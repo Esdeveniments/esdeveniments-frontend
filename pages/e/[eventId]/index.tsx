@@ -118,24 +118,6 @@ const NativeShareButton = dynamic(
   }
 );
 
-function replaceURLs(text: string | undefined): string | undefined {
-  if (!text) return undefined;
-
-  const urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
-  return text.replace(urlRegex, (url: string) => {
-    let hyperlink = url;
-    if (!hyperlink.match("^https?://")) {
-      hyperlink = "http://" + hyperlink;
-    }
-    return `<a href="${hyperlink}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-  });
-}
-
-function isHTML(text: string | undefined): boolean {
-  if (!text) return false;
-  return !!text.match(/<[a-z][\s\S]*>/i);
-}
-
 const sanitizeInput = (input: string): string =>
   input
     .replace(/(<([^>]+)>)/gi, "")
@@ -354,9 +336,9 @@ export default function Event(props: {
     endTime,
     imageUrl,
     url,
-    visits,
-    categories,
   } = event;
+  const cityName = city?.name || "";
+  const regionName = region?.name || "";
 
   const eventDate = endDate ? (
     <>
@@ -389,9 +371,9 @@ export default function Event(props: {
   return (
     <>
       <Meta
-        title={generateMetaTitle(title, "", location, city.name, region.name)}
+        title={generateMetaTitle(title, "", location, cityName, regionName)}
         description={generateMetaDescription(
-          `${title} - ${startDate} - ${location}, ${city.name}, ${region.name}`,
+          `${title} - ${startDate} - ${location}, ${cityName}, ${regionName}`,
           description
         )}
         canonical={`${siteUrl}/e/${slug}`}
@@ -440,7 +422,7 @@ export default function Event(props: {
                     url={slug}
                     date={eventDateString}
                     location={location}
-                    subLocation={`${city}, ${region}`}
+                    subLocation={`${cityName}, ${regionName}`}
                   />
                 )}
                 <ViewCounter slug={slug} />
@@ -467,7 +449,7 @@ export default function Event(props: {
                 <AddToCalendar
                   title={title}
                   description={description}
-                  location={`${location}, ${city.name}, ${region.name}`}
+                  location={`${location}, ${cityName}, ${regionName}`}
                   startDate={startDate}
                   endDate={endDate}
                   canonical={`${siteUrl}/e/${slug}`}
@@ -485,7 +467,7 @@ export default function Event(props: {
                     <div className="w-full flex flex-col justify-start items-start gap-1">
                       <p>{location}</p>{" "}
                       <p>
-                        {city.name}, {region.name}
+                        {cityName}, {regionName}
                       </p>
                     </div>
                     <div
@@ -536,24 +518,27 @@ export default function Event(props: {
             {/* Description */}
             <Description
               description={description}
-              location={city.name || region.name}
+              location={cityName || regionName}
             />
             {url &&
               renderEventImage(imageUrl, title, location, startDate, startDate)}
             {/* Weather */}
-            <div
-              className="w-full flex justify-center items-start gap-2 px-4"
-              ref={weatherDivRef}
-            >
-              <CloudIcon className="w-5 h-5 mt-1" />
-              <div className="w-11/12 flex flex-col gap-4">
-                <h2>El temps</h2>
-                {isWeatherVisible && (
-                  <Weather startDate={startDate} location={city.name} />
-                )}
+            {/* Use the new weather api when is ready */}
+            {false && (
+              <div
+                className="w-full flex justify-center items-start gap-2 px-4"
+                ref={weatherDivRef}
+              >
+                <CloudIcon className="w-5 h-5 mt-1" />
+                <div className="w-11/12 flex flex-col gap-4">
+                  <h2>El temps</h2>
+                  {isWeatherVisible && (
+                    <Weather startDate={startDate} location={cityName} />
+                  )}
+                </div>
+                <span ref={eventsAroundDivRef} />
               </div>
-              <span ref={eventsAroundDivRef} />
-            </div>
+            )}
             {/* More info */}
             <div className="w-full flex justify-center items-start gap-2 px-4">
               <WebIcon className="w-5 h-5 mt-1" />
@@ -632,8 +617,8 @@ export default function Event(props: {
                   <EventsAround
                     id={id}
                     title={title}
-                    town={city.name}
-                    region={region.name}
+                    town={cityName}
+                    region={regionName}
                   />
                 </div>
               </div>

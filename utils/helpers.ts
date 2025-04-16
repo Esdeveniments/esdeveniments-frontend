@@ -1,10 +1,8 @@
-// @ts-nocheck
-// I'll come back later
-import { Event } from "@store";
-import { DAYS, MONTHS, CATEGORIES, RegionData } from "./constants";
+import { DAYS, MONTHS, CATEGORIES } from "./constants";
 import { siteUrl } from "@config/index";
-import { getRegions } from "@lib/apiHelpers";
 import { EventDetailResponseDTO } from "types/api/event";
+import { fetchCityById } from "@lib/api/cities";
+import { fetchRegionById } from "@lib/api/regions";
 
 export interface DateObject {
   date?: string;
@@ -22,12 +20,6 @@ export interface FormattedDateResult {
   isLessThanFiveDays: boolean;
   isMultipleDays: boolean;
   duration: string;
-}
-
-export interface PlaceTypeAndLabel {
-  type: "region" | "town";
-  label: string;
-  regionLabel?: string;
 }
 
 export interface Location {
@@ -268,18 +260,16 @@ export const generateJsonData = (
     startDate,
     endDate,
     location,
-    imageUploaded,
-    eventImage,
-    postalCode,
-    subLocation,
-    duration,
-    videoUrl,
+    imageUrl,
+    duration = "",
+    videoUrl = undefined,
+    city = undefined,
+    region = undefined,
+    province = undefined,
   } = event;
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
-  const images = [imageUploaded, eventImage, defaultImage].filter(
-    Boolean
-  ) as string[];
+  const images = [imageUrl, defaultImage].filter(Boolean) as string[];
 
   const videoObject = videoUrl
     ? {
@@ -287,7 +277,7 @@ export const generateJsonData = (
         name: title,
         contentUrl: videoUrl,
         description,
-        thumbnailUrl: imageUploaded || eventImage || defaultImage,
+        thumbnailUrl: imageUrl || defaultImage,
         uploadDate: startDate,
       }
     : null;
@@ -307,10 +297,10 @@ export const generateJsonData = (
       address: {
         "@type": "PostalAddress" as const,
         streetAddress: location,
-        addressLocality: subLocation,
-        postalCode,
-        addressCountry: "ES",
-        addressRegion: "CT",
+        addressLocality: city?.name || "",
+        postalCode: city?.postalCode || "",
+        addressCountry: province?.name || "ES",
+        addressRegion: region?.name || "CT",
       },
     },
     image: images,
@@ -338,78 +328,21 @@ export const generateJsonData = (
   };
 };
 
-export const generateRegionsAndTownsOptions = async (): Promise<
-  {
-    label: string;
-    options: Option[];
-  }[]
-> => {
-  const regions = await getRegions();
-  const regionsOptions: Option[] = regions.map((region) => ({
-    label: region.name,
-    value: region.slug,
-  }));
-  regionsOptions.sort((a, b) => a.label.localeCompare(b.label));
-  return [{ label: "Comarques", options: regionsOptions }];
-};
-
-export const generateRegionsOptions = async (): Promise<Option[]> => {
-  const regions = await getRegions();
-  return regions.map((region) => ({
-    value: region.slug,
-    label: region.name,
-  }));
-};
+export type PlaceTypeAndLabel = { type: "region" | "town"; label: string };
 
 export const getPlaceTypeAndLabel = async (
   place: string
 ): Promise<PlaceTypeAndLabel> => {
-  const regions = await getRegions();
-  const foundRegion = regions.find((region) => region.slug === place);
-  if (foundRegion) {
-    return { type: "region", label: foundRegion.name };
+  if (place && !isNaN(Number(place))) {
+    // Try region
+    const region = await fetchRegionById(place);
+    if (region) return { type: "region", label: region.name };
+    // Try city
+    const city = await fetchCityById(place);
+    if (city) return { type: "town", label: city.name };
   }
+  // Fallback
   return { type: "town", label: place };
-};
-
-export const generateTownsOptions = (region: string): Option[] => {
-  return [];
-};
-
-export const getPlaceLabel = async (place: string): Promise<string> => {
-  const regions = await getRegions();
-
-  const foundRegion = regions.find((region) => region.slug === place);
-  if (foundRegion) {
-    return foundRegion.name;
-  }
-  return place;
-};
-
-export const getTownLabel = (townValue: string): string => {
-  return "";
-};
-
-export const getRegionLabelByValue = (regionValue: string): string => {
-  return "";
-};
-
-export const getTownOptionsWithoutRegion = (town: string): Option[] => {
-  const options: Option[] = [];
-
-  return options;
-};
-
-export const getRegionByTown = (town: string): string => {
-  return "";
-};
-
-export const getRegionValueByLabel = (regionLabel: string): string => {
-  return "";
-};
-
-export const getTownValueByLabel = (label: string): string | undefined => {
-  return undefined;
 };
 
 export const truncateString = (str: string, num: number): string => {

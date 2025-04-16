@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { slug, getFormattedDate } from "@utils/helpers";
@@ -11,47 +11,35 @@ import {
 } from "@components/ui/common/form";
 import Meta from "@components/partials/seo-meta";
 import { Notification } from "@components/ui/common";
+import { generateRegionsOptions, generateTownsOptions } from "@utils/helpers";
 import { siteUrl } from "@config/index";
-import type { EventDetailResponseDTO } from "../../../../types/api/event";
-import { updateEventById } from "lib/api/events";
-import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import type { FormState, FormData, EditEventProps } from "types/event";
-import type { Option } from "types/common";
 
 const _createFormState = (
   isDisabled = true,
   isPristine = true,
   message = ""
-): FormState => ({
+) => ({
   isDisabled,
   isPristine,
   message,
 });
 
+const defaultForm = {
+  title: "",
+  description: "",
+  startDate: "",
+  endDate: "",
+  region: "",
+  town: "",
+  location: "",
+  imageUploaded: null,
+  eventUrl: "",
+};
+
 const createFormState = (
-  form: Pick<
-    FormData,
-    | "title"
-    | "description"
-    | "startDate"
-    | "endDate"
-    | "region"
-    | "town"
-    | "location"
-    | "url"
-  >,
-  isPristine: boolean
-): FormState => {
-  const {
-    title,
-    description,
-    startDate,
-    endDate,
-    region,
-    town,
-    location,
-    url,
-  } = form;
+  { title, description, startDate, endDate, region, town, location, eventUrl },
+  isPristine
+) => {
   if (!isPristine) {
     return _createFormState(true, true, "");
   }
@@ -68,11 +56,11 @@ const createFormState = (
     );
   }
 
-  if (!region || !region.id) {
+  if (!region || !region.value) {
     return _createFormState(true, true, "Comarca obligatoria");
   }
 
-  if (!town || !town.id) {
+  if (!town || !town.value) {
     return _createFormState(true, true, "Ciutat obligatoria");
   }
 
@@ -111,7 +99,7 @@ const createFormState = (
     "i"
   );
 
-  if (url && !urlPattern.test(url)) {
+  if (eventUrl && !urlPattern.test(eventUrl)) {
     return _createFormState(
       true,
       true,
@@ -122,61 +110,21 @@ const createFormState = (
   return _createFormState(false);
 };
 
-const Edita: React.FC<EditEventProps> = ({ event }) => {
+export default function Edita({ event }) {
   const router = useRouter();
-  const [form, setForm] = useState<FormData>({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    startDate: event.startDate,
-    endDate: event.endDate,
-    region: event.region,
-    town: event.city,
-    location: event.location,
-    imageUrl: event.imageUrl || null,
-    url: event.url,
-    email: "",
-  });
-  const [formState, setFormState] = useState<FormState>(_createFormState());
+  const [form, setForm] = useState(defaultForm);
+  const [region, setRegion] = useState(event.region.value);
+  const [formState, setFormState] = useState(_createFormState());
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
   const [showDeleteMessage, setShowDeleteMessage] = useState(false);
-  const [imageToUpload, setImageToUpload] = useState<File | null>(null);
+  const [imageToUpload, setImageToUpload] = useState(null);
   const [progress, setProgress] = useState(0);
 
-  const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
-    useGetRegionsWithCities();
-
-  const regionOptions = useMemo(
-    () =>
-      regionsWithCities
-        ? regionsWithCities.map((region) => ({
-            label: region.name,
-            value: region.id.toString(),
-          }))
-        : [],
-    [regionsWithCities]
-  );
-
-  const cityOptions = useMemo(() => {
-    if (!regionsWithCities || !form.region) return [];
-    const region = regionsWithCities.find((r) => r.id === form.region!.id);
-    return region ? region.cities : [];
-  }, [regionsWithCities, form.region]);
+  const regionsArray = useMemo(() => generateRegionsOptions(), []);
+  const citiesArray = useMemo(() => generateTownsOptions(region), [region]);
 
   useEffect(() => {
-    setForm({
-      id: event.id,
-      title: event.title,
-      description: event.description,
-      startDate: event.startDate,
-      endDate: event.endDate,
-      region: event.region,
-      town: event.city,
-      location: event.location,
-      imageUrl: event.imageUrl || null,
-      url: event.url,
-      email: "",
-    });
+    setForm(event);
   }, [event]);
 
   useEffect(() => {
@@ -187,84 +135,80 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
     });
   }, [showDeleteMessage]);
 
-  const goToEventPage = (url: string) => ({
+  const goToEventPage = (url) => ({
     pathname: `${url}`,
     query: { edit_suggested: true },
   });
 
-  const handleFormChange = (name: keyof FormData, value: any) => {
-    let newValue = value;
-    if (name === "region") {
-      newValue = value
-        ? regionsWithCities?.find((r) => r.id.toString() === value.value) ||
-          null
-        : null;
-      // Reset town if region changes
-      setForm((prev) => ({ ...prev, region: newValue, town: null }));
-      setFormState(
-        createFormState(
-          { ...form, region: newValue, town: null },
-          formState.isPristine
-        )
-      );
-      return;
-    }
-    if (name === "town") {
-      newValue =
-        value && form.region
-          ? regionsWithCities
-              ?.find((r) => r.id === form.region!.id)
-              ?.cities.find((c) => c.value === value.value) || null
-          : null;
-    }
-    if (name === "startDate" || name === "endDate")
-      newValue =
-        value instanceof Date ? value.toISOString().slice(0, 10) : value;
-    setForm((prev) => ({ ...prev, [name]: newValue }));
-    setFormState(
-      createFormState({ ...form, [name]: newValue }, formState.isPristine)
-    );
+  const handleFormChange = (name, value) => {
+    const newForm = { ...form, [name]: value };
+
+    setForm(newForm);
+    setFormState(createFormState(newForm));
   };
 
-  const handleChange = (e: { target: { name: string; value: string } }) => {
-    const { name, value } = e.target;
-    handleFormChange(name as keyof FormData, value);
+  const handleChange = ({ target: { name, value } }) =>
+    handleFormChange(name, value);
+
+  const handleRegionChange = (region) => {
+    setRegion(region.value);
+    handleFormChange("region", region);
   };
+
+  const handleTownChange = (town) => handleFormChange("town", town);
+
+  const handleChangeDate = (name, value) => handleFormChange(name, value);
 
   const onSubmit = async () => {
     const newFormState = createFormState(form, formState.isPristine);
+
     setFormState(newFormState);
+
     if (!newFormState.isDisabled) {
       setIsLoadingEdit(true);
+
       try {
-        const dataToSend = {
-          ...form,
-          regionId: form.region?.id,
-          cityId: form.town?.id,
-          imageUrl: form.imageUrl,
-          url: form.url,
-        };
-        await updateEventById(form.id!, dataToSend);
+        const rawResponse = await fetch("/api/editEvent", {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...form,
+            location: `${form.location}, ${form.town.label}, ${form.region.label}`,
+            imageUploaded: !!imageToUpload || !!event.imageUploaded,
+          }),
+        });
+
+        await rawResponse.json();
+
         const { formattedStart } = getFormattedDate(
           form.startDate,
           form.endDate
         );
-        const slugifiedTitle = slug(form.title, formattedStart, form.id!);
+        const slugifiedTitle = slug(form.title, formattedStart, form.id);
+
         if (imageToUpload) {
-          uploadFile(form.id!, slugifiedTitle);
+          uploadFile(form.id, slugifiedTitle);
         } else {
-          setProgress(0);
-          router.push(`/e/${form.id}/${slugifiedTitle}`);
+          router.push(goToEventPage(`/e/${slugifiedTitle}`));
         }
       } catch (error) {
-        console.error(error);
-      } finally {
+        console.error("Error updating event:", error);
         setIsLoadingEdit(false);
+        setFormState(
+          _createFormState(
+            true,
+            true,
+            "Hi ha hagut un error, torna-ho a provar més tard o contacta amb nosaltres."
+          )
+        );
       }
     }
   };
 
-  const uploadFile = (id: string, slugifiedTitle: string) => {
+  const uploadFile = (id, slugifiedTitle) => {
     const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUDNAME}/upload`;
     const xhr = new XMLHttpRequest();
     const fd = new FormData();
@@ -281,19 +225,13 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
       }
     };
 
-    if (process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET) {
-      fd.append(
-        "upload_preset",
-        process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET
-      );
-    }
+    fd.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET
+    );
     fd.append("tags", "browser_upload");
-    if (imageToUpload) {
-      fd.append("file", imageToUpload);
-    }
-    if (id) {
-      fd.append("public_id", id);
-    }
+    fd.append("file", imageToUpload);
+    fd.append("public_id", id);
     xhr.send(fd);
   };
 
@@ -333,14 +271,16 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
               onChange={handleChange}
             />
 
-            <Input
-              id="url"
-              title="Enllaç de l'esdeveniment"
-              value={form.url || ""}
-              onChange={handleChange}
-            />
+            {event.eventUrl && (
+              <Input
+                id="eventUrl"
+                title="Enllaç de l'esdeveniment"
+                value={form.eventUrl || event.eventUrl}
+                onChange={handleChange}
+              />
+            )}
 
-            {event.imageUrl ? (
+            {event.imageUploaded ? (
               <div className="sm:col-span-6">
                 <div className="next-image-wrapper">
                   <Image
@@ -349,7 +289,7 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
                     height="100"
                     width="150"
                     className="object-contain rounded-lg"
-                    src={form.imageUrl || event.imageUrl}
+                    src={form.imageUploaded || event.imageUploaded}
                     style={{
                       maxWidth: "100%",
                       height: "auto",
@@ -364,7 +304,7 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
               </div>
             ) : (
               <ImageUpload
-                value={form.imageUrl}
+                value={imageToUpload}
                 onUpload={setImageToUpload}
                 progress={progress}
               />
@@ -373,45 +313,22 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
             <Select
               id="region"
               title="Comarca *"
-              options={regionOptions}
-              value={
-                form.region
-                  ? {
-                      label: form.region.name,
-                      value: form.region.id.toString(),
-                    }
-                  : null
-              }
-              onChange={(option: Option | null) =>
-                handleFormChange("region", option)
-              }
+              options={regionsArray}
+              value={form.region}
+              onChange={handleRegionChange}
               isClearable
-              placeholder={
-                isLoadingRegionsWithCities
-                  ? "Carregant comarques..."
-                  : "Selecciona una comarca"
-              }
+              placeholder="una comarca"
             />
 
             <Select
               id="town"
               title="Ciutat *"
-              options={cityOptions}
-              value={
-                form.town
-                  ? { label: form.town.name, value: form.town.id.toString() }
-                  : null
-              }
-              onChange={(option: Option | null) =>
-                handleFormChange("town", option)
-              }
-              isDisabled={!form.region || isLoadingRegionsWithCities}
+              options={citiesArray}
+              value={form.town}
+              onChange={handleTownChange}
+              isDisabled={!form.region}
               isClearable
-              placeholder={
-                isLoadingRegionsWithCities
-                  ? "Carregant pobles..."
-                  : "Selecciona un poble"
-              }
+              placeholder="un poble"
             />
 
             <Input
@@ -422,18 +339,15 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
             />
 
             <DatePicker
-              startDate={form.startDate ? new Date(form.startDate) : undefined}
-              endDate={form.endDate ? new Date(form.endDate) : undefined}
-              onChange={(name: string, value: Date) =>
-                handleFormChange(name as keyof FormData, value)
-              }
+              startDate={form.startDate || event.startDate}
+              endDate={form.endDate || event.endDate}
+              onChange={handleChangeDate}
             />
 
             <Input
               id="email"
               title="Correu electrònic"
               subtitle="Vols que t'avisem quan l'esdeveniment s'hagi actualitzat? (no guardem les dades)"
-              value={form.email || ""}
               onChange={handleChange}
             />
           </div>
@@ -479,25 +393,34 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
       </div>
     </>
   );
-};
-
-export async function getServerSideProps({
-  params,
-}: {
-  params: { eventId: string };
-}) {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/events/${params.eventId}`
-    );
-    const event: EventDetailResponseDTO = await res.json();
-    if (!event) {
-      return { notFound: true };
-    }
-    return { props: { event } };
-  } catch (error) {
-    return { notFound: true };
-  }
 }
 
-export default Edita;
+export async function getServerSideProps({ params }) {
+  const { getCalendarEvent } = require("@lib/helpers");
+  const {
+    getRegionValueByLabel,
+    getTownValueByLabel,
+  } = require("@utils/helpers");
+  const eventId = params.eventId;
+
+  const { event } = await getCalendarEvent(eventId);
+
+  if (!event.id) {
+    return {
+      notFound: true,
+    };
+  }
+
+  event.region = {
+    value: getRegionValueByLabel(event.region),
+    label: event.region,
+  };
+  event.town = {
+    value: getTownValueByLabel(event.town),
+    label: event.town,
+  };
+
+  return {
+    props: { event },
+  };
+}

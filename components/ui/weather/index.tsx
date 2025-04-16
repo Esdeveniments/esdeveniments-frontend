@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable */
 // Check in the future
 import { memo, FC } from "react";
 import Image from "next/image";

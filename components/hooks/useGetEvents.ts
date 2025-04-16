@@ -1,13 +1,10 @@
 import { captureException } from "@sentry/nextjs";
 import useSWR, { preload } from "swr";
-import { Event } from "@store";
-
-interface EventsResponse {
-  events: Event[];
-}
+import { PagedResponseDTO, EventSummaryResponseDTO } from "types/api/event";
+import { fetchEventsFromBackend } from "../../lib/api/events";
 
 interface EventsProps {
-  events?: Event[];
+  events?: EventSummaryResponseDTO[];
 }
 
 interface UseGetEventsProps {
@@ -17,16 +14,42 @@ interface UseGetEventsProps {
   refreshInterval?: boolean;
   maxResults?: number;
   town?: string;
+  zone?: string;
+  category?: string;
 }
 
-const fetcher = async ([url, pageIndex, q, maxResults, town]: readonly [string, number, string, number, string]): Promise<EventsResponse> => {
-  const response = await fetch(
-    `${url}?page=${pageIndex}&q=${q}&maxResults=${maxResults}&town=${town}`
-  );
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+const fetcher = async (
+  _: any,
+  pageIndex: number,
+  maxResults: number,
+  q?: string,
+  town?: string,
+  zone?: string,
+  category?: string
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
+  try {
+    const params: Record<string, any> = {
+      page: pageIndex,
+      maxResults: maxResults,
+    };
+    if (q) params.q = q;
+    if (town) params.town = town;
+    if (zone) params.zone = zone;
+    if (category) params.category = category;
+    const content = await fetchEventsFromBackend(params);
+    // Wrap in paged response structure for compatibility
+    return {
+      content,
+      currentPage: pageIndex,
+      pageSize: maxResults,
+      totalElements: content.length,
+      totalPages: 1,
+      last: true,
+    };
+  } catch (error: any) {
+    captureException(error);
+    throw error;
   }
-  return response.json();
 };
 
 export const useGetEvents = ({
@@ -36,25 +59,50 @@ export const useGetEvents = ({
   refreshInterval = true,
   maxResults = 10,
   town = "",
+  zone = "",
+  category = "",
 }: UseGetEventsProps) => {
-  preload(["/api/getEvents", pageIndex, q, maxResults, town], fetcher);
+  // Only fetch if pageIndex is a valid number
+  const shouldFetch = typeof pageIndex === "number" && pageIndex >= 0;
+
+  // Only include non-empty params in the key to avoid unnecessary re-fetches
+  const swrKey = shouldFetch
+    ? [
+        "events",
+        pageIndex,
+        maxResults,
+        q || null,
+        town || null,
+        zone || null,
+        category || null,
+      ]
+    : null;
+
+  if (swrKey) preload(swrKey, fetcher);
 
   const hasFallbackData = (props?.events?.length ?? 0) > 0;
 
-  return useSWR<EventsResponse>(["/api/getEvents", pageIndex, q, maxResults, town], fetcher, {
-    fallbackData: hasFallbackData ? { ...props, events: props.events || [] } : undefined,
-    refreshInterval: refreshInterval ? 300000 : 0,
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    revalidateIfStale: true, // Revalidate if data is stale
+  return useSWR<PagedResponseDTO<EventSummaryResponseDTO>>(swrKey, fetcher, {
+    fallbackData: hasFallbackData
+      ? {
+          content: props.events || [],
+          currentPage: 0,
+          pageSize: 0,
+          totalElements: 0,
+          totalPages: 0,
+          last: true,
+        }
+      : undefined,
+    revalidateIfStale: true,
     refreshWhenOffline: false,
     suspense: true,
     keepPreviousData: true,
-    revalidateOnMount: !hasFallbackData, // Avoid revalidating on mount
-    dedupingInterval: 2000, // Deduplicate requests within 2 seconds
-    focusThrottleInterval: 5000, // Throttle focus revalidation to every 5 seconds
-    errorRetryInterval: 5000, // Retry errors every 5 seconds
-    errorRetryCount: 3, // Retry up to 3 times
+    revalidateOnMount: !hasFallbackData,
+    dedupingInterval: 2000,
+    focusThrottleInterval: 5000,
+    errorRetryInterval: 5000,
+    errorRetryCount: 3,
+    refreshInterval: refreshInterval ? 300000 : 0,
     onError: (error: Error) => {
       console.error("Error fetching events:", error);
       captureException(error);

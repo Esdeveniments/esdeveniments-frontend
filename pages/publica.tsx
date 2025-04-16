@@ -1,12 +1,7 @@
 import { useState, useMemo, ChangeEvent } from "react";
 import { useRouter } from "next/router";
 import { captureException } from "@sentry/nextjs";
-import {
-  slug,
-  getFormattedDate,
-  getRegionLabelByValue,
-  getTownLabel,
-} from "@utils/helpers";
+import { slug, getFormattedDate } from "@utils/helpers";
 import {
   DatePicker,
   Input,
@@ -15,12 +10,11 @@ import {
   ImageUpload,
 } from "@components/ui/common/form";
 import Meta from "@components/partials/seo-meta";
-import {
-  env,
-  generateRegionsOptions,
-  generateTownsOptions,
-} from "@utils/helpers";
+import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { siteUrl } from "@config/index";
+import { createEvent } from "lib/api/events";
+import { fetchRegionById } from "@lib/api/regions";
+import { fetchCityById } from "@lib/api/cities";
 import type { NextPage } from "next";
 
 interface FormData {
@@ -31,8 +25,8 @@ interface FormData {
   region: SelectOption | null;
   town: SelectOption | null;
   location: string;
-  imageUploaded: File | null;
   eventUrl: string;
+  imageUrl?: string;
 }
 
 interface SelectOption {
@@ -54,7 +48,6 @@ const defaultForm: FormData = {
   region: null,
   town: null,
   location: "",
-  imageUploaded: null,
   eventUrl: "",
 };
 
@@ -86,10 +79,6 @@ const createFormState = (form: FormData, isPristine: boolean): FormState => {
       true,
       "Descripció obligatòria, mínim 15 caràcters"
     );
-  }
-
-  if (!form.imageUploaded) {
-    return _createFormState(true, true, "Imatge obligatoria");
   }
 
   if (!form.region) {
@@ -134,20 +123,44 @@ const createFormState = (form: FormData, isPristine: boolean): FormState => {
     return _createFormState(true, true, "Enllaç no vàlid");
   }
 
+  if (!form.imageUrl) {
+    return _createFormState(true, true, "Imatge obligatòria");
+  }
+
   return _createFormState(false);
 };
 
 const Publica: NextPage = () => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
-  const [region, setRegion] = useState<string>("");
   const [formState, setFormState] = useState<FormState>(_createFormState());
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [imageToUpload, setImageToUpload] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
 
-  const regionsArray = useMemo(() => generateRegionsOptions(), []);
-  const citiesArray = useMemo(() => generateTownsOptions(region), [region]);
+  const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
+    useGetRegionsWithCities();
+
+  const regionOptions = useMemo(
+    () =>
+      regionsWithCities
+        ? regionsWithCities.map((region) => ({
+            label: region.name,
+            value: region.id.toString(),
+          }))
+        : [],
+    [regionsWithCities]
+  );
+
+  const cityOptions = useMemo(() => {
+    if (!regionsWithCities || !form.region) return [];
+    const region = regionsWithCities.find(
+      (r) => r.id.toString() === form.region?.value
+    );
+    return region
+      ? region.cities.map((city) => ({ label: city.label, value: city.value }))
+      : [];
+  }, [regionsWithCities, form.region]);
 
   const handleFormChange = (name: keyof FormData, value: any) => {
     const newForm = { ...form, [name]: value };
@@ -164,7 +177,6 @@ const Publica: NextPage = () => {
   ) => handleFormChange(name, value as any);
 
   const handleRegionChange = (region: SelectOption | null) => {
-    setRegion(region?.value || "");
     handleFormChange("region", region);
   };
 
@@ -174,16 +186,10 @@ const Publica: NextPage = () => {
       setImageToUpload(reader.result as string);
     });
     reader.readAsDataURL(file);
-    handleFormChange("imageUploaded", file);
   };
 
   const handleTownChange = (town: SelectOption | null) =>
     handleFormChange("town", town);
-
-  const goToEventPage = (url: string) => ({
-    pathname: url,
-    query: { newEvent: true },
-  });
 
   const onSubmit = async () => {
     const newFormState = createFormState(form, formState.isPristine);
@@ -195,60 +201,79 @@ const Publica: NextPage = () => {
       try {
         const townValue = form.town?.value ?? "";
         const regionValue = form.region?.value ?? "";
-        const location = `${form.location}, ${getTownLabel(
-          townValue
-        )}, ${getRegionLabelByValue(regionValue)}`;
+        let regionLabel = "";
+        let townLabel = "";
+        if (regionValue) {
+          const region = await fetchRegionById(regionValue);
+          regionLabel = region?.name || "";
+        }
+        if (townValue) {
+          const city = await fetchCityById(townValue);
+          townLabel = city?.name || "";
+        }
+        const location = `${form.location}, ${townLabel}, ${regionLabel}`;
 
-        const rawResponse = await fetch("/api/postEvent", {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...form,
-            location,
-            imageUploaded: !!imageToUpload,
-          }),
-        });
+        const eventData = {
+          ...form,
+          location,
+        };
 
-        if (rawResponse.ok) {
-          const { id } = await rawResponse.json();
-          const { formattedStart } = getFormattedDate(
-            form.startDate ? form.startDate.toISOString() : "",
-            form.endDate ? form.endDate.toISOString() : ""
+        if (imageToUpload) {
+          const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUDNAME}/upload`;
+          const xhr = new XMLHttpRequest();
+          const fd = new FormData();
+          xhr.open("POST", url, true);
+          xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+          xhr.upload.addEventListener("progress", (e) => {
+            setProgress(Math.round((e.loaded * 100.0) / e.total));
+          });
+
+          xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4) {
+              if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                eventData.imageUrl = response.secure_url;
+                createEvent(eventData).then((eventResponse) => {
+                  const { id } = eventResponse;
+                  const { formattedStart } = getFormattedDate(
+                    form.startDate ? form.startDate.toISOString() : "",
+                    form.endDate ? form.endDate.toISOString() : ""
+                  );
+                  const slugifiedTitle = slug(form.title, formattedStart, id);
+                  router.push(`/e/${id}/${slugifiedTitle}`);
+                });
+              } else {
+                const error = JSON.parse(xhr.responseText).error;
+                console.error("Error uploading file:", error);
+                setIsLoading(false);
+                setFormState(
+                  _createFormState(
+                    true,
+                    true,
+                    `Hi ha hagut un error en pujar la imatge: ${error.message}, torna-ho a provar més tard o contacta amb nosaltres.`
+                  )
+                );
+                captureException(
+                  new Error(`Error uploading file: ${error.message}`)
+                );
+              }
+            }
+          };
+
+          fd.append(
+            "upload_preset",
+            process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET as string
           );
-          const slugifiedTitle = slug(form.title, formattedStart, id);
-
-          if (env === "prod") {
-            fetch(process.env.NEXT_PUBLIC_NEW_EVENT_EMAIL_URL as string, {
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ title: form.title, slug: slugifiedTitle }),
-            }).catch((error) => {
-              console.error(`Error sending new event email: ${error.message}`);
-              captureException(
-                new Error(`Error sending new event email: ${error.message}`)
-              );
-            });
-          }
-
-          imageToUpload
-            ? await uploadFile(id, slugifiedTitle)
-            : router.push(goToEventPage(`/e/${slugifiedTitle}`));
+          fd.append("tags", "browser_upload");
+          fd.append("file", imageToUpload as string);
+          xhr.send(fd);
         } else {
-          const errorText = await rawResponse.text();
-          const errorMessage = `Error submitting form: ${errorText}`;
-          console.error(errorMessage);
-          captureException(new Error(errorMessage));
           setIsLoading(false);
+          setFormState(_createFormState(true, true, "Imatge obligatòria"));
         }
       } catch (error) {
-        console.error("Error submitting form:", error);
-        setIsLoading(false);
+        captureException(error);
         setFormState(
           _createFormState(
             true,
@@ -256,73 +281,9 @@ const Publica: NextPage = () => {
             "Hi ha hagut un error, torna-ho a provar més tard o contacta amb nosaltres."
           )
         );
-        if (error instanceof Error) {
-          captureException(
-            new Error(`Error submitting form: ${error.message}`)
-          );
-        }
+      } finally {
+        setIsLoading(false);
       }
-    }
-  };
-
-  const uploadFile = async (id: string, slugifiedTitle: string) => {
-    try {
-      const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUDNAME}/upload`;
-      const xhr = new XMLHttpRequest();
-      const fd = new FormData();
-      xhr.open("POST", url, true);
-      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-
-      xhr.upload.addEventListener("progress", (e) => {
-        setProgress(Math.round((e.loaded * 100.0) / e.total));
-      });
-
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            console.log(response.public_id);
-            router.push(goToEventPage(`/e/${slugifiedTitle}`));
-          } else {
-            const error = JSON.parse(xhr.responseText).error;
-            console.error("Error uploading file:", error);
-            setIsLoading(false);
-            setFormState(
-              _createFormState(
-                true,
-                true,
-                `Hi ha hagut un error en pujar la imatge: ${error.message}, torna-ho a provar més tard o contacta amb nosaltres.`
-              )
-            );
-            captureException(
-              new Error(`Error uploading file: ${error.message}`)
-            );
-          }
-        }
-      };
-
-      fd.append(
-        "upload_preset",
-        process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET as string
-      );
-      fd.append("tags", "browser_upload");
-      fd.append("file", imageToUpload as string);
-      fd.append("public_id", id);
-      xhr.send(fd);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setIsLoading(false);
-      setFormState(
-        _createFormState(
-          true,
-          true,
-          "Hi ha hagut un error en pujar la imatge, torna-ho a provar més tard o contacta amb nosaltres."
-        )
-      );
-      if (error instanceof Error) {
-        captureException(new Error(`Error uploading file: ${error.message}`));
-      }
-      throw error;
     }
   };
 
@@ -371,22 +332,30 @@ const Publica: NextPage = () => {
             <Select
               id="region"
               title="Comarca *"
-              options={regionsArray}
+              options={regionOptions}
               value={form.region}
               onChange={handleRegionChange}
               isClearable
-              placeholder="una comarca"
+              placeholder={
+                isLoadingRegionsWithCities
+                  ? "Carregant comarques..."
+                  : "Selecciona una comarca"
+              }
             />
 
             <Select
               id="town"
               title="Ciutat *"
-              options={citiesArray}
+              options={cityOptions}
               value={form.town}
               onChange={handleTownChange}
-              isDisabled={!form.region}
+              isDisabled={!form.region || isLoadingRegionsWithCities}
               isClearable
-              placeholder="un poble"
+              placeholder={
+                isLoadingRegionsWithCities
+                  ? "Carregant pobles..."
+                  : "Selecciona un poble"
+              }
             />
 
             <Input

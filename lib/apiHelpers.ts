@@ -89,9 +89,11 @@ export async function getRegions(): Promise<{ [key: string]: Region }> {
     const data = response.data;
 
     const regionsMap: { [key: string]: Region } = {};
-    data.regions.forEach((region) => {
-      regionsMap[region.slug] = region;
-    });
+    if (Array.isArray(data.regions)) {
+      data.regions.forEach((region) => {
+        regionsMap[region.slug] = region;
+      });
+    }
 
     return regionsMap;
   } catch (error) {

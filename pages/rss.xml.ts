@@ -1,26 +1,14 @@
 import { FC } from "react";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
-import { getCalendarEvents } from "@lib/helpers";
+import { fetchEventsFromBackend } from "@lib/api/events";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { getFormattedDate } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import type { GetServerSideProps } from "next";
-import { Event as EventType } from "@store";
+import { EventSummaryResponseDTO } from "types/api/event";
 
 const SITE_NAME = "Esdeveniments.cat";
-
-interface Event extends EventType {
-  nameDay: string;
-  formattedStart: string;
-  location: string;
-  town: string;
-  region: string;
-  mapsLocation?: string;
-  imageUploaded?: string;
-  eventImage?: string;
-  slug: string;
-  startDate: string;
-}
 
 interface QueryParams {
   region?: string;
@@ -29,15 +17,28 @@ interface QueryParams {
   until?: number;
 }
 
+interface RssEvent {
+  id: string;
+  title: string;
+  slug: string;
+  nameDay: string;
+  formattedStart: string;
+  location: string;
+  town: string;
+  region: string;
+  startDate: string;
+  imageUploaded?: string;
+  eventImage?: string;
+}
 
 const getAllArticles = async (
   region: string,
   town: string,
   maxEventsPerDay: string | undefined = undefined,
   untilProp: number = 7
-): Promise<Event[]> => {
-  const { label: regionLabel } = getPlaceTypeAndLabel(region);
-  const { label: townLabel } = getPlaceTypeAndLabel(town);
+): Promise<RssEvent[]> => {
+  const { label: regionLabel } = await getPlaceTypeAndLabel(region);
+  const { label: townLabel } = await getPlaceTypeAndLabel(town);
 
   try {
     const now = new Date();
@@ -46,29 +47,39 @@ const getAllArticles = async (
 
     const q = town ? `${townLabel} ${regionLabel}` : regionLabel;
 
-    const { events } = await getCalendarEvents({
+    const events: EventSummaryResponseDTO[] = await fetchEventsFromBackend({
       from,
       until,
       q,
-      normalizeRss: true,
       filterByDate: true,
       maxResults: 1000,
     });
 
-    const shuffledEvents = events as Event[];
+    const mappedEvents = events.map((event) => {
+      const { formattedStart, nameDay } = getFormattedDate(
+        event.startDate,
+        event.endDate
+      );
+      return {
+        id: event.id,
+        title: event.title,
+        slug: event.slug,
+        nameDay,
+        formattedStart,
+        location: event.location || "",
+        town: event.city?.name || "",
+        region: event.region?.name || "",
+        startDate: event.startDate,
+        imageUploaded: event.imageUrl || "",
+        eventImage: event.imageUrl || "",
+      };
+    });
 
-    // Get the last event
-    const lastEvent = shuffledEvents[shuffledEvents.length - 1];
+    const limitedEvents = maxEventsPerDay
+      ? mappedEvents.slice(0, Number(maxEventsPerDay))
+      : mappedEvents;
 
-    // Limit the number of events
-    const limitedEvents = maxEventsPerDay ? shuffledEvents.slice(0, Number(maxEventsPerDay)) : shuffledEvents;
-
-    // Add the last event to the limited events
-    if (lastEvent) {
-      limitedEvents.push(lastEvent);
-    }
-
-    return JSON.parse(JSON.stringify(limitedEvents));
+    return limitedEvents;
   } catch (error) {
     console.error(error);
     captureException(
@@ -80,10 +91,14 @@ const getAllArticles = async (
   }
 };
 
-const buildFeed = (items: Event[], region: string, town: string): Feed => {
+const buildFeed = async (
+  items: RssEvent[],
+  region: string,
+  town: string
+): Promise<Feed> => {
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
-  const { label: regionLabel } = getPlaceTypeAndLabel(region);
-  const { label: townLabel } = getPlaceTypeAndLabel(town);
+  const { label: regionLabel } = await getPlaceTypeAndLabel(region);
+  const { label: townLabel } = await getPlaceTypeAndLabel(town);
 
   const feed = new Feed({
     id: siteUrl,
@@ -100,12 +115,10 @@ const buildFeed = (items: Event[], region: string, town: string): Feed => {
     },
   });
 
-  const removedDuplicatedItems = items
-    .filter((event) => !event.isAd)
-    .filter(
-      (v, i, a) =>
-        a.findIndex((v2) => v2.id.split("_")[0] === v.id.split("_")[0]) === i
-    );
+  const removedDuplicatedItems = items.filter(
+    (v, i, a) =>
+      a.findIndex((v2) => v2.id.split("_")[0] === v.id.split("_")[0]) === i
+  );
 
   removedDuplicatedItems.forEach((item) => {
     const description = `${item.title}\n\n🗓️ ${item.nameDay} ${item.formattedStart}\n\n🏡 ${item.location}, ${item.town}, ${item.region} \n\nℹ️ Més informació disponible a la nostra pàgina web!`;
@@ -127,11 +140,16 @@ const buildFeed = (items: Event[], region: string, town: string): Feed => {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   if (context && context.res) {
     const { res, query } = context;
-    const { region = "", town = "", maxEventsPerDay, until } = query as QueryParams;
+    const {
+      region = "",
+      town = "",
+      maxEventsPerDay,
+      until,
+    } = query as QueryParams;
 
     const articles = await getAllArticles(region, town, maxEventsPerDay, until);
 
-    const feed = buildFeed(articles, region, town);
+    const feed = await buildFeed(articles, region, town);
     res.setHeader("content-type", "text/xml");
     res.write(feed.rss2()); // NOTE: You can also use feed.atom1() or feed.json1() for other feed formats
     res.end();

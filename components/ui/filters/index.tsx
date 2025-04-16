@@ -4,7 +4,7 @@ import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
 import { BYDATES } from "@utils/constants";
-import { getPlaceLabel, findCategoryKeyByValue } from "@utils/helpers";
+import { findCategoryKeyByValue } from "@utils/helpers";
 import { useRouter } from "next/router";
 import useStore from "@store";
 
@@ -28,6 +28,10 @@ interface FilterState {
     // eslint-disable-next-line no-unused-vars
     value: string | boolean
   ) => void;
+}
+
+interface FiltersProps {
+  placeLabel: string;
 }
 
 const renderButton = ({
@@ -78,7 +82,7 @@ const renderButton = ({
   </div>
 );
 
-const Filters = (): JSX.Element => {
+const Filters = ({ placeLabel }: FiltersProps): JSX.Element => {
   const router = useRouter();
   const { place, byDate, category, distance, openModal, setState } =
     useStore<FilterState>((state) => ({
@@ -162,7 +166,7 @@ const Filters = (): JSX.Element => {
         </div>
         <div className="w-8/10 flex items-center gap-1 border-0 placeholder:text-bColor overflow-x-auto">
           {renderButton({
-            text: getText(getPlaceLabel(place), "Població"),
+            text: getText(placeLabel, "Població"),
             enabled: Boolean(place),
             onClick: handlePlaceClick,
             handleOpenModal: () => setState("openModal", true),

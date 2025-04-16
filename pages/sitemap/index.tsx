@@ -1,22 +1,11 @@
 import { JSX } from "react";
 import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
-import { generateRegionsOptions, generateTownsOptions } from "@utils/helpers";
+import { fetchRegionsWithCities } from "@lib/api/regions";
 import Link from "next/link";
+import { GetStaticProps } from "next";
 
-interface RegionOption {
-  value: string;
-  label: string;
-}
-
-interface TownOption {
-  value: string;
-  label: string;
-}
-
-const regions: RegionOption[] = generateRegionsOptions();
-
-export default function Sitemap(): JSX.Element {
+export default function Sitemap({ regions }: { regions: any[] }): JSX.Element {
   return (
     <>
       <Meta
@@ -25,31 +14,30 @@ export default function Sitemap(): JSX.Element {
         canonical={`${siteUrl}/sitemap`}
       />
       <div className="w-full px-6">
-        {regions.map(({ value, label }) => {
-          const towns: TownOption[] = generateTownsOptions(value);
-
-          return (
-            <div key={value} className="">
-              <div className="">
-                <h2 className="mb-4">{label}</h2>
-              </div>
-              {towns.map(({ value: valueTown, label: labelTown }) => {
-                return (
-                  <div key={valueTown} className="mb-2">
-                    <Link
-                      href={`/sitemap/${valueTown.toLowerCase()}`}
-                      prefetch={false}
-                      className="hover:underline"
-                    >
-                      <p className="">{labelTown}</p>
-                    </Link>
-                  </div>
-                );
-              })}
+        {regions.map((region) => (
+          <div key={region.value} className="">
+            <div className="">
+              <h2 className="mb-4">{region.label}</h2>
             </div>
-          );
-        })}
+            {region.cities.map((city: any) => (
+              <div key={city.value} className="mb-2">
+                <Link
+                  href={`/sitemap/${city.value.toLowerCase()}`}
+                  prefetch={false}
+                  className="hover:underline"
+                >
+                  <p className="">{city.label}</p>
+                </Link>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const regions = await fetchRegionsWithCities();
+  return { props: { regions } };
+};

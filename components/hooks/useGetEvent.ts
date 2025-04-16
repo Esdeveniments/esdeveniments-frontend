@@ -1,31 +1,24 @@
-import { siteUrl } from "@config/index";
 import useSWR, { preload } from "swr";
 import { EventDetailResponseDTO } from "types/api/event";
+import { fetchEventById } from "../../lib/api/events";
 
 interface EventProps {
   event: EventDetailResponseDTO;
 }
 
-const fetchWithId = async ([url, id]: [
-  string | null,
-  string
-]): Promise<EventDetailResponseDTO> => {
-  if (!url || !id) {
-    throw new Error("URL and ID are required");
+const fetcher = async (_: any, uuid: string): Promise<EventDetailResponseDTO> => {
+  if (!uuid) {
+    throw new Error("Event UUID is required");
   }
-  const response = await fetch(`${siteUrl}${url}?eventId=${id}`);
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  return response.json();
+  return fetchEventById(uuid);
 };
 
 export const useGetEvent = (props: EventProps): EventDetailResponseDTO => {
   const eventId = props.event.slug;
+  const swrKey = ["event", eventId];
+  preload(swrKey, fetcher);
 
-  preload([eventId ? `/api/getEvent` : null, eventId], fetchWithId);
-
-  return useSWR([eventId ? `/api/getEvent` : null, eventId], fetchWithId, {
+  return useSWR(swrKey, fetcher, {
     fallbackData: props.event,
     refreshInterval: 300000,
     revalidateOnFocus: true,

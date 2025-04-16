@@ -115,7 +115,7 @@ export default function SelectComponent({
           formatCreateLabel={(inputValue: string) =>
             `Afegir nou lloc: "${inputValue}"`
           }
-          placeholder={`Selecciona ${placeholder}`}
+          placeholder={placeholder}
           defaultValue={selectedOption || initialValue}
           value={selectedOption || initialValue}
           onChange={handleChange}

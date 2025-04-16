@@ -11,8 +11,9 @@ import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, CATEGORY_NAMES_MAP, DISTANCES } from "@utils/constants";
-import { generateRegionsAndTownsOptions, sendEventToGA } from "@utils/helpers";
+import { sendEventToGA } from "@utils/helpers";
 import useStore, { UserLocation, EventCategory } from "@store";
+import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 
 interface GeolocationPosition {
   coords: {
@@ -80,10 +81,19 @@ const FiltersModal: FC = () => {
   const [userLocationError, setUserLocationError] = useState<string>("");
   const [selectOption, setSelectOption] = useState<SelectOption | null>(null);
 
-  const regionsAndCitiesArray = useMemo<GroupedOption[]>(
-    () => generateRegionsAndTownsOptions(),
-    []
-  );
+  const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
+    useGetRegionsWithCities();
+
+  const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
+    if (!regionsWithCities) return [];
+    return regionsWithCities.map((region) => ({
+      label: region.name,
+      options: region.cities.map((city) => ({
+        label: city.label,
+        value: city.value,
+      })),
+    }));
+  }, [regionsWithCities]);
 
   useEffect(() => {
     if (openModal) {
@@ -245,8 +255,12 @@ const FiltersModal: FC = () => {
                 value={selectOption}
                 onChange={handlePlaceChange}
                 isClearable
-                placeholder="població"
-                isDisabled={disablePlace}
+                placeholder={
+                  isLoadingRegionsWithCities
+                    ? "Carregant poblacions..."
+                    : "Selecciona població"
+                }
+                isDisabled={isLoadingRegionsWithCities || disablePlace}
               />
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { CSSProperties, JSX } from "react";
 import {
   FacebookShareButton,
   TwitterShareButton,
@@ -14,14 +15,16 @@ interface CardShareButtonProps {
 }
 
 interface CustomIconProps {
-  bgStyle?: React.CSSProperties;
+  bgStyle?: CSSProperties;
   iconFillColor?: string;
   size?: number;
   round?: boolean;
   className?: string;
 }
 
-export default function CardShareButton({ slug }: CardShareButtonProps): JSX.Element {
+export default function CardShareButton({
+  slug,
+}: CardShareButtonProps): JSX.Element {
   const eventUrl = `${siteUrl}/e/${slug}`;
 
   const iconProps: CustomIconProps = {

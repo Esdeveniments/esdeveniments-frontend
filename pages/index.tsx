@@ -1,16 +1,17 @@
 import { useEffect, JSX } from "react";
-import { getCalendarEvents } from "@lib/helpers";
-import { twoWeeksDefault } from "@lib/dates";
-import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
 import type { GetStaticProps } from "next";
-import { Event, EventLocation } from "../store";
+import { EventLocation } from "../store";
+import { CategorizedEvents, EventSummaryResponseDTO } from "../types/api/event";
+import EventsCategorized from "@components/ui/eventsCategorized";
+import { fetchCategorizedEvents } from "@lib/api/events";
 
 interface InitialState {
-  events: Event[];
-  noEventsFound: boolean;
+  categorizedEvents: CategorizedEvents;
+  latestEvents: EventSummaryResponseDTO[];
   userLocation?: EventLocation | null;
   currentYear?: number;
+  noEventsFound: boolean;
 }
 
 interface HomeProps {
@@ -22,37 +23,27 @@ export default function Home({ initialState }: HomeProps): JSX.Element {
     initializeStore(initialState);
   }, [initialState]);
 
-  const { events } = initialState;
-
   return (
     <>
-      <Events events={events} />
+      <EventsCategorized />
     </>
   );
 }
 
 export const getStaticProps: GetStaticProps<HomeProps> = async () => {
-  const { from, until } = twoWeeksDefault();
-
-  let { events } = await getCalendarEvents({
-    from,
-    until,
-  });
-
-  let noEventsFound = false;
-  if (events.length === 0) {
-    noEventsFound = true;
-  }
+  const { categorizedEvents, latestEvents } = await fetchCategorizedEvents();
 
   const initialState: InitialState = {
-    events,
-    noEventsFound,
+    categorizedEvents: categorizedEvents || {},
+    latestEvents: latestEvents || [],
+    noEventsFound:
+      !categorizedEvents ||
+      Object.values(categorizedEvents).every((events) => events.length === 0),
   };
 
   return {
     props: {
       initialState,
     },
-    revalidate: 60,
   };
 };

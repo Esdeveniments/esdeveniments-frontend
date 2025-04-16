@@ -3,23 +3,18 @@ import { GetStaticPaths, GetStaticProps } from "next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Script from "next/script";
-import { generateJsonData } from "@utils/helpers";
+import { generateJsonData, getFormattedDate } from "@utils/helpers";
 import Meta from "@components/partials/seo-meta";
 import Link from "next/link";
 import { MONTHS_URL } from "@utils/constants";
 import { siteUrl } from "@config/index";
 import { getAllYears, getHistoricDates } from "@lib/dates";
-import { getCalendarEvents } from "@lib/helpers";
-import {
-  generateRegionsOptions,
-  generateTownsOptions,
-  getTownLabel,
-  getRegionByTown,
-} from "@utils/helpers";
-import { Event } from "@store";
+import { fetchRegionsWithCities } from "@lib/api/regions";
+import { fetchEventsFromBackend } from "@lib/api/events";
+import { EventSummaryResponseDTO } from "types/api/event";
 
 interface MonthProps {
-  events: Event[];
+  events: EventSummaryResponseDTO[];
   town: string;
   townLabel: string;
 }
@@ -58,7 +53,7 @@ export default function Month({
 
   const jsonData = events
     ? events
-        .filter((event): event is Event => !event.isAd)
+        .filter((event): event is EventSummaryResponseDTO => event !== null)
         .map((event) => generateJsonData(event))
         .filter((data): data is NonNullable<typeof data> => data !== null)
     : [];
@@ -81,22 +76,28 @@ export default function Month({
         </h1>
         <div className="flex flex-col items-start">
           {(events?.length > 0 &&
-            events.map((event) => (
-              <div key={event.id}>
-                <Link
-                  href={`/e/${event.slug}`}
-                  prefetch={false}
-                  className="hover:text-primary"
-                >
-                  <h3>{event.title}</h3>
-                  <p className="text-sm">
-                    {event.formattedEnd
-                      ? `${event.formattedStart} - ${event.formattedEnd}`
-                      : `${event.formattedStart}`}
-                  </p>
-                </Link>
-              </div>
-            ))) || <NoEventsFound />}
+            events.map((event) => {
+              const { formattedStart, formattedEnd } = getFormattedDate(
+                event.startDate,
+                event.endDate
+              );
+              return (
+                <div key={event.id}>
+                  <Link
+                    href={`/e/${event.slug}`}
+                    prefetch={false}
+                    className="hover:text-primary"
+                  >
+                    <h3>{event.title}</h3>
+                    <p className="text-sm">
+                      {formattedEnd
+                        ? `${formattedStart} - ${formattedEnd}`
+                        : `${formattedStart}`}
+                    </p>
+                  </Link>
+                </div>
+              );
+            })) || <NoEventsFound />}
         </div>
       </div>
     </>
@@ -104,7 +105,7 @@ export default function Month({
 }
 
 export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
-  const regions = generateRegionsOptions();
+  const regions = await fetchRegionsWithCities();
   const years = getAllYears();
   const params: Array<{ params: StaticPathParams }> = [];
 
@@ -122,8 +123,7 @@ export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
         index <= nextThreeMonths
       ) {
         regions.forEach((region) => {
-          const towns = generateTownsOptions(region.value);
-          towns.forEach((town) => {
+          region.cities.forEach((town) => {
             params.push({
               params: {
                 town: town.value,
@@ -155,37 +155,21 @@ export const getStaticProps: GetStaticProps<
 
   const { town, year, month } = params;
   const { from, until } = getHistoricDates(month, parseInt(year, 10));
-  const townLabel = getTownLabel(town);
+  const townLabel = town;
 
-  const { events } = await getCalendarEvents({
+  const events = await fetchEventsFromBackend({
     from,
     until,
     maxResults: 2500,
     filterByDate: false,
-    q: `${townLabel || ""} ${getRegionByTown(town) || ""}`,
+    q: `${townLabel || ""}`,
   });
 
-  try {
-    const normalizedEvents = (JSON.parse(JSON.stringify(events)) ||
-      []) as Event[];
-
-    return {
-      props: {
-        events:
-          normalizedEvents?.filter((event): event is Event => !event.isAd) ??
-          [],
-        town,
-        townLabel: townLabel || "",
-      },
-    };
-  } catch (error) {
-    console.error("Error normalizing events:", error);
-    return {
-      props: {
-        events: [],
-        town,
-        townLabel: townLabel || "",
-      },
-    };
-  }
+  return {
+    props: {
+      events: events ?? [],
+      town,
+      townLabel: townLabel || "",
+    },
+  };
 };

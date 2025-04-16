@@ -44,11 +44,11 @@ const createPageData = (
   notFoundText,
 });
 
-export function generatePagesData({ currentYear, place = "", byDate = "" }: GeneratePagesDataProps): PageData {
+export async function generatePagesData({ currentYear, place = "", byDate = "" }: GeneratePagesDataProps): Promise<PageData> {
   if (typeof currentYear === "number" && (currentYear < 2000 || currentYear > 3000)) {
     throw new Error("Invalid year range");
   }
-  let { type, label }: PlaceTypeAndLabel = getPlaceTypeAndLabel(place);
+  let { type, label }: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
   const labelEmpty = label;
 
   if (type === "region") {
@@ -61,8 +61,12 @@ export function generatePagesData({ currentYear, place = "", byDate = "" }: Gene
     } else {
       label = `al ${label}`;
     }
-  } else if (type === "town") {
-    label = `a ${label}`;
+  } else {
+    if (["a", "e", "i", "o", "u", "h"].includes(label.charAt(0).toLowerCase())) {
+      label = `a ${label}`;
+    } else {
+      label = `a ${label}`;
+    }
   }
 
   if (!place && !byDate) {

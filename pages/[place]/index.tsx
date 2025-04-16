@@ -1,21 +1,22 @@
 import { useEffect, JSX } from "react";
 import { GetStaticPaths, GetStaticProps } from "next";
-import { getCalendarEvents } from "@lib/helpers";
-import { getPlaceTypeAndLabel } from "@utils/helpers";
-import { twoWeeksDefault } from "@lib/dates";
 import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
 import { getRegions } from "@lib/apiHelpers";
+import { fetchEventsFromBackend, insertAds } from "@lib/api/events";
+import { ListEvent } from "../../types/api/event";
+import { getPlaceTypeAndLabel } from "@utils/helpers";
 
 interface InitialState {
   place: string;
-  events: any[]; // Replace with proper Event interface from your types
+  events: ListEvent[];
   noEventsFound: boolean;
   hasServerFilters: boolean;
 }
 
 interface PlaceProps {
   initialState: InitialState;
+  placeTypeLabel: { type: string; label: string; regionLabel?: string };
 }
 
 interface StaticPathParams {
@@ -23,7 +24,12 @@ interface StaticPathParams {
   [key: string]: string | string[] | undefined;
 }
 
-export default function Place({ initialState }: PlaceProps): JSX.Element {
+export default function Place({ initialState, placeTypeLabel }: PlaceProps): JSX.Element {
+  // If initialState or events is missing, show a fallback UI
+  if (!initialState || !initialState.events) {
+    return <div>No events found or data is loading.</div>;
+  }
+
   useEffect(() => {
     initializeStore(initialState);
   }, [initialState]);
@@ -32,6 +38,7 @@ export default function Place({ initialState }: PlaceProps): JSX.Element {
     <Events
       events={initialState.events}
       hasServerFilters={initialState.hasServerFilters}
+      placeTypeLabel={placeTypeLabel}
     />
   );
 }
@@ -50,54 +57,33 @@ export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
     });
   }
 
-  return { paths, fallback: false };
+  return {
+    paths,
+    fallback: false,
+  };
 };
 
-export const getStaticProps: GetStaticProps<
-  PlaceProps,
-  StaticPathParams
-> = async ({ params }) => {
-  if (!params) {
-    return {
-      notFound: true,
-    };
-  }
-
-  const { from, until } = twoWeeksDefault();
-  const { place } = params;
-  const { type, label, regionLabel } = await getPlaceTypeAndLabel(place);
-  let { events } = await getCalendarEvents({
-    from,
-    until,
-    q: type === "town" ? `${label} ${regionLabel}` : label,
-    town: type === "town" ? label : "",
-  });
-
-  let noEventsFound = false;
-
-  if (events.length === 0) {
-    const { from, until } = twoWeeksDefault();
-    const nextEventsResult = await getCalendarEvents({
-      from,
-      until,
-      maxResults: 7,
-      q: label,
-    });
-
-    noEventsFound = true;
-    events = nextEventsResult.events;
-  }
+export const getStaticProps: GetStaticProps<PlaceProps> = async (context) => {
+  const { place } = context.params as StaticPathParams;
+  // Example params: filter by place (region/city), adjust as needed
+  const params = { page: 0, maxResults: 100, place };
+  const events = await fetchEventsFromBackend(params);
+  const eventsWithAds = insertAds(events);
 
   const initialState: InitialState = {
     place,
-    events,
-    noEventsFound,
-    hasServerFilters: true,
+    events: eventsWithAds,
+    noEventsFound: events.length === 0,
+    hasServerFilters: true, // or set dynamically if needed
   };
+
+  // Fetch placeTypeLabel server-side
+  const placeTypeLabel = await getPlaceTypeAndLabel(place);
 
   return {
     props: {
       initialState,
+      placeTypeLabel,
     },
     revalidate: 60,
   };

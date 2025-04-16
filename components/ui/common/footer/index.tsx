@@ -1,4 +1,4 @@
-import React from "react";
+import { JSX } from "react";
 import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
 

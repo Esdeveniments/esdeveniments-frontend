@@ -1,19 +1,17 @@
-type DateString = string | Date;
-
-import {
+import React, {
   useState,
+  useRef,
   useCallback,
-  lazy,
   Suspense,
   memo,
-  useRef,
   useEffect,
-  RefObject,
 } from "react";
 import CalendarButton from "./CalendarButton";
 import { generateCalendarUrls, CalendarUrls } from "@utils/calendarUtils";
 
-const LazyCalendarList = lazy(() => import("./CalendarList"));
+const LazyCalendarList = React.lazy(() => import("./CalendarList"));
+
+type DateString = string | Date;
 
 interface AddToCalendarProps {
   title: string;
@@ -25,13 +23,17 @@ interface AddToCalendarProps {
   hideText?: boolean;
 }
 
-const useOutsideClick = (
-  ref: RefObject<HTMLDivElement>,
+const useOutsideClick = <T extends HTMLElement>(
+  ref: React.RefObject<T | null>,
   handler: () => void
 ): void => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent): void => {
-      if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) {
+      if (
+        ref.current &&
+        event.target instanceof Node &&
+        !ref.current.contains(event.target)
+      ) {
         handler();
       }
     };

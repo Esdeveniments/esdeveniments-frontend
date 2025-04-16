@@ -1,11 +1,12 @@
-import { useEffect, useState, useRef, RefObject } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
-interface UseOnScreenOptions extends IntersectionObserverInit {
+interface UseOnScreenOptions extends Omit<IntersectionObserverInit, "rootMargin"> {
+  rootMargin?: string;
   freezeOnceVisible?: boolean;
 }
 
 function useOnScreen<T extends Element>(
-  ref: RefObject<T>,
+  ref: React.RefObject<T | null>,
   options: UseOnScreenOptions = {}
 ): boolean {
   const { rootMargin = "0px", freezeOnceVisible = false, ...restOptions } = options;
@@ -21,10 +22,12 @@ function useOnScreen<T extends Element>(
 
     const currentRef = ref.current;
     if (!currentRef) {
+      setIntersecting(false);
       return;
     }
 
-    const updateEntry = ([entry]: IntersectionObserverEntry[]): void => {
+    const updateEntry = (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
       if (frozenRef.current) {
         return;
       }

@@ -15,7 +15,6 @@ import { generatePagesData } from "@components/partials/generatePagesData";
 import { useGetEvents } from "@components/hooks/useGetEvents";
 import {
   generateJsonData,
-  getPlaceTypeAndLabel,
   getDistance,
 } from "@utils/helpers";
 import { dateFunctions } from "@utils/constants";
@@ -25,7 +24,8 @@ import Card from "@components/ui/card";
 import { CATEGORIES } from "@utils/constants";
 import useOnScreen from "@components/hooks/useOnScreen";
 import useStore from "@store";
-import { Event, UserLocation } from "@store";
+import { UserLocation } from "@store";
+import { EventSummaryResponseDTO, AdEvent, ListEvent } from "types/api/event";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound"),
@@ -35,7 +35,8 @@ const NoEventsFound = dynamic(
 );
 
 interface EventsListProps {
-  events?: Event[];
+  events?: ListEvent[];
+  placeTypeLabel: { type: string; label: string; regionLabel?: string };
 }
 
 interface PageData {
@@ -48,17 +49,38 @@ interface PageData {
 }
 
 interface FetchedData {
-  events?: Event[];
+  content?: ListEvent[];
   noEventsFound?: boolean;
   allEventsLoaded?: boolean;
 }
 
+// --- Helper type guards and extractors (move outside the component for stability) ---
+function eventHasAd(event: ListEvent): event is AdEvent {
+  return (event as AdEvent).isAd === true;
+}
+function eventHasCoords(event: ListEvent): event is EventSummaryResponseDTO {
+  return (
+    !eventHasAd(event) &&
+    !!event.city &&
+    typeof event.city.latitude === "number" &&
+    typeof event.city.longitude === "number"
+  );
+}
+function eventGetCoords(
+  event: ListEvent
+): { latitude: number; longitude: number } | null {
+  if (eventHasCoords(event)) {
+    return { latitude: event.city.latitude, longitude: event.city.longitude };
+  }
+  return null;
+}
+
 function EventsList({
   events: serverEvents = [],
+  placeTypeLabel,
 }: EventsListProps): ReactElement {
   const {
     noEventsFound: serverNoEventsFound,
-    place,
     byDate,
     category,
     searchTerm,
@@ -71,7 +93,6 @@ function EventsList({
   } = useStore((state) => ({
     events: state.events,
     noEventsFound: state.noEventsFound,
-    place: state.place,
     byDate: state.byDate,
     category: state.category,
     searchTerm: state.searchTerm,
@@ -92,11 +113,11 @@ function EventsList({
 
   // State
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<ListEvent[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Derived state
-  const { type, label, regionLabel } = getPlaceTypeAndLabel(place);
+  const { type, label, regionLabel } = placeTypeLabel;
+
   const categoryQuery = category ? CATEGORIES[category] || category : "";
   const sharedQuery = `${searchTerm} ${categoryQuery} ${label}`;
   const pageIndex = dateFunctions[byDate] || "all";
@@ -118,7 +139,10 @@ function EventsList({
     town: type === "town" ? label : "",
   });
 
-  const events = fetchedData.events?.length ? fetchedData.events : serverEvents;
+  // Use content from paginated response
+  const events = fetchedData.content?.length
+    ? fetchedData.content
+    : serverEvents;
   const noEventsFound = fetchedData.noEventsFound ?? serverNoEventsFound;
   const allEventsLoaded = fetchedData.allEventsLoaded ?? false;
 
@@ -151,15 +175,16 @@ function EventsList({
   }, [isBrowser, page, setState]);
 
   const filterEventsByDistance = useCallback(
-    (events: Event[], userLocation: UserLocation | null) => {
+    (events: ListEvent[], userLocation: UserLocation | null) => {
       if (!distance || isNaN(distance)) return events;
 
       return events.filter((event) => {
-        if (event.isAd || !event.coords || !userLocation) {
+        if (eventHasAd(event) || !eventHasCoords(event) || !userLocation) {
           return true;
         }
-
-        const eventDistance = getDistance(userLocation, event.coords);
+        const eventCoords = eventGetCoords(event);
+        if (!eventCoords) return true;
+        const eventDistance = getDistance(userLocation, eventCoords);
         return eventDistance <= distance;
       });
     },
@@ -182,8 +207,18 @@ function EventsList({
         }
         return prevFilteredEvents;
       });
+      setIsLoading(false);
+    } else {
+      setFilteredEvents([]);
+      setIsLoading(false);
     }
-  }, [events, filterEventsByDistance, userLocation]);
+  }, [events, userLocation, filterEventsByDistance]);
+
+  useEffect(() => {
+    if (scrollPosition && divRef.current) {
+      divRef.current.scrollIntoView({ behavior: "auto" });
+    }
+  }, [scrollPosition]);
 
   useEffect(() => {
     const shouldLoad = events.length === 0 && !error && isValidating;
@@ -205,12 +240,6 @@ function EventsList({
     }
   }, [isBrowser, scrollPosition, setState]);
 
-  useEffect(() => {
-    if (scrollPosition) {
-      window.scrollTo(0, parseInt(scrollPosition));
-    }
-  }, [events.length, scrollPosition]);
-
   // Page data
   const {
     metaTitle,
@@ -222,7 +251,7 @@ function EventsList({
   }: PageData =
     generatePagesData({
       currentYear,
-      place,
+      place: label,
       byDate,
     }) || {};
 
@@ -233,7 +262,7 @@ function EventsList({
   return (
     <>
       <Script
-        id={`${place || "catalunya"}-${byDate || "all"}-script`}
+        id={`${label || "catalunya"}-${byDate || "all"}-script`}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonEvents) }}
       />
@@ -265,7 +294,7 @@ function EventsList({
           </div>
         ) : (
           <List events={filteredEvents}>
-            {(event: Event, index: number) => (
+            {(event: ListEvent, index: number) => (
               <Card key={event.id} event={event} isPriority={index === 0} />
             )}
           </List>

@@ -1,7 +1,6 @@
 import { FC, MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { getTownValueByLabel } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
 
 interface CulturalMessageProps {
@@ -10,24 +9,23 @@ interface CulturalMessageProps {
 
 const CulturalMessage: FC<CulturalMessageProps> = ({ location }) => {
   const { push } = useRouter();
-  const town = getTownValueByLabel(location);
 
-  if (!town) {
+  if (!location) {
     return null;
   }
 
   const handleNavigation = async (
     e: MouseEvent<HTMLAnchorElement>,
-    town: string,
+    location: string,
     timeframe: string
   ) => {
     e.preventDefault();
     sendGoogleEvent("navigate_to", {
       content_type: "navigation",
-      item_id: `${town}_${timeframe}`,
-      item_name: `${town} ${timeframe}`,
+      item_id: `${location}_${timeframe}`,
+      item_name: `${location} ${timeframe}`,
       event_category: "Navigation",
-      event_label: `navigate_to_${town}_${timeframe}`,
+      event_label: `navigate_to_${location}_${timeframe}`,
     });
     await push(e.currentTarget.href);
   };
@@ -38,32 +36,32 @@ const CulturalMessage: FC<CulturalMessageProps> = ({ location }) => {
       <span className="font-bold">{location}</span>: un univers de cultura
       esperant ser explorat per tu. Comença la teva aventura{" "}
       <Link
-        href={`/${town}/avui`}
-        onClick={(e) => handleNavigation(e, town, "avui")}
+        href={`/${location}/avui`}
+        onClick={(e) => handleNavigation(e, location, "avui")}
         className="font-medium text-primary hover:underline"
       >
         avui
       </Link>
       , descobreix què està passant{" "}
       <Link
-        href={`/${town}/dema`}
-        onClick={(e) => handleNavigation(e, town, "dema")}
+        href={`/${location}/dema`}
+        onClick={(e) => handleNavigation(e, location, "dema")}
         className="font-medium text-primary hover:underline"
       >
         demà
       </Link>
       , continua explorant{" "}
       <Link
-        href={`/${town}/setmana`}
-        onClick={(e) => handleNavigation(e, town, "setmana")}
+        href={`/${location}/setmana`}
+        onClick={(e) => handleNavigation(e, location, "setmana")}
         className="font-medium text-primary hover:underline"
       >
         durant la setmana
       </Link>
       , i culmina amb un{" "}
       <Link
-        href={`/${town}/cap-de-setmana`}
-        onClick={(e) => handleNavigation(e, town, "cap-de-setmana")}
+        href={`/${location}/cap-de-setmana`}
+        onClick={(e) => handleNavigation(e, location, "cap-de-setmana")}
         className="font-medium text-primary hover:underline"
       >
         cap de setmana espectacular

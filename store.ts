@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, PersistOptions } from 'zustand/middleware';
+import { ListEvent } from "types/api/event";
 
 // Base interfaces
 export interface UserLocation {
@@ -24,6 +25,8 @@ export enum EventCategory {
   Espectacles = "Espectacles",
 }
 
+// NOTE: The following Event interface is for frontend-only or transformed events.
+// For all backend-aligned event data, use EventSummaryResponseDTO or ListEvent from types/api/event.
 export interface Event {
   id: string;
   title: string;
@@ -77,10 +80,14 @@ interface UIState {
 }
 
 // Event state interface
-interface EventState {
-  categorizedEvents: Record<string, Event[]>;
-  latestEvents: Event[];
-  events: Event[];
+export interface EventState {
+  /**
+   * All event lists should use ListEvent[], which is aligned with backend EventSummaryResponseDTO (and AdEvent).
+   * Do NOT use the custom Event interface above for backend data.
+   */
+  categorizedEvents: Record<string, ListEvent[]>;
+  latestEvents: ListEvent[];
+  events: ListEvent[];
   noEventsFound: boolean;
 }
 

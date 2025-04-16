@@ -1,4 +1,4 @@
-import { useState, memo, lazy, ReactNode } from "react";
+import { useState, memo, lazy, ReactNode, JSX } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 import CardLoading from "@components/ui/cardLoading";
 

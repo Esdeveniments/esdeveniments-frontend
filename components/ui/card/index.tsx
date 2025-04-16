@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { JSX, memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
 import { Event } from "@store";
@@ -26,7 +26,11 @@ interface CardProps {
   isPriority?: boolean;
 }
 
-function Card({ event, isLoading = false, isPriority = false }: CardProps): JSX.Element {
+function Card({
+  event,
+  isLoading = false,
+  isPriority = false,
+}: CardProps): JSX.Element {
   if (isLoading) return <CardLoading />;
 
   if (event.isAd) {

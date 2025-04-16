@@ -7,7 +7,7 @@ import Search from "@components/ui/search";
 import SubMenu from "@components/ui/common/subMenu";
 import Imago from "public/static/images/imago-esdeveniments.png";
 import CardLoading from "@components/ui/cardLoading";
-import { Event } from "@store";
+import { ListEvent } from "types/api/event";
 
 const EventsList = dynamic(() => import("@components/ui/eventsList"), {
   loading: () => (
@@ -18,17 +18,17 @@ const EventsList = dynamic(() => import("@components/ui/eventsList"), {
   ssr: true,
 });
 
-// const EventsCategorized = dynamic(
-//   () => import("@components/ui/eventsCategorized"),
-//   {
-//     loading: () => (
-//       <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
-//         <CardLoading />
-//       </div>
-//     ),
-//     ssr: true,
-//   }
-// );
+const EventsCategorized = dynamic(
+  () => import("@components/ui/eventsCategorized"),
+  {
+    loading: () => (
+      <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+        <CardLoading />
+      </div>
+    ),
+    ssr: true,
+  }
+);
 
 /* eslint-disable no-unused-vars */
 function debounce<T extends (...args: any[]) => any>(
@@ -45,11 +45,12 @@ function debounce<T extends (...args: any[]) => any>(
 /* eslint-enable no-unused-vars */
 
 interface EventsProps {
-  events: Event[];
+  events: ListEvent[];
   hasServerFilters?: boolean;
+  placeTypeLabel: { type: string; label: string; regionLabel?: string };
 }
 
-const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {
+const Events: FC<EventsProps> = ({ events, hasServerFilters, placeTypeLabel }) => {
   const { setState, areFiltersActive, filtersApplied } = useStore((state) => ({
     openModal: state.openModal,
     setState: state.setState,
@@ -103,7 +104,7 @@ const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {
       if (hasFilters) {
         await import("@components/ui/eventsList");
       } else {
-        await import("@components/ui/eventsList");
+        await import("@components/ui/eventsCategorized");
       }
       setIsLoading(false);
     };
@@ -139,7 +140,7 @@ const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {
       >
         <div className="w-full flex flex-col justify-center items-center md:items-start mx-auto px-2 pt-2 pb-2 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
           <Search />
-          <SubMenu />
+          <SubMenu placeLabel={placeTypeLabel?.label || ""} />
         </div>
       </div>
       {isLoading ? (
@@ -149,9 +150,9 @@ const Events: FC<EventsProps> = ({ events, hasServerFilters }) => {
           ))}
         </div>
       ) : hasFilters ? (
-        <EventsList events={events} />
+        <EventsList events={events} placeTypeLabel={placeTypeLabel} />
       ) : (
-        <EventsList events={events} />
+        <EventsCategorized />
       )}
     </>
   );

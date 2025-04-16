@@ -1,3 +1,4 @@
+// @ts-ignore
 import { useState, memo, useRef, RefObject } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
@@ -21,9 +22,9 @@ interface LoaderProps {
 
 const cloudflareLoader = ({
   src,
-  width,
-  quality = 70,
-}: LoaderProps): string => {
+}: // width,
+// quality = 70,
+LoaderProps): string => {
   return src;
   // if (!src) return "";
   // const normalizedSrc = src.startsWith("/") ? src.slice(1) : src;

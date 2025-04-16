@@ -4,8 +4,8 @@ import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
-import { getTownOptionsWithoutRegion } from "@utils/helpers";
 import Link from "next/link";
+import { fetchCityById } from "@lib/api/cities";
 
 interface SitemapProps {
   town: string;
@@ -84,8 +84,9 @@ export const getStaticProps: GetStaticProps<
     };
   }
 
-  const townOptions = getTownOptionsWithoutRegion(town);
-  const label = townOptions?.[0]?.label;
+  // Fetch city by ID from backend
+  const city = await fetchCityById(town);
+  const label = city?.name;
 
   if (!label) {
     return {

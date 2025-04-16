@@ -1,4 +1,4 @@
-import { useRef, memo, FC, RefObject } from "react";
+import { useRef, memo, FC } from "react";
 import dynamic from "next/dynamic";
 import Filters from "@components/ui/filters";
 import useOnScreen from "@components/hooks/useOnScreen";
@@ -8,17 +8,20 @@ interface StoreState {
   openModal: boolean;
 }
 
+interface SubMenuProps {
+  placeLabel: string;
+}
+
 const FiltersModal = dynamic(() => import("@components/ui/filtersModal"), {
   loading: () => null,
 });
 
-const SubMenu: FC = () => {
+const SubMenu: FC<SubMenuProps> = ({ placeLabel }) => {
   const { openModal } = useStore((state: StoreState) => ({
     openModal: state.openModal,
   }));
 
-  const filtersModalRef = useRef<Element>(null) as RefObject<Element>;
-  const divRef = useRef<HTMLDivElement>(null);
+  const filtersModalRef = useRef<HTMLDivElement>(null);
   const isFiltersModalVisible = useOnScreen(filtersModalRef, {
     freezeOnceVisible: true,
   });
@@ -26,11 +29,14 @@ const SubMenu: FC = () => {
   return (
     <>
       {openModal && (
-        <div className="flex justify-center items-center gap-4" ref={divRef}>
+        <div
+          className="flex justify-center items-center gap-4"
+          ref={filtersModalRef}
+        >
           {isFiltersModalVisible && <FiltersModal />}
         </div>
       )}
-      <Filters />
+      <Filters placeLabel={placeLabel} />
     </>
   );
 };
