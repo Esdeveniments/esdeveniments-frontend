@@ -13,10 +13,7 @@ import dynamic from "next/dynamic";
 import Meta from "@components/partials/seo-meta";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { useGetEvents } from "@components/hooks/useGetEvents";
-import {
-  generateJsonData,
-  getDistance,
-} from "@utils/helpers";
+import { generateJsonData, getDistance } from "@utils/helpers";
 import { dateFunctions } from "@utils/constants";
 import List from "@components/ui/list";
 import CardLoading from "@components/ui/cardLoading";

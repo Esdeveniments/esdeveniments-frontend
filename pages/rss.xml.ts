@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
-import { fetchEventsFromBackend } from "@lib/api/events";
+import { fetchEvents } from "@lib/api/events";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getFormattedDate } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
@@ -47,7 +47,7 @@ const getAllArticles = async (
 
     const q = town ? `${townLabel} ${regionLabel}` : regionLabel;
 
-    const events: EventSummaryResponseDTO[] = await fetchEventsFromBackend({
+    const events: EventSummaryResponseDTO[] = await fetchEvents({
       from,
       until,
       q,

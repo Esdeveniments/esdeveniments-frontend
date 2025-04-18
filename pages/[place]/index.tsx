@@ -2,10 +2,10 @@ import { useEffect, JSX } from "react";
 import { GetStaticPaths, GetStaticProps } from "next";
 import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
-import { getRegions } from "@lib/apiHelpers";
-import { fetchEventsFromBackend, insertAds } from "@lib/api/events";
+import { fetchEvents, insertAds } from "@lib/api/events";
 import { ListEvent } from "../../types/api/event";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { fetchRegionsWithCities } from "@lib/api/regions";
 
 interface InitialState {
   place: string;
@@ -24,19 +24,17 @@ interface StaticPathParams {
   [key: string]: string | string[] | undefined;
 }
 
-export default function Place({ initialState, placeTypeLabel }: PlaceProps): JSX.Element {
-  // If initialState or events is missing, show a fallback UI
-  if (!initialState || !initialState.events) {
-    return <div>No events found or data is loading.</div>;
-  }
-
+export default function Place({
+  initialState,
+  placeTypeLabel,
+}: PlaceProps): JSX.Element {
   useEffect(() => {
     initializeStore(initialState);
   }, [initialState]);
 
   return (
     <Events
-      events={initialState.events}
+      events={initialState.events || []}
       hasServerFilters={initialState.hasServerFilters}
       placeTypeLabel={placeTypeLabel}
     />
@@ -46,15 +44,15 @@ export default function Place({ initialState, placeTypeLabel }: PlaceProps): JSX
 export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
   const paths: Array<{ params: StaticPathParams }> = [];
 
-  const regions = await getRegions();
+  const regions = await fetchRegionsWithCities();
 
-  for (const regionSlug of Object.keys(regions)) {
-    const region = regions[regionSlug];
-    paths.push({
-      params: {
-        place: region.slug,
-      },
-    });
+  for (const region of regions) {
+    paths.push({ params: { place: region.name } });
+    if (region.cities) {
+      for (const city of region.cities) {
+        paths.push({ params: { place: city.value } });
+      }
+    }
   }
 
   return {
@@ -65,19 +63,18 @@ export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
 
 export const getStaticProps: GetStaticProps<PlaceProps> = async (context) => {
   const { place } = context.params as StaticPathParams;
-  // Example params: filter by place (region/city), adjust as needed
+
   const params = { page: 0, maxResults: 100, place };
-  const events = await fetchEventsFromBackend(params);
+  const events = await fetchEvents(params);
   const eventsWithAds = insertAds(events);
 
   const initialState: InitialState = {
     place,
     events: eventsWithAds,
     noEventsFound: events.length === 0,
-    hasServerFilters: true, // or set dynamically if needed
+    hasServerFilters: true,
   };
 
-  // Fetch placeTypeLabel server-side
   const placeTypeLabel = await getPlaceTypeAndLabel(place);
 
   return {

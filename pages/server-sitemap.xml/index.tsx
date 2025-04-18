@@ -2,7 +2,7 @@ import { GetServerSideProps } from "next";
 import { getServerSideSitemapLegacy, ISitemapField } from "next-sitemap";
 import { sanitize } from "@utils/helpers";
 import { siteUrl } from "@config/index";
-import { fetchEventsFromBackend } from "@lib/api/events";
+import { fetchEvents } from "@lib/api/events";
 import { Event } from "@store";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -10,7 +10,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const from = new Date(now.getFullYear(), now.getMonth() - 4);
   const until = new Date(now.getFullYear(), now.getMonth() + 4);
 
-  const events = await fetchEventsFromBackend({
+  const events = await fetchEvents({
     from,
     until,
     normalizeRss: true,

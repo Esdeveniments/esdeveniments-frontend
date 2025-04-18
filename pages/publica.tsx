@@ -16,39 +16,38 @@ import { createEvent } from "lib/api/events";
 import { fetchRegionById } from "@lib/api/regions";
 import { fetchCityById } from "@lib/api/cities";
 import type { NextPage } from "next";
+import type { Option } from "types/common";
+import type { FormState, FormData } from "types/event";
 
-interface FormData {
-  title: string;
-  description: string;
-  startDate: Date | undefined;
-  endDate: Date | undefined;
-  region: SelectOption | null;
-  town: SelectOption | null;
-  location: string;
-  eventUrl: string;
-  imageUrl?: string;
+// Helper type guards for region/town
+function isOption(obj: any): obj is Option {
+  return obj && typeof obj === "object" && "value" in obj && "label" in obj;
 }
 
-interface SelectOption {
-  value: string;
-  label: string;
+function getRegionValue(region: FormData["region"]): string | null {
+  if (!region) return null;
+  if (isOption(region)) return region.value;
+  if ("id" in region) return String(region.id);
+  return null;
 }
 
-interface FormState {
-  isDisabled: boolean;
-  isPristine: boolean;
-  message: string;
+function getTownValue(town: FormData["town"]): string | null {
+  if (!town) return null;
+  if (isOption(town)) return town.value;
+  if ("id" in town) return String(town.id);
+  return null;
 }
 
 const defaultForm: FormData = {
   title: "",
   description: "",
-  startDate: undefined,
-  endDate: undefined,
+  startDate: "",
+  endDate: "",
   region: null,
   town: null,
   location: "",
-  eventUrl: "",
+  imageUrl: null,
+  url: "",
 };
 
 const _createFormState = (
@@ -81,31 +80,33 @@ const createFormState = (form: FormData, isPristine: boolean): FormState => {
     );
   }
 
-  if (!form.region) {
+  if (!form.region || !getRegionValue(form.region)) {
     return _createFormState(true, true, "Comarca obligatoria");
   }
 
-  if (!form.town) {
-    return _createFormState(true, true, "Ciutat obligatoria");
+  if (!form.town || !getTownValue(form.town)) {
+    return _createFormState(true, true, "Població obligatoria");
   }
 
-  if (!form.location) {
-    return _createFormState(true, true, "Lloc obligatori");
+  if (!form.startDate || !form.endDate) {
+    return _createFormState(true, true, "Dates obligatories");
   }
 
-  if (!form.startDate) {
-    return _createFormState(true, true, "Data inici obligatòria");
+  // Accept both string and Date
+  const start =
+    typeof form.startDate === "string"
+      ? new Date(form.startDate)
+      : form.startDate;
+  const end =
+    typeof form.endDate === "string" ? new Date(form.endDate) : form.endDate;
+  if (!start || !end) {
+    return _createFormState(true, true, "Dates invàlides");
   }
-
-  if (!form.endDate) {
-    return _createFormState(true, true, "Data final obligatòria");
-  }
-
-  if (form.endDate.getTime() <= form.startDate.getTime()) {
+  if (end.getTime() <= start.getTime()) {
     return _createFormState(
       true,
       true,
-      "Data final no pot ser anterior o igual a la data inici"
+      "Data final no pot ser anterior a la data d'inici"
     );
   }
 
@@ -119,7 +120,7 @@ const createFormState = (form: FormData, isPristine: boolean): FormState => {
     "i"
   );
 
-  if (form.eventUrl && !urlPattern.test(form.eventUrl)) {
+  if (form.url && !urlPattern.test(form.url)) {
     return _createFormState(true, true, "Enllaç no vàlid");
   }
 
@@ -155,7 +156,7 @@ const Publica: NextPage = () => {
   const cityOptions = useMemo(() => {
     if (!regionsWithCities || !form.region) return [];
     const region = regionsWithCities.find(
-      (r) => r.id.toString() === form.region?.value
+      (r) => r.id.toString() === getRegionValue(form.region)
     );
     return region
       ? region.cities.map((city) => ({ label: city.label, value: city.value }))
@@ -171,12 +172,11 @@ const Publica: NextPage = () => {
   const handleChange = (e: ChangeEvent<{ name: string; value: string }>) =>
     handleFormChange(e.target.name as keyof FormData, e.target.value);
 
-  const handleChangeDate = (
-    name: keyof Pick<FormData, "startDate" | "endDate">,
-    value: Date | null
-  ) => handleFormChange(name, value as any);
+  const handleChangeDate = (field: "startDate" | "endDate", date: Date) => {
+    handleFormChange(field, date);
+  };
 
-  const handleRegionChange = (region: SelectOption | null) => {
+  const handleRegionChange = (region: Option | null) => {
     handleFormChange("region", region);
   };
 
@@ -188,7 +188,7 @@ const Publica: NextPage = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleTownChange = (town: SelectOption | null) =>
+  const handleTownChange = (town: Option | null) =>
     handleFormChange("town", town);
 
   const onSubmit = async () => {
@@ -199,8 +199,8 @@ const Publica: NextPage = () => {
       setIsLoading(true);
 
       try {
-        const townValue = form.town?.value ?? "";
-        const regionValue = form.region?.value ?? "";
+        const townValue = getTownValue(form.town);
+        const regionValue = getRegionValue(form.region);
         let regionLabel = "";
         let townLabel = "";
         if (regionValue) {
@@ -216,6 +216,10 @@ const Publica: NextPage = () => {
         const eventData = {
           ...form,
           location,
+          region: undefined, // Remove region Option/DTO object from payload
+          town: undefined, // Remove town Option/DTO object from payload
+          regionId: regionValue,
+          cityId: townValue,
         };
 
         if (imageToUpload) {
@@ -237,8 +241,8 @@ const Publica: NextPage = () => {
                 createEvent(eventData).then((eventResponse) => {
                   const { id } = eventResponse;
                   const { formattedStart } = getFormattedDate(
-                    form.startDate ? form.startDate.toISOString() : "",
-                    form.endDate ? form.endDate.toISOString() : ""
+                    String(form.startDate), // Ensure date is passed as string
+                    String(form.endDate) // Ensure date is passed as string
                   );
                   const slugifiedTitle = slug(form.title, formattedStart, id);
                   router.push(`/e/${id}/${slugifiedTitle}`);
@@ -309,31 +313,27 @@ const Publica: NextPage = () => {
               value={form.title}
               onChange={handleChange}
             />
-
             <TextArea
               id="description"
               value={form.description}
               onChange={handleChange}
             />
-
             <Input
-              id="eventUrl"
+              id="url"
               title="Enllaç de l'esdeveniment"
-              value={form.eventUrl}
+              value={form.url}
               onChange={handleChange}
             />
-
             <ImageUpload
               value={imageToUpload}
               onUpload={handleImageChange}
               progress={progress}
             />
-
             <Select
               id="region"
               title="Comarca *"
               options={regionOptions}
-              value={form.region}
+              value={isOption(form.region) ? form.region : null}
               onChange={handleRegionChange}
               isClearable
               placeholder={
@@ -342,12 +342,11 @@ const Publica: NextPage = () => {
                   : "Selecciona una comarca"
               }
             />
-
             <Select
               id="town"
-              title="Ciutat *"
+              title="Població *"
               options={cityOptions}
-              value={form.town}
+              value={isOption(form.town) ? form.town : null}
               onChange={handleTownChange}
               isDisabled={!form.region || isLoadingRegionsWithCities}
               isClearable
@@ -357,18 +356,31 @@ const Publica: NextPage = () => {
                   : "Selecciona un poble"
               }
             />
-
             <Input
               id="location"
               title="Lloc *"
               value={form.location}
               onChange={handleChange}
             />
-
             <DatePicker
-              startDate={form.startDate}
-              endDate={form.endDate}
+              idPrefix="event-date"
+              startDate={
+                typeof form.startDate === "string"
+                  ? form.startDate
+                    ? new Date(form.startDate)
+                    : new Date()
+                  : form.startDate
+              }
+              endDate={
+                typeof form.endDate === "string"
+                  ? form.endDate
+                    ? new Date(form.endDate)
+                    : new Date()
+                  : form.endDate
+              }
+              minDate={new Date()}
               onChange={handleChangeDate}
+              required
             />
           </div>
         </div>

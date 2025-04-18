@@ -26,7 +26,7 @@ import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import AddToCalendar from "@components/ui/addToCalendar";
 import type { QueryParams, DeleteReason } from "./types";
 import { EventDetailResponseDTO } from "types/api/event";
-import { getEvent } from "@lib/apiHelpers";
+import { fetchEventById } from "@lib/api/events";
 
 const AdArticle = dynamic(() => import("@components/ui/adArticle"), {
   loading: () => null,
@@ -672,8 +672,7 @@ export async function getStaticProps({
   params: { eventId: string };
 }) {
   try {
-    const response = await getEvent(params.eventId);
-    const event = response.data;
+    const event = await fetchEventById(params.eventId);
 
     return {
       props: {

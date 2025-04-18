@@ -57,11 +57,15 @@ function ImageComponent({
   priority = false,
   alt = title,
 }: ImageComponentProps) {
-  const imgDefaultRef = useRef<Element>(null) as RefObject<Element>;
+  // Use HTMLDivElement for consistency with the rest of the codebase
+  const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
-  const isImgDefaultVisible = useOnScreen(imgDefaultRef, {
-    freezeOnceVisible: true,
-  });
+  const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
+    imgDefaultRef as RefObject<HTMLDivElement>,
+    {
+      freezeOnceVisible: true,
+    }
+  );
   const [hasError, setHasError] = useState(false);
   const imageClassName = `${className}`;
   const quality = useNetworkSpeed();
@@ -77,7 +81,10 @@ function ImageComponent({
           />
         ) : (
           <div className="flex justify-center items-center w-full">
-            <div className="w-full h-60 bg-darkCorp animate-fast-pulse"></div>
+            <div
+              className="w-full h-60 bg-darkCorp animate-fast-pulse"
+              ref={imgDefaultRef}
+            ></div>
           </div>
         )}
       </div>

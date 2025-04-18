@@ -1,8 +1,8 @@
 import { RefObject } from "react";
 import { EventDetailResponseDTO } from "types/api/event";
+import type { DeleteReason } from "types/common";
 
 export interface EventData extends EventDetailResponseDTO {
-  // Computed fields that we add to the base DTO
   mapsLocation?: string;
   timeUntil?: string;
   nameDay?: string;
@@ -47,9 +47,4 @@ export interface DynamicOptionsLoadingProps {
   timedOut?: boolean;
 }
 
-export type DeleteReason = "not-exist" | "duplicated" | "offensive" | "others" | null;
-
-export interface SelectOption {
-  value: string;
-  label: string;
-}
+export { DeleteReason };

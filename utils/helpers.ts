@@ -3,6 +3,7 @@ import { siteUrl } from "@config/index";
 import { EventDetailResponseDTO } from "types/api/event";
 import { fetchCityById } from "@lib/api/cities";
 import { fetchRegionById } from "@lib/api/regions";
+import { CategoryKey } from "types/common";
 
 export interface DateObject {
   date?: string;
@@ -25,11 +26,6 @@ export interface FormattedDateResult {
 export interface Location {
   lat: number;
   lng: number;
-}
-
-export interface Option {
-  value: string;
-  label: string;
 }
 
 interface VideoObject {
@@ -399,6 +395,10 @@ export const getRegionFromQuery = (q: string): string => {
   return "";
 };
 
-export const findCategoryKeyByValue = (value: string): string | undefined => {
-  return Object.keys(CATEGORIES).find((key) => CATEGORIES[key] === value);
+export const findCategoryKeyByValue = (
+  value: string
+): CategoryKey | undefined => {
+  return (Object.keys(CATEGORIES) as CategoryKey[]).find(
+    (key) => CATEGORIES[key] === value
+  );
 };

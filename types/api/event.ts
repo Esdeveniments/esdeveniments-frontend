@@ -49,6 +49,11 @@ export interface EventSummaryResponseDTO {
   region: RegionSummaryResponseDTO;
   province: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
+  weather?: {
+    description?: string;
+    icon?: string;
+  };
+  isAd?: boolean;
 }
 
 export interface AdEvent {

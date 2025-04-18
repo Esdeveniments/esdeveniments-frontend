@@ -1,3 +1,4 @@
+import React from 'react';
 import { memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
@@ -37,7 +38,7 @@ const CardHorizontal: React.FC<CardHorizontalProps> = ({ event, isLoading, isPri
   }
 
   return (
-    <CardContent event={event} isPriority={isPriority} isHorizontal={true} />
+    <CardContent event={event as any} isPriority={isPriority} isHorizontal={true} />
   );
 };
 

@@ -1,29 +1,4 @@
-export interface FormState {
-  isDisabled: boolean;
-  isPristine: boolean;
-  message: string;
-}
-
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export interface FormData {
-  title: string;
-  description: string;
-  startDate: Date | string;
-  endDate: Date | string;
-  region: SelectOption | string;
-  town: SelectOption | string;
-  location: string;
-  imageUploaded: string | null;
-  eventUrl: string;
-}
-
-export interface EditEventProps {
-  event: FormData;
-}
+import type { FormData } from "types/event";
 
 export interface EditEventPageProps {
   params: {

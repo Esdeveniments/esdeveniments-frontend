@@ -6,6 +6,7 @@ import {
   useMemo,
   MouseEvent,
   JSX,
+  RefObject,
 } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -47,7 +48,7 @@ function CardContent({
 }: CardContentProps): JSX.Element {
   const counterRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
-  const isCounterVisible = useOnScreen(counterRef, {
+  const isCounterVisible = useOnScreen(counterRef as RefObject<Element>, {
     freezeOnceVisible: true,
   });
   const { prefetch } = useRouter();
@@ -73,11 +74,16 @@ function CardContent({
     () => ({
       title: truncateString(event.title || "", isHorizontal ? 30 : 75),
       location: truncateString(event.location || "", 45),
-      subLocation: truncateString(event.subLocation || "", 45),
-      image: event.imageUploaded || event.eventImage || "",
-      eventDate: event.formattedEnd
-        ? `Del ${event.formattedStart} al ${event.formattedEnd}`
-        : `${event.nameDay}, ${event.formattedStart}`,
+      subLocation: "",
+      image: event.imageUrl || "",
+      eventDate:
+        event.startDate === event.endDate
+          ? `${event.startDate} ${event.startTime ?? ""} - ${
+              event.endTime ?? ""
+            }`
+          : `${event.startDate} ${event.startTime ?? ""} - ${event.endDate} ${
+              event.endTime ?? ""
+            }`,
     }),
     [event, isHorizontal]
   );
@@ -131,7 +137,6 @@ function CardContent({
                   url={`/e/${event.slug}`}
                   date={memoizedValues.eventDate}
                   location={memoizedValues.location}
-                  subLocation={memoizedValues.subLocation}
                   onShareClick={handleShareClick}
                   hideText={true}
                 />
@@ -151,9 +156,9 @@ function CardContent({
                 title={event.title}
                 date={memoizedValues.eventDate}
                 location={event.location}
-                subLocation={event.subLocation || ""}
                 image={memoizedValues.image}
                 priority={isPriority}
+                alt={event.title}
               />
             </div>
           </div>
@@ -181,16 +186,17 @@ function CardContent({
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-2">
             <span className="max-w-full">{memoizedValues.location}</span>
-            <span className="max-w-full">{memoizedValues.subLocation}</span>
           </div>
         </div>
         {/* Date time */}
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="px-2">
-            {event.isFullDayEvent
-              ? "Consultar horaris"
-              : `${event.startTime} - ${event.endTime}`}
+            {event.startDate === event.endDate
+              ? `${event.startTime ?? ""} - ${event.endTime ?? ""}`
+              : `${event.startDate} ${event.startTime ?? ""} - ${
+                  event.endDate
+                } ${event.endTime ?? ""}`}
           </p>
         </div>
         {!isHorizontal && <div className="mb-8" />}

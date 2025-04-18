@@ -7,14 +7,20 @@ export interface FormState {
   message: string;
 }
 
+/**
+ * Canonical FormData for event creation/edit forms.
+ * Use this interface everywhere for event forms.
+ * - For UI, use Option | null for region/town, then convert to DTO for backend.
+ * - Dates should be string (ISO) for storage, can be Date in UI state.
+ */
 export interface FormData {
   id?: string;
   title: string;
   description: string;
-  startDate: string;
-  endDate: string;
-  region: RegionSummaryResponseDTO | null;
-  town: CitySummaryResponseDTO | null;
+  startDate: string | Date; // Use string for backend, Date for UI state
+  endDate: string | Date;
+  region: RegionSummaryResponseDTO | { value: string; label: string } | null;
+  town: CitySummaryResponseDTO | { value: string; label: string } | null;
   location: string;
   imageUrl: string | null;
   url: string;
@@ -22,5 +28,5 @@ export interface FormData {
 }
 
 export interface EditEventProps {
-  event: import("./api/event").EventDetailResponseDTO;
+  event: FormData;
 }

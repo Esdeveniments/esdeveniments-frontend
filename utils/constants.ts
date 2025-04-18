@@ -1,3 +1,10 @@
+import type {
+  Option,
+  Categories,
+  CategoryValue,
+  CategoryKey,
+} from "types/common";
+
 export const MAX_RESULTS = 15;
 
 export const DAYS: string[] = [
@@ -40,10 +47,6 @@ export const MONTHS_URL: string[] = [
   "desembre",
 ];
 
-export interface Categories {
-  [key: string]: string;
-}
-
 export const CATEGORIES: Categories = {
   "Festes Majors": "Festa Major",
   Festivals: "Festival",
@@ -63,30 +66,22 @@ export const SEARCH_TERMS_SUBSET: string[] = [
   "Música",
 ];
 
-export const CATEGORY_NAMES_MAP: Categories = Object.fromEntries(
-  Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
-    searchTerm,
-    displayName,
-  ])
-);
+export const CATEGORY_NAMES_MAP: Record<CategoryValue, CategoryKey> =
+  Object.fromEntries(
+    Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
+      searchTerm,
+      displayName,
+    ])
+  ) as Record<CategoryValue, CategoryKey>;
 
-export interface DateOption {
-  value: string;
-  label: string;
-}
-
-export const BYDATES: DateOption[] = [
+export const BYDATES: Option[] = [
   { value: "avui", label: "Avui" },
   { value: "dema", label: "Demà" },
   { value: "cap-de-setmana", label: "Cap de setmana" },
   { value: "setmana", label: "Aquesta setmana" },
 ];
 
-interface DateFunctions {
-  [key: string]: string;
-}
-
-export const dateFunctions: DateFunctions = {
+export const dateFunctions: { [key: string]: string } = {
   avui: "today",
   dema: "tomorrow",
   setmana: "week",
@@ -94,8 +89,3 @@ export const dateFunctions: DateFunctions = {
 };
 
 export const DISTANCES: number[] = [5, 10, 25, 50, 100];
-
-export interface RegionData {
-  label: string;
-  towns: string[];
-}

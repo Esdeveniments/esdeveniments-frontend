@@ -14,6 +14,7 @@ import { BYDATES, CATEGORY_NAMES_MAP, DISTANCES } from "@utils/constants";
 import { sendEventToGA } from "@utils/helpers";
 import useStore, { UserLocation, EventCategory } from "@store";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
+import type { Option } from "types/common";
 
 interface GeolocationPosition {
   coords: {
@@ -36,14 +37,9 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
   loading: () => <></>,
 });
 
-interface SelectOption {
-  value: string;
-  label: string;
-}
-
 interface GroupedOption {
   label: string;
-  options: SelectOption[];
+  options: Option[];
 }
 
 interface GeolocationError {
@@ -79,7 +75,7 @@ const FiltersModal: FC = () => {
   const [userLocationLoading, setUserLocationLoading] =
     useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
-  const [selectOption, setSelectOption] = useState<SelectOption | null>(null);
+  const [selectOption, setSelectOption] = useState<Option | null>(null);
 
   const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
     useGetRegionsWithCities();
@@ -118,7 +114,7 @@ const FiltersModal: FC = () => {
   ]);
 
   const handlePlaceChange = useCallback(
-    (option: SelectOption | null) => {
+    (option: Option | null) => {
       const regionOption = regionsAndCitiesArray
         .flatMap((group) => group.options)
         .find((opt) => opt.value === option?.value);

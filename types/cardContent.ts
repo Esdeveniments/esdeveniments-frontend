@@ -1,7 +1,9 @@
-import { Event } from "@store";
+import { EventSummaryResponseDTO } from "./api/event";
+
+export type CardContent = Omit<EventSummaryResponseDTO, 'city' | 'region' | 'province'>;
 
 export interface CardContentProps {
-  event: Event;
+  event: CardContent;
   isPriority?: boolean;
   isHorizontal?: boolean;
 }

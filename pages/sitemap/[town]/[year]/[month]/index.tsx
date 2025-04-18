@@ -10,7 +10,7 @@ import { MONTHS_URL } from "@utils/constants";
 import { siteUrl } from "@config/index";
 import { getAllYears, getHistoricDates } from "@lib/dates";
 import { fetchRegionsWithCities } from "@lib/api/regions";
-import { fetchEventsFromBackend } from "@lib/api/events";
+import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 
 interface MonthProps {
@@ -157,7 +157,7 @@ export const getStaticProps: GetStaticProps<
   const { from, until } = getHistoricDates(month, parseInt(year, 10));
   const townLabel = town;
 
-  const events = await fetchEventsFromBackend({
+  const events = await fetchEvents({
     from,
     until,
     maxResults: 2500,

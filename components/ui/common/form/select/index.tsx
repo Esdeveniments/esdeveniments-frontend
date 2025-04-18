@@ -2,11 +2,7 @@ import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components, StylesConfig, GroupBase } from "react-select";
 import useStore from "@store";
-
-interface Option {
-  label: string;
-  value: string;
-}
+import type { Option } from "types/common";
 
 interface SelectComponentProps {
   id: string;

@@ -15,8 +15,25 @@ import { siteUrl } from "@config/index";
 import type { EventDetailResponseDTO } from "../../../../types/api/event";
 import { updateEventById } from "lib/api/events";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import type { FormState, FormData, EditEventProps } from "types/event";
+import type { FormState, FormData } from "types/event";
 import type { Option } from "types/common";
+
+// Helper type guards for Option/DTO
+function isOption(obj: any): obj is Option {
+  return obj && typeof obj === "object" && "value" in obj && "label" in obj;
+}
+function getRegionId(region: FormData["region"]): string | null {
+  if (!region) return null;
+  if ("id" in region) return String(region.id);
+  if (isOption(region)) return region.value;
+  return null;
+}
+function getTownId(town: FormData["town"]): string | null {
+  if (!town) return null;
+  if ("id" in town) return String(town.id);
+  if (isOption(town)) return town.value;
+  return null;
+}
 
 const _createFormState = (
   isDisabled = true,
@@ -68,11 +85,11 @@ const createFormState = (
     );
   }
 
-  if (!region || !region.id) {
+  if (!region || !getRegionId(region)) {
     return _createFormState(true, true, "Comarca obligatoria");
   }
 
-  if (!town || !town.id) {
+  if (!town || !getTownId(town)) {
     return _createFormState(true, true, "Ciutat obligatoria");
   }
 
@@ -122,10 +139,9 @@ const createFormState = (
   return _createFormState(false);
 };
 
-const Edita: React.FC<EditEventProps> = ({ event }) => {
+const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>({
-    id: event.id,
     title: event.title,
     description: event.description,
     startDate: event.startDate,
@@ -159,13 +175,14 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
 
   const cityOptions = useMemo(() => {
     if (!regionsWithCities || !form.region) return [];
-    const region = regionsWithCities.find((r) => r.id === form.region!.id);
+    const region = regionsWithCities.find(
+      (r) => String(r.id) === getRegionId(form.region)
+    );
     return region ? region.cities : [];
   }, [regionsWithCities, form.region]);
 
   useEffect(() => {
     setForm({
-      id: event.id,
       title: event.title,
       description: event.description,
       startDate: event.startDate,
@@ -196,7 +213,7 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
     let newValue = value;
     if (name === "region") {
       newValue = value
-        ? regionsWithCities?.find((r) => r.id.toString() === value.value) ||
+        ? regionsWithCities?.find((r) => String(r.id) === getRegionId(value)) ||
           null
         : null;
       // Reset town if region changes
@@ -213,8 +230,8 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
       newValue =
         value && form.region
           ? regionsWithCities
-              ?.find((r) => r.id === form.region!.id)
-              ?.cities.find((c) => c.value === value.value) || null
+              ?.find((r) => String(r.id) === getRegionId(form.region))
+              ?.cities.find((c) => String(c.value) === getTownId(value)) || null
           : null;
     }
     if (name === "startDate" || name === "endDate")
@@ -239,22 +256,26 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
       try {
         const dataToSend = {
           ...form,
-          regionId: form.region?.id,
-          cityId: form.town?.id,
+          regionId: getRegionId(form.region),
+          cityId: getTownId(form.town),
           imageUrl: form.imageUrl,
           url: form.url,
         };
-        await updateEventById(form.id!, dataToSend);
+        await updateEventById(event.id, dataToSend);
         const { formattedStart } = getFormattedDate(
-          form.startDate,
-          form.endDate
+          typeof form.startDate === "string"
+            ? form.startDate
+            : form.startDate.toISOString().slice(0, 10),
+          typeof form.endDate === "string"
+            ? form.endDate
+            : form.endDate.toISOString().slice(0, 10)
         );
-        const slugifiedTitle = slug(form.title, formattedStart, form.id!);
+        const slugifiedTitle = slug(form.title, formattedStart, event.id);
         if (imageToUpload) {
-          uploadFile(form.id!, slugifiedTitle);
+          uploadFile(event.id, slugifiedTitle);
         } else {
           setProgress(0);
-          router.push(`/e/${form.id}/${slugifiedTitle}`);
+          router.push(`/e/${event.id}/${slugifiedTitle}`);
         }
       } catch (error) {
         console.error(error);
@@ -374,14 +395,7 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
               id="region"
               title="Comarca *"
               options={regionOptions}
-              value={
-                form.region
-                  ? {
-                      label: form.region.name,
-                      value: form.region.id.toString(),
-                    }
-                  : null
-              }
+              value={isOption(form.region) ? form.region : null}
               onChange={(option: Option | null) =>
                 handleFormChange("region", option)
               }
@@ -397,11 +411,7 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
               id="town"
               title="Ciutat *"
               options={cityOptions}
-              value={
-                form.town
-                  ? { label: form.town.name, value: form.town.id.toString() }
-                  : null
-              }
+              value={isOption(form.town) ? form.town : null}
               onChange={(option: Option | null) =>
                 handleFormChange("town", option)
               }
@@ -422,8 +432,8 @@ const Edita: React.FC<EditEventProps> = ({ event }) => {
             />
 
             <DatePicker
-              startDate={form.startDate ? new Date(form.startDate) : undefined}
-              endDate={form.endDate ? new Date(form.endDate) : undefined}
+              startDate={form.startDate ? new Date(form.startDate) : new Date()}
+              endDate={form.endDate ? new Date(form.endDate) : new Date()}
               onChange={(name: string, value: Date) =>
                 handleFormChange(name as keyof FormData, value)
               }

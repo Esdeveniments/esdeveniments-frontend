@@ -8,7 +8,7 @@ interface NativeShareButtonProps {
   url: string;
   date: string;
   location: string;
-  subLocation: string;
+  subLocation?: string;
   // eslint-disable-next-line no-unused-vars
   onShareClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   hideText?: boolean;

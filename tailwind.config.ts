@@ -1,4 +1,9 @@
-module.exports = {
+import type { Config } from "tailwindcss";
+import aspectRatio from "@tailwindcss/aspect-ratio";
+import typography from "@tailwindcss/typography";
+import forms from "@tailwindcss/forms";
+
+const config: Config = {
   purge: ["./components/**/*.{js,ts,jsx,tsx}", "./pages/**/*.{js,ts,jsx,tsx}"],
   content: [
     "./components/**/*.{js,ts,jsx,tsx}",
@@ -25,29 +30,29 @@ module.exports = {
       },
       keyframes: {
         "fast-pulse": {
-          "0%, 100%": { opacity: 1 },
-          "50%": { opacity: 0 },
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0" },
         },
         appear: {
-          "0%": { opacity: 0 },
-          "100%": { opacity: 1 },
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
         disappear: {
-          "0%": { opacity: 1 },
-          "100%": { opacity: 0 },
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
         },
       },
       boxShadow: {
         lg: "4px 4px 9px -3px #45454590",
       },
       flex: {
-        2: "2 2 0%",
-        3: "3 3 0%",
-        4: "4 4 0%",
+        "2": "2 2 0%",
+        "3": "3 3 0%",
+        "4": "4 4 0%",
       },
       zIndex: {
-        1: "1",
-        900: "900",
+        "1": "1",
+        "900": "900",
       },
     },
     colors: {
@@ -66,9 +71,7 @@ module.exports = {
       cursor: ["disabled"],
     },
   },
-  plugins: [
-    require("@tailwindcss/aspect-ratio"),
-    require("@tailwindcss/typography"),
-    require("@tailwindcss/forms"),
-  ],
+  plugins: [aspectRatio, typography, forms],
 };
+
+export default config;

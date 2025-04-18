@@ -2,8 +2,7 @@ import { FC } from "react";
 import Link from "next/link";
 import Modal from "@components/ui/common/modal";
 import { PencilIcon, XCircleIcon } from "@heroicons/react/outline";
-
-type DeleteReason = "not-exist" | "duplicated" | "offensive" | "others";
+import type { DeleteReason } from "types/common";
 
 interface EditModalProps {
   openModal: boolean;

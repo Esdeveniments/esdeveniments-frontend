@@ -1,19 +1,7 @@
-import { memo, useCallback, useEffect } from "react";
+import { memo, useCallback, useEffect, FC } from "react";
 import Image from "next/image";
 import { sendGoogleEvent } from "@utils/analytics";
-
-interface CalendarUrls {
-  google: string;
-  outlook: string;
-  ical: string;
-}
-
-interface CalendarOption {
-  name: string;
-  url?: string;
-  icon: string;
-  download?: string;
-}
+import type { CalendarUrls, CalendarOption } from "types/common";
 
 interface CalendarListProps {
   onClick: () => void;
@@ -21,7 +9,7 @@ interface CalendarListProps {
   title: string;
 }
 
-const CalendarList: React.FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
+const CalendarList: FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
   const urls = getUrls();
 
   const handleCalendarClick = useCallback(
@@ -39,17 +27,17 @@ const CalendarList: React.FC<CalendarListProps> = ({ onClick, getUrls, title }) 
   const calendarOptions: CalendarOption[] = [
     {
       name: "Google Calendar",
-      url: urls?.google,
+      url: urls.google,
       icon: "google-calendar.png",
     },
     {
       name: "Outlook",
-      url: urls?.outlook,
+      url: urls.outlook,
       icon: "outlook.jpeg",
     },
     {
       name: "Altres",
-      url: urls?.ical,
+      url: urls.ical,
       icon: "ical.png",
       download: `${title}.ics`,
     },

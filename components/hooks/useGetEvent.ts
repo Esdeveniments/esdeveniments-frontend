@@ -1,12 +1,15 @@
 import useSWR, { preload } from "swr";
 import { EventDetailResponseDTO } from "types/api/event";
-import { fetchEventById } from "../../lib/api/events";
+import { fetchEventById } from "@lib/api/events";
 
 interface EventProps {
   event: EventDetailResponseDTO;
 }
 
-const fetcher = async (_: any, uuid: string): Promise<EventDetailResponseDTO> => {
+const fetcher = async (
+  _: any,
+  uuid: string
+): Promise<EventDetailResponseDTO> => {
   if (!uuid) {
     throw new Error("Event UUID is required");
   }

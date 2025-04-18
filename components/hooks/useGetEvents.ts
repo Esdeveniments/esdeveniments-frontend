@@ -1,7 +1,7 @@
 import { captureException } from "@sentry/nextjs";
 import useSWR, { preload } from "swr";
 import { PagedResponseDTO, EventSummaryResponseDTO } from "types/api/event";
-import { fetchEventsFromBackend } from "../../lib/api/events";
+import { fetchEvents } from "../../lib/api/events";
 
 interface EventsProps {
   events?: EventSummaryResponseDTO[];
@@ -36,7 +36,7 @@ const fetcher = async (
     if (town) params.town = town;
     if (zone) params.zone = zone;
     if (category) params.category = category;
-    const content = await fetchEventsFromBackend(params);
+    const content = await fetchEvents(params);
     // Wrap in paged response structure for compatibility
     return {
       content,

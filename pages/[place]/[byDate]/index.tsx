@@ -2,7 +2,7 @@ import { useEffect, JSX } from "react";
 import { GetStaticPaths, GetStaticProps } from "next";
 import { initializeStore } from "@utils/initializeStore";
 import Events from "@components/ui/events";
-import { fetchEventsFromBackend, insertAds } from "@lib/api/events";
+import { fetchEvents, insertAds } from "@lib/api/events";
 import { ListEvent } from "../../../types/api/event";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 
@@ -82,7 +82,7 @@ export const getStaticProps: GetStaticProps<
     from: from.toISOString().split("T")[0],
     until: until.toISOString().split("T")[0],
   };
-  const events = await fetchEventsFromBackend(paramsForFetch);
+  const events = await fetchEvents(paramsForFetch);
   const eventsWithAds = insertAds(events);
 
   const initialState: InitialState = {

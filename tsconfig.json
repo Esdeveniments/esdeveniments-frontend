@@ -1,12 +1,8 @@
 {
   "compilerOptions": {
     "target": "es2021",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -25,54 +21,24 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@store": [
-        "store.ts"
-      ],
-      "@pages/*": [
-        "pages/*"
-      ],
-      "@components/*": [
-        "components/*"
-      ],
-      "@styles/*": [
-        "styles/*"
-      ],
-      "@content/*": [
-        "content/*"
-      ],
-      "@utils/*": [
-        "utils/*"
-      ],
-      "@lib/*": [
-        "lib/*"
-      ],
-      "@config/*": [
-        "config/*"
-      ],
-      "@public/*": [
-        "public/*"
-      ],
-      "@types/*": [
-        "types/*"
-      ],
-      "react": [
-        "./node_modules/@types/react"
-      ]
+      "@store": ["store.ts"],
+      "@pages/*": ["pages/*"],
+      "@components/*": ["components/*"],
+      "@styles/*": ["styles/*"],
+      "@content/*": ["content/*"],
+      "@utils/*": ["utils/*"],
+      "@lib/*": ["lib/*"],
+      "@config/*": ["config/*"],
+      "@public/*": ["public/*"],
+      "@types/*": ["types/*"],
+      "react": ["./node_modules/@types/react"]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": [
-      "./types/react-datepicker.d.ts"
-    ]
+    "types": ["./types/react-datepicker.d.ts"]
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }
