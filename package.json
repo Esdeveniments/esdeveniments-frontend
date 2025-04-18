@@ -25,6 +25,9 @@
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.9",
     "@tinymce/tinymce-react": "^5.1.1",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
     "@upstash/redis": "^1.28.0",
     "@vercel/edge-config": "^0.2.1",
     "@vercel/kv": "^0.2.1",
@@ -52,6 +55,7 @@
     "rss": "^1.2.2",
     "swr": "^2.2.5",
     "tailwindcss": "^3.3.6",
+    "typescript": "^5.8.3",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
