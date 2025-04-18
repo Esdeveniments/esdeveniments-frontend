@@ -18,7 +18,7 @@ const Maps: FC<MapsProps> = ({ location }) => {
     frame.style.width = "100%";
     frame.style.height = "400px";
     frame.style.border = "0";
-    frame.allowFullscreen = true;
+    frame.setAttribute("allowfullscreen", "true");
 
     const onLoad = () => {
       frame.removeEventListener("load", onLoad);
