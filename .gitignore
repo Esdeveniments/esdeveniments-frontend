@@ -69,3 +69,6 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .codegpt
+
+.env copy.development
+.env copy.production
