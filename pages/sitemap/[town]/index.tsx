@@ -6,7 +6,7 @@ import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 import Link from "next/link";
 import { fetchCityById } from "@lib/api/cities";
-import type { SitemapProps, StaticPathParams } from "types/common";
+import type { SitemapProps, TownStaticPathParams } from "types/common";
 
 const years: number[] = getAllYears();
 
@@ -51,7 +51,9 @@ export default function Sitemap({ town, label }: SitemapProps): JSX.Element {
   );
 }
 
-export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
+export const getStaticPaths: GetStaticPaths<
+  TownStaticPathParams
+> = async () => {
   return {
     paths: [],
     fallback: "blocking",
@@ -60,7 +62,7 @@ export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
 
 export const getStaticProps: GetStaticProps<
   SitemapProps,
-  StaticPathParams
+  TownStaticPathParams
 > = async ({ params }) => {
   if (!params) {
     return {

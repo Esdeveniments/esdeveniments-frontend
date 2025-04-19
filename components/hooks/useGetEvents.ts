@@ -1,11 +1,12 @@
 import { captureException } from "@sentry/nextjs";
 import useSWR, { preload } from "swr";
 import { PagedResponseDTO, EventSummaryResponseDTO } from "types/api/event";
+import { FetchEventsParams } from "../../types/event";
 import { UseGetEventsProps } from "types/common";
 import { fetchEvents } from "../../lib/api/events";
 
 const fetcher = async (
-  _: any,
+  _: string,
   pageIndex: number,
   maxResults: number,
   q?: string,
@@ -14,7 +15,7 @@ const fetcher = async (
   category?: string
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
   try {
-    const params: Record<string, any> = {
+    const params: FetchEventsParams = {
       page: pageIndex,
       maxResults: maxResults,
     };
@@ -32,7 +33,7 @@ const fetcher = async (
       totalPages: 1,
       last: true,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     captureException(error);
     throw error;
   }

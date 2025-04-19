@@ -5,14 +5,16 @@ import {
   CategorizedEvents,
   EventDetailResponseDTO,
 } from "types/api/event";
+import { FetchEventsParams, FormData } from "types/event";
 
 export async function fetchEvents(
-  params: Record<string, any>
+  params: FetchEventsParams
 ): Promise<EventSummaryResponseDTO[]> {
   // Prepare params: always send page and size, only include others if non-empty
-  const query: Record<string, any> = {};
+  const query: Partial<FetchEventsParams> = {};
   query.page = typeof params.page === "number" ? params.page : 0;
-  query.size = typeof params.maxResults === "number" ? params.maxResults : 10;
+  query.maxResults =
+    typeof params.maxResults === "number" ? params.maxResults : 10;
   // Add other params if present and non-empty
   if (params.q) query.q = params.q;
   if (params.town) query.town = params.town;
@@ -20,7 +22,14 @@ export async function fetchEvents(
   if (params.category) query.category = params.category;
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/events?` + new URLSearchParams(query)
+    `${process.env.NEXT_PUBLIC_API_URL}/events?` +
+      new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(query)
+            .filter(([, v]) => v !== undefined)
+            .map(([k, v]) => [k, String(v)])
+        )
+      )
   );
   const data = await response.json();
   return data.content || [];
@@ -38,7 +47,7 @@ export async function fetchEventById(
 
 export async function updateEventById(
   uuid: string,
-  data: any
+  data: FormData
 ): Promise<EventDetailResponseDTO> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`,
@@ -55,7 +64,7 @@ export async function updateEventById(
   return response.json();
 }
 
-export async function createEvent(data: any): Promise<EventDetailResponseDTO> {
+export async function createEvent(data: FormData): Promise<EventDetailResponseDTO> {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
     method: "POST",
     headers: {

@@ -1,5 +1,6 @@
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
-import { Option } from "types/common";
+import { Option, PlaceTypeAndLabel } from "types/common";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 
 export interface SelectComponentProps {
   id: string;
@@ -23,7 +24,7 @@ export interface ReportViewProps {
 }
 
 export interface CardContentProps {
-  event: any;
+  event: EventSummaryResponseDTO;
   isPriority?: boolean;
   isHorizontal?: boolean;
 }
@@ -63,6 +64,6 @@ export interface SocialProps {
 }
 
 export interface EventsListProps {
-  events: any[];
-  placeTypeLabel?: string;
+  events: ListEvent[];
+  placeTypeLabel?: PlaceTypeAndLabel;
 }

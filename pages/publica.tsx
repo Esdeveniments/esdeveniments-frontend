@@ -20,8 +20,8 @@ import type { Option } from "types/common";
 import type { FormState, FormData } from "types/event";
 
 // Helper type guards for region/town
-function isOption(obj: any): obj is Option {
-  return obj && typeof obj === "object" && "value" in obj && "label" in obj;
+function isOption(obj: unknown): obj is Option {
+  return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;
 }
 
 function getRegionValue(region: FormData["region"]): string | null {
@@ -163,7 +163,10 @@ const Publica: NextPage = () => {
       : [];
   }, [regionsWithCities, form.region]);
 
-  const handleFormChange = (name: keyof FormData, value: any) => {
+  const handleFormChange = <K extends keyof FormData>(
+    name: K,
+    value: FormData[K]
+  ) => {
     const newForm = { ...form, [name]: value };
     setForm(newForm);
     setFormState(createFormState(newForm, true));
@@ -216,8 +219,8 @@ const Publica: NextPage = () => {
         const eventData = {
           ...form,
           location,
-          region: undefined, // Remove region Option/DTO object from payload
-          town: undefined, // Remove town Option/DTO object from payload
+          region: null, // Remove region Option/DTO object from payload
+          town: null, // Remove town Option/DTO object from payload
           regionId: regionValue,
           cityId: townValue,
         };

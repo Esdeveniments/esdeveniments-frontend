@@ -8,6 +8,8 @@ import SubMenu from "@components/ui/common/subMenu";
 import Imago from "public/static/images/imago-esdeveniments.png";
 import CardLoading from "@components/ui/cardLoading";
 import { ListEvent } from "types/api/event";
+import type { PageData } from "types/common";
+import { makePlaceTypeAndLabel } from "types/common";
 
 const EventsList = dynamic(() => import("@components/ui/eventsList"), {
   loading: () => (
@@ -31,13 +33,13 @@ const EventsCategorized = dynamic(
 );
 
 /* eslint-disable no-unused-vars */
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
+function debounce<F extends (...args: unknown[]) => unknown>(
+  func: F,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: Parameters<F>) => void {
   let timeout: ReturnType<typeof setTimeout> | undefined;
 
-  return function (this: ThisParameterType<T>, ...args: Parameters<T>): void {
+  return function (this: ThisParameterType<F>, ...args: Parameters<F>): void {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), wait);
   };
@@ -48,12 +50,14 @@ interface EventsProps {
   events: ListEvent[];
   hasServerFilters?: boolean;
   placeTypeLabel: { type: string; label: string; regionLabel?: string };
+  pageData: PageData;
 }
 
 const Events: FC<EventsProps> = ({
   events,
   hasServerFilters,
   placeTypeLabel,
+  pageData,
 }) => {
   const { setState, areFiltersActive, filtersApplied } = useStore((state) => ({
     openModal: state.openModal,
@@ -154,12 +158,24 @@ const Events: FC<EventsProps> = ({
           ))}
         </div>
       ) : hasFilters ? (
-        <EventsList
-          events={events}
-          placeTypeLabel={placeTypeLabel?.label || ""}
-        />
+        (() => {
+          const safePlaceTypeLabel = placeTypeLabel
+            ? makePlaceTypeAndLabel(
+                placeTypeLabel.type,
+                placeTypeLabel.label,
+                placeTypeLabel.regionLabel
+              )
+            : undefined;
+          return (
+            <EventsList
+              events={events}
+              placeTypeLabel={safePlaceTypeLabel}
+              pageData={pageData}
+            />
+          );
+        })()
       ) : (
-        <EventsCategorized />
+        <EventsCategorized pageData={pageData} />
       )}
     </>
   );

@@ -11,44 +11,24 @@ import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import useStore from "@store";
 import { sendGoogleEvent } from "@utils/analytics";
-import { StoreState } from "@store";
+import type { Store } from "@store";
 
-// eslint-disable-next-line no-unused-vars
-type DebouncedFunction<T extends (...args: any[]) => any> = (
-  // eslint-disable-next-line no-unused-vars
-  ...args: Parameters<T>
-) => void;
-
-// eslint-disable-next-line no-unused-vars
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
+function debounce(
+  func: (value: string) => void,
   wait: number,
-  immediate: boolean = false
-): DebouncedFunction<T> {
+  immediate = false
+): (value: string) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  return function executedFunction(this: any, ...args: Parameters<T>) {
-    const context = this;
-
-    const later = function () {
+  return function executedFunction(value: string) {
+    const later = () => {
       timeout = null;
-      if (!immediate) func.apply(context, args);
+      if (!immediate) func(value);
     };
-
     const callNow = immediate && !timeout;
-
     if (timeout) clearTimeout(timeout);
-
     timeout = setTimeout(later, wait);
-
-    if (callNow) func.apply(context, args);
+    if (callNow) func(value);
   };
-}
-
-interface SearchState {
-  searchTerm: string;
-  // eslint-disable-next-line no-unused-vars
-  setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
 }
 
 const sendSearchTermGA = (searchTerm: string): void => {
@@ -61,11 +41,16 @@ const sendSearchTermGA = (searchTerm: string): void => {
 };
 
 export default function Search(): JSX.Element {
-  const { searchTerm, setState } = useStore<SearchState>((state) => ({
-    searchTerm: state.searchTerm,
-    setState: state.setState,
-  }));
+  // Use StoreState for correct typing
+  const setState = useStore((state: Store) => state.setState);
+  const searchTerm = useStore((state: Store) => state.searchTerm);
   const [inputValue, setInputValue] = useState<string>(searchTerm);
+
+  // Debounce only the searchTerm update for simplicity
+  const debouncedSetSearchTerm = useMemo(
+    () => debounce((value: string) => setState("searchTerm", value), 1500),
+    [setState]
+  );
 
   const searchEvents = useCallback((term: string): void => {
     if (term && term.length > 0) {
@@ -77,22 +62,14 @@ export default function Search(): JSX.Element {
     setInputValue(searchTerm);
   }, [searchTerm]);
 
-  const debouncedChangeHandler = useMemo(
-    () =>
-      debounce((value: string) => {
-        setState("searchTerm", value);
-        sendSearchTermGA(value);
-      }, 1500),
-    [setState]
-  );
-
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setInputValue(value);
-      debouncedChangeHandler(value);
+      debouncedSetSearchTerm(value);
+      sendSearchTermGA(value);
     },
-    [debouncedChangeHandler]
+    [debouncedSetSearchTerm]
   );
 
   const handleKeyPress = useCallback(

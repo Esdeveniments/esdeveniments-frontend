@@ -11,11 +11,14 @@ import type {
   PlaceStaticPathParams,
   PlaceStaticPath,
 } from "types/common";
+import { generatePagesData } from "@components/partials/generatePagesData";
+import type { PageData } from "types/common";
 
 export default function Place({
   initialState,
   placeTypeLabel,
-}: PlaceProps): JSX.Element {
+  pageData,
+}: PlaceProps & { pageData: PageData }): JSX.Element {
   useEffect(() => {
     initializeStore(initialState);
   }, [initialState]);
@@ -25,6 +28,7 @@ export default function Place({
       events={initialState.events || []}
       hasServerFilters={initialState.hasServerFilters}
       placeTypeLabel={placeTypeLabel}
+      pageData={pageData}
     />
   );
 }
@@ -51,7 +55,7 @@ export const getStaticPaths: GetStaticPaths<
   };
 };
 
-export const getStaticProps: GetStaticProps<PlaceProps> = async (context) => {
+export const getStaticProps: GetStaticProps<PlaceProps & { pageData: PageData }> = async (context) => {
   const { place } = context.params as PlaceStaticPathParams;
 
   const params = { page: 0, maxResults: 100, place };
@@ -67,10 +71,19 @@ export const getStaticProps: GetStaticProps<PlaceProps> = async (context) => {
 
   const placeTypeLabel = await getPlaceTypeAndLabel(place);
 
+  // Generate the SEO/page meta data server-side, passing placeTypeLabel
+  const pageData = await generatePagesData({
+    currentYear: new Date().getFullYear(),
+    place,
+    byDate: "",
+    placeTypeLabel,
+  });
+
   return {
     props: {
       initialState,
       placeTypeLabel,
+      pageData,
     },
     revalidate: 60,
   };

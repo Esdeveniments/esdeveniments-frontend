@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   memo,
   useEffect,
@@ -11,9 +10,12 @@ import {
 import Script from "next/script";
 import dynamic from "next/dynamic";
 import Meta from "@components/partials/seo-meta";
-import { generatePagesData } from "@components/partials/generatePagesData";
 import { useGetEvents } from "@components/hooks/useGetEvents";
-import { generateJsonData, getDistance } from "@utils/helpers";
+import {
+  generateJsonData,
+  getDistance,
+  findCategoryKeyByValue,
+} from "@utils/helpers";
 import { dateFunctions } from "@utils/constants";
 import List from "@components/ui/list";
 import CardLoading from "@components/ui/cardLoading";
@@ -22,9 +24,10 @@ import { CATEGORIES } from "@utils/constants";
 import useOnScreen from "@components/hooks/useOnScreen";
 import useStore from "@store";
 import { UserLocation } from "@store";
-import { EventSummaryResponseDTO, AdEvent, ListEvent } from "types/api/event";
-import { EventsListProps } from '../../../types/props';
-import { FetchedData } from "types/common";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import { EventsListProps } from "../../../types/props";
+import { FetchedData, PageData } from "types/common";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound"),
@@ -33,40 +36,11 @@ const NoEventsFound = dynamic(
   }
 );
 
-interface PageData {
-  metaTitle: string;
-  metaDescription: string;
-  title: string;
-  subTitle: string;
-  canonical: string;
-  notFoundText: string;
-}
-
-// --- Helper type guards and extractors (move outside the component for stability) ---
-function eventHasAd(event: ListEvent): event is AdEvent {
-  return (event as AdEvent).isAd === true;
-}
-function eventHasCoords(event: ListEvent): event is EventSummaryResponseDTO {
-  return (
-    !eventHasAd(event) &&
-    !!event.city &&
-    typeof event.city.latitude === "number" &&
-    typeof event.city.longitude === "number"
-  );
-}
-function eventGetCoords(
-  event: ListEvent
-): { latitude: number; longitude: number } | null {
-  if (eventHasCoords(event)) {
-    return { latitude: event.city.latitude, longitude: event.city.longitude };
-  }
-  return null;
-}
-
 function EventsList({
   events: serverEvents = [],
   placeTypeLabel,
-}: EventsListProps): ReactElement {
+  pageData: serverPageData,
+}: EventsListProps & { pageData?: PageData }): ReactElement {
   const {
     noEventsFound: serverNoEventsFound,
     byDate,
@@ -76,7 +50,6 @@ function EventsList({
     distance,
     page,
     scrollPosition,
-    currentYear,
     setState,
   } = useStore((state) => ({
     events: state.events,
@@ -104,11 +77,13 @@ function EventsList({
   const [filteredEvents, setFilteredEvents] = useState<ListEvent[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const { type, label, regionLabel } = placeTypeLabel;
+  const { type, label, regionLabel } = placeTypeLabel ?? {};
 
-  const categoryQuery = category ? CATEGORIES[category] || category : "";
+  const categoryKey = category ? findCategoryKeyByValue(category) : undefined;
+  const categoryQuery = categoryKey ? CATEGORIES[categoryKey] : category || "";
   const sharedQuery = `${searchTerm} ${categoryQuery} ${label}`;
-  const pageIndex = dateFunctions[byDate] || "all";
+  const pageIndex =
+    typeof dateFunctions[byDate] === "number" ? dateFunctions[byDate] : 0;
 
   const {
     data: fetchedData = {} as FetchedData,
@@ -116,10 +91,7 @@ function EventsList({
     error,
   } = useGetEvents({
     props: {
-      events: serverEvents,
-      noEventsFound: serverNoEventsFound,
-      currentYear,
-      allEventsLoaded: false,
+      events: serverEvents.filter(isEventSummaryResponseDTO),
     },
     pageIndex,
     maxResults: page * 10,
@@ -131,8 +103,14 @@ function EventsList({
   const events = fetchedData.content?.length
     ? fetchedData.content
     : serverEvents;
-  const noEventsFound = fetchedData.noEventsFound ?? serverNoEventsFound;
-  const allEventsLoaded = fetchedData.allEventsLoaded ?? false;
+  const noEventsFound =
+    "noEventsFound" in fetchedData
+      ? (fetchedData as { noEventsFound: boolean }).noEventsFound
+      : serverNoEventsFound;
+  const allEventsLoaded =
+    "allEventsLoaded" in fetchedData
+      ? (fetchedData as { allEventsLoaded: boolean }).allEventsLoaded
+      : false;
 
   const notFound =
     !isLoading &&
@@ -140,7 +118,7 @@ function EventsList({
     (noEventsFound || filteredEvents.length === 0);
 
   const jsonEvents = events
-    .filter(({ isAd }) => !isAd)
+    .filter(isEventSummaryResponseDTO)
     .map((event) => {
       try {
         return generateJsonData(event);
@@ -150,6 +128,34 @@ function EventsList({
       }
     })
     .filter(Boolean);
+
+  // Helper type guards and extractors
+  function eventHasAd(event: ListEvent): boolean {
+    return event.isAd === true;
+  }
+  function eventHasCoords(event: ListEvent): boolean {
+    return (
+      !eventHasAd(event) &&
+      !!event.city &&
+      typeof (event.city as { latitude: number; longitude: number })
+        .latitude === "number" &&
+      typeof (event.city as { latitude: number; longitude: number })
+        .longitude === "number"
+    );
+  }
+  function eventGetCoords(
+    event: ListEvent
+  ): { latitude: number; longitude: number } | null {
+    if (eventHasCoords(event)) {
+      return {
+        latitude: (event.city as { latitude: number; longitude: number })
+          .latitude,
+        longitude: (event.city as { latitude: number; longitude: number })
+          .longitude,
+      };
+    }
+    return null;
+  }
 
   // Event handlers
   const handleLoadMore = useCallback(() => {
@@ -164,7 +170,9 @@ function EventsList({
 
   const filterEventsByDistance = useCallback(
     (events: ListEvent[], userLocation: UserLocation | null) => {
-      if (!distance || isNaN(distance)) return events;
+      const numericDistance =
+        typeof distance === "string" ? Number(distance) : distance;
+      if (!numericDistance || isNaN(numericDistance)) return events;
 
       return events.filter((event) => {
         if (eventHasAd(event) || !eventHasCoords(event) || !userLocation) {
@@ -172,8 +180,11 @@ function EventsList({
         }
         const eventCoords = eventGetCoords(event);
         if (!eventCoords) return true;
-        const eventDistance = getDistance(userLocation, eventCoords);
-        return eventDistance <= distance;
+        const eventDistance = getDistance(
+          { lat: userLocation.latitude, lng: userLocation.longitude },
+          { lat: eventCoords.latitude, lng: eventCoords.longitude }
+        );
+        return eventDistance <= numericDistance;
       });
     },
     [distance]
@@ -221,30 +232,29 @@ function EventsList({
         setState("scrollPosition", 0);
       } else {
         const storedScrollPosition = scrollPosition;
-        if (storedScrollPosition) {
-          window.scrollTo(0, parseInt(storedScrollPosition));
+        if (
+          storedScrollPosition !== undefined &&
+          storedScrollPosition !== null
+        ) {
+          window.scrollTo(
+            0,
+            typeof storedScrollPosition === "string"
+              ? parseInt(storedScrollPosition, 10)
+              : storedScrollPosition
+          );
         }
       }
     }
   }, [isBrowser, scrollPosition, setState]);
 
   // Page data
-  const {
-    metaTitle,
-    metaDescription,
-    title,
-    subTitle,
-    canonical,
-    notFoundText,
-  }: PageData =
-    generatePagesData({
-      currentYear,
-      place: label,
-      byDate,
-    }) || {};
+  const pageData = serverPageData;
+
+  // Filter to only real events for components that require EventSummaryResponseDTO[]
+  const realFilteredEvents = filteredEvents.filter(isEventSummaryResponseDTO);
 
   // Error handling
-  if (error) return <NoEventsFound title={notFoundText} />;
+  if (error) return <NoEventsFound title={pageData?.notFoundText || ""} />;
 
   // Render
   return (
@@ -255,22 +265,28 @@ function EventsList({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonEvents) }}
       />
       <Meta
-        title={metaTitle}
-        description={metaDescription}
-        canonical={canonical}
+        title={pageData?.metaTitle || ""}
+        description={pageData?.metaDescription || ""}
+        canonical={pageData?.canonical || ""}
       />
       <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
         {notFound && (
           <>
             <div ref={divRef} />
-            {isNoEventsFoundVisible && <NoEventsFound title={notFoundText} />}
+            {isNoEventsFoundVisible && (
+              <NoEventsFound
+                title={
+                  pageData?.notFoundText || "No s'han trobat esdeveniments."
+                }
+              />
+            )}
           </>
         )}
         {!notFound && (
           <>
-            <h1 className="uppercase mb-2 px-2">{title}</h1>
+            <h1 className="uppercase mb-2 px-2">{pageData?.title || ""}</h1>
             <p className="text-[16px] font-normal text-blackCorp text-left mb-10 px-2 font-barlow">
-              {subTitle}
+              {pageData?.subTitle || ""}
             </p>
           </>
         )}
@@ -281,15 +297,15 @@ function EventsList({
             ))}
           </div>
         ) : (
-          <List events={filteredEvents}>
-            {(event: ListEvent, index: number) => (
+          <List events={realFilteredEvents}>
+            {(event: EventSummaryResponseDTO, index: number) => (
               <Card key={event.id} event={event} isPriority={index === 0} />
             )}
           </List>
         )}
         {isLoadingMore && <CardLoading />}
         {!noEventsFound &&
-          filteredEvents.length > 7 &&
+          realFilteredEvents.length > 7 &&
           !isLoadingMore &&
           !allEventsLoaded && (
             <div className="h-12 flex justify-center items-center text-center pt-10 pb-14">

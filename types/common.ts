@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { ErrorProps } from "next/error";
 import type { EventLocation } from "../store";
+import type { StoreState } from "@store";
 import {
   CategorizedEvents,
   EventSummaryResponseDTO,
@@ -113,11 +114,13 @@ export interface GeneratePagesDataProps {
   currentYear: string | number;
   place?: string;
   byDate?: ByDateOptions;
+  placeTypeLabel?: PlaceTypeAndLabel;
 }
 
 export interface PlaceTypeAndLabel {
   type: PlaceType;
   label: string;
+  regionLabel?: string;
 }
 
 export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
@@ -306,7 +309,7 @@ export interface InitialState {
 
 export interface ByDateProps {
   initialState: InitialState;
-  placeTypeLabel: { type: string; label: string; regionLabel?: string };
+  placeTypeLabel: PlaceTypeAndLabel;
 }
 
 export interface StaticProps {
@@ -325,7 +328,7 @@ export interface PlaceInitialState {
 
 export interface PlaceProps {
   initialState: PlaceInitialState;
-  placeTypeLabel: { type: string; label: string; regionLabel?: string };
+  placeTypeLabel: PlaceTypeAndLabel;
 }
 
 export interface PlaceStaticPathParams {
@@ -420,4 +423,29 @@ export interface TownStaticPathParams {
 export interface SitemapProps {
   town: string;
   label: string;
+}
+
+// SearchState type
+export interface SearchState {
+  searchTerm: string;
+  setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
+}
+
+// ViewCounterResponse interface
+export interface ViewCounterResponse {
+  views: number;
+}
+
+// Utility function to safely construct a PlaceTypeAndLabel from any input
+export function makePlaceTypeAndLabel(
+  type: string,
+  label: string,
+  regionLabel?: string
+): PlaceTypeAndLabel {
+  const allowedTypes: PlaceType[] = ["region", "town", ""];
+  return {
+    type: allowedTypes.includes(type as PlaceType) ? (type as PlaceType) : "",
+    label,
+    regionLabel,
+  };
 }

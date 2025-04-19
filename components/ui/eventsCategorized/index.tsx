@@ -1,21 +1,19 @@
-// @ts-nocheck
 import { memo, useCallback, useEffect, useState, ReactElement } from "react";
 import Script from "next/script";
 import dynamic from "next/dynamic";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import SpeakerphoneIcon from "@heroicons/react/outline/SpeakerphoneIcon";
 import Meta from "@components/partials/seo-meta";
-import { generatePagesData } from "@components/partials/generatePagesData";
 import { useGetCategorizedEvents } from "@components/hooks/useGetCategorizedEvents";
 import { generateJsonData, sendEventToGA } from "@utils/helpers";
-import { MAX_RESULTS } from "@utils/constants";
 import List from "@components/ui/list";
 import CardLoading from "@components/ui/cardLoading";
 import Card from "@components/ui/card";
 import EventsHorizontalScroll from "@components/ui/eventsHorizontalScroll";
-import { SEARCH_TERMS_SUBSET, CATEGORY_NAMES_MAP } from "@utils/constants";
+import { CATEGORY_NAMES_MAP } from "@utils/constants";
 import useStore, { EventCategory } from "@store";
-import { ByDateOptions } from "types/common";
+import { ByDateOptions, PageData } from "types/common";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound"),
@@ -29,13 +27,16 @@ const AdArticle = dynamic(() => import("@components/ui/adArticle"), {
   ssr: false,
 });
 
-function EventsCategorized(): ReactElement {
+interface EventsCategorizedProps {
+  pageData: PageData;
+}
+
+function EventsCategorized({ pageData }: EventsCategorizedProps): ReactElement {
   const {
     categorizedEvents: initialCategorizedEvents,
     latestEvents: initialLatestEvents,
     place,
     byDate,
-    currentYear,
     setState,
   } = useStore((state) => ({
     categorizedEvents: state.categorizedEvents,
@@ -48,22 +49,32 @@ function EventsCategorized(): ReactElement {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Filter out ads before passing to hook props
+  const safeInitialCategorizedEvents = Object.fromEntries(
+    Object.entries(initialCategorizedEvents).map(([category, events]) => [
+      category,
+      events.filter(isEventSummaryResponseDTO),
+    ])
+  );
+  const safeInitialLatestEvents = initialLatestEvents.filter(
+    isEventSummaryResponseDTO
+  );
+
   const {
     data: fetchedData,
     isValidating,
     error,
   } = useGetCategorizedEvents({
     props: {
-      categorizedEvents: initialCategorizedEvents,
-      latestEvents: initialLatestEvents,
+      categorizedEvents: safeInitialCategorizedEvents,
+      latestEvents: safeInitialLatestEvents,
     },
-    searchTerms: SEARCH_TERMS_SUBSET,
-    maxResults: MAX_RESULTS,
+    // Removed searchTerms and maxResults as they are not supported by the backend endpoint
   });
 
   const categorizedEvents =
-    fetchedData?.categorizedEvents || initialCategorizedEvents;
-  const latestEvents = fetchedData?.latestEvents || initialLatestEvents;
+    fetchedData?.categorizedEvents || safeInitialCategorizedEvents;
+  const latestEvents = fetchedData?.latestEvents || safeInitialLatestEvents;
 
   const scrollToTop = useCallback((): void => {
     window.scrollTo({
@@ -121,7 +132,6 @@ function EventsCategorized(): ReactElement {
       .filter(Boolean),
   ];
 
-  // Generate SEO meta data (reuse logic from old)
   const {
     metaTitle,
     metaDescription,
@@ -129,12 +139,7 @@ function EventsCategorized(): ReactElement {
     subTitle,
     canonical,
     notFoundText,
-  } =
-    generatePagesData({
-      currentYear: currentYear || new Date().getFullYear(),
-      place,
-      byDate,
-    }) || {};
+  } = pageData;
 
   const getCategoryName = (category: string): string => {
     return Object.entries(CATEGORY_NAMES_MAP).reduce(
@@ -142,6 +147,14 @@ function EventsCategorized(): ReactElement {
       category
     );
   };
+
+  // Filter out ads before using as CategorizedEvents
+  const safeCategorizedEvents = Object.fromEntries(
+    Object.entries(categorizedEvents).map(([category, events]) => [
+      category,
+      events.filter(isEventSummaryResponseDTO),
+    ])
+  );
 
   // Error handling
   if (error) return <NoEventsFound title={notFoundText} />;
@@ -183,11 +196,11 @@ function EventsCategorized(): ReactElement {
           </>
         ) : error ? (
           <div className="error">Failed to load events.</div>
-        ) : Object.entries(categorizedEvents).length === 0 ? (
+        ) : Object.entries(safeCategorizedEvents).length === 0 ? (
           <NoEventsFound />
         ) : (
           <div className="p-2">
-            {Object.entries(categorizedEvents).map(
+            {Object.entries(safeCategorizedEvents).map(
               ([category, events], index) => {
                 // Priority rendering logic (first two categories)
                 const shouldUsePriority = index < 2;

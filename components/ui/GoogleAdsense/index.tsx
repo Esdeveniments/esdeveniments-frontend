@@ -4,7 +4,7 @@ import { AdStatus, GoogleAdsenseContainerProps } from "types/common";
 declare global {
   // eslint-disable-next-line no-unused-vars
   interface Window {
-    adsbygoogle: any[];
+    adsbygoogle: unknown[];
   }
 }
 

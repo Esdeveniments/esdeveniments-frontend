@@ -30,14 +30,16 @@ export async function generatePagesData({
   currentYear,
   place = "",
   byDate = "",
-}: GeneratePagesDataProps): Promise<PageData> {
+  placeTypeLabel,
+}: GeneratePagesDataProps & { placeTypeLabel?: PlaceTypeAndLabel }): Promise<PageData> {
   if (
     typeof currentYear === "number" &&
     (currentYear < 2000 || currentYear > 3000)
   ) {
     throw new Error("Invalid year range");
   }
-  let { type, label }: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
+  let { type, label }: PlaceTypeAndLabel =
+    placeTypeLabel || (await getPlaceTypeAndLabel(place));
   const labelEmpty = label;
 
   if (type === "region") {

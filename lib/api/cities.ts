@@ -28,5 +28,5 @@ async function fetchCityByIdApi(
 export async function fetchCityById(
   id: string | number
 ): Promise<CitySummaryResponseDTO | null> {
-  return cityByIdCache(fetchCityByIdApi, id);
+  return cityByIdCache(id, fetchCityByIdApi);
 }

@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import ChartBarIcon from "@heroicons/react/outline/ChartBarIcon";
 import { env } from "@utils/helpers";
-import type { ViewCounterProps } from "types/common";
-
-interface ViewCounterResponse {
-  views: number;
-}
+import type { ViewCounterProps, ViewCounterResponse } from "types/common";
 
 function ViewCounter({ slug, hideText = false }: ViewCounterProps) {
   const [views, setViews] = useState<number>(0);

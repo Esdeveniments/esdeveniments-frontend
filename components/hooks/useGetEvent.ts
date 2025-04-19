@@ -4,7 +4,7 @@ import { fetchEventById } from "@lib/api/events";
 import { EventProps } from "types/common";
 
 const fetcher = async (
-  _: any,
+  _: string,
   uuid: string
 ): Promise<EventDetailResponseDTO> => {
   if (!uuid) {

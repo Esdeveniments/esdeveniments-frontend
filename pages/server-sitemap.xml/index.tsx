@@ -11,8 +11,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const until = new Date(now.getFullYear(), now.getMonth() + 4);
 
   const events = await fetchEvents({
-    from,
-    until,
+    page: 0,
+    from: from.toISOString(),
+    until: until.toISOString(),
     normalizeRss: true,
     maxResults: 2500,
     filterByDate: false,

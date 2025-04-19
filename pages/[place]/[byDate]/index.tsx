@@ -4,12 +4,14 @@ import { initializeStore } from "@utils/initializeStore";
 import Events from "@components/ui/events";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
-import type { ByDateProps, InitialState, StaticProps, DateFunctionsMap } from "types/common";
+import { generatePagesData } from "@components/partials/generatePagesData";
+import type { ByDateProps, InitialState, StaticProps, DateFunctionsMap, PageData, ByDateOptions } from "types/common";
 
 export default function ByDate({
   initialState,
   placeTypeLabel,
-}: ByDateProps): JSX.Element {
+  pageData,
+}: ByDateProps & { pageData: PageData }): JSX.Element {
   useEffect(() => {
     initializeStore(initialState);
   }, [initialState]);
@@ -19,6 +21,7 @@ export default function ByDate({
       events={initialState.events}
       hasServerFilters={initialState.hasServerFilters}
       placeTypeLabel={placeTypeLabel}
+      pageData={pageData}
     />
   );
 }
@@ -30,10 +33,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   };
 };
 
-export const getStaticProps: GetStaticProps<
-  ByDateProps,
-  StaticProps["params"]
-> = async ({ params }) => {
+export const getStaticProps: GetStaticProps<ByDateProps & { pageData: PageData }, StaticProps["params"]> = async ({ params }) => {
   if (!params) {
     return {
       notFound: true,
@@ -67,7 +67,7 @@ export const getStaticProps: GetStaticProps<
 
   const initialState: InitialState = {
     place,
-    byDate,
+    byDate: byDate as ByDateOptions,
     events: eventsWithAds,
     noEventsFound: events.length === 0,
     hasServerFilters: true,
@@ -76,10 +76,19 @@ export const getStaticProps: GetStaticProps<
   // Fetch placeTypeLabel server-side
   const placeTypeLabel = await getPlaceTypeAndLabel(place);
 
+  // Generate the SEO/page meta data server-side, passing placeTypeLabel
+  const pageData = await generatePagesData({
+    currentYear: new Date().getFullYear(),
+    place,
+    byDate: byDate as ByDateOptions,
+    placeTypeLabel,
+  });
+
   return {
     props: {
       initialState,
       placeTypeLabel,
+      pageData,
     },
     revalidate: 60,
   };

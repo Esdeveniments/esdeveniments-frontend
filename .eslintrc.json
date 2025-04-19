@@ -9,7 +9,8 @@
   "rules": {
     "no-unused-vars": "warn",
     "no-undef": "error",
-    "no-debugger": "error"
+    "no-debugger": "error",
+    "react/react-in-jsx-scope": "off"
   },
   "env": {
     "es6": true,
@@ -19,7 +20,12 @@
   },
   "overrides": [
     {
-      "files": ["components/**/*.{ts,tsx,js,jsx}", "pages/**/*.{ts,tsx,js,jsx}", "store.ts", "utils/**/*.{ts,tsx,js,jsx}"],
+      "files": [
+        "components/**/*.{ts,tsx,js,jsx}",
+        "pages/**/*.{ts,tsx,js,jsx}",
+        "store.ts",
+        "utils/**/*.{ts,tsx,js,jsx}"
+      ],
       "rules": {
         "no-restricted-syntax": [
           "error",

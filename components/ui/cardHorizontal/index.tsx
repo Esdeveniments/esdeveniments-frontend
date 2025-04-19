@@ -35,11 +35,7 @@ const CardHorizontal: React.FC<CardHorizontalProps> = ({
   }
 
   return (
-    <CardContent
-      event={event as any}
-      isPriority={isPriority}
-      isHorizontal={true}
-    />
+    <CardContent event={event} isPriority={isPriority} isHorizontal={true} />
   );
 };
 

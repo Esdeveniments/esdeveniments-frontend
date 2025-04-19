@@ -19,8 +19,8 @@ import type { FormState, FormData } from "types/event";
 import type { Option } from "types/common";
 
 // Helper type guards for Option/DTO
-function isOption(obj: any): obj is Option {
-  return obj && typeof obj === "object" && "value" in obj && "label" in obj;
+function isOption(obj: unknown): obj is Option {
+  return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;
 }
 function getRegionId(region: FormData["region"]): string | null {
   if (!region) return null;

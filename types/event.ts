@@ -82,4 +82,19 @@ export interface DynamicOptionsLoadingProps {
   timedOut?: boolean;
 }
 
+// Parameters accepted by fetchEvents API
+export interface FetchEventsParams {
+  page?: number;
+  maxResults: number;
+  q?: string;
+  town?: string;
+  zone?: string;
+  category?: string;
+  region?: string;
+  from?: string;
+  until?: string;
+  filterByDate?: boolean;
+  normalizeRss?: boolean;
+}
+
 export { DeleteReason };

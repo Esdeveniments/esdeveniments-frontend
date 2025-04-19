@@ -28,8 +28,8 @@ const getAllArticles = async (
     const q = town ? `${townLabel} ${regionLabel}` : regionLabel;
 
     const events: EventSummaryResponseDTO[] = await fetchEvents({
-      from,
-      until,
+      from: from.toISOString(),
+      until: until.toISOString(),
       q,
       filterByDate: true,
       maxResults: 1000,

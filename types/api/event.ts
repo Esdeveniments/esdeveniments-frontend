@@ -59,7 +59,7 @@ export interface EventSummaryResponseDTO {
 export interface AdEvent {
   isAd: true;
   id: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export type ListEvent = EventSummaryResponseDTO | AdEvent;

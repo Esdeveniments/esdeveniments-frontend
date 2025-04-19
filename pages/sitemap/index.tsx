@@ -4,8 +4,13 @@ import { siteUrl } from "@config/index";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import Link from "next/link";
 import { GetStaticProps } from "next";
+import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
-export default function Sitemap({ regions }: { regions: any[] }): JSX.Element {
+export default function Sitemap({
+  regions,
+}: {
+  regions: RegionsGroupedByCitiesResponseDTO[];
+}): JSX.Element {
   return (
     <>
       <Meta
@@ -15,11 +20,11 @@ export default function Sitemap({ regions }: { regions: any[] }): JSX.Element {
       />
       <div className="w-full px-6">
         {regions.map((region) => (
-          <div key={region.value} className="">
+          <div key={region.name} className="">
             <div className="">
-              <h2 className="mb-4">{region.label}</h2>
+              <h2 className="mb-4">{region.name}</h2>
             </div>
-            {region.cities.map((city: any) => (
+            {region.cities.map((city) => (
               <div key={city.value} className="mb-2">
                 <Link
                   href={`/sitemap/${city.value.toLowerCase()}`}

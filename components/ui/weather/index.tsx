@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* eslint-disable */
 // Check in the future
 import { memo, FC } from "react";
@@ -27,7 +26,7 @@ interface WeatherData {
   icon?: string;
 }
 
-const Weather: FC<WeatherProps> = ({ startDate, location }) => {
+const Weather: FC<WeatherProps> = ({ startDate }) => {
   const {
     isLessThanFiveDays,
     startDate: start,
@@ -35,7 +34,9 @@ const Weather: FC<WeatherProps> = ({ startDate, location }) => {
   }: FormattedDateResult = getFormattedDate(startDate);
 
   const showWeather = isMultipleDays || isLessThanFiveDays;
-  const { data, error } = {} as any; // useGetWeather(showWeather, location);
+  console.log(showWeather);
+  console.log(start);
+  const { data, error } = { data: undefined, error: undefined }; // useGetWeather(showWeather, location);
 
   if (!data || error) return <p>No hi ha dades meteorològiques disponibles.</p>;
 

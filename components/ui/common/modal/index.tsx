@@ -1,7 +1,7 @@
-import { Fragment, useRef, ReactNode } from "react";
+import { Fragment, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import ArrowLeftIcon from "@heroicons/react/outline/ArrowLeftIcon";
-import { ModalProps } from '../../../../types/props';
+import { ModalProps } from "types/props";
 
 export default function Modal({
   open,

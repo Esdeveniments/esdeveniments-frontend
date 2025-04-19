@@ -154,9 +154,10 @@ export const getStaticProps: GetStaticProps<
   const townLabel = town;
 
   const events = await fetchEvents({
-    from,
-    until,
+    page: 0,
     maxResults: 2500,
+    from: from.toISOString(),
+    until: until.toISOString(),
     filterByDate: false,
     q: `${townLabel || ""}`,
   });
