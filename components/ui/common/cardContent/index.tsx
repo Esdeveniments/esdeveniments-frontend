@@ -23,7 +23,7 @@ import useOnScreen from "@components/hooks/useOnScreen";
 import Image from "@components/ui/common/image";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import ViewCounter from "@components/ui/viewCounter";
-import { CardContentProps, MemoizedValues } from "types/cardContent";
+import { CardContentProps } from "types/props";
 
 const NativeShareButton = dynamic(
   () => import("@components/ui/common/nativeShareButton"),
@@ -70,7 +70,7 @@ function CardContent({
 
   const { description, icon } = event.weather || {};
 
-  const memoizedValues = useMemo<MemoizedValues>(
+  const memoizedValues = useMemo(
     () => ({
       title: truncateString(event.title || "", isHorizontal ? 30 : 75),
       location: truncateString(event.location || "", 45),
@@ -137,6 +137,7 @@ function CardContent({
                   url={`/e/${event.slug}`}
                   date={memoizedValues.eventDate}
                   location={memoizedValues.location}
+                  subLocation={memoizedValues.subLocation}
                   onShareClick={handleShareClick}
                   hideText={true}
                 />

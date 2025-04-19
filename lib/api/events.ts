@@ -4,7 +4,7 @@ import {
   AdEvent,
   CategorizedEvents,
   EventDetailResponseDTO,
-} from "../../types/api/event";
+} from "types/api/event";
 
 export async function fetchEvents(
   params: Record<string, any>

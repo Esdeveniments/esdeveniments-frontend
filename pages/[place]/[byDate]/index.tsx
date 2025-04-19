@@ -3,21 +3,8 @@ import { GetStaticPaths, GetStaticProps } from "next";
 import { initializeStore } from "@utils/initializeStore";
 import Events from "@components/ui/events";
 import { fetchEvents, insertAds } from "@lib/api/events";
-import { ListEvent } from "../../../types/api/event";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
-
-interface InitialState {
-  place: string;
-  byDate: string;
-  events: ListEvent[];
-  noEventsFound: boolean;
-  hasServerFilters: boolean;
-}
-
-interface ByDateProps {
-  initialState: InitialState;
-  placeTypeLabel: { type: string; label: string; regionLabel?: string };
-}
+import type { ByDateProps, InitialState, StaticProps, DateFunctionsMap } from "types/common";
 
 export default function ByDate({
   initialState,
@@ -43,13 +30,6 @@ export const getStaticPaths: GetStaticPaths = async () => {
   };
 };
 
-interface StaticProps {
-  params: {
-    place: string;
-    byDate: string;
-  };
-}
-
 export const getStaticProps: GetStaticProps<
   ByDateProps,
   StaticProps["params"]
@@ -62,7 +42,7 @@ export const getStaticProps: GetStaticProps<
 
   const { place, byDate } = params;
 
-  const dateFunctions: { [key: string]: () => { from: Date; until: Date } } = {
+  const dateFunctions: DateFunctionsMap = {
     avui: () => ({ from: new Date(), until: new Date() }),
     dema: () => ({ from: new Date(), until: new Date() }),
     setmana: () => ({ from: new Date(), until: new Date() }),

@@ -12,18 +12,7 @@ import { getAllYears, getHistoricDates } from "@lib/dates";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
-
-interface MonthProps {
-  events: EventSummaryResponseDTO[];
-  town: string;
-  townLabel: string;
-}
-
-interface StaticPathParams extends Record<string, string> {
-  town: string;
-  year: string;
-  month: string;
-}
+import type { MonthProps, MonthStaticPathParams } from "types/common";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound"),
@@ -104,10 +93,12 @@ export default function Month({
   );
 }
 
-export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
+export const getStaticPaths: GetStaticPaths<
+  MonthStaticPathParams
+> = async () => {
   const regions = await fetchRegionsWithCities();
   const years = getAllYears();
-  const params: Array<{ params: StaticPathParams }> = [];
+  const params: Array<{ params: MonthStaticPathParams }> = [];
 
   // Get the current year and the next three months
   const currentYear = new Date().getFullYear();
@@ -145,7 +136,7 @@ export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
 
 export const getStaticProps: GetStaticProps<
   MonthProps,
-  StaticPathParams
+  MonthStaticPathParams
 > = async ({ params }) => {
   if (!params) {
     return {
@@ -154,6 +145,11 @@ export const getStaticProps: GetStaticProps<
   }
 
   const { town, year, month } = params;
+
+  if (!month || !year) {
+    return { notFound: true };
+  }
+
   const { from, until } = getHistoricDates(month, parseInt(year, 10));
   const townLabel = town;
 

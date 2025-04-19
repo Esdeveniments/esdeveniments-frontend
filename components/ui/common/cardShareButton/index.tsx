@@ -1,5 +1,5 @@
 import { siteUrl } from "@config/index";
-import { CSSProperties, JSX } from "react";
+import { JSX } from "react";
 import {
   FacebookShareButton,
   TwitterShareButton,
@@ -9,18 +9,7 @@ import {
   TelegramIcon,
   WhatsappIcon,
 } from "react-share";
-
-interface CardShareButtonProps {
-  slug: string;
-}
-
-interface CustomIconProps {
-  bgStyle?: CSSProperties;
-  iconFillColor?: string;
-  size?: number;
-  round?: boolean;
-  className?: string;
-}
+import type { CardShareButtonProps, CustomIconProps } from "types/common";
 
 export default function CardShareButton({
   slug,

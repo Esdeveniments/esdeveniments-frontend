@@ -1,12 +1,9 @@
-import { useState, memo, lazy, ReactNode, JSX } from "react";
+import { useState, memo, lazy, JSX } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 import CardLoading from "@components/ui/cardLoading";
+import { AdContentProps } from "types/common";
 
 const AdBoard = lazy(() => import("../adBoard"));
-
-interface AdContentProps {
-  children: ReactNode;
-}
 
 const AdContent = ({ children }: AdContentProps): JSX.Element => (
   <>

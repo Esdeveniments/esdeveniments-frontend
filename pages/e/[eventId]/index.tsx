@@ -24,7 +24,7 @@ import { siteUrl } from "@config/index";
 import { sendGoogleEvent } from "@utils/analytics";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import AddToCalendar from "@components/ui/addToCalendar";
-import type { QueryParams, DeleteReason } from "./types";
+import type { QueryParams, DeleteReason } from "types/event";
 import { EventDetailResponseDTO } from "types/api/event";
 import { fetchEventById } from "@lib/api/events";
 

@@ -1,16 +1,6 @@
 import { JSX } from "react";
 import Link from "next/link";
-
-interface SocialLinks {
-  twitter?: string;
-  instagram?: string;
-  telegram?: string;
-  facebook?: string;
-}
-
-interface SocialProps {
-  links: SocialLinks;
-}
+import { SocialProps } from '../../../../types/props';
 
 const renderFacebook = (link: string | undefined): JSX.Element | null =>
   link ? (

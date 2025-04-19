@@ -1,5 +1,11 @@
 // --- Centralized event form types ---
-import type { RegionSummaryResponseDTO, CitySummaryResponseDTO } from "./api/event";
+import type {
+  RegionSummaryResponseDTO,
+  CitySummaryResponseDTO,
+} from "./api/event";
+import type { RefObject } from "react";
+import type { DeleteReason } from "./common";
+import type { EventDetailResponseDTO } from "./api/event";
 
 export interface FormState {
   isDisabled: boolean;
@@ -30,3 +36,50 @@ export interface FormData {
 export interface EditEventProps {
   event: FormData;
 }
+
+export interface EventData extends EventDetailResponseDTO {
+  mapsLocation?: string;
+  timeUntil?: string;
+  nameDay?: string;
+  formattedStart?: string;
+  formattedEnd?: string;
+  isFullDayEvent?: boolean;
+  durationInHours?: number;
+  eventImage?: string;
+  eventUrl?: string;
+  videoUrl?: string;
+}
+
+export interface EventProps {
+  event: EventData;
+  fallback?: {
+    [key: string]: EventData;
+  };
+}
+
+export interface EventPageProps {
+  params: {
+    eventId: string;
+  };
+}
+
+export interface QueryParams {
+  newEvent?: boolean;
+  edit_suggested?: boolean;
+}
+
+export interface EventRefs {
+  mapsRef: RefObject<HTMLDivElement>;
+  weatherRef: RefObject<HTMLDivElement>;
+  eventsAroundRef: RefObject<HTMLDivElement>;
+  editModalRef: RefObject<HTMLDivElement>;
+}
+
+export interface DynamicOptionsLoadingProps {
+  error?: Error | null;
+  isLoading?: boolean;
+  pastDelay?: boolean;
+  timedOut?: boolean;
+}
+
+export { DeleteReason };

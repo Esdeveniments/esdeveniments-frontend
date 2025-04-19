@@ -1,8 +1,10 @@
 {
+  "plugins": ["@typescript-eslint"],
   "extends": [
     "eslint:recommended",
     "next",
-    "next/core-web-vitals"
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended"
   ],
   "rules": {
     "no-unused-vars": "warn",
@@ -14,5 +16,23 @@
     "browser": true,
     "node": true,
     "jest": true
-  }
+  },
+  "overrides": [
+    {
+      "files": ["components/**/*.{ts,tsx,js,jsx}", "pages/**/*.{ts,tsx,js,jsx}", "store.ts", "utils/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "TSTypeAliasDeclaration",
+            "message": "Do not declare types outside of the /types directory. Centralize all type aliases in /types."
+          },
+          {
+            "selector": "TSInterfaceDeclaration",
+            "message": "Do not declare interfaces outside of the /types directory. Centralize all interfaces in /types."
+          }
+        ]
+      }
+    }
+  ]
 }

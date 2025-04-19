@@ -1,6 +1,7 @@
-import { ReactNode, JSX } from "react";
+import { JSX } from "react";
 import dynamic from "next/dynamic";
 import Head from "next/head";
+import type { BaseLayoutProps } from "types/common";
 
 const Navbar = dynamic(() => import("@components/ui/common/navbar"), {
   ssr: true,
@@ -10,10 +11,6 @@ const Footer = dynamic(() => import("@components/ui/common/footer"), {
   loading: () => <></>,
   ssr: false,
 });
-
-interface BaseLayoutProps {
-  children: ReactNode;
-}
 
 export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
   return (

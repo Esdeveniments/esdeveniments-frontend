@@ -7,32 +7,8 @@ import { findCategoryKeyByValue } from "@utils/helpers";
 import { useRouter } from "next/router";
 import useStore from "@store";
 import type { Option } from "types/common";
-
-interface RenderButtonProps {
-  text: string;
-  enabled: string | boolean | undefined;
-  onClick: () => void;
-  handleOpenModal: () => void;
-  scrollToTop: () => void;
-}
-
-interface FilterState {
-  place: string;
-  byDate: string;
-  category: string;
-  distance: string;
-  openModal: boolean;
-  setState: (
-    // eslint-disable-next-line no-unused-vars
-    key: "place" | "byDate" | "category" | "distance" | "openModal",
-    // eslint-disable-next-line no-unused-vars
-    value: string | boolean
-  ) => void;
-}
-
-interface FiltersProps {
-  placeLabel: string;
-}
+import { RenderButtonProps, FiltersProps } from "types/common";
+import { FilterState } from "types/filters";
 
 const renderButton = ({
   text,

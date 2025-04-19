@@ -1,8 +1,5 @@
-import type { NextConfig } from 'next';
-import { withSentryConfig } from '@sentry/nextjs';
-import withBundleAnalyzer from '@next/bundle-analyzer';
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   experimental: {
     scrollRestoration: true,
   },
@@ -43,27 +40,23 @@ const nextConfig: NextConfig = {
   redirects: async () => [],
 };
 
-// Configure bundle analyzer
-const bundleAnalyzer = withBundleAnalyzer({
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
+const { withSentryConfig } = require('@sentry/nextjs');
 
-// Configure Sentry
 const sentryWebpackPluginOptions = {
   silent: true,
   org: 'esdeveniments',
   project: 'javascript-nextjs',
-  widenClientFileUpload: true, // Upload a larger set of source maps for prettier stack traces (increases build time)
-  transpileClientSDK: true, // Transpiles SDK to be compatible with IE11 (increases bundle size)
-  hideSourceMaps: true, // Hides source maps from generated client bundles
-  disableLogger: true, // Automatically tree-shake Sentry logger statements to reduce bundle size
-  automaticVercelMonitors: true, // Enables automatic instrumentation of Vercel Cron Monitors
+  widenClientFileUpload: true,
+  transpileClientSDK: true,
+  hideSourceMaps: true,
+  disableLogger: true,
+  automaticVercelMonitors: true,
 };
 
-// Apply configurations
-const config = withSentryConfig(
-  bundleAnalyzer(nextConfig),
+module.exports = withSentryConfig(
+  withBundleAnalyzer(nextConfig),
   sentryWebpackPluginOptions
 );
-
-export default config;

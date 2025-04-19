@@ -1,18 +1,5 @@
 import { useState, useEffect } from "react";
-
-interface NetworkInformation extends EventTarget {
-  effectiveType: string;
-  addEventListener: (type: string, listener: EventListener) => void;
-  removeEventListener: (type: string, listener: EventListener) => void;
-}
-
-declare global {
-  interface Navigator {
-    connection?: NetworkInformation;
-    mozConnection?: NetworkInformation;
-    webkitConnection?: NetworkInformation;
-  }
-}
+import { NetworkInformation } from "types/common";
 
 export const useNetworkSpeed = (): number => {
   const [quality, setQuality] = useState<number>(70); // Default quality

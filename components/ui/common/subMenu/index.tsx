@@ -3,10 +3,6 @@ import dynamic from "next/dynamic";
 import Filters from "@components/ui/filters";
 import useStore from "@store";
 
-interface StoreState {
-  openModal: boolean;
-}
-
 interface SubMenuProps {
   placeLabel: string;
 }
@@ -16,13 +12,37 @@ const FiltersModal = dynamic(() => import("@components/ui/filtersModal"), {
 });
 
 const SubMenu: FC<SubMenuProps> = ({ placeLabel }) => {
-  const { openModal } = useStore((state: StoreState) => ({
+  const {
+    openModal,
+    place,
+    byDate,
+    category,
+    distance,
+    userLocation,
+    setState,
+  } = useStore((state) => ({
     openModal: state.openModal,
+    place: state.place,
+    byDate: state.byDate,
+    category: state.category,
+    distance: state.distance,
+    userLocation: state.userLocation,
+    setState: state.setState,
   }));
 
   return (
     <>
-      {openModal && <FiltersModal />}
+      {openModal && (
+        <FiltersModal
+          openModal={openModal}
+          place={place}
+          byDate={byDate}
+          category={category}
+          distance={distance}
+          userLocation={userLocation}
+          setState={setState}
+        />
+      )}
       <Filters placeLabel={placeLabel} />
     </>
   );

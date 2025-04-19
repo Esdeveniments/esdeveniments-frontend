@@ -1,8 +1,5 @@
 import { useEffect, useRef, FC, RefObject } from "react";
-
-interface MapsProps {
-  location: string;
-}
+import type { MapsProps } from "types/common";
 
 const Maps: FC<MapsProps> = ({ location }) => {
   const mapRef = useRef<HTMLDivElement | null>(

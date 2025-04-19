@@ -15,8 +15,7 @@ import Card from "@components/ui/card";
 import EventsHorizontalScroll from "@components/ui/eventsHorizontalScroll";
 import { SEARCH_TERMS_SUBSET, CATEGORY_NAMES_MAP } from "@utils/constants";
 import useStore, { EventCategory } from "@store";
-
-type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
+import { ByDateOptions } from "types/common";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound"),

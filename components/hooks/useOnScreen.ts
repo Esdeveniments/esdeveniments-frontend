@@ -1,8 +1,5 @@
 import { useEffect, useState, useRef, RefObject } from "react";
-
-interface UseOnScreenOptions extends IntersectionObserverInit {
-  freezeOnceVisible?: boolean;
-}
+import { UseOnScreenOptions } from "types/common";
 
 function useOnScreen<T extends Element = Element>(
   ref: RefObject<T>,

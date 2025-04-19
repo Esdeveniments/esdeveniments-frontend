@@ -1,12 +1,7 @@
 import type { NextPage, NextPageContext } from "next";
-import type { ErrorProps } from "next/error";
 import NextErrorComponent from "next/error";
 import { captureException, flush } from "@sentry/nextjs";
-
-interface MyErrorProps extends ErrorProps {
-  hasGetInitialPropsRun: boolean;
-  err?: Error;
-}
+import type { MyErrorProps } from "types/common";
 
 const MyError: NextPage<MyErrorProps> = ({
   statusCode,

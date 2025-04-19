@@ -1,7 +1,7 @@
 import { JSX, memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
-import { CardContent as CardContentType } from "types/cardContent"; // add this import
+import type { CardProps } from "types/common";
 
 const CardLoading = dynamic(() => import("@components/ui/cardLoading"), {
   loading: () => (
@@ -19,12 +19,6 @@ const AdCard = dynamic(() => import("@components/ui/adCard"), {
   ),
   ssr: false,
 });
-
-interface CardProps {
-  event: CardContentType;
-  isLoading?: boolean;
-  isPriority?: boolean;
-}
 
 function Card({
   event,

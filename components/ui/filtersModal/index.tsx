@@ -12,22 +12,10 @@ import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, CATEGORY_NAMES_MAP, DISTANCES } from "@utils/constants";
 import { sendEventToGA } from "@utils/helpers";
-import useStore, { UserLocation, EventCategory } from "@store";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option } from "types/common";
-
-interface GeolocationPosition {
-  coords: {
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-    altitude: number | null;
-    altitudeAccuracy: number | null;
-    heading: number | null;
-    speed: number | null;
-  };
-  timestamp: number;
-}
+import { FiltersModalProps } from "types/filtersModal";
+import { GeolocationPosition, GroupedOption, GeolocationError } from "types/common";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
@@ -37,41 +25,20 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
   loading: () => <></>,
 });
 
-interface GroupedOption {
-  label: string;
-  options: Option[];
-}
-
-interface GeolocationError {
-  code: number;
-  message: string;
-}
-
-const FiltersModal: FC = () => {
-  const {
-    openModal,
-    place,
-    byDate,
-    category,
-    distance,
-    userLocation,
-    setState,
-  } = useStore((state) => ({
-    openModal: state.openModal,
-    place: state.place,
-    byDate: state.byDate,
-    category: state.category,
-    distance: state.distance,
-    userLocation: state.userLocation,
-    setState: state.setState,
-  }));
-
+const FiltersModal: FC<FiltersModalProps> = ({
+  openModal,
+  place,
+  byDate,
+  category,
+  distance,
+  userLocation,
+  setState,
+}) => {
   const [localPlace, setLocalPlace] = useState<string>(place);
   const [localByDate, setLocalByDate] = useState<string>(byDate);
   const [localCategory, setLocalCategory] = useState<string>(category);
   const [localDistance, setLocalDistance] = useState<string>(distance);
-  const [localUserLocation, setLocalUserLocation] =
-    useState<UserLocation | null>(userLocation);
+  const [localUserLocation, setLocalUserLocation] = useState(userLocation);
   const [userLocationLoading, setUserLocationLoading] =
     useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
@@ -137,7 +104,7 @@ const FiltersModal: FC = () => {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position: GeolocationPosition) => {
-            const location: UserLocation = {
+            const location = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
             };
@@ -200,7 +167,7 @@ const FiltersModal: FC = () => {
   const applyFilters = () => {
     setState("place", localPlace);
     setState("byDate", localByDate);
-    setState("category", localCategory as EventCategory | "");
+    setState("category", localCategory);
     setState("distance", localDistance);
     setState("userLocation", localUserLocation);
     setState("filtersApplied", true);

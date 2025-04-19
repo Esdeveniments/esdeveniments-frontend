@@ -3,17 +3,11 @@ import { captureException } from "@sentry/nextjs";
 import { sendGoogleEvent } from "@utils/analytics";
 import EventsAroundScroll from "@components/ui/eventsAroundScroll";
 
-import { Event } from "@store";
-
-interface EventsAroundProps {
-  id: string;
-  title: string;
-  town: string;
-  region: string;
-}
+import type { EventSummaryResponseDTO } from "types/api/event";
+import type { EventsAroundProps } from "types/common";
 
 const EventsAround: FC<EventsAroundProps> = ({ id, title, town, region }) => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventSummaryResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

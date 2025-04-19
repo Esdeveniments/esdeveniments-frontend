@@ -50,7 +50,11 @@ interface EventsProps {
   placeTypeLabel: { type: string; label: string; regionLabel?: string };
 }
 
-const Events: FC<EventsProps> = ({ events, hasServerFilters, placeTypeLabel }) => {
+const Events: FC<EventsProps> = ({
+  events,
+  hasServerFilters,
+  placeTypeLabel,
+}) => {
   const { setState, areFiltersActive, filtersApplied } = useStore((state) => ({
     openModal: state.openModal,
     setState: state.setState,
@@ -150,7 +154,10 @@ const Events: FC<EventsProps> = ({ events, hasServerFilters, placeTypeLabel }) =
           ))}
         </div>
       ) : hasFilters ? (
-        <EventsList events={events} placeTypeLabel={placeTypeLabel} />
+        <EventsList
+          events={events}
+          placeTypeLabel={placeTypeLabel?.label || ""}
+        />
       ) : (
         <EventsCategorized />
       )}

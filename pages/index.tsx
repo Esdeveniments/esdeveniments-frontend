@@ -1,22 +1,9 @@
 import { useEffect, JSX } from "react";
 import { initializeStore } from "@utils/initializeStore";
 import type { GetStaticProps } from "next";
-import { EventLocation } from "../store";
-import { CategorizedEvents, EventSummaryResponseDTO } from "../types/api/event";
 import EventsCategorized from "@components/ui/eventsCategorized";
 import { fetchCategorizedEvents } from "@lib/api/events";
-
-interface InitialState {
-  categorizedEvents: CategorizedEvents;
-  latestEvents: EventSummaryResponseDTO[];
-  userLocation?: EventLocation | null;
-  currentYear?: number;
-  noEventsFound: boolean;
-}
-
-interface HomeProps {
-  initialState: InitialState;
-}
+import type { HomeInitialState, HomeProps } from "types/common";
 
 export default function Home({ initialState }: HomeProps): JSX.Element {
   useEffect(() => {
@@ -33,7 +20,7 @@ export default function Home({ initialState }: HomeProps): JSX.Element {
 export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   const { categorizedEvents, latestEvents } = await fetchCategorizedEvents();
 
-  const initialState: InitialState = {
+  const initialState: HomeInitialState = {
     categorizedEvents: categorizedEvents || {},
     latestEvents: latestEvents || [],
     noEventsFound:

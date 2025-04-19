@@ -6,30 +6,10 @@ import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getFormattedDate } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import type { GetServerSideProps } from "next";
+import type { RssQueryParams, RssEvent } from "types/common";
 import { EventSummaryResponseDTO } from "types/api/event";
 
 const SITE_NAME = "Esdeveniments.cat";
-
-interface QueryParams {
-  region?: string;
-  town?: string;
-  maxEventsPerDay?: string;
-  until?: number;
-}
-
-interface RssEvent {
-  id: string;
-  title: string;
-  slug: string;
-  nameDay: string;
-  formattedStart: string;
-  location: string;
-  town: string;
-  region: string;
-  startDate: string;
-  imageUploaded?: string;
-  eventImage?: string;
-}
 
 const getAllArticles = async (
   region: string,
@@ -145,7 +125,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       town = "",
       maxEventsPerDay,
       until,
-    } = query as QueryParams;
+    } = query as RssQueryParams;
 
     const articles = await getAllArticles(region, town, maxEventsPerDay, until);
 

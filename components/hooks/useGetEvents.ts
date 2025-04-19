@@ -1,22 +1,8 @@
 import { captureException } from "@sentry/nextjs";
 import useSWR, { preload } from "swr";
 import { PagedResponseDTO, EventSummaryResponseDTO } from "types/api/event";
+import { UseGetEventsProps } from "types/common";
 import { fetchEvents } from "../../lib/api/events";
-
-interface EventsProps {
-  events?: EventSummaryResponseDTO[];
-}
-
-interface UseGetEventsProps {
-  props?: EventsProps;
-  pageIndex: number;
-  q?: string;
-  refreshInterval?: boolean;
-  maxResults?: number;
-  town?: string;
-  zone?: string;
-  category?: string;
-}
 
 const fetcher = async (
   _: any,

@@ -1,9 +1,6 @@
 import { useEffect, FC } from "react";
 import { env } from "@utils/helpers";
-
-interface ReportViewProps {
-  slug: string;
-}
+import { ReportViewProps } from '../../../types/props';
 
 const ReportView: FC<ReportViewProps> = ({ slug }) => {
   useEffect(() => {

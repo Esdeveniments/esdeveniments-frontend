@@ -1,29 +1,11 @@
 import { siteUrl } from "@config/index";
 import { monthsName } from "@utils/helpers";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
-
-type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
-type PlaceType = "region" | "town" | "";
-
-export interface PageData {
-  title: string;
-  subTitle: string;
-  metaTitle: string;
-  metaDescription: string;
-  canonical: string;
-  notFoundText: string;
-}
-
-export interface GeneratePagesDataProps {
-  currentYear: string | number;
-  place?: string;
-  byDate?: ByDateOptions;
-}
-
-export interface PlaceTypeAndLabel {
-  type: PlaceType;
-  label: string;
-}
+import {
+  PageData,
+  GeneratePagesDataProps,
+  PlaceTypeAndLabel,
+} from "types/common";
 
 const FEMININE_REGIONS = ["selva"];
 const month = monthsName[new Date().getMonth()];
@@ -44,8 +26,15 @@ const createPageData = (
   notFoundText,
 });
 
-export async function generatePagesData({ currentYear, place = "", byDate = "" }: GeneratePagesDataProps): Promise<PageData> {
-  if (typeof currentYear === "number" && (currentYear < 2000 || currentYear > 3000)) {
+export async function generatePagesData({
+  currentYear,
+  place = "",
+  byDate = "",
+}: GeneratePagesDataProps): Promise<PageData> {
+  if (
+    typeof currentYear === "number" &&
+    (currentYear < 2000 || currentYear > 3000)
+  ) {
     throw new Error("Invalid year range");
   }
   let { type, label }: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
@@ -62,7 +51,9 @@ export async function generatePagesData({ currentYear, place = "", byDate = "" }
       label = `al ${label}`;
     }
   } else {
-    if (["a", "e", "i", "o", "u", "h"].includes(label.charAt(0).toLowerCase())) {
+    if (
+      ["a", "e", "i", "o", "u", "h"].includes(label.charAt(0).toLowerCase())
+    ) {
       label = `a ${label}`;
     } else {
       label = `a ${label}`;

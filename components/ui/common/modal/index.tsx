@@ -1,16 +1,7 @@
 import { Fragment, useRef, ReactNode } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import ArrowLeftIcon from "@heroicons/react/outline/ArrowLeftIcon";
-
-interface ModalProps {
-  open: boolean;
-  // eslint-disable-next-line no-unused-vars
-  setOpen: (open: boolean) => void;
-  title: string;
-  children: ReactNode;
-  actionButton?: string;
-  onActionButtonClick?: () => void | Promise<void>;
-}
+import { ModalProps } from '../../../../types/props';
 
 export default function Modal({
   open,

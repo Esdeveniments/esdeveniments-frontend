@@ -2,17 +2,7 @@ import { useCallback, useMemo, memo, MouseEvent, JSX } from "react";
 import { ShareIcon } from "@heroicons/react/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { sendGoogleEvent } from "@utils/analytics";
-
-interface NativeShareButtonProps {
-  title: string;
-  url: string;
-  date: string;
-  location: string;
-  subLocation?: string;
-  // eslint-disable-next-line no-unused-vars
-  onShareClick?: (e: MouseEvent<HTMLButtonElement>) => void;
-  hideText?: boolean;
-}
+import { NativeShareButtonProps } from '../../../../types/props';
 
 const NativeShareButton = ({
   title,

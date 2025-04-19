@@ -8,20 +8,9 @@ import React, {
 } from "react";
 import CalendarButton from "./CalendarButton";
 import { generateCalendarUrls, CalendarUrls } from "@utils/calendarUtils";
+import { AddToCalendarProps } from "types/common";
 
 const LazyCalendarList = React.lazy(() => import("./CalendarList"));
-
-type DateString = string | Date;
-
-interface AddToCalendarProps {
-  title: string;
-  description: string;
-  location: string;
-  startDate: DateString;
-  endDate: DateString;
-  canonical: string;
-  hideText?: boolean;
-}
 
 const useOutsideClick = <T extends HTMLElement>(
   ref: React.RefObject<T | null>,

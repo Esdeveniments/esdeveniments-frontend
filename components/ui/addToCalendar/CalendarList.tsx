@@ -1,13 +1,7 @@
 import { memo, useCallback, useEffect, FC } from "react";
 import Image from "next/image";
 import { sendGoogleEvent } from "@utils/analytics";
-import type { CalendarUrls, CalendarOption } from "types/common";
-
-interface CalendarListProps {
-  onClick: () => void;
-  getUrls: () => CalendarUrls;
-  title: string;
-}
+import type { CalendarOption, CalendarListProps } from "types/common";
 
 const CalendarList: FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
   const urls = getUrls();

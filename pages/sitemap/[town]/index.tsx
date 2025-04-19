@@ -6,16 +6,7 @@ import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 import Link from "next/link";
 import { fetchCityById } from "@lib/api/cities";
-
-interface SitemapProps {
-  town: string;
-  label: string;
-}
-
-interface StaticPathParams {
-  town: string;
-  [key: string]: string;
-}
+import type { SitemapProps, StaticPathParams } from "types/common";
 
 const years: number[] = getAllYears();
 

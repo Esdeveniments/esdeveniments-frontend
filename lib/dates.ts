@@ -1,10 +1,6 @@
 import { MONTHS_URL as MONTHS } from "@utils/constants";
 import { nextDay, isWeekend } from "@utils/helpers";
-
-type DateRange = {
-  from: Date;
-  until: Date;
-};
+import { DateRange } from "types/common";
 
 /**
  * Returns whether the current date is in daylight saving time

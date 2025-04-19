@@ -1,8 +1,7 @@
-import React from 'react';
 import { memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
-import { Event } from "@store";
+import type { CardHorizontalProps } from "types/common";
 
 const CardHorizontalLoading = dynamic(
   () => import("@components/ui/cardLoading"),
@@ -24,13 +23,11 @@ const AdCard = dynamic(() => import("@components/ui/adCard"), {
   ssr: false,
 });
 
-interface CardHorizontalProps {
-  event: Event;
-  isLoading?: boolean;
-  isPriority?: boolean;
-}
-
-const CardHorizontal: React.FC<CardHorizontalProps> = ({ event, isLoading, isPriority }) => {
+const CardHorizontal: React.FC<CardHorizontalProps> = ({
+  event,
+  isLoading,
+  isPriority,
+}) => {
   if (isLoading) return <CardHorizontalLoading />;
 
   if (event.isAd) {
@@ -38,11 +35,18 @@ const CardHorizontal: React.FC<CardHorizontalProps> = ({ event, isLoading, isPri
   }
 
   return (
-    <CardContent event={event as any} isPriority={isPriority} isHorizontal={true} />
+    <CardContent
+      event={event as any}
+      isPriority={isPriority}
+      isHorizontal={true}
+    />
   );
 };
 
-const areEqual = (prevProps: CardHorizontalProps, nextProps: CardHorizontalProps): boolean => {
+const areEqual = (
+  prevProps: CardHorizontalProps,
+  nextProps: CardHorizontalProps
+): boolean => {
   if (!prevProps.event && !nextProps.event) {
     return (
       prevProps.isLoading === nextProps.isLoading &&

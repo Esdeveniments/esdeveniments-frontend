@@ -12,7 +12,7 @@ import {
 import Meta from "@components/partials/seo-meta";
 import { Notification } from "@components/ui/common";
 import { siteUrl } from "@config/index";
-import type { EventDetailResponseDTO } from "../../../../types/api/event";
+import type { EventDetailResponseDTO } from "types/api/event";
 import { updateEventById } from "lib/api/events";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { FormState, FormData } from "types/event";

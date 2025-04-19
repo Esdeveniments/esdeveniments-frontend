@@ -3,26 +3,14 @@ import { GetStaticPaths, GetStaticProps } from "next";
 import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
 import { fetchEvents, insertAds } from "@lib/api/events";
-import { ListEvent } from "../../types/api/event";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { fetchRegionsWithCities } from "@lib/api/regions";
-
-interface InitialState {
-  place: string;
-  events: ListEvent[];
-  noEventsFound: boolean;
-  hasServerFilters: boolean;
-}
-
-interface PlaceProps {
-  initialState: InitialState;
-  placeTypeLabel: { type: string; label: string; regionLabel?: string };
-}
-
-interface StaticPathParams {
-  place: string;
-  [key: string]: string | string[] | undefined;
-}
+import type {
+  PlaceInitialState,
+  PlaceProps,
+  PlaceStaticPathParams,
+  PlaceStaticPath,
+} from "types/common";
 
 export default function Place({
   initialState,
@@ -41,8 +29,10 @@ export default function Place({
   );
 }
 
-export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
-  const paths: Array<{ params: StaticPathParams }> = [];
+export const getStaticPaths: GetStaticPaths<
+  PlaceStaticPathParams
+> = async () => {
+  const paths: PlaceStaticPath[] = [];
 
   const regions = await fetchRegionsWithCities();
 
@@ -62,13 +52,13 @@ export const getStaticPaths: GetStaticPaths<StaticPathParams> = async () => {
 };
 
 export const getStaticProps: GetStaticProps<PlaceProps> = async (context) => {
-  const { place } = context.params as StaticPathParams;
+  const { place } = context.params as PlaceStaticPathParams;
 
   const params = { page: 0, maxResults: 100, place };
   const events = await fetchEvents(params);
   const eventsWithAds = insertAds(events);
 
-  const initialState: InitialState = {
+  const initialState: PlaceInitialState = {
     place,
     events: eventsWithAds,
     noEventsFound: events.length === 0,

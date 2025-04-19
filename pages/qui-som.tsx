@@ -3,16 +3,9 @@ import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import Image from "next/image";
 import type { NextPage } from "next";
+import type { TeamMember as TeamMemberType } from "types/common";
 
-interface TeamMember {
-  name: string;
-  role: string;
-  title: string;
-  image: string;
-  linkedin: string;
-}
-
-const teamMembers: TeamMember[] = [
+const teamMembers: TeamMemberType[] = [
   {
     name: "Albert Olivé Corbella",
     role: "Senior Full Stack Developer",
@@ -80,7 +73,10 @@ const QuiSom: NextPage = () => {
           <h2 className="text-center">El nostre equip</h2>
           <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-8">
             {teamMembers.map((member) => (
-              <div key={member.name} className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl">
+              <div
+                key={member.name}
+                className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl"
+              >
                 <div className="h-[185px] overflow-hidden">
                   <Image
                     className="object-cover object-top rounded-t-md"
@@ -97,7 +93,9 @@ const QuiSom: NextPage = () => {
                   </div>
                   <div className="w-full flex flex-col justify-start items-start px-4">
                     <p className="w-full">{member.role}</p>
-                    <p className="w-full text-sm font-semibold">{member.title}</p>
+                    <p className="w-full text-sm font-semibold">
+                      {member.title}
+                    </p>
                   </div>
                   <a
                     href={member.linkedin}

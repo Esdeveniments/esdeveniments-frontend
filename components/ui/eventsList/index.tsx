@@ -23,6 +23,8 @@ import useOnScreen from "@components/hooks/useOnScreen";
 import useStore from "@store";
 import { UserLocation } from "@store";
 import { EventSummaryResponseDTO, AdEvent, ListEvent } from "types/api/event";
+import { EventsListProps } from '../../../types/props';
+import { FetchedData } from "types/common";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound"),
@@ -31,11 +33,6 @@ const NoEventsFound = dynamic(
   }
 );
 
-interface EventsListProps {
-  events?: ListEvent[];
-  placeTypeLabel: { type: string; label: string; regionLabel?: string };
-}
-
 interface PageData {
   metaTitle: string;
   metaDescription: string;
@@ -43,12 +40,6 @@ interface PageData {
   subTitle: string;
   canonical: string;
   notFoundText: string;
-}
-
-interface FetchedData {
-  content?: ListEvent[];
-  noEventsFound?: boolean;
-  allEventsLoaded?: boolean;
 }
 
 // --- Helper type guards and extractors (move outside the component for stability) ---

@@ -1,14 +1,7 @@
 import Head from "next/head";
 import { siteUrl } from "@config/index";
 import { FC } from "react";
-
-interface MetaProps {
-  title: string;
-  description: string;
-  canonical: string;
-  image?: string;
-  preload?: string;
-}
+import { MetaProps } from "types/common";
 
 const Meta: FC<MetaProps> = ({ title, description, canonical, image, preload }) => {
   const imageUrl = image || `${siteUrl}/static/images/logo-seo-meta.webp`;

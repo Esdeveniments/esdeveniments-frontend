@@ -2,20 +2,8 @@ import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components, StylesConfig, GroupBase } from "react-select";
 import useStore from "@store";
-import type { Option } from "types/common";
-
-interface SelectComponentProps {
-  id: string;
-  title: string;
-  value?: Option | null;
-  // eslint-disable-next-line no-unused-vars
-  onChange: (value: Option | null) => void;
-  options: Option[];
-  isDisabled?: boolean;
-  isValidNewOption?: boolean;
-  isClearable?: boolean;
-  placeholder?: string;
-}
+import { SelectComponentProps } from "types/props";
+import { Option } from "types/common";
 
 const borderColor = "#CCC !important";
 

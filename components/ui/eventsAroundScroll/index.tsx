@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Image from "@components/ui/common/image";
 import { truncateString } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
-import { Event } from "@store";
+import type { EventsAroundScrollProps } from "types/common";
 
 const EventCardLoading: FC = () => {
   return (
@@ -29,11 +29,6 @@ const EventCardLoading: FC = () => {
     </div>
   );
 };
-
-interface EventsAroundScrollProps {
-  events: Event[];
-  loading: boolean;
-}
 
 const EventsAroundScroll: FC<EventsAroundScrollProps> = ({
   events,
@@ -72,7 +67,7 @@ const EventsAroundScroll: FC<EventsAroundScrollProps> = ({
     <div className="w-full flex overflow-x-auto py-4 space-x-4">
       {events.map((event) => {
         const title = truncateString(event.title || "", 60);
-        const image = event.imageUploaded || event.eventImage;
+        const image = event.imageUrl;
         const link = `/e/${event.slug}`;
 
         return (

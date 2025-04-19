@@ -1,12 +1,6 @@
 import { memo, FC } from "react";
 import CardHorizontal from "@components/ui/cardHorizontal";
-import { Event } from "@store";
-
-interface EventsHorizontalScrollProps {
-  events: Event[];
-  loading?: boolean;
-  usePriority?: boolean;
-}
+import type { EventsHorizontalScrollProps } from "types/common";
 
 const EventCardLoading: FC = () => {
   return (

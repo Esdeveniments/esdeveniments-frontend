@@ -1,10 +1,7 @@
 import useSWR, { preload } from "swr";
 import { EventDetailResponseDTO } from "types/api/event";
 import { fetchEventById } from "@lib/api/events";
-
-interface EventProps {
-  event: EventDetailResponseDTO;
-}
+import { EventProps } from "types/common";
 
 const fetcher = async (
   _: any,

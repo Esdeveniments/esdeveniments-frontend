@@ -39,6 +39,13 @@
     "noUnusedParameters": true,
     "types": ["./types/react-datepicker.d.ts"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "tailwind.config.js",
+    "next.config.js",
+    "postcss.config.js"
+  ],
   "exclude": ["node_modules"]
 }
