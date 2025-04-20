@@ -11,6 +11,11 @@ import { FetchEventsParams, FormData } from "types/event";
 export async function fetchEvents(
   params: FetchEventsParams
 ): Promise<EventSummaryResponseDTO[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    // MOCK DATA or empty for build safety
+    return [];
+  }
   // Prepare params: always send page and size, only include others if non-empty
   const query: Partial<FetchEventsParams> = {};
   query.page = typeof params.page === "number" ? params.page : 0;
@@ -22,18 +27,23 @@ export async function fetchEvents(
   if (params.zone) query.zone = params.zone;
   if (params.category) query.category = params.category;
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/events?` +
-      new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(query)
-            .filter(([, v]) => v !== undefined)
-            .map(([k, v]) => [k, String(v)])
+  try {
+    const response = await fetch(
+      `${apiUrl}/events?` +
+        new URLSearchParams(
+          Object.fromEntries(
+            Object.entries(query)
+              .filter(([, v]) => v !== undefined)
+              .map(([k, v]) => [k, String(v)])
+          )
         )
-      )
-  );
-  const data = await response.json();
-  return data.content || [];
+    );
+    const data = await response.json();
+    return data.content || [];
+  } catch (e) {
+    console.error("Error fetching events:", e);
+    return [];
+  }
 }
 
 export async function fetchEventById(
@@ -84,11 +94,21 @@ export interface CategorizedEventsApiResponse {
 }
 
 export async function fetchCategorizedEvents(): Promise<CategorizedEventsApiResponse> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/events/categorized`
-  );
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return response.json();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    // MOCK DATA or empty for build safety
+    return { categorizedEvents: {} };
+  }
+  try {
+    const response = await fetch(
+      `${apiUrl}/events/categorized`
+    );
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
+  } catch (e) {
+    console.error("Error fetching categorized events:", e);
+    return { categorizedEvents: {} };
+  }
 }
 
 export function insertAds(
