@@ -1,0 +1,474 @@
+import type { CSSProperties } from "react";
+import type { ErrorProps } from "next/error";
+import type { EventLocation } from "../store";
+import type { StoreState } from "@store";
+import {
+  CategorizedEvents,
+  EventSummaryResponseDTO,
+  EventDetailResponseDTO,
+  ListEvent,
+} from "types/api/event";
+import type { LinkProps } from "next/link";
+
+export interface Option {
+  label: string;
+  value: string;
+}
+
+export type CategoryKey =
+  | "Festes Majors"
+  | "Festivals"
+  | "Familiar"
+  | "Música"
+  | "Cinema"
+  | "Teatre"
+  | "Exposicions"
+  | "Fires"
+  | "Espectacles";
+
+export type CategoryValue =
+  | "Festa Major"
+  | "Festival"
+  | "Familiar"
+  | "Música"
+  | "Cinema"
+  | "Teatre"
+  | "Exposició"
+  | "Fira"
+  | "Espectacles";
+
+export type Categories = Record<CategoryKey, CategoryValue>;
+
+export interface CalendarUrls {
+  google: string;
+  outlook: string;
+  ical: string;
+}
+
+export interface CalendarOption {
+  name: string;
+  url?: string;
+  icon: string;
+  download?: string;
+}
+
+export type DeleteReason =
+  | "not-exist"
+  | "duplicated"
+  | "offensive"
+  | "others"
+  | null;
+
+export interface EventProps {
+  event: EventDetailResponseDTO;
+}
+
+export interface EventsProps {
+  events?: EventSummaryResponseDTO[];
+}
+
+export interface UseGetEventsProps {
+  props?: EventsProps;
+  pageIndex: number;
+  q?: string;
+  refreshInterval?: boolean;
+  maxResults?: number;
+  town?: string;
+  zone?: string;
+  category?: string;
+}
+
+export interface UseGetCategorizedEventsProps {
+  props?: {
+    categorizedEvents?: CategorizedEvents;
+    latestEvents?: EventSummaryResponseDTO[];
+  };
+  // Removed searchTerms and maxResults as they are not supported by the backend endpoint
+  refreshInterval?: boolean;
+}
+
+export interface CategorizedEventsResponse {
+  categorizedEvents: CategorizedEvents;
+  latestEvents?: EventSummaryResponseDTO[];
+}
+
+export interface NetworkInformation extends EventTarget {
+  effectiveType: string;
+  addEventListener: (type: string, listener: EventListener) => void;
+  removeEventListener: (type: string, listener: EventListener) => void;
+}
+
+export interface UseOnScreenOptions extends IntersectionObserverInit {
+  freezeOnceVisible?: boolean;
+}
+
+export interface PageData {
+  metaTitle: string;
+  metaDescription: string;
+  title: string;
+  subTitle: string;
+  canonical: string;
+  notFoundText: string;
+}
+
+export interface GeneratePagesDataProps {
+  currentYear: string | number;
+  place?: string;
+  byDate?: ByDateOptions;
+  placeTypeLabel?: PlaceTypeAndLabel;
+}
+
+export interface PlaceTypeAndLabel {
+  type: PlaceType;
+  label: string;
+  regionLabel?: string;
+}
+
+export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
+export type PlaceType = "region" | "town" | "";
+
+export interface FetchedData {
+  content?: ListEvent[];
+  noEventsFound?: boolean;
+  allEventsLoaded?: boolean;
+}
+
+export interface RenderButtonProps {
+  text: string;
+  enabled: string | boolean | undefined;
+  onClick: () => void;
+  handleOpenModal: () => void;
+  scrollToTop: () => void;
+}
+
+export interface FiltersProps {
+  placeLabel: string;
+}
+
+export interface GeolocationPosition {
+  coords: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    altitude: number | null;
+    altitudeAccuracy: number | null;
+    heading: number | null;
+    speed: number | null;
+  };
+  timestamp: number;
+}
+
+export interface GroupedOption {
+  label: string;
+  options: Option[];
+}
+
+export interface GeolocationError {
+  code: number;
+  message: string;
+}
+
+export interface Gradient {
+  gradient: string;
+  color: string;
+}
+
+export interface ImgDefaultProps {
+  date: string;
+  location: string;
+  subLocation: string;
+}
+
+export interface MetaProps {
+  title: string;
+  description: string;
+  canonical: string;
+  image?: string;
+  preload?: string;
+}
+
+export type AdStatus = "unfilled" | "filled";
+
+export interface GoogleAdsenseContainerProps {
+  id: string;
+  style?: CSSProperties;
+  layout?: "horizontal" | "vertical" | "in-article" | "in-feed";
+  format?: "auto" | "rectangle" | "vertical" | "horizontal";
+  responsive?: boolean;
+  slot: string;
+  setDisplayAd?: (display: boolean) => void;
+  adClient?: string;
+}
+
+export interface AdArticleProps {
+  isDisplay?: boolean;
+  slot: string;
+}
+
+export interface AdContentProps {
+  children: React.ReactNode;
+}
+
+export type DateString = string | Date;
+
+export interface AddToCalendarProps {
+  title: string;
+  description: string;
+  location: string;
+  startDate: DateString;
+  endDate: DateString;
+  canonical: string;
+  hideText?: boolean;
+}
+
+export interface CalendarButtonProps {
+  onClick: React.MouseEventHandler<HTMLButtonElement>;
+  hideText?: boolean;
+}
+
+export interface CalendarListProps {
+  onClick: () => void;
+  getUrls: () => CalendarUrls;
+  title: string;
+}
+
+export interface CardProps {
+  event: EventSummaryResponseDTO;
+  isLoading?: boolean;
+  isPriority?: boolean;
+}
+
+export interface CardHorizontalProps {
+  event: EventSummaryResponseDTO;
+  isLoading?: boolean;
+  isPriority?: boolean;
+}
+
+export interface CardShareButtonProps {
+  slug: string;
+}
+
+export interface CustomIconProps {
+  bgStyle?: CSSProperties;
+  iconFillColor?: string;
+  size?: number;
+  round?: boolean;
+  className?: string;
+}
+
+export interface EventsAroundProps {
+  id: string;
+  title: string;
+  town: string;
+  region: string;
+}
+
+export interface EventsAroundScrollProps {
+  events: EventSummaryResponseDTO[];
+  loading: boolean;
+}
+
+export interface EventsHorizontalScrollProps {
+  events: EventSummaryResponseDTO[];
+  loading?: boolean;
+  usePriority?: boolean;
+}
+
+export interface BaseLayoutProps {
+  children: React.ReactNode;
+}
+
+export interface ListProps {
+  events: EventSummaryResponseDTO[];
+  children: (
+    event: EventSummaryResponseDTO,
+    index: number
+  ) => React.ReactElement;
+}
+
+export interface MapsProps {
+  location: string;
+}
+
+export interface TooltipComponentProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+export interface ViewCounterProps {
+  slug: string;
+  hideText?: boolean;
+}
+
+export interface InitialState {
+  place: string;
+  byDate: string;
+  events: ListEvent[];
+  noEventsFound: boolean;
+  hasServerFilters: boolean;
+}
+
+export interface ByDateProps {
+  initialState: InitialState;
+  placeTypeLabel: PlaceTypeAndLabel;
+}
+
+export interface StaticProps {
+  params: {
+    place: string;
+    byDate: string;
+  };
+}
+
+export interface PlaceInitialState {
+  place: string;
+  events: ListEvent[];
+  noEventsFound: boolean;
+  hasServerFilters: boolean;
+}
+
+export interface PlaceProps {
+  initialState: PlaceInitialState;
+  placeTypeLabel: PlaceTypeAndLabel;
+}
+
+export interface PlaceStaticPathParams {
+  place: string;
+  [key: string]: string | string[] | undefined;
+}
+
+export type PlaceStaticPath = { params: PlaceStaticPathParams };
+
+export interface MyErrorProps extends ErrorProps {
+  hasGetInitialPropsRun: boolean;
+  err?: Error;
+}
+
+export interface EditEventPageProps {
+  params: {
+    eventId: string;
+  };
+}
+
+export interface ApiResponse {
+  success: boolean;
+  message?: string;
+  event?: FormData;
+}
+
+export interface HomeInitialState {
+  categorizedEvents: CategorizedEvents;
+  latestEvents: EventSummaryResponseDTO[];
+  userLocation?: EventLocation | null;
+  currentYear?: number;
+  noEventsFound: boolean;
+}
+
+export interface HomeProps {
+  initialState: HomeInitialState;
+}
+
+export interface TeamMember {
+  name: string;
+  role: string;
+  title: string;
+  image: string;
+  linkedin: string;
+}
+
+export type DateRange = { from: Date; until: Date };
+
+export type DateFunctionsMap = { [key: string]: () => DateRange };
+
+export interface RssQueryParams {
+  region?: string;
+  town?: string;
+  maxEventsPerDay?: string;
+  until?: number;
+}
+
+export interface RssEvent {
+  id: string;
+  title: string;
+  slug: string;
+  nameDay: string;
+  formattedStart: string;
+  location: string;
+  town: string;
+  region: string;
+  startDate: string;
+  imageUploaded?: string;
+  eventImage?: string;
+}
+
+export interface MonthProps {
+  events: EventSummaryResponseDTO[];
+  town: string;
+  townLabel: string;
+}
+
+export interface MonthStaticPathParams {
+  town: string;
+  year?: string;
+  month?: string;
+  [key: string]: string | undefined;
+}
+
+export interface TownStaticPathParams {
+  town: string;
+  year?: string;
+  month?: string;
+  [key: string]: string | undefined;
+}
+
+export interface SitemapProps {
+  town: string;
+  label: string;
+}
+
+// SearchState type
+export interface SearchState {
+  searchTerm: string;
+  setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
+}
+
+// ViewCounterResponse interface
+export interface ViewCounterResponse {
+  views: number;
+}
+
+// Utility function to safely construct a PlaceTypeAndLabel from any input
+export function makePlaceTypeAndLabel(
+  type: string,
+  label: string,
+  regionLabel?: string
+): PlaceTypeAndLabel {
+  const allowedTypes: PlaceType[] = ["region", "town", ""];
+  return {
+    type: allowedTypes.includes(type as PlaceType) ? (type as PlaceType) : "",
+    label,
+    regionLabel,
+  };
+}
+
+export interface LoaderProps {
+  src: string;
+  width: number;
+  quality?: number;
+}
+
+export interface ImageComponentProps {
+  title: string;
+  date?: string;
+  location?: string;
+  subLocation?: string;
+  image?: string;
+  className?: string;
+  priority?: boolean;
+  alt?: string;
+}
+
+export interface ActiveLinkProps extends LinkProps {
+  children: React.ReactElement<HTMLAnchorElement>;
+  activeLinkClass?: string;
+}

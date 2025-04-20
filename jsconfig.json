@@ -28,7 +28,11 @@
       ],
       "@public/*": [
         "public/*"
+      ],
+      "@types/*": [
+        "types/*"
       ]
-    }
+    },
+    "types": ["./types/react-datepicker.d.ts"]
   }
 }
