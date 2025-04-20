@@ -51,6 +51,7 @@ export async function fetchRegionsWithCities(): Promise<
   try {
     return await regionsWithCitiesCache(fetchRegionsWithCitiesFromApi);
   } catch (e) {
+    console.error("Error fetching regions with cities:", e);
     // If fetch fails, fallback to mock data
     return [
       {
