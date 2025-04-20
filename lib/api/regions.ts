@@ -29,7 +29,45 @@ async function fetchRegionsWithCitiesFromApi(): Promise<
 export async function fetchRegionsWithCities(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
-  return regionsWithCitiesCache(fetchRegionsWithCitiesFromApi);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    // MOCK DATA: fallback for Vercel or missing backend
+    return [
+      {
+        id: 1,
+        name: "Barcelona",
+        cities: [
+          { label: "Barcelona", value: "barcelona" },
+          { label: "Hospitalet", value: "hospitalet" },
+        ],
+      },
+      {
+        id: 2,
+        name: "Girona",
+        cities: [{ label: "Girona", value: "girona" }],
+      },
+    ];
+  }
+  try {
+    return await regionsWithCitiesCache(fetchRegionsWithCitiesFromApi);
+  } catch (e) {
+    // If fetch fails, fallback to mock data
+    return [
+      {
+        id: 1,
+        name: "Barcelona",
+        cities: [
+          { label: "Barcelona", value: "barcelona" },
+          { label: "Hospitalet", value: "hospitalet" },
+        ],
+      },
+      {
+        id: 2,
+        name: "Girona",
+        cities: [{ label: "Girona", value: "girona" }],
+      },
+    ];
+  }
 }
 
 export async function fetchRegionById(
