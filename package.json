@@ -6,6 +6,7 @@
     "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build",
     "vercel-build": "next build && yarn run postbuild",
     "dev": "next dev",
+    "build": "next build",
     "build:development": "NODE_ENV=development env-cmd -f .env.development next build",
     "start:development": "env-cmd -f .env.development next start",
     "build:staging": "NODE_ENV=staging env-cmd -f .env.staging next build",
