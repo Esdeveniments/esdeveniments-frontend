@@ -1,3 +1,4 @@
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
@@ -11,6 +12,8 @@
 # next.js
 /.next/
 /out/
+next-env.d.ts
+tsconfig.tsbuildinfo
 
 # production
 /build
@@ -24,8 +27,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+/.yarn/
+
+# logs
+*.log
 
 # local env files
+.env
 .env.development
 .env.production
 .env.staging
@@ -36,11 +44,29 @@ yarn-error.log*
 # Sitemap file
 sitemap.xml
 sitemap-0.xml
+
 # Sentry
 .sentryclirc
 
-# Sentry Auth Token
-.sentryclirc
 
-# Sentry Config File
-.sentryclirc
+.aider*
+
+.early.coverage
+
+.ts-migration*
+
+# IDE/Editor specific
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.codegpt
