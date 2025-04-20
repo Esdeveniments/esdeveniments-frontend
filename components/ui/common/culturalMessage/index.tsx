@@ -2,10 +2,7 @@ import { FC, MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { sendGoogleEvent } from "@utils/analytics";
-
-interface CulturalMessageProps {
-  location: string;
-}
+import { CulturalMessageProps } from "types/props";
 
 const CulturalMessage: FC<CulturalMessageProps> = ({ location }) => {
   const { push } = useRouter();

@@ -130,32 +130,28 @@ function EventsList({
     .filter(Boolean);
 
   // Helper type guards and extractors
-  function eventHasAd(event: ListEvent): boolean {
+  const eventHasAd = useCallback((event: ListEvent): boolean => {
     return event.isAd === true;
-  }
-  function eventHasCoords(event: ListEvent): boolean {
+  }, []);
+
+  const eventHasCoords = useCallback((event: ListEvent): boolean => {
     return (
       !eventHasAd(event) &&
       !!event.city &&
-      typeof (event.city as { latitude: number; longitude: number })
-        .latitude === "number" &&
-      typeof (event.city as { latitude: number; longitude: number })
-        .longitude === "number"
+      typeof (event.city as { latitude: number; longitude: number }).latitude === "number" &&
+      typeof (event.city as { latitude: number; longitude: number }).longitude === "number"
     );
-  }
-  function eventGetCoords(
-    event: ListEvent
-  ): { latitude: number; longitude: number } | null {
+  }, [eventHasAd]);
+
+  const eventGetCoords = useCallback((event: ListEvent): { latitude: number; longitude: number } | null => {
     if (eventHasCoords(event)) {
       return {
-        latitude: (event.city as { latitude: number; longitude: number })
-          .latitude,
-        longitude: (event.city as { latitude: number; longitude: number })
-          .longitude,
+        latitude: (event.city as { latitude: number; longitude: number }).latitude,
+        longitude: (event.city as { latitude: number; longitude: number }).longitude,
       };
     }
     return null;
-  }
+  }, [eventHasCoords]);
 
   // Event handlers
   const handleLoadMore = useCallback(() => {
@@ -187,7 +183,7 @@ function EventsList({
         return eventDistance <= numericDistance;
       });
     },
-    [distance]
+    [distance, eventGetCoords, eventHasCoords, eventHasAd]
   );
 
   // Effects

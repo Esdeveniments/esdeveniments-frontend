@@ -40,14 +40,20 @@ function getTownValue(town: FormData["town"]): string | null {
 
 const defaultForm: FormData = {
   title: "",
+  slug: "",
   description: "",
+  type: "FREE",
   startDate: "",
+  startTime: "",
   endDate: "",
+  endTime: "",
   region: null,
   town: null,
   location: "",
   imageUrl: null,
   url: "",
+  categories: [],
+  email: "",
 };
 
 const _createFormState = (

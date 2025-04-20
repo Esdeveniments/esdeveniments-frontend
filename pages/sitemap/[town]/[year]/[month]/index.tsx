@@ -28,7 +28,8 @@ export default function Month({
   townLabel,
 }: MonthProps): JSX.Element {
   const { query } = useRouter();
-  let { year, month } = query as { year?: string; month?: string };
+  let { month } = query as { year?: string; month?: string };
+  const year = query.year as string;
 
   // Ensure month is defined and handle special case
   if (!month) return <></>;

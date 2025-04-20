@@ -1,18 +1,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import UploadIcon from "@heroicons/react/outline/UploadIcon";
-
-type AcceptedImageTypes =
-  | "image/jpeg"
-  | "image/png"
-  | "image/jpg"
-  | "image/webp";
-
-interface ImageUploaderProps {
-  value: string | null;
-  onUpload: (file: File) => void;
-  progress: number;
-}
+import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   value,

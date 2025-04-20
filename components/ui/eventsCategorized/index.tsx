@@ -12,7 +12,7 @@ import Card from "@components/ui/card";
 import EventsHorizontalScroll from "@components/ui/eventsHorizontalScroll";
 import { CATEGORY_NAMES_MAP } from "@utils/constants";
 import useStore, { EventCategory } from "@store";
-import { ByDateOptions, PageData } from "types/common";
+import type { ByDateOptions, PageData } from "types/common";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 const NoEventsFound = dynamic(
@@ -27,11 +27,7 @@ const AdArticle = dynamic(() => import("@components/ui/adArticle"), {
   ssr: false,
 });
 
-interface EventsCategorizedProps {
-  pageData: PageData;
-}
-
-function EventsCategorized({ pageData }: EventsCategorizedProps): ReactElement {
+function EventsCategorized({ pageData }: { pageData: PageData }): ReactElement {
   const {
     categorizedEvents: initialCategorizedEvents,
     latestEvents: initialLatestEvents,

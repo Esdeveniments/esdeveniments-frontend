@@ -1,13 +1,6 @@
 import { useEffect, useRef, CSSProperties, JSX } from "react";
 import { AdStatus, GoogleAdsenseContainerProps } from "types/common";
 
-declare global {
-  // eslint-disable-next-line no-unused-vars
-  interface Window {
-    adsbygoogle: unknown[];
-  }
-}
-
 const GoogleAdsenseContainer = ({
   id,
   style,

@@ -6,27 +6,9 @@ import format from "date-fns/format";
 import ca from "date-fns/locale/ca";
 import setHours from "date-fns/setHours";
 import setMinutes from "date-fns/setMinutes";
+import { DatePickerComponentProps, CustomHeaderProps } from "types/props";
 
 import "react-datepicker/dist/react-datepicker.css";
-
-// Improved typing: only expose what is needed, and forward accessibility props
-export interface DatePickerComponentProps {
-  idPrefix?: string;
-  startDate: Date;
-  endDate: Date;
-  minDate?: Date;
-  onChange: (field: "startDate" | "endDate", date: Date) => void;
-  required?: boolean;
-  className?: string;
-}
-
-interface CustomHeaderProps {
-  date: Date;
-  decreaseMonth: () => void;
-  increaseMonth: () => void;
-  prevMonthButtonDisabled: boolean;
-  nextMonthButtonDisabled: boolean;
-}
 
 const ButtonInput = React.forwardRef<
   HTMLButtonElement,

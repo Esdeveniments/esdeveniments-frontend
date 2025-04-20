@@ -2,11 +2,7 @@ import ReactHtmlParser from "react-html-parser";
 import DocumentIcon from "@heroicons/react/outline/DocumentIcon";
 import CulturalMessage from "../culturalMessage";
 import { JSX, ReactNode } from "react";
-
-interface DescriptionProps {
-  description?: string;
-  location?: string;
-}
+import { DescriptionProps } from "types/props";
 
 export default function Description({
   description,

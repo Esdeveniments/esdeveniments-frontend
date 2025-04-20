@@ -1,20 +1,6 @@
-import { ChangeEvent, FC } from "react";
+import { FC } from "react";
 import XIcon from "@heroicons/react/outline/XIcon";
-
-type RangeInputValue = string | number;
-
-interface RangeInputProps {
-  id: string;
-  min: number;
-  max: number;
-  value: number;
-  onChange: (
-    // eslint-disable-next-line no-unused-vars
-    e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } }
-  ) => void;
-  label: string;
-  disabled?: boolean;
-}
+import { RangeInputProps } from "types/props";
 
 const RangeInput: FC<RangeInputProps> = ({
   id,

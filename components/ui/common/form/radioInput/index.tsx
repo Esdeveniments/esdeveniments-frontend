@@ -1,16 +1,5 @@
 import { memo } from "react";
-
-type RadioInputValue = string | number;
-
-interface RadioInputProps {
-  id: string;
-  name: string;
-  value: RadioInputValue;
-  checkedValue: RadioInputValue;
-  onChange: (value: RadioInputValue) => void;
-  label: string;
-  disabled?: boolean;
-}
+import { RadioInputProps } from "types/props";
 
 const RadioInput: React.FC<RadioInputProps> = ({
   id,

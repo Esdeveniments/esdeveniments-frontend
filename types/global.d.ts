@@ -4,6 +4,10 @@ declare global {
     mozConnection?: NetworkInformation;
     webkitConnection?: NetworkInformation;
   }
+
+  interface Window {
+    adsbygoogle: unknown[];
+  }
 }
 
 export {};

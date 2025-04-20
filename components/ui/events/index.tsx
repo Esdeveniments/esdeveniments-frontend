@@ -7,9 +7,8 @@ import Search from "@components/ui/search";
 import SubMenu from "@components/ui/common/subMenu";
 import Imago from "public/static/images/imago-esdeveniments.png";
 import CardLoading from "@components/ui/cardLoading";
-import { ListEvent } from "types/api/event";
-import type { PageData } from "types/common";
 import { makePlaceTypeAndLabel } from "types/common";
+import type { EventsProps } from "types/events";
 
 const EventsList = dynamic(() => import("@components/ui/eventsList"), {
   loading: () => (
@@ -45,13 +44,6 @@ function debounce<F extends (...args: unknown[]) => unknown>(
   };
 }
 /* eslint-enable no-unused-vars */
-
-interface EventsProps {
-  events: ListEvent[];
-  hasServerFilters?: boolean;
-  placeTypeLabel: { type: string; label: string; regionLabel?: string };
-  pageData: PageData;
-}
 
 const Events: FC<EventsProps> = ({
   events,

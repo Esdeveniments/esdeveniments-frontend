@@ -3,18 +3,7 @@ import { FC } from "react";
 import CheckCircleIcon from "@heroicons/react/solid/CheckCircleIcon";
 import ExclamationCircleIcon from "@heroicons/react/solid/ExclamationCircleIcon";
 import XIcon from "@heroicons/react/solid/XIcon";
-
-// eslint-disable-next-line no-unused-vars
-type HideNotification = (hide: boolean) => void;
-
-interface NotificationProps {
-  url?: string;
-  title?: string;
-  type?: "warning" | "success";
-  customNotification?: boolean;
-  hideNotification?: HideNotification;
-  hideClose?: boolean;
-}
+import { NotificationProps } from "types/props";
 
 const Notification: FC<NotificationProps> = ({
   url,

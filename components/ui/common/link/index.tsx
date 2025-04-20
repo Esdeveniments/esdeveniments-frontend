@@ -1,11 +1,7 @@
-import React, { ReactElement } from "react";
-import Link, { LinkProps } from "next/link";
+import { cloneElement } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
-
-interface ActiveLinkProps extends LinkProps {
-  children: ReactElement<HTMLAnchorElement>;
-  activeLinkClass?: string;
-}
+import { ActiveLinkProps } from "types/common";
 
 export default function ActiveLink({
   children,
@@ -27,7 +23,7 @@ export default function ActiveLink({
 
   return (
     <Link {...props} prefetch={false} legacyBehavior>
-      {React.cloneElement(children, { className })}
+      {cloneElement(children, { className })}
     </Link>
   );
 }

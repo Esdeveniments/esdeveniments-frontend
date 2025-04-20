@@ -2,22 +2,7 @@ import { FC } from "react";
 import Link from "next/link";
 import Modal from "@components/ui/common/modal";
 import { PencilIcon, XCircleIcon } from "@heroicons/react/outline";
-import type { DeleteReason } from "types/common";
-
-interface EditModalProps {
-  openModal: boolean;
-  // eslint-disable-next-line no-unused-vars
-  setOpenModal: (open: boolean) => void;
-  slug: string;
-  // eslint-disable-next-line no-unused-vars
-  setOpenModalDeleteReasonModal: (open: boolean) => void;
-  openDeleteReasonModal: boolean;
-  // eslint-disable-next-line no-unused-vars
-  setReasonToDelete: (reason: DeleteReason) => void;
-  reasonToDelete?: DeleteReason | null | undefined;
-  onSendDeleteReason: () => void;
-  onRemove: () => void;
-}
+import type { EditModalProps } from "types/editModal";
 
 const EditModal: FC<EditModalProps> = ({
   openModal,

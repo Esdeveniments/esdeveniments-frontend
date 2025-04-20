@@ -81,3 +81,28 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
 export type CategorizedEvents = {
   [category: string]: EventSummaryResponseDTO[];
 };
+
+// --- Backend time object ---
+export interface EventTimeDTO {
+  hour: number;
+  minute: number;
+  second?: number;
+  nano?: number;
+}
+
+// --- Event update (PUT) request DTO ---
+export interface EventUpdateRequestDTO {
+  title: string;
+  type: "FREE" | "PAID";
+  url: string;
+  description: string;
+  imageUrl: string | null;
+  regionId: number;
+  cityId: number;
+  startDate: string; // YYYY-MM-DD
+  startTime: EventTimeDTO;
+  endDate: string;
+  endTime: EventTimeDTO;
+  location: string;
+  categories: number[];
+}

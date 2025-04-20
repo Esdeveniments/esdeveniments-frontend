@@ -1,9 +1,6 @@
 import { FC } from "react";
 import Link from "next/link";
-
-interface NoEventsFoundProps {
-  title?: string;
-}
+import type { NoEventsFoundProps } from "types/props";
 
 const NoEventsFound: FC<NoEventsFoundProps> = ({ title }) => {
   return (

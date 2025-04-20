@@ -1,10 +1,10 @@
-// @ts-ignore
 import { useState, memo, useRef, RefObject } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import useOnScreen from "@components/hooks/useOnScreen";
 import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
+import { LoaderProps, ImageComponentProps } from "types/common";
 
 const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   loading: () => (
@@ -14,17 +14,8 @@ const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   ),
 });
 
-interface LoaderProps {
-  src: string;
-  width: number;
-  quality?: number;
-}
-
-const cloudflareLoader = ({
-  src,
-}: // width,
-// quality = 70,
-LoaderProps): string => {
+const cloudflareLoader = ({ src, width, quality }: LoaderProps): string => {
+  console.log(width, quality);
   return src;
   // if (!src) return "";
   // const normalizedSrc = src.startsWith("/") ? src.slice(1) : src;
@@ -35,17 +26,6 @@ LoaderProps): string => {
   //   ? `/cdn-cgi/image/${paramsString}/${normalizedSrc}`
   //   : src;
 };
-
-interface ImageComponentProps {
-  title: string;
-  date?: string;
-  location?: string;
-  subLocation?: string;
-  image?: string;
-  className?: string;
-  priority?: boolean;
-  alt?: string;
-}
 
 function ImageComponent({
   title = "",

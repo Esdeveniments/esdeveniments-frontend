@@ -12,27 +12,45 @@ import {
 import Meta from "@components/partials/seo-meta";
 import { Notification } from "@components/ui/common";
 import { siteUrl } from "@config/index";
-import type { EventDetailResponseDTO } from "types/api/event";
+import type {
+  CitySummaryResponseDTO,
+  EventDetailResponseDTO,
+  RegionSummaryResponseDTO,
+} from "types/api/event";
 import { updateEventById } from "lib/api/events";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { FormState, FormData } from "types/event";
 import type { Option } from "types/common";
+import type { EventUpdateRequestDTO } from "types/api/event";
+import type { EventTimeDTO } from "types/api/event";
 
 // Helper type guards for Option/DTO
 function isOption(obj: unknown): obj is Option {
   return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;
 }
+
 function getRegionId(region: FormData["region"]): string | null {
   if (!region) return null;
   if ("id" in region) return String(region.id);
   if (isOption(region)) return region.value;
   return null;
 }
+
 function getTownId(town: FormData["town"]): string | null {
   if (!town) return null;
   if ("id" in town) return String(town.id);
   if (isOption(town)) return town.value;
   return null;
+}
+
+// --- Helper: Type guard for backend time object ---
+function isBackendTime(obj: unknown): obj is EventTimeDTO {
+  return (
+    !!obj &&
+    typeof obj === "object" &&
+    typeof (obj as EventTimeDTO).hour === "number" &&
+    typeof (obj as EventTimeDTO).minute === "number"
+  );
 }
 
 const _createFormState = (
@@ -139,20 +157,119 @@ const createFormState = (
   return _createFormState(false);
 };
 
-const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
-  const router = useRouter();
-  const [form, setForm] = useState<FormData>({
-    title: event.title,
-    description: event.description,
-    startDate: event.startDate,
-    endDate: event.endDate,
-    region: event.region,
-    town: event.city,
-    location: event.location,
+// --- Mapping function: EventDetailResponseDTO to FormData ---
+function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
+  return {
+    id: event.id ? String(event.id) : undefined,
+    slug: event.slug || "",
+    title: event.title || "",
+    description: event.description || "",
+    type: event.type || "FREE",
+    startDate: event.startDate ? new Date(event.startDate) : "",
+    startTime: isBackendTime(event.startTime)
+      ? `${event.startTime.hour
+          .toString()
+          .padStart(2, "0")}:${event.startTime.minute
+          .toString()
+          .padStart(2, "0")}`
+      : "",
+    endDate: event.endDate ? new Date(event.endDate) : "",
+    endTime: isBackendTime(event.endTime)
+      ? `${event.endTime.hour
+          .toString()
+          .padStart(2, "0")}:${event.endTime.minute
+          .toString()
+          .padStart(2, "0")}`
+      : "",
+    region: event.region
+      ? { value: String(event.region.id), label: event.region.name }
+      : null,
+    town: event.city
+      ? { value: String(event.city.id), label: event.city.name }
+      : null,
+    location: event.location || "",
     imageUrl: event.imageUrl || null,
-    url: event.url,
-    email: "",
-  });
+    url: event.url || "",
+    categories: Array.isArray(event.categories)
+      ? event.categories.map((cat) => ({ id: cat.id, name: cat.name }))
+      : [],
+    email: "", // UI only
+  };
+}
+
+// --- Helper: Parse time to { hour, minute, second, nano } ---
+function parseTime(dateOrString: Date | string | undefined): EventTimeDTO {
+  let date: Date;
+  if (!dateOrString) {
+    return { hour: 0, minute: 0, second: 0, nano: 0 };
+  }
+  if (typeof dateOrString === "string") {
+    const [h, m, s] = dateOrString.split(":").map(Number);
+    date = new Date(1970, 0, 1, h || 0, m || 0, s || 0);
+    if (isNaN(date.getTime())) {
+      return { hour: 0, minute: 0, second: 0, nano: 0 };
+    }
+  } else {
+    date = dateOrString;
+  }
+  return {
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    second: date.getSeconds(),
+    nano: 0,
+  };
+}
+
+// --- Mapping: FormData to backend DTO ---
+function formDataToBackendDTO(form: FormData): EventUpdateRequestDTO {
+  return {
+    title: form.title,
+    type: form.type ?? "FREE",
+    url: form.url,
+    description: form.description,
+    imageUrl: form.imageUrl,
+    regionId:
+      form.region && "id" in form.region
+        ? form.region.id
+        : isOption(form.region)
+        ? Number(form.region.value)
+        : 0,
+    cityId:
+      form.town && "id" in form.town
+        ? form.town.id
+        : isOption(form.town)
+        ? Number(form.town.value)
+        : 0,
+    startDate:
+      typeof form.startDate === "string"
+        ? form.startDate
+        : form.startDate instanceof Date
+        ? form.startDate.toISOString().slice(0, 10)
+        : "",
+    startTime: parseTime(form.startTime),
+    endDate:
+      typeof form.endDate === "string"
+        ? form.endDate
+        : form.endDate instanceof Date
+        ? form.endDate.toISOString().slice(0, 10)
+        : "",
+    endTime: parseTime(form.endTime),
+    location: form.location,
+    categories: Array.isArray(form.categories)
+      ? form.categories.map((cat) =>
+          typeof cat === "object" && "id" in cat
+            ? cat.id
+            : isOption(cat)
+            ? Number(cat.value)
+            : Number(cat)
+        )
+      : [],
+  };
+}
+
+const Edita: React.FC<{ event: FormData }> = ({ event }) => {
+  const router = useRouter();
+  const [form, setForm] = useState<FormData>({ ...event });
   const [formState, setFormState] = useState<FormState>(_createFormState());
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
   const [showDeleteMessage, setShowDeleteMessage] = useState(false);
@@ -182,18 +299,7 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
   }, [regionsWithCities, form.region]);
 
   useEffect(() => {
-    setForm({
-      title: event.title,
-      description: event.description,
-      startDate: event.startDate,
-      endDate: event.endDate,
-      region: event.region,
-      town: event.city,
-      location: event.location,
-      imageUrl: event.imageUrl || null,
-      url: event.url,
-      email: "",
-    });
+    setForm({ ...event });
   }, [event]);
 
   useEffect(() => {
@@ -209,44 +315,31 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
     query: { edit_suggested: true },
   });
 
-  const handleFormChange = (name: keyof FormData, value: any) => {
-    let newValue = value;
-    if (name === "region") {
-      newValue = value
-        ? regionsWithCities?.find((r) => String(r.id) === getRegionId(value)) ||
-          null
-        : null;
-      // Reset town if region changes
-      setForm((prev) => ({ ...prev, region: newValue, town: null }));
-      setFormState(
-        createFormState(
-          { ...form, region: newValue, town: null },
-          formState.isPristine
-        )
-      );
-      return;
-    }
-    if (name === "town") {
-      newValue =
-        value && form.region
-          ? regionsWithCities
-              ?.find((r) => String(r.id) === getRegionId(form.region))
-              ?.cities.find((c) => String(c.value) === getTownId(value)) || null
-          : null;
-    }
-    if (name === "startDate" || name === "endDate")
-      newValue =
-        value instanceof Date ? value.toISOString().slice(0, 10) : value;
-    setForm((prev) => ({ ...prev, [name]: newValue }));
-    setFormState(
-      createFormState({ ...form, [name]: newValue }, formState.isPristine)
-    );
+  // --- Field-specific change handlers ---
+  const handleTitleChange = (v: string) => setForm((f) => ({ ...f, title: v }));
+  const handleDescriptionChange = (v: string) =>
+    setForm((f) => ({ ...f, description: v }));
+  const handleUrlChange = (v: string) => setForm((f) => ({ ...f, url: v }));
+  const handleLocationChange = (v: string) =>
+    setForm((f) => ({ ...f, location: v }));
+  const handleEmailChange = (v: string) => setForm((f) => ({ ...f, email: v }));
+
+  const handleRegionChange = (
+    region: RegionSummaryResponseDTO | { value: string; label: string } | null
+  ) => {
+    setForm((f) => ({ ...f, region, town: null }));
   };
 
-  const handleChange = (e: { target: { name: string; value: string } }) => {
-    const { name, value } = e.target;
-    handleFormChange(name as keyof FormData, value);
+  const handleTownChange = (
+    town: CitySummaryResponseDTO | { value: string; label: string } | null
+  ) => {
+    setForm((f) => ({ ...f, town }));
   };
+
+  const handleStartDateChange = (date: string | Date) =>
+    setForm((f) => ({ ...f, startDate: date }));
+  const handleEndDateChange = (date: string | Date) =>
+    setForm((f) => ({ ...f, endDate: date }));
 
   const onSubmit = async () => {
     const newFormState = createFormState(form, formState.isPristine);
@@ -254,13 +347,9 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
     if (!newFormState.isDisabled) {
       setIsLoadingEdit(true);
       try {
-        const dataToSend = {
-          ...form,
-          regionId: getRegionId(form.region),
-          cityId: getTownId(form.town),
-          imageUrl: form.imageUrl,
-          url: form.url,
-        };
+        if (!event.id) throw new Error("Event id is missing");
+
+        const dataToSend = formDataToBackendDTO(form);
         await updateEventById(event.id, dataToSend);
         const { formattedStart } = getFormattedDate(
           typeof form.startDate === "string"
@@ -345,20 +434,20 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
               id="title"
               title="Títol *"
               value={form.title || event.title}
-              onChange={handleChange}
+              onChange={(e) => handleTitleChange(e.target.value)}
             />
 
             <TextArea
               id="description"
               value={form.description || event.description}
-              onChange={handleChange}
+              onChange={(e) => handleDescriptionChange(e.target.value)}
             />
 
             <Input
               id="url"
               title="Enllaç de l'esdeveniment"
               value={form.url || ""}
-              onChange={handleChange}
+              onChange={(e) => handleUrlChange(e.target.value)}
             />
 
             {event.imageUrl ? (
@@ -396,9 +485,7 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
               title="Comarca *"
               options={regionOptions}
               value={isOption(form.region) ? form.region : null}
-              onChange={(option: Option | null) =>
-                handleFormChange("region", option)
-              }
+              onChange={(option: Option | null) => handleRegionChange(option)}
               isClearable
               placeholder={
                 isLoadingRegionsWithCities
@@ -412,9 +499,7 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
               title="Ciutat *"
               options={cityOptions}
               value={isOption(form.town) ? form.town : null}
-              onChange={(option: Option | null) =>
-                handleFormChange("town", option)
-              }
+              onChange={(option: Option | null) => handleTownChange(option)}
               isDisabled={!form.region || isLoadingRegionsWithCities}
               isClearable
               placeholder={
@@ -428,15 +513,19 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
               id="location"
               title="Lloc *"
               value={form.location}
-              onChange={handleChange}
+              onChange={(e) => handleLocationChange(e.target.value)}
             />
 
             <DatePicker
               startDate={form.startDate ? new Date(form.startDate) : new Date()}
               endDate={form.endDate ? new Date(form.endDate) : new Date()}
-              onChange={(name: string, value: Date) =>
-                handleFormChange(name as keyof FormData, value)
-              }
+              onChange={(name: string, value: Date) => {
+                if (name === "startDate") {
+                  handleStartDateChange(value);
+                } else if (name === "endDate") {
+                  handleEndDateChange(value);
+                }
+              }}
             />
 
             <Input
@@ -444,7 +533,7 @@ const Edita: React.FC<{ event: EventDetailResponseDTO }> = ({ event }) => {
               title="Correu electrònic"
               subtitle="Vols que t'avisem quan l'esdeveniment s'hagi actualitzat? (no guardem les dades)"
               value={form.email || ""}
-              onChange={handleChange}
+              onChange={(e) => handleEmailChange(e.target.value)}
             />
           </div>
         </div>
@@ -504,8 +593,10 @@ export async function getServerSideProps({
     if (!event) {
       return { notFound: true };
     }
-    return { props: { event } };
+    const formData = eventDtoToFormData(event);
+    return { props: { event: formData } };
   } catch (error) {
+    console.error(error);
     return { notFound: true };
   }
 }

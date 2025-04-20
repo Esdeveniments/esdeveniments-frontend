@@ -7,6 +7,27 @@ import type { RefObject } from "react";
 import type { DeleteReason } from "./common";
 import type { EventDetailResponseDTO } from "./api/event";
 
+export interface FormData {
+  id?: string;
+  slug: string;
+  title: string;
+  description: string;
+  type: "FREE" | "PAID";
+  startDate: string | Date;
+  startTime: string | Date;
+  endDate: string | Date;
+  endTime: string | Date;
+  region: RegionSummaryResponseDTO | { value: string; label: string } | null;
+  town: CitySummaryResponseDTO | { value: string; label: string } | null;
+  location: string;
+  imageUrl: string | null;
+  url: string;
+  categories: Array<
+    { id: number; name: string } | { value: string; label: string } | number
+  >;
+  email?: string; // UI only
+}
+
 export interface FormState {
   isDisabled: boolean;
   isPristine: boolean;
@@ -19,19 +40,6 @@ export interface FormState {
  * - For UI, use Option | null for region/town, then convert to DTO for backend.
  * - Dates should be string (ISO) for storage, can be Date in UI state.
  */
-export interface FormData {
-  id?: string;
-  title: string;
-  description: string;
-  startDate: string | Date; // Use string for backend, Date for UI state
-  endDate: string | Date;
-  region: RegionSummaryResponseDTO | { value: string; label: string } | null;
-  town: CitySummaryResponseDTO | { value: string; label: string } | null;
-  location: string;
-  imageUrl: string | null;
-  url: string;
-  email?: string;
-}
 
 export interface EditEventProps {
   event: FormData;

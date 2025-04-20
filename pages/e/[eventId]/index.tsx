@@ -681,6 +681,7 @@ export async function getStaticProps({
       revalidate: 60,
     };
   } catch (error) {
+    console.error("Error fetching event:", error);
     return {
       notFound: true,
     };

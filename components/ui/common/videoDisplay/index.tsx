@@ -1,8 +1,5 @@
 import { JSX } from "react";
-
-interface VideoDisplayProps {
-  videoUrl: string | null | undefined;
-}
+import { VideoDisplayProps } from "types/props";
 
 const VideoDisplay = ({ videoUrl }: VideoDisplayProps): JSX.Element | null => {
   if (!videoUrl || videoUrl === "") {

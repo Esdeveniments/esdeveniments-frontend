@@ -31,7 +31,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const fields: ISitemapField[] = normalizedEvents
     ?.filter((event) => !event.isAd)
     .map((data) => {
-      let field: ISitemapField & { "image:image"?: string } = {
+      const field: ISitemapField & { "image:image"?: string } = {
         loc: `${siteUrl}/e/${data.slug}`,
         lastmod: new Date().toISOString(),
         changefreq: "daily",

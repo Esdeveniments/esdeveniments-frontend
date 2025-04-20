@@ -8,6 +8,7 @@ import {
   EventDetailResponseDTO,
   ListEvent,
 } from "types/api/event";
+import type { LinkProps } from "next/link";
 
 export interface Option {
   label: string;
@@ -448,4 +449,26 @@ export function makePlaceTypeAndLabel(
     label,
     regionLabel,
   };
+}
+
+export interface LoaderProps {
+  src: string;
+  width: number;
+  quality?: number;
+}
+
+export interface ImageComponentProps {
+  title: string;
+  date?: string;
+  location?: string;
+  subLocation?: string;
+  image?: string;
+  className?: string;
+  priority?: boolean;
+  alt?: string;
+}
+
+export interface ActiveLinkProps extends LinkProps {
+  children: React.ReactElement<HTMLAnchorElement>;
+  activeLinkClass?: string;
 }

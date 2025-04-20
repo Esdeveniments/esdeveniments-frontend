@@ -4,6 +4,7 @@ import {
   AdEvent,
   CategorizedEvents,
   EventDetailResponseDTO,
+  EventUpdateRequestDTO,
 } from "types/api/event";
 import { FetchEventsParams, FormData } from "types/event";
 
@@ -47,7 +48,7 @@ export async function fetchEventById(
 
 export async function updateEventById(
   uuid: string,
-  data: FormData
+  data: EventUpdateRequestDTO
 ): Promise<EventDetailResponseDTO> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`,

@@ -2,10 +2,7 @@ import { memo, FC } from "react";
 import dynamic from "next/dynamic";
 import Filters from "@components/ui/filters";
 import useStore from "@store";
-
-interface SubMenuProps {
-  placeLabel: string;
-}
+import { SubMenuProps } from "types/props";
 
 const FiltersModal = dynamic(() => import("@components/ui/filtersModal"), {
   loading: () => null,

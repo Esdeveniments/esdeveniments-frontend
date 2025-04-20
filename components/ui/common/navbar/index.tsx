@@ -11,14 +11,7 @@ import {
 import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
 import logo from "@public/static/images/logo-esdeveniments.webp";
-
-type Href = `/${string}`;
-
-interface NavigationItem {
-  name: string;
-  href: Href;
-  current: true | false;
-}
+import { NavigationItem } from "types/props";
 
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: true },
