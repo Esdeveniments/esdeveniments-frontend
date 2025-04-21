@@ -1,5 +1,3 @@
-'use client';
-
 import { JSX } from "react";
 import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";

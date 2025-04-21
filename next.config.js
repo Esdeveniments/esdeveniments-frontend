@@ -2,6 +2,7 @@
 const nextConfig = {
   experimental: {
     scrollRestoration: true,
+    appDir: true
   },
   productionBrowserSourceMaps: true,
   i18n: {

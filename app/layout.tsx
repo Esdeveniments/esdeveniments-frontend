@@ -1,15 +1,9 @@
-'use client';
-
 import "@styles/globals.css";
 import { Suspense, JSX } from "react";
 import Script from "next/script";
 import { BaseLayout } from "@components/ui/layout";
-import type { AppProps } from "next/app";
 
-function EsdevenimentsMainEntry({
-  Component,
-  pageProps,
-}: AppProps): JSX.Element {
+export default function RootLayout({ children }) {
   return (
     <>
       <Script
@@ -64,11 +58,9 @@ function EsdevenimentsMainEntry({
 
       <BaseLayout>
         <Suspense fallback={<></>}>
-          <Component {...pageProps} />
+          {children}
         </Suspense>
       </BaseLayout>
     </>
   );
 }
-
-export default EsdevenimentsMainEntry;

@@ -4,13 +4,13 @@ import { getFormattedDate } from '@utils/helpers';
 import { EventDetailResponseDTO } from 'types/api/event';
 import { JSX } from 'react';
 
-interface EventPageProps {
+interface EditEventPageProps {
   params: {
     eventId: string;
   };
 }
 
-export default async function EventPage({ params }: EventPageProps): Promise<JSX.Element> {
+export default async function EditEventPage({ params }: EditEventPageProps): Promise<JSX.Element> {
   const event: EventDetailResponseDTO | null = await fetchEventById(params.eventId);
 
   if (!event) {
@@ -21,7 +21,7 @@ export default async function EventPage({ params }: EventPageProps): Promise<JSX
 
   return (
     <div>
-      <h1>{event.title}</h1>
+      <h1>Edit Event: {event.title}</h1>
       <p>{event.description}</p>
       <p>
         {formattedStart} - {formattedEnd}

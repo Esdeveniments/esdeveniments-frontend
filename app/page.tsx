@@ -2,11 +2,10 @@
 
 import { useEffect, JSX } from "react";
 import { initializeStore } from "@utils/initializeStore";
-import type { GetStaticProps } from "next";
 import EventsCategorized from "@components/ui/eventsCategorized";
 import { fetchCategorizedEvents } from "@lib/api/events";
-import type { HomeInitialState, HomeProps } from "types/common";
 import { generatePagesData } from "@components/partials/generatePagesData";
+import type { HomeInitialState, HomeProps } from "types/common";
 import type { PageData } from "types/common";
 
 export default function Home({ initialState, pageData }: HomeProps & { pageData: PageData }): JSX.Element {
@@ -21,7 +20,7 @@ export default function Home({ initialState, pageData }: HomeProps & { pageData:
   );
 }
 
-export const getStaticProps: GetStaticProps<HomeProps & { pageData: PageData }> = async () => {
+export async function getStaticProps() {
   const { categorizedEvents, latestEvents } = await fetchCategorizedEvents();
 
   const initialState: HomeInitialState = {
@@ -32,7 +31,6 @@ export const getStaticProps: GetStaticProps<HomeProps & { pageData: PageData }> 
       Object.values(categorizedEvents).every((events) => events.length === 0),
   };
 
-  // Generate the SEO/page meta data server-side
   const pageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place: "",
@@ -45,4 +43,4 @@ export const getStaticProps: GetStaticProps<HomeProps & { pageData: PageData }> 
       pageData,
     },
   };
-};
+}
