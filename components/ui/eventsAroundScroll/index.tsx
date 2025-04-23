@@ -1,6 +1,6 @@
 import { memo, FC, MouseEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import Image from "@components/ui/common/image";
 import { truncateString } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";

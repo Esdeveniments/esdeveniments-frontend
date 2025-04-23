@@ -160,17 +160,6 @@ export interface NoEventsFoundProps {
   title?: string;
 }
 
-export type HideNotification = (hide: boolean) => void;
-
-export interface NotificationProps {
-  url?: string;
-  title?: string;
-  type?: "warning" | "success";
-  customNotification?: boolean;
-  hideNotification?: HideNotification;
-  hideClose?: boolean;
-}
-
 export interface SubMenuProps {
   placeLabel: string;
 }

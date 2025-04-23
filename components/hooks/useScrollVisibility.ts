@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useCallback } from "react";
 
 export const useScrollVisibility = (scrollThreshold: number): boolean => {

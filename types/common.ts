@@ -364,10 +364,6 @@ export interface HomeInitialState {
   noEventsFound: boolean;
 }
 
-export interface HomeProps {
-  initialState: HomeInitialState;
-}
-
 export interface TeamMember {
   name: string;
   role: string;

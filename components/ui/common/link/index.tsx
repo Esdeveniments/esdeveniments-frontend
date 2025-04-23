@@ -1,6 +1,6 @@
 import { cloneElement } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { ActiveLinkProps } from "types/common";
 
 export default function ActiveLink({
@@ -8,7 +8,7 @@ export default function ActiveLink({
   activeLinkClass,
   ...props
 }: ActiveLinkProps) {
-  const { pathname } = useRouter();
+  const pathname = usePathname();
   let className =
     children.props.className ||
     "flex justify-center items-center gap-2 text-blackCorp bg-whiteCorp py-2 px-3 font-barlow italic uppercase font-medium tracking-wider ease-in-out duration-200";
@@ -22,7 +22,7 @@ export default function ActiveLink({
   }
 
   return (
-    <Link {...props} prefetch={false} legacyBehavior>
+    <Link {...props} prefetch={false}>
       {cloneElement(children, { className })}
     </Link>
   );

@@ -76,6 +76,7 @@ export interface PagedResponseDTO<T> {
 export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   duration?: string;
   videoUrl?: string;
+  tags?: string[];
 }
 
 export type CategorizedEvents = {

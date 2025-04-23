@@ -1,10 +1,12 @@
+"use client";
+
 import { memo, useCallback, MouseEvent, JSX } from "react";
 import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
 import { BYDATES } from "@utils/constants";
 import { findCategoryKeyByValue } from "@utils/helpers";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import useStore from "@store";
 import type { Option } from "types/common";
 import { RenderButtonProps, FiltersProps } from "types/common";

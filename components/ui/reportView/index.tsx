@@ -1,6 +1,8 @@
+// REMOVE
+
 import { useEffect, FC } from "react";
 import { env } from "@utils/helpers";
-import { ReportViewProps } from '../../../types/props';
+import { ReportViewProps } from "types/props";
 
 const ReportView: FC<ReportViewProps> = ({ slug }) => {
   useEffect(() => {

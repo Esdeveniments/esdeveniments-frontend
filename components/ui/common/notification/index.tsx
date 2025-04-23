@@ -1,11 +1,10 @@
 import { FC } from "react";
-
 import CheckCircleIcon from "@heroicons/react/solid/CheckCircleIcon";
 import ExclamationCircleIcon from "@heroicons/react/solid/ExclamationCircleIcon";
 import XIcon from "@heroicons/react/solid/XIcon";
-import { NotificationProps } from "types/props";
+import type { EventNotificationProps } from "types/event";
 
-const Notification: FC<NotificationProps> = ({
+const Notification: FC<EventNotificationProps> = ({
   url,
   title,
   type,
@@ -63,14 +62,17 @@ const Notification: FC<NotificationProps> = ({
           )}
         </div>
         <div className="ml-3">
-          <h3 className="text-sm font-semibold text-green-800">
-            {title}{" "}
-            <span className="mt-2 text-sm text-green-700">
-              <a className="font-bold" href={`mailto:${url}`}>
-                {url}
-              </a>
-            </span>
-          </h3>
+          <h3 className="text-sm font-semibold text-blackCorp">{title}</h3>
+          {url && (
+            <a
+              href={url}
+              className="text-sm text-green-700 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Veure esdeveniment
+            </a>
+          )}
         </div>
       </div>
     </div>

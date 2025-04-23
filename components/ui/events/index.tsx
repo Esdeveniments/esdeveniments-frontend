@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useEffect, useState, useCallback, FC } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
@@ -16,7 +18,7 @@ const EventsList = dynamic(() => import("@components/ui/eventsList"), {
       <CardLoading />
     </div>
   ),
-  ssr: true,
+  ssr: false,
 });
 
 const EventsCategorized = dynamic(
@@ -27,7 +29,7 @@ const EventsCategorized = dynamic(
         <CardLoading />
       </div>
     ),
-    ssr: true,
+    ssr: false,
   }
 );
 

@@ -1,17 +1,4 @@
-export interface CalendarParams {
-  title: string;
-  description: string;
-  location: string;
-  startDate: string | Date;
-  endDate: string | Date;
-  canonical: string;
-}
-
-export interface CalendarUrls {
-  google: string;
-  outlook: string;
-  ical: string;
-}
+import type { CalendarParams, CalendarUrls } from "types/calendar";
 
 const formatDate = (date: string | Date): string =>
   new Date(date).toISOString().replace(/-|:|\.\d+/g, "");
@@ -23,6 +10,31 @@ const encodeParams = (params: Record<string, string>): string =>
 
 const createUrl = (base: string, params: Record<string, string>): string =>
   `${base}?${encodeParams(params)}`;
+
+import * as React from "react";
+
+// Utility to format event date as string and JSX with <time> for accessibility
+export function formatEventDateRange(
+  startDate: string,
+  endDate?: string
+): { string: string; jsx: React.ReactNode } {
+  if (endDate) {
+    return {
+      string: `Del ${startDate} al ${endDate}`,
+      jsx: (
+        <>
+          <time dateTime={startDate}>Del {startDate}</time> al{" "}
+          <time dateTime={endDate}>{endDate}</time>
+        </>
+      ),
+    };
+  } else {
+    return {
+      string: `${startDate}`,
+      jsx: <time dateTime={startDate}>{startDate}</time>,
+    };
+  }
+}
 
 export const generateCalendarUrls = ({
   title,

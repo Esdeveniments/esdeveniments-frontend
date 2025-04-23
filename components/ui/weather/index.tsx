@@ -3,16 +3,7 @@
 import { memo, FC } from "react";
 import Image from "next/image";
 import { getFormattedDate } from "@utils/helpers";
-
-interface DateObject {
-  date?: string;
-  dateTime?: string;
-}
-
-interface WeatherProps {
-  startDate: DateObject | string;
-  location: string;
-}
+import type { EventWeatherProps } from "types/event";
 
 interface FormattedDateResult {
   isLessThanFiveDays: boolean;
@@ -26,7 +17,7 @@ interface WeatherData {
   icon?: string;
 }
 
-const Weather: FC<WeatherProps> = ({ startDate }) => {
+const Weather: FC<EventWeatherProps> = ({ startDate, location }) => {
   const {
     isLessThanFiveDays,
     startDate: start,

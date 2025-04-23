@@ -1,3 +1,6 @@
+import withBundleAnalyzer from '@next/bundle-analyzer';
+import { withSentryConfig } from '@sentry/nextjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -40,11 +43,6 @@ const nextConfig = {
   redirects: async () => [],
 };
 
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
-const { withSentryConfig } = require('@sentry/nextjs');
-
 const sentryWebpackPluginOptions = {
   silent: true,
   org: 'esdeveniments',
@@ -56,7 +54,7 @@ const sentryWebpackPluginOptions = {
   automaticVercelMonitors: true,
 };
 
-module.exports = withSentryConfig(
-  withBundleAnalyzer(nextConfig),
+export default withSentryConfig(
+  withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' })(nextConfig),
   sentryWebpackPluginOptions
 );

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, memo, useCallback, FC } from "react";
 import LocationMarkerIcon from "@heroicons/react/outline/LocationMarkerIcon";
 import NextImage from "next/image";

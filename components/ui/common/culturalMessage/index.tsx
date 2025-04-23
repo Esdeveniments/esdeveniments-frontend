@@ -1,6 +1,6 @@
 import { FC, MouseEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { sendGoogleEvent } from "@utils/analytics";
 import { CulturalMessageProps } from "types/props";
 

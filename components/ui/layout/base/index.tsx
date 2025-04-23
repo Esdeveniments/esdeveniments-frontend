@@ -1,10 +1,12 @@
+"use client";
+
 import { JSX } from "react";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import type { BaseLayoutProps } from "types/common";
 
 const Navbar = dynamic(() => import("@components/ui/common/navbar"), {
-  ssr: true,
+  ssr: false,
 });
 
 const Footer = dynamic(() => import("@components/ui/common/footer"), {

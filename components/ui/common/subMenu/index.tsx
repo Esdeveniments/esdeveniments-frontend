@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, FC } from "react";
 import dynamic from "next/dynamic";
 import Filters from "@components/ui/filters";

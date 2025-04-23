@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, memo, lazy, Suspense, FC } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 import { AdArticleProps } from "types/common";

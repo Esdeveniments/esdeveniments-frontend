@@ -2,10 +2,10 @@
 import type {
   RegionSummaryResponseDTO,
   CitySummaryResponseDTO,
+  EventDetailResponseDTO,
 } from "./api/event";
 import type { RefObject } from "react";
 import type { DeleteReason } from "./common";
-import type { EventDetailResponseDTO } from "./api/event";
 
 export interface FormData {
   id?: string;
@@ -90,7 +90,6 @@ export interface DynamicOptionsLoadingProps {
   timedOut?: boolean;
 }
 
-// Parameters accepted by fetchEvents API
 export interface FetchEventsParams {
   page?: number;
   maxResults: number;
@@ -103,6 +102,82 @@ export interface FetchEventsParams {
   until?: string;
   filterByDate?: boolean;
   normalizeRss?: boolean;
+}
+
+export interface EventHeaderProps {
+  title: string;
+  eventDate: string | { string: string; jsx: React.ReactNode };
+  location: string;
+  city?: string;
+  region?: string;
+}
+
+export interface EventMediaProps {
+  event: EventDetailResponseDTO;
+  title: string;
+}
+
+export interface EventShareBarProps {
+  slug: string;
+  title: string;
+  eventDateString: string;
+  location: string;
+  cityName: string;
+  regionName: string;
+}
+
+export interface EventDescriptionProps {
+  description: string;
+}
+
+export interface EventTagsProps {
+  tags: string[];
+}
+
+export interface EventCalendarProps {
+  event: EventDetailResponseDTO;
+}
+
+export type HideNotification = (hide: boolean) => void;
+
+export interface EventNotificationProps {
+  url?: string;
+  title?: string;
+  type?: "warning" | "success";
+  customNotification?: boolean;
+  hideNotification?: HideNotification;
+  hideClose?: boolean;
+}
+
+export interface EventNotificationsProps {
+  newEvent?: boolean | undefined;
+  title: string;
+  slug: string;
+  showThankYouBanner: boolean;
+  setShowThankYouBanner: HideNotification;
+}
+
+export interface EventMapsProps {
+  location: string;
+}
+
+export interface EventWeatherProps {
+  startDate: { date?: string; dateTime?: string } | string;
+  location: string;
+}
+
+export interface EventImageProps {
+  image: string | undefined;
+  title: string;
+  location: string;
+  nameDay: string;
+  formattedStart: string;
+}
+
+export interface EventLocationProps {
+  location: string;
+  cityName: string;
+  regionName: string;
 }
 
 export { DeleteReason };

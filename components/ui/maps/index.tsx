@@ -1,7 +1,7 @@
 import { useEffect, useRef, FC, RefObject } from "react";
-import type { MapsProps } from "types/common";
+import type { EventMapsProps } from "types/event";
 
-const Maps: FC<MapsProps> = ({ location }) => {
+const Maps: FC<EventMapsProps> = ({ location }) => {
   const mapRef = useRef<HTMLDivElement | null>(
     null
   ) as RefObject<HTMLDivElement>;

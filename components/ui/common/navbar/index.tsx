@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Disclosure } from "@headlessui/react";
 import {
@@ -20,11 +20,11 @@ const navigation: NavigationItem[] = [
 ];
 
 export default function Navbar() {
-  const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <Disclosure
-      key={router.asPath}
+      key={pathname}
       as="nav"
       className="w-full bg-whiteCorp sticky top-0 z-10"
     >
