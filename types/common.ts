@@ -15,6 +15,11 @@ export interface Option {
   value: string;
 }
 
+// Type guard for Option (centralized for reuse in forms)
+export function isOption(obj: unknown): obj is Option {
+  return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;
+}
+
 export type CategoryKey =
   | "Festes Majors"
   | "Festivals"

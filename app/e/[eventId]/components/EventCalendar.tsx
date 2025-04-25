@@ -1,9 +1,7 @@
-import dynamic from "next/dynamic";
 import { CalendarIcon } from "@heroicons/react/outline";
 import { siteUrl } from "@config/index";
 import type { EventCalendarProps } from "types/event";
-
-const AddToCalendar = dynamic(() => import("components/ui/addToCalendar"));
+import AddToCalendar from "@components/ui/addToCalendar";
 
 export default function EventCalendar({ event }: EventCalendarProps) {
   // Extract needed fields

@@ -97,7 +97,6 @@ function CardContent({
         passHref
         prefetch={false}
         className="w-full"
-        legacyBehavior
       >
         <div
           className={`w-full flex flex-col justify-center bg-whiteCorp overflow-hidden cursor-pointer ${

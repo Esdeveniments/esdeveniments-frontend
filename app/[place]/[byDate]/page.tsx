@@ -10,9 +10,9 @@ import ByDateClient from "./ByDateClient";
 export default async function ByDatePage({
   params,
 }: {
-  params: { place: string; byDate: string };
+  params: Promise<{ place: string; byDate: string }>;
 }) {
-  const { place, byDate } = params;
+  const { place, byDate } = await params;
 
   const dateFunctions = {
     avui: today,

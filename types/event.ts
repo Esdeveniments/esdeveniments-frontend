@@ -1,12 +1,35 @@
-// --- Centralized event form types ---
+import { z } from "zod";
 import type {
   RegionSummaryResponseDTO,
   CitySummaryResponseDTO,
   EventDetailResponseDTO,
 } from "./api/event";
 import type { RefObject } from "react";
-import type { DeleteReason } from "./common";
+import type { DeleteReason, Option } from "./common";
 
+// --- Zod schema for canonical event form data ---
+export const EventFormSchema = z.object({
+  id: z.string().optional(),
+  slug: z.string().min(1, "Slug obligatori"),
+  title: z.string().min(1, "Títol obligatori"),
+  description: z.string().min(1, "Descripció obligatòria"),
+  type: z.enum(["FREE", "PAID"]),
+  startDate: z.union([z.string(), z.date()]),
+  startTime: z.union([z.string(), z.date()]),
+  endDate: z.union([z.string(), z.date()]),
+  endTime: z.union([z.string(), z.date()]),
+  region: z.any().nullable(),
+  town: z.any().nullable(),
+  location: z.string().min(1, "Localització obligatòria"),
+  imageUrl: z.string().nullable(),
+  url: z.string().url("URL invàlida"),
+  categories: z.array(z.any()),
+  email: z.string().email("Email invàlid").optional(),
+});
+
+export type EventFormSchemaType = z.infer<typeof EventFormSchema>;
+
+// --- Centralized event form types ---
 export interface FormData {
   id?: string;
   slug: string;
@@ -178,6 +201,27 @@ export interface EventLocationProps {
   location: string;
   cityName: string;
   regionName: string;
+}
+
+export interface EventFormProps {
+  form: FormData;
+  initialValues: FormData;
+  onSubmit: (data: FormData) => Promise<void> | void;
+  submitLabel: string;
+  isEditMode?: boolean;
+  isLoading?: boolean;
+  regionOptions: Option[];
+  cityOptions: Option[];
+  isLoadingRegionsWithCities: boolean;
+  handleFormChange: <K extends keyof FormData>(
+    name: K,
+    value: FormData[K]
+  ) => void;
+  handleImageChange: (file: File) => void;
+  handleRegionChange: (region: Option | null) => void;
+  handleTownChange: (town: Option | null) => void;
+  progress: number;
+  imageToUpload: string | null;
 }
 
 export { DeleteReason };

@@ -5,8 +5,9 @@ import {
   CategorizedEvents,
   EventDetailResponseDTO,
   EventUpdateRequestDTO,
+  EventCreateRequestDTO,
 } from "types/api/event";
-import { FetchEventsParams, FormData } from "types/event";
+import { FetchEventsParams } from "types/event";
 
 export async function fetchEvents(
   params: FetchEventsParams
@@ -48,10 +49,11 @@ export async function fetchEvents(
 
 export async function fetchEventById(
   uuid: string
-): Promise<EventDetailResponseDTO> {
+): Promise<EventDetailResponseDTO | null> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`
   );
+  if (response.status === 404) return null;
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
 }
@@ -75,7 +77,9 @@ export async function updateEventById(
   return response.json();
 }
 
-export async function createEvent(data: FormData): Promise<EventDetailResponseDTO> {
+export async function createEvent(
+  data: EventCreateRequestDTO
+): Promise<EventDetailResponseDTO> {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
     method: "POST",
     headers: {
@@ -100,9 +104,7 @@ export async function fetchCategorizedEvents(): Promise<CategorizedEventsApiResp
     return { categorizedEvents: {} };
   }
   try {
-    const response = await fetch(
-      `${apiUrl}/events/categorized`
-    );
+    const response = await fetch(`${apiUrl}/events/categorized`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
   } catch (e) {

@@ -15,14 +15,21 @@ import AdArticle from "components/ui/adArticle";
 import EventClient from "./EventClient";
 import NoEventFound from "components/ui/common/noEventFound";
 
+// Helper to extract uuid from slug
+function extractUuidFromSlug(slug: string): string {
+  const parts = slug.split("-");
+  return parts[parts.length - 1];
+}
+
 // Helper: Metadata generation
 export async function generateMetadata(props: {
   params: { eventId: string };
 }): Promise<Metadata> {
-  const params = await props.params;
-  const event = await fetchEventById(params.eventId);
+  const slug = props.params.eventId;
+  const uuid = extractUuidFromSlug(slug);
+  const event = await fetchEventById(uuid);
   if (!event) return { title: "No event found" };
-  return generateEventMetadata(event, `${siteUrl}/e/${params.eventId}`);
+  return generateEventMetadata(event, `${siteUrl}/e/${slug}`);
 }
 
 // Main page component
@@ -31,15 +38,14 @@ export default async function EventPage({
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  const event: EventDetailResponseDTO | null = await fetchEventById(
-    (
-      await params
-    ).eventId
-  );
+  console.log("params", params);
+  const slug = (await params).eventId;
+  const uuid = extractUuidFromSlug(slug);
+  const event: EventDetailResponseDTO | null = await fetchEventById(uuid);
   if (!event) return <NoEventFound />;
   if (event.title === "CANCELLED") return <NoEventFound />;
 
-  const slug = event?.slug ?? "";
+  const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
   const cityName = event.city?.name || "";
   const regionName = event.region?.name || "";
@@ -63,7 +69,7 @@ export default async function EventPage({
               <EventMedia event={event} title={title} />
             </div>
             <EventShareBar
-              slug={slug}
+              slug={eventSlug}
               title={title}
               eventDateString={eventDateString}
               location={event.location}

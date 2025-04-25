@@ -94,13 +94,30 @@ export interface EventTimeDTO {
 // --- Event update (PUT) request DTO ---
 export interface EventUpdateRequestDTO {
   title: string;
-  type: "FREE" | "PAID";
+  type: EventType;
   url: string;
   description: string;
   imageUrl: string | null;
   regionId: number;
   cityId: number;
   startDate: string; // YYYY-MM-DD
+  startTime: EventTimeDTO;
+  endDate: string;
+  endTime: EventTimeDTO;
+  location: string;
+  categories: number[];
+}
+
+// --- Event create (POST) request DTO ---
+export interface EventCreateRequestDTO {
+  title: string;
+  type: EventType;
+  url: string;
+  description: string;
+  imageUrl: string | null;
+  regionId: number;
+  cityId: number;
+  startDate: string;
   startTime: EventTimeDTO;
   endDate: string;
   endTime: EventTimeDTO;

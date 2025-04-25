@@ -1,9 +1,27 @@
 import { DAYS, MONTHS, CATEGORIES } from "./constants";
 import { siteUrl } from "@config/index";
-import { EventDetailResponseDTO } from "types/api/event";
 import { fetchCityById } from "@lib/api/cities";
 import { fetchRegionById } from "@lib/api/regions";
-import { CategoryKey } from "types/common";
+import { type Option, CategoryKey } from "types/common";
+
+// Centralized helpers for extracting region/town values from form fields
+export function getRegionValue(
+  region: Option | { id: string | number } | null | undefined
+): string | null {
+  if (!region) return null;
+  if (typeof region === "object" && "value" in region) return region.value;
+  if (typeof region === "object" && "id" in region) return String(region.id);
+  return null;
+}
+
+export function getTownValue(
+  town: Option | { id: string | number } | null | undefined
+): string | null {
+  if (!town) return null;
+  if (typeof town === "object" && "value" in town) return town.value;
+  if (typeof town === "object" && "id" in town) return String(town.id);
+  return null;
+}
 
 export interface DateObject {
   date?: string;
@@ -402,3 +420,112 @@ export const findCategoryKeyByValue = (
     (key) => CATEGORIES[key] === value
   );
 };
+
+// --- Helper: Parse time to { hour, minute, second, nano } ---
+export function parseTime(dateOrString: Date | string | undefined) {
+  let date: Date;
+  if (!dateOrString) {
+    return { hour: 0, minute: 0, second: 0, nano: 0 };
+  }
+  if (typeof dateOrString === "string") {
+    const [h, m, s] = dateOrString.split(":").map(Number);
+    date = new Date(1970, 0, 1, h || 0, m || 0, s || 0);
+    if (isNaN(date.getTime())) {
+      return { hour: 0, minute: 0, second: 0, nano: 0 };
+    }
+  } else {
+    date = dateOrString;
+  }
+  return {
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    second: date.getSeconds(),
+    nano: 0,
+  };
+}
+
+// --- Mapping: FormData to backend DTO (EventCreateRequestDTO/EventUpdateRequestDTO) ---
+import type { FormData } from "types/event";
+import type { EventCreateRequestDTO, EventUpdateRequestDTO } from "types/api/event";
+
+export function formDataToBackendDTO(form: FormData): EventCreateRequestDTO | EventUpdateRequestDTO {
+  return {
+    title: form.title,
+    type: form.type ?? "FREE",
+    url: form.url,
+    description: form.description,
+    imageUrl: form.imageUrl,
+    regionId:
+      form.region && "id" in form.region
+        ? form.region.id
+        : form.region && "value" in form.region
+        ? Number(form.region.value)
+        : 0,
+    cityId:
+      form.town && "id" in form.town
+        ? form.town.id
+        : form.town && "value" in form.town
+        ? Number(form.town.value)
+        : 0,
+    startDate:
+      typeof form.startDate === "string"
+        ? form.startDate
+        : form.startDate instanceof Date
+        ? form.startDate.toISOString().slice(0, 10)
+        : "",
+    startTime: parseTime(form.startTime),
+    endDate:
+      typeof form.endDate === "string"
+        ? form.endDate
+        : form.endDate instanceof Date
+        ? form.endDate.toISOString().slice(0, 10)
+        : "",
+    endTime: parseTime(form.endTime),
+    location: form.location,
+    categories: Array.isArray(form.categories)
+      ? form.categories
+          .map((cat: { id?: number; value?: string } | number | string) =>
+            typeof cat === "object" && cat !== null && "id" in cat
+              ? cat.id
+              : cat && typeof cat === "object" && "value" in cat
+              ? Number(cat.value)
+              : Number(cat)
+          )
+          .filter((id): id is number => typeof id === "number" && !isNaN(id))
+      : [],
+  };
+}
+
+// --- Mapping: EventDetailResponseDTO to FormData ---
+import type { EventDetailResponseDTO } from "types/api/event";
+
+export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
+  return {
+    id: event.id ? String(event.id) : undefined,
+    slug: event.slug || "",
+    title: event.title || "",
+    description: event.description || "",
+    type: event.type || "FREE",
+    startDate: event.startDate ? new Date(event.startDate) : "",
+    startTime: (event.startTime && typeof event.startTime === "object" && "hour" in event.startTime && "minute" in event.startTime)
+      ? `${(event.startTime as any).hour.toString().padStart(2, "0")}:${(event.startTime as any).minute.toString().padStart(2, "0")}`
+      : "",
+    endDate: event.endDate ? new Date(event.endDate) : "",
+    endTime: (event.endTime && typeof event.endTime === "object" && "hour" in event.endTime && "minute" in event.endTime)
+      ? `${(event.endTime as any).hour.toString().padStart(2, "0")}:${(event.endTime as any).minute.toString().padStart(2, "0")}`
+      : "",
+    region: event.region
+      ? { value: String(event.region.id), label: event.region.name }
+      : null,
+    town: event.city
+      ? { value: String(event.city.id), label: event.city.name }
+      : null,
+    location: event.location || "",
+    imageUrl: event.imageUrl || null,
+    url: event.url || "",
+    categories: Array.isArray(event.categories)
+      ? event.categories.map((cat) => ({ id: cat.id, name: cat.name }))
+      : [],
+    email: "", // UI only
+  };
+}
