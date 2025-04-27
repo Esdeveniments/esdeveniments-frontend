@@ -23,9 +23,9 @@ function extractUuidFromSlug(slug: string): string {
 
 // Helper: Metadata generation
 export async function generateMetadata(props: {
-  params: { eventId: string };
+  params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
-  const slug = props.params.eventId;
+  const slug = (await props.params).eventId;
   const uuid = extractUuidFromSlug(slug);
   const event = await fetchEventById(uuid);
   if (!event) return { title: "No event found" };
@@ -38,7 +38,6 @@ export default async function EventPage({
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  console.log("params", params);
   const slug = (await params).eventId;
   const uuid = extractUuidFromSlug(slug);
   const event: EventDetailResponseDTO | null = await fetchEventById(uuid);

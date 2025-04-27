@@ -26,7 +26,7 @@ export async function generateStaticParams() {
 export default async function Page({
   params,
 }: {
-  params: PlaceStaticPathParams;
+  params: Promise<PlaceStaticPathParams>;
 }) {
   const { from, until } = twoWeeksDefault();
   const { place } = await params;

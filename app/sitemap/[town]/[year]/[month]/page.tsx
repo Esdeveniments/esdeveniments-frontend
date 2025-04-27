@@ -11,16 +11,15 @@ import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
 const NoEventsFound = dynamic(
-  () => import("@components/ui/common/noEventsFound"),
-  { ssr: false }
+  () => import("@components/ui/common/noEventsFound")
 );
 
 export default async function Page({
   params,
 }: {
-  params: MonthStaticPathParams;
+  params: Promise<MonthStaticPathParams>;
 }) {
-  const { town, year, month } = params;
+  const { town, year, month } = await params;
   if (!town || !year || !month) return null;
 
   // Get date range for the month

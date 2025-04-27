@@ -10,32 +10,34 @@ import type { TownStaticPathParams } from "types/common";
 export async function generateMetadata({
   params,
 }: {
-  params: TownStaticPathParams;
+  params: Promise<TownStaticPathParams>;
 }): Promise<Metadata> {
-  const city = await fetchCityById(params.town);
-  const label = city?.name || params.town;
+  const { town } = await params;
+  const city = await fetchCityById(town);
+  const label = city?.name || town;
   return {
     title: `Arxiu. Descobreix tot el que ha passat a ${label} - Esdeveniments.cat`,
-    description: `Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${params.town} - Arxiu - Esdeveniments.cat`,
-    alternates: { canonical: `${siteUrl}/sitemap/${params.town}` },
+    description: `Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`,
+    alternates: { canonical: `${siteUrl}/sitemap/${town}` },
   };
 }
 
 export default async function Page({
   params,
 }: {
-  params: TownStaticPathParams;
+  params: Promise<TownStaticPathParams>;
 }) {
+  const { town } = await params;
   const years: number[] = getAllYears();
-  const city = await fetchCityById(params.town);
-  const label = city?.name || params.town;
+  const city = await fetchCityById(town);
+  const label = city?.name || town;
 
   return (
     <>
       <Meta
         title={`Arxiu. Descobreix tot el que ha passat a ${label} - Esdeveniments.cat`}
-        description={`Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${params.town} - Arxiu - Esdeveniments.cat`}
-        canonical={`${siteUrl}/sitemap/${params.town}`}
+        description={`Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`}
+        canonical={`${siteUrl}/sitemap/${town}`}
       />
       <div className="flex flex-col">
         <div className="reset-this">
@@ -53,9 +55,7 @@ export default async function Page({
                 return (
                   <div key={`${year}-${month}`} className="box py-1">
                     <Link
-                      href={`/sitemap/${
-                        params.town
-                      }/${year}/${month.toLocaleLowerCase()}`}
+                      href={`/sitemap/${town}/${year}/${month.toLocaleLowerCase()}`}
                       prefetch={false}
                       className="hover:underline"
                     >
