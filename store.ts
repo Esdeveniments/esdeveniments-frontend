@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage, PersistOptions } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist, createJSONStorage, PersistOptions } from "zustand/middleware";
 import { ListEvent } from "types/api/event";
 
 // Base interfaces
@@ -35,14 +35,14 @@ export interface Event {
   /** URL of an image uploaded by the user */
   imageUploaded?: string;
   /** URL of an image associated with the event */
-  eventImage?: string;
+  imageUrl: string;
   url: string;
   startDate: string;
   endDate: string;
   startTime: string;
   endTime: string;
   place: string;
-  category: EventCategory | '';
+  category: EventCategory | "";
   distance?: number;
   location?: string;
   subLocation?: string;
@@ -56,10 +56,10 @@ export interface Event {
   timeUntilEvent: string;
   videoUrl?: string;
   nameDay: string;
-    weather?: {
-      description?: string;
-      icon?: string;
-    };
+  weather?: {
+    description?: string;
+    icon?: string;
+  };
 }
 
 // Filter state interface
@@ -67,7 +67,7 @@ interface FilterState {
   page: number;
   place: string;
   byDate: string;
-  category: EventCategory | '';
+  category: EventCategory | "";
   searchTerm: string;
   distance: string;
   filtersApplied: boolean;
@@ -107,11 +107,11 @@ export interface StoreActions {
 // Complete store type
 export type Store = StoreState & StoreActions;
 
-type PersistState = Pick<StoreState, 'page' | 'currentYear' | 'scrollPosition'>;
+type PersistState = Pick<StoreState, "page" | "currentYear" | "scrollPosition">;
 
 // Persist configuration
 const persistConfig: PersistOptions<Store, PersistState> = {
-  name: 'filterState',
+  name: "filterState",
   storage: createJSONStorage(() => localStorage),
   partialize: (state) => ({
     page: state.page,
@@ -126,11 +126,11 @@ const useStore = create<Store>()(
     (set, get) => ({
       // Initial filter state
       page: 1,
-      place: '',
-      byDate: '',
-      category: '',
-      searchTerm: '',
-      distance: '',
+      place: "",
+      byDate: "",
+      category: "",
+      searchTerm: "",
+      distance: "",
       filtersApplied: false,
 
       // Initial UI state

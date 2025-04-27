@@ -1,22 +1,41 @@
-import { JSX } from "react";
-import { GetStaticPaths, GetStaticProps } from "next";
+import { Metadata } from "next";
 import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 import Link from "next/link";
 import { fetchCityById } from "@lib/api/cities";
-import type { SitemapProps, TownStaticPathParams } from "types/common";
+import type { TownStaticPathParams } from "types/common";
 
-const years: number[] = getAllYears();
+export async function generateMetadata({
+  params,
+}: {
+  params: TownStaticPathParams;
+}): Promise<Metadata> {
+  const city = await fetchCityById(params.town);
+  const label = city?.name || params.town;
+  return {
+    title: `Arxiu. Descobreix tot el que ha passat a ${label} - Esdeveniments.cat`,
+    description: `Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${params.town} - Arxiu - Esdeveniments.cat`,
+    alternates: { canonical: `${siteUrl}/sitemap/${params.town}` },
+  };
+}
 
-export default function Sitemap({ town, label }: SitemapProps): JSX.Element {
+export default async function Page({
+  params,
+}: {
+  params: TownStaticPathParams;
+}) {
+  const years: number[] = getAllYears();
+  const city = await fetchCityById(params.town);
+  const label = city?.name || params.town;
+
   return (
     <>
       <Meta
         title={`Arxiu. Descobreix tot el que ha passat a ${label} - Esdeveniments.cat`}
-        description={`Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`}
-        canonical={`${siteUrl}/sitemap/${town}`}
+        description={`Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${params.town} - Arxiu - Esdeveniments.cat`}
+        canonical={`${siteUrl}/sitemap/${params.town}`}
       />
       <div className="flex flex-col">
         <div className="reset-this">
@@ -34,7 +53,9 @@ export default function Sitemap({ town, label }: SitemapProps): JSX.Element {
                 return (
                   <div key={`${year}-${month}`} className="box py-1">
                     <Link
-                      href={`/sitemap/${town}/${year}/${month.toLocaleLowerCase()}`}
+                      href={`/sitemap/${
+                        params.town
+                      }/${year}/${month.toLocaleLowerCase()}`}
                       prefetch={false}
                       className="hover:underline"
                     >
@@ -50,47 +71,3 @@ export default function Sitemap({ town, label }: SitemapProps): JSX.Element {
     </>
   );
 }
-
-export const getStaticPaths: GetStaticPaths<
-  TownStaticPathParams
-> = async () => {
-  return {
-    paths: [],
-    fallback: "blocking",
-  };
-};
-
-export const getStaticProps: GetStaticProps<
-  SitemapProps,
-  TownStaticPathParams
-> = async ({ params }) => {
-  if (!params) {
-    return {
-      notFound: true,
-    };
-  }
-
-  const { town } = params;
-  if (!town) {
-    return {
-      notFound: true,
-    };
-  }
-
-  // Fetch city by ID from backend
-  const city = await fetchCityById(town);
-  const label = city?.name;
-
-  if (!label) {
-    return {
-      notFound: true,
-    };
-  }
-
-  return {
-    props: {
-      town,
-      label,
-    },
-  };
-};

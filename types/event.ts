@@ -76,7 +76,7 @@ export interface EventData extends EventDetailResponseDTO {
   formattedEnd?: string;
   isFullDayEvent?: boolean;
   durationInHours?: number;
-  eventImage?: string;
+  imageUrl: string;
   eventUrl?: string;
   videoUrl?: string;
 }

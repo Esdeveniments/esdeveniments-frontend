@@ -27,6 +27,7 @@ const Weather: FC<EventWeatherProps> = ({ startDate, location }) => {
   const showWeather = isMultipleDays || isLessThanFiveDays;
   console.log(showWeather);
   console.log(start);
+  console.log(location);
   const { data, error } = { data: undefined, error: undefined }; // useGetWeather(showWeather, location);
 
   if (!data || error) return <p>No hi ha dades meteorològiques disponibles.</p>;

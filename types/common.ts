@@ -381,13 +381,6 @@ export type DateRange = { from: Date; until: Date };
 
 export type DateFunctionsMap = { [key: string]: () => DateRange };
 
-export interface RssQueryParams {
-  region?: string;
-  town?: string;
-  maxEventsPerDay?: string;
-  until?: number;
-}
-
 export interface RssEvent {
   id: string;
   title: string;
@@ -398,8 +391,7 @@ export interface RssEvent {
   town: string;
   region: string;
   startDate: string;
-  imageUploaded?: string;
-  eventImage?: string;
+  imageUrl?: string;
 }
 
 export interface MonthProps {

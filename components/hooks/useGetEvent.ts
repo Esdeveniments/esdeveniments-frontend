@@ -6,7 +6,7 @@ import { EventProps } from "types/common";
 const fetcher = async (
   _: string,
   uuid: string
-): Promise<EventDetailResponseDTO> => {
+): Promise<EventDetailResponseDTO | null> => {
   if (!uuid) {
     throw new Error("Event UUID is required");
   }
@@ -27,5 +27,5 @@ export const useGetEvent = (props: EventProps): EventDetailResponseDTO => {
     suspense: true,
     keepPreviousData: true,
     revalidateOnMount: false,
-  }).data;
+  }).data!;
 };

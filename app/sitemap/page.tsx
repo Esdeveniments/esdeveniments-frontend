@@ -1,21 +1,28 @@
-import { JSX } from "react";
+import { Metadata } from "next";
 import Meta from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import Link from "next/link";
-import { GetStaticProps } from "next";
 import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
-export default function Sitemap({
-  regions,
-}: {
-  regions: RegionsGroupedByCitiesResponseDTO[];
-}): JSX.Element {
+export const metadata: Metadata = {
+  title: "Arxiu. Descobreix tot el que passa a Catalunya - Esdeveniments.cat",
+  description:
+    "Descobreix tot el què ha passat a Catalunya cada any. Les millors propostes culturals per esprémer al màxim de Catalunya - Arxiu - Esdeveniments.cat",
+  alternates: { canonical: `${siteUrl}/sitemap` },
+};
+
+async function getData(): Promise<RegionsGroupedByCitiesResponseDTO[]> {
+  return fetchRegionsWithCities();
+}
+
+export default async function Page() {
+  const regions = await getData();
   return (
     <>
       <Meta
-        title={`Arxiu. Descobreix tot el que passa a Catalunya - Esdeveniments.cat`}
-        description="Descobreix tot el què ha passat a Catalunya cada any. Les millors propostes culturals per esprémer al màxim de Catalunya - Arxiu - Esdeveniments.cat"
+        title={metadata.title as string}
+        description={metadata.description as string}
         canonical={`${siteUrl}/sitemap`}
       />
       <div className="w-full px-6">
@@ -41,8 +48,3 @@ export default function Sitemap({
     </>
   );
 }
-
-export const getStaticProps: GetStaticProps = async () => {
-  const regions = await fetchRegionsWithCities();
-  return { props: { regions } };
-};

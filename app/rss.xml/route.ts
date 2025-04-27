@@ -1,12 +1,10 @@
-import { FC } from "react";
+import { NextRequest } from "next/server";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { fetchEvents } from "@lib/api/events";
-import { getPlaceTypeAndLabel } from "@utils/helpers";
-import { getFormattedDate } from "@utils/helpers";
+import { getPlaceTypeAndLabel, getFormattedDate } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
-import type { GetServerSideProps } from "next";
-import type { RssQueryParams, RssEvent } from "types/common";
+import type { RssEvent } from "types/common";
 import { EventSummaryResponseDTO } from "types/api/event";
 
 const SITE_NAME = "Esdeveniments.cat";
@@ -50,8 +48,7 @@ const getAllArticles = async (
         town: event.city?.name || "",
         region: event.region?.name || "",
         startDate: event.startDate,
-        imageUploaded: event.imageUrl || "",
-        eventImage: event.imageUrl || "",
+        imageUrl: event.imageUrl || "",
       };
     });
 
@@ -110,36 +107,28 @@ const buildFeed = async (
       description,
       content: item.location,
       date: new Date(item.startDate),
-      image: item.imageUploaded || item.eventImage || defaultImage,
+      image: item.imageUrl || defaultImage,
     });
   });
 
   return feed;
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  if (context && context.res) {
-    const { res, query } = context;
-    const {
-      region = "",
-      town = "",
-      maxEventsPerDay,
-      until,
-    } = query as RssQueryParams;
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+  const region = searchParams.get("region") || "";
+  const town = searchParams.get("town") || "";
+  const maxEventsPerDay = searchParams.get("maxEventsPerDay") || undefined;
+  const untilParam = searchParams.get("until");
+  const until = untilParam ? Number(untilParam) : 7;
 
-    const articles = await getAllArticles(region, town, maxEventsPerDay, until);
+  const articles = await getAllArticles(region, town, maxEventsPerDay, until);
+  const feed = await buildFeed(articles, region, town);
 
-    const feed = await buildFeed(articles, region, town);
-    res.setHeader("content-type", "text/xml");
-    res.write(feed.rss2()); // NOTE: You can also use feed.atom1() or feed.json1() for other feed formats
-    res.end();
-  }
-
-  return {
-    props: {},
-  };
-};
-
-const RssPage: FC = () => null;
-
-export default RssPage;
+  return new Response(feed.rss2(), {
+    headers: {
+      "Content-Type": "text/xml; charset=utf-8",
+    },
+    status: 200,
+  });
+}
