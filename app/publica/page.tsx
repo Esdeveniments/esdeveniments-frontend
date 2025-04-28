@@ -11,7 +11,6 @@ import {
   formDataToBackendDTO,
 } from "@utils/helpers";
 import EventForm from "@components/ui/EventForm";
-import Meta from "@components/partials/seo-meta";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { siteUrl } from "@config/index";
 import { createEventAction } from "./actions";
@@ -20,6 +19,13 @@ import { fetchCityById } from "@lib/api/cities";
 import type { FormState, FormData } from "types/event";
 import { EventFormSchema, type EventFormSchemaType } from "types/event";
 import { Option } from "types/common";
+import { buildPageMeta } from "@components/partials/seo-meta";
+
+export const metadata = buildPageMeta({
+  title: "Publica - Esdeveniments.cat",
+  description: "Publica un acte cultural - Esdeveniments.cat",
+  canonical: `${siteUrl}/publica`,
+});
 
 const defaultForm: FormData = {
   title: "",
@@ -229,46 +235,39 @@ const Publica = () => {
   };
 
   return (
-    <>
-      <Meta
-        title="Publica - Esdeveniments.cat"
-        description="Publica un acte cultural - Esdeveniments.cat"
-        canonical={`${siteUrl}/publica`}
-      />
-      <div className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-col items-center gap-2">
-            <h1 className="text-center italic uppercase font-semibold">
-              Publica un esdeveniment
-            </h1>
-            <p className="text-sm text-center">* camps obligatoris</p>
-          </div>
-          <div className="w-full flex flex-col justify-center items-center gap-y-4 pt-4 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
-            <EventForm
-              form={form}
-              initialValues={defaultForm}
-              onSubmit={onSubmit}
-              submitLabel="Publica"
-              isLoading={isPending || isLoading}
-              regionOptions={regionOptions}
-              cityOptions={cityOptions}
-              progress={progress}
-              isLoadingRegionsWithCities={isLoadingRegionsWithCities}
-              handleFormChange={handleFormChange}
-              handleImageChange={handleImageChange}
-              handleRegionChange={handleRegionChange}
-              handleTownChange={handleTownChange}
-              imageToUpload={imageToUpload}
-            />
-          </div>
+    <div className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-center italic uppercase font-semibold">
+            Publica un esdeveniment
+          </h1>
+          <p className="text-sm text-center">* camps obligatoris</p>
         </div>
-        {formState.isPristine && formState.message && (
-          <div className="p-4 my-3 text-primary rounded-lg text-md">
-            {formState.message}
-          </div>
-        )}
+        <div className="w-full flex flex-col justify-center items-center gap-y-4 pt-4 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+          <EventForm
+            form={form}
+            initialValues={defaultForm}
+            onSubmit={onSubmit}
+            submitLabel="Publica"
+            isLoading={isPending || isLoading}
+            regionOptions={regionOptions}
+            cityOptions={cityOptions}
+            progress={progress}
+            isLoadingRegionsWithCities={isLoadingRegionsWithCities}
+            handleFormChange={handleFormChange}
+            handleImageChange={handleImageChange}
+            handleRegionChange={handleRegionChange}
+            handleTownChange={handleTownChange}
+            imageToUpload={imageToUpload}
+          />
+        </div>
       </div>
-    </>
+      {formState.isPristine && formState.message && (
+        <div className="p-4 my-3 text-primary rounded-lg text-md">
+          {formState.message}
+        </div>
+      )}
+    </div>
   );
 };
 

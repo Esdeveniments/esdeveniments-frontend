@@ -28,7 +28,7 @@
     {
       "files": [
         "components/**/*.{ts,tsx,js,jsx}",
-        "pages/**/*.{ts,tsx,js,jsx}",
+        "app/**/*.{ts,tsx,js,jsx}",
         "store.ts",
         "utils/**/*.{ts,tsx,js,jsx}"
       ],

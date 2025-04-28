@@ -1,11 +1,33 @@
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { generatePagesData } from "@components/partials/generatePagesData";
+import { buildPageMeta } from "@components/partials/seo-meta";
 import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
-import { PlaceTypeAndLabel } from "types/common";
+import { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import { FetchEventsParams } from "types/event";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import ByDateClient from "./ByDateClient";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { place: string; byDate: string };
+}) {
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
+    params.place
+  );
+  const pageData: PageData = await generatePagesData({
+    currentYear: new Date().getFullYear(),
+    place: params.place,
+    byDate: params.byDate as ByDateOptions,
+    placeTypeLabel,
+  });
+  return buildPageMeta({
+    title: pageData.metaTitle,
+    description: pageData.metaDescription,
+    canonical: pageData.canonical,
+  });
+}
 
 export default async function ByDatePage({
   params,

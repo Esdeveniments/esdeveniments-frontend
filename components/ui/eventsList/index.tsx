@@ -11,7 +11,6 @@ import {
 } from "react";
 import Script from "next/script";
 import dynamic from "next/dynamic";
-import Meta from "@components/partials/seo-meta";
 import { useGetEvents } from "@components/hooks/useGetEvents";
 import {
   generateJsonData,
@@ -136,24 +135,34 @@ function EventsList({
     return event.isAd === true;
   }, []);
 
-  const eventHasCoords = useCallback((event: ListEvent): boolean => {
-    return (
-      !eventHasAd(event) &&
-      !!event.city &&
-      typeof (event.city as { latitude: number; longitude: number }).latitude === "number" &&
-      typeof (event.city as { latitude: number; longitude: number }).longitude === "number"
-    );
-  }, [eventHasAd]);
+  const eventHasCoords = useCallback(
+    (event: ListEvent): boolean => {
+      return (
+        !eventHasAd(event) &&
+        !!event.city &&
+        typeof (event.city as { latitude: number; longitude: number })
+          .latitude === "number" &&
+        typeof (event.city as { latitude: number; longitude: number })
+          .longitude === "number"
+      );
+    },
+    [eventHasAd]
+  );
 
-  const eventGetCoords = useCallback((event: ListEvent): { latitude: number; longitude: number } | null => {
-    if (eventHasCoords(event)) {
-      return {
-        latitude: (event.city as { latitude: number; longitude: number }).latitude,
-        longitude: (event.city as { latitude: number; longitude: number }).longitude,
-      };
-    }
-    return null;
-  }, [eventHasCoords]);
+  const eventGetCoords = useCallback(
+    (event: ListEvent): { latitude: number; longitude: number } | null => {
+      if (eventHasCoords(event)) {
+        return {
+          latitude: (event.city as { latitude: number; longitude: number })
+            .latitude,
+          longitude: (event.city as { latitude: number; longitude: number })
+            .longitude,
+        };
+      }
+      return null;
+    },
+    [eventHasCoords]
+  );
 
   // Event handlers
   const handleLoadMore = useCallback(() => {
@@ -261,11 +270,6 @@ function EventsList({
         id={`${label || "catalunya"}-${byDate || "all"}-script`}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonEvents) }}
-      />
-      <Meta
-        title={pageData?.metaTitle || ""}
-        description={pageData?.metaDescription || ""}
-        canonical={pageData?.canonical || ""}
       />
       <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
         {notFound && (

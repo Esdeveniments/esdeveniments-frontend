@@ -64,10 +64,12 @@ export default function Navbar() {
                 <div className="md:w-1/2 flex justify-end items-center">
                   <div className="hidden md:flex md:items-center gap-x-4">
                     {navigation.map((item) => (
-                      <ActiveLink href={item.href} key={item.name}>
-                        <a className="border-b-2 border-b-whiteCorp">
-                          {item.name}
-                        </a>
+                      <ActiveLink
+                        href={item.href}
+                        key={item.name}
+                        className="border-b-2 border-b-whiteCorp"
+                      >
+                        {item.name}
                       </ActiveLink>
                     ))}
                   </div>

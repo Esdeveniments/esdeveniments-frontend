@@ -1,14 +1,9 @@
 "use client";
 
 import Events from "@components/ui/events";
+import { ByDateClientProps } from "types/props";
 import { initializeStore } from "@utils/initializeStore";
 import { useEffect } from "react";
-import type { ByDateProps, PageData, PlaceTypeAndLabel } from "types/common";
-
-interface ByDateClientProps extends ByDateProps {
-  pageData: PageData;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
 
 export default function ByDateClient({
   initialState,

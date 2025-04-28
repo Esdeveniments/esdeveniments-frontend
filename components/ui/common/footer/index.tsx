@@ -25,8 +25,12 @@ export default function Footer(): JSX.Element {
       <div className="flex flex-col items-center gap-8 text-xs">
         <div className="flex justify-center items-center gap-6">
           {navigation.map((item) => (
-            <ActiveLink href={item.href} key={item.name}>
-              <a className="font-semibold">{item.name}</a>
+            <ActiveLink
+              href={item.href}
+              key={item.name}
+              className="font-semibold"
+            >
+              {item.name}
             </ActiveLink>
           ))}
         </div>

@@ -1,5 +1,4 @@
 import Script from "next/script";
-import Meta from "@components/partials/seo-meta";
 import Link from "next/link";
 import { generateJsonData, getFormattedDate } from "@utils/helpers";
 import { siteUrl } from "@config/index";
@@ -9,10 +8,28 @@ import { getHistoricDates } from "@lib/dates";
 import dynamic from "next/dynamic";
 import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
+import { buildPageMeta } from "@components/partials/seo-meta";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
 );
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<MonthStaticPathParams>;
+}) {
+  const { town, year, month } = await params;
+  const city = await fetchCityById(town);
+  const townLabel = city?.name || town;
+  let textMonth = month;
+  if (month === "marc") textMonth = month.replace("c", "ç");
+  return buildPageMeta({
+    title: `Arxiu de ${townLabel} del ${textMonth} del ${year} - Esdeveniments.cat`,
+    description: `Descobreix què va passar a ${townLabel} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
+    canonical: `${siteUrl}/sitemap/${town}/${year}/${month}`,
+  });
+}
 
 export default async function Page({
   params,
@@ -57,11 +74,6 @@ export default async function Page({
         id={`${town}-${month}-${year}-script`}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
-      />
-      <Meta
-        title={`Arxiu de ${townLabel} del ${textMonth} del ${year} - Esdeveniments.cat`}
-        description={`Descobreix què va passar a ${townLabel} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`}
-        canonical={`${siteUrl}/sitemap/${town}/${year}/${month}`}
       />
       <div className="flex flex-col justify-center items-center gap-2 p-6">
         <h1 className="font-semibold italic uppercase">

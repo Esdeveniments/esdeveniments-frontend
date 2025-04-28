@@ -462,6 +462,7 @@ export interface ImageComponentProps {
 }
 
 export interface ActiveLinkProps extends LinkProps {
-  children: React.ReactElement<HTMLAnchorElement>;
+  children: React.ReactNode;
   activeLinkClass?: string;
+  className?: string;
 }

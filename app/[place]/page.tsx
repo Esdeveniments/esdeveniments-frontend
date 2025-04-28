@@ -2,7 +2,12 @@ import { fetchEvents, insertAds } from "@lib/api/events";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { generatePagesData } from "@components/partials/generatePagesData";
-import type { PlaceStaticPathParams, PlaceTypeAndLabel } from "types/common";
+import { buildPageMeta } from "@components/partials/seo-meta";
+import type {
+  PlaceStaticPathParams,
+  PlaceTypeAndLabel,
+  PageData,
+} from "types/common";
 import { twoWeeksDefault } from "@lib/dates";
 import { FetchEventsParams } from "types/event";
 import PlaceClient from "./PlaceClient";
@@ -21,6 +26,27 @@ export async function generateStaticParams() {
     }
   }
   return params;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: PlaceStaticPathParams;
+}) {
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
+    params.place
+  );
+  const pageData: PageData = await generatePagesData({
+    currentYear: new Date().getFullYear(),
+    place: params.place,
+    byDate: "",
+    placeTypeLabel,
+  });
+  return buildPageMeta({
+    title: pageData.metaTitle,
+    description: pageData.metaDescription,
+    canonical: pageData.canonical,
+  });
 }
 
 export default async function Page({

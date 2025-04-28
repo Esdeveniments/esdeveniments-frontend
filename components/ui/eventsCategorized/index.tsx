@@ -3,7 +3,6 @@ import Script from "next/script";
 import dynamic from "next/dynamic";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import SpeakerphoneIcon from "@heroicons/react/outline/SpeakerphoneIcon";
-import Meta from "@components/partials/seo-meta";
 import { useGetCategorizedEvents } from "@components/hooks/useGetCategorizedEvents";
 import { generateJsonData, sendEventToGA } from "@utils/helpers";
 import List from "@components/ui/list";
@@ -128,14 +127,7 @@ function EventsCategorized({ pageData }: { pageData: PageData }): ReactElement {
       .filter(Boolean),
   ];
 
-  const {
-    metaTitle,
-    metaDescription,
-    title,
-    subTitle,
-    canonical,
-    notFoundText,
-  } = pageData;
+  const { title, subTitle, notFoundText } = pageData;
 
   const getCategoryName = (category: string): string => {
     return Object.entries(CATEGORY_NAMES_MAP).reduce(
@@ -163,12 +155,6 @@ function EventsCategorized({ pageData }: { pageData: PageData }): ReactElement {
         id={`${place || "catalunya"}-${byDate || "all"}-script`}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonEvents) }}
-      />
-      {/* SEO meta tags */}
-      <Meta
-        title={metaTitle}
-        description={metaDescription}
-        canonical={canonical}
       />
       <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
         <>
