@@ -212,7 +212,7 @@ export interface EventFormProps {
   isLoading?: boolean;
   regionOptions: Option[];
   cityOptions: Option[];
-  isLoadingRegionsWithCities: boolean;
+  isLoadingRegionsWithCities?: boolean;
   handleFormChange: <K extends keyof FormData>(
     name: K,
     value: FormData[K]

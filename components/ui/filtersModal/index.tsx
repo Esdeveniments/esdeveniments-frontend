@@ -15,7 +15,11 @@ import { sendEventToGA } from "@utils/helpers";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option } from "types/common";
 import { FiltersModalProps } from "types/filtersModal";
-import { GeolocationPosition, GroupedOption, GeolocationError } from "types/common";
+import {
+  GeolocationPosition,
+  GroupedOption,
+  GeolocationError,
+} from "types/common";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,

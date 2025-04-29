@@ -30,11 +30,9 @@ function getZodValidationState(
 export default function EditEventClient({
   event,
   regions,
-  isLoadingRegionsWithCities,
 }: {
   event: EventSummaryResponseDTO;
   regions: RegionsGroupedByCitiesResponseDTO[] | null;
-  isLoadingRegionsWithCities: boolean;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
@@ -133,7 +131,6 @@ export default function EditEventClient({
         submitLabel="Desa canvis"
         isEditMode={true}
         isLoading={isPending}
-        isLoadingRegionsWithCities={isLoadingRegionsWithCities}
         regionOptions={regionOptions}
         cityOptions={cityOptions}
         handleFormChange={handleFormChange}
