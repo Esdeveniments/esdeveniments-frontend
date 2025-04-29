@@ -12,20 +12,12 @@ import {
 } from "@utils/helpers";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import { siteUrl } from "@config/index";
 import { createEventAction } from "./actions";
 import { fetchRegionById } from "@lib/api/regions";
 import { fetchCityById } from "@lib/api/cities";
 import type { FormState, FormData } from "types/event";
 import { EventFormSchema, type EventFormSchemaType } from "types/event";
 import { Option } from "types/common";
-import { buildPageMeta } from "@components/partials/seo-meta";
-
-export const metadata = buildPageMeta({
-  title: "Publica - Esdeveniments.cat",
-  description: "Publica un acte cultural - Esdeveniments.cat",
-  canonical: `${siteUrl}/publica`,
-});
 
 const defaultForm: FormData = {
   title: "",
