@@ -3,12 +3,7 @@
 import Events from "@components/ui/events";
 import { initializeStore } from "@utils/initializeStore";
 import { useEffect } from "react";
-import type { PlaceProps, PageData, PlaceTypeAndLabel } from "types/common";
-
-interface PlaceClientProps extends PlaceProps {
-  pageData: PageData;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
+import type { PlaceClientProps } from "types/props";
 
 export default function PlaceClient({
   initialState,

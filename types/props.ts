@@ -1,5 +1,11 @@
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
-import { ByDateProps, Option, PageData, PlaceTypeAndLabel } from "types/common";
+import {
+  ByDateProps,
+  Option,
+  PageData,
+  PlaceProps,
+  PlaceTypeAndLabel,
+} from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 
 export interface SelectComponentProps {
@@ -169,6 +175,11 @@ export interface VideoDisplayProps {
 }
 
 export interface ByDateClientProps extends ByDateProps {
+  pageData: PageData;
+  placeTypeLabel: PlaceTypeAndLabel;
+}
+
+export interface PlaceClientProps extends PlaceProps {
   pageData: PageData;
   placeTypeLabel: PlaceTypeAndLabel;
 }
