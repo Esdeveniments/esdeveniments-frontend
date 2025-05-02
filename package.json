@@ -31,6 +31,7 @@
     "@tinymce/tinymce-react": "^5.1.1",
     "autoprefixer": "^10.4.20",
     "axios": "^1.4.0",
+    "critters": "^0.0.25",
     "cssnano": "^7.0.6",
     "date-fns": "^2.29.3",
     "fast-xml-parser": "^4.4.0",
