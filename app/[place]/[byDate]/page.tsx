@@ -11,15 +11,14 @@ import ByDateClient from "./ByDateClient";
 export async function generateMetadata({
   params,
 }: {
-  params: { place: string; byDate: string };
+  params: Promise<{ place: string; byDate: string }>;
 }) {
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
-    params.place
-  );
+  const { place, byDate } = await params;
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
-    place: params.place,
-    byDate: params.byDate as ByDateOptions,
+    place,
+    byDate: byDate as ByDateOptions,
     placeTypeLabel,
   });
   return buildPageMeta({

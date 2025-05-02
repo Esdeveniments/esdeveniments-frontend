@@ -31,14 +31,13 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: PlaceStaticPathParams;
+  params: Promise<PlaceStaticPathParams>;
 }) {
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
-    params.place
-  );
+  const { place } = await params;
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
-    place: params.place,
+    place,
     byDate: "",
     placeTypeLabel,
   });

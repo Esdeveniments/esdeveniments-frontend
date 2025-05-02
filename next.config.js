@@ -1,9 +1,12 @@
-const { withSentryConfig } = require('@sentry/nextjs');
+const { withSentryConfig } = require("@sentry/nextjs");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
     scrollRestoration: true,
+    reactCompiler: true,
+    optimizePackageImports: ["@heroicons/react"],
+    optimizeCss: true,
   },
   productionBrowserSourceMaps: true,
   reactStrictMode: false,
@@ -50,8 +53,8 @@ const nextConfig = {
 
 const sentryWebpackPluginOptions = {
   silent: true,
-  org: 'esdeveniments',
-  project: 'javascript-nextjs',
+  org: "esdeveniments",
+  project: "javascript-nextjs",
   widenClientFileUpload: true,
   transpileClientSDK: true,
   hideSourceMaps: true,
