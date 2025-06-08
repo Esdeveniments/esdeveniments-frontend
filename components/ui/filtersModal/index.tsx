@@ -7,6 +7,7 @@ import {
   ChangeEvent,
   FC,
 } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
@@ -168,22 +169,40 @@ const FiltersModal: FC<FiltersModalProps> = ({
   const disableDistance: boolean =
     Boolean(localPlace) || userLocationLoading || Boolean(userLocationError);
 
+  const router = useRouter();
+
   const applyFilters = () => {
-    setState("place", localPlace);
-    setState("byDate", localByDate);
-    setState("category", localCategory);
-    setState("distance", localDistance);
-    setState("userLocation", localUserLocation);
-    setState("filtersApplied", true);
+    console.log('Applying filters:', {
+      localPlace,
+      localByDate, 
+      localCategory,
+      localDistance
+    });
+    
+    // Build query parameters for non-place filters
+    const params = new URLSearchParams();
+    if (localByDate) params.set('date', localByDate);
+    if (localCategory) params.set('category', localCategory);
+    if (localDistance) params.set('distance', localDistance);
+    
+    const queryString = params.toString();
+    
+    if (localPlace) {
+      // Navigate to place page with other filters as query params
+      const url = `/${localPlace}${queryString ? `?${queryString}` : ''}`;
+      console.log('🔥 Navigating to place URL:', url);
+      router.push(url);
+    } else {
+      // Stay on homepage with all filters as query params
+      const url = `/${queryString ? `?${queryString}` : ''}`;
+      console.log('🔥 Navigating to home URL:', url);
+      router.push(url);
+    }
 
     sendEventToGA("Place", localPlace);
     sendEventToGA("ByDate", localByDate);
     sendEventToGA("Category", localCategory);
     sendEventToGA("Distance", localDistance);
-
-    if (!localPlace) {
-      setState("place", "");
-    }
 
     setState("openModal", false);
   };

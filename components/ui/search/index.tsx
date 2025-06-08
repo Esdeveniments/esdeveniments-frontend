@@ -7,6 +7,7 @@ import {
   KeyboardEvent,
   JSX,
 } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import useStore from "@store";
@@ -41,15 +42,43 @@ const sendSearchTermGA = (searchTerm: string): void => {
 };
 
 export default function Search(): JSX.Element {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // Use StoreState for correct typing
   const setState = useStore((state: Store) => state.setState);
+  const place = useStore((state: Store) => state.place);
   const searchTerm = useStore((state: Store) => state.searchTerm);
   const [inputValue, setInputValue] = useState<string>(searchTerm);
 
-  // Debounce only the searchTerm update for simplicity
+  // Function to update URL with search parameter
+  const updateSearchUrl = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (value) {
+        params.set("search", value);
+      } else {
+        params.delete("search");
+      }
+
+      const newUrl = place
+        ? `/${place}${params.toString() ? `?${params.toString()}` : ""}`
+        : `/${params.toString() ? `?${params.toString()}` : ""}`;
+
+      router.push(newUrl);
+    },
+    [place, searchParams, router]
+  );
+
+  // Debounce both store update and URL update
   const debouncedSetSearchTerm = useMemo(
-    () => debounce((value: string) => setState("searchTerm", value), 1500),
-    [setState]
+    () =>
+      debounce((value: string) => {
+        setState("searchTerm", value);
+        updateSearchUrl(value);
+      }, 1500),
+    [setState, updateSearchUrl]
   );
 
   const searchEvents = useCallback((term: string): void => {
@@ -78,15 +107,17 @@ export default function Search(): JSX.Element {
         const value = e.currentTarget.value;
         sendSearchTermGA(value);
         setState("searchTerm", value);
+        updateSearchUrl(value);
       }
     },
-    [setState]
+    [setState, updateSearchUrl]
   );
 
   const clearSearchTerm = useCallback((): void => {
     setState("searchTerm", "");
     setInputValue("");
-  }, [setState]);
+    updateSearchUrl("");
+  }, [setState, updateSearchUrl]);
 
   return (
     <div className="w-full flex justify-center border border-bColor border-opacity-50 rounded-full px-4 mt-2">

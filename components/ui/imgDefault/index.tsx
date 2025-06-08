@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect, memo, useCallback, FC } from "react";
-import LocationMarkerIcon from "@heroicons/react/outline/LocationMarkerIcon";
+import { memo, FC } from "react";
 import NextImage from "next/image";
 import Tickets from "public/static/images/tickets-color.svg";
 import { Gradient, ImgDefaultProps } from "types/common";
-
-let lastRandomIndex: number | null = null;
 
 const gradients: Gradient[] = [
   {
@@ -36,56 +33,46 @@ const gradients: Gradient[] = [
   },
 ];
 
-const ImgDefault: FC<ImgDefaultProps> = ({ date, location, subLocation }) => {
-  const [background, setBackground] = useState<Gradient>(gradients[0]);
+// Simple hash function to get deterministic gradient selection
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
 
-  const getRandomBackground = useCallback((): Gradient => {
-    let randomIndex: number;
-
-    do {
-      randomIndex = Math.floor(Math.random() * gradients.length);
-    } while (randomIndex === lastRandomIndex);
-
-    lastRandomIndex = randomIndex;
-
-    return gradients[randomIndex];
-  }, []);
-
-  useEffect(() => {
-    setBackground(getRandomBackground());
-  }, [getRandomBackground]);
+const ImgDefault: FC<ImgDefaultProps> = ({ title }) => {
+  // Use deterministic gradient selection based on title to avoid hydration issues
+  const gradientIndex = hashString(title || "default") % gradients.length;
+  const background = gradients[gradientIndex];
 
   return (
     <div
-      className="w-full flex flex-col justify-center items-start gap-4 p-10"
+      className="w-full h-full flex flex-col justify-between items-start p-4"
       style={{
         backgroundImage: background.gradient,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        width: "100%",
-        height: "100%",
+        minHeight: "260px",
       }}
     >
+      {/* Top section - Event Title */}
       <div className="w-full flex justify-start items-start gap-2">
-        <LocationMarkerIcon className="text-whiteCorp w-9 h-9 drop-shadow-md" />
-        <div className="w-full flex flex-col justify-start items-start gap-1">
+        <div className="w-full flex flex-col justify-start items-start gap-1 min-w-0">
           <h1
-            className="font-bold uppercase font-roboto text-whiteCorp text-[32px] tracking-wide drop-shadow-md"
-            aria-label={location}
+            className="font-bold uppercase font-roboto text-whiteCorp text-2xl leading-tight tracking-wide drop-shadow-md break-words"
+            aria-label={title}
           >
-            {location}
+            {title}
           </h1>
-          <h2 className="text-whiteCorp font-normal">{subLocation}</h2>
         </div>
       </div>
-      <div className="w-1/2 ml-10 border-t-2 border-whiteCorp drop-shadow-md"></div>
-      <div className={`w-full pl-10 flex flex-col justify-center items-center`}>
-        <h3
-          className="w-full text-whiteCorp font-roboto font-normal tracking-wider drop-shadow-md"
-          aria-label={date}
-        >
-          {date}
-        </h3>
+
+      {/* Bottom section - Tickets */}
+      <div className="w-full pl-10 flex flex-col justify-center items-center">
         <div className="w-full h-28 flex justify-end items-end">
           <NextImage
             className="w-6/12 drop-shadow-md"

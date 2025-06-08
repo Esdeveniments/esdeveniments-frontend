@@ -11,11 +11,7 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
       {event.url ? (
         <VideoDisplay videoUrl={event.url} />
       ) : (
-        <ImageDefault
-          date={event.startDate}
-          location={event.location}
-          subLocation={title}
-        />
+        <ImageDefault title={title} />
       )}
     </div>
   );

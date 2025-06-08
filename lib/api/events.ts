@@ -6,44 +6,72 @@ import {
   EventDetailResponseDTO,
   EventUpdateRequestDTO,
   EventCreateRequestDTO,
+  PagedResponseDTO,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
 
 export async function fetchEvents(
   params: FetchEventsParams
-): Promise<EventSummaryResponseDTO[]> {
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
     // MOCK DATA or empty for build safety
-    return [];
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
   }
   // Prepare params: always send page and size, only include others if non-empty
   const query: Partial<FetchEventsParams> = {};
   query.page = typeof params.page === "number" ? params.page : 0;
-  query.maxResults =
-    typeof params.maxResults === "number" ? params.maxResults : 10;
+  query.size = typeof params.size === "number" ? params.size : 10;
+
   // Add other params if present and non-empty
-  if (params.q) query.q = params.q;
-  if (params.town) query.town = params.town;
   if (params.zone) query.zone = params.zone;
   if (params.category) query.category = params.category;
+  if (params.lat) query.lat = params.lat;
+  if (params.lon) query.lon = params.lon;
+  if (params.radius) query.radius = params.radius;
+  if (params.q) query.q = params.q;
+  if (params.byDate) query.byDate = params.byDate;
+  if (params.from) query.from = params.from;
+  if (params.until) query.until = params.until;
+
+  console.log("fetchEvents: input params:", params);
+  console.log("fetchEvents: final query:", query);
 
   try {
-    const response = await fetch(
-      `${apiUrl}/events?` +
-        new URLSearchParams(
-          Object.fromEntries(
-            Object.entries(query)
-              .filter(([, v]) => v !== undefined)
-              .map(([k, v]) => [k, String(v)])
-          )
-        )
+    const filteredEntries = Object.entries(query)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [k, String(v)]);
+
+    const queryString = new URLSearchParams(
+      Object.fromEntries(filteredEntries)
     );
+    const finalUrl = `${apiUrl}/events?${queryString}`;
+
+    console.log("fetchEvents: final URL:", finalUrl);
+
+    const response = await fetch(finalUrl);
     const data = await response.json();
-    return data.content || [];
+
+    console.log("fetchEvents: response:", data);
+
+    return data;
   } catch (e) {
     console.error("Error fetching events:", e);
-    return [];
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
   }
 }
 
@@ -92,24 +120,32 @@ export async function createEvent(
   return response.json();
 }
 
-export interface CategorizedEventsApiResponse {
-  categorizedEvents: CategorizedEvents;
-  latestEvents?: EventSummaryResponseDTO[];
-}
-
-export async function fetchCategorizedEvents(): Promise<CategorizedEventsApiResponse> {
+export async function fetchCategorizedEvents(
+  maxEventsPerCategory?: number
+): Promise<CategorizedEvents> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
     // MOCK DATA or empty for build safety
-    return { categorizedEvents: {} };
+    return {};
   }
   try {
-    const response = await fetch(`${apiUrl}/events/categorized`);
+    const params = new URLSearchParams();
+    if (maxEventsPerCategory !== undefined) {
+      params.append("maxEventsPerCategory", String(maxEventsPerCategory));
+    }
+    const queryString = params.toString();
+    const finalUrl = `${apiUrl}/events/categorized${
+      queryString ? `?${queryString}` : ""
+    }`;
+    const response = await fetch(finalUrl);
+
+    const data = await response.json();
+
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return response.json();
+    return data;
   } catch (e) {
     console.error("Error fetching categorized events:", e);
-    return { categorizedEvents: {} };
+    return {};
   }
 }
 

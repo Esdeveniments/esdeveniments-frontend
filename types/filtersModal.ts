@@ -14,8 +14,7 @@ export interface FiltersModalProps {
       | "category"
       | "distance"
       | "openModal"
-      | "userLocation"
-      | "filtersApplied",
+      | "userLocation",
     value: string | boolean | UserLocation | null
   ) => void;
 }

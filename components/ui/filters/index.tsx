@@ -6,10 +6,10 @@ import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
 import { BYDATES } from "@utils/constants";
 import { findCategoryKeyByValue } from "@utils/helpers";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import useStore from "@store";
 import type { Option } from "types/common";
-import { RenderButtonProps, FiltersProps } from "types/common";
+import { RenderButtonProps } from "types/common";
 import { FilterState } from "types/filters";
 
 const renderButton = ({
@@ -60,20 +60,42 @@ const renderButton = ({
   </div>
 );
 
-const Filters = ({ placeLabel }: FiltersProps): JSX.Element => {
+const Filters = (): JSX.Element => {
   const router = useRouter();
-  const { place, byDate, category, distance, openModal, setState } =
-    useStore<FilterState>((state) => ({
-      place: state.place,
-      byDate: state.byDate,
-      category: state.category,
-      distance: state.distance,
-      openModal: state.openModal,
-      setState: state.setState,
-    }));
+  const searchParams = useSearchParams();
+
+  // Read filter values from URL parameters (primary source) with store as fallback
+  const urlCategory = searchParams.get("category");
+  const urlDate = searchParams.get("date");
+  const urlDistance = searchParams.get("distance");
+  const urlSearch = searchParams.get("search");
+
+  const {
+    place,
+    byDate: storeByDate,
+    category: storeCategory,
+    searchTerm: storeSearchTerm,
+    distance: storeDistance,
+    openModal,
+    setState,
+  } = useStore<FilterState>((state) => ({
+    place: state.place,
+    byDate: state.byDate,
+    category: state.category,
+    searchTerm: state.searchTerm,
+    distance: state.distance,
+    openModal: state.openModal,
+    setState: state.setState,
+  }));
+
+  // Use URL parameters as the primary source of truth for filter values
+  const byDate = urlDate || storeByDate;
+  const category = urlCategory || storeCategory;
+  const searchTerm = urlSearch || storeSearchTerm;
+  const distance = urlDistance || storeDistance;
 
   const isAnyFilterSelected = (): boolean =>
-    Boolean(place || byDate || category || distance);
+    Boolean(place || byDate || category || searchTerm || distance);
   const getText = (value: string | undefined, defaultValue: string): string =>
     value ? value : defaultValue;
   const foundByDate = BYDATES.find((item) => item.value === byDate);
@@ -83,18 +105,72 @@ const Filters = ({ placeLabel }: FiltersProps): JSX.Element => {
   const handleByDateClick = useCallback((): void => {
     if (byDate) {
       setState("byDate", "");
+
+      // Update URL to remove date parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("date");
+
+      const newUrl = place
+        ? `/${place}${params.toString() ? `?${params.toString()}` : ""}`
+        : `/${params.toString() ? `?${params.toString()}` : ""}`;
+
+      router.push(newUrl);
     } else {
       setState("openModal", true);
     }
-  }, [byDate, setState]);
+  }, [byDate, place, searchParams, setState, router]);
 
   const handleCategoryClick = useCallback((): void => {
-    setState("category", "");
-  }, [setState]);
+    if (category) {
+      setState("category", "");
+
+      // Update URL to remove category parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("category");
+
+      const newUrl = place
+        ? `/${place}${params.toString() ? `?${params.toString()}` : ""}`
+        : `/${params.toString() ? `?${params.toString()}` : ""}`;
+
+      router.push(newUrl);
+    } else {
+      setState("openModal", true);
+    }
+  }, [category, place, searchParams, setState, router]);
 
   const handleDistanceClick = useCallback((): void => {
-    setState("distance", "");
-  }, [setState]);
+    if (distance) {
+      setState("distance", "");
+
+      // Update URL to remove distance parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("distance");
+
+      const newUrl = place
+        ? `/${place}${params.toString() ? `?${params.toString()}` : ""}`
+        : `/${params.toString() ? `?${params.toString()}` : ""}`;
+
+      router.push(newUrl);
+    } else {
+      setState("openModal", true);
+    }
+  }, [distance, place, searchParams, setState, router]);
+
+  const handleSearchClick = useCallback((): void => {
+    if (searchTerm) {
+      setState("searchTerm", "");
+
+      // Update URL to remove search parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("search");
+
+      const newUrl = place
+        ? `/${place}${params.toString() ? `?${params.toString()}` : ""}`
+        : `/${params.toString() ? `?${params.toString()}` : ""}`;
+
+      router.push(newUrl);
+    }
+  }, [searchTerm, place, searchParams, setState, router]);
 
   const handleOnClick = useCallback(
     (value: string | Option | undefined, fn: () => void) => (): void => {
@@ -111,13 +187,28 @@ const Filters = ({ placeLabel }: FiltersProps): JSX.Element => {
     if (place) {
       setState("place", "");
 
-      if (place) {
+      // Check if any other filters are active
+      const hasOtherFilters = Boolean(byDate || category || searchTerm || distance);
+
+      if (hasOtherFilters) {
+        // Build query parameters for non-place filters
+        const params = new URLSearchParams();
+        if (byDate) params.set("date", byDate);
+        if (category) params.set("category", category);
+        if (searchTerm) params.set("search", searchTerm);
+        if (distance) params.set("distance", distance);
+
+        const queryString = params.toString();
+        const url = `/${queryString ? `?${queryString}` : ""}`;
+        router.push(url);
+      } else {
+        // No other filters active, navigate to homepage
         router.push("/");
       }
     } else {
       setState("openModal", true);
     }
-  }, [place, setState, router]);
+  }, [place, byDate, category, searchTerm, distance, setState, router]);
 
   return (
     <div
@@ -144,7 +235,7 @@ const Filters = ({ placeLabel }: FiltersProps): JSX.Element => {
         </div>
         <div className="w-8/10 flex items-center gap-1 border-0 placeholder:text-bColor overflow-x-auto">
           {renderButton({
-            text: getText(placeLabel, "Població"),
+            text: getText(place, "Població"),
             enabled: Boolean(place),
             onClick: handlePlaceClick,
             handleOpenModal: () => setState("openModal", true),
@@ -157,6 +248,13 @@ const Filters = ({ placeLabel }: FiltersProps): JSX.Element => {
             ),
             enabled: Boolean(category),
             onClick: handleOnClick(category, handleCategoryClick),
+            handleOpenModal: () => setState("openModal", true),
+            scrollToTop,
+          })}
+          {renderButton({
+            text: getText(searchTerm, "Cerca"),
+            enabled: Boolean(searchTerm),
+            onClick: handleSearchClick,
             handleOpenModal: () => setState("openModal", true),
             scrollToTop,
           })}

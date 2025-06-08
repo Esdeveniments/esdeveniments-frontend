@@ -4,7 +4,7 @@ import { generateJsonData, getFormattedDate } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { fetchCityById } from "@lib/api/cities";
-import { getHistoricDates } from "@lib/dates";
+// Removed getHistoricDates - new API doesn't support date filtering
 import dynamic from "next/dynamic";
 import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
@@ -40,15 +40,14 @@ export default async function Page({
   if (!town || !year || !month) return null;
 
   // Get date range for the month
-  const { from, until } = getHistoricDates(month, Number(year));
+  // Removed date filtering - new API doesn't support it
 
   // Fetch events and city label
   const [events, city] = await Promise.all([
     fetchEvents({
-      town,
-      from: from.toISOString(),
-      until: until.toISOString(),
-      maxResults: 2500,
+      page: 0,
+      size: 2500,
+      zone: town,
     }),
     fetchCityById(town),
   ]);

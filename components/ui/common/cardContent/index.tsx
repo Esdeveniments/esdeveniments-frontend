@@ -111,11 +111,7 @@ function CardContent({
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
               <div className="w-2 h-6 bg-gradient-to-r from-primary to-primarydark"></div>
             </div>
-            <h3 className="w-9/12 uppercase">
-              <Link href={`/e/${event.slug}`} passHref prefetch={false}>
-                {memoizedValues.title}
-              </Link>
-            </h3>
+            <h3 className="w-9/12 uppercase">{memoizedValues.title}</h3>
             <div className="flex items-center gap-2">
               {icon && (
                 <div className="flex items-center gap-1">
@@ -156,8 +152,6 @@ function CardContent({
                   isHorizontal ? "h-64 object-cover" : "object-contain"
                 }`}
                 title={event.title}
-                date={memoizedValues.eventDate}
-                location={event.location}
                 image={memoizedValues.image}
                 priority={isPriority}
                 alt={event.title}

@@ -30,6 +30,8 @@ export const defaultMeta = {
     "fb:pages": "103738478742219",
     "google-site-verification":
       process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    author: "Esdeveniments.cat",
+    "revisit-after": "1 days",
   },
 };
 
@@ -67,5 +69,12 @@ export function buildPageMeta({
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
         : "index, follow",
+    other: {
+      ...restDefaults.other,
+      "twitter:domain": siteUrl,
+      "twitter:url": canonical,
+      "twitter:image:src": image,
+      "twitter:image:alt": title,
+    },
   };
 }

@@ -14,13 +14,7 @@ const ImageDefault = dynamic(() => import("@components/ui/imgDefault"), {
   loading: () => null,
 });
 
-const EventImage: FC<EventImageProps> = ({
-  image,
-  title,
-  location,
-  nameDay,
-  formattedStart,
-}) => {
+const EventImage: FC<EventImageProps> = ({ image, title }) => {
   if (image) {
     return (
       <a
@@ -40,12 +34,10 @@ const EventImage: FC<EventImageProps> = ({
     );
   }
 
-  const date = `${nameDay} ${formattedStart}`;
-
   return (
     <div className="w-full">
       <div className="w-full border-t"></div>
-      <ImageDefault date={date} location={location} subLocation={title} />
+      <ImageDefault title={title} />
     </div>
   );
 };

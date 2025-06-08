@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components, StylesConfig, GroupBase } from "react-select";
-import useStore from "@store";
+// Removed useStore import - no longer needed
 import { SelectComponentProps } from "types/props";
 import { Option } from "types/common";
 
@@ -64,9 +64,7 @@ export default function SelectComponent({
   isClearable = false,
   placeholder = "una opció",
 }: SelectComponentProps) {
-  const { setState } = useStore((state) => ({
-    setState: state.setState,
-  }));
+  // Removed setState - no longer needed for page/scroll reset
   const [selectedOption, setSelectedOption] = useState<Option | null>(
     initialValue
   );
@@ -79,10 +77,7 @@ export default function SelectComponent({
     setSelectedOption(value);
     onChange(value);
 
-    if (value === null) {
-      setState("page", 1);
-      setState("scrollPosition", 0);
-    }
+    // Removed page/scrollPosition reset - no longer needed with server-side filtering
   };
 
   return (

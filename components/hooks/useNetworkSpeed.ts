@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
-import { NetworkInformation } from "types/common";
 
 export const useNetworkSpeed = (): number => {
   const [quality, setQuality] = useState<number>(70); // Default quality
 
   useEffect(() => {
-    const connection: NetworkInformation | undefined =
-      ((navigator as Navigator).connection ||
-      (navigator as Navigator).mozConnection ||
-      (navigator as Navigator).webkitConnection);
+    const connection =
+      navigator.connection ||
+      navigator.mozConnection ||
+      navigator.webkitConnection;
 
     if (!connection) {
       console.log("Network Information API not supported");
-      return setQuality(70); // Exit if the connection API is not supported and set default quality
+      setQuality(70);
+      return;
     }
 
-    const setConnectionQuality = (): void => {
+    const handleConnectionChange = () => {
       switch (connection.effectiveType) {
         case "slow-2g":
         case "2g":
@@ -35,13 +35,12 @@ export const useNetworkSpeed = (): number => {
       }
     };
 
-    setConnectionQuality();
-    connection.addEventListener("change", setConnectionQuality);
+    handleConnectionChange();
+
+    connection.addEventListener("change", handleConnectionChange);
 
     return () => {
-      if (connection) {
-        connection.removeEventListener("change", setConnectionQuality);
-      }
+      connection.removeEventListener("change", handleConnectionChange);
     };
   }, []);
 

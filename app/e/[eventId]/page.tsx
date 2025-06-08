@@ -6,12 +6,7 @@ import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
 import Script from "next/script";
 import EventMedia from "./components/EventMedia";
-import EventHeader from "./components/EventHeader";
-import EventDescription from "./components/EventDescription";
-import EventCalendar from "./components/EventCalendar";
 import EventShareBar from "./components/EventShareBar";
-import { SpeakerphoneIcon } from "@heroicons/react/outline";
-import AdArticle from "components/ui/adArticle";
 import EventClient from "./EventClient";
 import NoEventFound from "components/ui/common/noEventFound";
 
@@ -66,37 +61,14 @@ export default async function EventPage({
           <article className="w-full flex flex-col justify-center items-start gap-8">
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <EventMedia event={event} title={title} />
-            </div>
-            <EventShareBar
-              slug={eventSlug}
-              title={title}
-              eventDateString={eventDateString}
-              location={event.location}
-              cityName={cityName}
-              regionName={regionName}
-            />
-            <EventHeader
-              title={title}
-              eventDate={eventDateString}
-              location={event.location}
-              city={cityName}
-              region={regionName}
-            />
-            <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-              <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-              <div className="w-11/12 flex flex-col gap-4">
-                <h2>Contingut patrocinat</h2>
-                <AdArticle slot="9643657007" />
-              </div>
-            </div>
-            <EventDescription description={event.description} />
-            <EventCalendar event={event} />
-            <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-              <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-              <div className="w-11/12 flex flex-col gap-4">
-                <h2>Contingut patrocinat</h2>
-                <AdArticle slot="9643657007" />
-              </div>
+              <EventShareBar
+                slug={eventSlug}
+                title={title}
+                eventDateString={eventDateString}
+                location={event.location}
+                cityName={cityName}
+                regionName={regionName}
+              />
             </div>
             <EventClient event={event} />
           </article>

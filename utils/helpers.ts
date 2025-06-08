@@ -3,6 +3,10 @@ import { siteUrl } from "@config/index";
 import { fetchCityById } from "@lib/api/cities";
 import { fetchRegionById } from "@lib/api/regions";
 import { type Option, CategoryKey } from "types/common";
+import {
+  EventSummaryResponseDTO,
+  EventDetailResponseDTO,
+} from "types/api/event";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -265,7 +269,7 @@ export const monthsName: string[] = [
 ];
 
 export const generateJsonData = (
-  event: EventDetailResponseDTO
+  event: EventDetailResponseDTO | EventSummaryResponseDTO
 ): SchemaOrgEvent => {
   const {
     title,
@@ -275,12 +279,14 @@ export const generateJsonData = (
     endDate,
     location,
     imageUrl,
-    duration = "",
-    videoUrl = undefined,
     city = undefined,
     region = undefined,
     province = undefined,
   } = event;
+
+  // Handle optional properties that only exist in EventDetailResponseDTO
+  const duration = "duration" in event ? event.duration || "" : "";
+  const videoUrl = "videoUrl" in event ? event.videoUrl : undefined;
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
   const images = [imageUrl, defaultImage].filter(Boolean) as string[];
@@ -422,20 +428,54 @@ export const findCategoryKeyByValue = (
 };
 
 // --- Helper: Parse time to { hour, minute, second, nano } ---
-export function parseTime(dateOrString: Date | string | undefined) {
-  let date: Date;
-  if (!dateOrString) {
+/**
+ * Converts ISO time string or Date to EventTimeDTO shape for backend requests.
+ * Provides a default fallback for invalid or empty input.
+ * Accepts:
+ *   - "14:30:00" or "14:30" (ISO time format)
+ *   - Date object
+ *   - null/undefined returns default { hour: 0, minute: 0, second: 0, nano: 0 }
+ */
+export function parseTimeToEventTimeDTO(
+  dateOrString: Date | string | null | undefined
+): EventTimeDTO {
+  if (
+    !dateOrString ||
+    (typeof dateOrString === "string" && dateOrString.trim() === "")
+  ) {
     return { hour: 0, minute: 0, second: 0, nano: 0 };
   }
+
+  let date: Date | null = null;
+
   if (typeof dateOrString === "string") {
-    const [h, m, s] = dateOrString.split(":").map(Number);
-    date = new Date(1970, 0, 1, h || 0, m || 0, s || 0);
-    if (isNaN(date.getTime())) {
+    const parts = dateOrString.split(":");
+    if (parts.length < 2 || parts.length > 3) {
       return { hour: 0, minute: 0, second: 0, nano: 0 };
     }
-  } else {
+    const [h, m, s] = parts.map(Number);
+    // Validate numbers and ranges
+    if (
+      isNaN(h) ||
+      isNaN(m) ||
+      (parts.length === 3 && isNaN(s)) ||
+      h < 0 ||
+      h > 23 ||
+      m < 0 ||
+      m > 59 ||
+      (typeof s === "number" && (s < 0 || s > 59))
+    ) {
+      return { hour: 0, minute: 0, second: 0, nano: 0 };
+    }
+    date = new Date(1970, 0, 1, h, m, s || 0);
+  } else if (dateOrString instanceof Date && !isNaN(dateOrString.getTime())) {
     date = dateOrString;
   }
+
+  if (!date) {
+    return { hour: 0, minute: 0, second: 0, nano: 0 };
+  }
+
   return {
     hour: date.getHours(),
     minute: date.getMinutes(),
@@ -446,9 +486,15 @@ export function parseTime(dateOrString: Date | string | undefined) {
 
 // --- Mapping: FormData to backend DTO (EventCreateRequestDTO/EventUpdateRequestDTO) ---
 import type { FormData } from "types/event";
-import type { EventCreateRequestDTO, EventUpdateRequestDTO } from "types/api/event";
+import type {
+  EventCreateRequestDTO,
+  EventUpdateRequestDTO,
+  EventTimeDTO,
+} from "types/api/event";
 
-export function formDataToBackendDTO(form: FormData): EventCreateRequestDTO | EventUpdateRequestDTO {
+export function formDataToBackendDTO(
+  form: FormData
+): EventCreateRequestDTO | EventUpdateRequestDTO {
   return {
     title: form.title,
     type: form.type ?? "FREE",
@@ -467,20 +513,10 @@ export function formDataToBackendDTO(form: FormData): EventCreateRequestDTO | Ev
         : form.town && "value" in form.town
         ? Number(form.town.value)
         : 0,
-    startDate:
-      typeof form.startDate === "string"
-        ? form.startDate
-        : form.startDate instanceof Date
-        ? form.startDate.toISOString().slice(0, 10)
-        : "",
-    startTime: parseTime(form.startTime),
-    endDate:
-      typeof form.endDate === "string"
-        ? form.endDate
-        : form.endDate instanceof Date
-        ? form.endDate.toISOString().slice(0, 10)
-        : "",
-    endTime: parseTime(form.endTime),
+    startDate: form.startDate, // Already in YYYY-MM-DD format
+    startTime: parseTimeToEventTimeDTO(form.startTime),
+    endDate: form.endDate, // Already in YYYY-MM-DD format
+    endTime: parseTimeToEventTimeDTO(form.endTime),
     location: form.location,
     categories: Array.isArray(form.categories)
       ? form.categories
@@ -497,7 +533,6 @@ export function formDataToBackendDTO(form: FormData): EventCreateRequestDTO | Ev
 }
 
 // --- Mapping: EventDetailResponseDTO to FormData ---
-import type { EventDetailResponseDTO } from "types/api/event";
 
 export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
   return {
@@ -506,14 +541,10 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
     title: event.title || "",
     description: event.description || "",
     type: event.type || "FREE",
-    startDate: event.startDate ? new Date(event.startDate) : "",
-    startTime: (event.startTime && typeof event.startTime === "object" && "hour" in event.startTime && "minute" in event.startTime)
-      ? `${(event.startTime as any).hour.toString().padStart(2, "0")}:${(event.startTime as any).minute.toString().padStart(2, "0")}`
-      : "",
-    endDate: event.endDate ? new Date(event.endDate) : "",
-    endTime: (event.endTime && typeof event.endTime === "object" && "hour" in event.endTime && "minute" in event.endTime)
-      ? `${(event.endTime as any).hour.toString().padStart(2, "0")}:${(event.endTime as any).minute.toString().padStart(2, "0")}`
-      : "",
+    startDate: event.startDate || "", // Keep as string, already in YYYY-MM-DD format
+    startTime: event.startTime, // Keep as string | null, already in ISO time format
+    endDate: event.endDate || "", // Keep as string, already in YYYY-MM-DD format
+    endTime: event.endTime, // Keep as string | null, already in ISO time format
     region: event.region
       ? { value: String(event.region.id), label: event.region.name }
       : null,

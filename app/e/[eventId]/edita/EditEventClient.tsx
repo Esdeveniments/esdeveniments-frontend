@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useTransition } from "react";
 import EventForm from "@components/ui/EventForm";
-import type { FormData, FormState } from "types/event";
+import type { FormData } from "types/event";
 import { EventFormSchema, type EventFormSchemaType } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
@@ -13,7 +13,7 @@ import { Option } from "types/common";
 function getZodValidationState(
   form: EventFormSchemaType,
   isPristine: boolean
-): FormState {
+): { isDisabled: boolean; isPristine: boolean; message: string } {
   if (!isPristine) {
     return { isDisabled: true, isPristine: true, message: "" };
   }
@@ -36,7 +36,11 @@ export default function EditEventClient({
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
-  const [formState, setFormState] = useState<FormState>({
+  const [formState, setFormState] = useState<{
+    isDisabled: boolean;
+    isPristine: boolean;
+    message: string;
+  }>({
     isDisabled: true,
     isPristine: true,
     message: "",

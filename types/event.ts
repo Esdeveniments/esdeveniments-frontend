@@ -14,10 +14,10 @@ export const EventFormSchema = z.object({
   title: z.string().min(1, "Títol obligatori"),
   description: z.string().min(1, "Descripció obligatòria"),
   type: z.enum(["FREE", "PAID"]),
-  startDate: z.union([z.string(), z.date()]),
-  startTime: z.union([z.string(), z.date()]),
-  endDate: z.union([z.string(), z.date()]),
-  endTime: z.union([z.string(), z.date()]),
+  startDate: z.string(), // "YYYY-MM-DD" - consistent with API
+  startTime: z.string().nullable(), // ISO time string or null - consistent with API
+  endDate: z.string(), // "YYYY-MM-DD" - consistent with API
+  endTime: z.string().nullable(), // ISO time string or null - consistent with API
   region: z.any().nullable(),
   town: z.any().nullable(),
   location: z.string().min(1, "Localització obligatòria"),
@@ -36,10 +36,10 @@ export interface FormData {
   title: string;
   description: string;
   type: "FREE" | "PAID";
-  startDate: string | Date;
-  startTime: string | Date;
-  endDate: string | Date;
-  endTime: string | Date;
+  startDate: string; // "YYYY-MM-DD" - consistent with API
+  startTime: string | null; // ISO time string or null - consistent with API
+  endDate: string; // "YYYY-MM-DD" - consistent with API
+  endTime: string | null; // ISO time string or null - consistent with API
   region: RegionSummaryResponseDTO | { value: string; label: string } | null;
   town: CitySummaryResponseDTO | { value: string; label: string } | null;
   location: string;
@@ -49,12 +49,6 @@ export interface FormData {
     { id: number; name: string } | { value: string; label: string } | number
   >;
   email?: string; // UI only
-}
-
-export interface FormState {
-  isDisabled: boolean;
-  isPristine: boolean;
-  message: string;
 }
 
 /**
@@ -115,16 +109,16 @@ export interface DynamicOptionsLoadingProps {
 
 export interface FetchEventsParams {
   page?: number;
-  maxResults: number;
-  q?: string;
-  town?: string;
+  size: number;
   zone?: string;
   category?: string;
-  region?: string;
-  from?: string;
-  until?: string;
-  filterByDate?: boolean;
-  normalizeRss?: boolean;
+  lat?: number;
+  lon?: number;
+  radius?: number;
+  q?: string; // Search query
+  byDate?: string; // Date filter
+  from?: string; // Start date
+  until?: string; // End date
 }
 
 export interface EventHeaderProps {

@@ -8,8 +8,11 @@ import type {
   PlaceTypeAndLabel,
   PageData,
 } from "types/common";
-import { twoWeeksDefault } from "@lib/dates";
+import type { EventCategory } from "@store";
+// Removed twoWeeksDefault - no longer needed with new API structure
 import { FetchEventsParams } from "types/event";
+import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import PlaceClient from "./PlaceClient";
 
 export const revalidate = 600;
@@ -50,40 +53,63 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { from, until } = twoWeeksDefault();
   const { place } = await params;
+  const search = await searchParams;
+
+  // Extract query parameters for filters
+  const category =
+    typeof search.category === "string" ? search.category : undefined;
+  const date = typeof search.date === "string" ? search.date : undefined;
+  const distance =
+    typeof search.distance === "string" ? search.distance : undefined;
+
   const fetchParams: FetchEventsParams = {
     page: 0,
-    maxResults: 100,
-    town: place,
-    from: from.toISOString(),
-    until: until.toISOString(),
+    size: 10,
+    zone: place,
   };
 
-  let events = await fetchEvents(fetchParams);
-  let noEventsFound = false;
+  // Add filters if present
+  if (category) fetchParams.category = category;
 
-  if (!events || events.length === 0) {
+  console.log("🔥 [place]/page.tsx - fetchParams:", fetchParams);
+  console.log("🔥 [place]/page.tsx - searchParams:", {
+    category,
+    date,
+    distance,
+  });
+
+  let eventsResponse = await fetchEvents(fetchParams);
+  let noEventsFound = false;
+  let totalServerEvents = eventsResponse?.totalElements || 0;
+
+  if (
+    !eventsResponse ||
+    !eventsResponse.content ||
+    eventsResponse.content.length === 0
+  ) {
     const regions = await fetchRegionsWithCities();
     const region = regions.find((r) =>
       r.cities.some((city) => city.value === place)
     );
 
     if (region) {
-      events = await fetchEvents({
+      eventsResponse = await fetchEvents({
         page: 0,
-        maxResults: 7,
-        region: region.name,
-        from: from.toISOString(),
-        until: until.toISOString(),
+        size: 7,
+        zone: region.name,
       });
+      totalServerEvents = eventsResponse?.totalElements || 0;
       noEventsFound = true;
     }
   }
 
+  const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
@@ -96,17 +122,36 @@ export default async function Page({
   });
 
   const initialState = {
+    // Only initialize filter state - events are handled server-side
     place,
-    events: eventsWithAds,
-    noEventsFound,
-    hasServerFilters: true,
+    byDate: date || "",
+    category: (category || "") as EventCategory | "",
   };
 
   return (
-    <PlaceClient
-      initialState={initialState}
-      placeTypeLabel={placeTypeLabel}
-      pageData={pageData}
-    />
+    <>
+      {/* Initialize client store (for state management) */}
+      <PlaceClient
+        initialState={initialState}
+        placeTypeLabel={placeTypeLabel}
+        pageData={pageData}
+      />
+
+      {/* Server-rendered events content (SEO optimized) */}
+      <ServerEventsDisplay
+        events={eventsWithAds}
+        placeTypeLabel={placeTypeLabel}
+        pageData={pageData}
+        noEventsFound={noEventsFound}
+        hasServerFilters={true}
+        place={place}
+        category={category}
+        date={date}
+        totalServerEvents={totalServerEvents}
+      />
+
+      {/* Client-side interactive layer (search, filters, floating button) */}
+      <ClientInteractiveLayer />
+    </>
   );
 }

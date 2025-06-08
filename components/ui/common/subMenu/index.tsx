@@ -1,16 +1,15 @@
 "use client";
 
-import { memo, FC } from "react";
+import { memo, FC, Suspense } from "react";
 import dynamic from "next/dynamic";
 import Filters from "@components/ui/filters";
 import useStore from "@store";
-import { SubMenuProps } from "types/props";
 
 const FiltersModal = dynamic(() => import("@components/ui/filtersModal"), {
   loading: () => null,
 });
 
-const SubMenu: FC<SubMenuProps> = ({ placeLabel }) => {
+const SubMenu: FC = () => {
   const {
     openModal,
     place,
@@ -42,7 +41,11 @@ const SubMenu: FC<SubMenuProps> = ({ placeLabel }) => {
           setState={setState}
         />
       )}
-      <Filters placeLabel={placeLabel} />
+      <Suspense
+        fallback={<div className="w-full h-10 bg-whiteCorp animate-pulse" />}
+      >
+        <Filters />
+      </Suspense>
     </>
   );
 };

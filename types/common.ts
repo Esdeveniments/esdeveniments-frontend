@@ -2,8 +2,8 @@ import type { CSSProperties } from "react";
 import type { ErrorProps } from "next/error";
 import type { EventLocation } from "../store";
 import type { StoreState } from "@store";
+import type { EventCategory } from "@store";
 import {
-  CategorizedEvents,
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
   ListEvent,
@@ -75,26 +75,13 @@ export interface EventsProps {
 export interface UseGetEventsProps {
   props?: EventsProps;
   pageIndex: number;
-  q?: string;
   refreshInterval?: boolean;
   maxResults?: number;
-  town?: string;
   zone?: string;
   category?: string;
-}
-
-export interface UseGetCategorizedEventsProps {
-  props?: {
-    categorizedEvents?: CategorizedEvents;
-    latestEvents?: EventSummaryResponseDTO[];
-  };
-  // Removed searchTerms and maxResults as they are not supported by the backend endpoint
-  refreshInterval?: boolean;
-}
-
-export interface CategorizedEventsResponse {
-  categorizedEvents: CategorizedEvents;
-  latestEvents?: EventSummaryResponseDTO[];
+  lat?: number;
+  lon?: number;
+  radius?: number;
 }
 
 export interface NetworkInformation extends EventTarget {
@@ -179,9 +166,7 @@ export interface Gradient {
 }
 
 export interface ImgDefaultProps {
-  date: string;
-  location: string;
-  subLocation: string;
+  title: string;
 }
 
 export interface MetaProps {
@@ -326,10 +311,10 @@ export interface StaticProps {
 }
 
 export interface PlaceInitialState {
+  // Only filter state - events are handled server-side
   place: string;
-  events: ListEvent[];
-  noEventsFound: boolean;
-  hasServerFilters: boolean;
+  byDate: string;
+  category: EventCategory | "";
 }
 
 export interface PlaceProps {
@@ -362,11 +347,8 @@ export interface ApiResponse {
 }
 
 export interface HomeInitialState {
-  categorizedEvents: CategorizedEvents;
-  latestEvents: EventSummaryResponseDTO[];
+  // Only initialize filter state - events are handled server-side
   userLocation?: EventLocation | null;
-  currentYear?: number;
-  noEventsFound: boolean;
 }
 
 export interface TeamMember {
@@ -452,9 +434,6 @@ export interface LoaderProps {
 
 export interface ImageComponentProps {
   title: string;
-  date?: string;
-  location?: string;
-  subLocation?: string;
   image?: string;
   className?: string;
   priority?: boolean;
@@ -465,4 +444,11 @@ export interface ActiveLinkProps extends LinkProps {
   children: React.ReactNode;
   activeLinkClass?: string;
   className?: string;
+}
+
+export interface URLFilters {
+  category?: string;
+  date?: string;
+  distance?: string;
+  searchTerm?: string;
 }

@@ -6,7 +6,7 @@ import {
   PlaceProps,
   PlaceTypeAndLabel,
 } from "types/common";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import { EventSummaryResponseDTO } from "types/api/event";
 
 export interface SelectComponentProps {
   id: string;
@@ -69,10 +69,7 @@ export interface SocialProps {
   };
 }
 
-export interface EventsListProps {
-  events: ListEvent[];
-  placeTypeLabel?: PlaceTypeAndLabel;
-}
+// Removed EventsListProps - no longer needed with server-side architecture
 
 export interface CulturalMessageProps {
   location: string;
@@ -102,10 +99,10 @@ export interface SocialLinks {
 
 export interface DatePickerComponentProps {
   idPrefix?: string;
-  startDate: Date;
-  endDate: Date;
-  minDate?: Date;
-  onChange: (field: "startDate" | "endDate", date: Date) => void;
+  startDate: string; // "YYYY-MM-DD" or ISO string
+  endDate: string; // "YYYY-MM-DD" or ISO string
+  minDate?: string; // "YYYY-MM-DD" or ISO string
+  onChange: (field: "startDate" | "endDate", value: string) => void;
   required?: boolean;
   className?: string;
 }
@@ -166,10 +163,6 @@ export interface NoEventsFoundProps {
   title?: string;
 }
 
-export interface SubMenuProps {
-  placeLabel: string;
-}
-
 export interface VideoDisplayProps {
   videoUrl: string | null | undefined;
 }
@@ -182,4 +175,11 @@ export interface ByDateClientProps extends ByDateProps {
 export interface PlaceClientProps extends PlaceProps {
   pageData: PageData;
   placeTypeLabel: PlaceTypeAndLabel;
+}
+
+export interface LoadMoreButtonProps {
+  place: string;
+  category?: string;
+  date?: string; // Reserved for future date filtering
+  totalServerEvents?: number; // Total number of events from server to determine if more pages exist
 }

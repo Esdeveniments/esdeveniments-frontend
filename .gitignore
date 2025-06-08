@@ -76,3 +76,5 @@ $RECYCLE.BIN/
 
 .env copy.development
 .env copy.production
+# Million Lint
+.million

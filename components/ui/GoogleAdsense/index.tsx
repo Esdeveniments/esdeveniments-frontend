@@ -13,6 +13,11 @@ const GoogleAdsenseContainer = ({
 }: GoogleAdsenseContainerProps): JSX.Element => {
   const adRef = useRef<HTMLModElement>(null);
   const observer = useRef<MutationObserver | null>(null);
+  const callbackRef = useRef(setDisplayAd);
+
+  useEffect(() => {
+    callbackRef.current = setDisplayAd;
+  }, [setDisplayAd]);
 
   useEffect(() => {
     if (
@@ -39,7 +44,7 @@ const GoogleAdsenseContainer = ({
         const target = element.target as HTMLElement;
         const adStatus = target.getAttribute("data-ad-status") as AdStatus;
         if (adStatus === "unfilled") {
-          setDisplayAd?.(false);
+          callbackRef.current?.(false);
         }
       });
     };
@@ -56,7 +61,7 @@ const GoogleAdsenseContainer = ({
     }
 
     return () => observer.current?.disconnect();
-  }, [setDisplayAd, style, layout, format, responsive, slot]);
+  }, []);
 
   return (
     <ins

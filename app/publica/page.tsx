@@ -15,7 +15,7 @@ import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCiti
 import { createEventAction } from "./actions";
 import { fetchRegionById } from "@lib/api/regions";
 import { fetchCityById } from "@lib/api/cities";
-import type { FormState, FormData } from "types/event";
+import type { FormData } from "types/event";
 import { EventFormSchema, type EventFormSchemaType } from "types/event";
 import { Option } from "types/common";
 
@@ -40,7 +40,7 @@ const defaultForm: FormData = {
 const getZodValidationState = (
   form: EventFormSchemaType,
   isPristine: boolean
-): FormState => {
+): { isDisabled: boolean; isPristine: boolean; message: string } => {
   if (!isPristine) {
     return { isDisabled: true, isPristine: true, message: "" };
   }
@@ -58,7 +58,11 @@ const getZodValidationState = (
 const Publica = () => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
-  const [formState, setFormState] = useState<FormState>({
+  const [formState, setFormState] = useState<{
+    isDisabled: boolean;
+    isPristine: boolean;
+    message: string;
+  }>({
     isDisabled: true,
     isPristine: true,
     message: "",

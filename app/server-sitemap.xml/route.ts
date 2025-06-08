@@ -39,18 +39,14 @@ function buildSitemap(
 }
 
 export async function GET() {
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth() - 4);
-  const until = new Date(now.getFullYear(), now.getMonth() + 4);
+  // Removed date filtering - new API doesn't support it
 
-  const events = await fetchEvents({
+  const response = await fetchEvents({
     page: 0,
-    from: from.toISOString(),
-    until: until.toISOString(),
-    normalizeRss: true,
-    maxResults: 2500,
-    filterByDate: false,
+    size: 2500,
   });
+
+  const events = response.content;
 
   if (!Array.isArray(events)) {
     return new Response("<error>events is not an array</error>", {

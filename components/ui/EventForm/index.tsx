@@ -8,14 +8,14 @@ import {
   TextArea,
   ImageUpload,
 } from "@components/ui/common/form";
-import type { FormState, EventFormProps } from "types/event";
+import type { EventFormProps } from "types/event";
 import { isOption } from "types/common";
 import { EventFormSchema, type EventFormSchemaType } from "types/event";
 
 const getZodValidationState = (
   form: EventFormSchemaType,
   isPristine: boolean
-): FormState => {
+): { isDisabled: boolean; isPristine: boolean; message: string } => {
   if (!isPristine) {
     return { isDisabled: true, isPristine: true, message: "" };
   }
@@ -46,9 +46,11 @@ export const EventForm: React.FC<EventFormProps> = ({
   progress,
   imageToUpload,
 }) => {
-  const [formState, setFormState] = useState<FormState>(
-    getZodValidationState(form, true)
-  );
+  const [formState, setFormState] = useState({
+    isDisabled: true,
+    isPristine: true,
+    message: "",
+  });
 
   const _onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,22 +129,10 @@ export const EventForm: React.FC<EventFormProps> = ({
       )}
       <DatePicker
         idPrefix="event-date"
-        startDate={
-          typeof form.startDate === "string"
-            ? form.startDate
-              ? new Date(form.startDate)
-              : new Date()
-            : form.startDate
-        }
-        endDate={
-          typeof form.endDate === "string"
-            ? form.endDate
-              ? new Date(form.endDate)
-              : new Date()
-            : form.endDate
-        }
-        minDate={new Date()}
-        onChange={(field, date) => handleFormChange(field, date)}
+        startDate={form.startDate}
+        endDate={form.endDate}
+        minDate={form.startDate}
+        onChange={(field, value) => handleFormChange(field, value)}
         required
       />
       <button type="submit" disabled={formState.isDisabled || isLoading}>
