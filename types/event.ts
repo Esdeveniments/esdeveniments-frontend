@@ -109,7 +109,8 @@ export interface DynamicOptionsLoadingProps {
 
 export interface FetchEventsParams {
   page?: number;
-  size: number;
+  size?: number;
+  place?: string;
   zone?: string;
   category?: string;
   lat?: number;
@@ -119,6 +120,9 @@ export interface FetchEventsParams {
   byDate?: string; // Date filter
   from?: string; // Start date
   until?: string; // End date
+  isToday?: boolean;
+  distance?: number;
+  searchTerm?: string;
 }
 
 export interface EventHeaderProps {

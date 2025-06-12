@@ -6,7 +6,9 @@ import {
   PlaceProps,
   PlaceTypeAndLabel,
 } from "types/common";
-import { EventSummaryResponseDTO } from "types/api/event";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import { CategorySummaryResponseDTO } from "types/api/category";
+import { RouteSegments, QueryParams } from "@utils/url-filters";
 
 export interface SelectComponentProps {
   id: string;
@@ -182,4 +184,87 @@ export interface LoadMoreButtonProps {
   category?: string;
   date?: string; // Reserved for future date filtering
   totalServerEvents?: number; // Total number of events from server to determine if more pages exist
+}
+
+// Next.js App Router page props interfaces
+export interface FilteredPageProps {
+  params: Promise<{
+    place: string;
+    byDate: string;
+    category: string;
+  }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+// Component props interfaces
+export interface ClientInteractiveLayerProps {
+  categories?: CategorySummaryResponseDTO[];
+}
+
+export interface ServerNavLinkProps {
+  href: string;
+  children: ReactNode;
+  className?: string;
+  activeLinkClass?: string;
+}
+
+export interface FilterButtonProps {
+  text: string;
+  enabled: boolean;
+  removeUrl: string;
+  onOpenModal: () => void;
+}
+
+export interface ServerFiltersProps {
+  segments: RouteSegments;
+  queryParams: QueryParams;
+  categories?: CategorySummaryResponseDTO[];
+  onOpenModal: () => void;
+}
+
+export interface NavigationFiltersModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentSegments: RouteSegments;
+  currentQueryParams: QueryParams;
+  userLocation?: { latitude: number; longitude: number };
+  categories?: CategorySummaryResponseDTO[];
+}
+
+export interface HybridEventsListProps {
+  initialEvents: ListEvent[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+  pageData?: PageData;
+  noEventsFound?: boolean;
+  place: string;
+  category?: string;
+  date?: string;
+  totalServerEvents?: number;
+}
+
+export interface ServerEventsCategorizedProps {
+  categorizedEvents: Record<string, ListEvent[]>;
+  pageData?: PageData;
+  categories?: CategorySummaryResponseDTO[];
+}
+
+export interface ServerEventsListProps {
+  events: ListEvent[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+  pageData?: PageData;
+  noEventsFound?: boolean;
+}
+
+export interface ServerEventsDisplayProps {
+  categorizedEvents?: Record<string, ListEvent[]>;
+  events?: ListEvent[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+  noEventsFound?: boolean;
+  hasServerFilters?: boolean;
+  place?: string;
+  category?: string;
+  date?: string;
+  totalServerEvents?: number;
+  pageData: PageData;
+  categories?: CategorySummaryResponseDTO[];
 }

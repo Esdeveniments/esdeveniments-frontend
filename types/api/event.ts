@@ -1,10 +1,7 @@
+import { CategorySummaryResponseDTO } from "./category";
+
 export type EventType = "FREE" | "PAID";
 export type EventOrigin = "SCRAPE" | "RSS" | "MANUAL" | "MIGRATION";
-
-export interface CategorySummaryResponseDTO {
-  id: number;
-  name: string;
-}
 
 export interface CitySummaryResponseDTO {
   id: number;

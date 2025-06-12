@@ -1,18 +1,11 @@
 "use client";
 
-import { initializeStore } from "@utils/initializeStore";
 import { useEffect } from "react";
 import useStore from "@store";
-import type { PlaceClientProps } from "types/props";
 
-export default function PlaceClient({ initialState }: PlaceClientProps) {
-  const {
-    setHydrated,
-    place: currentPlace,
-    resetPagination,
-  } = useStore((state) => ({
+export default function PlaceClient() {
+  const { setHydrated, resetPagination } = useStore((state) => ({
     setHydrated: state.setHydrated,
-    place: state.place,
     resetPagination: state.resetPagination,
   }));
 
@@ -20,16 +13,12 @@ export default function PlaceClient({ initialState }: PlaceClientProps) {
     // Mark as hydrated first
     setHydrated();
 
-    // Check if place changed and reset pagination if needed
-    const newPlace = initialState.place;
-    if (currentPlace && newPlace && currentPlace !== newPlace) {
-      resetPagination();
-    }
+    // Reset pagination for fresh page loads
+    resetPagination();
 
-    // Initialize store with fresh server data
-    initializeStore(initialState);
-  }, [initialState, setHydrated, currentPlace, resetPagination]);
+    // No filter state initialization needed - filters live in URL only
+  }, [setHydrated, resetPagination]);
 
-  // This component is now invisible - it only initializes the store
+  // This component is now invisible - it only initializes hydration
   return null;
 }

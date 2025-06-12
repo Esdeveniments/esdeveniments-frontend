@@ -8,6 +8,7 @@ import {
   EventDetailResponseDTO,
   ListEvent,
 } from "types/api/event";
+import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
 
 export interface Option {
@@ -451,4 +452,14 @@ export interface URLFilters {
   date?: string;
   distance?: string;
   searchTerm?: string;
+}
+
+// Hook return types
+export interface UseCategoriesReturn {
+  categories: CategorySummaryResponseDTO[];
+  isLoading: boolean;
+  error: Error | null;
+  getCategoryById: (id: number) => CategorySummaryResponseDTO | null;
+  getCategoryBySlug: (slug: string) => CategorySummaryResponseDTO | null;
+  refetch: () => Promise<void>;
 }

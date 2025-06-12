@@ -1,25 +1,14 @@
 "use client";
 
-import { useEffect, memo, ReactElement } from "react";
+import { useEffect, memo, ReactElement, useMemo, useCallback } from "react";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
-import { PageData, PlaceTypeAndLabel } from "types/common";
+import { EventSummaryResponseDTO } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import NoEventsFound from "@components/ui/common/noEventsFound";
-import useStore, { EventCategory } from "@store";
-
-interface HybridEventsListProps {
-  initialEvents: ListEvent[];
-  placeTypeLabel?: PlaceTypeAndLabel;
-  pageData?: PageData;
-  noEventsFound?: boolean;
-  place: string;
-  category?: string;
-  date?: string;
-  totalServerEvents?: number; // Total number of events from server for pagination
-}
+import useStore from "@store";
+import { HybridEventsListProps } from "types/props";
 
 function HybridEventsList({
   initialEvents = [],
@@ -31,68 +20,43 @@ function HybridEventsList({
   date,
   totalServerEvents = 0,
 }: HybridEventsListProps): ReactElement {
-  const {
-    loadedEvents,
-    resetPagination,
-    scrollPosition,
-    setState,
-    saveScrollPosition,
-  } = useStore((state) => ({
-    loadedEvents: state.loadedEvents,
-    resetPagination: state.resetPagination,
-    scrollPosition: state.scrollPosition,
-    setState: state.setState,
-    saveScrollPosition: state.saveScrollPosition,
-  }));
+  const { loadedEvents, scrollPosition, setState, saveScrollPosition } =
+    useStore((state) => ({
+      loadedEvents: state.loadedEvents,
+      scrollPosition: state.scrollPosition,
+      setState: state.setState,
+      saveScrollPosition: state.saveScrollPosition,
+    }));
 
-  // Check if persisted data is stale (older than 1 hour)
-  const isDataStale = () => {
+  // Check if persisted data is stale (older than 1 hour) - memoized to prevent infinite loops
+  const isDataStale = useCallback(() => {
     const lastUpdated = useStore.getState().lastUpdated;
     if (!lastUpdated) return true;
     const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
     return Date.now() - lastUpdated > oneHour;
-  };
+  }, []); // No dependencies - lastUpdated is read from store directly
 
-  // Filter server events
-  const validInitialEvents = initialEvents.filter(
-    isEventSummaryResponseDTO
-  ) as EventSummaryResponseDTO[];
+  // Filter server events - memoize to prevent infinite re-renders
+  const validInitialEvents = useMemo(
+    () =>
+      initialEvents.filter(
+        isEventSummaryResponseDTO
+      ) as EventSummaryResponseDTO[],
+    [initialEvents]
+  );
 
-  // Smart pagination management
+  // Smart pagination management - removed filter state synchronization
   useEffect(() => {
-    const storedPlace = useStore.getState().place;
-    const storedCategory = useStore.getState().category;
-
-    // Check if this is a real filter change vs just navigation back
-    const isPlaceChange = storedPlace !== place;
-    const isCategoryChange = storedCategory !== (category || "");
     const dataIsStale = isDataStale();
 
-    if (isPlaceChange || isCategoryChange || dataIsStale) {
-      // Real filter change or stale data - reset pagination and initialize with server events
-      resetPagination();
-      setState("place", place);
-      setState("category", (category || "") as EventCategory | "");
-      setState("currentPage", 1);
-      setState("loadedEvents", validInitialEvents);
-      setState("lastUpdated", Date.now());
-    } else if (loadedEvents.length === 0) {
-      // First load or no persisted data - initialize with server events
+    if (dataIsStale || loadedEvents.length === 0) {
+      // Initialize with server events if stale or no data
       setState("loadedEvents", validInitialEvents);
       setState("currentPage", 1);
       setState("lastUpdated", Date.now());
     }
-    // Otherwise, use persisted loadedEvents (user navigated back)
-  }, [
-    place,
-    category,
-    date,
-    resetPagination,
-    setState,
-    validInitialEvents,
-    loadedEvents.length,
-    isDataStale,
-  ]);
+    // Use persisted loadedEvents for navigation back (if not stale)
+  }, [setState, validInitialEvents, loadedEvents.length, isDataStale]);
 
   // Use loadedEvents as the source of truth
   const allEvents =

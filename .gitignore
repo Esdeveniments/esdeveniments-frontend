@@ -78,3 +78,19 @@ $RECYCLE.BIN/
 .env copy.production
 # Million Lint
 .million
+
+# Added by Task Master AI
+# Logs
+logs
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+# Editor directories and files
+.idea
+.vscode
+*.sw?
+# OS specific
+# Task files
+tasks.json
+tasks/ 

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage, PersistOptions } from "zustand/middleware";
 import { EventSummaryResponseDTO } from "types/api/event";
+import type { CategorySummaryResponseDTO } from "types/api/category";
 
 // Base interfaces
 export interface UserLocation {
@@ -24,6 +25,16 @@ export enum EventCategory {
   Fires = "Fira",
   Espectacles = "Espectacles",
 }
+
+// Dynamic category interface for new system
+export interface DynamicEventCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+// Union type for transition period - supports both legacy and dynamic
+export type EventCategoryType = EventCategory | DynamicEventCategory | string;
 
 // NOTE: The following Event interface is for frontend-only or transformed events.
 // For all backend-aligned event data, use EventSummaryResponseDTO or ListEvent from types/api/event.
@@ -62,14 +73,8 @@ export interface Event {
   };
 }
 
-// Filter state interface
-interface FilterState {
-  place: string;
-  byDate: string;
-  category: EventCategory | "";
-  searchTerm: string;
-  distance: string;
-}
+// Filter state interface - REMOVED: Filters now live in URL only
+// URL is the single source of truth for: place, byDate, category, searchTerm, distance
 
 // Pagination state interface (for infinite scroll)
 interface PaginationState {
@@ -89,16 +94,17 @@ interface UIState {
 // Event state interface (removed - events now handled server-side)
 // All event data is now passed as props to server components
 
-// Combined store state interface
-export interface StoreState extends FilterState, UIState, PaginationState {
+// Combined store state interface - URL-first, no filter state
+export interface StoreState extends UIState, PaginationState {
   userLocation: UserLocation | null;
 }
 
-// Store actions interface
+// Store actions interface - enhanced with category management
 export interface StoreActions {
   setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
   initializeStore: (initialState: Partial<StoreState>) => void;
   setHydrated: () => void;
+
   // Pagination actions
   loadMoreEvents: (
     newEvents: EventSummaryResponseDTO[],
@@ -118,12 +124,10 @@ type PaginationPersistState = Pick<
   | "currentPage"
   | "scrollPosition"
   | "hasMoreEvents"
-  | "place"
-  | "category"
   | "lastUpdated"
 >;
 
-// Minimal persistence configuration for pagination only
+// Minimal persistence configuration for pagination and categories
 const persistConfig: PersistOptions<Store, PaginationPersistState> = {
   name: "events-pagination",
   storage: createJSONStorage(() => localStorage),
@@ -132,23 +136,14 @@ const persistConfig: PersistOptions<Store, PaginationPersistState> = {
     currentPage: state.currentPage,
     scrollPosition: state.scrollPosition,
     hasMoreEvents: state.hasMoreEvents,
-    place: state.place, // Track which place the events belong to
-    category: state.category, // Track which category the events belong to
     lastUpdated: state.lastUpdated,
   }),
 };
 
-// Create the store with proper type inference and minimal persistence
+// Create the store with proper type inference and enhanced persistence
 const useStore = create<Store>()(
   persist(
     (set) => ({
-      // Initial filter state
-      place: "",
-      byDate: "",
-      category: "",
-      searchTerm: "",
-      distance: "",
-
       // Initial UI state
       openModal: false,
       hydrated: false,
@@ -170,27 +165,12 @@ const useStore = create<Store>()(
 
       initializeStore: (initialState) => {
         set((state) => {
-          // If we're initializing with fresh server data, prioritize server state
-          // except for filters that the user has manually cleared
-          let newState = { ...state, ...initialState };
+          // Only merge non-filter state (pagination, UI, cache)
+          const newState = { ...state, ...initialState };
 
-          // Don't override user-cleared filters (empty string means user cleared it)
-          if (state.place === "" && initialState.place) {
-            // User has manually cleared the place filter, don't override it
-            newState.place = "";
-          }
-          if (state.category === "" && initialState.category) {
-            // User has manually cleared the category filter, don't override it
-            newState.category = "";
-          }
-
-          // If we have fresh server data, determine hasMoreEvents based on the current page
-          // Default to true for fresh loads to allow the LoadMoreButton to make its own decision
-          if (initialState.place !== undefined && state.place !== "") {
-            // Only reset pagination state when initializing with a new place and place wasn't cleared
-            newState.hasMoreEvents = true;
-            newState.currentPage = 0;
-          }
+          // Reset pagination state for fresh data
+          newState.hasMoreEvents = true;
+          newState.currentPage = 0;
 
           return newState;
         });

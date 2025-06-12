@@ -2,8 +2,7 @@ import { ReactElement } from "react";
 import dynamic from "next/dynamic";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import ServerEventsList from "@components/ui/serverEventsList";
-import { ListEvent } from "types/api/event";
-import { PageData, PlaceTypeAndLabel } from "types/common";
+import { ServerEventsDisplayProps } from "types/props";
 
 const HybridEventsList = dynamic(
   () => import("@components/ui/hybridEventsList"),
@@ -11,26 +10,6 @@ const HybridEventsList = dynamic(
     loading: () => null,
   }
 );
-
-interface ServerEventsDisplayProps {
-  // For categorized events (home page)
-  categorizedEvents?: Record<string, ListEvent[]>;
-
-  // For filtered events (place pages)
-  events?: ListEvent[];
-  placeTypeLabel?: PlaceTypeAndLabel;
-  noEventsFound?: boolean;
-  hasServerFilters?: boolean;
-
-  // For hybrid pagination (place pages)
-  place?: string;
-  category?: string;
-  date?: string;
-  totalServerEvents?: number; // Total number of events from server for pagination
-
-  // Common props
-  pageData: PageData;
-}
 
 export default function ServerEventsDisplay({
   categorizedEvents,
@@ -43,6 +22,7 @@ export default function ServerEventsDisplay({
   date,
   totalServerEvents = 0,
   pageData,
+  categories,
 }: ServerEventsDisplayProps): ReactElement {
   // Determine which component to render based on props
   const shouldShowEventsList = hasServerFilters || events;
@@ -79,6 +59,7 @@ export default function ServerEventsDisplay({
     <ServerEventsCategorized
       categorizedEvents={categorizedEvents || {}}
       pageData={pageData}
+      categories={categories}
     />
   );
 }

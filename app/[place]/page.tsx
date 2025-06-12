@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { fetchEvents, insertAds } from "@lib/api/events";
+import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -8,11 +10,16 @@ import type {
   PlaceTypeAndLabel,
   PageData,
 } from "types/common";
+import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { EventCategory } from "@store";
-// Removed twoWeeksDefault - no longer needed with new API structure
 import { FetchEventsParams } from "types/event";
 import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import { buildCanonicalUrl } from "@utils/url-filters";
+import {
+  validatePlaceOrThrow,
+  validatePlaceForMetadata,
+} from "@utils/route-validation";
 import PlaceClient from "./PlaceClient";
 
 export const revalidate = 600;
@@ -37,6 +44,13 @@ export async function generateMetadata({
   params: Promise<PlaceStaticPathParams>;
 }) {
   const { place } = await params;
+
+  // 🛡️ SECURITY: Validate place parameter
+  const validation = validatePlaceForMetadata(place);
+  if (!validation.isValid) {
+    return validation.fallbackMetadata;
+  }
+
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
@@ -61,18 +75,51 @@ export default async function Page({
   const { place } = await params;
   const search = await searchParams;
 
-  // Extract query parameters for filters
+  // 🛡️ SECURITY: Validate place parameter
+  validatePlaceOrThrow(place);
+
+  // Convert searchParams to URLSearchParams for parsing
+  const urlSearchParams = new URLSearchParams();
+  Object.entries(search).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      urlSearchParams.set(key, value);
+    } else if (Array.isArray(value)) {
+      urlSearchParams.set(key, value[0]);
+    }
+  });
+
+  // Check if we have filters that should redirect to canonical URL structure
   const category =
     typeof search.category === "string" ? search.category : undefined;
   const date = typeof search.date === "string" ? search.date : undefined;
   const distance =
     typeof search.distance === "string" ? search.distance : undefined;
+  const searchTerm =
+    typeof search.search === "string" ? search.search : undefined;
+
+  // If we have category or date filters, redirect to canonical URL structure
+  if (category || date) {
+    const canonicalUrl = buildCanonicalUrl({
+      place,
+      byDate: date || "tots",
+      category: (category as EventCategory) || "tots",
+      searchTerm: searchTerm || "",
+      distance: distance ? parseInt(distance) : 50,
+    });
+
+    console.log(`🔄 Redirecting /${place}?... → ${canonicalUrl}`);
+    redirect(canonicalUrl);
+  }
 
   const fetchParams: FetchEventsParams = {
     page: 0,
     size: 10,
-    zone: place,
   };
+
+  // Only add zone if place is not "catalunya" (catalunya is not a valid API zone)
+  if (place !== "catalunya") {
+    fetchParams.zone = place;
+  }
 
   // Add filters if present
   if (category) fetchParams.category = category;
@@ -112,6 +159,16 @@ export default async function Page({
   const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 
+  // Fetch dynamic categories for enhanced category support
+  let categories: CategorySummaryResponseDTO[] = [];
+  try {
+    categories = await fetchCategories();
+    console.log("🔥 [place]/page.tsx - Fetched categories:", categories.length);
+  } catch (error) {
+    console.error("🔥 [place]/page.tsx - Error fetching categories:", error);
+    // Continue without categories - components will use static fallbacks
+  }
+
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
 
   const pageData = await generatePagesData({
@@ -121,21 +178,10 @@ export default async function Page({
     placeTypeLabel,
   });
 
-  const initialState = {
-    // Only initialize filter state - events are handled server-side
-    place,
-    byDate: date || "",
-    category: (category || "") as EventCategory | "",
-  };
-
   return (
     <>
-      {/* Initialize client store (for state management) */}
-      <PlaceClient
-        initialState={initialState}
-        placeTypeLabel={placeTypeLabel}
-        pageData={pageData}
-      />
+      {/* Initialize client hydration only */}
+      <PlaceClient />
 
       {/* Server-rendered events content (SEO optimized) */}
       <ServerEventsDisplay
@@ -148,10 +194,11 @@ export default async function Page({
         category={category}
         date={date}
         totalServerEvents={totalServerEvents}
+        categories={categories}
       />
 
       {/* Client-side interactive layer (search, filters, floating button) */}
-      <ClientInteractiveLayer />
+      <ClientInteractiveLayer categories={categories} />
     </>
   );
 }

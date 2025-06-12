@@ -2,11 +2,21 @@ import { DAYS, MONTHS, CATEGORIES } from "./constants";
 import { siteUrl } from "@config/index";
 import { fetchCityById } from "@lib/api/cities";
 import { fetchRegionById } from "@lib/api/regions";
-import { type Option, CategoryKey } from "types/common";
+import { type Option, CategoryKey, CategoryValue } from "types/common";
 import {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
+  EventTimeDTO,
+  EventCreateRequestDTO,
+  EventUpdateRequestDTO,
 } from "types/api/event";
+import type { CategorySummaryResponseDTO } from "types/api/category";
+import type { FormData } from "types/event";
+
+import {
+  findCategoryBySlug,
+  mapLegacyValueToCategory,
+} from "./category-mapping";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -427,6 +437,89 @@ export const findCategoryKeyByValue = (
   );
 };
 
+/**
+ * Finds a category by slug in dynamic category data
+ * Returns null if not found
+ */
+export function findCategoryBySlugDynamic(
+  categories: CategorySummaryResponseDTO[],
+  slug: string
+): CategorySummaryResponseDTO | null {
+  return findCategoryBySlug(categories, slug);
+}
+
+/**
+ * Gets category from dynamic data, with fallback to legacy system
+ * Used during transition period for backward compatibility
+ */
+export function getCategoryFromDynamicData(
+  categories: CategorySummaryResponseDTO[],
+  identifier: string | number
+): CategorySummaryResponseDTO | null {
+  if (!categories || !Array.isArray(categories)) {
+    return null;
+  }
+
+  // If identifier is a number, find by ID
+  if (typeof identifier === "number") {
+    return categories.find((cat) => cat.id === identifier) || null;
+  }
+
+  // If identifier is a string, try different approaches
+  if (typeof identifier === "string") {
+    // First try to find by slug
+    const bySlug = findCategoryBySlug(categories, identifier);
+    if (bySlug) return bySlug;
+
+    // Then try to find by name (exact match)
+    const byName = categories.find(
+      (cat) => cat.name.toLowerCase() === identifier.toLowerCase()
+    );
+    if (byName) return byName;
+
+    // Finally, try to map from legacy value to dynamic category
+    return mapLegacyValueToCategory(categories, identifier as CategoryValue);
+  }
+
+  return null;
+}
+
+/**
+ * Gets category ID from various identifier types
+ * Useful for API calls that require category ID
+ */
+export function getCategoryId(
+  categories: CategorySummaryResponseDTO[],
+  identifier: string | number | CategorySummaryResponseDTO
+): number | null {
+  if (typeof identifier === "number") {
+    return identifier;
+  }
+
+  if (typeof identifier === "object" && identifier?.id) {
+    return identifier.id;
+  }
+
+  if (typeof identifier === "string") {
+    const category = getCategoryFromDynamicData(categories, identifier);
+    return category?.id || null;
+  }
+
+  return null;
+}
+
+/**
+ * Creates a display-friendly name from category data
+ * Falls back to slug or ID if name is not available
+ */
+export function getCategoryDisplayName(
+  category: CategorySummaryResponseDTO | null
+): string {
+  if (!category) return "";
+
+  return category.name || category.slug || `Category ${category.id}`;
+}
+
 // --- Helper: Parse time to { hour, minute, second, nano } ---
 /**
  * Converts ISO time string or Date to EventTimeDTO shape for backend requests.
@@ -445,7 +538,6 @@ export function parseTimeToEventTimeDTO(
   ) {
     return { hour: 0, minute: 0, second: 0, nano: 0 };
   }
-
   let date: Date | null = null;
 
   if (typeof dateOrString === "string") {
@@ -471,7 +563,6 @@ export function parseTimeToEventTimeDTO(
   } else if (dateOrString instanceof Date && !isNaN(dateOrString.getTime())) {
     date = dateOrString;
   }
-
   if (!date) {
     return { hour: 0, minute: 0, second: 0, nano: 0 };
   }
@@ -483,14 +574,6 @@ export function parseTimeToEventTimeDTO(
     nano: 0,
   };
 }
-
-// --- Mapping: FormData to backend DTO (EventCreateRequestDTO/EventUpdateRequestDTO) ---
-import type { FormData } from "types/event";
-import type {
-  EventCreateRequestDTO,
-  EventUpdateRequestDTO,
-  EventTimeDTO,
-} from "types/api/event";
 
 export function formDataToBackendDTO(
   form: FormData
@@ -532,8 +615,6 @@ export function formDataToBackendDTO(
   };
 }
 
-// --- Mapping: EventDetailResponseDTO to FormData ---
-
 export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
   return {
     id: event.id ? String(event.id) : undefined,
@@ -560,3 +641,12 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
     email: "", // UI only
   };
 }
+
+/**
+ * Convert Date object to LocalDate format (YYYY-MM-DD) for API compatibility
+ * @param date - Date object to convert
+ * @returns string in YYYY-MM-DD format
+ */
+export const toLocalDateString = (date: Date): string => {
+  return date.toISOString().slice(0, 10);
+};

@@ -1,13 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { ReactNode } from "react";
-
-interface ServerNavLinkProps {
-  href: string;
-  children: ReactNode;
-  className?: string;
-  activeLinkClass?: string;
-}
+import { ServerNavLinkProps } from "types/props";
 
 // Server-safe navigation link component with active state detection
 export default async function ServerNavLink({
