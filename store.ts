@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage, PersistOptions } from "zustand/middleware";
 import { EventSummaryResponseDTO } from "types/api/event";
-import type { CategorySummaryResponseDTO } from "types/api/category";
 
 // Base interfaces
 export interface UserLocation {
