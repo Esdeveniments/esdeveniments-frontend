@@ -21,6 +21,11 @@ export function isOption(obj: unknown): obj is Option {
   return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;
 }
 
+export interface Location {
+  lat: number;
+  lng: number;
+}
+
 export type CategoryKey =
   | "Festes Majors"
   | "Festivals"

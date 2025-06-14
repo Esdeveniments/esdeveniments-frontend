@@ -219,7 +219,10 @@ export default async function ByDatePage({
       />
 
       {/* Client-side interactive layer (search, filters, floating button) */}
-      <ClientInteractiveLayer categories={categories} />
+      <ClientInteractiveLayer
+        categories={categories}
+        placeTypeLabel={placeTypeLabel}
+      />
     </>
   );
 }

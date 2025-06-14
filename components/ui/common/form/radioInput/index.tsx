@@ -11,7 +11,7 @@ const RadioInput: React.FC<RadioInputProps> = ({
   disabled,
 }) => {
   return (
-    <div className="flex justify-center items-center gap-2">
+    <div className="flex justify-start items-center gap-2">
       <input
         id={id}
         name={name}

@@ -44,7 +44,7 @@ export default function LoadMoreButton({
       const fetchParams: FetchEventsParams = {
         page: currentPage + 1, // Load next page
         size: 10,
-        zone: place,
+        zone: place !== "catalunya" ? place : undefined, // Only add zone if not "catalunya"
       };
 
       // Add filters if present
@@ -74,11 +74,12 @@ export default function LoadMoreButton({
   return (
     <div className="w-full flex justify-center items-center py-8">
       <button
+        type="button"
         onClick={handleLoadMore}
         disabled={isLoading}
-        className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-[120px] bg-whiteCorp flex justify-center items-center gap-2 font-barlow italic uppercase tracking-wider font-semibold p-2 border-2 border-bColor rounded-lg hover:bg-primary hover:text-whiteCorp hover:border-whiteCorp ease-in-out duration-300 focus:outline-none"
       >
-        {isLoading ? "Carregant..." : "Carregar més esdeveniments"}
+        {isLoading ? "Carregant..." : "Carregar més"}
       </button>
     </div>
   );

@@ -43,6 +43,7 @@ export default function Search(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const isHomePage = pathname === "/";
 
   // Get current search term from URL (not Zustand)
   const urlSearchTerm = searchParams.get("search") || "";
@@ -62,11 +63,15 @@ export default function Search(): JSX.Element {
 
       // Build new URL preserving current path structure
       const queryString = params.toString();
-      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+      const newUrl = queryString
+        ? `${isHomePage ? "/catalunya/" : pathname}?${queryString}`
+        : isHomePage
+        ? "/catalunya/"
+        : pathname;
 
       router.push(newUrl);
     },
-    [searchParams, router, pathname]
+    [searchParams, router, pathname, isHomePage]
   );
 
   // Debounce URL update only (no more Zustand)

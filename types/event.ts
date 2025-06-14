@@ -29,6 +29,25 @@ export const EventFormSchema = z.object({
 
 export type EventFormSchemaType = z.infer<typeof EventFormSchema>;
 
+// --- Date handling interfaces ---
+export interface DateObject {
+  date?: string;
+  dateTime?: string;
+}
+
+export interface FormattedDateResult {
+  originalFormattedStart: string;
+  formattedStart: string;
+  formattedEnd: string | null;
+  startTime: string;
+  endTime: string;
+  nameDay: string;
+  startDate: Date;
+  isLessThanFiveDays: boolean;
+  isMultipleDays: boolean;
+  duration: string;
+}
+
 // --- Centralized event form types ---
 export interface FormData {
   id?: string;

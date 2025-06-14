@@ -9,6 +9,7 @@ const ServerFilters = ({
   segments,
   queryParams,
   categories = [],
+  placeTypeLabel,
   onOpenModal,
 }: ServerFiltersProps): JSX.Element => {
   // Convert URL data to filter state for display
@@ -33,6 +34,12 @@ const ServerFilters = ({
       : defaultValue;
 
   const foundByDate = BYDATES.find((item) => item.value === filters.byDate);
+
+  // Get place display name from placeTypeLabel
+  const getPlaceDisplayName = (): string | undefined => {
+    if (filters.place === "catalunya") return undefined;
+    return placeTypeLabel?.label || filters.place;
+  };
 
   // Get category display name from dynamic categories
   const getCategoryDisplayName = (categorySlug: string): string | undefined => {
@@ -88,10 +95,7 @@ const ServerFilters = ({
         </div>
         <div className="w-8/10 flex items-center gap-1 border-0 placeholder:text-bColor overflow-x-auto">
           <FilterButton
-            text={getText(
-              filters.place === "catalunya" ? undefined : filters.place,
-              "Població"
-            )}
+            text={getPlaceDisplayName() || "Població"}
             enabled={filters.place !== "catalunya"}
             removeUrl={getRemoveUrl("place")}
             onOpenModal={onOpenModal}

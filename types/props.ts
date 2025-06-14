@@ -2,6 +2,7 @@ import { ChangeEvent, MouseEvent, ReactNode } from "react";
 import {
   ByDateProps,
   Option,
+  GroupedOption,
   PageData,
   PlaceProps,
   PlaceTypeAndLabel,
@@ -15,7 +16,7 @@ export interface SelectComponentProps {
   title: string;
   value?: Option | null;
   onChange: (value: Option | null) => void;
-  options?: Option[];
+  options?: Option[] | GroupedOption[];
   isDisabled?: boolean;
   isValidNewOption?: boolean;
   isClearable?: boolean;
@@ -199,6 +200,7 @@ export interface FilteredPageProps {
 // Component props interfaces
 export interface ClientInteractiveLayerProps {
   categories?: CategorySummaryResponseDTO[];
+  placeTypeLabel?: PlaceTypeAndLabel;
 }
 
 export interface ServerNavLinkProps {
@@ -219,6 +221,7 @@ export interface ServerFiltersProps {
   segments: RouteSegments;
   queryParams: QueryParams;
   categories?: CategorySummaryResponseDTO[];
+  placeTypeLabel?: PlaceTypeAndLabel;
   onOpenModal: () => void;
 }
 

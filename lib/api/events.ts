@@ -59,7 +59,7 @@ export async function fetchEvents(
     const response = await fetch(finalUrl);
     const data = await response.json();
 
-    console.log("fetchEvents: response:", data);
+    // console.log("fetchEvents: response:", data);
 
     return data;
   } catch (e) {

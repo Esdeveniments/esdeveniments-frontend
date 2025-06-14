@@ -26,10 +26,6 @@ export default function HomeClient({
         ...(urlFilters?.searchTerm && { searchTerm: urlFilters.searchTerm }),
       };
 
-      console.log(
-        "🔥 HomeClient - Initializing store with:",
-        storeInitialState
-      );
       initializeStore(storeInitialState);
       initialized.current = true;
     }

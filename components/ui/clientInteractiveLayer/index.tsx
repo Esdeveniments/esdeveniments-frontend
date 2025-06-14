@@ -28,6 +28,7 @@ function debounce<F extends (...args: unknown[]) => unknown>(
 
 function ClientInteractiveLayer({
   categories = [],
+  placeTypeLabel,
 }: ClientInteractiveLayerProps) {
   const isSticky = useScrollVisibility(30);
   const isHydrated = useHydration();
@@ -120,6 +121,7 @@ function ClientInteractiveLayer({
               segments={parsed.segments}
               queryParams={parsed.queryParams}
               categories={categories}
+              placeTypeLabel={placeTypeLabel}
               onOpenModal={handleOpenModal}
             />
           )}

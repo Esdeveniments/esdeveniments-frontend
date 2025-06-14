@@ -1,8 +1,15 @@
 import { DAYS, MONTHS, CATEGORIES } from "./constants";
 import { siteUrl } from "@config/index";
 import { fetchCityById } from "@lib/api/cities";
-import { fetchRegionById } from "@lib/api/regions";
-import { type Option, CategoryKey, CategoryValue } from "types/common";
+import { fetchRegionById, fetchRegionsWithCities } from "@lib/api/regions";
+import {
+  type Option,
+  CategoryKey,
+  CategoryValue,
+  GroupedOption,
+  Location,
+  PlaceTypeAndLabel,
+} from "types/common";
 import {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -11,7 +18,9 @@ import {
   EventUpdateRequestDTO,
 } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import type { FormData } from "types/event";
+import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
+import type { FormData, DateObject, FormattedDateResult } from "types/event";
+import type { VideoObject, SchemaOrgEvent } from "types/schema";
 
 import {
   findCategoryBySlug,
@@ -35,83 +44,6 @@ export function getTownValue(
   if (typeof town === "object" && "value" in town) return town.value;
   if (typeof town === "object" && "id" in town) return String(town.id);
   return null;
-}
-
-export interface DateObject {
-  date?: string;
-  dateTime?: string;
-}
-
-export interface FormattedDateResult {
-  originalFormattedStart: string;
-  formattedStart: string;
-  formattedEnd: string | null;
-  startTime: string;
-  endTime: string;
-  nameDay: string;
-  startDate: Date;
-  isLessThanFiveDays: boolean;
-  isMultipleDays: boolean;
-  duration: string;
-}
-
-export interface Location {
-  lat: number;
-  lng: number;
-}
-
-interface VideoObject {
-  "@type": "VideoObject";
-  name: string;
-  contentUrl: string;
-  description: string;
-  thumbnailUrl: string;
-  uploadDate: string;
-}
-
-interface SchemaOrgEvent {
-  "@context": "https://schema.org";
-  "@type": "Event";
-  name: string | undefined;
-  url: string;
-  startDate: string;
-  endDate: string;
-  eventAttendanceMode: string;
-  eventStatus: string;
-  location: {
-    "@type": "Place";
-    name: string | undefined;
-    address: {
-      "@type": "PostalAddress";
-      streetAddress: string | undefined;
-      addressLocality: string | undefined;
-      postalCode: string | undefined;
-      addressCountry: string;
-      addressRegion: string;
-    };
-  };
-  image: string[];
-  description: string;
-  performer: {
-    "@type": "PerformingGroup";
-    name: string | undefined;
-  };
-  organizer: {
-    "@type": "Organization";
-    name: string | undefined;
-    url: string;
-  };
-  offers: {
-    "@type": "Offer";
-    price: number;
-    priceCurrency: string;
-    availability: string;
-    url: string;
-    validFrom: string;
-  };
-  isAccessibleForFree: boolean;
-  duration: string;
-  video?: VideoObject;
 }
 
 export const isLessThanFiveDays = (date: Date): boolean => {
@@ -301,7 +233,7 @@ export const generateJsonData = (
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
   const images = [imageUrl, defaultImage].filter(Boolean) as string[];
 
-  const videoObject = videoUrl
+  const videoObject: VideoObject | null = videoUrl
     ? {
         "@type": "VideoObject" as const,
         name: title,
@@ -358,11 +290,11 @@ export const generateJsonData = (
   };
 };
 
-export type PlaceTypeAndLabel = { type: "region" | "town"; label: string };
-
+// Updated function that works with slug-based URLs
 export const getPlaceTypeAndLabel = async (
   place: string
 ): Promise<PlaceTypeAndLabel> => {
+  // First, try the old ID-based approach for backward compatibility
   if (place && !isNaN(Number(place))) {
     // Try region
     const region = await fetchRegionById(place);
@@ -371,6 +303,28 @@ export const getPlaceTypeAndLabel = async (
     const city = await fetchCityById(place);
     if (city) return { type: "town", label: city.name };
   }
+
+  // New slug-based approach: fetch regions with cities and find by slug
+  try {
+    const regionsWithCities = await fetchRegionsWithCities();
+
+    // Check if it's a region slug (region names are used as slugs)
+    const region = regionsWithCities.find((r) => sanitize(r.name) === place);
+    if (region) {
+      return { type: "region", label: region.name };
+    }
+
+    // Check if it's a city slug
+    for (const region of regionsWithCities) {
+      const city = region.cities.find((c) => c.value === place);
+      if (city) {
+        return { type: "town", label: city.label };
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching regions for place lookup:", error);
+  }
+
   // Fallback
   return { type: "town", label: place };
 };
@@ -650,3 +604,74 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
 export const toLocalDateString = (date: Date): string => {
   return date.toISOString().slice(0, 10);
 };
+
+/**
+ * Generate regions options sorted alphabetically
+ * @param regionsWithCities - Array of regions with cities from API
+ * @returns Array of Option objects for regions
+ */
+export function generateRegionsOptions(
+  regionsWithCities: RegionsGroupedByCitiesResponseDTO[]
+): Option[] {
+  return regionsWithCities
+    .map((region) => ({
+      value: sanitize(region.name),
+      label: region.name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+/**
+ * Generate towns options for a specific region
+ * @param regionsWithCities - Array of regions with cities from API
+ * @param regionId - ID of the region to get towns for
+ * @returns Array of Option objects for towns in the specified region
+ */
+export function generateTownsOptions(
+  regionsWithCities: RegionsGroupedByCitiesResponseDTO[],
+  regionId: string | number
+): Option[] {
+  const region = regionsWithCities.find(
+    (r) => r.id.toString() === regionId.toString()
+  );
+  return region
+    ? region.cities
+        .map((city) => ({
+          value: city.value,
+          label: city.label,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label))
+    : [];
+}
+
+/**
+ * Generate complete regions and towns options structure
+ * Returns "Comarques" group first, followed by towns grouped by regions
+ * This matches the structure from the old codebase
+ * @param regionsWithCities - Array of regions with cities from API
+ * @returns Array of GroupedOption objects
+ */
+export function generateRegionsAndTownsOptions(
+  regionsWithCities: RegionsGroupedByCitiesResponseDTO[]
+): GroupedOption[] {
+  if (!regionsWithCities) return [];
+
+  // Create regions options sorted alphabetically
+  const regionsOptions = generateRegionsOptions(regionsWithCities);
+
+  // Create towns options grouped by region, sorted alphabetically
+  const townsOptions = regionsWithCities
+    .map((region) => ({
+      label: region.name,
+      options: region.cities
+        .map((city) => ({
+          label: city.label,
+          value: city.value,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  // Return with "Comarques" group first, then towns grouped by regions
+  return [{ label: "Comarques", options: regionsOptions }, ...townsOptions];
+}

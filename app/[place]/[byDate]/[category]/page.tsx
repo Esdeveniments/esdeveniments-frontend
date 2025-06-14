@@ -166,7 +166,10 @@ export default async function FilteredPage({
         totalServerEvents={totalServerEvents}
         categories={categories}
       />
-      <ClientInteractiveLayer categories={categories} />
+      <ClientInteractiveLayer
+        categories={categories}
+        placeTypeLabel={placeTypeAndLabel}
+      />
     </>
   );
 }

@@ -12,7 +12,7 @@ import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, DISTANCES } from "@utils/constants";
-import { sendEventToGA } from "@utils/helpers";
+import { sendEventToGA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
@@ -60,13 +60,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
-    return regionsWithCities.map((region) => ({
-      label: region.name,
-      options: region.cities.map((city) => ({
-        label: city.label,
-        value: city.value,
-      })),
-    }));
+    return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
 
   // Initialize form state when modal opens
@@ -236,8 +230,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         actionButton="Aplicar filtres"
         onActionButtonClick={applyFilters}
       >
-        <div className="w-full h-full flex flex-col justify-center items-center gap-5 py-8">
-          <div className="w-full flex flex-col justify-center items-center gap-4">
+        <div className="w-full h-full flex flex-col justify-start items-start gap-5 py-8">
+          <div className="w-full flex flex-col justify-start items-start gap-4">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Poblacions
             </p>
@@ -245,9 +239,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               <Select
                 id="options"
                 title="Poblacions"
-                options={regionsAndCitiesArray.flatMap(
-                  (group) => group.options
-                )}
+                options={regionsAndCitiesArray}
                 value={selectOption}
                 onChange={handlePlaceChange}
                 isClearable
@@ -264,9 +256,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             <p className="w-full font-semibold font-barlow uppercase">
               Categories
             </p>
-            <div className="w-full h-28 flex flex-col justify-start items-start gap-2 flex-wrap">
+            <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
               {isLoadingCategories ? (
-                <p className="text-sm text-gray-500">Loading categories...</p>
+                <p className="text-sm text-gray-500 col-span-3">
+                  Carregant categories...
+                </p>
               ) : (
                 categories.map((category: CategorySummaryResponseDTO) => (
                   <RadioInput
