@@ -7,7 +7,7 @@ import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
 import { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { fetchRegionsWithCities } from "@lib/api/regions";
+import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { parseFiltersFromUrl } from "@utils/url-filters";
@@ -161,30 +161,36 @@ export default async function ByDatePage({
   let totalServerEvents = eventsResponse?.totalElements || 0;
 
   if (!events || events.length === 0) {
-    const regions = await fetchRegionsWithCities();
-    const region = regions.find((r) =>
+    const regionsWithCities = await fetchRegionsWithCities();
+    const regionWithCities = regionsWithCities.find((r) =>
       r.cities.some((city) => city.value === place)
     );
 
-    if (region) {
-      ({ from, until } = twoWeeksDefault());
-      const fallbackParams: FetchEventsParams = {
-        page: 0,
-        size: 7,
-        zone: region.name,
-        from: toLocalDateString(from),
-        until: toLocalDateString(until),
-      };
+    if (regionWithCities) {
+      // Get the region with slug from the regions API
+      const regions = await fetchRegions();
+      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
 
-      // Keep category filter in fallback if present
-      if (finalCategory && finalCategory !== "tots") {
-        fallbackParams.category = finalCategory;
+      if (regionWithSlug) {
+        ({ from, until } = twoWeeksDefault());
+        const fallbackParams: FetchEventsParams = {
+          page: 0,
+          size: 7,
+          zone: regionWithSlug.slug,
+          from: toLocalDateString(from),
+          until: toLocalDateString(until),
+        };
+
+        // Keep category filter in fallback if present
+        if (finalCategory && finalCategory !== "tots") {
+          fallbackParams.category = finalCategory;
+        }
+
+        eventsResponse = await fetchEvents(fallbackParams);
+        events = eventsResponse?.content || [];
+        totalServerEvents = eventsResponse?.totalElements || 0;
+        noEventsFound = true;
       }
-
-      eventsResponse = await fetchEvents(fallbackParams);
-      events = eventsResponse?.content || [];
-      totalServerEvents = eventsResponse?.totalElements || 0;
-      noEventsFound = true;
     }
   }
 

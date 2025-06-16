@@ -62,6 +62,7 @@ export default async function EventPage({
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <EventMedia event={event} title={title} />
               <EventShareBar
+                visits={event.visits}
                 slug={eventSlug}
                 title={title}
                 eventDateString={eventDateString}

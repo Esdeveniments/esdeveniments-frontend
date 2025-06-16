@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
-import { fetchRegionsWithCities } from "@lib/api/regions";
+import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import type {
@@ -140,19 +140,25 @@ export default async function Page({
     !eventsResponse.content ||
     eventsResponse.content.length === 0
   ) {
-    const regions = await fetchRegionsWithCities();
-    const region = regions.find((r) =>
+    const regionsWithCities = await fetchRegionsWithCities();
+    const regionWithCities = regionsWithCities.find((r) =>
       r.cities.some((city) => city.value === place)
     );
 
-    if (region) {
-      eventsResponse = await fetchEvents({
-        page: 0,
-        size: 7,
-        zone: region.name,
-      });
-      totalServerEvents = eventsResponse?.totalElements || 0;
-      noEventsFound = true;
+    if (regionWithCities) {
+      // Get the region with slug from the regions API
+      const regions = await fetchRegions();
+      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
+      
+      if (regionWithSlug) {
+        eventsResponse = await fetchEvents({
+          page: 0,
+          size: 7,
+          zone: regionWithSlug.slug,
+        });
+        totalServerEvents = eventsResponse?.totalElements || 0;
+        noEventsFound = true;
+      }
     }
   }
 

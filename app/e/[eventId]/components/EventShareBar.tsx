@@ -6,6 +6,7 @@ import useCheckMobileScreen from "components/hooks/useCheckMobileScreen";
 import type { EventShareBarProps } from "types/event";
 
 export default function EventShareBar({
+  visits,
   slug,
   title,
   eventDateString,
@@ -30,7 +31,7 @@ export default function EventShareBar({
       ) : (
         <CardShareButton slug={slug} />
       )}
-      <ViewCounter slug={slug} />
+      <ViewCounter visits={visits} />
     </div>
   );
 }

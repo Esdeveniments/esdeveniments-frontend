@@ -158,6 +158,7 @@ export interface EventMediaProps {
 }
 
 export interface EventShareBarProps {
+  visits: number;
   slug: string;
   title: string;
   eventDateString: string;

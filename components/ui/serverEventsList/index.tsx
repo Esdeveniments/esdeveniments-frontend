@@ -48,25 +48,23 @@ function ServerEventsList({
         />
       )}
 
-      <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
-        <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
-          {/* SEO Content */}
-          {pageData && (
-            <div className="w-full px-4 mb-6">
-              <h1 className="text-2xl font-bold mb-2">{pageData.title}</h1>
-              <p className="text-gray-700 leading-relaxed">
-                {pageData.subTitle}
-              </p>
-            </div>
-          )}
+      <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+        {/* SEO Content */}
+        {pageData && (
+          <>
+            <h1 className="uppercase mb-2 px-2">{pageData.title}</h1>
+            <p className="text-[16px] font-normal text-blackCorp text-left mb-10 px-2 font-barlow">
+              {pageData.subTitle}
+            </p>
+          </>
+        )}
 
-          {/* Events List */}
-          <List events={validEvents}>
-            {(event: EventSummaryResponseDTO, index: number) => (
-              <Card key={`${event.id}-${index}`} event={event} />
-            )}
-          </List>
-        </div>
+        {/* Events List */}
+        <List events={validEvents}>
+          {(event: EventSummaryResponseDTO, index: number) => (
+            <Card key={`${event.id}-${index}`} event={event} />
+          )}
+        </List>
       </div>
     </>
   );

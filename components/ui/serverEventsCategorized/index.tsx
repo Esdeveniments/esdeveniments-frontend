@@ -70,7 +70,7 @@ function ServerEventsCategorized({
       )}
 
       <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
-        <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+        <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
           {Object.entries(filteredCategorizedEvents).map(
             ([category, events]) => {
               // Try to get category name from dynamic categories first, fallback to static mapping

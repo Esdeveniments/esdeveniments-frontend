@@ -12,7 +12,6 @@ import { HybridEventsListProps } from "types/props";
 
 function HybridEventsList({
   initialEvents = [],
-  // placeTypeLabel, // Currently unused but kept for future features
   pageData,
   noEventsFound = false,
   place,
@@ -20,13 +19,11 @@ function HybridEventsList({
   date,
   totalServerEvents = 0,
 }: HybridEventsListProps): ReactElement {
-  const { loadedEvents, scrollPosition, setState, saveScrollPosition } =
-    useStore((state) => ({
-      loadedEvents: state.loadedEvents,
-      scrollPosition: state.scrollPosition,
-      setState: state.setState,
-      saveScrollPosition: state.saveScrollPosition,
-    }));
+  const { loadedEvents, scrollPosition, setState } = useStore((state) => ({
+    loadedEvents: state.loadedEvents,
+    scrollPosition: state.scrollPosition,
+    setState: state.setState,
+  }));
 
   // Check if persisted data is stale (older than 1 hour) - memoized to prevent infinite loops
   const isDataStale = useCallback(() => {
@@ -88,38 +85,50 @@ function HybridEventsList({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [setState]);
 
+  console.log("HybridEventsList: allEvents length:", allEvents.length);
+  console.log("HybridEventsList: noEventsFound:", noEventsFound);
+
   if (noEventsFound || allEvents.length === 0) {
-    return <NoEventsFound />;
+    return (
+      <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+        <NoEventsFound title={pageData?.notFoundText} />
+        <List events={allEvents}>
+          {(event: EventSummaryResponseDTO, index: number) => (
+            <Card key={`${event.id}-${index}`} event={event} />
+          )}
+        </List>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
-      <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
-        {/* SEO Content */}
-        {pageData && (
-          <div className="w-full px-4 mb-6">
-            <h1 className="text-2xl font-bold mb-2">{pageData.title}</h1>
-            <p className="text-gray-700 leading-relaxed">{pageData.subTitle}</p>
-          </div>
+    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+      {/* SEO Content */}
+      {pageData && (
+        <>
+          <h1 className="uppercase mb-2 px-2">{pageData.title}</h1>
+          <p className="text-[16px] font-normal text-blackCorp text-left mb-10 px-2 font-barlow">
+            {pageData.subTitle}
+          </p>
+        </>
+      )}
+
+      {/* Events List */}
+      {/* <div onClick={saveScrollPosition}> */}
+      <List events={allEvents}>
+        {(event: EventSummaryResponseDTO, index: number) => (
+          <Card key={`${event.id}-${index}`} event={event} />
         )}
+      </List>
+      {/* </div> */}
 
-        {/* Events List */}
-        <div onClick={saveScrollPosition}>
-          <List events={allEvents}>
-            {(event: EventSummaryResponseDTO, index: number) => (
-              <Card key={`${event.id}-${index}`} event={event} />
-            )}
-          </List>
-        </div>
-
-        {/* Load More Button */}
-        <LoadMoreButton
-          place={place}
-          category={category}
-          date={date}
-          totalServerEvents={totalServerEvents}
-        />
-      </div>
+      {/* Load More Button */}
+      <LoadMoreButton
+        place={place}
+        category={category}
+        date={date}
+        totalServerEvents={totalServerEvents}
+      />
     </div>
   );
 }

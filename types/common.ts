@@ -292,7 +292,7 @@ export interface TooltipComponentProps {
 }
 
 export interface ViewCounterProps {
-  slug: string;
+  visits: number;
   hideText?: boolean;
 }
 
@@ -411,11 +411,6 @@ export interface SitemapProps {
 export interface SearchState {
   searchTerm: string;
   setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
-}
-
-// ViewCounterResponse interface
-export interface ViewCounterResponse {
-  views: number;
 }
 
 // Utility function to safely construct a PlaceTypeAndLabel from any input

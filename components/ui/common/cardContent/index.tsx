@@ -107,12 +107,12 @@ function CardContent({
           onClick={handleClick}
         >
           {/* Title, Share Button, and Weather Icon */}
-          <div className="bg-whiteCorp h-fit flex justify-between items-start gap-2 pr-4">
+          <div className="bg-whiteCorp h-fit flex justify-start items-start gap-2 pr-4">
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
               <div className="w-2 h-6 bg-gradient-to-r from-primary to-primarydark"></div>
             </div>
-            <h3 className="w-9/12 uppercase">{memoizedValues.title}</h3>
-            <div className="flex items-center gap-2">
+            <h3 className="w-full uppercase">{memoizedValues.title}</h3>
+            <div className="flex items-end gap-2">
               {icon && (
                 <div className="flex items-center gap-1">
                   <NextImage
@@ -167,9 +167,9 @@ function CardContent({
       >
         {!isMobile && <ShareButton slug={event.slug} />}
         {isPriority ? (
-          <ViewCounter slug={event.slug} hideText />
+          <ViewCounter visits={event.visits} hideText />
         ) : (
-          isCounterVisible && <ViewCounter slug={event.slug} hideText />
+          isCounterVisible && <ViewCounter visits={event.visits} hideText />
         )}
       </div>
       <div className="w-full flex flex-col px-4 gap-3">

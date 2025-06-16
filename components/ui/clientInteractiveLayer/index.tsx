@@ -63,7 +63,7 @@ function ClientInteractiveLayer({
   const stickyClasses =
     isHydrated && isSticky
       ? "top-10 z-5"
-      : "top-0 z-10 md:top-10 border-bColor md:border-b-0 shadow-sm md:shadow-none";
+      : "!top-0 z-10 md:top-10 border-bColor md:border-b-0 shadow-sm md:shadow-none";
 
   // Determine if it's the home page
   const isHomePage = pathname === "/";
