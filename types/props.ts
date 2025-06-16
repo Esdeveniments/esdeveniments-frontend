@@ -181,10 +181,12 @@ export interface PlaceClientProps extends PlaceProps {
 }
 
 export interface LoadMoreButtonProps {
-  place: string;
-  category?: string;
-  date?: string; // Reserved for future date filtering
-  totalServerEvents?: number; // Total number of events from server to determine if more pages exist
+  onLoadMore: () => void;
+  isLoading?: boolean;
+  isValidating?: boolean;
+  hasMore?: boolean;
+  currentCount?: number;
+  totalEvents?: number;
 }
 
 // Next.js App Router page props interfaces
@@ -242,7 +244,8 @@ export interface HybridEventsListProps {
   place: string;
   category?: string;
   date?: string;
-  totalServerEvents?: number;
+  serverHasMore?: boolean; // Add server pagination info
+  // totalServerEvents removed - SWR hook manages this via API response
 }
 
 export interface ServerEventsCategorizedProps {
@@ -267,7 +270,8 @@ export interface ServerEventsDisplayProps {
   place?: string;
   category?: string;
   date?: string;
-  totalServerEvents?: number;
+  serverHasMore?: boolean; // Add server pagination info
+  // totalServerEvents removed - SWR hook manages this
   pageData: PageData;
   categories?: CategorySummaryResponseDTO[];
 }

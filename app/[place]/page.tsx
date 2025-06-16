@@ -20,7 +20,6 @@ import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
-import PlaceClient from "./PlaceClient";
 
 export const revalidate = 600;
 
@@ -133,7 +132,6 @@ export default async function Page({
 
   let eventsResponse = await fetchEvents(fetchParams);
   let noEventsFound = false;
-  let totalServerEvents = eventsResponse?.totalElements || 0;
 
   if (
     !eventsResponse ||
@@ -149,14 +147,13 @@ export default async function Page({
       // Get the region with slug from the regions API
       const regions = await fetchRegions();
       const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
-      
+
       if (regionWithSlug) {
         eventsResponse = await fetchEvents({
           page: 0,
           size: 7,
           zone: regionWithSlug.slug,
         });
-        totalServerEvents = eventsResponse?.totalElements || 0;
         noEventsFound = true;
       }
     }
@@ -186,9 +183,6 @@ export default async function Page({
 
   return (
     <>
-      {/* Initialize client hydration only */}
-      <PlaceClient />
-
       {/* Server-rendered events content (SEO optimized) */}
       <ServerEventsDisplay
         events={eventsWithAds}
@@ -199,7 +193,7 @@ export default async function Page({
         place={place}
         category={category}
         date={date}
-        totalServerEvents={totalServerEvents}
+        serverHasMore={!eventsResponse?.last}
         categories={categories}
       />
 

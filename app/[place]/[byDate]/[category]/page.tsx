@@ -10,7 +10,6 @@ import { FetchEventsParams } from "types/event";
 import { FilteredPageProps } from "types/props";
 import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
-import PlaceClient from "../../PlaceClient";
 import {
   parseFiltersFromUrl,
   getRedirectUrl,
@@ -140,7 +139,6 @@ export default async function FilteredPage({
   // Fetch events
   const events = await fetchEvents(fetchParams);
   const eventsWithAds = insertAds(events.content);
-  const totalServerEvents = events?.totalElements || 0;
 
   // Generate page data for SEO
   const pageData: PageData = await generatePagesData({
@@ -152,9 +150,6 @@ export default async function FilteredPage({
 
   return (
     <>
-      {/* Initialize client hydration only */}
-      <PlaceClient />
-
       <ServerEventsDisplay
         events={eventsWithAds}
         pageData={pageData}
@@ -163,7 +158,7 @@ export default async function FilteredPage({
         place={filters.place}
         category={filters.category}
         date={filters.byDate}
-        totalServerEvents={totalServerEvents}
+        serverHasMore={!events.last}
         categories={categories}
       />
       <ClientInteractiveLayer

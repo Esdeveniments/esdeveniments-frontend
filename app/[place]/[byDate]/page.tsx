@@ -15,7 +15,6 @@ import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
-import PlaceClient from "../PlaceClient";
 
 export async function generateMetadata({
   params,
@@ -158,7 +157,6 @@ export default async function ByDatePage({
   let noEventsFound = false;
   let eventsResponse = await fetchEvents(paramsForFetch);
   let events = eventsResponse?.content || [];
-  let totalServerEvents = eventsResponse?.totalElements || 0;
 
   if (!events || events.length === 0) {
     const regionsWithCities = await fetchRegionsWithCities();
@@ -188,7 +186,6 @@ export default async function ByDatePage({
 
         eventsResponse = await fetchEvents(fallbackParams);
         events = eventsResponse?.content || [];
-        totalServerEvents = eventsResponse?.totalElements || 0;
         noEventsFound = true;
       }
     }
@@ -205,11 +202,14 @@ export default async function ByDatePage({
     placeTypeLabel,
   });
 
+  // Calculate if there are more events available for Load More functionality
+  const serverHasMore = eventsResponse
+    ? !eventsResponse.last &&
+      eventsWithAds.length < eventsResponse.totalElements
+    : false;
+
   return (
     <>
-      {/* Initialize client hydration only */}
-      <PlaceClient />
-
       {/* Server-rendered events content (SEO optimized) */}
       <ServerEventsDisplay
         events={eventsWithAds}
@@ -220,8 +220,8 @@ export default async function ByDatePage({
         place={place}
         category={finalCategory}
         date={actualDate}
-        totalServerEvents={totalServerEvents}
         categories={categories}
+        serverHasMore={serverHasMore}
       />
 
       {/* Client-side interactive layer (search, filters, floating button) */}

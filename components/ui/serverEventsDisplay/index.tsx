@@ -20,7 +20,7 @@ export default function ServerEventsDisplay({
   place,
   category,
   date,
-  totalServerEvents = 0,
+  serverHasMore = false,
   pageData,
   categories,
 }: ServerEventsDisplayProps): ReactElement {
@@ -38,22 +38,22 @@ export default function ServerEventsDisplay({
         place={place}
         category={category}
         date={date}
-        totalServerEvents={totalServerEvents}
+        serverHasMore={serverHasMore}
       />
     );
   }
 
-  if (shouldShowEventsList) {
-    // Fallback to server-only list
-    return (
-      <ServerEventsList
-        events={events || []}
-        placeTypeLabel={placeTypeLabel}
-        pageData={pageData}
-        noEventsFound={noEventsFound}
-      />
-    );
-  }
+  // if (shouldShowEventsList) {
+  //   // Fallback to server-only list
+  //   return (
+  //     <ServerEventsList
+  //       events={events || []}
+  //       placeTypeLabel={placeTypeLabel}
+  //       pageData={pageData}
+  //       noEventsFound={noEventsFound}
+  //     />
+  //   );
+  // }
 
   return (
     <ServerEventsCategorized

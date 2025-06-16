@@ -1,6 +1,5 @@
 import { create } from "zustand";
-import { persist, createJSONStorage, PersistOptions } from "zustand/middleware";
-import { EventSummaryResponseDTO } from "types/api/event";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // Base interfaces
 export interface UserLocation {
@@ -75,71 +74,27 @@ export interface Event {
 // Filter state interface - REMOVED: Filters now live in URL only
 // URL is the single source of truth for: place, byDate, category, searchTerm, distance
 
-// Pagination state interface (for infinite scroll)
-interface PaginationState {
-  loadedEvents: EventSummaryResponseDTO[];
-  currentPage: number;
-  scrollPosition: number;
-  hasMoreEvents: boolean;
-  lastUpdated?: number; // Timestamp for invalidation
-}
-
 // UI state interface
 interface UIState {
   openModal: boolean;
   hydrated: boolean;
 }
 
-// Event state interface (removed - events now handled server-side)
-// All event data is now passed as props to server components
-
-// Combined store state interface - URL-first, no filter state
-export interface StoreState extends UIState, PaginationState {
+// Combined store state interface - URL-first, minimal state
+export interface StoreState extends UIState {
   userLocation: UserLocation | null;
 }
 
-// Store actions interface - enhanced with category management
+// Store actions interface - simplified
 export interface StoreActions {
   setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
-  initializeStore: (initialState: Partial<StoreState>) => void;
   setHydrated: () => void;
-
-  // Pagination actions
-  loadMoreEvents: (
-    newEvents: EventSummaryResponseDTO[],
-    isLast: boolean
-  ) => void;
-  resetPagination: () => void;
-  saveScrollPosition: () => void;
 }
 
 // Complete store type
 export type Store = StoreState & StoreActions;
 
-// Pagination persistence state (only what we need to maintain across navigation)
-type PaginationPersistState = Pick<
-  StoreState,
-  | "loadedEvents"
-  | "currentPage"
-  | "scrollPosition"
-  | "hasMoreEvents"
-  | "lastUpdated"
->;
-
-// Minimal persistence configuration for pagination and categories
-const persistConfig: PersistOptions<Store, PaginationPersistState> = {
-  name: "events-pagination",
-  storage: createJSONStorage(() => localStorage),
-  partialize: (state) => ({
-    loadedEvents: state.loadedEvents,
-    currentPage: state.currentPage,
-    scrollPosition: state.scrollPosition,
-    hasMoreEvents: state.hasMoreEvents,
-    lastUpdated: state.lastUpdated,
-  }),
-};
-
-// Create the store with proper type inference and enhanced persistence
+// Create the store with minimal state
 const useStore = create<Store>()(
   persist(
     (set) => ({
@@ -147,81 +102,30 @@ const useStore = create<Store>()(
       openModal: false,
       hydrated: false,
 
-      // Initial pagination state
-      loadedEvents: [],
-      currentPage: 0,
-      scrollPosition: 0,
-      hasMoreEvents: true,
-      lastUpdated: undefined,
-
-      // Other initial state
+      // Initial user location
       userLocation: null,
 
       // Actions
       setState: (key, value) => {
-        set((state) => ({ ...state, [key]: value }));
-      },
-
-      initializeStore: (initialState) => {
         set((state) => {
-          // Only merge non-filter state (pagination, UI, cache)
-          const newState = { ...state, ...initialState };
-
-          // Reset pagination state for fresh data
-          newState.hasMoreEvents = true;
-          newState.currentPage = 0;
-
-          return newState;
+          // Only update the specific property to avoid unnecessary re-renders
+          if (state[key] === value) return state; // Skip if value hasn't changed
+          return { ...state, [key]: value };
         });
       },
 
       setHydrated: () => {
         set((state) => ({ ...state, hydrated: true }));
       },
-
-      // Pagination actions
-      loadMoreEvents: (newEvents, isLast) => {
-        set((state) => {
-          const MAX_EVENTS = 100; // Limit stored events
-          const allEvents = [...state.loadedEvents, ...newEvents];
-
-          // Trim to max events if needed (keep most recent)
-          const trimmedEvents =
-            allEvents.length > MAX_EVENTS
-              ? allEvents.slice(-MAX_EVENTS)
-              : allEvents;
-
-          return {
-            ...state,
-            loadedEvents: trimmedEvents,
-            currentPage: state.currentPage + 1,
-            hasMoreEvents: !isLast,
-            lastUpdated: Date.now(),
-          };
-        });
-      },
-
-      resetPagination: () => {
-        set((state) => ({
-          ...state,
-          loadedEvents: [],
-          currentPage: 0,
-          scrollPosition: 0,
-          hasMoreEvents: true,
-          lastUpdated: undefined,
-        }));
-      },
-
-      saveScrollPosition: () => {
-        if (typeof window !== "undefined") {
-          set((state) => ({
-            ...state,
-            scrollPosition: window.scrollY,
-          }));
-        }
-      },
     }),
-    persistConfig
+    {
+      name: "events-ui",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        // Only persist UI state that should survive browser restarts
+        hydrated: state.hydrated,
+      }),
+    }
   )
 );
 

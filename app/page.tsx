@@ -2,13 +2,12 @@ import { fetchCategorizedEvents, fetchEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { buildPageMeta } from "@components/partials/seo-meta";
-import type { HomeInitialState, PageData, ByDateOptions } from "types/common";
+import type { PageData, ByDateOptions } from "types/common";
 import { FetchEventsParams } from "types/event";
 import { EventSummaryResponseDTO, CategorizedEvents } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
-import HomeClient from "./HomeClient";
 
 export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
@@ -90,11 +89,6 @@ export default async function Page({
     categorizedEvents = await fetchCategorizedEvents();
   }
 
-  const initialState: HomeInitialState = {
-    // Only initialize minimal state - events are handled server-side
-    userLocation: null,
-  };
-
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place: "",
@@ -103,17 +97,6 @@ export default async function Page({
 
   return (
     <>
-      {/* Initialize client store (for state management) */}
-      <HomeClient
-        initialState={initialState}
-        urlFilters={{
-          category,
-          date,
-          distance,
-          searchTerm,
-        }}
-      />
-
       {/* Server-rendered events content (SEO optimized) */}
       {hasServerFilters ? (
         <ServerEventsDisplay
