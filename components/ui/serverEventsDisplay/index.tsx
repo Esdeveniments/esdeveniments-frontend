@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 import dynamic from "next/dynamic";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
-import ServerEventsList from "@components/ui/serverEventsList";
+// import ServerEventsList from "@components/ui/serverEventsList";
 import { ServerEventsDisplayProps } from "types/props";
 
 const HybridEventsList = dynamic(

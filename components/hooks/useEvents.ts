@@ -2,27 +2,12 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
-import { FetchEventsParams } from "types/event";
+import {
+  FetchEventsParams,
+  UseEventsOptions,
+  UseEventsReturn,
+} from "types/event";
 import { captureException } from "@sentry/nextjs";
-
-interface UseEventsOptions {
-  place?: string;
-  category?: string;
-  date?: string;
-  initialSize?: number;
-  fallbackData?: EventSummaryResponseDTO[];
-  serverHasMore?: boolean; // Add server pagination info
-}
-
-interface UseEventsReturn {
-  events: EventSummaryResponseDTO[];
-  hasMore: boolean;
-  totalEvents: number;
-  loadMore: () => void;
-  isLoading: boolean;
-  isValidating: boolean;
-  error: Error | undefined;
-}
 
 // SWR fetcher function for events API with cumulative pagination
 const fetcher = async (
