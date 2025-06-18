@@ -20,7 +20,7 @@ import {
   CalendarIcon,
   ShareIcon,
 } from "@heroicons/react/outline";
-import { truncateString } from "@utils/helpers";
+import { truncateString, getFormattedDate } from "@utils/helpers";
 import useOnScreen from "@components/hooks/useOnScreen";
 import Image from "@components/ui/common/image";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
@@ -72,23 +72,22 @@ function CardContent({
 
   const { description, icon } = event.weather || {};
 
-  const memoizedValues = useMemo(
-    () => ({
+  const memoizedValues = useMemo(() => {
+    const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+      event.startDate,
+      event.endDate
+    );
+
+    return {
       title: truncateString(event.title || "", isHorizontal ? 30 : 75),
       location: truncateString(event.location || "", 45),
       subLocation: "",
       image: event.imageUrl || "",
-      eventDate:
-        event.startDate === event.endDate
-          ? `${event.startDate} ${event.startTime ?? ""} - ${
-              event.endTime ?? ""
-            }`
-          : `${event.startDate} ${event.startTime ?? ""} - ${event.endDate} ${
-              event.endTime ?? ""
-            }`,
-    }),
-    [event, isHorizontal]
-  );
+      eventDate: formattedEnd
+        ? `Del ${formattedStart} al ${formattedEnd}`
+        : `${nameDay}, ${formattedStart}`,
+    };
+  }, [event, isHorizontal]);
 
   return (
     <>
@@ -188,11 +187,9 @@ function CardContent({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="px-2">
-            {event.startDate === event.endDate
-              ? `${event.startTime ?? ""} - ${event.endTime ?? ""}`
-              : `${event.startDate} ${event.startTime ?? ""} - ${
-                  event.endDate
-                } ${event.endTime ?? ""}`}
+            {event.startTime && event.endTime
+              ? `${event.startTime} - ${event.endTime}`
+              : "Consultar horaris"}
           </p>
         </div>
         {!isHorizontal && <div className="mb-8" />}

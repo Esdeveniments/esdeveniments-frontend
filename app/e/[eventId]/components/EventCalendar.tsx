@@ -1,5 +1,6 @@
 import { CalendarIcon } from "@heroicons/react/outline";
 import { siteUrl } from "@config/index";
+import { getFormattedDate } from "@utils/helpers";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
 
@@ -18,7 +19,14 @@ export default function EventCalendar({ event }: EventCalendarProps) {
     endTime,
   } = event;
 
-  const eventDate = endDate ? `Del ${startDate} al ${endDate}` : `${startDate}`;
+  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+    startDate,
+    endDate
+  );
+
+  const eventDate = formattedEnd
+    ? `Del ${formattedStart} al ${formattedEnd}`
+    : `${nameDay}, ${formattedStart}`;
 
   return (
     <div className="w-full flex justify-center items-start gap-2 px-4">
