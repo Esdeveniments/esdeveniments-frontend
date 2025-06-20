@@ -13,7 +13,7 @@ import type {
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
-import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
+import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import {
@@ -184,17 +184,15 @@ export default async function Page({
   return (
     <>
       {/* Server-rendered events content (SEO optimized) */}
-      <ServerEventsDisplay
-        events={eventsWithAds}
+      <HybridEventsList
+        initialEvents={eventsWithAds}
         placeTypeLabel={placeTypeLabel}
         pageData={pageData}
         noEventsFound={noEventsFound}
-        hasServerFilters={true}
         place={place}
         category={category}
         date={date}
         serverHasMore={!eventsResponse?.last}
-        categories={categories}
       />
 
       {/* Client-side interactive layer (search, filters, floating button) */}

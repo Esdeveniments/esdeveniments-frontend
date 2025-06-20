@@ -63,7 +63,7 @@ function ServerEventsCategorized({
       )}
 
       <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
-        <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
+        <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-4">
           {/* SEO Content */}
           {pageData && (
             <>
@@ -109,7 +109,7 @@ function ServerEventsCategorized({
                   <div key={categorySlug}>
                     {/* Category Header */}
                     <div className="flex justify-between">
-                      <h2 className="font-semibold">{categoryName}</h2>
+                      <h3 className="font-semibold">{categoryName}</h3>
                       <Link
                         href={buildCanonicalUrl(
                           {

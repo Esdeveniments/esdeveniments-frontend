@@ -33,7 +33,7 @@ const EventsHorizontalScroll: FC<EventsHorizontalScrollProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="w-full flex overflow-x-auto py-4 space-x-4">
+      <div className="w-full flex overflow-x-auto py-6 space-x-6">
         <EventCardLoading />
         <EventCardLoading />
         <EventCardLoading />
@@ -42,7 +42,7 @@ const EventsHorizontalScroll: FC<EventsHorizontalScrollProps> = ({
   }
 
   return (
-    <div className="w-full flex overflow-x-auto py-4 space-x-4">
+    <div className="w-full flex overflow-x-auto py-6 space-x-6">
       {events.map((event, index) => (
         <div
           key={event.id}

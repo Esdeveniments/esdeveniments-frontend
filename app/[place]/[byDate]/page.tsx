@@ -8,7 +8,7 @@ import { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
-import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
+import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import {
@@ -211,16 +211,14 @@ export default async function ByDatePage({
   return (
     <>
       {/* Server-rendered events content (SEO optimized) */}
-      <ServerEventsDisplay
-        events={eventsWithAds}
+      <HybridEventsList
+        initialEvents={eventsWithAds}
         placeTypeLabel={placeTypeLabel}
         pageData={pageData}
         noEventsFound={noEventsFound}
-        hasServerFilters={true}
         place={place}
         category={finalCategory}
         date={actualDate}
-        categories={categories}
         serverHasMore={serverHasMore}
       />
 

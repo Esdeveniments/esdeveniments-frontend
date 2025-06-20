@@ -262,21 +262,6 @@ export interface ServerEventsListProps {
   noEventsFound?: boolean;
 }
 
-export interface ServerEventsDisplayProps {
-  categorizedEvents?: Record<string, ListEvent[]>;
-  events?: ListEvent[];
-  placeTypeLabel?: PlaceTypeAndLabel;
-  noEventsFound?: boolean;
-  hasServerFilters?: boolean;
-  place?: string;
-  category?: string;
-  date?: string;
-  serverHasMore?: boolean; // Add server pagination info
-  // totalServerEvents removed - SWR hook manages this
-  pageData: PageData;
-  categories?: CategorySummaryResponseDTO[];
-}
-
 // Location Discovery Widget Props
 export interface LocationDiscoveryWidgetProps {
   className?: string;

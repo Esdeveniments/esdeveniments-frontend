@@ -8,7 +8,7 @@ import type { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { FilteredPageProps } from "types/props";
-import ServerEventsDisplay from "@components/ui/serverEventsDisplay";
+import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import {
   parseFiltersFromUrl,
@@ -150,16 +150,14 @@ export default async function FilteredPage({
 
   return (
     <>
-      <ServerEventsDisplay
-        events={eventsWithAds}
+      <HybridEventsList
+        initialEvents={eventsWithAds}
         pageData={pageData}
         placeTypeLabel={placeTypeAndLabel}
-        hasServerFilters={true}
         place={filters.place}
         category={filters.category}
         date={filters.byDate}
         serverHasMore={!events.last}
-        categories={categories}
       />
       <ClientInteractiveLayer
         categories={categories}

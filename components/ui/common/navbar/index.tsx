@@ -26,7 +26,7 @@ export default function Navbar() {
     <Disclosure
       key={pathname}
       as="nav"
-      className="w-full bg-whiteCorp fixed top-0 z-10"
+      className="w-full bg-whiteCorp relative top-0 z-10"
     >
       {({ open }) => (
         <>
