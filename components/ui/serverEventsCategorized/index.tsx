@@ -63,7 +63,7 @@ function ServerEventsCategorized({
       )}
 
       <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
-        <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-16">
+        <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
           {/* SEO Content */}
           {pageData && (
             <>

@@ -34,9 +34,11 @@ export function transformRegionsToOptions(
  * Find nearest city using coordinates
  * For now, returns Catalunya as fallback - can be enhanced with actual mapping
  */
-export function findNearestCity(): Option | null {
-// _coordinates: GeolocationCoordinates,
-// _regions: RegionsGroupedByCitiesResponseDTO[]
+export function findNearestCity(
+  _coordinates: GeolocationCoordinates,
+  _regions: RegionsGroupedByCitiesResponseDTO[]
+): Option | null {
+  console.log(_coordinates, _regions);
   // TODO: Implement actual coordinate-to-city mapping logic
   // For now, return Catalunya as fallback
   return { value: "catalunya", label: "Catalunya" };
