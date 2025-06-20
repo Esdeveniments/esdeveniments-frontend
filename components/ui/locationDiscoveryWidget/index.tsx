@@ -125,13 +125,13 @@ export default function LocationDiscoveryWidget({
     <div
       className={`w-full bg-whiteCorp flex justify-center items-center pt-8 ${className}`}
     >
-      <div className="w-full flex flex-col justify-center items-center px-2 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+      <div className="w-full flex flex-col justify-center items-center px-2 lg:px-0 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
         <div className="relative w-full">
           {/* Main Location Selector */}
           <div className="flex items-center space-x-2 mb-6">
-            <span className="text-blackCorp text-lg font-normal">
+            <h2 className="text-blackCorp font-semibold">
               Mirant esdeveniments a
-            </span>
+            </h2>
             <div className="relative">
               <button
                 className="flex items-center space-x-2 group"

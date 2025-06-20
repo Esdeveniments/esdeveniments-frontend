@@ -67,8 +67,8 @@ function ServerEventsCategorized({
           {/* SEO Content */}
           {pageData && (
             <>
-              <h1 className="uppercase mb-2 px-2">{pageData.title}</h1>
-              <p className="text-[16px] font-normal text-blackCorp text-left px-2 font-barlow">
+              <h1 className="uppercase mb-2 px-2 lg:px-0">{pageData.title}</h1>
+              <p className="text-[16px] font-normal text-blackCorp text-left px-2 lg:px-0 font-barlow">
                 {pageData.subTitle}
               </p>
             </>
@@ -77,7 +77,7 @@ function ServerEventsCategorized({
           {/* Location Discovery Widget */}
           <LocationDiscoveryWidget />
 
-          <div className="p-2">
+          <div className="p-2 lg:p-0">
             {Object.entries(filteredCategorizedEvents).map(
               ([category, events], index) => {
                 // Aggressive Priority logic for fast initial load:

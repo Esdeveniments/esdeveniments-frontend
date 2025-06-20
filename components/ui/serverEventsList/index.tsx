@@ -52,7 +52,7 @@ function ServerEventsList({
         {/* SEO Content */}
         {pageData && (
           <>
-            <h1 className="uppercase mb-2 px-2">{pageData.title}</h1>
+            <h1 className="uppercase mb-2 px-2  lg:px-0">{pageData.title}</h1>
             <p className="text-[16px] font-normal text-blackCorp text-left mb-10 px-2 font-barlow">
               {pageData.subTitle}
             </p>
