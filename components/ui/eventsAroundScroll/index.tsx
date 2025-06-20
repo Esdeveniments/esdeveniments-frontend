@@ -65,7 +65,7 @@ const EventsAroundScroll: FC<EventsAroundScrollProps> = ({
 
   return (
     <div className="w-full flex overflow-x-auto py-4 space-x-4">
-      {events.map((event) => {
+      {events.map((event, index) => {
         const title = truncateString(event.title || "", 60);
         const image = event.imageUrl;
         const link = `/e/${event.slug}`;
@@ -86,6 +86,7 @@ const EventsAroundScroll: FC<EventsAroundScrollProps> = ({
                   title={event.title}
                   alt={event.title}
                   image={image}
+                  priority={index <= 1}
                 />
               </div>
               {/* Title */}

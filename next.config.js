@@ -15,6 +15,12 @@ const nextConfig = {
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },
     ],
+    // Enhanced image optimization settings for better performance
+    deviceSizes: [480, 640, 768, 1024, 1280, 1600, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    formats: ["image/webp", "image/avif"],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: false,
   },
   headers: async () => [
     {

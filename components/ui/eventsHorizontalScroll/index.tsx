@@ -50,7 +50,7 @@ const EventsHorizontalScroll: FC<EventsHorizontalScrollProps> = ({
         >
           <CardHorizontal
             event={event}
-            isPriority={usePriority && (index === 0 || index === 1)}
+            isPriority={usePriority && index <= 2}
           />
         </div>
       ))}

@@ -62,7 +62,11 @@ function ServerEventsList({
         {/* Events List */}
         <List events={validEvents}>
           {(event: EventSummaryResponseDTO, index: number) => (
-            <Card key={`${event.id}-${index}`} event={event} />
+            <Card
+              key={`${event.id}-${index}`}
+              event={event}
+              isPriority={index === 0}
+            />
           )}
         </List>
       </div>

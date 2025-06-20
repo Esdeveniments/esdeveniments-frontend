@@ -9,6 +9,7 @@ import {
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
+import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, QueryParams } from "@utils/url-filters";
 
 export interface SelectComponentProps {
@@ -274,4 +275,37 @@ export interface ServerEventsDisplayProps {
   // totalServerEvents removed - SWR hook manages this
   pageData: PageData;
   categories?: CategorySummaryResponseDTO[];
+}
+
+// Location Discovery Widget Props
+export interface LocationDiscoveryWidgetProps {
+  className?: string;
+  onLocationChange?: (location: Option) => void;
+  onSearchSubmit?: (location: Option, searchTerm: string) => void;
+}
+
+export interface LocationDropdownProps {
+  selectedLocation: Option | null;
+  regions: RegionsGroupedByCitiesResponseDTO[];
+  onLocationSelect: (location: Option) => void;
+  isLoading?: boolean;
+  placeholder?: string;
+  className?: string;
+}
+
+export interface GeolocationButtonProps {
+  onLocationDetected: (location: Option) => void;
+  isLoading?: boolean;
+  error?: string | null;
+  className?: string;
+}
+
+export interface UseGeolocationReturn {
+  location: GeolocationCoordinates | null;
+  isLoading: boolean;
+  error: string | null;
+  requestLocation: (
+    regions: RegionsGroupedByCitiesResponseDTO[]
+  ) => Promise<Option | null>;
+  clearLocation: () => void;
 }
