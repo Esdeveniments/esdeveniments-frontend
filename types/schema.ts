@@ -21,6 +21,11 @@ export interface SchemaOrgEvent {
   location: {
     "@type": "Place";
     name: string | undefined;
+    geo?: {
+      "@type": "GeoCoordinates";
+      latitude: number;
+      longitude: number;
+    };
     address: {
       "@type": "PostalAddress";
       streetAddress: string | undefined;
@@ -32,6 +37,7 @@ export interface SchemaOrgEvent {
   };
   image: string[];
   description: string;
+  genre?: string[];
   performer: {
     "@type": "PerformingGroup";
     name: string | undefined;
@@ -43,11 +49,15 @@ export interface SchemaOrgEvent {
   };
   offers: {
     "@type": "Offer";
-    price: number;
+    price: number | string;
     priceCurrency: string;
     availability: string;
     url: string;
     validFrom: string;
+    priceSpecification?: {
+      "@type": "PriceSpecification";
+      priceCurrency: string;
+    };
   };
   isAccessibleForFree: boolean;
   duration: string;

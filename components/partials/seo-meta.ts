@@ -76,5 +76,9 @@ export function buildPageMeta({
       "twitter:image:src": image,
       "twitter:image:alt": title,
     },
+    // SEO Guru Enhancement: Add language targeting
+    languages: {
+      "ca-ES": canonical, // Catalan (primary)
+    },
   };
 }
