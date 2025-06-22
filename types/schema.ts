@@ -37,6 +37,8 @@ export interface SchemaOrgEvent {
   };
   image: string[];
   description: string;
+  inLanguage: string;
+  keywords?: string;
   genre?: string[];
   performer: {
     "@type": "PerformingGroup";

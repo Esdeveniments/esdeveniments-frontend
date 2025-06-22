@@ -65,6 +65,19 @@ export const generateJsonData = (
       : undefined;
   };
 
+  // Generate keywords from available data
+  const getKeywords = () => {
+    const keywords = [...(getGenre() || []), city?.name, region?.name].filter(
+      Boolean
+    );
+    return keywords.length > 0 ? keywords.join(", ") : undefined;
+  };
+
+  // Enhanced datetime with time if available
+  const getEnhancedDateTime = (date: string, time: string | null) => {
+    return time ? `${date}T${time}` : date;
+  };
+
   // Enhanced offers based on event type
   const getOffers = () => {
     const baseOffer = {
@@ -97,8 +110,14 @@ export const generateJsonData = (
     "@type": "Event" as const,
     name: title,
     url: `${siteUrl}/e/${slug}`,
-    startDate,
-    endDate,
+    startDate: getEnhancedDateTime(
+      startDate,
+      "startTime" in event ? event.startTime : null
+    ),
+    endDate: getEnhancedDateTime(
+      endDate,
+      "endTime" in event ? event.endTime : null
+    ),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
     location: {
@@ -119,6 +138,8 @@ export const generateJsonData = (
     },
     image: images,
     description,
+    inLanguage: "ca",
+    ...(getKeywords() && { keywords: getKeywords() }),
     ...(getGenre() && { genre: getGenre() }),
     performer: {
       "@type": "PerformingGroup" as const,
