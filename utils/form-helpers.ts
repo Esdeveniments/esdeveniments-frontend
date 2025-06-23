@@ -5,7 +5,7 @@ import type {
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
-import { parseTimeToEventTimeDTO } from "./date-helpers";
+import { formatTimeForAPI } from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -48,9 +48,9 @@ export function formDataToBackendDTO(
         ? Number(form.town.value)
         : 0,
     startDate: form.startDate, // Already in YYYY-MM-DD format
-    startTime: parseTimeToEventTimeDTO(form.startTime),
+    startTime: formatTimeForAPI(form.startTime || ""),
     endDate: form.endDate, // Already in YYYY-MM-DD format
-    endTime: parseTimeToEventTimeDTO(form.endTime),
+    endTime: formatTimeForAPI(form.endTime || ""),
     location: form.location,
     categories: Array.isArray(form.categories)
       ? form.categories

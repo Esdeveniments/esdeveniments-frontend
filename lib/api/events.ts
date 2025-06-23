@@ -106,15 +106,26 @@ export async function updateEventById(
 }
 
 export async function createEvent(
-  data: EventCreateRequestDTO
+  data: EventCreateRequestDTO,
+  imageFile?: File
 ): Promise<EventDetailResponseDTO> {
+  const formData = new FormData();
+
+  // Add the request data as a JSON string
+  formData.append("request", JSON.stringify(data));
+
+  // Add the image file if provided
+  if (imageFile) {
+    formData.append("imageFile", imageFile);
+  }
+
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json",
+      // Note: Don't set Content-Type for FormData, let the browser set it with boundary
     },
-    body: JSON.stringify(data),
+    body: formData,
   });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();

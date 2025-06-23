@@ -224,14 +224,15 @@ export interface EventLocationProps {
 
 export interface EventFormProps {
   form: FormData;
-  initialValues: FormData;
-  onSubmit: (data: FormData) => Promise<void> | void;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
   submitLabel: string;
   isEditMode?: boolean;
   isLoading?: boolean;
   regionOptions: Option[];
   cityOptions: Option[];
+  categoryOptions: Option[];
   isLoadingRegionsWithCities?: boolean;
+  isLoadingCategories?: boolean;
   handleFormChange: <K extends keyof FormData>(
     name: K,
     value: FormData[K]
@@ -239,8 +240,22 @@ export interface EventFormProps {
   handleImageChange: (file: File) => void;
   handleRegionChange: (region: Option | null) => void;
   handleTownChange: (town: Option | null) => void;
+  handleCategoriesChange: (categories: Option[]) => void;
   progress: number;
   imageToUpload: string | null;
+  // External state management props
+  formState: {
+    isDisabled: boolean;
+    isPristine: boolean;
+    message: string;
+  };
+  setFormState: React.Dispatch<
+    React.SetStateAction<{
+      isDisabled: boolean;
+      isPristine: boolean;
+      message: string;
+    }>
+  >;
 }
 
 export { DeleteReason };

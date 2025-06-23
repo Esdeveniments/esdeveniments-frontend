@@ -3,9 +3,12 @@ import { revalidatePath } from "next/cache";
 import { createEvent } from "lib/api/events";
 import type { EventCreateRequestDTO } from "types/api/event";
 
-export async function createEventAction(data: EventCreateRequestDTO) {
+export async function createEventAction(
+  data: EventCreateRequestDTO,
+  imageFile?: File
+) {
   // 1. Create the event in your backend
-  const created = await createEvent(data);
+  const created = await createEvent(data, imageFile);
 
   // 2. Revalidate the event list page (purge ISR cache)
   await revalidatePath("/e");

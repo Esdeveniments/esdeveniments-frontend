@@ -24,6 +24,17 @@ export interface SelectComponentProps {
   placeholder?: string;
 }
 
+export interface MultiSelectProps {
+  id: string;
+  title: string;
+  value?: Option[];
+  onChange: (values: Option[]) => void;
+  options?: Option[];
+  isDisabled?: boolean;
+  placeholder?: string;
+  isLoading?: boolean;
+}
+
 export interface ViewCounterProps {
   slug: string;
   hideText?: boolean;

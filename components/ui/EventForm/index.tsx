@@ -1,34 +1,16 @@
 "use client";
 
-import React, { useState, memo } from "react";
+import React, { memo } from "react";
 import {
   DatePicker,
   Input,
   Select,
   TextArea,
   ImageUpload,
+  MultiSelect,
 } from "@components/ui/common/form";
 import type { EventFormProps } from "types/event";
-import { isOption } from "types/common";
-import { EventFormSchema, type EventFormSchemaType } from "types/event";
-
-const getZodValidationState = (
-  form: EventFormSchemaType,
-  isPristine: boolean
-): { isDisabled: boolean; isPristine: boolean; message: string } => {
-  if (!isPristine) {
-    return { isDisabled: true, isPristine: true, message: "" };
-  }
-  const result = EventFormSchema.safeParse(form);
-  if (!result.success) {
-    // Collect first error message
-    const firstError =
-      Object.values(result.error.flatten().fieldErrors)[0]?.[0] ||
-      "Hi ha errors de validació";
-    return { isDisabled: true, isPristine: true, message: firstError };
-  }
-  return { isDisabled: false, isPristine: false, message: "" };
-};
+import { isOption, Option } from "types/common";
 
 export const EventForm: React.FC<EventFormProps> = ({
   form,
@@ -37,32 +19,21 @@ export const EventForm: React.FC<EventFormProps> = ({
   isEditMode = false,
   isLoading = false,
   isLoadingRegionsWithCities = false,
+  isLoadingCategories = false,
   regionOptions,
   cityOptions,
+  categoryOptions,
   handleFormChange,
   handleImageChange,
   handleRegionChange,
   handleTownChange,
+  handleCategoriesChange,
   progress,
   imageToUpload,
+  formState,
 }) => {
-  const [formState, setFormState] = useState({
-    isDisabled: true,
-    isPristine: true,
-    message: "",
-  });
-
-  const _onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const newFormState = getZodValidationState(form, formState.isPristine);
-    setFormState(newFormState);
-    if (!newFormState.isDisabled) {
-      await onSubmit(form);
-    }
-  };
-
   return (
-    <form onSubmit={_onSubmit}>
+    <form onSubmit={onSubmit}>
       <Input
         id="title"
         title="Títol *"
@@ -117,6 +88,34 @@ export const EventForm: React.FC<EventFormProps> = ({
         title="Lloc *"
         value={form.location}
         onChange={(e) => handleFormChange("location", e.target.value)}
+      />
+      <MultiSelect
+        id="categories"
+        title="Categories"
+        value={
+          Array.isArray(form.categories)
+            ? form.categories
+                .map((cat) => {
+                  if (
+                    typeof cat === "object" &&
+                    "value" in cat &&
+                    "label" in cat
+                  ) {
+                    return cat as Option;
+                  }
+                  if (typeof cat === "object" && "id" in cat && "name" in cat) {
+                    return { value: cat.id.toString(), label: cat.name };
+                  }
+                  return null;
+                })
+                .filter((cat): cat is Option => cat !== null)
+            : []
+        }
+        onChange={handleCategoriesChange}
+        options={categoryOptions}
+        isDisabled={isLoadingCategories}
+        isLoading={isLoadingCategories}
+        placeholder="Selecciona categories (opcional)"
       />
       {isEditMode && (
         <Input

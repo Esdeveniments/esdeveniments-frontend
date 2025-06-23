@@ -3,29 +3,13 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo, useTransition } from "react";
 import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
-import { EventFormSchema, type EventFormSchemaType } from "types/event";
+import { getZodValidationState } from "@utils/form-validation";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { Option } from "types/common";
-
-function getZodValidationState(
-  form: EventFormSchemaType,
-  isPristine: boolean
-): { isDisabled: boolean; isPristine: boolean; message: string } {
-  if (!isPristine) {
-    return { isDisabled: true, isPristine: true, message: "" };
-  }
-  const result = EventFormSchema.safeParse(form);
-  if (!result.success) {
-    const firstError =
-      Object.values(result.error.flatten().fieldErrors)[0]?.[0] ||
-      "Hi ha errors de validació";
-    return { isDisabled: true, isPristine: true, message: firstError };
-  }
-  return { isDisabled: false, isPristine: false, message: "" };
-}
+import { useCategories } from "@components/hooks/useCategories";
 
 export default function EditEventClient({
   event,
@@ -51,6 +35,9 @@ export default function EditEventClient({
   const [progress] = useState<number>(0);
   const [isPending, startTransition] = useTransition();
 
+  // Fetch categories
+  const { categories, isLoading: isLoadingCategories } = useCategories();
+
   const regionOptions = useMemo(
     () =>
       regions
@@ -60,6 +47,15 @@ export default function EditEventClient({
           }))
         : [],
     [regions]
+  );
+
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((category) => ({
+        label: category.name,
+        value: category.id.toString(),
+      })),
+    [categories]
   );
 
   const cityOptions = useMemo(() => {
@@ -88,6 +84,9 @@ export default function EditEventClient({
   const handleTownChange = (town: Option | null) =>
     handleFormChange("town", town);
 
+  const handleCategoriesChange = (categories: Option[]) =>
+    handleFormChange("categories", categories);
+
   const handleImageChange = (file: File) => {
     const reader = new FileReader();
     reader.addEventListener("load", () => {
@@ -96,7 +95,8 @@ export default function EditEventClient({
     reader.readAsDataURL(file);
   };
 
-  async function onSubmit() {
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
     const newFormState = getZodValidationState(form, formState.isPristine);
     setFormState(newFormState);
     if (!newFormState.isDisabled) {
@@ -130,19 +130,23 @@ export default function EditEventClient({
       <h1>Edita: {event.title}</h1>
       <EventForm
         form={form}
-        initialValues={form}
         onSubmit={onSubmit}
         submitLabel="Desa canvis"
         isEditMode={true}
         isLoading={isPending}
         regionOptions={regionOptions}
         cityOptions={cityOptions}
+        categoryOptions={categoryOptions}
+        isLoadingCategories={isLoadingCategories}
         handleFormChange={handleFormChange}
         handleImageChange={handleImageChange}
         handleRegionChange={handleRegionChange}
         handleTownChange={handleTownChange}
+        handleCategoriesChange={handleCategoriesChange}
         progress={progress}
         imageToUpload={imageToUpload}
+        formState={formState}
+        setFormState={setFormState}
       />
     </div>
   );

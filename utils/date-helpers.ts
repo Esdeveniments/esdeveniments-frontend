@@ -197,3 +197,25 @@ export function parseTimeToEventTimeDTO(
 export const toLocalDateString = (date: Date): string => {
   return date.toISOString().slice(0, 10);
 };
+
+/**
+ * Format time string for API compatibility (HH:mm format)
+ * @param timeString - Time string in various formats
+ * @returns string in HH:mm format or empty string if invalid
+ */
+export const formatTimeForAPI = (timeString: string): string => {
+  if (!timeString || !timeString.includes(":")) return "";
+  const [hour, minute] = timeString.split(":");
+  return `${hour}:${minute}`;
+};
+
+/**
+ * Format time from API response (EventTimeDTO) to string format
+ * @param timeObj - EventTimeDTO object from API
+ * @returns string in HH:mm format
+ */
+export const formatTimeFromAPI = (timeObj: EventTimeDTO): string => {
+  const hour = String(timeObj.hour).padStart(2, "0");
+  const minute = String(timeObj.minute).padStart(2, "0");
+  return `${hour}:${minute}`;
+};

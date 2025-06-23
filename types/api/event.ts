@@ -98,9 +98,9 @@ export interface EventUpdateRequestDTO {
   regionId: number;
   cityId: number;
   startDate: string; // YYYY-MM-DD
-  startTime: EventTimeDTO;
+  startTime: string;
   endDate: string;
-  endTime: EventTimeDTO;
+  endTime: string;
   location: string;
   categories: number[];
 }
@@ -115,9 +115,9 @@ export interface EventCreateRequestDTO {
   regionId: number;
   cityId: number;
   startDate: string;
-  startTime: EventTimeDTO;
+  startTime: string;
   endDate: string;
-  endTime: EventTimeDTO;
+  endTime: string;
   location: string;
   categories: number[];
 }

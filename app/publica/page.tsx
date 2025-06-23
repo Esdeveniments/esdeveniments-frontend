@@ -10,13 +10,14 @@ import {
   getTownValue,
   formDataToBackendDTO,
 } from "@utils/helpers";
+import { getZodValidationState } from "@utils/form-validation";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
+import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
 import { fetchRegionById } from "@lib/api/regions";
 import { fetchCityById } from "@lib/api/cities";
 import type { FormData } from "types/event";
-import { EventFormSchema, type EventFormSchemaType } from "types/event";
 import { Option } from "types/common";
 
 const defaultForm: FormData = {
@@ -37,24 +38,6 @@ const defaultForm: FormData = {
   email: "",
 };
 
-const getZodValidationState = (
-  form: EventFormSchemaType,
-  isPristine: boolean
-): { isDisabled: boolean; isPristine: boolean; message: string } => {
-  if (!isPristine) {
-    return { isDisabled: true, isPristine: true, message: "" };
-  }
-  const result = EventFormSchema.safeParse(form);
-  if (!result.success) {
-    // Collect first error message
-    const firstError =
-      Object.values(result.error.flatten().fieldErrors)[0]?.[0] ||
-      "Hi ha errors de validació";
-    return { isDisabled: true, isPristine: true, message: firstError };
-  }
-  return { isDisabled: false, isPristine: false, message: "" };
-};
-
 const Publica = () => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
@@ -67,13 +50,15 @@ const Publica = () => {
     isPristine: true,
     message: "",
   });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [imageToUpload, setImageToUpload] = useState<string | null>(null);
-  const [progress, setProgress] = useState<number>(0);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
     useGetRegionsWithCities();
+
+  // Fetch categories
+  const { categories } = useCategories();
 
   const regionOptions = useMemo(
     () =>
@@ -96,6 +81,15 @@ const Publica = () => {
       : [];
   }, [regionsWithCities, form.region]);
 
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((category) => ({
+        label: category.name,
+        value: category.id.toString(),
+      })),
+    [categories]
+  );
+
   const handleFormChange = <K extends keyof FormData>(
     name: K,
     value: FormData[K]
@@ -110,9 +104,10 @@ const Publica = () => {
   };
 
   const handleImageChange = (file: File) => {
+    setImageFile(file);
     const reader = new FileReader();
     reader.addEventListener("load", () => {
-      setImageToUpload(reader.result as string);
+      setImagePreview(reader.result as string);
     });
     reader.readAsDataURL(file);
   };
@@ -120,13 +115,26 @@ const Publica = () => {
   const handleTownChange = (town: Option | null) =>
     handleFormChange("town", town);
 
-  const onSubmit = async () => {
+  const handleCategoriesChange = (categories: Option[]) =>
+    handleFormChange("categories", categories);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const newFormState = getZodValidationState(form, formState.isPristine);
     setFormState(newFormState);
     if (!newFormState.isDisabled) {
       startTransition(async () => {
-        setIsLoading(true);
         try {
+          // Check if image is provided
+          if (!imageFile) {
+            setFormState({
+              isDisabled: true,
+              isPristine: true,
+              message: "Imatge obligatòria",
+            });
+            return;
+          }
+
           const townValue = getTownValue(form.town);
           const regionValue = getRegionValue(form.region);
           let regionLabel = "";
@@ -146,73 +154,22 @@ const Publica = () => {
             location,
           });
 
-          if (imageToUpload) {
-            const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUDNAME}/upload`;
-            const xhr = new XMLHttpRequest();
-            const fd = new FormData();
-            xhr.open("POST", url, true);
-            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+          // Call the new API with the image file
+          const result = await createEventAction(eventData, imageFile);
 
-            xhr.upload.addEventListener("progress", (e) => {
-              setProgress(Math.round((e.loaded * 100.0) / e.total));
-            });
-
-            xhr.onreadystatechange = () => {
-              if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                  const response = JSON.parse(xhr.responseText);
-                  eventData.imageUrl = response.secure_url;
-                  createEventAction(eventData).then((result) => {
-                    if (result && result.success && result.event) {
-                      const { id } = result.event;
-                      const { formattedStart } = getFormattedDate(
-                        String(form.startDate), // Ensure date is passed as string
-                        String(form.endDate) // Ensure date is passed as string
-                      );
-                      const slugifiedTitle = slug(
-                        form.title,
-                        formattedStart,
-                        id
-                      );
-                      router.push(`/e/${id}/${slugifiedTitle}`);
-                    } else {
-                      setFormState({
-                        isDisabled: true,
-                        isPristine: true,
-                        message:
-                          "Error creant l'esdeveniment. Torna-ho a provar.",
-                      });
-                    }
-                  });
-                } else {
-                  const error = JSON.parse(xhr.responseText).error;
-                  setIsLoading(false);
-                  setFormState({
-                    isDisabled: true,
-                    isPristine: true,
-                    message: `Hi ha hagut un error en pujar la imatge: ${error.message}, torna-ho a provar més tard o contacta amb nosaltres.`,
-                  });
-                  captureException(
-                    new Error(`Error uploading file: ${error.message}`)
-                  );
-                }
-              }
-            };
-
-            fd.append(
-              "upload_preset",
-              process.env
-                .NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET as string
+          if (result && result.success && result.event) {
+            const { id } = result.event;
+            const { formattedStart } = getFormattedDate(
+              String(form.startDate), // Ensure date is passed as string
+              String(form.endDate) // Ensure date is passed as string
             );
-            fd.append("tags", "browser_upload");
-            fd.append("file", imageToUpload as string);
-            xhr.send(fd);
+            const slugifiedTitle = slug(form.title, formattedStart, id);
+            router.push(`/e/${id}/${slugifiedTitle}`);
           } else {
-            setIsLoading(false);
             setFormState({
               isDisabled: true,
               isPristine: true,
-              message: "Imatge obligatòria",
+              message: "Error creant l'esdeveniment. Torna-ho a provar.",
             });
           }
         } catch (error) {
@@ -223,8 +180,6 @@ const Publica = () => {
             message:
               "Hi ha hagut un error, torna-ho a provar més tard o contacta amb nosaltres.",
           });
-        } finally {
-          setIsLoading(false);
         }
       });
     }
@@ -242,19 +197,22 @@ const Publica = () => {
         <div className="w-full flex flex-col justify-center items-center gap-y-4 pt-4 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
           <EventForm
             form={form}
-            initialValues={defaultForm}
             onSubmit={onSubmit}
             submitLabel="Publica"
-            isLoading={isPending || isLoading}
+            isLoading={isPending}
             regionOptions={regionOptions}
             cityOptions={cityOptions}
-            progress={progress}
+            categoryOptions={categoryOptions}
+            progress={0}
             isLoadingRegionsWithCities={isLoadingRegionsWithCities}
             handleFormChange={handleFormChange}
             handleImageChange={handleImageChange}
             handleRegionChange={handleRegionChange}
             handleTownChange={handleTownChange}
-            imageToUpload={imageToUpload}
+            handleCategoriesChange={handleCategoriesChange}
+            imageToUpload={imagePreview}
+            formState={formState}
+            setFormState={setFormState}
           />
         </div>
       </div>
