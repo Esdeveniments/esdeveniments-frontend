@@ -76,6 +76,11 @@ export default function MultiSelectComponent({
   isLoading = false,
 }: MultiSelectProps) {
   const [selectedOptions, setSelectedOptions] = useState<Option[]>(value);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     setSelectedOptions(value);
@@ -93,25 +98,30 @@ export default function MultiSelectComponent({
         {title}
       </label>
       <div className="mt-2">
-        <CreatableSelect<Option, true>
-          id={id}
-          instanceId={id}
-          isMulti
-          isSearchable
-          isClearable
-          isLoading={isLoading}
-          placeholder={isLoading ? "Carregant categories..." : placeholder}
-          value={selectedOptions}
-          onChange={handleChange}
-          options={options}
-          styles={customStyles}
-          isDisabled={isDisabled || isLoading}
-          noOptionsMessage={() => "No s'ha trobat cap categoria"}
-          loadingMessage={() => "Carregant..."}
-          components={{
-            Input,
-          }}
-        />
+        {!isMounted ? (
+          <div className="h-[42px] bg-gray-100 border border-gray-300 rounded-lg animate-pulse" />
+        ) : (
+          <CreatableSelect<Option, true>
+            key={`multiselect-${id}-${isMounted}`}
+            id={id}
+            instanceId={id}
+            isMulti
+            isSearchable
+            isClearable
+            isLoading={isLoading}
+            placeholder={isLoading ? "Carregant categories..." : placeholder}
+            value={selectedOptions}
+            onChange={handleChange}
+            options={options}
+            styles={customStyles}
+            isDisabled={isDisabled || isLoading}
+            noOptionsMessage={() => "No s'ha trobat cap categoria"}
+            loadingMessage={() => "Carregant..."}
+            components={{
+              Input,
+            }}
+          />
+        )}
       </div>
     </div>
   );

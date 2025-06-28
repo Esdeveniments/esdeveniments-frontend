@@ -7,27 +7,30 @@ import {
   slug,
   getFormattedDate,
   getRegionValue,
-  getTownValue,
   formDataToBackendDTO,
 } from "@utils/helpers";
-import { getZodValidationState } from "@utils/form-validation";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
-import { fetchRegionById } from "@lib/api/regions";
-import { fetchCityById } from "@lib/api/cities";
 import type { FormData } from "types/event";
 import { Option } from "types/common";
 
 const defaultForm: FormData = {
   title: "",
-  slug: "",
   description: "",
   type: "FREE",
-  startDate: "",
+  startDate: (() => {
+    const now = new Date();
+    now.setHours(9, 0, 0, 0); // Set to 9:00 AM
+    return now.toISOString().slice(0, 16);
+  })(),
   startTime: "",
-  endDate: "",
+  endDate: (() => {
+    const now = new Date();
+    now.setHours(10, 0, 0, 0); // Set to 10:00 AM
+    return now.toISOString().slice(0, 16);
+  })(),
   endTime: "",
   region: null,
   town: null,
@@ -41,15 +44,6 @@ const defaultForm: FormData = {
 const Publica = () => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
-  const [formState, setFormState] = useState<{
-    isDisabled: boolean;
-    isPristine: boolean;
-    message: string;
-  }>({
-    isDisabled: true,
-    isPristine: true,
-    message: "",
-  });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -77,7 +71,11 @@ const Publica = () => {
       (r) => r.id.toString() === getRegionValue(form.region)
     );
     return region
-      ? region.cities.map((city) => ({ label: city.label, value: city.value }))
+      ? region.cities.map((city) => ({ 
+          id: city.id,
+          label: city.label, 
+          value: city.id.toString() // Use ID as value for proper form handling
+        }))
       : [];
   }, [regionsWithCities, form.region]);
 
@@ -90,13 +88,12 @@ const Publica = () => {
     [categories]
   );
 
+  // Simple form change handler - no validation here
   const handleFormChange = <K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
-    const newForm = { ...form, [name]: value };
-    setForm(newForm);
-    setFormState(getZodValidationState(newForm, true));
+    setForm({ ...form, [name]: value });
   };
 
   const handleRegionChange = (region: Option | null) => {
@@ -118,73 +115,58 @@ const Publica = () => {
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const newFormState = getZodValidationState(form, formState.isPristine);
-    setFormState(newFormState);
-    if (!newFormState.isDisabled) {
-      startTransition(async () => {
-        try {
-          // Check if image is provided
-          if (!imageFile) {
-            setFormState({
-              isDisabled: true,
-              isPristine: true,
-              message: "Imatge obligatòria",
-            });
-            return;
-          }
+  const onSubmit = async () => {
+    // The EventForm component will handle validation internally
+    // This will only be called if validation passes
+    console.log("Form submitted successfully, processing...");
 
-          const townValue = getTownValue(form.town);
-          const regionValue = getRegionValue(form.region);
-          let regionLabel = "";
-          let townLabel = "";
-          if (regionValue) {
-            const region = await fetchRegionById(regionValue);
-            regionLabel = region?.name || "";
-          }
-          if (townValue) {
-            const city = await fetchCityById(townValue);
-            townLabel = city?.name || "";
-          }
-          const location = `${form.location}, ${townLabel}, ${regionLabel}`;
-
-          const eventData = formDataToBackendDTO({
-            ...form,
-            location,
-          });
-
-          // Call the new API with the image file
-          const result = await createEventAction(eventData, imageFile);
-
-          if (result && result.success && result.event) {
-            const { id } = result.event;
-            const { formattedStart } = getFormattedDate(
-              String(form.startDate), // Ensure date is passed as string
-              String(form.endDate) // Ensure date is passed as string
-            );
-            const slugifiedTitle = slug(form.title, formattedStart, id);
-            router.push(`/e/${id}/${slugifiedTitle}`);
-          } else {
-            setFormState({
-              isDisabled: true,
-              isPristine: true,
-              message: "Error creant l'esdeveniment. Torna-ho a provar.",
-            });
-          }
-        } catch (error) {
-          captureException(error);
-          setFormState({
-            isDisabled: true,
-            isPristine: true,
-            message:
-              "Hi ha hagut un error, torna-ho a provar més tard o contacta amb nosaltres.",
-          });
+    startTransition(async () => {
+      try {
+        // Check if image is provided
+        if (!imageFile) {
+          console.log("No image file provided");
+          return;
         }
-      });
-    }
-  };
 
+        console.log("Processing submission...");
+
+        // Use data already available in the client instead of making redundant API calls
+        const regionLabel =
+          form.region && "label" in form.region ? form.region.label : "";
+        const townLabel =
+          form.town && "label" in form.town ? form.town.label : "";
+        const location = `${form.location}, ${townLabel}, ${regionLabel}`;
+
+        const eventData = formDataToBackendDTO({
+          ...form,
+          location,
+        });
+
+        // Debug: Log what we're about to send
+        console.log("Form submission - raw form data:", form);
+        console.log("Form submission - processed eventData:", eventData);
+        console.log("Form submission - imageFile:", imageFile);
+
+        // Call the new API with the image file
+        const result = await createEventAction(eventData, imageFile);
+
+        if (result && result.success && result.event) {
+          const { id } = result.event;
+          const { formattedStart } = getFormattedDate(
+            String(form.startDate), // Ensure date is passed as string
+            String(form.endDate) // Ensure date is passed as string
+          );
+          const slugifiedTitle = slug(form.title, formattedStart, id);
+          router.push(`/e/${id}/${slugifiedTitle}`);
+        } else {
+          console.error("Error creating event");
+        }
+      } catch (error) {
+        console.error("Submission error:", error);
+        captureException(error);
+      }
+    });
+  };
   return (
     <div className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
       <div className="flex flex-col items-center gap-4">
@@ -198,7 +180,7 @@ const Publica = () => {
           <EventForm
             form={form}
             onSubmit={onSubmit}
-            submitLabel="Publica"
+            submitLabel="Publicar"
             isLoading={isPending}
             regionOptions={regionOptions}
             cityOptions={cityOptions}
@@ -211,16 +193,9 @@ const Publica = () => {
             handleTownChange={handleTownChange}
             handleCategoriesChange={handleCategoriesChange}
             imageToUpload={imagePreview}
-            formState={formState}
-            setFormState={setFormState}
           />
         </div>
       </div>
-      {formState.isPristine && formState.message && (
-        <div className="p-4 my-3 text-primary rounded-lg text-md">
-          {formState.message}
-        </div>
-      )}
     </div>
   );
 };

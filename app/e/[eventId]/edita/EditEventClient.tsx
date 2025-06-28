@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo, useTransition } from "react";
 import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
-import { getZodValidationState } from "@utils/form-validation";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
 import { EventSummaryResponseDTO } from "types/api/event";
@@ -20,15 +19,6 @@ export default function EditEventClient({
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
-  const [formState, setFormState] = useState<{
-    isDisabled: boolean;
-    isPristine: boolean;
-    message: string;
-  }>({
-    isDisabled: true,
-    isPristine: true,
-    message: "",
-  });
   const [imageToUpload, setImageToUpload] = useState<string | null>(
     form.imageUrl
   );
@@ -66,17 +56,20 @@ export default function EditEventClient({
         (form.region && "value" in form.region ? form.region.value : "")
     );
     return region
-      ? region.cities.map((city) => ({ label: city.label, value: city.value }))
+      ? region.cities.map((city) => ({ 
+          id: city.id,
+          label: city.label, 
+          value: city.id.toString() // Use ID as value for proper form handling
+        }))
       : [];
   }, [regions, form.region]);
 
+  // Simple form change handler - no validation here
   const handleFormChange = <K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
-    const newForm = { ...form, [name]: value };
-    setForm(newForm);
-    setFormState(getZodValidationState(newForm, true));
+    setForm({ ...form, [name]: value });
   };
 
   const handleRegionChange = (region: Option | null) =>
@@ -95,34 +88,23 @@ export default function EditEventClient({
     reader.readAsDataURL(file);
   };
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const newFormState = getZodValidationState(form, formState.isPristine);
-    setFormState(newFormState);
-    if (!newFormState.isDisabled) {
-      startTransition(async () => {
-        try {
-          if (!event) return;
-          const data = formDataToBackendDTO(form);
-          const result = await editEvent(event.id, data);
-          if (result && result.success) {
-            router.push(`/e/${event.id}/${form.slug}`);
-          } else {
-            setFormState({
-              isDisabled: true,
-              isPristine: true,
-              message: "Error actualitzant l'esdeveniment. Torna-ho a provar.",
-            });
-          }
-        } catch (error) {
-          setFormState({
-            isDisabled: true,
-            isPristine: true,
-            message: `Error actualitzant l'esdeveniment. Torna-ho a provar. ${error}`,
-          });
+  async function onSubmit() {
+    // The EventForm component will handle validation internally
+    // This will only be called if validation passes
+    startTransition(async () => {
+      try {
+        if (!event) return;
+        const data = formDataToBackendDTO(form);
+        const result = await editEvent(event.id, data);
+        if (result && result.success) {
+          router.push(`/e/${event.id}/${event.slug}`);
+        } else {
+          console.error("Error updating event");
         }
-      });
-    }
+      } catch (error) {
+        console.error("Error updating event:", error);
+      }
+    });
   }
 
   return (
@@ -145,8 +127,6 @@ export default function EditEventClient({
         handleCategoriesChange={handleCategoriesChange}
         progress={progress}
         imageToUpload={imageToUpload}
-        formState={formState}
-        setFormState={setFormState}
       />
     </div>
   );

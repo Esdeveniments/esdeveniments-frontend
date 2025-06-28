@@ -11,7 +11,6 @@ import type { DeleteReason, Option } from "./common";
 // --- Zod schema for canonical event form data ---
 export const EventFormSchema = z.object({
   id: z.string().optional(),
-  slug: z.string().min(1, "Slug obligatori"),
   title: z.string().min(1, "Títol obligatori"),
   description: z.string().min(1, "Descripció obligatòria"),
   type: z.enum(["FREE", "PAID"]),
@@ -25,7 +24,7 @@ export const EventFormSchema = z.object({
   imageUrl: z.string().nullable(),
   url: z.string().url("URL invàlida"),
   categories: z.array(z.any()),
-  email: z.string().email("Email invàlid").optional(),
+  email: z.string().email("Email invàlid").or(z.literal("")).optional(),
 });
 
 export type EventFormSchemaType = z.infer<typeof EventFormSchema>;
@@ -52,7 +51,6 @@ export interface FormattedDateResult {
 // --- Centralized event form types ---
 export interface FormData {
   id?: string;
-  slug: string;
   title: string;
   description: string;
   type: "FREE" | "PAID";
@@ -243,19 +241,6 @@ export interface EventFormProps {
   handleCategoriesChange: (categories: Option[]) => void;
   progress: number;
   imageToUpload: string | null;
-  // External state management props
-  formState: {
-    isDisabled: boolean;
-    isPristine: boolean;
-    message: string;
-  };
-  setFormState: React.Dispatch<
-    React.SetStateAction<{
-      isDisabled: boolean;
-      isPristine: boolean;
-      message: string;
-    }>
-  >;
 }
 
 export { DeleteReason };

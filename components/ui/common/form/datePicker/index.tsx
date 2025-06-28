@@ -3,6 +3,8 @@ import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import format from "date-fns/format";
+import setHours from "date-fns/setHours";
+import setMinutes from "date-fns/setMinutes";
 import ca from "date-fns/locale/ca";
 import { DatePickerComponentProps, CustomHeaderProps } from "types/props";
 
@@ -11,18 +13,29 @@ import "react-datepicker/dist/react-datepicker.css";
 const ButtonInput = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & { value?: string }
->(({ value, ...props }, ref) => (
-  <button ref={ref} type="button" {...props}>
-    {value}
-  </button>
-));
+>(({ value, ...props }, ref) => {
+  // Extract className from props to prevent it from overriding our styling
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+  const { className: _className, ...restProps } = props;
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className="w-full p-2.5 border border-bColor rounded-xl text-blackCorp sm:text-sm focus:border-darkCorp focus:outline-none"
+      {...restProps}
+    >
+      {value}
+    </button>
+  );
+});
 
 ButtonInput.displayName = "ButtonInput";
 
 // --- Conversion helpers ---
 function toDate(dateStr: string): Date {
   // Accepts YYYY-MM-DD or ISO string
-  if (!dateStr) return new Date();
+  if (!dateStr) return setHours(setMinutes(new Date(), 0), 9);
   // If only date, add time 09:00
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     return new Date(`${dateStr}T09:00`);
@@ -46,7 +59,9 @@ export default function DatePickerComponent({
 }: DatePickerComponentProps) {
   // Convert incoming strings to Date objects
   const startingDate = toDate(initialStartDate);
-  const endingDate = toDate(initialEndDate);
+  const endingDate = initialEndDate
+    ? toDate(initialEndDate)
+    : setMinutes(startingDate, startingDate.getMinutes() + 60);
   const minDateObj = minDate ? toDate(minDate) : undefined;
 
   const [startDate, setStartDate] = useState<Date>(startingDate);
@@ -91,7 +106,6 @@ export default function DatePickerComponent({
             endDate={endDate}
             minDate={minDateObj}
             required={required}
-            className="w-full rounded-xl border-bColor focus:border-darkCorp"
             nextMonthButtonLabel=">"
             previousMonthButtonLabel="<"
             popperClassName="react-datepicker-left"
@@ -159,7 +173,6 @@ export default function DatePickerComponent({
             endDate={endDate}
             minDate={startDate}
             required={required}
-            className="w-full rounded-xl border-bColor focus:border-darkCorp"
             nextMonthButtonLabel=">"
             previousMonthButtonLabel="<"
             popperClassName="react-datepicker-left"

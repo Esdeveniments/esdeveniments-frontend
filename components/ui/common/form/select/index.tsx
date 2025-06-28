@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components, StylesConfig, GroupBase } from "react-select";
-// Removed useStore import - no longer needed
 import { SelectComponentProps } from "types/props";
 import { Option } from "types/common";
 
@@ -68,14 +67,19 @@ export default function SelectComponent({
   const [selectedOption, setSelectedOption] = useState<Option | null>(
     initialValue
   );
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     setSelectedOption(initialValue);
   }, [initialValue]);
 
-  const handleChange = (value: Option | null) => {
-    setSelectedOption(value);
-    onChange(value);
+  const handleChange = (newValue: Option | null) => {
+    setSelectedOption(newValue);
+    onChange(newValue);
 
     // Removed page/scrollPosition reset - no longer needed with server-side filtering
   };
@@ -86,27 +90,32 @@ export default function SelectComponent({
         {title}
       </label>
       <div className="mt-2">
-        <CreatableSelect<Option>
-          id={id}
-          instanceId={id}
-          isSearchable
-          isClearable={isClearable}
-          formatCreateLabel={(inputValue: string) =>
-            `Afegir nou lloc: "${inputValue}"`
-          }
-          placeholder={placeholder}
-          defaultValue={selectedOption || initialValue}
-          value={selectedOption || initialValue}
-          onChange={handleChange}
-          options={options}
-          styles={customStyles}
-          isDisabled={isDisabled}
-          isValidNewOption={() => isValidNewOption}
-          noOptionsMessage={() => "No s'ha trobat cap opció"}
-          components={{
-            Input,
-          }}
-        />
+        {!isMounted ? (
+          <div className="h-[42px] bg-gray-100 border border-gray-300 rounded-lg animate-pulse" />
+        ) : (
+          <CreatableSelect<Option>
+            key={`select-${id}-${isMounted}`}
+            id={id}
+            instanceId={id}
+            isSearchable
+            isClearable={isClearable}
+            formatCreateLabel={(inputValue: string) =>
+              `Afegir nou lloc: "${inputValue}"`
+            }
+            placeholder={placeholder}
+            defaultValue={selectedOption || initialValue}
+            value={selectedOption || initialValue}
+            onChange={handleChange}
+            options={options}
+            styles={customStyles}
+            isDisabled={isDisabled}
+            isValidNewOption={() => isValidNewOption}
+            noOptionsMessage={() => "No s'ha trobat cap opció"}
+            components={{
+              Input,
+            }}
+          />
+        )}
       </div>
     </div>
   );
