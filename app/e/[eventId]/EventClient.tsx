@@ -7,6 +7,7 @@ import { sendGoogleEvent } from "@utils/analytics";
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
 import EventHeader from "./components/EventHeader";
+import EventCategories from "./components/EventCategories";
 import EventDescription from "./components/EventDescription";
 import EventCalendar from "./components/EventCalendar";
 import EventWeather from "./components/EventWeather";
@@ -123,11 +124,7 @@ export default function EventClient({
         setShowThankYouBanner={setShowThankYouBanner}
       />
       {/* Event Header */}
-      <EventHeader
-        title={title}
-        startDate={event.startDate}
-        endDate={event.endDate}
-      />
+      <EventHeader title={title} />
       {/* Event Calendar */}
       <EventCalendar event={event} />
 
@@ -136,6 +133,11 @@ export default function EventClient({
         location={event.location}
         cityName={cityName}
         regionName={regionName}
+      />
+      {/* Event Categories - Better positioned after essential info */}
+      <EventCategories
+        categories={event.categories}
+        place={event.region.slug}
       />
       {/* Ad Section */}
       <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">

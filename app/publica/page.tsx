@@ -158,6 +158,7 @@ const Publica = () => {
           );
           const slugifiedTitle = slug(form.title, formattedStart, id);
 
+          debugger;
           router.push(`/e/${id}/${slugifiedTitle}`);
         } else {
           console.error("Error creating event");

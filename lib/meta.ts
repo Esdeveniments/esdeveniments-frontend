@@ -57,10 +57,22 @@ export function generateMetaTitle(
 
 export function generateMetaDescription(
   title: string,
-  description?: string
+  description?: string,
+  categories?: Array<{ name: string; slug: string }>,
+  location?: string
 ): string {
   const titleSanitized = sanitizeInput(title);
   let metaDescription = titleSanitized;
+
+  // Add primary category context if available
+  if (categories && categories.length > 0 && location) {
+    const primaryCategory = categories[0].name;
+    metaDescription = `${primaryCategory} a ${location}: ${titleSanitized}`;
+  } else if (categories && categories.length > 0) {
+    const primaryCategory = categories[0].name;
+    metaDescription = `${primaryCategory}: ${titleSanitized}`;
+  }
+
   if (metaDescription.length < 120 && description) {
     const descriptionSanitized = sanitizeInput(description);
     metaDescription += ` - ${descriptionSanitized}`;
@@ -92,14 +104,31 @@ export function generateEventMetadata(
   // Generate enhanced description like the old version
   const enhancedDescription = generateMetaDescription(
     event.title,
-    event.description
+    event.description,
+    event.categories,
+    event.location
   );
 
   const image = event.imageUrl ? [event.imageUrl] : [];
   const canonical = url || `${siteUrl}/e/${event.slug}`;
+
+  // Generate article tags for categories
+  const articleTags = event.categories?.map((category) => category.name) || [];
+
+  // Generate comprehensive keywords
+  const keywordParts = [
+    ...(event.categories?.map((cat) => cat.name) || []),
+    event.city?.name,
+    event.region?.name,
+    event.location,
+  ].filter(Boolean);
+  const keywords =
+    keywordParts.length > 0 ? keywordParts.join(", ") : undefined;
+
   return {
     title: pageTitle,
     description: enhancedDescription,
+    ...(keywords && { keywords }),
     openGraph: {
       title: pageTitle,
       description: enhancedDescription,
@@ -135,6 +164,11 @@ export function generateEventMetadata(
       "twitter:image:alt": pageTitle,
       "twitter:url": canonical,
       "twitter:domain": siteUrl,
+      // Article tags for better social media categorization
+      ...(articleTags.length > 0 && {
+        "article:tag": articleTags.join(","),
+        "article:section": articleTags[0], // Primary category as section
+      }),
     },
   };
 }

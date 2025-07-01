@@ -5,6 +5,7 @@ import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
 } from "./api/event";
+import type { CategorySummaryResponseDTO } from "./api/category";
 import type { RefObject } from "react";
 import type { DeleteReason, Option } from "./common";
 
@@ -145,8 +146,6 @@ export interface FetchEventsParams {
 
 export interface EventHeaderProps {
   title: string;
-  startDate: string;
-  endDate?: string;
 }
 
 export interface EventMediaProps {
@@ -244,9 +243,6 @@ export interface EventFormProps {
   imageToUpload: string | null;
 }
 
-export { DeleteReason };
-
-// --- Hook interfaces ---
 export interface UseEventsOptions {
   place?: string;
   category?: string;
@@ -265,3 +261,10 @@ export interface UseEventsReturn {
   isValidating: boolean;
   error: Error | undefined;
 }
+
+export interface EventCategoriesProps {
+  categories: CategorySummaryResponseDTO[];
+  place: string;
+}
+
+export { DeleteReason };
