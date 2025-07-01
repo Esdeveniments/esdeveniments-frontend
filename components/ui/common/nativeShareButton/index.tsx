@@ -2,10 +2,11 @@ import { useCallback, useMemo, memo, MouseEvent, JSX } from "react";
 import { ShareIcon } from "@heroicons/react/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { sendGoogleEvent } from "@utils/analytics";
-import { NativeShareButtonProps } from '../../../../types/props';
+import { NativeShareButtonProps } from "../../../../types/props";
 
 const NativeShareButton = ({
   title,
+  text,
   url,
   date,
   location,
@@ -15,16 +16,18 @@ const NativeShareButton = ({
 }: NativeShareButtonProps): JSX.Element | null => {
   const isMobile = useCheckMobileScreen();
 
-  const shareText = useMemo(
-    () =>
-      `
-${title}
+  const shareText = useMemo(() => {
+    let content = `${title}`;
 
-Data: ${date}
-Lloc: ${location}, ${subLocation}
-  `.trim(),
-    [title, date, location, subLocation]
-  );
+    if (text) {
+      content += `\n\n${text}`;
+    }
+
+    content += `\n\nData: ${date}`;
+    content += `\nLloc: ${location}, ${subLocation}`;
+
+    return content.trim();
+  }, [title, text, date, location, subLocation]);
 
   const handleNativeShare = useCallback(
     async (e: MouseEvent<HTMLButtonElement>) => {

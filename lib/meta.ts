@@ -75,17 +75,34 @@ export function generateEventMetadata(
   prefixTitle?: string
 ): Metadata {
   if (!event) return { title: "No event found" };
+
+  // Generate enhanced title using the helper functions like the old version
+  const enhancedTitle = generateMetaTitle(
+    event.title,
+    event.description,
+    event.location,
+    event.city?.name,
+    event.region?.name
+  );
+
   const pageTitle = prefixTitle
-    ? `${prefixTitle}: ${event.title}`
-    : event.title;
+    ? `${prefixTitle}: ${enhancedTitle}`
+    : enhancedTitle;
+
+  // Generate enhanced description like the old version
+  const enhancedDescription = generateMetaDescription(
+    event.title,
+    event.description
+  );
+
   const image = event.imageUrl ? [event.imageUrl] : [];
   const canonical = url || `${siteUrl}/e/${event.slug}`;
   return {
     title: pageTitle,
-    description: event.description,
+    description: enhancedDescription,
     openGraph: {
       title: pageTitle,
-      description: event.description,
+      description: enhancedDescription,
       url: canonical,
       images: image,
       type: "article",
@@ -95,7 +112,7 @@ export function generateEventMetadata(
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
-      description: event.description,
+      description: enhancedDescription,
       site: "@esdeveniments",
       creator: "Esdeveniments.cat",
       images: image,

@@ -9,10 +9,12 @@ export default function EventShareBar({
   visits,
   slug,
   title,
+  description,
   eventDateString,
   location,
   cityName,
   regionName,
+  postalCode,
 }: EventShareBarProps) {
   const isMobile = useCheckMobileScreen();
   const canNativeShare = typeof window !== "undefined" && !!navigator.share;
@@ -23,10 +25,11 @@ export default function EventShareBar({
       {showNativeShare ? (
         <NativeShareButton
           title={title}
+          text={description}
           url={slug}
           date={eventDateString}
           location={location}
-          subLocation={`${cityName}, ${regionName}`}
+          subLocation={`${cityName}, ${regionName}, ${postalCode}`}
         />
       ) : (
         <CardShareButton slug={slug} />

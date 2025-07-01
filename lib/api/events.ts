@@ -78,12 +78,21 @@ export async function fetchEvents(
 export async function fetchEventById(
   uuid: string
 ): Promise<EventDetailResponseDTO | null> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`
-  );
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return response.json();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    console.error("NEXT_PUBLIC_API_URL is not defined");
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/events/${uuid}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching event by ID:", error);
+    return null;
+  }
 }
 
 export async function updateEventById(
@@ -111,6 +120,10 @@ export async function createEvent(
 ): Promise<EventDetailResponseDTO> {
   const formData = new FormData();
 
+  // Debug: Log the data being sent
+  console.log("createEvent: data to send:", data);
+  console.log("createEvent: imageFile:", imageFile);
+
   // Add the request data as a JSON string
   formData.append("request", JSON.stringify(data));
 
@@ -127,7 +140,16 @@ export async function createEvent(
     },
     body: formData,
   });
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+  // Debug: Log response details
+  console.log("createEvent: response status:", response.status);
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("createEvent: error response:", errorText);
+    throw new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`
+    );
+  }
   return response.json();
 }
 

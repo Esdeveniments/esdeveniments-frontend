@@ -37,14 +37,14 @@ export async function fetchRegionsWithCities(): Promise<
         id: 1,
         name: "Barcelona",
         cities: [
-          { label: "Barcelona", value: "barcelona" },
-          { label: "Hospitalet", value: "hospitalet" },
+          { id: 1, label: "Barcelona", value: "barcelona" },
+          { id: 2, label: "Hospitalet", value: "hospitalet" },
         ],
       },
       {
         id: 2,
         name: "Girona",
-        cities: [{ label: "Girona", value: "girona" }],
+        cities: [{ id: 1, label: "Girona", value: "girona" }],
       },
     ];
   }
@@ -58,14 +58,14 @@ export async function fetchRegionsWithCities(): Promise<
         id: 1,
         name: "Barcelona",
         cities: [
-          { label: "Barcelona", value: "barcelona" },
-          { label: "Hospitalet", value: "hospitalet" },
+          { id: 1, label: "Barcelona", value: "barcelona" },
+          { id: 2, label: "Hospitalet", value: "hospitalet" },
         ],
       },
       {
         id: 2,
         name: "Girona",
-        cities: [{ label: "Girona", value: "girona" }],
+        cities: [{ id: 1, label: "Girona", value: "girona" }],
       },
     ];
   }

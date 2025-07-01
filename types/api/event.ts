@@ -47,8 +47,9 @@ export interface EventSummaryResponseDTO {
   province: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
   weather?: {
-    description?: string;
-    icon?: string;
+    temperature: string;
+    description: string;
+    icon: string;
   };
   isAd?: boolean;
 }
@@ -74,6 +75,7 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   duration?: string;
   videoUrl?: string;
   tags?: string[];
+  relatedEvents?: EventSummaryResponseDTO[]; // Add related events from backend
 }
 
 export type CategorizedEvents = {

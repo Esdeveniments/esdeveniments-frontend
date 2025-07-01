@@ -36,15 +36,17 @@ export default function EventCalendar({ event }: EventCalendarProps) {
         <div className="w-full flex flex-col gap-4">
           <p>{eventDate}</p>
           <p className="capitalize">
-            {endDate
-              ? `${startTime ?? ""} - ${endTime ?? ""}`
-              : "Consultar horaris"}
+            {!startTime || startTime === "00:00"
+              ? "Consultar horaris"
+              : `${startTime} - ${endTime || ""}`}
           </p>
         </div>
         <AddToCalendar
           title={title}
           description={description}
-          location={`${location}, ${city}, ${region}`}
+          location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${
+            city?.postalCode || ""
+          }`}
           startDate={startDate}
           endDate={endDate}
           canonical={`${siteUrl}/e/${slug}`}

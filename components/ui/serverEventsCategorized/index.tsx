@@ -2,7 +2,7 @@ import { memo, ReactElement } from "react";
 import Script from "next/script";
 import Link from "next/link"; // Added Link import
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
-import EventsHorizontalScroll from "@components/ui/eventsHorizontalScroll";
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
 import { CATEGORY_NAMES_MAP } from "@utils/constants";
 import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
@@ -129,9 +129,13 @@ function ServerEventsCategorized({
                     </div>
 
                     {/* Events Horizontal Scroll */}
-                    <EventsHorizontalScroll
+                    <EventsAroundServer
                       events={events as EventSummaryResponseDTO[]}
+                      layout="horizontal"
                       usePriority={shouldUsePriority}
+                      showJsonLd={true}
+                      title={categoryName}
+                      jsonLdId={`category-events-${categoryName}-${events.length}`}
                     />
 
                     {/* Ad placement removed for server component - can be added via client component */}

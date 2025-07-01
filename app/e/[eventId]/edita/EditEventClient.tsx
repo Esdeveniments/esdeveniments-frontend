@@ -56,10 +56,10 @@ export default function EditEventClient({
         (form.region && "value" in form.region ? form.region.value : "")
     );
     return region
-      ? region.cities.map((city) => ({ 
+      ? region.cities.map((city) => ({
           id: city.id,
-          label: city.label, 
-          value: city.id.toString() // Use ID as value for proper form handling
+          label: city.label,
+          value: city.id.toString(), // Use ID as value for proper form handling
         }))
       : [];
   }, [regions, form.region]);

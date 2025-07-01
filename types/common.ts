@@ -173,6 +173,9 @@ export interface Gradient {
 
 export interface ImgDefaultProps {
   title: string;
+  location?: string;
+  region?: string;
+  date?: string;
 }
 
 export interface MetaProps {
@@ -240,6 +243,11 @@ export interface CardHorizontalProps {
   isPriority?: boolean;
 }
 
+export interface CardHorizontalServerProps {
+  event: EventSummaryResponseDTO;
+  isPriority?: boolean;
+}
+
 export interface CardShareButtonProps {
   slug: string;
 }
@@ -252,22 +260,20 @@ export interface CustomIconProps {
   className?: string;
 }
 
+export type EventsAroundLayout = "compact" | "horizontal" | "cards";
+
 export interface EventsAroundProps {
-  id: string;
-  title: string;
-  town: string;
-  region: string;
+  events: EventSummaryResponseDTO[];
+  title?: string;
 }
 
-export interface EventsAroundScrollProps {
-  events: EventSummaryResponseDTO[];
-  loading: boolean;
-}
-
-export interface EventsHorizontalScrollProps {
-  events: EventSummaryResponseDTO[];
+export interface EventsAroundServerProps extends EventsAroundProps {
+  layout?: EventsAroundLayout;
   loading?: boolean;
   usePriority?: boolean;
+  showJsonLd?: boolean;
+  jsonLdId?: string;
+  analyticsCategory?: string;
 }
 
 export interface BaseLayoutProps {
@@ -439,6 +445,9 @@ export interface ImageComponentProps {
   className?: string;
   priority?: boolean;
   alt?: string;
+  location?: string;
+  region?: string;
+  date?: string;
 }
 
 export interface ActiveLinkProps extends LinkProps {

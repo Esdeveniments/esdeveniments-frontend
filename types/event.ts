@@ -160,14 +160,17 @@ export interface EventShareBarProps {
   visits: number;
   slug: string;
   title: string;
+  description: string;
   eventDateString: string;
   location: string;
   cityName: string;
   regionName: string;
+  postalCode: string;
 }
 
 export interface EventDescriptionProps {
   description: string;
+  location: string;
 }
 
 export interface EventTagsProps {
@@ -202,16 +205,16 @@ export interface EventMapsProps {
 }
 
 export interface EventWeatherProps {
-  startDate: { date?: string; dateTime?: string } | string;
-  location: string;
+  weather?: {
+    temperature: string;
+    description: string;
+    icon: string;
+  };
 }
 
 export interface EventImageProps {
   image: string | undefined;
   title: string;
-  location: string;
-  nameDay: string;
-  formattedStart: string;
 }
 
 export interface EventLocationProps {

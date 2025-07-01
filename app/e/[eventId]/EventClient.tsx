@@ -1,8 +1,7 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import useOnScreen from "components/hooks/useOnScreen";
+// import useOnScreen from "components/hooks/useOnScreen";
 import { sendGoogleEvent } from "@utils/analytics";
 import { formatEventDateRange } from "@utils/calendarUtils";
 import type { EventDetailResponseDTO } from "types/api/event";
@@ -12,41 +11,64 @@ import EventDescription from "./components/EventDescription";
 import EventCalendar from "./components/EventCalendar";
 import EventWeather from "./components/EventWeather";
 import EventLocation from "./components/EventLocation";
-import { useEventModals } from "./hooks/useEventModals";
-import EventModals from "./components/EventModals";
+// import { useEventModals } from "./hooks/useEventModals";
+// import EventModals from "./components/EventModals";
 import {
-  PencilIcon,
-  InformationCircleIcon as InfoIcon,
+  // PencilIcon,
+  // InformationCircleIcon as InfoIcon,
   GlobeAltIcon as WebIcon,
   SpeakerphoneIcon,
 } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
 
-const EventsAround = dynamic(() => import("./components/EventsAround"), {
-  ssr: false,
-});
-
-const Tooltip = dynamic(() => import("components/ui/tooltip"), {
-  ssr: false,
-});
+// const Tooltip = dynamic(() => import("components/ui/tooltip"), {
+//   ssr: false,
+// });
 
 // Helper function to calculate time until event
-function calculateTimeUntil(startDate: string): string {
+function calculateTimeUntil(startDate: string, endDate?: string): string {
   const now = new Date();
-  const eventDate = new Date(startDate);
-  const timeDiff = eventDate.getTime() - now.getTime();
+  const eventStart = new Date(startDate);
+  const eventEnd = endDate ? new Date(endDate) : null;
+
+  // Event has already ended
+  if (eventEnd && now > eventEnd) {
+    return "L'esdeveniment ha finalitzat";
+  }
+
+  // Event is currently ongoing
+  if (eventEnd && now >= eventStart && now <= eventEnd) {
+    const timeDiff = eventEnd.getTime() - now.getTime();
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+
+    if (days > 0) {
+      return `Acaba en ${days} dies`;
+    } else if (hours > 0) {
+      return `Acaba en ${hours} hores`;
+    } else {
+      return "L'esdeveniment acaba aviat";
+    }
+  }
+
+  // Event hasn't started yet
+  const timeDiff = eventStart.getTime() - now.getTime();
 
   if (timeDiff <= 0) {
-    return "L'esdeveniment ja ha passat";
+    return "L'esdeveniment és ara";
   }
 
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const hours = Math.floor(
+    (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+  );
 
   if (days > 0) {
-    return `Falten ${days} dies`;
+    return `Comença en ${days} dies`;
   } else if (hours > 0) {
-    return `Falten ${hours} hores`;
+    return `Comença en ${hours} hores`;
   } else {
     return "L'esdeveniment és avui";
   }
@@ -57,41 +79,30 @@ export default function EventClient({
 }: {
   event: EventDetailResponseDTO;
 }) {
-  const weatherRef = useRef<HTMLDivElement>(null);
-  const eventsAroundRef = useRef<HTMLDivElement>(null);
-  const editModalRef = useRef<HTMLDivElement>(null);
+  // const editModalRef = useRef<HTMLDivElement>(null);
 
-  const isWeatherVisible = useOnScreen(weatherRef as React.RefObject<Element>, {
-    freezeOnceVisible: true,
-  });
-  const isEditModalVisible = useOnScreen(
-    editModalRef as React.RefObject<Element>,
-    {
-      freezeOnceVisible: true,
-    }
-  );
-  const isEventsAroundVisible = useOnScreen(
-    eventsAroundRef as React.RefObject<Element>,
-    {
-      freezeOnceVisible: true,
-    }
-  );
+  // const isEditModalVisible = useOnScreen(
+  //   editModalRef as React.RefObject<Element>,
+  //   {
+  //     freezeOnceVisible: true,
+  //   }
+  // );
 
   const searchParams = useSearchParams() ?? new URLSearchParams();
   const newEvent = searchParams.get("newEvent");
   const edit_suggested = searchParams.get("edit_suggested") === "true";
   const [showThankYouBanner, setShowThankYouBanner] = useState(edit_suggested);
 
-  const {
-    openModal,
-    setOpenModal,
-    openDeleteReasonModal,
-    setOpenModalDeleteReasonModal,
-    reasonToDelete,
-    setReasonToDelete,
-    onSendDeleteReason,
-    onRemove,
-  } = useEventModals();
+  // const {
+  //   openModal,
+  //   setOpenModal,
+  //   openDeleteReasonModal,
+  //   setOpenModalDeleteReasonModal,
+  //   reasonToDelete,
+  //   setReasonToDelete,
+  //   onSendDeleteReason,
+  //   onRemove,
+  // } = useEventModals();
 
   useEffect(() => {
     sendGoogleEvent("view_event_page", {});
@@ -136,7 +147,7 @@ export default function EventClient({
         regionName={regionName}
       />
       {/* Description */}
-      <EventDescription description={event.description} />
+      <EventDescription description={event.description} location={cityName} />
       {/* Ad Section */}
       <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
         <SpeakerphoneIcon className="w-5 h-5 mt-1" />
@@ -146,13 +157,8 @@ export default function EventClient({
         </div>
       </div>
       {/* Weather */}
-      <div ref={weatherRef} className="w-full">
-        {isWeatherVisible && (
-          <EventWeather
-            startDate={event.startDate}
-            location={event.location}
-          />
-        )}
+      <div className="w-full">
+        <EventWeather weather={event.weather} />
       </div>
       {/* Event Details Section */}
       <div className="w-full flex justify-center items-start gap-2 px-4">
@@ -161,7 +167,7 @@ export default function EventClient({
           <h2>Detalls de l&apos;Esdeveniment</h2>
           <div className="flex justify-start items-center gap-2">
             <div className="flex items-center gap-1 font-normal">
-              {calculateTimeUntil(event.startDate)}
+              {calculateTimeUntil(event.startDate, event.endDate)}
             </div>
           </div>
           {event.duration && (
@@ -187,7 +193,8 @@ export default function EventClient({
         </div>
       </div>
       {/* Edit Button Section */}
-      <div className="w-full flex justify-center items-start gap-2 px-4">
+
+      {/* <div className="w-full flex justify-center items-start gap-2 px-4">
         <PencilIcon className="w-5 h-5 mt-1" />
         <div className="w-11/12 flex flex-col gap-4">
           <h2>Suggerir un canvi</h2>
@@ -202,10 +209,7 @@ export default function EventClient({
               >
                 <p className="font-medium flex items-center">Editar</p>
               </div>
-              <InfoIcon
-                className="w-5 h-5"
-                data-tooltip-id="edit-button"
-              />
+              <InfoIcon className="w-5 h-5" data-tooltip-id="edit-button" />
               <Tooltip id="edit-button">
                 Si després de veure la informació de l&apos;esdeveniment,
                 <br />
@@ -218,18 +222,7 @@ export default function EventClient({
             </div>
           )}
         </div>
-      </div>
-      {/* Events Around */}
-      <div ref={eventsAroundRef} className="w-full">
-        {isEventsAroundVisible && (
-          <EventsAround
-            id={event.id}
-            title="Esdeveniments relacionats"
-            town={event?.city?.name || ""}
-            region={event?.region?.name || ""}
-          />
-        )}
-      </div>
+      </div> */}
       {/* Final Ad Section */}
       <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
         <SpeakerphoneIcon className="w-5 h-5 mt-1" />
@@ -239,7 +232,7 @@ export default function EventClient({
         </div>
       </div>
       {/* Edit Modal */}
-      <div ref={editModalRef} className="w-full">
+      {/* <div ref={editModalRef} className="w-full">
         {isEditModalVisible && (
           <EventModals
             openModal={openModal}
@@ -248,12 +241,14 @@ export default function EventClient({
             setOpenModalDeleteReasonModal={setOpenModalDeleteReasonModal}
             reasonToDelete={reasonToDelete}
             setReasonToDelete={setReasonToDelete}
-            onSendDeleteReason={() => onSendDeleteReason(String(event.id), event.title)}
+            onSendDeleteReason={() =>
+              onSendDeleteReason(String(event.id), event.title)
+            }
             onRemove={onRemove}
             slug={event.slug}
           />
         )}
-      </div>
+      </div> */}
     </>
   );
 }

@@ -52,6 +52,7 @@ export interface CardContentProps {
 
 export interface NativeShareButtonProps {
   title: string;
+  text?: string;
   url: string;
   date: string;
   location: string;

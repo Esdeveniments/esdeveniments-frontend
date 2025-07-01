@@ -9,6 +9,7 @@ import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
 import EventClient from "./EventClient";
 import NoEventFound from "components/ui/common/noEventFound";
+import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 
 // Helper to extract uuid from slug
 function extractUuidFromSlug(slug: string): string {
@@ -48,16 +49,58 @@ export default async function EventPage({
     : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event });
 
+  // Generate JSON-LD for related events (server-side for SEO)
+  const relatedEventsJsonData =
+    event.relatedEvents && event.relatedEvents.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Related Events",
+          numberOfItems: event.relatedEvents.length,
+          itemListElement: event.relatedEvents
+            .slice(0, 10) // Limit for performance
+            .map((relatedEvent, index) => {
+              try {
+                return {
+                  "@type": "ListItem",
+                  position: index + 1,
+                  item: generateJsonData(relatedEvent),
+                };
+              } catch (err) {
+                console.error(
+                  "Error generating JSON-LD for related event:",
+                  relatedEvent.id,
+                  err
+                );
+                return null;
+              }
+            })
+            .filter(Boolean),
+        }
+      : null;
+
   return (
-    <main>
+    <>
+      {/* Main Event JSON-LD */}
       <Script
         id={event.id ? String(event.id) : undefined}
         type="application/ld+json"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
       />
+      {/* Related Events JSON-LD */}
+      {relatedEventsJsonData && (
+        <Script
+          id={`related-events-${event.id}`}
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(relatedEventsJsonData),
+          }}
+        />
+      )}
       <div className="w-full flex justify-center bg-whiteCorp pb-10">
-        <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[520px] md:w-[520px] lg:w-[520px]">
+        <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[520px] md:w-[520px] lg:w-[520px] min-w-0">
           <article className="w-full flex flex-col justify-center items-start gap-8">
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <EventMedia event={event} title={title} />
@@ -65,17 +108,26 @@ export default async function EventPage({
                 visits={event.visits}
                 slug={eventSlug}
                 title={title}
+                description={event.description}
                 eventDateString={eventDateString}
                 location={event.location}
                 cityName={cityName}
                 regionName={regionName}
+                postalCode={event.city?.postalCode || ""}
               />
             </div>
             <EventClient event={event} />
+            {/* Related Events - Server-side rendered for SEO */}
+            {event.relatedEvents && event.relatedEvents.length > 0 && (
+              <EventsAroundSection
+                events={event.relatedEvents}
+                title="Esdeveniments relacionats"
+              />
+            )}
           </article>
         </div>
       </div>
-    </main>
+    </>
   );
 }
 

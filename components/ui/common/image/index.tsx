@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, memo, useRef, RefObject } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";

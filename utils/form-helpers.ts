@@ -12,8 +12,8 @@ export function getRegionValue(
   region: Option | { id: string | number } | null | undefined
 ): string | null {
   if (!region) return null;
-  if ('value' in region) return region.value;
-  if ('id' in region) return String(region.id);
+  if ("value" in region) return region.value;
+  if ("id" in region) return String(region.id);
   return null;
 }
 
@@ -21,8 +21,8 @@ export function getTownValue(
   town: Option | { id: string | number } | null | undefined
 ): string | null {
   if (!town) return null;
-  if ('value' in town) return town.value;
-  if ('id' in town) return String(town.id);
+  if ("value" in town) return town.value;
+  if ("id" in town) return String(town.id);
   return null;
 }
 
@@ -32,19 +32,23 @@ export function formDataToBackendDTO(
   // Extract date and time from datetime strings
   const startDateTime = new Date(form.startDate);
   const endDateTime = new Date(form.endDate);
-  
-  const startDate = startDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
-  const endDate = endDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
-  
+
+  const startDate = startDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
+  const endDate = endDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
+
   const startTime = startDateTime.toTimeString().slice(0, 5); // HH:mm
   const endTime = endDateTime.toTimeString().slice(0, 5); // HH:mm
 
   // Extract region and city IDs - they can be Option objects or DTO objects
-  const regionId = form.region 
-    ? ('value' in form.region ? Number(form.region.value) : form.region.id)
+  const regionId = form.region
+    ? "value" in form.region
+      ? Number(form.region.value)
+      : form.region.id
     : 0;
-  const cityId = form.town 
-    ? ('value' in form.town ? Number(form.town.value) : form.town.id)
+  const cityId = form.town
+    ? "value" in form.town
+      ? Number(form.town.value)
+      : form.town.id
     : 0;
 
   return {
@@ -57,7 +61,7 @@ export function formDataToBackendDTO(
     cityId,
     startDate, // Now in YYYY-MM-DD format
     startTime: form.startTime ? formatTimeForAPI(form.startTime) : startTime, // Use extracted time if form.startTime is empty
-    endDate, // Now in YYYY-MM-DD format  
+    endDate, // Now in YYYY-MM-DD format
     endTime: form.endTime ? formatTimeForAPI(form.endTime) : endTime, // Use extracted time if form.endTime is empty
     location: form.location,
     categories: Array.isArray(form.categories)

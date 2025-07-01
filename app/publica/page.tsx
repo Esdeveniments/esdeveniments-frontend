@@ -71,10 +71,10 @@ const Publica = () => {
       (r) => r.id.toString() === getRegionValue(form.region)
     );
     return region
-      ? region.cities.map((city) => ({ 
+      ? region.cities.map((city) => ({
           id: city.id,
-          label: city.label, 
-          value: city.id.toString() // Use ID as value for proper form handling
+          label: city.label,
+          value: city.id.toString(), // Use ID as value for proper form handling
         }))
       : [];
   }, [regionsWithCities, form.region]);
@@ -157,6 +157,8 @@ const Publica = () => {
             String(form.endDate) // Ensure date is passed as string
           );
           const slugifiedTitle = slug(form.title, formattedStart, id);
+
+          debugger;
           router.push(`/e/${id}/${slugifiedTitle}`);
         } else {
           console.error("Error creating event");

@@ -1,44 +1,45 @@
+"use client";
+
 import { EventImageProps } from "types/event";
-import dynamic from "next/dynamic";
-import { FC } from "react";
-
-const Image = dynamic(() => import("@components/ui/common/image"), {
-  loading: () => (
-    <div className="flex justify-center items-center w-full">
-      <div className="w-full h-60 bg-darkCorp animate-fast-pulse"></div>
-    </div>
-  ),
-});
-
-const ImageDefault = dynamic(() => import("@components/ui/imgDefault"), {
-  loading: () => null,
-});
+import { FC, useState } from "react";
+import Image from "next/image";
+import ImageDefault from "components/ui/imgDefault";
 
 const EventImage: FC<EventImageProps> = ({ image, title }) => {
-  if (image) {
+  const [hasError, setHasError] = useState(false);
+
+  // No image provided or image failed to load
+  if (!image || hasError) {
     return (
-      <a
-        href={image}
-        className="flex justify-center"
-        target="_blank"
-        rel="image_src noreferrer"
-      >
-        <Image
-          alt={title}
-          title={title}
-          image={image}
-          className="w-full object-center object-cover"
-          priority={true}
-        />
-      </a>
+      <div className="w-full">
+        <div className="w-full border-t"></div>
+        <ImageDefault title={title} />
+      </div>
     );
   }
 
+  // Show image with clickable link
   return (
-    <div className="w-full">
-      <div className="w-full border-t"></div>
-      <ImageDefault title={title} />
-    </div>
+    <a
+      href={image}
+      className="flex justify-center w-full"
+      target="_blank"
+      rel="image_src noreferrer"
+    >
+      <div className="w-full" style={{ position: "relative", height: "260px" }}>
+        <Image
+          src={image}
+          alt={title}
+          title={title}
+          fill
+          className="object-cover"
+          style={{ objectFit: "cover" }}
+          priority={true}
+          sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw"
+          onError={() => setHasError(true)}
+        />
+      </div>
+    </a>
   );
 };
 
