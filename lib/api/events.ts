@@ -39,7 +39,7 @@ export async function fetchEvents(
   if (params.q) query.q = params.q;
   if (params.byDate) query.byDate = params.byDate;
   if (params.from) query.from = params.from;
-  if (params.until) query.until = params.until;
+  if (params.to) query.to = params.to;
 
   console.log("fetchEvents: input params:", params);
   console.log("fetchEvents: final query:", query);

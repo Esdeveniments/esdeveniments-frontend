@@ -3,12 +3,7 @@
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
-import {
-  slug,
-  getFormattedDate,
-  getRegionValue,
-  formDataToBackendDTO,
-} from "@utils/helpers";
+import { getRegionValue, formDataToBackendDTO } from "@utils/helpers";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
@@ -128,9 +123,6 @@ const Publica = () => {
           return;
         }
 
-        console.log("Processing submission...");
-
-        // Use data already available in the client instead of making redundant API calls
         const regionLabel =
           form.region && "label" in form.region ? form.region.label : "";
         const townLabel =
@@ -142,24 +134,12 @@ const Publica = () => {
           location,
         });
 
-        // Debug: Log what we're about to send
-        console.log("Form submission - raw form data:", form);
-        console.log("Form submission - processed eventData:", eventData);
-        console.log("Form submission - imageFile:", imageFile);
-
-        // Call the new API with the image file
         const result = await createEventAction(eventData, imageFile);
 
         if (result && result.success && result.event) {
-          const { id } = result.event;
-          const { formattedStart } = getFormattedDate(
-            String(form.startDate), // Ensure date is passed as string
-            String(form.endDate) // Ensure date is passed as string
-          );
-          const slugifiedTitle = slug(form.title, formattedStart, id);
+          const { slug } = result.event;
 
-          debugger;
-          router.push(`/e/${id}/${slugifiedTitle}`);
+          router.push(`/e/${slug}`);
         } else {
           console.error("Error creating event");
         }

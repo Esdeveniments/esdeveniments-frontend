@@ -141,7 +141,7 @@ export default async function ByDatePage({
     page: 0,
     size: 10,
     from: toLocalDateString(from),
-    until: toLocalDateString(until),
+    to: toLocalDateString(until),
   };
 
   // Only add zone if place is not "catalunya" (catalunya is not a valid API zone)
@@ -176,7 +176,7 @@ export default async function ByDatePage({
           size: 7,
           zone: regionWithSlug.slug,
           from: toLocalDateString(from),
-          until: toLocalDateString(until),
+          to: toLocalDateString(until),
         };
 
         // Keep category filter in fallback if present

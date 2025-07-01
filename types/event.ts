@@ -138,7 +138,7 @@ export interface FetchEventsParams {
   q?: string; // Search query
   byDate?: string; // Date filter
   from?: string; // Start date
-  until?: string; // End date
+  to?: string; // End date
   isToday?: boolean;
   distance?: number;
   searchTerm?: string;

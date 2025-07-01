@@ -46,8 +46,8 @@ export default async function Page({
   const [events, city] = await Promise.all([
     fetchEvents({
       zone: town,
-      from: from.toISOString(),
-      until: until.toISOString(),
+      from: from.toISOString().split("T")[0], // yyyy-MM-dd format
+      to: until.toISOString().split("T")[0], // Use 'to' parameter, not 'until'
       size: 2500,
     }),
     fetchCityById(town),
@@ -58,8 +58,10 @@ export default async function Page({
   if (month === "marc") textMonth = month.replace("c", "ç");
 
   // Filter out ads (if isAd exists)
-  const filteredEvents = Array.isArray(events)
-    ? (events as EventSummaryResponseDTO[]).filter((event) => !event.isAd)
+  const filteredEvents = Array.isArray(events.content)
+    ? (events.content as EventSummaryResponseDTO[]).filter(
+        (event) => !event.isAd
+      )
     : [];
 
   const jsonData = filteredEvents
