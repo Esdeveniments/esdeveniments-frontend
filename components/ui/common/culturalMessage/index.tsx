@@ -28,7 +28,7 @@ const CulturalMessage: FC<CulturalMessageProps> = ({ location }) => {
   };
 
   return (
-    <div className="mt-2 text-sm">
+    <div className="mt-2">
       Imagina un lloc on cada dia és una nova descoberta. Això és{" "}
       <span className="font-bold">{location}</span>: un univers de cultura
       esperant ser explorat per tu. Comença la teva aventura{" "}

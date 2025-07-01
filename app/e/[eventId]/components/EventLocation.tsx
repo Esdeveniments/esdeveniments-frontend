@@ -33,6 +33,12 @@ export default function EventLocation({
     );
   };
 
+  // Check if location already contains city information to avoid duplication
+  const locationContainsCity = location
+    .toLowerCase()
+    .includes(cityName.toLowerCase());
+  const shouldShowCityRegion = !locationContainsCity && cityName && regionName;
+
   return (
     <>
       <div className="w-full flex justify-center items-start gap-2 px-4">
@@ -43,9 +49,11 @@ export default function EventLocation({
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <div className="w-full flex flex-col justify-start items-start gap-1">
                 <p>{location}</p>
-                <p>
-                  {cityName}, {regionName}
-                </p>
+                {shouldShowCityRegion && (
+                  <p>
+                    {cityName}, {regionName}
+                  </p>
+                )}
               </div>
               <div
                 className="w-fit flex justify-start items-center gap-2 border-b-2 border-whiteCorp hover:border-b-2 hover:border-blackCorp ease-in-out duration-300 cursor-pointer"

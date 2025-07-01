@@ -10,6 +10,8 @@ import EventShareBar from "./components/EventShareBar";
 import EventClient from "./EventClient";
 import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
+import { SpeakerphoneIcon } from "@heroicons/react/outline";
+import AdArticle from "components/ui/adArticle";
 
 // Helper to extract uuid from slug
 function extractUuidFromSlug(slug: string): string {
@@ -124,6 +126,14 @@ export default async function EventPage({
                 title="Esdeveniments relacionats"
               />
             )}
+            {/* Final Ad Section */}
+            <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
+              <SpeakerphoneIcon className="w-5 h-5 mt-1" />
+              <div className="w-11/12 flex flex-col gap-4">
+                <h2>Contingut patrocinat</h2>
+                <AdArticle slot="9643657007" />
+              </div>
+            </div>
           </article>
         </div>
       </div>

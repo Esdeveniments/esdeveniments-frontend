@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 // import useOnScreen from "components/hooks/useOnScreen";
 import { sendGoogleEvent } from "@utils/analytics";
-import { formatEventDateRange } from "@utils/calendarUtils";
+
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
 import EventHeader from "./components/EventHeader";
@@ -125,29 +125,18 @@ export default function EventClient({
       {/* Event Header */}
       <EventHeader
         title={title}
-        eventDate={formatEventDateRange(event.startDate, event.endDate)}
-        location={event.location}
-        city={cityName}
-        region={regionName}
+        startDate={event.startDate}
+        endDate={event.endDate}
       />
       {/* Event Calendar */}
       <EventCalendar event={event} />
-      {/* Ad Section */}
-      <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-        <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-        <div className="w-11/12 flex flex-col gap-4">
-          <h2>Contingut patrocinat</h2>
-          <AdArticle slot="9643657007" />
-        </div>
-      </div>
+
       {/* Location with Map Toggle */}
       <EventLocation
         location={event.location}
         cityName={cityName}
         regionName={regionName}
       />
-      {/* Description */}
-      <EventDescription description={event.description} location={cityName} />
       {/* Ad Section */}
       <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
         <SpeakerphoneIcon className="w-5 h-5 mt-1" />
@@ -156,6 +145,8 @@ export default function EventClient({
           <AdArticle slot="9643657007" />
         </div>
       </div>
+      {/* Description */}
+      <EventDescription description={event.description} location={cityName} />
       {/* Weather */}
       <div className="w-full">
         <EventWeather weather={event.weather} />
@@ -223,14 +214,6 @@ export default function EventClient({
           )}
         </div>
       </div> */}
-      {/* Final Ad Section */}
-      <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-        <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-        <div className="w-11/12 flex flex-col gap-4">
-          <h2>Contingut patrocinat</h2>
-          <AdArticle slot="9643657007" />
-        </div>
-      </div>
       {/* Edit Modal */}
       {/* <div ref={editModalRef} className="w-full">
         {isEditModalVisible && (

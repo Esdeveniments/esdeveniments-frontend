@@ -145,10 +145,8 @@ export interface FetchEventsParams {
 
 export interface EventHeaderProps {
   title: string;
-  eventDate: string | { string: string; jsx: React.ReactNode };
-  location: string;
-  city?: string;
-  region?: string;
+  startDate: string;
+  endDate?: string;
 }
 
 export interface EventMediaProps {
