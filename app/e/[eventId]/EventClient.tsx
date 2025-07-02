@@ -148,7 +148,11 @@ export default function EventClient({
         </div>
       </div>
       {/* Description */}
-      <EventDescription description={event.description} location={cityName} />
+      <EventDescription
+        description={event.description}
+        locationValue={event.city.slug || event.region.slug}
+        location={cityName || regionName}
+      />
       {/* Weather */}
       <div className="w-full">
         <EventWeather weather={event.weather} />

@@ -89,11 +89,13 @@ export interface SocialProps {
 
 export interface CulturalMessageProps {
   location: string;
+  locationValue: string; // URL-friendly version for analytics
 }
 
 export interface DescriptionProps {
   description?: string;
   location?: string;
+  locationValue?: string;
 }
 
 export type Href = `/${string}`;

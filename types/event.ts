@@ -168,6 +168,7 @@ export interface EventShareBarProps {
 export interface EventDescriptionProps {
   description: string;
   location: string;
+  locationValue: string;
 }
 
 export interface EventTagsProps {

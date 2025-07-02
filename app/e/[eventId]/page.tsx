@@ -15,8 +15,20 @@ import AdArticle from "components/ui/adArticle";
 
 // Helper to extract uuid from slug
 function extractUuidFromSlug(slug: string): string {
-  const parts = slug.split("-");
-  return parts[parts.length - 1];
+  // Try to match standard UUID v4 pattern at the end of the slug
+  // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  const uuidPattern =
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidMatch = slug.match(uuidPattern);
+
+  if (uuidMatch) {
+    // Found a standard UUID with dashes - return the full UUID
+    return uuidMatch[0];
+  } else {
+    // Fallback to old behavior for custom IDs without dashes
+    const parts = slug.split("-");
+    return parts[parts.length - 1];
+  }
 }
 
 // Helper: Metadata generation
@@ -37,8 +49,12 @@ export default async function EventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
+  console.log("EventPage params", params);
+  console.log("EventPage slug", slug);
   const uuid = extractUuidFromSlug(slug);
+  console.log("EventPage slug", uuid);
   const event: EventDetailResponseDTO | null = await fetchEventById(uuid);
+  console.log("EventPage", event);
   if (!event) return <NoEventFound />;
   if (event.title === "CANCELLED") return <NoEventFound />;
 

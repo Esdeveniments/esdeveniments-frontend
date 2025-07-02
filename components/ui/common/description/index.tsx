@@ -27,6 +27,7 @@ function processDescription(description: string): string {
 export default function Description({
   description,
   location,
+  locationValue,
 }: DescriptionProps): JSX.Element {
   // Process the description for smart features
   const processedDescription = processDescription(description || "");
@@ -38,7 +39,10 @@ export default function Description({
         <h2>Descripció</h2>
         <div className="w-full break-words overflow-hidden">
           {ReactHtmlParser(processedDescription) as ReactNode}
-          <CulturalMessage location={location || ""} />
+          <CulturalMessage
+            location={location || ""}
+            locationValue={locationValue || ""}
+          />
         </div>
       </div>
     </section>
