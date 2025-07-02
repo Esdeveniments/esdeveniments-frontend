@@ -1,5 +1,6 @@
 import { siteUrl } from "@config/index";
 import { EventSummaryResponseDTO } from "types/api/event";
+import { SchemaPlaceLocation } from "types/schema";
 
 export const defaultMeta = {
   openGraph: {
@@ -46,7 +47,7 @@ export function generateItemListStructuredData(
 
   const itemListElements = events.slice(0, 20).map((event, index) => {
     // Build location object with proper null checks
-    const locationData: any = {
+    const locationData: SchemaPlaceLocation = {
       "@type": "Place",
       name: event.location,
     };

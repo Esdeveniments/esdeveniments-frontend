@@ -9,6 +9,18 @@ export interface VideoObject {
   uploadDate: string;
 }
 
+// Type for schema.org Place object used in structured data (more flexible than SchemaOrgEvent location)
+export interface SchemaPlaceLocation {
+  "@type": "Place";
+  name: string | undefined;
+  address?: {
+    "@type": "PostalAddress";
+    addressCountry: string;
+    addressLocality?: string;
+    addressRegion?: string;
+  };
+}
+
 export interface SchemaOrgEvent {
   "@context": "https://schema.org";
   "@type": "Event";
