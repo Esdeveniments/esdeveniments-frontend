@@ -4,6 +4,7 @@ import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
+import { extractUuidFromSlug } from "@utils/string-helpers";
 import Script from "next/script";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
@@ -12,24 +13,6 @@ import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
-
-// Helper to extract uuid from slug
-function extractUuidFromSlug(slug: string): string {
-  // Try to match standard UUID v4 pattern at the end of the slug
-  // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-  const uuidPattern =
-    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const uuidMatch = slug.match(uuidPattern);
-
-  if (uuidMatch) {
-    // Found a standard UUID with dashes - return the full UUID
-    return uuidMatch[0];
-  } else {
-    // Fallback to old behavior for custom IDs without dashes
-    const parts = slug.split("-");
-    return parts[parts.length - 1];
-  }
-}
 
 // Helper: Metadata generation
 export async function generateMetadata(props: {

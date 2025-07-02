@@ -29,6 +29,40 @@ export const slug = (str: string, formattedStart: string, id: string): string =>
     .replace("ç", "c")
     .replace(/--/g, "-")}-${id}`;
 
+/**
+ * Extracts UUID from event slug, handling both formats:
+ * - Standard UUID v4 with dashes (new events): f9d240c2-25ae-4690-a745-f6e76e598bf3
+ * - Custom IDs without dashes (older events): ea962ni7nis5ga0ppcu7n12pcg
+ *
+ * @param slug - The event slug containing the UUID at the end
+ * @returns The extracted UUID or ID
+ *
+ * @example
+ * // New event with UUID v4
+ * extractUuidFromSlug('concert-jazz-15-febrer-2025-f9d240c2-25ae-4690-a745-f6e76e598bf3')
+ * // Returns: 'f9d240c2-25ae-4690-a745-f6e76e598bf3'
+ *
+ * // Older event with custom ID
+ * extractUuidFromSlug('festa-de-la-gent-gran-16-juliol-2025-ea962ni7nis5ga0ppcu7n12pcg')
+ * // Returns: 'ea962ni7nis5ga0ppcu7n12pcg'
+ */
+export const extractUuidFromSlug = (slug: string): string => {
+  // Try to match standard UUID v4 pattern at the end of the slug
+  // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  const uuidPattern =
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidMatch = slug.match(uuidPattern);
+
+  if (uuidMatch) {
+    // Found a standard UUID with dashes - return the full UUID
+    return uuidMatch[0];
+  } else {
+    // Fallback to old behavior for custom IDs without dashes
+    const parts = slug.split("-");
+    return parts[parts.length - 1];
+  }
+};
+
 export const truncateString = (str: string, num: number): string => {
   if (str.length <= num) return str;
   return str.slice(0, num) + "...";
