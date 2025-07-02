@@ -18,12 +18,13 @@ export const generateJsonData = (
     imageUrl,
     city = undefined,
     region = undefined,
-    province = undefined,
   } = event;
 
   // Handle optional properties that only exist in EventDetailResponseDTO
-  const duration = "duration" in event ? event.duration || "" : "";
+  const eventDuration = "duration" in event ? event.duration || "" : "";
   const videoUrl = "videoUrl" in event ? event.videoUrl : undefined;
+  const startTime = "startTime" in event ? event.startTime : null;
+  const endTime = "endTime" in event ? event.endTime : null;
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
 
@@ -47,13 +48,13 @@ export const generateJsonData = (
       }
     : null;
 
-  // Enhanced location data with better fallbacks
+  // Enhanced location data with better fallbacks and fixed country
   const getLocationData = () => {
     return {
       streetAddress: location || "",
       addressLocality: city?.name || "",
       postalCode: city?.postalCode || "",
-      addressCountry: province?.name || "ES",
+      addressCountry: "ES", // Fixed: Always use "ES" for Spain
       addressRegion: region?.name || "CT",
     };
   };
@@ -108,16 +109,11 @@ export const generateJsonData = (
   return {
     "@context": "https://schema.org" as const,
     "@type": "Event" as const,
+    "@id": `${siteUrl}/e/${slug}`,
     name: title,
     url: `${siteUrl}/e/${slug}`,
-    startDate: getEnhancedDateTime(
-      startDate,
-      "startTime" in event ? event.startTime : null
-    ),
-    endDate: getEnhancedDateTime(
-      endDate,
-      "endTime" in event ? event.endTime : null
-    ),
+    startDate: getEnhancedDateTime(startDate, startTime),
+    endDate: getEnhancedDateTime(endDate, endTime),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
     location: {
@@ -152,7 +148,8 @@ export const generateJsonData = (
     },
     offers: getOffers(),
     isAccessibleForFree: event.type === "FREE",
-    duration,
+    ...(eventDuration &&
+      eventDuration.trim() !== "" && { duration: eventDuration }),
     ...(videoObject ? { video: videoObject } : {}),
   };
 };

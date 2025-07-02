@@ -7,6 +7,7 @@ import { truncateString, getFormattedDate } from "@utils/helpers";
 import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
+import { siteUrl } from "@config/index";
 
 const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
   const cardClass =
@@ -75,6 +76,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
+      "@id": `${siteUrl}#itemlist-${title?.toLowerCase().replace(/\s+/g, "-")}`,
       name: title || "Related Events",
       numberOfItems: eventSchemas.length,
       itemListElement: eventSchemas.map((eventSchema, index) => ({

@@ -1,10 +1,14 @@
 import { redirect } from "next/navigation";
+import Script from "next/script";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { generatePagesData } from "@components/partials/generatePagesData";
-import { buildPageMeta } from "@components/partials/seo-meta";
+import {
+  buildPageMeta,
+  generateItemListStructuredData,
+} from "@components/partials/seo-meta";
 import type {
   PlaceStaticPathParams,
   PlaceTypeAndLabel,
@@ -20,6 +24,7 @@ import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 export const revalidate = 600;
 
@@ -181,8 +186,27 @@ export default async function Page({
     placeTypeLabel,
   });
 
+  // Generate JSON-LD structured data for events
+  const validEvents = events.filter(isEventSummaryResponseDTO);
+  const structuredData =
+    validEvents.length > 0
+      ? generateItemListStructuredData(validEvents, `Esdeveniments ${place}`)
+      : null;
+
   return (
     <>
+      {/* JSON-LD Structured Data */}
+      {structuredData && (
+        <Script
+          id={`events-${place}`}
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
+      )}
+
       {/* Server-rendered events content (SEO optimized) */}
       <HybridEventsList
         initialEvents={eventsWithAds}

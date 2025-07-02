@@ -12,6 +12,7 @@ export interface VideoObject {
 export interface SchemaOrgEvent {
   "@context": "https://schema.org";
   "@type": "Event";
+  "@id": string;
   name: string | undefined;
   url: string;
   startDate: string;
@@ -62,6 +63,6 @@ export interface SchemaOrgEvent {
     };
   };
   isAccessibleForFree: boolean;
-  duration: string;
+  duration?: string;
   video?: VideoObject;
 }

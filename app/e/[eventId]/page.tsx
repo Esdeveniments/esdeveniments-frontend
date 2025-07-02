@@ -32,12 +32,8 @@ export default async function EventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
-  console.log("EventPage params", params);
-  console.log("EventPage slug", slug);
   const uuid = extractUuidFromSlug(slug);
-  console.log("EventPage slug", uuid);
   const event: EventDetailResponseDTO | null = await fetchEventById(uuid);
-  console.log("EventPage", event);
   if (!event) return <NoEventFound />;
   if (event.title === "CANCELLED") return <NoEventFound />;
 
@@ -54,6 +50,9 @@ export default async function EventPage({
   const relatedEventsJsonData =
     event.relatedEvents && event.relatedEvents.length > 0
       ? {
+          "@id": `${siteUrl}#itemlist-${title
+            ?.toLowerCase()
+            .replace(/\s+/g, "-")}`,
           "@context": "https://schema.org",
           "@type": "ItemList",
           name: "Related Events",

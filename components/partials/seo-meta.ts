@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { EventSummaryResponseDTO } from "types/api/event";
 
 export const defaultMeta = {
   openGraph: {
@@ -35,6 +36,72 @@ export const defaultMeta = {
   },
 };
 
+// Generate ItemList structured data for event collections
+export function generateItemListStructuredData(
+  events: EventSummaryResponseDTO[],
+  listName: string,
+  description?: string
+) {
+  if (!events || events.length === 0) return null;
+
+  const itemListElements = events.slice(0, 20).map((event, index) => {
+    // Build location object with proper null checks
+    const locationData: any = {
+      "@type": "Place",
+      name: event.location,
+    };
+
+    // Only add address if we have city or region data
+    if (event.city?.name || event.region?.name) {
+      locationData.address = {
+        "@type": "PostalAddress",
+        addressCountry: "ES",
+        ...(event.city?.name && { addressLocality: event.city.name }),
+        ...(event.region?.name && { addressRegion: event.region.name }),
+      };
+    }
+
+    return {
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Event",
+        "@id": `${siteUrl}/e/${event.slug}`,
+        name: event.title,
+        url: `${siteUrl}/e/${event.slug}`,
+        startDate: event.startDate,
+        endDate: event.endDate || event.startDate,
+        eventStatus: "https://schema.org/EventScheduled",
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        location: locationData,
+        organizer: {
+          "@type": "Organization",
+          name: "Esdeveniments.cat",
+          url: siteUrl,
+        },
+        ...(event.imageUrl && {
+          image: event.imageUrl,
+        }),
+        ...(event.description && {
+          description: event.description,
+        }),
+      },
+    };
+  });
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${siteUrl}#itemlist-${listName
+      ?.toLowerCase()
+      .replace(/\s+/g, "-")}`,
+    name: listName,
+    description: description || `Llista d'esdeveniments culturals: ${listName}`,
+    numberOfItems: events.length,
+    itemListElement: itemListElements,
+  };
+}
+
 export function buildPageMeta({
   title,
   description,
@@ -47,7 +114,8 @@ export function buildPageMeta({
   image?: string;
 }) {
   const { openGraph, twitter, ...restDefaults } = defaultMeta;
-  return {
+
+  const baseMeta = {
     title,
     description,
     alternates: { canonical },
@@ -81,4 +149,6 @@ export function buildPageMeta({
       "ca-ES": canonical, // Catalan (primary)
     },
   };
+
+  return baseMeta;
 }

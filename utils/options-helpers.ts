@@ -34,7 +34,7 @@ export function generateTownsOptions(
   return region
     ? region.cities
         .map((city) => ({
-          value: city.id.toString(), // Use ID as value
+          value: city.value, // Use URL-friendly value instead of ID
           label: city.label,
         }))
         .sort((a, b) => a.label.localeCompare(b.label))
@@ -63,7 +63,7 @@ export function generateRegionsAndTownsOptions(
       options: region.cities
         .map((city) => ({
           label: city.label,
-          value: city.id.toString(), // Use ID as value
+          value: city.value, // Use URL-friendly value instead of ID
         }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     }))

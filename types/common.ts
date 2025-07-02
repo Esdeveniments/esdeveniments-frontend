@@ -114,6 +114,8 @@ export interface GeneratePagesDataProps {
   place?: string;
   byDate?: ByDateOptions;
   placeTypeLabel?: PlaceTypeAndLabel;
+  category?: string;
+  categoryName?: string;
 }
 
 export interface PlaceTypeAndLabel {

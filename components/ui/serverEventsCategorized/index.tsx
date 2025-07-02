@@ -1,5 +1,4 @@
 import { memo, ReactElement } from "react";
-import Script from "next/script";
 import Link from "next/link"; // Added Link import
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
@@ -9,7 +8,6 @@ import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
-import { generateJsonData } from "@utils/helpers";
 import { ServerEventsCategorizedProps } from "types/props";
 
 function ServerEventsCategorized({
@@ -32,36 +30,12 @@ function ServerEventsCategorized({
   const allEvents = Object.values(filteredCategorizedEvents).flat();
   const hasEvents = allEvents.length > 0;
 
-  // Generate JSON-LD data for all events (limited to first 50 for performance)
-  const jsonEvents = (allEvents as EventSummaryResponseDTO[])
-    .slice(0, 50)
-    .map((event) => {
-      try {
-        return generateJsonData(event);
-      } catch (err) {
-        console.error("Error generating JSON data for event:", event.id, err);
-        return null;
-      }
-    })
-    .filter(Boolean);
-
   if (!hasEvents) {
     return <NoEventsFound />;
   }
 
   return (
     <>
-      {/* JSON-LD Schema for SEO */}
-      {jsonEvents.length > 0 && (
-        <Script
-          id={`categorized-events-${Object.keys(filteredCategorizedEvents).join(
-            "-"
-          )}-${allEvents.length}`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonEvents) }}
-        />
-      )}
-
       <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
         <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-4">
           {/* SEO Content */}

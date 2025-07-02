@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
+import Script from "next/script";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { generatePagesData } from "@components/partials/generatePagesData";
-import { buildPageMeta } from "@components/partials/seo-meta";
+import {
+  buildPageMeta,
+  generateItemListStructuredData,
+} from "@components/partials/seo-meta";
 import type { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
@@ -20,6 +24,7 @@ import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 export const revalidate = 600;
 
@@ -36,23 +41,38 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
-  console.log("🔍 Categories fetched successfully:");
+  // Fetch categories for metadata generation FIRST
+  let categories: CategorySummaryResponseDTO[] = [];
+  try {
+    categories = await fetchCategories();
+    console.log("🔍 Categories fetched successfully:", categories.length);
+  } catch (error) {
+    console.error("Error fetching categories for metadata:", error);
+    categories = [];
+  }
 
-  // Parse filters for metadata generation
+  // Parse filters for metadata generation WITH categories
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    new URLSearchParams()
+    new URLSearchParams(),
+    categories // ✅ Now passing categories like in main function
   );
   const filters = urlToFilterState(parsed);
+
+  // Find category name for SEO
+  const categoryData = categories.find((cat) => cat.slug === filters.category);
 
   const placeTypeAndLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
     filters.place
   );
+
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
     placeTypeLabel: placeTypeAndLabel,
+    category: filters.category !== "tots" ? filters.category : undefined,
+    categoryName: categoryData?.name,
   });
 
   return buildPageMeta({
@@ -140,16 +160,45 @@ export default async function FilteredPage({
   const events = await fetchEvents(fetchParams);
   const eventsWithAds = insertAds(events.content);
 
+  // Find category name for SEO
+  const categoryData = categories.find((cat) => cat.slug === filters.category);
+
   // Generate page data for SEO
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
     placeTypeLabel: placeTypeAndLabel,
+    category: filters.category !== "tots" ? filters.category : undefined,
+    categoryName: categoryData?.name,
   });
+
+  // Generate JSON-LD structured data for events
+  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const structuredData =
+    validEvents.length > 0
+      ? generateItemListStructuredData(
+          validEvents,
+          categoryData
+            ? `${categoryData.name} ${filters.place}`
+            : `Esdeveniments ${filters.place}`
+        )
+      : null;
 
   return (
     <>
+      {/* JSON-LD Structured Data */}
+      {structuredData && (
+        <Script
+          id={`events-${filters.place}-${filters.byDate}-${filters.category}`}
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
+      )}
+
       <HybridEventsList
         initialEvents={eventsWithAds}
         pageData={pageData}

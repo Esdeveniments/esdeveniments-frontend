@@ -6,6 +6,7 @@ export default function WebsiteSchema() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${siteUrl}#website`,
     name: "Esdeveniments.cat",
     alternateName: "Esdeveniments Catalunya",
     url: siteUrl,

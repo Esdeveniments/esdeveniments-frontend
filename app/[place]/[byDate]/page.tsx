@@ -1,10 +1,14 @@
+import Script from "next/script";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel, toLocalDateString } from "@utils/helpers";
 import { generatePagesData } from "@components/partials/generatePagesData";
-import { buildPageMeta } from "@components/partials/seo-meta";
+import {
+  buildPageMeta,
+  generateItemListStructuredData,
+} from "@components/partials/seo-meta";
 import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
-import { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
+import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
@@ -15,6 +19,7 @@ import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 export async function generateMetadata({
   params,
@@ -29,12 +34,38 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
+  // Fetch categories to properly parse URL
+  let categories: CategorySummaryResponseDTO[] = [];
+  try {
+    categories = await fetchCategories();
+  } catch (error) {
+    console.error("generateMetadata: Error fetching categories:", error);
+  }
+
+  // Parse URL segments to determine if byDate is actually a date or category
+  const parsed = parseFiltersFromUrl(
+    { place, date: byDate },
+    new URLSearchParams(),
+    categories
+  );
+
+  // Extract the actual filter values from parsed URL
+  const actualDate = parsed.segments.date;
+  const actualCategory = parsed.segments.category;
+
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
-  const pageData: PageData = await generatePagesData({
+
+  // Find category name for SEO
+  const categoryData = categories.find((cat) => cat.slug === actualCategory);
+
+  const pageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place,
-    byDate: byDate as ByDateOptions,
+    byDate: actualDate as ByDateOptions,
     placeTypeLabel,
+    category:
+      actualCategory && actualCategory !== "tots" ? actualCategory : undefined,
+    categoryName: categoryData?.name,
   });
   return buildPageMeta({
     title: pageData.metaTitle,
@@ -195,11 +226,17 @@ export default async function ByDatePage({
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
 
+  // Find category name for SEO
+  const categoryData = categories.find((cat) => cat.slug === finalCategory);
+
   const pageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place,
     byDate: actualDate as ByDateOptions,
     placeTypeLabel,
+    category:
+      finalCategory && finalCategory !== "tots" ? finalCategory : undefined,
+    categoryName: categoryData?.name,
   });
 
   // Calculate if there are more events available for Load More functionality
@@ -208,8 +245,32 @@ export default async function ByDatePage({
       eventsWithAds.length < eventsResponse.totalElements
     : false;
 
+  // Generate JSON-LD structured data for events
+  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const structuredData =
+    validEvents.length > 0
+      ? generateItemListStructuredData(
+          validEvents,
+          finalCategory && finalCategory !== "tots"
+            ? `Esdeveniments ${finalCategory} ${place}`
+            : `Esdeveniments ${actualDate} ${place}`
+        )
+      : null;
+
   return (
     <>
+      {/* JSON-LD Structured Data */}
+      {structuredData && (
+        <Script
+          id={`events-${place}-${actualDate}`}
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
+      )}
+
       {/* Server-rendered events content (SEO optimized) */}
       <HybridEventsList
         initialEvents={eventsWithAds}
