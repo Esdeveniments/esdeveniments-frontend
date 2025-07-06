@@ -60,6 +60,7 @@ export function getServerImageQuality({
  */
 export const QUALITY_PRESETS = {
   LCP_EXTERNAL: 70, // LCP external images
+  EXTERNAL_HIGH: 65, // High-quality external images
   EXTERNAL_STANDARD: 60, // Regular external images
   EXTERNAL_MOBILE: 55, // Mobile/slow connections
   INTERNAL_HIGH: 80, // Internal high-quality images
@@ -73,7 +74,7 @@ export const QUALITY_PRESETS = {
 export function getQualityPreset(preset: QualityPreset): number {
   const presetMap = {
     LCP_EXTERNAL: QUALITY_PRESETS.LCP_EXTERNAL,
-    EXTERNAL_HIGH: QUALITY_PRESETS.EXTERNAL_STANDARD,
+    EXTERNAL_HIGH: QUALITY_PRESETS.EXTERNAL_HIGH,
     EXTERNAL_STANDARD: QUALITY_PRESETS.EXTERNAL_STANDARD,
     INTERNAL_HIGH: QUALITY_PRESETS.INTERNAL_HIGH,
     INTERNAL_STANDARD: QUALITY_PRESETS.INTERNAL_STANDARD,

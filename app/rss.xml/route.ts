@@ -22,7 +22,12 @@ const getAllArticles = async (
     const now = new Date();
     const from = new Date();
     const until = new Date();
-    until.setDate(now.getDate() + Number(untilProp));
+    const untilDays = Number(untilProp);
+    if (!isNaN(untilDays) && untilDays > 0) {
+      until.setDate(now.getDate() + untilDays);
+    } else {
+      until.setDate(now.getDate() + 7); // Default to 7 days if invalid
+    }
 
     const response = await fetchEvents({
       page: 0,

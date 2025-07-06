@@ -3,7 +3,8 @@ import { EventFormSchema, type EventFormSchemaType } from "types/event";
 export const getZodValidationState = (
   form: EventFormSchemaType,
   isPristine: boolean,
-  imageFile?: File | null
+  imageFile?: File | null,
+  isEditMode?: boolean
 ): { isDisabled: boolean; isPristine: boolean; message: string } => {
   const result = EventFormSchema.safeParse(form);
   if (!result.success) {
@@ -14,8 +15,8 @@ export const getZodValidationState = (
     return { isDisabled: true, isPristine, message: firstError };
   }
 
-  // Additional validation for image file (required for new events)
-  if (!isPristine && !imageFile) {
+  // Additional validation for image file (required for new events only)
+  if (!isPristine && !imageFile && !isEditMode) {
     return {
       isDisabled: true,
       isPristine,

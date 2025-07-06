@@ -55,8 +55,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
     useGetRegionsWithCities();
 
-  const isLoadingCategories = false;
-
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
     return generateRegionsAndTownsOptions(regionsWithCities);
@@ -239,23 +237,17 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               Categories
             </p>
             <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
-              {isLoadingCategories ? (
-                <p className="text-sm text-gray-500 col-span-3">
-                  Carregant categories...
-                </p>
-              ) : (
-                categories.map((category: CategorySummaryResponseDTO) => (
-                  <RadioInput
-                    key={category.id}
-                    id={category.slug}
-                    name="category"
-                    value={category.slug}
-                    checkedValue={localCategory}
-                    onChange={handleCategoryChange}
-                    label={category.name}
-                  />
-                ))
-              )}
+              {categories.map((category: CategorySummaryResponseDTO) => (
+                <RadioInput
+                  key={category.id}
+                  id={category.slug}
+                  name="category"
+                  value={category.slug}
+                  checkedValue={localCategory}
+                  onChange={handleCategoryChange}
+                  label={category.name}
+                />
+              ))}
             </div>
           </fieldset>
           <fieldset className="w-full flex flex-col justify-start items-start gap-6">

@@ -42,15 +42,25 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   // Update validation state whenever form data changes
   useEffect(() => {
-    const newFormState = getZodValidationState(form, true, imageFile);
+    const newFormState = getZodValidationState(
+      form,
+      true,
+      imageFile,
+      isEditMode
+    );
     setFormState(newFormState);
-  }, [form, imageFile]);
+  }, [form, imageFile, isEditMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Final validation with isPristine = false for submit
-    const submitFormState = getZodValidationState(form, false, imageFile);
+    const submitFormState = getZodValidationState(
+      form,
+      false,
+      imageFile,
+      isEditMode
+    );
     setFormState(submitFormState);
 
     // Only call parent onSubmit if validation passes
