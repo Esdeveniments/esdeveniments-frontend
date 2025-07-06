@@ -2,9 +2,9 @@ import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { createCache } from "lib/api/cache";
 
-const regionsCache = createCache<RegionSummaryResponseDTO[]>(300000);
+const regionsCache = createCache<RegionSummaryResponseDTO[]>(86400000);
 const regionsWithCitiesCache =
-  createCache<RegionsGroupedByCitiesResponseDTO[]>(300000);
+  createCache<RegionsGroupedByCitiesResponseDTO[]>(86400000);
 
 async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
   const response = await fetch(

@@ -450,6 +450,7 @@ export interface ImageComponentProps {
   location?: string;
   region?: string;
   date?: string;
+  quality?: number;
 }
 
 export interface ActiveLinkProps extends LinkProps {
@@ -474,3 +475,19 @@ export interface UseCategoriesReturn {
   getCategoryBySlug: (slug: string) => CategorySummaryResponseDTO | null;
   refetch: () => Promise<void>;
 }
+
+export interface QualityOptions {
+  isPriority?: boolean;
+  isExternal?: boolean;
+  networkQuality?: number;
+  customQuality?: number;
+}
+
+export type QualityPreset =
+  | "LCP_EXTERNAL"
+  | "EXTERNAL_HIGH"
+  | "EXTERNAL_STANDARD"
+  | "INTERNAL_HIGH"
+  | "INTERNAL_STANDARD"
+  | "NETWORK_SLOW"
+  | "NETWORK_FAST";

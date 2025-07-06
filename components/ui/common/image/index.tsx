@@ -7,6 +7,7 @@ import useOnScreen from "@components/hooks/useOnScreen";
 import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { ImageComponentProps } from "types/common";
+import { getOptimalImageQuality } from "@utils/image-quality";
 
 const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   loading: () => (
@@ -22,8 +23,8 @@ function ImageComponent({
   className = "w-full h-full flex justify-center items-center",
   priority = false,
   alt = title,
+  quality: customQuality,
 }: ImageComponentProps) {
-  // Use HTMLDivElement for consistency with the rest of the codebase
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
@@ -34,7 +35,14 @@ function ImageComponent({
   );
   const [hasError, setHasError] = useState(false);
   const imageClassName = `${className}`;
-  const quality = useNetworkSpeed();
+  const networkQuality = useNetworkSpeed();
+
+  const imageQuality = getOptimalImageQuality({
+    isPriority: priority,
+    isExternal: true,
+    networkQuality,
+    customQuality,
+  });
 
   if (!image || hasError) {
     return (
@@ -63,11 +71,12 @@ function ImageComponent({
         height={260}
         loading={priority ? "eager" : "lazy"}
         onError={() => setHasError(true)}
-        quality={quality}
+        quality={imageQuality}
         style={{
           objectFit: "cover",
         }}
         priority={priority}
+        fetchPriority={priority ? "high" : "auto"}
         sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw"
         unoptimized={env === "dev"}
       />

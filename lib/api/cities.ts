@@ -1,8 +1,8 @@
 import { CitySummaryResponseDTO } from "types/api/city";
 import { createCache, createKeyedCache } from "lib/api/cache";
 
-const cache = createCache<CitySummaryResponseDTO[]>(300000);
-const cityByIdCache = createKeyedCache<CitySummaryResponseDTO | null>(300000);
+const cache = createCache<CitySummaryResponseDTO[]>(86400000);
+const cityByIdCache = createKeyedCache<CitySummaryResponseDTO | null>(86400000);
 
 async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
   const response = await fetch(

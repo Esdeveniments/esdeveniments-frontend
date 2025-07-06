@@ -139,4 +139,4 @@ export default async function EventPage({
   );
 }
 
-export const revalidate = 300;
+export const revalidate = 1800;

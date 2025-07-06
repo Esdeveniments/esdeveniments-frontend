@@ -1,7 +1,7 @@
 import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache } from "lib/api/cache";
 
-const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(300000);
+const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
 
 async function fetchPlaceBySlugApi(
   key: string | number
