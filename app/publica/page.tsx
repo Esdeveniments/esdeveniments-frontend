@@ -62,9 +62,12 @@ const Publica = () => {
 
   const cityOptions = useMemo(() => {
     if (!regionsWithCities || !form.region) return [];
-    const region = regionsWithCities.find(
-      (r) => r.id.toString() === getRegionValue(form.region)
-    );
+
+    // SIMPLIFIED: Direct region lookup without complex find operation
+    const regionId = getRegionValue(form.region);
+    if (!regionId) return [];
+
+    const region = regionsWithCities.find((r) => r.id.toString() === regionId);
     return region
       ? region.cities.map((city) => ({
           id: city.id,

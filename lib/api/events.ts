@@ -31,7 +31,7 @@ export async function fetchEvents(
   query.size = typeof params.size === "number" ? params.size : 10;
 
   // Add other params if present and non-empty
-  if (params.zone) query.zone = params.zone;
+  if (params.place) query.place = params.place;
   if (params.category) query.category = params.category;
   if (params.lat) query.lat = params.lat;
   if (params.lon) query.lon = params.lon;

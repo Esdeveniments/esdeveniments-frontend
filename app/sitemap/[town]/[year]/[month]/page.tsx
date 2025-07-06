@@ -3,7 +3,7 @@ import Link from "next/link";
 import { generateJsonData, getFormattedDate } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
-import { fetchCityById } from "@lib/api/cities";
+import { fetchPlaceBySlug } from "@lib/api/places";
 import { getHistoricDates } from "@lib/dates";
 import dynamic from "next/dynamic";
 import type { MonthStaticPathParams } from "types/common";
@@ -20,8 +20,8 @@ export async function generateMetadata({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
-  const city = await fetchCityById(town);
-  const townLabel = city?.name || town;
+  const place = await fetchPlaceBySlug(town);
+  const townLabel = place?.name || town;
   let textMonth = month;
   if (month === "marc") textMonth = month.replace("c", "ç");
   return buildPageMeta({
@@ -39,25 +39,22 @@ export default async function Page({
   const { town, year, month } = await params;
   if (!town || !year || !month) return null;
 
-  // Get date range for the month
   const { from, until } = getHistoricDates(month, Number(year));
 
-  // Fetch events and city label
-  const [events, city] = await Promise.all([
+  const [events, place] = await Promise.all([
     fetchEvents({
-      zone: town,
-      from: from.toISOString().split("T")[0], // yyyy-MM-dd format
-      to: until.toISOString().split("T")[0], // Use 'to' parameter, not 'until'
+      place: town,
+      from: from.toISOString().split("T")[0],
+      to: until.toISOString().split("T")[0],
       size: 2500,
     }),
-    fetchCityById(town),
+    fetchPlaceBySlug(town),
   ]);
-  const townLabel = city?.name || town;
+  const townLabel = place?.name || town;
 
   let textMonth = month;
   if (month === "marc") textMonth = month.replace("c", "ç");
 
-  // Filter out ads (if isAd exists)
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(
         (event) => !event.isAd

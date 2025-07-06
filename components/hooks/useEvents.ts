@@ -45,7 +45,7 @@ export const useEvents = ({
       fetcher({
         page: 0, // Always page 0 for cumulative pagination
         size, // Increasing size for "load more"
-        zone: place !== "catalunya" ? place : undefined,
+        place: place !== "catalunya" ? place : undefined,
         category,
         byDate: date,
       }),

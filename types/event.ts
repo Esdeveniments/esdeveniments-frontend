@@ -130,7 +130,6 @@ export interface FetchEventsParams {
   page?: number;
   size?: number;
   place?: string;
-  zone?: string;
   category?: string;
   lat?: number;
   lon?: number;

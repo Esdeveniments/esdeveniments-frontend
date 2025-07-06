@@ -24,7 +24,7 @@ const getAllArticles = async (
     const response = await fetchEvents({
       page: 0,
       size: 1000,
-      zone: town || regionLabel,
+      place: town || regionLabel,
     });
 
     const events: EventSummaryResponseDTO[] = response.content;

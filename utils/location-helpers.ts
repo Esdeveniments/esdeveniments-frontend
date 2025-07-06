@@ -1,33 +1,36 @@
-import { fetchCityById } from "@lib/api/cities";
-import { fetchRegionById, fetchRegionsWithCities } from "@lib/api/regions";
+import { fetchRegionsWithCities } from "@lib/api/regions";
+import { fetchPlaceBySlug } from "@lib/api/places";
 import { sanitize } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
 
-// Updated function that works with slug-based URLs
 export const getPlaceTypeAndLabel = async (
   place: string
 ): Promise<PlaceTypeAndLabel> => {
-  // First, try the old ID-based approach for backward compatibility
-  if (place && !isNaN(Number(place))) {
-    // Try region
-    const region = await fetchRegionById(place);
-    if (region) return { type: "region", label: region.name };
-    // Try city
-    const city = await fetchCityById(place);
-    if (city) return { type: "town", label: city.name };
+  try {
+    const placeInfo = await fetchPlaceBySlug(place);
+    if (placeInfo) {
+      const type =
+        placeInfo.type === "CITY"
+          ? "town"
+          : placeInfo.type === "REGION"
+          ? "region"
+          : placeInfo.type === "PROVINCE"
+          ? "region"
+          : "town";
+      return { type, label: placeInfo.name };
+    }
+  } catch (error) {
+    console.error("Error fetching place by slug:", error);
   }
 
-  // New slug-based approach: fetch regions with cities and find by slug
   try {
     const regionsWithCities = await fetchRegionsWithCities();
 
-    // Check if it's a region slug (region names are used as slugs)
     const region = regionsWithCities.find((r) => sanitize(r.name) === place);
     if (region) {
       return { type: "region", label: region.name };
     }
 
-    // Check if it's a city slug
     for (const region of regionsWithCities) {
       const city = region.cities.find((c) => c.value === place);
       if (city) {
@@ -38,7 +41,6 @@ export const getPlaceTypeAndLabel = async (
     console.error("Error fetching regions for place lookup:", error);
   }
 
-  // Fallback
   return { type: "town", label: place };
 };
 

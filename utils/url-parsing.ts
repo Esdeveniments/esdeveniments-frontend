@@ -3,11 +3,7 @@
  * Complements the server-side URL parsing in url-filters.ts
  */
 
-export interface URLSegments {
-  place?: string;
-  date?: string;
-  category?: string;
-}
+import { URLSegments } from "../types/url-parsing";
 
 /**
  * Extract URL segments from a pathname
@@ -48,7 +44,7 @@ export function extractURLSegments(pathname: string): URLSegments {
 export function debugURLParsing(
   pathname: string,
   segments: URLSegments,
-  parsed: any
+  parsed: unknown
 ) {
   if (process.env.NODE_ENV === "development") {
     console.log("🔍 URL Parsing Debug:", {

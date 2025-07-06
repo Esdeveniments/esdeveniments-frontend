@@ -175,9 +175,9 @@ export default async function ByDatePage({
     to: toLocalDateString(until),
   };
 
-  // Only add zone if place is not "catalunya" (catalunya is not a valid API zone)
+  // Only add place if place is not "catalunya" (catalunya is not a valid API place)
   if (place !== "catalunya") {
-    paramsForFetch.zone = place;
+    paramsForFetch.place = place;
   }
 
   // Add category filter if present
@@ -205,7 +205,7 @@ export default async function ByDatePage({
         const fallbackParams: FetchEventsParams = {
           page: 0,
           size: 7,
-          zone: regionWithSlug.slug,
+          place: regionWithSlug.slug,
           from: toLocalDateString(from),
           to: toLocalDateString(until),
         };

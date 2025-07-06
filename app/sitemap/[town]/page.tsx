@@ -2,7 +2,7 @@ import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 import Link from "next/link";
-import { fetchCityById } from "@lib/api/cities";
+import { fetchPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
 import { buildPageMeta } from "@components/partials/seo-meta";
 
@@ -12,8 +12,8 @@ export async function generateMetadata({
   params: Promise<TownStaticPathParams>;
 }) {
   const { town } = await params;
-  const city = await fetchCityById(town);
-  const label = city?.name || town;
+  const place = await fetchPlaceBySlug(town);
+  const label = place?.name || town;
   return buildPageMeta({
     title: `Arxiu. Descobreix tot el que ha passat a ${label} - Esdeveniments.cat`,
     description: `Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`,
@@ -28,8 +28,8 @@ export default async function Page({
 }) {
   const { town } = await params;
   const years: number[] = getAllYears();
-  const city = await fetchCityById(town);
-  const label = city?.name || town;
+  const place = await fetchPlaceBySlug(town);
+  const label = place?.name || town;
 
   return (
     <div className="flex flex-col">

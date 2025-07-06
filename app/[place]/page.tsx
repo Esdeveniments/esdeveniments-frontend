@@ -25,21 +25,17 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { fetchCities } from "@lib/api/cities";
 
 export const revalidate = 600;
 
 export async function generateStaticParams() {
-  const regions = await fetchRegionsWithCities();
-  const params = [];
-  for (const region of regions) {
-    params.push({ place: region.name });
-    if (region.cities) {
-      for (const city of region.cities) {
-        params.push({ place: city.value });
-      }
-    }
-  }
-  return params;
+  const [regions, cities] = await Promise.all([fetchRegions(), fetchCities()]);
+
+  return [
+    ...regions.map((region) => ({ place: region.slug })),
+    ...cities.map((city) => ({ place: city.slug })),
+  ];
 }
 
 export async function generateMetadata({
@@ -49,7 +45,6 @@ export async function generateMetadata({
 }) {
   const { place } = await params;
 
-  // 🛡️ SECURITY: Validate place parameter
   const validation = validatePlaceForMetadata(place);
   if (!validation.isValid) {
     return validation.fallbackMetadata;
@@ -79,10 +74,8 @@ export default async function Page({
   const { place } = await params;
   const search = await searchParams;
 
-  // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
 
-  // Convert searchParams to URLSearchParams for parsing
   const urlSearchParams = new URLSearchParams();
   Object.entries(search).forEach(([key, value]) => {
     if (typeof value === "string") {
@@ -92,7 +85,6 @@ export default async function Page({
     }
   });
 
-  // Check if we have filters that should redirect to canonical URL structure
   const category =
     typeof search.category === "string" ? search.category : undefined;
   const date = typeof search.date === "string" ? search.date : undefined;
@@ -101,7 +93,6 @@ export default async function Page({
   const searchTerm =
     typeof search.search === "string" ? search.search : undefined;
 
-  // If we have category or date filters, redirect to canonical URL structure
   if (category || date) {
     const canonicalUrl = buildCanonicalUrl({
       place,
@@ -111,7 +102,6 @@ export default async function Page({
       distance: distance ? parseInt(distance) : 50,
     });
 
-    console.log(`🔄 Redirecting /${place}?... → ${canonicalUrl}`);
     redirect(canonicalUrl);
   }
 
@@ -120,20 +110,11 @@ export default async function Page({
     size: 10,
   };
 
-  // Only add zone if place is not "catalunya" (catalunya is not a valid API zone)
   if (place !== "catalunya") {
-    fetchParams.zone = place;
+    fetchParams.place = place;
   }
 
-  // Add filters if present
   if (category) fetchParams.category = category;
-
-  console.log("🔥 [place]/page.tsx - fetchParams:", fetchParams);
-  console.log("🔥 [place]/page.tsx - searchParams:", {
-    category,
-    date,
-    distance,
-  });
 
   let eventsResponse = await fetchEvents(fetchParams);
   let noEventsFound = false;
@@ -149,7 +130,6 @@ export default async function Page({
     );
 
     if (regionWithCities) {
-      // Get the region with slug from the regions API
       const regions = await fetchRegions();
       const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
 
@@ -157,7 +137,7 @@ export default async function Page({
         eventsResponse = await fetchEvents({
           page: 0,
           size: 7,
-          zone: regionWithSlug.slug,
+          place: regionWithSlug.slug,
         });
         noEventsFound = true;
       }
@@ -167,14 +147,11 @@ export default async function Page({
   const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 
-  // Fetch dynamic categories for enhanced category support
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await fetchCategories();
-    console.log("🔥 [place]/page.tsx - Fetched categories:", categories.length);
   } catch (error) {
-    console.error("🔥 [place]/page.tsx - Error fetching categories:", error);
-    // Continue without categories - components will use static fallbacks
+    console.error("Error fetching categories:", error);
   }
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
@@ -186,7 +163,6 @@ export default async function Page({
     placeTypeLabel,
   });
 
-  // Generate JSON-LD structured data for events
   const validEvents = events.filter(isEventSummaryResponseDTO);
   const structuredData =
     validEvents.length > 0
