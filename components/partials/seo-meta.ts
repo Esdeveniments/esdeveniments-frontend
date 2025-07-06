@@ -1,6 +1,12 @@
 import { siteUrl } from "@config/index";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { SchemaPlaceLocation } from "types/schema";
+import {
+  BreadcrumbItem,
+  WebPageOptions,
+  CollectionPageOptions,
+  NavigationItem,
+} from "types/seo";
 
 export const defaultMeta = {
   openGraph: {
@@ -152,4 +158,109 @@ export function buildPageMeta({
   };
 
   return baseMeta;
+}
+
+// Sitemap-specific structured data helpers
+export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
+  if (!breadcrumbs || breadcrumbs.length === 0) return null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "@id": `${siteUrl}#breadcrumblist`,
+    itemListElement: breadcrumbs.map((breadcrumb, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: breadcrumb.name,
+      item: breadcrumb.url,
+    })),
+  };
+}
+
+export function generateWebPageSchema(options: WebPageOptions) {
+  const { title, description, url, breadcrumbs, isPartOf, mainContentOfPage } =
+    options;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    name: title,
+    description,
+    url,
+    inLanguage: "ca",
+    isPartOf: isPartOf || {
+      "@type": "WebSite",
+      "@id": `${siteUrl}#website`,
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+    },
+    about: {
+      "@type": "Thing",
+      name: "Esdeveniments culturals de Catalunya",
+      description: "Agenda cultural catalana",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+      logo: `${siteUrl}/static/images/logo-seo-meta.webp`,
+    },
+    ...(breadcrumbs && { breadcrumb: generateBreadcrumbList(breadcrumbs) }),
+    ...(mainContentOfPage && { mainContentOfPage }),
+  };
+}
+
+export function generateCollectionPageSchema(options: CollectionPageOptions) {
+  const { title, description, url, breadcrumbs, mainEntity, numberOfItems } =
+    options;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${url}#collectionpage`,
+    name: title,
+    description,
+    url,
+    inLanguage: "ca",
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": `${siteUrl}#website`,
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+    },
+    about: {
+      "@type": "Thing",
+      name: "Arxiu d'esdeveniments culturals",
+      description: "Històric d'esdeveniments culturals de Catalunya",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+      logo: `${siteUrl}/static/images/logo-seo-meta.webp`,
+    },
+    ...(breadcrumbs && { breadcrumb: generateBreadcrumbList(breadcrumbs) }),
+    ...(mainEntity && { mainEntity }),
+    ...(numberOfItems && { numberOfItems }),
+  };
+}
+
+export function generateSiteNavigationElementSchema(
+  navigationItems: NavigationItem[]
+) {
+  if (!navigationItems || navigationItems.length === 0) return null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "SiteNavigationElement",
+    "@id": `${siteUrl}#sitenavigation`,
+    name: "Sitemap de Catalunya",
+    url: `${siteUrl}/sitemap`,
+    hasPart: navigationItems.map((item) => ({
+      "@type": "SiteNavigationElement",
+      name: item.name,
+      url: item.url,
+    })),
+  };
 }

@@ -8,7 +8,11 @@ import { getHistoricDates } from "@lib/dates";
 import dynamic from "next/dynamic";
 import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
-import { buildPageMeta } from "@components/partials/seo-meta";
+import {
+  buildPageMeta,
+  generateCollectionPageSchema,
+  generateItemListStructuredData,
+} from "@components/partials/seo-meta";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -61,51 +65,210 @@ export default async function Page({
       )
     : [];
 
+  // Generate event JSON-LD data
   const jsonData = filteredEvents
     ? filteredEvents
         .map((event) => generateJsonData(event))
         .filter((data) => data !== null)
     : [];
 
+  // Generate structured data for the month archive
+  const breadcrumbs = [
+    { name: "Inici", url: siteUrl },
+    { name: "Arxiu", url: `${siteUrl}/sitemap` },
+    { name: townLabel, url: `${siteUrl}/sitemap/${town}` },
+    {
+      name: `${textMonth} ${year}`,
+      url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
+    },
+  ];
+
+  // Generate ItemList for events if available
+  const eventsItemList =
+    filteredEvents.length > 0
+      ? generateItemListStructuredData(
+          filteredEvents,
+          `Esdeveniments de ${townLabel} - ${textMonth} ${year}`,
+          `Col·lecció d'esdeveniments culturals de ${townLabel} del ${textMonth} del ${year}`
+        )
+      : null;
+
+  // Generate collection page schema
+  const collectionPageSchema = generateCollectionPageSchema({
+    title: `Arxiu de ${townLabel} - ${textMonth} ${year}`,
+    description: `Esdeveniments culturals que van tenir lloc a ${townLabel} durant el ${textMonth} del ${year}`,
+    url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
+    breadcrumbs,
+    numberOfItems: filteredEvents.length,
+    mainEntity: eventsItemList || {
+      "@type": "Thing",
+      name: `Esdeveniments de ${townLabel} - ${textMonth} ${year}`,
+      description: "Col·lecció d'esdeveniments culturals",
+    },
+  });
+
   return (
     <>
+      {/* Individual Events JSON-LD - kept for backward compatibility */}
+      {jsonData.length > 0 && (
+        <Script
+          id={`${town}-${month}-${year}-events`}
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
+        />
+      )}
+
+      {/* Enhanced Collection Page Schema */}
       <Script
-        id={`${town}-${month}-${year}-script`}
+        id={`${town}-${month}-${year}-collection`}
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(collectionPageSchema),
+        }}
       />
-      <div className="flex flex-col justify-center items-center gap-2 p-6">
-        <h1 className="font-semibold italic uppercase">
-          Arxiu {townLabel} - {textMonth} del {year}
-        </h1>
-        <div className="flex flex-col items-start">
+
+      {/* Enhanced Events ItemList Schema */}
+      {eventsItemList && (
+        <Script
+          id={`${town}-${month}-${year}-itemlist`}
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(eventsItemList),
+          }}
+        />
+      )}
+
+      <div
+        className="w-full flex flex-col justify-center items-center gap-2 pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
+        role="main"
+      >
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="w-full mb-4">
+          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+            <li>
+              <Link href="/" className="hover:text-gray-800">
+                Inici
+              </Link>
+            </li>
+            <li>
+              <span className="mx-2">/</span>
+              <Link href="/sitemap" className="hover:text-gray-800">
+                Arxiu
+              </Link>
+            </li>
+            <li>
+              <span className="mx-2">/</span>
+              <Link href={`/sitemap/${town}`} className="hover:text-gray-800">
+                {townLabel}
+              </Link>
+            </li>
+            <li>
+              <span className="mx-2">/</span>
+              <span className="text-gray-800 capitalize">
+                {textMonth} {year}
+              </span>
+            </li>
+          </ol>
+        </nav>
+
+        {/* Header */}
+        <header className="w-full text-center mb-6">
+          <h1 className="font-semibold italic uppercase text-2xl mb-2">
+            Arxiu {townLabel} - {textMonth} del {year}
+          </h1>
+          <p className="text-gray-600 mb-4">
+            {filteredEvents.length > 0
+              ? `${filteredEvents.length} esdeveniments culturals documentats`
+              : `No s'han trobat esdeveniments per aquest període`}
+          </p>
+        </header>
+
+        {/* Events List */}
+        <section className="w-full">
           {filteredEvents.length > 0 ? (
-            filteredEvents.map((event: EventSummaryResponseDTO) => {
-              const { formattedStart, formattedEnd } = getFormattedDate(
-                event.startDate,
-                event.endDate
-              );
-              return (
-                <div key={event.id}>
-                  <Link
-                    href={`/e/${event.slug}`}
-                    prefetch={false}
-                    className="hover:text-primary"
+            <div className="flex flex-col items-start space-y-4">
+              <h2 className="sr-only">Llista d&apos;esdeveniments</h2>
+              {filteredEvents.map((event: EventSummaryResponseDTO) => {
+                const { formattedStart, formattedEnd } = getFormattedDate(
+                  event.startDate,
+                  event.endDate
+                );
+                return (
+                  <article
+                    key={event.id}
+                    className="border-b border-gray-100 pb-4 w-full"
                   >
-                    <h3>{event.title}</h3>
-                    <p className="text-sm">
-                      {formattedEnd
-                        ? `${formattedStart} - ${formattedEnd}`
-                        : `${formattedStart}`}
-                    </p>
-                  </Link>
-                </div>
-              );
-            })
+                    <Link
+                      href={`/e/${event.slug}`}
+                      prefetch={false}
+                      className="hover:text-primary block group"
+                    >
+                      <h3 className="text-lg font-medium group-hover:text-blue-600 transition-colors">
+                        {event.title}
+                      </h3>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-600 mt-1">
+                        <time dateTime={event.startDate}>
+                          {formattedEnd
+                            ? `${formattedStart} - ${formattedEnd}`
+                            : `${formattedStart}`}
+                        </time>
+                        {event.location && (
+                          <>
+                            <span className="hidden sm:inline">•</span>
+                            <span>{event.location}</span>
+                          </>
+                        )}
+                        {event.categories && event.categories.length > 0 && (
+                          <>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="text-blue-600">
+                              {event.categories[0].name}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {event.description && (
+                        <p className="text-sm text-gray-700 mt-2 line-clamp-2">
+                          {event.description}
+                        </p>
+                      )}
+                    </Link>
+                  </article>
+                );
+              })}
+            </div>
           ) : (
             <NoEventsFound />
           )}
-        </div>
+        </section>
+
+        {/* Footer with navigation hints */}
+        {filteredEvents.length > 0 && (
+          <footer className="w-full mt-12 pt-8 border-t border-gray-200">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                Vols explorar més esdeveniments de {townLabel}?
+              </p>
+              <div className="flex justify-center space-x-4">
+                <Link
+                  href={`/sitemap/${town}`}
+                  className="text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  Veure tots els arxius
+                </Link>
+                <Link
+                  href={`/${town}`}
+                  className="text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  Esdeveniments actuals
+                </Link>
+              </div>
+            </div>
+          </footer>
+        )}
       </div>
     </>
   );

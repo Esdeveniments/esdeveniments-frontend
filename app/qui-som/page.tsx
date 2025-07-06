@@ -38,7 +38,7 @@ const teamMembers: TeamMemberType[] = [
 
 const QuiSom: NextPage = () => {
   return (
-    <div className="w-full flex flex-col justify-start items-center gap-10 px-4 pt-8 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+    <div className="w-full flex flex-col justify-center items-center gap-10 pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
       <div>
         <h1 className="text-center italic uppercase font-semibold">Qui som?</h1>
         <h3 className="text-center italic font-normal text-primary">
