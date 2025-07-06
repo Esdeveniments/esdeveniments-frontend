@@ -5,11 +5,26 @@ const nextConfig = {
   experimental: {
     scrollRestoration: true,
     reactCompiler: true,
-    optimizePackageImports: ["@heroicons/react"],
+    optimizePackageImports: [
+      "@heroicons/react",
+      "react-select",
+      "react-tooltip",
+    ],
     optimizeCss: true,
+    gzipSize: true,
+  },
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
+      },
+    },
   },
   productionBrowserSourceMaps: true,
   reactStrictMode: false,
+  poweredByHeader: false,
+  compress: true,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },
@@ -21,6 +36,10 @@ const nextConfig = {
     formats: ["image/webp", "image/avif"],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: false,
+    unoptimized: false,
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
   },
   headers: async () => [
     {
@@ -35,6 +54,29 @@ const nextConfig = {
         { key: "X-Frame-Options", value: "SAMEORIGIN" },
         { key: "X-Content-Type-Options", value: "nosniff" },
         { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+        {
+          key: "Permissions-Policy",
+          value: "camera=(), microphone=(), geolocation=*",
+        },
+      ],
+    },
+    {
+      source: "/styles/:path*",
+      headers: [
+        { key: "Content-Type", value: "text/css; charset=utf-8" },
+        { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+      ],
+    },
+    {
+      source: "/static/:path*",
+      headers: [
+        { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+      ],
+    },
+    {
+      source: "/fonts/:path*",
+      headers: [
+        { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
       ],
     },
     {

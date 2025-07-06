@@ -4,18 +4,24 @@
 
 @font-face {
   font-family: "Barlow Condensed";
-  src: url("/static/fonts/BarlowCondensed-Regular.ttf") format("woff2");
+  src: url("/static/fonts/BarlowCondensed-Regular.woff2") format("woff2"),
+    url("/static/fonts/BarlowCondensed-Regular.ttf") format("truetype");
   font-display: swap;
+  font-weight: normal;
+  font-style: normal;
 }
 
 @font-face {
   font-family: "Roboto Flex";
-  src: url("/static/fonts/RobotoFlex-Regular.ttf") format("woff2");
+  src: url("/static/fonts/RobotoFlex-Regular.woff2") format("woff2"),
+    url("/static/fonts/RobotoFlex-Regular.ttf") format("truetype");
   font-display: swap;
+  font-weight: normal;
+  font-style: normal;
 }
 
 body {
-    @apply font-sans antialiased;
+  @apply font-sans antialiased;
 }
 
 html,

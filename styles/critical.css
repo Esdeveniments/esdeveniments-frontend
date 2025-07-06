@@ -1,0 +1,109 @@
+/* Critical CSS for initial page render */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Critical font-face declarations */
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("/static/fonts/BarlowCondensed-Regular.woff2") format("woff2"),
+    url("/static/fonts/BarlowCondensed-Regular.ttf") format("truetype");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Roboto Flex";
+  src: url("/static/fonts/RobotoFlex-Regular.woff2") format("woff2"),
+    url("/static/fonts/RobotoFlex-Regular.ttf") format("truetype");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Critical base styles */
+body {
+  @apply font-sans antialiased;
+}
+
+html,
+body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  -o-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: "Roboto Flex", sans-serif;
+  font-size: 14px;
+  color: #454545;
+  font-weight: 300;
+  letter-spacing: 0.034rem;
+  line-height: 1.2rem;
+}
+
+/* Critical typography */
+h1 {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.62rem;
+  letter-spacing: 0.001rem;
+  line-height: 2.1rem;
+  font-weight: 600;
+}
+
+h2 {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.38rem;
+  letter-spacing: 0.001rem;
+  line-height: 1.6rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.02rem;
+  line-height: 1.65rem;
+  font-weight: 600;
+}
+
+p {
+  font-family: "Roboto Flex", sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.038rem;
+  line-height: 1.2rem;
+}
+
+/* Critical layout */
+#__next {
+  min-height: 100% !important;
+  position: relative;
+}
+
+.fit {
+  min-height: calc(100vh - 88px);
+}
+
+.next-image-wrapper > span {
+  height: 100% !important;
+}
+
+/* Critical utility classes */
+.nowrap {
+  white-space: nowrap;
+  overflow-wrap: break-word;
+}
+
+.break-word {
+  word-break: break-word;
+}
+
+/* Critical image optimization */
+img,
+video {
+  max-width: 100%;
+  height: 100%;
+}
