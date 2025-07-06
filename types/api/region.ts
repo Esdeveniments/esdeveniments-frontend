@@ -1,4 +1,5 @@
 export interface CityDropdownResponseDTO {
+  id: number;
   value: string;
   label: string;
 }

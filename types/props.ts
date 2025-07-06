@@ -1,17 +1,38 @@
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
-import { Option, PlaceTypeAndLabel } from "types/common";
+import {
+  ByDateProps,
+  Option,
+  GroupedOption,
+  PageData,
+  PlaceProps,
+  PlaceTypeAndLabel,
+} from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import { CategorySummaryResponseDTO } from "types/api/category";
+import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
+import { RouteSegments, QueryParams } from "@utils/url-filters";
 
 export interface SelectComponentProps {
   id: string;
   title: string;
   value?: Option | null;
   onChange: (value: Option | null) => void;
-  options?: Option[];
+  options?: Option[] | GroupedOption[];
   isDisabled?: boolean;
   isValidNewOption?: boolean;
   isClearable?: boolean;
   placeholder?: string;
+}
+
+export interface MultiSelectProps {
+  id: string;
+  title: string;
+  value?: Option[];
+  onChange: (values: Option[]) => void;
+  options?: Option[];
+  isDisabled?: boolean;
+  placeholder?: string;
+  isLoading?: boolean;
 }
 
 export interface ViewCounterProps {
@@ -31,6 +52,7 @@ export interface CardContentProps {
 
 export interface NativeShareButtonProps {
   title: string;
+  text?: string;
   url: string;
   date: string;
   location: string;
@@ -63,18 +85,17 @@ export interface SocialProps {
   };
 }
 
-export interface EventsListProps {
-  events: ListEvent[];
-  placeTypeLabel?: PlaceTypeAndLabel;
-}
+// Removed EventsListProps - no longer needed with server-side architecture
 
 export interface CulturalMessageProps {
   location: string;
+  locationValue: string; // URL-friendly version for analytics
 }
 
 export interface DescriptionProps {
   description?: string;
   location?: string;
+  locationValue?: string;
 }
 
 export type Href = `/${string}`;
@@ -96,10 +117,10 @@ export interface SocialLinks {
 
 export interface DatePickerComponentProps {
   idPrefix?: string;
-  startDate: Date;
-  endDate: Date;
-  minDate?: Date;
-  onChange: (field: "startDate" | "endDate", date: Date) => void;
+  startDate: string; // "YYYY-MM-DD" or ISO string
+  endDate: string; // "YYYY-MM-DD" or ISO string
+  minDate?: string; // "YYYY-MM-DD" or ISO string
+  onChange: (field: "startDate" | "endDate", value: string) => void;
   required?: boolean;
   className?: string;
 }
@@ -160,21 +181,130 @@ export interface NoEventsFoundProps {
   title?: string;
 }
 
-export type HideNotification = (hide: boolean) => void;
-
-export interface NotificationProps {
-  url?: string;
-  title?: string;
-  type?: "warning" | "success";
-  customNotification?: boolean;
-  hideNotification?: HideNotification;
-  hideClose?: boolean;
-}
-
-export interface SubMenuProps {
-  placeLabel: string;
-}
-
 export interface VideoDisplayProps {
   videoUrl: string | null | undefined;
+}
+
+export interface ByDateClientProps extends ByDateProps {
+  pageData: PageData;
+  placeTypeLabel: PlaceTypeAndLabel;
+}
+
+export interface PlaceClientProps extends PlaceProps {
+  pageData: PageData;
+  placeTypeLabel: PlaceTypeAndLabel;
+}
+
+export interface LoadMoreButtonProps {
+  onLoadMore: () => void;
+  isLoading?: boolean;
+  isValidating?: boolean;
+  hasMore?: boolean;
+  currentCount?: number;
+  totalEvents?: number;
+}
+
+// Next.js App Router page props interfaces
+export interface FilteredPageProps {
+  params: Promise<{
+    place: string;
+    byDate: string;
+    category: string;
+  }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+// Component props interfaces
+export interface ClientInteractiveLayerProps {
+  categories?: CategorySummaryResponseDTO[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+}
+
+export interface ServerNavLinkProps {
+  href: string;
+  children: ReactNode;
+  className?: string;
+  activeLinkClass?: string;
+}
+
+export interface FilterButtonProps {
+  text: string;
+  enabled: boolean;
+  removeUrl: string;
+  onOpenModal: () => void;
+}
+
+export interface ServerFiltersProps {
+  segments: RouteSegments;
+  queryParams: QueryParams;
+  categories?: CategorySummaryResponseDTO[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+  onOpenModal: () => void;
+}
+
+export interface NavigationFiltersModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentSegments: RouteSegments;
+  currentQueryParams: QueryParams;
+  userLocation?: { latitude: number; longitude: number };
+  categories?: CategorySummaryResponseDTO[];
+}
+
+export interface HybridEventsListProps {
+  initialEvents: ListEvent[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+  pageData?: PageData;
+  noEventsFound?: boolean;
+  place: string;
+  category?: string;
+  date?: string;
+  serverHasMore?: boolean; // Add server pagination info
+  // totalServerEvents removed - SWR hook manages this via API response
+}
+
+export interface ServerEventsCategorizedProps {
+  categorizedEvents: Record<string, ListEvent[]>;
+  pageData?: PageData;
+  categories?: CategorySummaryResponseDTO[];
+}
+
+export interface ServerEventsListProps {
+  events: ListEvent[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+  pageData?: PageData;
+  noEventsFound?: boolean;
+}
+
+// Location Discovery Widget Props
+export interface LocationDiscoveryWidgetProps {
+  className?: string;
+  onLocationChange?: (location: Option) => void;
+  onSearchSubmit?: (location: Option, searchTerm: string) => void;
+}
+
+export interface LocationDropdownProps {
+  selectedLocation: Option | null;
+  regions: RegionsGroupedByCitiesResponseDTO[];
+  onLocationSelect: (location: Option) => void;
+  isLoading?: boolean;
+  placeholder?: string;
+  className?: string;
+}
+
+export interface GeolocationButtonProps {
+  onLocationDetected: (location: Option) => void;
+  isLoading?: boolean;
+  error?: string | null;
+  className?: string;
+}
+
+export interface UseGeolocationReturn {
+  location: GeolocationCoordinates | null;
+  isLoading: boolean;
+  error: string | null;
+  requestLocation: (
+    regions: RegionsGroupedByCitiesResponseDTO[]
+  ) => Promise<Option | null>;
+  clearLocation: () => void;
 }

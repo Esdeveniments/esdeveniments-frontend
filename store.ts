@@ -1,6 +1,5 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage, PersistOptions } from 'zustand/middleware';
-import { ListEvent } from "types/api/event";
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // Base interfaces
 export interface UserLocation {
@@ -25,6 +24,16 @@ export enum EventCategory {
   Espectacles = "Espectacles",
 }
 
+// Dynamic category interface for new system
+export interface DynamicEventCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+// Union type for transition period - supports both legacy and dynamic
+export type EventCategoryType = EventCategory | DynamicEventCategory | string;
+
 // NOTE: The following Event interface is for frontend-only or transformed events.
 // For all backend-aligned event data, use EventSummaryResponseDTO or ListEvent from types/api/event.
 export interface Event {
@@ -35,14 +44,14 @@ export interface Event {
   /** URL of an image uploaded by the user */
   imageUploaded?: string;
   /** URL of an image associated with the event */
-  eventImage?: string;
+  imageUrl: string;
   url: string;
   startDate: string;
   endDate: string;
   startTime: string;
   endTime: string;
   place: string;
-  category: EventCategory | '';
+  category: EventCategory | "";
   distance?: number;
   location?: string;
   subLocation?: string;
@@ -56,118 +65,67 @@ export interface Event {
   timeUntilEvent: string;
   videoUrl?: string;
   nameDay: string;
-    weather?: {
-      description?: string;
-      icon?: string;
-    };
+  weather?: {
+    description?: string;
+    icon?: string;
+  };
 }
 
-// Filter state interface
-interface FilterState {
-  page: number;
-  place: string;
-  byDate: string;
-  category: EventCategory | '';
-  searchTerm: string;
-  distance: string;
-  filtersApplied: boolean;
-}
+// Filter state interface - REMOVED: Filters now live in URL only
+// URL is the single source of truth for: place, byDate, category, searchTerm, distance
 
 // UI state interface
 interface UIState {
   openModal: boolean;
-  scrollPosition: number;
+  hydrated: boolean;
 }
 
-// Event state interface
-export interface EventState {
-  /**
-   * All event lists should use ListEvent[], which is aligned with backend EventSummaryResponseDTO (and AdEvent).
-   * Do NOT use the custom Event interface above for backend data.
-   */
-  categorizedEvents: Record<string, ListEvent[]>;
-  latestEvents: ListEvent[];
-  events: ListEvent[];
-  noEventsFound: boolean;
-}
-
-// Combined store state interface
-export interface StoreState extends FilterState, UIState, EventState {
+// Combined store state interface - URL-first, minimal state
+export interface StoreState extends UIState {
   userLocation: UserLocation | null;
-  currentYear: number;
 }
 
-// Store actions interface
+// Store actions interface - simplified
 export interface StoreActions {
   setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
-  initializeStore: (initialState: Partial<StoreState>) => void;
-  areFiltersActive: () => boolean;
+  setHydrated: () => void;
 }
 
 // Complete store type
 export type Store = StoreState & StoreActions;
 
-type PersistState = Pick<StoreState, 'page' | 'currentYear' | 'scrollPosition'>;
-
-// Persist configuration
-const persistConfig: PersistOptions<Store, PersistState> = {
-  name: 'filterState',
-  storage: createJSONStorage(() => localStorage),
-  partialize: (state) => ({
-    page: state.page,
-    currentYear: state.currentYear,
-    scrollPosition: state.scrollPosition,
-  }),
-};
-
-// Create the store with proper type inference
+// Create the store with minimal state
 const useStore = create<Store>()(
   persist(
-    (set, get) => ({
-      // Initial filter state
-      page: 1,
-      place: '',
-      byDate: '',
-      category: '',
-      searchTerm: '',
-      distance: '',
-      filtersApplied: false,
-
+    (set) => ({
       // Initial UI state
       openModal: false,
-      scrollPosition: 0,
+      hydrated: false,
 
-      // Initial event state
-      categorizedEvents: {},
-      latestEvents: [],
-      events: [],
-      noEventsFound: false,
-
-      // Other initial state
+      // Initial user location
       userLocation: null,
-      currentYear: new Date().getFullYear(),
 
       // Actions
       setState: (key, value) => {
-        set((state) => ({ ...state, [key]: value }));
+        set((state) => {
+          // Only update the specific property to avoid unnecessary re-renders
+          if (state[key] === value) return state; // Skip if value hasn't changed
+          return { ...state, [key]: value };
+        });
       },
 
-      initializeStore: (initialState) => {
-        set(initialState);
-      },
-
-      areFiltersActive: () => {
-        const state = get();
-        return (
-          Boolean(state.place) ||
-          Boolean(state.byDate) ||
-          Boolean(state.category) ||
-          Boolean(state.searchTerm) ||
-          Boolean(state.distance)
-        );
+      setHydrated: () => {
+        set((state) => ({ ...state, hydrated: true }));
       },
     }),
-    persistConfig
+    {
+      name: "events-ui",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        // Only persist UI state that should survive browser restarts
+        hydrated: state.hydrated,
+      }),
+    }
   )
 );
 

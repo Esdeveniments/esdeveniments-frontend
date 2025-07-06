@@ -26,7 +26,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-.yarn*
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
 
 # logs
 *.log
@@ -72,3 +76,21 @@ $RECYCLE.BIN/
 
 .env copy.development
 .env copy.production
+# Million Lint
+.million
+
+# Added by Task Master AI
+# Logs
+logs
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+# Editor directories and files
+.idea
+.vscode
+*.sw?
+# OS specific
+# Task files
+tasks.json
+tasks/ 

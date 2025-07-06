@@ -1,22 +1,64 @@
-// --- Centralized event form types ---
+import { z } from "zod";
 import type {
   RegionSummaryResponseDTO,
   CitySummaryResponseDTO,
+  EventDetailResponseDTO,
+  EventSummaryResponseDTO,
 } from "./api/event";
+import type { CategorySummaryResponseDTO } from "./api/category";
 import type { RefObject } from "react";
-import type { DeleteReason } from "./common";
-import type { EventDetailResponseDTO } from "./api/event";
+import type { DeleteReason, Option } from "./common";
 
+// --- Zod schema for canonical event form data ---
+export const EventFormSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Títol obligatori"),
+  description: z.string().min(1, "Descripció obligatòria"),
+  type: z.enum(["FREE", "PAID"]),
+  startDate: z.string(), // "YYYY-MM-DD" - consistent with API
+  startTime: z.string().nullable(), // ISO time string or null - consistent with API
+  endDate: z.string(), // "YYYY-MM-DD" - consistent with API
+  endTime: z.string().nullable(), // ISO time string or null - consistent with API
+  region: z.any().nullable(),
+  town: z.any().nullable(),
+  location: z.string().min(1, "Localització obligatòria"),
+  imageUrl: z.string().nullable(),
+  url: z.string().url("URL invàlida"),
+  categories: z.array(z.any()),
+  email: z.string().email("Email invàlid").or(z.literal("")).optional(),
+});
+
+export type EventFormSchemaType = z.infer<typeof EventFormSchema>;
+
+// --- Date handling interfaces ---
+export interface DateObject {
+  date?: string;
+  dateTime?: string;
+}
+
+export interface FormattedDateResult {
+  originalFormattedStart: string;
+  formattedStart: string;
+  formattedEnd: string | null;
+  startTime: string;
+  endTime: string;
+  nameDay: string;
+  startDate: Date;
+  isLessThanFiveDays: boolean;
+  isMultipleDays: boolean;
+  duration: string;
+}
+
+// --- Centralized event form types ---
 export interface FormData {
   id?: string;
-  slug: string;
   title: string;
   description: string;
   type: "FREE" | "PAID";
-  startDate: string | Date;
-  startTime: string | Date;
-  endDate: string | Date;
-  endTime: string | Date;
+  startDate: string; // "YYYY-MM-DD" - consistent with API
+  startTime: string | null; // ISO time string or null - consistent with API
+  endDate: string; // "YYYY-MM-DD" - consistent with API
+  endTime: string | null; // ISO time string or null - consistent with API
   region: RegionSummaryResponseDTO | { value: string; label: string } | null;
   town: CitySummaryResponseDTO | { value: string; label: string } | null;
   location: string;
@@ -26,12 +68,6 @@ export interface FormData {
     { id: number; name: string } | { value: string; label: string } | number
   >;
   email?: string; // UI only
-}
-
-export interface FormState {
-  isDisabled: boolean;
-  isPristine: boolean;
-  message: string;
 }
 
 /**
@@ -53,7 +89,7 @@ export interface EventData extends EventDetailResponseDTO {
   formattedEnd?: string;
   isFullDayEvent?: boolean;
   durationInHours?: number;
-  eventImage?: string;
+  imageUrl: string;
   eventUrl?: string;
   videoUrl?: string;
 }
@@ -90,19 +126,145 @@ export interface DynamicOptionsLoadingProps {
   timedOut?: boolean;
 }
 
-// Parameters accepted by fetchEvents API
 export interface FetchEventsParams {
   page?: number;
-  maxResults: number;
-  q?: string;
-  town?: string;
-  zone?: string;
+  size?: number;
+  place?: string;
   category?: string;
-  region?: string;
-  from?: string;
-  until?: string;
-  filterByDate?: boolean;
-  normalizeRss?: boolean;
+  lat?: number;
+  lon?: number;
+  radius?: number;
+  q?: string; // Search query
+  byDate?: string; // Date filter
+  from?: string; // Start date
+  to?: string; // End date
+  isToday?: boolean;
+  distance?: number;
+  searchTerm?: string;
+}
+
+export interface EventHeaderProps {
+  title: string;
+}
+
+export interface EventMediaProps {
+  event: EventDetailResponseDTO;
+  title: string;
+}
+
+export interface EventShareBarProps {
+  visits: number;
+  slug: string;
+  title: string;
+  description: string;
+  eventDateString: string;
+  location: string;
+  cityName: string;
+  regionName: string;
+  postalCode: string;
+}
+
+export interface EventDescriptionProps {
+  description: string;
+  location: string;
+  locationValue: string;
+}
+
+export interface EventTagsProps {
+  tags: string[];
+}
+
+export interface EventCalendarProps {
+  event: EventDetailResponseDTO;
+}
+
+export type HideNotification = (hide: boolean) => void;
+
+export interface EventNotificationProps {
+  url?: string;
+  title?: string;
+  type?: "warning" | "success";
+  customNotification?: boolean;
+  hideNotification?: HideNotification;
+  hideClose?: boolean;
+}
+
+export interface EventNotificationsProps {
+  newEvent?: boolean | undefined;
+  title: string;
+  slug: string;
+  showThankYouBanner: boolean;
+  setShowThankYouBanner: HideNotification;
+}
+
+export interface EventMapsProps {
+  location: string;
+}
+
+export interface EventWeatherProps {
+  weather?: {
+    temperature: string;
+    description: string;
+    icon: string;
+  };
+}
+
+export interface EventImageProps {
+  image: string | undefined;
+  title: string;
+}
+
+export interface EventLocationProps {
+  location: string;
+  cityName: string;
+  regionName: string;
+}
+
+export interface EventFormProps {
+  form: FormData;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
+  submitLabel: string;
+  isEditMode?: boolean;
+  isLoading?: boolean;
+  regionOptions: Option[];
+  cityOptions: Option[];
+  categoryOptions: Option[];
+  isLoadingRegionsWithCities?: boolean;
+  isLoadingCategories?: boolean;
+  handleFormChange: <K extends keyof FormData>(
+    name: K,
+    value: FormData[K]
+  ) => void;
+  handleImageChange: (file: File) => void;
+  handleRegionChange: (region: Option | null) => void;
+  handleTownChange: (town: Option | null) => void;
+  handleCategoriesChange: (categories: Option[]) => void;
+  progress: number;
+  imageToUpload: string | null;
+}
+
+export interface UseEventsOptions {
+  place?: string;
+  category?: string;
+  date?: string;
+  initialSize?: number;
+  fallbackData?: EventSummaryResponseDTO[];
+  serverHasMore?: boolean; // Add server pagination info
+}
+
+export interface UseEventsReturn {
+  events: EventSummaryResponseDTO[];
+  hasMore: boolean;
+  totalEvents: number;
+  loadMore: () => void;
+  isLoading: boolean;
+  isValidating: boolean;
+  error: Error | undefined;
+}
+
+export interface EventCategoriesProps {
+  categories: CategorySummaryResponseDTO[];
+  place: string;
 }
 
 export { DeleteReason };

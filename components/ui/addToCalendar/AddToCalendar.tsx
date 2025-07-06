@@ -1,3 +1,5 @@
+"use client";
+
 import React, {
   useState,
   useRef,
@@ -7,8 +9,9 @@ import React, {
   useEffect,
 } from "react";
 import CalendarButton from "./CalendarButton";
-import { generateCalendarUrls, CalendarUrls } from "@utils/calendarUtils";
+import { generateCalendarUrls } from "@utils/calendarUtils";
 import { AddToCalendarProps } from "types/common";
+import type { CalendarUrls } from "types/calendar";
 
 const LazyCalendarList = React.lazy(() => import("./CalendarList"));
 

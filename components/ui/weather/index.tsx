@@ -1,67 +1,40 @@
 /* eslint-disable */
-// Check in the future
+"use client";
+
 import { memo, FC } from "react";
 import Image from "next/image";
-import { getFormattedDate } from "@utils/helpers";
+import type { EventWeatherProps } from "types/event";
 
-interface DateObject {
-  date?: string;
-  dateTime?: string;
-}
+const Weather: FC<EventWeatherProps> = ({ weather }) => {
+  if (
+    !weather ||
+    !weather.temperature ||
+    !weather.description ||
+    !weather.icon
+  ) {
+    return <p>No hi ha dades meteorològiques disponibles.</p>;
+  }
 
-interface WeatherProps {
-  startDate: DateObject | string;
-  location: string;
-}
-
-interface FormattedDateResult {
-  isLessThanFiveDays: boolean;
-  startDate: string | Date;
-  isMultipleDays: boolean;
-}
-
-interface WeatherData {
-  temp?: number;
-  description?: string;
-  icon?: string;
-}
-
-const Weather: FC<WeatherProps> = ({ startDate }) => {
-  const {
-    isLessThanFiveDays,
-    startDate: start,
-    isMultipleDays,
-  }: FormattedDateResult = getFormattedDate(startDate);
-
-  const showWeather = isMultipleDays || isLessThanFiveDays;
-  console.log(showWeather);
-  console.log(start);
-  const { data, error } = { data: undefined, error: undefined }; // useGetWeather(showWeather, location);
-
-  if (!data || error) return <p>No hi ha dades meteorològiques disponibles.</p>;
-
-  const weather: WeatherData = {}; // normalizeWeather(start, data);
-  const { temp, description: weatherDescription, icon } = weather || {};
+  const { temperature, description, icon } = weather;
+  const temp = Math.floor(Number(temperature));
 
   return (
     <div className="flex justify-start items-center gap-2">
-      {icon && (
-        <div className="flex justify-center items-center">
-          <Image
-            alt={weatherDescription || "Weather icon"}
-            src={icon}
-            width={27}
-            height={27}
-            style={{
-              maxWidth: "100%",
-              height: "auto",
-            }}
-          />
-        </div>
-      )}{" "}
+      <div className="flex justify-center items-center">
+        <Image
+          alt={description || "Weather icon"}
+          src={`/static/images/icons/${icon}.png`}
+          width={27}
+          height={27}
+          style={{
+            maxWidth: "100%",
+            height: "auto",
+          }}
+        />
+      </div>
       <div className="flex justify-center items-center gap-2">
-        <p className="">{weatherDescription ? weatherDescription : ""} </p>
-        <p className="">{temp ? `- ${temp}º` : ""}</p>
+        <p className="">{description}</p>
+        <p className="">- {temp}º</p>
       </div>
     </div>
   );

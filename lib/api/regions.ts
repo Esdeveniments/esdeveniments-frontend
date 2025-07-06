@@ -7,7 +7,9 @@ const regionsWithCitiesCache =
   createCache<RegionsGroupedByCitiesResponseDTO[]>(300000);
 
 async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/regions`);
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/places/regions`
+  );
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
 }
@@ -20,7 +22,7 @@ async function fetchRegionsWithCitiesFromApi(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/regions/cities`
+    `${process.env.NEXT_PUBLIC_API_URL}/places/regions/options`
   );
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
@@ -37,14 +39,14 @@ export async function fetchRegionsWithCities(): Promise<
         id: 1,
         name: "Barcelona",
         cities: [
-          { label: "Barcelona", value: "barcelona" },
-          { label: "Hospitalet", value: "hospitalet" },
+          { id: 1, label: "Barcelona", value: "barcelona" },
+          { id: 2, label: "Hospitalet", value: "hospitalet" },
         ],
       },
       {
         id: 2,
         name: "Girona",
-        cities: [{ label: "Girona", value: "girona" }],
+        cities: [{ id: 1, label: "Girona", value: "girona" }],
       },
     ];
   }
@@ -58,14 +60,14 @@ export async function fetchRegionsWithCities(): Promise<
         id: 1,
         name: "Barcelona",
         cities: [
-          { label: "Barcelona", value: "barcelona" },
-          { label: "Hospitalet", value: "hospitalet" },
+          { id: 1, label: "Barcelona", value: "barcelona" },
+          { id: 2, label: "Hospitalet", value: "hospitalet" },
         ],
       },
       {
         id: 2,
         name: "Girona",
-        cities: [{ label: "Girona", value: "girona" }],
+        cities: [{ id: 1, label: "Girona", value: "girona" }],
       },
     ];
   }
@@ -75,7 +77,7 @@ export async function fetchRegionById(
   id: string | number
 ): Promise<RegionSummaryResponseDTO | null> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/regions/${id}`
+    `${process.env.NEXT_PUBLIC_API_URL}/places/regions/${id}`
   );
   if (!response.ok) return null;
   return response.json();

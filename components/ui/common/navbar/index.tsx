@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Disclosure } from "@headlessui/react";
 import {
@@ -20,13 +20,13 @@ const navigation: NavigationItem[] = [
 ];
 
 export default function Navbar() {
-  const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <Disclosure
-      key={router.asPath}
+      key={pathname}
       as="nav"
-      className="w-full bg-whiteCorp sticky top-0 z-10"
+      className="w-full bg-whiteCorp relative top-0 z-10"
     >
       {({ open }) => (
         <>
@@ -64,10 +64,12 @@ export default function Navbar() {
                 <div className="md:w-1/2 flex justify-end items-center">
                   <div className="hidden md:flex md:items-center gap-x-4">
                     {navigation.map((item) => (
-                      <ActiveLink href={item.href} key={item.name}>
-                        <a className="border-b-2 border-b-whiteCorp">
-                          {item.name}
-                        </a>
+                      <ActiveLink
+                        href={item.href}
+                        key={item.name}
+                        className="border-b-2 border-b-whiteCorp"
+                      >
+                        {item.name}
                       </ActiveLink>
                     ))}
                   </div>

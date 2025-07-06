@@ -28,8 +28,8 @@
       "@store": [
         "store.ts"
       ],
-      "@pages/*": [
-        "pages/*"
+      "@app/*": [
+        "app/*"
       ],
       "@components/*": [
         "components/*"
@@ -68,14 +68,16 @@
     ]
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "tailwind.config.js",
+    "next-env.d.ts",
     "next.config.js",
-    "postcss.config.js"
+    "postcss.config.js",
+    "tailwind.config.js",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next"
   ]
 }

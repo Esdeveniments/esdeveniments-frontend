@@ -1,3 +1,5 @@
+"use client";
+
 import {
   useCallback,
   useEffect,
@@ -7,11 +9,10 @@ import {
   KeyboardEvent,
   JSX,
 } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
-import useStore from "@store";
 import { sendGoogleEvent } from "@utils/analytics";
-import type { Store } from "@store";
 
 function debounce(
   func: (value: string) => void,
@@ -41,15 +42,47 @@ const sendSearchTermGA = (searchTerm: string): void => {
 };
 
 export default function Search(): JSX.Element {
-  // Use StoreState for correct typing
-  const setState = useStore((state: Store) => state.setState);
-  const searchTerm = useStore((state: Store) => state.searchTerm);
-  const [inputValue, setInputValue] = useState<string>(searchTerm);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
 
-  // Debounce only the searchTerm update for simplicity
-  const debouncedSetSearchTerm = useMemo(
-    () => debounce((value: string) => setState("searchTerm", value), 1500),
-    [setState]
+  // Get current search term from URL (not Zustand)
+  const urlSearchTerm = searchParams.get("search") || "";
+
+  const [inputValue, setInputValue] = useState<string>(urlSearchTerm);
+
+  // Function to update URL with search parameter
+  const updateSearchUrl = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (value) {
+        params.set("search", value);
+      } else {
+        params.delete("search");
+      }
+
+      // Build new URL preserving current path structure
+      const queryString = params.toString();
+      const newUrl = queryString
+        ? `${isHomePage ? "/catalunya/" : pathname}?${queryString}`
+        : isHomePage
+        ? "/catalunya/"
+        : pathname;
+
+      router.push(newUrl);
+    },
+    [searchParams, router, pathname, isHomePage]
+  );
+
+  // Debounce URL update only (no more Zustand)
+  const debouncedUpdateUrl = useMemo(
+    () =>
+      debounce((value: string) => {
+        updateSearchUrl(value);
+      }, 1500),
+    [updateSearchUrl]
   );
 
   const searchEvents = useCallback((term: string): void => {
@@ -58,18 +91,19 @@ export default function Search(): JSX.Element {
     }
   }, []);
 
+  // Sync input with URL search term when URL changes
   useEffect(() => {
-    setInputValue(searchTerm);
-  }, [searchTerm]);
+    setInputValue(urlSearchTerm);
+  }, [urlSearchTerm]);
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setInputValue(value);
-      debouncedSetSearchTerm(value);
+      debouncedUpdateUrl(value);
       sendSearchTermGA(value);
     },
-    [debouncedSetSearchTerm]
+    [debouncedUpdateUrl]
   );
 
   const handleKeyPress = useCallback(
@@ -77,16 +111,16 @@ export default function Search(): JSX.Element {
       if (e.key === "Enter") {
         const value = e.currentTarget.value;
         sendSearchTermGA(value);
-        setState("searchTerm", value);
+        updateSearchUrl(value);
       }
     },
-    [setState]
+    [updateSearchUrl]
   );
 
   const clearSearchTerm = useCallback((): void => {
-    setState("searchTerm", "");
     setInputValue("");
-  }, [setState]);
+    updateSearchUrl("");
+  }, [updateSearchUrl]);
 
   return (
     <div className="w-full flex justify-center border border-bColor border-opacity-50 rounded-full px-4 mt-2">
@@ -94,7 +128,7 @@ export default function Search(): JSX.Element {
         <div className="h-10 flex justify-end items-center cursor-pointer">
           <SearchIcon
             className="h-5 w-5 text-blackCorp"
-            onClick={() => searchEvents(searchTerm)}
+            onClick={() => searchEvents(urlSearchTerm)}
             aria-label="Search"
           />
         </div>

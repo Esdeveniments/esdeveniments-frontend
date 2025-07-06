@@ -5,6 +5,6 @@ import type { PlaceTypeAndLabel } from "./common";
 export interface EventsProps {
   events: ListEvent[];
   hasServerFilters?: boolean;
-  placeTypeLabel: PlaceTypeAndLabel;
+  placeTypeLabel?: PlaceTypeAndLabel;
   pageData: PageData;
 }

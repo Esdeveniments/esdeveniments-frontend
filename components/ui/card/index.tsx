@@ -1,3 +1,5 @@
+"use client";
+
 import { JSX, memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";

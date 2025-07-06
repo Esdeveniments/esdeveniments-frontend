@@ -1,0 +1,377 @@
+/**
+ * URL-first filter management utilities
+ * Handles the canonical route structure: /place/date/category
+ * With query params for client-side filters: search, distance
+ *
+ * Phase 2: Enhanced with dynamic category support
+ */
+
+import type { CategorySummaryResponseDTO } from "types/api/category";
+import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
+
+// Extended to support both static and dynamic categories
+export type URLCategory = string;
+
+export interface FilterState {
+  place: string;
+  byDate: string;
+  category: URLCategory;
+  searchTerm: string;
+  distance: number;
+}
+
+export interface RouteSegments {
+  place: string;
+  date: string;
+  category: string;
+}
+
+export interface QueryParams {
+  search?: string;
+  distance?: string;
+}
+
+export interface ParsedFilters {
+  segments: RouteSegments;
+  queryParams: QueryParams;
+  isCanonical: boolean;
+}
+
+// Legacy categories for backward compatibility
+const LEGACY_CATEGORIES: Record<string, URLCategory> = {
+  tots: "tots",
+  concerts: "concerts",
+  festivals: "festivals",
+  espectacles: "espectacles",
+  familia: "familia",
+  "fires-i-festes": "fires-i-festes",
+  exposicions: "exposicions",
+  esports: "esports",
+  gastronomia: "gastronomia",
+  "cursos-i-conferencies": "cursos-i-conferencies",
+} as const;
+
+// Valid date formats
+const VALID_DATES = [
+  "tots",
+  "avui",
+  "dema",
+  "cap-de-setmana",
+  "setmana-vinent",
+] as const;
+
+/**
+ * Check if a category slug is valid (either legacy or dynamic)
+ */
+export function isValidCategorySlug(
+  categorySlug: string,
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): boolean {
+  // Check legacy categories first
+  if (LEGACY_CATEGORIES[categorySlug]) {
+    return true;
+  }
+
+  // Check dynamic categories if available
+  if (dynamicCategories && Array.isArray(dynamicCategories)) {
+    const found = dynamicCategories.some((cat) => cat.slug === categorySlug);
+    if (found) return true;
+  }
+
+  // Default valid categories for fallback
+  return categorySlug === "tots";
+}
+
+/**
+ * Parse URL segments and query params into filter state
+ * Enhanced with dynamic category support and smart 2-segment detection
+ */
+export function parseFiltersFromUrl(
+  segments: { place?: string; date?: string; category?: string },
+  searchParams: URLSearchParams,
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): ParsedFilters {
+  // Count non-empty segments
+  const segmentValues = [
+    segments.place,
+    segments.date,
+    segments.category,
+  ].filter(Boolean);
+  const segmentCount = segmentValues.length;
+
+  let place: string;
+  let date: string;
+  let category: string;
+
+  if (segmentCount === 1) {
+    // /catalunya
+    place = segments.place || "catalunya";
+    date = "tots";
+    category = "tots";
+  } else if (segmentCount === 2) {
+    // /catalunya/something - determine if 'something' is date or category
+    place = segments.place || "catalunya";
+    const secondSegment = segments.date || segments.category || "";
+
+    if (VALID_DATES.includes(secondSegment as any)) {
+      // It's a date: /catalunya/avui
+      date = secondSegment;
+      category = "tots";
+    } else {
+      // It's a category: /catalunya/festivals
+      date = "tots";
+      category = secondSegment;
+    }
+  } else {
+    // 3 segments: /catalunya/avui/festivals (explicit structure)
+    place = segments.place || "catalunya";
+    date = segments.date || "tots";
+    category = segments.category || "tots";
+  }
+
+  // Validate and normalize segments
+  const normalizedDate = VALID_DATES.includes(date as any) ? date : "tots";
+  const normalizedCategory = isValidCategorySlug(category, dynamicCategories)
+    ? category
+    : "tots";
+
+  // Determine if this is a canonical URL structure
+  const isCanonical =
+    segmentCount <= 2 ||
+    (!!(segments.place && segments.date && segments.category) &&
+      VALID_DATES.includes(date as any) &&
+      isValidCategorySlug(category, dynamicCategories));
+
+  return {
+    segments: {
+      place,
+      date: normalizedDate,
+      category: normalizedCategory,
+    },
+    queryParams: {
+      search: searchParams.get("search") || undefined,
+      distance: searchParams.get("distance") || undefined,
+    },
+    isCanonical,
+  };
+}
+
+/**
+ * Build canonical URL from filter state
+ * Updated to support dynamic categories
+ */
+export function buildCanonicalUrl(
+  filters: Partial<FilterState>,
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): string {
+  return buildCanonicalUrlDynamic(filters, dynamicCategories);
+}
+
+/**
+ * Build URL for filter changes (used by FiltersModal)
+ * Enhanced with dynamic category support
+ */
+export function buildFilterUrl(
+  currentSegments: RouteSegments,
+  currentQuery: QueryParams,
+  changes: Partial<FilterState>,
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): string {
+  const newFilters: Partial<FilterState> = {
+    place: changes.place || currentSegments.place,
+    byDate: changes.byDate || currentSegments.date,
+    category: changes.category || (currentSegments.category as URLCategory),
+    searchTerm:
+      changes.searchTerm !== undefined
+        ? changes.searchTerm
+        : currentQuery.search,
+    distance:
+      changes.distance !== undefined
+        ? changes.distance
+        : parseInt(currentQuery.distance || "50"),
+  };
+
+  return buildCanonicalUrl(newFilters, dynamicCategories);
+}
+
+/**
+ * Convert URL segments to FilterState for compatibility with existing components
+ */
+export function urlToFilterState(parsed: ParsedFilters): FilterState {
+  return {
+    place: parsed.segments.place,
+    byDate: parsed.segments.date,
+    category: parsed.segments.category as URLCategory,
+    searchTerm: parsed.queryParams.search || "",
+    distance: parseInt(parsed.queryParams.distance || "50"),
+  };
+}
+
+/**
+ * Check if a redirect is needed for non-canonical URLs
+ */
+export function getRedirectUrl(parsed: ParsedFilters): string | null {
+  if (parsed.isCanonical) {
+    return null;
+  }
+
+  // Always redirect to canonical structure
+  const redirectUrl = buildCanonicalUrl(urlToFilterState(parsed));
+  return redirectUrl;
+}
+
+/**
+ * Get category slug from category value - enhanced with dynamic support
+ * Falls back to legacy mapping if dynamic categories not available
+ */
+export function getCategorySlug(
+  category: URLCategory,
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): string {
+  // If we have dynamic categories, try to find the category
+  if (dynamicCategories && Array.isArray(dynamicCategories)) {
+    const foundCategory = dynamicCategories.find(
+      (cat) =>
+        cat.name.toLowerCase() === category.toLowerCase() ||
+        cat.slug === category
+    );
+    if (foundCategory) {
+      return foundCategory.slug;
+    }
+  }
+
+  // Fall back to legacy mapping or return as-is if already a valid slug
+  return LEGACY_CATEGORIES[category] || category || "tots";
+}
+
+/**
+ * Generate static params for ISR - enhanced with dynamic categories
+ */
+export function getTopStaticCombinations(
+  dynamicCategories?: CategorySummaryResponseDTO[]
+) {
+  const topPlaces = ["catalunya", "barcelona", "girona", "lleida", "tarragona"];
+  const topDates = ["avui", "dema", "cap-de-setmana"];
+
+  // Get top categories from dynamic data or fall back to legacy
+  let topCategories = ["tots"];
+
+  if (dynamicCategories && Array.isArray(dynamicCategories)) {
+    // Use first 5 dynamic categories + "tots"
+    const dynamicSlugs = dynamicCategories.slice(0, 4).map((cat) => cat.slug);
+    topCategories = ["tots", ...dynamicSlugs];
+  } else {
+    // Fall back to legacy categories
+    topCategories = ["tots", "concerts", "festivals", "espectacles", "familia"];
+  }
+
+  const combinations = [];
+
+  for (const place of topPlaces) {
+    for (const date of topDates) {
+      for (const category of topCategories) {
+        combinations.push({ place, date, category });
+      }
+    }
+  }
+
+  return combinations;
+}
+
+/**
+ * Get all possible category slugs for ISR generation
+ * Combines legacy and dynamic categories
+ */
+export function getAllCategorySlugsForISR(
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): string[] {
+  if (dynamicCategories && Array.isArray(dynamicCategories)) {
+    return getAllCategorySlugs(dynamicCategories);
+  }
+
+  // Fall back to legacy categories
+  return Object.keys(LEGACY_CATEGORIES);
+}
+
+/**
+ * Find category by slug in dynamic or legacy data
+ * Returns category info for routing and display
+ */
+export function findCategoryForRouting(
+  slug: string,
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): { id?: number; name: string; slug: string } | null {
+  // Try dynamic categories first
+  if (dynamicCategories && Array.isArray(dynamicCategories)) {
+    const category = findCategoryBySlug(dynamicCategories, slug);
+    if (category) {
+      return {
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+      };
+    }
+  }
+
+  // Fall back to legacy categories
+  if (LEGACY_CATEGORIES[slug]) {
+    return {
+      name: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "),
+      slug: slug,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Build canonical URL with dynamic category support
+ * Omits /tots/ date segment when it's the default
+ */
+export function buildCanonicalUrlDynamic(
+  filters: Partial<FilterState>,
+  dynamicCategories?: CategorySummaryResponseDTO[]
+): string {
+  const place = filters.place || "catalunya";
+  const date = filters.byDate || "tots";
+  let categorySlug = filters.category || "tots";
+
+  // Ensure we use the correct slug for the category
+  if (filters.category && filters.category !== "tots") {
+    categorySlug = getCategorySlug(filters.category, dynamicCategories);
+  }
+
+  // Build URL based on filter values, omitting /tots/ when it's default
+  let url: string;
+
+  if (date === "tots" && categorySlug === "tots") {
+    // Both default: /catalunya
+    url = `/${place}`;
+  } else if (date === "tots") {
+    // Date is default, category is specific: /catalunya/festivals
+    url = `/${place}/${categorySlug}`;
+  } else if (categorySlug === "tots") {
+    // Date is specific, category is default: /catalunya/avui
+    url = `/${place}/${date}`;
+  } else {
+    // Both specific: /catalunya/avui/festivals
+    url = `/${place}/${date}/${categorySlug}`;
+  }
+
+  // Add query params for client-side filters
+  const params = new URLSearchParams();
+  if (filters.searchTerm) {
+    params.set("search", filters.searchTerm);
+  }
+  if (filters.distance && filters.distance !== 50) {
+    // 50 is default
+    params.set("distance", filters.distance.toString());
+  }
+
+  const queryString = params.toString();
+  if (queryString) {
+    url += `?${queryString}`;
+  }
+
+  return url;
+}

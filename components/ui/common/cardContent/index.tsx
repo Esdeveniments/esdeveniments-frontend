@@ -1,3 +1,5 @@
+"use client";
+
 import {
   memo,
   useRef,
@@ -10,7 +12,7 @@ import {
 } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import NextImage from "next/image";
 import {
   ClockIcon,
@@ -18,7 +20,7 @@ import {
   CalendarIcon,
   ShareIcon,
 } from "@heroicons/react/outline";
-import { truncateString } from "@utils/helpers";
+import { truncateString, getFormattedDate } from "@utils/helpers";
 import useOnScreen from "@components/hooks/useOnScreen";
 import Image from "@components/ui/common/image";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
@@ -70,23 +72,22 @@ function CardContent({
 
   const { description, icon } = event.weather || {};
 
-  const memoizedValues = useMemo(
-    () => ({
+  const memoizedValues = useMemo(() => {
+    const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+      event.startDate,
+      event.endDate
+    );
+
+    return {
       title: truncateString(event.title || "", isHorizontal ? 30 : 75),
       location: truncateString(event.location || "", 45),
       subLocation: "",
       image: event.imageUrl || "",
-      eventDate:
-        event.startDate === event.endDate
-          ? `${event.startDate} ${event.startTime ?? ""} - ${
-              event.endTime ?? ""
-            }`
-          : `${event.startDate} ${event.startTime ?? ""} - ${event.endDate} ${
-              event.endTime ?? ""
-            }`,
-    }),
-    [event, isHorizontal]
-  );
+      eventDate: formattedEnd
+        ? `Del ${formattedStart} al ${formattedEnd}`
+        : `${nameDay}, ${formattedStart}`,
+    };
+  }, [event, isHorizontal]);
 
   return (
     <>
@@ -95,7 +96,6 @@ function CardContent({
         passHref
         prefetch={false}
         className="w-full"
-        legacyBehavior
       >
         <div
           className={`w-full flex flex-col justify-center bg-whiteCorp overflow-hidden cursor-pointer ${
@@ -106,16 +106,12 @@ function CardContent({
           onClick={handleClick}
         >
           {/* Title, Share Button, and Weather Icon */}
-          <div className="bg-whiteCorp h-fit flex justify-between items-start gap-2 pr-4">
+          <div className="bg-whiteCorp h-fit flex justify-start items-start gap-2 pr-4">
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
               <div className="w-2 h-6 bg-gradient-to-r from-primary to-primarydark"></div>
             </div>
-            <h3 className="w-9/12 uppercase">
-              <Link href={`/e/${event.slug}`} passHref prefetch={false}>
-                {memoizedValues.title}
-              </Link>
-            </h3>
-            <div className="flex items-center gap-2">
+            <h3 className="w-full uppercase">{memoizedValues.title}</h3>
+            <div className="flex items-end gap-2">
               {icon && (
                 <div className="flex items-center gap-1">
                   <NextImage
@@ -155,8 +151,6 @@ function CardContent({
                   isHorizontal ? "h-64 object-cover" : "object-contain"
                 }`}
                 title={event.title}
-                date={memoizedValues.eventDate}
-                location={event.location}
                 image={memoizedValues.image}
                 priority={isPriority}
                 alt={event.title}
@@ -172,9 +166,9 @@ function CardContent({
       >
         {!isMobile && <ShareButton slug={event.slug} />}
         {isPriority ? (
-          <ViewCounter slug={event.slug} hideText />
+          <ViewCounter visits={event.visits} hideText />
         ) : (
-          isCounterVisible && <ViewCounter slug={event.slug} hideText />
+          isCounterVisible && <ViewCounter visits={event.visits} hideText />
         )}
       </div>
       <div className="w-full flex flex-col px-4 gap-3">
@@ -193,11 +187,9 @@ function CardContent({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="px-2">
-            {event.startDate === event.endDate
-              ? `${event.startTime ?? ""} - ${event.endTime ?? ""}`
-              : `${event.startDate} ${event.startTime ?? ""} - ${
-                  event.endDate
-                } ${event.endTime ?? ""}`}
+            {event.startTime && event.endTime
+              ? `${event.startTime} - ${event.endTime}`
+              : "Consultar horaris"}
           </p>
         </div>
         {!isHorizontal && <div className="mb-8" />}

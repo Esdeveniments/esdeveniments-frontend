@@ -91,7 +91,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
       >
-        <form className="flex justify-center items-center h-full">
+        <div className="flex justify-center items-center h-full">
           {progress === 0 ? (
             <div className="text-center">
               <button
@@ -113,7 +113,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             style={{ display: "none" }}
             onChange={onChangeImage}
           />
-        </form>
+        </div>
         {error && <p className="text-primary text-sm mt-2">{error}</p>}
       </div>
       {imgData && (

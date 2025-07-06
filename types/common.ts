@@ -2,17 +2,28 @@ import type { CSSProperties } from "react";
 import type { ErrorProps } from "next/error";
 import type { EventLocation } from "../store";
 import type { StoreState } from "@store";
+import type { EventCategory } from "@store";
 import {
-  CategorizedEvents,
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
   ListEvent,
 } from "types/api/event";
+import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
 
 export interface Option {
   label: string;
   value: string;
+}
+
+// Type guard for Option (centralized for reuse in forms)
+export function isOption(obj: unknown): obj is Option {
+  return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;
+}
+
+export interface Location {
+  lat: number;
+  lng: number;
 }
 
 export type CategoryKey =
@@ -70,26 +81,13 @@ export interface EventsProps {
 export interface UseGetEventsProps {
   props?: EventsProps;
   pageIndex: number;
-  q?: string;
   refreshInterval?: boolean;
   maxResults?: number;
-  town?: string;
   zone?: string;
   category?: string;
-}
-
-export interface UseGetCategorizedEventsProps {
-  props?: {
-    categorizedEvents?: CategorizedEvents;
-    latestEvents?: EventSummaryResponseDTO[];
-  };
-  // Removed searchTerms and maxResults as they are not supported by the backend endpoint
-  refreshInterval?: boolean;
-}
-
-export interface CategorizedEventsResponse {
-  categorizedEvents: CategorizedEvents;
-  latestEvents?: EventSummaryResponseDTO[];
+  lat?: number;
+  lon?: number;
+  radius?: number;
 }
 
 export interface NetworkInformation extends EventTarget {
@@ -116,6 +114,8 @@ export interface GeneratePagesDataProps {
   place?: string;
   byDate?: ByDateOptions;
   placeTypeLabel?: PlaceTypeAndLabel;
+  category?: string;
+  categoryName?: string;
 }
 
 export interface PlaceTypeAndLabel {
@@ -174,9 +174,10 @@ export interface Gradient {
 }
 
 export interface ImgDefaultProps {
-  date: string;
-  location: string;
-  subLocation: string;
+  title: string;
+  location?: string;
+  region?: string;
+  date?: string;
 }
 
 export interface MetaProps {
@@ -244,6 +245,11 @@ export interface CardHorizontalProps {
   isPriority?: boolean;
 }
 
+export interface CardHorizontalServerProps {
+  event: EventSummaryResponseDTO;
+  isPriority?: boolean;
+}
+
 export interface CardShareButtonProps {
   slug: string;
 }
@@ -256,22 +262,20 @@ export interface CustomIconProps {
   className?: string;
 }
 
+export type EventsAroundLayout = "compact" | "horizontal" | "cards";
+
 export interface EventsAroundProps {
-  id: string;
-  title: string;
-  town: string;
-  region: string;
+  events: EventSummaryResponseDTO[];
+  title?: string;
 }
 
-export interface EventsAroundScrollProps {
-  events: EventSummaryResponseDTO[];
-  loading: boolean;
-}
-
-export interface EventsHorizontalScrollProps {
-  events: EventSummaryResponseDTO[];
+export interface EventsAroundServerProps extends EventsAroundProps {
+  layout?: EventsAroundLayout;
   loading?: boolean;
   usePriority?: boolean;
+  showJsonLd?: boolean;
+  jsonLdId?: string;
+  analyticsCategory?: string;
 }
 
 export interface BaseLayoutProps {
@@ -296,7 +300,7 @@ export interface TooltipComponentProps {
 }
 
 export interface ViewCounterProps {
-  slug: string;
+  visits: number;
   hideText?: boolean;
 }
 
@@ -321,10 +325,10 @@ export interface StaticProps {
 }
 
 export interface PlaceInitialState {
+  // Only filter state - events are handled server-side
   place: string;
-  events: ListEvent[];
-  noEventsFound: boolean;
-  hasServerFilters: boolean;
+  byDate: string;
+  category: EventCategory | "";
 }
 
 export interface PlaceProps {
@@ -357,15 +361,8 @@ export interface ApiResponse {
 }
 
 export interface HomeInitialState {
-  categorizedEvents: CategorizedEvents;
-  latestEvents: EventSummaryResponseDTO[];
+  // Only initialize filter state - events are handled server-side
   userLocation?: EventLocation | null;
-  currentYear?: number;
-  noEventsFound: boolean;
-}
-
-export interface HomeProps {
-  initialState: HomeInitialState;
 }
 
 export interface TeamMember {
@@ -380,13 +377,6 @@ export type DateRange = { from: Date; until: Date };
 
 export type DateFunctionsMap = { [key: string]: () => DateRange };
 
-export interface RssQueryParams {
-  region?: string;
-  town?: string;
-  maxEventsPerDay?: string;
-  until?: number;
-}
-
 export interface RssEvent {
   id: string;
   title: string;
@@ -397,8 +387,7 @@ export interface RssEvent {
   town: string;
   region: string;
   startDate: string;
-  imageUploaded?: string;
-  eventImage?: string;
+  imageUrl?: string;
 }
 
 export interface MonthProps {
@@ -432,11 +421,6 @@ export interface SearchState {
   setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
 }
 
-// ViewCounterResponse interface
-export interface ViewCounterResponse {
-  views: number;
-}
-
 // Utility function to safely construct a PlaceTypeAndLabel from any input
 export function makePlaceTypeAndLabel(
   type: string,
@@ -459,16 +443,34 @@ export interface LoaderProps {
 
 export interface ImageComponentProps {
   title: string;
-  date?: string;
-  location?: string;
-  subLocation?: string;
   image?: string;
   className?: string;
   priority?: boolean;
   alt?: string;
+  location?: string;
+  region?: string;
+  date?: string;
 }
 
 export interface ActiveLinkProps extends LinkProps {
-  children: React.ReactElement<HTMLAnchorElement>;
+  children: React.ReactNode;
   activeLinkClass?: string;
+  className?: string;
+}
+
+export interface URLFilters {
+  category?: string;
+  date?: string;
+  distance?: string;
+  searchTerm?: string;
+}
+
+// Hook return types
+export interface UseCategoriesReturn {
+  categories: CategorySummaryResponseDTO[];
+  isLoading: boolean;
+  error: Error | null;
+  getCategoryById: (id: number) => CategorySummaryResponseDTO | null;
+  getCategoryBySlug: (slug: string) => CategorySummaryResponseDTO | null;
+  refetch: () => Promise<void>;
 }

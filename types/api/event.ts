@@ -1,10 +1,7 @@
+import { CategorySummaryResponseDTO } from "./category";
+
 export type EventType = "FREE" | "PAID";
 export type EventOrigin = "SCRAPE" | "RSS" | "MANUAL" | "MIGRATION";
-
-export interface CategorySummaryResponseDTO {
-  id: number;
-  name: string;
-}
 
 export interface CitySummaryResponseDTO {
   id: number;
@@ -50,8 +47,9 @@ export interface EventSummaryResponseDTO {
   province: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
   weather?: {
-    description?: string;
-    icon?: string;
+    temperature: string;
+    description: string;
+    icon: string;
   };
   isAd?: boolean;
 }
@@ -76,6 +74,8 @@ export interface PagedResponseDTO<T> {
 export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   duration?: string;
   videoUrl?: string;
+  tags?: string[];
+  relatedEvents?: EventSummaryResponseDTO[]; // Add related events from backend
 }
 
 export type CategorizedEvents = {
@@ -93,16 +93,33 @@ export interface EventTimeDTO {
 // --- Event update (PUT) request DTO ---
 export interface EventUpdateRequestDTO {
   title: string;
-  type: "FREE" | "PAID";
+  type: EventType;
   url: string;
   description: string;
   imageUrl: string | null;
   regionId: number;
   cityId: number;
   startDate: string; // YYYY-MM-DD
-  startTime: EventTimeDTO;
+  startTime: string;
   endDate: string;
-  endTime: EventTimeDTO;
+  endTime: string;
+  location: string;
+  categories: number[];
+}
+
+// --- Event create (POST) request DTO ---
+export interface EventCreateRequestDTO {
+  title: string;
+  type: EventType;
+  url: string;
+  description: string;
+  imageUrl: string | null;
+  regionId: number;
+  cityId: number;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
   location: string;
   categories: number[];
 }

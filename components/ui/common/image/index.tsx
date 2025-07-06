@@ -1,10 +1,12 @@
+"use client";
+
 import { useState, memo, useRef, RefObject } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import useOnScreen from "@components/hooks/useOnScreen";
 import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
-import { LoaderProps, ImageComponentProps } from "types/common";
+import { ImageComponentProps } from "types/common";
 
 const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   loading: () => (
@@ -14,24 +16,8 @@ const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   ),
 });
 
-const cloudflareLoader = ({ src, width, quality }: LoaderProps): string => {
-  console.log(width, quality);
-  return src;
-  // if (!src) return "";
-  // const normalizedSrc = src.startsWith("/") ? src.slice(1) : src;
-  // const params = [`width=${width}`, `quality=${quality}`, "format=auto"];
-  // const paramsString = params.join(",");
-
-  // return env === "prod"
-  //   ? `/cdn-cgi/image/${paramsString}/${normalizedSrc}`
-  //   : src;
-};
-
 function ImageComponent({
   title = "",
-  date = "",
-  location = "",
-  subLocation = "",
   image,
   className = "w-full h-full flex justify-center items-center",
   priority = false,
@@ -54,11 +40,7 @@ function ImageComponent({
     return (
       <div className={imageClassName} ref={divRef}>
         {isImgDefaultVisible ? (
-          <ImgDefault
-            date={date}
-            location={location}
-            subLocation={subLocation}
-          />
+          <ImgDefault title={title} />
         ) : (
           <div className="flex justify-center items-center w-full">
             <div
@@ -75,9 +57,6 @@ function ImageComponent({
     <div className={imageClassName} style={{ position: "relative" }}>
       <NextImage
         className="object-cover"
-        loader={({ src, width }: LoaderProps) =>
-          cloudflareLoader({ src, width, quality })
-        }
         src={image}
         alt={alt}
         width={500}

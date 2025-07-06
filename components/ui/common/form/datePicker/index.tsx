@@ -3,9 +3,9 @@ import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import format from "date-fns/format";
-import ca from "date-fns/locale/ca";
 import setHours from "date-fns/setHours";
 import setMinutes from "date-fns/setMinutes";
+import ca from "date-fns/locale/ca";
 import { DatePickerComponentProps, CustomHeaderProps } from "types/props";
 
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,13 +13,40 @@ import "react-datepicker/dist/react-datepicker.css";
 const ButtonInput = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & { value?: string }
->(({ value, ...props }, ref) => (
-  <button ref={ref} type="button" {...props}>
-    {value}
-  </button>
-));
+>(({ value, ...props }, ref) => {
+  // Extract className from props to prevent it from overriding our styling
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+  const { className: _className, ...restProps } = props;
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className="w-full p-2.5 border border-bColor rounded-xl text-blackCorp sm:text-sm focus:border-darkCorp focus:outline-none"
+      {...restProps}
+    >
+      {value}
+    </button>
+  );
+});
 
 ButtonInput.displayName = "ButtonInput";
+
+// --- Conversion helpers ---
+function toDate(dateStr: string): Date {
+  // Accepts YYYY-MM-DD or ISO string
+  if (!dateStr) return setHours(setMinutes(new Date(), 0), 9);
+  // If only date, add time 09:00
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return new Date(`${dateStr}T09:00`);
+  }
+  return new Date(dateStr);
+}
+function toISOString(date: Date): string {
+  // Returns YYYY-MM-DDTHH:mm
+  return date.toISOString().slice(0, 16);
+}
+// Removed unused toDateString function
 
 export default function DatePickerComponent({
   idPrefix = "date",
@@ -30,32 +57,30 @@ export default function DatePickerComponent({
   required,
   className,
 }: DatePickerComponentProps) {
-  // Ensure valid dates
-  const startingDate =
-    initialStartDate instanceof Date && !isNaN(initialStartDate.getTime())
-      ? initialStartDate
-      : setHours(setMinutes(new Date(), 0), 9);
-  const endingDate =
-    initialEndDate instanceof Date && !isNaN(initialEndDate.getTime())
-      ? initialEndDate
-      : setMinutes(new Date(startingDate), 60);
+  // Convert incoming strings to Date objects
+  const startingDate = toDate(initialStartDate);
+  const endingDate = initialEndDate
+    ? toDate(initialEndDate)
+    : setMinutes(startingDate, startingDate.getMinutes() + 60);
+  const minDateObj = minDate ? toDate(minDate) : undefined;
 
   const [startDate, setStartDate] = useState<Date>(startingDate);
   const [endDate, setEndDate] = useState<Date>(endingDate);
 
   useEffect(() => {
-    if (startDate > endDate) setEndDate(setMinutes(startDate, 60));
+    if (startDate > endDate)
+      setEndDate(new Date(startDate.getTime() + 60 * 60 * 1000));
   }, [startDate, endDate]);
 
+  // Emit string values on change
   const onChangeStart = (date: Date) => {
-    onChange("startDate", date);
     setStartDate(date);
     if (date > endDate) setEndDate(new Date(date.getTime() + 60 * 60 * 1000));
+    onChange("startDate", toISOString(date));
   };
-
   const onChangeEnd = (date: Date) => {
-    onChange("endDate", date);
     setEndDate(date);
+    onChange("endDate", toISOString(date));
   };
 
   return (
@@ -79,9 +104,8 @@ export default function DatePickerComponent({
             selectsStart
             startDate={startDate}
             endDate={endDate}
-            minDate={minDate}
+            minDate={minDateObj}
             required={required}
-            className="w-full rounded-xl border-bColor focus:border-darkCorp"
             nextMonthButtonLabel=">"
             previousMonthButtonLabel="<"
             popperClassName="react-datepicker-left"
@@ -149,7 +173,6 @@ export default function DatePickerComponent({
             endDate={endDate}
             minDate={startDate}
             required={required}
-            className="w-full rounded-xl border-bColor focus:border-darkCorp"
             nextMonthButtonLabel=">"
             previousMonthButtonLabel="<"
             popperClassName="react-datepicker-left"
