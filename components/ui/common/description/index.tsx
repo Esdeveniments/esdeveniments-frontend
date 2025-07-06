@@ -1,7 +1,7 @@
-import ReactHtmlParser from "react-html-parser";
+import DOMPurify from "dompurify";
 import DocumentIcon from "@heroicons/react/outline/DocumentIcon";
 import CulturalMessage from "../culturalMessage";
-import { JSX, ReactNode } from "react";
+import { JSX } from "react";
 import { DescriptionProps } from "types/props";
 
 // Smart content processing function
@@ -29,8 +29,9 @@ export default function Description({
   location,
   locationValue,
 }: DescriptionProps): JSX.Element {
-  // Process the description for smart features
+  // Process and sanitize the description to prevent XSS attacks
   const processedDescription = processDescription(description || "");
+  const sanitizedHtml = DOMPurify.sanitize(processedDescription);
 
   return (
     <section className="w-full flex justify-center items-start gap-2 px-4">
@@ -38,7 +39,7 @@ export default function Description({
       <div className="w-11/12 flex flex-col gap-4">
         <h2>Descripció</h2>
         <div className="w-full break-words overflow-hidden">
-          {ReactHtmlParser(processedDescription) as ReactNode}
+          <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
           <CulturalMessage
             location={location || ""}
             locationValue={locationValue || ""}

@@ -29,8 +29,8 @@ export function getOptimalImageQuality({
       // LCP external images: 70-75 quality for critical loading
       return 70;
     } else {
-      // Regular external images: 60-65 quality for optimal performance
-      return 60;
+      // For regular external images, use network-based quality, capped for performance.
+      return Math.min(networkQuality, 65);
     }
   }
 

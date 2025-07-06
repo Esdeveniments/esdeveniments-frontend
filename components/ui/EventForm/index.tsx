@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useState, useEffect } from "react";
+import React, { memo, useState, useMemo } from "react";
 import {
   DatePicker,
   Input,
@@ -33,41 +33,33 @@ export const EventForm: React.FC<EventFormProps> = ({
   imageToUpload,
   imageFile,
 }) => {
-  // Internal validation state - no longer passed from parent
-  const [formState, setFormState] = useState({
-    isDisabled: false,
-    isPristine: true,
-    message: "",
-  });
-
-  // Update validation state whenever form data changes
-  useEffect(() => {
-    const newFormState = getZodValidationState(
-      form,
-      true,
-      imageFile,
-      isEditMode
-    );
-    setFormState(newFormState);
+  const formState = useMemo(() => {
+    return getZodValidationState(form, true, imageFile, isEditMode);
   }, [form, imageFile, isEditMode]);
+
+  const [submitFormState, setSubmitFormState] = useState<{
+    isDisabled: boolean;
+    isPristine: boolean;
+    message: string;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Final validation with isPristine = false for submit
-    const submitFormState = getZodValidationState(
+    const submitValidation = getZodValidationState(
       form,
       false,
       imageFile,
       isEditMode
     );
-    setFormState(submitFormState);
+    setSubmitFormState(submitValidation);
 
-    // Only call parent onSubmit if validation passes
-    if (!submitFormState.isDisabled) {
+    if (!submitValidation.isDisabled) {
       onSubmit(e);
     }
   };
+
+  const currentFormState = submitFormState || formState;
 
   return (
     <form
@@ -184,19 +176,18 @@ export const EventForm: React.FC<EventFormProps> = ({
         required
       />
 
-      {/* Error message positioned before submit button, matching old design */}
-      {formState.message && (
+      {currentFormState.message && (
         <div className="p-4 my-3 text-primary rounded-lg text-md">
-          {formState.message}
+          {currentFormState.message}
         </div>
       )}
 
       <div className="flex justify-center pt-10">
         <button
           type="submit"
-          disabled={formState.isDisabled || isLoading}
+          disabled={currentFormState.isDisabled || isLoading}
           className={`text-blackCorp bg-whiteCorp hover:bg-primary hover:border-whiteCorp hover:text-whiteCorp border-blackCorp rounded-xl py-3 px-6 ease-in-out duration-300 border focus:outline-none font-barlow italic uppercase font-semibold tracking-wide ${
-            formState.isDisabled || isLoading
+            currentFormState.isDisabled || isLoading
               ? "opacity-50 cursor-not-allowed"
               : "opacity-100"
           }`}
