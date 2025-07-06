@@ -45,7 +45,6 @@ export async function generateMetadata({
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await fetchCategories();
-    console.log("🔍 Categories fetched successfully:", categories.length);
   } catch (error) {
     console.error("Error fetching categories for metadata:", error);
     categories = [];

@@ -15,7 +15,6 @@ export async function fetchEvents(
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
-    // MOCK DATA or empty for build safety
     return {
       content: [],
       currentPage: 0,
@@ -25,12 +24,11 @@ export async function fetchEvents(
       last: true,
     };
   }
-  // Prepare params: always send page and size, only include others if non-empty
+
   const query: Partial<FetchEventsParams> = {};
   query.page = typeof params.page === "number" ? params.page : 0;
   query.size = typeof params.size === "number" ? params.size : 10;
 
-  // Add other params if present and non-empty
   if (params.place) query.place = params.place;
   if (params.category) query.category = params.category;
   if (params.lat) query.lat = params.lat;
@@ -40,9 +38,6 @@ export async function fetchEvents(
   if (params.byDate) query.byDate = params.byDate;
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;
-
-  console.log("fetchEvents: input params:", params);
-  console.log("fetchEvents: final query:", query);
 
   try {
     const filteredEntries = Object.entries(query)
@@ -54,12 +49,8 @@ export async function fetchEvents(
     );
     const finalUrl = `${apiUrl}/events?${queryString}`;
 
-    console.log("fetchEvents: final URL:", finalUrl);
-
     const response = await fetch(finalUrl);
     const data = await response.json();
-
-    // console.log("fetchEvents: response:", data);
 
     return data;
   } catch (e) {
@@ -85,7 +76,7 @@ export async function fetchEventById(
   }
 
   try {
-    const response = await fetch(`${apiUrl}/events/${uuid}`);
+    const response = await fetch(`${apiUrl}/events/${uuid}?trackVisit=false`);
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
@@ -120,14 +111,8 @@ export async function createEvent(
 ): Promise<EventDetailResponseDTO> {
   const formData = new FormData();
 
-  // Debug: Log the data being sent
-  console.log("createEvent: data to send:", data);
-  console.log("createEvent: imageFile:", imageFile);
-
-  // Add the request data as a JSON string
   formData.append("request", JSON.stringify(data));
 
-  // Add the image file if provided
   if (imageFile) {
     formData.append("imageFile", imageFile);
   }
@@ -136,13 +121,10 @@ export async function createEvent(
     method: "POST",
     headers: {
       Accept: "application/json",
-      // Note: Don't set Content-Type for FormData, let the browser set it with boundary
     },
     body: formData,
   });
 
-  // Debug: Log response details
-  console.log("createEvent: response status:", response.status);
   if (!response.ok) {
     const errorText = await response.text();
     console.error("createEvent: error response:", errorText);
@@ -158,7 +140,6 @@ export async function fetchCategorizedEvents(
 ): Promise<CategorizedEvents> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
-    // MOCK DATA or empty for build safety
     return {};
   }
   try {
@@ -194,7 +175,6 @@ export function insertAds(
       result.push({
         isAd: true,
         id: `ad-${adIndex++}`,
-        // Add any other AdEvent fields if needed
       } as AdEvent);
     }
   }

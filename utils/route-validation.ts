@@ -26,7 +26,7 @@ export function isValidPlace(place: string): boolean {
   }
 
   // Check against known invalid places
-  if (INVALID_PLACES.includes(place as any)) {
+  if (INVALID_PLACES.includes(place as (typeof INVALID_PLACES)[number])) {
     return false;
   }
 
@@ -56,7 +56,6 @@ export function isValidPlace(place: string): boolean {
  */
 export function validatePlaceOrThrow(place: string): void {
   if (!isValidPlace(place)) {
-    console.log(`🚫 Blocking invalid place request: ${place}`);
     throw new Error(`Invalid place: ${place}`);
   }
 }
@@ -75,7 +74,6 @@ export function validatePlaceForMetadata(place: string): {
   };
 } {
   if (!isValidPlace(place)) {
-    console.log(`🚫 Blocking invalid place in metadata: ${place}`);
     return {
       isValid: false,
       fallbackMetadata: {

@@ -31,6 +31,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   handleCategoriesChange,
   progress,
   imageToUpload,
+  imageFile,
 }) => {
   // Internal validation state - no longer passed from parent
   const [formState, setFormState] = useState({
@@ -41,15 +42,15 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   // Update validation state whenever form data changes
   useEffect(() => {
-    const newFormState = getZodValidationState(form, true);
+    const newFormState = getZodValidationState(form, true, imageFile);
     setFormState(newFormState);
-  }, [form]);
+  }, [form, imageFile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Final validation with isPristine = false for submit
-    const submitFormState = getZodValidationState(form, false);
+    const submitFormState = getZodValidationState(form, false, imageFile);
     setFormState(submitFormState);
 
     // Only call parent onSubmit if validation passes

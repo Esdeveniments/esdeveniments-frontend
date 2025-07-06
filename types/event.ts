@@ -241,6 +241,7 @@ export interface EventFormProps {
   handleCategoriesChange: (categories: Option[]) => void;
   progress: number;
   imageToUpload: string | null;
+  imageFile?: File | null;
 }
 
 export interface UseEventsOptions {
