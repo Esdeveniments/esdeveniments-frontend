@@ -76,7 +76,7 @@ export async function fetchEventById(
   }
 
   try {
-    const response = await fetch(`${apiUrl}/events/${uuid}?trackVisit=false`);
+    const response = await fetch(`${apiUrl}/events/${uuid}`);
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
