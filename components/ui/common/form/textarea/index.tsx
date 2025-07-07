@@ -1,23 +1,7 @@
 import { TextAreaProps } from "types/props";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import DOMPurify from "isomorphic-dompurify";
-
-// Same processing logic as Description component
-function processDescription(description: string): string {
-  if (!description) return "";
-
-  const urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
-  let processed = description.replace(urlRegex, function (url) {
-    let hyperlink = url;
-    if (!hyperlink.match("^https?://")) {
-      hyperlink = "http://" + hyperlink;
-    }
-    return `<a href="${hyperlink}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-  });
-
-  processed = processed.replace(/\n/g, "<br>");
-  return processed;
-}
+import { processDescription } from "utils/text-processing";
 
 export default function TextArea({ id, value, onChange }: TextAreaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -35,7 +19,10 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
   }, [value, showPreview]);
 
   // Sanitize the processed description to prevent XSS attacks
-  const sanitizedHtml = DOMPurify.sanitize(processDescription(value || ""));
+  const sanitizedHtml = useMemo(
+    () => DOMPurify.sanitize(processDescription(value || "")),
+    [value]
+  );
 
   return (
     <div className="w-full">

@@ -15,6 +15,9 @@ export {
 // String helpers
 export { sanitize, slug, truncateString } from "./string-helpers";
 
+// Text processing helpers
+export { processDescription } from "./text-processing";
+
 // Form helpers
 export {
   getRegionValue,
