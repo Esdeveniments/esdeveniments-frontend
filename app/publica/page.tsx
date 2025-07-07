@@ -17,13 +17,13 @@ const defaultForm: FormData = {
   type: "FREE",
   startDate: (() => {
     const now = new Date();
-    now.setHours(9, 0, 0, 0); // Set to 9:00 AM
+    now.setHours(9, 0, 0, 0);
     return now.toISOString().slice(0, 16);
   })(),
   startTime: "",
   endDate: (() => {
     const now = new Date();
-    now.setHours(10, 0, 0, 0); // Set to 10:00 AM
+    now.setHours(10, 0, 0, 0);
     return now.toISOString().slice(0, 16);
   })(),
   endTime: "",
@@ -46,7 +46,6 @@ const Publica = () => {
   const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
     useGetRegionsWithCities();
 
-  // Fetch categories
   const { categories } = useCategories();
 
   const regionOptions = useMemo(
@@ -63,7 +62,6 @@ const Publica = () => {
   const cityOptions = useMemo(() => {
     if (!regionsWithCities || !form.region) return [];
 
-    // SIMPLIFIED: Direct region lookup without complex find operation
     const regionId = getRegionValue(form.region);
     if (!regionId) return [];
 
@@ -72,7 +70,7 @@ const Publica = () => {
       ? region.cities.map((city) => ({
           id: city.id,
           label: city.label,
-          value: city.id.toString(), // Use ID as value for proper form handling
+          value: city.id.toString(),
         }))
       : [];
   }, [regionsWithCities, form.region]);
@@ -86,7 +84,6 @@ const Publica = () => {
     [categories]
   );
 
-  // Simple form change handler - no validation here
   const handleFormChange = <K extends keyof FormData>(
     name: K,
     value: FormData[K]
@@ -114,18 +111,8 @@ const Publica = () => {
     handleFormChange("categories", categories);
 
   const onSubmit = async () => {
-    // The EventForm component will handle validation internally
-    // This will only be called if validation passes
-    console.log("Form submitted successfully, processing...");
-
     startTransition(async () => {
       try {
-        // Check if image is provided
-        if (!imageFile) {
-          console.log("No image file provided");
-          return;
-        }
-
         const regionLabel =
           form.region && "label" in form.region ? form.region.label : "";
         const townLabel =
@@ -137,14 +124,17 @@ const Publica = () => {
           location,
         });
 
-        const result = await createEventAction(eventData, imageFile);
+        const result = await createEventAction(
+          eventData,
+          imageFile || undefined
+        );
 
         if (result && result.success && result.event) {
           const { slug } = result.event;
 
           router.push(`/e/${slug}`);
         } else {
-          console.error("Error creating event");
+          captureException("Error creating event");
         }
       } catch (error) {
         console.error("Submission error:", error);
@@ -178,6 +168,7 @@ const Publica = () => {
             handleTownChange={handleTownChange}
             handleCategoriesChange={handleCategoriesChange}
             imageToUpload={imagePreview}
+            imageFile={imageFile}
           />
         </div>
       </div>

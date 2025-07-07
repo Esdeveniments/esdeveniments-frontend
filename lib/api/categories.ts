@@ -4,9 +4,9 @@ import {
 } from "types/api/category";
 import { createCache, createKeyedCache } from "lib/api/cache";
 
-const cache = createCache<CategorySummaryResponseDTO[]>(300000);
+const cache = createCache<CategorySummaryResponseDTO[]>(86400000);
 const categoryByIdCache = createKeyedCache<CategoryDetailResponseDTO | null>(
-  300000
+  86400000
 );
 
 async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {

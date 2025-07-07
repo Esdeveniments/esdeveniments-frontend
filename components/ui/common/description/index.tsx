@@ -1,36 +1,20 @@
-import ReactHtmlParser from "react-html-parser";
+import DOMPurify from "isomorphic-dompurify";
 import DocumentIcon from "@heroicons/react/outline/DocumentIcon";
 import CulturalMessage from "../culturalMessage";
-import { JSX, ReactNode } from "react";
+import { JSX, useMemo } from "react";
 import { DescriptionProps } from "types/props";
-
-// Smart content processing function
-function processDescription(description: string): string {
-  if (!description) return "";
-
-  // Auto-convert plain text URLs to links (replicating your existing replaceURLs logic)
-  const urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
-  let processed = description.replace(urlRegex, function (url) {
-    let hyperlink = url;
-    if (!hyperlink.match("^https?://")) {
-      hyperlink = "http://" + hyperlink;
-    }
-    return `<a href="${hyperlink}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-  });
-
-  // Convert line breaks to HTML breaks for better readability
-  processed = processed.replace(/\n/g, "<br>");
-
-  return processed;
-}
+import { processDescription } from "utils/text-processing";
 
 export default function Description({
   description,
   location,
   locationValue,
 }: DescriptionProps): JSX.Element {
-  // Process the description for smart features
-  const processedDescription = processDescription(description || "");
+  // Process and sanitize the description to prevent XSS attacks
+  const sanitizedHtml = useMemo(() => {
+    const processedDescription = processDescription(description || "");
+    return DOMPurify.sanitize(processedDescription);
+  }, [description]);
 
   return (
     <section className="w-full flex justify-center items-start gap-2 px-4">
@@ -38,7 +22,7 @@ export default function Description({
       <div className="w-11/12 flex flex-col gap-4">
         <h2>Descripció</h2>
         <div className="w-full break-words overflow-hidden">
-          {ReactHtmlParser(processedDescription) as ReactNode}
+          <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
           <CulturalMessage
             location={location || ""}
             locationValue={locationValue || ""}

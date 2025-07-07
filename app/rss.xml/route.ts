@@ -12,19 +12,29 @@ const SITE_NAME = "Esdeveniments.cat";
 const getAllArticles = async (
   region: string,
   town: string,
-  maxEventsPerDay: string | undefined = undefined
-  // untilProp: number = 7
+  maxEventsPerDay: string | undefined = undefined,
+  untilProp: number = 7
 ): Promise<RssEvent[]> => {
   const { label: regionLabel } = await getPlaceTypeAndLabel(region);
   const { label: townLabel } = await getPlaceTypeAndLabel(town);
 
   try {
-    // Removed date filtering - new API doesn't support it
+    const now = new Date();
+    const from = new Date();
+    const until = new Date();
+    const untilDays = Number(untilProp);
+    if (!isNaN(untilDays) && untilDays > 0) {
+      until.setDate(now.getDate() + untilDays);
+    } else {
+      until.setDate(now.getDate() + 7); // Default to 7 days if invalid
+    }
 
     const response = await fetchEvents({
       page: 0,
       size: 1000,
       place: town || regionLabel,
+      from: from.toISOString().split("T")[0],
+      to: until.toISOString().split("T")[0],
     });
 
     const events: EventSummaryResponseDTO[] = response.content;
@@ -117,9 +127,8 @@ export async function GET(request: NextRequest) {
   const maxEventsPerDay = searchParams.get("maxEventsPerDay") || undefined;
   const untilParam = searchParams.get("until");
   const until = untilParam ? Number(untilParam) : 7;
-  console.log(until);
 
-  const articles = await getAllArticles(region, town, maxEventsPerDay);
+  const articles = await getAllArticles(region, town, maxEventsPerDay, until);
   const feed = await buildFeed(articles, region, town);
 
   return new Response(feed.rss2(), {

@@ -28,13 +28,11 @@ export async function generateMetadata({
 }) {
   const { place, byDate } = await params;
 
-  // 🛡️ SECURITY: Validate place parameter
   const validation = validatePlaceForMetadata(place);
   if (!validation.isValid) {
     return validation.fallbackMetadata;
   }
 
-  // Fetch categories to properly parse URL
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await fetchCategories();
@@ -42,20 +40,17 @@ export async function generateMetadata({
     console.error("generateMetadata: Error fetching categories:", error);
   }
 
-  // Parse URL segments to determine if byDate is actually a date or category
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
     new URLSearchParams(),
     categories
   );
 
-  // Extract the actual filter values from parsed URL
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
 
-  // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === actualCategory);
 
   const pageData = await generatePagesData({
@@ -78,7 +73,6 @@ export async function generateStaticParams() {
   const topPlaces = ["catalunya", "barcelona", "girona", "lleida", "tarragona"];
   const topDates = ["avui", "dema", "cap-de-setmana"];
 
-  // Get dynamic categories for generating category-only URLs (e.g., /barcelona/festivals)
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await fetchCategories();
@@ -90,12 +84,10 @@ export async function generateStaticParams() {
   const combinations = [];
 
   for (const place of topPlaces) {
-    // Generate date-only URLs (e.g., /barcelona/avui)
     for (const date of topDates) {
       combinations.push({ place, byDate: date });
     }
 
-    // Generate category-only URLs (e.g., /barcelona/festivals) - these represent category with default date
     for (const category of topCategories) {
       combinations.push({ place, byDate: category });
     }
@@ -114,42 +106,32 @@ export default async function ByDatePage({
   const { place, byDate } = await params;
   const search = await searchParams;
 
-  // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
 
-  // Fetch dynamic categories first for URL parsing
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await fetchCategories();
-    console.log(
-      "🔥 [place]/[byDate]/page.tsx - Fetched categories:",
-      categories.length
-    );
   } catch (error) {
     console.error(
       "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
       error
     );
-    // Continue without categories - components will use static fallbacks
+    categories = [];
   }
 
-  // Parse URL segments to determine if byDate is actually a date or category
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
     new URLSearchParams(),
     categories
   );
 
-  // Extract the actual filter values from parsed URL
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
 
-  // Extract additional filters from search params
   const searchCategory =
     typeof search.category === "string" ? search.category : undefined;
   const finalCategory = searchCategory || actualCategory;
 
-  // Use actualDate for date functions instead of byDate
   const dateFunctions = {
     avui: today,
     dema: tomorrow,
@@ -157,7 +139,6 @@ export default async function ByDatePage({
     "cap-de-setmana": weekend,
   };
 
-  // If we have a category filter and date is "tots" (default), use broader range
   let selectedFunction;
   if (actualDate === "tots" && finalCategory && finalCategory !== "tots") {
     selectedFunction = twoWeeksDefault;
@@ -175,12 +156,10 @@ export default async function ByDatePage({
     to: toLocalDateString(until),
   };
 
-  // Only add place if place is not "catalunya" (catalunya is not a valid API place)
   if (place !== "catalunya") {
     paramsForFetch.place = place;
   }
 
-  // Add category filter if present
   if (finalCategory && finalCategory !== "tots") {
     paramsForFetch.category = finalCategory;
   }
@@ -196,7 +175,6 @@ export default async function ByDatePage({
     );
 
     if (regionWithCities) {
-      // Get the region with slug from the regions API
       const regions = await fetchRegions();
       const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
 
@@ -210,7 +188,6 @@ export default async function ByDatePage({
           to: toLocalDateString(until),
         };
 
-        // Keep category filter in fallback if present
         if (finalCategory && finalCategory !== "tots") {
           fallbackParams.category = finalCategory;
         }
@@ -226,7 +203,6 @@ export default async function ByDatePage({
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
 
-  // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === finalCategory);
 
   const pageData = await generatePagesData({
@@ -239,13 +215,11 @@ export default async function ByDatePage({
     categoryName: categoryData?.name,
   });
 
-  // Calculate if there are more events available for Load More functionality
   const serverHasMore = eventsResponse
     ? !eventsResponse.last &&
       eventsWithAds.length < eventsResponse.totalElements
     : false;
 
-  // Generate JSON-LD structured data for events
   const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
   const structuredData =
     validEvents.length > 0

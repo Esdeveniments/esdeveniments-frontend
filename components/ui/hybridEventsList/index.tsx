@@ -19,7 +19,6 @@ function HybridEventsList({
   date,
   serverHasMore = false,
 }: HybridEventsListProps): ReactElement {
-  // Filter server events - memoize to prevent infinite re-renders
   const validInitialEvents = useMemo(
     () =>
       initialEvents.filter(
@@ -28,42 +27,20 @@ function HybridEventsList({
     [initialEvents]
   );
 
-  // Use SWR hook for data fetching with cumulative pagination
-  const {
-    events,
-    hasMore,
-    totalEvents,
-    loadMore,
-    isLoading,
-    isValidating,
-    error,
-  } = useEvents({
-    place,
-    category,
-    date,
-    initialSize: 10,
-    fallbackData: validInitialEvents,
-    serverHasMore,
-  });
+  const { events, hasMore, loadMore, isLoading, isValidating, error } =
+    useEvents({
+      place,
+      category,
+      date,
+      initialSize: 10,
+      fallbackData: validInitialEvents,
+      serverHasMore,
+    });
 
-  // Use SWR events if available, otherwise fall back to initial events
   const allEvents = events.length > 0 ? events : validInitialEvents;
 
-  console.log("🔍 HybridEventsList Debug:", {
-    serverHasMore,
-    hasMore,
-    totalEvents,
-    allEventsLength: allEvents.length,
-    validInitialEventsLength: validInitialEvents.length,
-    eventsLength: events.length,
-    isLoading,
-    isValidating,
-  });
-
-  // Handle error state
   if (error) {
     console.error("Events loading error:", error);
-    // Fall back to initial events on error
   }
 
   if (noEventsFound || allEvents.length === 0) {

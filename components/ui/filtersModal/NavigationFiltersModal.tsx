@@ -41,7 +41,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
-  // Local state for form inputs
   const [localPlace, setLocalPlace] = useState<string>("");
   const [localByDate, setLocalByDate] = useState<string>("");
   const [localCategory, setLocalCategory] = useState<string>("");
@@ -56,18 +55,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
     useGetRegionsWithCities();
 
-  const isLoadingCategories = false; // Categories are passed as props, no loading needed
-
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
     return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
 
-  // Initialize form state when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Initialize form state when modal opens
-      // Always reflect the current URL state - show what's currently active
       const place =
         currentSegments.place === "catalunya" ? "" : currentSegments.place;
 
@@ -84,7 +78,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalDistance(distance);
       setLocalUserLocation(initialUserLocation);
 
-      // Set select option for place
       const regionOption = regionsAndCitiesArray
         .flatMap((group) => group.options)
         .find((option) => option.value === place);
@@ -172,14 +165,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   );
 
   const applyFilters = () => {
-    console.log("Applying filters:", {
-      localPlace,
-      localByDate,
-      localCategory,
-      localDistance,
-    });
-
-    // Convert form state to filter changes
     const changes = {
       place: localPlace || "catalunya",
       byDate: localByDate || "avui",
@@ -188,18 +173,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       distance: localDistance ? parseInt(localDistance) : 50,
     };
 
-    // Build the new URL using our URL utilities
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
 
-    console.log("🔥 Navigating to URL:", newUrl);
-
-    // Send GA events
     sendEventToGA("Place", changes.place);
     sendEventToGA("ByDate", changes.byDate);
     sendEventToGA("Category", changes.category);
     sendEventToGA("Distance", changes.distance.toString());
 
-    // Navigate to new URL and close modal
     router.push(newUrl);
     onClose();
   };
@@ -257,23 +237,17 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               Categories
             </p>
             <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
-              {isLoadingCategories ? (
-                <p className="text-sm text-gray-500 col-span-3">
-                  Carregant categories...
-                </p>
-              ) : (
-                categories.map((category: CategorySummaryResponseDTO) => (
-                  <RadioInput
-                    key={category.id}
-                    id={category.slug}
-                    name="category"
-                    value={category.slug}
-                    checkedValue={localCategory}
-                    onChange={handleCategoryChange}
-                    label={category.name}
-                  />
-                ))
-              )}
+              {categories.map((category: CategorySummaryResponseDTO) => (
+                <RadioInput
+                  key={category.id}
+                  id={category.slug}
+                  name="category"
+                  value={category.slug}
+                  checkedValue={localCategory}
+                  onChange={handleCategoryChange}
+                  label={category.name}
+                />
+              ))}
             </div>
           </fieldset>
           <fieldset className="w-full flex flex-col justify-start items-start gap-6">

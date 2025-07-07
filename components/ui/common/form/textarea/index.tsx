@@ -1,23 +1,7 @@
 import { TextAreaProps } from "types/props";
-import { useEffect, useRef, useState } from "react";
-import ReactHtmlParser from "react-html-parser";
-
-// Same processing logic as Description component
-function processDescription(description: string): string {
-  if (!description) return "";
-
-  const urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
-  let processed = description.replace(urlRegex, function (url) {
-    let hyperlink = url;
-    if (!hyperlink.match("^https?://")) {
-      hyperlink = "http://" + hyperlink;
-    }
-    return `<a href="${hyperlink}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-  });
-
-  processed = processed.replace(/\n/g, "<br>");
-  return processed;
-}
+import { useEffect, useRef, useState, useMemo } from "react";
+import DOMPurify from "isomorphic-dompurify";
+import { processDescription } from "utils/text-processing";
 
 export default function TextArea({ id, value, onChange }: TextAreaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -33,6 +17,12 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
       textarea.style.height = `${Math.max(300, textarea.scrollHeight)}px`;
     }
   }, [value, showPreview]);
+
+  // Sanitize the processed description to prevent XSS attacks
+  const sanitizedHtml = useMemo(
+    () => DOMPurify.sanitize(processDescription(value || "")),
+    [value]
+  );
 
   return (
     <div className="w-full">
@@ -51,9 +41,10 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
       <div className="mt-2">
         {showPreview ? (
           <div className="w-full min-h-[300px] p-3 border rounded-xl border-bColor bg-gray-50">
-            <div className="break-words preview-content">
-              {ReactHtmlParser(processDescription(value || ""))}
-            </div>
+            <div
+              className="break-words preview-content"
+              dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+            />
             {!value && (
               <p className="text-gray-500 italic">
                 Escriu alguna cosa per veure la previsualització...
@@ -61,13 +52,13 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             )}
             <style jsx>{`
               .preview-content :global(a) {
-                color: #FF0037 !important;
+                color: #ff0037 !important;
                 text-decoration: underline;
                 font-weight: 500;
                 transition: color 0.2s ease;
               }
               .preview-content :global(a:hover) {
-                color: #CC002C !important;
+                color: #cc002c !important;
                 text-decoration: none;
               }
             `}</style>

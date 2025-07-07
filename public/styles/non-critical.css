@@ -1,0 +1,187 @@
+/* Non-critical CSS - loaded asynchronously */
+
+/* Enhanced scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fff;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 20px;
+}
+
+/* Form styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 5px;
+  background: #ddd;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+input[type="range"]:hover {
+  opacity: 1;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff0037;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+}
+
+/* Additional animations */
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-appear {
+  animation: appear 0.3s ease-out;
+}
+
+/* Editor styles */
+.ql-toolbar {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.ql-container {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Map styling */
+#map,
+#mymap {
+  height: 100%;
+}
+
+#mymap iframe {
+  border-radius: 12px;
+}
+
+/* Ad slot styling */
+#ad-card-slot {
+  min-height: 250px;
+}
+
+#ad-article-slot {
+  min-height: 90px;
+}
+
+/* Slider styles */
+.slider {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  border-radius: 5px;
+  background: #13b60a;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: 0.2s;
+  transition: opacity 0.2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: #4caf50;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+}
+
+iframe {
+  max-width: 100% !important;
+}
+
+/* Editor styles */
+.reset-this * {
+  font-size: revert;
+  font-weight: revert;
+  font-family: revert;
+  font-style: revert;
+}
+
+.ql-editor > p {
+  margin-top: 1.3333333em !important;
+  margin-bottom: 1.3333333em !important;
+}
+
+.ql-editor > ul {
+  margin-top: 1.3333333em !important;
+  margin-bottom: 1.3333333em !important;
+}
+
+.ql-editor > ul > li {
+  margin-top: 0.6666667em;
+  margin-bottom: 0.6666667em;
+}
+
+/* Form styles */
+[type="text"]:focus {
+  box-shadow: inset 0px 0px 0px 0px white;
+}
+
+.select-container input {
+  --tw-border-opacity: 1;
+  border-color: rgb(209 213 219 / var(--tw-border-opacity));
+  box-shadow: inset 0px 0px 0px 0px white;
+}
+
+.select-container input:focus {
+  box-shadow: inset 0px 0px 0px 0px white;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+/* Image effects */
+.blurred-image {
+  image-rendering: -moz-crisp-edges; /* Firefox */
+  image-rendering: -o-crisp-edges; /* Opera */
+  image-rendering: -webkit-optimize-contrast; /* Webkit (non-standard naming) */
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+}

@@ -2,6 +2,7 @@ import NextImage from "next/image";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { env } from "@utils/helpers";
 import { ImageComponentProps } from "types/common";
+import { getServerImageQuality } from "@utils/image-quality";
 
 // Server-side compatible Image component
 function ImageServer({
@@ -13,9 +14,9 @@ function ImageServer({
   location,
   region,
   date,
+  quality,
 }: ImageComponentProps) {
   if (!image) {
-    // Use server-side gradient fallback
     return (
       <div className={className}>
         <ImgDefaultServer
@@ -28,6 +29,12 @@ function ImageServer({
     );
   }
 
+  const imageQuality = getServerImageQuality({
+    isPriority: priority,
+    isExternal: true,
+    customQuality: quality,
+  });
+
   return (
     <div className={className} style={{ position: "relative" }}>
       <NextImage
@@ -37,14 +44,14 @@ function ImageServer({
         width={500}
         height={260}
         loading={priority ? "eager" : "lazy"}
-        quality={75} // Fixed quality for server-side
+        quality={imageQuality}
         style={{
           objectFit: "cover",
         }}
         priority={priority}
+        fetchPriority={priority ? "high" : "auto"}
         sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw"
         unoptimized={env === "dev"}
-        // For server-side, we can't handle onError, so we rely on Next.js built-in fallbacks
       />
     </div>
   );
