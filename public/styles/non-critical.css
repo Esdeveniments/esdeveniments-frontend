@@ -1,6 +1,6 @@
-/* Non-critical CSS loaded after initial render */
+/* Non-critical CSS - loaded asynchronously */
 
-/* Custom scrollbar styles */
+/* Enhanced scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 3px;
@@ -11,8 +11,81 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #fff;
+  background-color: #ccc;
   border-radius: 20px;
+}
+
+/* Form styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 5px;
+  background: #ddd;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+input[type="range"]:hover {
+  opacity: 1;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff0037;
+  cursor: pointer;
+}
+
+/* Additional animations */
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-appear {
+  animation: appear 0.3s ease-out;
+}
+
+/* Editor styles */
+.ql-toolbar {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.ql-container {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Map styling */
+#map,
+#mymap {
+  height: 100%;
+}
+
+#mymap iframe {
+  border-radius: 12px;
+}
+
+/* Ad slot styling */
+#ad-card-slot {
+  min-height: 250px;
+}
+
+#ad-article-slot {
+  min-height: 90px;
 }
 
 /* Input range styles */
@@ -31,16 +104,6 @@ input[type="range"] {
 
 input[type="range"]:hover {
   opacity: 1;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #ff0037;
-  cursor: pointer;
 }
 
 input[type="range"]::-moz-range-thumb {
@@ -86,21 +149,6 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* Map styles */
-#map {
-  height: 100%;
-}
-
-#mymap {
-  background: url(/static/images/gMaps.webp);
-  background-size: auto;
-  overflow: hidden;
-}
-
-#mymap iframe {
-  border: 0;
-}
-
 iframe {
   max-width: 100% !important;
 }
@@ -111,24 +159,6 @@ iframe {
   font-weight: revert;
   font-family: revert;
   font-style: revert;
-}
-
-.ql-toolbar {
-  -webkit-border-top-left-radius: 12px;
-  -webkit-border-top-right-radius: 12px;
-  -moz-border-radius-topleft: 12px;
-  -moz-border-radius-topright: 12px;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-}
-
-.ql-container {
-  -webkit-border-bottom-right-radius: 12px;
-  -webkit-border-bottom-left-radius: 12px;
-  -moz-border-radius-bottomright: 12px;
-  -moz-border-radius-bottomleft: 12px;
-  border-bottom-right-radius: 12px;
-  border-bottom-left-radius: 12px;
 }
 
 .ql-editor > p {
@@ -165,17 +195,6 @@ iframe {
   width: 100%;
 }
 
-/* Ad styles */
-#ad-card-slot {
-  min-height: 240px;
-  min-width: 280px;
-}
-
-#ad-article-slot {
-  min-height: 280px;
-  min-width: 280px;
-}
-
 /* Image effects */
 .blurred-image {
   image-rendering: -moz-crisp-edges; /* Firefox */
@@ -183,20 +202,4 @@ iframe {
   image-rendering: -webkit-optimize-contrast; /* Webkit (non-standard naming) */
   image-rendering: crisp-edges;
   -ms-interpolation-mode: nearest-neighbor;
-}
-
-/* Custom animations */
-@keyframes appear {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-appear {
-  animation: appear 0.3s ease-out;
 }

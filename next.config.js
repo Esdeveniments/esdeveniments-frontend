@@ -12,6 +12,7 @@ const nextConfig = {
     ],
     optimizeCss: true,
     gzipSize: true,
+    cssChunking: "strict",
   },
   turbopack: {
     rules: {
@@ -40,6 +41,7 @@ const nextConfig = {
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
+    legacyBrowsers: false,
   },
   headers: async () => [
     {
