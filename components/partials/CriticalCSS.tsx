@@ -26,14 +26,7 @@ export default function CriticalCSS() {
     };
 
     // Load non-critical styles after initial render
-    const link = loadCSS("/styles/non-critical.css");
-
-    // Cleanup function
-    return () => {
-      if (link && link.parentNode) {
-        link.parentNode.removeChild(link);
-      }
-    };
+    loadCSS("/styles/non-critical.css");
   }, []);
 
   return null;
