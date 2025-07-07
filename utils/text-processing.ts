@@ -8,10 +8,10 @@
  * @returns Processed HTML string with converted URLs and line breaks
  */
 export function processDescription(description: string): string {
-  if (!description) return "";
+  if (!description || typeof description !== "string") return "";
 
   // Auto-convert plain text URLs to links
-  const urlRegex = /(((https?:\/\/)|(www\.))[^\s]+)/g;
+  const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+|www\.[^\s<>"{}|\\^`[\]]+)/g;
   let processed = description.replace(urlRegex, function (url) {
     let hyperlink = url;
     if (!hyperlink.match("^https?://")) {
