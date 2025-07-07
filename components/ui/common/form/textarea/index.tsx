@@ -1,6 +1,6 @@
 import { TextAreaProps } from "types/props";
 import { useEffect, useRef, useState } from "react";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 
 // Same processing logic as Description component
 function processDescription(description: string): string {

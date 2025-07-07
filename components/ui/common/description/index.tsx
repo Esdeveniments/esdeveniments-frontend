@@ -1,4 +1,4 @@
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 import DocumentIcon from "@heroicons/react/outline/DocumentIcon";
 import CulturalMessage from "../culturalMessage";
 import { JSX } from "react";

@@ -54,9 +54,38 @@ const nextConfig = {
         { key: "X-Frame-Options", value: "SAMEORIGIN" },
         { key: "X-Content-Type-Options", value: "nosniff" },
         { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+        // Default restrictive permissions for all pages
         {
           key: "Permissions-Policy",
-          value: "camera=(), microphone=(), geolocation=*",
+          value: "camera=(), microphone=(), geolocation=()",
+        },
+      ],
+    },
+    // Allow geolocation only on event listing pages where filtering is needed
+    {
+      source: "/:place((?!e|publica|qui-som|sitemap|offline).*)",
+      headers: [
+        {
+          key: "Permissions-Policy",
+          value: "camera=(), microphone=(), geolocation=(self)",
+        },
+      ],
+    },
+    {
+      source: "/:place/:byDate",
+      headers: [
+        {
+          key: "Permissions-Policy",
+          value: "camera=(), microphone=(), geolocation=(self)",
+        },
+      ],
+    },
+    {
+      source: "/:place/:byDate/:category",
+      headers: [
+        {
+          key: "Permissions-Policy",
+          value: "camera=(), microphone=(), geolocation=(self)",
         },
       ],
     },
