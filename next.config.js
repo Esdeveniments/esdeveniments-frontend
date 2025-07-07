@@ -41,7 +41,6 @@ const nextConfig = {
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
-    legacyBrowsers: false,
   },
   headers: async () => [
     {
@@ -105,7 +104,21 @@ const nextConfig = {
       ],
     },
     {
-      source: "/fonts/:path*",
+      source: "/static/fonts/:path*",
+      headers: [
+        { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        { key: "Access-Control-Allow-Origin", value: "*" },
+        { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+      ],
+    },
+    {
+      source: "/_next/static/:path*",
+      headers: [
+        { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+      ],
+    },
+    {
+      source: "/_next/image",
       headers: [
         { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
       ],

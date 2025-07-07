@@ -2,24 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Barlow Condensed";
-  src: url("/static/fonts/BarlowCondensed-Regular.woff2") format("woff2"),
-    url("/static/fonts/BarlowCondensed-Regular.ttf") format("truetype");
-  font-display: swap;
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Roboto Flex";
-  src: url("/static/fonts/RobotoFlex-Regular.woff2") format("woff2"),
-    url("/static/fonts/RobotoFlex-Regular.ttf") format("truetype");
-  font-display: swap;
-  font-weight: normal;
-  font-style: normal;
-}
-
 body {
   @apply font-sans antialiased;
 }
@@ -34,7 +16,7 @@ body {
   -moz-font-smoothing: antialiased;
   -o-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: "Roboto Flex", sans-serif;
+  font-family: var(--font-roboto-flex), sans-serif;
   font-size: 14px;
   color: #454545;
   font-weight: 300;
@@ -92,7 +74,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 h1 {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-barlow-condensed), sans-serif;
   font-size: 1.62rem;
   letter-spacing: 0.001rem;
   line-height: 2.1rem;
@@ -100,14 +82,14 @@ h1 {
 }
 
 h2 {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-barlow-condensed), sans-serif;
   font-size: 1.38rem;
   letter-spacing: 0.001rem;
   line-height: 1.6rem;
   font-weight: 600;
 }
 h3 {
-  font-family: "Barlow Condensed", sans-serif;
+  font-family: var(--font-barlow-condensed), sans-serif;
   font-size: 1.2rem;
   letter-spacing: 0.02rem;
   line-height: 1.65rem;
@@ -115,7 +97,7 @@ h3 {
 }
 
 p {
-  font-family: "Roboto Flex", sans-serif;
+  font-family: var(--font-roboto-flex), sans-serif;
   font-size: 1rem;
   letter-spacing: 0.038rem;
   line-height: 1.2rem;
