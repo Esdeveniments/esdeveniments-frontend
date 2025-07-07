@@ -490,4 +490,5 @@ export type QualityPreset =
   | "INTERNAL_HIGH"
   | "INTERNAL_STANDARD"
   | "NETWORK_SLOW"
-  | "NETWORK_FAST";
+  | "NETWORK_FAST"
+  | "EMERGENCY";

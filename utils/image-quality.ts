@@ -8,9 +8,11 @@ import { QualityOptions, QualityPreset } from "types/common";
 /**
  * Determines optimal image quality based on context
  * Research-based approach for external images:
- * - External images: 60-70 quality (optimal performance vs quality balance)
- * - LCP external images: 70-75 quality (critical loading performance)
- * - Mobile/slow networks: 50-60 quality (bandwidth conservation)
+ * - External images: 50-55 quality (optimized for performance vs quality balance)
+ * - LCP external images: 60-65 quality (critical loading performance)
+ * - Mobile/slow networks: 45-50 quality (bandwidth conservation)
+ *
+ * Updated based on Lighthouse analysis showing 159 KiB potential savings
  */
 export function getOptimalImageQuality({
   isPriority = false,
@@ -23,14 +25,14 @@ export function getOptimalImageQuality({
     return customQuality;
   }
 
-  // For external images, use research-based quality settings
+  // For external images, use optimized quality settings for performance
   if (isExternal) {
     if (isPriority) {
-      // LCP external images: 70-75 quality for critical loading
-      return 70;
+      // LCP external images: 60-65 quality for critical loading (reduced from 70)
+      return 60;
     } else {
       // For regular external images, use network-based quality, capped for performance.
-      return Math.min(networkQuality, 65);
+      return Math.min(networkQuality, 50);
     }
   }
 
@@ -40,7 +42,7 @@ export function getOptimalImageQuality({
 
 /**
  * Server-side quality selection (no network detection available)
- * Conservative approach for external images
+ * Conservative approach for external images with performance optimization
  */
 export function getServerImageQuality({
   isPriority = false,
@@ -50,22 +52,23 @@ export function getServerImageQuality({
   return getOptimalImageQuality({
     isPriority,
     isExternal,
-    networkQuality: 70, // Default fallback for server-side
+    networkQuality: 60, // Reduced default fallback for server-side (from 70)
     customQuality,
   });
 }
 
 /**
  * Quality presets for common scenarios
+ * Optimized based on Lighthouse performance analysis
  */
 export const QUALITY_PRESETS = {
-  LCP_EXTERNAL: 70, // LCP external images
-  EXTERNAL_HIGH: 65, // High-quality external images
-  EXTERNAL_STANDARD: 60, // Regular external images
-  EXTERNAL_MOBILE: 55, // Mobile/slow connections
-  INTERNAL_HIGH: 80, // Internal high-quality images
-  INTERNAL_STANDARD: 75, // Internal standard images
-  EMERGENCY: 50, // Emergency/breaking news (speed over quality)
+  LCP_EXTERNAL: 60, // LCP external images (reduced from 70)
+  EXTERNAL_HIGH: 50, // High-quality external images (reduced from 65)
+  EXTERNAL_STANDARD: 45, // Regular external images (reduced from 60)
+  EXTERNAL_MOBILE: 40, // Mobile/slow connections (reduced from 55)
+  INTERNAL_HIGH: 80, // Internal high-quality images (unchanged)
+  INTERNAL_STANDARD: 75, // Internal standard images (unchanged)
+  EMERGENCY: 35, // Emergency/breaking news - maximum speed (reduced from 50)
 } as const;
 
 /**
@@ -80,6 +83,7 @@ export function getQualityPreset(preset: QualityPreset): number {
     INTERNAL_STANDARD: QUALITY_PRESETS.INTERNAL_STANDARD,
     NETWORK_SLOW: QUALITY_PRESETS.EXTERNAL_MOBILE,
     NETWORK_FAST: QUALITY_PRESETS.INTERNAL_HIGH,
+    EMERGENCY: QUALITY_PRESETS.EMERGENCY,
   };
 
   return presetMap[preset] || QUALITY_PRESETS.EXTERNAL_STANDARD;
