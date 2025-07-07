@@ -5,7 +5,7 @@ frontend:
       commands:
         - echo "Installing dependencies..."
         - yarn install --frozen-lockfile
-        - echo "NEXT_PUBLIC_BUILD_ID=$(date +%s)" >> .env.production
+        - echo "NEXT_PUBLIC_BUILD_ID=${AWS_COMMIT_ID:-$(date +%s)}" >> .env.production
     build:
       commands:
         - echo "Building Next.js application..."
@@ -70,7 +70,7 @@ frontend:
     - pattern: "/api/**"
       headers:
         - key: "Access-Control-Allow-Origin"
-          value: "*"
+          value: "https://esdeveniments.cat"
         - key: "Access-Control-Allow-Methods"
           value: "GET,OPTIONS,PATCH,DELETE,POST,PUT"
         - key: "Access-Control-Allow-Headers"
@@ -83,8 +83,8 @@ frontend:
           value: "on"
         - key: "Strict-Transport-Security"
           value: "max-age=63072000; includeSubDomains; preload"
-        - key: "X-XSS-Protection"
-          value: "1; mode=block"
+        - key: "Content-Security-Policy"
+          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: http:; connect-src 'self' https://www.google-analytics.com https://api-pre.esdeveniments.cat; frame-src 'self' https://www.google.com https://googleads.g.doubleclick.net"
         - key: "X-Frame-Options"
           value: "SAMEORIGIN"
         - key: "X-Content-Type-Options"
