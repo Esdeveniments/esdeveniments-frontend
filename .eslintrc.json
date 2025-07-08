@@ -20,7 +20,7 @@
   },
   "overrides": [
     {
-      "files": ["public/sw.js"],
+      "files": ["public/sw.js", "public/sw-template.js"],
       "env": {
         "serviceworker": true
       },

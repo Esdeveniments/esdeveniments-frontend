@@ -132,7 +132,7 @@ workbox.routing.registerRoute(
         statuses: [0, 200],
       }),
     ],
-    networkTimeoutSeconds: 10, // Fallback to cache if network is slow
+    networkTimeoutSeconds: 5, // Fallback to cache if network is slow
   })
 );
 
