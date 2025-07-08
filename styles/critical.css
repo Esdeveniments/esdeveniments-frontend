@@ -3,15 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Critical font CSS variables */
-.font-roboto-flex {
-  font-family: var(--font-roboto-flex), sans-serif;
-}
-
-.font-barlow-condensed {
-  font-family: var(--font-barlow-condensed), sans-serif;
-}
-
 /* Critical base styles */
 body {
   @apply font-sans antialiased;
