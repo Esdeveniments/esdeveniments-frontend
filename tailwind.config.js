@@ -5,8 +5,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        roboto: ["Roboto Flex", "sans-serif"],
-        barlow: ["Barlow Condensed", "sans-serif"],
+        roboto: ["var(--font-roboto-flex)", "sans-serif"],
+        barlow: ["var(--font-barlow-condensed)", "sans-serif"],
       },
       screens: {
         xs: "360px",

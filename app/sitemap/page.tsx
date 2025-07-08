@@ -1,6 +1,7 @@
 import { siteUrl } from "@config/index";
 import { fetchRegions } from "@lib/api/regions";
 import { fetchCities } from "@lib/api/cities";
+import { headers } from "next/headers";
 import Link from "next/link";
 import Script from "next/script";
 import type { RegionSummaryResponseDTO } from "types/api/event";
@@ -29,6 +30,10 @@ async function getData(): Promise<{
 
 export default async function Page() {
   const { regions, cities } = await getData();
+
+  // Read the nonce from the middleware headers
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
 
   // Generate structured data for the sitemap
   const breadcrumbs = [
@@ -75,6 +80,7 @@ export default async function Page() {
         id="webpage-schema"
         type="application/ld+json"
         strategy="afterInteractive"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(webPageSchema),
         }}
@@ -83,6 +89,7 @@ export default async function Page() {
         id="site-navigation-schema"
         type="application/ld+json"
         strategy="afterInteractive"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(siteNavigationSchema),
         }}

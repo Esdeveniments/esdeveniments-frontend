@@ -1,8 +1,9 @@
 // components/partials/WebsiteSchema.tsx
 import Script from "next/script";
 import { siteUrl } from "@config/index";
+import { WebsiteSchemaProps } from "types/props";
 
-export default function WebsiteSchema() {
+export default function WebsiteSchema({ nonce }: WebsiteSchemaProps) {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -33,6 +34,7 @@ export default function WebsiteSchema() {
       id="website-schema"
       type="application/ld+json"
       strategy="afterInteractive"
+      nonce={nonce}
       dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
     />
   );

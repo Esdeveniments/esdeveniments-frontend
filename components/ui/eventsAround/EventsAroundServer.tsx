@@ -50,6 +50,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   showJsonLd = false,
   jsonLdId,
   title,
+  nonce = "",
 }) => {
   // Generate JSON-LD data for SEO
   const generateJsonLdData = () => {
@@ -116,6 +117,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           <Script
             id={jsonLdId || `events-around-${Date.now()}`}
             type="application/ld+json"
+            nonce={nonce}
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
           />
         )}
@@ -143,6 +145,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
         <Script
           id={jsonLdId || `events-around-${Date.now()}`}
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
         />
       )}

@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
+import { getVersionedUrl } from "../../utils/buildVersion";
 
 export default function CriticalCSS() {
   useEffect(() => {
-    // Check if CSS is already loaded
-    if (document.querySelector('link[href="/styles/non-critical.css"]')) {
+    // Get versioned CSS URL
+    const cssUrl = getVersionedUrl("/styles/non-critical.css");
+
+    // Check if CSS is already loaded (check for any version)
+    if (document.querySelector('link[href^="/styles/non-critical.css"]')) {
       return;
     }
 
@@ -26,7 +30,7 @@ export default function CriticalCSS() {
     };
 
     // Load non-critical styles after initial render
-    loadCSS("/styles/non-critical.css");
+    loadCSS(cssUrl);
   }, []);
 
   return null;

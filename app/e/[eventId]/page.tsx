@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
 import { extractUuidFromSlug } from "@utils/string-helpers";
+import { headers } from "next/headers";
 import Script from "next/script";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
@@ -33,6 +34,11 @@ export default async function EventPage({
 }) {
   const slug = (await params).eventId;
   const uuid = extractUuidFromSlug(slug);
+  
+  // Read the nonce from the middleware headers
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
+
   const event: EventDetailResponseDTO | null = await fetchEventById(uuid);
   if (!event) return <NoEventFound />;
   if (event.title === "CANCELLED") return <NoEventFound />;
@@ -86,6 +92,7 @@ export default async function EventPage({
         id={event.id ? String(event.id) : undefined}
         type="application/ld+json"
         strategy="afterInteractive"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
       />
       {/* Related Events JSON-LD */}
@@ -94,6 +101,7 @@ export default async function EventPage({
           id={`related-events-${event.id}`}
           type="application/ld+json"
           strategy="afterInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(relatedEventsJsonData),
           }}
@@ -122,6 +130,7 @@ export default async function EventPage({
               <EventsAroundSection
                 events={event.relatedEvents}
                 title="Esdeveniments relacionats"
+                nonce={nonce}
               />
             )}
             {/* Final Ad Section */}
