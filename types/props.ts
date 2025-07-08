@@ -12,6 +12,16 @@ import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, QueryParams } from "@utils/url-filters";
 
+// Google Scripts Props
+export interface GoogleScriptsProps {
+  nonce: string;
+}
+
+// WebsiteSchema Props
+export interface WebsiteSchemaProps {
+  nonce: string;
+}
+
 export interface SelectComponentProps {
   id: string;
   title: string;
@@ -267,6 +277,7 @@ export interface ServerEventsCategorizedProps {
   categorizedEvents: Record<string, ListEvent[]>;
   pageData?: PageData;
   categories?: CategorySummaryResponseDTO[];
+  nonce?: string;
 }
 
 export interface ServerEventsListProps {
@@ -274,6 +285,7 @@ export interface ServerEventsListProps {
   placeTypeLabel?: PlaceTypeAndLabel;
   pageData?: PageData;
   noEventsFound?: boolean;
+  nonce?: string;
 }
 
 // Location Discovery Widget Props

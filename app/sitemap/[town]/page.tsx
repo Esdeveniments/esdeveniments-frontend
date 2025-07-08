@@ -1,6 +1,7 @@
 import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
+import { headers } from "next/headers";
 import Link from "next/link";
 import Script from "next/script";
 import { fetchPlaceBySlug } from "@lib/api/places";
@@ -31,6 +32,11 @@ export default async function Page({
   params: Promise<TownStaticPathParams>;
 }) {
   const { town } = await params;
+
+  // Read the nonce from the middleware headers
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
+
   const years: number[] = getAllYears();
   const place = await fetchPlaceBySlug(town);
   const label = place?.name || town;
@@ -77,6 +83,7 @@ export default async function Page({
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(collectionPageSchema),
         }}
+        nonce={nonce}
       />
 
       <div

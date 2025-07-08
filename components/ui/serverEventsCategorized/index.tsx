@@ -14,6 +14,7 @@ function ServerEventsCategorized({
   categorizedEvents,
   pageData,
   categories,
+  nonce = "",
 }: ServerEventsCategorizedProps): ReactElement {
   // Filter out ads before processing
   const filteredCategorizedEvents = Object.entries(categorizedEvents).reduce(
@@ -110,6 +111,7 @@ function ServerEventsCategorized({
                       showJsonLd={true}
                       title={categoryName}
                       jsonLdId={`category-events-${categoryName}-${events.length}`}
+                      nonce={nonce}
                     />
 
                     {/* Ad placement removed for server component - can be added via client component */}

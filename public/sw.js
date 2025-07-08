@@ -63,6 +63,7 @@ workbox.routing.registerRoute(
     } catch (error) {
       // If the network fails AND the page isn't in the cache,
       // serve the pre-cached offline page as a last resort.
+      console.warn("Failed to load page:", error);
       const cache = await caches.open(workbox.core.cacheNames.precache);
       const offlinePage = await cache.match("/offline");
       return offlinePage;

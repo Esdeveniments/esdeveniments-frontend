@@ -87,7 +87,7 @@ export function middleware(request: NextRequest) {
   }
 
   // --- Generate and Apply Security Headers for all other pages ---
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const nonce = crypto.randomUUID();
   const csp = getCsp(nonce);
 
   const requestHeaders = new Headers(request.headers);
@@ -122,13 +122,13 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
+     * - _next (Next.js internal files)
      * - favicon.ico (favicon file)
      * - robots.txt, sitemap.xml, ads.txt (SEO files)
      * - static (static assets)
      * - styles (CSS files)
+     * - sw.js (service worker)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap|ads.txt|static|styles).*)",
+    "/((?!api|_next|favicon.ico|robots.txt|sitemap\\.xml|ads.txt|static|styles|sw\\.js).*)",
   ],
 };

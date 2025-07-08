@@ -1,6 +1,7 @@
 import "../styles/critical.css";
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import GoogleScripts from "./GoogleScripts";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
@@ -25,7 +26,15 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  // Read the nonce from the middleware headers
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
+
   return (
     <html
       lang="ca"
@@ -43,9 +52,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//www.google-analytics.com" />
-        <WebsiteSchema />
+        <WebsiteSchema nonce={nonce} />
         <CriticalCSS />
-        <GoogleScripts />
+        <GoogleScripts nonce={nonce} />
         <BaseLayout>{children}</BaseLayout>
       </body>
     </html>

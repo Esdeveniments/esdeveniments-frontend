@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
@@ -73,6 +74,10 @@ export default async function Page({
 }) {
   const { place } = await params;
   const search = await searchParams;
+
+  // Read the nonce from the middleware headers
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
 
   validatePlaceOrThrow(place);
 
@@ -177,6 +182,7 @@ export default async function Page({
           id={`events-${place}`}
           type="application/ld+json"
           strategy="afterInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredData),
           }}

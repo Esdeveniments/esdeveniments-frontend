@@ -13,6 +13,7 @@ function ServerEventsList({
   placeTypeLabel,
   pageData,
   noEventsFound = false,
+  nonce = "",
 }: ServerEventsListProps): ReactElement {
   // Filter out ads and invalid events
   const validEvents = events.filter(
@@ -44,6 +45,7 @@ function ServerEventsList({
             validEvents.length
           }`}
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonEvents) }}
         />
       )}
