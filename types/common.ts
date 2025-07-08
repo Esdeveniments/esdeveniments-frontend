@@ -106,14 +106,6 @@ export interface NetworkQualityCache {
   timestamp: number;
 }
 
-declare global {
-  interface Navigator {
-    connection?: NetworkInformation;
-    mozConnection?: NetworkInformation;
-    webkitConnection?: NetworkInformation;
-  }
-}
-
 export interface UseOnScreenOptions extends IntersectionObserverInit {
   freezeOnceVisible?: boolean;
 }

@@ -20,9 +20,9 @@ const FilterButton = ({
   };
 
   return (
-    <div className="w-full bg-whiteCorp flex justify-center items-center nowrap">
+    <div className="flex-shrink-0 bg-whiteCorp flex justify-center items-center nowrap min-w-max">
       <div
-        className={`w-full flex justify-center items-center gap-1 px-1 ease-in-out duration-300 focus:outline-none font-medium ${
+        className={`flex justify-center items-center gap-1 px-2 py-1 ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap ${
           enabled
             ? "text-primary"
             : "border-whiteCorp text-blackCorp hover:bg-darkCorp hover:text-blackCorp"
@@ -30,19 +30,19 @@ const FilterButton = ({
       >
         <span
           onClick={onOpenModal}
-          className="w-full text-center font-barlow uppercase text-[16px]"
+          className="text-center font-barlow uppercase text-[16px] cursor-pointer"
         >
           {text}
         </span>
         {enabled ? (
           <XIcon
-            className="h-5 w-5"
+            className="h-5 w-5 cursor-pointer"
             aria-hidden="true"
             onClick={handleRemove}
           />
         ) : (
           <ChevronDownIcon
-            className="h-5 w-5"
+            className="h-5 w-5 cursor-pointer"
             aria-hidden="true"
             onClick={(e: MouseEvent) => {
               e.stopPropagation();

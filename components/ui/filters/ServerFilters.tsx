@@ -93,7 +93,13 @@ const ServerFilters = ({
             Filtres
           </p>
         </div>
-        <div className="w-8/10 flex items-center gap-1 border-0 placeholder:text-bColor overflow-x-auto">
+        <div
+          className="flex-1 flex items-center gap-1 border-0 placeholder:text-bColor overflow-x-auto"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#cccccc transparent",
+          }}
+        >
           <FilterButton
             text={getPlaceDisplayName() || "Població"}
             enabled={filters.place !== "catalunya"}

@@ -1,0 +1,80 @@
+import { useState, useCallback, useRef, useEffect } from "react";
+
+/**
+ * Hook for handling image loading retry logic
+ * Provides state management and handlers for image loading with retry functionality
+ */
+export function useImageRetry(maxRetries: number = 2) {
+  const [retryCount, setRetryCount] = useState(0);
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  /**
+   * Handle image load error with exponential backoff retry
+   */
+  const handleError = useCallback(() => {
+    if (retryCount < maxRetries) {
+      setRetryCount((prev) => prev + 1);
+      setIsLoading(true);
+      // Add exponential backoff delay before retry to avoid overwhelming the server
+      retryTimeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000 * (retryCount + 1));
+    } else {
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, [retryCount, maxRetries]);
+
+  /**
+   * Handle successful image load
+   */
+  const handleLoad = useCallback(() => {
+    setIsLoading(false);
+    setHasError(false);
+  }, []);
+
+  /**
+   * Reset retry state (useful for new image sources)
+   */
+  const reset = useCallback(() => {
+    // Clear any pending timeout when resetting
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    setRetryCount(0);
+    setHasError(false);
+    setIsLoading(true);
+  }, []);
+
+  /**
+   * Generate unique key for image retry (forces re-render)
+   */
+  const getImageKey = useCallback(
+    (baseSrc: string) => {
+      return `${baseSrc}-${retryCount}`;
+    },
+    [retryCount]
+  );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  return {
+    retryCount,
+    hasError,
+    isLoading,
+    handleError,
+    handleLoad,
+    reset,
+    getImageKey,
+  };
+}

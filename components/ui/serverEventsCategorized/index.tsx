@@ -55,11 +55,10 @@ function ServerEventsCategorized({
           <div className="p-2 lg:p-0">
             {Object.entries(filteredCategorizedEvents).map(
               ([category, events], index) => {
-                // Aggressive Priority logic for fast initial load:
-                // First 3 categories get priority to ensure fast visual loading
-                // Mobile: 2 categories × 3 images = 6 priority images
-                // Desktop: 3 categories × 3 images = 9 priority images
-                const shouldUsePriority = index < 3;
+                // Conservative priority logic for homepage main content:
+                // Only first 2 categories get priority to balance performance
+                // This gives priority to ~6 images (2 categories × 3 images each)
+                const shouldUsePriority = index < 2;
 
                 // Try to get category name from dynamic categories first, fallback to static mapping
                 let categoryName: string;

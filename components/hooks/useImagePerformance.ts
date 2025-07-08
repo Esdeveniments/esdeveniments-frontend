@@ -16,7 +16,8 @@ export const useImagePerformance = (
     reportedRef.current = false;
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
+
+    // img.crossOrigin = "anonymous";
 
     const handleLoad = () => {
       if (!startTimeRef.current || reportedRef.current) return;
@@ -45,7 +46,10 @@ export const useImagePerformance = (
         console.log("Image Performance:", metrics);
 
         // Send to analytics or monitoring service
-        if (typeof window !== "undefined" && window.gtag) {
+        if (
+          typeof window !== "undefined" &&
+          typeof window.gtag === "function"
+        ) {
           window.gtag("event", "image_performance", {
             event_category: "performance",
             event_label: priority ? "priority" : "normal",
@@ -83,6 +87,7 @@ export const useImagePerformance = (
     img.src = src;
 
     return () => {
+      reportedRef.current = true;
       img.removeEventListener("load", handleLoad);
       img.removeEventListener("error", handleError);
     };

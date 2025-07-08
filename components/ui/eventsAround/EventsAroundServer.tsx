@@ -138,7 +138,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     );
   }
 
-  // Default compact layout
+  // Default compact layout - for related events on individual pages (no priority)
   return (
     <>
       {jsonLdData && (
@@ -176,7 +176,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     title={event.title}
                     alt={event.title}
                     image={image}
-                    priority={index <= 1}
+                    priority={false}
                     context="card"
                   />
                 </div>

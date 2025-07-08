@@ -51,6 +51,7 @@ function ImageServer({
         quality={imageQuality}
         style={{
           objectFit: "cover",
+          height: "auto", // Maintain aspect ratio
         }}
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}
