@@ -5,9 +5,14 @@ frontend:
       commands:
         # Use Yarn with --frozen-lockfile for fast, deterministic builds in CI.
         - yarn install --frozen-lockfile
-        - echo "NEXT_PUBLIC_BUILD_ID=${AWS_COMMIT_ID:-$(date +%s)}" >> .env.production
-        # Disable Next.js telemetry for faster builds
-        - echo "NEXT_TELEMETRY_DISABLED=1" >> .env.production
+        # Remove any existing keys, then write a single, up-to-date copy
+        - sed -i '/^NEXT_PUBLIC_BUILD_ID=/d' .env.production 2>/dev/null || true
+        - sed -i '/^NEXT_TELEMETRY_DISABLED=/d' .env.production 2>/dev/null || true
+        - |
+          {
+            echo "NEXT_PUBLIC_BUILD_ID=${AWS_COMMIT_ID:-$(date +%s)}"
+            echo "NEXT_TELEMETRY_DISABLED=1"
+          } >> .env.production
     build:
       commands:
         - echo "Building Next.js application..."
