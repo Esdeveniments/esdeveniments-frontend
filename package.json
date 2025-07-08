@@ -7,7 +7,7 @@
     "vercel-build": "yarn run prebuild && next build && yarn run postbuild",
     "dev": "yarn run prebuild && next dev",
     "build": "yarn run prebuild && next build",
-    "prebuild": "node scripts/generate-sw.js",
+    "prebuild": "node scripts/generate-sw.mjs",
     "build:development": "NODE_ENV=development env-cmd -f .env.development yarn run prebuild && env-cmd -f .env.development next build",
     "start:development": "env-cmd -f .env.development next start",
     "build:staging": "NODE_ENV=staging env-cmd -f .env.staging yarn run prebuild && env-cmd -f .env.staging next build",

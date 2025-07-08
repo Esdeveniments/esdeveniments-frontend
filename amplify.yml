@@ -9,7 +9,7 @@ frontend:
     build:
       commands:
         - echo "Building Next.js application..."
-        - node scripts/generate-sw.js
+        - node scripts/generate-sw.mjs
         - yarn build
   artifacts:
     baseDirectory: .next
