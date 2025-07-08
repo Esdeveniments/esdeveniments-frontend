@@ -34,6 +34,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             location={event.city?.name}
             region={event.region?.name}
             date={eventDate}
+            context="list"
           />
         </div>
 

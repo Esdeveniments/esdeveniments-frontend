@@ -154,6 +154,7 @@ function CardContent({
                 image={memoizedValues.image}
                 priority={isPriority}
                 alt={event.title}
+                context={isHorizontal ? "list" : "card"}
               />
             </div>
           </div>

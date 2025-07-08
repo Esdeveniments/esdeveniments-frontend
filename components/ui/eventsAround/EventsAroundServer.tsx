@@ -177,6 +177,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     alt={event.title}
                     image={image}
                     priority={index <= 1}
+                    context="card"
                   />
                 </div>
                 {/* Title */}

@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, memo, useRef, RefObject } from "react";
+import { useState, memo, useRef, RefObject, useCallback } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import useOnScreen from "@components/hooks/useOnScreen";
 import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
+import { useImagePerformance } from "@components/hooks/useImagePerformance";
 import { ImageComponentProps } from "types/common";
-import { getOptimalImageQuality } from "@utils/image-quality";
+import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-quality";
 
 const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   loading: () => (
@@ -24,7 +25,8 @@ function ImageComponent({
   priority = false,
   alt = title,
   quality: customQuality,
-}: ImageComponentProps) {
+  context = "card", // Add context prop for size optimization
+}: ImageComponentProps & { context?: 'card' | 'hero' | 'list' | 'detail' }) {
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
@@ -34,8 +36,31 @@ function ImageComponent({
     }
   );
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const imageClassName = `${className}`;
   const networkQuality = useNetworkSpeed();
+
+  const MAX_RETRIES = 2;
+
+  const handleImageError = useCallback(() => {
+    if (retryCount < MAX_RETRIES) {
+      setRetryCount((prev) => prev + 1);
+      setIsLoading(true);
+      // Add a small delay before retry to avoid overwhelming the server
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000 * (retryCount + 1));
+    } else {
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, [retryCount]);
+
+  const handleImageLoad = useCallback(() => {
+    setIsLoading(false);
+    setHasError(false);
+  }, []);
 
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,
@@ -43,6 +68,12 @@ function ImageComponent({
     networkQuality,
     customQuality,
   });
+
+  // Monitor image performance
+  useImagePerformance(image, imageQuality, priority);
+
+  // Get image key for retry logic
+  const imageKey = `${image}-${retryCount}`;
 
   if (!image || hasError) {
     return (
@@ -63,21 +94,30 @@ function ImageComponent({
 
   return (
     <div className={imageClassName} style={{ position: "relative" }}>
+      {isLoading && (
+        <div className="absolute inset-0 flex justify-center items-center bg-darkCorp animate-fast-pulse">
+          <div className="w-full h-60 bg-darkCorp animate-fast-pulse"></div>
+        </div>
+      )}
       <NextImage
+        key={imageKey}
         className="object-cover"
         src={image}
         alt={alt}
         width={500}
         height={260}
         loading={priority ? "eager" : "lazy"}
-        onError={() => setHasError(true)}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
         quality={imageQuality}
         style={{
           objectFit: "cover",
+          opacity: isLoading ? 0 : 1,
+          transition: "opacity 0.3s ease-in-out",
         }}
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}
-        sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw"
+        sizes={getOptimalImageSizes(context)}
         unoptimized={env === "dev"}
       />
     </div>
