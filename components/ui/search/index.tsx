@@ -48,14 +48,14 @@ export default function Search(): JSX.Element {
   const isHomePage = pathname === "/";
 
   // Get current search term from URL (not Zustand)
-  const urlSearchTerm = searchParams.get("search") || "";
+  const urlSearchTerm = searchParams?.get("search") || "";
 
   const [inputValue, setInputValue] = useState<string>(urlSearchTerm);
 
   // Function to update URL with search parameter
   const updateSearchUrl = useCallback(
     (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParams?.toString() || "");
 
       if (value) {
         params.set("search", value);
@@ -69,7 +69,7 @@ export default function Search(): JSX.Element {
         ? `${isHomePage ? "/catalunya/" : pathname}?${queryString}`
         : isHomePage
         ? "/catalunya/"
-        : pathname;
+        : pathname || "/";
 
       router.push(newUrl);
     },

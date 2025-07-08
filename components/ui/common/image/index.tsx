@@ -8,7 +8,11 @@ import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImagePerformance } from "@components/hooks/useImagePerformance";
 import { ImageComponentProps } from "types/common";
-import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-quality";
+import {
+  getOptimalImageQuality,
+  getOptimalImageSizes,
+  getServerImageQuality,
+} from "@utils/image-quality";
 
 const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
   loading: () => (
@@ -26,7 +30,7 @@ function ImageComponent({
   alt = title,
   quality: customQuality,
   context = "card", // Add context prop for size optimization
-}: ImageComponentProps & { context?: 'card' | 'hero' | 'list' | 'detail' }) {
+}: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
@@ -39,7 +43,7 @@ function ImageComponent({
   const [retryCount, setRetryCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const imageClassName = `${className}`;
-  const networkQuality = useNetworkSpeed();
+  const networkQualityString = useNetworkSpeed();
 
   const MAX_RETRIES = 2;
 
@@ -65,7 +69,7 @@ function ImageComponent({
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,
     isExternal: true,
-    networkQuality,
+    networkQuality: getServerImageQuality(networkQualityString),
     customQuality,
   });
 

@@ -3,7 +3,7 @@ import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { env } from "@utils/helpers";
 import { ImageComponentProps } from "types/common";
 import {
-  getServerImageQuality,
+  getOptimalImageQuality,
   getOptimalImageSizes,
 } from "@utils/image-quality";
 
@@ -33,7 +33,7 @@ function ImageServer({
     );
   }
 
-  const imageQuality = getServerImageQuality({
+  const imageQuality = getOptimalImageQuality({
     isPriority: priority,
     isExternal: true,
     customQuality: quality,
