@@ -55,20 +55,28 @@ workbox.routing.registerRoute(
     try {
       // Use the Navigation Preload response if it's available.
       const preloadResponse = await args.preloadResponse;
-      if (preloadResponse) {
-        return preloadResponse;
-      }
+      if (preloadResponse) return preloadResponse;
       // Otherwise, fall back to the network-first strategy.
       return await pageStrategy.handle(args);
     } catch (error) {
       // If the network fails AND the page isn't in the cache,
       // serve the pre-cached offline page as a last resort.
-      console.warn("Failed to load page:", error);
       const cache = await caches.open(workbox.core.cacheNames.precache);
-      const offlinePage = await cache.match("/offline");
-      return offlinePage;
+      console.error("Error loading page:", error);
+      return await cache.match("/offline");
     }
   }
+);
+
+// FIXED: Add a specific route to handle ad/tracker scripts.
+// This tells the service worker to just try the network and fail gracefully
+// if an ad blocker is present, preventing the unhandled promise rejection errors.
+workbox.routing.registerRoute(
+  ({ url }) =>
+    /googlesyndication|googletagmanager|google-analytics|sentry\.io/.test(
+      url.href
+    ),
+  new workbox.strategies.NetworkOnly()
 );
 
 // Strategy for Static Assets (CSS, JS, Fonts, Images) - Cache First
@@ -102,7 +110,7 @@ workbox.routing.registerRoute(
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 50,
-        maxAgeSeconds: 24 * 60 * 60, // 1 Day
+        maxAgeSeconds: 24 * 60 * 60, // 24 Hours
       }),
     ],
   })
