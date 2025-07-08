@@ -8,6 +8,21 @@ const nextConfig = {
   compress: true,
   productionBrowserSourceMaps: true,
 
+  // --- Experimental Features ---
+  experimental: {
+    scrollRestoration: true,
+  },
+
+  // --- Webpack Configuration ---
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.svg$/i,
+      issuer: /\.[jt]sx?$/,
+      use: ["@svgr/webpack"],
+    });
+    return config;
+  },
+
   // --- Optimizations ---
   compiler: {
     reactCompiler: true,
@@ -19,8 +34,8 @@ const nextConfig = {
     // IMPORTANT: Whitelist only the specific domains you load images from.
     // Using wildcards is a security risk.
     remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com" },
-      { protocol: "https", hostname: "*.googleusercontent.com" },
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
     ],
     deviceSizes: [480, 640, 768, 1024, 1280, 1600, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
