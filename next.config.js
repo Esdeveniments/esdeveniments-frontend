@@ -11,11 +11,11 @@ const nextConfig = {
   // --- Experimental Features ---
   experimental: {
     scrollRestoration: true,
+    reactCompiler: true, // React Compiler is experimental
   },
 
   // --- Optimizations ---
   compiler: {
-    reactCompiler: true,
     removeConsole: process.env.NODE_ENV === "production",
   },
 

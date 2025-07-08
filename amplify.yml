@@ -9,6 +9,7 @@ frontend:
     build:
       commands:
         - echo "Building Next.js application..."
+        - node scripts/generate-sw.js
         - yarn build
   artifacts:
     baseDirectory: .next
@@ -20,10 +21,67 @@ frontend:
       - .next/cache/**/*
       - .yarn/cache/**/*
 
-  # The 'customHeaders' section has been removed.
-  # Security headers (CSP, HSTS, etc.) and caching policies are now managed
-  # within the Next.js application via `middleware.ts`. This is the
-  # recommended approach as it centralizes logic and supports dynamic headers.
+  # Static asset caching is configured here for optimal performance.
+  # Security headers for dynamic content are managed in middleware.ts.
+  # Assets using getVersionedUrl() can have longer cache times.
+  customHeaders:
+    # Next.js built assets - these are automatically hashed, safe for long cache
+    - pattern: "/_next/static/**"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000, immutable"
+    
+    # Next.js optimized images - 1 year cache (CRITICAL for performance)
+    - pattern: "/_next/image**"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000, immutable"
+    
+    # CSS files - safe for long cache since /styles/non-critical.css uses getVersionedUrl
+    - pattern: "/styles/**"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000, immutable"
+        - key: Content-Type
+          value: "text/css; charset=utf-8"
+    
+    # Font files - longer cache with CORS headers for cross-origin loading
+    - pattern: "/static/fonts/**"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000, immutable"
+        - key: Access-Control-Allow-Origin
+          value: "*"
+        - key: Cross-Origin-Resource-Policy
+          value: "cross-origin"
+    
+    # Static assets - be more conservative since not all may use getVersionedUrl
+    - pattern: "/static/**"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    
+    # Static images only (not user uploads) - conservative approach
+    - pattern: "/static/**/*.{png,jpg,jpeg,gif,webp,svg,ico}"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    
+    # Fonts - longer cache since they rarely change
+    - pattern: "**/*.{woff,woff2,ttf,eot}"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000"  # 1 year
+    
+    # API routes - CORS headers for functionality (middleware excludes these)
+    - pattern: "/api/**"
+      headers:
+        - key: Access-Control-Allow-Origin
+          value: "https://esdeveniments.cat"
+        - key: Access-Control-Allow-Methods
+          value: "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+        - key: Access-Control-Allow-Headers
+          value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
 # Environment variables should be set in the Amplify Console for better security.
 # Go to: App settings > Environment variables
 # Recommended variables:

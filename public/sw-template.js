@@ -99,20 +99,40 @@ workbox.routing.registerRoute(
   })
 );
 
-// Strategy for API Requests - Stale-While-Revalidate
+// Strategy for Local API Requests - Stale-While-Revalidate
 // This strategy serves a cached response immediately for speed,
 // then updates the cache in the background with a fresh network response for the next time.
 // It's a great balance of performance and data freshness.
 workbox.routing.registerRoute(
   ({ url }) => url.pathname.startsWith("/api/"),
   new workbox.strategies.StaleWhileRevalidate({
-    cacheName: "esdeveniments-api-cache",
+    cacheName: "esdeveniments-local-api-cache",
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 50,
         maxAgeSeconds: 24 * 60 * 60, // 24 Hours
       }),
     ],
+  })
+);
+
+// Strategy for External API Requests - Cache First for better performance
+// External API requests are slower, so we prioritize cached responses
+workbox.routing.registerRoute(
+  ({ url }) => url.origin === "{{API_ORIGIN}}",
+  new workbox.strategies.CacheFirst({
+    cacheName: "esdeveniments-external-api-cache",
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 30 * 60, // 30 minutes for external API
+      }),
+      // Add network timeout for external API
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+    networkTimeoutSeconds: 10, // Fallback to cache if network is slow
   })
 );
 

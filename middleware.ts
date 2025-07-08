@@ -3,12 +3,38 @@ import { NextRequest, NextResponse } from "next/server";
 // Determine if the environment is development
 const isDev = process.env.NODE_ENV !== "production";
 
+// Get API origin with multiple fallback strategies for Edge Runtime
+// Edge Runtime has limitations with environment variables
+const getApiOrigin = () => {
+  // Strategy 1: Try environment variable (works in most cases)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (apiUrl) {
+    try {
+      return new URL(apiUrl).origin;
+    } catch {
+      console.warn("Invalid NEXT_PUBLIC_API_URL format:", apiUrl);
+    }
+  }
+
+  // Strategy 2: Fallback based on NODE_ENV
+  const nodeEnv = process.env.NODE_ENV;
+  if (nodeEnv === "production") {
+    return "https://api.esdeveniments.cat"; // Production API
+  }
+
+  // Strategy 3: Default fallback (development/staging)
+  return "https://api-pre.esdeveniments.cat";
+};
+
 /**
  * Generates a balanced and maintainable Content Security Policy.
  * @param nonce - A unique string for the 'nonce-' directive.
  * @returns The CSP string.
  */
 function getCsp(nonce: string) {
+  const apiOrigin = getApiOrigin();
+
   const cspDirectives = {
     // By default, only allow resources from our own domain.
     "default-src": ["'self'"],
@@ -26,18 +52,19 @@ function getCsp(nonce: string) {
     ],
 
     // --- STYLE SECURITY ---
-    "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    "style-src": ["'self'", "'unsafe-inline'"],
 
     // --- OTHER RESOURCES (More Flexible for Maintainability) ---
     // Instead of whitelisting every domain, we allow connections to any secure (https) source.
     // This prevents services from breaking if they change their endpoints.
     "connect-src": [
       "'self'",
+      apiOrigin, // Dynamic external API based on environment
       "https:", // Allows any HTTPS connection
       isDev ? "wss:" : "", // For Next.js Fast Refresh in dev
     ],
     "img-src": ["'self'", "data:", "https:"], // Allows any HTTPS image
-    "font-src": ["'self'", "https://fonts.gstatic.com"],
+    "font-src": ["'self'"],
     "frame-src": ["'self'", "https:"], // Allows any HTTPS iframe
 
     // --- LOCKDOWN DIRECTIVES (Hardening) ---
