@@ -70,7 +70,32 @@ frontend:
           value: "public, max-age=2592000"  # 30 days
     
     # Static images only (not user uploads) - conservative approach
-    - pattern: "/static/**/*.{png,jpg,jpeg,gif,webp,svg,ico}"
+    # Separate patterns for common image extensions (brace expansion not supported)
+    - pattern: "/static/**/*.png"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    - pattern: "/static/**/*.jpg"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    - pattern: "/static/**/*.jpeg"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    - pattern: "/static/**/*.gif"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    - pattern: "/static/**/*.webp"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    - pattern: "/static/**/*.svg"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=2592000"  # 30 days
+    - pattern: "/static/**/*.ico"
       headers:
         - key: Cache-Control
           value: "public, max-age=2592000"  # 30 days
@@ -90,6 +115,12 @@ frontend:
           value: "GET,OPTIONS,PATCH,DELETE,POST,PUT"
         - key: Access-Control-Allow-Headers
           value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+        - key: Vary
+          value: "Origin"
+        - key: Cache-Control
+          value: "public, max-age=3600"  # 1 hour - conservative for API responses
+
+
 # Environment variables should be set in the Amplify Console for better security.
 # Go to: App settings > Environment variables
 # Recommended variables:
