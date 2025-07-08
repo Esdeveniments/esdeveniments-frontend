@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { NetworkQuality, NetworkQualityCache } from "types/common";
+import {
+  NetworkQuality,
+  NetworkQualityCache,
+  NetworkInformation,
+} from "types/common";
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -28,17 +32,14 @@ function getNetworkQualityFromCache(): NetworkQuality | null {
  * Detect network quality using Network Information API
  */
 function detectNetworkQuality(): NetworkQuality {
-  // Check for Network Information API
-  const nav = navigator as unknown as Record<string, unknown>;
+  // Check for Network Information API with proper typing
   const connection =
-    nav.connection || nav.mozConnection || nav.webkitConnection;
+    navigator.connection ||
+    navigator.mozConnection ||
+    navigator.webkitConnection;
 
-  if (connection && typeof connection === "object") {
-    const conn = connection as {
-      downlink?: number;
-      effectiveType?: string;
-      saveData?: boolean;
-    };
+  if (connection) {
+    const conn = connection as NetworkInformation;
 
     // Check for data saver mode
     if (conn.saveData) {

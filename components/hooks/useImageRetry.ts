@@ -15,11 +15,16 @@ export function useImageRetry(maxRetries: number = 2) {
    */
   const handleError = useCallback(() => {
     if (retryCount < maxRetries) {
-      setRetryCount((prev) => prev + 1);
-      setIsLoading(true);
+      // Clear any existing timeout to prevent race conditions
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+
       // Add exponential backoff delay before retry to avoid overwhelming the server
       retryTimeoutRef.current = setTimeout(() => {
-        setIsLoading(false);
+        setRetryCount((prev) => prev + 1);
+        setIsLoading(true);
       }, 1000 * (retryCount + 1));
     } else {
       setHasError(true);
@@ -31,6 +36,11 @@ export function useImageRetry(maxRetries: number = 2) {
    * Handle successful image load
    */
   const handleLoad = useCallback(() => {
+    // Clear any pending retry timeout on successful load
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
     setIsLoading(false);
     setHasError(false);
   }, []);

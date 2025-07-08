@@ -91,11 +91,9 @@ export interface UseGetEventsProps {
 }
 
 export interface NetworkInformation {
-  connection?: {
-    downlink?: number;
-    effectiveType?: "slow-2g" | "2g" | "3g" | "4g";
-    saveData?: boolean;
-  };
+  downlink?: number;
+  effectiveType?: "slow-2g" | "2g" | "3g" | "4g";
+  saveData?: boolean;
 }
 
 // Image optimization types
