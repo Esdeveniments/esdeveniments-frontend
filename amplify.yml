@@ -6,9 +6,12 @@ frontend:
         # Use Yarn with --frozen-lockfile for fast, deterministic builds in CI.
         - yarn install --frozen-lockfile
         - echo "NEXT_PUBLIC_BUILD_ID=${AWS_COMMIT_ID:-$(date +%s)}" >> .env.production
+        # Disable Next.js telemetry for faster builds
+        - echo "NEXT_TELEMETRY_DISABLED=1" >> .env.production
     build:
       commands:
         - echo "Building Next.js application..."
+        - test -f scripts/generate-sw.mjs || { echo "generate-sw.mjs missing"; exit 1; }
         - node scripts/generate-sw.mjs
         - yarn build
   artifacts:
@@ -32,7 +35,7 @@ frontend:
           value: "public, max-age=31536000, immutable"
     
     # Next.js optimized images - 1 year cache (CRITICAL for performance)
-    - pattern: "/_next/image**"
+    - pattern: "/_next/image*"
       headers:
         - key: Cache-Control
           value: "public, max-age=31536000, immutable"
