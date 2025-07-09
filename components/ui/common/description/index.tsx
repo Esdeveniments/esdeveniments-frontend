@@ -17,7 +17,7 @@ export default function Description({
   }, [description]);
 
   return (
-    <section className="w-full flex justify-center items-start gap-2 px-4">
+    <section className="w-full flex justify-center items-start gap-2">
       <DocumentIcon className="w-5 h-5 mt-1" aria-hidden="true" />
       <div className="w-11/12 flex flex-col gap-4">
         <h2>Descripció</h2>

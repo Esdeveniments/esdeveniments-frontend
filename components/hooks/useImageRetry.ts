@@ -12,6 +12,7 @@ export function useImageRetry(maxRetries: number = 2) {
 
   /**
    * Handle image load error with exponential backoff retry
+   * Delays: 1s, 2s, 4s, 8s, etc. (2^retryCount * 1000ms)
    */
   const handleError = useCallback(() => {
     if (retryCount < maxRetries) {
@@ -21,11 +22,12 @@ export function useImageRetry(maxRetries: number = 2) {
         retryTimeoutRef.current = null;
       }
 
-      // Add exponential backoff delay before retry to avoid overwhelming the server
+      // Use exponential backoff and delay the actual retry attempt
+      const delay = 1000 * 2 ** retryCount;
       retryTimeoutRef.current = setTimeout(() => {
         setRetryCount((prev) => prev + 1);
         setIsLoading(true);
-      }, 1000 * (retryCount + 1));
+      }, delay);
     } else {
       setHasError(true);
       setIsLoading(false);

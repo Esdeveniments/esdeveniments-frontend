@@ -83,7 +83,9 @@ function cacheNetworkQuality(quality: NetworkQuality): void {
 }
 
 /**
- * Hook that returns the current network quality
+ * Hook to initialize network detection without returning the value.
+ * Use this in components that need to ensure network detection runs
+ * and caches the result for other components to consume.
  */
 export function useNetworkSpeed(): NetworkQuality {
   const [networkQuality, setNetworkQuality] =

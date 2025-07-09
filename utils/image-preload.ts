@@ -43,7 +43,10 @@ export const preloadImage = (
   // Get optimal width for preloading
   const optimalWidth = getOptimalPreloadWidth();
 
-  // Create optimized Next.js image URL
+  // DEPENDENCY WARNING: This manually constructs Next.js's internal image optimization URL
+  // The /_next/image endpoint and its query parameters (url, w, q) are internal implementation details
+  // that could change in future Next.js versions without notice. Consider using Next.js's official
+  // image preloading utilities if they become available, or abstract this into a configuration.
   const imageUrl = `/_next/image?url=${encodeURIComponent(
     src
   )}&w=${optimalWidth}&q=${quality}`;
