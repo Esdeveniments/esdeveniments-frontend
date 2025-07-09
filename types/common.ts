@@ -517,3 +517,7 @@ export interface PreloadOptions {
   quality?: number;
   fetchPriority?: "high" | "low" | "auto";
 }
+
+export interface GoogleAnalyticsEvent {
+  [key: string]: unknown;
+}
