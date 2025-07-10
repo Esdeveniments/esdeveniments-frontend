@@ -29,12 +29,7 @@ export const useImagePerformance = (
 
       const metrics: ImagePerformanceMetrics = {
         loadTime,
-        size:
-          (
-            performance.getEntriesByName(src, "resource")[0] as
-              | PerformanceResourceTiming
-              | undefined
-          )?.transferSize ?? 0,
+        size: 0, // Will be populated by network tab if available
         src,
         networkType:
           connection && typeof connection === "object"
