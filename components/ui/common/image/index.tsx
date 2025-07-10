@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useRef, RefObject, useEffect } from "react";
+import { memo, useRef, RefObject } from "react";
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
 import useOnScreen from "@components/hooks/useOnScreen";
@@ -45,12 +45,12 @@ function ImageComponent({
   const networkQualityString = useNetworkSpeed();
 
   // Use the extracted retry hook
-  const { hasError, isLoading, handleError, handleLoad, getImageKey, reset } =
+  const { hasError, isLoading, handleError, handleLoad, getImageKey } =
     useImageRetry(2);
 
-  useEffect(() => {
-    reset();
-  }, [image, reset]); // Reset when image changes
+  // useEffect(() => {
+  //   reset();
+  // }, [image]);
 
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,
