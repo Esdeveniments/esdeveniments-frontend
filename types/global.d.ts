@@ -1,12 +1,11 @@
 declare global {
-  interface Navigator {
-    connection?: NetworkInformation;
-    mozConnection?: NetworkInformation;
-    webkitConnection?: NetworkInformation;
+  interface Window {
+    adsbygoogle: unknown[];
   }
 
   interface Window {
-    adsbygoogle: unknown[];
+    /* eslint-disable-next-line no-unused-vars */
+    gtag?: (command: string, event: string, params?: unknown) => void;
   }
 }
 

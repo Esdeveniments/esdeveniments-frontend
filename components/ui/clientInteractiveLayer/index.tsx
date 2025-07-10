@@ -68,10 +68,10 @@ function ClientInteractiveLayer({
   const isHomePage = pathname === "/";
 
   // Parse current URL segments from pathname - this is the key fix!
-  const urlSegments = extractURLSegments(pathname);
+  const urlSegments = extractURLSegments(pathname || "/");
 
   // Parse current URL state for filters and modal
-  const urlSearchParams = new URLSearchParams(searchParams.toString());
+  const urlSearchParams = new URLSearchParams(searchParams?.toString() || "");
   const parsed = parseFiltersFromUrl(
     urlSegments,
     urlSearchParams,
@@ -79,7 +79,7 @@ function ClientInteractiveLayer({
   );
 
   // Debug URL parsing in development
-  debugURLParsing(pathname, urlSegments, parsed);
+  debugURLParsing(pathname || "/", urlSegments, parsed);
 
   return (
     <>

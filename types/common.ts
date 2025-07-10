@@ -90,10 +90,18 @@ export interface UseGetEventsProps {
   radius?: number;
 }
 
-export interface NetworkInformation extends EventTarget {
-  effectiveType: string;
-  addEventListener: (type: string, listener: EventListener) => void;
-  removeEventListener: (type: string, listener: EventListener) => void;
+export interface NetworkInformation {
+  downlink?: number;
+  effectiveType?: "slow-2g" | "2g" | "3g" | "4g";
+  saveData?: boolean;
+}
+
+// Image optimization types
+export type NetworkQuality = "high" | "medium" | "low" | "unknown";
+
+export interface NetworkQualityCache {
+  quality: NetworkQuality;
+  timestamp: number;
 }
 
 export interface UseOnScreenOptions extends IntersectionObserverInit {
@@ -494,3 +502,22 @@ export type QualityPreset =
   | "NETWORK_SLOW"
   | "NETWORK_FAST"
   | "EMERGENCY";
+
+export interface ImagePerformanceMetrics {
+  loadTime: number;
+  size: number;
+  src: string;
+  networkType?: string;
+  quality: number;
+}
+
+export interface PreloadOptions {
+  priority?: boolean;
+  sizes?: string;
+  quality?: number;
+  fetchPriority?: "high" | "low" | "auto";
+}
+
+export interface GoogleAnalyticsEvent {
+  [key: string]: unknown;
+}

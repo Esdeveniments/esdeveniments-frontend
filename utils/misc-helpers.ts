@@ -2,7 +2,7 @@ export const sendEventToGA = (
   filterName: string,
   filterValue: string
 ): void => {
-  if (typeof window !== "undefined" && window.gtag) {
+  if (typeof window !== "undefined" && typeof window.gtag === "function") {
     window.gtag("event", "filter_change", {
       event_category: "Filter",
       event_label: `${filterName}: ${filterValue}`,

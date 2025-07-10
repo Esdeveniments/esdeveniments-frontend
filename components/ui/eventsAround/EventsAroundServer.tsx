@@ -138,7 +138,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     );
   }
 
-  // Default compact layout
+  // Default compact layout - for related events on individual pages (no priority)
   return (
     <>
       {jsonLdData && (
@@ -150,7 +150,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
         />
       )}
       <div className="w-full flex overflow-x-auto py-4 px-4 space-x-4 min-w-0">
-        {events.map((event, index) => {
+        {events.map((event) => {
           const eventTitle = truncateString(event.title || "", 60);
           const image = event.imageUrl;
 
@@ -176,7 +176,8 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     title={event.title}
                     alt={event.title}
                     image={image}
-                    priority={index <= 1}
+                    priority={false}
+                    context="card"
                   />
                 </div>
                 {/* Title */}

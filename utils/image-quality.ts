@@ -4,6 +4,7 @@
  */
 
 import { QualityOptions, QualityPreset } from "types/common";
+import { NetworkQuality } from "types/common";
 
 /**
  * Determines optimal image quality based on context
@@ -40,21 +41,16 @@ export function getOptimalImageQuality({
   return networkQuality;
 }
 
-/**
- * Server-side quality selection (no network detection available)
- * Conservative approach for external images with performance optimization
- */
-export function getServerImageQuality({
-  isPriority = false,
-  isExternal = true,
-  customQuality,
-}: Omit<QualityOptions, "networkQuality">): number {
-  return getOptimalImageQuality({
-    isPriority,
-    isExternal,
-    networkQuality: 60, // Reduced default fallback for server-side (from 70)
-    customQuality,
-  });
+// Network-aware quality mapping
+const QUALITY_MAP: Record<NetworkQuality, number> = {
+  high: 85,
+  medium: 70,
+  low: 45,
+  unknown: 70, // Default to medium quality
+};
+
+export function getServerImageQuality(networkQuality?: NetworkQuality): number {
+  return QUALITY_MAP[networkQuality || "unknown"];
 }
 
 /**
@@ -88,3 +84,24 @@ export function getQualityPreset(preset: QualityPreset): number {
 
   return presetMap[preset] || QUALITY_PRESETS.EXTERNAL_STANDARD;
 }
+
+/**
+ * Get optimized sizes attribute based on component usage context
+ * Based on actual usage patterns from the Lighthouse analysis
+ */
+export const getOptimalImageSizes = (
+  context: "card" | "hero" | "list" | "detail" = "card"
+): string => {
+  const sizesMap = {
+    // Event cards in listings (most common usage)
+    card: "(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
+    // Hero/featured images
+    hero: "(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw",
+    // List view images (smaller)
+    list: "(max-width: 480px) 100vw, (max-width: 768px) 30vw, 20vw",
+    // Detail page images
+    detail: "(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 40vw",
+  };
+
+  return sizesMap[context];
+};

@@ -1,0 +1,96 @@
+import { useEffect, useRef } from "react";
+import { ImagePerformanceMetrics } from "types/common";
+
+export const useImagePerformance = (
+  src: string | undefined,
+  quality: number,
+  priority: boolean = false
+) => {
+  const startTimeRef = useRef<number>(0);
+  const reportedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!src || reportedRef.current) return;
+
+    startTimeRef.current = performance.now();
+    reportedRef.current = false;
+
+    const img = new Image();
+
+    const handleLoad = () => {
+      if (!startTimeRef.current || reportedRef.current) return;
+
+      const loadTime = performance.now() - startTimeRef.current;
+      const nav = navigator as unknown as Record<string, unknown>;
+      const connection =
+        nav.connection || nav.mozConnection || nav.webkitConnection;
+
+      const metrics: ImagePerformanceMetrics = {
+        loadTime,
+        size:
+          (
+            performance.getEntriesByName(src, "resource")[0] as
+              | PerformanceResourceTiming
+              | undefined
+          )?.transferSize ?? 0,
+        src,
+        networkType:
+          connection && typeof connection === "object"
+            ? (connection as { effectiveType?: string }).effectiveType
+            : undefined,
+        quality,
+      };
+
+      if (
+        process.env.NODE_ENV === "production" &&
+        (priority || loadTime > 1000)
+      ) {
+        console.log("Image Performance:", metrics);
+
+        if (
+          typeof window !== "undefined" &&
+          typeof window.gtag === "function"
+        ) {
+          window.gtag("event", "image_performance", {
+            event_category: "performance",
+            event_label: priority ? "priority" : "normal",
+            value: Math.round(loadTime),
+          });
+        }
+      }
+
+      reportedRef.current = true;
+    };
+
+    const handleError = () => {
+      if (!startTimeRef.current || reportedRef.current) return;
+
+      const loadTime = performance.now() - startTimeRef.current;
+
+      if (process.env.NODE_ENV === "production") {
+        console.warn("Image Load Error:", { src, loadTime });
+
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "image_error", {
+            event_category: "performance",
+            event_label: "load_failure",
+            value: Math.round(loadTime),
+          });
+        }
+      }
+
+      reportedRef.current = true;
+    };
+
+    img.addEventListener("load", handleLoad);
+    img.addEventListener("error", handleError);
+
+    img.src = src;
+
+    return () => {
+      reportedRef.current = true;
+      img.removeEventListener("load", handleLoad);
+      img.removeEventListener("error", handleError);
+    };
+  }, [src, quality, priority]);
+};

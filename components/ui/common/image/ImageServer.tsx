@@ -2,7 +2,10 @@ import NextImage from "next/image";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { env } from "@utils/helpers";
 import { ImageComponentProps } from "types/common";
-import { getServerImageQuality } from "@utils/image-quality";
+import {
+  getOptimalImageQuality,
+  getOptimalImageSizes,
+} from "@utils/image-quality";
 
 // Server-side compatible Image component
 function ImageServer({
@@ -15,7 +18,8 @@ function ImageServer({
   region,
   date,
   quality,
-}: ImageComponentProps) {
+  context = "card", // Add context prop for size optimization
+}: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
   if (!image) {
     return (
       <div className={className}>
@@ -29,7 +33,7 @@ function ImageServer({
     );
   }
 
-  const imageQuality = getServerImageQuality({
+  const imageQuality = getOptimalImageQuality({
     isPriority: priority,
     isExternal: true,
     customQuality: quality,
@@ -47,10 +51,11 @@ function ImageServer({
         quality={imageQuality}
         style={{
           objectFit: "cover",
+          height: "auto", // Maintain aspect ratio
         }}
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}
-        sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw"
+        sizes={getOptimalImageSizes(context)}
         unoptimized={env === "dev"}
       />
     </div>

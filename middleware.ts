@@ -49,6 +49,8 @@ function getCsp(nonce: string) {
       `'nonce-${nonce}'`,
       "'strict-dynamic'",
       isDev ? "'unsafe-eval'" : "", // For Next.js Fast Refresh in dev
+      isDev ? "localhost:*" : "", // Allow localhost scripts in dev for Next.js chunks
+      isDev ? "127.0.0.1:*" : "", // Allow 127.0.0.1 scripts in dev for Next.js chunks
     ],
 
     // --- STYLE SECURITY ---
@@ -62,6 +64,9 @@ function getCsp(nonce: string) {
       apiOrigin, // Dynamic external API based on environment
       "https:", // Allows any HTTPS connection
       isDev ? "wss:" : "", // For Next.js Fast Refresh in dev
+      isDev ? "ws:" : "", // For Next.js Fast Refresh in dev (non-secure)
+      isDev ? "localhost:*" : "", // Allow localhost connections in dev
+      isDev ? "127.0.0.1:*" : "", // Allow 127.0.0.1 connections in dev
     ],
     "img-src": ["'self'", "data:", "https:"], // Allows any HTTPS image
     "font-src": ["'self'"],

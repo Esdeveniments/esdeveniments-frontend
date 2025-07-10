@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, ReactElement, useMemo } from "react";
+import { memo, ReactElement, useMemo, useEffect } from "react";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
@@ -9,6 +9,8 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
+import { preloadImages } from "@utils/image-preload";
+import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
 
 function HybridEventsList({
   initialEvents = [],
@@ -19,6 +21,9 @@ function HybridEventsList({
   date,
   serverHasMore = false,
 }: HybridEventsListProps): ReactElement {
+  // Initialize network detection for caching
+  useNetworkDetection();
+
   const validInitialEvents = useMemo(
     () =>
       initialEvents.filter(
@@ -38,6 +43,26 @@ function HybridEventsList({
     });
 
   const allEvents = events.length > 0 ? events : validInitialEvents;
+
+  // Preload first 3 images for better LCP
+  useEffect(() => {
+    const imagesToPreload = allEvents
+      .slice(0, 3)
+      .filter((event) => event.imageUrl)
+      .map((event, index) => ({
+        src: event.imageUrl!,
+        options: {
+          priority: index === 0,
+          quality: index === 0 ? 85 : 75,
+          sizes:
+            "(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
+        },
+      }));
+
+    if (imagesToPreload.length > 0) {
+      preloadImages(imagesToPreload);
+    }
+  }, [allEvents]);
 
   if (error) {
     console.error("Events loading error:", error);
