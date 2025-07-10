@@ -24,6 +24,7 @@ const EventImage: FC<EventImageProps> = ({ image, title }) => {
     >
       <div className="w-full" style={{ position: "relative", height: "260px" }}>
         <Image
+          key={image} // Force remount when image changes
           title={title}
           alt={title}
           image={image}
