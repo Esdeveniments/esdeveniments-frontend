@@ -44,13 +44,8 @@ function ImageComponent({
   const imageClassName = `${className}`;
   const networkQualityString = useNetworkSpeed();
 
-  // Use the extracted retry hook
   const { hasError, isLoading, handleError, handleLoad, getImageKey } =
     useImageRetry(2);
-
-  // useEffect(() => {
-  //   reset();
-  // }, [image]);
 
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,
@@ -59,10 +54,8 @@ function ImageComponent({
     customQuality,
   });
 
-  // Monitor image performance
   useImagePerformance(image, imageQuality, priority);
 
-  // Get image key for retry logic
   const imageKey = getImageKey(image || "");
 
   if (!image || hasError) {

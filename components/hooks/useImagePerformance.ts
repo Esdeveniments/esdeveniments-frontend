@@ -17,8 +17,6 @@ export const useImagePerformance = (
 
     const img = new Image();
 
-    // img.crossOrigin = "anonymous";
-
     const handleLoad = () => {
       if (!startTimeRef.current || reportedRef.current) return;
 
@@ -29,7 +27,12 @@ export const useImagePerformance = (
 
       const metrics: ImagePerformanceMetrics = {
         loadTime,
-        size: 0, // Will be populated by network tab if available
+        size:
+          (
+            performance.getEntriesByName(src, "resource")[0] as
+              | PerformanceResourceTiming
+              | undefined
+          )?.transferSize ?? 0,
         src,
         networkType:
           connection && typeof connection === "object"
@@ -38,14 +41,12 @@ export const useImagePerformance = (
         quality,
       };
 
-      // Only report in production and for priority images or slow loads
       if (
         process.env.NODE_ENV === "production" &&
         (priority || loadTime > 1000)
       ) {
         console.log("Image Performance:", metrics);
 
-        // Send to analytics or monitoring service
         if (
           typeof window !== "undefined" &&
           typeof window.gtag === "function"
