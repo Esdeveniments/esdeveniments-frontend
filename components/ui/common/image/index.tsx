@@ -50,7 +50,7 @@ function ImageComponent({
 
   useEffect(() => {
     reset();
-  }, [image, reset]);
+  }, [image]);
 
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,

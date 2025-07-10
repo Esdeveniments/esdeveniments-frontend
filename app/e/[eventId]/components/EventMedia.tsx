@@ -22,7 +22,7 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
   // Check if we have a video URL - if so, display video
   if (event.videoUrl) {
     return (
-      <div className="w-full flex flex-col justify-center items-start gap-4">
+      <div className="w-full flex flex-col justify-center items-start gap-4 overflow-hidden">
         <VideoDisplay videoUrl={event.videoUrl} />
       </div>
     );
@@ -31,7 +31,7 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
   // Check if we have an image - if so, display image using EventImage component
   if (event.imageUrl) {
     return (
-      <div className="w-full flex flex-col justify-center items-start gap-4">
+      <div className="w-full flex flex-col justify-center items-start gap-4 overflow-hidden">
         <EventImage image={event.imageUrl} title={title} />
       </div>
     );
@@ -39,7 +39,7 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
 
   // Fallback to default image
   return (
-    <div className="w-full flex flex-col justify-center items-start gap-4">
+    <div className="w-full flex flex-col justify-center items-start gap-4 overflow-hidden">
       <ImageDefault title={title} />
     </div>
   );
