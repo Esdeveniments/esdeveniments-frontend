@@ -34,7 +34,7 @@ export async function fetchEvents(
   if (params.lat) query.lat = params.lat;
   if (params.lon) query.lon = params.lon;
   if (params.radius) query.radius = params.radius;
-  if (params.q) query.q = params.q;
+  if (params.term) query.term = params.term;
   if (params.byDate) query.byDate = params.byDate;
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;

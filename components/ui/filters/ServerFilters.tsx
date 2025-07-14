@@ -1,7 +1,8 @@
 import { JSX } from "react";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
 import { BYDATES } from "@utils/constants";
-import { FilterState, buildFilterUrl } from "@utils/url-filters";
+import { buildFilterUrl } from "@utils/url-filters";
+import type { URLFilterState } from "types/url-filters";
 import FilterButton from "./FilterButton";
 import { ServerFiltersProps } from "types/props";
 
@@ -13,7 +14,7 @@ const ServerFilters = ({
   onOpenModal,
 }: ServerFiltersProps): JSX.Element => {
   // Convert URL data to filter state for display
-  const filters: FilterState = {
+  const filters: URLFilterState = {
     place: segments.place || "catalunya",
     byDate: segments.date || "tots", // Simplified initialization
     category: segments.category || "tots",
@@ -26,7 +27,8 @@ const ServerFilters = ({
     segments.date !== "tots" ||
     segments.category !== "tots" ||
     Boolean(queryParams.search) ||
-    Boolean(queryParams.distance && queryParams.distance !== "50");
+    Boolean(queryParams.distance && queryParams.distance !== "50") ||
+    Boolean(queryParams.lat && queryParams.lon);
 
   const getText = (value: string | undefined, defaultValue: string): string =>
     value && value !== "catalunya" && value !== "tots" && value !== "tots"
@@ -49,9 +51,15 @@ const ServerFilters = ({
     return category ? category.name.toUpperCase() : undefined;
   };
 
-  // Build URLs for filter removal
-  const getRemoveUrl = (filterType: keyof FilterState): string => {
-    const changes: Partial<FilterState> = {};
+  // Build URLs for filter removal - simplified without memoization
+  const getRemoveUrl = (filterType: keyof URLFilterState): string => {
+    const changes: Partial<URLFilterState> = {};
+
+    if (filterType === "distance") {
+      changes.distance = undefined; // Remove distance entirely, not set to default
+      changes.lat = undefined;
+      changes.lon = undefined;
+    }
 
     switch (filterType) {
       case "place":
@@ -67,11 +75,12 @@ const ServerFilters = ({
         changes.category = "tots";
         break;
       case "distance":
-        changes.distance = 50;
+        // Already handled above
         break;
     }
 
-    return buildFilterUrl(segments, queryParams, changes);
+    const result = buildFilterUrl(segments, queryParams, changes);
+    return result;
   };
 
   return (
@@ -123,10 +132,15 @@ const ServerFilters = ({
           />
           <FilterButton
             text={getText(
-              filters.distance !== 50 ? `${filters.distance} km` : undefined,
+              filters.distance !== 50 || (queryParams.lat && queryParams.lon)
+                ? `${filters.distance} km`
+                : undefined,
               "Distància"
             )}
-            enabled={filters.distance !== 50}
+            enabled={
+              filters.distance !== 50 ||
+              Boolean(queryParams.lat && queryParams.lon)
+            }
             removeUrl={getRemoveUrl("distance")}
             onOpenModal={onOpenModal}
           />

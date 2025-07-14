@@ -70,7 +70,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       const category =
         currentSegments.category === "tots" ? "" : currentSegments.category;
 
-      const distance = currentQueryParams.distance || "";
+      // Infer distance from URL: if lat/lon exist but no distance, assume default 50
+      const distance =
+        currentQueryParams.distance ||
+        (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
 
       setLocalPlace(place);
       setLocalByDate(byDate);
@@ -121,32 +124,44 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             setLocalDistance(value);
           },
           (error: GeolocationError) => {
-            console.log("Error occurred. Error code: " + error.code);
+            console.log(
+              "Geolocation error occurred. Error code: " + error.code
+            );
+            setUserLocationLoading(false);
+
             switch (error.code) {
-              case 1:
+              case 1: // PERMISSION_DENIED
                 setUserLocationError(
-                  "Permission denied. The user has denied the request for geolocation."
+                  "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció."
                 );
                 break;
-              case 2:
+              case 2: // POSITION_UNAVAILABLE
                 setUserLocationError(
-                  "Position unavailable. Location information is unavailable."
+                  "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància."
                 );
                 break;
-              case 3:
+              case 3: // TIMEOUT
                 setUserLocationError(
-                  "Timeout. The request to get user location timed out."
+                  "Temps d'espera esgotat. Prova de nou o selecciona una població."
                 );
                 break;
               default:
-                setUserLocationError("An unknown error occurred.");
+                setUserLocationError(
+                  "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+                );
             }
-            setUserLocationLoading(false);
+          },
+          {
+            enableHighAccuracy: false, // Don't require GPS, allow network location
+            timeout: 10000, // 10 second timeout
+            maximumAge: 300000, // Accept cached location up to 5 minutes old
           }
         );
       } else {
         console.log("Geolocation is not supported by this browser.");
-        setUserLocationError("Geolocation is not supported by this browser.");
+        setUserLocationError(
+          "La geolocalització no està disponible en aquest navegador."
+        );
         setUserLocationLoading(false);
       }
     },
@@ -165,12 +180,28 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   );
 
   const applyFilters = () => {
+    const hasDistance = localDistance && localDistance !== "";
+    const hasUserLocation = Boolean(localUserLocation);
+
     const changes = {
-      place: localPlace || "catalunya",
+      // Clear place when using distance filter with user location
+      place:
+        hasDistance && hasUserLocation
+          ? "catalunya"
+          : localPlace || "catalunya",
       byDate: localByDate || "avui",
       category: (localCategory || "tots") as EventCategory,
       searchTerm: currentQueryParams.search || "",
-      distance: localDistance ? parseInt(localDistance) : 50,
+      distance: hasDistance ? parseInt(localDistance) : 50,
+      // Only include lat/lon if we have both distance and user location
+      lat:
+        hasDistance && hasUserLocation && localUserLocation
+          ? localUserLocation.latitude
+          : undefined,
+      lon:
+        hasDistance && hasUserLocation && localUserLocation
+          ? localUserLocation.longitude
+          : undefined,
     };
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
@@ -198,8 +229,15 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     localDistance !== undefined &&
     localDistance !== "" &&
     !Number.isNaN(Number(localDistance));
+
+  // Allow distance interaction if coords exist in URL (for clearing) or if no place is selected
+  const hasCoordinatesInUrl = Boolean(
+    currentQueryParams.lat && currentQueryParams.lon
+  );
   const disableDistance: boolean =
-    Boolean(localPlace) || userLocationLoading || Boolean(userLocationError);
+    (Boolean(localPlace) && !hasCoordinatesInUrl) ||
+    userLocationLoading ||
+    Boolean(userLocationError);
 
   return (
     <>

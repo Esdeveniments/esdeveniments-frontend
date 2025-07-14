@@ -134,13 +134,31 @@ export interface FetchEventsParams {
   lat?: number;
   lon?: number;
   radius?: number;
-  q?: string; // Search query
+  term?: string; // Search term (API parameter)
   byDate?: string; // Date filter
   from?: string; // Start date
   to?: string; // End date
   isToday?: boolean;
-  distance?: number;
-  searchTerm?: string;
+  // Note: API expects 'term' for search queries
+}
+
+/**
+ * Convert UI distance (from filters/URL) to API radius parameter
+ * @param distance - Distance value from UI (number or string)
+ * @param defaultRadius - Default radius when distance is not significant (default: 50)
+ * @returns radius for API call, or undefined if distance equals default
+ */
+export function distanceToRadius(
+  distance: number | string | undefined,
+  defaultRadius: number = 50
+): number | undefined {
+  if (distance === undefined) return undefined;
+
+  const numericDistance =
+    typeof distance === "string" ? parseInt(distance) : distance;
+
+  // Only return radius if it's different from default
+  return numericDistance !== defaultRadius ? numericDistance : undefined;
 }
 
 export interface EventHeaderProps {

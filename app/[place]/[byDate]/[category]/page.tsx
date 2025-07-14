@@ -151,9 +151,15 @@ export default async function FilteredPage({
     byDate: filters.byDate as ByDateOptions,
     isToday: filters.byDate === "tots",
     category: filters.category !== "tots" ? filters.category : undefined,
-    searchTerm: filters.searchTerm || undefined,
-    distance: filters.distance !== 50 ? filters.distance : undefined,
+    term: filters.searchTerm || undefined,
   };
+
+  // Add distance/radius filter if coordinates are provided
+  if (filters.lat && filters.lon) {
+    fetchParams.radius = filters.distance;
+    fetchParams.lat = filters.lat;
+    fetchParams.lon = filters.lon;
+  }
 
   // Fetch events
   const events = await fetchEvents(fetchParams);

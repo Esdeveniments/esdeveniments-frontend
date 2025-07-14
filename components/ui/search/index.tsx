@@ -63,6 +63,15 @@ export default function Search(): JSX.Element {
         params.delete("search");
       }
 
+      // Clean up lat/lon if there's no distance filter or it's default
+      const distance = params.get("distance");
+      const hasActiveDistanceFilter = distance && distance !== "50";
+      
+      if (!hasActiveDistanceFilter) {
+        params.delete("lat");
+        params.delete("lon");
+      }
+
       // Build new URL preserving current path structure
       const queryString = params.toString();
       const newUrl = queryString
