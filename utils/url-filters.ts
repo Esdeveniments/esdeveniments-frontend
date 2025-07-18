@@ -17,6 +17,36 @@ import type {
 import { VALID_DATES, isValidDateSlug } from "types/dates";
 import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
 
+/**
+ * Validate latitude coordinate
+ */
+function isValidLatitude(lat: number): boolean {
+  return !isNaN(lat) && lat >= -90 && lat <= 90;
+}
+
+/**
+ * Validate longitude coordinate
+ */
+function isValidLongitude(lon: number): boolean {
+  return !isNaN(lon) && lon >= -180 && lon <= 180;
+}
+
+/**
+ * Safely parse and validate latitude coordinate
+ */
+function parseLatitude(value: string): number | undefined {
+  const lat = parseFloat(value);
+  return isValidLatitude(lat) ? lat : undefined;
+}
+
+/**
+ * Safely parse and validate longitude coordinate
+ */
+function parseLongitude(value: string): number | undefined {
+  const lon = parseFloat(value);
+  return isValidLongitude(lon) ? lon : undefined;
+}
+
 // Legacy categories for backward compatibility
 const LEGACY_CATEGORIES: Record<string, URLCategory> = {
   tots: "tots",
@@ -166,13 +196,13 @@ export function buildFilterUrl(
       "lat" in changes
         ? changes.lat
         : currentQuery.lat
-        ? parseFloat(currentQuery.lat)
+        ? parseLatitude(currentQuery.lat)
         : undefined,
     lon:
       "lon" in changes
         ? changes.lon
         : currentQuery.lon
-        ? parseFloat(currentQuery.lon)
+        ? parseLongitude(currentQuery.lon)
         : undefined,
   };
 
@@ -191,10 +221,10 @@ export function urlToFilterState(parsed: ParsedFilters): URLFilterState {
     searchTerm: parsed.queryParams.search || "",
     distance: parseInt(parsed.queryParams.distance || "50"),
     lat: parsed.queryParams.lat
-      ? parseFloat(parsed.queryParams.lat)
+      ? parseLatitude(parsed.queryParams.lat)
       : undefined,
     lon: parsed.queryParams.lon
-      ? parseFloat(parsed.queryParams.lon)
+      ? parseLongitude(parsed.queryParams.lon)
       : undefined,
   };
 }

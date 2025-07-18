@@ -4,18 +4,11 @@
  */
 "use client";
 
-import { Component, type ErrorInfo, type ReactNode } from "react";
-
-type FilterErrorBoundaryProps = {
-  children: ReactNode;
-  fallbackMessage?: string;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
-};
-
-type FilterErrorBoundaryState = {
-  hasError: boolean;
-  error?: Error;
-};
+import { Component, type ErrorInfo } from "react";
+import type {
+  FilterErrorBoundaryProps,
+  FilterErrorBoundaryState,
+} from "types/filters";
 
 export default class FilterErrorBoundary extends Component<
   FilterErrorBoundaryProps,

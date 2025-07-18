@@ -159,7 +159,9 @@ export default async function FilteredPage({
 
   // Add distance/radius filter if coordinates are provided
   if (filters.lat && filters.lon) {
-    fetchParams.radius = filters.distance;
+    if (filters.distance !== undefined) {
+      fetchParams.radius = filters.distance;
+    }
     fetchParams.lat = filters.lat;
     fetchParams.lon = filters.lon;
   }

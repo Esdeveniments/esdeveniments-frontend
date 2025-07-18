@@ -158,15 +158,6 @@ export default async function ByDatePage({
 
     paramsForFetch.from = toLocalDateString(from);
     paramsForFetch.to = toLocalDateString(until);
-
-    console.log(
-      "🔍 [ByDatePage] Added date filters for specific date:",
-      actualDate
-    );
-  } else {
-    console.log(
-      "🔍 [ByDatePage] Skipping date filters for 'tots' - showing all events"
-    );
   }
 
   if (place !== "catalunya") {
@@ -186,7 +177,9 @@ export default async function ByDatePage({
 
   // Add distance/radius filter if coordinates are provided
   if (lat && lon) {
-    paramsForFetch.radius = distance ? parseInt(distance) : 50;
+    if (distance) {
+      paramsForFetch.radius = parseInt(distance);
+    }
     paramsForFetch.lat = parseFloat(lat);
     paramsForFetch.lon = parseFloat(lon);
   }
@@ -194,7 +187,6 @@ export default async function ByDatePage({
   // Add search query if provided
   if (query) {
     paramsForFetch.term = query;
-    console.log("🔍 [ByDatePage] Adding search query:", query);
   }
 
   let noEventsFound = false;

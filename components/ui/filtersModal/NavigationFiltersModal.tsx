@@ -124,9 +124,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             setLocalDistance(value);
           },
           (error: GeolocationError) => {
-            console.log(
-              "Geolocation error occurred. Error code: " + error.code
-            );
             setUserLocationLoading(false);
 
             switch (error.code) {

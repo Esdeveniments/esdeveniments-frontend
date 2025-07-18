@@ -126,7 +126,9 @@ export default async function Page({
 
   // Add distance/radius filter if coordinates are provided
   if (lat && lon) {
-    fetchParams.radius = distance ? parseInt(distance) : 50;
+    if (distance) {
+      fetchParams.radius = parseInt(distance);
+    }
     fetchParams.lat = parseFloat(lat);
     fetchParams.lon = parseFloat(lon);
   }

@@ -36,12 +36,12 @@ function ServerEventsCategorized({
   // Pre-calculate ad placement positions for better performance
   const totalCategories = Object.keys(filteredCategorizedEvents).length;
   const adPositions = new Set<number>();
-  
+
   // Add ads starting from index 1 (after 2nd category) and then every 3rd category
   for (let i = 1; i < totalCategories; i += 3) {
     adPositions.add(i);
   }
-  
+
   // Always show ad after the last category if we have more than 3 categories
   if (totalCategories > 3) {
     adPositions.add(totalCategories - 1);
