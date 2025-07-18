@@ -1,8 +1,7 @@
 import { JSX } from "react";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
-import { BYDATES } from "@utils/constants";
-import { buildFilterUrl } from "@utils/url-filters";
-import type { URLFilterState } from "types/url-filters";
+import { FilterOperations } from "@utils/filter-operations";
+import type { FilterDisplayState } from "types/filters";
 import FilterButton from "./FilterButton";
 import { ServerFiltersProps } from "types/props";
 
@@ -14,74 +13,32 @@ const ServerFilters = ({
   onOpenModal,
 }: ServerFiltersProps): JSX.Element => {
   // Convert URL data to filter state for display
-  const filters: URLFilterState = {
+  const filters = {
     place: segments.place || "catalunya",
-    byDate: segments.date || "tots", // Simplified initialization
+    byDate: segments.date || "tots",
     category: segments.category || "tots",
     searchTerm: queryParams.search || "",
     distance: parseInt(queryParams.distance || "50"),
+    lat: queryParams.lat ? parseFloat(queryParams.lat) : undefined,
+    lon: queryParams.lon ? parseFloat(queryParams.lon) : undefined,
   };
 
-  const isAnyFilterSelected = (): boolean =>
-    segments.place !== "catalunya" ||
-    segments.date !== "tots" ||
-    segments.category !== "tots" ||
-    Boolean(queryParams.search) ||
-    Boolean(queryParams.distance && queryParams.distance !== "50") ||
-    Boolean(queryParams.lat && queryParams.lon);
+  // Create display state for configuration-driven operations
+  const displayState: FilterDisplayState = {
+    filters,
+    queryParams,
+    segments,
+    extraData: { categories, placeTypeLabel },
+  };
+
+  const configurations = FilterOperations.getAllConfigurations();
+
+  const isAnyFilterSelected = (): boolean => {
+    return FilterOperations.hasActiveFilters(displayState);
+  };
 
   const getText = (value: string | undefined, defaultValue: string): string =>
-    value && value !== "catalunya" && value !== "tots" && value !== "tots"
-      ? value
-      : defaultValue;
-
-  const foundByDate = BYDATES.find((item) => item.value === filters.byDate);
-
-  // Get place display name from placeTypeLabel
-  const getPlaceDisplayName = (): string | undefined => {
-    if (filters.place === "catalunya") return undefined;
-    return placeTypeLabel?.label || filters.place;
-  };
-
-  // Get category display name from dynamic categories
-  const getCategoryDisplayName = (categorySlug: string): string | undefined => {
-    if (categorySlug === "tots") return undefined;
-
-    const category = categories.find((cat) => cat.slug === categorySlug);
-    return category ? category.name.toUpperCase() : undefined;
-  };
-
-  // Build URLs for filter removal - simplified without memoization
-  const getRemoveUrl = (filterType: keyof URLFilterState): string => {
-    const changes: Partial<URLFilterState> = {};
-
-    if (filterType === "distance") {
-      changes.distance = undefined; // Remove distance entirely, not set to default
-      changes.lat = undefined;
-      changes.lon = undefined;
-    }
-
-    switch (filterType) {
-      case "place":
-        changes.place = "catalunya";
-        break;
-      case "byDate":
-        if (segments.place === "catalunya" && segments.category === "tots") {
-          return "/";
-        }
-        changes.byDate = "tots";
-        break;
-      case "category":
-        changes.category = "tots";
-        break;
-      case "distance":
-        // Already handled above
-        break;
-    }
-
-    const result = buildFilterUrl(segments, queryParams, changes);
-    return result;
-  };
+    value || defaultValue;
 
   return (
     <div className="w-full bg-whiteCorp flex justify-center items-center mt-2">
@@ -109,41 +66,22 @@ const ServerFilters = ({
             scrollbarColor: "#cccccc transparent",
           }}
         >
-          <FilterButton
-            text={getPlaceDisplayName() || "Població"}
-            enabled={filters.place !== "catalunya"}
-            removeUrl={getRemoveUrl("place")}
-            onOpenModal={onOpenModal}
-          />
-          <FilterButton
-            text={getText(
-              getCategoryDisplayName(filters.category),
-              "Categoria"
-            )}
-            enabled={filters.category !== "tots"}
-            removeUrl={getRemoveUrl("category")}
-            onOpenModal={onOpenModal}
-          />
-          <FilterButton
-            text={getText(foundByDate?.label, "Data")}
-            enabled={filters.byDate !== "tots"} // Simplified enabled logic
-            removeUrl={getRemoveUrl("byDate")}
-            onOpenModal={onOpenModal}
-          />
-          <FilterButton
-            text={getText(
-              filters.distance !== 50 || (queryParams.lat && queryParams.lon)
-                ? `${filters.distance} km`
-                : undefined,
-              "Distància"
-            )}
-            enabled={
-              filters.distance !== 50 ||
-              Boolean(queryParams.lat && queryParams.lon)
-            }
-            removeUrl={getRemoveUrl("distance")}
-            onOpenModal={onOpenModal}
-          />
+          {configurations.map((config) => (
+            <FilterButton
+              key={config.key}
+              text={getText(
+                FilterOperations.getDisplayText(config.key, displayState),
+                config.displayName
+              )}
+              enabled={FilterOperations.isEnabled(config.key, displayState)}
+              removeUrl={FilterOperations.getRemovalUrl(
+                config.key,
+                segments,
+                queryParams
+              )}
+              onOpenModal={onOpenModal}
+            />
+          ))}
         </div>
       </div>
     </div>

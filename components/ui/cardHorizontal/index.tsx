@@ -1,9 +1,8 @@
-"use client";
-
 import { memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
 import type { CardHorizontalProps } from "types/common";
+import { EventSummaryResponseDTO } from "types/api/event";
 
 const CardHorizontalLoading = dynamic(
   () => import("@components/ui/cardLoading"),
@@ -37,7 +36,11 @@ const CardHorizontal: React.FC<CardHorizontalProps> = ({
   }
 
   return (
-    <CardContent event={event} isPriority={isPriority} isHorizontal={true} />
+    <CardContent
+      event={event as EventSummaryResponseDTO}
+      isPriority={isPriority}
+      isHorizontal={true}
+    />
   );
 };
 

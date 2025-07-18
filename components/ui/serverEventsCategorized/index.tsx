@@ -1,8 +1,10 @@
 import { memo, ReactElement } from "react";
 import Link from "next/link"; // Added Link import
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
+import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
+import AdArticle from "@components/ui/adArticle";
 import { CATEGORY_NAMES_MAP } from "@utils/constants";
 import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
@@ -30,6 +32,20 @@ function ServerEventsCategorized({
 
   const allEvents = Object.values(filteredCategorizedEvents).flat();
   const hasEvents = allEvents.length > 0;
+
+  // Pre-calculate ad placement positions for better performance
+  const totalCategories = Object.keys(filteredCategorizedEvents).length;
+  const adPositions = new Set<number>();
+  
+  // Add ads starting from index 1 (after 2nd category) and then every 3rd category
+  for (let i = 1; i < totalCategories; i += 3) {
+    adPositions.add(i);
+  }
+  
+  // Always show ad after the last category if we have more than 3 categories
+  if (totalCategories > 3) {
+    adPositions.add(totalCategories - 1);
+  }
 
   if (!hasEvents) {
     return <NoEventsFound />;
@@ -113,7 +129,20 @@ function ServerEventsCategorized({
                       nonce={nonce}
                     />
 
-                    {/* Ad placement removed for server component - can be added via client component */}
+                    {/* Ad placement between category sections */}
+                    {adPositions.has(index) && (
+                      <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-2 mt-4 mb-2">
+                        <div className="w-full flex">
+                          <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
+                          <div className="w-11/12 flex flex-col gap-4">
+                            <h2>Contingut patrocinat</h2>
+                          </div>
+                        </div>
+                        <div className="w-full">
+                          <AdArticle slot="8139041285" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               }

@@ -55,7 +55,7 @@ export interface ReportViewProps {
 }
 
 export interface CardContentProps {
-  event: EventSummaryResponseDTO;
+  event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
   isHorizontal?: boolean;
 }

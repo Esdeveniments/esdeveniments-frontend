@@ -4,7 +4,7 @@ import { memo, ReactElement, useMemo, useEffect } from "react";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
-import { EventSummaryResponseDTO } from "types/api/event";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { useEvents } from "@components/hooks/useEvents";
@@ -32,6 +32,11 @@ function HybridEventsList({
     [initialEvents]
   );
 
+  const allEventsWithAds = useMemo(
+    () => initialEvents, // Keep all events including ads for rendering
+    [initialEvents]
+  );
+
   const { events, hasMore, loadMore, isLoading, isValidating, error } =
     useEvents({
       place,
@@ -42,15 +47,15 @@ function HybridEventsList({
       serverHasMore,
     });
 
-  const allEvents = events.length > 0 ? events : validInitialEvents;
+  const allEvents = allEventsWithAds.length > 0 ? allEventsWithAds : events;
 
   // Preload first 3 images for better LCP
   useEffect(() => {
     const imagesToPreload = allEvents
       .slice(0, 3)
-      .filter((event) => event.imageUrl)
+      .filter((event) => isEventSummaryResponseDTO(event) && event.imageUrl)
       .map((event, index) => ({
-        src: event.imageUrl!,
+        src: (event as EventSummaryResponseDTO).imageUrl!,
         options: {
           priority: index === 0,
           quality: index === 0 ? 85 : 75,
@@ -73,7 +78,7 @@ function HybridEventsList({
       <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
         <NoEventsFound title={pageData?.notFoundText} />
         <List events={allEvents}>
-          {(event: EventSummaryResponseDTO, index: number) => (
+          {(event: ListEvent, index: number) => (
             <Card
               key={`${event.id}-${index}`}
               event={event}
@@ -99,7 +104,7 @@ function HybridEventsList({
 
       {/* Events List */}
       <List events={allEvents}>
-        {(event: EventSummaryResponseDTO, index: number) => (
+        {(event: ListEvent, index: number) => (
           <Card
             key={`${event.id}-${index}`}
             event={event}

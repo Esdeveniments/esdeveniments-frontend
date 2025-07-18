@@ -163,20 +163,70 @@ export async function fetchCategorizedEvents(
   }
 }
 
+function insertAdsRandomly(
+  events: EventSummaryResponseDTO[],
+  ads: AdEvent[],
+  minDistance = 4,
+  maxDistance = 6,
+  startFrom = 3
+): ListEvent[] {
+  const result: ListEvent[] = [...events];
+
+  // Shuffle the ads for random distribution
+  const shuffledAds = [...ads].sort(() => Math.random() - 0.5);
+
+  // Track inserted positions to avoid conflicts
+  const insertedIndexes: number[] = [];
+
+  // Insert ads at calculated positions
+  shuffledAds.forEach((ad, i) => {
+    // Calculate the index for the ad based on the min and max distance
+    let index =
+      startFrom +
+      i * minDistance +
+      Math.floor(Math.random() * (maxDistance - minDistance + 1));
+
+    // Adjust index to account for previously inserted ads
+    insertedIndexes.forEach((insertedIndex) => {
+      if (index >= insertedIndex) {
+        index++;
+      }
+    });
+
+    // Check if the index is valid
+    if (index <= result.length) {
+      // Insert the ad at the calculated index
+      result.splice(index, 0, ad);
+      // Add the index to the insertedIndexes array
+      insertedIndexes.push(index);
+      insertedIndexes.sort((a, b) => a - b); // Keep sorted for next iteration
+    }
+  });
+
+  return result;
+}
+
 export function insertAds(
   events: EventSummaryResponseDTO[],
-  adFrequency = 5
+  adFrequencyRatio = 4 // 1 ad per 4 events, matching old behavior
 ): ListEvent[] {
-  const result: ListEvent[] = [];
-  let adIndex = 0;
-  for (let i = 0; i < events.length; i++) {
-    result.push(events[i]);
-    if ((i + 1) % adFrequency === 0) {
-      result.push({
-        isAd: true,
-        id: `ad-${adIndex++}`,
-      } as AdEvent);
-    }
+  if (!events.length) {
+    return [];
   }
-  return result;
+
+  // Create ad events similar to old implementation
+  const numberOfAds = Math.ceil(events.length / adFrequencyRatio);
+  const ads: AdEvent[] = Array.from(
+    { length: numberOfAds },
+    (_, i) =>
+      ({
+        isAd: true,
+        id: `ad-${i}`,
+        images: [],
+        location: "",
+        slug: "",
+      } as AdEvent)
+  );
+
+  return insertAdsRandomly(events, ads);
 }

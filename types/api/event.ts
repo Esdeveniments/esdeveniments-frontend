@@ -57,6 +57,9 @@ export interface EventSummaryResponseDTO {
 export interface AdEvent {
   isAd: true;
   id: string;
+  images?: string[];
+  location?: string;
+  slug?: string;
   [key: string]: unknown;
 }
 

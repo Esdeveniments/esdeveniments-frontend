@@ -164,6 +164,20 @@ export default async function Page({
     }
   }
 
+  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
+  if (
+    !eventsResponse ||
+    !eventsResponse.content ||
+    eventsResponse.content.length === 0
+  ) {
+    eventsResponse = await fetchEvents({
+      page: 0,
+      size: 7,
+      // No place, category, or other filters - just get latest events
+    });
+    noEventsFound = true;
+  }
+
   const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 

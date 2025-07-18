@@ -232,6 +232,22 @@ export default async function ByDatePage({
     }
   }
 
+  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
+  if (!events || events.length === 0) {
+    const { from, until } = twoWeeksDefault();
+    const latestEventsParams: FetchEventsParams = {
+      page: 0,
+      size: 7,
+      from: toLocalDateString(from),
+      to: toLocalDateString(until),
+      // No place, category, or other filters - just get latest events
+    };
+
+    eventsResponse = await fetchEvents(latestEventsParams);
+    events = eventsResponse?.content || [];
+    noEventsFound = true;
+  }
+
   const eventsWithAds = insertAds(events);
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
