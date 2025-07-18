@@ -1,4 +1,4 @@
-import { memo, JSX } from 'react';
+import { memo, JSX } from "react";
 
 function AdBoard(): JSX.Element {
   return (
@@ -13,8 +13,8 @@ function AdBoard(): JSX.Element {
       </p>
       <p className="text-sm text-yellow-700 mt-2">
         Si estàs interessat a anunciar-te aquí,{" "}
-        <a 
-          className="text-primary" 
+        <a
+          className="text-primary"
           href="mailto:hola@esdeveniments.cat"
           rel="noopener noreferrer"
         >

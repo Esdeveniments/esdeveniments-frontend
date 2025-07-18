@@ -2,7 +2,7 @@ import { memo, ReactElement } from "react";
 import Script from "next/script";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
-import { EventSummaryResponseDTO } from "types/api/event";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { generateJsonData } from "@utils/helpers";
@@ -62,8 +62,8 @@ function ServerEventsList({
         )}
 
         {/* Events List */}
-        <List events={validEvents}>
-          {(event: EventSummaryResponseDTO, index: number) => (
+        <List events={validEvents as ListEvent[]}>
+          {(event: ListEvent, index: number) => (
             <Card
               key={`${event.id}-${index}`}
               event={event}

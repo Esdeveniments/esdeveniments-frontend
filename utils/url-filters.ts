@@ -7,34 +7,44 @@
  */
 
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import type {
+  URLCategory,
+  URLFilterState,
+  RouteSegments,
+  URLQueryParams,
+  ParsedFilters,
+} from "types/url-filters";
+import { VALID_DATES, isValidDateSlug } from "types/dates";
 import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
 
-// Extended to support both static and dynamic categories
-export type URLCategory = string;
-
-export interface FilterState {
-  place: string;
-  byDate: string;
-  category: URLCategory;
-  searchTerm: string;
-  distance: number;
+/**
+ * Validate latitude coordinate
+ */
+function isValidLatitude(lat: number): boolean {
+  return !isNaN(lat) && lat >= -90 && lat <= 90;
 }
 
-export interface RouteSegments {
-  place: string;
-  date: string;
-  category: string;
+/**
+ * Validate longitude coordinate
+ */
+function isValidLongitude(lon: number): boolean {
+  return !isNaN(lon) && lon >= -180 && lon <= 180;
 }
 
-export interface QueryParams {
-  search?: string;
-  distance?: string;
+/**
+ * Safely parse and validate latitude coordinate
+ */
+function parseLatitude(value: string): number | undefined {
+  const lat = parseFloat(value);
+  return isValidLatitude(lat) ? lat : undefined;
 }
 
-export interface ParsedFilters {
-  segments: RouteSegments;
-  queryParams: QueryParams;
-  isCanonical: boolean;
+/**
+ * Safely parse and validate longitude coordinate
+ */
+function parseLongitude(value: string): number | undefined {
+  const lon = parseFloat(value);
+  return isValidLongitude(lon) ? lon : undefined;
 }
 
 // Legacy categories for backward compatibility
@@ -50,15 +60,6 @@ const LEGACY_CATEGORIES: Record<string, URLCategory> = {
   gastronomia: "gastronomia",
   "cursos-i-conferencies": "cursos-i-conferencies",
 } as const;
-
-// Valid date formats
-const VALID_DATES = [
-  "tots",
-  "avui",
-  "dema",
-  "cap-de-setmana",
-  "setmana-vinent",
-] as const;
 
 /**
  * Check if a category slug is valid (either legacy or dynamic)
@@ -113,7 +114,7 @@ export function parseFiltersFromUrl(
     place = segments.place || "catalunya";
     const secondSegment = segments.date || segments.category || "";
 
-    if (VALID_DATES.includes(secondSegment as any)) {
+    if (isValidDateSlug(secondSegment)) {
       // It's a date: /catalunya/avui
       date = secondSegment;
       category = "tots";
@@ -130,7 +131,7 @@ export function parseFiltersFromUrl(
   }
 
   // Validate and normalize segments
-  const normalizedDate = VALID_DATES.includes(date as any) ? date : "tots";
+  const normalizedDate = isValidDateSlug(date) ? date : "tots";
   const normalizedCategory = isValidCategorySlug(category, dynamicCategories)
     ? category
     : "tots";
@@ -139,7 +140,7 @@ export function parseFiltersFromUrl(
   const isCanonical =
     segmentCount <= 2 ||
     (!!(segments.place && segments.date && segments.category) &&
-      VALID_DATES.includes(date as any) &&
+      isValidDateSlug(date) &&
       isValidCategorySlug(category, dynamicCategories));
 
   return {
@@ -151,6 +152,8 @@ export function parseFiltersFromUrl(
     queryParams: {
       search: searchParams.get("search") || undefined,
       distance: searchParams.get("distance") || undefined,
+      lat: searchParams.get("lat") || undefined,
+      lon: searchParams.get("lon") || undefined,
     },
     isCanonical,
   };
@@ -161,7 +164,7 @@ export function parseFiltersFromUrl(
  * Updated to support dynamic categories
  */
 export function buildCanonicalUrl(
-  filters: Partial<FilterState>,
+  filters: Partial<URLFilterState>,
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): string {
   return buildCanonicalUrlDynamic(filters, dynamicCategories);
@@ -173,11 +176,11 @@ export function buildCanonicalUrl(
  */
 export function buildFilterUrl(
   currentSegments: RouteSegments,
-  currentQuery: QueryParams,
-  changes: Partial<FilterState>,
+  currentQuery: URLQueryParams,
+  changes: Partial<URLFilterState>,
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): string {
-  const newFilters: Partial<FilterState> = {
+  const newFilters: Partial<URLFilterState> = {
     place: changes.place || currentSegments.place,
     byDate: changes.byDate || currentSegments.date,
     category: changes.category || (currentSegments.category as URLCategory),
@@ -186,24 +189,43 @@ export function buildFilterUrl(
         ? changes.searchTerm
         : currentQuery.search,
     distance:
-      changes.distance !== undefined
+      "distance" in changes
         ? changes.distance
         : parseInt(currentQuery.distance || "50"),
+    lat:
+      "lat" in changes
+        ? changes.lat
+        : currentQuery.lat
+        ? parseLatitude(currentQuery.lat)
+        : undefined,
+    lon:
+      "lon" in changes
+        ? changes.lon
+        : currentQuery.lon
+        ? parseLongitude(currentQuery.lon)
+        : undefined,
   };
 
-  return buildCanonicalUrl(newFilters, dynamicCategories);
+  const result = buildCanonicalUrl(newFilters, dynamicCategories);
+  return result;
 }
 
 /**
  * Convert URL segments to FilterState for compatibility with existing components
  */
-export function urlToFilterState(parsed: ParsedFilters): FilterState {
+export function urlToFilterState(parsed: ParsedFilters): URLFilterState {
   return {
     place: parsed.segments.place,
     byDate: parsed.segments.date,
     category: parsed.segments.category as URLCategory,
     searchTerm: parsed.queryParams.search || "",
     distance: parseInt(parsed.queryParams.distance || "50"),
+    lat: parsed.queryParams.lat
+      ? parseLatitude(parsed.queryParams.lat)
+      : undefined,
+    lon: parsed.queryParams.lon
+      ? parseLongitude(parsed.queryParams.lon)
+      : undefined,
   };
 }
 
@@ -251,7 +273,7 @@ export function getTopStaticCombinations(
   dynamicCategories?: CategorySummaryResponseDTO[]
 ) {
   const topPlaces = ["catalunya", "barcelona", "girona", "lleida", "tarragona"];
-  const topDates = ["avui", "dema", "cap-de-setmana"];
+  const topDates = VALID_DATES.filter((date) => date !== "tots"); // Exclude "tots" from static generation
 
   // Get top categories from dynamic data or fall back to legacy
   let topCategories = ["tots"];
@@ -329,7 +351,7 @@ export function findCategoryForRouting(
  * Omits /tots/ date segment when it's the default
  */
 export function buildCanonicalUrlDynamic(
-  filters: Partial<FilterState>,
+  filters: Partial<URLFilterState>,
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): string {
   const place = filters.place || "catalunya";
@@ -363,12 +385,20 @@ export function buildCanonicalUrlDynamic(
   if (filters.searchTerm) {
     params.set("search", filters.searchTerm);
   }
-  if (filters.distance && filters.distance !== 50) {
-    // 50 is default
+  if (filters.distance !== undefined && filters.distance !== 50) {
+    // Only add distance if it's defined and not the default value
     params.set("distance", filters.distance.toString());
   }
 
+  if (filters.lat !== undefined) {
+    params.set("lat", filters.lat.toString());
+  }
+  if (filters.lon !== undefined) {
+    params.set("lon", filters.lon.toString());
+  }
+
   const queryString = params.toString();
+
   if (queryString) {
     url += `?${queryString}`;
   }

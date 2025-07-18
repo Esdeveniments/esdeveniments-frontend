@@ -10,7 +10,7 @@ import {
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
-import { RouteSegments, QueryParams } from "@utils/url-filters";
+import { RouteSegments, URLQueryParams } from "types/url-filters";
 
 // Google Scripts Props
 export interface GoogleScriptsProps {
@@ -55,7 +55,7 @@ export interface ReportViewProps {
 }
 
 export interface CardContentProps {
-  event: EventSummaryResponseDTO;
+  event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
   isHorizontal?: boolean;
 }
@@ -246,7 +246,7 @@ export interface FilterButtonProps {
 
 export interface ServerFiltersProps {
   segments: RouteSegments;
-  queryParams: QueryParams;
+  queryParams: URLQueryParams;
   categories?: CategorySummaryResponseDTO[];
   placeTypeLabel?: PlaceTypeAndLabel;
   onOpenModal: () => void;
@@ -256,7 +256,7 @@ export interface NavigationFiltersModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentSegments: RouteSegments;
-  currentQueryParams: QueryParams;
+  currentQueryParams: URLQueryParams;
   userLocation?: { latitude: number; longitude: number };
   categories?: CategorySummaryResponseDTO[];
 }

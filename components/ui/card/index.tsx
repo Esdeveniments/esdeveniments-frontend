@@ -1,9 +1,8 @@
-"use client";
-
 import { JSX, memo } from "react";
 import dynamic from "next/dynamic";
 import CardContent from "@components/ui/common/cardContent";
 import type { CardProps } from "types/common";
+import { EventSummaryResponseDTO } from "types/api/event";
 
 const CardLoading = dynamic(() => import("@components/ui/cardLoading"), {
   loading: () => (
@@ -34,7 +33,11 @@ function Card({
   }
 
   return (
-    <CardContent event={event} isPriority={isPriority} isHorizontal={false} />
+    <CardContent
+      event={event as EventSummaryResponseDTO}
+      isPriority={isPriority}
+      isHorizontal={false}
+    />
   );
 }
 

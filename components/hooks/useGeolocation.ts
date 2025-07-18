@@ -14,7 +14,7 @@ export function useGeolocation(): UseGeolocationReturn {
       regions: RegionsGroupedByCitiesResponseDTO[]
     ): Promise<Option | null> => {
       if (!("geolocation" in navigator)) {
-        setError("Geolocation is not supported by this browser.");
+        setError("La geolocalització no està disponible en aquest navegador.");
         return null;
       }
 
@@ -37,18 +37,19 @@ export function useGeolocation(): UseGeolocationReturn {
             switch (error.code) {
               case error.PERMISSION_DENIED:
                 errorMessage =
-                  "Permission denied. The user has denied the request for geolocation.";
+                  "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció.";
                 break;
               case error.POSITION_UNAVAILABLE:
                 errorMessage =
-                  "Position unavailable. Location information is unavailable.";
+                  "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.";
                 break;
               case error.TIMEOUT:
                 errorMessage =
-                  "Timeout. The request to get user location timed out.";
+                  "Temps d'espera esgotat. Prova de nou o selecciona una població.";
                 break;
               default:
-                errorMessage = "An unknown error occurred.";
+                errorMessage =
+                  "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància.";
             }
 
             setError(errorMessage);

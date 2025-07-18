@@ -25,6 +25,9 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { toLocalDateString } from "@utils/helpers";
+import { twoWeeksDefault } from "@lib/dates";
 
 export const revalidate = 600;
 
@@ -151,13 +154,68 @@ export default async function FilteredPage({
     byDate: filters.byDate as ByDateOptions,
     isToday: filters.byDate === "tots",
     category: filters.category !== "tots" ? filters.category : undefined,
-    searchTerm: filters.searchTerm || undefined,
-    distance: filters.distance !== 50 ? filters.distance : undefined,
+    term: filters.searchTerm || undefined,
   };
 
+  // Add distance/radius filter if coordinates are provided
+  if (filters.lat && filters.lon) {
+    if (filters.distance !== undefined) {
+      fetchParams.radius = filters.distance;
+    }
+    fetchParams.lat = filters.lat;
+    fetchParams.lon = filters.lon;
+  }
+
   // Fetch events
-  const events = await fetchEvents(fetchParams);
-  const eventsWithAds = insertAds(events.content);
+  let eventsResponse = await fetchEvents(fetchParams);
+  let events = eventsResponse?.content || [];
+  let noEventsFound = false;
+
+  // Check if we need to fetch fallback events from the region
+  if (!events || events.length === 0) {
+    const regionsWithCities = await fetchRegionsWithCities();
+    const regionWithCities = regionsWithCities.find((r) =>
+      r.cities.some((city) => city.value === filters.place)
+    );
+
+    if (regionWithCities) {
+      const regions = await fetchRegions();
+      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
+
+      if (regionWithSlug) {
+        // Fetch events from the parent region without the specific category filter
+        const fallbackParams: FetchEventsParams = {
+          page: 0,
+          size: 7,
+          place: regionWithSlug.slug,
+          byDate: filters.byDate as ByDateOptions,
+          isToday: filters.byDate === "tots",
+        };
+
+        eventsResponse = await fetchEvents(fallbackParams);
+        events = eventsResponse?.content || [];
+        noEventsFound = true;
+      }
+    }
+  }
+
+  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
+  if (!events || events.length === 0) {
+    const { from, until } = twoWeeksDefault();
+    const latestEventsParams: FetchEventsParams = {
+      page: 0,
+      size: 7,
+      from: toLocalDateString(from),
+      to: toLocalDateString(until),
+      // No place, category, or other filters - just get latest events
+    };
+
+    eventsResponse = await fetchEvents(latestEventsParams);
+    events = eventsResponse?.content || [];
+    noEventsFound = true;
+  }
+
+  const eventsWithAds = insertAds(events);
 
   // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === filters.category);
@@ -205,7 +263,8 @@ export default async function FilteredPage({
         place={filters.place}
         category={filters.category}
         date={filters.byDate}
-        serverHasMore={!events.last}
+        serverHasMore={!eventsResponse?.last}
+        noEventsFound={noEventsFound}
       />
       <ClientInteractiveLayer
         categories={categories}

@@ -242,13 +242,13 @@ export interface CalendarListProps {
 }
 
 export interface CardProps {
-  event: EventSummaryResponseDTO;
+  event: ListEvent;
   isLoading?: boolean;
   isPriority?: boolean;
 }
 
 export interface CardHorizontalProps {
-  event: EventSummaryResponseDTO;
+  event: ListEvent;
   isLoading?: boolean;
   isPriority?: boolean;
 }
@@ -293,11 +293,8 @@ export interface BaseLayoutProps {
 }
 
 export interface ListProps {
-  events: EventSummaryResponseDTO[];
-  children: (
-    event: EventSummaryResponseDTO,
-    index: number
-  ) => React.ReactElement;
+  events: ListEvent[];
+  children: (event: ListEvent, index: number) => React.ReactElement;
 }
 
 export interface MapsProps {

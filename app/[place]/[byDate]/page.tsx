@@ -8,6 +8,7 @@ import {
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
 import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
+import type { DateFunctions } from "types/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
@@ -71,7 +72,12 @@ export async function generateMetadata({
 
 export async function generateStaticParams() {
   const topPlaces = ["catalunya", "barcelona", "girona", "lleida", "tarragona"];
-  const topDates = ["avui", "dema", "cap-de-setmana"];
+  const topDates = [
+    "avui",
+    "dema",
+    "setmana",
+    "cap-de-setmana",
+  ] as ByDateOptions[];
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {
@@ -132,29 +138,27 @@ export default async function ByDatePage({
     typeof search.category === "string" ? search.category : undefined;
   const finalCategory = searchCategory || actualCategory;
 
-  const dateFunctions = {
+  const dateFunctions: DateFunctions = {
     avui: today,
     dema: tomorrow,
     setmana: week,
     "cap-de-setmana": weekend,
   };
 
-  let selectedFunction;
-  if (actualDate === "tots" && finalCategory && finalCategory !== "tots") {
-    selectedFunction = twoWeeksDefault;
-  } else {
-    selectedFunction =
-      dateFunctions[actualDate as keyof typeof dateFunctions] || today;
-  }
-
-  let { from, until } = selectedFunction();
-
   const paramsForFetch: FetchEventsParams = {
     page: 0,
     size: 10,
-    from: toLocalDateString(from),
-    to: toLocalDateString(until),
   };
+
+  // Only add date filters if actualDate is not "tots"
+  if (actualDate !== "tots") {
+    const selectedFunction =
+      dateFunctions[actualDate as keyof typeof dateFunctions] || today;
+    const { from, until } = selectedFunction();
+
+    paramsForFetch.from = toLocalDateString(from);
+    paramsForFetch.to = toLocalDateString(until);
+  }
 
   if (place !== "catalunya") {
     paramsForFetch.place = place;
@@ -162,6 +166,27 @@ export default async function ByDatePage({
 
   if (finalCategory && finalCategory !== "tots") {
     paramsForFetch.category = finalCategory;
+  }
+
+  // Add distance/radius filter if provided
+  const distance =
+    typeof search.distance === "string" ? search.distance : undefined;
+  const lat = typeof search.lat === "string" ? search.lat : undefined;
+  const lon = typeof search.lon === "string" ? search.lon : undefined;
+  const query = typeof search.search === "string" ? search.search : undefined;
+
+  // Add distance/radius filter if coordinates are provided
+  if (lat && lon) {
+    if (distance) {
+      paramsForFetch.radius = parseInt(distance);
+    }
+    paramsForFetch.lat = parseFloat(lat);
+    paramsForFetch.lon = parseFloat(lon);
+  }
+
+  // Add search query if provided
+  if (query) {
+    paramsForFetch.term = query;
   }
 
   let noEventsFound = false;
@@ -179,7 +204,7 @@ export default async function ByDatePage({
       const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
 
       if (regionWithSlug) {
-        ({ from, until } = twoWeeksDefault());
+        const { from, until } = twoWeeksDefault();
         const fallbackParams: FetchEventsParams = {
           page: 0,
           size: 7,
@@ -197,6 +222,22 @@ export default async function ByDatePage({
         noEventsFound = true;
       }
     }
+  }
+
+  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
+  if (!events || events.length === 0) {
+    const { from, until } = twoWeeksDefault();
+    const latestEventsParams: FetchEventsParams = {
+      page: 0,
+      size: 7,
+      from: toLocalDateString(from),
+      to: toLocalDateString(until),
+      // No place, category, or other filters - just get latest events
+    };
+
+    eventsResponse = await fetchEvents(latestEventsParams);
+    events = eventsResponse?.content || [];
+    noEventsFound = true;
   }
 
   const eventsWithAds = insertAds(events);

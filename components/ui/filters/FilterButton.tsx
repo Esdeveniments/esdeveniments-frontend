@@ -36,7 +36,7 @@ const FilterButton = ({
         </span>
         {enabled ? (
           <XIcon
-            className="h-5 w-5 cursor-pointer"
+            className="h-5 w-5 cursor-pointer ml-1 p-1 hover:bg-gray-100 rounded"
             aria-hidden="true"
             onClick={handleRemove}
           />

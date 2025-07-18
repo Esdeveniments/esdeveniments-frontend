@@ -95,16 +95,19 @@ export default async function Page({
   const date = typeof search.date === "string" ? search.date : undefined;
   const distance =
     typeof search.distance === "string" ? search.distance : undefined;
-  const searchTerm =
-    typeof search.search === "string" ? search.search : undefined;
+  const lat = typeof search.lat === "string" ? search.lat : undefined;
+  const lon = typeof search.lon === "string" ? search.lon : undefined;
+  const query = typeof search.search === "string" ? search.search : undefined;
 
   if (category || date) {
     const canonicalUrl = buildCanonicalUrl({
       place,
       byDate: date || "tots",
       category: (category as EventCategory) || "tots",
-      searchTerm: searchTerm || "",
+      searchTerm: query || "",
       distance: distance ? parseInt(distance) : 50,
+      lat: lat ? parseFloat(lat) : undefined,
+      lon: lon ? parseFloat(lon) : undefined,
     });
 
     redirect(canonicalUrl);
@@ -120,6 +123,20 @@ export default async function Page({
   }
 
   if (category) fetchParams.category = category;
+
+  // Add distance/radius filter if coordinates are provided
+  if (lat && lon) {
+    if (distance) {
+      fetchParams.radius = parseInt(distance);
+    }
+    fetchParams.lat = parseFloat(lat);
+    fetchParams.lon = parseFloat(lon);
+  }
+
+  // Add search query if provided
+  if (query) {
+    fetchParams.term = query;
+  }
 
   let eventsResponse = await fetchEvents(fetchParams);
   let noEventsFound = false;
@@ -147,6 +164,20 @@ export default async function Page({
         noEventsFound = true;
       }
     }
+  }
+
+  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
+  if (
+    !eventsResponse ||
+    !eventsResponse.content ||
+    eventsResponse.content.length === 0
+  ) {
+    eventsResponse = await fetchEvents({
+      page: 0,
+      size: 7,
+      // No place, category, or other filters - just get latest events
+    });
+    noEventsFound = true;
   }
 
   const events = eventsResponse?.content || [];

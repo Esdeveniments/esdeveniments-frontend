@@ -18,83 +18,99 @@ const CATEGORY_SEO_TEMPLATES = {
     description:
       "literatura, llibres, presentacions literàries, clubs de lectura",
     culturalContext: "Descobreix el món de la literatura catalana",
+    noEventsText: "activitats literàries",
   },
   "fires-i-mercats": {
     titleSuffix: "Fires i mercats",
     description: "fires, mercats, esdeveniments comercials, artesania",
     culturalContext: "Descobreix fires i mercats tradicionals",
+    noEventsText: "fires ni mercats",
   },
   "festes-populars": {
     titleSuffix: "Festes populars",
     description: "festes populars, celebracions tradicionals, cultura popular",
     culturalContext: "Participa en les millors festes populars catalanes",
+    noEventsText: "festes populars",
   },
   "tallers-i-formacio": {
     titleSuffix: "Tallers i formació",
     description: "tallers, formació, cursos, aprenentatge",
     culturalContext: "Aprèn i forma't amb els millors tallers",
+    noEventsText: "tallers ni formacions",
   },
   dansa: {
     titleSuffix: "Dansa i ball",
     description: "dansa, ball, espectacles de dansa, classes de ball",
     culturalContext: "Viu la passió de la dansa",
+    noEventsText: "activitats de dansa",
   },
   "salut-i-benestar": {
     titleSuffix: "Salut i benestar",
     description: "salut, benestar, activitats saludables, wellness",
     culturalContext: "Cuida't amb activitats de salut i benestar",
+    noEventsText: "activitats de salut i benestar",
   },
   esport: {
     titleSuffix: "Esport i activitat física",
     description: "esport, activitat física, competicions esportives",
     culturalContext: "Mantén-te actiu amb les millors activitats esportives",
+    noEventsText: "activitats esportives",
   },
   "patrimoni-cultural": {
     titleSuffix: "Patrimoni cultural",
     description: "patrimoni cultural, història, monuments, tradicions",
     culturalContext: "Descobreix el ric patrimoni cultural català",
+    noEventsText: "activitats de patrimoni cultural",
   },
   "serveis-municipals": {
     titleSuffix: "Serveis municipals",
     description:
       "serveis municipals, administració, tràmits, informació ciutadana",
     culturalContext: "Informa't sobre els serveis municipals disponibles",
+    noEventsText: "serveis municipals",
   },
   "gent-gran": {
     titleSuffix: "Activitats per a la gent gran",
     description: "activitats per a gent gran, sèniors, tercera edat",
     culturalContext:
       "Descobreix activitats especialment pensades per a la gent gran",
+    noEventsText: "activitats per a la gent gran",
   },
   "familia-i-infants": {
     titleSuffix: "Família i infants",
     description: "activitats familiars, infants, nens, diversió familiar",
     culturalContext: "Diversió per a tota la família",
+    noEventsText: "activitats familiars",
   },
   exposicions: {
     titleSuffix: "Exposicions i art",
     description: "exposicions, galeries d'art, museus, art visual",
     culturalContext: "Explora l'art i la cultura visual",
+    noEventsText: "exposicions",
   },
   cinema: {
     titleSuffix: "Cinema i audiovisual",
     description: "cinema, projeccions, festivals de cinema, audiovisual",
     culturalContext: "Gaudeix del millor cinema",
+    noEventsText: "projeccions de cinema",
   },
   musica: {
     titleSuffix: "Música i concerts",
     description: "música, concerts, espectacles musicals, festivals musicals",
     culturalContext: "Descobreix la millor música en viu",
+    noEventsText: "concerts ni espectacles musicals",
   },
   teatre: {
     titleSuffix: "Teatre i arts escèniques",
     description: "teatre, òpera, arts escèniques, espectacles teatrals",
     culturalContext: "Viu les millors obres teatrals",
+    noEventsText: "obres de teatre",
   },
   altres: {
     titleSuffix: "Altres activitats",
     description: "altres activitats, esdeveniments diversos, miscel·lània",
     culturalContext: "Descobreix altres activitats interessants",
+    noEventsText: "activitats",
   },
 };
 
@@ -195,7 +211,7 @@ export async function generatePagesData({
         `${categorySEO.culturalContext} avui ${labelWithArticle}. Agenda actualitzada amb ${categorySEO.description} i esdeveniments culturals destacats.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
-          categorySEO.description.split(",")[0]
+          categorySEO.noEventsText || categorySEO.description.split(",")[0]
         } avui ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
       );
     } else if (byDate === "dema") {
@@ -206,7 +222,7 @@ export async function generatePagesData({
         `${categorySEO.culturalContext} demà ${labelWithArticle}. Agenda actualitzada amb ${categorySEO.description} i esdeveniments culturals destacats.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
-          categorySEO.description.split(",")[0]
+          categorySEO.noEventsText || categorySEO.description.split(",")[0]
         } demà ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
       );
     } else if (byDate === "setmana") {
@@ -217,7 +233,7 @@ export async function generatePagesData({
         `${categorySEO.culturalContext} aquesta setmana ${labelWithArticle}. Agenda setmanal amb ${categorySEO.description} i esdeveniments culturals destacats.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
-          categorySEO.description.split(",")[0]
+          categorySEO.noEventsText || categorySEO.description.split(",")[0]
         } aquesta setmana ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
       );
     } else if (byDate === "cap-de-setmana") {
@@ -228,7 +244,7 @@ export async function generatePagesData({
         `${categorySEO.culturalContext} aquest cap de setmana ${labelWithArticle}. Agenda de cap de setmana amb ${categorySEO.description} i esdeveniments culturals destacats.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
-          categorySEO.description.split(",")[0]
+          categorySEO.noEventsText || categorySEO.description.split(",")[0]
         } aquest cap de setmana ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
       );
     } else {
@@ -240,7 +256,7 @@ export async function generatePagesData({
         `${categorySEO.culturalContext} ${labelWithArticle}. Agenda cultural catalana amb ${categorySEO.description} i esdeveniments destacats durant tot l'any.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
-          categorySEO.description.split(",")[0]
+          categorySEO.noEventsText || categorySEO.description.split(",")[0]
         } ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
       );
     }

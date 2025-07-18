@@ -13,15 +13,12 @@ import { extractURLSegments, debugURLParsing } from "@utils/url-parsing";
 import { ClientInteractiveLayerProps } from "types/props";
 import Imago from "public/static/images/imago-esdeveniments.png";
 
-function debounce<F extends (...args: unknown[]) => unknown>(
-  func: F,
-  wait: number
-): (...args: Parameters<F>) => void {
+function debounce(func: () => void, wait: number): () => void {
   let timeout: ReturnType<typeof setTimeout> | undefined;
 
-  return function (...args: Parameters<F>): void {
+  return function (): void {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => func(), wait);
   };
 }
 
@@ -33,6 +30,9 @@ function ClientInteractiveLayer({
   const isHydrated = useHydration();
   const [scrollIcon, setScrollIcon] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<
+    { latitude: number; longitude: number } | undefined
+  >();
   const searchParams = useSearchParams();
   const pathname = usePathname(); // Get current pathname
 
@@ -77,6 +77,21 @@ function ClientInteractiveLayer({
     urlSearchParams,
     categories // Pass dynamic categories for proper validation
   );
+
+  // Initialize user location from URL params if available
+  useEffect(() => {
+    const lat = parsed.queryParams.lat;
+    const lon = parsed.queryParams.lon;
+    if (lat && lon) {
+      setUserLocation({
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lon),
+      });
+    } else {
+      // Clear user location when lat/lon are not in URL
+      setUserLocation(undefined);
+    }
+  }, [parsed.queryParams.lat, parsed.queryParams.lon]);
 
   // Debug URL parsing in development
   debugURLParsing(pathname || "/", urlSegments, parsed);
@@ -133,6 +148,7 @@ function ClientInteractiveLayer({
         onClose={handleCloseModal}
         currentSegments={parsed.segments}
         currentQueryParams={parsed.queryParams}
+        userLocation={userLocation}
         categories={categories}
       />
     </>
