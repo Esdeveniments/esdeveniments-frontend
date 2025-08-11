@@ -34,7 +34,8 @@ export async function GET(
     // Optionally align returned type to validation outcome
     const normalized = { ...data, type };
     return Response.json(normalized, { status: 200 });
-  } catch (e: any) {
-    return Response.json({ message: e?.message || "Invalid date range" }, { status: 400 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Invalid date range";
+    return Response.json({ message }, { status: 400 });
   }
 }
