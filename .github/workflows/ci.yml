@@ -72,7 +72,7 @@ jobs:
 
       - name: Start Next.js server
         run: |
-          yarn start &
+          E2E_TEST_MODE=true yarn start &
           echo $! > .next_pid
         env:
           PORT: 3000

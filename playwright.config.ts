@@ -19,4 +19,8 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+  webServer: undefined,
+  expect: { timeout: 10000 },
+  // Provide env to app server (Next.js) via process.env during CI start step.
+  // In GitHub Actions we set NEXT_PUBLIC_API_URL; also export E2E_TEST_MODE to enable deterministic publish flow.
 })

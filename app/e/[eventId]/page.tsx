@@ -19,6 +19,9 @@ export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
+  if (process.env.E2E_TEST_MODE === "true" && slug === "e2e-test-event") {
+    return { title: "E2E Test Event" };
+  }
   const event = await fetchEventBySlug(slug);
   if (!event) return { title: "No event found" };
   return generateEventMetadata(event, `${siteUrl}/e/${slug}`);
@@ -35,6 +38,62 @@ export default async function EventPage({
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";
+
+  if (process.env.E2E_TEST_MODE === "true" && slug === "e2e-test-event") {
+    const fake: EventDetailResponseDTO = {
+      id: 1,
+      slug: "e2e-test-event",
+      title: "E2E Test Event",
+      description: "Detall de prova per E2E",
+      startDate: "2025-01-01",
+      endDate: null as any,
+      location: "Barcelona",
+      city: { id: 1, name: "Barcelona", slug: "barcelona", postalCode: "08001" } as any,
+      region: { id: 1, name: "Barcelona", slug: "barcelona" } as any,
+      categories: [],
+      imageUrl: "",
+      visits: 0,
+      duration: null as any,
+      weather: undefined,
+      tags: [],
+      type: "FREE",
+      url: "https://example.com",
+    } as any
+
+    const jsonData = generateJsonData(fake)
+
+    return (
+      <>
+        <Script
+          id="e2e-jsonld"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
+        />
+        <div className="w-full flex justify-center bg-whiteCorp pb-10">
+          <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[520px] md:w-[520px] lg:w-[520px] min-w-0">
+            <article className="w-full flex flex-col justify-center items-start gap-8">
+              <div className="w-full flex flex-col justify-center items-start gap-4">
+                <EventShareBar
+                  visits={0}
+                  slug={fake.slug}
+                  title={fake.title}
+                  description={fake.description}
+                  eventDateString={fake.startDate}
+                  location={fake.location}
+                  cityName={fake.city.name}
+                  regionName={fake.region.name}
+                  postalCode={fake.city.postalCode}
+                />
+              </div>
+              <EventClient event={fake} />
+            </article>
+          </div>
+        </div>
+      </>
+    )
+  }
 
   const event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
   if (!event) return <NoEventFound />;
@@ -106,7 +165,7 @@ export default async function EventPage({
       )}
       <div className="w-full flex justify-center bg-whiteCorp pb-10">
         <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[520px] md:w-[520px] lg:w-[520px] min-w-0">
-          <article className="w-full flex flex-col justify-center items-start gap-8">
+          <article className="w-full flex flex-col justifycenter items-start gap-8">
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <EventMedia event={event} title={title} />
               <EventShareBar
