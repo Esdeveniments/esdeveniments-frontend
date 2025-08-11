@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test('home page renders', async ({ page }) => {
+test('home page renders and shows search input', async ({ page }) => {
   await page.goto('/')
-  await expect(page).toHaveTitle(/esdeveniments/i)
+  await expect(page.getByLabel('Search input')).toBeVisible()
 })
