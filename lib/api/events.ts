@@ -66,8 +66,8 @@ export async function fetchEvents(
   }
 }
 
-export async function fetchEventById(
-  uuid: string
+export async function fetchEventBySlug(
+  fullSlug: string
 ): Promise<EventDetailResponseDTO | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -76,12 +76,12 @@ export async function fetchEventById(
   }
 
   try {
-    const response = await fetch(`${apiUrl}/events/${uuid}`);
+    const response = await fetch(`${apiUrl}/events/${fullSlug}`);
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
   } catch (error) {
-    console.error("Error fetching event by ID:", error);
+    console.error("Error fetching event by slug:", error);
     return null;
   }
 }
