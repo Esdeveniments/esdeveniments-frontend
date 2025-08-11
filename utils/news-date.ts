@@ -1,10 +1,15 @@
 export type ValidRangeType = "WEEKLY" | "WEEKEND";
 
 function parseISO(dateStr: string): Date {
-  const d = new Date(dateStr);
+  // Parse as local date to avoid UTC interpretation of YYYY-MM-DD
+  // Accepts strictly YYYY-MM-DD
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!m) throw new Error(`Invalid date: ${dateStr}`);
+  const year = Number(m[1]);
+  const monthIndex = Number(m[2]) - 1; // 0-based
+  const day = Number(m[3]);
+  const d = new Date(year, monthIndex, day, 0, 0, 0, 0);
   if (isNaN(d.getTime())) throw new Error(`Invalid date: ${dateStr}`);
-  // Normalize to local midnight to avoid TZ drift when comparing by day
-  d.setHours(0, 0, 0, 0);
   return d;
 }
 
