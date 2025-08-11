@@ -1,7 +1,7 @@
 /**
  * Tests for configuration-driven filter system
  */
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import { FilterOperations } from "../utils/filter-operations";
 import { FILTER_CONFIGURATIONS } from "../config/filters";
 import type { FilterDisplayState } from "../types/filters";
