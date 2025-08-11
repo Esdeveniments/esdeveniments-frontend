@@ -1,10 +1,9 @@
 import { generateJsonData } from "@utils/helpers";
-import { fetchEventById } from "@lib/api/events";
+import { fetchEventBySlug } from "@lib/api/events";
 import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
-import { extractUuidFromSlug } from "@utils/string-helpers";
 import { headers } from "next/headers";
 import Script from "next/script";
 import EventMedia from "./components/EventMedia";
@@ -20,8 +19,7 @@ export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
-  const uuid = extractUuidFromSlug(slug);
-  const event = await fetchEventById(uuid);
+  const event = await fetchEventBySlug(slug);
   if (!event) return { title: "No event found" };
   return generateEventMetadata(event, `${siteUrl}/e/${slug}`);
 }
@@ -33,13 +31,12 @@ export default async function EventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
-  const uuid = extractUuidFromSlug(slug);
   
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";
 
-  const event: EventDetailResponseDTO | null = await fetchEventById(uuid);
+  const event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
   if (!event) return <NoEventFound />;
   if (event.title === "CANCELLED") return <NoEventFound />;
 
