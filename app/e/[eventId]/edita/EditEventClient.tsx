@@ -97,7 +97,7 @@ export default function EditEventClient({
         const data = formDataToBackendDTO(form);
         const result = await editEvent(event.id, event.slug, data);
         if (result && result.success) {
-          router.push(`/e/${event.slug}`);
+          router.push(`/e/${result.newSlug}`);
         } else {
           console.error("Error updating event");
         }

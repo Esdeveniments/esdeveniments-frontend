@@ -9,11 +9,15 @@ export async function editEvent(
   data: EventUpdateRequestDTO
 ) {
   // 1. Update the event in your backend
-  await updateEventById(eventId, data);
+  const updatedEvent = await updateEventById(eventId, data);
 
   // 2. Revalidate the event detail page (purge ISR cache)
-  await revalidatePath(`/e/${slug}`);
+  // If slug changed, clear old path; always revalidate the new one
+  if (updatedEvent.slug !== slug) {
+    await revalidatePath(`/e/${slug}`);
+  }
+  await revalidatePath(`/e/${updatedEvent.slug}`);
 
-  // 3. Optionally, return a result for your client
-  return { success: true };
+  // 3. Return result with new slug for client redirection
+  return { success: true, newSlug: updatedEvent.slug };
 }
