@@ -8,12 +8,7 @@ import {
   PROMOTE_PLACEMENT_MULTIPLIER,
 } from "@utils/constants";
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
-
-const ClientBusinessUpload = dynamic(() => import("./upload-client"), {
-  ssr: false,
-  loading: () => null,
-});
+import ClientBusinessUpload from "./upload-client";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
