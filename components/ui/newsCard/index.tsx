@@ -37,9 +37,9 @@ export default function NewsCard({
         ) : (
           <div className="aspect-[16/9] w-full bg-gradient-to-br from-primarySoft to-primary md:h-80" />
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-blackCorp/95 via-blackCorp/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-fullBlackCorp/95 via-fullBlackCorp/70 to-fullBlackCorp/40" />
 
-        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pt-6 pb-8 sm:p-6 text-whiteCorp">
+        <div className="absolute inset-x-0 bottom-0 px-4 pt-6 pb-8 sm:p-6 text-whiteCorp">
           <h2 className="mb-3 text-3xl font-extrabold leading-tight md:drop-shadow-2xl md:text-4xl lg:text-5xl text-balance">
             {event.title}
           </h2>

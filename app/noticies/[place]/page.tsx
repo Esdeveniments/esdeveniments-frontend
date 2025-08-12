@@ -123,7 +123,7 @@ export default async function Page({
           Veure totes les notícies
         </Link>
       </div>
-      <section className="flex flex-col gap-6">
+      <section className="flex flex-col gap-6 px-2 lg:px-0">
         {list.map((event, index) => (
           <NewsCard
             key={`${event.id}-${index}`}
