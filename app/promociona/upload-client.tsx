@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ImageUploader from "@components/ui/common/form/imageUpload";
 
-export default function ClientBusinessUpload(): JSX.Element {
+export default function ClientBusinessUpload() {
   const [file, setFile] = useState<File | null>(null);
 
   return (
