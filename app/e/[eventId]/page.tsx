@@ -13,6 +13,9 @@ import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { fetchEvents } from "@lib/api/events";
 
 // Helper: Metadata generation
 export async function generateMetadata(props: {
@@ -22,6 +25,16 @@ export async function generateMetadata(props: {
   const event = await fetchEventBySlug(slug);
   if (!event) return { title: "No event found" };
   return generateEventMetadata(event, `${siteUrl}/e/${slug}`);
+}
+
+async function getNearbyBusinesses(regionSlug?: string) {
+  if (process.env.NEXT_PUBLIC_FEATURE_PROMOTED !== "1") return [];
+  try {
+    const res = await fetchEvents({ page: 0, size: 6, place: regionSlug });
+    return (res?.content || []).filter(isEventSummaryResponseDTO);
+  } catch {
+    return [];
+  }
 }
 
 // Main page component
@@ -82,6 +95,8 @@ export default async function EventPage({
         }
       : null;
 
+  const nearbyBusinesses = await getNearbyBusinesses(event.region?.slug);
+
   return (
     <>
       {/* Main Event JSON-LD */}
@@ -122,6 +137,22 @@ export default async function EventPage({
               />
             </div>
             <EventClient event={event} />
+
+            {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && nearbyBusinesses.length >= 3 && (
+              <section className="w-full">
+                <div className="w-full flex justify-center items-start gap-2 px-4 mb-2">
+                  <h2>Empreses recomanades a prop</h2>
+                </div>
+                <EventsAroundServer
+                  events={nearbyBusinesses}
+                  layout="horizontal"
+                  showJsonLd={false}
+                  title="Empreses recomanades a prop"
+                  nonce={nonce}
+                />
+              </section>
+            )}
+
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (
               <EventsAroundSection

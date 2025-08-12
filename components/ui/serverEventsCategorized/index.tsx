@@ -11,6 +11,17 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ServerEventsCategorizedProps } from "types/props";
+import { fetchEvents } from "@lib/api/events";
+
+async function getPromotedBusinesses(): Promise<EventSummaryResponseDTO[]> {
+  if (process.env.NEXT_PUBLIC_FEATURE_PROMOTED !== "1") return [];
+  try {
+    const res = await fetchEvents({ page: 0, size: 6 });
+    return (res?.content || []).filter(isEventSummaryResponseDTO);
+  } catch {
+    return [];
+  }
+}
 
 function ServerEventsCategorized({
   categorizedEvents,
@@ -68,6 +79,11 @@ function ServerEventsCategorized({
           {/* Location Discovery Widget */}
           <LocationDiscoveryWidget />
 
+          {/* Promoted businesses strip (MVP) */}
+          {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && (
+            <PromotedBusinessesSection />
+          )}
+
           <div className="p-2 lg:p-0">
             {Object.entries(filteredCategorizedEvents).map(
               ([category, events], index) => {
@@ -98,24 +114,34 @@ function ServerEventsCategorized({
                 return (
                   <div key={categorySlug}>
                     {/* Category Header */}
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <h3 className="font-semibold">{categoryName}</h3>
-                      <Link
-                        href={buildCanonicalUrl(
-                          {
-                            place: "catalunya",
-                            byDate: "tots",
-                            category: categorySlug,
-                          },
-                          categories
+                      <div className="flex items-center gap-4">
+                        <Link
+                          href={buildCanonicalUrl(
+                            {
+                              place: "catalunya",
+                              byDate: "tots",
+                              category: categorySlug,
+                            },
+                            categories
+                          )}
+                          className="flex justify-between items-center cursor-pointer text-primary"
+                        >
+                          <div className="flex items-center">
+                            Veure més
+                            <ChevronRightIcon className="w-5 h-5" />
+                          </div>
+                        </Link>
+                        {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && (
+                          <Link
+                            href="/promociona?kind=business"
+                            className="text-sm text-primary underline"
+                          >
+                            Promociona la teva empresa
+                          </Link>
                         )}
-                        className="flex justify-between items-center cursor-pointer text-primary"
-                      >
-                        <div className="flex items-center">
-                          Veure més
-                          <ChevronRightIcon className="w-5 h-5" />
-                        </div>
-                      </Link>
+                      </div>
                     </div>
 
                     {/* Events Horizontal Scroll */}
@@ -151,6 +177,23 @@ function ServerEventsCategorized({
         </div>
       </div>
     </>
+  );
+}
+
+async function PromotedBusinessesSection() {
+  const items = await getPromotedBusinesses();
+  if (items.length < 3) return null;
+  return (
+    <section className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6">
+      <h2 className="uppercase mb-2 px-2 lg:px-0">Empreses destacades</h2>
+      <EventsAroundServer
+        events={items}
+        layout="horizontal"
+        usePriority
+        showJsonLd={false}
+        title="Empreses destacades"
+      />
+    </section>
   );
 }
 

@@ -92,6 +92,19 @@ export default async function Page(): Promise<JSX.Element> {
         pageData={pageData}
         categories={categories}
       />
+
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
+        <section className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6">
+          <h2 className="uppercase mb-2 px-2 lg:px-0">Empreses destacades</h2>
+          <EventsAroundServer
+            events={featured}
+            layout="horizontal"
+            usePriority={false}
+            showJsonLd={false}
+            title="Empreses destacades"
+          />
+        </section>
+      )}
     </>
   );
 }

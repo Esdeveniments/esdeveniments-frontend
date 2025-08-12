@@ -270,6 +270,20 @@ export default async function Page({
         serverHasMore={!eventsResponse?.last}
       />
 
+      {/* Bottom promoted businesses strip */}
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
+        <section className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6">
+          <h2 className="uppercase mb-2 px-2 lg:px-0">Empreses de proximitat</h2>
+          <EventsAroundServer
+            events={featured}
+            layout="horizontal"
+            usePriority={false}
+            showJsonLd={false}
+            title="Empreses de proximitat"
+          />
+        </section>
+      )}
+
       {/* Client-side interactive layer (search, filters, floating button) */}
       <ClientInteractiveLayer
         categories={categories}
