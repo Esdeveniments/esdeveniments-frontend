@@ -1,6 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
+import { sendGoogleEvent } from "@utils/analytics";
 
 export default function SuccessPage() {
+  useEffect(() => {
+    try {
+      sendGoogleEvent("checkout_success", {});
+    } catch (_) {}
+  }, []);
+
   return (
     <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-28 px-2 lg:px-0">
       <h1 className="uppercase mb-4">Pagament completat</h1>

@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import ClientBusinessUpload from "./upload-client";
 import PlaceSelector from "./place-client";
 import { fetchRegions } from "@lib/api/regions";
+import PromoCheckoutCTA from "./cta-client";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -94,6 +95,11 @@ export default async function Page({
 
   return (
     <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-28 px-2 lg:px-0">
+      {process.env.STRIPE_SECRET_KEY ? null : (
+        <div className="w-full mb-4 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-900 px-3 py-2 text-sm">
+          Pagament de prova deshabilitat: manca STRIPE_SECRET_KEY. Pots configurar-lo a les variables d'entorn i tornar a provar.
+        </div>
+      )}
       <nav aria-label="Breadcrumb" className="mb-3 text-sm text-blackCorp/70">
         <ol className="flex items-center space-x-2">
           <li>
@@ -217,14 +223,21 @@ export default async function Page({
         </ul>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-2xl font-semibold">{price.toFixed(2)} €</span>
-          <Link
-            href={kind === "business" ? toCheckoutUrl() : toPublicaUrl()}
-            className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primarydark"
-            prefetch={false}
-          >
-            Continuar
-          </Link>
+          {kind === "business" ? (
+            <PromoCheckoutCTA href={toCheckoutUrl()} kind={kind} price={price} />
+          ) : (
+            <Link
+              href={toPublicaUrl()}
+              className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primarydark"
+              prefetch={false}
+            >
+              Continuar
+            </Link>
+          )}
         </div>
+        <p className="mt-2 text-xs text-blackCorp/60">
+          El pagament és processat per Stripe. Rebràs un rebut al teu correu.
+        </p>
       </section>
     </div>
   );
