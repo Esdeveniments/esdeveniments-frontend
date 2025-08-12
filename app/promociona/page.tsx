@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { PROMOTE_DURATIONS, PROMOTE_PRICING, PROMOTE_VISIBILITY } from "@utils/constants";
 import type { Metadata } from "next";
 
@@ -29,9 +28,6 @@ export default async function Page({
   const scope = getSelected(rawScope, "ciutat", PROMOTE_VISIBILITY as unknown as string[]);
   const days = getSelected(rawDays, 7, PROMOTE_DURATIONS as unknown as number[]);
   const price = PROMOTE_PRICING[scope]?.[days] ?? 0;
-
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   const buildUrl = (nextScope: string, nextDays: number) => {
     const sp = new URLSearchParams();
@@ -117,7 +113,7 @@ export default async function Page({
         <ul className="list-disc ml-5 text-sm text-blackCorp/80 space-y-1">
           <li>Àrea seleccionada: {scope === "zona" ? "Zona" : scope === "ciutat" ? "Ciutat" : "País"}</li>
           <li>Durada: {days} dies</li>
-          <li>On es mostra: pàgina principal, llistes i pàgines de lloc segons l'àrea</li>
+          <li>On es mostra: pàgina principal, llistes i pàgines de lloc segons l&apos;àrea</li>
         </ul>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-2xl font-semibold">{price.toFixed(2)} €</span>
