@@ -49,7 +49,10 @@ export async function fetchEvents(
     );
     const finalUrl = `${apiUrl}/events?${queryString}`;
 
-    const response = await fetch(finalUrl);
+    const response = await fetch(finalUrl, {
+      // Cache on the edge for 10 minutes; allow background revalidation
+      next: { revalidate: 600, tags: ["events"] },
+    });
     const data = await response.json();
 
     return data;
@@ -76,7 +79,9 @@ export async function fetchEventBySlug(
   }
 
   try {
-    const response = await fetch(`${apiUrl}/events/${fullSlug}`);
+    const response = await fetch(`${apiUrl}/events/${fullSlug}`, {
+      next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
+    });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
@@ -101,7 +106,13 @@ export async function updateEventById(
       body: JSON.stringify(data),
     }
   );
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("updateEventById: error response:", errorText);
+    throw new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`
+    );
+  }
   return response.json();
 }
 
@@ -151,7 +162,9 @@ export async function fetchCategorizedEvents(
     const finalUrl = `${apiUrl}/events/categorized${
       queryString ? `?${queryString}` : ""
     }`;
-    const response = await fetch(finalUrl);
+    const response = await fetch(finalUrl, {
+      next: { revalidate: 3600, tags: ["events", "events:categorized"] },
+    });
 
     const data = await response.json();
 

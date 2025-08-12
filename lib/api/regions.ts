@@ -8,21 +8,30 @@ const regionsWithCitiesCache =
 
 async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/places/regions`
+    `${process.env.NEXT_PUBLIC_API_URL}/places/regions`,
+    { next: { revalidate: 86400, tags: ["regions"] } }
   );
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
 }
 
 export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
-  return regionsCache(fetchRegionsFromApi);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return [];
+  try {
+    return await regionsCache(fetchRegionsFromApi);
+  } catch (e) {
+    console.error("Error fetching regions:", e);
+    return [];
+  }
 }
 
 async function fetchRegionsWithCitiesFromApi(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/places/regions/options`
+    `${process.env.NEXT_PUBLIC_API_URL}/places/regions/options`,
+    { next: { revalidate: 86400, tags: ["regions", "regions:options"] } }
   );
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
@@ -76,9 +85,16 @@ export async function fetchRegionsWithCities(): Promise<
 export async function fetchRegionById(
   id: string | number
 ): Promise<RegionSummaryResponseDTO | null> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/places/regions/${id}`
-  );
-  if (!response.ok) return null;
-  return response.json();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return null;
+  try {
+  const response = await fetch(`${apiUrl}/places/regions/${id}`, {
+    next: { revalidate: 86400, tags: ["regions", `region:${id}`] },
+  });
+    if (!response.ok) return null;
+    return response.json();
+  } catch (e) {
+    console.error("Error fetching region by id:", e);
+    return null;
+  }
 }

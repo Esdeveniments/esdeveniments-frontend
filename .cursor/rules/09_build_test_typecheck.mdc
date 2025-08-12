@@ -1,0 +1,9 @@
+### Build, test, lint, and typecheck
+
+- **Dev**: `yarn dev` (runs `prebuild` for SW) then Next dev server.
+- **Build**: `yarn build` (prebuild + next build). Environment builds: `build:development|staging|production` using `.env.*` via env-cmd.
+- **Analyze**: `yarn analyze`, `analyze:server`, `analyze:browser`.
+- **Tests**: `yarn test` (Jest jsdom). Current suite focuses on filter system.
+- **Typecheck**: `yarn typecheck`.
+- **Lint**: `yarn lint`. Maintain conventions and fix issues before commit.
+- **Precommit idea**: Keep SW generation and tests passing locally before pushing.

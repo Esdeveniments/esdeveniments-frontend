@@ -18,8 +18,9 @@ import type {
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
+import { distanceToRadius } from "types/event";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import dynamic from "next/dynamic";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -29,6 +30,11 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchCities } from "@lib/api/cities";
 
 export const revalidate = 600;
+
+const ClientInteractiveLayer = dynamic(
+  () => import("@components/ui/clientInteractiveLayer"),
+  { ssr: false }
+);
 
 export async function generateStaticParams() {
   const [regions, cities] = await Promise.all([fetchRegions(), fetchCities()]);
@@ -126,8 +132,9 @@ export default async function Page({
 
   // Add distance/radius filter if coordinates are provided
   if (lat && lon) {
-    if (distance) {
-      fetchParams.radius = parseInt(distance);
+    const maybeRadius = distanceToRadius(distance);
+    if (maybeRadius !== undefined) {
+      fetchParams.radius = maybeRadius;
     }
     fetchParams.lat = parseFloat(lat);
     fetchParams.lon = parseFloat(lon);
@@ -138,6 +145,7 @@ export default async function Page({
     fetchParams.term = query;
   }
 
+  // Fetch events and categories in parallel when safe to do so later
   let eventsResponse = await fetchEvents(fetchParams);
   let noEventsFound = false;
 
