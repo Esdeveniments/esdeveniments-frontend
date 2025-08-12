@@ -65,6 +65,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     <form
       onSubmit={handleSubmit}
       className="w-full flex flex-col justify-center items-center gap-y-4"
+      data-testid="event-form"
     >
       <Input
         id="title"
@@ -191,6 +192,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               ? "opacity-50 cursor-not-allowed"
               : "opacity-100"
           }`}
+          data-testid="publish-button"
         >
           {isLoading ? (
             <>

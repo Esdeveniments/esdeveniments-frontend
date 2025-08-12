@@ -1,29 +1,36 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
 // Event flow: visit sitemap, try to open some event. If none, verify 404 page renders on fake slug.
 
-test.describe('Event detail flow', () => {
-  test('open an event card when available or show not-found', async ({ page }) => {
-    await page.goto('/sitemap')
-    // Click first region/city link if present
-    const firstLink = page.locator('a[href^="/sitemap/"]').first()
+test.describe("Event detail flow", () => {
+  test("open an event card when available or show not-found", async ({
+    page,
+  }) => {
+    await page.goto("/sitemap", { waitUntil: "domcontentloaded" });
+    // Click first region/city link if present (prefer stable testids)
+    const firstLink = page.getByTestId("sitemap-region-link").first();
     if (await firstLink.isVisible()) {
-      await firstLink.click()
-      // If the page lists archive months, navigate to any month then choose an event if listed
-      const monthLink = page.locator('a[href*="/sitemap/"]').nth(1)
+      await firstLink.click();
+      // Try a city link (sitemap navigation) as a second step
+      const monthLink = page.getByTestId("sitemap-city-link").first();
       if (await monthLink.isVisible()) {
-        await monthLink.click()
-        const eventLink = page.locator('a[href^="/e/"]').first()
+        await monthLink.click();
+        const eventLink = page.locator('a[href^="/e/"]').first();
         if (await eventLink.isVisible()) {
-          await eventLink.click()
+          await eventLink.click();
           // Event header/title should be visible
-          await expect(page.locator('h1')).toBeVisible()
-          return
+          await expect(page.locator("h1")).toBeVisible();
+          return;
         }
       }
     }
     // Fallback: navigate to a non-existent event
-    await page.goto('/e/non-existent-event-slug-12345')
-    await expect(page.getByText('Pàgina no trobada')).toBeVisible()
-  })
-})
+    await page.goto("/e/non-existent-event-slug-12345", {
+      waitUntil: "domcontentloaded",
+    });
+    // Accept either site-wide not-found or event-specific noEventFound component
+    const notFoundTitle = page.getByTestId("not-found-title");
+    const noEventFound = page.getByTestId("no-event-found");
+    await expect(notFoundTitle.or(noEventFound)).toBeVisible();
+  });
+});
