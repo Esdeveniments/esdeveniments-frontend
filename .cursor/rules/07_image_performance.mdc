@@ -1,0 +1,7 @@
+### Image performance strategy
+
+- **Quality caps**: External images default to 50; LCP/priority images use 60. Adjust with `getOptimalImageQuality` by context.
+- **Sizes**: Use `getOptimalImageSizes` per context (card, hero, list, detail).
+- **Preload**: Use `preloadImage` conservatively; mind internal `_next/image` URL coupling—avoid brittle custom logic.
+- **Retry**: Use `useImageRetry` with exponential backoff; use `getImageKey` to force re-render on retry.
+- **Next images**: Only whitelist necessary remote patterns via `next.config.js` (already wildcard). Prefer keeping minimal.

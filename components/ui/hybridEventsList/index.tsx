@@ -32,11 +32,6 @@ function HybridEventsList({
     [initialEvents]
   );
 
-  const allEventsWithAds = useMemo(
-    () => initialEvents, // Keep all events including ads for rendering
-    [initialEvents]
-  );
-
   const { events, hasMore, loadMore, isLoading, isValidating, error } =
     useEvents({
       place,
@@ -47,7 +42,32 @@ function HybridEventsList({
       serverHasMore,
     });
 
-  const allEvents = allEventsWithAds.length > 0 ? allEventsWithAds : events;
+  const mergedEvents = useMemo(() => {
+    const ssrWithAds = initialEvents;
+
+    // If no client-fetched events yet, keep SSR list (with ads)
+    if (!events || events.length === 0) {
+      return ssrWithAds;
+    }
+
+    // Number of real events that were rendered on SSR (excluding ads)
+    const initialRealCount = validInitialEvents.length;
+
+    // SWR returns cumulative content; append only items beyond the SSR real count
+    const appended = events.slice(initialRealCount);
+
+    // De-duplicate by id across the boundary
+    const existingIds = new Set(
+      ssrWithAds
+        .filter(isEventSummaryResponseDTO)
+        .map((e) => (e as EventSummaryResponseDTO).id)
+    );
+    const uniqueAppended = appended.filter((e) => !existingIds.has(e.id));
+
+    return ssrWithAds.concat(uniqueAppended);
+  }, [initialEvents, events, validInitialEvents]);
+
+  const allEvents = mergedEvents;
 
   // Preload first 3 images for better LCP
   useEffect(() => {

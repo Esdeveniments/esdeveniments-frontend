@@ -1,0 +1,11 @@
+### Hybrid rendering contract (SSR + client append)
+
+- **Server (SSR)**:
+  - Fetch initial events, call `insertAds(events)` once.
+  - Send SSR list with ad markers to client.
+- **Client (SWR append)**:
+  - SWR returns cumulative events without ads.
+  - Compute `initialRealCount` from SSR (exclude `isAd`).
+  - Append only items beyond `initialRealCount` and do not insert ads again.
+  - De-duplicate by `id` when merging.
+- **Rationale**: Stable ad density; prevents duplicates/clustering.

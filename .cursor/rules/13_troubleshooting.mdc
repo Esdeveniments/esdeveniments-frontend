@@ -1,0 +1,10 @@
+### Troubleshooting and common pitfalls
+
+- Forgot to regenerate SW after template change → Run `yarn prebuild` (or any build script).
+- Inline script failing under CSP → Ensure you pass `nonce` from `headers()` to all `<Script>` and inline JSON-LD.
+- URL includes default `tots` segments → Use canonical builders and `getRedirectUrl`.
+- API read fails in preview env → Env guard must return safe fallback instead of throwing.
+- Categories mismatch with URL → Pass fetched categories to `parseFiltersFromUrl`; validate slugs.
+- Duplicate/clustered ads → Insert ads only on SSR; client must not reinsert.
+- Slow edge fetch for regions/cities → Ensure `lib/api/cache.ts` wrappers are used.
+- Types scattered in components → Move to `types/` directory per convention.

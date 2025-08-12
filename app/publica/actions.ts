@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createEvent } from "lib/api/events";
 import type { EventCreateRequestDTO } from "types/api/event";
 
@@ -12,6 +12,9 @@ export async function createEventAction(
 
   // 2. Revalidate the event list page (purge ISR cache)
   await revalidatePath("/e");
+  // Also invalidate cached event lists and categorized collections
+  revalidateTag("events");
+  revalidateTag("events:categorized");
 
   // 3. Optionally, return the created event or result for your client
   return { success: true, event: created };
