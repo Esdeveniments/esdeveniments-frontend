@@ -16,7 +16,7 @@ export default function PlaceSelector({ currentParams, regionSlugByName, scope, 
   // Initialize selection from current place when available
   useEffect(() => {
     if (!regionsWithCities || !place || place === "catalunya") return;
-    const regionMatch = regionsWithCities.find((r) => r.slug === place || regionSlugByName[r.name] === place);
+    const regionMatch = regionsWithCities.find((r) => regionSlugByName[r.name] === place);
     if (regionMatch) {
       setRegion({ label: regionMatch.name, value: String(regionMatch.id) });
       setCity(null);
