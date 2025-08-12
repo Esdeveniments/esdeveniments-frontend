@@ -150,7 +150,7 @@ export default function LocationDiscoveryWidget({
               {/* Dropdown Menu */}
               {isOpen && (
                 <div
-                  className="absolute top-8 left-1/2 transform -translate-x-1/2 sm:left-0 sm:transform-none w-80 max-w-[calc(100vw-2rem)] bg-white opacity-100 rounded-xl shadow-xl border border-gray-200 py-3 z-20"
+                  className="absolute top-8 left-1/2 transform -translate-x-1/2 sm:left-0 sm:transform-none w-80 max-w-[calc(100vw-2rem)] bg-whiteCorp opacity-100 rounded-xl shadow-xl border border-gray-200 py-3 z-20"
                   style={{ backgroundColor: "rgb(255, 255, 255)" }}
                 >
                   {/* Search Input */}
@@ -162,7 +162,7 @@ export default function LocationDiscoveryWidget({
                         placeholder="Cercar ubicació..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-whiteCorp"
                         autoFocus
                       />
                     </div>

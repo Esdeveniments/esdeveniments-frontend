@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### URL parsing and canonicalization
 
 - **Parsing**: Use `parseFiltersFromUrl`, `urlToFilterState` from `utils/url-filters.ts` and `utils/url-parsing.ts`.

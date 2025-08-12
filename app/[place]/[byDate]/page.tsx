@@ -1,4 +1,5 @@
 import Script from "next/script";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
@@ -15,18 +16,13 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import dynamic from "next/dynamic";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-
-const ClientInteractiveLayer = dynamic(
-  () => import("@components/ui/clientInteractiveLayer"),
-  { ssr: false }
-);
 
 export async function generateMetadata({
   params,
@@ -201,9 +197,7 @@ export default async function ByDatePage({
 
   let noEventsFound = false;
   // Fetch events and place label in parallel when possible
-  let [eventsResponse] = await Promise.all([
-    fetchEvents(paramsForFetch),
-  ]);
+  let [eventsResponse] = await Promise.all([fetchEvents(paramsForFetch)]);
   let events = eventsResponse?.content || [];
 
   if (!events || events.length === 0) {
@@ -299,6 +293,17 @@ export default async function ByDatePage({
           }}
         />
       )}
+
+      {/* Contextual link to News for current place */}
+      <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
+        <Link
+          href={`/noticies/${place}`}
+          className="text-primary underline text-sm"
+          prefetch={false}
+        >
+          Notícies de {placeTypeLabel.label}
+        </Link>
+      </div>
 
       {/* Server-rendered events content (SEO optimized) */}
       <HybridEventsList

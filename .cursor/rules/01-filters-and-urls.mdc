@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### Filters and URL-first design (authoritative)
 
 - **Single source of truth**: `config/filters.ts` (key, defaultValue, isEnabled, getDisplayText, getRemovalChanges[, dependencies, specialCases]).

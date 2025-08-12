@@ -16,7 +16,7 @@ import { NavigationItem } from "types/props";
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: true },
   { name: "Publicar", href: "/publica", current: false },
-  { name: "Qui som", href: "/qui-som", current: false },
+  { name: "Notícies", href: "/noticies", current: false },
 ];
 
 export default function Navbar() {
@@ -123,8 +123,12 @@ export default function Navbar() {
           <Disclosure.Panel className="md:hidden">
             <div className="w-full relative flex justify-evenly items-center bg-whiteCorp transition-transform">
               {navigation.map((item) => (
-                <ActiveLink href={item.href} key={item.name}>
-                  <a className="border-b-2 border-b-whiteCorp">{item.name}</a>
+                <ActiveLink
+                  href={item.href}
+                  key={item.name}
+                  className="border-b-2 border-b-whiteCorp"
+                >
+                  {item.name}
                 </ActiveLink>
               ))}
             </div>

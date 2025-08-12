@@ -13,6 +13,9 @@ import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
+import { fetchNews } from "@lib/api/news";
+import NewsCard from "@components/ui/newsCard";
+import Link from "next/link";
 
 // Helper: Metadata generation
 export async function generateMetadata(props: {
@@ -31,7 +34,7 @@ export default async function EventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
-  
+
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";
@@ -48,6 +51,14 @@ export default async function EventPage({
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event });
+
+  // Fetch latest news for the event's place (prefer city, then region, fallback Catalunya)
+  const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
+  const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
+  const latestNews = newsResponse.content || [];
+  const placeLabel = event.city?.name || event.region?.name || "Catalunya";
+  const newsHref =
+    placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`;
 
   // Generate JSON-LD for related events (server-side for SEO)
   const relatedEventsJsonData =
@@ -141,6 +152,36 @@ export default async function EventPage({
           </article>
         </div>
       </div>
+
+      {latestNews.length > 0 && (
+        <div className="w-full flex justify-center bg-whiteCorp pb-8">
+          <section className="w-full sm:w-[520px] md:w-[520px] lg:w-[520px] px-4 flex flex-col gap-4">
+            <div className="w-full flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                Últimes notícies {placeLabel ? `a ${placeLabel}` : ""}
+              </h2>
+              <Link
+                href={newsHref}
+                prefetch={false}
+                className="text-primary underline text-sm"
+              >
+                Veure totes
+              </Link>
+            </div>
+            <div className="flex flex-col gap-4">
+              {latestNews.map((newsItem, index) => (
+                <NewsCard
+                  key={`${newsItem.id}-${index}`}
+                  event={newsItem}
+                  placeSlug={placeSlug}
+                  placeLabel={placeLabel}
+                  variant={index === 0 ? "hero" : "default"}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </>
   );
 }

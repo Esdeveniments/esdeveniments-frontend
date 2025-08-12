@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### Troubleshooting and common pitfalls
 
 - Forgot to regenerate SW after template change → Run `yarn prebuild` (or any build script).

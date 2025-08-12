@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### Commands cheat sheet
 
 - Dev: `yarn dev`

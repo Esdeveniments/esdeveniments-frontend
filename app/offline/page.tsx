@@ -11,20 +11,20 @@ export default function OfflinePage() {
         </p>
         <a
           href="/"
-          className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="inline-block bg-blue-500 hover:bg-blue-700 text-whiteCorp font-bold py-2 px-4 rounded"
         >
           Torna a l&apos;inici
         </a>
         <br />
         <a
           href="/barcelona"
-          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2"
+          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-whiteCorp font-bold py-2 px-4 rounded mr-2"
         >
           Barcelona
         </a>
         <a
           href="/catalunya"
-          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-whiteCorp font-bold py-2 px-4 rounded"
         >
           Catalunya
         </a>

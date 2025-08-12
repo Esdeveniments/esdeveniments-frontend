@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+
+### Copilot instructions anchor (authoritative pointer)
+
+- Always consult `.github/copilot-instructions.md` before making changes. Treat it as the single source of truth when rules conflict.
+- Re-read these sections each new goal: 2, 3, 4, 6, 7, 8, 13, 15.
+- If anything in rules or code diverges from it, align with `.github/copilot-instructions.md`.
+- If the file is missing or unreadable, fall back to `project-snapshot.txt` for environment/build/test/service worker details.
