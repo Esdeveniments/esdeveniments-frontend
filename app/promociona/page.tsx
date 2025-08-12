@@ -9,6 +9,8 @@ import {
 } from "@utils/constants";
 import type { Metadata } from "next";
 import ClientBusinessUpload from "./upload-client";
+import PlaceSelector from "./place-client";
+import { fetchRegions } from "@lib/api/regions";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -33,6 +35,7 @@ export default async function Page({
   const rawDays = typeof params.days === "string" ? parseInt(params.days, 10) : undefined;
   const rawKind = typeof params.kind === "string" ? params.kind : undefined;
   const rawPlacement = typeof params.placement === "string" ? params.placement : undefined;
+  const rawPlace = typeof params.place === "string" ? params.place : undefined;
   const eventId = typeof params.eventId === "string" ? params.eventId : undefined;
 
   const scope = getSelected(rawScope, "ciutat", PROMOTE_VISIBILITY as unknown as string[]);
@@ -43,6 +46,7 @@ export default async function Page({
     "global",
     PROMOTE_PLACEMENTS as unknown as string[]
   );
+  const place = rawPlace || "catalunya";
 
   const basePrice = PROMOTE_PRICING[scope]?.[days] ?? 0;
   const multiplier = PROMOTE_PLACEMENT_MULTIPLIER[placement] ?? 1;
@@ -54,6 +58,7 @@ export default async function Page({
     sp.set("days", String((next.days as number) || days));
     sp.set("kind", (next.kind as string) || kind);
     sp.set("placement", (next.placement as string) || placement);
+    sp.set("place", (next.place as string) || place);
     if (eventId) sp.set("eventId", eventId);
     return `/promociona?${sp.toString()}`;
   };
@@ -65,9 +70,16 @@ export default async function Page({
     sp.set("days", String(days));
     sp.set("kind", kind);
     sp.set("placement", placement);
+    sp.set("place", place);
     if (eventId) sp.set("eventId", eventId);
     return `/publica?${sp.toString()}`;
   };
+
+  // Build region name -> slug mapping for client place selector
+  const regions = await fetchRegions();
+  const regionSlugByName = Object.fromEntries(
+    (regions || []).map((r) => [r.name, r.slug])
+  );
 
   return (
     <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-28 px-2 lg:px-0">
@@ -150,24 +162,23 @@ export default async function Page({
 
         <section className="bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
           <h2 className="text-base font-semibold uppercase tracking-wide mb-3">
-            Ubicació de la impressió
+            Ubicació
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {PROMOTE_PLACEMENTS.map((p) => (
-              <Link
-                key={p as string}
-                href={buildUrl({ placement: p as string })}
-                className={`px-4 py-2 rounded-full border ${
-                  placement === p
-                    ? "bg-primary text-white border-primary"
-                    : "bg-whiteCorp border-darkCorp/20"
-                }`}
-                prefetch={false}
-              >
-                {p === "global" ? "Global (home + llistes)" : p === "category" ? "Només categoria" : "Newsletter"}
-              </Link>
-            ))}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Link
+              href={buildUrl({ place: "catalunya" })}
+              className={`px-4 py-2 rounded-full border ${
+                place === "catalunya" ? "bg-primary text-white border-primary" : "bg-whiteCorp border-darkCorp/20"
+              }`}
+              prefetch={false}
+            >
+              Catalunya
+            </Link>
           </div>
+          <PlaceSelector
+            currentParams={{ scope, days, kind, placement, eventId, place }}
+            regionSlugByName={regionSlugByName}
+          />
         </section>
       </div>
 
@@ -188,7 +199,7 @@ export default async function Page({
           <li>Tipus: {kind === "event" ? "Esdeveniment" : "Negoci"}</li>
           <li>Àrea: {scope === "zona" ? "Zona" : scope === "ciutat" ? "Ciutat" : "País"}</li>
           <li>Durada: {days} dies</li>
-          <li>Ubicació: {placement === "global" ? "Global (home + llistes)" : placement === "category" ? "Només categoria" : "Newsletter"}</li>
+          <li>Ubicació: {place}</li>
           <li>On es mostra: pàgina principal, llistes i pàgines de lloc segons l&apos;àrea</li>
         </ul>
         <div className="mt-4 flex items-center justify-between">
