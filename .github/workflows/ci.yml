@@ -12,7 +12,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  NEXT_PUBLIC_API_URL: 'https://api-pre.esdeveniments.cat'
+  NEXT_PUBLIC_API_URL: 'https://api-pre.esdeveniments.cat/api'
 
 jobs:
   quality:
@@ -74,22 +74,13 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Start Next.js server
-        run: |
-          E2E_TEST_MODE=true yarn start &
-          echo $! > .next_pid
-        env:
-          PORT: 3000
-
-      - name: Wait for app to be ready
-        run: npx wait-on http://localhost:3000
-
-      - name: Run E2E tests (Playwright)
+      # Assumes a separate workflow sets PREVIEW_URL as an output/variable
+      - name: Run E2E tests (Playwright) against Vercel Preview
+        if: ${{ env.PREVIEW_URL != '' }}
         env:
           CI: true
-          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
-          NEXT_PUBLIC_API_URL: http://127.0.0.1:4001
-          MOCK_API_PORT: 4001
+          PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
+          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: yarn test:e2e
 
       - name: Upload Playwright report
@@ -99,8 +90,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
-
-      - name: Stop Next.js server
-        if: ${{ always() }}
-        run: |
-          if [ -f .next_pid ]; then kill $(cat .next_pid) || true; fi
