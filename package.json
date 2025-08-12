@@ -21,7 +21,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "cross-env NEXT_PUBLIC_API_URL=http://127.0.0.1:4001 node scripts/mock-api.mjs & PLAYWRIGHT_BASE_URL=http://localhost:3000 MOCK_API_PORT=4001 playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "scan": "npx react-scan@latest localhost:3000"

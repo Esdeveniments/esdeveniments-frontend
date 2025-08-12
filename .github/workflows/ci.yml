@@ -88,6 +88,8 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4001
+          MOCK_API_PORT: 4001
         run: yarn test:e2e
 
       - name: Upload Playwright report
