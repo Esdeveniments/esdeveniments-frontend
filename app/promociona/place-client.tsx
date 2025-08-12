@@ -6,10 +6,10 @@ import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCiti
 import { Option } from "types/common";
 import { useRouter } from "next/navigation";
 
-interface PlaceClientProps {
+type PlaceClientProps = {
   currentParams: Record<string, string | number | undefined>;
   regionSlugByName: Record<string, string>;
-}
+};
 
 export default function PlaceSelector({ currentParams, regionSlugByName }: PlaceClientProps) {
   const router = useRouter();
