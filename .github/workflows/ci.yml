@@ -74,7 +74,19 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      # Assumes a separate workflow sets PREVIEW_URL as an output/variable
+      - name: Deploy Preview to Vercel
+        id: vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: .
+          vercel-args: '--env NEXT_PUBLIC_API_URL=https://api-pre.esdeveniments.cat/api --build-env NEXT_PUBLIC_API_URL=https://api-pre.esdeveniments.cat/api'
+
+      - name: Set preview URL
+        run: echo "PREVIEW_URL=${{ steps.vercel.outputs.preview-url }}" >> $GITHUB_ENV
+
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' }}
         env:
