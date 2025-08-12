@@ -56,6 +56,7 @@ module.exports = {
       darkCorp: "#F7F7F7",
       // Use RGB with <alpha-value> to support /opacity utilities like from-blackCorp/70
       blackCorp: "rgb(69 69 69 / <alpha-value>)",
+      fullBlackCorp: "rgb(0 0 0 / <alpha-value>)",
       bColor: "#cccccc",
     },
   },
