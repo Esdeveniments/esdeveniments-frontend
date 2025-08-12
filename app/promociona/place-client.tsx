@@ -1,0 +1,92 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Select from "@components/ui/common/form/select";
+import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
+import { Option } from "types/common";
+import { useRouter } from "next/navigation";
+import type { PromocionaPlaceSelectorProps } from "types/props";
+
+export default function PlaceSelector({ currentParams, regionSlugByName, scope, place }: PromocionaPlaceSelectorProps) {
+  const router = useRouter();
+  const { regionsWithCities } = useGetRegionsWithCities();
+  const [region, setRegion] = useState<Option | null>(null);
+  const [city, setCity] = useState<Option | null>(null);
+
+  // Initialize selection from current place when available
+  useEffect(() => {
+    if (!regionsWithCities || !place || place === "catalunya") return;
+    const regionMatch = regionsWithCities.find((r) => regionSlugByName[r.name] === place);
+    if (regionMatch) {
+      setRegion({ label: regionMatch.name, value: String(regionMatch.id) });
+      setCity(null);
+      return;
+    }
+    // Otherwise, leave for city selection via manual change; MVP does not have city slug mapping here
+  }, [regionsWithCities, place, regionSlugByName]);
+
+  const regionOptions: Option[] = useMemo(
+    () =>
+      (regionsWithCities || []).map((r) => ({ label: r.name, value: String(r.id) })),
+    [regionsWithCities]
+  );
+
+  const cityOptions: Option[] = useMemo(() => {
+    if (!regionsWithCities || !region) return [];
+    const r = regionsWithCities.find((rr) => String(rr.id) === (region?.value as string));
+    return r ? r.cities.map((c) => ({ label: c.label, value: String(c.id) })) : [];
+  }, [regionsWithCities, region]);
+
+  const navigateWithPlace = (placeSlug: string) => {
+    const sp = new URLSearchParams();
+    Object.entries(currentParams).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) sp.set(k, String(v));
+    });
+    sp.set("place", placeSlug);
+    router.push(`/promociona?${sp.toString()}`);
+  };
+
+  const onRegionChange = (opt: Option | null) => {
+    setRegion(opt);
+    setCity(null);
+    if (opt) {
+      const slug = regionSlugByName[opt.label] || "catalunya";
+      navigateWithPlace(slug);
+    }
+  };
+
+  const onCityChange = (opt: Option | null) => {
+    setCity(opt);
+    if (!opt) return;
+    const citySlug = opt.label.toLowerCase().replace(/\s+/g, "-");
+    navigateWithPlace(citySlug);
+  };
+
+  const isScopeNational = scope === "pais";
+  const isScopeRegion = scope === "zona"; // Rename suggestion in server page will reflect to UX; keep key for now
+
+  return (
+    <div className="space-y-3">
+      <Select
+        id="promo-region"
+        title="Regió"
+        value={region}
+        onChange={onRegionChange}
+        options={regionOptions}
+        isClearable
+        placeholder="Tria una regió"
+        isDisabled={isScopeNational}
+      />
+      <Select
+        id="promo-city"
+        title="Ciutat"
+        value={city}
+        onChange={onCityChange}
+        options={cityOptions}
+        isClearable
+        placeholder="Tria una ciutat"
+        isDisabled={isScopeNational || isScopeRegion}
+      />
+    </div>
+  );
+}

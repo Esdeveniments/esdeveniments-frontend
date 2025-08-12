@@ -15,18 +15,14 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import dynamic from "next/dynamic";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-
-const ClientInteractiveLayer = dynamic(
-  () => import("@components/ui/clientInteractiveLayer"),
-  { ssr: false }
-);
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 
 export async function generateMetadata({
   params,
@@ -201,9 +197,7 @@ export default async function ByDatePage({
 
   let noEventsFound = false;
   // Fetch events and place label in parallel when possible
-  let [eventsResponse] = await Promise.all([
-    fetchEvents(paramsForFetch),
-  ]);
+  let [eventsResponse] = await Promise.all([fetchEvents(paramsForFetch)]);
   let events = eventsResponse?.content || [];
 
   if (!events || events.length === 0) {
@@ -255,6 +249,21 @@ export default async function ByDatePage({
 
   const eventsWithAds = insertAds(events);
 
+  // Optionally fetch a small featured strip scoped to place (not tied to byDate)
+  let featured: typeof events = [];
+  if (process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1") {
+    try {
+      const res = await fetchEvents({ page: 0, size: 6, place });
+      featured = (res?.content || []).filter(isEventSummaryResponseDTO);
+      if (featured.length < 3) {
+        const res2 = await fetchEvents({ page: 0, size: 6 });
+        featured = (res2?.content || []).filter(isEventSummaryResponseDTO);
+      }
+    } catch {
+      featured = [];
+    }
+  }
+
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
 
   const categoryData = categories.find((cat) => cat.slug === finalCategory);
@@ -298,6 +307,24 @@ export default async function ByDatePage({
             __html: JSON.stringify(structuredData),
           }}
         />
+      )}
+
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
+        <section
+          aria-labelledby="featured-heading"
+          className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6"
+        >
+          <h2 id="featured-heading" className="uppercase mb-2 px-2 lg:px-0">
+            Destacats
+          </h2>
+          <EventsAroundServer
+            events={featured}
+            layout="horizontal"
+            usePriority
+            showJsonLd={false}
+            title="Destacats"
+          />
+        </section>
       )}
 
       {/* Server-rendered events content (SEO optimized) */}

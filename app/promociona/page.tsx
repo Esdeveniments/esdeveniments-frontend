@@ -1,0 +1,244 @@
+import Link from "next/link";
+import {
+  PROMOTE_DURATIONS,
+  PROMOTE_PRICING,
+  PROMOTE_VISIBILITY,
+  PROMOTE_KINDS,
+  PROMOTE_PLACEMENTS,
+  PROMOTE_PLACEMENT_MULTIPLIER,
+} from "@utils/constants";
+import type { Metadata } from "next";
+import ClientBusinessUpload from "./upload-client";
+import PlaceSelector from "./place-client";
+import { fetchRegions } from "@lib/api/regions";
+import PromoCheckoutCTA from "./cta-client";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Promociona el teu esdeveniment | Esdeveniments.cat",
+    description:
+      "Tria l'àrea de visibilitat i la durada per destacar el teu esdeveniment. MVP sense pagament: redirigim a publica.",
+  } as Metadata;
+}
+
+function getSelected<T>(value: T | undefined, fallback: T, allowed: readonly T[]): T {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = (await searchParams) || {};
+
+  const rawScope = typeof params.scope === "string" ? params.scope : undefined;
+  const rawDays = typeof params.days === "string" ? parseInt(params.days, 10) : undefined;
+  const rawKind = typeof params.kind === "string" ? params.kind : undefined;
+  const rawPlacement = typeof params.placement === "string" ? params.placement : undefined;
+  const rawPlace = typeof params.place === "string" ? params.place : undefined;
+  const eventId = typeof params.eventId === "string" ? params.eventId : undefined;
+
+  const scope = getSelected(rawScope, "ciutat", PROMOTE_VISIBILITY as unknown as string[]);
+  const days = getSelected(rawDays, 7, PROMOTE_DURATIONS as unknown as number[]);
+  const kind = getSelected(rawKind, "event", PROMOTE_KINDS as unknown as string[]);
+  const placement = getSelected(
+    rawPlacement,
+    "global",
+    PROMOTE_PLACEMENTS as unknown as string[]
+  );
+  const place = rawPlace || "catalunya";
+
+  const basePrice = PROMOTE_PRICING[scope]?.[days] ?? 0;
+  const multiplier = PROMOTE_PLACEMENT_MULTIPLIER[placement] ?? 1;
+  const price = Math.max(0, basePrice * multiplier);
+
+  const buildUrl = (next: Partial<Record<string, string | number>>) => {
+    const sp = new URLSearchParams();
+    sp.set("scope", (next.scope as string) || scope);
+    sp.set("days", String((next.days as number) || days));
+    sp.set("kind", (next.kind as string) || kind);
+    sp.set("placement", (next.placement as string) || placement);
+    sp.set("place", (next.place as string) || place);
+    if (eventId) sp.set("eventId", eventId);
+    return `/promociona?${sp.toString()}`;
+  };
+
+  const toPublicaUrl = () => {
+    const sp = new URLSearchParams();
+    sp.set("promote", "1");
+    sp.set("scope", scope);
+    sp.set("days", String(days));
+    sp.set("kind", kind);
+    sp.set("placement", placement);
+    sp.set("place", place);
+    if (eventId) sp.set("eventId", eventId);
+    return `/publica?${sp.toString()}`;
+  };
+
+  const toCheckoutUrl = () => {
+    const sp = new URLSearchParams();
+    sp.set("scope", scope);
+    sp.set("days", String(days));
+    sp.set("kind", kind);
+    sp.set("placement", placement);
+    sp.set("place", place);
+    if (eventId) sp.set("eventId", eventId);
+    return `/promociona/checkout?${sp.toString()}`;
+  };
+
+  // Build region name -> slug mapping for client place selector
+  const regions = await fetchRegions();
+  const regionSlugByName = Object.fromEntries(
+    (regions || []).map((r) => [r.name, r.slug])
+  );
+
+  return (
+    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-28 px-2 lg:px-0">
+      {process.env.STRIPE_SECRET_KEY ? null : (
+        <div className="w-full mb-4 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-900 px-3 py-2 text-sm">
+          Pagament de prova deshabilitat: manca STRIPE_SECRET_KEY. Pots configurar-lo a les variables d'entorn i tornar a provar.
+        </div>
+      )}
+      <nav aria-label="Breadcrumb" className="mb-3 text-sm text-blackCorp/70">
+        <ol className="flex items-center space-x-2">
+          <li>
+            <Link href="/" className="hover:underline">
+              Inici
+            </Link>
+          </li>
+          <li>
+            <span className="mx-1">/</span>
+          </li>
+          <li className="text-blackCorp">Promociona</li>
+        </ol>
+      </nav>
+
+      <h1 className="uppercase mb-4">Promociona</h1>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <section className="bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
+          <h2 className="text-base font-semibold uppercase tracking-wide mb-3">
+            Tipus
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {PROMOTE_KINDS.map((k) => (
+              <Link
+                key={k as string}
+                href={buildUrl({ kind: k as string })}
+                className={`px-4 py-2 rounded-full border ${
+                  kind === k ? "bg-primary text-white border-primary" : "bg-whiteCorp border-darkCorp/20"
+                }`}
+                prefetch={false}
+              >
+                {k === "event" ? "Esdeveniment" : "Negoci"}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
+          <h2 className="text-base font-semibold uppercase tracking-wide mb-3">
+            Àrea de visibilitat
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {PROMOTE_VISIBILITY.map((opt) => (
+              <Link
+                key={opt}
+                href={buildUrl({ scope: opt as string })}
+                className={`px-4 py-2 rounded-full border ${
+                  scope === opt ? "bg-primary text-white border-primary" : "bg-whiteCorp border-darkCorp/20"
+                }`}
+                prefetch={false}
+              >
+                {opt === "zona" ? "Regió" : opt === "ciutat" ? "Ciutat" : "País (tot Catalunya)"}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
+          <h2 className="text-base font-semibold uppercase tracking-wide mb-3">
+            Durada
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {PROMOTE_DURATIONS.map((d) => (
+              <Link
+                key={d}
+                href={buildUrl({ days: d })}
+                className={`px-4 py-2 rounded-full border ${
+                  days === d ? "bg-primary text-white border-primary" : "bg-whiteCorp border-darkCorp/20"
+                }`}
+                prefetch={false}
+              >
+                {d} dies
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
+          <h2 className="text-base font-semibold uppercase tracking-wide mb-3">
+            Ubicació
+          </h2>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Link
+              href={buildUrl({ place: "catalunya" })}
+              className={`px-4 py-2 rounded-full border ${
+                place === "catalunya" ? "bg-primary text-white border-primary" : "bg-whiteCorp border-darkCorp/20"
+              }`}
+              prefetch={false}
+            >
+              Catalunya
+            </Link>
+          </div>
+          <PlaceSelector
+            currentParams={{ scope, days, kind, placement, eventId, place }}
+            regionSlugByName={regionSlugByName}
+            scope={scope}
+            place={place}
+          />
+        </section>
+      </div>
+
+      {kind === "business" && (
+        <section className="mt-6 bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
+          <h2 className="text-base font-semibold uppercase tracking-wide mb-3">
+            Creativitats (MVP)
+          </h2>
+          <ClientBusinessUpload />
+        </section>
+      )}
+
+      <section className="mt-6 bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
+        <h2 className="text-base font-semibold uppercase tracking-wide mb-3">
+          Resum
+        </h2>
+        <ul className="list-disc ml-5 text-sm text-blackCorp/80 space-y-1">
+          <li>Tipus: {kind === "event" ? "Esdeveniment" : "Negoci"}</li>
+          <li>Àrea: {scope === "zona" ? "Zona" : scope === "ciutat" ? "Ciutat" : "País"}</li>
+          <li>Durada: {days} dies</li>
+          <li>Ubicació: {place}</li>
+          <li>On es mostra: pàgina principal, llistes i pàgines de lloc segons l&apos;àrea</li>
+        </ul>
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-2xl font-semibold">{price.toFixed(2)} €</span>
+          {kind === "business" ? (
+            <PromoCheckoutCTA href={toCheckoutUrl()} kind={kind} price={price} />
+          ) : (
+            <Link
+              href={toPublicaUrl()}
+              className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primarydark"
+              prefetch={false}
+            >
+              Continuar
+            </Link>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-blackCorp/60">
+          El pagament és processat per Stripe. Rebràs un rebut al teu correu.
+        </p>
+      </section>
+    </div>
+  );
+}

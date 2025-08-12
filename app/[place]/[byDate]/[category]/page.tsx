@@ -15,7 +15,7 @@ import { FetchEventsParams } from "types/event";
 import { FilteredPageProps } from "types/props";
 import { distanceToRadius } from "types/event";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import dynamic from "next/dynamic";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import {
   parseFiltersFromUrl,
   getRedirectUrl,
@@ -30,13 +30,9 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault } from "@lib/dates";
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 
 export const revalidate = 600;
-
-const ClientInteractiveLayer = dynamic(
-  () => import("@components/ui/clientInteractiveLayer"),
-  { ssr: false }
-);
 
 export async function generateMetadata({
   params,
@@ -227,6 +223,21 @@ export default async function FilteredPage({
 
   const eventsWithAds = insertAds(events);
 
+  // Optionally fetch a small featured strip scoped to place and category
+  let featured: typeof events = [];
+  if (process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1") {
+    try {
+      const res = await fetchEvents({ page: 0, size: 6, place, category: filters.category !== "tots" ? filters.category : undefined });
+      featured = (res?.content || []).filter(isEventSummaryResponseDTO);
+      if (featured.length < 3) {
+        const res2 = await fetchEvents({ page: 0, size: 6, place });
+        featured = (res2?.content || []).filter(isEventSummaryResponseDTO);
+      }
+    } catch {
+      featured = [];
+    }
+  }
+
   // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === filters.category);
 
@@ -265,6 +276,24 @@ export default async function FilteredPage({
             __html: JSON.stringify(structuredData),
           }}
         />
+      )}
+
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
+        <section
+          aria-labelledby="featured-heading"
+          className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6"
+        >
+          <h2 id="featured-heading" className="uppercase mb-2 px-2 lg:px-0">
+            Destacats
+          </h2>
+          <EventsAroundServer
+            events={featured}
+            layout="horizontal"
+            usePriority
+            showJsonLd={false}
+            title="Destacats"
+          />
+        </section>
       )}
 
       <HybridEventsList

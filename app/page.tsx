@@ -1,4 +1,4 @@
-import { fetchCategorizedEvents } from "@lib/api/events";
+import { fetchCategorizedEvents, fetchEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { buildPageMeta } from "@components/partials/seo-meta";
@@ -8,6 +8,9 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { Suspense, JSX } from "react";
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import type { EventSummaryResponseDTO } from "types/api/event";
 
 export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
@@ -25,6 +28,18 @@ export async function generateMetadata() {
 export default async function Page(): Promise<JSX.Element> {
   // Always fetch categorized events (no URL filters support)
   const categorizedEvents: CategorizedEvents = await fetchCategorizedEvents(5);
+
+  // Optionally fetch featured/promoted events (simple placeholder source)
+  let featured: EventSummaryResponseDTO[] = [];
+  if (process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1") {
+    try {
+      const res = await fetchEvents({ page: 0, size: 6 });
+      featured = (res?.content || []).filter(isEventSummaryResponseDTO);
+    } catch {
+      // Safe fallback – hide section on error
+      featured = [];
+    }
+  }
 
   // Fetch dynamic categories for enhanced category support
   let categories: CategorySummaryResponseDTO[] = [];
@@ -54,11 +69,42 @@ export default async function Page(): Promise<JSX.Element> {
         </Suspense>
       </div>
 
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
+        <section
+          aria-labelledby="featured-heading"
+          className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6"
+        >
+          <h2 id="featured-heading" className="uppercase mb-2 px-2 lg:px-0">
+            Destacats
+          </h2>
+          <EventsAroundServer
+            events={featured}
+            layout="horizontal"
+            usePriority
+            showJsonLd={false}
+            title="Destacats"
+          />
+        </section>
+      )}
+
       <ServerEventsCategorized
         categorizedEvents={categorizedEvents}
         pageData={pageData}
         categories={categories}
       />
+
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
+        <section className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6">
+          <h2 className="uppercase mb-2 px-2 lg:px-0">Empreses destacades</h2>
+          <EventsAroundServer
+            events={featured}
+            layout="horizontal"
+            usePriority={false}
+            showJsonLd={false}
+            title="Empreses destacades"
+          />
+        </section>
+      )}
     </>
   );
 }

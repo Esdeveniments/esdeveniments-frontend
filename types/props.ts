@@ -261,6 +261,14 @@ export interface NavigationFiltersModalProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
+// Props for promociona place selector (MVP)
+export interface PromocionaPlaceSelectorProps {
+  currentParams: Record<string, string | number | undefined>;
+  regionSlugByName: Record<string, string>;
+  scope: string;
+  place?: string;
+}
+
 export interface HybridEventsListProps {
   initialEvents: ListEvent[];
   placeTypeLabel?: PlaceTypeAndLabel;
