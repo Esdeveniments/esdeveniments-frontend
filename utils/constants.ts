@@ -172,3 +172,10 @@ export const PROMOTE_PRICING: Record<string, Record<number, number>> = {
   ciutat: { 2: 1.49, 7: 2.49, 15: 3.99 },
   pais: { 2: 2.49, 7: 4.99, 15: 7.99 },
 };
+export const PROMOTE_KINDS = ["event", "business"] as const; // MVP types
+export const PROMOTE_PLACEMENTS = ["global", "category", "newsletter"] as const; // where to appear
+export const PROMOTE_PLACEMENT_MULTIPLIER: Record<string, number> = {
+  global: 1.0, // home + lists + place pages
+  category: 0.6, // only category pages
+  newsletter: 0.8, // newsletter mention (future)
+};
