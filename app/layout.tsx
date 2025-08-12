@@ -15,7 +15,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     types: {
-      "application/rss+xml": [{ url: "/rss.xml", title: "RSS" }],
+      "application/rss+xml": [
+        { url: "/rss.xml", title: "RSS" },
+        { url: "/noticies/rss.xml", title: "RSS Notícies" },
+      ],
     },
   },
 };

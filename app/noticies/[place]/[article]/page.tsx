@@ -25,17 +25,27 @@ export async function generateMetadata({
   const detail: NewsDetailResponseDTO | null = await fetchNewsBySlug(article);
   const placeType = await getPlaceTypeAndLabel(place);
   if (detail) {
-    return buildPageMeta({
+    const base = buildPageMeta({
       title: `${detail.title} | ${placeType.label}`,
       description: detail.description,
-      canonical: `/noticies/${place}/${article}`,
+      canonical: `${siteUrl}/noticies/${place}/${article}`,
       image: detail.events?.[0]?.imageUrl,
     }) as unknown as Metadata;
+    const augmented: Metadata = {
+      ...base,
+      openGraph: {
+        ...(base.openGraph || {}),
+        type: "article",
+        ...(detail.createdAt && { publishedTime: detail.createdAt }),
+        ...(detail.createdAt && { modifiedTime: detail.createdAt }),
+      },
+    };
+    return augmented;
   }
   return buildPageMeta({
     title: `Notícia | ${placeType.label}`,
     description: `Detall de la notícia`,
-    canonical: `/noticies/${place}/${article}`,
+    canonical: `${siteUrl}/noticies/${place}/${article}`,
   }) as unknown as Metadata;
 }
 
@@ -68,18 +78,50 @@ export default async function Page({
       : f.formattedStart;
   })();
 
+  // Build keywords from available data (categories and locations)
+  const categoryKeywords = Array.from(
+    new Set(
+      (detail.events || [])
+        .flatMap((e) => e.categories?.map((c) => c.name) || [])
+        .filter(Boolean)
+    )
+  ).slice(0, 10);
+  const locationKeywords = Array.from(
+    new Set((detail.events || []).map((e) => e.location).filter(Boolean))
+  ).slice(0, 5);
+  const keywords = [
+    ...categoryKeywords,
+    ...locationKeywords,
+    placeType.label,
+  ].filter(Boolean);
+
   const articleSchema = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "NewsArticle",
     headline: detail.title,
     description: detail.description,
     datePublished: detail.createdAt,
     dateModified: detail.createdAt,
     image: detail.events?.[0]?.imageUrl,
     inLanguage: "ca",
+    isAccessibleForFree: true,
+    articleSection: detail.type,
+    ...(keywords.length > 0 ? { keywords } : {}),
+    publisher: {
+      "@type": "Organization",
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+      logo: `${siteUrl}/static/images/logo-seo-meta.webp`,
+    },
+    author: {
+      "@type": "Organization",
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+    },
+    url: `${siteUrl}/noticies/${place}/${article}`,
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `/noticies/${place}/${article}`,
+      "@id": `${siteUrl}/noticies/${place}/${article}`,
     },
   };
 
