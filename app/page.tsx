@@ -35,7 +35,7 @@ export default async function Page(): Promise<JSX.Element> {
     try {
       const res = await fetchEvents({ page: 0, size: 6 });
       featured = (res?.content || []).filter(isEventSummaryResponseDTO);
-    } catch (e) {
+    } catch {
       // Safe fallback – hide section on error
       featured = [];
     }

@@ -198,7 +198,7 @@ export default async function Page({
         const res2 = await fetchEvents({ page: 0, size: 6 });
         featured = (res2?.content || []).filter(isEventSummaryResponseDTO);
       }
-    } catch (e) {
+    } catch {
       featured = [];
     }
   }
