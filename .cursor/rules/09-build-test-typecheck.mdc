@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### Build, test, lint, and typecheck
 
 - **Dev**: `yarn dev` (runs `prebuild` for SW) then Next dev server.

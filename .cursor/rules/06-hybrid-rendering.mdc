@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### Hybrid rendering contract (SSR + client append)
 
 - **Server (SSR)**:

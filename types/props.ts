@@ -11,6 +11,7 @@ import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
+import type { NewsEventItemDTO } from "types/api/news";
 
 // Google Scripts Props
 export interface GoogleScriptsProps {
@@ -319,4 +320,22 @@ export interface UseGeolocationReturn {
     regions: RegionsGroupedByCitiesResponseDTO[]
   ) => Promise<Option | null>;
   clearLocation: () => void;
+}
+
+// --- News components props ---
+export interface NewsEventsSectionProps {
+  title: string;
+  events: NewsEventItemDTO[];
+  showHero?: boolean;
+  showNumbered?: boolean;
+}
+
+export interface NewsHeroEventProps {
+  event: NewsEventItemDTO;
+}
+
+export interface NewsRichCardProps {
+  event: NewsEventItemDTO;
+  variant?: "default" | "horizontal";
+  numbered?: number;
 }

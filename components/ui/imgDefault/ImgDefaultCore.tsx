@@ -67,8 +67,8 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
           {/* Location Icon and City */}
           {location && (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-white"></div>
+              <div className="w-4 h-4 rounded-full bg-whiteCorp/20 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-whiteCorp"></div>
               </div>
               <h2 className="font-bold uppercase text-whiteCorp text-lg drop-shadow-md">
                 {location}
@@ -83,7 +83,7 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
             </p>
           )}
 
-          <div className="w-full h-px bg-white/30 my-2"></div>
+          <div className="w-full h-px bg-whiteCorp/30 my-2"></div>
 
           {/* Event Title */}
           <h1

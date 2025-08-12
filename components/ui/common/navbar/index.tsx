@@ -16,7 +16,7 @@ import { NavigationItem } from "types/props";
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: true },
   { name: "Publicar", href: "/publica", current: false },
-  { name: "Qui som", href: "/qui-som", current: false },
+  { name: "Notícies", href: "/noticies", current: false },
 ];
 
 export default function Navbar() {

@@ -1,4 +1,8 @@
-import type { PagedResponseDTO as PagedNewsResponseDTO, NewsSummaryResponseDTO, NewsDetailResponseDTO } from "types/api/news";
+import type {
+  PagedResponseDTO as PagedNewsResponseDTO,
+  NewsSummaryResponseDTO,
+  NewsDetailResponseDTO,
+} from "types/api/news";
 
 export interface FetchNewsParams {
   page?: number;
@@ -36,7 +40,7 @@ export async function fetchNews(
     );
     const finalUrl = `${apiUrl}/news?${queryString}`;
 
-    const response = await fetch(finalUrl);
+    const response = await fetch(finalUrl, { next: { revalidate: 60 } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -63,7 +67,9 @@ export async function fetchNewsBySlug(
     return null;
   }
   try {
-    const response = await fetch(`${apiUrl}/news/${slug}`);
+    const response = await fetch(`${apiUrl}/news/${slug}`, {
+      next: { revalidate: 60 },
+    });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();

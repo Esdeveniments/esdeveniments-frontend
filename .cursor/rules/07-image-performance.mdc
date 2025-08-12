@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### Image performance strategy
 
 - **Quality caps**: External images default to 50; LCP/priority images use 60. Adjust with `getOptimalImageQuality` by context.

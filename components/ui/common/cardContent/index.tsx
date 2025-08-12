@@ -131,7 +131,11 @@ function CardContent({
               {isMobile && (
                 <NativeShareButton
                   title={event.title}
-                  url={event.url && event.url.trim() ? event.url : `/e/${event.slug}`}
+                  url={
+                    event.url && event.url.trim()
+                      ? event.url
+                      : `/e/${event.slug}`
+                  }
                   date={memoizedValues.eventDate}
                   location={memoizedValues.location}
                   subLocation={memoizedValues.subLocation}
@@ -182,7 +186,9 @@ function CardContent({
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-2">
-            <span className="max-w-full">{memoizedValues.location}</span>
+            <span className="max-w-full capitalize">
+              {memoizedValues.location}
+            </span>
           </div>
         </div>
         {/* Date time */}

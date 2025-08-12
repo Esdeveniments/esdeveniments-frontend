@@ -54,7 +54,8 @@ module.exports = {
       primarySoft: "#FF003750",
       whiteCorp: "#ffffff",
       darkCorp: "#F7F7F7",
-      blackCorp: "#454545",
+      // Use RGB with <alpha-value> to support /opacity utilities like from-blackCorp/70
+      blackCorp: "rgb(69 69 69 / <alpha-value>)",
       bColor: "#cccccc",
     },
   },

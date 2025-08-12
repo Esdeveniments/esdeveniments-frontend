@@ -1,3 +1,8 @@
+---
+globs: public/sw-template.js, public/sw.js, scripts/generate-sw.mjs, middleware.ts
+alwaysApply: false
+---
+
 ### Service Worker workflow
 
 - **Template only**: Edit `public/sw-template.js`; never hand-edit generated `public/sw.js`.

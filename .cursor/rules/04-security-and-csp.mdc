@@ -1,3 +1,8 @@
+---
+globs: middleware.ts, app/layout.tsx, app/GoogleScripts.tsx
+alwaysApply: false
+---
+
 ### Security: CSP and nonce usage (middleware-driven)
 
 - **Nonce source**: `middleware.ts` generates `x-nonce`; pages/components must read from `headers()` and pass to Script/JSON-LD.

@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### API access, fallbacks, and caching
 
 - **Always guard env**: If `NEXT_PUBLIC_API_URL` missing → return safe empty DTO; never throw for reads.

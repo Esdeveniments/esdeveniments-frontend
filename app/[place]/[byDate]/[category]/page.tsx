@@ -15,7 +15,7 @@ import { FetchEventsParams } from "types/event";
 import { FilteredPageProps } from "types/props";
 import { distanceToRadius } from "types/event";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import dynamic from "next/dynamic";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import {
   parseFiltersFromUrl,
   getRedirectUrl,
@@ -32,11 +32,6 @@ import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault } from "@lib/dates";
 
 export const revalidate = 600;
-
-const ClientInteractiveLayer = dynamic(
-  () => import("@components/ui/clientInteractiveLayer"),
-  { ssr: false }
-);
 
 export async function generateMetadata({
   params,

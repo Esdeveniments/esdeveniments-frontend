@@ -163,3 +163,39 @@ export function getCategoryDisplayName(
   // Fallback to static mapping
   return CATEGORY_NAMES_MAP[categorySlug as CategoryValue] || categorySlug;
 }
+
+// --- News UI constants ---
+export const NEWS_HUBS: { slug: string; name: string }[] = [
+  { slug: "barcelona", name: "Barcelona" },
+  { slug: "girona", name: "Girona" },
+  { slug: "tarragona", name: "Tarragona" },
+  { slug: "lleida", name: "Lleida" },
+];
+
+export const NEARBY_PLACES_BY_HUB: Record<
+  string,
+  { slug: string; name: string }[]
+> = {
+  barcelona: [
+    { slug: "l-hospitalet-de-llobregat", name: "L'Hospitalet de Llobregat" },
+    { slug: "badalona", name: "Badalona" },
+    { slug: "sant-just-desvern", name: "Sant Just Desvern" },
+    { slug: "cardedeu", name: "Cardedeu" },
+    { slug: "castelldefels", name: "Castelldefels" },
+  ],
+  girona: [
+    { slug: "figueres", name: "Figueres" },
+    { slug: "blanes", name: "Blanes" },
+    { slug: "olot", name: "Olot" },
+  ],
+  tarragona: [
+    { slug: "reus", name: "Reus" },
+    { slug: "cambrils", name: "Cambrils" },
+    { slug: "salou", name: "Salou" },
+  ],
+  lleida: [
+    { slug: "balaguer", name: "Balaguer" },
+    { slug: "tremp", name: "Tremp" },
+    { slug: "tarrega", name: "Tàrrega" },
+  ],
+};

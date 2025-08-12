@@ -1,0 +1,230 @@
+import { headers } from "next/headers";
+import type { Metadata } from "next";
+import Script from "next/script";
+import Link from "next/link";
+import DOMPurify from "isomorphic-dompurify";
+import { fetchNewsBySlug } from "@lib/api/news";
+import type { NewsDetailResponseDTO } from "types/api/news";
+import type { NewsEventsSectionProps } from "types/props";
+import { siteUrl } from "@config/index";
+import { generateWebPageSchema } from "@components/partials/seo-meta";
+import { buildPageMeta } from "@components/partials/seo-meta";
+import ViewCounter from "@components/ui/viewCounter";
+import AdArticle from "@components/ui/adArticle";
+import NewsHeroEvent from "@components/ui/newsHeroEvent";
+import NewsRichCard from "@components/ui/newsRichCard";
+import { getFormattedDate } from "@utils/date-helpers";
+import { getPlaceTypeAndLabel } from "@utils/helpers";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ place: string; article: string }>;
+}): Promise<Metadata> {
+  const { place, article } = await params;
+  const detail: NewsDetailResponseDTO | null = await fetchNewsBySlug(article);
+  const placeType = await getPlaceTypeAndLabel(place);
+  if (detail) {
+    return buildPageMeta({
+      title: `${detail.title} | ${placeType.label}`,
+      description: detail.description,
+      canonical: `/noticies/${place}/${article}`,
+      image: detail.events?.[0]?.imageUrl,
+    }) as unknown as Metadata;
+  }
+  return buildPageMeta({
+    title: `Notícia | ${placeType.label}`,
+    description: `Detall de la notícia`,
+    canonical: `/noticies/${place}/${article}`,
+  }) as unknown as Metadata;
+}
+
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ place: string; article: string }>;
+}) {
+  const { place, article } = await params;
+  const [detail, placeType, headersList] = await Promise.all([
+    fetchNewsBySlug(article),
+    getPlaceTypeAndLabel(place),
+    headers(),
+  ]);
+
+  if (!detail) {
+    // Let Next handle 404
+    const { notFound } = await import("next/navigation");
+    return notFound();
+  }
+
+  const nonce = headersList.get("x-nonce") || "";
+  const plainDescription = DOMPurify.sanitize(detail.description || "", {
+    ALLOWED_TAGS: [],
+  });
+  const dateRangeText = (() => {
+    const f = getFormattedDate(detail.startDate, detail.endDate);
+    return f.formattedEnd
+      ? `${f.formattedStart} – ${f.formattedEnd}`
+      : f.formattedStart;
+  })();
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: detail.title,
+    description: detail.description,
+    datePublished: detail.createdAt,
+    dateModified: detail.createdAt,
+    image: detail.events?.[0]?.imageUrl,
+    inLanguage: "ca",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `/noticies/${place}/${article}`,
+    },
+  };
+
+  const breadcrumbs = [
+    { name: "Inici", url: siteUrl },
+    { name: "Notícies", url: `${siteUrl}/noticies` },
+    { name: place, url: `${siteUrl}/noticies/${place}` },
+    { name: detail.title, url: `${siteUrl}/noticies/${place}/${article}` },
+  ];
+  const webPageSchema = generateWebPageSchema({
+    title: detail.title,
+    description: detail.description,
+    url: `${siteUrl}/noticies/${place}/${article}`,
+    breadcrumbs,
+  });
+
+  return (
+    <div className="min-h-screen bg-whiteCorp mt-4">
+      {/* Breadcrumbs */}
+      <div className="bg-whiteCorp border-b border-bColor">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <nav className="text-sm text-blackCorp/70" aria-label="Breadcrumb">
+            <Link href="/" className="hover:underline">
+              Inici
+            </Link>{" "}
+            /{" "}
+            <Link href="/noticies" className="hover:underline">
+              Notícies
+            </Link>{" "}
+            /{" "}
+            <Link href={`/noticies/${place}`} className="hover:underline">
+              {placeType.label}
+            </Link>{" "}
+            / <span className="text-blackCorp font-medium">{detail.title}</span>
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-6">
+          <h1 className="text-4xl font-bold text-blackCorp mb-6 md:text-5xl lg:text-6xl leading-tight uppercase">
+            {detail.title}
+          </h1>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-blackCorp/70">
+            <div className="flex items-center gap-4">
+              <span className="bg-primary text-whiteCorp px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
+                {detail.type === "WEEKEND" ? "Cap de setmana" : "Setmana"}{" "}
+                {dateRangeText}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 mt-4 md:mt-0">
+              <span>{detail.readingTime} min lectura</span>
+              <ViewCounter visits={detail.visits} hideText={false} />
+            </div>
+          </div>
+          {plainDescription && (
+            <p className="text-xl text-blackCorp/80 leading-relaxed">
+              {plainDescription}
+            </p>
+          )}
+        </div>
+
+        <div className="my-2">
+          <AdArticle slot="news_in_article" isDisplay={false} />
+        </div>
+
+        {detail.events && detail.events.length > 0 && (
+          <EventsSection
+            title="ELS IMPRESCINDIBLES"
+            events={detail.events.slice(0, Math.min(detail.events.length, 3))}
+            showHero={true}
+            showNumbered={true}
+          />
+        )}
+
+        {detail.events && detail.events.length > 3 && (
+          <EventsSection
+            title="MÉS PROPOSTES"
+            events={detail.events.slice(3)}
+          />
+        )}
+      </div>
+
+      <Script
+        id="news-article-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <Script
+        id="news-webpage-breadcrumbs"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+      />
+    </div>
+  );
+}
+
+function EventsSection({
+  title,
+  events,
+  showHero = false,
+  showNumbered = false,
+}: NewsEventsSectionProps) {
+  const [heroEvent, ...otherEvents] = events;
+
+  return (
+    <section className="mb-16">
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-blackCorp mb-3 md:text-4xl">
+          {title}
+        </h2>
+        <div className="w-20 h-1.5 bg-primary rounded-full"></div>
+      </div>
+
+      {showHero && heroEvent && (
+        <div className="mb-12">
+          <NewsHeroEvent event={heroEvent} />
+        </div>
+      )}
+
+      {showNumbered ? (
+        <div className="space-y-8">
+          {(showHero ? otherEvents : events).map((event, index) => (
+            <div key={event.id} className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary text-whiteCorp rounded-full flex items-center justify-center font-bold text-sm">
+                {showHero ? index + 2 : index + 1}
+              </div>
+              <div className="flex-1">
+                <NewsRichCard event={event} variant="horizontal" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {(showHero ? otherEvents : events).map((event) => (
+            <NewsRichCard key={event.id} event={event} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}

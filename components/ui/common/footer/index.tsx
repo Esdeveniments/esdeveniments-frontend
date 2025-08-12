@@ -6,6 +6,7 @@ import { NavigationItem, SocialLinks } from "types/props";
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: false },
   { name: "Publicar", href: "/publica", current: false },
+  { name: "Notícies", href: "/noticies", current: false },
   { name: "Qui som", href: "/qui-som", current: false },
   { name: "Arxiu", href: "/sitemap", current: false },
 ];

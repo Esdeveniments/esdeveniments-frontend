@@ -1,3 +1,8 @@
+---
+globs: components/partials/seo-meta.ts, lib/meta.ts, app/**/route.ts,rss.xml,server-sitemap.xml,sitemap/**
+alwaysApply: false
+---
+
 ### SEO and structured data (JSON-LD)
 
 - **Meta**: Use `components/partials/seo-meta.ts` helpers to build page metadata; keep canonical URLs correct via URL helpers.

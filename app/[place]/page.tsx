@@ -20,7 +20,7 @@ import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import dynamic from "next/dynamic";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -30,11 +30,6 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchCities } from "@lib/api/cities";
 
 export const revalidate = 600;
-
-const ClientInteractiveLayer = dynamic(
-  () => import("@components/ui/clientInteractiveLayer"),
-  { ssr: false }
-);
 
 export async function generateStaticParams() {
   const [regions, cities] = await Promise.all([fetchRegions(), fetchCities()]);

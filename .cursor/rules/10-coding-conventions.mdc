@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 ### Coding conventions and structure
 
 - **Centralize** constants in `utils/constants.ts`; do not duplicate literals.
