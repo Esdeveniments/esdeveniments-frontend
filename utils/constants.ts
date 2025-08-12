@@ -163,3 +163,12 @@ export function getCategoryDisplayName(
   // Fallback to static mapping
   return CATEGORY_NAMES_MAP[categorySlug as CategoryValue] || categorySlug;
 }
+
+// Promotion MVP constants (frontend-only; backend will own logic later)
+export const PROMOTE_VISIBILITY = ["zona", "ciutat", "pais"] as const;
+export const PROMOTE_DURATIONS = [2, 7, 15] as const;
+export const PROMOTE_PRICING: Record<string, Record<number, number>> = {
+  zona: { 2: 0.99, 7: 1.25, 15: 1.99 },
+  ciutat: { 2: 1.49, 7: 2.49, 15: 3.99 },
+  pais: { 2: 2.49, 7: 4.99, 15: 7.99 },
+};

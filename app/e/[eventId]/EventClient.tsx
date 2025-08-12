@@ -149,8 +149,8 @@ export default function EventClient({
             <h2 className="text-sm font-semibold uppercase tracking-wide">Promociona el teu esdeveniment</h2>
             <p className="text-sm text-blackCorp/80">Dona-li més visibilitat a la teva proposta distingint-la a la pàgina principal i llistes.</p>
             <div>
-              <Link href="/publica" className="inline-flex items-center px-3 py-1.5 bg-primary text-white rounded-md hover:bg-primarydark">
-                Publica ara
+              <Link href={`/promociona?eventId=${encodeURIComponent(slug)}`} className="inline-flex items-center px-3 py-1.5 bg-primary text-white rounded-md hover:bg-primarydark">
+                Configura la promoció
               </Link>
             </div>
           </div>
