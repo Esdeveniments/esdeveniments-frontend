@@ -32,8 +32,7 @@ describe('lib/api/events', () => {
 
     const mockJson = vi.fn().mockResolvedValue({ content: [], currentPage: 0, pageSize: 10, totalElements: 0, totalPages: 0, last: true })
     const mockFetch = vi.fn().mockResolvedValue({ json: mockJson })
-    // @ts-expect-error
-    global.fetch = mockFetch
+    ;(globalThis as any).fetch = mockFetch
 
     await fetchEvents({ place: 'barcelona', term: 'music', page: 2, size: 20 })
     const calledUrl = mockFetch.mock.calls[0][0] as string
