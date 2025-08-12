@@ -3,12 +3,16 @@ import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
-import { buildPageMeta } from "@components/partials/seo-meta";
+import {
+  buildPageMeta,
+  generateBreadcrumbList,
+} from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import Link from "next/link";
 import { siteUrl } from "@config/index";
 import Script from "next/script";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
+import Head from "next/head";
 
 export async function generateMetadata({
   params,
@@ -17,11 +21,26 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { place } = await params;
   const placeType = await getPlaceTypeAndLabel(place);
-  return buildPageMeta({
+  const base = buildPageMeta({
     title: `Notícies de ${placeType.label} | Esdeveniments.cat`,
     description: `Arxiu i recomanacions d'esdeveniments a ${placeType.label}`,
-    canonical: `/noticies/${place}`,
+    canonical: `${siteUrl}/noticies/${place}`,
   }) as unknown as Metadata;
+  return {
+    ...base,
+    alternates: {
+      ...(base.alternates || {}),
+      types: {
+        ...((base.alternates && base.alternates.types) || {}),
+        "application/rss+xml": [
+          {
+            url: `/noticies/${place}/rss.xml`,
+            title: `RSS Notícies ${placeType.label}`,
+          },
+        ],
+      },
+    },
+  };
 }
 
 export default async function Page({
@@ -77,15 +96,70 @@ export default async function Page({
     url: `${siteUrl}/noticies/${place}`,
     breadcrumbs,
   });
+  const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
+  const newsItemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${siteUrl}/noticies/${place}#news-itemlist`,
+    name: `Notícies de ${placeType.label}`,
+    numberOfItems: list.length,
+    itemListElement: list.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "NewsArticle",
+        "@id": `${siteUrl}/noticies/${place}/${item.slug}`,
+        url: `${siteUrl}/noticies/${place}/${item.slug}`,
+        headline: item.title,
+        ...(item.imageUrl ? { image: item.imageUrl } : {}),
+      },
+    })),
+  };
 
   return (
     <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
+      <Head>
+        {currentPage > 0 && (
+          <link
+            rel="prev"
+            href={`${siteUrl}/noticies/${place}?page=${
+              currentPage - 1
+            }&size=${pageSize}`}
+          />
+        )}
+        {!response.last && (
+          <link
+            rel="next"
+            href={`${siteUrl}/noticies/${place}?page=${
+              currentPage + 1
+            }&size=${pageSize}`}
+          />
+        )}
+      </Head>
       <Script
         id="news-place-webpage-breadcrumbs"
         type="application/ld+json"
         strategy="afterInteractive"
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+      />
+      {breadcrumbListSchema && (
+        <Script
+          id="news-place-breadcrumbs"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbListSchema),
+          }}
+        />
+      )}
+      <Script
+        id="news-place-itemlist"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(newsItemList) }}
       />
       <nav
         aria-label="Breadcrumb"
@@ -121,6 +195,14 @@ export default async function Page({
           prefetch={false}
         >
           Veure totes les notícies
+        </Link>
+        <span className="mx-2">·</span>
+        <Link
+          href={`/noticies/${place}/rss.xml`}
+          className="text-primary underline text-sm"
+          prefetch={false}
+        >
+          RSS
         </Link>
       </div>
       <section className="flex flex-col gap-6 px-2 lg:px-0">

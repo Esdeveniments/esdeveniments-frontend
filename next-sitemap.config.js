@@ -41,6 +41,7 @@ module.exports = {
     additionalSitemaps: [
       `${siteUrl}/sitemap.xml`,
       `${siteUrl}/server-sitemap.xml`,
+      `${siteUrl}/server-news-sitemap.xml`,
     ],
   },
 };

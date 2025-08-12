@@ -8,7 +8,10 @@ import Link from "next/link";
 import { NEWS_HUBS, NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
 import Script from "next/script";
-import { generateWebPageSchema } from "@components/partials/seo-meta";
+import {
+  generateWebPageSchema,
+  generateBreadcrumbList,
+} from "@components/partials/seo-meta";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Notícies | Esdeveniments.cat",
     description:
       "Les últimes notícies, recomanacions i plans culturals de Catalunya.",
-    canonical: "/noticies",
+    canonical: `${siteUrl}/noticies`,
   }) as unknown as Metadata;
 }
 
@@ -44,6 +47,33 @@ export default async function Page() {
     url: `${siteUrl}/noticies`,
     breadcrumbs,
   });
+  const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
+
+  // Structured data: ItemList for the first article of each hub
+  const firstArticles = hubResults
+    .map(({ hub, items }) =>
+      items && items[0] ? { hub, item: items[0] } : null
+    )
+    .filter(Boolean) as { hub: { slug: string; name: string }; item: any }[];
+
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${siteUrl}/noticies#news-itemlist`,
+    name: "Últimes notícies per hub",
+    numberOfItems: firstArticles.length,
+    itemListElement: firstArticles.map(({ hub, item }, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "NewsArticle",
+        "@id": `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
+        url: `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
+        headline: item.title,
+        ...(item.imageUrl ? { image: item.imageUrl } : {}),
+      },
+    })),
+  };
 
   return (
     <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
@@ -54,10 +84,37 @@ export default async function Page() {
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
       />
+      {breadcrumbListSchema && (
+        <Script
+          id="news-list-breadcrumbs"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbListSchema),
+          }}
+        />
+      )}
+      <Script
+        id="news-list-itemlist"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      />
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
       <p className="text-[16px] font-normal text-blackCorp text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.
       </p>
+      <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
+        <Link
+          href={`/noticies/rss.xml`}
+          className="text-primary underline text-sm"
+          prefetch={false}
+        >
+          RSS
+        </Link>
+      </div>
       <nav
         aria-label="Breadcrumb"
         className="mb-6 px-2 lg:px-0 text-sm text-blackCorp/70"

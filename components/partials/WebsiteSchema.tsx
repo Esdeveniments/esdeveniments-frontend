@@ -13,6 +13,12 @@ export default function WebsiteSchema({ nonce }: WebsiteSchemaProps) {
     url: siteUrl,
     description: "Descobreix esdeveniments culturals a Catalunya",
     inLanguage: "ca",
+    sameAs: [
+      "https://www.facebook.com/esdevenimentscat",
+      "https://www.instagram.com/esdevenimentscat",
+      "https://www.tiktok.com/@esdevenimentscat",
+      "https://x.com/esdeveniments",
+    ],
     potentialAction: {
       "@type": "SearchAction",
       target: {
@@ -25,7 +31,10 @@ export default function WebsiteSchema({ nonce }: WebsiteSchemaProps) {
       "@type": "Organization",
       name: "Esdeveniments.cat",
       url: siteUrl,
-      logo: `${siteUrl}/static/images/logo-seo-meta.webp`,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/static/images/logo-seo-meta.webp`,
+      },
     },
   };
 

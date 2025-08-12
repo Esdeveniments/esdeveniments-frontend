@@ -15,6 +15,8 @@ Host: https://www.esdeveniments.cat
 # Sitemaps
 Sitemap: https://www.esdeveniments.cat/sitemap.xml
 Sitemap: https://www.esdeveniments.cat/server-sitemap.xml
+Sitemap: https://www.esdeveniments.cat/server-news-sitemap.xml
+Sitemap: https://www.esdeveniments.cat/server-google-news-sitemap.xml
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1
