@@ -265,6 +265,8 @@ export interface NavigationFiltersModalProps {
 export interface PromocionaPlaceSelectorProps {
   currentParams: Record<string, string | number | undefined>;
   regionSlugByName: Record<string, string>;
+  scope: string;
+  place?: string;
 }
 
 export interface HybridEventsListProps {

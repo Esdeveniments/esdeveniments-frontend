@@ -134,7 +134,7 @@ export default async function Page({
                 }`}
                 prefetch={false}
               >
-                {opt === "zona" ? "Zona" : opt === "ciutat" ? "Ciutat" : "País"}
+                {opt === "zona" ? "Regió" : opt === "ciutat" ? "Ciutat" : "País (tot Catalunya)"}
               </Link>
             ))}
           </div>
@@ -178,6 +178,8 @@ export default async function Page({
           <PlaceSelector
             currentParams={{ scope, days, kind, placement, eventId, place }}
             regionSlugByName={regionSlugByName}
+            scope={scope}
+            place={place}
           />
         </section>
       </div>

@@ -1,17 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Select from "@components/ui/common/form/select";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { Option } from "types/common";
 import { useRouter } from "next/navigation";
 import type { PromocionaPlaceSelectorProps } from "types/props";
 
-export default function PlaceSelector({ currentParams, regionSlugByName }: PromocionaPlaceSelectorProps) {
+export default function PlaceSelector({ currentParams, regionSlugByName, scope, place }: PromocionaPlaceSelectorProps) {
   const router = useRouter();
   const { regionsWithCities } = useGetRegionsWithCities();
   const [region, setRegion] = useState<Option | null>(null);
   const [city, setCity] = useState<Option | null>(null);
+
+  // Initialize selection from current place when available
+  useEffect(() => {
+    if (!regionsWithCities || !place || place === "catalunya") return;
+    const regionMatch = regionsWithCities.find((r) => r.slug === place || regionSlugByName[r.name] === place);
+    if (regionMatch) {
+      setRegion({ label: regionMatch.name, value: String(regionMatch.id) });
+      setCity(null);
+      return;
+    }
+    // Otherwise, leave for city selection via manual change; MVP does not have city slug mapping here
+  }, [regionsWithCities, place, regionSlugByName]);
 
   const regionOptions: Option[] = useMemo(
     () =>
@@ -50,6 +62,10 @@ export default function PlaceSelector({ currentParams, regionSlugByName }: Promo
     navigateWithPlace(citySlug);
   };
 
+  const isScopeNational = scope === "pais";
+  const isScopeRegion = scope === "zona"; // Rename suggestion in server page will reflect to UX; keep key for now
+  const isScopeCity = scope === "ciutat";
+
   return (
     <div className="space-y-3">
       <Select
@@ -60,6 +76,7 @@ export default function PlaceSelector({ currentParams, regionSlugByName }: Promo
         options={regionOptions}
         isClearable
         placeholder="Tria una regió"
+        isDisabled={isScopeNational}
       />
       <Select
         id="promo-city"
@@ -69,6 +86,7 @@ export default function PlaceSelector({ currentParams, regionSlugByName }: Promo
         options={cityOptions}
         isClearable
         placeholder="Tria una ciutat"
+        isDisabled={isScopeNational || isScopeRegion}
       />
     </div>
   );
