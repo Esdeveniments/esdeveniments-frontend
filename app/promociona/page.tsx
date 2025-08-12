@@ -75,6 +75,17 @@ export default async function Page({
     return `/publica?${sp.toString()}`;
   };
 
+  const toCheckoutUrl = () => {
+    const sp = new URLSearchParams();
+    sp.set("scope", scope);
+    sp.set("days", String(days));
+    sp.set("kind", kind);
+    sp.set("placement", placement);
+    sp.set("place", place);
+    if (eventId) sp.set("eventId", eventId);
+    return `/promociona/checkout?${sp.toString()}`;
+  };
+
   // Build region name -> slug mapping for client place selector
   const regions = await fetchRegions();
   const regionSlugByName = Object.fromEntries(
@@ -207,7 +218,7 @@ export default async function Page({
         <div className="mt-4 flex items-center justify-between">
           <span className="text-2xl font-semibold">{price.toFixed(2)} €</span>
           <Link
-            href={toPublicaUrl()}
+            href={kind === "business" ? toCheckoutUrl() : toPublicaUrl()}
             className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primarydark"
             prefetch={false}
           >
