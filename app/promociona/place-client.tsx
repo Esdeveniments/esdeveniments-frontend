@@ -5,13 +5,9 @@ import Select from "@components/ui/common/form/select";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { Option } from "types/common";
 import { useRouter } from "next/navigation";
+import type { PromocionaPlaceSelectorProps } from "types/props";
 
-type PlaceClientProps = {
-  currentParams: Record<string, string | number | undefined>;
-  regionSlugByName: Record<string, string>;
-};
-
-export default function PlaceSelector({ currentParams, regionSlugByName }: PlaceClientProps) {
+export default function PlaceSelector({ currentParams, regionSlugByName }: PromocionaPlaceSelectorProps) {
   const router = useRouter();
   const { regionsWithCities } = useGetRegionsWithCities();
   const [region, setRegion] = useState<Option | null>(null);
@@ -50,8 +46,6 @@ export default function PlaceSelector({ currentParams, regionSlugByName }: Place
   const onCityChange = (opt: Option | null) => {
     setCity(opt);
     if (!opt) return;
-    // We don't have city slugs from this hook, so fallback to label sanitize is not ideal; rely on backend later.
-    // For MVP, use opt.label lowercased without spaces; backend contract will provide real slugs later.
     const citySlug = opt.label.toLowerCase().replace(/\s+/g, "-");
     navigateWithPlace(citySlug);
   };
