@@ -78,6 +78,8 @@ export async function GET() {
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
+      // Enable caching at the edge/CDN
+      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=86400",
     },
     status: 200,
   });

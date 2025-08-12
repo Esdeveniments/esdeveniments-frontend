@@ -1,0 +1,16 @@
+---
+alwaysApply: false
+---
+
+### Commands cheat sheet
+
+- Dev: `yarn dev`
+- Build (default): `yarn build`
+- Build by env: `yarn build:development | build:staging | build:production`
+- Start by env: `yarn start:development | start:staging | start:production`
+- Tests: `yarn test` (watch: `yarn test:watch`)
+- Typecheck: `yarn typecheck`
+- Lint: `yarn lint`
+- Analyze bundles: `yarn analyze | analyze:server | analyze:browser`
+- SW generation only: `yarn prebuild`
+- React Scan: `yarn scan` (requires dev server running)

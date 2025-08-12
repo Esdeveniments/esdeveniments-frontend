@@ -1,4 +1,6 @@
 import Script from "next/script";
+import Link from "next/link";
+import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel, toLocalDateString } from "@utils/helpers";
@@ -11,7 +13,7 @@ import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
 import type { DateFunctions } from "types/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import { FetchEventsParams } from "types/event";
+import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
@@ -112,6 +114,9 @@ export default async function ByDatePage({
   const { place, byDate } = await params;
   const search = await searchParams;
 
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
+
   validatePlaceOrThrow(place);
 
   let categories: CategorySummaryResponseDTO[] = [];
@@ -177,8 +182,9 @@ export default async function ByDatePage({
 
   // Add distance/radius filter if coordinates are provided
   if (lat && lon) {
-    if (distance) {
-      paramsForFetch.radius = parseInt(distance);
+    const maybeRadius = distanceToRadius(distance);
+    if (maybeRadius !== undefined) {
+      paramsForFetch.radius = maybeRadius;
     }
     paramsForFetch.lat = parseFloat(lat);
     paramsForFetch.lon = parseFloat(lon);
@@ -190,7 +196,8 @@ export default async function ByDatePage({
   }
 
   let noEventsFound = false;
-  let eventsResponse = await fetchEvents(paramsForFetch);
+  // Fetch events and place label in parallel when possible
+  let [eventsResponse] = await Promise.all([fetchEvents(paramsForFetch)]);
   let events = eventsResponse?.content || [];
 
   if (!events || events.length === 0) {
@@ -280,11 +287,23 @@ export default async function ByDatePage({
           id={`events-${place}-${actualDate}`}
           type="application/ld+json"
           strategy="afterInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredData),
           }}
         />
       )}
+
+      {/* Contextual link to News for current place */}
+      <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
+        <Link
+          href={`/noticies/${place}`}
+          className="text-primary underline text-sm"
+          prefetch={false}
+        >
+          Notícies de {placeTypeLabel.label}
+        </Link>
+      </div>
 
       {/* Server-rendered events content (SEO optimized) */}
       <HybridEventsList

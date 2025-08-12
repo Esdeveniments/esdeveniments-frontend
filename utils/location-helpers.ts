@@ -64,3 +64,37 @@ export const getDistance = (
 export const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);
 };
+
+// Build simple News CTA (href + text) without network lookups
+// Preference: use provided human label when available, fallback to capitalized slug
+export function getNewsCta(
+  place: string | undefined,
+  placeLabel?: string
+): { href: string; text: string } {
+  const safePlace = (place || "").trim();
+  const href =
+    safePlace === "catalunya" || safePlace === ""
+      ? "/noticies"
+      : `/noticies/${safePlace}`;
+
+  const formatWords = (text: string): string =>
+    text
+      .split(/\s+/)
+      .map((t) =>
+        t
+          .split("-")
+          .map((h) => (h.length ? h.charAt(0).toUpperCase() + h.slice(1) : h))
+          .join("-")
+      )
+      .join(" ");
+
+  const label =
+    safePlace === "catalunya"
+      ? "Catalunya"
+      : placeLabel
+      ? placeLabel
+      : formatWords(safePlace.replace(/-/g, " "));
+
+  const text = `Notícies a ${label}`;
+  return { href, text };
+}

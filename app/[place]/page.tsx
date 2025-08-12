@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import Script from "next/script";
+import Link from "next/link";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
@@ -18,6 +19,7 @@ import type {
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
+import { distanceToRadius } from "types/event";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { buildCanonicalUrl } from "@utils/url-filters";
@@ -126,8 +128,9 @@ export default async function Page({
 
   // Add distance/radius filter if coordinates are provided
   if (lat && lon) {
-    if (distance) {
-      fetchParams.radius = parseInt(distance);
+    const maybeRadius = distanceToRadius(distance);
+    if (maybeRadius !== undefined) {
+      fetchParams.radius = maybeRadius;
     }
     fetchParams.lat = parseFloat(lat);
     fetchParams.lon = parseFloat(lon);
@@ -138,6 +141,7 @@ export default async function Page({
     fetchParams.term = query;
   }
 
+  // Fetch events and categories in parallel when safe to do so later
   let eventsResponse = await fetchEvents(fetchParams);
   let noEventsFound = false;
 
@@ -219,6 +223,17 @@ export default async function Page({
           }}
         />
       )}
+
+      {/* Contextual link to News for current place */}
+      <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
+        <Link
+          href={`/noticies/${place}`}
+          className="text-primary underline text-sm"
+          prefetch={false}
+        >
+          Notícies de {placeTypeLabel.label}
+        </Link>
+      </div>
 
       {/* Server-rendered events content (SEO optimized) */}
       <HybridEventsList

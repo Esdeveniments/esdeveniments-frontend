@@ -9,9 +9,9 @@ const CalendarButton: React.FC<CalendarButtonProps> = ({
   <button
     onClick={onClick}
     type="button"
-    className="btn text-white flex items-center justify-center hover:text-primary"
+    className="btn text-whiteCorp flex items-center justify-center hover:text-primary"
   >
-    <div className="bg-white p-1 mr-2 border border-black rounded ">
+    <div className="bg-whiteCorp p-1 mr-2 border border-black rounded ">
       <PlusIcon className="w-4 h-4" />
     </div>
     {!hideText && "Afegir al calendari"}

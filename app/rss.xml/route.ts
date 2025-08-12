@@ -134,6 +134,8 @@ export async function GET(request: NextRequest) {
   return new Response(feed.rss2(), {
     headers: {
       "Content-Type": "text/xml; charset=utf-8",
+      // Enable caching at the edge/CDN
+      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=86400",
     },
     status: 200,
   });

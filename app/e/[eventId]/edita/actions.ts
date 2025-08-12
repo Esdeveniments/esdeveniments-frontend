@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { updateEventById } from "lib/api/events";
 import type { EventUpdateRequestDTO } from "types/api/event";
 
@@ -17,6 +17,9 @@ export async function editEvent(
     await revalidatePath(`/e/${slug}`);
   }
   await revalidatePath(`/e/${updatedEvent.slug}`);
+  // Invalidate lists and the specific event cache tag
+  revalidateTag("events");
+  revalidateTag(`event:${updatedEvent.slug}`);
 
   // 3. Return result with new slug for client redirection
   return { success: true, newSlug: updatedEvent.slug };

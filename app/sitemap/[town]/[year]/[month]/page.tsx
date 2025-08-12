@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { generateJsonData, getFormattedDate } from "@utils/helpers";
 import { siteUrl } from "@config/index";
@@ -42,6 +43,9 @@ export default async function Page({
 }) {
   const { town, year, month } = await params;
   if (!town || !year || !month) return null;
+
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
 
   const { from, until } = getHistoricDates(month, Number(year));
 
@@ -115,6 +119,7 @@ export default async function Page({
           id={`${town}-${month}-${year}-events`}
           type="application/ld+json"
           strategy="afterInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
         />
       )}
@@ -124,6 +129,7 @@ export default async function Page({
         id={`${town}-${month}-${year}-collection`}
         type="application/ld+json"
         strategy="afterInteractive"
+          nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(collectionPageSchema),
         }}
@@ -135,6 +141,7 @@ export default async function Page({
           id={`${town}-${month}-${year}-itemlist`}
           type="application/ld+json"
           strategy="afterInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(eventsItemList),
           }}

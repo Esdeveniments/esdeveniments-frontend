@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, ReactElement, useMemo, useEffect } from "react";
+import Link from "next/link";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
@@ -10,6 +11,7 @@ import NoEventsFound from "@components/ui/common/noEventsFound";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
 import { preloadImages } from "@utils/image-preload";
+import { getNewsCta } from "@utils/helpers";
 import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
 
 function HybridEventsList({
@@ -32,11 +34,6 @@ function HybridEventsList({
     [initialEvents]
   );
 
-  const allEventsWithAds = useMemo(
-    () => initialEvents, // Keep all events including ads for rendering
-    [initialEvents]
-  );
-
   const { events, hasMore, loadMore, isLoading, isValidating, error } =
     useEvents({
       place,
@@ -47,7 +44,36 @@ function HybridEventsList({
       serverHasMore,
     });
 
-  const allEvents = allEventsWithAds.length > 0 ? allEventsWithAds : events;
+  const { href: newsHref, text: newsText } = useMemo(() => {
+    return getNewsCta(place, pageData?.title);
+  }, [place, pageData?.title]);
+
+  const mergedEvents = useMemo(() => {
+    const ssrWithAds = initialEvents;
+
+    // If no client-fetched events yet, keep SSR list (with ads)
+    if (!events || events.length === 0) {
+      return ssrWithAds;
+    }
+
+    // Number of real events that were rendered on SSR (excluding ads)
+    const initialRealCount = validInitialEvents.length;
+
+    // SWR returns cumulative content; append only items beyond the SSR real count
+    const appended = events.slice(initialRealCount);
+
+    // De-duplicate by id across the boundary
+    const existingIds = new Set(
+      ssrWithAds
+        .filter(isEventSummaryResponseDTO)
+        .map((e) => (e as EventSummaryResponseDTO).id)
+    );
+    const uniqueAppended = appended.filter((e) => !existingIds.has(e.id));
+
+    return ssrWithAds.concat(uniqueAppended);
+  }, [initialEvents, events, validInitialEvents]);
+
+  const allEvents = mergedEvents;
 
   // Preload first 3 images for better LCP
   useEffect(() => {
@@ -96,9 +122,21 @@ function HybridEventsList({
       {pageData && (
         <>
           <h1 className="uppercase mb-2 px-2">{pageData.title}</h1>
-          <p className="text-[16px] font-normal text-blackCorp text-left mb-10 px-2 font-barlow">
+          <p className="text-[16px] font-normal text-blackCorp text-left mb-2 px-2 font-barlow">
             {pageData.subTitle}
           </p>
+          {place && (
+            <div className="px-2 mb-10">
+              <Link
+                href={newsHref}
+                className="inline-flex items-center text-primary underline text-sm"
+                prefetch={false}
+                aria-label={newsText}
+              >
+                {newsText}
+              </Link>
+            </div>
+          )}
         </>
       )}
 

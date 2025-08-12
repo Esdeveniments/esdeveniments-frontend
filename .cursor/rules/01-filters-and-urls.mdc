@@ -1,0 +1,24 @@
+---
+alwaysApply: false
+---
+
+### Filters and URL-first design (authoritative)
+
+- **Single source of truth**: `config/filters.ts` (key, defaultValue, isEnabled, getDisplayText, getRemovalChanges[, dependencies, specialCases]).
+- **Do not** add ad-hoc conditionals; use `FilterOperations` from `utils/filter-operations.ts`.
+- **URL helpers**: `buildFilterUrl`, `buildCanonicalUrlDynamic`, `buildCanonicalUrl` in `utils/url-filters.ts`.
+- **Omission rules** (never bloat with defaults):
+  - If date === `tots` AND category === `tots` → `/place`
+  - If date === `tots` and category != `tots` → `/place/category`
+  - If category === `tots` and date != `tots` → `/place/date`
+- **Query filters**: non-segment filters live in query: `search`, `distance`, `lat`, `lon` (omit `distance` when default 50).
+- **Redirect normalization**: `getRedirectUrl` ensures canonical URLs per omission rules.
+- **Special case**: `place=catalunya` + `byDate` + `category=tots` may redirect to home.
+- **Dynamic categories**: validate with `isValidCategorySlug`; use backend slugs when available; fallback to legacy list.
+
+#### When adding a new filter
+
+1. Add config to `config/filters.ts`.
+2. Ensure URL/default behavior aligns with omission rules.
+3. Use `FilterOperations` for removal URLs, active state, validation.
+4. Update UI to rely on `FilterOperations.getAllConfigurations()` rather than hard-coded lists.

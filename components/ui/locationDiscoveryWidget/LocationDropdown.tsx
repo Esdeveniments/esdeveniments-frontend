@@ -100,7 +100,7 @@ export default function LocationDropdown({
         type="button"
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="w-full flex justify-between items-center border border-bColor border-opacity-50 rounded-full px-4 py-3 bg-white hover:border-primary transition-colors duration-200"
+        className="w-full flex justify-between items-center border border-bColor border-opacity-50 rounded-full px-4 py-3 bg-whiteCorp hover:border-primary transition-colors duration-200"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
@@ -119,7 +119,7 @@ export default function LocationDropdown({
 
       {/* Dropdown content */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-bColor border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-whiteCorp border border-bColor border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
           {/* Search input */}
           <div className="p-3 border-b border-bColor border-opacity-30">
             <input

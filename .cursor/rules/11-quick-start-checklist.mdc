@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+---
+
+### Quick-start checklist (copy for any task)
+
+1. Identify domain (Filters/URLs, API, SEO, SW, Security) and open key files.
+2. Confirm URL canonical rules; use `parseFiltersFromUrl` and `buildCanonicalUrl*` helpers.
+3. For data fetching:
+   - Guard env
+   - Filter undefined params → `URLSearchParams`
+   - Try/catch + safe fallback
+   - Consider cache wrappers
+4. For pages/components touching scripts/JSON-LD:
+   - Read `nonce` via `headers()` and pass to all scripts.
+5. For event lists:
+   - Insert ads only once on SSR
+   - Respect merge and dedupe rules on client
+6. If SW changes:
+   - Edit template → regenerate with `prebuild`
+7. Run: `yarn typecheck` → `yarn test` → `yarn lint` → build as needed.

@@ -1,0 +1,19 @@
+---
+alwaysApply: false
+---
+
+### API access, fallbacks, and caching
+
+- **Always guard env**: If `NEXT_PUBLIC_API_URL` missing → return safe empty DTO; never throw for reads.
+- **DTO shape**: Paged responses use `PagedResponseDTO` with `{ content[], currentPage, pageSize, totalElements, totalPages, last }`.
+- **Param building**: Filter undefined keys; build via `URLSearchParams`; keep backend param names identical.
+- **Resilience**: Wrap fetch in try/catch; log and return safe fallback.
+- **Caching**: Use `createCache` (single value) / `createKeyedCache` (per id/slug) with TTL (24h) in `lib/api/cache.ts` for low-volatility endpoints (categories, regions, cities, places).
+- **Events fallback chain** (place pages):
+  1. requested place
+  2. parent region (lookup from grouped regions)
+  3. latest global (no filters)
+- **Distance & geo**: UI `distance` + `lat/lon` map to API `radius/lat/lon`; compute `radius` via `distanceToRadius(distance)`; only send when defined.
+- **Search term**: internal key `searchTerm` maps to API param `term`.
+- **Mutations**: On non-OK, read `response.text()` for detailed error, then throw; keep this policy uniform.
+- **Do not** duplicate manual query-string concatenation or bypass cache wrappers.

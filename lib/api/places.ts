@@ -8,7 +8,8 @@ async function fetchPlaceBySlugApi(
 ): Promise<PlaceResponseDTO | null> {
   const slug = String(key);
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/places/${slug}`
+    `${process.env.NEXT_PUBLIC_API_URL}/places/${slug}`,
+    { next: { revalidate: 86400, tags: ["places", `place:${slug}`] } }
   );
   if (!response.ok) return null;
   return response.json();

@@ -1,0 +1,14 @@
+---
+alwaysApply: false
+---
+
+### URL parsing and canonicalization
+
+- **Parsing**: Use `parseFiltersFromUrl`, `urlToFilterState` from `utils/url-filters.ts` and `utils/url-parsing.ts`.
+- **Canonical normalization**: Use `getRedirectUrl(parsed)` to compute canonical destination; never implement string logic manually.
+- **Segments vs query**:
+  - Segments: `place`, `byDate`, `category` (with omission rules)
+  - Query: `search`, `distance`, `lat`, `lon`
+- **Dynamic categories**: pass fetched categories to parser so it can validate slugs; fallback to legacy mapping.
+- **2-segment interpretation tests** exist—keep compatibility: `/place/foo` may be date or category; rely on parser.
+- **Validation**: `validatePlaceOrThrow` and `validatePlaceForMetadata` in `utils/route-validation.ts` must be used.

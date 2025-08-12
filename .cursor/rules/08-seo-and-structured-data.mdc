@@ -1,0 +1,13 @@
+---
+globs: components/partials/seo-meta.ts, lib/meta.ts, app/**/route.ts,rss.xml,server-sitemap.xml,sitemap/**
+alwaysApply: false
+---
+
+### SEO and structured data (JSON-LD)
+
+- **Meta**: Use `components/partials/seo-meta.ts` helpers to build page metadata; keep canonical URLs correct via URL helpers.
+- **generateMetadata**: Each route computes metadata server-side; rely on `generatePagesData` and validations.
+- **JSON-LD**: Render with Next `<Script>` or inline `<script>` using `nonce` and `dangerouslySetInnerHTML`.
+- **Lists**: Use `generateItemListStructuredData` for event lists; limit items for performance.
+- **Event detail**: Use `generateJsonData` for the main event and optionally a related events ItemList.
+- **Sitemaps**: `next-sitemap` config in `next-sitemap.config.js`; additional routes under `app/server-sitemap.xml` and `app/rss.xml`.

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Script from "next/script";
+import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
@@ -12,6 +13,7 @@ import type { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { FilteredPageProps } from "types/props";
+import { distanceToRadius } from "types/event";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import {
@@ -104,6 +106,9 @@ export default async function FilteredPage({
   const { place, byDate, category } = await params;
   const search = await searchParams;
 
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
+
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
 
@@ -143,11 +148,6 @@ export default async function FilteredPage({
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
 
-  // Get place type and label
-  const placeTypeAndLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
-    filters.place
-  );
-
   // Prepare fetch params
   const fetchParams: FetchEventsParams = {
     place: filters.place,
@@ -159,15 +159,20 @@ export default async function FilteredPage({
 
   // Add distance/radius filter if coordinates are provided
   if (filters.lat && filters.lon) {
-    if (filters.distance !== undefined) {
-      fetchParams.radius = filters.distance;
+    const maybeRadius = distanceToRadius(filters.distance);
+    if (maybeRadius !== undefined) {
+      fetchParams.radius = maybeRadius;
     }
     fetchParams.lat = filters.lat;
     fetchParams.lon = filters.lon;
   }
 
-  // Fetch events
-  let eventsResponse = await fetchEvents(fetchParams);
+  // Fetch events and place label in parallel
+  const [placeTypeAndLabel, initialEventsResponse] = await Promise.all([
+    getPlaceTypeAndLabel(filters.place),
+    fetchEvents(fetchParams),
+  ]);
+  let eventsResponse = initialEventsResponse;
   let events = eventsResponse?.content || [];
   let noEventsFound = false;
 
@@ -250,6 +255,7 @@ export default async function FilteredPage({
           id={`events-${filters.place}-${filters.byDate}-${filters.category}`}
           type="application/ld+json"
           strategy="afterInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredData),
           }}
