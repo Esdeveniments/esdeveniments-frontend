@@ -21,6 +21,7 @@ import {
   SpeakerphoneIcon,
 } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
+import Link from "next/link";
 
 // const Tooltip = dynamic(() => import("components/ui/tooltip"), {
 //   ssr: false,
@@ -139,6 +140,23 @@ export default function EventClient({
         categories={event.categories}
         place={event.region.slug}
       />
+
+      {/* Promote your event CTA */}
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && (
+        <div className="w-full flex justify-center items-start gap-2 px-4 mt-4">
+          <SpeakerphoneIcon className="w-5 h-5 mt-1" />
+          <div className="w-11/12 flex flex-col gap-2 bg-whiteCorp border border-darkCorp/10 rounded-lg p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide">Promociona el teu esdeveniment</h2>
+            <p className="text-sm text-blackCorp/80">Dona-li més visibilitat a la teva proposta distingint-la a la pàgina principal i llistes.</p>
+            <div>
+              <Link href="/publica" className="inline-flex items-center px-3 py-1.5 bg-primary text-white rounded-md hover:bg-primarydark">
+                Publica ara
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Ad Section */}
       <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
         <SpeakerphoneIcon className="w-5 h-5 mt-1" />

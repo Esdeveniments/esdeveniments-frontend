@@ -20,7 +20,7 @@ import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import dynamic from "next/dynamic";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -28,13 +28,9 @@ import {
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchCities } from "@lib/api/cities";
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 
 export const revalidate = 600;
-
-const ClientInteractiveLayer = dynamic(
-  () => import("@components/ui/clientInteractiveLayer"),
-  { ssr: false }
-);
 
 export async function generateStaticParams() {
   const [regions, cities] = await Promise.all([fetchRegions(), fetchCities()]);
@@ -191,6 +187,22 @@ export default async function Page({
   const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 
+  // Optionally fetch a small featured strip scoped to place
+  let featured: typeof events = [];
+  if (process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1") {
+    try {
+      const res = await fetchEvents({ page: 0, size: 6, place });
+      featured = (res?.content || []).filter(isEventSummaryResponseDTO);
+      // Fallback to global latest if empty
+      if (featured.length < 3) {
+        const res2 = await fetchEvents({ page: 0, size: 6 });
+        featured = (res2?.content || []).filter(isEventSummaryResponseDTO);
+      }
+    } catch (e) {
+      featured = [];
+    }
+  }
+
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await fetchCategories();
@@ -226,6 +238,24 @@ export default async function Page({
             __html: JSON.stringify(structuredData),
           }}
         />
+      )}
+
+      {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
+        <section
+          aria-labelledby="featured-heading"
+          className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6"
+        >
+          <h2 id="featured-heading" className="uppercase mb-2 px-2 lg:px-0">
+            Destacats
+          </h2>
+          <EventsAroundServer
+            events={featured}
+            layout="horizontal"
+            usePriority
+            showJsonLd={false}
+            title="Destacats"
+          />
+        </section>
       )}
 
       {/* Server-rendered events content (SEO optimized) */}
