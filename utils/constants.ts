@@ -181,6 +181,7 @@ export const NEARBY_PLACES_BY_HUB: Record<
     { slug: "badalona", name: "Badalona" },
     { slug: "sant-just-desvern", name: "Sant Just Desvern" },
     { slug: "cardedeu", name: "Cardedeu" },
+    { slug: "granollers", name: "Granollers" },
     { slug: "castelldefels", name: "Castelldefels" },
   ],
   girona: [

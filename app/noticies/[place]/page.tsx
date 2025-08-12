@@ -1,11 +1,7 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
-import List from "@components/ui/list";
-import Card from "@components/ui/card";
-import type { ListEvent } from "types/api/event";
-import { mapNewsSummariesToEvents } from "@utils/news-mapping";
-import { insertAds } from "@lib/api/events";
+import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
@@ -67,8 +63,7 @@ export default async function Page({
     return notFound();
   }
 
-  const mapped = mapNewsSummariesToEvents(items, place);
-  const list: ListEvent[] = insertAds(mapped);
+  const list = items;
 
   const nonce = headersList.get("x-nonce") || "";
   const breadcrumbs = [
@@ -128,15 +123,17 @@ export default async function Page({
           Veure totes les notícies
         </Link>
       </div>
-      <List events={list}>
-        {(event, index) => (
-          <Card
+      <section className="flex flex-col gap-6">
+        {list.map((event, index) => (
+          <NewsCard
             key={`${event.id}-${index}`}
             event={event}
-            isPriority={index === 0}
+            placeSlug={place}
+            placeLabel={placeType.label}
+            variant={index === 0 ? "hero" : "default"}
           />
-        )}
-      </List>
+        ))}
+      </section>
       <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
         {currentPage > 0 ? (
           <Link

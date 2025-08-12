@@ -36,7 +36,12 @@ export {
 } from "./category-helpers";
 
 // Location helpers
-export { getPlaceTypeAndLabel, getDistance, deg2rad } from "./location-helpers";
+export {
+  getPlaceTypeAndLabel,
+  getDistance,
+  deg2rad,
+  getNewsCta,
+} from "./location-helpers";
 
 // Schema helpers
 export { generateJsonData } from "./schema-helpers";

@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, ReactElement, useMemo, useEffect } from "react";
+import Link from "next/link";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
@@ -10,6 +11,7 @@ import NoEventsFound from "@components/ui/common/noEventsFound";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
 import { preloadImages } from "@utils/image-preload";
+import { getNewsCta } from "@utils/helpers";
 import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
 
 function HybridEventsList({
@@ -41,6 +43,10 @@ function HybridEventsList({
       fallbackData: validInitialEvents,
       serverHasMore,
     });
+
+  const { href: newsHref, text: newsText } = useMemo(() => {
+    return getNewsCta(place, pageData?.title);
+  }, [place, pageData?.title]);
 
   const mergedEvents = useMemo(() => {
     const ssrWithAds = initialEvents;
@@ -116,9 +122,21 @@ function HybridEventsList({
       {pageData && (
         <>
           <h1 className="uppercase mb-2 px-2">{pageData.title}</h1>
-          <p className="text-[16px] font-normal text-blackCorp text-left mb-10 px-2 font-barlow">
+          <p className="text-[16px] font-normal text-blackCorp text-left mb-2 px-2 font-barlow">
             {pageData.subTitle}
           </p>
+          {place && (
+            <div className="px-2 mb-10">
+              <Link
+                href={newsHref}
+                className="inline-flex items-center text-primary underline text-sm"
+                prefetch={false}
+                aria-label={newsText}
+              >
+                {newsText}
+              </Link>
+            </div>
+          )}
         </>
       )}
 

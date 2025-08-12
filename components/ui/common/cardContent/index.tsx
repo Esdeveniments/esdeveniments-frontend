@@ -58,9 +58,8 @@ function CardContent({
   const isMobile = useCheckMobileScreen();
 
   const handlePrefetch = useCallback((): void => {
-    const href = event.url && event.url.trim() ? event.url : `/e/${event.slug}`;
-    prefetch(href);
-  }, [event.slug, event.url, prefetch]);
+    prefetch(`/e/${event.slug}`);
+  }, [event.slug, prefetch]);
 
   const handleClick = useCallback((): void => {
     setIsCardLoading(true);
@@ -93,7 +92,7 @@ function CardContent({
   return (
     <>
       <Link
-        href={event.url && event.url.trim() ? event.url : `/e/${event.slug}`}
+        href={`/e/${event.slug}`}
         passHref
         prefetch={false}
         className="w-full"
@@ -131,11 +130,7 @@ function CardContent({
               {isMobile && (
                 <NativeShareButton
                   title={event.title}
-                  url={
-                    event.url && event.url.trim()
-                      ? event.url
-                      : `/e/${event.slug}`
-                  }
+                  url={`/e/${event.slug}`}
                   date={memoizedValues.eventDate}
                   location={memoizedValues.location}
                   subLocation={memoizedValues.subLocation}
