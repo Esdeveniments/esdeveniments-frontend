@@ -7,12 +7,6 @@ export async function createEventAction(
   data: EventCreateRequestDTO,
   imageFile?: File
 ) {
-  // E2E test mode: avoid external API calls and return a predictable result
-  if (process.env.E2E_TEST_MODE === "true") {
-    await revalidatePath("/e");
-    return { success: true, event: { slug: "e2e-test-event" } as any };
-  }
-
   // 1. Create the event in your backend
   const created = await createEvent(data, imageFile);
 
