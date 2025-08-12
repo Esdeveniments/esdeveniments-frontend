@@ -64,7 +64,6 @@ export default function PlaceSelector({ currentParams, regionSlugByName, scope, 
 
   const isScopeNational = scope === "pais";
   const isScopeRegion = scope === "zona"; // Rename suggestion in server page will reflect to UX; keep key for now
-  const isScopeCity = scope === "ciutat";
 
   return (
     <div className="space-y-3">
