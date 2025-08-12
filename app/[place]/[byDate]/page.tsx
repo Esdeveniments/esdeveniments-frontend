@@ -15,7 +15,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import dynamic from "next/dynamic";
+import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -23,11 +23,6 @@ import {
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
-
-const ClientInteractiveLayer = dynamic(
-  () => import("@components/ui/clientInteractiveLayer"),
-  { ssr: false }
-);
 
 export async function generateMetadata({
   params,
@@ -202,9 +197,7 @@ export default async function ByDatePage({
 
   let noEventsFound = false;
   // Fetch events and place label in parallel when possible
-  let [eventsResponse] = await Promise.all([
-    fetchEvents(paramsForFetch),
-  ]);
+  let [eventsResponse] = await Promise.all([fetchEvents(paramsForFetch)]);
   let events = eventsResponse?.content || [];
 
   if (!events || events.length === 0) {
