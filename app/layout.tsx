@@ -9,51 +9,68 @@ import CriticalCSS from "@components/partials/CriticalCSS";
 import { robotoFlex, barlowCondensed } from "../lib/fonts";
 
 export const metadata: Metadata = {
-  other: {
-    "mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "default",
-  },
-  alternates: {
-    types: {
-      "application/rss+xml": [
-        { url: "/rss.xml", title: "RSS" },
-        { url: "/noticies/rss.xml", title: "RSS Notícies" },
-      ],
-    },
-  },
+	other: {
+		"mobile-web-app-capable": "yes",
+		"apple-mobile-web-app-status-bar-style": "default",
+	},
+	alternates: {
+		types: {
+			"application/rss+xml": [
+				{ url: "/rss.xml", title: "RSS" },
+				{ url: "/noticies/rss.xml", title: "RSS Notícies" },
+			],
+		},
+	},
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  themeColor: "#000000",
+	width: "device-width",
+	initialScale: 1,
+	themeColor: "#000000",
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  // Read the nonce from the middleware headers
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
+// Resolve API origin in the same spirit as middleware (server-only)
+function getApiOrigin(): string | null {
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+	if (apiUrl) {
+		try {
+			return new URL(apiUrl).origin;
+		} catch {
+			// noop
+		}
+	}
+	const nodeEnv = process.env.NODE_ENV;
+	if (nodeEnv === "production") return "https://api.esdeveniments.cat";
+	return "https://api-pre.esdeveniments.cat";
+}
 
-  return (
-    <html
-      lang="ca"
-      className={`${robotoFlex.variable} ${barlowCondensed.variable}`}
-    >
-      <body>
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
-        <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
-        <link rel="dns-prefetch" href="//www.google-analytics.com" />
-        <WebsiteSchema nonce={nonce} />
-        <CriticalCSS />
-        <GoogleScripts nonce={nonce} />
-        <BaseLayout>{children}</BaseLayout>
-      </body>
-    </html>
-  );
+export default async function RootLayout({
+	children,
+}: {
+	children: ReactNode;
+}) {
+	// Read the nonce from the middleware headers
+	const headersList = await headers();
+	const nonce = headersList.get("x-nonce") || "";
+	const apiOrigin = getApiOrigin();
+
+	return (
+		<html
+			lang="ca"
+			className={`${robotoFlex.variable} ${barlowCondensed.variable}`}
+		>
+			<body>
+				<link rel="preconnect" href="https://www.googletagmanager.com" />
+				<link rel="preconnect" href="https://www.google-analytics.com" />
+				<link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+				{apiOrigin && <link rel="preconnect" href={apiOrigin} crossOrigin="anonymous" />}
+				<link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
+				<link rel="dns-prefetch" href="//www.google-analytics.com" />
+				<WebsiteSchema nonce={nonce} />
+				<CriticalCSS />
+				<GoogleScripts nonce={nonce} />
+				<BaseLayout>{children}</BaseLayout>
+			</body>
+		</html>
+	);
 }
