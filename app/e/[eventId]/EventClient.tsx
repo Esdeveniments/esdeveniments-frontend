@@ -125,7 +125,7 @@ export default function EventClient({
         setShowThankYouBanner={setShowThankYouBanner}
       />
       <div className="w-full flex items-center justify-between px-4">
-        <EventHeader title={title} />
+        <EventHeader title={title} slug={slug} />
         <FavoriteButton slug={slug} />
       </div>
       {/* Event Calendar */}
