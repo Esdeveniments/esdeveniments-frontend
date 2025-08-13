@@ -34,7 +34,7 @@ export default async function EventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
-
+  
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";

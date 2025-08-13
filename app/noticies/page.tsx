@@ -8,6 +8,7 @@ import Link from "next/link";
 import { NEWS_HUBS, NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
 import Script from "next/script";
+import type { NewsSummaryResponseDTO } from "types/api/news";
 import {
   generateWebPageSchema,
   generateBreadcrumbList,
@@ -52,9 +53,18 @@ export default async function Page() {
   // Structured data: ItemList for the first article of each hub
   const firstArticles = hubResults
     .map(({ hub, items }) =>
-      items && items[0] ? { hub, item: items[0] } : null
+      items && items[0]
+        ? { hub, item: items[0] as NewsSummaryResponseDTO }
+        : null
     )
-    .filter(Boolean) as { hub: { slug: string; name: string }; item: any }[];
+    .filter(
+      (
+        v
+      ): v is {
+        hub: { slug: string; name: string };
+        item: NewsSummaryResponseDTO;
+      } => v !== null
+    );
 
   const itemListSchema = {
     "@context": "https://schema.org",

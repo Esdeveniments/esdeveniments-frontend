@@ -1,13 +1,7 @@
 import { siteUrl } from "@config/index";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
-
-type UrlField = {
-  loc: string;
-  lastmod: string;
-  changefreq: string;
-  priority: number;
-};
+import type { UrlField } from "types/sitemap";
 
 function buildSitemap(fields: UrlField[]): string {
   return (
