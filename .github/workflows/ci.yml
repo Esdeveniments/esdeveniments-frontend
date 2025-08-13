@@ -105,21 +105,43 @@ jobs:
           if [ -n "${VERCEL_ORG_ID:-}" ]; then
             BASE_URL="$BASE_URL&teamId=$VERCEL_ORG_ID"
           fi
-          for i in {1..60}; do
-            RESP=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" "$BASE_URL" || true)
-            # Ensure JSON before parsing
-            if ! echo "$RESP" | jq -e . >/dev/null 2>&1; then
-              echo "Non-JSON response from Vercel API, retrying ($i/60)..."
-              sleep 10
-              continue
+          # URL-encode the branch ref for queries
+          REF_ENC=$(printf '%s' "$HEAD_REF" | jq -sRr @uri)
+
+          fetch_url_by_query() {
+            local query="$1"
+            local resp url
+            resp=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" "$BASE_URL&$query" || true)
+            if ! echo "$resp" | jq -e . >/dev/null 2>&1; then
+              echo "{}"
+              return 0
             fi
-            URL=$(echo "$RESP" | jq -r --arg SHA "$HEAD_SHA" --arg REF "$HEAD_REF" --arg PR "$PR_NUMBER" '
-              ((.deployments // [])
-               | map(select((.meta.githubCommitSha==$SHA) or (.meta.githubCommitRef==$REF) or ((.meta.githubPrId|tostring)==$PR))))
-              | (.[0].url // empty)')
+            url=$(echo "$resp" | jq -r '((.deployments // []) | (.[0].url // empty))')
+            if [ -n "$url" ]; then
+              echo "$url"
+            else
+              echo ""
+            fi
+          }
+
+          for i in {1..30}; do
+            URL=""
+            # 1) Exact match by commit SHA
+            URL=$(fetch_url_by_query "meta-githubCommitSha=$HEAD_SHA")
+            # 2) Match by branch name
             if [ -z "$URL" ]; then
-              # Fallback to latest READY preview
-              URL=$(echo "$RESP" | jq -r '((.deployments // []) | map(select(.readyState=="READY")) | (.[0].url // empty))')
+              URL=$(fetch_url_by_query "meta-githubCommitRef=$REF_ENC")
+            fi
+            # 3) Match by PR id
+            if [ -z "$URL" ]; then
+              URL=$(fetch_url_by_query "meta-githubPrId=$PR_NUMBER")
+            fi
+            # 4) Fallback: fetch list and take latest READY
+            if [ -z "$URL" ]; then
+              RESP=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" "$BASE_URL" || true)
+              if echo "$RESP" | jq -e . >/dev/null 2>&1; then
+                URL=$(echo "$RESP" | jq -r '((.deployments // []) | map(select(.readyState=="READY")) | (.[0].url // empty))')
+              fi
             fi
             if [ -n "$URL" ]; then
               echo "Found Vercel preview: https://$URL"
