@@ -1,0 +1,53 @@
+name: Amplify Preview E2E
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  e2e-on-amplify-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install deps
+        run: yarn install --frozen-lockfile
+
+      - name: Wait for Amplify preview URL (from PR comments)
+        id: wait
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Polling PR comments for Amplify preview URL..."
+          for i in {1..30}; do
+            COMMENTS=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/${REPO}/issues/${PR_NUMBER}/comments)
+            URL=$(echo "$COMMENTS" | jq -r '[.[].body] | map(capture("(?<u>https?://[^ ]*amplifyapp.com[^\\s]*)")? .u) | map(select(.!=null)) | last // empty')
+            if [ -n "$URL" ]; then
+              echo "Found Amplify URL: $URL"
+              echo "preview_url=$URL" >> $GITHUB_OUTPUT
+              break
+            fi
+            echo "No URL yet, retrying..."
+            sleep 20
+          done
+          test -n "$(echo $URL)"
+
+      - name: Run Playwright tests against Amplify preview
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.wait.outputs.preview_url }}
+        run: |
+          echo "Using BASE URL: $PLAYWRIGHT_TEST_BASE_URL"
+          npx playwright install --with-deps
+          npx playwright test -c playwright.remote.config.ts
