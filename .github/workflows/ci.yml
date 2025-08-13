@@ -81,7 +81,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npx vercel@25 pull --yes --environment=preview
+          npx vercel@25 pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy Preview to Vercel (CLI)
         if: github.event_name == 'pull_request'
@@ -92,7 +92,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: |
-          OUT=$(npx vercel@25 --yes --json \
+          OUT=$(npx vercel@25 --yes --json --token=${{ secrets.VERCEL_TOKEN }} \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
             --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL)
           echo "$OUT" | jq .
