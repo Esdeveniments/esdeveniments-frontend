@@ -22,6 +22,13 @@ jobs:
           node-version: 20
           cache: yarn
 
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GITHUB_TOKEN" | gh auth login --with-token
+          gh auth status
+
       - name: Enable Corepack and Yarn 4
         run: |
           corepack enable
@@ -36,6 +43,7 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -46,7 +54,7 @@ jobs:
             echo "preview_url=${{ secrets.AMPLIFY_PREVIEW_URL }}" >> $GITHUB_OUTPUT
             exit 0
           fi
-          for i in {1..30}; do
+          for i in {1..60}; do
             # Strategy 1: PR comments (posted by Amplify integration)
             URL=$(gh api repos/${REPO}/issues/${PR_NUMBER}/comments -q '.[].body' \
               | grep -Eo 'https?://[A-Za-z0-9._/\-]*amplifyapp\.com[^\s]*' \
@@ -83,8 +91,8 @@ jobs:
               fi
             fi
 
-            echo "No URL yet, retrying ($i/30)..."
-            sleep 20
+            echo "No URL yet, retrying ($i/60)..."
+            sleep 30
           done
           echo "Amplify preview URL not found in PR comments, statuses, or deployments within timeout" >&2
           exit 1
