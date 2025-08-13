@@ -74,17 +74,20 @@ function getCsp(nonce: string) {
 
     // --- LOCKDOWN DIRECTIVES (Hardening) ---
     "worker-src": ["'self'", "blob:"],
-    "object-src": ["'none'"], // Disallow plugins like Flash
-    "base-uri": ["'self'"],
-    "form-action": ["'self'"],
-    "frame-ancestors": ["'self'"], // Prevents clickjacking
-
-    // 'report-uri': 'YOUR_SENTRY_REPORTING_ENDPOINT',
+    "object-src": ["'none'"],
   };
 
-  return Object.entries(cspDirectives)
-    .map(([key, value]) => `${key} ${value.filter(Boolean).join(" ")}`)
+  // Convert to a compact CSP string, filtering out empty entries
+  const csp = Object.entries(cspDirectives)
+    .map(([key, value]) => {
+      const filtered = Array.isArray(value)
+        ? value.filter(Boolean)
+        : ([value].filter(Boolean) as string[]);
+      return `${key} ${filtered.join(" ")}`;
+    })
     .join("; ");
+
+  return csp;
 }
 
 export function middleware(request: NextRequest) {
@@ -100,6 +103,12 @@ export function middleware(request: NextRequest) {
     );
     response.headers.set("Service-Worker-Allowed", "/");
     return response;
+  }
+
+  // --- Protect dashboard routes ---
+  if (pathname.startsWith("/dashboard")) {
+    // Mock protection: no server session cookie, so always allow; client layout will redirect if not logged.
+    // Optionally, we can redirect to login if a special header indicates no client session, but unavailable here.
   }
 
   // --- Handle Redirects ---

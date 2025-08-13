@@ -7,11 +7,14 @@ import {
   PlusIcon as PlusSmIcon,
   HomeIcon,
   InformationCircleIcon as InfoIcon,
+  UserIcon,
 } from "@heroicons/react/outline";
 import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
 import logo from "@public/static/images/logo-esdeveniments.webp";
 import { NavigationItem } from "types/props";
+import { useEffect, useState } from "react";
+import { getSession } from "@lib/auth/session";
 
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: true },
@@ -21,6 +24,11 @@ const navigation: NavigationItem[] = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [isLogged, setIsLogged] = useState(false);
+
+  useEffect(() => {
+    setIsLogged(!!getSession());
+  }, []);
 
   return (
     <Disclosure
@@ -39,7 +47,7 @@ export default function Navbar() {
                   <Link href="/">
                     <Image
                       src={logo}
-                      className="bg-whiteCorp flex justify-center items-center cursor-pointer"
+                      className="bg-whiteCorp flex justify-center itemscenter cursor-pointer"
                       alt="Logo Esdeveniments.cat"
                       width={190}
                       height={18}
@@ -72,6 +80,12 @@ export default function Navbar() {
                         {item.name}
                       </ActiveLink>
                     ))}
+                    <ActiveLink
+                      href={isLogged ? "/dashboard" : "/auth/login"}
+                      className="border-b-2 border-b-whiteCorp"
+                    >
+                      {isLogged ? "Panell" : "Entrar"}
+                    </ActiveLink>
                   </div>
                 </div>
               </div>
@@ -116,6 +130,19 @@ export default function Navbar() {
                     </button>
                   </ActiveLink>
                 </div>
+
+                {/* Auth */}
+                <div className="flex justify-center items-center rounded-xl cursor-pointer">
+                  <ActiveLink href={isLogged ? "/dashboard" : "/auth/login"}>
+                    <button
+                      type="button"
+                      className="flex items-center p-2 border-b-whiteCorp focus:outline-none cursor-pointer rounded-xl"
+                      aria-label="Compte"
+                    >
+                      <UserIcon className="h-6 w-6" />
+                    </button>
+                  </ActiveLink>
+                </div>
               </div>
             </div>
           </div>
@@ -131,6 +158,12 @@ export default function Navbar() {
                   {item.name}
                 </ActiveLink>
               ))}
+              <ActiveLink
+                href={isLogged ? "/dashboard" : "/auth/login"}
+                className="border-b-2 border-b-whiteCorp"
+              >
+                {isLogged ? "Panell" : "Entrar"}
+              </ActiveLink>
             </div>
           </Disclosure.Panel>
         </>

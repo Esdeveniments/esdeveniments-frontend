@@ -45,11 +45,6 @@ export default async function EventPage({
 
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
-  const cityName = event.city?.name || "";
-  const regionName = event.region?.name || "";
-  const eventDateString = event.endDate
-    ? `Del ${event.startDate} al ${event.endDate}`
-    : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event });
 
   // Fetch latest news for the event's place (prefer city, then region, fallback Catalunya)
@@ -123,13 +118,6 @@ export default async function EventPage({
               <EventShareBar
                 visits={event.visits}
                 slug={eventSlug}
-                title={title}
-                description={event.description}
-                eventDateString={eventDateString}
-                location={event.location}
-                cityName={cityName}
-                regionName={regionName}
-                postalCode={event.city?.postalCode || ""}
               />
             </div>
             <EventClient event={event} />

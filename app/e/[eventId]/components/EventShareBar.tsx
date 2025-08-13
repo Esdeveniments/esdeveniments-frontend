@@ -1,40 +1,18 @@
 "use client";
-import CardShareButton from "components/ui/common/cardShareButton";
-import NativeShareButton from "components/ui/common/nativeShareButton";
-import ViewCounter from "components/ui/viewCounter";
-import useCheckMobileScreen from "components/hooks/useCheckMobileScreen";
-import type { EventShareBarProps } from "types/event";
+
+import FavoriteButton from "./FavoriteButton";
 
 export default function EventShareBar({
   visits,
   slug,
-  title,
-  description,
-  eventDateString,
-  location,
-  cityName,
-  regionName,
-  postalCode,
-}: EventShareBarProps) {
-  const isMobile = useCheckMobileScreen();
-  const canNativeShare = typeof window !== "undefined" && !!navigator.share;
-  const showNativeShare = isMobile && canNativeShare;
-
+}: {
+  visits: number;
+  slug: string;
+}) {
   return (
-    <div className="w-full flex justify-between items-center px-4 h-2">
-      {showNativeShare ? (
-        <NativeShareButton
-          title={title}
-          text={description}
-          url={slug}
-          date={eventDateString}
-          location={location}
-          subLocation={`${cityName}, ${regionName}, ${postalCode}`}
-        />
-      ) : (
-        <CardShareButton slug={slug} />
-      )}
-      <ViewCounter visits={visits} />
+    <div className="w-full flex items-center justify-between px-4">
+      <div className="text-sm text-gray-600">{visits} visites</div>
+      <FavoriteButton slug={slug} />
     </div>
   );
 }

@@ -21,6 +21,7 @@ import {
   SpeakerphoneIcon,
 } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
+import FavoriteButton from "./components/FavoriteButton";
 
 // const Tooltip = dynamic(() => import("components/ui/tooltip"), {
 //   ssr: false,
@@ -123,8 +124,10 @@ export default function EventClient({
         showThankYouBanner={!!showThankYouBanner}
         setShowThankYouBanner={setShowThankYouBanner}
       />
-      {/* Event Header */}
-      <EventHeader title={title} />
+      <div className="w-full flex items-center justify-between px-4">
+        <EventHeader title={title} />
+        <FavoriteButton slug={slug} />
+      </div>
       {/* Event Calendar */}
       <EventCalendar event={event} />
 
