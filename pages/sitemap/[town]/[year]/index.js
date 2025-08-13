@@ -1,12 +1,12 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
+export async function getServerSideProps() {
+  return {
+    redirect: {
+      destination: "/sitemap",
+      permanent: false,
+    },
+  };
+}
 
 export default function Year() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/sitemap");
-  });
-
   return null;
 }

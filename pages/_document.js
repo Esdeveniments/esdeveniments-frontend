@@ -1,5 +1,6 @@
 import Document, { Html, Head, Main, NextScript } from "next/document";
 import { env } from "@utils/helpers";
+import { siteUrl } from "@config/index";
 
 class MyDocument extends Document {
   static async getInitialProps(ctx) {
@@ -18,8 +19,34 @@ class MyDocument extends Document {
         />
       ) : null;
 
+    const orgJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+      logo: `${siteUrl}/static/images/logo-seo-meta.webp`,
+      sameAs: [
+        "https://twitter.com/esdeveniments_",
+        "https://www.instagram.com/esdevenimentscat/",
+        "https://t.me/esdeveniments",
+        "https://www.facebook.com/esdeveniments.cat/",
+      ],
+    };
+
+    const webSiteJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      url: siteUrl,
+      name: "Esdeveniments.cat",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${siteUrl}/?q={search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
+    };
+
     return (
-      <Html>
+      <Html lang="ca-ES">
         <Head>
           {meticulousScript}
           <link
@@ -42,6 +69,14 @@ class MyDocument extends Document {
           <link
             rel="preconnect"
             href="https://fundingchoicesmessages.google.com"
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd) }}
           />
         </Head>
         <body>

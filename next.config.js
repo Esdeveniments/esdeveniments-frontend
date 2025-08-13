@@ -52,7 +52,30 @@ const nextConfig = {
     ];
   },
   async redirects() {
-    return [];
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "esdeveniments.vercel.app",
+          },
+        ],
+        destination: "https://www.esdeveniments.cat/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "esdeveniments.cat",
+          },
+        ],
+        destination: "https://www.esdeveniments.cat/:path*",
+        permanent: true,
+      },
+    ];
   },
 };
 

@@ -388,6 +388,7 @@ export default function Event(props) {
         canonical={`${siteUrl}/e/${slug}`}
         image={image}
         preload="/static/images/gMaps.webp"
+        ogType="article"
       />
       <Script
         id={id}

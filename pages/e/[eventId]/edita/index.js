@@ -241,6 +241,7 @@ export default function Edita({ event }) {
         title="Edita - Esdeveniments.cat"
         description="Edita - Esdeveniments.cat"
         canonical={`${siteUrl}/e/${event.slug}/edita`}
+        noindex
       />
       {showDeleteMessage && (
         <Notification
