@@ -101,16 +101,25 @@ jobs:
           HEAD_REF='${{ github.head_ref }}'
           PR_NUMBER='${{ github.event.pull_request.number }}'
           echo "Resolving Vercel preview for head sha $HEAD_SHA (ref: $HEAD_REF, pr: $PR_NUMBER)"
+          BASE_URL="https://api.vercel.com/v13/deployments?projectId=$VERCEL_PROJECT_ID&target=preview&limit=20"
+          if [ -n "${VERCEL_ORG_ID:-}" ]; then
+            BASE_URL="$BASE_URL&teamId=$VERCEL_ORG_ID"
+          fi
           for i in {1..60}; do
-            RESP=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
-              "https://api.vercel.com/v13/deployments?projectId=$VERCEL_PROJECT_ID&target=preview&teamId=$VERCEL_ORG_ID&limit=20")
+            RESP=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" "$BASE_URL" || true)
+            # Ensure JSON before parsing
+            if ! echo "$RESP" | jq -e . >/dev/null 2>&1; then
+              echo "Non-JSON response from Vercel API, retrying ($i/60)..."
+              sleep 10
+              continue
+            fi
             URL=$(echo "$RESP" | jq -r --arg SHA "$HEAD_SHA" --arg REF "$HEAD_REF" --arg PR "$PR_NUMBER" '
-              .deployments
-              | map(select((.meta.githubCommitSha==$SHA) or (.meta.githubCommitRef==$REF) or ((.meta.githubPrId|tostring)==$PR)))
+              ((.deployments // [])
+               | map(select((.meta.githubCommitSha==$SHA) or (.meta.githubCommitRef==$REF) or ((.meta.githubPrId|tostring)==$PR))))
               | (.[0].url // empty)')
             if [ -z "$URL" ]; then
               # Fallback to latest READY preview
-              URL=$(echo "$RESP" | jq -r '.deployments | map(select(.readyState=="READY")) | (.[0].url // empty)')
+              URL=$(echo "$RESP" | jq -r '((.deployments // []) | map(select(.readyState=="READY")) | (.[0].url // empty))')
             fi
             if [ -n "$URL" ]; then
               echo "Found Vercel preview: https://$URL"
@@ -123,6 +132,35 @@ jobs:
           done
           echo "Failed to resolve Vercel preview URL" >&2
           exit 1
+
+      # Fallback to old method: trigger a CLI deploy to guarantee a preview URL
+      - name: Fallback - Vercel pull (preview)
+        if: github.event_name == 'pull_request' && env.PREVIEW_URL == ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npx vercel@25 pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Fallback - Deploy Preview to Vercel (CLI)
+        if: github.event_name == 'pull_request' && env.PREVIEW_URL == ''
+        id: deploy_preview_fallback
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          LOG=$(mktemp)
+          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} | tee "$LOG"
+          URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)
+          if [ -z "$URL" ]; then
+            echo "Fallback: failed to extract preview URL from Vercel output" >&2
+            echo "===== Vercel Output =====" && cat "$LOG" && echo "========================="
+            exit 1
+          fi
+          echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
+          echo "preview-url=$URL" >> $GITHUB_OUTPUT
 
       - name: Wait for Vercel preview readiness
         if: github.event_name == 'pull_request'
