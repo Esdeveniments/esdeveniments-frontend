@@ -1,13 +1,18 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-export interface DbUser { id: string; name: string; email: string }
-export interface DbSession { token: string; userId: string; createdAt: number }
+export interface DbUser { id: string; name: string; email: string; role?: "user" | "organizer" | "admin" }
+export interface DbSession { token: string; userId: string; createdAt: number; expiresAt: number }
+export interface MagicToken { token: string; email: string; createdAt: number; expiresAt: number; used: boolean }
+export interface DeleteRequest { slug: string; userId: string; reason?: string; createdAt: number }
 export interface DbShape {
   users: DbUser[];
   sessions: DbSession[];
   ownership: Record<string, string[]>; // userId -> slugs
   favorites: Record<string, string[]>; // userId -> slugs
+  coowners: Record<string, string[]>; // slug -> userIds
+  magicTokens: MagicToken[];
+  deleteRequests: DeleteRequest[];
 }
 
 const DATA_DIR = path.join(process.cwd(), ".data");
@@ -20,7 +25,15 @@ async function ensureDb(): Promise<void> {
   try {
     await fs.access(DB_FILE);
   } catch {
-    const initial: DbShape = { users: [], sessions: [], ownership: {}, favorites: {} };
+    const initial: DbShape = {
+      users: [],
+      sessions: [],
+      ownership: {},
+      favorites: {},
+      coowners: {},
+      magicTokens: [],
+      deleteRequests: [],
+    };
     await fs.writeFile(DB_FILE, JSON.stringify(initial, null, 2), "utf8");
   }
 }
@@ -40,7 +53,7 @@ export async function findOrCreateUser(name: string, email: string): Promise<DbU
   const db = await readDb();
   let user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
   if (!user) {
-    user = { id: crypto.randomUUID(), name, email };
+    user = { id: crypto.randomUUID(), name, email, role: "user" };
     db.users.push(user);
     await writeDb(db);
   }
@@ -50,16 +63,18 @@ export async function findOrCreateUser(name: string, email: string): Promise<DbU
 export async function getUserBySessionToken(token: string | undefined | null): Promise<DbUser | null> {
   if (!token) return null;
   const db = await readDb();
-  const session = db.sessions.find((s) => s.token === token);
+  const now = Date.now();
+  const session = db.sessions.find((s) => s.token === token && s.expiresAt > now);
   if (!session) return null;
   const user = db.users.find((u) => u.id === session.userId) || null;
   return user || null;
 }
 
-export async function createSession(userId: string): Promise<string> {
+export async function createSession(userId: string, ttlMs: number = 1000 * 60 * 60 * 24 * 7): Promise<string> {
   const db = await readDb();
   const token = crypto.randomUUID();
-  db.sessions.push({ token, userId, createdAt: Date.now() });
+  const now = Date.now();
+  db.sessions.push({ token, userId, createdAt: now, expiresAt: now + ttlMs });
   await writeDb(db);
   return token;
 }
@@ -68,6 +83,18 @@ export async function deleteSession(token: string | undefined | null): Promise<v
   if (!token) return;
   const db = await readDb();
   db.sessions = db.sessions.filter((s) => s.token !== token);
+  await writeDb(db);
+}
+
+export async function listSessions(userId: string): Promise<DbSession[]> {
+  const db = await readDb();
+  const now = Date.now();
+  return db.sessions.filter((s) => s.userId === userId && s.expiresAt > now);
+}
+
+export async function revokeSession(userId: string, token: string): Promise<void> {
+  const db = await readDb();
+  db.sessions = db.sessions.filter((s) => !(s.userId === userId && s.token === token));
   await writeDb(db);
 }
 
@@ -93,6 +120,21 @@ export async function getOwnership(userId: string): Promise<string[]> {
   return db.ownership[userId] || [];
 }
 
+export async function addCoOwner(slug: string, userId: string): Promise<void> {
+  const db = await readDb();
+  const list = db.coowners[slug] || [];
+  if (!list.includes(userId)) {
+    list.push(userId);
+    db.coowners[slug] = list;
+    await writeDb(db);
+  }
+}
+
+export async function getCoOwners(slug: string): Promise<string[]> {
+  const db = await readDb();
+  return db.coowners[slug] || [];
+}
+
 export async function toggleFavoriteDb(userId: string, slug: string): Promise<boolean> {
   const db = await readDb();
   const list = db.favorites[userId] || [];
@@ -112,4 +154,30 @@ export async function toggleFavoriteDb(userId: string, slug: string): Promise<bo
 export async function getFavorites(userId: string): Promise<string[]> {
   const db = await readDb();
   return db.favorites[userId] || [];
+}
+
+export async function createMagicToken(email: string, ttlMs: number = 1000 * 60 * 15): Promise<MagicToken> {
+  const db = await readDb();
+  const token = crypto.randomUUID();
+  const now = Date.now();
+  const entry: MagicToken = { token, email, createdAt: now, expiresAt: now + ttlMs, used: false };
+  db.magicTokens.push(entry);
+  await writeDb(db);
+  return entry;
+}
+
+export async function useMagicToken(token: string): Promise<string | null> {
+  const db = await readDb();
+  const now = Date.now();
+  const entry = db.magicTokens.find((t) => t.token === token);
+  if (!entry || entry.used || entry.expiresAt <= now) return null;
+  entry.used = true;
+  await writeDb(db);
+  return entry.email;
+}
+
+export async function addDeleteRequest(slug: string, userId: string, reason?: string): Promise<void> {
+  const db = await readDb();
+  db.deleteRequests.push({ slug, userId, reason, createdAt: Date.now() });
+  await writeDb(db);
 }

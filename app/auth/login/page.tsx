@@ -9,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [magicUrl, setMagicUrl] = useState<string | null>(null);
 
   return (
     <div className="w-full flex justify-center bg-whiteCorp py-8">
@@ -25,21 +26,54 @@ export default function LoginPage() {
           />
         </label>
         {error && <p className="text-red-600 text-sm">{error}</p>}
-        <button
-          className="bg-primary text-white p-2 rounded"
-          onClick={async () => {
-            setError(null);
-            if (!email) return;
-            try {
-              await apiLogin(email);
-              router.push("/dashboard");
-            } catch (e) {
-              setError("No s'ha pogut iniciar sessió");
-            }
-          }}
-        >
-          Entrar
-        </button>
+        <div className="flex gap-3">
+          <button
+            className="bg-primary text-white p-2 rounded"
+            onClick={async () => {
+              setError(null);
+              if (!email) return;
+              try {
+                await apiLogin(email);
+                router.push("/dashboard");
+              } catch (e) {
+                setError("No s'ha pogut iniciar sessió");
+              }
+            }}
+          >
+            Entrar (instantani)
+          </button>
+          <button
+            className="bg-gray-200 p-2 rounded"
+            onClick={async () => {
+              setError(null);
+              setMagicUrl(null);
+              if (!email) return;
+              try {
+                const res = await fetch("/api/auth/magic/request", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email }),
+                });
+                if (!res.ok) throw new Error("failed");
+                const data = await res.json();
+                setMagicUrl(data.verifyUrl as string);
+              } catch (e) {
+                setError("No s'ha pogut enviar l'enllaç màgic");
+              }
+            }}
+          >
+            Envia enllaç màgic
+          </button>
+        </div>
+        {magicUrl && (
+          <p className="text-sm">
+            Enllaç de prova (dev):
+            {" "}
+            <a className="text-primary underline" href={magicUrl}>
+              {magicUrl}
+            </a>
+          </p>
+        )}
         <p className="text-sm">
           No tens compte? <Link className="text-primary underline" href="/auth/signup">Crea'n un</Link>
         </p>
