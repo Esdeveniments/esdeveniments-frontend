@@ -83,140 +83,10 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install chromium
 
-      # Resolve the auto-generated Vercel preview for this commit (no extra deploy)
-      - name: Install jq
+      # Using Vercel CLI for preview URL on PRs
+
+      - name: Vercel pull (preview)
         if: github.event_name == 'pull_request'
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Resolve latest Vercel preview URL
-        if: github.event_name == 'pull_request'
-        id: vercel_preview
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        run: |
-          set -euo pipefail
-          HEAD_SHA='${{ github.event.pull_request.head.sha }}'
-          HEAD_REF='${{ github.head_ref }}'
-          PR_NUMBER='${{ github.event.pull_request.number }}'
-          echo "Resolving Vercel preview for head sha $HEAD_SHA (ref: $HEAD_REF, pr: $PR_NUMBER)"
-          BASE_URL="https://api.vercel.com/v13/deployments?projectId=$VERCEL_PROJECT_ID&target=preview&limit=20"
-          if [ -n "${VERCEL_ORG_ID:-}" ]; then
-            BASE_URL="$BASE_URL&teamId=$VERCEL_ORG_ID"
-          fi
-          # URL-encode the branch ref for queries
-          REF_ENC=$(printf '%s' "$HEAD_REF" | jq -sRr @uri)
-
-          fetch_url_by_query() {
-            local query="$1"
-            local resp url
-            resp=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" "$BASE_URL&$query" || true)
-            if ! echo "$resp" | jq -e . >/dev/null 2>&1; then
-              echo "{}"
-              return 0
-            fi
-            url=$(echo "$resp" | jq -r '((.deployments // []) | (.[0].url // empty))')
-            if [ -n "$url" ]; then
-              echo "$url"
-            else
-              echo ""
-            fi
-          }
-
-          for i in {1..30}; do
-            URL=""
-            # 1) Exact match by commit SHA
-            URL=$(fetch_url_by_query "meta-githubCommitSha=$HEAD_SHA")
-            # 2) Match by branch name
-            if [ -z "$URL" ]; then
-              URL=$(fetch_url_by_query "meta-githubCommitRef=$REF_ENC")
-            fi
-            # 3) Match by PR id
-            if [ -z "$URL" ]; then
-              URL=$(fetch_url_by_query "meta-githubPrId=$PR_NUMBER")
-            fi
-            # 4) Fallback: fetch list and take latest READY
-            if [ -z "$URL" ]; then
-              RESP=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" "$BASE_URL" || true)
-              if echo "$RESP" | jq -e . >/dev/null 2>&1; then
-                URL=$(echo "$RESP" | jq -r '((.deployments // []) | map(select(.readyState=="READY")) | (.[0].url // empty))')
-              fi
-            fi
-            if [ -n "$URL" ]; then
-              echo "Found Vercel preview: https://$URL"
-              echo "PREVIEW_URL=https://$URL" >> $GITHUB_ENV
-              echo "preview-url=https://$URL" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            echo "No preview yet, retrying ($i/60)..."
-            sleep 10
-          done
-          echo "Failed to resolve Vercel preview URL" >&2
-          exit 1
-
-      # Fallback to old method: trigger a CLI deploy to guarantee a preview URL
-      - name: Fallback - Resolve via GitHub deployments API
-        if: github.event_name == 'pull_request' && env.PREVIEW_URL == ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          echo "Trying GitHub deployments API for $HEAD_SHA"
-          DEPLOY_ID=$(curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
-            "https://api.github.com/repos/$REPO/deployments?sha=$HEAD_SHA&per_page=20" \
-            | jq -r '.[0].id // empty')
-          if [ -n "$DEPLOY_ID" ]; then
-            URL=$(curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
-              "https://api.github.com/repos/$REPO/deployments/$DEPLOY_ID/statuses?per_page=20" \
-              | jq -r 'map(select(.environment_url != null and .environment_url != "")) | (.[0].environment_url // empty)')
-            if [ -z "$URL" ]; then
-              URL=$(curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
-                "https://api.github.com/repos/$REPO/deployments/$DEPLOY_ID/statuses?per_page=20" \
-                | jq -r 'map(select(.target_url != null and .target_url != "")) | (.[0].target_url // empty)')
-              # extract vercel.app URL if present in target_url
-              if echo "$URL" | grep -q "vercel\.app"; then
-                URL=$(echo "$URL" | grep -Eo 'https?://[^ ]+vercel\.app' | head -n1)
-              else
-                URL=""
-              fi
-            fi
-            if [ -n "$URL" ]; then
-              echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
-              echo "preview-url=$URL" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-          fi
-
-      - name: Fallback - Resolve via GitHub commit statuses
-        if: github.event_name == 'pull_request' && env.PREVIEW_URL == ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          echo "Trying GitHub commit statuses for $HEAD_SHA"
-          URL=$(curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
-            "https://api.github.com/repos/$REPO/commits/$HEAD_SHA/statuses" \
-            | jq -r 'map(select((.context|test("vercel";"i")) and (.target_url!=null))) | (.[0].target_url // empty)')
-          if [ -n "$URL" ]; then
-            if echo "$URL" | grep -q "vercel\.app"; then
-              URL=$(echo "$URL" | grep -Eo 'https?://[^ ]+vercel\.app' | head -n1)
-            else
-              URL=""
-            fi
-          fi
-          if [ -n "$URL" ]; then
-            echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
-            echo "preview-url=$URL" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-      - name: Fallback - Vercel pull (preview)
-        if: github.event_name == 'pull_request' && env.PREVIEW_URL == ''
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -224,9 +94,9 @@ jobs:
         run: |
           npx vercel@25 pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Fallback - Deploy Preview to Vercel (CLI)
-        if: github.event_name == 'pull_request' && env.PREVIEW_URL == ''
-        id: deploy_preview_fallback
+      - name: Deploy Preview to Vercel (CLI)
+        if: github.event_name == 'pull_request'
+        id: deploy_preview
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
