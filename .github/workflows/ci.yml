@@ -74,40 +74,52 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Vercel pull (preview)
+      # Resolve the auto-generated Vercel preview for this commit (no extra deploy)
+      - name: Install jq
         if: github.event_name == 'pull_request'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          npx vercel@25 pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Deploy Preview to Vercel (CLI)
+      - name: Resolve latest Vercel preview URL
         if: github.event_name == 'pull_request'
-        id: deploy_preview
+        id: vercel_preview
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: |
-          # Deploy and capture logs
-          LOG=$(mktemp)
-          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
-            --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-            --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL | tee "$LOG"
-          # Extract the last vercel.app URL (alias line usually printed last)
-          URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)
-          if [ -z "$URL" ]; then
-            echo "Failed to extract preview URL from Vercel output" >&2
-            echo "===== Vercel Output ====="
-            cat "$LOG"
-            echo "========================="
-            exit 1
-          fi
-          echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
-          echo "preview-url=$URL" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          echo "Resolving Vercel preview for commit ${{ github.sha }}"
+          for i in {1..30}; do
+            URL=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v13/deployments?projectId=$VERCEL_PROJECT_ID&target=preview&limit=5&meta-githubCommitSha=${{ github.sha }}" \
+              | jq -r '.deployments[0].url // empty')
+            if [ -n "$URL" ]; then
+              echo "Found Vercel preview: https://$URL"
+              echo "PREVIEW_URL=https://$URL" >> $GITHUB_ENV
+              echo "preview-url=https://$URL" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "No preview yet, retrying ($i/30)..."
+            sleep 10
+          done
+          echo "Failed to resolve Vercel preview URL" >&2
+          exit 1
+
+      - name: Wait for Vercel preview readiness
+        if: github.event_name == 'pull_request'
+        env:
+          PREVIEW_URL: ${{ env.PREVIEW_URL }}
+        run: |
+          echo "Waiting for preview to become ready at: $PREVIEW_URL"
+          for i in {1..60}; do
+            if curl -s -m 10 -o /dev/null -w "%{http_code}" "$PREVIEW_URL" | grep -q "^2"; then
+              echo "Preview is responding."
+              exit 0
+            fi
+            echo "Not ready yet ($i/60), waiting..."
+            sleep 10
+          done
+          echo "Preview did not become ready in time" >&2
+          exit 1
 
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' }}
@@ -115,7 +127,7 @@ jobs:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
-        run: yarn test:e2e
+        run: yarn test:e2e -- --workers=4
 
       - name: Upload Playwright report
         if: ${{ always() }}
