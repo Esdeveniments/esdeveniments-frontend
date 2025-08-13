@@ -1,6 +1,6 @@
-import '@testing-library/jest-dom/vitest'
-import { configure } from '@testing-library/react'
+import "@testing-library/jest-dom";
+import { configure } from "@testing-library/react";
 
 configure({
-  testIdAttribute: 'data-testid',
-})
+  testIdAttribute: "data-testid",
+});

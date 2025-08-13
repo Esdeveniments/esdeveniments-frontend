@@ -120,13 +120,17 @@ describe("Filter Configuration System", () => {
       expect(configs).toEqual(FILTER_CONFIGURATIONS);
     });
 
-    test("getDefaultFilterState returns proper defaults", () => {
+    test("getDefaultFilterState returns proper defaults (treat as black-box)", () => {
       const defaults = FilterOperations.getDefaultFilterState();
-      expect(defaults.place).toBe("catalunya");
-      expect(defaults.byDate).toBe("tots");
-      expect(defaults.category).toBe("tots");
-      expect(defaults.searchTerm).toBe("");
-      expect(defaults.distance).toBe(50);
+      expect(defaults).toEqual({
+        place: "catalunya",
+        byDate: "tots",
+        category: "tots",
+        searchTerm: "",
+        distance: 50,
+        lat: undefined,
+        lon: undefined,
+      });
     });
 
     test("validateConfiguration passes", () => {
