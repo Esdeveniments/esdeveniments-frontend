@@ -100,6 +100,25 @@ export default async function Page({
           Pagament de prova deshabilitat: manca STRIPE_SECRET_KEY. Pots configurar-lo a les variables d'entorn i tornar a provar.
         </div>
       )}
+      {/* Query banners */}
+      {(() => {
+        const q = new URLSearchParams(params as any);
+        if (q.get("canceled") === "1") {
+          return (
+            <div className="w-full mb-4 rounded-md border border-gray-300 bg-gray-50 text-gray-900 px-3 py-2 text-sm">
+              Pagament cancel·lat. Pots revisar les opcions i tornar-ho a intentar.
+            </div>
+          );
+        }
+        if (q.get("stripe") === "missing") {
+          return (
+            <div className="w-full mb-4 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-900 px-3 py-2 text-sm">
+              No s'ha pogut iniciar el pagament: falta la configuració de Stripe.
+            </div>
+          );
+        }
+        return null;
+      })()}
       <nav aria-label="Breadcrumb" className="mb-3 text-sm text-blackCorp/70">
         <ol className="flex items-center space-x-2">
           <li>
@@ -235,9 +254,10 @@ export default async function Page({
             </Link>
           )}
         </div>
-        <p className="mt-2 text-xs text-blackCorp/60">
-          El pagament és processat per Stripe. Rebràs un rebut al teu correu.
-        </p>
+        <div className="mt-2 flex items-center justify-between text-xs text-blackCorp/60">
+          <p>El pagament és processat per Stripe. Rebràs un rebut al teu correu.</p>
+          <Link href="/legal/condicions" className="underline">Consulta condicions</Link>
+        </div>
       </section>
     </div>
   );

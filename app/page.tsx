@@ -11,6 +11,7 @@ import { Suspense, JSX } from "react";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import type { EventSummaryResponseDTO } from "types/api/event";
+import PromoStripTracker from "@components/ui/promotions/PromoStripTracker";
 
 export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
@@ -96,13 +97,15 @@ export default async function Page(): Promise<JSX.Element> {
       {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
         <section className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6">
           <h2 className="uppercase mb-2 px-2 lg:px-0">Empreses destacades</h2>
-          <EventsAroundServer
-            events={featured}
-            layout="horizontal"
-            usePriority={false}
-            showJsonLd={false}
-            title="Empreses destacades"
-          />
+          <PromoStripTracker events={featured} placement="home_empreses" pageType="home">
+            <EventsAroundServer
+              events={featured}
+              layout="horizontal"
+              usePriority={false}
+              showJsonLd={false}
+              title="Empreses destacades"
+            />
+          </PromoStripTracker>
         </section>
       )}
     </>

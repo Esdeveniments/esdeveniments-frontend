@@ -16,6 +16,7 @@ import AdArticle from "components/ui/adArticle";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchEvents } from "@lib/api/events";
+import PromoStripTracker from "@components/ui/promotions/PromoStripTracker";
 
 // Helper: Metadata generation
 export async function generateMetadata(props: {
@@ -143,13 +144,15 @@ export default async function EventPage({
                 <div className="w-full flex justify-center items-start gap-2 px-4 mb-2">
                   <h2>Empreses recomanades a prop</h2>
                 </div>
-                <EventsAroundServer
-                  events={nearbyBusinesses}
-                  layout="horizontal"
-                  showJsonLd={false}
-                  title="Empreses recomanades a prop"
-                  nonce={nonce}
-                />
+                <PromoStripTracker events={nearbyBusinesses} placement="event_nearby" pageType="event" place={event.region?.slug}>
+                  <EventsAroundServer
+                    events={nearbyBusinesses}
+                    layout="horizontal"
+                    showJsonLd={false}
+                    title="Empreses recomanades a prop"
+                    nonce={nonce}
+                  />
+                </PromoStripTracker>
               </section>
             )}
 

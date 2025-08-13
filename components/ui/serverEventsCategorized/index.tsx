@@ -12,6 +12,7 @@ import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ServerEventsCategorizedProps } from "types/props";
 import { fetchEvents } from "@lib/api/events";
+import PromoStripTracker from "@components/ui/promotions/PromoStripTracker";
 
 async function getPromotedBusinesses(): Promise<EventSummaryResponseDTO[]> {
   if (process.env.NEXT_PUBLIC_FEATURE_PROMOTED !== "1") return [];
@@ -186,13 +187,15 @@ async function PromotedBusinessesSection() {
   return (
     <section className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6">
       <h2 className="uppercase mb-2 px-2 lg:px-0">Empreses destacades</h2>
-      <EventsAroundServer
-        events={items}
-        layout="horizontal"
-        usePriority
-        showJsonLd={false}
-        title="Empreses destacades"
-      />
+      <PromoStripTracker events={items} placement="home_above_categories" pageType="home">
+        <EventsAroundServer
+          events={items}
+          layout="horizontal"
+          usePriority
+          showJsonLd={false}
+          title="Empreses destacades"
+        />
+      </PromoStripTracker>
     </section>
   );
 }

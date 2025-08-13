@@ -29,6 +29,7 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchCities } from "@lib/api/cities";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
+import PromoStripTracker from "@components/ui/promotions/PromoStripTracker";
 
 export const revalidate = 600;
 
@@ -274,13 +275,15 @@ export default async function Page({
       {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && featured.length >= 3 && (
         <section className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-6">
           <h2 className="uppercase mb-2 px-2 lg:px-0">Empreses de proximitat</h2>
-          <EventsAroundServer
-            events={featured}
-            layout="horizontal"
-            usePriority={false}
-            showJsonLd={false}
-            title="Empreses de proximitat"
-          />
+          <PromoStripTracker events={featured} placement="place_bottom" pageType="place" place={place}>
+            <EventsAroundServer
+              events={featured}
+              layout="horizontal"
+              usePriority={false}
+              showJsonLd={false}
+              title="Empreses de proximitat"
+            />
+          </PromoStripTracker>
         </section>
       )}
 
