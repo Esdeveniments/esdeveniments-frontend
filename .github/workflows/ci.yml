@@ -36,7 +36,6 @@ jobs:
       - name: Configure Yarn
         run: |
           yarn config set enableImmutableInstalls false
-
       - name: Cache Next.js build cache
         uses: actions/cache@v4
         with:
@@ -45,7 +44,6 @@ jobs:
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.[jt]s', '**/*.[jt]sx') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
-
       - name: Install dependencies
         run: yarn install --immutable
 
@@ -61,29 +59,18 @@ jobs:
         run: yarn test
 
       - name: Build application
-        if: github.event_name == 'push'
         env:
           NODE_ENV: production
         run: yarn build
-
-      - name: Get Playwright version
-        id: pw
-        run: |
-          set -e
-          VER=$(npx playwright --version | awk '{print $2}')
-          echo "Detected Playwright version: $VER"
-          echo "version=$VER" >> $GITHUB_OUTPUT
 
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.pw.outputs.version }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install Playwright Browsers
-        run: npx playwright install chromium
-
-      # Using Vercel CLI for preview URL on PRs
+        run: npx playwright install --with-deps
 
       - name: Vercel pull (preview)
         if: github.event_name == 'pull_request'
@@ -93,7 +80,6 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           npx vercel@25 pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
       - name: Deploy Preview to Vercel (CLI)
         if: github.event_name == 'pull_request'
         id: deploy_preview
@@ -101,42 +87,31 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: |
+          # Deploy and capture logs
           LOG=$(mktemp)
-          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} | tee "$LOG"
+          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
+            --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+            --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL | tee "$LOG"
+          # Extract the last vercel.app URL (alias line usually printed last)
           URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)
           if [ -z "$URL" ]; then
-            echo "Fallback: failed to extract preview URL from Vercel output" >&2
-            echo "===== Vercel Output =====" && cat "$LOG" && echo "========================="
+            echo "Failed to extract preview URL from Vercel output" >&2
+            echo "===== Vercel Output ====="
+            cat "$LOG"
+            echo "========================="
             exit 1
           fi
           echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
           echo "preview-url=$URL" >> $GITHUB_OUTPUT
-
-      - name: Wait for Vercel preview readiness
-        if: github.event_name == 'pull_request'
-        env:
-          PREVIEW_URL: ${{ env.PREVIEW_URL }}
-        run: |
-          echo "Waiting for preview to become ready at: $PREVIEW_URL"
-          for i in {1..60}; do
-            if curl -s -m 10 -o /dev/null -w "%{http_code}" "$PREVIEW_URL" | grep -q "^2"; then
-              echo "Preview is responding."
-              exit 0
-            fi
-            echo "Not ready yet ($i/60), waiting..."
-            sleep 10
-          done
-          echo "Preview did not become ready in time" >&2
-          exit 1
-
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' }}
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
-        run: yarn test:e2e -- --workers=4
+        run: yarn test:e2e
 
       - name: Upload Playwright report
         if: ${{ always() }}
