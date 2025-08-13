@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Sitemaps and feed", () => {
   test("sitemap index renders", async ({ page }) => {
-    await page.goto("/sitemap");
+    await page.goto("/sitemap", { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("sitemap-page")).toBeVisible();
     await expect(page.getByTestId("sitemap-title")).toBeVisible();
   });
