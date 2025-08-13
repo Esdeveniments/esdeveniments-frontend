@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiSignup } from "@lib/auth/session";
+import Turnstile from "@components/ui/Turnstile";
 
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [cfToken, setCfToken] = useState<string | null>(null);
 
   return (
     <div className="w-full flex justify-center bg-whiteCorp py-8">
@@ -36,13 +37,20 @@ export default function SignupPage() {
           />
         </label>
         {error && <p className="text-red-600 text-sm">{error}</p>}
+        <Turnstile onToken={setCfToken} />
         <button
           className="bg-primary text-white p-2 rounded"
           onClick={async () => {
             setError(null);
-            if (!email || !name) return;
+            if (!email || !name || !cfToken) return;
             try {
-              await apiSignup(name, email);
+              // attach cfToken via header for server validation
+              const res = await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, cfToken }),
+              });
+              if (!res.ok) throw new Error("failed");
               router.push("/dashboard");
             } catch (e) {
               setError("No s'ha pogut crear el compte");

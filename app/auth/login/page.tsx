@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiLogin } from "@lib/auth/session";
+import Turnstile from "@components/ui/Turnstile";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [magicUrl, setMagicUrl] = useState<string | null>(null);
+  const [cfToken, setCfToken] = useState<string | null>(null);
 
   return (
     <div className="w-full flex justify-center bg-whiteCorp py-8">
@@ -26,6 +28,7 @@ export default function LoginPage() {
           />
         </label>
         {error && <p className="text-red-600 text-sm">{error}</p>}
+        <Turnstile onToken={setCfToken} />
         <div className="flex gap-3 flex-wrap">
           <button
             className="bg-primary text-white p-2 rounded"
@@ -47,12 +50,12 @@ export default function LoginPage() {
             onClick={async () => {
               setError(null);
               setMagicUrl(null);
-              if (!email) return;
+              if (!email || !cfToken) return;
               try {
                 const res = await fetch("/api/auth/magic/request", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email }),
+                  body: JSON.stringify({ email, cfToken }),
                 });
                 if (!res.ok) throw new Error("failed");
                 const data = await res.json();
