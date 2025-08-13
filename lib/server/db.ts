@@ -13,6 +13,7 @@ export interface DbShape {
   coowners: Record<string, string[]>; // slug -> userIds
   magicTokens: MagicToken[];
   deleteRequests: DeleteRequest[];
+  oauthStates: { state: string; createdAt: number }[];
 }
 
 const DATA_DIR = path.join(process.cwd(), ".data");
@@ -33,6 +34,7 @@ async function ensureDb(): Promise<void> {
       coowners: {},
       magicTokens: [],
       deleteRequests: [],
+      oauthStates: [],
     };
     await fs.writeFile(DB_FILE, JSON.stringify(initial, null, 2), "utf8");
   }
@@ -47,6 +49,21 @@ export async function readDb(): Promise<DbShape> {
 export async function writeDb(db: DbShape): Promise<void> {
   await ensureDb();
   await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+}
+
+export async function saveOauthState(state: string): Promise<void> {
+  const db = await readDb();
+  db.oauthStates.push({ state, createdAt: Date.now() });
+  await writeDb(db);
+}
+
+export async function consumeOauthState(state: string): Promise<boolean> {
+  const db = await readDb();
+  const idx = db.oauthStates.findIndex((s) => s.state === state && Date.now() - s.createdAt < 15 * 60 * 1000);
+  if (idx === -1) return false;
+  db.oauthStates.splice(idx, 1);
+  await writeDb(db);
+  return true;
 }
 
 export async function findOrCreateUser(name: string, email: string): Promise<DbUser> {

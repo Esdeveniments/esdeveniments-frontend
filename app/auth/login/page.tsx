@@ -26,7 +26,7 @@ export default function LoginPage() {
           />
         </label>
         {error && <p className="text-red-600 text-sm">{error}</p>}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <button
             className="bg-primary text-white p-2 rounded"
             onClick={async () => {
@@ -64,6 +64,12 @@ export default function LoginPage() {
           >
             Envia enllaç màgic
           </button>
+          <a
+            className="bg-white border px-3 py-2 rounded hover:bg-gray-50"
+            href="/api/auth/google"
+          >
+            Continua amb Google
+          </a>
         </div>
         {magicUrl && (
           <p className="text-sm">
