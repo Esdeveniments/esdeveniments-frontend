@@ -243,6 +243,7 @@ export interface FilterButtonProps {
   enabled: boolean;
   removeUrl: string;
   onOpenModal: () => void;
+  testId?: string;
 }
 
 export interface ServerFiltersProps {

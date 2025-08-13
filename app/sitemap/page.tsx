@@ -99,6 +99,7 @@ export default async function Page() {
       <div
         className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
         role="main"
+        data-testid="sitemap-page"
       >
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="mb-4">
@@ -118,7 +119,7 @@ export default async function Page() {
         {/* Display regions */}
         <section className="mb-8">
           <header className="mb-6">
-            <h1 className="text-3xl font-bold mb-4">
+            <h1 className="text-3xl font-bold mb-4" data-testid="sitemap-title">
               Arxiu d&apos;esdeveniments culturals
             </h1>
             <p className="mb-4 text-lg text-gray-700">
@@ -139,6 +140,7 @@ export default async function Page() {
                     href={`/sitemap/${region.slug}`}
                     prefetch={false}
                     className="hover:underline hover:text-blue-600 transition-colors"
+                    data-testid="sitemap-region-link"
                   >
                     <p className="text-gray-900">{region.name}</p>
                   </Link>
@@ -159,6 +161,7 @@ export default async function Page() {
                     href={`/sitemap/${city.slug}`}
                     prefetch={false}
                     className="hover:underline hover:text-blue-600 transition-colors"
+                    data-testid="sitemap-city-link"
                   >
                     <p className="text-gray-900">{city.name}</p>
                   </Link>

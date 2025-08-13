@@ -5,7 +5,7 @@ import eventNotFound from "@public/static/images/error_404_page_not_found.png";
 
 const NoEventFound: FC = () => {
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto" data-testid="no-event-found">
       <div className="block blurred-image">
         <Image
           title="Esdeveniment no trobat - Esdeveniments.cat"

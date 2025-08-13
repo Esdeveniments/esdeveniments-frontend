@@ -123,7 +123,10 @@ export default function Search(): JSX.Element {
   }, [updateSearchUrl]);
 
   return (
-    <div className="w-full flex justify-center border border-bColor border-opacity-50 rounded-full px-4 mt-2">
+    <div
+      className="w-full flex justify-center border border-bColor border-opacity-50 rounded-full px-4 mt-2"
+      data-testid="search-bar"
+    >
       <div className="w-full flex justify-start items-center gap-2 rounded-full">
         <div className="h-10 flex justify-end items-center cursor-pointer">
           <SearchIcon
@@ -141,6 +144,7 @@ export default function Search(): JSX.Element {
           onChange={handleChange}
           autoComplete="off"
           aria-label="Search input"
+          data-testid="search-input"
         />
         {inputValue.length > 0 && (
           <div className="flex justify-end items-center cursor-pointer">
