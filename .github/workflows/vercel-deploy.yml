@@ -31,7 +31,7 @@ jobs:
           VERCEL_ORG_ID: team_6hH7xdOOVCOaC8pXKuUMh27K
           VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
         run: |
-          npx vercel@25 pull --yes --environment=preview
+          npx vercel@25 pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy preview
         env:
@@ -40,7 +40,7 @@ jobs:
           VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: |
-          npx vercel@25 \
+          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
             --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
@@ -67,7 +67,7 @@ jobs:
           VERCEL_ORG_ID: team_6hH7xdOOVCOaC8pXKuUMh27K
           VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
         run: |
-          npx vercel@25 pull --yes --environment=production
+          npx vercel@25 pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy production
         env:
@@ -76,6 +76,6 @@ jobs:
           VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
           NEXT_PUBLIC_API_URL: https://api.esdeveniments.cat/api
         run: |
-          npx vercel@25 --prod \
+          npx vercel@25 --prod --token=${{ secrets.VERCEL_TOKEN }} \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
             --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
