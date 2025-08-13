@@ -92,7 +92,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: |
-          OUT=$(npx vercel@25 --yes --json --token=${{ secrets.VERCEL_TOKEN }} \
+          OUT=$(npx vercel@25 --json --token=${{ secrets.VERCEL_TOKEN }} \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
             --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL)
           echo "$OUT" | jq .
