@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
-  NEXT_PUBLIC_API_URL: 'https://api-pre.esdeveniments.cat/api'
+  NODE_VERSION: "20"
+  NEXT_PUBLIC_API_URL: "https://api-pre.esdeveniments.cat/api"
 
 jobs:
   quality:
@@ -74,18 +74,39 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Deploy Preview to Vercel
-        id: vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: .
-          vercel-args: '--env NEXT_PUBLIC_API_URL=https://api-pre.esdeveniments.cat/api --build-env NEXT_PUBLIC_API_URL=https://api-pre.esdeveniments.cat/api'
+      - name: Vercel pull (preview)
+        if: github.event_name == 'pull_request'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npx vercel@25 pull --yes --environment=preview
 
-      - name: Set preview URL
-        run: echo "PREVIEW_URL=${{ steps.vercel.outputs.preview-url }}" >> $GITHUB_ENV
+      - name: Deploy Preview to Vercel (CLI)
+        if: github.event_name == 'pull_request'
+        id: deploy_preview
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
+        run: |
+          OUT=$(npx vercel@25 --yes --json \
+            --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+            --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL)
+          echo "$OUT" | jq .
+          URL=$(echo "$OUT" | jq -r '.url // empty')
+          if [ -z "$URL" ]; then
+            echo "Failed to obtain preview URL from Vercel output" >&2
+            exit 1
+          fi
+          case "$URL" in
+            http*) FULL_URL="$URL";;
+            *) FULL_URL="https://$URL";;
+          esac
+          echo "PREVIEW_URL=$FULL_URL" >> $GITHUB_ENV
+          echo "preview-url=$FULL_URL" >> $GITHUB_OUTPUT
 
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' }}
