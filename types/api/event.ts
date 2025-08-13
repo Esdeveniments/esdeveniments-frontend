@@ -1,20 +1,10 @@
 import { CategorySummaryResponseDTO } from "./category";
+import type { CitySummaryResponseDTO } from "./city";
 
 export type EventType = "FREE" | "PAID";
 export type EventOrigin = "SCRAPE" | "RSS" | "MANUAL" | "MIGRATION";
 
 // Use the canonical CitySummaryResponseDTO from types/api/city
-export interface CitySummaryResponseDTO {
-  id: number;
-  name: string;
-  slug: string;
-  latitude: number;
-  longitude: number;
-  postalCode: string;
-  rssFeed: string | null;
-  enabled: boolean;
-}
-
 export interface RegionSummaryResponseDTO {
   id: number;
   name: string;

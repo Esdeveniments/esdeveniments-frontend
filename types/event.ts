@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type {
   RegionSummaryResponseDTO,
-  CitySummaryResponseDTO,
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
 } from "./api/event";
+import type { CitySummaryResponseDTO } from "./api/city";
 import type { CategorySummaryResponseDTO } from "./api/category";
 import type { RefObject } from "react";
 import type { DeleteReason, Option } from "./common";
