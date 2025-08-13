@@ -61,6 +61,7 @@ jobs:
         run: yarn test
 
       - name: Build application
+        if: github.event_name == 'push'
         env:
           NODE_ENV: production
         run: yarn build
@@ -93,20 +94,31 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
         run: |
           set -euo pipefail
-          echo "Resolving Vercel preview for commit ${{ github.sha }}"
-          for i in {1..30}; do
-            URL=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
-              "https://api.vercel.com/v13/deployments?projectId=$VERCEL_PROJECT_ID&target=preview&limit=5&meta-githubCommitSha=${{ github.sha }}" \
-              | jq -r '.deployments[0].url // empty')
+          HEAD_SHA='${{ github.event.pull_request.head.sha }}'
+          HEAD_REF='${{ github.head_ref }}'
+          PR_NUMBER='${{ github.event.pull_request.number }}'
+          echo "Resolving Vercel preview for head sha $HEAD_SHA (ref: $HEAD_REF, pr: $PR_NUMBER)"
+          for i in {1..60}; do
+            RESP=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v13/deployments?projectId=$VERCEL_PROJECT_ID&target=preview&teamId=$VERCEL_ORG_ID&limit=20")
+            URL=$(echo "$RESP" | jq -r --arg SHA "$HEAD_SHA" --arg REF "$HEAD_REF" --arg PR "$PR_NUMBER" '
+              .deployments
+              | map(select((.meta.githubCommitSha==$SHA) or (.meta.githubCommitRef==$REF) or ((.meta.githubPrId|tostring)==$PR)))
+              | (.[0].url // empty)')
+            if [ -z "$URL" ]; then
+              # Fallback to latest READY preview
+              URL=$(echo "$RESP" | jq -r '.deployments | map(select(.readyState=="READY")) | (.[0].url // empty)')
+            fi
             if [ -n "$URL" ]; then
               echo "Found Vercel preview: https://$URL"
               echo "PREVIEW_URL=https://$URL" >> $GITHUB_ENV
               echo "preview-url=https://$URL" >> $GITHUB_OUTPUT
               exit 0
             fi
-            echo "No preview yet, retrying ($i/30)..."
+            echo "No preview yet, retrying ($i/60)..."
             sleep 10
           done
           echo "Failed to resolve Vercel preview URL" >&2
