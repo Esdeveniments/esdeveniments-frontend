@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      deployments: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,16 +22,23 @@ jobs:
           node-version: 20
           cache: yarn
 
-      - name: Install deps
-        run: yarn install --frozen-lockfile
+      - name: Enable Corepack and Yarn 4
+        run: |
+          corepack enable
+          corepack prepare yarn@4.9.1 --activate
+          yarn --version
 
-      - name: Wait for Amplify preview URL (from PR comments)
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Wait for Amplify preview URL (PR comment, status, or deployments)
         id: wait
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           echo "Polling PR comments for Amplify preview URL..."
           # Allow manual override via secret for debugging
@@ -39,18 +47,63 @@ jobs:
             exit 0
           fi
           for i in {1..30}; do
+            # Strategy 1: PR comments (posted by Amplify integration)
             URL=$(gh api repos/${REPO}/issues/${PR_NUMBER}/comments -q '.[].body' \
               | grep -Eo 'https?://[A-Za-z0-9._/\-]*amplifyapp\.com[^\s]*' \
               | tail -n1)
             if [ -n "$URL" ]; then
-              echo "Found Amplify URL: $URL"
+              echo "Found Amplify URL via PR comments: $URL"
               echo "preview_url=$URL" >> $GITHUB_OUTPUT
               exit 0
             fi
+
+            # Strategy 2: Commit statuses target_url from Amplify
+            URL=$(gh api repos/${REPO}/commits/${HEAD_SHA}/statuses \
+              -q '.[] | select(.context|test("amplify|aws amplify|amplify console";"i")) | .target_url' \
+              | head -n1)
+            if [ -n "$URL" ]; then
+              echo "Found Amplify URL via commit statuses: $URL"
+              echo "preview_url=$URL" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            # Strategy 3: Deployments API environment_url
+            DEPLOY_ID=$(gh api repos/${REPO}/deployments \
+              -q '.[] | select(.ref=="refs/pull/'"${PR_NUMBER}"'/merge" or .ref=="refs/pull/'"${PR_NUMBER}"'/head") | .id' \
+              | head -n1)
+            if [ -n "$DEPLOY_ID" ]; then
+              URL=$(gh api repos/${REPO}/deployments/${DEPLOY_ID}/statuses \
+                -q '.[] | ( .environment_url // .target_url )' \
+                | grep -Eo 'https?://[A-Za-z0-9._/\-]*amplifyapp\.com[^\s]*' \
+                | head -n1)
+              if [ -n "$URL" ]; then
+                echo "Found Amplify URL via deployments API: $URL"
+                echo "preview_url=$URL" >> $GITHUB_OUTPUT
+                exit 0
+              fi
+            fi
+
             echo "No URL yet, retrying ($i/30)..."
             sleep 20
           done
-          echo "Amplify preview URL not found in PR comments within timeout" >&2
+          echo "Amplify preview URL not found in PR comments, statuses, or deployments within timeout" >&2
+          exit 1
+
+      - name: Wait for preview readiness
+        if: steps.wait.outputs.preview_url != ''
+        env:
+          PREVIEW_URL: ${{ steps.wait.outputs.preview_url }}
+        run: |
+          echo "Waiting for preview to become ready at: $PREVIEW_URL"
+          for i in {1..60}; do
+            if curl -s -m 10 -o /dev/null -w "%{http_code}" "$PREVIEW_URL" | grep -q "^2"; then
+              echo "Preview is responding."
+              exit 0
+            fi
+            echo "Not ready yet ($i/60), waiting..."
+            sleep 10
+          done
+          echo "Preview did not become ready in time" >&2
           exit 1
 
       - name: Run Playwright tests against Amplify preview
