@@ -3,6 +3,7 @@ import { CategorySummaryResponseDTO } from "./category";
 export type EventType = "FREE" | "PAID";
 export type EventOrigin = "SCRAPE" | "RSS" | "MANUAL" | "MIGRATION";
 
+// Use the canonical CitySummaryResponseDTO from types/api/city
 export interface CitySummaryResponseDTO {
   id: number;
   name: string;

@@ -10,6 +10,7 @@ import {
 } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
+import type { CalendarUrls } from "types/calendar";
 
 export interface Option {
   label: string;
@@ -49,12 +50,6 @@ export type CategoryValue =
   | "Espectacles";
 
 export type Categories = Record<CategoryKey, CategoryValue>;
-
-export interface CalendarUrls {
-  google: string;
-  outlook: string;
-  ical: string;
-}
 
 export interface CalendarOption {
   name: string;

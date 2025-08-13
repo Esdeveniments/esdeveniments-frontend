@@ -1,10 +1,8 @@
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
 import {
-  ByDateProps,
   Option,
   GroupedOption,
   PageData,
-  PlaceProps,
   PlaceTypeAndLabel,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
@@ -44,11 +42,6 @@ export interface MultiSelectProps {
   isDisabled?: boolean;
   placeholder?: string;
   isLoading?: boolean;
-}
-
-export interface ViewCounterProps {
-  slug: string;
-  hideText?: boolean;
 }
 
 export interface ReportViewProps {
@@ -194,16 +187,6 @@ export interface NoEventsFoundProps {
 
 export interface VideoDisplayProps {
   videoUrl: string | null | undefined;
-}
-
-export interface ByDateClientProps extends ByDateProps {
-  pageData: PageData;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
-
-export interface PlaceClientProps extends PlaceProps {
-  pageData: PageData;
-  placeTypeLabel: PlaceTypeAndLabel;
 }
 
 export interface LoadMoreButtonProps {

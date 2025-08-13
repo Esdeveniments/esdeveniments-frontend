@@ -5,6 +5,6 @@ export interface CitySummaryResponseDTO {
   latitude: number;
   longitude: number;
   postalCode: string;
-  rssFeed: string;
+  rssFeed: string | null;
   enabled: boolean;
 }
