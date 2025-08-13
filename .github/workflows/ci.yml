@@ -65,14 +65,22 @@ jobs:
           NODE_ENV: production
         run: yarn build
 
+      - name: Get Playwright version
+        id: pw
+        run: |
+          set -e
+          VER=$(npx playwright --version | awk '{print $2}')
+          echo "Detected Playwright version: $VER"
+          echo "version=$VER" >> $GITHUB_OUTPUT
+
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-playwright-${{ steps.pw.outputs.version }}
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install chromium
 
       # Resolve the auto-generated Vercel preview for this commit (no extra deploy)
       - name: Install jq
