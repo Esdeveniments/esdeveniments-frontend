@@ -105,10 +105,13 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // --- Protect dashboard routes ---
+  // --- Protect dashboard routes (server-side cookie) ---
   if (pathname.startsWith("/dashboard")) {
-    // Mock protection: no server session cookie, so always allow; client layout will redirect if not logged.
-    // Optionally, we can redirect to login if a special header indicates no client session, but unavailable here.
+    const hasSession = request.cookies.get("session");
+    if (!hasSession) {
+      const loginUrl = new URL("/auth/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   // --- Handle Redirects ---

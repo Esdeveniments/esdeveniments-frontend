@@ -1,53 +1,40 @@
 "use client";
 
-import { Session, User } from "types/user";
+import { User } from "types/user";
 
-const STORAGE_KEY = "events-auth-session";
+export async function apiSignup(name: string, email: string): Promise<User> {
+  const res = await fetch("/api/auth/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email }),
+  });
+  if (!res.ok) throw new Error("Signup failed");
+  const data = await res.json();
+  return data.user as User;
+}
 
-export function getSession(): Session | null {
-  if (typeof window === "undefined") return null;
+export async function apiLogin(email: string): Promise<User> {
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) throw new Error("Login failed");
+  const data = await res.json();
+  return data.user as User;
+}
+
+export async function apiLogout(): Promise<void> {
+  await fetch("/api/auth/logout", { method: "POST" });
+}
+
+export async function getCurrentUser(): Promise<User | null> {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: Session = JSON.parse(raw);
-    if (!parsed?.user?.id) return null;
-    return parsed;
+    const res = await fetch("/api/auth/me", { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user as User;
   } catch {
     return null;
   }
-}
-
-export function setSession(session: Session): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-}
-
-export function clearSession(): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(STORAGE_KEY);
-}
-
-export function isAuthenticated(): boolean {
-  return !!getSession();
-}
-
-export function mockSignup(name: string, email: string): Session {
-  const user: User = {
-    id: crypto.randomUUID(),
-    name,
-    email,
-  };
-  const session: Session = { user, issuedAt: Date.now() };
-  setSession(session);
-  return session;
-}
-
-export function mockLogin(email: string): Session | null {
-  // For mock: if a session exists and email matches, reuse; else create a new user with placeholder name
-  const existing = getSession();
-  if (existing && existing.user.email === email) return existing;
-  const user: User = { id: crypto.randomUUID(), name: email.split("@")[0], email };
-  const session: Session = { user, issuedAt: Date.now() };
-  setSession(session);
-  return session;
 }

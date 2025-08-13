@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { mockLogin } from "@lib/auth/session";
+import { apiLogin } from "@lib/auth/session";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="w-full flex justify-center bg-whiteCorp py-8">
@@ -23,12 +24,18 @@ export default function LoginPage() {
             placeholder="tu@exemple.com"
           />
         </label>
+        {error && <p className="text-red-600 text-sm">{error}</p>}
         <button
           className="bg-primary text-white p-2 rounded"
-          onClick={() => {
+          onClick={async () => {
+            setError(null);
             if (!email) return;
-            mockLogin(email);
-            router.push("/dashboard");
+            try {
+              await apiLogin(email);
+              router.push("/dashboard");
+            } catch (e) {
+              setError("No s'ha pogut iniciar sessió");
+            }
           }}
         >
           Entrar

@@ -14,7 +14,6 @@ import ActiveLink from "@components/ui/common/link";
 import logo from "@public/static/images/logo-esdeveniments.webp";
 import { NavigationItem } from "types/props";
 import { useEffect, useState } from "react";
-import { getSession } from "@lib/auth/session";
 
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: true },
@@ -27,7 +26,14 @@ export default function Navbar() {
   const [isLogged, setIsLogged] = useState(false);
 
   useEffect(() => {
-    setIsLogged(!!getSession());
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        setIsLogged(res.ok);
+      } catch {
+        setIsLogged(false);
+      }
+    })();
   }, []);
 
   return (

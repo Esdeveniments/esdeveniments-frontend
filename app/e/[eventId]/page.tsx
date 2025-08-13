@@ -118,6 +118,13 @@ export default async function EventPage({
               <EventShareBar
                 visits={event.visits}
                 slug={eventSlug}
+                title={title}
+                description={event.description}
+                eventDateString={event.endDate ? `Del ${event.startDate} al ${event.endDate}` : `${event.startDate}`}
+                location={event.location}
+                cityName={event.city?.name || ""}
+                regionName={event.region?.name || ""}
+                postalCode={event.city?.postalCode || ""}
               />
             </div>
             <EventClient event={event} />

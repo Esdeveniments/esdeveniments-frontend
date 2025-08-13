@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { mockSignup } from "@lib/auth/session";
+import { apiSignup } from "@lib/auth/session";
 
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="w-full flex justify-center bg-whiteCorp py-8">
@@ -34,12 +35,18 @@ export default function SignupPage() {
             placeholder="tu@exemple.com"
           />
         </label>
+        {error && <p className="text-red-600 text-sm">{error}</p>}
         <button
           className="bg-primary text-white p-2 rounded"
-          onClick={() => {
+          onClick={async () => {
+            setError(null);
             if (!email || !name) return;
-            mockSignup(name, email);
-            router.push("/dashboard");
+            try {
+              await apiSignup(name, email);
+              router.push("/dashboard");
+            } catch (e) {
+              setError("No s'ha pogut crear el compte");
+            }
           }}
         >
           Crear compte

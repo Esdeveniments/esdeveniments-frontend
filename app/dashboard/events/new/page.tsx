@@ -10,8 +10,6 @@ import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "@app/publica/actions";
 import type { FormData } from "types/event";
 import { Option } from "types/common";
-import { addOwnedEvent } from "@lib/auth/ownership";
-import { getSession } from "@lib/auth/session";
 
 const defaultForm: FormData = {
   title: "",
@@ -130,10 +128,14 @@ export default function NewEventPage() {
 
         if (result && result.success && result.event) {
           const { slug } = result.event;
-          const session = getSession();
-          if (session) {
-            addOwnedEvent(session.user.id, slug);
-          }
+          // Save ownership via API
+          try {
+            await fetch("/api/user/events", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug }),
+            });
+          } catch {}
           router.push(`/e/${slug}`);
         } else {
           captureException("Error creating event");
