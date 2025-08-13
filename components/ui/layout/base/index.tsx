@@ -11,7 +11,10 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
     <>
       <ServiceWorkerRegistration />
       <Navbar />
-      <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
+      <div
+        className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden"
+        data-testid="app-content"
+      >
         {children}
       </div>
       <Footer />

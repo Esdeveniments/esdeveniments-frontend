@@ -43,13 +43,18 @@ const nextConfig = {
   },
 };
 
+// Enable uploads only when an auth token is present. Otherwise skip network calls to avoid build failures.
+const sentryUploadsEnabled = Boolean(process.env.SENTRY_AUTH_TOKEN);
 const sentryWebpackPluginOptions = {
   silent: true,
   org: "esdeveniments",
   project: "javascript-nextjs",
   widenClientFileUpload: true,
   transpileClientSDK: true,
+  // Prevent original sources from appearing in devtools in production
   hideSourceMaps: true,
+  // Skip all Sentry network operations when no auth token is configured (e.g., Amplify/GHA builds)
+  dryRun: !sentryUploadsEnabled,
   disableLogger: true,
   automaticVercelMonitors: true,
 };

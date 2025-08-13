@@ -46,6 +46,7 @@ const ServerFilters = ({
         <div
           onClick={onOpenModal}
           className="mr-3 flex justify-center items-center gap-3 cursor-pointer"
+          data-testid="filters-open"
         >
           <AdjustmentsIcon
             className={
@@ -80,6 +81,7 @@ const ServerFilters = ({
                 queryParams
               )}
               onOpenModal={onOpenModal}
+              testId={`filter-pill-${config.key}`}
             />
           ))}
         </div>

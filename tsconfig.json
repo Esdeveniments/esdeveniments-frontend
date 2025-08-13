@@ -64,6 +64,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "types": [
+      "vitest/globals",
       "./types/react-datepicker.d.ts"
     ]
   },

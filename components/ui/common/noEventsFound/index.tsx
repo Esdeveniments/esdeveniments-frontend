@@ -4,7 +4,10 @@ import type { NoEventsFoundProps } from "types/props";
 
 const NoEventsFound: FC<NoEventsFoundProps> = ({ title }) => {
   return (
-    <div className="flex flex-col items-center gap-6 py-6">
+    <div
+      className="flex flex-col items-center gap-6 py-6"
+      data-testid="no-events-found"
+    >
       <div className="flex flex-col justify-center items-center gap-6 px-6">
         <div className="w-full flex justify-center">
           <svg viewBox="0 0 120 122" className="w-1/3">

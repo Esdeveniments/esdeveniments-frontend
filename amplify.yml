@@ -3,8 +3,13 @@ frontend:
   phases:
     preBuild:
       commands:
-        # Use Yarn with --frozen-lockfile for fast, deterministic builds in CI.
-        - yarn install --frozen-lockfile
+        # Ensure correct Node and Yarn (Berry) versions
+        - nvm install 20 && nvm use 20
+        - corepack enable
+        - corepack prepare yarn@4.9.1 --activate
+        - yarn --version
+        # Use Yarn 4 immutable installs for fast, deterministic builds in CI
+        - yarn install --immutable
         # Remove any existing keys, then write a single, up-to-date copy
         - sed -i '/^NEXT_PUBLIC_BUILD_ID=/d' .env.production 2>/dev/null || true
         - sed -i '/^NEXT_TELEMETRY_DISABLED=/d' .env.production 2>/dev/null || true
@@ -33,18 +38,25 @@ frontend:
   # Security headers for dynamic content are managed in middleware.ts.
   # Assets using getVersionedUrl() can have longer cache times.
   customHeaders:
+    # Service worker: avoid caching and allow root scope
+    - pattern: "/sw.js"
+      headers:
+        - key: Cache-Control
+          value: "no-cache, no-store, must-revalidate"
+        - key: Service-Worker-Allowed
+          value: "/"
     # Next.js built assets - these are automatically hashed, safe for long cache
     - pattern: "/_next/static/**"
       headers:
         - key: Cache-Control
           value: "public, max-age=31536000, immutable"
-    
+
     # Next.js optimized images - 1 year cache (CRITICAL for performance)
     - pattern: "/_next/image*"
       headers:
         - key: Cache-Control
           value: "public, max-age=31536000, immutable"
-    
+
     # CSS files - safe for long cache since /styles/non-critical.css uses getVersionedUrl
     - pattern: "/styles/**"
       headers:
@@ -52,7 +64,7 @@ frontend:
           value: "public, max-age=31536000, immutable"
         - key: Content-Type
           value: "text/css; charset=utf-8"
-    
+
     # Font files - longer cache with CORS headers for cross-origin loading
     - pattern: "/static/fonts/**"
       headers:
@@ -62,50 +74,62 @@ frontend:
           value: "*"
         - key: Cross-Origin-Resource-Policy
           value: "cross-origin"
-    
+
     # Static assets - be more conservative since not all may use getVersionedUrl
     - pattern: "/static/**"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
-    
+          value: "public, max-age=2592000" # 30 days
+
     # Static images only (not user uploads) - conservative approach
     # Separate patterns for common image extensions (brace expansion not supported)
     - pattern: "/static/**/*.png"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
+          value: "public, max-age=2592000" # 30 days
     - pattern: "/static/**/*.jpg"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
+          value: "public, max-age=2592000" # 30 days
     - pattern: "/static/**/*.jpeg"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
+          value: "public, max-age=2592000" # 30 days
     - pattern: "/static/**/*.gif"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
+          value: "public, max-age=2592000" # 30 days
     - pattern: "/static/**/*.webp"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
+          value: "public, max-age=2592000" # 30 days
     - pattern: "/static/**/*.svg"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
+          value: "public, max-age=2592000" # 30 days
     - pattern: "/static/**/*.ico"
       headers:
         - key: Cache-Control
-          value: "public, max-age=2592000"  # 30 days
-    
-    # Fonts - longer cache since they rarely change
-    - pattern: "**/*.{woff,woff2,ttf,eot}"
+          value: "public, max-age=2592000" # 30 days
+
+    # Fonts - longer cache since they rarely change (avoid brace expansion)
+    - pattern: "/**/*.woff"
       headers:
         - key: Cache-Control
-          value: "public, max-age=31536000"  # 1 year
-    
+          value: "public, max-age=31536000" # 1 year
+    - pattern: "/**/*.woff2"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000" # 1 year
+    - pattern: "/**/*.ttf"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000" # 1 year
+    - pattern: "/**/*.eot"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=31536000" # 1 year
+
     # API routes - CORS headers for functionality (middleware excludes these)
     - pattern: "/api/**"
       headers:
@@ -118,8 +142,7 @@ frontend:
         - key: Vary
           value: "Origin"
         - key: Cache-Control
-          value: "public, max-age=3600"  # 1 hour - conservative for API responses
-
+          value: "public, max-age=3600" # 1 hour - conservative for API responses
 
 # Environment variables should be set in the Amplify Console for better security.
 # Go to: App settings > Environment variables
