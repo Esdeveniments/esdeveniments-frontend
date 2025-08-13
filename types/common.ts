@@ -1,8 +1,6 @@
 import type { CSSProperties } from "react";
 import type { ErrorProps } from "next/error";
-import type { EventLocation } from "../store";
 import type { StoreState } from "@store";
-import type { EventCategory } from "@store";
 import {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -69,22 +67,6 @@ export interface EventProps {
   event: EventDetailResponseDTO;
 }
 
-export interface EventsProps {
-  events?: EventSummaryResponseDTO[];
-}
-
-export interface UseGetEventsProps {
-  props?: EventsProps;
-  pageIndex: number;
-  refreshInterval?: boolean;
-  maxResults?: number;
-  zone?: string;
-  category?: string;
-  lat?: number;
-  lon?: number;
-  radius?: number;
-}
-
 export interface NetworkInformation {
   downlink?: number;
   effectiveType?: "slow-2g" | "2g" | "3g" | "4g";
@@ -142,10 +124,6 @@ export interface RenderButtonProps {
   onClick: () => void;
   handleOpenModal: () => void;
   scrollToTop: () => void;
-}
-
-export interface FiltersProps {
-  placeLabel: string;
 }
 
 export interface GeolocationPosition {
@@ -292,10 +270,6 @@ export interface ListProps {
   children: (event: ListEvent, index: number) => React.ReactElement;
 }
 
-export interface MapsProps {
-  location: string;
-}
-
 export interface TooltipComponentProps {
   id: string;
   children: React.ReactNode;
@@ -306,65 +280,9 @@ export interface ViewCounterProps {
   hideText?: boolean;
 }
 
-export interface InitialState {
-  place: string;
-  byDate: string;
-  events: ListEvent[];
-  noEventsFound: boolean;
-  hasServerFilters: boolean;
-}
-
-export interface ByDateProps {
-  initialState: InitialState;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
-
-export interface StaticProps {
-  params: {
-    place: string;
-    byDate: string;
-  };
-}
-
-export interface PlaceInitialState {
-  // Only filter state - events are handled server-side
-  place: string;
-  byDate: string;
-  category: EventCategory | "";
-}
-
-export interface PlaceProps {
-  initialState: PlaceInitialState;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
-
-export interface PlaceStaticPathParams {
-  place: string;
-  [key: string]: string | string[] | undefined;
-}
-
-export type PlaceStaticPath = { params: PlaceStaticPathParams };
-
 export interface MyErrorProps extends ErrorProps {
   hasGetInitialPropsRun: boolean;
   err?: Error;
-}
-
-export interface EditEventPageProps {
-  params: {
-    eventId: string;
-  };
-}
-
-export interface ApiResponse {
-  success: boolean;
-  message?: string;
-  event?: FormData;
-}
-
-export interface HomeInitialState {
-  // Only initialize filter state - events are handled server-side
-  userLocation?: EventLocation | null;
 }
 
 export interface TeamMember {
@@ -377,8 +295,6 @@ export interface TeamMember {
 
 export type DateRange = { from: Date; until: Date };
 
-export type DateFunctionsMap = { [key: string]: () => DateRange };
-
 export interface RssEvent {
   id: string;
   title: string;
@@ -390,12 +306,6 @@ export interface RssEvent {
   region: string;
   startDate: string;
   imageUrl?: string;
-}
-
-export interface MonthProps {
-  events: EventSummaryResponseDTO[];
-  town: string;
-  townLabel: string;
 }
 
 export interface MonthStaticPathParams {
@@ -412,10 +322,12 @@ export interface TownStaticPathParams {
   [key: string]: string | undefined;
 }
 
-export interface SitemapProps {
-  town: string;
-  label: string;
+export interface PlaceStaticPathParams {
+  place: string;
+  [key: string]: string | string[] | undefined;
 }
+
+export type PlaceStaticPath = { params: PlaceStaticPathParams };
 
 // SearchState type
 export interface SearchState {
@@ -437,12 +349,6 @@ export function makePlaceTypeAndLabel(
   };
 }
 
-export interface LoaderProps {
-  src: string;
-  width: number;
-  quality?: number;
-}
-
 export interface ImageComponentProps {
   title: string;
   image?: string;
@@ -459,13 +365,6 @@ export interface ActiveLinkProps extends LinkProps {
   children: React.ReactNode;
   activeLinkClass?: string;
   className?: string;
-}
-
-export interface URLFilters {
-  category?: string;
-  date?: string;
-  distance?: string;
-  searchTerm?: string;
 }
 
 // Hook return types
