@@ -26,22 +26,21 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Vercel pull (preview)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_6hH7xdOOVCOaC8pXKuUMh27K
+          VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
         run: |
-          npx vercel@25 pull \
-            --yes \
-            --environment=preview \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=team_6hH7xdOOVCOaC8pXKuUMh27K \
-            --project=prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
+          npx vercel@25 pull --yes --environment=preview
 
       - name: Deploy preview
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_6hH7xdOOVCOaC8pXKuUMh27K
+          VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: |
           npx vercel@25 \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=team_6hH7xdOOVCOaC8pXKuUMh27K \
-            --project=prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
             --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
@@ -63,21 +62,20 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Vercel pull (production)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_6hH7xdOOVCOaC8pXKuUMh27K
+          VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
         run: |
-          npx vercel@25 pull \
-            --yes \
-            --environment=production \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=team_6hH7xdOOVCOaC8pXKuUMh27K \
-            --project=prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
+          npx vercel@25 pull --yes --environment=production
 
       - name: Deploy production
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_6hH7xdOOVCOaC8pXKuUMh27K
+          VERCEL_PROJECT_ID: prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE
           NEXT_PUBLIC_API_URL: https://api.esdeveniments.cat/api
         run: |
           npx vercel@25 --prod \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=team_6hH7xdOOVCOaC8pXKuUMh27K \
-            --project=prj_6u5oiNTDwKXRlCfdf64OTVdkHVlE \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
             --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
