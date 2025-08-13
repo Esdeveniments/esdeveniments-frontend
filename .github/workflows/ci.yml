@@ -92,21 +92,22 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
         run: |
-          OUT=$(npx vercel@25 --json --token=${{ secrets.VERCEL_TOKEN }} \
+          # Deploy and capture logs
+          LOG=$(mktemp)
+          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-            --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL)
-          echo "$OUT" | jq .
-          URL=$(echo "$OUT" | jq -r '.url // empty')
+            --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL | tee "$LOG"
+          # Extract the last vercel.app URL (alias line usually printed last)
+          URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)
           if [ -z "$URL" ]; then
-            echo "Failed to obtain preview URL from Vercel output" >&2
+            echo "Failed to extract preview URL from Vercel output" >&2
+            echo "===== Vercel Output ====="
+            cat "$LOG"
+            echo "========================="
             exit 1
           fi
-          case "$URL" in
-            http*) FULL_URL="$URL";;
-            *) FULL_URL="https://$URL";;
-          esac
-          echo "PREVIEW_URL=$FULL_URL" >> $GITHUB_ENV
-          echo "preview-url=$FULL_URL" >> $GITHUB_OUTPUT
+          echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
+          echo "preview-url=$URL" >> $GITHUB_OUTPUT
 
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' }}
