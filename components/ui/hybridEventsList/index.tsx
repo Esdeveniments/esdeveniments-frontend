@@ -12,6 +12,7 @@ import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
 import { getNewsCta } from "@utils/helpers";
 import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
+import { QUALITY_PRESETS, getOptimalImageSizes } from "@utils/image-quality";
 
 function HybridEventsList({
   initialEvents = [],

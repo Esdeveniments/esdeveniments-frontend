@@ -130,6 +130,13 @@ frontend:
         - key: Cache-Control
           value: "public, max-age=31536000" # 1 year
 
+    # Next.js pages - enable back/forward cache for better performance
+    # This pattern matches all HTML pages and routes without file extensions
+    - pattern: "/*"
+      headers:
+        - key: Cache-Control
+          value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+
     # API routes - CORS headers for functionality (middleware excludes these)
     - pattern: "/api/**"
       headers:

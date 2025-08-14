@@ -11,7 +11,7 @@ import {
 import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
 import logo from "@public/static/images/logo-esdeveniments.webp";
-import { NavigationItem } from "types/props";
+import { NavigationItem } from "types/common";
 
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: true },

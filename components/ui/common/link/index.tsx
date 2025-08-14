@@ -6,14 +6,18 @@ export default function ActiveLink({
   children,
   activeLinkClass,
   className,
+  href,
+  url,
   ...props
-}: ActiveLinkProps) {
+}: ActiveLinkProps & { url?: string }) {
   const pathname = usePathname();
+  const linkHref = href || url || "/";
+
   let classNameProps =
     className ||
     "flex justify-center items-center gap-2 text-blackCorp bg-whiteCorp py-2 px-3 font-barlow italic uppercase font-medium tracking-wider ease-in-out duration-200";
 
-  if (pathname === props.href) {
+  if (pathname === linkHref) {
     classNameProps = `${
       activeLinkClass
         ? activeLinkClass
@@ -22,7 +26,12 @@ export default function ActiveLink({
   }
 
   return (
-    <Link {...props} prefetch={false} className={classNameProps}>
+    <Link
+      {...props}
+      href={linkHref}
+      prefetch={false}
+      className={classNameProps}
+    >
       {children}
     </Link>
   );

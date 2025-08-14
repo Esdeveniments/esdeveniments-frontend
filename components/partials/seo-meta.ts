@@ -6,7 +6,7 @@ import {
   WebPageOptions,
   CollectionPageOptions,
   NavigationItem,
-} from "types/seo";
+} from "types/common";
 
 export const defaultMeta = {
   openGraph: {
@@ -260,7 +260,7 @@ export function generateSiteNavigationElementSchema(
     hasPart: navigationItems.map((item) => ({
       "@type": "SiteNavigationElement",
       name: item.name,
-      url: item.url,
+      url: item.url || item.href || `${siteUrl}/${item.name.toLowerCase()}`,
     })),
   };
 }

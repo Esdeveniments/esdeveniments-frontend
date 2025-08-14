@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 import useOnScreen from "@components/hooks/useOnScreen";
 import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
-import { useImagePerformance } from "@components/hooks/useImagePerformance";
 import { useImageRetry } from "@components/hooks/useImageRetry";
 import { ImageComponentProps } from "types/common";
 import {
@@ -53,8 +52,6 @@ function ImageComponent({
     networkQuality: getServerImageQuality(networkQualityString),
     customQuality,
   });
-
-  useImagePerformance(image, imageQuality, priority);
 
   const imageKey = getImageKey(image || "");
 

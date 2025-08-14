@@ -1,12 +1,9 @@
----
-alwaysApply: true
----
-
 ### Repository overview and always-load context
 
 - **Primary sources to consult first**:
   - `.github/copilot-instructions.md` (authoritative architecture and domain rules)
   - `project-snapshot.txt` (point-in-time config and script snapshot)
+  - `types/README.md` (type organization and canonical sources)
 - **Core stack**: Next.js App Router (TypeScript), URL-first filtering system, SSR + client enhancement (hybrid rendering), SW for offline/caching, strict CSP with nonces.
 
 - **Key domains**:
@@ -17,6 +14,7 @@ alwaysApply: true
   - **Rendering**: `components/ui/hybridEventsList`, `components/ui/clientInteractiveLayer`
   - **SW**: `public/sw-template.js`, `scripts/generate-sw.mjs`
   - **Images**: `utils/image-quality.ts`, `utils/image-preload.ts`, `components/hooks/useImageRetry.ts`
+  - **Types**: `types/common.ts` (shared UI types), `types/api/*.ts` (API DTOs), `types/README.md` (organization guide)
 
 ### Start-of-prompt checklist (use every time)
 
@@ -27,6 +25,7 @@ alwaysApply: true
 - For any Script/JSON-LD, pass `nonce` from `headers()` to satisfy CSP.
 - If ads/events lists are touched, follow the Hybrid Rendering Contract (SSR inserts ads, client does not).
 - If SW behavior is affected, edit `public/sw-template.js` and regenerate via `scripts/generate-sw.mjs`.
+- **For type changes**: Check `types/README.md` for canonical sources and avoid duplication.
 
 ### Non-negotiable invariants
 
@@ -35,6 +34,7 @@ alwaysApply: true
 - All read endpoints must return safe fallbacks when `NEXT_PUBLIC_API_URL` is absent or fetch fails.
 - CSP must remain nonce-based. No inline scripts without the nonce.
 - Constants belong in `utils/constants.ts`. Types/interfaces live under `types/`.
+- **Type organization**: Each type has exactly one canonical source. Import from canonical locations, never duplicate.
 
 ### Quick links
 
@@ -44,3 +44,4 @@ alwaysApply: true
 - SEO: `components/partials/seo-meta.ts`, `lib/meta.ts`
 - SW: `public/sw-template.js`, `scripts/generate-sw.mjs`
 - Tests: `test/filter-system.test.ts`, `test/setup.ts`
+- Types: `types/common.ts`, `types/api/*.ts`, `types/README.md`
