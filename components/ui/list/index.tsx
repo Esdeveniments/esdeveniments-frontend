@@ -4,11 +4,13 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 
 function List({ events, children }: ListProps): JSX.Element {
   const parentRef = useRef<HTMLDivElement | null>(null);
-  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
+  const [scrollElement, setScrollElement] = useState<Element | null>(null);
 
   // Use window scrolling when available to avoid nested scrollbars
   useEffect(() => {
-    setScrollElement(typeof window !== "undefined" ? window.document.scrollingElement : null);
+    setScrollElement(
+      typeof window !== "undefined" ? document.scrollingElement : null
+    );
   }, []);
 
   // Use virtualization for larger lists only
@@ -16,7 +18,7 @@ function List({ events, children }: ListProps): JSX.Element {
 
   const rowVirtualizer = useVirtualizer({
     count: events?.length || 0,
-    getScrollElement: () => (shouldVirtualize ? (scrollElement as any) : null),
+    getScrollElement: () => (shouldVirtualize ? scrollElement : null),
     estimateSize: () => 360, // Approximate card height including margins
     overscan: 6,
     enabled: shouldVirtualize,

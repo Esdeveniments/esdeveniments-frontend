@@ -63,14 +63,13 @@ export const useEvents = ({
     error,
     isLoading,
     isValidating,
-    size,
     setSize,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
     ([, placeParam, categoryParam, byDateParam, pageIndex, sizeParam]) =>
       pageFetcher({
-        page: Number(pageIndex),
-        size: Number(sizeParam),
+        page: pageIndex as number,
+        size: sizeParam as number,
         place: placeParam as string | undefined,
         category: categoryParam as string | undefined,
         byDate: byDateParam as string | undefined,
@@ -120,7 +119,11 @@ export const useEvents = ({
     : fallbackData.length;
 
   const lastPage = isActivated && pages ? pages[pages.length - 1] : undefined;
-  const hasMore = isActivated ? (lastPage ? !lastPage.last : false) : serverHasMore;
+  const hasMore = isActivated
+    ? lastPage
+      ? !lastPage.last
+      : false
+    : serverHasMore;
 
   const loadMore = () => {
     if (isLoading || isValidating || (isActivated && !hasMore)) return;
