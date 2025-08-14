@@ -1,12 +1,11 @@
 import { z } from "zod";
 import type {
   RegionSummaryResponseDTO,
-  CitySummaryResponseDTO,
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
 } from "./api/event";
+import type { CitySummaryResponseDTO } from "./api/city";
 import type { CategorySummaryResponseDTO } from "./api/category";
-import type { RefObject } from "react";
 import type { DeleteReason, Option } from "./common";
 
 // --- Zod schema for canonical event form data ---
@@ -77,54 +76,7 @@ export interface FormData {
  * - Dates should be string (ISO) for storage, can be Date in UI state.
  */
 
-export interface EditEventProps {
-  event: FormData;
-}
-
-export interface EventData extends EventDetailResponseDTO {
-  mapsLocation?: string;
-  timeUntil?: string;
-  nameDay?: string;
-  formattedStart?: string;
-  formattedEnd?: string;
-  isFullDayEvent?: boolean;
-  durationInHours?: number;
-  imageUrl: string;
-  eventUrl?: string;
-  videoUrl?: string;
-}
-
-export interface EventProps {
-  event: EventData;
-  fallback?: {
-    [key: string]: EventData;
-  };
-}
-
-export interface EventPageProps {
-  params: {
-    eventId: string;
-  };
-}
-
-export interface QueryParams {
-  newEvent?: boolean;
-  edit_suggested?: boolean;
-}
-
-export interface EventRefs {
-  mapsRef: RefObject<HTMLDivElement>;
-  weatherRef: RefObject<HTMLDivElement>;
-  eventsAroundRef: RefObject<HTMLDivElement>;
-  editModalRef: RefObject<HTMLDivElement>;
-}
-
-export interface DynamicOptionsLoadingProps {
-  error?: Error | null;
-  isLoading?: boolean;
-  pastDelay?: boolean;
-  timedOut?: boolean;
-}
+// Removed unused Event* props and helper types to keep the type surface minimal
 
 export interface FetchEventsParams {
   page?: number;

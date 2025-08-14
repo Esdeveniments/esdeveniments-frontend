@@ -1,15 +1,9 @@
 import type { CSSProperties } from "react";
-import type { ErrorProps } from "next/error";
-import type { EventLocation } from "../store";
 import type { StoreState } from "@store";
-import type { EventCategory } from "@store";
-import {
-  EventSummaryResponseDTO,
-  EventDetailResponseDTO,
-  ListEvent,
-} from "types/api/event";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
+import type { CalendarUrls } from "types/calendar";
 
 export interface Option {
   label: string;
@@ -50,12 +44,6 @@ export type CategoryValue =
 
 export type Categories = Record<CategoryKey, CategoryValue>;
 
-export interface CalendarUrls {
-  google: string;
-  outlook: string;
-  ical: string;
-}
-
 export interface CalendarOption {
   name: string;
   url?: string;
@@ -70,25 +58,7 @@ export type DeleteReason =
   | "others"
   | null;
 
-export interface EventProps {
-  event: EventDetailResponseDTO;
-}
-
-export interface EventsProps {
-  events?: EventSummaryResponseDTO[];
-}
-
-export interface UseGetEventsProps {
-  props?: EventsProps;
-  pageIndex: number;
-  refreshInterval?: boolean;
-  maxResults?: number;
-  zone?: string;
-  category?: string;
-  lat?: number;
-  lon?: number;
-  radius?: number;
-}
+// Removed duplicate/unused EventProps (conflicted with types/event)
 
 export interface NetworkInformation {
   downlink?: number;
@@ -135,6 +105,25 @@ export interface PlaceTypeAndLabel {
 export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
 export type PlaceType = "region" | "town" | "";
 
+export type Href = `/${string}`;
+
+// Unified NavigationItem interface for both UI and SEO use cases
+export interface NavigationItem {
+  name: string;
+  href?: Href; // UI navigation (preferred for ActiveLink)
+  url?: string; // SEO structured data (fallback if href not provided)
+  current?: boolean; // UI navigation state
+}
+
+export interface SocialLinks {
+  web: string;
+  twitter: string;
+  instagram: string;
+  telegram: string;
+  facebook: string;
+  [key: string]: string;
+}
+
 export interface FetchedData {
   content?: ListEvent[];
   noEventsFound?: boolean;
@@ -147,10 +136,6 @@ export interface RenderButtonProps {
   onClick: () => void;
   handleOpenModal: () => void;
   scrollToTop: () => void;
-}
-
-export interface FiltersProps {
-  placeLabel: string;
 }
 
 export interface GeolocationPosition {
@@ -297,10 +282,6 @@ export interface ListProps {
   children: (event: ListEvent, index: number) => React.ReactElement;
 }
 
-export interface MapsProps {
-  location: string;
-}
-
 export interface TooltipComponentProps {
   id: string;
   children: React.ReactNode;
@@ -311,66 +292,7 @@ export interface ViewCounterProps {
   hideText?: boolean;
 }
 
-export interface InitialState {
-  place: string;
-  byDate: string;
-  events: ListEvent[];
-  noEventsFound: boolean;
-  hasServerFilters: boolean;
-}
-
-export interface ByDateProps {
-  initialState: InitialState;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
-
-export interface StaticProps {
-  params: {
-    place: string;
-    byDate: string;
-  };
-}
-
-export interface PlaceInitialState {
-  // Only filter state - events are handled server-side
-  place: string;
-  byDate: string;
-  category: EventCategory | "";
-}
-
-export interface PlaceProps {
-  initialState: PlaceInitialState;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
-
-export interface PlaceStaticPathParams {
-  place: string;
-  [key: string]: string | string[] | undefined;
-}
-
-export type PlaceStaticPath = { params: PlaceStaticPathParams };
-
-export interface MyErrorProps extends ErrorProps {
-  hasGetInitialPropsRun: boolean;
-  err?: Error;
-}
-
-export interface EditEventPageProps {
-  params: {
-    eventId: string;
-  };
-}
-
-export interface ApiResponse {
-  success: boolean;
-  message?: string;
-  event?: FormData;
-}
-
-export interface HomeInitialState {
-  // Only initialize filter state - events are handled server-side
-  userLocation?: EventLocation | null;
-}
+// Removed unused MyErrorProps based on current app error boundaries
 
 export interface TeamMember {
   name: string;
@@ -381,8 +303,6 @@ export interface TeamMember {
 }
 
 export type DateRange = { from: Date; until: Date };
-
-export type DateFunctionsMap = { [key: string]: () => DateRange };
 
 export interface RssEvent {
   id: string;
@@ -395,12 +315,6 @@ export interface RssEvent {
   region: string;
   startDate: string;
   imageUrl?: string;
-}
-
-export interface MonthProps {
-  events: EventSummaryResponseDTO[];
-  town: string;
-  townLabel: string;
 }
 
 export interface MonthStaticPathParams {
@@ -417,10 +331,12 @@ export interface TownStaticPathParams {
   [key: string]: string | undefined;
 }
 
-export interface SitemapProps {
-  town: string;
-  label: string;
+export interface PlaceStaticPathParams {
+  place: string;
+  [key: string]: string | string[] | undefined;
 }
+
+export type PlaceStaticPath = { params: PlaceStaticPathParams };
 
 // SearchState type
 export interface SearchState {
@@ -442,12 +358,6 @@ export function makePlaceTypeAndLabel(
   };
 }
 
-export interface LoaderProps {
-  src: string;
-  width: number;
-  quality?: number;
-}
-
 export interface ImageComponentProps {
   title: string;
   image?: string;
@@ -460,17 +370,11 @@ export interface ImageComponentProps {
   quality?: number;
 }
 
-export interface ActiveLinkProps extends LinkProps {
+export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   children: React.ReactNode;
   activeLinkClass?: string;
   className?: string;
-}
-
-export interface URLFilters {
-  category?: string;
-  date?: string;
-  distance?: string;
-  searchTerm?: string;
+  href?: Href;
 }
 
 // Hook return types
@@ -517,4 +421,28 @@ export interface PreloadOptions {
 
 export interface GoogleAnalyticsEvent {
   [key: string]: unknown;
+}
+
+// SEO and structured data types
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+export interface WebPageOptions {
+  title: string;
+  description: string;
+  url: string;
+  breadcrumbs?: BreadcrumbItem[];
+  isPartOf?: string;
+  mainContentOfPage?: Record<string, unknown>;
+}
+
+export interface CollectionPageOptions {
+  title: string;
+  description: string;
+  url: string;
+  breadcrumbs?: BreadcrumbItem[];
+  mainEntity?: Record<string, unknown>;
+  numberOfItems?: number;
 }

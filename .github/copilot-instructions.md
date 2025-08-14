@@ -60,12 +60,20 @@ Adding a new filter:
 - Keep links, list rendering, and content display server-rendered whenever possible. Client hydration should be minimal and scoped.
 - This project tracks the latest Next.js App Router conventions; avoid legacy patterns from pages router.
 
-## 7. TypeScript Strictness
+## 7. TypeScript Strictness & Type Organization
 
 - No `any` is allowed. Use precise types or `unknown` with proper narrowing when necessary.
+- **Type Organization**: Follow the structure defined in `types/README.md` - all types must be in the `/types` directory with clear domain separation.
+- **Canonical Sources**: Each type should be defined exactly once in its canonical location:
+  - API DTOs: `types/api/*.ts` (e.g., `CitySummaryResponseDTO` in `types/api/city.ts`)
+  - Shared UI types: `types/common.ts` (e.g., `NavigationItem`, `SocialLinks`)
+  - Domain-specific: `types/event.ts`, `types/filters.ts`, etc.
+- **No Duplication**: ESLint rules prevent duplicate interface definitions. Always import from canonical sources.
+- **DRY Principle**: Consolidate duplicate types by moving to `types/common.ts` and updating all imports.
 - Prefer explicit interfaces/types in `types/` and reuse DTOs across layers.
 - Keep `strict` type-checking green (`noImplicitAny`, `noUncheckedIndexedAccess`, etc. where applicable). Do not suppress with `// @ts-ignore` unless absolutely necessary and justified.
 - ESLint rule: Do not declare types or interfaces outside of the `types/` directory. Our linter enforces this via `no-restricted-syntax` for `TSTypeAliasDeclaration` and `TSInterfaceDeclaration` anywhere outside `types/`.
+- **Type Consolidation**: When adding new types, check `types/README.md` for existing patterns and canonical sources to avoid duplication.
 
 ## 8. Build / Run / Test Workflow
 
@@ -76,28 +84,45 @@ Adding a new filter:
 - Type check: `yarn typecheck`.
 - Lint: `yarn lint` (ESLint + Next config). Maintain existing conventions; prefer config-driven patterns over ad hoc conditionals.
 
-## 9. Service Worker Pattern
+## 9. Type Maintenance & Quality
+
+- **Before adding new types**: Check `types/README.md` for existing patterns and canonical sources.
+- **Type consolidation workflow**:
+  1. Run `yarn typecheck` to identify any type errors
+  2. Check for duplicate interfaces using `yarn lint` (ESLint rules catch duplicates)
+  3. Consolidate duplicates by moving to canonical location in `types/common.ts`
+  4. Update all imports to use canonical source
+  5. Verify with `yarn typecheck && yarn lint`
+- **Canonical sources to remember**:
+  - `NavigationItem`, `SocialLinks` → `types/common.ts`
+  - `CitySummaryResponseDTO` → `types/api/city.ts`
+  - API DTOs → `types/api/*.ts`
+  - UI props → `types/common.ts`
+  - Domain-specific → respective domain files
+- **When refactoring types**: Update `types/README.md` to reflect new organization patterns.
+
+## 10. Service Worker Pattern
 
 - Template: `public/sw-template.js` (contains placeholder `{{API_ORIGIN}}`).
 - Generation script replaces placeholder with `NEXT_PUBLIC_API_URL` origin (fallback pre env) -> writes `public/sw.js` consumed by middleware (special cache headers).
 - Update caching logic ONLY via template; never hand-edit generated `public/sw.js` (will be overwritten).
 
-## 10. Security & Analytics
+## 11. Security & Analytics
 
 - CSP: Only nonce-based scripts allowed; no inline scripts without nonce. When adding new `<Script>` blocks or inline JSON-LD, pass `nonce` from `headers()` (layout pattern in `app/layout.tsx`). If in a page, read `const nonce = (await headers()).get('x-nonce') || ''` and pass it to all Script tags.
 - External tracking (GA, Ads, Sentry) loaded afterInteractive with nonce to satisfy CSP `'strict-dynamic'` policy.
 
-## 11. Image Performance Strategy
+## 12. Image Performance Strategy
 
 - External images assumed: default quality cap 50; priority/LCP images use 60. Adjust with `getOptimalImageQuality` and `getOptimalImageSizes` contexts (card, hero, list, detail).
 - Preload critical images using `preloadImage` cautiously; note comment about internal Next.js `_next/image` URL coupling—avoid brittle custom logic across versions.
 - Retry logic: `useImageRetry` provides exponential backoff; use `getImageKey` to force re-render on retry.
 
-## 12. Versioning & Cache Busting
+## 13. Versioning & Cache Busting
 
 - `BUILD_VERSION` resolves to timestamp in dev, build ID or package version in prod. Use `getVersionedUrl('/path')` when adding long-lived assets needing busting.
 
-## 13. Contribution Conventions
+## 14. Contribution Conventions
 
 - Prefer adding capabilities via configuration (filters, categories) rather than branching conditionals.
 - Centralize constants in `utils/constants.ts`; avoid duplicating literals (dates, distances, category labels).
@@ -105,19 +130,21 @@ Adding a new filter:
 - Dates: Use `getFormattedDate(start, end)` from `utils/date-helpers.ts` for any human-readable date range in UI (e.g., pills, subtitles). Do not inline `toLocaleDateString` in components.
 - Colors: Use Tailwind theme tokens defined in `tailwind.config.js` (e.g., `primary`, `primarydark`, `whiteCorp`, `darkCorp`, `blackCorp`, `bColor`). Do not hardcode hex values in components/styles. If a new color is needed, add it to the Tailwind theme and reference by token.
 
-## 14. Common Pitfalls
+## 15. Common Pitfalls
 
 - Forgetting to regenerate SW after changing template (always rely on `prebuild`).
 - Adding inline script without nonce (breaks under CSP).
 - Encoding filter defaults in multiple places instead of relying on config defaults.
 - Creating URLs that include unused default segments (`/tots/`). Always use `buildCanonicalUrl` helpers.
+- **Type duplication**: Creating duplicate interfaces instead of importing from canonical sources in `types/common.ts`.
 
-## 15. Quick Examples
+## 16. Quick Examples
 
 - Remove distance filter: `FilterOperations.getRemovalUrl('distance', segments, queryParams)` auto clears distance + lat/lon.
-- Add “price” filter: create config with key `price`, supply `defaultValue`, `isEnabled` logic, update UI to read via `FilterOperations.getAllConfigurations()`; no URL parsing changes if kept query-based.
+- Add "price" filter: create config with key `price`, supply `defaultValue`, `isEnabled` logic, update UI to read via `FilterOperations.getAllConfigurations()`; no URL parsing changes if kept query-based.
+- **Consolidate duplicate types**: Move shared interfaces to `types/common.ts`, update imports, run `yarn typecheck && yarn lint`.
 
-## 16. Hybrid Rendering Contract (Explicit)
+## 17. Hybrid Rendering Contract (Explicit)
 
 - Server (SSR):
   - Fetch initial events, then call `insertAds(events)` once to insert ad markers.
@@ -129,7 +156,7 @@ Adding a new filter:
   - De-duplicate by `id` when merging SSR-with-ads and appended events.
 - Rationale: keeps ad density stable and avoids duplicate or clustered ad markers.
 
-## 17. Environment Variables
+## 18. Environment Variables
 
 - Required: `NEXT_PUBLIC_API_URL` (core), `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `NEXT_PUBLIC_SENTRY_DNS`, `NEXT_PUBLIC_VERCEL_ENV`.
 - On absence of `NEXT_PUBLIC_API_URL`: read endpoints must return safe empty DTOs (never throw) except explicit mutation endpoints.

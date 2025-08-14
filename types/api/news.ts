@@ -1,3 +1,5 @@
+import type { PagedResponseDTO as EventPagedResponseDTO } from "./event";
+
 export type NewsType = "WEEKLY" | "WEEKEND" | string;
 
 export interface NewsSummaryResponseDTO {
@@ -50,11 +52,4 @@ export interface NewsDetailResponseDTO {
   createdAt: string; // ISO datetime
 }
 
-export interface PagedResponseDTO<T> {
-  content: T[];
-  currentPage: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-}
+export type PagedResponseDTO<T> = EventPagedResponseDTO<T>;
