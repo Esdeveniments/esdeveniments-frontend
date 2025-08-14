@@ -45,15 +45,15 @@ export default async function RootLayout({
       lang="ca"
       className={`${robotoFlex.variable} ${barlowCondensed.variable}`}
     >
-      <body>
+      <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         {apiOrigin && (
           <link rel="preconnect" href={apiOrigin} crossOrigin="anonymous" />
         )}
-        <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
-        <link rel="dns-prefetch" href="//www.google-analytics.com" />
+      </head>
+      <body>
         <WebsiteSchema nonce={nonce} />
         <CriticalCSS />
         <GoogleScripts nonce={nonce} />
