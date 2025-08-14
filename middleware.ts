@@ -74,17 +74,23 @@ function getCsp(nonce: string) {
 
     // --- LOCKDOWN DIRECTIVES (Hardening) ---
     "worker-src": ["'self'", "blob:"],
-    "object-src": ["'none'"], // Disallow plugins like Flash
+    "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],
-    "frame-ancestors": ["'self'"], // Prevents clickjacking
-
-    // 'report-uri': 'YOUR_SENTRY_REPORTING_ENDPOINT',
+    "frame-ancestors": ["'self'"],
   };
 
-  return Object.entries(cspDirectives)
-    .map(([key, value]) => `${key} ${value.filter(Boolean).join(" ")}`)
+  // Convert to a compact CSP string, filtering out empty entries
+  const csp = Object.entries(cspDirectives)
+    .map(([key, value]) => {
+      const filtered = Array.isArray(value)
+        ? value.filter(Boolean)
+        : ([value].filter(Boolean) as string[]);
+      return `${key} ${filtered.join(" ")}`;
+    })
     .join("; ");
+
+  return csp;
 }
 
 export function middleware(request: NextRequest) {
@@ -100,6 +106,15 @@ export function middleware(request: NextRequest) {
     );
     response.headers.set("Service-Worker-Allowed", "/");
     return response;
+  }
+
+  // --- Protect dashboard routes (server-side cookie) ---
+  if (pathname.startsWith("/dashboard")) {
+    const hasSession = request.cookies.get("session");
+    if (!hasSession) {
+      const loginUrl = new URL("/auth/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   // --- Handle Redirects ---
