@@ -102,22 +102,7 @@ export interface DescriptionProps {
   locationValue?: string;
 }
 
-export type Href = `/${string}`;
-
-export interface NavigationItem {
-  name: string;
-  href: Href;
-  current: true | false;
-}
-
-export interface SocialLinks {
-  web: string;
-  twitter: string;
-  instagram: string;
-  telegram: string;
-  facebook: string;
-  [key: string]: string;
-}
+// NavigationItem and Href are now imported from types/common.ts
 
 export interface DatePickerComponentProps {
   idPrefix?: string;

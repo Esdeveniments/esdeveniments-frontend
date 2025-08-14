@@ -1,7 +1,3 @@
----
-alwaysApply: true
----
-
 ### Quick-start checklist (copy for any task)
 
 1. Identify domain (Filters/URLs, API, SEO, SW, Security) and open key files.
@@ -18,4 +14,9 @@ alwaysApply: true
    - Respect merge and dedupe rules on client
 6. If SW changes:
    - Edit template → regenerate with `prebuild`
-7. Run: `yarn typecheck` → `yarn test` → `yarn lint` → build as needed.
+7. **For type changes**:
+   - Check `types/README.md` for existing patterns and canonical sources
+   - Import from canonical locations (e.g., `NavigationItem` from `types/common.ts`)
+   - Avoid duplicate interface definitions
+   - Consolidate shared types in `types/common.ts`
+8. Run: `yarn typecheck` → `yarn test` → `yarn lint` → build as needed.

@@ -1,7 +1,7 @@
 import { JSX } from "react";
 import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
-import { NavigationItem, SocialLinks } from "types/props";
+import { NavigationItem, SocialLinks } from "types/common";
 
 const navigation: NavigationItem[] = [
   { name: "Agenda", href: "/", current: false },

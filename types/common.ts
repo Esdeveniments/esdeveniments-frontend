@@ -1,11 +1,6 @@
 import type { CSSProperties } from "react";
-import type { ErrorProps } from "next/error";
 import type { StoreState } from "@store";
-import {
-  EventSummaryResponseDTO,
-  EventDetailResponseDTO,
-  ListEvent,
-} from "types/api/event";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
 import type { CalendarUrls } from "types/calendar";
@@ -63,9 +58,7 @@ export type DeleteReason =
   | "others"
   | null;
 
-export interface EventProps {
-  event: EventDetailResponseDTO;
-}
+// Removed duplicate/unused EventProps (conflicted with types/event)
 
 export interface NetworkInformation {
   downlink?: number;
@@ -111,6 +104,25 @@ export interface PlaceTypeAndLabel {
 
 export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
 export type PlaceType = "region" | "town" | "";
+
+export type Href = `/${string}`;
+
+// Unified NavigationItem interface for both UI and SEO use cases
+export interface NavigationItem {
+  name: string;
+  href?: Href; // UI navigation (preferred for ActiveLink)
+  url?: string; // SEO structured data (fallback if href not provided)
+  current?: boolean; // UI navigation state
+}
+
+export interface SocialLinks {
+  web: string;
+  twitter: string;
+  instagram: string;
+  telegram: string;
+  facebook: string;
+  [key: string]: string;
+}
 
 export interface FetchedData {
   content?: ListEvent[];
@@ -280,10 +292,7 @@ export interface ViewCounterProps {
   hideText?: boolean;
 }
 
-export interface MyErrorProps extends ErrorProps {
-  hasGetInitialPropsRun: boolean;
-  err?: Error;
-}
+// Removed unused MyErrorProps based on current app error boundaries
 
 export interface TeamMember {
   name: string;
@@ -361,10 +370,11 @@ export interface ImageComponentProps {
   quality?: number;
 }
 
-export interface ActiveLinkProps extends LinkProps {
+export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   children: React.ReactNode;
   activeLinkClass?: string;
   className?: string;
+  href?: Href;
 }
 
 // Hook return types
@@ -411,4 +421,28 @@ export interface PreloadOptions {
 
 export interface GoogleAnalyticsEvent {
   [key: string]: unknown;
+}
+
+// SEO and structured data types
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+export interface WebPageOptions {
+  title: string;
+  description: string;
+  url: string;
+  breadcrumbs?: BreadcrumbItem[];
+  isPartOf?: string;
+  mainContentOfPage?: Record<string, unknown>;
+}
+
+export interface CollectionPageOptions {
+  title: string;
+  description: string;
+  url: string;
+  breadcrumbs?: BreadcrumbItem[];
+  mainEntity?: Record<string, unknown>;
+  numberOfItems?: number;
 }
