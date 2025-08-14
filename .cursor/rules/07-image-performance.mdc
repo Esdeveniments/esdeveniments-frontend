@@ -8,4 +8,5 @@ alwaysApply: false
 - **Sizes**: Use `getOptimalImageSizes` per context (card, hero, list, detail).
 - **Preload**: Use `preloadImage` conservatively; mind internal `_next/image` URL coupling—avoid brittle custom logic.
 - **Retry**: Use `useImageRetry` with exponential backoff; use `getImageKey` to force re-render on retry.
-- **Next images**: Only whitelist necessary remote patterns via `next.config.js` (already wildcard). Prefer keeping minimal.
+- **Component**: Prefer `components/ui/common/image` wrapper for consistent behavior (quality, sizes, loading states).
+- **Next images**: Only whitelist necessary remote patterns via `next.config.js` (currently wildcard). Prefer keeping minimal.

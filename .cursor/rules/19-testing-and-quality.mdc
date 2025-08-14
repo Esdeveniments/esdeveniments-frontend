@@ -1,0 +1,12 @@
+### Testing and quality
+
+- Unit tests (Vitest):
+  - URL filters canonicalization and parsing (`utils/url-filters.ts`).
+  - Route validation (`utils/route-validation.ts`).
+  - Meta builders (`components/partials/seo-meta.ts`, `lib/meta.ts`).
+  - Image helpers (`utils/image-quality.ts`, `utils/image-preload.ts`).
+  - Caching utilities (`lib/api/cache.ts`).
+- E2E (Playwright): Smoke flows for search, list pagination, and detail page navigation.
+- Test data: Prefer lightweight fixtures mirroring DTOs in `types/api/*`.
+- Lint/typecheck: Run `yarn lint` and `yarn typecheck` before PRs. Keep ESLint rules satisfied (no inline types/interfaces).
+- CI: Ensure `prebuild` step runs to keep SW up to date for E2E runs.

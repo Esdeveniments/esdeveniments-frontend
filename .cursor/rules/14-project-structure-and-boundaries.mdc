@@ -1,0 +1,22 @@
+### Project structure and module boundaries
+
+- app/: Next.js App Router routes, layouts, and special files. Keep server-only logic in server components or route handlers. Read nonce via headers() in layouts/pages.
+- components/ui/: Presentational and interactive components. No direct API calls; accept props derived from server data or use client-only hooks.
+- components/partials/: Cross-cutting page fragments (SEO, schemas, CriticalCSS, data builders). Use nonce for any inline <script> or JSON-LD.
+- components/hooks/: Client hooks only; avoid environment-dependent logic.
+- lib/api/: API client layer and cache utilities. All backend communication goes here. Respect env guards and caching tags/TTL.
+- lib/: Cross-domain helpers (meta, fonts, dates) that are framework-aware.
+- utils/: Pure utilities (string, url, dates, images, filters). No React/DOM. Keep deterministic and side-effect free.
+- config/: Centralized configuration (filters, siteUrl). Prefer configuration over branching logic.
+- types/: All TypeScript types/interfaces (including api DTOs). Do not declare types outside this directory.
+- styles/: Tailwind and global CSS only. Co-locate minimal component styles via classNames.
+- public/: Static assets, generated SW output (do not edit `public/sw.js` directly).
+- test/: Vitest unit/integration tests and test setup.
+
+### Module boundaries
+
+- API usage: Only from server components/route handlers or lib/api. Do not fetch in presentational components.
+- URL-first filters: URL is the single source of truth. Do not mirror filter state in stores.
+- Types: Import from types/ and keep DTO names stable. Avoid redefining shapes in components.
+- Config-driven: Add features via config/ and FilterOperations rather than scattering conditionals.
+- Path aliases: Use @app/*, @components/*, @utils/*, @lib/*, @config/*, @types/* as defined in tsconfig.json.
