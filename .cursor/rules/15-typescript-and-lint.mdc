@@ -1,0 +1,12 @@
+### TypeScript and linting standards
+
+- Strict mode: Keep tsconfig strict; do not weaken compiler options.
+- No any: Avoid the `any` type. Prefer precise types or `unknown` with refinement.
+- Types location: Declare interfaces/types only under `types/`. ESLint forbids declarations elsewhere.
+- Public APIs: Explicitly type exported functions and component props/returns.
+- Environment access: Read `process.env` only on the server; use `NEXT_PUBLIC_*` on the client.
+- Non-null assertions: Avoid `!`. Prefer guards and narrowings.
+- Generics: Use generic helpers (e.g., `createCache<T>`) rather than casting.
+- Imports: Prefer path aliases (`@lib/...`, `@utils/...`) and import DTOs from `types/api/*`.
+- DTO mapping: Preserve backend param names (e.g., `term`, `radius`) and shapes in types; map UI names in callers.
+- Error handling: For read APIs, return safe fallbacks. For writes, log `response.text()` and throw with details.

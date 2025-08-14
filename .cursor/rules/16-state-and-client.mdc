@@ -1,0 +1,8 @@
+### State management and client behavior
+
+- URL-first filters: Do not persist filters in state. Source of truth is the URL segments/query.
+- Zustand store: Keep minimal UI state only (`openModal`, `hydrated`, `userLocation`). Avoid duplicating server data in the store.
+- Hydration: Gate client-only UI with `hydrated` to prevent mismatch.
+- SWR/data fetching: Client-side enhancements should append to SSR data without duplicating ads; de-duplicate by id.
+- Geolocation: Store ephemeral location data only when needed; never send without user action.
+- Side effects: Encapsulate browser APIs behind hooks in `components/hooks/` and guard for SSR.
