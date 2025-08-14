@@ -17,6 +17,7 @@ import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchEvents } from "@lib/api/events";
 import PromoStripTracker from "@components/ui/promotions/PromoStripTracker";
+import FeaturedEventsSection from "@components/ui/featuredEvents/FeaturedEventsSection";
 
 // Helper: Metadata generation
 export async function generateMetadata(props: {
@@ -140,20 +141,7 @@ export default async function EventPage({
             <EventClient event={event} />
 
             {process.env.NEXT_PUBLIC_FEATURE_PROMOTED === "1" && nearbyBusinesses.length >= 3 && (
-              <section className="w-full">
-                <div className="w-full flex justify-center items-start gap-2 px-4 mb-2">
-                  <h2>Empreses recomanades a prop</h2>
-                </div>
-                <PromoStripTracker events={nearbyBusinesses} placement="event_nearby" pageType="event" place={event.region?.slug}>
-                  <EventsAroundServer
-                    events={nearbyBusinesses}
-                    layout="horizontal"
-                    showJsonLd={false}
-                    title="Empreses recomanades a prop"
-                    nonce={nonce}
-                  />
-                </PromoStripTracker>
-              </section>
+              <FeaturedEventsSection title="Empreses recomanades a prop" place={event.region?.slug} placement="event_nearby" pageType="event" />
             )}
 
             {/* Related Events - Server-side rendered for SEO */}
