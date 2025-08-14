@@ -7,6 +7,7 @@ import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import CriticalCSS from "@components/partials/CriticalCSS";
 import { robotoFlex, barlowCondensed } from "../lib/fonts";
+import { getApiOrigin } from "../utils/api-helpers";
 
 export const metadata: Metadata = {
   other: {
@@ -37,18 +38,22 @@ export default async function RootLayout({
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";
+  const apiOrigin = getApiOrigin();
 
   return (
     <html
       lang="ca"
       className={`${robotoFlex.variable} ${barlowCondensed.variable}`}
     >
-      <body>
+      <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
-        <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
-        <link rel="dns-prefetch" href="//www.google-analytics.com" />
+        {apiOrigin && (
+          <link rel="preconnect" href={apiOrigin} crossOrigin="anonymous" />
+        )}
+      </head>
+      <body>
         <WebsiteSchema nonce={nonce} />
         <CriticalCSS />
         <GoogleScripts nonce={nonce} />

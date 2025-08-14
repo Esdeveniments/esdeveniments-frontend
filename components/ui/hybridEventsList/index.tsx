@@ -13,6 +13,7 @@ import { HybridEventsListProps } from "types/props";
 import { preloadImages } from "@utils/image-preload";
 import { getNewsCta } from "@utils/helpers";
 import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
+import { QUALITY_PRESETS, getOptimalImageSizes } from "@utils/image-quality";
 
 function HybridEventsList({
   initialEvents = [],
@@ -75,18 +76,20 @@ function HybridEventsList({
 
   const allEvents = mergedEvents;
 
-  // Preload first 3 images for better LCP
+  // Preload first 2 images for better LCP while limiting bandwidth
   useEffect(() => {
     const imagesToPreload = allEvents
-      .slice(0, 3)
+      .slice(0, 2)
       .filter((event) => isEventSummaryResponseDTO(event) && event.imageUrl)
       .map((event, index) => ({
         src: (event as EventSummaryResponseDTO).imageUrl!,
         options: {
           priority: index === 0,
-          quality: index === 0 ? 85 : 75,
-          sizes:
-            "(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
+          quality:
+            index === 0
+              ? QUALITY_PRESETS.LCP_EXTERNAL
+              : QUALITY_PRESETS.EXTERNAL_HIGH,
+          sizes: getOptimalImageSizes("card"),
         },
       }));
 

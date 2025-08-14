@@ -1,31 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getApiOrigin } from "./utils/api-helpers";
 
 // Determine if the environment is development
 const isDev = process.env.NODE_ENV !== "production";
-
-// Get API origin with multiple fallback strategies for Edge Runtime
-// Edge Runtime has limitations with environment variables
-const getApiOrigin = () => {
-  // Strategy 1: Try environment variable (works in most cases)
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  if (apiUrl) {
-    try {
-      return new URL(apiUrl).origin;
-    } catch {
-      console.warn("Invalid NEXT_PUBLIC_API_URL format:", apiUrl);
-    }
-  }
-
-  // Strategy 2: Fallback based on NODE_ENV
-  const nodeEnv = process.env.NODE_ENV;
-  if (nodeEnv === "production") {
-    return "https://api.esdeveniments.cat"; // Production API
-  }
-
-  // Strategy 3: Default fallback (development/staging)
-  return "https://api-pre.esdeveniments.cat";
-};
 
 /**
  * Generates a balanced and maintainable Content Security Policy.
