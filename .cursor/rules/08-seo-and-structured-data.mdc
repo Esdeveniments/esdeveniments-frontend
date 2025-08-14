@@ -5,9 +5,9 @@ alwaysApply: false
 
 ### SEO and structured data (JSON-LD)
 
-- **Meta**: Use `components/partials/seo-meta.ts` helpers to build page metadata; keep canonical URLs correct via URL helpers.
-- **generateMetadata**: Each route computes metadata server-side; rely on `generatePagesData` and validations.
-- **JSON-LD**: Render with Next `<Script>` or inline `<script>` using `nonce` and `dangerouslySetInnerHTML`.
-- **Lists**: Use `generateItemListStructuredData` for event lists; limit items for performance.
-- **Event detail**: Use `generateJsonData` for the main event and optionally a related events ItemList.
-- **Sitemaps**: `next-sitemap` config in `next-sitemap.config.js`; additional routes under `app/server-sitemap.xml` and `app/rss.xml`.
+- Meta: Use `components/partials/seo-meta.ts` helpers (`buildPageMeta`) and `lib/meta.ts` for event detail.
+- generateMetadata: Build per route using `generatePagesData` and `buildPageMeta`; ensure canonical with `siteUrl` and URL helpers.
+- JSON-LD: Render with Next `<Script>` or inline `<script>` using nonce from `headers()`; never inject inline scripts without nonce.
+- Lists: Use `generateItemListStructuredData` for event collections; limit to ≤20 items.
+- Event detail: Use `generateEventMetadata` to generate full Metadata including OG/Twitter and keywords.
+- Sitemaps/RSS: Managed by `next-sitemap` and app routes in `app/server-*.xml/` and `app/rss.xml/`.

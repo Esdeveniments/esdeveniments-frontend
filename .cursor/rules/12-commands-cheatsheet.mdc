@@ -2,15 +2,16 @@
 alwaysApply: false
 ---
 
-### Commands cheat sheet
+### Commands cheatsheet
 
-- Dev: `yarn dev`
-- Build (default): `yarn build`
-- Build by env: `yarn build:development | build:staging | build:production`
-- Start by env: `yarn start:development | start:staging | start:production`
-- Tests: `yarn test` (watch: `yarn test:watch`)
-- Typecheck: `yarn typecheck`
+- Dev: `yarn dev` (runs prebuild and Next dev)
+- Build: `yarn build` (prebuild + Next build)
+- Env-specific builds: `yarn build:development|staging|production`
+- Start (prod build): `yarn start`
+- Analyze: `yarn analyze` | `yarn analyze:server` | `yarn analyze:browser`
 - Lint: `yarn lint`
-- Analyze bundles: `yarn analyze | analyze:server | analyze:browser`
-- SW generation only: `yarn prebuild`
-- React Scan: `yarn scan` (requires dev server running)
+- Typecheck: `yarn typecheck`
+- Unit tests: `yarn test` (or `yarn test:watch`)
+- Coverage: `yarn test:coverage`
+- E2E: `yarn test:e2e` (UI: `yarn test:e2e:ui`, debug: `yarn test:e2e:debug`)
+- React Scan (perf insights): `yarn scan` (visit `localhost:3000` first)

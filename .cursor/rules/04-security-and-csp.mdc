@@ -5,9 +5,15 @@ alwaysApply: false
 
 ### Security: CSP and nonce usage (middleware-driven)
 
-- **Nonce source**: `middleware.ts` generates `x-nonce`; pages/components must read from `headers()` and pass to Script/JSON-LD.
-- **CSP**: strict nonce-based with `'strict-dynamic'`; no inline scripts without nonce.
-- **Placement**: For pages, read `const nonce = (await headers()).get('x-nonce') || ''` and pass to all Next `<Script>` tags and inline JSON-LD blocks.
-- **Scripts**: Load GA/Ads/Sentry afterInteractive and with `nonce`. Example pattern in `app/GoogleScripts.tsx` and `app/layout.tsx`.
-- **Headers**: Security headers are set in `middleware.ts` (HSTS, X-Content-Type-Options, etc.). Do not duplicate in Next `headers()` config.
-- **Frames/Workers**: Respect `frame-src`, `worker-src` limitations.
+- Nonce source: `middleware.ts` generates `x-nonce`; pages/components must read from `headers()` and pass to Script/JSON-LD.
+- CSP: strict nonce-based with `'strict-dynamic'`; no inline scripts without nonce.
+- Placement: In layouts/pages, read nonce once and pass down:
+
+```
+const headersList = await headers();
+const nonce = headersList.get('x-nonce') || '';
+```
+
+- Scripts: Load GA/Ads/Sentry afterInteractive and with `nonce`.
+- Headers: Security headers set in `middleware.ts`; do not duplicate in Next `headers()` config.
+- Frames/Workers: Respect `frame-src`, `worker-src` limitations.

@@ -1,0 +1,9 @@
+### UI, accessibility, and styling
+
+- Tailwind-first: Use utility classes; keep class composition simple and semantic.
+- Semantics: Prefer semantic elements (<button>, <nav>, <header>, <section>) over generic <div>.
+- Keyboard: Ensure focus states and keyboard navigation for interactive components.
+- Images: Provide meaningful `alt`; use Next Image with sizes/quality helpers from `utils/image-quality.ts`.
+- Forms: Label controls and associate `htmlFor` properly; validate before submit.
+- Headless UI: Use `@headlessui/react` for accessible patterns where needed.
+- Layout: Keep container widths consistent with existing responsive classes in `app/page.tsx`.

@@ -1,0 +1,9 @@
+### Performance guardrails
+
+- Fetch caching: Use Next `next: { revalidate, tags }` consistent with lib/api (e.g., `events`, `events:categorized`, `event:{slug}`).
+- Image strategy: Use `getOptimalImageQuality` and `getOptimalImageSizes`; preload only LCP-critical assets via `preloadImage`.
+- Preconnect/DNS-prefetch: Follow patterns in `app/layout.tsx`; do not add domains casually.
+- Console stripping: Rely on Next compiler removeConsole in production; avoid noisy logs in hot paths.
+- Streaming/SSR: Keep server components lean; prefer incremental rendering with `<Suspense>` for client islands.
+- Bundles: Avoid large third-party libs in the client; prefer dynamic import with reasonable `ssr: false` only when necessary.
+- SW: Update `public/sw-template.js` and regenerate to adjust caching. Do not hand-edit `public/sw.js`.
