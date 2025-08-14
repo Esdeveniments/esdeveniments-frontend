@@ -75,6 +75,9 @@ function getCsp(nonce: string) {
     // --- LOCKDOWN DIRECTIVES (Hardening) ---
     "worker-src": ["'self'", "blob:"],
     "object-src": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "frame-ancestors": ["'self'"],
   };
 
   // Convert to a compact CSP string, filtering out empty entries
