@@ -1,8 +1,14 @@
 export default function OfflinePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div
+      className="min-h-screen flex items-center justify-center bg-gray-50"
+      data-testid="offline-page"
+    >
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1
+          className="text-4xl font-bold text-gray-900 mb-4"
+          data-testid="offline-title"
+        >
           🌐 Sense connexió
         </h1>
         <p className="text-lg text-gray-600 mb-8">
@@ -12,6 +18,7 @@ export default function OfflinePage() {
         <a
           href="/"
           className="inline-block bg-blue-500 hover:bg-blue-700 text-whiteCorp font-bold py-2 px-4 rounded"
+          data-testid="offline-home-link"
         >
           Torna a l&apos;inici
         </a>

@@ -104,7 +104,10 @@ function HybridEventsList({
 
   if (noEventsFound || allEvents.length === 0) {
     return (
-      <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+      <div
+        className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32"
+        data-testid="events-list"
+      >
         <NoEventsFound title={pageData?.notFoundText} />
         <List events={allEvents}>
           {(event: ListEvent, index: number) => (
@@ -120,7 +123,10 @@ function HybridEventsList({
   }
 
   return (
-    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32">
+    <div
+      className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32"
+      data-testid="events-list"
+    >
       {/* SEO Content */}
       {pageData && (
         <>

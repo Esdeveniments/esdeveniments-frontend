@@ -2,20 +2,12 @@
 alwaysApply: true
 ---
 
-### Quick-start checklist (copy for any task)
+### Quick start checklist (project-specific)
 
-1. Identify domain (Filters/URLs, API, SEO, SW, Security) and open key files.
-2. Confirm URL canonical rules; use `parseFiltersFromUrl` and `buildCanonicalUrl*` helpers.
-3. For data fetching:
-   - Guard env
-   - Filter undefined params → `URLSearchParams`
-   - Try/catch + safe fallback
-   - Consider cache wrappers
-4. For pages/components touching scripts/JSON-LD:
-   - Read `nonce` via `headers()` and pass to all scripts.
-5. For event lists:
-   - Insert ads only once on SSR
-   - Respect merge and dedupe rules on client
-6. If SW changes:
-   - Edit template → regenerate with `prebuild`
-7. Run: `yarn typecheck` → `yarn test` → `yarn lint` → build as needed.
+- Read `.github/copilot-instructions.md` and `00-repository-overview.mdc`.
+- For new routes: implement `generateMetadata` using `generatePagesData` and `buildPageMeta`.
+- For list pages: fetch via `lib/api/*` and use `insertAds` on SSR only; append client items without ads.
+- For filters/URLs: use `utils/url-filters.ts` helpers; never craft strings manually.
+- For scripts/JSON-LD: read `nonce` from `headers()` and pass to `<Script>`.
+- For images: use the image wrapper in `components/ui/common/image` and quality/size helpers.
+- Before PR: `yarn typecheck && yarn lint && yarn test`.

@@ -1,10 +1,8 @@
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
 import {
-  ByDateProps,
   Option,
   GroupedOption,
   PageData,
-  PlaceProps,
   PlaceTypeAndLabel,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
@@ -44,11 +42,6 @@ export interface MultiSelectProps {
   isDisabled?: boolean;
   placeholder?: string;
   isLoading?: boolean;
-}
-
-export interface ViewCounterProps {
-  slug: string;
-  hideText?: boolean;
 }
 
 export interface ReportViewProps {
@@ -109,22 +102,7 @@ export interface DescriptionProps {
   locationValue?: string;
 }
 
-export type Href = `/${string}`;
-
-export interface NavigationItem {
-  name: string;
-  href: Href;
-  current: true | false;
-}
-
-export interface SocialLinks {
-  web: string;
-  twitter: string;
-  instagram: string;
-  telegram: string;
-  facebook: string;
-  [key: string]: string;
-}
+// NavigationItem and Href are now imported from types/common.ts
 
 export interface DatePickerComponentProps {
   idPrefix?: string;
@@ -196,16 +174,6 @@ export interface VideoDisplayProps {
   videoUrl: string | null | undefined;
 }
 
-export interface ByDateClientProps extends ByDateProps {
-  pageData: PageData;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
-
-export interface PlaceClientProps extends PlaceProps {
-  pageData: PageData;
-  placeTypeLabel: PlaceTypeAndLabel;
-}
-
 export interface LoadMoreButtonProps {
   onLoadMore: () => void;
   isLoading?: boolean;
@@ -243,6 +211,7 @@ export interface FilterButtonProps {
   enabled: boolean;
   removeUrl: string;
   onOpenModal: () => void;
+  testId?: string;
 }
 
 export interface ServerFiltersProps {
