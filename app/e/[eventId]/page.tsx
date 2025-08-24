@@ -8,6 +8,8 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
+import EventHeader from "./components/EventHeader";
+import EventCalendar from "./components/EventCalendar";
 import EventClient from "./EventClient";
 import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
@@ -34,7 +36,7 @@ export default async function EventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
-  
+
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";
@@ -132,6 +134,10 @@ export default async function EventPage({
                 postalCode={event.city?.postalCode || ""}
               />
             </div>
+            {/* Event Header - Server-side rendered */}
+            <EventHeader title={title} />
+            {/* Event Calendar - Server-side rendered */}
+            <EventCalendar event={event} />
             <EventClient event={event} />
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (
