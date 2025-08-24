@@ -1,14 +1,17 @@
 import type { EventDetailResponseDTO } from "types/api/event";
 import { getFormattedDate } from "@utils/date-helpers";
-
-export type FaqItem = { q: string; a: string };
+import type { FaqItem } from "types/faq";
 
 function isValidTime(t: string | null): t is string {
   return !!t && t !== "00:00";
 }
 
 function normalize(s: string): string {
-  return s.trim().toLowerCase();
+  return s
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 export function buildEventIntroText(event: EventDetailResponseDTO): string {
@@ -35,7 +38,7 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
       ? `, ${startTimeLabel}${endTimeLabel ? `–${endTimeLabel}` : ""}`
       : "";
 
-  return `${event.title} se celebra ${datePhrase}${timePart}, a ${placeSummary}.`;
+  return `${event.title} es celebra ${datePhrase}${timePart}, a ${placeSummary}.`;
 }
 
 export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {

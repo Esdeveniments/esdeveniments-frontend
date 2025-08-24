@@ -12,6 +12,7 @@ import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
 import { getNewsCta } from "@utils/helpers";
 import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
+import AdArticle from "../adArticle";
 
 function HybridEventsList({
   initialEvents = [],
@@ -136,6 +137,8 @@ function HybridEventsList({
           />
         )}
       </List>
+
+      <AdArticle slot="9643657007" />
 
       {/* Load More Button - using new SWR props */}
       <LoadMoreButton
