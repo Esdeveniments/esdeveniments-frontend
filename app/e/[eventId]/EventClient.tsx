@@ -6,10 +6,8 @@ import { sendGoogleEvent } from "@utils/analytics";
 
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
-import EventHeader from "./components/EventHeader";
 import EventCategories from "./components/EventCategories";
 import EventDescription from "./components/EventDescription";
-import EventCalendar from "./components/EventCalendar";
 import EventWeather from "./components/EventWeather";
 import EventLocation from "./components/EventLocation";
 // import { useEventModals } from "./hooks/useEventModals";
@@ -123,10 +121,6 @@ export default function EventClient({
         showThankYouBanner={!!showThankYouBanner}
         setShowThankYouBanner={setShowThankYouBanner}
       />
-      {/* Event Header */}
-      <EventHeader title={title} />
-      {/* Event Calendar */}
-      <EventCalendar event={event} />
 
       {/* Location with Map Toggle */}
       <EventLocation

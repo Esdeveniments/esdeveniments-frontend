@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, ReactElement, useMemo, useEffect } from "react";
+import { memo, ReactElement, useMemo } from "react";
 import Link from "next/link";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
@@ -10,10 +10,9 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
-import { preloadImages } from "@utils/image-preload";
 import { getNewsCta } from "@utils/helpers";
 import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
-import { QUALITY_PRESETS, getOptimalImageSizes } from "@utils/image-quality";
+import AdArticle from "../adArticle";
 
 function HybridEventsList({
   initialEvents = [],
@@ -57,46 +56,19 @@ function HybridEventsList({
       return ssrWithAds;
     }
 
-    // Number of real events that were rendered on SSR (excluding ads)
-    const initialRealCount = validInitialEvents.length;
-
-    // SWR returns cumulative content; append only items beyond the SSR real count
-    const appended = events.slice(initialRealCount);
-
-    // De-duplicate by id across the boundary
-    const existingIds = new Set(
-      ssrWithAds
-        .filter(isEventSummaryResponseDTO)
-        .map((e) => (e as EventSummaryResponseDTO).id)
-    );
-    const uniqueAppended = appended.filter((e) => !existingIds.has(e.id));
+    // De-duplicate by id across the boundary and across pages (order-agnostic)
+    const seen = new Set<string>(validInitialEvents.map((e) => e.id));
+    const uniqueAppended: EventSummaryResponseDTO[] = [];
+    for (const e of events) {
+      if (seen.has(e.id)) continue;
+      seen.add(e.id);
+      uniqueAppended.push(e);
+    }
 
     return ssrWithAds.concat(uniqueAppended);
   }, [initialEvents, events, validInitialEvents]);
 
   const allEvents = mergedEvents;
-
-  // Preload first 2 images for better LCP while limiting bandwidth
-  useEffect(() => {
-    const imagesToPreload = allEvents
-      .slice(0, 2)
-      .filter((event) => isEventSummaryResponseDTO(event) && event.imageUrl)
-      .map((event, index) => ({
-        src: (event as EventSummaryResponseDTO).imageUrl!,
-        options: {
-          priority: index === 0,
-          quality:
-            index === 0
-              ? QUALITY_PRESETS.LCP_EXTERNAL
-              : QUALITY_PRESETS.EXTERNAL_HIGH,
-          sizes: getOptimalImageSizes("card"),
-        },
-      }));
-
-    if (imagesToPreload.length > 0) {
-      preloadImages(imagesToPreload);
-    }
-  }, [allEvents]);
 
   if (error) {
     console.error("Events loading error:", error);
@@ -159,6 +131,8 @@ function HybridEventsList({
           />
         )}
       </List>
+
+      <AdArticle slot="9643657007" />
 
       {/* Load More Button - using new SWR props */}
       <LoadMoreButton

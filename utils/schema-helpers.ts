@@ -28,25 +28,44 @@ export const generateJsonData = (
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
 
-  // Enhanced image handling with future-proof fallback logic
-  const images = [
+  const isValidHttpUrl = (maybeUrl: string | undefined | null): boolean => {
+    if (!maybeUrl || typeof maybeUrl !== "string") return false;
+    const trimmed = maybeUrl.trim();
+    if (trimmed.length === 0) return false;
+    try {
+      const u = new URL(trimmed);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
+  // Enhanced image handling with validation, de-duplication and fallback
+  const imageCandidates = [
     imageUrl,
     // Future: Add additional image sources here when available
     // 'imageUploaded' in event ? event.imageUploaded : undefined,
     // 'eventImage' in event ? event.eventImage : undefined,
     defaultImage,
-  ].filter(Boolean) as string[];
+  ];
+  const images = Array.from(
+    new Set(imageCandidates.filter((src): src is string => isValidHttpUrl(src)))
+  );
+  if (images.length === 0 && isValidHttpUrl(defaultImage)) {
+    images.push(defaultImage);
+  }
 
-  const videoObject: VideoObject | null = videoUrl
-    ? {
-        "@type": "VideoObject" as const,
-        name: title,
-        contentUrl: videoUrl,
-        description,
-        thumbnailUrl: images[0] || defaultImage, // Use first available image
-        uploadDate: startDate,
-      }
-    : null;
+  const videoObject: VideoObject | null =
+    videoUrl && isValidHttpUrl(videoUrl)
+      ? {
+          "@type": "VideoObject" as const,
+          name: title,
+          contentUrl: videoUrl,
+          description,
+          thumbnailUrl: images[0] || defaultImage, // Use first available image
+          uploadDate: startDate,
+        }
+      : null;
 
   // Enhanced location data with better fallbacks and fixed country
   const getLocationData = () => {
@@ -61,17 +80,30 @@ export const generateJsonData = (
 
   // Generate genre from categories
   const getGenre = () => {
-    return "categories" in event && event.categories?.length > 0
-      ? event.categories.map((category) => category.name)
-      : undefined;
+    if (
+      !("categories" in event) ||
+      !event.categories ||
+      event.categories.length === 0
+    ) {
+      return undefined;
+    }
+    const names = event.categories
+      .map((category) => category?.name)
+      .filter(
+        (name): name is string =>
+          typeof name === "string" && name.trim().length > 0
+      );
+    const unique = Array.from(new Set(names));
+    return unique.length > 0 ? unique : undefined;
   };
 
   // Generate keywords from available data
   const getKeywords = () => {
-    const keywords = [...(getGenre() || []), city?.name, region?.name].filter(
-      Boolean
-    );
-    return keywords.length > 0 ? keywords.join(", ") : undefined;
+    const raw = [...(getGenre() || []), city?.name, region?.name]
+      .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+      .map((v) => v.trim());
+    const unique = Array.from(new Set(raw));
+    return unique.length > 0 ? unique.join(", ") : undefined;
   };
 
   // Enhanced datetime with time if available
@@ -86,7 +118,7 @@ export const generateJsonData = (
       priceCurrency: "EUR",
       availability: "https://schema.org/InStock",
       url: `${siteUrl}/e/${slug}`,
-      validFrom: startDate,
+      validFrom: getEnhancedDateTime(startDate, startTime),
     };
 
     if (event.type === "FREE") {
@@ -153,3 +185,6 @@ export const generateJsonData = (
     ...(videoObject ? { video: videoObject } : {}),
   };
 };
+
+// Backward-compatible alias with a clearer name for AEO/GEO context
+export const buildEventSchema = generateJsonData;

@@ -9,7 +9,7 @@ const CalendarButton: React.FC<CalendarButtonProps> = ({
   <button
     onClick={onClick}
     type="button"
-    className="btn text-whiteCorp flex items-center justify-center hover:text-primary"
+    className="btn text-primary flex items-center justify-center hover:text-primarydark"
   >
     <div className="bg-whiteCorp p-1 mr-2 border border-black rounded ">
       <PlusIcon className="w-4 h-4" />

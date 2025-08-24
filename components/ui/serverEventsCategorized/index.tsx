@@ -11,6 +11,7 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ServerEventsCategorizedProps } from "types/props";
+import { formatCatalanDe } from "@utils/helpers";
 
 function ServerEventsCategorized({
   categorizedEvents,
@@ -99,7 +100,9 @@ function ServerEventsCategorized({
                   <div key={categorySlug}>
                     {/* Category Header */}
                     <div className="flex justify-between">
-                      <h3 className="font-semibold">{categoryName}</h3>
+                      <h3 className="font-semibold">
+                        Agenda {formatCatalanDe(categoryName)} a Catalunya
+                      </h3>
                       <Link
                         href={buildCanonicalUrl(
                           {
@@ -112,7 +115,8 @@ function ServerEventsCategorized({
                         className="flex justify-between items-center cursor-pointer text-primary"
                       >
                         <div className="flex items-center">
-                          Veure més
+                          Veure més esdeveniments{" "}
+                          {formatCatalanDe(categoryName)}
                           <ChevronRightIcon className="w-5 h-5" />
                         </div>
                       </Link>

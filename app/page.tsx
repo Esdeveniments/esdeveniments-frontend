@@ -8,6 +8,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { Suspense, JSX } from "react";
+import { headers } from "next/headers";
 
 export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
@@ -23,6 +24,10 @@ export async function generateMetadata() {
 }
 
 export default async function Page(): Promise<JSX.Element> {
+  // Read the nonce from the middleware headers
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
+
   // Always fetch categorized events (no URL filters support)
   const categorizedEvents: CategorizedEvents = await fetchCategorizedEvents(5);
 
@@ -58,6 +63,7 @@ export default async function Page(): Promise<JSX.Element> {
         categorizedEvents={categorizedEvents}
         pageData={pageData}
         categories={categories}
+        nonce={nonce}
       />
     </>
   );
