@@ -56,16 +56,10 @@ function HybridEventsList({
       return ssrWithAds;
     }
 
-    // Number of real events that were rendered on SSR (excluding ads)
-    const initialRealCount = validInitialEvents.length;
-
-    // SWR returns cumulative content; append only items beyond the SSR real count
-    const appended: EventSummaryResponseDTO[] = events.slice(initialRealCount);
-
-    // De-duplicate by id across the boundary and across pages
+    // De-duplicate by id across the boundary and across pages (order-agnostic)
     const seen = new Set<string>(validInitialEvents.map((e) => e.id));
     const uniqueAppended: EventSummaryResponseDTO[] = [];
-    for (const e of appended) {
+    for (const e of events) {
       if (seen.has(e.id)) continue;
       seen.add(e.id);
       uniqueAppended.push(e);
