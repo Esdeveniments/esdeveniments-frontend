@@ -13,7 +13,17 @@ export {
 } from "./date-helpers";
 
 // String helpers
-export { sanitize, slug, truncateString } from "./string-helpers";
+export {
+  sanitize,
+  slug,
+  truncateString,
+  formatCatalanDe,
+} from "./string-helpers";
+export {
+  buildEventIntroText,
+  buildFaqItems,
+  buildFaqJsonLd,
+} from "./event-copy";
 
 // Text processing helpers
 export { processDescription } from "./text-processing";

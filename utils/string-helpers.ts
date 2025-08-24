@@ -67,3 +67,18 @@ export const truncateString = (str: string, num: number): string => {
   if (str.length <= num) return str;
   return str.slice(0, num) + "...";
 };
+
+/**
+ * Catalan contraction for the preposition "de" before vowels/"h".
+ * Returns natural phrase like "d'exposicions" or "de teatre".
+ * Defaults to lowercasing the noun for natural reading in CT.
+ */
+export function formatCatalanDe(
+  name: string,
+  lowercase: boolean = true
+): string {
+  const raw = (name || "").trim();
+  const text = lowercase ? raw.toLowerCase() : raw;
+  const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(text);
+  return `${startsWithVowelOrH ? "d'" : "de "}${text}`;
+}

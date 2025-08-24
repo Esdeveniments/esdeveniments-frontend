@@ -13,11 +13,20 @@ import EventCalendar from "./components/EventCalendar";
 import EventClient from "./EventClient";
 import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
-import { SpeakerphoneIcon } from "@heroicons/react/outline";
+import {
+  SpeakerphoneIcon,
+  InformationCircleIcon as InfoIcon,
+} from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import Link from "next/link";
+// date helpers used via shared utils in event-copy
+import {
+  buildEventIntroText,
+  buildFaqItems,
+  buildFaqJsonLd,
+} from "@utils/helpers";
 
 // Helper: Metadata generation
 export async function generateMetadata(props: {
@@ -53,6 +62,13 @@ export default async function EventPage({
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event });
+
+  // Legacy date computation was here; intro/faq now use shared utils
+
+  // Build intro and FAQ via shared utils (no assumptions)
+  const introText = buildEventIntroText(event);
+  const faqItems = buildFaqItems(event);
+  const faqJsonLd = buildFaqJsonLd(faqItems);
 
   // Fetch latest news for the event's place (prefer city, then region, fallback Catalunya)
   const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
@@ -138,7 +154,43 @@ export default async function EventPage({
             <EventHeader title={title} />
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
+
+            {/* Q/A Intro Section (styled like other sections) */}
+            <div className="w-full flex justify-center items-start gap-2 px-4">
+              <InfoIcon className="w-5 h-5 mt-1" />
+              <section
+                className="w-11/12 flex flex-col gap-4"
+                aria-labelledby="event-intro"
+              >
+                <h2 id="event-intro">Resum</h2>
+                <p className="text-base font-normal text-blackCorp">
+                  {introText}
+                </p>
+              </section>
+            </div>
+
             <EventClient event={event} />
+
+            {/* Dynamic FAQ Section (SSR, gated by data) */}
+            {faqItems.length >= 2 && (
+              <div className="w-full flex justify-center items-start gap-2 px-4">
+                <InfoIcon className="w-5 h-5 mt-1" />
+                <section
+                  className="w-11/12 flex flex-col gap-4"
+                  aria-labelledby="event-faq"
+                >
+                  <h2 id="event-faq">Preguntes freqüents</h2>
+                  <dl className="space-y-3">
+                    {faqItems.map((item, idx) => (
+                      <div key={`faq-${idx}`}>
+                        <dt className="font-medium">{item.q}</dt>
+                        <dd className="text-blackCorp/70">{item.a}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              </div>
+            )}
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (
               <EventsAroundSection
@@ -187,6 +239,17 @@ export default async function EventPage({
             </div>
           </section>
         </div>
+      )}
+
+      {/* FAQ JSON-LD (only when we have 2+ items) */}
+      {faqJsonLd && (
+        <Script
+          id={`faq-${event.id}`}
+          type="application/ld+json"
+          strategy="afterInteractive"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
       )}
     </>
   );
