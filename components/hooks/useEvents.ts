@@ -104,6 +104,10 @@ export const useEvents = ({
         console.error("Error fetching events:", e);
         captureException(e);
       },
+      // Avoid revalidating the first page (SSR) on every size change
+      revalidateFirstPage: false,
+      // We already have SSR fallback; don't revalidate on mount
+      revalidateOnMount: false,
     }
   );
 
@@ -129,11 +133,9 @@ export const useEvents = ({
     if (isLoading || isValidating || (isActivated && !hasMore)) return;
     if (!isActivated) {
       setIsActivated(true);
-      // Activate and fetch next page beyond the SSR page
-      setSize(2); // ensure we have at least two pages (SSR + next)
-    } else {
-      setSize((prev) => prev + 1);
     }
+    // Load exactly one additional page each time
+    setSize((prev) => prev + 1);
   };
 
   return {

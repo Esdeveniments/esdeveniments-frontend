@@ -181,8 +181,8 @@ export default async function EventPage({
                 >
                   <h2 id="event-faq">Preguntes freqüents</h2>
                   <dl className="space-y-3">
-                    {faqItems.map((item, idx) => (
-                      <div key={`faq-${idx}`}>
+                    {faqItems.map((item) => (
+                      <div key={item.q}>
                         <dt className="font-medium">{item.q}</dt>
                         <dd className="text-blackCorp/70">{item.a}</dd>
                       </div>
