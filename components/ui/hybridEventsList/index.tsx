@@ -61,13 +61,19 @@ function HybridEventsList({
     // SWR returns cumulative content; append only items beyond the SSR real count
     const appended = events.slice(initialRealCount);
 
-    // De-duplicate by id across the boundary
-    const existingIds = new Set(
+    // De-duplicate by id across the boundary and across pages
+    const seen = new Set<string>(
       ssrWithAds
         .filter(isEventSummaryResponseDTO)
         .map((e) => (e as EventSummaryResponseDTO).id)
     );
-    const uniqueAppended = appended.filter((e) => !existingIds.has(e.id));
+    const uniqueAppended: EventSummaryResponseDTO[] = [];
+    for (const e of appended) {
+      if (!seen.has(e.id)) {
+        seen.add(e.id);
+        uniqueAppended.push(e);
+      }
+    }
 
     return ssrWithAds.concat(uniqueAppended);
   }, [initialEvents, events, validInitialEvents]);

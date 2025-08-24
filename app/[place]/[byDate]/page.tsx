@@ -263,10 +263,7 @@ export default async function ByDatePage({
     categoryName: categoryData?.name,
   });
 
-  const serverHasMore = eventsResponse
-    ? !eventsResponse.last &&
-      eventsWithAds.length < eventsResponse.totalElements
-    : false;
+  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
   const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
   const structuredData =
