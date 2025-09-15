@@ -21,6 +21,7 @@ import AdArticle from "components/ui/adArticle";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import Link from "next/link";
+import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
 // date helpers used via shared utils in event-copy
 import {
   buildEventIntroText,
@@ -199,6 +200,15 @@ export default async function EventPage({
                 nonce={nonce}
               />
             )}
+
+            {/* Restaurant Promotion Section */}
+            <RestaurantPromotionSection
+              eventId={event.id}
+              eventLocation={event.location}
+              eventLat={event.city?.latitude}
+              eventLng={event.city?.longitude}
+            />
+
             {/* Final Ad Section */}
             <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
               <SpeakerphoneIcon className="w-5 h-5 mt-1" />

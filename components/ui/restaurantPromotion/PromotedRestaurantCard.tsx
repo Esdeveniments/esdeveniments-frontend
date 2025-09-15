@@ -1,0 +1,72 @@
+import Image from "next/image";
+import { PromotedRestaurantCardProps } from "types/api/restaurant";
+
+export default function PromotedRestaurantCard({
+  promotion,
+}: PromotedRestaurantCardProps) {
+  const formatExpiryDate = (expiresAt: string) => {
+    const date = new Date(expiresAt);
+    return date.toLocaleDateString("ca-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  return (
+    <div className="w-full flex justify-center items-start gap-2 px-4">
+      <svg
+        className="w-5 h-5 mt-1 text-primary"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+        />
+      </svg>
+      <div className="w-11/12 flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">Restaurant promocionat</h2>
+          <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
+            Patrocinat
+          </span>
+        </div>
+
+        <div className="border border-primary/20 rounded-lg p-4 bg-gradient-to-r from-primary/5 to-primary/10">
+          <div className="flex items-start gap-4">
+            {/* Restaurant Image */}
+            <div className="flex-shrink-0">
+              <Image
+                src={promotion.image.secure_url}
+                alt={promotion.restaurantName}
+                width={64}
+                height={64}
+                className="w-16 h-16 object-cover rounded-lg"
+              />
+            </div>
+
+            {/* Restaurant Info */}
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg text-gray-900">
+                {promotion.restaurantName}
+              </h3>
+              <p className="text-gray-600 mt-1">{promotion.location}</p>
+
+              {/* Expiry Info */}
+              <div className="mt-2 text-sm text-gray-500">
+                <span>Promoció activa fins al </span>
+                <span className="font-medium">
+                  {formatExpiryDate(promotion.expiresAt)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
