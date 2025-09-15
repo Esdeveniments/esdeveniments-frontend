@@ -96,12 +96,24 @@ function ServerEventsCategorized({
                     ] || category;
                 }
 
+                // Build natural Catalan phrasing for headers/CTA
+                const normalizedName = (categoryName || "").toLowerCase();
+                const isGentGran =
+                  categorySlug === "gent-gran" ||
+                  normalizedName.includes("gent gran");
+                const headerCategoryPhrase = isGentGran
+                  ? `per a la ${normalizedName}`
+                  : formatCatalanDe(categoryName);
+                const viewMoreSuffix = isGentGran
+                  ? `per a la ${normalizedName}`
+                  : formatCatalanDe(categoryName).toLowerCase();
+
                 return (
                   <div key={categorySlug}>
                     {/* Category Header */}
                     <div className="flex justify-between">
                       <h3 className="font-semibold">
-                        Agenda {formatCatalanDe(categoryName)} a Catalunya
+                        Què hi ha {headerCategoryPhrase} a Catalunya?
                       </h3>
                       <Link
                         href={buildCanonicalUrl(
@@ -115,12 +127,47 @@ function ServerEventsCategorized({
                         className="flex justify-between items-center cursor-pointer text-primary"
                       >
                         <div className="flex items-center">
-                          Veure més esdeveniments{" "}
-                          {formatCatalanDe(categoryName)}
+                          Veure més {viewMoreSuffix}
                           <ChevronRightIcon className="w-5 h-5" />
                         </div>
                       </Link>
                     </div>
+
+                    {/* Related canonical links for this category */}
+                    <nav aria-label="Vegeu també" className="mt-1 mb-2">
+                      <ul className="flex gap-3 text-sm">
+                        <li>
+                          <Link
+                            href={buildCanonicalUrl(
+                              {
+                                place: "catalunya",
+                                byDate: "avui",
+                                category: categorySlug,
+                              },
+                              categories
+                            )}
+                            className="text-primary underline"
+                          >
+                            Avui
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={buildCanonicalUrl(
+                              {
+                                place: "catalunya",
+                                byDate: "cap-de-setmana",
+                                category: categorySlug,
+                              },
+                              categories
+                            )}
+                            className="text-primary underline"
+                          >
+                            Cap de setmana
+                          </Link>
+                        </li>
+                      </ul>
+                    </nav>
 
                     {/* Events Horizontal Scroll */}
                     <EventsAroundServer
@@ -129,7 +176,7 @@ function ServerEventsCategorized({
                       usePriority={shouldUsePriority}
                       showJsonLd={true}
                       title={categoryName}
-                      jsonLdId={`category-events-${categoryName}-${events.length}`}
+                      jsonLdId={`category-events-${categorySlug}`}
                       nonce={nonce}
                     />
 

@@ -115,7 +115,12 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
       <>
         {jsonLdData && (
           <Script
-            id={jsonLdId || `events-around-${Date.now()}`}
+            id={
+              jsonLdId ||
+              (title
+                ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
+                : "events-around")
+            }
             type="application/ld+json"
             nonce={nonce}
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
@@ -143,7 +148,12 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     <>
       {jsonLdData && (
         <Script
-          id={jsonLdId || `events-around-${Date.now()}`}
+          id={
+            jsonLdId ||
+            (title
+              ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
+              : "events-around")
+          }
           type="application/ld+json"
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}

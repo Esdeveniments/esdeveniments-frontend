@@ -60,6 +60,47 @@ export default function GoogleScripts({ nonce }: GoogleScriptsProps) {
         strategy="afterInteractive"
         nonce={nonce}
       />
+      {/* AI Referrer Analytics */}
+      <Script
+        id="ai-referrer-analytics"
+        strategy="afterInteractive"
+        nonce={nonce}
+      >
+        {`
+          (function() {
+            try {
+              const referrer = document.referrer;
+              if (!referrer) return;
+              
+              const aiDomains = [
+                'chat.openai.com',
+                'perplexity.ai',
+                'gemini.google.com',
+                'bard.google.com',
+                'claude.ai'
+              ];
+              
+              const isAiReferrer = aiDomains.some(domain => referrer.includes(domain));
+              if (!isAiReferrer) return;
+              
+              const domain = aiDomains.find(d => referrer.includes(d));
+              const sessionKey = 'ai_referrer_tracked_' + domain;
+              
+              if (sessionStorage.getItem(sessionKey)) return;
+              
+              if (typeof gtag !== 'undefined') {
+                gtag('event', 'ai_referrer', {
+                  referrer_domain: domain,
+                  referrer_url: referrer
+                });
+                sessionStorage.setItem(sessionKey, 'true');
+              }
+            } catch (error) {
+              console.warn('AI referrer analytics error:', error);
+            }
+          })();
+        `}
+      </Script>
     </>
   );
 }

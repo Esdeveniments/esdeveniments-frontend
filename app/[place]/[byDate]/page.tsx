@@ -8,6 +8,8 @@ import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
   generateItemListStructuredData,
+  generateWebPageSchema,
+  generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
 import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
 import type { DateFunctions } from "types/dates";
@@ -276,9 +278,46 @@ export default async function ByDatePage({
         )
       : null;
 
+  // Generate WebPage and CollectionPage schemas
+  const webPageSchema = generateWebPageSchema({
+    title: pageData.title,
+    description: pageData.metaDescription,
+    url: pageData.canonical,
+  });
+
+  const collectionSchema =
+    validEvents.length > 0
+      ? generateCollectionPageSchema({
+          title: pageData.title,
+          description: pageData.metaDescription,
+          url: pageData.canonical,
+          numberOfItems: validEvents.length,
+        })
+      : null;
+
   return (
     <>
       {/* JSON-LD Structured Data */}
+      <Script
+        id="webpage-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(webPageSchema),
+        }}
+      />
+      {collectionSchema && (
+        <Script
+          id="collection-schema"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(collectionSchema),
+          }}
+        />
+      )}
       {structuredData && (
         <Script
           id={`events-${place}-${actualDate}`}
