@@ -207,6 +207,8 @@ export default async function EventPage({
               eventLocation={event.location}
               eventLat={event.city?.latitude}
               eventLng={event.city?.longitude}
+              eventStartDate={event.startDate}
+              eventEndDate={event.endDate}
             />
 
             {/* Final Ad Section */}

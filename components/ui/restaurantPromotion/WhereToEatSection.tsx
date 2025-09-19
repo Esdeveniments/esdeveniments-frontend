@@ -1,4 +1,4 @@
-import { WhereToEatSectionProps } from "types/api/restaurant";
+import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
 
 export default function WhereToEatSection({
   places,
@@ -9,7 +9,7 @@ export default function WhereToEatSection({
   }
 
   return (
-    <div className="w-full flex justify-center items-start gap-2 px-4">
+    <div className="w-full flex justify-center items-start gap-2">
       <svg
         className="w-5 h-5 mt-1"
         fill="none"

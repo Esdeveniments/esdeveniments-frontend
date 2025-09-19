@@ -63,22 +63,15 @@ export interface GooglePlace {
   }>;
 }
 
-export interface GooglePlaceNewApi {
-  place_id: string;
-  name: string;
-  vicinity: string;
+export interface GooglePlaceResponse {
+  name?: string;
+  displayName?: { text: string };
+  formattedAddress?: string;
   rating?: number;
-  price_level?: number;
+  priceLevel?: number;
   types?: string[];
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-  photos?: Array<{
-    photo_reference: string;
-    height: number;
-    width: number;
-  }>;
+  location?: { latitude: number; longitude: number };
+  photos?: Array<{ photo_reference: string; height: number; width: number }>;
 }
 
 export interface GooglePlacesNearbyResponse {
@@ -148,6 +141,8 @@ export interface RestaurantPromotionSectionProps {
   eventLocation?: string;
   eventLat?: number;
   eventLng?: number;
+  eventStartDate?: string; // ISO date string
+  eventEndDate?: string; // ISO date string
 }
 
 export interface RestaurantPromotionFormProps {

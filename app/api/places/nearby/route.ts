@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GooglePlaceNewApi } from "types/api/restaurant";
+import { GooglePlaceResponse } from "types/api/restaurant";
+
 export const runtime = "nodejs";
 
 /**
@@ -32,20 +33,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Build Google Places API (New) v1 request with field mask
     const fields = [
-      "places.place_id",
       "places.name",
-      "places.vicinity",
+      "places.displayName",
+      "places.formattedAddress",
       "places.rating",
-      "places.price_level",
+      "places.priceLevel",
       "places.types",
-      "places.location",
+      "places.location", // Changed from geometry to location
       "places.photos",
     ].join(",");
 
     const url = new URL("https://places.googleapis.com/v1/places:searchNearby");
-    url.searchParams.set("fields", fields);
 
     const requestBody = {
       includedTypes: ["restaurant"],
@@ -80,8 +79,14 @@ export async function GET(request: NextRequest) {
     // Handle API errors
     if (!response.ok) {
       console.error("Google Places API error:", response.status, data);
+      console.error("Request body was:", JSON.stringify(requestBody, null, 2));
+      console.error("Request headers were:", {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey ? "***" : "MISSING",
+        "X-Goog-FieldMask": fields,
+      });
       return NextResponse.json(
-        { error: "Places API error", status: response.status },
+        { error: "Places API error", status: response.status, details: data },
         { status: 500 }
       );
     }
@@ -90,21 +95,25 @@ export async function GET(request: NextRequest) {
     const places = data.places || [];
     const limitedResults = places
       .slice(0, limit)
-      .map((place: GooglePlaceNewApi) => ({
-        place_id: place.place_id,
-        name: place.name,
-        vicinity: place.vicinity,
-        rating: place.rating,
-        price_level: place.price_level,
-        types: place.types,
-        geometry: {
-          location: {
-            lat: place.location?.latitude || 0,
-            lng: place.location?.longitude || 0,
+      .map((place: GooglePlaceResponse) => {
+        const placeId = place.name?.replace("places/", "") || "";
+
+        return {
+          place_id: placeId,
+          name: place.displayName?.text || "Restaurant",
+          vicinity: place.formattedAddress || "Localització no disponible",
+          rating: place.rating,
+          price_level: place.priceLevel || undefined,
+          types: place.types || [],
+          geometry: {
+            location: {
+              lat: place.location?.latitude || 0,
+              lng: place.location?.longitude || 0,
+            },
           },
-        },
-        photos: place.photos?.slice(0, 1), // Only first photo
-      }));
+          photos: place.photos?.slice(0, 1) || undefined,
+        };
+      });
 
     return NextResponse.json({
       results: limitedResults,
