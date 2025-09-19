@@ -1,73 +1,51 @@
-import { FC, MouseEvent } from "react";
+import { FC } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { sendGoogleEvent } from "@utils/analytics";
 import { CulturalMessageProps } from "types/props";
+import { formatCatalanA, capitalizeFirstLetter } from "@utils/helpers";
 
 const CulturalMessage: FC<CulturalMessageProps> = ({
   location,
   locationValue,
+  locationType = "general",
 }) => {
-  const { push } = useRouter();
-
   if (!location) {
     return null;
   }
 
-  const handleNavigation = async (
-    e: MouseEvent<HTMLAnchorElement>,
-    locationValue: string,
-    timeframe: string
-  ) => {
-    e.preventDefault();
-    sendGoogleEvent("navigate_to", {
-      content_type: "navigation",
-      item_id: `${locationValue}_${timeframe}`,
-      item_name: `${locationValue} ${timeframe}`,
-      event_category: "Navigation",
-      event_label: `navigate_to_${locationValue}_${timeframe}`,
-    });
-    await push(e.currentTarget.href);
-  };
+  const capitalizedLocation = capitalizeFirstLetter(location);
 
   return (
-    <div className="mt-2 leading-relaxed">
-      Imagina un lloc on cada dia és una nova descoberta. Això és{" "}
-      <span className="font-bold">{location}</span>: un univers de cultura
-      esperant ser explorat per tu. Comença la teva aventura{" "}
-      <Link
-        href={`/${locationValue}/avui`}
-        onClick={(e) => handleNavigation(e, locationValue, "avui")}
-        className="font-medium text-primary hover:underline"
-      >
-        avui
-      </Link>
-      , descobreix què està passant{" "}
-      <Link
-        href={`/${locationValue}/dema`}
-        onClick={(e) => handleNavigation(e, locationValue, "dema")}
-        className="font-medium text-primary hover:underline"
-      >
-        demà
-      </Link>
-      , continua explorant{" "}
-      <Link
-        href={`/${locationValue}/setmana`}
-        onClick={(e) => handleNavigation(e, locationValue, "setmana")}
-        className="font-medium text-primary hover:underline"
-      >
-        durant la setmana
-      </Link>
-      , i culmina amb un{" "}
-      <Link
-        href={`/${locationValue}/cap-de-setmana`}
-        onClick={(e) => handleNavigation(e, locationValue, "cap-de-setmana")}
-        className="font-medium text-primary hover:underline"
-      >
-        cap de setmana espectacular
-      </Link>
-      . Deixa&apos;t sorprendre per tot el que{" "}
-      <span className="font-bold">{location}</span> pot oferir-te.
+    <div className="leading-relaxed">
+      <p className="text-base leading-relaxed text-blackCorp font-bold">
+        Explora més plans{" "}
+        {formatCatalanA(capitalizedLocation, locationType, false)}:
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Link
+          href={`/${locationValue}/avui`}
+          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
+        >
+          Què fer avui
+        </Link>
+        <Link
+          href={`/${locationValue}/dema`}
+          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
+        >
+          Què fer demà
+        </Link>
+        <Link
+          href={`/${locationValue}/setmana`}
+          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
+        >
+          Què fer aquesta setmana
+        </Link>
+        <Link
+          href={`/${locationValue}/cap-de-setmana`}
+          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
+        >
+          Què fer aquest cap de setmana
+        </Link>
+      </div>
     </div>
   );
 };

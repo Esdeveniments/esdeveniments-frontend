@@ -11,6 +11,8 @@ import EventShareBar from "./components/EventShareBar";
 import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
 import EventClient from "./EventClient";
+import EventDescription from "./components/EventDescription";
+import EventCategories from "./components/EventCategories";
 import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import {
@@ -156,19 +158,31 @@ export default async function EventPage({
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
 
-            {/* Q/A Intro Section (styled like other sections) */}
-            <div className="w-full flex justify-center items-start gap-2 px-4">
-              <InfoIcon className="w-5 h-5 mt-1" />
-              <section
-                className="w-11/12 flex flex-col gap-4"
-                aria-labelledby="event-intro"
-              >
-                <h2 id="event-intro">Resum</h2>
-                <p className="text-base font-normal text-blackCorp">
-                  {introText}
-                </p>
-              </section>
-            </div>
+            {/* Related Events - Server-side rendered for SEO */}
+            {event.relatedEvents && event.relatedEvents.length > 0 && (
+              <EventsAroundSection
+                events={event.relatedEvents}
+                title="Esdeveniments relacionats"
+                nonce={nonce}
+              />
+            )}
+
+            {/* Event Description - Server-side rendered for SEO */}
+            <EventDescription
+              description={event.description}
+              locationValue={event.city?.slug || event.region?.slug || ""}
+              location={cityName || regionName}
+              introText={introText}
+              locationType={
+                event.region ? "region" : event.city ? "town" : "general"
+              }
+            />
+
+            {/* Event Categories - Server-side rendered for SEO */}
+            <EventCategories
+              categories={event.categories}
+              place={event.region?.slug || ""}
+            />
 
             <EventClient event={event} />
 
@@ -191,14 +205,6 @@ export default async function EventPage({
                   </dl>
                 </section>
               </div>
-            )}
-            {/* Related Events - Server-side rendered for SEO */}
-            {event.relatedEvents && event.relatedEvents.length > 0 && (
-              <EventsAroundSection
-                events={event.relatedEvents}
-                title="Esdeveniments relacionats"
-                nonce={nonce}
-              />
             )}
 
             {/* Restaurant Promotion Section */}

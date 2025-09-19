@@ -6,8 +6,8 @@ import {
   GeneratePagesDataProps,
   PlaceTypeAndLabel,
 } from "types/common";
+import { formatCatalanA } from "@utils/helpers";
 
-const FEMININE_REGIONS = ["selva"];
 const month = monthsName[new Date().getMonth()];
 
 // Normalize subtitles for LLM/AI SEO extractability:
@@ -197,27 +197,7 @@ export async function generatePagesData({
   const { type, label }: PlaceTypeAndLabel =
     placeTypeLabel || (await getPlaceTypeAndLabel(place));
   // keep legacy naming compatibility without unused var warnings
-  let labelWithArticle = label;
-
-  if (type === "region") {
-    if (FEMININE_REGIONS.includes(label.toLowerCase())) {
-      labelWithArticle = `a la ${label}`;
-    } else if (
-      ["a", "e", "i", "o", "u", "h"].includes(label.charAt(0).toLowerCase())
-    ) {
-      labelWithArticle = `a ${label}`;
-    } else {
-      labelWithArticle = `al ${label}`;
-    }
-  } else {
-    if (
-      ["a", "e", "i", "o", "u", "h"].includes(label.charAt(0).toLowerCase())
-    ) {
-      labelWithArticle = `a ${label}`;
-    } else {
-      labelWithArticle = `a ${label}`;
-    }
-  }
+  const labelWithArticle = formatCatalanA(label, type, false);
 
   // Get category-specific SEO data
   const categorySEO = getCategorySEO(category);

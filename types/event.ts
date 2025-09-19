@@ -138,6 +138,8 @@ export interface EventDescriptionProps {
   description: string;
   location: string;
   locationValue: string;
+  introText?: string;
+  locationType?: "region" | "town" | "general";
 }
 
 export interface EventTagsProps {

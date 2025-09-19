@@ -18,6 +18,8 @@ export {
   slug,
   truncateString,
   formatCatalanDe,
+  formatCatalanA,
+  capitalizeFirstLetter,
 } from "./string-helpers";
 export {
   buildEventIntroText,

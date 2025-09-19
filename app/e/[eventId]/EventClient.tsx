@@ -6,8 +6,6 @@ import { sendGoogleEvent } from "@utils/analytics";
 
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
-import EventCategories from "./components/EventCategories";
-import EventDescription from "./components/EventDescription";
 import EventWeather from "./components/EventWeather";
 import EventLocation from "./components/EventLocation";
 // import { useEventModals } from "./hooks/useEventModals";
@@ -128,11 +126,6 @@ export default function EventClient({
         cityName={cityName}
         regionName={regionName}
       />
-      {/* Event Categories - Better positioned after essential info */}
-      <EventCategories
-        categories={event.categories}
-        place={event.region.slug}
-      />
       {/* Ad Section */}
       <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
         <SpeakerphoneIcon className="w-5 h-5 mt-1" />
@@ -141,12 +134,6 @@ export default function EventClient({
           <AdArticle slot="9643657007" />
         </div>
       </div>
-      {/* Description */}
-      <EventDescription
-        description={event.description}
-        locationValue={event.city.slug || event.region.slug}
-        location={cityName || regionName}
-      />
       {/* Weather */}
       <div className="w-full">
         <EventWeather weather={event.weather} />
