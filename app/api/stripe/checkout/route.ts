@@ -7,10 +7,16 @@ import {
 } from "types/api/restaurant";
 import { getPricingConfig } from "config/pricing";
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-08-27.basil",
-});
+// Lazy initialize Stripe to avoid build errors when API key is missing
+function getStripe(): Stripe {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+  }
+  return new Stripe(secretKey, {
+    apiVersion: "2025-08-27.basil",
+  });
+}
 
 /**
  * Create Stripe Checkout Session for restaurant promotion
@@ -18,6 +24,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        {
+          error:
+            "Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.",
+        },
+        { status: 503 }
+      );
+    }
+
     const body: StripeCheckoutRequest = await request.json();
     const { leadId, eventId } = body;
 
@@ -96,6 +113,7 @@ export async function POST(request: NextRequest) {
       }));
     }
 
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create(sessionParams);
 
     const response: StripeCheckoutResponse = {

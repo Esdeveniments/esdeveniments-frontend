@@ -18,6 +18,7 @@ export default function RestaurantPromotionSection({
   eventLng,
   eventStartDate,
 }: RestaurantPromotionSectionProps) {
+  // All hooks must be called at the top level before any conditional returns
   const [placesResp, setPlacesResp] = useState<PlacesResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
