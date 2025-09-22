@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate duration (should be from allowed values)
-    const allowedDurations = getAvailableDurations();
+    const allowedDurations = [1, 3, 5, 7, 14, 30];
     if (!allowedDurations.includes(displayDurationDays)) {
       return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
     }
