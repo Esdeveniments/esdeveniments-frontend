@@ -1,5 +1,4 @@
 import Script from "next/script";
-import Link from "next/link";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
@@ -329,17 +328,6 @@ export default async function ByDatePage({
           }}
         />
       )}
-
-      {/* Contextual link to News for current place */}
-      <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
-        <Link
-          href={`/noticies/${place}`}
-          className="text-primary underline text-sm"
-          prefetch={false}
-        >
-          Notícies de {placeTypeLabel.label}
-        </Link>
-      </div>
 
       {/* Server-rendered events content (SEO optimized) */}
       <HybridEventsList

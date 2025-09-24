@@ -3,9 +3,11 @@ import type { ViewCounterProps } from "types/common";
 
 function ViewCounter({ visits, hideText = false }: ViewCounterProps) {
   return (
-    <div className="w-full flex justify-end items-center gap-2 text-md">
-      <ChartBarIcon className="w-6 h-6" />
-      {hideText ? visits : `${visits} visit${visits === 1 ? "a" : "es"}`}
+    <div className="flex justify-end items-center gap-1 text-md min-w-[60px] h-8">
+      <ChartBarIcon className="w-5 h-5" />
+      <span className="tabular-nums leading-none">
+        {hideText ? visits : `${visits} visit${visits === 1 ? "a" : "es"}`}
+      </span>
     </div>
   );
 }

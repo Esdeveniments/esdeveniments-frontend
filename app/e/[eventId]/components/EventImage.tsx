@@ -1,5 +1,3 @@
-"use client";
-
 import { EventImageProps } from "types/event";
 import { FC } from "react";
 import Image from "@components/ui/common/image";

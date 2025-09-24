@@ -1,6 +1,3 @@
-/* eslint-disable */
-"use client";
-
 import { memo, FC } from "react";
 import Image from "next/image";
 import type { EventWeatherProps } from "types/event";

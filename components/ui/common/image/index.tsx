@@ -1,108 +1,17 @@
-"use client";
+import type { ImageComponentProps } from "types/common";
+import ImageServer from "./ImageServer";
+import ClientImage from "./ClientImage";
 
-import { memo, useRef, RefObject } from "react";
-import NextImage from "next/image";
-import dynamic from "next/dynamic";
-import useOnScreen from "@components/hooks/useOnScreen";
-import { env } from "@utils/helpers";
-import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
-import { useImageRetry } from "@components/hooks/useImageRetry";
-import { ImageComponentProps } from "types/common";
-import {
-  getOptimalImageQuality,
-  getOptimalImageSizes,
-  getServerImageQuality,
-} from "@utils/image-quality";
-
-const ImgDefault = dynamic(() => import("@components/ui/imgDefault"), {
-  loading: () => (
-    <div className="flex justify-center items-center w-full">
-      <div className="w-full h-60 bg-darkCorp animate-fast-pulse"></div>
-    </div>
-  ),
-});
-
-function ImageComponent({
-  title = "",
-  image,
-  className = "w-full h-full flex justify-center items-center",
-  priority = false,
-  alt = title,
-  quality: customQuality,
-  context = "card", // Add context prop for size optimization
-}: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
-  const imgDefaultRef = useRef<HTMLDivElement>(null);
-  const divRef = useRef<HTMLDivElement>(null);
-  const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
-    imgDefaultRef as RefObject<HTMLDivElement>,
-    {
-      freezeOnceVisible: true,
-    }
-  );
-
-  const imageClassName = `${className}`;
-  const networkQualityString = useNetworkSpeed();
-
-  const { hasError, isLoading, handleError, handleLoad, getImageKey } =
-    useImageRetry(2);
-
-  const imageQuality = getOptimalImageQuality({
-    isPriority: priority,
-    isExternal: true,
-    networkQuality: getServerImageQuality(networkQualityString),
-    customQuality,
-  });
-
-  const imageKey = getImageKey(image || "");
-
-  if (!image || hasError) {
-    return (
-      <div className={imageClassName} ref={divRef}>
-        {isImgDefaultVisible ? (
-          <ImgDefault title={title} />
-        ) : (
-          <div className="flex justify-center items-center w-full">
-            <div
-              className="w-full h-60 bg-darkCorp animate-fast-pulse"
-              ref={imgDefaultRef}
-            ></div>
-          </div>
-        )}
-      </div>
-    );
+/**
+ * Server wrapper deciding the lightest rendering path:
+ * - No image: pure server fallback (no hydration) via ImageServer & ImgDefaultServer.
+ * - Image present: opt into enhanced client features (retry, network-adaptive quality).
+ */
+export default function Image(
+  props: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }
+) {
+  if (!props.image) {
+    return <ImageServer {...props} />;
   }
-
-  return (
-    <div className={imageClassName} style={{ position: "relative" }}>
-      {isLoading && (
-        <div className="absolute inset-0 flex justify-center items-center bg-darkCorp animate-fast-pulse">
-          <div className="w-full h-60 bg-darkCorp animate-fast-pulse"></div>
-        </div>
-      )}
-      <NextImage
-        key={imageKey}
-        className="object-cover"
-        src={image}
-        alt={alt}
-        width={500}
-        height={260}
-        loading={priority ? "eager" : "lazy"}
-        onError={handleError}
-        onLoad={handleLoad}
-        quality={imageQuality}
-        style={{
-          objectFit: "cover",
-          opacity: isLoading ? 0 : 1,
-          transition: "opacity 0.3s ease-in-out",
-          height: "auto", // Maintain aspect ratio
-        }}
-        priority={priority}
-        fetchPriority={priority ? "high" : "auto"}
-        sizes={getOptimalImageSizes(context)}
-        unoptimized={env === "dev"}
-      />
-    </div>
-  );
+  return <ClientImage {...props} />;
 }
-
-export default memo(ImageComponent);

@@ -1,5 +1,3 @@
-"use client";
-
 import { LoadMoreButtonProps } from "types/props";
 
 export default function LoadMoreButton({
@@ -8,7 +6,6 @@ export default function LoadMoreButton({
   isValidating = false,
   hasMore = true,
 }: LoadMoreButtonProps) {
-  // Determine button state
   const isButtonDisabled = isLoading || !hasMore;
   const buttonText = isLoading ? "Carregant..." : "Carregar més";
 

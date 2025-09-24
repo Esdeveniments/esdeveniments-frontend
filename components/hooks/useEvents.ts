@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useSWRInfinite from "swr/infinite";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
@@ -25,10 +25,19 @@ export const useEvents = ({
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {
   const [isActivated, setIsActivated] = useState(false);
+  // When the user clicks loadMore the first time we need to both activate and
+  // fetch the *next* page beyond the SSR list. Previously we called setSize
+  // during the same tick while the key was still null (because isActivated was
+  // still false). SWR Infinite discards that size increase when the key moves
+  // from null -> real key, so only page 0 was fetched and the user had to
+  // click a second time. We capture that intent here and apply it *after*
+  // activation so the first click yields new events immediately.
+  const fetchNextAfterActivateRef = useRef(false);
 
   // Reset activation when filters change (place, category, date)
   useEffect(() => {
     setIsActivated(false);
+    fetchNextAfterActivateRef.current = false;
   }, [place, category, date]);
 
   // Build base params for the key/fetcher
@@ -111,6 +120,16 @@ export const useEvents = ({
     }
   );
 
+  // After activation, if the first click intended to also fetch the next page,
+  // perform the size increment now (when keys are established) so both page 0
+  // (SSR/fallback) and page 1 are available right after the first click.
+  useEffect(() => {
+    if (isActivated && fetchNextAfterActivateRef.current) {
+      fetchNextAfterActivateRef.current = false;
+      setSize((prev) => prev + 1);
+    }
+  }, [isActivated, setSize]);
+
   // Use fallback data when not activated, SWR data when activated
   const clientEvents = isActivated
     ? pages?.flatMap((p) => p.content) ?? []
@@ -131,10 +150,15 @@ export const useEvents = ({
 
   const loadMore = () => {
     if (isLoading || isValidating || (isActivated && !hasMore)) return;
+
     if (!isActivated) {
+      // Mark that once activation completes we should fetch the next page.
+      fetchNextAfterActivateRef.current = true;
       setIsActivated(true);
+      return; // size bump will occur in the activation effect
     }
-    // Load exactly one additional page each time
+
+    // Already active: directly request one more page.
     setSize((prev) => prev + 1);
   };
 

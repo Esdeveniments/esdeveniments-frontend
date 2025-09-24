@@ -1,6 +1,6 @@
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { fetchPlaceBySlug } from "@lib/api/places";
-import { sanitize } from "./string-helpers";
+import { sanitize, formatCatalanDe } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
 
 export const getPlaceTypeAndLabel = async (
@@ -88,13 +88,20 @@ export function getNewsCta(
       )
       .join(" ");
 
-  const label =
+  const baseLabel =
     safePlace === "catalunya"
       ? "Catalunya"
       : placeLabel
       ? placeLabel
       : formatWords(safePlace.replace(/-/g, " "));
 
-  const text = `Notícies a ${label}`;
+  // Use existing Catalan contraction helper for "de" forms
+  const deLabel = formatCatalanDe(baseLabel, false); // keep original casing of baseLabel
+
+  // CTA copy (cultural focus). Uses contraction helper for natural Catalan.
+  const text =
+    safePlace === "catalunya"
+      ? "Actualitat cultural de Catalunya"
+      : `Actualitat cultural ${deLabel}`;
   return { href, text };
 }
