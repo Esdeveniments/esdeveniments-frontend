@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ImageServer from "@components/ui/common/image/ImageServer";
 import { PromotedRestaurantCardProps } from "types/api/restaurant";
 
 export default function PromotedRestaurantCard({
@@ -39,13 +39,13 @@ export default function PromotedRestaurantCard({
         <div className="border border-primary/20 rounded-lg p-4 bg-gradient-to-r from-primary/5 to-primary/10">
           <div className="flex items-start gap-4">
             {/* Restaurant Image */}
-            <div className="flex-shrink-0">
-              <Image
-                src={promotion.image.secure_url}
+            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden">
+              <ImageServer
+                image={promotion.image.secure_url}
+                title={promotion.restaurantName}
                 alt={promotion.restaurantName}
-                width={64}
-                height={64}
-                className="w-16 h-16 object-cover rounded-lg"
+                className="w-16 h-16"
+                context="card"
               />
             </div>
 

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { memo } from "react";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
+import type { CardShareButtonProps } from "types/common";
 
 const ShareButton = dynamic(
   () => import("@components/ui/common/cardShareButton"),
@@ -22,10 +23,12 @@ const ShareButton = dynamic(
   }
 );
 
-function DesktopShareIsland({ slug }: { slug: string }) {
+function DesktopShareIsland({ slug }: CardShareButtonProps) {
   const isMobile = useCheckMobileScreen();
   const canNativeShare =
-    typeof window !== "undefined" && typeof navigator !== "undefined" && !!navigator.share;
+    typeof window !== "undefined" &&
+    typeof navigator !== "undefined" &&
+    !!navigator.share;
   const showNativeOnMobile = isMobile && canNativeShare;
 
   return (

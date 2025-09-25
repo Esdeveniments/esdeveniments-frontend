@@ -12,26 +12,10 @@ const CardHorizontal: React.FC<CardHorizontalProps> = ({
   if (isLoading) return <CardLoading />;
   if (event.isAd) return <AdCardClient />;
   return (
-    <CardContentServer
-      event={event}
-      isPriority={isPriority}
-      isHorizontal
-    />
+    <CardContentServer event={event} isPriority={isPriority} isHorizontal />
   );
 };
 
-function areEqual(
-  prevProps: CardHorizontalProps,
-  nextProps: CardHorizontalProps
-): boolean {
-  if (!prevProps.event || !nextProps.event) return false;
-  return (
-    prevProps.isLoading === nextProps.isLoading &&
-    prevProps.isPriority === nextProps.isPriority &&
-    prevProps.event.id === nextProps.event.id
-  );
-}
-
 CardHorizontal.displayName = "CardHorizontal";
 
-export default memo(CardHorizontal, areEqual);
+export default memo(CardHorizontal);

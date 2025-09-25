@@ -310,3 +310,11 @@ export interface NewsCardProps {
   placeLabel?: string;
   variant?: "default" | "hero";
 }
+
+// Mobile share island component props
+export interface MobileShareProps {
+  title: string;
+  slug: string;
+  eventDate: string; // ISO or human readable date string used in share payload
+  location: string; // Main location label
+}

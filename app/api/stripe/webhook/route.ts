@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
-import Stripe from "stripe";
 import { headers } from "next/headers";
 
-// Lazy initialize Stripe to avoid build errors when API key is missing
-function getStripe(): Stripe {
+/**
+ * Dynamically create a Stripe client only if the secret key is present and the dependency exists.
+ * While Stripe is removed from package.json this will always hit the catch block and we return null.
+ * Re‑enable by installing the dependency: `yarn add stripe` and (optionally) replacing this with a static import.
+ */
+async function createStripeClient(): Promise<unknown | null> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+  if (!secretKey) return null;
+  try {
+    const mod = await import("stripe");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Ctor = (mod as { default: any }).default;
+    return new Ctor(secretKey, { apiVersion: "2025-08-27.basil" });
+  } catch {
+    // Dependency missing — keep silent (expected while package removed)
+    return null;
   }
-  return new Stripe(secretKey, {
-    apiVersion: "2025-08-27.basil",
-  });
-}
-
-function getWebhookSecret(): string {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    throw new Error("STRIPE_WEBHOOK_SECRET environment variable is not set");
-  }
-  return webhookSecret;
 }
 
 /**
@@ -48,13 +47,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 });
     }
 
-    let event: Stripe.Event;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let event: any;
 
     try {
       // Verify webhook signature
-      const stripe = getStripe();
-      const webhookSecret = getWebhookSecret();
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      const stripe = await createStripeClient();
+      if (!stripe) {
+        return NextResponse.json(
+          {
+            error:
+              "Stripe payments are not available (dependency not installed).",
+          },
+          { status: 503 }
+        );
+      }
+
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        throw new Error(
+          "STRIPE_WEBHOOK_SECRET environment variable is not set"
+        );
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      event = (stripe as any).webhooks.constructEvent(
+        body,
+        signature,
+        webhookSecret
+      );
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -62,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Handle checkout.session.completed event
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object;
 
       const { leadId, eventId, durationDays, geoScopeType, geoScopeId } =
         session.metadata || {};

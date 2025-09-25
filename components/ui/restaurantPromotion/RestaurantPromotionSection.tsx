@@ -41,10 +41,7 @@ export default function RestaurantPromotionSection({
       return;
     }
 
-    // Check if event is in the future
-    const eventDate = new Date(eventStartDate);
-    const now = new Date();
-    if (eventDate <= now) {
+    if (!isEventInFuture()) {
       return;
     }
 

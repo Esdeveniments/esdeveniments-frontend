@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { ShareIcon } from "@heroicons/react/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { memo } from "react";
+import type { MobileShareProps } from "types/props";
 
 const NativeShareButton = dynamic(
   () => import("@components/ui/common/nativeShareButton"),
@@ -18,15 +19,12 @@ function MobileShareIsland({
   slug,
   eventDate,
   location,
-}: {
-  title: string;
-  slug: string;
-  eventDate: string;
-  location: string;
-}) {
+}: MobileShareProps) {
   const isMobile = useCheckMobileScreen();
   const canNativeShare =
-    typeof window !== "undefined" && typeof navigator !== "undefined" && !!navigator.share;
+    typeof window !== "undefined" &&
+    typeof navigator !== "undefined" &&
+    !!navigator.share;
   if (!isMobile || !canNativeShare) return null;
   return (
     <NativeShareButton

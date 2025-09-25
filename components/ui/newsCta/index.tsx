@@ -12,7 +12,7 @@ export function NewsCta({ href, label, ...rest }: NewsCtaProps) {
     <Link
       href={href}
       prefetch={false}
-      aria-label={`Accedeix a ${label.toLowerCase()}`}
+      aria-label={`Accedeix a ${label}`}
       rel="related"
       {...rest}
       className="group relative inline-flex items-center gap-2.5 rounded-xl border border-bColor/60 bg-whiteCorp px-4 py-2.5 sm:py-2 text-sm font-semibold text-fullBlackCorp shadow-sm hover:shadow-md hover:border-primary/50 hover:bg-darkCorp/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 active:scale-[0.99] sm:active:scale-[0.985] transition-[background,box-shadow,transform,border-color] duration-200 min-h-[44px] sm:min-h-[auto]"
