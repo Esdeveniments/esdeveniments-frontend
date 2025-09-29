@@ -20,7 +20,7 @@ const EventImage: FC<EventImageProps> = ({ image, title }) => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <div className="w-full" style={{ position: "relative", height: "260px" }}>
+      <div style={{ position: "relative", height: "260px" }}>
         <Image
           title={title}
           alt={title}

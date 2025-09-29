@@ -138,6 +138,17 @@ export const generateJsonData = (
     }
   };
 
+  // Dynamic eventStatus (improves accuracy for past/ongoing events)
+  const now = new Date();
+  const startDateObj = new Date(startDate);
+  const endDateObj = endDate ? new Date(endDate) : undefined;
+  let eventStatusValue = "https://schema.org/EventScheduled";
+  if (endDateObj && now > endDateObj) {
+    eventStatusValue = "https://schema.org/EventCompleted"; // Completed
+  } else if (now >= startDateObj && (!endDateObj || now <= endDateObj)) {
+    eventStatusValue = "https://schema.org/EventInProgress"; // Live
+  }
+
   return {
     "@context": "https://schema.org" as const,
     "@type": "Event" as const,
@@ -147,7 +158,7 @@ export const generateJsonData = (
     startDate: getEnhancedDateTime(startDate, startTime),
     endDate: getEnhancedDateTime(endDate, endTime),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    eventStatus: "https://schema.org/EventScheduled",
+    eventStatus: eventStatusValue,
     location: {
       "@type": "Place" as const,
       name: location,

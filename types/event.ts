@@ -123,7 +123,6 @@ export interface EventMediaProps {
 }
 
 export interface EventShareBarProps {
-  visits: number;
   slug: string;
   title: string;
   description: string;
@@ -132,6 +131,12 @@ export interface EventShareBarProps {
   cityName: string;
   regionName: string;
   postalCode: string;
+}
+
+// Client-side props for EventShareBar include an optional server hint for
+// initial mobile rendering to avoid hydration layout shifts.
+export interface EventShareBarClientProps extends EventShareBarProps {
+  initialIsMobile?: boolean;
 }
 
 export interface EventDescriptionProps {

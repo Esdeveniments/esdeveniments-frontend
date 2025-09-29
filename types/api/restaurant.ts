@@ -48,7 +48,7 @@ export interface GooglePlace {
   name: string;
   vicinity: string;
   rating?: number;
-  price_level?: number;
+  price_level?: number | string; // Google may return enum string or numeric (0-4)
   types: string[];
   geometry: {
     location: {
@@ -56,13 +56,89 @@ export interface GooglePlace {
       lng: number;
     };
   };
+  // Photos (Places API v1 only)
   photos?: Array<{
-    photo_reference: string;
-    height: number;
-    width: number;
+    name: string; // places/{place_id}/photos/{photo_id}
+    widthPx?: number;
+    heightPx?: number;
+    authorAttributions?: Array<{
+      displayName?: string;
+      uri?: string;
+      photoUri?: string;
+    }>;
+    googleMapsUri?: string;
   }>;
+  // Structured address fields from postalAddress (preferred over 'vicinity')
+  address_lines?: string[];
+  address_locality?: string;
+  address_administrative_area?: string;
+  address_postal_code?: string;
+  // Enriched fields returned by our nearby proxy (optional)
+  business_status?: PlaceBusinessStatus;
+  is_open_on_event_day?: boolean;
+  open_confidence?: OpenConfidence; // confidence of open determination for event date
+  hours_display?: string; // deprecated: use opening_info + format util
+  raw_weekday_text?: string[]; // original weekday descriptions (if requested)
+  opening_info?: OpeningInfo; // structured opening data (preferred)
 }
 
+export type OpenConfidence = "confirmed" | "inferred" | "none";
+
+export interface OpeningSegment {
+  start: string; // HH:MM 24h
+  end: string; // HH:MM 24h (can be 24:00 for midnight)
+  overnight: boolean;
+  source: "current" | "regular";
+}
+
+export interface OpeningInfo {
+  open_status: "open" | "closed" | "unknown"; // relative to now OR event date context
+  open_confidence?: OpenConfidence;
+  event_date?: string | null; // YYYY-MM-DD when filtering by date
+  segments?: OpeningSegment[]; // relevant segments for the day
+  is_24h?: boolean;
+  next_change?: string; // ISO date-time (optional, not always provided)
+  source?: "current" | "regular"; // which schedule produced segments
+}
+
+export interface PlaceOpeningHoursPoint {
+  // google.type.Date subset (we only need calendar parts)
+  date?:
+    | string
+    | {
+        year?: number;
+        month?: number;
+        day?: number;
+      };
+  day?: number; // 0=Sunday ... 6=Saturday
+  hour?: number;
+  minute?: number;
+  truncated?: boolean;
+}
+
+export interface PlaceOpeningHoursPeriod {
+  open?: PlaceOpeningHoursPoint;
+  close?: PlaceOpeningHoursPoint;
+}
+
+export interface PlaceCurrentOpeningHours {
+  openNow?: boolean;
+  periods?: PlaceOpeningHoursPeriod[];
+  weekdayDescriptions?: string[];
+}
+
+export interface PlaceRegularOpeningHours {
+  periods?: PlaceOpeningHoursPeriod[];
+  weekdayDescriptions?: string[];
+}
+
+export type PlaceBusinessStatus =
+  | "OPERATIONAL"
+  | "CLOSED_TEMPORARILY"
+  | "CLOSED_PERMANENTLY"
+  | string; // fallback for unexpected values
+
+// Extend existing GooglePlaceResponse (add these fields if not already present)
 export interface GooglePlaceResponse {
   name?: string;
   displayName?: { text: string };
@@ -71,13 +147,67 @@ export interface GooglePlaceResponse {
   priceLevel?: number;
   types?: string[];
   location?: { latitude: number; longitude: number };
-  photos?: Array<{ photo_reference: string; height: number; width: number }>;
+  photos?: Array<{
+    name: string;
+    widthPx?: number;
+    heightPx?: number;
+    authorAttributions?: Array<{
+      displayName?: string;
+      uri?: string;
+      photoUri?: string;
+    }>;
+    googleMapsUri?: string;
+  }>;
+
+  postalAddress?: {
+    addressLines?: string[];
+    locality?: string;
+    administrativeArea?: string;
+    postalCode?: string;
+    regionCode?: string;
+    languageCode?: string;
+  };
+
+  // Newly added:
+  businessStatus?: PlaceBusinessStatus;
+  currentOpeningHours?: PlaceCurrentOpeningHours;
+  regularOpeningHours?: PlaceRegularOpeningHours;
+  utcOffsetMinutes?: number;
 }
 
 export interface GooglePlacesNearbyResponse {
   results: GooglePlace[];
   status: string;
   error_message?: string;
+}
+
+/**
+ * Google Places v1 Nearby Search request payload
+ */
+export interface GooglePlacesNearbyRequest {
+  includedTypes: string[];
+  maxResultCount: number;
+  locationRestriction: {
+    circle: {
+      center: { latitude: number; longitude: number };
+      radius: number; // meters
+    };
+  };
+  rankPreference?: "POPULARITY" | "DISTANCE";
+  languageCode?: string; // e.g. "ca" for Catalan
+}
+
+/**
+ * Raw response from Google Places v1 searchNearby endpoint.
+ * We only type the fields we request via the field mask.
+ */
+export interface GooglePlacesSearchNearbyRawResponse {
+  places?: GooglePlaceResponse[];
+  error?: {
+    message?: string;
+    status?: string;
+    code?: number;
+  };
 }
 
 export interface CloudinaryUploadResponse {
@@ -174,6 +304,8 @@ export interface PlacesResponse {
 export interface WhereToEatSectionProps {
   places: GooglePlace[];
   attribution: string;
+  /** Optional callback to open a promotion info modal */
+  onPromoteClick?: () => void;
 }
 
 export interface PromotedRestaurantCardProps {

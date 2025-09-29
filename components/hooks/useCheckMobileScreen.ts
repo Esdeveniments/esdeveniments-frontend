@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
-const useCheckMobileScreen = (): boolean => {
+const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
   const [width, setWidth] = useState<number | undefined>(undefined);
   const [hasMounted, setHasMounted] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -39,9 +39,14 @@ const useCheckMobileScreen = (): boolean => {
     };
   }, [handleWindowSizeChange]);
 
-  // Return false during SSR and initial render to prevent hydration mismatch
-  // Only return actual mobile detection after client-side mount
+  // If the component hasn't mounted yet, prefer a server-provided hint when
+  // available. This avoids rendering a desktop-only UI on the server and
+  // then swapping to mobile after hydration (layout shift).
   if (!hasMounted) {
+    if (typeof initialIsMobile === "boolean") {
+      return initialIsMobile;
+    }
+    // Fallback during SSR/initial render: be conservative and return false.
     return false;
   }
 

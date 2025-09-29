@@ -70,7 +70,12 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
 
   return (
     <div ref={containerRef} className="relative">
-      <CalendarButton onClick={toggleAgendaList} hideText={hideText} />
+      <CalendarButton
+        onClick={toggleAgendaList}
+        hideText={hideText}
+        open={showAgendaList}
+      />
+
       {showAgendaList && (
         <Suspense fallback={<div>Carregant...</div>}>
           <LazyCalendarList

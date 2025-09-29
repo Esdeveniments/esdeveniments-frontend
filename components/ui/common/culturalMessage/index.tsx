@@ -1,7 +1,7 @@
 import { FC } from "react";
-import Link from "next/link";
 import { CulturalMessageProps } from "types/props";
 import { formatCatalanA, capitalizeFirstLetter } from "@utils/helpers";
+import Badge from "../badge";
 
 const CulturalMessage: FC<CulturalMessageProps> = ({
   location,
@@ -21,30 +21,14 @@ const CulturalMessage: FC<CulturalMessageProps> = ({
         {formatCatalanA(capitalizedLocation, locationType, false)}:
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
-        <Link
-          href={`/${locationValue}/avui`}
-          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
-        >
-          Què fer avui
-        </Link>
-        <Link
-          href={`/${locationValue}/dema`}
-          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
-        >
-          Què fer demà
-        </Link>
-        <Link
-          href={`/${locationValue}/setmana`}
-          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
-        >
+        <Badge href={`/${locationValue}/avui`}>Què fer avui</Badge>
+        <Badge href={`/${locationValue}/dema`}>Què fer demà</Badge>
+        <Badge href={`/${locationValue}/setmana`}>
           Què fer aquesta setmana
-        </Link>
-        <Link
-          href={`/${locationValue}/cap-de-setmana`}
-          className="inline-flex items-center rounded-full border border-blackCorp bg-whiteCorp px-3 py-1 text-sm text-blackCorp hover:bg-primary hover:text-whiteCorp transition-colors"
-        >
+        </Badge>
+        <Badge href={`/${locationValue}/cap-de-setmana`}>
           Què fer aquest cap de setmana
-        </Link>
+        </Badge>
       </div>
     </div>
   );

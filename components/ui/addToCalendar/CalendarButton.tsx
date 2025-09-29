@@ -1,21 +1,26 @@
 import { memo } from "react";
-import { PlusIcon } from "@heroicons/react/outline";
+import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/outline";
+import Button from "../common/button";
 import { CalendarButtonProps } from "types/common";
 
 const CalendarButton: React.FC<CalendarButtonProps> = ({
   onClick,
   hideText = false,
+  open = false,
 }) => (
-  <button
+  <Button
     onClick={onClick}
-    type="button"
-    className="btn text-primary flex items-center justify-center hover:text-primarydark"
+    variant="neutral"
+    aria-haspopup="menu"
+    data-open={open}
+    className="group"
   >
-    <div className="bg-whiteCorp p-1 mr-2 border border-black rounded ">
-      <PlusIcon className="w-4 h-4" />
-    </div>
+    <span className="flex items-center justify-center w-6 h-6 rounded-md bg-whiteCorp p-1 mr-2 border border-blackCorp/10">
+      <CalendarIcon className="w-4 h-4 text-primary" />
+    </span>
     {!hideText && "Afegir al calendari"}
-  </button>
+    <ChevronDownIcon className="w-4 h-4 ml-2 transition-transform duration-200 group-data-[open=true]:rotate-180" />
+  </Button>
 );
 
 export default memo(CalendarButton);

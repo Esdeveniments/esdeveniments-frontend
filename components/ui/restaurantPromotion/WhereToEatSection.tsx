@@ -1,114 +1,154 @@
 import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
+import Image from "next/image";
+import { FireIcon } from "@heroicons/react/outline"; // using FireIcon as dining marker (no direct utensils icon in outline set v1)
+import { getOptimalImageQuality } from "@utils/image-quality";
+import {
+  formatPriceLevelGeneric,
+  getOpenLineInfo,
+  formatAddressLines,
+} from "@utils/place-format";
+
+// Helper: derive photo proxy URL (Places API v1 only)
+function getPhotoUrl(place: GooglePlace): string | null {
+  const photo = place.photos?.[0];
+  if (!photo) return null;
+  return `/api/places/photo?name=${encodeURIComponent(photo.name)}&w=160`;
+}
 
 export default function WhereToEatSection({
   places,
   attribution,
+  onPromoteClick,
 }: WhereToEatSectionProps) {
   if (!places || places.length === 0) {
     return null;
   }
 
   return (
-    <div className="w-full flex justify-center items-start gap-2">
-      <svg
-        className="w-5 h-5 mt-1"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-        />
-      </svg>
+    <>
+      <FireIcon className="w-5 h-5 mt-1" aria-hidden="true" />
       <section
         className="w-11/12 flex flex-col gap-4"
         aria-labelledby="where-to-eat"
       >
-        <h2 id="where-to-eat">On pots menjar</h2>
-        <div className="space-y-3">
-          {places.slice(0, 3).map((place: GooglePlace) => (
-            <div
-              key={place.place_id}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+        <div className="flex items-center justify-between gap-2">
+          <h2 id="where-to-eat" className="flex-1">
+            On pots menjar
+          </h2>
+          {onPromoteClick && (
+            <button
+              type="button"
+              onClick={onPromoteClick}
+              className="text-xs font-medium text-primary hover:text-primarydark underline focus:outline-none"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{place.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{place.vicinity}</p>
-
-                  {/* Rating */}
-                  {place.rating && (
-                    <div className="flex items-center mt-2">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(place.rating!)
-                                ? "text-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="ml-1 text-sm text-gray-600">
-                        {place.rating.toFixed(1)}
-                      </span>
+              Promociona el teu restaurant
+            </button>
+          )}
+        </div>
+        <div className="space-y-3">
+          {places.slice(0, 3).map((place: GooglePlace) => {
+            const openInfo = getOpenLineInfo(place);
+            const price = formatPriceLevelGeneric(place.price_level);
+            const shortAddress =
+              formatAddressLines(place.address_lines) || place.vicinity;
+            return (
+              <a
+                key={place.place_id}
+                href={`https://www.google.com/maps/place/?q=place_id:${place.place_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block border border-gray-200 rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
+                aria-label={`Obrir ${place.name} a Google Maps`}
+              >
+                <div className="flex items-start gap-4">
+                  {getPhotoUrl(place) ? (
+                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 ml-4">
+                      <Image
+                        src={getPhotoUrl(place)!}
+                        alt={`Foto de ${place.name}`}
+                        fill
+                        priority={false}
+                        sizes="80px"
+                        quality={getOptimalImageQuality({ isExternal: true })}
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-md flex items-center justify-center bg-gray-100 text-gray-400 flex-shrink-0 ml-4">
+                      <svg
+                        className="w-8 h-8"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
                     </div>
                   )}
-
-                  {/* Price Level */}
-                  {place.price_level !== undefined && (
-                    <div className="mt-1">
-                      <span className="text-sm text-gray-600">
-                        {place.price_level === 0 && "€"}
-                        {place.price_level === 1 && "€€"}
-                        {place.price_level === 2 && "€€€"}
-                        {place.price_level === 3 && "€€€€"}
-                      </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-medium text-gray-900 line-clamp-1 group-hover:underline min-w-0">
+                        {place.name}
+                      </h3>
+                      <svg
+                        className="h-4 w-4 text-primary opacity-70 group-hover:opacity-100 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
                     </div>
-                  )}
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      {shortAddress}
+                    </p>
+                    <p className="mt-2 text-xs flex flex-wrap items-center gap-2 text-gray-700">
+                      {openInfo?.hoursText && <span>{openInfo.hoursText}</span>}
+                      {openInfo?.hoursText && openInfo?.openLabel && (
+                        <span className="text-gray-300">·</span>
+                      )}
+                      {openInfo?.openLabel && (
+                        <span className={openInfo.toneClass}>
+                          {openInfo.openLabel}
+                        </span>
+                      )}
+                      {(openInfo?.hoursText || openInfo?.openLabel) &&
+                        (place.rating || price) && (
+                          <span className="text-gray-300">·</span>
+                        )}
+                      {place.rating && (
+                        <span className="text-gray-700 flex items-center gap-1">
+                          <span className="text-yellow-500">★</span>
+                          {place.rating.toFixed(1)}
+                        </span>
+                      )}
+                      {place.rating && price && (
+                        <span className="text-gray-300">·</span>
+                      )}
+                      {price && <span className="text-gray-700">{price}</span>}
+                    </p>
+                  </div>
                 </div>
-
-                {/* Google Maps Link */}
-                <a
-                  href={`https://www.google.com/maps/place/?q=place_id:${place.place_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-4 text-primary hover:text-primarydark transition-colors"
-                  aria-label={`View ${place.name} on Google Maps`}
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          ))}
+              </a>
+            );
+          })}
         </div>
 
         {/* Attribution */}
-        <div className="text-xs text-gray-500 text-center pt-2 border-t border-gray-100">
+        <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
           {attribution}
         </div>
       </section>
-    </div>
+    </>
   );
 }

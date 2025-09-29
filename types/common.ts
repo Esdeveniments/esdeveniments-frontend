@@ -138,6 +138,12 @@ export interface RenderButtonProps {
   scrollToTop: () => void;
 }
 
+// Props for restaurant promotion info modal component
+export interface PromotionInfoModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
 export interface GeolocationPosition {
   coords: {
     latitude: number;
@@ -205,6 +211,15 @@ export interface AdContentProps {
 
 export type DateString = string | Date;
 
+export interface PastEventBannerProps {
+  temporalStatus: import("./event-status").EventTemporalStatus;
+  cityName?: string;
+  regionName?: string;
+  explorePlaceHref: string;
+  exploreCategoryHref: string;
+  primaryCategorySlug?: string | null;
+}
+
 export interface AddToCalendarProps {
   title: string;
   description: string;
@@ -213,11 +228,14 @@ export interface AddToCalendarProps {
   endDate: DateString;
   canonical: string;
   hideText?: boolean;
+  buttonVariant?: ButtonProps["variant"];
 }
 
 export interface CalendarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement>;
   hideText?: boolean;
+  open?: boolean;
+  variant?: ButtonProps["variant"];
 }
 
 export interface CalendarListProps {
@@ -377,6 +395,20 @@ export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   href?: Href;
 }
 
+// Generic Badge component props used across UI
+export interface BadgeProps {
+  href?: string;
+  className?: string;
+  variant?: "outline" | "solid";
+  onClick?: () => void;
+  ariaLabel?: string;
+}
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "neutral" | "primary" | "muted" | "outline" | "solid";
+}
+
 // Hook return types
 export interface UseCategoriesReturn {
   categories: CategorySummaryResponseDTO[];
@@ -421,6 +453,12 @@ export interface PreloadOptions {
 
 export interface GoogleAnalyticsEvent {
   [key: string]: unknown;
+}
+
+// Opening hours formatting options (shared between utils and UI)
+export interface FormatOpeningHoursOptions {
+  locale?: string;
+  now?: Date; // override for deterministic tests
 }
 
 // SEO and structured data types

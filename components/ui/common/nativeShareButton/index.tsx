@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useMemo, memo, MouseEvent, JSX } from "react";
 import { ShareIcon } from "@heroicons/react/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";

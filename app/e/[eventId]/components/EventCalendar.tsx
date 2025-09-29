@@ -1,4 +1,4 @@
-import { CalendarIcon } from "@heroicons/react/outline";
+import { CalendarIcon, ClockIcon } from "@heroicons/react/outline";
 import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
 import type { EventCalendarProps } from "types/event";
@@ -34,8 +34,9 @@ export default function EventCalendar({ event }: EventCalendarProps) {
       <div className="w-11/12 flex flex-col gap-4">
         <h2>Data i hora</h2>
         <div className="w-full flex flex-col gap-4">
-          <p>{eventDate}</p>
-          <p className="capitalize">
+          <p className="font-bold">{eventDate}</p>
+          <p className="capitalize flex items-center gap-2">
+            <ClockIcon className="w-4 h-4 text-blackCorp/70" />
             {!startTime || startTime === "00:00"
               ? "Consultar horaris"
               : `${startTime} - ${endTime || ""}`}
