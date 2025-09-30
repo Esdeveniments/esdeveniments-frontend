@@ -1,5 +1,5 @@
 import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
-import Image from "next/image";
+import NextImage from "next/image";
 import { FireIcon } from "@heroicons/react/outline"; // using FireIcon as dining marker (no direct utensils icon in outline set v1)
 import { getOptimalImageQuality } from "@utils/image-quality";
 import {
@@ -63,7 +63,7 @@ export default function WhereToEatSection({
                 <div className="flex items-start gap-4">
                   {getPhotoUrl(place) ? (
                     <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 ml-4">
-                      <Image
+                      <NextImage
                         src={getPhotoUrl(place)!}
                         alt={`Foto de ${place.name}`}
                         fill
@@ -71,6 +71,7 @@ export default function WhereToEatSection({
                         sizes="80px"
                         quality={getOptimalImageQuality({ isExternal: true })}
                         className="object-cover"
+                        style={{ objectFit: "cover" }}
                       />
                     </div>
                   ) : (

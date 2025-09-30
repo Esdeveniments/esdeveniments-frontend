@@ -70,4 +70,32 @@ describe("computeTemporalStatus", () => {
     const status = computeTemporalStatus(start, undefined, baseNow);
     expect(status.state).toBe("past");
   });
+
+  it("date-only start on same day (no times) is considered live", () => {
+    // start as bare date (midnight UTC)
+    const start = baseNow.toISOString().split("T")[0]; // '2025-09-29'
+    const status = computeTemporalStatus(start, undefined, baseNow);
+    expect(status.state).toBe("live");
+  });
+
+  it("date-only start more than 24h ago is past", () => {
+    const start = addDays(-2).toISOString().split("T")[0]; // two days before
+    const status = computeTemporalStatus(start, undefined, baseNow);
+    expect(status.state).toBe("past");
+  });
+
+  it("datetime start with explicit time in future uses hour granularity", () => {
+    const start = "2025-09-29T13:00:00.000Z"; // 1 hour from baseNow
+    const status = computeTemporalStatus(start, undefined, baseNow);
+    expect(status.state).toBe("upcoming");
+    if (status.state === "upcoming") {
+      expect(status.startsIn).toContain("1 hores");
+    }
+  });
+
+  it("datetime start earlier today with explicit time is live", () => {
+    const start = "2025-09-29T11:00:00.000Z"; // 1 hour before baseNow
+    const status = computeTemporalStatus(start, undefined, baseNow);
+    expect(status.state).toBe("live");
+  });
 });

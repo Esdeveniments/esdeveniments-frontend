@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
+  parseISO,
+  isValid,
+  isAfter,
+  differenceInCalendarDays,
+  format,
+} from "date-fns";
+import {
   RestaurantPromotionSectionProps,
   PlacesResponse,
   // ActivePromotion,
@@ -36,27 +43,47 @@ export default function RestaurantPromotionSection({
   });
 
   // Compute once per render; safe primitive usage inside effect
-  const eventIsInFuture = (() => {
-    if (!eventStartDate) return false;
-    const eventDate = new Date(eventStartDate);
-    return eventDate.getTime() > Date.now();
+  // We keep two booleans:
+  // - eventIsInFuture: whether the event is in the future (used to decide render)
+  // - eventIsWithinFetchWindow: whether the event is within the next MAX_DAYS days
+  const { eventIsInFuture, eventIsWithinFetchWindow } = (() => {
+    const MAX_DAYS = 15;
+    if (!eventStartDate)
+      return { eventIsInFuture: false, eventIsWithinFetchWindow: false };
+
+    // Prefer ISO parsing; if not valid, fallback to native Date parsing
+    let eventDate = parseISO(eventStartDate);
+    if (!isValid(eventDate)) {
+      eventDate = new Date(eventStartDate);
+    }
+
+    const now = new Date();
+    const eventIsInFuture = isAfter(eventDate, now);
+    const daysAhead = differenceInCalendarDays(eventDate, now);
+    const eventIsWithinFetchWindow = eventIsInFuture && daysAhead <= MAX_DAYS;
+    return { eventIsInFuture, eventIsWithinFetchWindow };
   })();
 
-  // Fetch places when section becomes visible and event is in future
+  // Fetch places when section becomes visible and event is in future and within the fetch window
   useEffect(() => {
     if (!isVisible || !eventStartDate || !eventLat || !eventLng || placesResp) {
       return;
     }
-    if (!eventIsInFuture) return;
+    // Only fetch if the event is within the configured fetch window (e.g. next 15 days)
+    if (!eventIsWithinFetchWindow) return;
 
     const fetchPlaces = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const dateParam = eventStartDate
-          ? `&date=${eventStartDate.slice(0, 10)}`
-          : "";
+        let dateParam = "";
+        if (eventStartDate) {
+          // Format to YYYY-MM-DD for the API
+          const parsed = parseISO(eventStartDate);
+          const usedDate = isValid(parsed) ? parsed : new Date(eventStartDate);
+          dateParam = `&date=${format(usedDate, "yyyy-MM-dd")}`;
+        }
         const url = `/api/places/nearby?lat=${eventLat}&lng=${eventLng}&limit=3${dateParam}`;
         const res = await fetch(url);
 
@@ -81,7 +108,7 @@ export default function RestaurantPromotionSection({
     eventLng,
     eventStartDate,
     placesResp,
-    eventIsInFuture,
+    eventIsWithinFetchWindow,
   ]);
 
   // Don't render if event is not in the future

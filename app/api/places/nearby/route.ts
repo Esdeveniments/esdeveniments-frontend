@@ -12,21 +12,13 @@ import {
 
 export const runtime = "nodejs";
 
-/**
- * Google Places Nearby Search API proxy
- * Returns only restaurants that are open on the provided event date (place-local).
- * - Within 7 days: use currentOpeningHours date-bounded periods.
- * - Beyond 7 days: fall back to regularOpeningHours weekly schedule (likely open).
- */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
-  const radius = searchParams.get("radius") || "5000"; // meters
+  const radius = searchParams.get("radius") || "5000";
   const limit = parseInt(searchParams.get("limit") || "3", 10);
-
-  // Event date (YYYY-MM-DD) in place-local calendar
-  const eventDateISO = searchParams.get("date");
+  const eventDateISO = searchParams.get("date"); // YYYY-MM-DD in place-local calendar
 
   if (!lat || !lng) {
     return NextResponse.json(
@@ -44,51 +36,42 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const sameISO = (a?: string, b?: string) => !!a && !!b && a === b;
-
-  // Convert a Point (period.open/close) into ISO yyyy-mm-dd in place-local time
-  function pointDateToISO(
-    point: PlaceOpeningHoursPoint | undefined
-  ): string | undefined {
-    if (!point) return undefined;
-    const d = point.date;
-    if (!d) return undefined;
-    if (typeof d === "string") return d.slice(0, 10);
-    const { year, month, day } = d;
+  // --- Helpers (consolidated) ---
+  function toISODate(point?: PlaceOpeningHoursPoint): string | undefined {
+    if (!point?.date) return undefined;
+    if (typeof point.date === "string") return point.date.slice(0, 10);
+    const { year, month, day } = point.date;
     if (year && month && day) {
-      const mm = String(month).padStart(2, "0");
-      const dd = String(day).padStart(2, "0");
-      return `${year}-${mm}-${dd}`;
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+        2,
+        "0"
+      )}`;
     }
     return undefined;
   }
 
-  function isOpenOnDateUsingCurrentHours(
-    place: GooglePlaceResponse,
-    isoDate: string
+  function periodIncludesDate(
+    p: PlaceOpeningHoursPeriod,
+    iso: string
   ): boolean {
-    const ch = place.currentOpeningHours;
-    if (!ch?.periods?.length) return false;
-    return ch.periods.some((p: PlaceOpeningHoursPeriod) => {
-      const openISO = pointDateToISO(p.open);
-      const closeISO = pointDateToISO(p.close);
-      if (sameISO(openISO, isoDate)) return true;
-      if (sameISO(closeISO, isoDate)) return true;
-      if (openISO && closeISO) {
-        return openISO < isoDate && closeISO > isoDate;
-      }
-      return false;
-    });
+    const openISO = toISODate(p.open);
+    const closeISO = toISODate(p.close);
+    if (!openISO && !closeISO) return false;
+    if (openISO === iso || closeISO === iso) return true;
+    if (openISO && closeISO) return openISO < iso && closeISO > iso;
+    return false;
   }
 
-  function isOpenOnDateUsingRegularHours(
-    place: GooglePlaceResponse,
-    isoDate: string
-  ): boolean {
-    const rh = place.regularOpeningHours;
-    if (!rh?.periods?.length) return false;
-    const wd = new Date(`${isoDate}T12:00:00`).getDay(); // 0=Sun..6=Sat
-    return rh.periods.some((p: PlaceOpeningHoursPeriod) => {
+  function isOpenOnDate(place: GooglePlaceResponse, iso: string): boolean {
+    // prefer currentOpeningHours date-bounded periods when present
+    const current = place.currentOpeningHours?.periods;
+    if (current?.some((p) => periodIncludesDate(p, iso))) return true;
+
+    // fallback to regular weekly schedule (day-based)
+    const regular = place.regularOpeningHours?.periods;
+    if (!regular?.length) return false;
+    const wd = new Date(`${iso}T12:00:00`).getDay(); // 0=Sun..6=Sat
+    return regular.some((p) => {
       const od = p.open?.day;
       const cd = p.close?.day;
       if (od === wd) return true;
@@ -104,34 +87,40 @@ export async function GET(request: NextRequest) {
     return place.businessStatus === "OPERATIONAL" || !place.businessStatus;
   }
 
-  function extractISODate(point?: PlaceOpeningHoursPoint): string | undefined {
-    if (!point?.date) return undefined;
-    if (typeof point.date === "string") return point.date.slice(0, 10);
-    const { year, month, day } = point.date;
-    if (year && month && day) {
-      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
-        2,
-        "0"
-      )}`;
+  function to24h(input: string): string {
+    const t = input.trim();
+    // 24h "HH:MM"
+    let m = t.match(/^(\d{1,2}):(\d{2})$/);
+    if (m) {
+      const h = String(parseInt(m[1], 10)).padStart(2, "0");
+      const mm = m[2];
+      return `${h}:${mm}`;
     }
-    return undefined;
+    // "H:MM AM/PM" or "HMMAM" variants
+    m = t.match(/^(\d{1,2}):?(\d{2})?\s*(AM|PM)$/i);
+    if (m) {
+      const hRaw = m[1];
+      const mRaw = m[2] ?? "00";
+      let h = parseInt(hRaw, 10);
+      const ap = m[3].toUpperCase();
+      if (ap === "AM" && h === 12) h = 0;
+      if (ap === "PM" && h !== 12) h += 12;
+      return `${String(h).padStart(2, "0")}:${String(mRaw).padStart(2, "0")}`;
+    }
+    // "H AM/PM"
+    m = t.match(/^(\d{1,2})\s*(AM|PM)$/i);
+    if (m) {
+      let h = parseInt(m[1], 10);
+      const ap = m[2].toUpperCase();
+      if (ap === "AM" && h === 12) h = 0;
+      if (ap === "PM" && h !== 12) h += 12;
+      return `${String(h).padStart(2, "0")}:00`;
+    }
+    return t;
   }
 
-  function periodMatchesDate(
-    period: PlaceOpeningHoursPeriod,
-    isoDate: string
-  ): boolean {
-    const openDate = extractISODate(period.open);
-    const closeDate = extractISODate(period.close);
-    if (!openDate && !closeDate) return false;
-    if (openDate === isoDate || closeDate === isoDate) return true;
-    if (openDate && closeDate && openDate < isoDate && closeDate > isoDate)
-      return true;
-    return false;
-  }
-
-  function pad(n: number | undefined): string {
-    return String(n ?? 0).padStart(2, "0");
+  function getSource(place: GooglePlaceResponse): "current" | "regular" {
+    return place.currentOpeningHours?.periods?.length ? "current" : "regular";
   }
 
   function buildOpeningInfo(
@@ -143,33 +132,7 @@ export async function GET(request: NextRequest) {
       place.regularOpeningHours?.weekdayDescriptions ||
       [];
 
-    // Helper: convert a 12h time like "8:00 AM" or "12:30 PM" to 24h HH:MM
-    function to24h(t: string): string {
-      const trimmed = t.trim();
-      // Try various time formats that Google might use
-      let match = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-      if (!match) {
-        // Try without space before AM/PM
-        match = trimmed.match(/^(\d{1,2}):(\d{2})(AM|PM)$/i);
-      }
-      if (!match) {
-        // Try format like "1 PM" or "12 AM"
-        match = trimmed.match(/^(\d{1,2})\s*(AM|PM)$/i);
-        if (match) {
-          match = [match[0], match[1], "00", match[2]];
-        }
-      }
-      if (!match) return trimmed; // fallback if unexpected format
-
-      const [, hStr, m = "00", apRaw] = match;
-      let h = parseInt(hStr, 10);
-      const ap = apRaw.toUpperCase();
-      if (ap === "AM" && h === 12) h = 0;
-      if (ap === "PM" && h !== 12) h += 12;
-      return `${String(h).padStart(2, "0")}:${m || "00"}`;
-    }
-
-    // Event date path: show explicit ranges for that day
+    // Event date path: try explicit periods first (current or regular), then fallback to weekday text
     if (isoDate) {
       const periods = place.currentOpeningHours?.periods?.length
         ? place.currentOpeningHours.periods
@@ -177,46 +140,51 @@ export async function GET(request: NextRequest) {
       const segments: OpeningSegment[] = [];
       if (periods) {
         for (const p of periods) {
-          if (periodMatchesDate(p, isoDate)) {
+          if (periodIncludesDate(p, isoDate)) {
             if (p.open) {
-              const start = `${pad(p.open.hour)}:${pad(p.open.minute)}`;
+              const start = `${String(p.open.hour ?? 0).padStart(
+                2,
+                "0"
+              )}:${String(p.open.minute ?? 0).padStart(2, "0")}`;
               let end = "";
               let overnight = false;
               if (p.close) {
-                end = `${pad(p.close.hour)}:${pad(p.close.minute)}`;
-                const openDate = extractISODate(p.open);
-                const closeDate = extractISODate(p.close);
+                end = `${String(p.close.hour ?? 0).padStart(2, "0")}:${String(
+                  p.close.minute ?? 0
+                ).padStart(2, "0")}`;
+                const openDate = toISODate(p.open);
+                const closeDate = toISODate(p.close);
                 overnight = !!(openDate && closeDate && openDate !== closeDate);
               } else {
-                end = "24:00"; // open ended until midnight
+                end = "24:00";
               }
               segments.push({
                 start,
                 end,
                 overnight,
-                source: place.currentOpeningHours?.periods?.length
-                  ? "current"
-                  : "regular",
+                source: getSource(place),
               });
             }
           }
         }
       }
+
       if (segments.length) {
         return {
           info: {
-            open_status: "unknown", // status relative to event date not “now”
+            open_status: "unknown",
             segments,
             event_date: isoDate,
-            source: segments[0]?.source,
+            source: segments[0].source,
             is_24h:
               segments.length === 1 &&
               segments[0].start === "00:00" &&
-              segments[0].end === "24:00",
+              (segments[0].end === "24:00" || segments[0].end === "00:00"),
           },
           weekdayText,
         };
       }
+
       // Fallback: derive from weekday description for that weekday
       const wdIdx = new Date(`${isoDate}T12:00:00`).getDay();
       const line = weekdayText[wdIdx];
@@ -225,7 +193,6 @@ export async function GET(request: NextRequest) {
           ? line.substring(line.indexOf(":") + 1).trim()
           : line;
 
-        // Handle "Closed" case
         if (
           afterColon.toLowerCase().includes("closed") ||
           afterColon.toLowerCase().includes("cerrat")
@@ -234,21 +201,17 @@ export async function GET(request: NextRequest) {
             info: {
               open_status: "closed",
               event_date: isoDate,
-              source: place.currentOpeningHours?.weekdayDescriptions
-                ? "current"
-                : "regular",
+              source: getSource(place),
             },
             weekdayText,
           };
         }
 
-        // Try to parse time ranges with various separators
         const parts = afterColon.split(/[–—-]|to/i).map((p) => p.trim());
         if (parts.length === 2) {
           const start = to24h(parts[0]);
           const end = to24h(parts[1]);
-          // Only create segments if we successfully parsed both times
-          if (start.match(/^\d{2}:\d{2}$/) && end.match(/^\d{2}:\d{2}$/)) {
+          if (/^\d{2}:\d{2}$/.test(start) && /^\d{2}:\d{2}$/.test(end)) {
             return {
               info: {
                 open_status: "unknown",
@@ -256,16 +219,12 @@ export async function GET(request: NextRequest) {
                   {
                     start,
                     end,
-                    overnight: start > end, // detect overnight (e.g., 22:00-02:00)
-                    source: place.currentOpeningHours?.weekdayDescriptions
-                      ? "current"
-                      : "regular",
+                    overnight: start > end,
+                    source: getSource(place),
                   },
                 ],
                 event_date: isoDate,
-                source: place.currentOpeningHours?.weekdayDescriptions
-                  ? "current"
-                  : "regular",
+                source: getSource(place),
                 is_24h:
                   start === "00:00" && (end === "24:00" || end === "00:00"),
               },
@@ -274,25 +233,23 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        // If we have text but couldn't parse it, still return some info
         return {
           info: {
             open_status: "unknown",
             event_date: isoDate,
-            source: place.currentOpeningHours?.weekdayDescriptions
-              ? "current"
-              : "regular",
+            source: getSource(place),
           },
           weekdayText,
         };
       }
+
       return {
         info: { open_status: "unknown", event_date: isoDate },
         weekdayText,
       };
     }
 
-    // No event date: treat as 'today' UX like Google Maps (open/close status).
+    // No event date: treat as 'today' UX (open_now + weekday line)
     if (weekdayText.length) {
       const todayIdx = new Date().getDay();
       const line = weekdayText[todayIdx];
@@ -300,7 +257,6 @@ export async function GET(request: NextRequest) {
         const afterColon = line.includes(":")
           ? line.substring(line.indexOf(":") + 1).trim()
           : line;
-        // Expect something like "8:00 AM – 12:00 AM"
         const parts = afterColon.split(/[–-]/).map((p) => p.trim());
         if (parts.length === 2) {
           const start = to24h(parts[0]);
@@ -318,14 +274,10 @@ export async function GET(request: NextRequest) {
                 start,
                 end,
                 overnight: false,
-                source: place.currentOpeningHours?.weekdayDescriptions
-                  ? "current"
-                  : "regular",
+                source: getSource(place),
               },
             ],
-            source: place.currentOpeningHours?.weekdayDescriptions
-              ? "current"
-              : "regular",
+            source: getSource(place),
             is_24h: start === "00:00" && (end === "24:00" || end === "00:00"),
           };
           return { info, weekdayText };
@@ -333,14 +285,16 @@ export async function GET(request: NextRequest) {
         return { info: { open_status: "unknown" }, weekdayText };
       }
     }
+
     return { info: { open_status: "unknown" }, weekdayText };
   }
 
+  // --- Main fetch + transform ---
   try {
     const fields = [
       "places.name",
       "places.displayName",
-      "places.formattedAddress", // kept temporarily (legacy)
+      "places.formattedAddress",
       "places.rating",
       "places.priceLevel",
       "places.location",
@@ -356,7 +310,6 @@ export async function GET(request: NextRequest) {
     ].join(",");
 
     const url = new URL("https://places.googleapis.com/v1/places:searchNearby");
-
     const requestedCount = Math.min(Math.max(limit * 3, 12), 20);
 
     const requestBody: GooglePlacesNearbyRequest = {
@@ -364,15 +317,12 @@ export async function GET(request: NextRequest) {
       maxResultCount: requestedCount,
       locationRestriction: {
         circle: {
-          center: {
-            latitude: parseFloat(lat),
-            longitude: parseFloat(lng),
-          },
+          center: { latitude: parseFloat(lat), longitude: parseFloat(lng) },
           radius: parseFloat(radius),
         },
       },
       rankPreference: "DISTANCE",
-      languageCode: "ca", // Catalan results where available
+      languageCode: "ca",
     };
 
     const response = await fetch(url.toString(), {
@@ -408,29 +358,34 @@ export async function GET(request: NextRequest) {
     const filtered = places.filter((place: GooglePlaceResponse) => {
       if (!isOperational(place)) return false;
       if (!eventDateISO) return true;
-
-      if (place.currentOpeningHours?.periods?.length) {
-        if (isOpenOnDateUsingCurrentHours(place, eventDateISO)) return true;
+      // prefer current periods for exact-date checks, otherwise evaluate regular schedule
+      const hasCurrentPeriods = !!place.currentOpeningHours?.periods?.length;
+      if (hasCurrentPeriods) {
+        return place.currentOpeningHours!.periods!.some((p) =>
+          periodIncludesDate(p, eventDateISO)
+        );
       }
-      return isOpenOnDateUsingRegularHours(place, eventDateISO);
+      return isOpenOnDate(place, eventDateISO);
     });
 
     const limitedResults = filtered
       .slice(0, limit)
       .map((place: GooglePlaceResponse) => {
         const placeId = place.name?.replace("places/", "") || "";
-        const isOpenOnEventDay =
-          eventDateISO &&
-          (isOpenOnDateUsingCurrentHours(place, eventDateISO) ||
-            isOpenOnDateUsingRegularHours(place, eventDateISO));
-
         const confirmedByCurrent =
-          !!eventDateISO && isOpenOnDateUsingCurrentHours(place, eventDateISO);
+          !!eventDateISO &&
+          !!place.currentOpeningHours?.periods?.some((p) =>
+            periodIncludesDate(p, eventDateISO)
+          );
+        const isOpenOnEventDay =
+          !!eventDateISO &&
+          (confirmedByCurrent || isOpenOnDate(place, eventDateISO));
+
         const open_confidence: OpenConfidence | undefined = !eventDateISO
           ? undefined
           : confirmedByCurrent
           ? "confirmed"
-          : isOpenOnEventDay
+          : isOpenOnDate(place, eventDateISO)
           ? "inferred"
           : "none";
 
@@ -438,10 +393,7 @@ export async function GET(request: NextRequest) {
           place,
           eventDateISO
         );
-        // attach open_confidence into structured object for future formatting
-        if (open_confidence) {
-          opening_info.open_confidence = open_confidence;
-        }
+        if (open_confidence) opening_info.open_confidence = open_confidence;
 
         const addressLines = place.postalAddress?.addressLines;
         const locality = place.postalAddress?.locality;
@@ -451,7 +403,7 @@ export async function GET(request: NextRequest) {
         return {
           place_id: placeId,
           name: place.displayName?.text || "Restaurant",
-          vicinity: place.formattedAddress || "Localització no disponible", // deprecated; prefer address_lines
+          vicinity: place.formattedAddress || "Localització no disponible",
           address_lines: addressLines,
           address_locality: locality,
           address_administrative_area: adminArea,

@@ -228,14 +228,12 @@ export interface AddToCalendarProps {
   endDate: DateString;
   canonical: string;
   hideText?: boolean;
-  buttonVariant?: ButtonProps["variant"];
 }
 
 export interface CalendarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement>;
   hideText?: boolean;
   open?: boolean;
-  variant?: ButtonProps["variant"];
 }
 
 export interface CalendarListProps {

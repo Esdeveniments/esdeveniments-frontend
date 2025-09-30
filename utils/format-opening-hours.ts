@@ -22,6 +22,9 @@ export function formatOpeningHours(
   if (!info) return undefined;
   const locale = options.locale || "ca";
   const t = (dict as Record<string, typeof dict.ca>)[locale] || dict.ca;
+  const now = options.now ? new Date(options.now) : new Date();
+  // ensure 'now' is considered used (deterministic clock override for tests)
+  void now;
 
   // Handle closed status
   if (info.open_status === "closed" && !info.segments?.length) {

@@ -3,6 +3,7 @@ import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
 import Link from "next/link";
+import { ClockIcon } from "@heroicons/react/outline";
 
 const EventDetailsSection: React.FC<{
   event: EventDetailResponseDTO;
@@ -28,16 +29,18 @@ const EventDetailsSection: React.FC<{
             />
 
             {event.duration && (
-              <div className="text-blackCorp/70">
+              <div className="flex items-center gap-2 text-sm text-blackCorp/70">
+                <ClockIcon className="w-4 h-4" />
                 Durada aproximada: {event.duration}
               </div>
             )}
 
             {event.url && (
               <div className="font-bold">
+                Enllaç a l&apos;esdeveniment:{" "}
                 <Link
                   href={event.url}
-                  className="underline font-normal ml-1"
+                  className="inline-block text-base font-medium text-blackCorp hover:text-primary transition-colors duration-200 border-b-2 border-blackCorp/20 hover:border-primary pb-0.1"
                   target="_blank"
                   rel="noreferrer"
                 >

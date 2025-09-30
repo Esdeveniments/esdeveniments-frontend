@@ -1,7 +1,7 @@
 import { memo, ReactElement } from "react";
-import Link from "next/link"; // Added Link import
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
+import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
 import AdArticle from "@components/ui/adArticle";
@@ -12,6 +12,7 @@ import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ServerEventsCategorizedProps } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
+import Link from "next/link";
 
 function ServerEventsCategorized({
   categorizedEvents,
@@ -60,9 +61,9 @@ function ServerEventsCategorized({
           {pageData && (
             <>
               <h1 className="uppercase mb-2 px-2 lg:px-0">{pageData.title}</h1>
-              <p className="text-[16px] font-normal text-blackCorp text-left px-2 lg:px-0 font-barlow">
+              <h2 className="font-normal text-blackCorp text-left px-2 lg:px-0">
                 {pageData.subTitle}
-              </p>
+              </h2>
             </>
           )}
 
@@ -104,9 +105,6 @@ function ServerEventsCategorized({
                 const headerCategoryPhrase = isGentGran
                   ? `per a la ${normalizedName}`
                   : formatCatalanDe(categoryName);
-                const viewMoreSuffix = isGentGran
-                  ? `per a la ${normalizedName}`
-                  : formatCatalanDe(categoryName).toLowerCase();
 
                 return (
                   <div key={categorySlug}>
@@ -124,12 +122,12 @@ function ServerEventsCategorized({
                           },
                           categories
                         )}
-                        className="flex justify-between items-center cursor-pointer text-primary"
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent dark:hover:bg-accent/50 h-9 px-4 py-2 has-[>svg]:px-3 text-primary hover:text-primary/80 gap-2 flex-shrink-0"
                       >
-                        <div className="flex items-center">
-                          Veure més {viewMoreSuffix}
-                          <ChevronRightIcon className="w-5 h-5" />
-                        </div>
+                        <span className="flex items-center">
+                          Veure més
+                          <ChevronRightIcon className="w-5 h-5 ml-1" />
+                        </span>
                       </Link>
                     </div>
 
@@ -137,7 +135,7 @@ function ServerEventsCategorized({
                     <nav aria-label="Vegeu també" className="mt-1 mb-2">
                       <ul className="flex gap-3 text-sm">
                         <li>
-                          <Link
+                          <Badge
                             href={buildCanonicalUrl(
                               {
                                 place: "catalunya",
@@ -146,13 +144,13 @@ function ServerEventsCategorized({
                               },
                               categories
                             )}
-                            className="text-primary underline"
+                            ariaLabel={`Veure activitats d'avui per la categoria ${categoryName}`}
                           >
                             Avui
-                          </Link>
+                          </Badge>
                         </li>
                         <li>
-                          <Link
+                          <Badge
                             href={buildCanonicalUrl(
                               {
                                 place: "catalunya",
@@ -161,10 +159,10 @@ function ServerEventsCategorized({
                               },
                               categories
                             )}
-                            className="text-primary underline"
+                            ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${categoryName}`}
                           >
                             Cap de setmana
-                          </Link>
+                          </Badge>
                         </li>
                       </ul>
                     </nav>
@@ -186,7 +184,7 @@ function ServerEventsCategorized({
                         <div className="w-full flex">
                           <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
                           <div className="w-11/12 flex flex-col gap-4">
-                            <h2>Contingut patrocinat</h2>
+                            <h3>Contingut patrocinat</h3>
                           </div>
                         </div>
                         <div className="w-full">

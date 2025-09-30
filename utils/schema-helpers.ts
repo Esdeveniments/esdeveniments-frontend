@@ -140,12 +140,30 @@ export const generateJsonData = (
 
   // Dynamic eventStatus (improves accuracy for past/ongoing events)
   const now = new Date();
-  const startDateObj = new Date(startDate);
-  const endDateObj = endDate ? new Date(endDate) : undefined;
+  const parseDateTime = (
+    date: string | undefined | null,
+    time: string | null,
+    isEnd?: boolean
+  ): Date | undefined => {
+    if (!date) return undefined;
+    const hasTime = typeof time === "string" && time.trim().length > 0;
+    // When time is missing, treat start of day as 00:00:00 and end of day as 23:59:59
+    const iso = hasTime
+      ? `${date}T${time}`
+      : `${date}T${isEnd ? "23:59:59" : "00:00:00"}`;
+    const parsed = new Date(iso);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  };
+  const startDateTime = parseDateTime(startDate, startTime);
+  const endDateTime = parseDateTime(endDate, endTime, true);
   let eventStatusValue = "https://schema.org/EventScheduled";
-  if (endDateObj && now > endDateObj) {
+  if (endDateTime && now > endDateTime) {
     eventStatusValue = "https://schema.org/EventCompleted"; // Completed
-  } else if (now >= startDateObj && (!endDateObj || now <= endDateObj)) {
+  } else if (
+    startDateTime &&
+    now >= startDateTime &&
+    (!endDateTime || now <= endDateTime)
+  ) {
     eventStatusValue = "https://schema.org/EventInProgress"; // Live
   }
 

@@ -1,3 +1,4 @@
+import { ClockIcon } from "@heroicons/react/outline";
 import type { EventTemporalStatus } from "types/event-status";
 
 const EventStatusDetails: React.FC<{
@@ -16,28 +17,35 @@ const EventStatusDetails: React.FC<{
   if (!temporalStatus) return null;
 
   return (
-    <>
+    <div className={`flex items-center gap-2 py-2 ${className}`}>
+      <ClockIcon className="w-4 h-4 text-blackCorp/70" />
       {temporalStatus.state === "live" && temporalStatus.endsIn && (
-        <span className={`text-blackCorp/70 text-sm ${className}`}>
+        <div
+          className={`flex items-center gap-2 text-md text-blackCorp/70 ${className}`}
+        >
           {temporalStatus.endsIn}
-        </span>
+        </div>
       )}
 
       {temporalStatus.state === "upcoming" && temporalStatus.startsIn && (
-        <span className={`text-blackCorp/70 text-sm ${className}`}>
+        <div
+          className={`flex items-center gap-2 text-md text-blackCorp/70 ${className}`}
+        >
           {temporalStatus.startsIn}
-        </span>
+        </div>
       )}
 
       {temporalStatus.state === "past" && (
-        <span className={`text-blackCorp/70 text-sm ${className}`}>
+        <div
+          className={`flex items-center gap-2 text-md text-blackCorp/70 ${className}`}
+        >
           Va finalitzar el{" "}
           {formattedEnd
             ? `Del ${formattedStart} al ${formattedEnd}`
             : `${nameDay}, ${formattedStart}`}
-        </span>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 

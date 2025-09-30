@@ -1,7 +1,0 @@
-{
-  "error": {
-    "code": 400,
-    "message": "Invalid JSON payload received. Unexpected token.\n  \"maxResultCount\": ,\n    \"locationRestr\n                    ^",
-    "status": "INVALID_ARGUMENT"
-  }
-}

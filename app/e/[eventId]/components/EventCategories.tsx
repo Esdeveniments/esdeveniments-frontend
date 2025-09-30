@@ -1,5 +1,5 @@
 import React from "react";
-import Badge from "../../../../components/ui/common/badge";
+import Badge from "@components/ui/common/badge";
 import { TagIcon } from "@heroicons/react/outline";
 import type { EventCategoriesProps } from "types/event";
 

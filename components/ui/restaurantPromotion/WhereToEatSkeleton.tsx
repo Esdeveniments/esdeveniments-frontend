@@ -1,14 +1,15 @@
 import { FireIcon } from "@heroicons/react/outline";
+import type { WhereToEatSkeletonProps } from "types/ui/restaurant-promotion";
 
 // Skeleton loader matching the final WhereToEatSection layout to avoid layout shift.
 export default function WhereToEatSkeleton({
   items = 2,
   onPromoteClick,
-}: {
-  items?: number;
-  onPromoteClick?: () => void;
-}) {
-  const skeletons = Array.from({ length: items });
+}: WhereToEatSkeletonProps) {
+  const count = Number.isFinite(items)
+    ? Math.min(Math.max(Math.floor(items), 1), 10)
+    : 2;
+  const skeletons = Array.from({ length: count });
   return (
     <>
       <FireIcon className="w-5 h-5 mt-1" aria-hidden="true" />
