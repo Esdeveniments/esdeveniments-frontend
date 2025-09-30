@@ -160,3 +160,33 @@ Adding a new filter:
 
 - Required: `NEXT_PUBLIC_API_URL` (core), `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `NEXT_PUBLIC_SENTRY_DNS`, `NEXT_PUBLIC_VERCEL_ENV`.
 - On absence of `NEXT_PUBLIC_API_URL`: read endpoints must return safe empty DTOs (never throw) except explicit mutation endpoints.
+
+## 19. Development Workflow & Constraints (Component Library)
+
+### Role & Context
+
+- You are a senior Next.js/TypeScript developer.
+- Project priorities: minimalistic code, DRY principle, testability.
+
+### Mandatory Constraints
+
+- Max 40 lines of code per function.
+- Do **not** create generic utilities without immediate usage.
+- Do **not** duplicate logic that already exists in `/lib`, `/components`, or `/utils`.
+- Always prefer composition over inheritance.
+
+### Required Workflow
+
+1. Analyze existing related code.
+2. Propose a 2-4 step plan (no code) to the user.
+3. Wait for confirmation before implementing.
+4. Implement step-by-step.
+5. Self-review to ensure DRY compliance.
+
+### Automatic Red Flags (Stop & Propose Alternative)
+
+- Helper function used only once.
+- Component exposing more than 10 props.
+- File exceeding 200 lines.
+- Logic duplicated across multiple locations.
+- Abstractions deeper than 3 levels.
