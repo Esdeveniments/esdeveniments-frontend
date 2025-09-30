@@ -9,6 +9,7 @@ import { sendGoogleEvent } from "@utils/analytics";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import LocationMarkerIcon from "@heroicons/react/solid/LocationMarkerIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
+import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import { transformRegionsToOptions } from "./utils";
 
 export default function LocationDiscoveryWidget({
@@ -129,7 +130,8 @@ export default function LocationDiscoveryWidget({
         <div className="relative w-full">
           {/* Main Location Selector */}
           <div className="flex items-center space-x-2 mb-6">
-            <h2 className="text-blackCorp font-semibold">
+            <GlobeIcon className="w-4 h-4" />
+            <h2 className="text-lg font-medium text-foreground">
               Mirant esdeveniments a
             </h2>
             <div className="relative">

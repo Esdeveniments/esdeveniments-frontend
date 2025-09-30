@@ -85,13 +85,10 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
 
           <div className="w-full h-px bg-whiteCorp/30 my-2"></div>
 
-          {/* Event Title */}
-          <h1
-            className="font-bold uppercase font-roboto text-whiteCorp text-xl leading-tight tracking-wide drop-shadow-md break-words"
-            aria-label={title}
-          >
+          {/* Event Title (non-heading to avoid outline pollution) */}
+          <p className="font-bold uppercase font-roboto text-whiteCorp text-xl leading-tight tracking-wide drop-shadow-md break-words">
             {title}
-          </h1>
+          </p>
 
           {/* Date */}
           {date && (

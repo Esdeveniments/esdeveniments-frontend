@@ -8,9 +8,16 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
+import ViewCounter from "@components/ui/viewCounter";
 import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
+import { computeTemporalStatus } from "@utils/event-status";
+import type { EventTemporalStatus } from "types/event-status";
 import EventClient from "./EventClient";
+import { getFormattedDate } from "@utils/helpers";
+import PastEventBanner from "./components/PastEventBanner";
+import EventDescription from "./components/EventDescription";
+import EventCategories from "./components/EventCategories";
 import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import {
@@ -21,14 +28,14 @@ import AdArticle from "components/ui/adArticle";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import Link from "next/link";
-// date helpers used via shared utils in event-copy
+import EventDetailsSection from "./components/EventDetailsSection";
+import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
 import {
   buildEventIntroText,
   buildFaqItems,
   buildFaqJsonLd,
 } from "@utils/helpers";
 
-// Helper: Metadata generation
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
@@ -49,6 +56,8 @@ export default async function EventPage({
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";
+  const userAgent = headersList.get("user-agent") || "";
+  const initialIsMobile = /mobile|iphone|android|ipad|mobi/i.test(userAgent);
 
   const event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
   if (!event) return <NoEventFound />;
@@ -58,12 +67,32 @@ export default async function EventPage({
   const title = event?.title ?? "";
   const cityName = event.city?.name || "";
   const regionName = event.region?.name || "";
+  const citySlug = event.city?.slug;
+  const regionSlug = event.region?.slug;
+  const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
+  const primaryCategorySlug = event.categories?.[0]?.slug;
+  const explorePlaceHref = `/${primaryPlaceSlug}`;
+  const exploreCategoryHref = primaryCategorySlug
+    ? `/${primaryPlaceSlug}/${primaryCategorySlug}`
+    : explorePlaceHref;
   const eventDateString = event.endDate
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event });
+  const temporalStatus: EventTemporalStatus = computeTemporalStatus(
+    event.startDate,
+    event.endDate
+  );
 
-  // Legacy date computation was here; intro/faq now use shared utils
+  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+    event.startDate,
+    event.endDate
+  );
+
+  const statusMeta = {
+    state: temporalStatus.state,
+    label: temporalStatus.label,
+  };
 
   // Build intro and FAQ via shared utils (no assumptions)
   const introText = buildEventIntroText(event);
@@ -138,38 +167,76 @@ export default async function EventPage({
           <article className="w-full flex flex-col justify-center items-start gap-8">
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <EventMedia event={event} title={title} />
-              <EventShareBar
-                visits={event.visits}
-                slug={eventSlug}
-                title={title}
-                description={event.description}
-                eventDateString={eventDateString}
-                location={event.location}
-                cityName={cityName}
-                regionName={regionName}
-                postalCode={event.city?.postalCode || ""}
-              />
+              <div className="w-full flex justify-between items-center px-4">
+                <EventShareBar
+                  slug={eventSlug}
+                  title={title}
+                  description={event.description}
+                  eventDateString={eventDateString}
+                  location={event.location}
+                  initialIsMobile={initialIsMobile}
+                  cityName={cityName}
+                  regionName={regionName}
+                  postalCode={event.city?.postalCode || ""}
+                />
+                <div className="ml-2">
+                  <ViewCounter visits={event.visits} />
+                </div>
+              </div>
             </div>
-            {/* Event Header - Server-side rendered */}
-            <EventHeader title={title} />
+
+            {/* Event Header with status pill - Server-side rendered */}
+            <EventHeader title={title} statusMeta={statusMeta} />
+
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
 
-            {/* Q/A Intro Section (styled like other sections) */}
-            <div className="w-full flex justify-center items-start gap-2 px-4">
-              <InfoIcon className="w-5 h-5 mt-1" />
-              <section
-                className="w-11/12 flex flex-col gap-4"
-                aria-labelledby="event-intro"
-              >
-                <h2 id="event-intro">Resum</h2>
-                <p className="text-base font-normal text-blackCorp">
-                  {introText}
-                </p>
-              </section>
-            </div>
+            {/* Related Events - Server-side rendered for SEO */}
+            {event.relatedEvents && event.relatedEvents.length > 0 && (
+              <EventsAroundSection
+                events={event.relatedEvents}
+                title="Esdeveniments relacionats"
+                nonce={nonce}
+              />
+            )}
 
-            <EventClient event={event} />
+            {/* Event Description - Server-side rendered for SEO */}
+            <EventDescription
+              description={event.description}
+              locationValue={event.city?.slug || event.region?.slug || ""}
+              location={cityName || regionName}
+              introText={introText}
+              locationType="town"
+            />
+
+            {/* Event Categories - Server-side rendered for SEO */}
+            <EventCategories
+              categories={event.categories}
+              place={event.region?.slug || ""}
+            />
+
+            {/* Past Event Banner (high visibility) - server component */}
+            {temporalStatus.state === "past" && (
+              <PastEventBanner
+                temporalStatus={temporalStatus}
+                cityName={cityName}
+                regionName={regionName}
+                explorePlaceHref={explorePlaceHref}
+                exploreCategoryHref={exploreCategoryHref}
+                primaryCategorySlug={primaryCategorySlug}
+              />
+            )}
+
+            <EventClient event={event} temporalStatus={temporalStatus} />
+
+            {/* Event details (status, duration, external url) - server-rendered */}
+            <EventDetailsSection
+              event={event}
+              temporalStatus={temporalStatus}
+              formattedStart={formattedStart}
+              formattedEnd={formattedEnd}
+              nameDay={nameDay}
+            />
 
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
@@ -191,14 +258,17 @@ export default async function EventPage({
                 </section>
               </div>
             )}
-            {/* Related Events - Server-side rendered for SEO */}
-            {event.relatedEvents && event.relatedEvents.length > 0 && (
-              <EventsAroundSection
-                events={event.relatedEvents}
-                title="Esdeveniments relacionats"
-                nonce={nonce}
-              />
-            )}
+
+            {/* Restaurant Promotion Section */}
+            <RestaurantPromotionSection
+              eventId={event.id}
+              eventLocation={event.location}
+              eventLat={event.city?.latitude}
+              eventLng={event.city?.longitude}
+              eventStartDate={event.startDate}
+              eventEndDate={event.endDate}
+            />
+
             {/* Final Ad Section */}
             <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
               <SpeakerphoneIcon className="w-5 h-5 mt-1" />

@@ -1,18 +1,18 @@
-"use client";
-
-import { memo, ReactElement, useMemo } from "react";
-import Link from "next/link";
+import { ReactElement, memo } from "react";
+import { HybridEventsListProps } from "types/props";
+import NoEventsFound from "@components/ui/common/noEventsFound";
+import { ListEvent } from "types/api/event";
+import HybridEventsListClient from "./HybridEventsListClient";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
-import LoadMoreButton from "@components/ui/loadMoreButton";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
-import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import NoEventsFound from "@components/ui/common/noEventsFound";
-import { useEvents } from "@components/hooks/useEvents";
-import { HybridEventsListProps } from "types/props";
 import { getNewsCta } from "@utils/helpers";
-import { useNetworkDetection } from "@components/hooks/useNetworkSpeed";
+import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
+
+// Server wrapper: renders SEO content + initial SSR events (already including ads)
+// with no client hydration except where necessary (Card components are still
+// client, but wrapper & heading/subtitle remain server-only). Pagination &
+// dynamic fetching live in the client enhancer loaded below the fold.
 
 function HybridEventsList({
   initialEvents = [],
@@ -23,65 +23,16 @@ function HybridEventsList({
   date,
   serverHasMore = false,
 }: HybridEventsListProps): ReactElement {
-  // Initialize network detection for caching
-  useNetworkDetection();
+  const { href: newsHref, text: newsText } = getNewsCta(place);
 
-  const validInitialEvents = useMemo(
-    () =>
-      initialEvents.filter(
-        isEventSummaryResponseDTO
-      ) as EventSummaryResponseDTO[],
-    [initialEvents]
-  );
-
-  const { events, hasMore, loadMore, isLoading, isValidating, error } =
-    useEvents({
-      place,
-      category,
-      date,
-      initialSize: 10,
-      fallbackData: validInitialEvents,
-      serverHasMore,
-    });
-
-  const { href: newsHref, text: newsText } = useMemo(() => {
-    return getNewsCta(place, pageData?.title);
-  }, [place, pageData?.title]);
-
-  const mergedEvents = useMemo(() => {
-    const ssrWithAds = initialEvents;
-
-    // If no client-fetched events yet, keep SSR list (with ads)
-    if (!events || events.length === 0) {
-      return ssrWithAds;
-    }
-
-    // De-duplicate by id across the boundary and across pages (order-agnostic)
-    const seen = new Set<string>(validInitialEvents.map((e) => e.id));
-    const uniqueAppended: EventSummaryResponseDTO[] = [];
-    for (const e of events) {
-      if (seen.has(e.id)) continue;
-      seen.add(e.id);
-      uniqueAppended.push(e);
-    }
-
-    return ssrWithAds.concat(uniqueAppended);
-  }, [initialEvents, events, validInitialEvents]);
-
-  const allEvents = mergedEvents;
-
-  if (error) {
-    console.error("Events loading error:", error);
-  }
-
-  if (noEventsFound || allEvents.length === 0) {
+  if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
         className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32"
         data-testid="events-list"
       >
         <NoEventsFound title={pageData?.notFoundText} />
-        <List events={allEvents}>
+        <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
             <Card
               key={`${event.id}-${index}`}
@@ -99,33 +50,33 @@ function HybridEventsList({
       className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-32"
       data-testid="events-list"
     >
-      {/* SEO Content */}
       {pageData && (
         <>
-          <h1 className="uppercase mb-2 px-2">{pageData.title}</h1>
-          <p className="text-[16px] font-normal text-blackCorp text-left mb-2 px-2 font-barlow">
+          <div className="px-2 mt-2 md:flex md:items-start md:justify-between gap-4">
+            <h1 className="uppercase mb-3 md:mb-0 leading-tight pr-1 md:pr-4 flex-1">
+              {pageData.title}
+            </h1>
+            {place && (
+              <div className="mb-4 md:mb-0 md:mt-0 shrink-0">
+                <NewsCta
+                  href={newsHref}
+                  label={newsText}
+                  data-cta="news-inline"
+                />
+              </div>
+            )}
+          </div>
+          <p className="text-[16px] font-normal text-blackCorp text-left mb-8 px-2 font-barlow">
             {pageData.subTitle}
           </p>
-          {place && (
-            <div className="px-2 mb-10">
-              <Link
-                href={newsHref}
-                className="inline-flex items-center text-primary underline text-sm"
-                prefetch={false}
-                aria-label={newsText}
-              >
-                {newsText}
-              </Link>
-            </div>
-          )}
         </>
       )}
 
-      {/* Events List */}
-      <List events={allEvents}>
+      {/* Initial SSR list with ads (no hydration beyond card internals) */}
+      <List events={initialEvents}>
         {(event: ListEvent, index: number) => (
           <Card
-            key={`${event.id}-${index}`}
+            key={`${event.id ?? "ad"}-${index}`}
             event={event}
             isPriority={index === 0}
           />
@@ -134,12 +85,13 @@ function HybridEventsList({
 
       <AdArticle slot="9643657007" />
 
-      {/* Load More Button - using new SWR props */}
-      <LoadMoreButton
-        onLoadMore={loadMore}
-        isLoading={isLoading}
-        isValidating={isValidating}
-        hasMore={hasMore}
+      {/* Client enhancer for pagination */}
+      <HybridEventsListClient
+        initialEvents={initialEvents}
+        place={place}
+        category={category}
+        date={date}
+        serverHasMore={serverHasMore}
       />
     </div>
   );

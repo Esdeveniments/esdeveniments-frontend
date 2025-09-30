@@ -30,6 +30,14 @@ export const slug = (str: string, formattedStart: string, id: string): string =>
     .replace(/--/g, "-")}-${id}`;
 
 /**
+ * Capitalize first letter of a string (safe)
+ */
+export function capitalizeFirstLetter(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
  * Extracts UUID from event slug, handling both formats:
  * - Standard UUID v4 with dashes (new events): f9d240c2-25ae-4690-a745-f6e76e598bf3
  * - Custom IDs without dashes (older events): ea962ni7nis5ga0ppcu7n12pcg
@@ -81,4 +89,75 @@ export function formatCatalanDe(
   const text = lowercase ? raw.toLowerCase() : raw;
   const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(text);
   return `${startsWithVowelOrH ? "d'" : "de "}${text}`;
+}
+
+/**
+ * Catalan preposition "a" with proper article handling.
+ * Returns natural phrase like "al Montseny", "a Barcelona", or "a la Selva".
+ * Handles regions, towns, and general place names with proper gender/article rules.
+ * Uses pattern-based detection for feminine place names.
+ */
+export function formatCatalanA(
+  name: string,
+  type: "region" | "town" | "general" | "" = "general",
+  lowercase: boolean = true
+): string {
+  const raw = (name || "").trim();
+  const text = lowercase ? raw.toLowerCase() : raw;
+
+  // Handle empty type as general
+  const normalizedType = type === "" ? "general" : type;
+
+  // For vowels and 'h', use "a"
+  const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(text);
+  if (startsWithVowelOrH) {
+    return `a ${text}`;
+  }
+
+  // For regions, check if it's feminine using pattern detection
+  if (normalizedType === "region") {
+    if (isFemininePlaceName(text)) {
+      return `a la ${text}`;
+    } else {
+      return `al ${text}`;
+    }
+  }
+
+  // For towns and general, always use "a"
+  return `a ${text}`;
+}
+
+/**
+ * Determines if a place name is feminine in Catalan using linguistic patterns.
+ * This is more maintainable than hardcoding all feminine places.
+ */
+function isFemininePlaceName(name: string): boolean {
+  const lowerName = name.toLowerCase();
+
+  // Known exceptions: masculine places that might match feminine patterns
+  const MASCULINE_EXCEPTIONS = [
+    "penedès", // el Penedès
+    "rosselló", // el Rosselló
+    "urgell", // l'Urgell
+  ];
+
+  if (MASCULINE_EXCEPTIONS.includes(lowerName)) {
+    return false;
+  }
+
+  // Common feminine suffixes in Catalan place names
+  const feminineSuffixes = [
+    /a$/, // -a: Barcelona, Tarragona, Lleida, Girona
+    /ia$/, // -ia: Catalunya, València
+    /ella$/, // -ella: Sitges, etc.
+    /ona$/, // -ona: Tarragona, etc.
+    /ena$/, // -ena:
+    /ina$/, // -ina:
+    /ella$/, // -ella:
+    /ura$/, // -ura:
+    /osa$/, // -osa:
+  ];
+
+  // Check if the name matches any feminine suffix pattern
+  return feminineSuffixes.some((pattern) => pattern.test(lowerName));
 }

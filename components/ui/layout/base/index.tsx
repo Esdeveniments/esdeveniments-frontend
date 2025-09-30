@@ -1,5 +1,3 @@
-"use client";
-
 import { JSX } from "react";
 import type { BaseLayoutProps } from "types/common";
 import Footer from "@components/ui/common/footer";

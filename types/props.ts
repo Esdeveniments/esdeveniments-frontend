@@ -94,12 +94,15 @@ export interface SocialProps {
 export interface CulturalMessageProps {
   location: string;
   locationValue: string; // URL-friendly version for analytics
+  locationType?: "region" | "town" | "general"; // Type of location for proper preposition
 }
 
 export interface DescriptionProps {
   description?: string;
   location?: string;
   locationValue?: string;
+  introText?: string;
+  locationType?: "region" | "town" | "general";
 }
 
 // NavigationItem and Href are now imported from types/common.ts
@@ -306,4 +309,12 @@ export interface NewsCardProps {
   placeSlug: string;
   placeLabel?: string;
   variant?: "default" | "hero";
+}
+
+// Mobile share island component props
+export interface MobileShareProps {
+  title: string;
+  slug: string;
+  eventDate: string; // ISO or human readable date string used in share payload
+  location: string; // Main location label
 }

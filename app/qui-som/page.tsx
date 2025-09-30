@@ -41,9 +41,9 @@ const QuiSom: NextPage = () => {
     <div className="w-full flex flex-col justify-center items-center gap-10 pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
       <div>
         <h1 className="text-center italic uppercase font-semibold">Qui som?</h1>
-        <h3 className="text-center italic font-normal text-primary">
+        <h2 className="text-center italic font-normal text-primary">
           esdeveniments.cat
-        </h3>
+        </h2>
       </div>
       <div className="flex flex-col justify-start items-start gap-6">
         <p>
@@ -88,7 +88,7 @@ const QuiSom: NextPage = () => {
               <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
                 <div className="w-full flex justify-start items-start gap-2 pt-4">
                   <div className="w-2 h-6 bg-primary"></div>
-                  <h2>{member.name}</h2>
+                  <h3>{member.name}</h3>
                 </div>
                 <div className="w-full flex flex-col justify-start items-start px-4">
                   <p className="w-full">{member.role}</p>

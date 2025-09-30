@@ -52,11 +52,25 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   title,
   nonce = "",
 }) => {
+  // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
+  // Keep first occurrence order-stable. Key used: id fallback to slug.
+  const uniqueEvents = (() => {
+    const seen = new Set<string | number | undefined>();
+    const result = [] as typeof events;
+    for (const ev of events) {
+      const key = (ev.id as string | number | undefined) ?? ev.slug;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(ev);
+    }
+    return result;
+  })();
+
   // Generate JSON-LD data for SEO
   const generateJsonLdData = () => {
-    if (!showJsonLd || events.length === 0) return null;
+    if (!showJsonLd || uniqueEvents.length === 0) return null;
 
-    const eventSchemas: SchemaOrgEvent[] = events
+    const eventSchemas: SchemaOrgEvent[] = uniqueEvents
       .slice(0, 10) // Limit to first 10 events for performance
       .map((event) => {
         try {
@@ -105,7 +119,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     );
   }
 
-  if (events.length === 0) {
+  if (uniqueEvents.length === 0) {
     return null;
   }
 
@@ -127,9 +141,10 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           />
         )}
         <div className="w-full flex overflow-x-auto py-6 px-4 space-x-6 min-w-0">
-          {events.map((event, index) => (
+          {uniqueEvents.map((event, index) => (
             <div
-              key={event.id}
+              // key uses id or slug; index fallback should never be needed due to dedup above
+              key={event.id ?? event.slug ?? index}
               className="flex-none w-96 min-w-[24rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer"
             >
               <CardHorizontalServer
@@ -160,7 +175,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
         />
       )}
       <div className="w-full flex overflow-x-auto py-4 px-4 space-x-4 min-w-0">
-        {events.map((event) => {
+        {uniqueEvents.map((event, index) => {
           const eventTitle = truncateString(event.title || "", 60);
           const image = event.imageUrl;
 
@@ -175,7 +190,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
 
           return (
             <div
-              key={event.id}
+              key={event.id ?? event.slug ?? index}
               className="flex-none w-40 min-w-[10rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer mb-10"
             >
               <Link href={`/e/${event.slug}`}>

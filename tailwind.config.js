@@ -4,6 +4,17 @@ module.exports = {
   content: ["./components/**/*.{js,ts,jsx,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontSize: {
+        xs: ["0.75rem", { lineHeight: "1.25" }], // 12px
+        sm: ["0.875rem", { lineHeight: "1.4" }], // 14px
+        base: ["1rem", { lineHeight: "1.5" }], // 16px (accessible default)
+        lg: ["1.125rem", { lineHeight: "1.6" }], // ~18px
+        xl: ["1.25rem", { lineHeight: "1.6" }], // ~20px
+        "2xl": ["1.5rem", { lineHeight: "1.6" }], // ~24px
+        "3xl": ["1.875rem", { lineHeight: "1.4" }], // 30px
+        "4xl": ["2.25rem", { lineHeight: "1.25" }], // 36px
+        "5xl": ["3rem", { lineHeight: "1.15" }], // 48px
+      },
       fontFamily: {
         roboto: ["var(--font-roboto-flex)", "sans-serif"],
         barlow: ["var(--font-barlow-condensed)", "sans-serif"],
