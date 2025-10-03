@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "./utils/api-helpers";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 const hmacSecret = process.env.HMAC_SECRET;
 const isDev = process.env.NODE_ENV !== "production";
@@ -81,8 +81,17 @@ export async function middleware(request: NextRequest) {
     const expectedHmac = createHmac("sha256", hmacSecret)
       .update(stringToSign)
       .digest("hex");
-
-    if (hmac !== expectedHmac) {
+    let signatureIsValid = false;
+    try {
+      const hmacBuffer = Buffer.from(hmac, "hex");
+      const expectedBuffer = Buffer.from(expectedHmac, "hex");
+      signatureIsValid =
+        hmacBuffer.length === expectedBuffer.length &&
+        timingSafeEqual(hmacBuffer, expectedBuffer);
+    } catch {
+      signatureIsValid = false;
+    }
+    if (!signatureIsValid) {
       return new NextResponse("Unauthorized: Invalid signature", { status: 401 });
     }
 
