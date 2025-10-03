@@ -1,3 +1,4 @@
+import { fetchWithHmac } from "./fetch-wrapper";
 import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache } from "lib/api/cache";
 
@@ -7,7 +8,7 @@ async function fetchPlaceBySlugApi(
   key: string | number
 ): Promise<PlaceResponseDTO | null> {
   const slug = String(key);
-  const response = await fetch(
+  const response = await fetchWithHmac(
     `${process.env.NEXT_PUBLIC_API_URL}/places/${slug}`,
     { next: { revalidate: 86400, tags: ["places", `place:${slug}`] } }
   );
