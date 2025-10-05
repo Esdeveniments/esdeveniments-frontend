@@ -1,4 +1,4 @@
-import Description from "@components/ui/common/description";
+import Description from "@components/ui/primitives/description";
 import React from "react";
 import type { EventDescriptionProps } from "types/event";
 
@@ -10,8 +10,8 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   locationType = "general",
 }) => {
   return (
-    <div className="w-full flex justify-center items-start gap-2 px-4">
-      <div className="max-w-none text-gray-800">
+    <div className="flex w-full items-start justify-center gap-component-xs px-component-md">
+      <div className="max-w-none text-blackCorp">
         <Description
           description={description}
           location={location}

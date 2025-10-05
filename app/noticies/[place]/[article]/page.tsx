@@ -9,10 +9,8 @@ import type { NewsEventsSectionProps } from "types/props";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import { buildPageMeta } from "@components/partials/seo-meta";
-import ViewCounter from "@components/ui/viewCounter";
-import AdArticle from "@components/ui/adArticle";
-import NewsHeroEvent from "@components/ui/newsHeroEvent";
-import NewsRichCard from "@components/ui/newsRichCard";
+import { ViewCounter, AdArticle, Card, Text } from "@components/ui/primitives";
+import NewsHeroEvent from "components/ui/domain/newsHeroEvent";
 import { getFormattedDate } from "@utils/date-helpers";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 
@@ -83,11 +81,11 @@ export default async function Page({
     new Set(
       (detail.events || [])
         .flatMap((e) => e.categories?.map((c) => c.name) || [])
-        .filter(Boolean)
-    )
+        .filter(Boolean),
+    ),
   ).slice(0, 10);
   const locationKeywords = Array.from(
-    new Set((detail.events || []).map((e) => e.location).filter(Boolean))
+    new Set((detail.events || []).map((e) => e.location).filter(Boolean)),
   ).slice(0, 5);
   const keywords = [
     ...categoryKeywords,
@@ -139,11 +137,11 @@ export default async function Page({
   });
 
   return (
-    <div className="min-h-screen bg-whiteCorp mt-4">
+    <div className="mt-component-md min-h-screen bg-whiteCorp">
       {/* Breadcrumbs */}
-      <div className="bg-whiteCorp border-b border-bColor">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="text-sm text-blackCorp/70" aria-label="Breadcrumb">
+      <div className="border-b border-bColor bg-whiteCorp">
+        <div className="mx-auto max-w-7xl px-component-md py-component-md sm:px-component-lg lg:px-component-xl">
+          <nav className="text-blackCorp/70" aria-label="Breadcrumb">
             <Link href="/" className="hover:underline">
               Inici
             </Link>{" "}
@@ -155,37 +153,51 @@ export default async function Page({
             <Link href={`/noticies/${place}`} className="hover:underline">
               {placeType.label}
             </Link>{" "}
-            / <span className="text-blackCorp font-medium">{detail.title}</span>
+            /{" "}
+            <Text variant="body-sm" className="font-medium text-blackCorp">
+              {detail.title}
+            </Text>
           </nav>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-blackCorp mb-6 md:text-5xl lg:text-6xl leading-tight uppercase">
+      <div className="mx-auto max-w-7xl px-component-md py-component-2xl sm:px-component-lg lg:px-component-xl">
+        <div className="mb-component-lg">
+          <Text
+            as="h1"
+            variant="h1"
+            className="mb-component-lg font-bold uppercase leading-tight"
+          >
             {detail.title}
-          </h1>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-blackCorp/70">
-            <div className="flex items-center gap-4">
-              <span className="bg-primary text-whiteCorp px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
+          </Text>
+          <div className="mb-component-lg flex flex-col items-start justify-between text-blackCorp/70 md:flex-row md:items-center">
+            <div className="flex items-center gap-component-md">
+              <Text
+                variant="body-sm"
+                className="whitespace-nowrap rounded-full bg-primary px-component-md py-component-xs font-medium uppercase text-whiteCorp"
+              >
                 {detail.type === "WEEKEND" ? "Cap de setmana" : "Setmana"}{" "}
                 {dateRangeText}
-              </span>
+              </Text>
             </div>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <span>{detail.readingTime} min lectura</span>
+            <div className="md:mt-xs mt-component-md flex items-center gap-component-md">
+              <Text variant="body-sm">{detail.readingTime} min lectura</Text>
               <ViewCounter visits={detail.visits} hideText={false} />
             </div>
           </div>
           {plainDescription && (
-            <p className="text-xl text-blackCorp/80 leading-relaxed">
+            <Text
+              as="p"
+              variant="body-lg"
+              className="leading-relaxed text-blackCorp/80"
+            >
               {plainDescription}
-            </p>
+            </Text>
           )}
         </div>
 
-        <div className="my-2">
+        <div className="my-component-xs">
           <AdArticle slot="news_in_article" isDisplay={false} />
         </div>
 
@@ -233,16 +245,16 @@ function EventsSection({
   const [heroEvent, ...otherEvents] = events;
 
   return (
-    <section className="mb-16">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-blackCorp mb-3 md:text-4xl">
+    <section className="mb-4xl">
+      <div className="mb-component-xl">
+        <Text as="h2" variant="h1" className="mb-component-sm">
           {title}
-        </h2>
-        <div className="w-20 h-1.5 bg-primary rounded-full"></div>
+        </Text>
+        <div className="h-1.5 w-20 rounded-full bg-primary"></div>
       </div>
 
       {showHero && heroEvent && (
-        <div className="mb-12">
+        <div className="mb-component-2xl">
           <NewsHeroEvent event={heroEvent} />
         </div>
       )}
@@ -250,20 +262,22 @@ function EventsSection({
       {showNumbered ? (
         <div className="space-y-8">
           {(showHero ? otherEvents : events).map((event, index) => (
-            <div key={event.id} className="flex gap-6 items-start">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-whiteCorp rounded-full flex items-center justify-center font-bold text-sm">
-                {showHero ? index + 2 : index + 1}
+            <div key={event.id} className="flex items-start gap-component-lg">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-bold text-whiteCorp">
+                <Text variant="body-sm">
+                  {showHero ? index + 2 : index + 1}
+                </Text>
               </div>
               <div className="flex-1">
-                <NewsRichCard event={event} variant="horizontal" />
+                <Card type="news-rich" event={event} variant="horizontal" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-component-xl md:grid-cols-2 lg:grid-cols-3">
           {(showHero ? otherEvents : events).map((event) => (
-            <NewsRichCard key={event.id} event={event} />
+            <Card key={event.id} type="news-rich" event={event} />
           ))}
         </div>
       )}

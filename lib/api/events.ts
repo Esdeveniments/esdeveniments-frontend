@@ -11,7 +11,7 @@ import {
 import { FetchEventsParams } from "types/event";
 
 export async function fetchEvents(
-  params: FetchEventsParams
+  params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -45,7 +45,7 @@ export async function fetchEvents(
       .map(([k, v]) => [k, String(v)]);
 
     const queryString = new URLSearchParams(
-      Object.fromEntries(filteredEntries)
+      Object.fromEntries(filteredEntries),
     );
     const finalUrl = `${apiUrl}/events?${queryString}`;
 
@@ -70,7 +70,7 @@ export async function fetchEvents(
 }
 
 export async function fetchEventBySlug(
-  fullSlug: string
+  fullSlug: string,
 ): Promise<EventDetailResponseDTO | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -93,7 +93,7 @@ export async function fetchEventBySlug(
 
 export async function updateEventById(
   uuid: string,
-  data: EventUpdateRequestDTO
+  data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`,
@@ -104,13 +104,13 @@ export async function updateEventById(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
-    }
+    },
   );
   if (!response.ok) {
     const errorText = await response.text();
     console.error("updateEventById: error response:", errorText);
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
   return response.json();
@@ -118,7 +118,7 @@ export async function updateEventById(
 
 export async function createEvent(
   data: EventCreateRequestDTO,
-  imageFile?: File
+  imageFile?: File,
 ): Promise<EventDetailResponseDTO> {
   const formData = new FormData();
 
@@ -140,14 +140,14 @@ export async function createEvent(
     const errorText = await response.text();
     console.error("createEvent: error response:", errorText);
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
   return response.json();
 }
 
 export async function fetchCategorizedEvents(
-  maxEventsPerCategory?: number
+  maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -181,7 +181,7 @@ function insertAdsRandomly(
   ads: AdEvent[],
   minDistance = 4,
   maxDistance = 6,
-  startFrom = 3
+  startFrom = 3,
 ): ListEvent[] {
   const result: ListEvent[] = [...events];
 
@@ -221,7 +221,7 @@ function insertAdsRandomly(
 
 export function insertAds(
   events: EventSummaryResponseDTO[],
-  adFrequencyRatio = 4 // 1 ad per 4 events, matching old behavior
+  adFrequencyRatio = 4, // 1 ad per 4 events, matching old behavior
 ): ListEvent[] {
   if (!events.length) {
     return [];
@@ -238,7 +238,7 @@ export function insertAds(
         images: [],
         location: "",
         slug: "",
-      } as AdEvent)
+      }) as AdEvent,
   );
 
   return insertAdsRandomly(events, ads);

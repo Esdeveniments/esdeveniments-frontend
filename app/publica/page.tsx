@@ -4,11 +4,12 @@ import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO } from "@utils/helpers";
-import EventForm from "@components/ui/EventForm";
+import EventForm from "components/ui/domain/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
 import type { FormData } from "types/event";
+import { Text } from "@components/ui/primitives/Text";
 import { Option } from "types/common";
 
 const defaultForm: FormData = {
@@ -56,7 +57,7 @@ const Publica = () => {
             value: region.id.toString(),
           }))
         : [],
-    [regionsWithCities]
+    [regionsWithCities],
   );
 
   const cityOptions = useMemo(() => {
@@ -81,12 +82,12 @@ const Publica = () => {
         label: category.name,
         value: category.id.toString(),
       })),
-    [categories]
+    [categories],
   );
 
   const handleFormChange = <K extends keyof FormData>(
     name: K,
-    value: FormData[K]
+    value: FormData[K],
   ) => {
     setForm({ ...form, [name]: value });
   };
@@ -126,7 +127,7 @@ const Publica = () => {
 
         const result = await createEventAction(
           eventData,
-          imageFile || undefined
+          imageFile || undefined,
         );
 
         if (result && result.success && result.event) {
@@ -143,15 +144,17 @@ const Publica = () => {
     });
   };
   return (
-    <div className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="text-center italic uppercase font-semibold">
+    <div className="pb-3xl md:px-xs flex w-full flex-col items-center justify-center px-component-md pt-component-xs sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+      <div className="flex flex-col items-center gap-component-md">
+        <div className="flex flex-col items-center gap-component-xs">
+          <Text as="h1" className="text-center font-semibold uppercase italic">
             Publica un esdeveniment
-          </h1>
-          <p className="text-sm text-center">* camps obligatoris</p>
+          </Text>
+          <Text variant="body" size="sm" className="text-center">
+            * camps obligatoris
+          </Text>
         </div>
-        <div className="w-full flex flex-col justify-center items-center gap-y-4 pt-4 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+        <div className="flex w-full flex-col items-center justify-center gap-y-4 pt-component-md sm:w-[580px] md:w-[768px] lg:w-[1024px]">
           <EventForm
             form={form}
             onSubmit={onSubmit}

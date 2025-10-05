@@ -17,11 +17,11 @@ const EventStatusDetails: React.FC<{
   if (!temporalStatus) return null;
 
   return (
-    <div className={`flex items-center gap-2 py-2 ${className}`}>
-      <ClockIcon className="w-4 h-4 text-blackCorp/70" />
+    <div className={`flex items-center gap-component-xs py-component-xs ${className}`}>
+      <ClockIcon className="h-4 w-4 text-blackCorp/70" />
       {temporalStatus.state === "live" && temporalStatus.endsIn && (
         <div
-          className={`flex items-center gap-2 text-md text-blackCorp/70 ${className}`}
+          className={`text-md flex items-center gap-component-xs text-blackCorp/70 ${className}`}
         >
           {temporalStatus.endsIn}
         </div>
@@ -29,7 +29,7 @@ const EventStatusDetails: React.FC<{
 
       {temporalStatus.state === "upcoming" && temporalStatus.startsIn && (
         <div
-          className={`flex items-center gap-2 text-md text-blackCorp/70 ${className}`}
+          className={`text-md flex items-center gap-component-xs text-blackCorp/70 ${className}`}
         >
           {temporalStatus.startsIn}
         </div>
@@ -37,7 +37,7 @@ const EventStatusDetails: React.FC<{
 
       {temporalStatus.state === "past" && (
         <div
-          className={`flex items-center gap-2 text-md text-blackCorp/70 ${className}`}
+          className={`text-md flex items-center gap-component-xs text-blackCorp/70 ${className}`}
         >
           Va finalitzar el{" "}
           {formattedEnd

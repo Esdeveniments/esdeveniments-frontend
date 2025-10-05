@@ -7,7 +7,7 @@ test.describe("No events fallback", () => {
       "/catalunya/tots?category=category-that-does-not-exist-xyz",
       {
         waitUntil: "load",
-      }
+      },
     );
     // Either we see no-results widget or the page loads without events
     const noEvents = page.getByTestId("no-events-found");

@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
-import ViewCounter from "@components/ui/viewCounter";
+import { ViewCounter, Text } from "@components/ui/primitives";
 import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
 import { computeTemporalStatus } from "@utils/event-status";
@@ -18,18 +18,18 @@ import { getFormattedDate } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
-import NoEventFound from "components/ui/common/noEventFound";
-import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
+import NoEventFound from "components/ui/domain/noEventFound";
+import EventsAroundSection from "@components/ui/domain/eventsAround/EventsAroundSection";
 import {
   SpeakerphoneIcon,
   InformationCircleIcon as InfoIcon,
 } from "@heroicons/react/outline";
-import AdArticle from "components/ui/adArticle";
+import { AdArticle } from "@components/ui/primitives";
 import { fetchNews } from "@lib/api/news";
-import NewsCard from "@components/ui/newsCard";
+import { Card } from "@components/ui/primitives";
 import Link from "next/link";
 import EventDetailsSection from "./components/EventDetailsSection";
-import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
+import { RestaurantPromotionSection } from "@components/ui/domain/restaurantPromotion";
 import {
   buildEventIntroText,
   buildFaqItems,
@@ -56,8 +56,6 @@ export default async function EventPage({
   // Read the nonce from the middleware headers
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") || "";
-  const userAgent = headersList.get("user-agent") || "";
-  const initialIsMobile = /mobile|iphone|android|ipad|mobi/i.test(userAgent);
 
   const event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
   if (!event) return <NoEventFound />;
@@ -81,12 +79,12 @@ export default async function EventPage({
   const jsonData = generateJsonData({ ...event });
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
-    event.endDate
+    event.endDate,
   );
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
   );
 
   const statusMeta = {
@@ -131,7 +129,7 @@ export default async function EventPage({
                 console.error(
                   "Error generating JSON-LD for related event:",
                   relatedEvent.id,
-                  err
+                  err,
                 );
                 return null;
               }
@@ -162,24 +160,23 @@ export default async function EventPage({
           }}
         />
       )}
-      <div className="w-full flex justify-center bg-whiteCorp pb-10">
-        <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[520px] md:w-[520px] lg:w-[520px] min-w-0">
-          <article className="w-full flex flex-col justify-center items-start gap-8">
-            <div className="w-full flex flex-col justify-center items-start gap-4">
+      <div className="pb-2xl flex w-full justify-center bg-whiteCorp">
+        <div className="flex w-full min-w-0 flex-col items-center justify-center gap-component-md sm:w-[520px] md:w-[520px] lg:w-[520px]">
+          <article className="flex w-full flex-col items-start justify-center gap-component-xl">
+            <div className="flex w-full flex-col items-start justify-center gap-component-md">
               <EventMedia event={event} title={title} />
-              <div className="w-full flex justify-between items-center px-4">
+              <div className="flex w-full items-center justify-between px-component-md">
                 <EventShareBar
                   slug={eventSlug}
                   title={title}
                   description={event.description}
                   eventDateString={eventDateString}
                   location={event.location}
-                  initialIsMobile={initialIsMobile}
                   cityName={cityName}
                   regionName={regionName}
                   postalCode={event.city?.postalCode || ""}
                 />
-                <div className="ml-2">
+                <div className="ml-component-xs">
                   <ViewCounter visits={event.visits} />
                 </div>
               </div>
@@ -240,13 +237,15 @@ export default async function EventPage({
 
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
-              <div className="w-full flex justify-center items-start gap-2 px-4">
-                <InfoIcon className="w-5 h-5 mt-1" />
+              <div className="flex w-full items-start justify-center gap-component-xs px-component-md">
+                <InfoIcon className="mt-component-xs h-5 w-5" />
                 <section
-                  className="w-11/12 flex flex-col gap-4"
+                  className="flex w-11/12 flex-col gap-component-md"
                   aria-labelledby="event-faq"
                 >
-                  <h2 id="event-faq">Preguntes freqüents</h2>
+                  <Text as="h2" id="event-faq" variant="h2">
+                    Preguntes freqüents
+                  </Text>
                   <dl className="space-y-3">
                     {faqItems.map((item) => (
                       <div key={item.q}>
@@ -270,10 +269,12 @@ export default async function EventPage({
             />
 
             {/* Final Ad Section */}
-            <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-              <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-              <div className="w-11/12 flex flex-col gap-4">
-                <h2>Contingut patrocinat</h2>
+            <div className="flex h-full min-h-[250px] w-full items-start justify-center gap-component-xs px-component-md">
+              <SpeakerphoneIcon className="mt-component-xs h-5 w-5" />
+              <div className="flex w-11/12 flex-col gap-component-md">
+                <Text as="h2" variant="h2">
+                  Contingut patrocinat
+                </Text>
                 <AdArticle slot="9643657007" />
               </div>
             </div>
@@ -282,24 +283,23 @@ export default async function EventPage({
       </div>
 
       {latestNews.length > 0 && (
-        <div className="w-full flex justify-center bg-whiteCorp pb-8">
-          <section className="w-full sm:w-[520px] md:w-[520px] lg:w-[520px] px-4 flex flex-col gap-4">
-            <div className="w-full flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
+        <div className="flex w-full justify-center bg-whiteCorp pb-component-xl">
+          <section className="flex w-full flex-col gap-component-md px-component-md sm:w-[520px] md:w-[520px] lg:w-[520px]">
+            <div className="flex w-full items-center justify-between">
+              <Text as="h2" variant="body-lg" className="font-semibold">
                 Últimes notícies {placeLabel ? `a ${placeLabel}` : ""}
-              </h2>
-              <Link
-                href={newsHref}
-                prefetch={false}
-                className="text-primary underline text-sm"
-              >
-                Veure totes
+              </Text>
+              <Link href={newsHref} prefetch={false} className="underline">
+                <Text variant="body-sm" color="primary">
+                  Veure totes
+                </Text>
               </Link>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-component-md">
               {latestNews.map((newsItem, index) => (
-                <NewsCard
+                <Card
                   key={`${newsItem.id}-${index}`}
+                  type="news"
                   event={newsItem}
                   placeSlug={placeSlug}
                   placeLabel={placeLabel}

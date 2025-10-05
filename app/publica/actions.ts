@@ -5,7 +5,7 @@ import type { EventCreateRequestDTO } from "types/api/event";
 
 export async function createEventAction(
   data: EventCreateRequestDTO,
-  imageFile?: File
+  imageFile?: File,
 ) {
   // 1. Create the event in your backend
   const created = await createEvent(data, imageFile);

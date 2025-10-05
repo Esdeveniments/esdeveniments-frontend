@@ -1,7 +1,7 @@
 import { EventImageProps } from "types/event";
 import { FC } from "react";
-import Image from "@components/ui/common/image";
-import ImageDefault from "components/ui/imgDefault";
+import { Image } from "@components/ui/primitives";
+import { default as ImageDefault } from "@components/ui/primitives/ImgDefault";
 
 const EventImage: FC<EventImageProps> = ({ image, title }) => {
   if (!image) {
@@ -16,7 +16,7 @@ const EventImage: FC<EventImageProps> = ({ image, title }) => {
   return (
     <a
       href={image}
-      className="flex justify-center w-full"
+      className="flex w-full justify-center"
       target="_blank"
       rel="noopener noreferrer"
     >
@@ -25,7 +25,7 @@ const EventImage: FC<EventImageProps> = ({ image, title }) => {
           title={title}
           alt={title}
           image={image}
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
           priority={true}
           context="detail"
         />

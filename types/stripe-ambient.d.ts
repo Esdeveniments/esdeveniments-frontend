@@ -18,7 +18,7 @@ declare module "stripe" {
     constructEvent(
       body: string | Buffer,
       signature: string,
-      secret: string
+      secret: string,
     ): unknown; // Caller narrows
   }
 

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!pricing) {
       return NextResponse.json(
         { error: "Invalid combination" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

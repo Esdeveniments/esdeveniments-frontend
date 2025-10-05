@@ -1,17 +1,20 @@
 import React from "react";
 import type { EventTagsProps } from "types/event";
+import { Text } from "components/ui/primitives/Text";
 
 const EventTags: React.FC<EventTagsProps> = ({ tags }) => {
   if (!tags || tags.length === 0) return null;
   return (
-    <div className="w-full px-4 pb-2 flex flex-wrap gap-2">
+    <div className="flex w-full flex-wrap gap-component-xs px-component-md pb-component-xs">
       {tags.map((tag) => (
-        <span
+        <Text
           key={tag}
-          className="bg-gray-200 text-gray-700 rounded-full px-3 py-1 text-xs font-medium"
+          as="span"
+          variant="caption"
+          className="rounded-full bg-darkCorp/80 px-component-sm py-component-xs font-medium text-blackCorp"
         >
           {tag}
-        </span>
+        </Text>
       ))}
     </div>
   );

@@ -18,7 +18,7 @@ const EventStatusGroup: React.FC<{
   if (!temporalStatus) return null;
 
   return (
-    <div className={`flex flex-col items-start gap-1 ${className}`}>
+    <div className={`flex flex-col items-start gap-xs ${className}`}>
       <EventStatusBadge status={temporalStatus} />
       <EventStatusDetails
         temporalStatus={temporalStatus}

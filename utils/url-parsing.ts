@@ -44,7 +44,7 @@ export function extractURLSegments(pathname: string): URLSegments {
 export function debugURLParsing(
   pathname: string,
   segments: URLSegments,
-  parsed: unknown
+  parsed: unknown,
 ) {
   if (process.env.NODE_ENV === "development") {
     console.log("🔍 URL Parsing Debug:", {

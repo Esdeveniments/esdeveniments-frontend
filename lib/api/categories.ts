@@ -6,13 +6,16 @@ import { createCache, createKeyedCache } from "lib/api/cache";
 
 const cache = createCache<CategorySummaryResponseDTO[]>(86400000);
 const categoryByIdCache = createKeyedCache<CategoryDetailResponseDTO | null>(
-  86400000
+  86400000,
 );
 
 async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
-    next: { revalidate: 86400, tags: ["categories"] },
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+    {
+      next: { revalidate: 86400, tags: ["categories"] },
+    },
+  );
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
 }
@@ -29,18 +32,18 @@ export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
 }
 
 async function fetchCategoryByIdApi(
-  id: string | number
+  id: string | number,
 ): Promise<CategoryDetailResponseDTO | null> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`,
-    { next: { revalidate: 86400, tags: ["categories", `category:${id}`] } }
+    { next: { revalidate: 86400, tags: ["categories", `category:${id}`] } },
   );
   if (!response.ok) return null;
   return response.json();
 }
 
 export async function fetchCategoryById(
-  id: string | number
+  id: string | number,
 ): Promise<CategoryDetailResponseDTO | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return null;

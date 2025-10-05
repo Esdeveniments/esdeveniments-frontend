@@ -10,7 +10,7 @@ test.describe("News article pages", () => {
       const href = await article.getAttribute("href");
       await article.click();
       await expect(page).toHaveURL(
-        new RegExp(`^${href?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`)
+        new RegExp(`^${href?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
       );
       // Basic SEO tags
       await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);

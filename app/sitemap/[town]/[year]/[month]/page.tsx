@@ -14,9 +14,10 @@ import {
   generateCollectionPageSchema,
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
+import { Text } from "@components/ui/primitives";
 
 const NoEventsFound = dynamic(
-  () => import("@components/ui/common/noEventsFound")
+  () => import("components/ui/domain/noEventsFound"),
 );
 
 export async function generateMetadata({
@@ -65,7 +66,7 @@ export default async function Page({
 
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(
-        (event) => !event.isAd
+        (event) => !event.isAd,
       )
     : [];
 
@@ -93,7 +94,7 @@ export default async function Page({
       ? generateItemListStructuredData(
           filteredEvents,
           `Esdeveniments de ${townLabel} - ${textMonth} ${year}`,
-          `Col·lecció d'esdeveniments culturals de ${townLabel} del ${textMonth} del ${year}`
+          `Col·lecció d'esdeveniments culturals de ${townLabel} del ${textMonth} del ${year}`,
         )
       : null;
 
@@ -129,7 +130,7 @@ export default async function Page({
         id={`${town}-${month}-${year}-collection`}
         type="application/ld+json"
         strategy="afterInteractive"
-          nonce={nonce}
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(collectionPageSchema),
         }}
@@ -149,98 +150,118 @@ export default async function Page({
       )}
 
       <div
-        className="w-full flex flex-col justify-center items-center gap-2 pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
+        className="pb-3xl md:px-xs flex w-full flex-col items-center justify-center gap-component-xs px-component-md pt-component-xs sm:w-[580px] md:w-[768px] lg:w-[1024px]"
         role="main"
       >
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="w-full mb-4">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+        <nav aria-label="Breadcrumb" className="mb-component-md w-full">
+          <ol className="flex items-center space-x-2 text-blackCorp/80">
             <li>
-              <Link href="/" className="hover:text-gray-800">
+              <Link href="/" className="hover:text-blackCorp">
                 Inici
               </Link>
             </li>
             <li>
-              <span className="mx-2">/</span>
-              <Link href="/sitemap" className="hover:text-gray-800">
+              <span className="mx-component-xs">/</span>
+              <Link href="/sitemap" className="hover:text-blackCorp">
                 Arxiu
               </Link>
             </li>
             <li>
-              <span className="mx-2">/</span>
-              <Link href={`/sitemap/${town}`} className="hover:text-gray-800">
+              <span className="mx-component-xs">/</span>
+              <Link href={`/sitemap/${town}`} className="hover:text-blackCorp">
                 {townLabel}
               </Link>
             </li>
             <li>
-              <span className="mx-2">/</span>
-              <span className="text-gray-800 capitalize">
+              <span className="mx-component-xs">/</span>
+              <Text variant="body-sm" className="capitalize text-blackCorp">
                 {textMonth} {year}
-              </span>
+              </Text>
             </li>
           </ol>
         </nav>
 
         {/* Header */}
-        <header className="w-full text-center mb-6">
-          <h1 className="font-semibold italic uppercase text-2xl mb-2">
+        <header className="mb-component-lg w-full text-center">
+          <Text
+            as="h1"
+            variant="h1"
+            className="mb-component-xs uppercase italic"
+          >
             Arxiu {townLabel} - {textMonth} del {year}
-          </h1>
-          <p className="text-gray-600 mb-4">
+          </Text>
+          <Text
+            as="p"
+            variant="body"
+            className="mb-component-md text-blackCorp/80"
+          >
             {filteredEvents.length > 0
               ? `${filteredEvents.length} esdeveniments culturals documentats`
               : `No s'han trobat esdeveniments per aquest període`}
-          </p>
+          </Text>
         </header>
 
         {/* Events List */}
         <section className="w-full">
           {filteredEvents.length > 0 ? (
             <div className="flex flex-col items-start space-y-4">
-              <h2 className="sr-only">Llista d&apos;esdeveniments</h2>
+              <Text as="h2" variant="h2" className="sr-only">
+                Llista d&apos;esdeveniments
+              </Text>
               {filteredEvents.map((event: EventSummaryResponseDTO) => {
                 const { formattedStart, formattedEnd } = getFormattedDate(
                   event.startDate,
-                  event.endDate
+                  event.endDate,
                 );
                 return (
                   <article
                     key={event.id}
-                    className="border-b border-gray-100 pb-4 w-full"
+                    className="w-full border-b border-bColor/50 pb-component-md"
                   >
                     <Link
                       href={`/e/${event.slug}`}
                       prefetch={false}
-                      className="hover:text-primary block group"
+                      className="group block hover:text-primary"
                     >
-                      <h3 className="text-lg font-medium group-hover:text-blue-600 transition-colors">
+                      <Text
+                        as="h3"
+                        variant="h3"
+                        className="group-hover:text-blue-600 transition-colors"
+                      >
                         {event.title}
-                      </h3>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-600 mt-1">
+                      </Text>
+                      <div className="mt-component-xs flex flex-col text-blackCorp/80 sm:flex-row sm:items-center sm:space-x-4">
                         <time dateTime={event.startDate}>
-                          {formattedEnd
-                            ? `${formattedStart} - ${formattedEnd}`
-                            : `${formattedStart}`}
+                          <Text variant="body-sm">
+                            {formattedEnd
+                              ? `${formattedStart} - ${formattedEnd}`
+                              : `${formattedStart}`}
+                          </Text>
                         </time>
                         {event.location && (
                           <>
                             <span className="hidden sm:inline">•</span>
-                            <span>{event.location}</span>
+                            <Text variant="body-sm">{event.location}</Text>
                           </>
                         )}
                         {event.categories && event.categories.length > 0 && (
                           <>
                             <span className="hidden sm:inline">•</span>
-                            <span className="text-blue-600">
+                            <Text variant="body-sm" className="text-blue-600">
                               {event.categories[0].name}
-                            </span>
+                            </Text>
                           </>
                         )}
                       </div>
                       {event.description && (
-                        <p className="text-sm text-gray-700 mt-2 line-clamp-2">
+                        <Text
+                          as="p"
+                          variant="body-sm"
+                          className="mt-component-xs line-clamp-2 text-blackCorp"
+                        >
                           {event.description}
-                        </p>
+                        </Text>
                       )}
                     </Link>
                   </article>
@@ -254,23 +275,27 @@ export default async function Page({
 
         {/* Footer with navigation hints */}
         {filteredEvents.length > 0 && (
-          <footer className="w-full mt-12 pt-8 border-t border-gray-200">
+          <footer className="mt-component-2xl w-full border-t border-bColor/50 pt-component-xl">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">
+              <Text
+                as="p"
+                variant="body-sm"
+                className="mb-component-md text-blackCorp/80"
+              >
                 Vols explorar més esdeveniments de {townLabel}?
-              </p>
+              </Text>
               <div className="flex justify-center space-x-4">
                 <Link
                   href={`/sitemap/${town}`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
+                  className="text-blue-600 hover:text-blue-800"
                 >
-                  Veure tots els arxius
+                  <Text variant="body-sm">Veure tots els arxius</Text>
                 </Link>
                 <Link
                   href={`/${town}`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
+                  className="text-blue-600 hover:text-blue-800"
                 >
-                  Esdeveniments actuals
+                  <Text variant="body-sm">Esdeveniments actuals</Text>
                 </Link>
               </div>
             </div>

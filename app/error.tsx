@@ -1,8 +1,15 @@
 "use client";
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
+import { Text } from "@components/ui/primitives";
 
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
   useEffect(() => {
     if (error) {
       Sentry.captureException(error);
@@ -10,10 +17,14 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   }, [error]);
 
   return (
-    <div style={{ padding: 32, textAlign: "center" }}>
-      <h1>Alguna cosa ha anat malament</h1>
-      <p>{error?.message || "Si us plau, torna-ho a intentar."}</p>
-      <button onClick={reset} style={{ marginTop: 16 }}>
+    <div className="py-page-y text-center">
+      <Text as="h1" variant="h1">
+        Alguna cosa ha anat malament
+      </Text>
+      <Text as="p" variant="body">
+        {error?.message || "Si us plau, torna-ho a intentar."}
+      </Text>
+      <button onClick={reset} className="mt-margin-sm">
         Torna a carregar
       </button>
     </div>

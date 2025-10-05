@@ -17,7 +17,7 @@ const dict = {
 
 export function formatOpeningHours(
   info: OpeningInfo | undefined,
-  options: FormatOpeningHoursOptions = {}
+  options: FormatOpeningHoursOptions = {},
 ): string | undefined {
   if (!info) return undefined;
   const locale = options.locale || "ca";
@@ -63,7 +63,7 @@ export function formatOpeningHours(
 
 export function formatConfidence(
   conf?: string,
-  locale: string = "ca"
+  locale: string = "ca",
 ): string | undefined {
   if (!conf) return undefined;
   if (locale !== "ca") return conf;

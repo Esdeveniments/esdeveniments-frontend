@@ -3,7 +3,7 @@ import { UseOnScreenOptions } from "types/common";
 
 function useOnScreen<T extends Element = Element>(
   ref: RefObject<T>,
-  options: UseOnScreenOptions = {}
+  options: UseOnScreenOptions = {},
 ): boolean {
   const {
     root = null,

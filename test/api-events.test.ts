@@ -30,16 +30,14 @@ describe("lib/api/events", () => {
   it("maps params correctly and serializes only defined ones", async () => {
     process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
 
-    const mockJson = vi
-      .fn()
-      .mockResolvedValue({
-        content: [],
-        currentPage: 0,
-        pageSize: 10,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      });
+    const mockJson = vi.fn().mockResolvedValue({
+      content: [],
+      currentPage: 0,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    });
     const mockFetch = vi.fn().mockResolvedValue({ json: mockJson });
     (globalThis as any).fetch = mockFetch;
 

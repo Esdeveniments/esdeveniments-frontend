@@ -11,7 +11,7 @@ export interface FetchNewsParams {
 }
 
 export async function fetchNews(
-  params: FetchNewsParams
+  params: FetchNewsParams,
 ): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -36,7 +36,7 @@ export async function fetchNews(
       .map(([k, v]) => [k, String(v)]);
 
     const queryString = new URLSearchParams(
-      Object.fromEntries(filteredEntries)
+      Object.fromEntries(filteredEntries),
     );
     const finalUrl = `${apiUrl}/news?${queryString}`;
 
@@ -60,7 +60,7 @@ export async function fetchNews(
 }
 
 export async function fetchNewsBySlug(
-  slug: string
+  slug: string,
 ): Promise<NewsDetailResponseDTO | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {

@@ -3,7 +3,7 @@
 // Import the Workbox library from Google's CDN.
 // Workbox simplifies common service worker tasks like caching, routing, and lifecycle management.
 importScripts(
-  "https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js"
+  "https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js",
 );
 
 // Set a more descriptive name for your caches for easier debugging.
@@ -65,7 +65,7 @@ workbox.routing.registerRoute(
       console.error("Error loading page:", error);
       return await cache.match("/offline");
     }
-  }
+  },
 );
 
 // FIXED: Add a specific route to handle ad/tracker scripts.
@@ -74,9 +74,9 @@ workbox.routing.registerRoute(
 workbox.routing.registerRoute(
   ({ url }) =>
     /googlesyndication|googletagmanager|google-analytics|sentry\.io/.test(
-      url.href
+      url.href,
     ),
-  new workbox.strategies.NetworkOnly()
+  new workbox.strategies.NetworkOnly(),
 );
 
 // Strategy for Static Assets (CSS, JS, Fonts, Images) - Cache First
@@ -96,7 +96,7 @@ workbox.routing.registerRoute(
         maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
       }),
     ],
-  })
+  }),
 );
 
 // Strategy for Local API Requests - Stale-While-Revalidate
@@ -113,7 +113,7 @@ workbox.routing.registerRoute(
         maxAgeSeconds: 24 * 60 * 60, // 24 Hours
       }),
     ],
-  })
+  }),
 );
 
 // Strategy for External API Requests - Cache First for better performance
@@ -133,7 +133,7 @@ workbox.routing.registerRoute(
       }),
     ],
     networkTimeoutSeconds: 5, // Fallback to cache if network is slow
-  })
+  }),
 );
 
 // --- 4. Service Worker Lifecycle ---

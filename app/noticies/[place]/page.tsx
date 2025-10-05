@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
-import NewsCard from "@components/ui/newsCard";
+import { Card, Text } from "@components/ui/primitives";
 import type { Metadata } from "next";
 import {
   buildPageMeta,
@@ -58,14 +58,14 @@ export default async function Page({
     typeof query.page === "string"
       ? query.page
       : Array.isArray(query.page)
-      ? query.page[0]
-      : undefined;
+        ? query.page[0]
+        : undefined;
   const sizeParam =
     typeof query.size === "string"
       ? query.size
       : Array.isArray(query.size)
-      ? query.size[0]
-      : undefined;
+        ? query.size[0]
+        : undefined;
   const currentPage = Number.isFinite(Number(pageParam))
     ? Number(pageParam)
     : 0;
@@ -117,7 +117,7 @@ export default async function Page({
   };
 
   return (
-    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
+    <div className="mt-page-top w-full flex-col items-center justify-center sm:w-[580px] md:w-[768px] lg:w-[1024px]">
       <Head>
         {currentPage > 0 && (
           <link
@@ -163,7 +163,7 @@ export default async function Page({
       />
       <nav
         aria-label="Breadcrumb"
-        className="mb-3 w-full px-2 lg:px-0 text-sm text-blackCorp/70"
+        className="mb-component-md w-full px-container-x text-blackCorp/70 lg:px-xs"
       >
         <ol className="flex items-center space-x-2">
           <li>
@@ -172,7 +172,7 @@ export default async function Page({
             </Link>
           </li>
           <li>
-            <span className="mx-1">/</span>
+            <span className="mx-xs">/</span>
           </li>
           <li>
             <Link href="/noticies" className="hover:underline">
@@ -180,35 +180,44 @@ export default async function Page({
             </Link>
           </li>
           <li>
-            <span className="mx-1">/</span>
+            <span className="mx-xs">/</span>
           </li>
-          <li className="text-blackCorp capitalize">{place}</li>
+          <li>
+            <Text variant="body-sm" className="capitalize text-blackCorp">
+              {place}
+            </Text>
+          </li>
         </ol>
       </nav>
-      <h1 className="uppercase mb-2 px-2 lg:px-0">
+      <Text
+        as="h1"
+        variant="h1"
+        className="mb-component-sm px-container-x uppercase lg:px-xs"
+      >
         Notícies de {placeType.label}
-      </h1>
-      <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
+      </Text>
+      <div className="mb-component-sm flex w-full justify-end px-container-x lg:px-xs">
         <Link
           href={`/noticies`}
-          className="text-primary underline text-sm"
+          className="text-primary underline"
           prefetch={false}
         >
-          Veure totes les notícies
+          <Text variant="body-sm">Veure totes les notícies</Text>
         </Link>
-        <span className="mx-2">·</span>
+        <span className="mx-component-xs">·</span>
         <Link
           href={`/noticies/${place}/rss.xml`}
-          className="text-primary underline text-sm"
+          className="text-primary underline"
           prefetch={false}
         >
-          RSS
+          <Text variant="body-sm">RSS</Text>
         </Link>
       </div>
-      <section className="flex flex-col gap-6 px-2 lg:px-0">
+      <section className="flex flex-col gap-section-gap px-container-x lg:px-xs">
         {list.map((event, index) => (
-          <NewsCard
+          <Card
             key={`${event.id}-${index}`}
+            type="news"
             event={event}
             placeSlug={place}
             placeLabel={placeType.label}
@@ -216,7 +225,7 @@ export default async function Page({
           />
         ))}
       </section>
-      <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
+      <div className="mt-component-xl flex w-full items-center justify-between px-container-x lg:px-xs">
         {currentPage > 0 ? (
           <Link
             href={{
@@ -226,7 +235,7 @@ export default async function Page({
             prefetch={false}
             className="text-primary underline"
           >
-            ← Anterior
+            <Text variant="body-sm">← Anterior</Text>
           </Link>
         ) : (
           <span />
@@ -240,7 +249,7 @@ export default async function Page({
             prefetch={false}
             className="text-primary underline"
           >
-            Més notícies →
+            <Text variant="body-sm">Més notícies →</Text>
           </Link>
         )}
       </div>

@@ -73,7 +73,7 @@ export function middleware(request: NextRequest) {
     const response = NextResponse.next();
     response.headers.set(
       "Cache-Control",
-      "no-cache, no-store, must-revalidate"
+      "no-cache, no-store, must-revalidate",
     );
     response.headers.set("Service-Worker-Allowed", "/");
     return response;
@@ -112,14 +112,14 @@ export function middleware(request: NextRequest) {
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set(
     "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload"
+    "max-age=63072000; includeSubDomains; preload",
   );
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self)"
+    "camera=(), microphone=(), geolocation=(self)",
   );
 
   return response;

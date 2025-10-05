@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   if (!lat || !lng) {
     return NextResponse.json(
       { error: "Missing required parameters: lat, lng" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     console.error("GOOGLE_PLACES_API_KEY is not configured");
     return NextResponse.json(
       { error: "Places API not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     if (year && month && day) {
       return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
         2,
-        "0"
+        "0",
       )}`;
     }
     return undefined;
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
   function periodIncludesDate(
     p: PlaceOpeningHoursPeriod,
-    iso: string
+    iso: string,
   ): boolean {
     const openISO = toISODate(p.open);
     const closeISO = toISODate(p.close);
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
 
   function buildOpeningInfo(
     place: GooglePlaceResponse,
-    isoDate: string | null
+    isoDate: string | null,
   ): { info: OpeningInfo; weekdayText?: string[] } {
     const weekdayText =
       place.currentOpeningHours?.weekdayDescriptions ||
@@ -144,13 +144,13 @@ export async function GET(request: NextRequest) {
             if (p.open) {
               const start = `${String(p.open.hour ?? 0).padStart(
                 2,
-                "0"
+                "0",
               )}:${String(p.open.minute ?? 0).padStart(2, "0")}`;
               let end = "";
               let overnight = false;
               if (p.close) {
                 end = `${String(p.close.hour ?? 0).padStart(2, "0")}:${String(
-                  p.close.minute ?? 0
+                  p.close.minute ?? 0,
                 ).padStart(2, "0")}`;
                 const openDate = toISODate(p.open);
                 const closeDate = toISODate(p.close);
@@ -267,8 +267,8 @@ export async function GET(request: NextRequest) {
               openNow === true
                 ? "open"
                 : openNow === false
-                ? "closed"
-                : "unknown",
+                  ? "closed"
+                  : "unknown",
             segments: [
               {
                 start,
@@ -349,7 +349,7 @@ export async function GET(request: NextRequest) {
       console.error("Google Places API error:", response.status, data);
       return NextResponse.json(
         { error: "Places API error", status: response.status, details: data },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -362,7 +362,7 @@ export async function GET(request: NextRequest) {
       const hasCurrentPeriods = !!place.currentOpeningHours?.periods?.length;
       if (hasCurrentPeriods) {
         return place.currentOpeningHours!.periods!.some((p) =>
-          periodIncludesDate(p, eventDateISO)
+          periodIncludesDate(p, eventDateISO),
         );
       }
       return isOpenOnDate(place, eventDateISO);
@@ -375,7 +375,7 @@ export async function GET(request: NextRequest) {
         const confirmedByCurrent =
           !!eventDateISO &&
           !!place.currentOpeningHours?.periods?.some((p) =>
-            periodIncludesDate(p, eventDateISO)
+            periodIncludesDate(p, eventDateISO),
           );
         const isOpenOnEventDay =
           !!eventDateISO &&
@@ -384,14 +384,14 @@ export async function GET(request: NextRequest) {
         const open_confidence: OpenConfidence | undefined = !eventDateISO
           ? undefined
           : confirmedByCurrent
-          ? "confirmed"
-          : isOpenOnDate(place, eventDateISO)
-          ? "inferred"
-          : "none";
+            ? "confirmed"
+            : isOpenOnDate(place, eventDateISO)
+              ? "inferred"
+              : "none";
 
         const { info: opening_info, weekdayText } = buildOpeningInfo(
           place,
-          eventDateISO
+          eventDateISO,
         );
         if (open_confidence) opening_info.open_confidence = open_confidence;
 
@@ -435,7 +435,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching places:", error);
     return NextResponse.json(
       { error: "Failed to fetch places" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

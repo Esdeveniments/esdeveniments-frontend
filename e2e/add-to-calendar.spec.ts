@@ -19,7 +19,7 @@ test.describe("Add to calendar menu", () => {
     await button.click();
 
     await expect(
-      page.getByRole("button", { name: "Google Calendar" })
+      page.getByRole("button", { name: "Google Calendar" }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Outlook" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Altres" })).toBeVisible();

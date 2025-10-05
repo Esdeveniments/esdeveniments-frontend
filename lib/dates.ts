@@ -116,6 +116,6 @@ export const getAllYears = (): number[] => {
 
   return Array.from(
     { length: currentYear - 2023 + 1 },
-    (_, i) => currentYear - i
+    (_, i) => currentYear - i,
   );
 };

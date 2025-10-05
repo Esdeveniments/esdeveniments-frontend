@@ -29,7 +29,7 @@ function getOptimalPreloadWidth(): number {
  */
 export const preloadImage = (
   src: string,
-  options: PreloadOptions = {}
+  options: PreloadOptions = {},
 ): void => {
   const {
     priority = false,
@@ -48,12 +48,12 @@ export const preloadImage = (
   // that could change in future Next.js versions without notice. Consider using Next.js's official
   // image preloading utilities if they become available, or abstract this into a configuration.
   const imageUrl = `/_next/image?url=${encodeURIComponent(
-    src
+    src,
   )}&w=${optimalWidth}&q=${quality}`;
 
   // Check if already preloaded
   const existingPreload = document.querySelector(
-    `link[rel="preload"][href="${imageUrl}"]`
+    `link[rel="preload"][href="${imageUrl}"]`,
   );
 
   if (existingPreload) return;
@@ -79,7 +79,7 @@ export const preloadImage = (
  * Uses requestIdleCallback for better performance
  */
 export const preloadImages = (
-  images: Array<{ src: string; options?: PreloadOptions }>
+  images: Array<{ src: string; options?: PreloadOptions }>,
 ): void => {
   if (typeof window === "undefined") return;
 
@@ -106,7 +106,7 @@ export const preloadImages = (
  * Preloads images that are about to enter the viewport
  */
 export const preloadOnIntersection = (
-  images: Array<{ src: string; element: Element; options?: PreloadOptions }>
+  images: Array<{ src: string; element: Element; options?: PreloadOptions }>,
 ): void => {
   if (typeof window === "undefined" || !window.IntersectionObserver) return;
 
@@ -126,7 +126,7 @@ export const preloadOnIntersection = (
       // Trigger when image is 200px away from viewport
       rootMargin: "200px",
       threshold: 0,
-    }
+    },
   );
 
   images.forEach(({ element }) => {

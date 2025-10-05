@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Option } from "types/common";
 import { UseGeolocationReturn } from "types/props";
-import { findNearestCity } from "../../components/ui/locationDiscoveryWidget/utils";
+import { findNearestCity } from "components/ui/domain/locationDiscoveryWidget/utils";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
 export function useGeolocation(): UseGeolocationReturn {
@@ -11,7 +11,7 @@ export function useGeolocation(): UseGeolocationReturn {
 
   const requestLocation = useCallback(
     async (
-      regions: RegionsGroupedByCitiesResponseDTO[]
+      regions: RegionsGroupedByCitiesResponseDTO[],
     ): Promise<Option | null> => {
       if (!("geolocation" in navigator)) {
         setError("La geolocalització no està disponible en aquest navegador.");
@@ -55,11 +55,11 @@ export function useGeolocation(): UseGeolocationReturn {
             setError(errorMessage);
             setIsLoading(false);
             resolve(null);
-          }
+          },
         );
       });
     },
-    []
+    [],
   );
 
   const clearLocation = useCallback(() => {

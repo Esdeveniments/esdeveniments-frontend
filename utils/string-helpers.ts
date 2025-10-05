@@ -83,7 +83,7 @@ export const truncateString = (str: string, num: number): string => {
  */
 export function formatCatalanDe(
   name: string,
-  lowercase: boolean = true
+  lowercase: boolean = true,
 ): string {
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
@@ -100,7 +100,7 @@ export function formatCatalanDe(
 export function formatCatalanA(
   name: string,
   type: "region" | "town" | "general" | "" = "general",
-  lowercase: boolean = true
+  lowercase: boolean = true,
 ): string {
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;

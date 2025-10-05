@@ -102,7 +102,7 @@ export interface FetchEventsParams {
  */
 export function distanceToRadius(
   distance: number | string | undefined,
-  defaultRadius: number = 50
+  defaultRadius: number = 50,
 ): number | undefined {
   if (distance === undefined) return undefined;
 
@@ -135,9 +135,7 @@ export interface EventShareBarProps {
 
 // Client-side props for EventShareBar include an optional server hint for
 // initial mobile rendering to avoid hydration layout shifts.
-export interface EventShareBarClientProps extends EventShareBarProps {
-  initialIsMobile?: boolean;
-}
+export interface EventShareBarClientProps extends EventShareBarProps {}
 
 export interface EventDescriptionProps {
   description: string;
@@ -210,7 +208,7 @@ export interface EventFormProps {
   isLoadingCategories?: boolean;
   handleFormChange: <K extends keyof FormData>(
     name: K,
-    value: FormData[K]
+    value: FormData[K],
   ) => void;
   handleImageChange: (file: File) => void;
   handleRegionChange: (region: Option | null) => void;

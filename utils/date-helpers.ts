@@ -13,7 +13,7 @@ export const convertTZ = (date: Date | string, tzString: string): Date =>
   new Date(
     (typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {
       timeZone: tzString,
-    })
+    }),
   );
 
 function calculateDetailedDurationISO8601(start: Date, end: Date): string {
@@ -21,7 +21,7 @@ function calculateDetailedDurationISO8601(start: Date, end: Date): string {
 
   const days = Math.floor(differenceInMs / (1000 * 60 * 60 * 24));
   const hours = Math.floor(
-    (differenceInMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    (differenceInMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
   );
   const minutes = Math.floor((differenceInMs % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((differenceInMs % (1000 * 60)) / 1000);
@@ -41,10 +41,10 @@ function calculateDetailedDurationISO8601(start: Date, end: Date): string {
 
 export const getFormattedDate = (
   start: string | DateObject,
-  end?: string | DateObject
+  end?: string | DateObject,
 ): FormattedDateResult => {
   const startDate = new Date(
-    typeof start === "object" ? start.date || start.dateTime || "" : start
+    typeof start === "object" ? start.date || start.dateTime || "" : start,
   );
   const endDate = end
     ? new Date(typeof end === "object" ? end.date || end.dateTime || "" : end)
@@ -84,10 +84,10 @@ export const getFormattedDate = (
   } del ${endDateConverted.getFullYear()}`;
 
   const startTime = `${startDateConverted.getHours()}:${String(
-    startDateConverted.getMinutes()
+    startDateConverted.getMinutes(),
   ).padStart(2, "0")}`;
   const endTime = `${endDateConverted.getHours()}:${String(
-    endDateConverted.getMinutes()
+    endDateConverted.getMinutes(),
   ).padStart(2, "0")}`;
 
   return {
@@ -144,7 +144,7 @@ export const monthsName: string[] = [
  *   - null/undefined returns default { hour: 0, minute: 0, second: 0, nano: 0 }
  */
 export function parseTimeToEventTimeDTO(
-  dateOrString: Date | string | null | undefined
+  dateOrString: Date | string | null | undefined,
 ): EventTimeDTO {
   if (
     !dateOrString ||

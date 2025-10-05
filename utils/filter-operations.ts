@@ -26,7 +26,7 @@ export class FilterOperations {
   static getRemovalUrl(
     filterKey: keyof URLFilterState,
     segments: RouteSegments,
-    queryParams: URLQueryParams
+    queryParams: URLQueryParams,
   ): string {
     const config = this.getConfig(filterKey);
     if (!config) return "/";
@@ -45,7 +45,7 @@ export class FilterOperations {
    */
   static isEnabled(
     filterKey: keyof URLFilterState,
-    state: FilterDisplayState
+    state: FilterDisplayState,
   ): boolean {
     const config = this.getConfig(filterKey);
     return config?.isEnabled(state) ?? false;
@@ -56,7 +56,7 @@ export class FilterOperations {
    */
   static getDisplayText(
     filterKey: keyof URLFilterState,
-    state: FilterDisplayState
+    state: FilterDisplayState,
   ): string | undefined {
     const config = this.getConfig(filterKey);
     return config?.getDisplayText(state);
@@ -74,7 +74,7 @@ export class FilterOperations {
    */
   static getEnabledConfigurations(state: FilterDisplayState): FilterConfig[] {
     return FILTER_CONFIGURATIONS.filter((config) =>
-      this.isEnabled(config.key, state)
+      this.isEnabled(config.key, state),
     );
   }
 
@@ -83,7 +83,7 @@ export class FilterOperations {
    */
   static hasActiveFilters(state: FilterDisplayState): boolean {
     return FILTER_CONFIGURATIONS.some((config) =>
-      this.isEnabled(config.key, state)
+      this.isEnabled(config.key, state),
     );
   }
 
@@ -121,7 +121,7 @@ export class FilterOperations {
       }
       if (!config.isEnabled || typeof config.isEnabled !== "function") {
         errors.push(
-          `Missing or invalid isEnabled function for filter ${index}: ${config.key}`
+          `Missing or invalid isEnabled function for filter ${index}: ${config.key}`,
         );
       }
       if (
@@ -129,7 +129,7 @@ export class FilterOperations {
         typeof config.getDisplayText !== "function"
       ) {
         errors.push(
-          `Missing or invalid getDisplayText function for filter ${index}: ${config.key}`
+          `Missing or invalid getDisplayText function for filter ${index}: ${config.key}`,
         );
       }
       if (
@@ -137,7 +137,7 @@ export class FilterOperations {
         typeof config.getRemovalChanges !== "function"
       ) {
         errors.push(
-          `Missing or invalid getRemovalChanges function for filter ${index}: ${config.key}`
+          `Missing or invalid getRemovalChanges function for filter ${index}: ${config.key}`,
         );
       }
     });

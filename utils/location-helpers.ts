@@ -4,7 +4,7 @@ import { sanitize, formatCatalanDe } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
 
 export const getPlaceTypeAndLabel = async (
-  place: string
+  place: string,
 ): Promise<PlaceTypeAndLabel> => {
   try {
     const placeInfo = await fetchPlaceBySlug(place);
@@ -13,10 +13,10 @@ export const getPlaceTypeAndLabel = async (
         placeInfo.type === "CITY"
           ? "town"
           : placeInfo.type === "REGION"
-          ? "region"
-          : placeInfo.type === "PROVINCE"
-          ? "region"
-          : "town";
+            ? "region"
+            : placeInfo.type === "PROVINCE"
+              ? "region"
+              : "town";
       return { type, label: placeInfo.name };
     }
   } catch (error) {
@@ -46,7 +46,7 @@ export const getPlaceTypeAndLabel = async (
 
 export const getDistance = (
   location1: Location,
-  location2: Location
+  location2: Location,
 ): number => {
   const R = 6371;
   const dLat = deg2rad(location2.lat - location1.lat);
@@ -69,7 +69,7 @@ export const deg2rad = (deg: number): number => {
 // Preference: use provided human label when available, fallback to capitalized slug
 export function getNewsCta(
   place: string | undefined,
-  placeLabel?: string
+  placeLabel?: string,
 ): { href: string; text: string } {
   const safePlace = (place || "").trim();
   const href =
@@ -84,7 +84,7 @@ export function getNewsCta(
         t
           .split("-")
           .map((h) => (h.length ? h.charAt(0).toUpperCase() + h.slice(1) : h))
-          .join("-")
+          .join("-"),
       )
       .join(" ");
 
@@ -92,8 +92,8 @@ export function getNewsCta(
     safePlace === "catalunya"
       ? "Catalunya"
       : placeLabel
-      ? placeLabel
-      : formatWords(safePlace.replace(/-/g, " "));
+        ? placeLabel
+        : formatWords(safePlace.replace(/-/g, " "));
 
   // Use existing Catalan contraction helper for "de" forms
   const deLabel = formatCatalanDe(baseLabel, false); // keep original casing of baseLabel

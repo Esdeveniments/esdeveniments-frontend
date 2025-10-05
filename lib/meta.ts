@@ -32,7 +32,7 @@ export function generateMetaTitle(
   description?: string,
   location?: string,
   town?: string,
-  region?: string
+  region?: string,
 ): string {
   const titleSanitized = sanitizeAndTrim(title);
   let metaTitle = smartTruncate(titleSanitized, 60);
@@ -59,7 +59,7 @@ export function generateMetaDescription(
   title: string,
   description?: string,
   categories?: Array<{ name: string; slug: string }>,
-  location?: string
+  location?: string,
 ): string {
   const titleSanitized = sanitizeInput(title);
   let metaDescription = titleSanitized;
@@ -84,7 +84,7 @@ export function generateMetaDescription(
 export function generateEventMetadata(
   event: EventDetailResponseDTO,
   url?: string,
-  prefixTitle?: string
+  prefixTitle?: string,
 ): Metadata {
   if (!event) return { title: "No event found" };
 
@@ -94,7 +94,7 @@ export function generateEventMetadata(
     event.description,
     event.location,
     event.city?.name,
-    event.region?.name
+    event.region?.name,
   );
 
   const pageTitle = prefixTitle
@@ -106,7 +106,7 @@ export function generateEventMetadata(
     event.title,
     event.description,
     event.categories,
-    event.location
+    event.location,
   );
 
   const image = event.imageUrl ? [event.imageUrl] : [];

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
-import NewsCard from "@components/ui/newsCard";
+import { Card, Text } from "@components/ui/primitives";
 import type { Metadata } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import Link from "next/link";
@@ -35,7 +35,7 @@ export default async function Page() {
     NEWS_HUBS.map(async (hub) => {
       const res = await fetchNews({ page: 0, size: 1, place: hub.slug });
       return { hub, items: res.content };
-    })
+    }),
   );
 
   const breadcrumbs = [
@@ -55,15 +55,15 @@ export default async function Page() {
     .map(({ hub, items }) =>
       items && items[0]
         ? { hub, item: items[0] as NewsSummaryResponseDTO }
-        : null
+        : null,
     )
     .filter(
       (
-        v
+        v,
       ): v is {
         hub: { slug: string; name: string };
         item: NewsSummaryResponseDTO;
-      } => v !== null
+      } => v !== null,
     );
 
   const itemListSchema = {
@@ -86,7 +86,7 @@ export default async function Page() {
   };
 
   return (
-    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
+    <div className="mt-component-xl w-full flex-col items-center justify-center sm:w-[580px] md:w-[768px] lg:w-[1024px]">
       <Script
         id="news-list-webpage-breadcrumbs"
         type="application/ld+json"
@@ -112,22 +112,32 @@ export default async function Page() {
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
       />
-      <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
-      <p className="text-[16px] font-normal text-blackCorp text-left mb-8 px-2 font-barlow">
+      <Text
+        as="h1"
+        variant="h1"
+        className="mb-component-xs px-component-xs uppercase lg:px-xs"
+      >
+        Notícies
+      </Text>
+      <Text
+        as="p"
+        variant="body"
+        className="mb-component-xl px-component-xs text-left font-barlow text-[16px] font-normal"
+      >
         Les últimes notícies i recomanacions d&apos;esdeveniments.
-      </p>
-      <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
+      </Text>
+      <div className="mb-component-md flex w-full justify-end px-component-xs lg:px-xs">
         <Link
           href={`/noticies/rss.xml`}
-          className="text-primary underline text-sm"
+          className="text-primary underline"
           prefetch={false}
         >
-          RSS
+          <Text variant="body-sm">RSS</Text>
         </Link>
       </div>
       <nav
         aria-label="Breadcrumb"
-        className="mb-6 px-2 lg:px-0 text-sm text-blackCorp/70"
+        className="mb-component-lg px-component-xs text-blackCorp/70 lg:px-xs"
       >
         <ol className="flex items-center space-x-2">
           <li>
@@ -136,30 +146,40 @@ export default async function Page() {
             </Link>
           </li>
           <li>
-            <span className="mx-1">/</span>
+            <span className="mx-xs">/</span>
           </li>
-          <li className="text-blackCorp">Notícies</li>
+          <li>
+            <Text variant="body-sm" className="text-blackCorp">
+              Notícies
+            </Text>
+          </li>
         </ol>
       </nav>
-      <div className="flex flex-col gap-10 px-2 lg:px-0">
+      <div className="flex flex-col gap-2xl px-component-xs lg:px-xs">
         {hubResults.map(({ hub, items }) => {
           const first = items?.[0];
           if (!first) return null;
           return (
             <section key={hub.slug} className="w-full">
-              <div className="flex items-baseline justify-between mb-1">
-                <h2 className="uppercase">{`Últimes notícies ${hub.name}`}</h2>
+              <div className="mb-component-xs flex items-baseline justify-between">
+                <Text
+                  as="h2"
+                  variant="h2"
+                  className="uppercase"
+                >{`Últimes notícies ${hub.name}`}</Text>
                 <Link
                   href={`/noticies/${hub.slug}`}
-                  className="text-primary underline text-sm"
+                  className="text-primary underline"
                   prefetch={false}
                 >
-                  Veure més…
+                  <Text variant="body-sm">Veure més…</Text>
                 </Link>
               </div>
               {NEARBY_PLACES_BY_HUB[hub.slug] && (
-                <nav className="mb-3 text-xs text-blackCorp/70">
-                  <span className="mr-2">A prop:</span>
+                <nav className="mb-component-sm text-blackCorp/70">
+                  <Text variant="caption" className="mr-component-xs">
+                    A prop:
+                  </Text>
                   {NEARBY_PLACES_BY_HUB[hub.slug].map((p, i) => (
                     <>
                       <Link
@@ -168,10 +188,10 @@ export default async function Page() {
                         prefetch={false}
                         className="underline hover:text-primary"
                       >
-                        {p.name}
+                        <Text variant="caption">{p.name}</Text>
                       </Link>
                       {i < NEARBY_PLACES_BY_HUB[hub.slug].length - 1 && (
-                        <span className="mx-1">·</span>
+                        <span className="mx-xs">·</span>
                       )}
                     </>
                   ))}
@@ -179,10 +199,11 @@ export default async function Page() {
               )}
               <Suspense
                 fallback={
-                  <div className="w-full h-12 bg-whiteCorp animate-pulse rounded-full" />
+                  <div className="h-12 w-full animate-pulse rounded-full bg-whiteCorp" />
                 }
               >
-                <NewsCard
+                <Card
+                  type="news"
                   event={first}
                   placeSlug={hub.slug}
                   placeLabel={hub.name}

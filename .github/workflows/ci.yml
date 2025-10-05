@@ -50,6 +50,9 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      - name: Design System Audit
+        run: yarn audit:design-system
+
       - name: Type check
         run: yarn typecheck
 

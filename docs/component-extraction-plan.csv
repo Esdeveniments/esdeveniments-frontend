@@ -1,0 +1,81 @@
+Component Name,Category,Status,Completion Date,Notes
+image,primitives,Complete,,Existing component
+link,common,Complete,,Existing component
+Card,primitives,Complete,2025-10-04,Existing component
+Button,primitives,Complete,2025-10-04,Existing component
+filters,primitives,Complete,,Existing component
+Input,primitives,Complete,2025-10-04,Existing component
+card,ui,Complete,2025-10-04,Existing component
+viewCounter,ui,Complete,,Existing component
+adArticle,ui,Complete,,Existing component
+select,primitives,Complete,,Existing component
+imgDefault,ui,Complete,,Existing component
+EventForm,ui,Complete,,Existing component
+GoogleAdsense,ui,Complete,,Existing component
+clientInteractiveLayer,ui,Complete,,Existing component
+badge,common,Complete,,Existing component
+modal,common,Complete,,Existing component
+noEventsFound,common,Complete,,Existing component
+shareButton,primitives,Complete,,Existing component
+editModal,ui,Complete,,Existing component
+hybridEventsList,ui,Complete,,Existing component
+newsCard,ui,Complete,2025-10-04,Existing component
+adBoard,ui,Complete,,Existing component
+cardContent,ui,Complete,2025-10-04,Existing component
+list,ui,Complete,,Existing component
+locationDiscoveryWidget,ui,Complete,,Existing component
+Text,primitives,Complete,,Existing component
+search,ui,Complete,,Existing component
+tooltip,ui,Complete,,Existing component
+adCard,ui,Complete,2025-10-04,Existing component
+addToCalendar,ui,Complete,,Existing component
+cardHorizontal,ui,Complete,2025-10-04,Existing component
+button,common,Complete,2025-10-04,Existing component
+culturalMessage,common,Complete,,Existing component
+description,common,Complete,,Existing component
+footer,common,Complete,,Existing component
+radioInput,primitives,Complete,2025-10-04,Existing component
+rangeInput,primitives,Complete,2025-10-04,Existing component
+navbar,common,Complete,,Existing component
+noEventFound,common,Complete,,Existing component
+notification,common,Complete,,Existing component
+social,common,Complete,,Existing component
+videoDisplay,common,Complete,,Existing component
+filtersModal,ui,Complete,,Existing component
+loadMoreButton,ui,Complete,,Existing component
+maps,ui,Complete,,Existing component
+newsCta,ui,Complete,,Existing component
+newsHeroEvent,ui,Complete,,Existing component
+newsRichCard,ui,Complete,2025-10-04,Existing component
+restaurantPromotion,ui,Complete,,Existing component
+serverEventsCategorized,ui,Complete,,Existing component
+weather,ui,Complete,,Existing component
+datePicker,primitives,Complete,,Existing component
+imageUpload,primitives,Complete,,Existing component
+input,primitives,Complete,2025-10-04,Existing component
+multiSelect,primitives,Complete,2025-10-04,Existing component
+textarea,primitives,Complete,,Existing component
+loading,common,Complete,,Existing component
+base,layout,Complete,,Existing component
+reportView,ui,Complete,2025-10-04,Existing component
+eventsAround,ui,Complete,2025-10-04,Added to resolve count discrepancy
+Heading,ui,Complete,2025-10-04,Added to resolve count discrepancy
+shareIslandSkeleton,common,Complete,2025-10-04,Added to resolve count discrepancy
+Filters,domain,Complete,2025-10-04,Added to resolve count discrepancy
+Weather,domain,Complete,2025-10-04,Added to resolve count discrepancy
+FormField,patterns,Complete,2025-10-04,Added to resolve count discrepancy
+Modal,patterns,Complete,2025-10-04,Added to resolve count discrepancy
+AdArticle,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Grid,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Icon,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Skeleton,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+ImgDefault,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Input,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Link,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+MultiSelect,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+RadioInput,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+RangeInput,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Select,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+ShareButton,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Text,primitives,Complete,2025-10-04,Added to resolve count discrepancy
+Modal,primitives,Complete,2025-10-04,Added to resolve count discrepancy

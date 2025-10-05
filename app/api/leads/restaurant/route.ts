@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (!image.public_id || !image.secure_url) {
       return NextResponse.json(
         { error: "Invalid image data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (!isPricingAvailable(displayDurationDays, geoScopeType)) {
       return NextResponse.json(
         { error: "Invalid pricing combination" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     if (!["town", "region"].includes(geoScopeType)) {
       return NextResponse.json(
         { error: "Invalid geo scope type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating restaurant lead:", error);
     return NextResponse.json(
       { error: "Failed to create lead" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

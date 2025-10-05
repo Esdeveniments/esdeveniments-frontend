@@ -16,7 +16,7 @@ import * as React from "react";
 // Utility to format event date as string and JSX with <time> for accessibility
 export function formatEventDateRange(
   startDate: string,
-  endDate?: string
+  endDate?: string,
 ): { string: string; jsx: React.ReactNode } {
   if (endDate) {
     return {
@@ -86,7 +86,7 @@ export const generateCalendarUrls = ({
     outlook: createUrl("https://outlook.live.com/owa/", outlookParams),
     ical: `data:text/calendar;charset=utf8,${encodeParams(iCalParams).replace(
       /&/g,
-      "%0D%0A"
+      "%0D%0A",
     )}`,
   };
 };

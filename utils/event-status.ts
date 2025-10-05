@@ -11,7 +11,7 @@ import type { EventTemporalStatus } from "types/event-status";
 export function computeTemporalStatus(
   startDate: string,
   endDate?: string,
-  nowOverride?: Date
+  nowOverride?: Date,
 ): EventTemporalStatus {
   const now = nowOverride ? new Date(nowOverride) : new Date();
   const start = new Date(startDate);

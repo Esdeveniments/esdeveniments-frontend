@@ -1,5 +1,5 @@
 import React from "react";
-import EditModal from "components/ui/editModal";
+import EditModal from "components/ui/domain/editModal";
 import type { EditModalProps } from "types/editModal";
 
 const EventModals: React.FC<EditModalProps> = ({

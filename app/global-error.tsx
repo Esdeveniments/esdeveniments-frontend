@@ -1,6 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
+import { Text } from "@components/ui/primitives";
 
 export default function GlobalError({
   error,
@@ -14,7 +15,9 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <h2>Alguna cosa ha anat malament (global)</h2>
+        <Text as="h2" variant="h2">
+          Alguna cosa ha anat malament (global)
+        </Text>
         <button onClick={() => reset()}>Torna a carregar</button>
       </body>
     </html>

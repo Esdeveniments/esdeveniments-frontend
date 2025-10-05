@@ -68,7 +68,7 @@ export function useImageRetry(maxRetries: number = 2) {
     (baseSrc: string) => {
       return `${baseSrc}-${retryCount}`;
     },
-    [retryCount]
+    [retryCount],
   );
 
   // Cleanup timeout on unmount

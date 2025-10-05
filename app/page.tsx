@@ -5,8 +5,8 @@ import { buildPageMeta } from "@components/partials/seo-meta";
 import type { PageData } from "types/common";
 import { CategorizedEvents } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
-import Search from "@components/ui/search";
+import ServerEventsCategorized from "components/ui/domain/serverEventsCategorized";
+import Search from "components/ui/domain/search";
 import { Suspense, JSX } from "react";
 import { headers } from "next/headers";
 
@@ -49,10 +49,10 @@ export default async function Page(): Promise<JSX.Element> {
 
   return (
     <>
-      <div className="w-full flex justify-center items-center mx-auto px-2 lg:px-0 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+      <div className="lg:px-xs mx-auto flex w-full items-center justify-center px-component-xs sm:w-[580px] md:w-[768px] lg:w-[1024px]">
         <Suspense
           fallback={
-            <div className="w-full h-12 bg-whiteCorp animate-pulse rounded-full" />
+            <div className="h-12 w-full animate-pulse rounded-full bg-whiteCorp" />
           }
         >
           <Search />

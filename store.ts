@@ -125,8 +125,8 @@ const useStore = create<Store>()(
         // Only persist UI state that should survive browser restarts
         hydrated: state.hydrated,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export default useStore;

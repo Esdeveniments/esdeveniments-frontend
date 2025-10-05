@@ -10,6 +10,7 @@ import {
   buildPageMeta,
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
+import { Text } from "@components/ui/primitives";
 
 export async function generateMetadata({
   params,
@@ -54,7 +55,7 @@ export default async function Page({
       "@type": "SiteNavigationElement",
       name: `${label} - ${month} ${year}`,
       url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
-    }))
+    })),
   );
 
   const collectionPageSchema = generateCollectionPageSchema({
@@ -87,45 +88,55 @@ export default async function Page({
       />
 
       <div
-        className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
+        className="flex w-full flex-col items-center justify-center px-component-md pb-3xl pt-component-xs sm:w-[580px] md:w-[768px] md:px-xs lg:w-[1024px]"
         role="main"
       >
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="mb-4 w-full">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+        <nav aria-label="Breadcrumb" className="mb-component-md w-full">
+          <ol className="flex items-center space-x-2 text-blackCorp/80">
             <li>
-              <Link href="/" className="hover:text-gray-800">
+              <Link href="/" className="hover:text-blackCorp">
                 Inici
               </Link>
             </li>
             <li>
-              <span className="mx-2">/</span>
-              <Link href="/sitemap" className="hover:text-gray-800">
+              <span className="mx-component-xs">/</span>
+              <Link href="/sitemap" className="hover:text-blackCorp">
                 Arxiu
               </Link>
             </li>
             <li>
-              <span className="mx-2">/</span>
-              <span className="text-gray-800">{label}</span>
+              <span className="mx-component-xs">/</span>
+              <Text variant="body-sm" className="text-blackCorp">
+                {label}
+              </Text>
             </li>
           </ol>
         </nav>
 
         {/* Header */}
-        <header className="reset-this mb-6 w-full">
-          <h1 className="pb-4 text-3xl font-bold">Arxiu històric de {label}</h1>
-          <p className="text-lg text-gray-700 mb-4">
-            Descobreix l&apos;evolució cultural de {label} any rere any. Cada
-            enllaç et porta als esdeveniments d&apos;un mes específic.
-          </p>
+        <header className="reset-this mb-component-lg w-full">
+          <Text as="h1" variant="h1" className="pb-component-md font-bold">
+            Arxiu històric de {label}
+          </Text>
+          <Text as="p" variant="body-lg" className="mb-component-md">
+            Descobreix l'evolució cultural de {label} any rere any. Cada enllaç
+            et porta als esdeveniments d'un mes específic.
+          </Text>
         </header>
 
         {/* Archive Grid */}
-        <section className="grid overflow-hidden grid-cols-2 lg:grid-cols-4 auto-rows-auto gap-2 grid-flow-row w-full">
+        <section className="grid w-full grid-flow-row auto-rows-auto grid-cols-2 gap-component-xs overflow-hidden lg:grid-cols-4">
           {years?.map((year) => (
             <article key={year} className="box">
               <header className="reset-this">
-                <h2 className="pb-2 text-xl font-semibold">{year}</h2>
+                <Text
+                  as="h2"
+                  variant="h2"
+                  className="pb-component-xs font-semibold"
+                >
+                  {year}
+                </Text>
               </header>
               <nav role="list" className="space-y-1">
                 {MONTHS_URL.map((month) => {
@@ -134,17 +145,21 @@ export default async function Page({
                   return (
                     <div
                       key={`${year}-${month}`}
-                      className="box py-1"
+                      className="box py-component-xs"
                       role="listitem"
                     >
                       <Link
                         href={`/sitemap/${town}/${year}/${month.toLocaleLowerCase()}`}
                         prefetch={false}
-                        className="hover:underline hover:text-blue-600 transition-colors"
+                        className="hover:text-blue-600 transition-colors hover:underline"
                       >
-                        <p className="text-md capitalize text-gray-900">
+                        <Text
+                          as="p"
+                          variant="body"
+                          className="capitalize text-blackCorp"
+                        >
                           {textMonth}
-                        </p>
+                        </Text>
                       </Link>
                     </div>
                   );
@@ -155,24 +170,35 @@ export default async function Page({
         </section>
 
         {/* Footer information */}
-        <footer className="mt-12 pt-8 border-t border-gray-200 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <footer className="mt-component-2xl w-full border-t border-bColor/50 pt-component-xl">
+          <div className="grid grid-cols-1 gap-component-lg md:grid-cols-2">
             <div>
-              <h3 className="font-semibold mb-2">Sobre aquest arxiu</h3>
-              <p className="text-sm text-gray-600">
-                Aquest arxiu conté una recopilació d&apos;esdeveniments
-                culturals de {label} organitzats cronològicament. Cada mes
-                inclou teatre, música, art, festivals i altres activitats
-                culturals.
-              </p>
+              <Text
+                as="h3"
+                variant="h3"
+                className="mb-component-xs font-semibold"
+              >
+                Sobre aquest arxiu
+              </Text>
+              <Text as="p" variant="body-sm" className="text-blackCorp/80">
+                Aquest arxiu conté una recopilació d'esdeveniments culturals de{" "}
+                {label} organitzats cronològicament. Cada mes inclou teatre,
+                música, art, festivals i altres activitats culturals.
+              </Text>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Navegació ràpida</h3>
-              <p className="text-sm text-gray-600">
+              <Text
+                as="h3"
+                variant="h3"
+                className="mb-component-xs font-semibold"
+              >
+                Navegació ràpida
+              </Text>
+              <Text as="p" variant="body-sm" className="text-blackCorp/80">
                 Utilitza els enllaços per navegar directament a un mes
                 específic. Els anys més recents apareixen primer per facilitar
                 la cerca.
-              </p>
+              </Text>
             </div>
           </div>
         </footer>

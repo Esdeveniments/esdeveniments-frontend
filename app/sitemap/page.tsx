@@ -11,6 +11,7 @@ import {
   generateWebPageSchema,
   generateSiteNavigationElementSchema,
 } from "@components/partials/seo-meta";
+import { Text } from "@components/ui/primitives";
 
 export const metadata = buildPageMeta({
   title: "Arxiu. Descobreix tot el que passa a Catalunya - Esdeveniments.cat",
@@ -97,52 +98,68 @@ export default async function Page() {
 
       {/* Enhanced HTML structure */}
       <div
-        className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
+        className="flex w-full flex-col items-center justify-center px-component-md pb-3xl pt-component-xs sm:w-[580px] md:w-[768px] md:px-xs lg:w-[1024px]"
         role="main"
         data-testid="sitemap-page"
       >
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="mb-4">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+        <nav aria-label="Breadcrumb" className="mb-component-md">
+          <ol className="flex items-center space-x-2 text-blackCorp/80">
             <li>
-              <Link href="/" className="hover:text-gray-800">
+              <Link href="/" className="hover:text-blackCorp">
                 Inici
               </Link>
             </li>
             <li>
-              <span className="mx-2">/</span>
-              <span className="text-gray-800">Arxiu</span>
+              <span className="mx-component-xs">/</span>
+              <Text variant="body-sm" className="text-blackCorp">
+                Arxiu
+              </Text>
             </li>
           </ol>
         </nav>
 
         {/* Display regions */}
-        <section className="mb-8">
-          <header className="mb-6">
-            <h1 className="text-3xl font-bold mb-4" data-testid="sitemap-title">
-              Arxiu d&apos;esdeveniments culturals
-            </h1>
-            <p className="mb-4 text-lg text-gray-700">
+        <section className="mb-component-xl">
+          <header className="mb-component-lg">
+            <Text
+              as="h1"
+              variant="h1"
+              className="mb-component-md"
+              data-testid="sitemap-title"
+            >
+              Arxiu d'esdeveniments culturals
+            </Text>
+            <Text as="p" variant="body-lg" className="mb-component-md">
               Descobreix tot el què ha passat a Catalunya cada any. Navega per
-              comarques i poblacions per trobar l&apos;història cultural del
+              comarques i poblacions per trobar l'història cultural del
               territori.
-            </p>
+            </Text>
           </header>
 
-          <div className="mb-8">
-            <h2 className="mb-4 text-2xl font-semibold">
+          <div className="mb-component-xl">
+            <Text as="h2" variant="h2" className="mb-component-md">
               Comarques de Catalunya
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="list">
+            </Text>
+            <div
+              className="grid grid-cols-2 gap-component-xs md:grid-cols-3"
+              role="list"
+            >
               {regions.map((region) => (
-                <div key={region.slug} className="mb-2" role="listitem">
+                <div
+                  key={region.slug}
+                  className="mb-component-xs"
+                  role="listitem"
+                >
                   <Link
                     href={`/sitemap/${region.slug}`}
                     prefetch={false}
-                    className="hover:underline hover:text-blue-600 transition-colors"
+                    className="hover:text-blue-600 transition-colors hover:underline"
                     data-testid="sitemap-region-link"
                   >
-                    <p className="text-gray-900">{region.name}</p>
+                    <Text as="p" variant="body">
+                      {region.name}
+                    </Text>
                   </Link>
                 </div>
               ))}
@@ -151,19 +168,28 @@ export default async function Page() {
 
           {/* Display cities */}
           <div>
-            <h2 className="mb-4 text-2xl font-semibold">
+            <Text as="h2" variant="h2" className="mb-component-md">
               Poblacions principals
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="list">
+            </Text>
+            <div
+              className="grid grid-cols-2 gap-component-xs md:grid-cols-4"
+              role="list"
+            >
               {cities.map((city) => (
-                <div key={city.slug} className="mb-2" role="listitem">
+                <div
+                  key={city.slug}
+                  className="mb-component-xs"
+                  role="listitem"
+                >
                   <Link
                     href={`/sitemap/${city.slug}`}
                     prefetch={false}
-                    className="hover:underline hover:text-blue-600 transition-colors"
+                    className="hover:text-blue-600 transition-colors hover:underline"
                     data-testid="sitemap-city-link"
                   >
-                    <p className="text-gray-900">{city.name}</p>
+                    <Text as="p" variant="body">
+                      {city.name}
+                    </Text>
                   </Link>
                 </div>
               ))}
@@ -172,12 +198,12 @@ export default async function Page() {
         </section>
 
         {/* Footer information */}
-        <footer className="mt-12 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-600">
-            L&apos;arxiu conté esdeveniments culturals de totes les comarques de
+        <footer className="mt-component-2xl border-t border-bColor/50 pt-component-xl">
+          <Text as="p" variant="body-sm" className="text-blackCorp/80">
+            L'arxiu conté esdeveniments culturals de totes les comarques de
             Catalunya. Cada enllaç et porta a un històric detallat organitzat
             per anys i mesos.
-          </p>
+          </Text>
         </footer>
       </div>
     </>

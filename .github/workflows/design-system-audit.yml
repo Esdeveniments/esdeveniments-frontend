@@ -1,0 +1,132 @@
+name: Design System Audit
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch: # Allow manual triggering
+  push:
+    branches: [main]
+    paths:
+      - "components/ui/**"
+      - "styles/**"
+      - "DESIGN_SYSTEM.md"
+
+jobs:
+  audit:
+    name: Design System Compliance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run Design System Audit
+        id: audit
+        run: |
+          echo "🕵️ Running comprehensive design system audit..."
+          yarn audit:design-system
+        continue-on-error: true
+
+      - name: Generate Weekly Markdown Report
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "📊 Generating weekly audit report..."
+          yarn audit:weekly-report
+        continue-on-error: true
+
+      - name: Run Automated Violation Detection
+        id: violation_detection
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: |
+          echo "🔍 Running automated violation detection..."
+          yarn audit:detect-violations
+        continue-on-error: true
+
+      - name: Generate Basic Audit Report
+        if: always() && (github.event_name == 'push' || github.event_name == 'pull_request')
+        run: |
+          echo "## Design System Audit Report" >> audit-report.md
+          echo "" >> audit-report.md
+          echo "### Audit Date" >> audit-report.md
+          echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> audit-report.md
+          echo "" >> audit-report.md
+          echo "### Trigger" >> audit-report.md
+          echo "${{ github.event_name }} - ${{ github.ref_name }}" >> audit-report.md
+          echo "" >> audit-report.md
+          echo "### Status" >> audit-report.md
+          if [ ${{ steps.audit.outcome }} == 'success' ]; then
+            echo "✅ PASSED - No design system violations found" >> audit-report.md
+          else
+            echo "❌ FAILED - Design system violations detected" >> audit-report.md
+          fi
+          echo "" >> audit-report.md
+          echo "### Automated Violation Detection" >> audit-report.md
+          if [ ${{ steps.violation_detection.outcome }} == 'success' ]; then
+            echo "✅ No new violations detected" >> audit-report.md
+          else
+            echo "🚨 New violations detected and reported" >> audit-report.md
+          fi
+          echo "" >> audit-report.md
+          echo "### Recommendations" >> audit-report.md
+          echo "- Run \`yarn audit:design-system\` locally to see detailed violations" >> audit-report.md
+          echo "- Use migration scripts: \`yarn migrate-colors\`, \`yarn migrate-spacing\`, \`yarn migrate-text-classes\`" >> audit-report.md
+          echo "- Review [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) for token guidelines" >> audit-report.md
+
+      - name: Upload Audit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-system-audit-report
+          path: audit-report.md
+          retention-days: 30
+
+      - name: Upload Weekly Report
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-design-system-report
+          path: reports/
+          retention-days: 90
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request' && steps.audit.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🚨 Design System Audit Failed\n\n' +
+                    'The design system audit detected violations in your changes. Please review the audit report and fix the following issues:\n\n' +
+                    '- **Hardcoded colors**: Use design tokens like `primary`, `blackCorp`, etc.\n' +
+                    '- **Hardcoded spacing**: Use tokens like `component-md`, `gap-lg`, etc.\n' +
+                    '- **Hardcoded typography**: Use `<Text>` component instead of raw HTML elements\n' +
+                    '- **Component violations**: Use design system components instead of raw HTML\n\n' +
+                    'Run `yarn audit:design-system` locally for detailed feedback.\n\n' +
+                    '[View Audit Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            })
+
+      - name: Fail on violations
+        if: steps.audit.outcome == 'failure'
+        run: |
+          echo "❌ Design system audit failed. Please fix the violations above."
+          exit 1

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import GoogleScripts from "./GoogleScripts";
-import { BaseLayout } from "@components/ui/layout";
+import BaseLayout from "components/ui/domain/layout/base";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import CriticalCSS from "@components/partials/CriticalCSS";
 import { robotoFlex, barlowCondensed } from "../lib/fonts";

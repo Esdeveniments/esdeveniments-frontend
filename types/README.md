@@ -44,6 +44,17 @@ This directory contains all TypeScript type definitions for the project. Types a
 - **Purpose**: Schema.org structured data types
 - **Contains**: JSON-LD schema types for SEO
 
+### `types/ui/`
+
+- **Purpose**: Canonical prop interfaces and variant tokens for the component library
+- **Contains**:
+  - `primitives.ts`: Atom-level component contracts (ButtonProps, InputProps, etc.)
+  - `patterns.ts`: Molecule/organism props (CardProps, ModalProps, etc.)
+  - `variants.ts`: Shared visual variant tokens and Tailwind mapping helpers
+  - `index.ts`: Barrel exports for the UI type namespace
+
+> When extracting components, always import props from `types/ui` to keep contracts centralized.
+
 ## Rules
 
 1. **No duplication**: Each type should be defined exactly once

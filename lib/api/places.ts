@@ -4,12 +4,12 @@ import { createKeyedCache } from "lib/api/cache";
 const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
 
 async function fetchPlaceBySlugApi(
-  key: string | number
+  key: string | number,
 ): Promise<PlaceResponseDTO | null> {
   const slug = String(key);
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/places/${slug}`,
-    { next: { revalidate: 86400, tags: ["places", `place:${slug}`] } }
+    { next: { revalidate: 86400, tags: ["places", `place:${slug}`] } },
   );
   if (!response.ok) return null;
   return response.json();
@@ -22,7 +22,7 @@ async function fetchPlaceBySlugApi(
  * @returns PlaceResponseDTO with id, type, name, slug
  */
 export async function fetchPlaceBySlug(
-  slug: string
+  slug: string,
 ): Promise<PlaceResponseDTO | null> {
   return placeBySlugCache(slug, fetchPlaceBySlugApi);
 }

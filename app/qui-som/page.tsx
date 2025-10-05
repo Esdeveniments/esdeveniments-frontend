@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { NextPage } from "next";
 import type { TeamMember as TeamMemberType } from "types/common";
 import { buildPageMeta } from "@components/partials/seo-meta";
+import { Text } from "@components/ui/primitives";
 
 export const metadata = buildPageMeta({
   title: "Qui som - Esdeveniments.cat",
@@ -38,19 +39,30 @@ const teamMembers: TeamMemberType[] = [
 
 const QuiSom: NextPage = () => {
   return (
-    <div className="w-full flex flex-col justify-center items-center gap-10 pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
+    <div className="flex w-full flex-col items-center justify-center gap-2xl px-component-md pb-3xl pt-component-xs sm:w-[580px] md:w-[768px] md:px-xs lg:w-[1024px]">
       <div>
-        <h1 className="text-center italic uppercase font-semibold">Qui som?</h1>
-        <h2 className="text-center italic font-normal text-primary">
+        <Text
+          as="h1"
+          variant="h1"
+          className="text-center font-semibold uppercase italic"
+        >
+          Qui som?
+        </Text>
+        <Text
+          as="h2"
+          variant="h2"
+          className="text-center font-normal italic"
+          color="primary"
+        >
           esdeveniments.cat
-        </h2>
+        </Text>
       </div>
-      <div className="flex flex-col justify-start items-start gap-6">
-        <p>
+      <div className="flex flex-col items-start justify-start gap-component-lg">
+        <Text as="p" variant="body">
           Esdeveniments.cat és una iniciativa ciutadana per veure de manera
           fàcil i ràpida tots els actes culturals que es fan a Catalunya.
-        </p>
-        <p>
+        </Text>
+        <Text as="p" variant="body">
           L&apos;agenda és col·laborativa, i cada persona que organitzi un acte
           cultural podrà publicar-lo{" "}
           <Link
@@ -61,44 +73,58 @@ const QuiSom: NextPage = () => {
             aquí
           </Link>{" "}
           pel seu compte.
-        </p>
-        <p>
+        </Text>
+        <Text as="p" variant="body">
           Podreu seguir l&apos;agenda cultural en aquesta pàgina web o
           seguir-nos a les xarxes socials:
-        </p>
+        </Text>
       </div>
       <div></div>
-      <div className="w-full flex flex-col justify-center gap-8 pb-20">
-        <h2 className="text-center">El nostre equip</h2>
-        <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-8">
+      <div className="flex w-full flex-col justify-center gap-component-xl pb-4xl">
+        <Text as="h2" variant="h2" className="text-center">
+          El nostre equip
+        </Text>
+        <div className="flex w-full flex-col items-center justify-center gap-component-xl sm:flex-row">
           {teamMembers.map((member) => (
             <div
               key={member.name}
-              className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl"
+              className="h-[414px] w-[200px] rounded-md bg-whiteCorp shadow-xl"
             >
               <div className="h-[185px] overflow-hidden">
                 <Image
-                  className="object-cover object-top rounded-t-md"
+                  className="rounded-t-md object-cover object-top"
                   src={member.image}
                   alt={member.name}
                   width={200}
                   height={200}
                 />
               </div>
-              <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
-                <div className="w-full flex justify-start items-start gap-2 pt-4">
-                  <div className="w-2 h-6 bg-primary"></div>
-                  <h3>{member.name}</h3>
+              <div className="flex w-full flex-col items-center justify-center gap-component-lg py-component-xl">
+                <div className="flex w-full items-start justify-start gap-component-xs pt-component-md">
+                  <div className="h-6 w-2 bg-primary"></div>
+                  <Text as="h3" variant="h3">
+                    {member.name}
+                  </Text>
                 </div>
-                <div className="w-full flex flex-col justify-start items-start px-4">
-                  <p className="w-full">{member.role}</p>
-                  <p className="w-full text-sm font-semibold">{member.title}</p>
+                <div className="flex w-full flex-col items-start justify-start px-component-md">
+                  <Text as="p" variant="body" className="w-full">
+                    {member.role}
+                  </Text>
+                  <Text
+                    as="p"
+                    variant="body-sm"
+                    className="w-full font-semibold"
+                  >
+                    {member.title}
+                  </Text>
                 </div>
                 <a
                   href={member.linkedin}
-                  className="w-full text-center hover:bg-primary hover:text-whiteCorp font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
+                  className="my-component-sm w-full cursor-pointer px-component-md py-component-sm text-center font-bold duration-300 ease-in-out hover:bg-primary hover:text-whiteCorp"
                 >
-                  <p>LinkedIn</p>
+                  <Text as="p" variant="body">
+                    LinkedIn
+                  </Text>
                 </a>
               </div>
             </div>

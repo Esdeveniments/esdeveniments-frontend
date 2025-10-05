@@ -8,8 +8,9 @@ import {
 } from "@heroicons/react/outline";
 import dynamic from "next/dynamic";
 import { EventLocationProps } from "types/event";
+import { Text } from "components/ui/primitives/Text";
 
-const Maps = dynamic(() => import("components/ui/maps"), { ssr: false });
+const Maps = dynamic(() => import("components/ui/domain/maps"), { ssr: false });
 
 export default function EventLocation({
   location,
@@ -29,7 +30,7 @@ export default function EventLocation({
     const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
-      "_blank"
+      "_blank",
     );
   };
 
@@ -41,26 +42,30 @@ export default function EventLocation({
 
   return (
     <>
-      <div className="w-full flex justify-center items-start gap-2 px-4">
-        <LocationIcon className="h-5 w-5 mt-1" aria-hidden="true" />
-        <div className="w-11/12 flex flex-col gap-4 pr-4">
-          <h2>Ubicació</h2>
-          <div className="w-full flex flex-col justify-center items-center gap-4">
-            <div className="w-full flex flex-col justify-center items-start gap-4">
-              <div className="w-full flex flex-col justify-start items-start gap-1">
-                <p>{location}</p>
+      <div className="flex w-full items-start justify-center gap-component-xs px-component-md">
+        <LocationIcon className="mt-component-xs h-5 w-5" aria-hidden="true" />
+        <div className="flex w-11/12 flex-col gap-component-md pr-component-md">
+          <Text as="h2" variant="h2">
+            Ubicació
+          </Text>
+          <div className="flex w-full flex-col items-center justify-center gap-component-md">
+            <div className="flex w-full flex-col items-start justify-center gap-component-md">
+              <div className="gap-xs flex w-full flex-col items-start justify-start">
+                <Text variant="body">{location}</Text>
                 {shouldShowCityRegion && (
-                  <p>
+                  <Text variant="body">
                     {cityName}, {regionName}
-                  </p>
+                  </Text>
                 )}
               </div>
               <div
-                className="w-fit flex justify-start items-center gap-2 border-b-2 border-whiteCorp hover:border-b-2 hover:border-blackCorp ease-in-out duration-300 cursor-pointer"
+                className="flex w-fit cursor-pointer items-center justify-start gap-component-xs border-b-2 border-whiteCorp duration-300 ease-in-out hover:border-b-2 hover:border-blackCorp"
                 onClick={handleShowMap}
               >
-                <button type="button" className="flex gap-2">
-                  <p className="font-medium">Mostrar mapa</p>
+                <button type="button" className="flex gap-component-xs">
+                  <Text variant="body" className="font-medium">
+                    Mostrar mapa
+                  </Text>
                   {showMap ? (
                     <XIcon className="h-5 w-5" aria-hidden="true" />
                   ) : (
@@ -74,14 +79,19 @@ export default function EventLocation({
       </div>
       {showMap && (
         <div
-          className="w-full flex flex-col justify-center items-end gap-6"
+          className="flex w-full flex-col items-end justify-center gap-component-lg"
           ref={mapsDivRef}
         >
           {isMapsVisible && <Maps location={location} />}
-          <div className="w-fit flex justify-end items-center gap-2 px-4 border-b-2 border-whiteCorp hover:border-b-2 hover:border-blackCorp ease-in-out duration-300 cursor-pointer">
-            <button className="flex gap-2" onClick={handleDirectionsClick}>
-              <p className="font-medium">Com arribar</p>
-              <ArrowRightIcon className="w-5 h-5" />
+          <div className="flex w-fit cursor-pointer items-center justify-end gap-component-xs border-b-2 border-whiteCorp px-component-md duration-300 ease-in-out hover:border-b-2 hover:border-blackCorp">
+            <button
+              className="flex gap-component-xs"
+              onClick={handleDirectionsClick}
+            >
+              <Text variant="body" className="font-medium">
+                Com arribar
+              </Text>
+              <ArrowRightIcon className="h-5 w-5" />
             </button>
           </div>
         </div>

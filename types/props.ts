@@ -1,4 +1,4 @@
-import { ChangeEvent, MouseEvent, ReactNode } from "react";
+import { ChangeEvent, ReactNode } from "react";
 import {
   Option,
   GroupedOption,
@@ -9,7 +9,7 @@ import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
-import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
+import type { NewsEventItemDTO } from "types/api/news";
 
 // Google Scripts Props
 export interface GoogleScriptsProps {
@@ -23,7 +23,10 @@ export interface WebsiteSchemaProps {
 
 export interface SelectComponentProps {
   id: string;
-  title: string;
+  label?: string;
+  subtitle?: string;
+  error?: string;
+  required?: boolean;
   value?: Option | null;
   onChange: (value: Option | null) => void;
   options?: Option[] | GroupedOption[];
@@ -35,7 +38,10 @@ export interface SelectComponentProps {
 
 export interface MultiSelectProps {
   id: string;
-  title: string;
+  label?: string;
+  subtitle?: string;
+  error?: string;
+  required?: boolean;
   value?: Option[];
   onChange: (values: Option[]) => void;
   options?: Option[];
@@ -54,17 +60,6 @@ export interface CardContentProps {
   isHorizontal?: boolean;
 }
 
-export interface NativeShareButtonProps {
-  title: string;
-  text?: string;
-  url: string;
-  date: string;
-  location: string;
-  subLocation: string;
-  onShareClick?: (e: MouseEvent<HTMLButtonElement>) => void;
-  hideText?: boolean;
-}
-
 export interface ModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -76,6 +71,10 @@ export interface ModalProps {
 
 export interface TextAreaProps {
   id: string;
+  label?: string;
+  subtitle?: string;
+  error?: string;
+  required?: boolean;
   value: string;
   onChange: (e: ChangeEvent<{ name: string; value: string }>) => void;
 }
@@ -109,11 +108,14 @@ export interface DescriptionProps {
 
 export interface DatePickerComponentProps {
   idPrefix?: string;
+  label?: string;
+  subtitle?: string;
+  error?: string;
+  required?: boolean;
   startDate: string; // "YYYY-MM-DD" or ISO string
   endDate: string; // "YYYY-MM-DD" or ISO string
   minDate?: string; // "YYYY-MM-DD" or ISO string
   onChange: (field: "startDate" | "endDate", value: string) => void;
-  required?: boolean;
   className?: string;
 }
 
@@ -139,8 +141,10 @@ export interface ImageUploaderProps {
 
 export interface InputProps {
   id: string;
-  title: string;
+  label?: string;
   subtitle?: string;
+  error?: string;
+  required?: boolean;
   value: string | number;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
@@ -154,18 +158,23 @@ export interface RadioInputProps {
   onChange: (value: RadioInputValue) => void;
   label: string;
   disabled?: boolean;
+  error?: string;
+  required?: boolean;
 }
 
 export type RangeInputValue = string | number;
 export interface RangeInputProps {
   id: string;
+  label?: string;
+  subtitle?: string;
+  error?: string;
+  required?: boolean;
   min: number;
   max: number;
   value: number;
   onChange: (
-    e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } }
+    e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } },
   ) => void;
-  label: string;
   disabled?: boolean;
 }
 
@@ -281,7 +290,7 @@ export interface UseGeolocationReturn {
   isLoading: boolean;
   error: string | null;
   requestLocation: (
-    regions: RegionsGroupedByCitiesResponseDTO[]
+    regions: RegionsGroupedByCitiesResponseDTO[],
   ) => Promise<Option | null>;
   clearLocation: () => void;
 }
@@ -296,19 +305,6 @@ export interface NewsEventsSectionProps {
 
 export interface NewsHeroEventProps {
   event: NewsEventItemDTO;
-}
-
-export interface NewsRichCardProps {
-  event: NewsEventItemDTO;
-  variant?: "default" | "horizontal";
-  numbered?: number;
-}
-
-export interface NewsCardProps {
-  event: NewsSummaryResponseDTO;
-  placeSlug: string;
-  placeLabel?: string;
-  variant?: "default" | "hero";
 }
 
 // Mobile share island component props

@@ -20,22 +20,22 @@ describe("meta helpers (black-box)", () => {
         relatedEvents: [],
         weather: null,
       } as any,
-      "https://www.esdeveniments.cat/e/concert-de-prova-1"
+      "https://www.esdeveniments.cat/e/concert-de-prova-1",
     );
 
     expect(meta.title).toBeDefined();
     expect(meta.description).toBeDefined();
     expect(meta.openGraph?.url).toBe(
-      "https://www.esdeveniments.cat/e/concert-de-prova-1"
+      "https://www.esdeveniments.cat/e/concert-de-prova-1",
     );
     const ogImages = Array.isArray(meta.openGraph?.images)
       ? meta.openGraph?.images
       : meta.openGraph?.images
-      ? [meta.openGraph.images]
-      : [];
+        ? [meta.openGraph.images]
+        : [];
     expect(ogImages.length).toBeGreaterThan(0);
     expect(meta.alternates?.canonical).toBe(
-      "https://www.esdeveniments.cat/e/concert-de-prova-1"
+      "https://www.esdeveniments.cat/e/concert-de-prova-1",
     );
   });
 
@@ -43,7 +43,7 @@ describe("meta helpers (black-box)", () => {
     // In tests, siteUrl may resolve to localhost depending on env.
     expect(getCanonicalUrl("/barcelona")).toContain("/barcelona");
     expect(getCanonicalUrl("https://www.esdeveniments.cat/girona")).toBe(
-      "https://www.esdeveniments.cat/girona"
+      "https://www.esdeveniments.cat/girona",
     );
   });
 });

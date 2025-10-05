@@ -69,7 +69,7 @@ function getDefaultFilterState() {
  */
 export function parseFiltersFromUrlSafe(
   segments: { place?: string; date?: string; category?: string },
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
 ) {
   try {
     // Validate query params first

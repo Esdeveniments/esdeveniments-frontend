@@ -1,5 +1,5 @@
 import React from "react";
-import Notification from "components/ui/common/notification";
+import Notification from "components/ui/primitives/notification";
 import type { EventNotificationsProps } from "types/event";
 
 const EventNotifications: React.FC<EventNotificationsProps> = ({

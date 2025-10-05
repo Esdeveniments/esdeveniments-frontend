@@ -1,21 +1,22 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import { CloudIcon } from "@heroicons/react/outline";
+import { Text } from "components/ui/primitives/Text";
+import Weather from "components/ui/domain/weather";
 import type { EventWeatherProps } from "types/event";
-
-const Weather = dynamic(() => import("components/ui/weather"), { ssr: false });
 
 const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
   if (!weather) return null;
 
   return (
     <div
-      className="w-full flex justify-center items-start gap-2 px-4"
+      className="flex w-full items-start justify-center gap-component-xs px-component-md"
       data-testid="event-weather"
     >
-      <CloudIcon className="w-5 h-5 mt-1" />
-      <div className="w-11/12 flex flex-col gap-4">
-        <h2>El temps</h2>
+      <CloudIcon className="mt-component-xs h-5 w-5" />
+      <div className="flex w-11/12 flex-col gap-component-md">
+        <Text as="h2" variant="h2">
+          El temps
+        </Text>
         <Weather weather={weather} />
       </div>
     </div>

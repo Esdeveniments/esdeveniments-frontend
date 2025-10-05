@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       console.error("Cloudinary configuration missing");
       return NextResponse.json(
         { error: "Cloudinary not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         public_id: public_id || undefined,
         transformation: "w_800,h_600,c_fill,q_auto,f_auto",
       },
-      process.env.CLOUDINARY_API_SECRET
+      process.env.CLOUDINARY_API_SECRET,
     );
 
     const response: CloudinarySignatureResponse = {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     console.error("Error generating Cloudinary signature:", error);
     return NextResponse.json(
       { error: "Failed to generate upload signature" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

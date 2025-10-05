@@ -4,7 +4,7 @@ import type { EventSummaryResponseDTO } from "types/api/event";
 // Minimal, explicit mapper to reuse existing Event card/list components
 export function mapNewsSummaryToEventSummary(
   news: NewsSummaryResponseDTO,
-  place: string
+  place: string,
 ): EventSummaryResponseDTO {
   return {
     id: news.id,
@@ -40,7 +40,7 @@ export function mapNewsSummaryToEventSummary(
 
 export function mapNewsSummariesToEvents(
   items: NewsSummaryResponseDTO[],
-  place: string
+  place: string,
 ): EventSummaryResponseDTO[] {
   return items.map((item) => mapNewsSummaryToEventSummary(item, place));
 }

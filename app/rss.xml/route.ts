@@ -13,7 +13,7 @@ const getAllArticles = async (
   region: string,
   town: string,
   maxEventsPerDay: string | undefined = undefined,
-  untilProp: number = 7
+  untilProp: number = 7,
 ): Promise<RssEvent[]> => {
   const { label: regionLabel } = await getPlaceTypeAndLabel(region);
   const { label: townLabel } = await getPlaceTypeAndLabel(town);
@@ -42,7 +42,7 @@ const getAllArticles = async (
     const mappedEvents = events.map((event) => {
       const { formattedStart, nameDay } = getFormattedDate(
         event.startDate,
-        event.endDate
+        event.endDate,
       );
       return {
         id: event.id,
@@ -68,7 +68,7 @@ const getAllArticles = async (
     captureException(
       `Error getting all articles to generate the RSS feed for ${
         townLabel || regionLabel || "Catalunya"
-      }: ${error}`
+      }: ${error}`,
     );
     return [];
   }
@@ -77,7 +77,7 @@ const getAllArticles = async (
 const buildFeed = async (
   items: RssEvent[],
   region: string,
-  town: string
+  town: string,
 ): Promise<Feed> => {
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
   const { label: regionLabel } = await getPlaceTypeAndLabel(region);
@@ -100,7 +100,7 @@ const buildFeed = async (
 
   const removedDuplicatedItems = items.filter(
     (v, i, a) =>
-      a.findIndex((v2) => v2.id.split("_")[0] === v.id.split("_")[0]) === i
+      a.findIndex((v2) => v2.id.split("_")[0] === v.id.split("_")[0]) === i,
   );
 
   removedDuplicatedItems.forEach((item) => {

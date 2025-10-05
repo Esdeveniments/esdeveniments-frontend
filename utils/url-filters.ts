@@ -66,7 +66,7 @@ const LEGACY_CATEGORIES: Record<string, URLCategory> = {
  */
 export function isValidCategorySlug(
   categorySlug: string,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): boolean {
   // Check legacy categories first
   if (LEGACY_CATEGORIES[categorySlug]) {
@@ -90,7 +90,7 @@ export function isValidCategorySlug(
 export function parseFiltersFromUrl(
   segments: { place?: string; date?: string; category?: string },
   searchParams: URLSearchParams,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): ParsedFilters {
   // Count non-empty segments
   const segmentValues = [
@@ -165,7 +165,7 @@ export function parseFiltersFromUrl(
  */
 export function buildCanonicalUrl(
   filters: Partial<URLFilterState>,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   return buildCanonicalUrlDynamic(filters, dynamicCategories);
 }
@@ -178,7 +178,7 @@ export function buildFilterUrl(
   currentSegments: RouteSegments,
   currentQuery: URLQueryParams,
   changes: Partial<URLFilterState>,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   const newFilters: Partial<URLFilterState> = {
     place: changes.place || currentSegments.place,
@@ -196,14 +196,14 @@ export function buildFilterUrl(
       "lat" in changes
         ? changes.lat
         : currentQuery.lat
-        ? parseLatitude(currentQuery.lat)
-        : undefined,
+          ? parseLatitude(currentQuery.lat)
+          : undefined,
     lon:
       "lon" in changes
         ? changes.lon
         : currentQuery.lon
-        ? parseLongitude(currentQuery.lon)
-        : undefined,
+          ? parseLongitude(currentQuery.lon)
+          : undefined,
   };
 
   const result = buildCanonicalUrl(newFilters, dynamicCategories);
@@ -248,14 +248,14 @@ export function getRedirectUrl(parsed: ParsedFilters): string | null {
  */
 export function getCategorySlug(
   category: URLCategory,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   // If we have dynamic categories, try to find the category
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
     const foundCategory = dynamicCategories.find(
       (cat) =>
         cat.name.toLowerCase() === category.toLowerCase() ||
-        cat.slug === category
+        cat.slug === category,
     );
     if (foundCategory) {
       return foundCategory.slug;
@@ -270,7 +270,7 @@ export function getCategorySlug(
  * Generate static params for ISR - enhanced with dynamic categories
  */
 export function getTopStaticCombinations(
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ) {
   const topPlaces = ["catalunya", "barcelona", "girona", "lleida", "tarragona"];
   const topDates = VALID_DATES.filter((date) => date !== "tots"); // Exclude "tots" from static generation
@@ -305,7 +305,7 @@ export function getTopStaticCombinations(
  * Combines legacy and dynamic categories
  */
 export function getAllCategorySlugsForISR(
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string[] {
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
     return getAllCategorySlugs(dynamicCategories);
@@ -321,7 +321,7 @@ export function getAllCategorySlugsForISR(
  */
 export function findCategoryForRouting(
   slug: string,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): { id?: number; name: string; slug: string } | null {
   // Try dynamic categories first
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
@@ -352,7 +352,7 @@ export function findCategoryForRouting(
  */
 export function buildCanonicalUrlDynamic(
   filters: Partial<URLFilterState>,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   const place = filters.place || "catalunya";
   const date = filters.byDate || "tots";

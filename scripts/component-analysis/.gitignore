@@ -1,0 +1,7 @@
+# Analysis output files
+output/
+*.csv
+*.json
+
+# Except the README
+!README.md

@@ -8,7 +8,7 @@ import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
  * @returns Array of Option objects for regions
  */
 export function generateRegionsOptions(
-  regionsWithCities: RegionsGroupedByCitiesResponseDTO[]
+  regionsWithCities: RegionsGroupedByCitiesResponseDTO[],
 ): Option[] {
   return regionsWithCities
     .map((region) => ({
@@ -26,10 +26,10 @@ export function generateRegionsOptions(
  */
 export function generateTownsOptions(
   regionsWithCities: RegionsGroupedByCitiesResponseDTO[],
-  regionId: string | number
+  regionId: string | number,
 ): Option[] {
   const region = regionsWithCities.find(
-    (r) => r.id.toString() === regionId.toString()
+    (r) => r.id.toString() === regionId.toString(),
   );
   return region
     ? region.cities
@@ -49,7 +49,7 @@ export function generateTownsOptions(
  * @returns Array of GroupedOption objects
  */
 export function generateRegionsAndTownsOptions(
-  regionsWithCities: RegionsGroupedByCitiesResponseDTO[]
+  regionsWithCities: RegionsGroupedByCitiesResponseDTO[],
 ): GroupedOption[] {
   if (!regionsWithCities) return [];
 

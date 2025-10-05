@@ -5,7 +5,8 @@ import type { DeleteReason } from "types/event";
 
 export function useEventModals() {
   const [openModal, setOpenModal] = useState(false);
-  const [openDeleteReasonModal, setOpenModalDeleteReasonModal] = useState(false);
+  const [openDeleteReasonModal, setOpenModalDeleteReasonModal] =
+    useState(false);
   const [reasonToDelete, setReasonToDelete] = useState<DeleteReason>(null);
   const [showThankYouBanner, setShowThankYouBanner] = useState(false);
 

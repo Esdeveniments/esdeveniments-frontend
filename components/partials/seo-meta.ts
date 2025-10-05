@@ -47,7 +47,7 @@ export const defaultMeta = {
 export function generateItemListStructuredData(
   events: EventSummaryResponseDTO[],
   listName: string,
-  description?: string
+  description?: string,
 ) {
   if (!events || events.length === 0) return null;
 
@@ -247,7 +247,7 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
 }
 
 export function generateSiteNavigationElementSchema(
-  navigationItems: NavigationItem[]
+  navigationItems: NavigationItem[],
 ) {
   if (!navigationItems || navigationItems.length === 0) return null;
 

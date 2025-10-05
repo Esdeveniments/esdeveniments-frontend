@@ -54,7 +54,7 @@ export async function GET() {
       console.error(
         "server-news-sitemap: error fetching news for hub",
         hub.slug,
-        e
+        e,
       );
     }
   }

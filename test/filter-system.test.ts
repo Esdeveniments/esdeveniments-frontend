@@ -76,22 +76,22 @@ describe("Filter Configuration System", () => {
     test("isEnabled works correctly", () => {
       expect(FilterOperations.isEnabled("place", mockDisplayState)).toBe(true);
       expect(FilterOperations.isEnabled("byDate", mockDisplayState)).toBe(
-        false
+        false,
       );
       expect(FilterOperations.isEnabled("category", mockDisplayState)).toBe(
-        true
+        true,
       );
     });
 
     test("getDisplayText works correctly", () => {
       expect(FilterOperations.getDisplayText("place", mockDisplayState)).toBe(
-        "Barcelona"
+        "Barcelona",
       );
       expect(
-        FilterOperations.getDisplayText("byDate", mockDisplayState)
+        FilterOperations.getDisplayText("byDate", mockDisplayState),
       ).toBeUndefined();
       expect(
-        FilterOperations.getDisplayText("category", mockDisplayState)
+        FilterOperations.getDisplayText("category", mockDisplayState),
       ).toBe("CONCERTS");
     });
 

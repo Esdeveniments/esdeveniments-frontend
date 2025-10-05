@@ -19,8 +19,8 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
-import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import HybridEventsList from "components/ui/domain/hybridEventsList";
+import ClientInteractiveLayer from "components/ui/domain/clientInteractiveLayer";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -151,7 +151,7 @@ export default async function Page({
   ) {
     const regionsWithCities = await fetchRegionsWithCities();
     const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === place)
+      r.cities.some((city) => city.value === place),
     );
 
     if (regionWithCities) {

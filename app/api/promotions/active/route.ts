@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   if (!eventId) {
     return NextResponse.json(
       { error: "Missing eventId parameter" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

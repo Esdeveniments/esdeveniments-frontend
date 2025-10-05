@@ -28,7 +28,7 @@ export function mapLegacyCategoryToSlug(categoryKey: CategoryKey): string {
  */
 export function findCategoryBySlug(
   categories: CategorySummaryResponseDTO[],
-  slug: string
+  slug: string,
 ): CategorySummaryResponseDTO | null {
   if (!categories || !Array.isArray(categories)) {
     return null;
@@ -42,7 +42,7 @@ export function findCategoryBySlug(
  * Used for ISR and URL routing optimization
  */
 export function createCategoryLookupMap(
-  categories: CategorySummaryResponseDTO[]
+  categories: CategorySummaryResponseDTO[],
 ): Map<string, CategorySummaryResponseDTO> {
   const lookupMap = new Map<string, CategorySummaryResponseDTO>();
 
@@ -85,7 +85,7 @@ export function getCategorySlug(categoryKey: CategoryKey): string {
  */
 export function getCategoryBySlug(
   categories: CategorySummaryResponseDTO[],
-  slug: string
+  slug: string,
 ): CategorySummaryResponseDTO | null {
   return findCategoryBySlug(categories, slug);
 }
@@ -96,7 +96,7 @@ export function getCategoryBySlug(
  */
 export function mapLegacyValueToCategory(
   categories: CategorySummaryResponseDTO[],
-  categoryValue: CategoryValue
+  categoryValue: CategoryValue,
 ): CategorySummaryResponseDTO | null {
   if (!categories || !Array.isArray(categories)) {
     return null;
@@ -104,7 +104,7 @@ export function mapLegacyValueToCategory(
 
   // Find the legacy key that maps to this value
   const legacyKey = Object.entries(CATEGORIES).find(
-    ([_, value]) => value === categoryValue
+    ([_, value]) => value === categoryValue,
   )?.[0] as CategoryKey | undefined;
 
   if (!legacyKey) {
@@ -121,7 +121,7 @@ export function mapLegacyValueToCategory(
  * Used for migration and compatibility
  */
 export function createLegacyDynamicMap(
-  categories: CategorySummaryResponseDTO[]
+  categories: CategorySummaryResponseDTO[],
 ): {
   legacyToSlug: Map<CategoryKey, string>;
   slugToLegacy: Map<string, CategoryKey>;
@@ -141,7 +141,7 @@ export function createLegacyDynamicMap(
   categories.forEach((category) => {
     // Try to find corresponding legacy key by name similarity
     const matchingLegacyKey = Object.keys(CATEGORIES).find(
-      (key) => key.toLowerCase() === category.name.toLowerCase()
+      (key) => key.toLowerCase() === category.name.toLowerCase(),
     ) as CategoryKey | undefined;
 
     if (matchingLegacyKey && !slugToLegacy.has(category.slug)) {
@@ -167,7 +167,7 @@ export function isValidCategorySlug(slug: string): boolean {
  * Returns both legacy-mapped slugs and dynamic category slugs
  */
 export function getAllCategorySlugs(
-  categories: CategorySummaryResponseDTO[] = []
+  categories: CategorySummaryResponseDTO[] = [],
 ): string[] {
   const slugs = new Set<string>();
 

@@ -1,5 +1,5 @@
 import React from "react";
-import Badge from "@components/ui/common/badge";
+import { Badge, Text } from "@components/ui/primitives";
 import { TagIcon } from "@heroicons/react/outline";
 import type { EventCategoriesProps } from "types/event";
 
@@ -10,14 +10,16 @@ const EventCategories: React.FC<EventCategoriesProps> = ({
   if (!categories || categories.length === 0) return null;
 
   return (
-    <div className="w-full flex justify-center items-start gap-2 px-4">
+    <div className="flex w-full items-start justify-center gap-component-xs px-component-md">
       <TagIcon
-        className="h-5 w-5 mt-1 text-blackCorp flex-shrink-0"
+        className="mt-component-xs h-5 w-5 flex-shrink-0 text-blackCorp"
         aria-hidden="true"
       />
-      <div className="w-11/12 flex flex-col gap-4">
-        <h2 className="text-blackCorp font-semibold">Categories</h2>
-        <div className="flex flex-wrap gap-3">
+      <div className="flex w-11/12 flex-col gap-component-md">
+        <Text as="h2" className="font-semibold text-blackCorp">
+          Categories
+        </Text>
+        <div className="flex flex-wrap gap-component-sm">
           {categories.map((category) => (
             <Badge key={category.id} href={`/${place}/${category.slug}`}>
               {category.name}

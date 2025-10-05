@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useTransition } from "react";
-import EventForm from "@components/ui/EventForm";
+import EventForm from "components/ui/domain/EventForm";
 import type { FormData } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
@@ -9,6 +9,7 @@ import { EventSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { Option } from "types/common";
 import { useCategories } from "@components/hooks/useCategories";
+import { Text } from "@components/ui/primitives/Text";
 
 export default function EditEventClient({
   event,
@@ -20,7 +21,7 @@ export default function EditEventClient({
   const router = useRouter();
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
   const [imageToUpload, setImageToUpload] = useState<string | null>(
-    form.imageUrl
+    form.imageUrl,
   );
   const [progress] = useState<number>(0);
   const [isPending, startTransition] = useTransition();
@@ -36,7 +37,7 @@ export default function EditEventClient({
             value: region.id.toString(),
           }))
         : [],
-    [regions]
+    [regions],
   );
 
   const categoryOptions = useMemo(
@@ -45,7 +46,7 @@ export default function EditEventClient({
         label: category.name,
         value: category.id.toString(),
       })),
-    [categories]
+    [categories],
   );
 
   const cityOptions = useMemo(() => {
@@ -53,7 +54,7 @@ export default function EditEventClient({
     const region = regions.find(
       (r) =>
         r.id.toString() ===
-        (form.region && "value" in form.region ? form.region.value : "")
+        (form.region && "value" in form.region ? form.region.value : ""),
     );
     return region
       ? region.cities.map((city) => ({
@@ -67,7 +68,7 @@ export default function EditEventClient({
   // Simple form change handler - no validation here
   const handleFormChange = <K extends keyof FormData>(
     name: K,
-    value: FormData[K]
+    value: FormData[K],
   ) => {
     setForm({ ...form, [name]: value });
   };
@@ -109,7 +110,9 @@ export default function EditEventClient({
 
   return (
     <div>
-      <h1>Edita: {event.title}</h1>
+      <Text as="h1" variant="h1">
+        Edita: {event.title}
+      </Text>
       <EventForm
         form={form}
         onSubmit={onSubmit}

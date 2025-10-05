@@ -10,7 +10,7 @@ function buildSitemap(
     changefreq: string;
     priority: number;
     image?: { loc: string; title: string };
-  }>
+  }>,
 ): string {
   return (
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
@@ -27,7 +27,7 @@ function buildSitemap(
             ? `    <image:image>\n      <image:loc>${
                 field.image.loc
               }</image:loc>\n      <image:title>${sanitize(
-                field.image.title
+                field.image.title,
               )}</image:title>\n    </image:image>\n`
             : "") +
           `  </url>`
@@ -56,7 +56,7 @@ export async function GET() {
   }
 
   const normalizedEvents = JSON.parse(
-    JSON.stringify(events)
+    JSON.stringify(events),
   ) as EventSummaryResponseDTO[];
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
@@ -68,7 +68,7 @@ export async function GET() {
       return {
         loc: `${siteUrl}/e/${data.slug}`,
         lastmod: new Date(
-          data.endDate || data.startDate || Date.now()
+          data.endDate || data.startDate || Date.now(),
         ).toISOString(),
         changefreq: "daily",
         priority: 0.7,

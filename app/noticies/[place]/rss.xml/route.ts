@@ -4,7 +4,7 @@ import { fetchNews } from "@lib/api/news";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ place: string }> }
+  { params }: { params: Promise<{ place: string }> },
 ) {
   const { place } = await params;
   const feed = new Feed({

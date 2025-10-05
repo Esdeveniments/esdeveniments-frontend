@@ -6,7 +6,7 @@ import type { EventUpdateRequestDTO } from "types/api/event";
 export async function editEvent(
   eventId: string,
   slug: string,
-  data: EventUpdateRequestDTO
+  data: EventUpdateRequestDTO,
 ) {
   // 1. Update the event in your backend
   const updatedEvent = await updateEventById(eventId, data);

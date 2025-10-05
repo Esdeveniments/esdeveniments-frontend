@@ -90,7 +90,7 @@ export function getQualityPreset(preset: QualityPreset): number {
  * Based on actual usage patterns from the Lighthouse analysis
  */
 export const getOptimalImageSizes = (
-  context: "card" | "hero" | "list" | "detail" = "card"
+  context: "card" | "hero" | "list" | "detail" = "card",
 ): string => {
   const sizesMap = {
     // Event cards in listings (most common usage)

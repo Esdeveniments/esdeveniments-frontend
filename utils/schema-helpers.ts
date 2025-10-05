@@ -6,7 +6,7 @@ import type {
 import type { VideoObject, SchemaOrgEvent } from "types/schema";
 
 export const generateJsonData = (
-  event: EventDetailResponseDTO | EventSummaryResponseDTO
+  event: EventDetailResponseDTO | EventSummaryResponseDTO,
 ): SchemaOrgEvent => {
   const {
     title,
@@ -49,7 +49,9 @@ export const generateJsonData = (
     defaultImage,
   ];
   const images = Array.from(
-    new Set(imageCandidates.filter((src): src is string => isValidHttpUrl(src)))
+    new Set(
+      imageCandidates.filter((src): src is string => isValidHttpUrl(src)),
+    ),
   );
   if (images.length === 0 && isValidHttpUrl(defaultImage)) {
     images.push(defaultImage);
@@ -91,7 +93,7 @@ export const generateJsonData = (
       .map((category) => category?.name)
       .filter(
         (name): name is string =>
-          typeof name === "string" && name.trim().length > 0
+          typeof name === "string" && name.trim().length > 0,
       );
     const unique = Array.from(new Set(names));
     return unique.length > 0 ? unique : undefined;
@@ -143,7 +145,7 @@ export const generateJsonData = (
   const parseDateTime = (
     date: string | undefined | null,
     time: string | null,
-    isEnd?: boolean
+    isEnd?: boolean,
   ): Date | undefined => {
     if (!date) return undefined;
     const hasTime = typeof time === "string" && time.trim().length > 0;

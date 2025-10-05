@@ -16,7 +16,8 @@ import {
   // InformationCircleIcon as InfoIcon,
   SpeakerphoneIcon,
 } from "@heroicons/react/outline";
-import AdArticle from "components/ui/adArticle";
+import { AdArticle } from "@components/ui/primitives";
+import { Text } from "components/ui/primitives/Text";
 
 // const Tooltip = dynamic(() => import("components/ui/tooltip"), {
 //   ssr: false,
@@ -83,10 +84,12 @@ export default function EventClient({
       />
 
       {/* Ad Section */}
-      <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-        <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-        <div className="w-11/12 flex flex-col gap-4">
-          <h2>Contingut patrocinat</h2>
+      <div className="flex h-full min-h-[250px] w-full items-start justify-center gap-component-xs px-component-md">
+        <SpeakerphoneIcon className="mt-component-xs h-5 w-5" />
+        <div className="flex w-11/12 flex-col gap-component-md">
+          <Text as="h2" variant="h2">
+            Contingut patrocinat
+          </Text>
           <AdArticle slot="9643657007" />
         </div>
       </div>
@@ -99,20 +102,20 @@ export default function EventClient({
       )}
       {/* Edit Button Section */}
 
-      {/* <div className="w-full flex justify-center items-start gap-2 px-4">
-        <PencilIcon className="w-5 h-5 mt-1" />
-        <div className="w-11/12 flex flex-col gap-4">
-          <h2>Suggerir un canvi</h2>
+      {/* <div className="w-full flex justify-center items-start gap-component-xs px-component-md">
+        <PencilIcon className="w-5 h-5 mt-component-xs" />
+        <div className="w-11/12 flex flex-col gap-component-md">
+          <Text as="h2" variant="h2">Suggerir un canvi</Text>
           {isEditModalVisible && (
-            <div className="w-11/12 flex justify-start items-center gap-2 cursor-pointer">
+            <div className="w-11/12 flex justify-start items-center gap-component-xs cursor-pointer">
               <div
                 onClick={() => {
                   setOpenModal(true);
                   sendGoogleEvent("open-change-modal", {});
                 }}
-                className="gap-2 ease-in-out duration-300 border-whiteCorp hover:border-blackCorp"
+                className="gap-component-xs ease-in-out duration-300 border-whiteCorp hover:border-blackCorp"
               >
-                <p className="font-medium flex items-center">Editar</p>
+                <Text as="p" variant="body" className="font-medium flex items-center">Editar</Text>
               </div>
               <InfoIcon className="w-5 h-5" data-tooltip-id="edit-button" />
               <Tooltip id="edit-button">

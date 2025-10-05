@@ -30,7 +30,7 @@ export interface FilterState {
       | "distance"
       | "openModal",
     // eslint-disable-next-line no-unused-vars
-    value: string | boolean
+    value: string | boolean,
   ) => void;
 }
 

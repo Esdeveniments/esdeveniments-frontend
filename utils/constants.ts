@@ -72,7 +72,7 @@ export const CATEGORY_NAMES_MAP: Record<CategoryValue, CategoryKey> =
     Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
       searchTerm,
       displayName,
-    ])
+    ]),
   ) as Record<CategoryValue, CategoryKey>;
 
 export const BYDATES: Option[] = [
@@ -102,14 +102,17 @@ export const DISTANCES: number[] = [5, 10, 25, 50, 100];
  * @returns Record mapping category values to display names
  */
 export function getDynamicCategoryNamesMap(
-  categories?: CategorySummaryResponseDTO[]
+  categories?: CategorySummaryResponseDTO[],
 ): Record<string, string> {
   if (categories && categories.length > 0) {
     // Create mapping from dynamic categories: slug -> name
-    return categories.reduce((acc, category) => {
-      acc[category.slug] = category.name;
-      return acc;
-    }, {} as Record<string, string>);
+    return categories.reduce(
+      (acc, category) => {
+        acc[category.slug] = category.name;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
   }
 
   // Fallback to static mapping
@@ -122,7 +125,7 @@ export function getDynamicCategoryNamesMap(
  * @returns Array of category names for search
  */
 export function getDynamicSearchTermsSubset(
-  categories?: CategorySummaryResponseDTO[]
+  categories?: CategorySummaryResponseDTO[],
 ): string[] {
   if (categories && categories.length > 0) {
     // Return first 4 category names for search subset
@@ -151,7 +154,7 @@ export function shouldUseDynamicCategories(): boolean {
  */
 export function getCategoryDisplayName(
   categorySlug: string,
-  categories?: CategorySummaryResponseDTO[]
+  categories?: CategorySummaryResponseDTO[],
 ): string {
   if (categories && categories.length > 0) {
     const dynamicCategory = categories.find((cat) => cat.slug === categorySlug);

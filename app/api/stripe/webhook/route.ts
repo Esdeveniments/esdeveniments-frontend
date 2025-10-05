@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
           error:
             "Stripe is not configured. Please set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET environment variables.",
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -59,14 +59,14 @@ export async function POST(request: NextRequest) {
             error:
               "Stripe payments are not available (dependency not installed).",
           },
-          { status: 503 }
+          { status: 503 },
         );
       }
 
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       if (!webhookSecret) {
         throw new Error(
-          "STRIPE_WEBHOOK_SECRET environment variable is not set"
+          "STRIPE_WEBHOOK_SECRET environment variable is not set",
         );
       }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       event = (stripe as any).webhooks.constructEvent(
         body,
         signature,
-        webhookSecret
+        webhookSecret,
       );
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
@@ -97,11 +97,11 @@ export async function POST(request: NextRequest) {
       ) {
         console.error(
           "Missing required metadata in Stripe session:",
-          session.metadata
+          session.metadata,
         );
         return NextResponse.json(
           { error: "Missing metadata" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       // This should resolve the geo scope to specific event IDs or boundaries
       // For now, we'll log the scope information
       console.log(
-        `Promotion scope: ${geoScopeType} (${geoScopeId}) for ${durationDays} days`
+        `Promotion scope: ${geoScopeType} (${geoScopeId}) for ${durationDays} days`,
       );
 
       // TODO: Update event visibility or add promotion to event display
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     console.error("Webhook error:", error);
     return NextResponse.json(
       { error: "Webhook processing failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

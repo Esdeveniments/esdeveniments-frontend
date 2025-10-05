@@ -11,7 +11,7 @@ import { captureException } from "@sentry/nextjs";
 
 // SWR fetcher function for events API (single page)
 const pageFetcher = async (
-  params: FetchEventsParams
+  params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
   return await fetchEvents(params);
 };
@@ -53,7 +53,7 @@ export const useEvents = ({
   // Key generator for SWR Infinite (page-by-page)
   const getKey = (
     pageIndex: number,
-    previousPageData: PagedResponseDTO<EventSummaryResponseDTO> | null
+    previousPageData: PagedResponseDTO<EventSummaryResponseDTO> | null,
   ) => {
     if (!isActivated) return null; // do not fetch until activated
     if (previousPageData && previousPageData.last) return null; // reached the end
@@ -117,7 +117,7 @@ export const useEvents = ({
       revalidateFirstPage: false,
       // We already have SSR fallback; don't revalidate on mount
       revalidateOnMount: false,
-    }
+    },
   );
 
   // After activation, if the first click intended to also fetch the next page,
@@ -132,12 +132,12 @@ export const useEvents = ({
 
   // Use fallback data when not activated, SWR data when activated
   const clientEvents = isActivated
-    ? pages?.flatMap((p) => p.content) ?? []
+    ? (pages?.flatMap((p) => p.content) ?? [])
     : fallbackData;
 
   const totalEvents = isActivated
     ? pages && pages.length > 0
-      ? pages[pages.length - 1]?.totalElements ?? clientEvents.length
+      ? (pages[pages.length - 1]?.totalElements ?? clientEvents.length)
       : clientEvents.length
     : fallbackData.length;
 

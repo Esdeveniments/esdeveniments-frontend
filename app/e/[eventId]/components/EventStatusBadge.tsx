@@ -17,12 +17,12 @@ const EventStatusBadge: React.FC<{
     status.state === "past"
       ? "Finalitzat"
       : status.state === "live"
-      ? "En curs"
-      : status.label;
+        ? "En curs"
+        : status.label;
 
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+      className={`inline-flex items-center rounded-md px-component-xs py-component-xs text-[10px] font-semibold uppercase tracking-wide ${
         stateStyles[status.state]
       } ${className}`}
       aria-label={`${ariaLabelPrefix} ${status.label}`}

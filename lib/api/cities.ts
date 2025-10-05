@@ -7,7 +7,7 @@ const cityByIdCache = createKeyedCache<CitySummaryResponseDTO | null>(86400000);
 async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/places/cities`,
-    { next: { revalidate: 86400, tags: ["cities"] } }
+    { next: { revalidate: 86400, tags: ["cities"] } },
   );
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
@@ -25,18 +25,18 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 }
 
 async function fetchCityByIdApi(
-  id: string | number
+  id: string | number,
 ): Promise<CitySummaryResponseDTO | null> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/places/cities/${id}`,
-    { next: { revalidate: 86400, tags: ["cities", `city:${id}`] } }
+    { next: { revalidate: 86400, tags: ["cities", `city:${id}`] } },
   );
   if (!response.ok) return null;
   return response.json();
 }
 
 export async function fetchCityById(
-  id: string | number
+  id: string | number,
 ): Promise<CitySummaryResponseDTO | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return null;

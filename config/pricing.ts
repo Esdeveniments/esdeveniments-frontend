@@ -85,7 +85,7 @@ function loadPricingFromEnv(): PricingMatrix {
  */
 export function getPricingConfig(
   durationDays: number,
-  geoScopeType: GeoScopeType
+  geoScopeType: GeoScopeType,
 ): PricingConfig | null {
   const matrix = loadPricingFromEnv();
   const key: PricingKey = `${durationDays}:${geoScopeType}`;
@@ -111,7 +111,7 @@ export function getAvailableGeoScopes(): GeoScopeType[] {
  */
 export function isPricingAvailable(
   durationDays: number,
-  geoScopeType: GeoScopeType
+  geoScopeType: GeoScopeType,
 ): boolean {
   return getPricingConfig(durationDays, geoScopeType) !== null;
 }

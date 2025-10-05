@@ -157,7 +157,7 @@ const createPageData = (
   metaTitle: string,
   metaDescription: string,
   canonical: string,
-  notFoundText: string
+  notFoundText: string,
 ): PageData => ({
   title,
   subTitle: normalizeSubTitle(subTitle),
@@ -209,7 +209,7 @@ export async function generatePagesData({
       `Descobreix esdeveniments a Catalunya aquest ${currentYear}`,
       `Esdeveniments culturals, concerts, exposicions i més a Catalunya.`,
       siteUrl,
-      `Ho sentim, però no hi ha esdeveniments a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+      `Ho sentim, però no hi ha esdeveniments a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
     );
   }
 
@@ -229,7 +229,7 @@ export async function generatePagesData({
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
-        } avui ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
+        } avui ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`,
       );
     } else if (byDate === "dema") {
       return createPageData(
@@ -240,7 +240,7 @@ export async function generatePagesData({
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
-        } demà ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
+        } demà ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`,
       );
     } else if (byDate === "setmana") {
       return createPageData(
@@ -251,7 +251,7 @@ export async function generatePagesData({
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
-        } aquesta setmana ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
+        } aquesta setmana ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`,
       );
     } else if (byDate === "cap-de-setmana") {
       return createPageData(
@@ -262,7 +262,7 @@ export async function generatePagesData({
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
-        } aquest cap de setmana ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
+        } aquest cap de setmana ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`,
       );
     } else {
       // General category page without date filter
@@ -274,7 +274,7 @@ export async function generatePagesData({
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
-        } ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`
+        } ${labelWithArticle}. Descobreix altres opcions culturals que t'interessaran.`,
       );
     }
   }
@@ -286,7 +286,7 @@ export async function generatePagesData({
       `Esdeveniments destacats ${labelWithArticle}. Agenda ${currentYear}`,
       `Esdeveniments culturals i propostes destacades ${labelWithArticle} aquest ${month}.`,
       `${siteUrl}/${place}`,
-      `Ho sentim, però no hi ha esdeveniments ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+      `Ho sentim, però no hi ha esdeveniments ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
     );
   }
 
@@ -297,7 +297,7 @@ export async function generatePagesData({
       `Guia d'activitats ${labelWithArticle} - ${month} ${currentYear}`,
       `Concerts, exposicions i més ${labelWithArticle} aquest ${month}.`,
       `${siteUrl}/${place}`,
-      `Ho sentim, però no hi ha esdeveniments ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+      `Ho sentim, però no hi ha esdeveniments ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
     );
   }
 
@@ -309,7 +309,7 @@ export async function generatePagesData({
         `Esdeveniments ${byDate} ${labelWithArticle}`,
         `Esdeveniments ${byDate} ${labelWithArticle}. Agenda cultural actualitzada.`,
         `${siteUrl}/${place}/${byDate}`,
-        `Ho sentim, però no hi ha esdeveniments avui ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+        `Ho sentim, però no hi ha esdeveniments avui ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
       );
     } else if (byDate === "dema") {
       return createPageData(
@@ -318,7 +318,7 @@ export async function generatePagesData({
         `Esdeveniments demà ${labelWithArticle}`,
         `Esdeveniments demà ${labelWithArticle}. Agenda cultural actualitzada.`,
         `${siteUrl}/${place}/${byDate}`,
-        `Ho sentim, però no hi ha esdeveniments demà ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+        `Ho sentim, però no hi ha esdeveniments demà ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
       );
     } else if (byDate === "setmana") {
       return createPageData(
@@ -327,7 +327,7 @@ export async function generatePagesData({
         `Esdeveniments aquesta ${byDate} ${labelWithArticle}`,
         `Esdeveniments aquesta ${byDate} ${labelWithArticle}. Agenda cultural actualitzada.`,
         `${siteUrl}/${place}/${byDate}`,
-        `Ho sentim, però no hi ha esdeveniments aquesta setmana ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+        `Ho sentim, però no hi ha esdeveniments aquesta setmana ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
       );
     } else if (byDate === "cap-de-setmana") {
       return createPageData(
@@ -336,7 +336,7 @@ export async function generatePagesData({
         `Plans per aquest cap de setmana ${labelWithArticle}`,
         `Esdeveniments aquest cap de setmana ${labelWithArticle}. Agenda cultural actualitzada.`,
         `${siteUrl}/${place}/${byDate}`,
-        `Ho sentim, però no hi ha esdeveniments aquest cap de setmana ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+        `Ho sentim, però no hi ha esdeveniments aquest cap de setmana ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
       );
     }
   }
@@ -349,7 +349,7 @@ export async function generatePagesData({
         "Esdeveniments avui a Catalunya",
         "Esdeveniments avui a Catalunya. Agenda cultural actualitzada.",
         `${siteUrl}/${byDate}`,
-        "Ho sentim, però no hi ha esdeveniments avui a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
+        "Ho sentim, però no hi ha esdeveniments avui a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.",
       );
     } else if (byDate === "dema") {
       return createPageData(
@@ -358,7 +358,7 @@ export async function generatePagesData({
         "Esdeveniments demà a Catalunya",
         "Esdeveniments demà a Catalunya. Agenda cultural actualitzada.",
         `${siteUrl}/${byDate}`,
-        "Ho sentim, però no hi ha esdeveniments demà a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
+        "Ho sentim, però no hi ha esdeveniments demà a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.",
       );
     } else if (byDate === "setmana") {
       return createPageData(
@@ -367,7 +367,7 @@ export async function generatePagesData({
         "Esdeveniments aquesta setmana a Catalunya",
         "Esdeveniments aquesta setmana a Catalunya. Agenda cultural actualitzada.",
         `${siteUrl}/${byDate}`,
-        "Ho sentim, però no hi ha esdeveniments aquesta setmana a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
+        "Ho sentim, però no hi ha esdeveniments aquesta setmana a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.",
       );
     } else if (byDate === "cap-de-setmana") {
       return createPageData(
@@ -376,7 +376,7 @@ export async function generatePagesData({
         "Esdeveniments aquest cap de setmana a Catalunya",
         "Esdeveniments aquest cap de setmana a Catalunya. Agenda cultural actualitzada.",
         `${siteUrl}/${byDate}`,
-        "Ho sentim, però no hi ha esdeveniments aquest cap de setmana a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
+        "Ho sentim, però no hi ha esdeveniments aquest cap de setmana a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.",
       );
     }
   }
@@ -388,6 +388,6 @@ export async function generatePagesData({
     `Descobreix esdeveniments a Catalunya aquest ${currentYear}`,
     `Esdeveniments culturals, concerts, exposicions i més a Catalunya.`,
     siteUrl,
-    `Ho sentim, però no hi ha esdeveniments a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
+    `Ho sentim, però no hi ha esdeveniments a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`,
   );
 }

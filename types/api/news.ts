@@ -30,9 +30,19 @@ export interface NewsEventItemDTO {
   description: string;
   imageUrl: string;
   startDate: string; // YYYY-MM-DD
-  startTime?: { hour: number; minute: number; second: number; nano: number } | null;
+  startTime?: {
+    hour: number;
+    minute: number;
+    second: number;
+    nano: number;
+  } | null;
   endDate: string; // YYYY-MM-DD
-  endTime?: { hour: number; minute: number; second: number; nano: number } | null;
+  endTime?: {
+    hour: number;
+    minute: number;
+    second: number;
+    nano: number;
+  } | null;
   location: string;
   visits: number;
   origin: string;

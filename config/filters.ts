@@ -30,7 +30,7 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
     getDisplayText: (state: FilterDisplayState) => {
       if (state.filters.category === "tots") return undefined;
       const category = state.extraData?.categories?.find(
-        (cat) => cat.slug === state.filters.category
+        (cat) => cat.slug === state.filters.category,
       );
       return category?.name.toUpperCase();
     },
@@ -45,7 +45,7 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
     isEnabled: (state: FilterDisplayState) => state.filters.byDate !== "tots",
     getDisplayText: (state: FilterDisplayState) => {
       const byDate = BYDATES.find(
-        (item) => item.value === state.filters.byDate
+        (item) => item.value === state.filters.byDate,
       );
       return byDate?.label;
     },
@@ -67,7 +67,7 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
       Boolean(state.queryParams.lat && state.queryParams.lon),
     getDisplayText: (state: FilterDisplayState) => {
       const hasLocation = Boolean(
-        state.queryParams.lat && state.queryParams.lon
+        state.queryParams.lat && state.queryParams.lon,
       );
       if (state.filters.distance !== 50 || hasLocation) {
         return `${state.filters.distance} km`;

@@ -16,8 +16,8 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { FilteredPageProps } from "types/props";
 import { distanceToRadius } from "types/event";
-import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import HybridEventsList from "components/ui/domain/hybridEventsList";
+import ClientInteractiveLayer from "components/ui/domain/clientInteractiveLayer";
 import {
   parseFiltersFromUrl,
   getRedirectUrl,
@@ -61,7 +61,7 @@ export async function generateMetadata({
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
     new URLSearchParams(),
-    categories // ✅ Now passing categories like in main function
+    categories, // ✅ Now passing categories like in main function
   );
   const filters = urlToFilterState(parsed);
 
@@ -69,7 +69,7 @@ export async function generateMetadata({
   const categoryData = categories.find((cat) => cat.slug === filters.category);
 
   const placeTypeAndLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
-    filters.place
+    filters.place,
   );
 
   const pageData: PageData = await generatePagesData({
@@ -138,7 +138,7 @@ export default async function FilteredPage({
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
     urlSearchParams,
-    categories
+    categories,
   );
 
   // Check if redirect is needed for non-canonical URLs
@@ -182,7 +182,7 @@ export default async function FilteredPage({
   if (!events || events.length === 0) {
     const regionsWithCities = await fetchRegionsWithCities();
     const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === filters.place)
+      r.cities.some((city) => city.value === filters.place),
     );
 
     if (regionWithCities) {
@@ -245,7 +245,7 @@ export default async function FilteredPage({
           validEvents,
           categoryData
             ? `${categoryData.name} ${filters.place}`
-            : `Esdeveniments ${filters.place}`
+            : `Esdeveniments ${filters.place}`,
         )
       : null;
 

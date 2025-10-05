@@ -20,13 +20,13 @@ describe("calendar utils (black-box)", () => {
     expect(urls.google).toContain("text=Castellers%20a%20pla%C3%A7a");
     expect(urls.google).toContain("details=");
     expect(urls.google).toContain(
-      "location=Pla%C3%A7a%20Catalunya%2C%20Barcelona"
+      "location=Pla%C3%A7a%20Catalunya%2C%20Barcelona",
     );
 
     expect(urls.outlook).toContain("https://outlook.live.com/owa/?");
     expect(urls.outlook).toContain("subject=Castellers%20a%20pla%C3%A7a");
     expect(urls.outlook).toContain(
-      "location=Pla%C3%A7a%20Catalunya%2C%20Barcelona"
+      "location=Pla%C3%A7a%20Catalunya%2C%20Barcelona",
     );
 
     expect(urls.ical.startsWith("data:text/calendar;charset=utf8,")).toBe(true);
@@ -38,10 +38,10 @@ describe("calendar utils (black-box)", () => {
 
     const range = formatEventDateRange(
       "2025-06-21T10:00:00",
-      "2025-06-21T12:00:00"
+      "2025-06-21T12:00:00",
     );
     expect(range.string).toContain(
-      "Del 2025-06-21T10:00:00 al 2025-06-21T12:00:00"
+      "Del 2025-06-21T10:00:00 al 2025-06-21T12:00:00",
     );
   });
 });

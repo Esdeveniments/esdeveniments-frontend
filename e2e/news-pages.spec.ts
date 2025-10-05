@@ -23,7 +23,7 @@ test.describe("News pages", () => {
     await page.goto("/noticies/barcelona", { waitUntil: "domcontentloaded" });
     if ((await page.locator("h1:has-text('Notícies de')").count()) > 0) {
       await expect(
-        page.locator("h1:has-text('Notícies de')").first()
+        page.locator("h1:has-text('Notícies de')").first(),
       ).toBeVisible();
     } else {
       await expect(page.getByTestId("not-found-title")).toBeVisible();

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import FilterButton from "../components/ui/filters/FilterButton";
+import FilterButton from "../components/ui/domain/Filters/FilterButton";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -17,10 +17,10 @@ describe("FilterButton (black-box)", () => {
         removeUrl="/barcelona"
         onOpenModal={onOpenModal}
         testId="filter-pill-category"
-      />
+      />,
     );
     expect(
-      screen.getByTestId("filter-pill-category-remove")
+      screen.getByTestId("filter-pill-category-remove"),
     ).toBeInTheDocument();
 
     rerender(
@@ -30,7 +30,7 @@ describe("FilterButton (black-box)", () => {
         removeUrl="/barcelona"
         onOpenModal={onOpenModal}
         testId="filter-pill-category"
-      />
+      />,
     );
     // When disabled, remove icon should not be present
     expect(screen.queryByTestId("filter-pill-category-remove")).toBeNull();
@@ -45,7 +45,7 @@ describe("FilterButton (black-box)", () => {
         removeUrl="/barcelona"
         onOpenModal={onOpenModal}
         testId="filter-pill-category"
-      />
+      />,
     );
     fireEvent.click(screen.getByText("Categoria"));
     expect(onOpenModal).toHaveBeenCalledTimes(1);

@@ -24,7 +24,7 @@ test.describe("Events around section", () => {
         await link.click();
         // Allow absolute URLs by only anchoring at the end
         await expect(page).toHaveURL(
-          new RegExp(`${href?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`)
+          new RegExp(`${href?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
         );
       } else {
         // Section present but no links; treat as pass since not guaranteed

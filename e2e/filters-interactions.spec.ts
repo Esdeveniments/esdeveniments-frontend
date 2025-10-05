@@ -11,7 +11,7 @@ test.describe("Filters interactions", () => {
 
     // Remove via pill X if present
     const distancePillRemove = page.getByTestId(
-      /filter-pill-distance-.*-remove|filter-pill-distance-remove/
+      /filter-pill-distance-.*-remove|filter-pill-distance-remove/,
     );
     if (await distancePillRemove.count()) {
       await distancePillRemove.first().click();

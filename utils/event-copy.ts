@@ -74,7 +74,7 @@ function detectCatalanGenderAndNumber(word: string): {
 
 /** Return the correct article token (capitalized) for a *word* (not whole title) */
 function getCatalanArticleForWord(
-  word: string
+  word: string,
 ): "El" | "La" | "L'" | "Els" | "Les" {
   const { gender, number } = detectCatalanGenderAndNumber(word);
   const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(word);
@@ -105,7 +105,7 @@ function capitalizePlaces(text: string): string {
     /\b(al|a|del|dels|de la|de les|de l’|de l'|pel|pels)\s+([a-zà-ÿ][\w'’\-\s]*)/gi,
     (_match, prep, place) => {
       return `${prep} ${capitalizeFirstLetter(place)}`;
-    }
+    },
   );
 
   // 2) Title-case inside parentheses
@@ -125,7 +125,7 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
   );
 
   const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
@@ -138,8 +138,8 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
   const locationType = event.region
     ? "region"
     : event.city
-    ? "town"
-    : "general";
+      ? "town"
+      : "general";
   // formatCatalanA will handle "a", "al", "a la", etc.; we'll capitalize names afterwards
   const preposition = formatCatalanA(placeSummary, locationType);
 
@@ -202,7 +202,7 @@ export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
   );
   const formattedEventDate = formattedEnd
     ? `del ${formattedStart} al ${formattedEnd}`

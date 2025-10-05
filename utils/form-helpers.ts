@@ -9,7 +9,7 @@ import { formatTimeForAPI } from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
-  region: Option | { id: string | number } | null | undefined
+  region: Option | { id: string | number } | null | undefined,
 ): string | null {
   if (!region) return null;
   if ("value" in region) return region.value;
@@ -18,7 +18,7 @@ export function getRegionValue(
 }
 
 export function getTownValue(
-  town: Option | { id: string | number } | null | undefined
+  town: Option | { id: string | number } | null | undefined,
 ): string | null {
   if (!town) return null;
   if ("value" in town) return town.value;
@@ -27,7 +27,7 @@ export function getTownValue(
 }
 
 export function formDataToBackendDTO(
-  form: FormData
+  form: FormData,
 ): EventCreateRequestDTO | EventUpdateRequestDTO {
   // Extract date and time from datetime strings
   const startDateTime = new Date(form.startDate);
@@ -70,8 +70,8 @@ export function formDataToBackendDTO(
             typeof cat === "object" && cat !== null && "id" in cat
               ? cat.id
               : cat && typeof cat === "object" && "value" in cat
-              ? Number(cat.value)
-              : Number(cat)
+                ? Number(cat.value)
+                : Number(cat),
           )
           .filter((id): id is number => typeof id === "number" && !isNaN(id))
       : [],

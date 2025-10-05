@@ -1,23 +1,31 @@
+import { Text } from "@components/ui/primitives";
+
 export default function OfflinePage() {
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gray-50"
+      className="flex min-h-screen items-center justify-center bg-whiteCorp"
       data-testid="offline-page"
     >
       <div className="text-center">
-        <h1
-          className="text-4xl font-bold text-gray-900 mb-4"
+        <Text
+          as="h1"
+          variant="h1"
+          className="mb-component-md font-bold"
           data-testid="offline-title"
         >
           🌐 Sense connexió
-        </h1>
-        <p className="text-lg text-gray-600 mb-8">
+        </Text>
+        <Text
+          as="p"
+          variant="body-lg"
+          className="mb-component-xl text-blackCorp/80"
+        >
           No pots connectar-te a internet. Alguns continguts emmagatzemats
           podrien estar disponibles.
-        </p>
+        </Text>
         <a
           href="/"
-          className="inline-block bg-blue-500 hover:bg-blue-700 text-whiteCorp font-bold py-2 px-4 rounded"
+          className="hover:bg-blue-700 inline-block rounded bg-primary/100 px-component-md py-component-xs font-bold text-whiteCorp"
           data-testid="offline-home-link"
         >
           Torna a l&apos;inici
@@ -25,13 +33,13 @@ export default function OfflinePage() {
         <br />
         <a
           href="/barcelona"
-          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-whiteCorp font-bold py-2 px-4 rounded mr-2"
+          className="bg-whiteCorp0 mr-component-xs mt-component-md inline-block rounded px-component-md py-component-xs font-bold text-whiteCorp hover:bg-blackCorp"
         >
           Barcelona
         </a>
         <a
           href="/catalunya"
-          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-whiteCorp font-bold py-2 px-4 rounded"
+          className="bg-whiteCorp0 mt-component-md inline-block rounded px-component-md py-component-xs font-bold text-whiteCorp hover:bg-blackCorp"
         >
           Catalunya
         </a>

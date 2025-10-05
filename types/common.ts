@@ -259,8 +259,19 @@ export interface CardHorizontalServerProps {
   isPriority?: boolean;
 }
 
-export interface CardShareButtonProps {
+export type ShareStrategy = "auto" | "native" | "social" | "static";
+
+export interface ShareButtonProps {
   slug: string;
+  strategy?: ShareStrategy;
+  title?: string;
+  description?: string;
+  date?: string;
+  location?: string;
+  subLocation?: string;
+  onShareClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  hideText?: boolean;
+  compact?: boolean;
 }
 
 export interface CustomIconProps {
@@ -364,7 +375,7 @@ export interface SearchState {
 export function makePlaceTypeAndLabel(
   type: string,
   label: string,
-  regionLabel?: string
+  regionLabel?: string,
 ): PlaceTypeAndLabel {
   const allowedTypes: PlaceType[] = ["region", "town", ""];
   return {
@@ -402,9 +413,12 @@ export interface BadgeProps {
   ariaLabel?: string;
 }
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "neutral" | "primary" | "muted" | "outline" | "solid";
+// Deprecated: Prefer ButtonProps from `types/ui`.
+export interface LegacyButtonProps {
+  label: string;
+  href?: string;
+  target?: string;
+  className?: string;
 }
 
 // Hook return types

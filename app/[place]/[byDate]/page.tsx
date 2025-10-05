@@ -16,8 +16,8 @@ import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
-import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import HybridEventsList from "components/ui/domain/hybridEventsList";
+import ClientInteractiveLayer from "components/ui/domain/clientInteractiveLayer";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -47,7 +47,7 @@ export async function generateMetadata({
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
     new URLSearchParams(),
-    categories
+    categories,
   );
 
   const actualDate = parsed.segments.date;
@@ -126,7 +126,7 @@ export default async function ByDatePage({
   } catch (error) {
     console.error(
       "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
-      error
+      error,
     );
     categories = [];
   }
@@ -134,7 +134,7 @@ export default async function ByDatePage({
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
     new URLSearchParams(),
-    categories
+    categories,
   );
 
   const actualDate = parsed.segments.date;
@@ -204,7 +204,7 @@ export default async function ByDatePage({
   if (!events || events.length === 0) {
     const regionsWithCities = await fetchRegionsWithCities();
     const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === place)
+      r.cities.some((city) => city.value === place),
     );
 
     if (regionWithCities) {
@@ -273,7 +273,7 @@ export default async function ByDatePage({
           validEvents,
           finalCategory && finalCategory !== "tots"
             ? `Esdeveniments ${finalCategory} ${place}`
-            : `Esdeveniments ${actualDate} ${place}`
+            : `Esdeveniments ${actualDate} ${place}`,
         )
       : null;
 

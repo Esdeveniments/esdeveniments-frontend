@@ -4,6 +4,7 @@ import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
 import Link from "next/link";
 import { ClockIcon } from "@heroicons/react/outline";
+import { Text } from "components/ui/primitives/Text";
 
 const EventDetailsSection: React.FC<{
   event: EventDetailResponseDTO;
@@ -15,12 +16,14 @@ const EventDetailsSection: React.FC<{
   if (!event) return null;
 
   return (
-    <div className="w-full flex justify-center items-start gap-2 px-4">
-      <GlobeIcon className="w-5 h-5 mt-1" />
-      <div className="w-11/12 flex flex-col gap-4">
-        <h2>Detalls de l&apos;Esdeveniment</h2>
-        <div className="flex justify-start items-center gap-2">
-          <div className="flex flex-col gap-0.5 flex-1">
+    <div className="flex w-full items-start justify-center gap-component-xs px-component-md">
+      <GlobeIcon className="mt-component-xs h-5 w-5" />
+      <div className="flex w-11/12 flex-col gap-component-md">
+        <Text as="h2" variant="h2">
+          Detalls de l&apos;Esdeveniment
+        </Text>
+        <div className="flex items-center justify-start gap-component-xs">
+          <div className="flex flex-1 flex-col gap-xs.5">
             <EventStatusGroup
               temporalStatus={temporalStatus}
               formattedStart={formattedStart}
@@ -29,22 +32,28 @@ const EventDetailsSection: React.FC<{
             />
 
             {event.duration && (
-              <div className="flex items-center gap-2 text-sm text-blackCorp/70">
-                <ClockIcon className="w-4 h-4" />
-                Durada aproximada: {event.duration}
+              <div className="flex items-center gap-component-xs">
+                <ClockIcon className="h-4 w-4" />
+                <Text variant="body-sm" color="muted">
+                  Durada aproximada: {event.duration}
+                </Text>
               </div>
             )}
 
             {event.url && (
-              <div className="font-bold">
-                Enllaç a l&apos;esdeveniment:{" "}
+              <div>
+                <Text variant="body" className="font-bold">
+                  Enllaç a l&apos;esdeveniment:{" "}
+                </Text>
                 <Link
                   href={event.url}
-                  className="inline-block text-base font-medium text-blackCorp hover:text-primary transition-colors duration-200 border-b-2 border-blackCorp/20 hover:border-primary pb-0.1"
+                  className="pb-xs.1 inline-block border-b-2 border-blackCorp/20 transition-colors duration-200 hover:border-primary hover:text-primary"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {event.title}
+                  <Text variant="body" className="font-medium">
+                    {event.title}
+                  </Text>
                 </Link>
               </div>
             )}

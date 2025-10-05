@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: "Stripe payments are temporarily disabled." },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     if (!leadId || !eventId) {
       return NextResponse.json(
         { error: "Missing required fields: leadId, eventId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
     // Get pricing configuration
     const pricing = getPricingConfig(
       lead.displayDurationDays,
-      lead.geoScopeType
+      lead.geoScopeType,
     );
     if (!pricing) {
       return NextResponse.json(
         { error: "Pricing not available for this combination" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -125,13 +125,13 @@ export async function POST(request: NextRequest) {
           error:
             "Stripe payments are not available (dependency not installed).",
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await (stripe as any).checkout.sessions.create(
-      sessionParams
+      sessionParams,
     );
 
     const response: StripeCheckoutResponse = {
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating Stripe checkout session:", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -22,7 +22,7 @@ export const FILTER_DEFAULTS = {
  * Generic filter removal function using configuration
  */
 export function createFilterRemovalChanges(
-  filterType: keyof URLFilterState
+  filterType: keyof URLFilterState,
 ): Partial<URLFilterState> {
   // Use new configuration-driven approach
   const config = FilterOperations.getConfig(filterType);

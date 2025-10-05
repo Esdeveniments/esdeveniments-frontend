@@ -4,7 +4,7 @@ export default function createHash(
   title: string,
   url: string,
   location: string,
-  date: string | Date
+  date: string | Date,
 ): string {
   const dateString = date instanceof Date ? date.toISOString() : date;
   const hash = createHashFn("md5")

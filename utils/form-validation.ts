@@ -4,7 +4,7 @@ export const getZodValidationState = (
   form: EventFormSchemaType,
   isPristine: boolean,
   imageFile?: File | null,
-  isEditMode?: boolean
+  isEditMode?: boolean,
 ): { isDisabled: boolean; isPristine: boolean; message: string } => {
   const result = EventFormSchema.safeParse(form);
   if (!result.success) {

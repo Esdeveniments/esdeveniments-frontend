@@ -7,10 +7,10 @@ import type { CategoryKey, CategoryValue } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 export const findCategoryKeyByValue = (
-  value: string
+  value: string,
 ): CategoryKey | undefined => {
   return (Object.keys(CATEGORIES) as CategoryKey[]).find(
-    (key) => CATEGORIES[key] === value
+    (key) => CATEGORIES[key] === value,
   );
 };
 
@@ -20,7 +20,7 @@ export const findCategoryKeyByValue = (
  */
 export function findCategoryBySlugDynamic(
   categories: CategorySummaryResponseDTO[],
-  slug: string
+  slug: string,
 ): CategorySummaryResponseDTO | null {
   return findCategoryBySlug(categories, slug);
 }
@@ -31,7 +31,7 @@ export function findCategoryBySlugDynamic(
  */
 export function getCategoryFromDynamicData(
   categories: CategorySummaryResponseDTO[],
-  identifier: string | number
+  identifier: string | number,
 ): CategorySummaryResponseDTO | null {
   if (!categories || !Array.isArray(categories)) {
     return null;
@@ -50,7 +50,7 @@ export function getCategoryFromDynamicData(
 
     // Then try to find by name (exact match)
     const byName = categories.find(
-      (cat) => cat.name.toLowerCase() === identifier.toLowerCase()
+      (cat) => cat.name.toLowerCase() === identifier.toLowerCase(),
     );
     if (byName) return byName;
 
@@ -67,7 +67,7 @@ export function getCategoryFromDynamicData(
  */
 export function getCategoryId(
   categories: CategorySummaryResponseDTO[],
-  identifier: string | number | CategorySummaryResponseDTO
+  identifier: string | number | CategorySummaryResponseDTO,
 ): number | null {
   if (typeof identifier === "number") {
     return identifier;
@@ -90,7 +90,7 @@ export function getCategoryId(
  * Falls back to slug or ID if name is not available
  */
 export function getCategoryDisplayName(
-  category: CategorySummaryResponseDTO | null
+  category: CategorySummaryResponseDTO | null,
 ): string {
   if (!category) return "";
 

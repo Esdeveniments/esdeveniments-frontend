@@ -65,7 +65,7 @@ export function getOpenLineInfo(place: GooglePlace): OpenLineInfo | null {
     confidence === "confirmed"
       ? "text-green-700"
       : confidence === "inferred"
-      ? "text-amber-700"
-      : "text-gray-600";
+        ? "text-amber-700"
+        : "text-gray-600";
   return { hoursText, openLabel, toneClass };
 }
