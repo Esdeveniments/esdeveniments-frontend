@@ -6,7 +6,7 @@ function CardLoading(): JSX.Element {
       {/* Title */}
       <div className="bg-whiteCorp h-fit flex justify-between items-center gap-2 pr-4">
         <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
-          <div className="w-2 h-6 bg-gradient-to-r from-primary to-primarydark"></div>
+          <div className="w-2 h-6 bg-linear-to-r from-primary to-primarydark"></div>
         </div>
         {/* Title */}
         <div className="w-9/12 flex justify-start items-center animate-fast-pulse">

@@ -40,7 +40,7 @@ export default function CardContentServer({
         <div className="w-full flex flex-col justify-center bg-whiteCorp overflow-hidden cursor-pointer">
           <div className="bg-whiteCorp h-fit flex justify-start items-start gap-2 pr-4">
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
-              <div className="w-2 h-6 bg-gradient-to-r from-primary to-primarydark" />
+              <div className="w-2 h-6 bg-linear-to-r from-primary to-primarydark" />
             </div>
             <h3 className="w-full uppercase">{title}</h3>
             <div className="flex items-end gap-2">

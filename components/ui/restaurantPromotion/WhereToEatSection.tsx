@@ -62,7 +62,7 @@ export default function WhereToEatSection({
               >
                 <div className="flex items-start gap-4">
                   {getPhotoUrl(place) ? (
-                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 ml-4">
+                    <div className="relative w-20 h-20 rounded-md overflow-hidden shrink-0 bg-gray-100 ml-4">
                       <NextImage
                         src={getPhotoUrl(place)!}
                         alt={`Foto de ${place.name}`}
@@ -75,7 +75,7 @@ export default function WhereToEatSection({
                       />
                     </div>
                   ) : (
-                    <div className="w-20 h-20 rounded-md flex items-center justify-center bg-gray-100 text-gray-400 flex-shrink-0 ml-4">
+                    <div className="w-20 h-20 rounded-md flex items-center justify-center bg-gray-100 text-gray-400 shrink-0 ml-4">
                       <svg
                         className="w-8 h-8"
                         fill="none"
@@ -97,7 +97,7 @@ export default function WhereToEatSection({
                         {place.name}
                       </h3>
                       <svg
-                        className="h-4 w-4 text-primary opacity-70 group-hover:opacity-100 flex-shrink-0"
+                        className="h-4 w-4 text-primary opacity-70 group-hover:opacity-100 shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"

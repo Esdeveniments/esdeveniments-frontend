@@ -40,7 +40,7 @@ export default function WhereToEatSkeleton({
               className="border border-gray-200 rounded-lg pr-4 py-4 pl-0 animate-pulse"
             >
               <div className="flex items-start gap-4">
-                <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-gray-200 ml-4" />
+                <div className="relative w-20 h-20 rounded-md overflow-hidden shrink-0 bg-gray-200 ml-4" />
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <div className="h-4 bg-gray-200 rounded w-2/3" />
                   <div className="h-3 bg-gray-200 rounded w-1/2" />

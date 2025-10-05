@@ -251,7 +251,7 @@ function EventsSection({
         <div className="space-y-8">
           {(showHero ? otherEvents : events).map((event, index) => (
             <div key={event.id} className="flex gap-6 items-start">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-whiteCorp rounded-full flex items-center justify-center font-bold text-sm">
+              <div className="shrink-0 w-8 h-8 bg-primary text-whiteCorp rounded-full flex items-center justify-center font-bold text-sm">
                 {showHero ? index + 2 : index + 1}
               </div>
               <div className="flex-1">

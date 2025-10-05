@@ -1,12 +1,9 @@
-/* Critical CSS for initial page render */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Critical base styles */
 body {
   @apply font-sans antialiased text-base leading-relaxed;
 }
+
 
 html,
 body {

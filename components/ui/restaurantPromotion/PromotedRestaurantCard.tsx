@@ -36,10 +36,10 @@ export default function PromotedRestaurantCard({
           </span>
         </div>
 
-        <div className="border border-primary/20 rounded-lg p-4 bg-gradient-to-r from-primary/5 to-primary/10">
+        <div className="border border-primary/20 rounded-lg p-4 bg-linear-to-r from-primary/5 to-primary/10">
           <div className="flex items-start gap-4">
             {/* Restaurant Image */}
-            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden">
+            <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden">
               <ImageServer
                 image={promotion.image.secure_url}
                 title={promotion.restaurantName}

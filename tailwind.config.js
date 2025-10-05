@@ -58,17 +58,17 @@ module.exports = {
         1: "1",
         900: "900",
       },
-    },
-    colors: {
-      primary: "#FF0037",
-      primarydark: "#C8033F",
-      primarySoft: "#FF003750",
-      whiteCorp: "#ffffff",
-      darkCorp: "#F7F7F7",
-      // Use RGB with <alpha-value> to support /opacity utilities like from-blackCorp/70
-      blackCorp: "rgb(69 69 69 / <alpha-value>)",
-      fullBlackCorp: "rgb(0 0 0 / <alpha-value>)",
-      bColor: "#cccccc",
+      colors: {
+        primary: "rgb(255 0 55 / <alpha-value>)",
+        primarydark: "rgb(200 3 63 / <alpha-value>)",
+        primarySoft: "rgb(255 0 55 / 0.31)",
+        whiteCorp: "#ffffff",
+        darkCorp: "#F7F7F7",
+        // Use RGB with <alpha-value> to support /opacity utilities like from-blackCorp/70
+        blackCorp: "rgb(69 69 69 / <alpha-value>)",
+        fullBlackCorp: "rgb(0 0 0 / <alpha-value>)",
+        bColor: "#cccccc",
+      },
     },
   },
   variants: {
@@ -77,9 +77,5 @@ module.exports = {
       cursor: ["disabled"],
     },
   },
-  plugins: [
-    require("@tailwindcss/aspect-ratio"),
-    require("@tailwindcss/typography"),
-    require("@tailwindcss/forms"),
-  ],
+  plugins: [],
 };

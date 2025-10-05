@@ -23,6 +23,7 @@
         "name": "next"
       }
     ],
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@store": [
@@ -65,7 +66,8 @@
     "noUnusedParameters": true,
     "types": [
       "vitest/globals",
-      "./types/react-datepicker.d.ts"
+      "./types/react-datepicker.d.ts",
+      "./types/navigator.d.ts"
     ]
   },
   "include": [

@@ -13,7 +13,7 @@ const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
   const cardClass =
     layout === "horizontal"
       ? "flex-none w-96 min-w-[24rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer"
-      : "flex-none w-40 min-w-[10rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer";
+      : "flex-none w-40 min-w-40 flex flex-col bg-whiteCorp overflow-hidden cursor-pointer";
 
   const imageClass = layout === "horizontal" ? "w-full h-64" : "w-full h-32";
 
@@ -191,7 +191,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           return (
             <div
               key={event.id ?? event.slug ?? index}
-              className="flex-none w-40 min-w-[10rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer mb-10"
+              className="flex-none w-40 min-w-40 flex flex-col bg-whiteCorp overflow-hidden cursor-pointer mb-10"
             >
               <Link href={`/e/${event.slug}`}>
                 {/* ImageEvent */}
@@ -208,7 +208,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                 {/* Title */}
                 <div className="flex pt-2">
                   <div className="pt-[2px] pr-2">
-                    <div className="w-2 h-4 bg-gradient-to-r from-primary to-primarydark"></div>
+                    <div className="w-2 h-4 bg-linear-to-r from-primary to-primarydark"></div>
                   </div>
                   <h3 className="text-sm font-semibold text-ellipsis overflow-hidden whitespace-nowrap">
                     {eventTitle}

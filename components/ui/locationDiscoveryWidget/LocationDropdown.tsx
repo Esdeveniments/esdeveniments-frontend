@@ -144,7 +144,7 @@ export default function LocationDropdown({
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-blackCorp flex items-center gap-2"
                     aria-selected={selectedLocation?.value === option.value}
                   >
-                    <LocationIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                    <LocationIcon className="h-4 w-4 text-primary shrink-0" />
                     {option.label}
                   </li>
                 ))}

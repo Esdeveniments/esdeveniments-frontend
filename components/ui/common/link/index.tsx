@@ -23,7 +23,7 @@ export default function ActiveLink({
     classNameProps = `${
       activeLinkClass
         ? activeLinkClass
-        : "text-primary bg-whiteCorp border-b-2 border-primary ease-in-out duration-200"
+        : "text-primary bg-whiteCorp border-primary ease-in-out duration-200"
     } ${classNameProps}`;
   }
 

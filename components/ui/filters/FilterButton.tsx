@@ -23,7 +23,7 @@ const FilterButton = ({
 
   return (
     <div
-      className="flex-shrink-0 bg-whiteCorp flex justify-center items-center nowrap min-w-max"
+      className="shrink-0 bg-whiteCorp flex justify-center items-center nowrap min-w-max"
       data-testid={testId}
     >
       <div

@@ -44,12 +44,12 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
           <div>
             <div className="flex justify-between items-start mb-3 gap-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-1 h-6 bg-gradient-to-b from-primary to-primarydark flex-shrink-0"></div>
+                <div className="w-1 h-6 bg-linear-to-b from-primary to-primarydark shrink-0"></div>
                 <h3 className="text-lg font-semibold text-blackCorp line-clamp-2 flex-1 group-hover:underline transition-all duration-200">
                   {title}
                 </h3>
               </div>
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <ViewCounter visits={event.visits} hideText />
               </div>
             </div>
@@ -60,7 +60,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             {/* Date */}
             <div className="flex items-center text-sm text-gray-700 mb-2">
               <svg
-                className="w-4 h-4 mr-2 text-primary flex-shrink-0"
+                className="w-4 h-4 mr-2 text-primary shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -78,7 +78,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             {/* Location */}
             <div className="flex items-center text-sm text-gray-700">
               <svg
-                className="w-4 h-4 mr-2 text-primary flex-shrink-0"
+                className="w-4 h-4 mr-2 text-primary shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

@@ -24,7 +24,7 @@ export default function NewsCard({
     return (
       <section className="relative w-full overflow-hidden rounded-xl bg-darkCorp shadow-lg">
         {image ? (
-          <div className="relative aspect-[16/9] w-full md:h-80">
+          <div className="relative aspect-video w-full md:h-80">
             <Image
               src={image || "/placeholder.svg"}
               alt={event.title}
@@ -35,9 +35,9 @@ export default function NewsCard({
             />
           </div>
         ) : (
-          <div className="aspect-[16/9] w-full bg-gradient-to-br from-primarySoft to-primary md:h-80" />
+          <div className="aspect-video w-full bg-linear-to-br from-primarySoft to-primary md:h-80" />
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-fullBlackCorp/95 via-fullBlackCorp/70 to-fullBlackCorp/40" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-fullBlackCorp/95 via-fullBlackCorp/70 to-fullBlackCorp/40" />
 
         <div className="absolute inset-x-0 bottom-0 px-4 pt-6 pb-8 sm:p-6 text-whiteCorp">
           <h2 className="mb-3 text-3xl font-extrabold leading-tight md:drop-shadow-2xl md:text-4xl lg:text-5xl text-balance">
@@ -77,10 +77,10 @@ export default function NewsCard({
             width={1200}
             height={675}
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 800px"
-            className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
+            className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (
-          <div className="aspect-[16/9] w-full bg-gradient-to-br from-darkCorp to-bColor" />
+          <div className="aspect-video w-full bg-linear-to-br from-darkCorp to-bColor" />
         )}
       </div>
 

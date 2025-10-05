@@ -12,7 +12,7 @@ const EventCategories: React.FC<EventCategoriesProps> = ({
   return (
     <div className="w-full flex justify-center items-start gap-2 px-4">
       <TagIcon
-        className="h-5 w-5 mt-1 text-blackCorp flex-shrink-0"
+        className="h-5 w-5 mt-1 text-blackCorp shrink-0"
         aria-hidden="true"
       />
       <div className="w-11/12 flex flex-col gap-4">

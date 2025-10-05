@@ -16,7 +16,7 @@ const Notification: FC<EventNotificationProps> = ({
     return (
       <div className="rounded-md bg-green-50 p-4 mb-4 break-word">
         <div className="flex">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <CheckCircleIcon
               className="h-5 w-5 text-primary"
               aria-hidden="true"
@@ -48,7 +48,7 @@ const Notification: FC<EventNotificationProps> = ({
         </div>
       )}
       <div className="flex">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {type === "warning" ? (
             <ExclamationCircleIcon
               className="h-5 w-5 text-green-400"

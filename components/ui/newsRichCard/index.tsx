@@ -25,26 +25,26 @@ export default function NewsRichCard({
   if (variant === "horizontal") {
     return (
       <article className="group w-full overflow-hidden rounded-xl border border-bColor bg-whiteCorp shadow-sm transition-all hover:shadow-lg hover:border-blackCorp/20">
-        <div className="flex flex-col md:flex-row gap-6 p-6 relative z-[1]">
+        <div className="flex flex-col md:flex-row gap-6 p-6 relative z-1">
           {numbered && (
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-whiteCorp">
                 {numbered}
               </div>
             </div>
           )}
 
-          <div className="md:flex-shrink-0">
+          <div className="md:shrink-0">
             {image ? (
               <Image
                 src={image || "/placeholder.svg"}
                 alt={event.title}
                 width={200}
                 height={150}
-                className="aspect-[4/3] w-full md:w-48 object-cover rounded-lg transition-transform group-hover:scale-105"
+                className="aspect-4/3 w-full md:w-48 object-cover rounded-lg transition-transform group-hover:scale-105"
               />
             ) : (
-              <div className="aspect-[4/3] w-full md:w-48 bg-gradient-to-br from-darkCorp to-bColor rounded-lg" />
+              <div className="aspect-4/3 w-full md:w-48 bg-linear-to-br from-darkCorp to-bColor rounded-lg" />
             )}
           </div>
 
@@ -113,10 +113,10 @@ export default function NewsRichCard({
             width={1200}
             height={675}
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 800px"
-            className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
+            className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (
-          <div className="aspect-[16/9] w-full bg-gradient-to-br from-darkCorp to-bColor" />
+          <div className="aspect-video w-full bg-linear-to-br from-darkCorp to-bColor" />
         )}
       </div>
 

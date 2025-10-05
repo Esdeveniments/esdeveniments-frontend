@@ -69,7 +69,7 @@ export default function Navbar() {
                       <ActiveLink
                         href={item.href}
                         key={item.name}
-                        className="border-b-2 border-b-whiteCorp"
+                        className="border-b-whiteCorp"
                       >
                         {item.name}
                       </ActiveLink>

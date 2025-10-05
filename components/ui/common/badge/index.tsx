@@ -3,14 +3,13 @@ import Link from "next/link";
 
 // Base classes requested by design, adapted to use the project's color palette
 const BASE_CLASS =
-  "rounded-lg px-4 py-2 text-sm font-medium border-2 border-blackCorp/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98]";
+  "rounded-lg px-4 py-2 text-sm font-medium border-2 border-blackCorp/60 hover:border-primary hover:text-primary transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98]";
 
 const Badge = forwardRef<
   HTMLSpanElement,
   React.PropsWithChildren<{
     href?: string;
     className?: string;
-    variant?: "outline" | "solid";
     onClick?: () => void;
     ariaLabel?: string;
   }>

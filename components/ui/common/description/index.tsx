@@ -28,7 +28,7 @@ export default function Description({
             </p>
           )}
           <div
-            className="text-base leading-relaxed font-normal text-blackCorp [&>*]:text-base [&>*]:leading-relaxed [&>*]:font-normal [&>*]:text-blackCorp"
+            className="text-base leading-relaxed font-normal text-blackCorp *:text-base *:leading-relaxed *:font-normal [&>*]:text-blackCorp"
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
           <div className="text-base font-normal text-blackCorp">
