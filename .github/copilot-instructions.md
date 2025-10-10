@@ -170,7 +170,7 @@ Adding a new filter:
 
 ### Mandatory Constraints
 
-- Max 40 lines of code per function.
+- Max 100 lines of code per function.
 - Do **not** create generic utilities without immediate usage.
 - Do **not** duplicate logic that already exists in `/lib`, `/components`, or `/utils`.
 - Always prefer composition over inheritance.
@@ -190,3 +190,147 @@ Adding a new filter:
 - File exceeding 200 lines.
 - Logic duplicated across multiple locations.
 - Abstractions deeper than 3 levels.
+
+## 20. Design System Conventions
+
+**Status**: Active (Week 0 - Foundation established)  
+**Reference**: `/docs/design-system-quick-start.md` (bookmark this)
+
+### Mandatory Rules
+
+1. **Typography**: ALWAYS use semantic classes, NEVER arbitrary text-\* utilities
+
+   - Headings: `.heading-1`, `.heading-2`, `.heading-3`, `.heading-4`
+   - Body: `.body-large`, `.body-normal`, `.body-small`
+   - Labels: `.label`
+   - Example: `<h1 className="heading-1">` NOT `<h1 className="text-3xl font-bold">`
+
+2. **Colors**: ALWAYS use semantic tokens, NEVER generic Tailwind grays
+
+   - ✅ Use: `text-blackCorp`, `text-blackCorp/80`, `bg-darkCorp`, `border-bColor`
+   - ❌ Forbidden: `text-gray-*`, `bg-gray-*`, `border-gray-*`
+   - Opacity: Use `/80`, `/70`, `/60` suffixes (e.g., `text-blackCorp/80`)
+   - Reference: Brand colors defined in `tailwind.config.js`
+
+3. **Buttons**: Use existing Button component or semantic classes
+
+   - Component: `<Button variant="neutral|primary|outline|muted|solid">`
+   - Classes: `.btn-neutral`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`
+   - Sizes: `.btn-sm`, `.btn-lg`
+   - NO manual button styling with inline utilities
+
+4. **Cards**: Use semantic card classes
+
+   - `.card-bordered` (border + subtle shadow)
+   - `.card-elevated` (stronger shadow, no border)
+   - `.card-body`, `.card-header`, `.card-footer` (spacing)
+   - Example: `<div className="card-bordered"><div className="card-body">...</div></div>`
+
+5. **Badges**: Use semantic badge classes
+
+   - `.badge-primary` (red background)
+   - `.badge-secondary` (gray background)
+   - `.badge-outline` (border, for filters)
+   - Component: `<Badge>` already exists, use it
+
+6. **Layout Utilities**: Replace repetitive flex patterns
+
+   - `.flex-center` replaces `flex justify-center items-center`
+   - `.flex-between` replaces `flex justify-between items-center`
+   - `.flex-start` replaces `flex justify-start items-center`
+   - `.flex-end` replaces `flex justify-end items-center`
+   - `.stack` replaces `flex flex-col gap-element-gap`
+   - `.stack-sm`, `.stack-lg` for different gaps
+
+7. **Spacing**: Use semantic tokens for consistency
+
+   - `py-section-y`, `px-section-x` for section spacing
+   - `p-card-padding` for card inner padding
+   - `gap-element-gap` for default gaps
+   - Still allowed: Standard Tailwind spacing (gap-2, p-4, etc.) when appropriate
+
+8. **Border Radius**: Use semantic tokens
+   - `rounded-button` for buttons (12px)
+   - `rounded-card` for cards (12px)
+   - `rounded-input` for form inputs (8px)
+   - `rounded-badge` for pills/badges (full)
+
+### Migration Context
+
+**Current Phase**: Week 0 - Foundation  
+**Status**: Design system classes added to `globals.css`, components being migrated incrementally
+
+When modifying existing components:
+
+- Prefer semantic classes over inline utilities
+- Consult `/docs/component-migration-inventory.md` for migration priority
+- Check `/docs/gray-migration-map.md` for color replacements
+- Keep changes incremental (don't rewrite entire components)
+
+### Examples
+
+**Typography**:
+
+```tsx
+// ❌ Bad
+<h1 className="text-3xl md:text-4xl font-bold">Title</h1>
+
+// ✅ Good
+<h1 className="heading-1">Title</h1>
+```
+
+**Colors**:
+
+```tsx
+// ❌ Bad
+<p className="text-gray-600">Secondary text</p>
+
+// ✅ Good
+<p className="text-blackCorp/80">Secondary text</p>
+```
+
+**Buttons**:
+
+```tsx
+// ❌ Bad
+<button className="bg-primary text-whiteCorp px-6 py-3 rounded-xl hover:bg-primarydark">
+  Submit
+</button>
+
+// ✅ Good
+<Button variant="primary">Submit</Button>
+// OR
+<button className="btn-primary">Submit</button>
+```
+
+**Layout**:
+
+```tsx
+// ❌ Bad
+<div className="flex justify-center items-center gap-4">
+  <span>Icon</span>
+  <span>Text</span>
+</div>
+
+// ✅ Good
+<div className="flex-center gap-4">
+  <span>Icon</span>
+  <span>Text</span>
+</div>
+```
+
+### AI Agent Reminders
+
+- **Before creating any component**: Check if semantic classes apply
+- **Before using text-gray-_/bg-gray-_/border-gray-\***: STOP. Use semantic tokens.
+- **Before writing long className strings**: Check if semantic class exists
+- **When reviewing code**: Flag any generic grays or repetitive patterns
+- **Context retention**: Reference `/docs/design-system-quick-start.md` when uncertain
+
+### Resources
+
+- Quick Reference: `/docs/design-system-quick-start.md`
+- Migration Examples: `/docs/component-refactor-examples.md`
+- Gray Mapping: `/docs/gray-migration-map.md`
+- Component Priority: `/docs/component-migration-inventory.md`
+- Full Spec: `/docs/design-system-audit.md`
