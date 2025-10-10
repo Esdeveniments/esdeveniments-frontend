@@ -1,12 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import { middleware } from "../middleware";
-import {
-  generateHmac,
-  validateTimestamp,
-  buildStringToSign,
-  verifyHmacSignature,
-} from "../utils/hmac";
+import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
 
@@ -29,13 +24,13 @@ vi.mock("next/server", () => {
     };
   });
 
-  MockNextResponse.next = vi.fn(() => new MockNextResponse());
-  MockNextResponse.redirect = vi.fn(
-    (url, status) => new MockNextResponse("redirect", { status })
-  );
-  MockNextResponse.json = vi.fn(
-    (data, options) => new MockNextResponse(JSON.stringify(data), options)
-  );
+  Object.assign(MockNextResponse, {
+    next: vi.fn(() => MockNextResponse()),
+    redirect: vi.fn((url, status) => MockNextResponse("redirect", { status })),
+    json: vi.fn((data, options) =>
+      MockNextResponse(JSON.stringify(data), options)
+    ),
+  });
 
   return {
     NextRequest: vi.fn(),
@@ -67,8 +62,16 @@ describe("middleware", () => {
       randomUUID: vi.fn().mockReturnValue("test-uuid"),
     });
 
-    vi.mocked(NextResponse).next.mockReturnValue({ headers: new Headers() });
-    vi.mocked(NextResponse).redirect.mockReturnValue(new Response());
+    vi.mocked(NextResponse).next.mockReturnValue({
+      status: 200,
+      headers: new Headers(),
+      text: () => Promise.resolve(""),
+    } as unknown as NextResponse);
+    vi.mocked(NextResponse).redirect.mockReturnValue({
+      status: 301,
+      headers: new Headers(),
+      text: () => Promise.resolve("redirect"),
+    } as unknown as NextResponse);
   });
 
   afterEach(() => {
@@ -108,12 +111,14 @@ describe("middleware", () => {
 
     it("redirects legacy /tots/ routes", async () => {
       const mockRequest = {
-        nextUrl: { pathname: "/tots/barcelona/events", search: "?param=value" },
+        nextUrl: {
+          pathname: "/tots/barcelona/events",
+          search: "?param=value",
+          searchParams: new URLSearchParams("?param=value"),
+        },
         url: "https://example.com/tots/barcelona/events?param=value",
         headers: new Headers(),
       } as unknown as NextRequest;
-
-      (NextResponse.redirect as Mock).mockReturnValue(new Response());
 
       await middleware(mockRequest);
 
@@ -232,7 +237,7 @@ describe("middleware", () => {
       } as unknown as NextRequest;
 
       // Mock verifyHmac to return false
-      (globalThis.crypto.subtle.verify as any).mockResolvedValue(false);
+      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(false);
 
       await middleware(mockRequest);
 
@@ -261,7 +266,7 @@ describe("middleware", () => {
       } as unknown as NextRequest;
 
       // Mock verifyHmac to return true
-      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
       await middleware(mockRequest);
 
@@ -285,7 +290,7 @@ describe("middleware", () => {
         text: vi.fn().mockResolvedValue(body),
       } as unknown as NextRequest;
 
-      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
       await middleware(mockRequest);
 
@@ -309,7 +314,7 @@ describe("middleware", () => {
         text: vi.fn(), // Should not be called
       } as unknown as NextRequest;
 
-      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
       await middleware(mockRequest);
 
@@ -330,7 +335,7 @@ describe("middleware", () => {
         text: vi.fn().mockRejectedValue(new Error("Read error")),
       } as unknown as NextRequest;
 
-      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
       // Should not throw, should continue with empty body
       await middleware(mockRequest);

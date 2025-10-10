@@ -116,12 +116,12 @@ export async function middleware(request: NextRequest) {
   const segments = pathname.split("/").filter(Boolean);
   if (
     (segments.length === 3 || segments.length === 2) &&
-    segments[1] === "tots"
+    segments[0] === "tots"
   ) {
     const newPath =
       segments.length === 3
-        ? `/${segments[0]}/${segments[2]}`
-        : `/${segments[0]}`;
+        ? `/${segments[1]}/${segments[2]}`
+        : `/${segments[1]}`;
     const searchParams = request.nextUrl.searchParams.toString();
     const finalUrl = searchParams ? `${newPath}?${searchParams}` : newPath;
     return NextResponse.redirect(new URL(finalUrl, request.url), 301);

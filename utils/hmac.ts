@@ -4,14 +4,16 @@ import { webcrypto } from "crypto";
 const cryptoSubtle = globalThis.crypto?.subtle || webcrypto.subtle;
 
 // Use the server-only secret. This ensures the secret is never exposed to the browser.
-export const hmacSecret =
-  process.env.HMAC_SECRET ||
-  "57fb1eec6911f154fc7fadacf85432429bd028c4a3116df2063e8717010e002d";
+const _hmacSecret = process.env.HMAC_SECRET;
+if (!_hmacSecret) {
+  throw new Error("HMAC_SECRET environment variable must be set");
+}
+export const hmacSecret = _hmacSecret;
 
 function hexToUint8Array(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.substring(i * 2, 2), 16);
+    bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
   }
   return bytes;
 }
@@ -25,7 +27,7 @@ export const generateHmac = async (
   const keyBytes = hexToUint8Array(hmacSecret);
   const key = await cryptoSubtle.importKey(
     "raw",
-    keyBytes,
+    keyBytes as BufferSource,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]
@@ -66,7 +68,7 @@ export const verifyHmacSignature = async (
   const keyBytes = hexToUint8Array(secret);
   const key = await cryptoSubtle.importKey(
     "raw",
-    keyBytes as any,
+    keyBytes as BufferSource,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"]
