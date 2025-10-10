@@ -1,38 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "./utils/api-helpers";
+import {
+  validateTimestamp,
+  buildStringToSign,
+  verifyHmacSignature,
+} from "./utils/hmac";
 
-const encoder = new TextEncoder();
-
-async function getHmacKey(secret: string) {
-  return crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"]
-  );
-}
-
-function hexToUint8Array(hex: string): Uint8Array<ArrayBuffer> {
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
-  }
-  return bytes;
-}
-
-async function verifyHmac(
-  data: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  const key = await getHmacKey(secret);
-  const dataBuffer = encoder.encode(data);
-  const signatureBuffer = hexToUint8Array(signature);
-  return crypto.subtle.verify("HMAC", key, signatureBuffer, dataBuffer);
-}
-
-const hmacSecret = process.env.HMAC_SECRET;
 const isDev = process.env.NODE_ENV !== "production";
 
 function getCsp(nonce: string) {
@@ -82,7 +55,7 @@ export async function middleware(request: NextRequest) {
     const contentType = request.headers.get("content-type") || "";
     let requestBody = "";
 
-    if (!hmacSecret) {
+    if (!process.env.HMAC_SECRET) {
       console.error("HMAC_SECRET is not configured on the server.");
       return new NextResponse("Internal Server Error", { status: 500 });
     }
@@ -94,6 +67,10 @@ export async function middleware(request: NextRequest) {
         console.warn("Could not read request body in middleware:", error);
       }
     }
+    console.log("requestBody:", requestBody);
+    console.log("timestamp:", timestamp);
+    console.log("pathname:", pathname);
+    console.log("search:", request.nextUrl.search);
 
     if (!hmac || !timestamp) {
       return new NextResponse("Unauthorized: Missing security headers", {
@@ -101,24 +78,24 @@ export async function middleware(request: NextRequest) {
       });
     }
 
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
-    const requestTimestamp = parseInt(timestamp, 10);
-
-    if (
-      isNaN(requestTimestamp) ||
-      requestTimestamp > now + 60000 ||
-      now - requestTimestamp > fiveMinutes
-    ) {
+    if (!validateTimestamp(timestamp)) {
       return new NextResponse("Request timed out or has invalid timestamp", {
         status: 408,
       });
     }
 
-    const stringToSign = `${requestBody}${timestamp}${pathname}${request.nextUrl.search}`;
-    const signatureIsValid = await verifyHmac(stringToSign, hmac, hmacSecret);
+    const stringToSign = buildStringToSign(
+      requestBody,
+      timestamp,
+      pathname,
+      request.nextUrl.search
+    );
+    console.log("stringToSign:", stringToSign);
+    console.log("hmac:", hmac);
+    const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
+    console.log("signatureIsValid:", signatureIsValid);
     if (!signatureIsValid) {
-      return new NextResponse("Unauthorized: Invalid signature", {
+      return new NextResponse(`Unauthorized: Invalid signature`, {
         status: 401,
       });
     }

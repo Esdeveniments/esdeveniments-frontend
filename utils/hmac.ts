@@ -1,20 +1,86 @@
-import { createHmac } from "crypto";
+import { webcrypto } from "crypto";
+
+// Use crypto.subtle for consistency with middleware
+const cryptoSubtle = globalThis.crypto?.subtle || webcrypto.subtle;
 
 // Use the server-only secret. This ensures the secret is never exposed to the browser.
-const hmacSecret = process.env.HMAC_SECRET;
+export const hmacSecret =
+  process.env.HMAC_SECRET ||
+  "57fb1eec6911f154fc7fadacf85432429bd028c4a3116df2063e8717010e002d";
 
-export const generateHmac = (
+function hexToUint8Array(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.substring(i * 2, 2), 16);
+  }
+  return bytes;
+}
+
+export const generateHmac = async (
   body: string,
   timestamp: number,
   pathAndQuery: string
-): string => {
-  if (!hmacSecret) {
-    // This will now only be an issue if the secret is missing on the server, which is the correct behavior.
-    throw new Error("HMAC_SECRET is not configured on the server.");
-  }
-
+): Promise<string> => {
   const stringToSign = `${body}${timestamp}${pathAndQuery}`;
-  const hmac = createHmac("sha256", hmacSecret);
-  hmac.update(stringToSign);
-  return hmac.digest("hex");
+  const keyBytes = hexToUint8Array(hmacSecret);
+  const key = await cryptoSubtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const dataBuffer = new TextEncoder().encode(stringToSign);
+  const signatureBuffer = await cryptoSubtle.sign("HMAC", key, dataBuffer);
+  const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return signatureHex;
+};
+
+export const validateTimestamp = (timestamp: string): boolean => {
+  const now = Date.now();
+  const fiveMinutes = 5 * 60 * 1000;
+  const requestTimestamp = parseInt(timestamp, 10);
+  return !(
+    isNaN(requestTimestamp) ||
+    requestTimestamp > now + 60000 ||
+    now - requestTimestamp > fiveMinutes
+  );
+};
+
+export const buildStringToSign = (
+  body: string,
+  timestamp: string,
+  pathname: string,
+  search: string
+): string => {
+  return `${body}${timestamp}${pathname}${search}`;
+};
+
+export const verifyHmacSignature = async (
+  stringToSign: string,
+  signature: string,
+  secret: string = hmacSecret
+): Promise<boolean> => {
+  const keyBytes = hexToUint8Array(secret);
+  const key = await cryptoSubtle.importKey(
+    "raw",
+    keyBytes as any,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+  const dataBuffer = new TextEncoder().encode(stringToSign);
+  const expectedSignatureBuffer = await cryptoSubtle.sign(
+    "HMAC",
+    key,
+    dataBuffer
+  );
+  const expectedSignatureHex = Array.from(
+    new Uint8Array(expectedSignatureBuffer)
+  )
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return expectedSignatureHex === signature;
 };

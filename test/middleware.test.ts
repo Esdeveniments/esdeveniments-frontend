@@ -1,0 +1,410 @@
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
+import { NextRequest, NextResponse } from "next/server";
+import { middleware } from "../middleware";
+import {
+  generateHmac,
+  validateTimestamp,
+  buildStringToSign,
+  verifyHmacSignature,
+} from "../utils/hmac";
+
+const originalEnv = { ...process.env };
+
+// Mock crypto globally
+vi.stubGlobal("crypto", {
+  subtle: {
+    importKey: vi.fn(),
+    sign: vi.fn(),
+    verify: vi.fn(),
+  },
+  randomUUID: vi.fn().mockReturnValue("test-uuid"),
+});
+
+vi.mock("next/server", () => {
+  const MockNextResponse = vi.fn().mockImplementation((body, options) => {
+    return {
+      status: options?.status || 200,
+      headers: new Headers(),
+      text: () => Promise.resolve(body || ""),
+    };
+  });
+
+  MockNextResponse.next = vi.fn(() => new MockNextResponse());
+  MockNextResponse.redirect = vi.fn(
+    (url, status) => new MockNextResponse("redirect", { status })
+  );
+  MockNextResponse.json = vi.fn(
+    (data, options) => new MockNextResponse(JSON.stringify(data), options)
+  );
+
+  return {
+    NextRequest: vi.fn(),
+    NextResponse: MockNextResponse,
+  };
+});
+
+// No need for globalThis mock, vi.mock handles it
+
+vi.mock("../utils/api-helpers", () => ({
+  getApiOrigin: vi.fn().mockReturnValue("https://api.example.com"),
+}));
+
+describe("middleware", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+    process.env = { ...originalEnv };
+    process.env.HMAC_SECRET = "test-secret";
+
+    // Reset mocks
+    vi.restoreAllMocks();
+    vi.stubGlobal("crypto", {
+      subtle: {
+        importKey: vi.fn(),
+        sign: vi.fn(),
+        verify: vi.fn(),
+      },
+      randomUUID: vi.fn().mockReturnValue("test-uuid"),
+    });
+
+    vi.mocked(NextResponse).next.mockReturnValue({ headers: new Headers() });
+    vi.mocked(NextResponse).redirect.mockReturnValue(new Response());
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  describe("non-API routes", () => {
+    it("passes through non-API routes", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/home", search: "" },
+        headers: new Headers(),
+        clone: vi.fn().mockReturnThis(),
+      } as unknown as NextRequest;
+
+      const result = await middleware(mockRequest);
+
+      expect(NextResponse.next).toHaveBeenCalled();
+      expect(result).toBeDefined();
+    });
+
+    it("handles /sw.js route with cache headers", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/sw.js", search: "" },
+        headers: new Headers(),
+      } as unknown as NextRequest;
+
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+
+      const result = await middleware(mockRequest);
+
+      expect(result.headers.get("Cache-Control")).toBe(
+        "no-cache, no-store, must-revalidate"
+      );
+      expect(result.headers.get("Service-Worker-Allowed")).toBe("/");
+    });
+
+    it("redirects legacy /tots/ routes", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/tots/barcelona/events", search: "?param=value" },
+        url: "https://example.com/tots/barcelona/events?param=value",
+        headers: new Headers(),
+      } as unknown as NextRequest;
+
+      (NextResponse.redirect as Mock).mockReturnValue(new Response());
+
+      await middleware(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL(
+          "/barcelona/events?param=value",
+          "https://example.com/tots/barcelona/events?param=value"
+        ),
+        301
+      );
+    });
+  });
+
+  describe("API routes", () => {
+    it("returns 401 when x-hmac header is missing", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({ "x-timestamp": "1234567890" }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(""),
+      } as unknown as NextRequest;
+
+      await middleware(mockRequest);
+
+      expect(NextResponse).toHaveBeenCalledWith(
+        "Unauthorized: Missing security headers",
+        { status: 401 }
+      );
+    });
+
+    it("returns 401 when x-timestamp header is missing", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({ "x-hmac": "some-hmac" }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(""),
+      } as unknown as NextRequest;
+
+      await middleware(mockRequest);
+
+      expect(NextResponse).toHaveBeenCalledWith(
+        "Unauthorized: Missing security headers",
+        { status: 401 }
+      );
+    });
+
+    it("returns 408 for invalid timestamp format", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": "invalid",
+          "x-hmac": "some-hmac",
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(""),
+      } as unknown as NextRequest;
+
+      await middleware(mockRequest);
+
+      expect(NextResponse).toHaveBeenCalledWith(
+        "Request timed out or has invalid timestamp",
+        { status: 408 }
+      );
+    });
+
+    it("returns 408 for future timestamp", async () => {
+      const futureTimestamp = Date.now() + 120000; // 2 minutes in future
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": futureTimestamp.toString(),
+          "x-hmac": "some-hmac",
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(""),
+      } as unknown as NextRequest;
+
+      await middleware(mockRequest);
+
+      expect(NextResponse).toHaveBeenCalledWith(
+        "Request timed out or has invalid timestamp",
+        { status: 408 }
+      );
+    });
+
+    it("returns 408 for expired timestamp", async () => {
+      const expiredTimestamp = Date.now() - 6 * 60 * 1000; // 6 minutes ago
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": expiredTimestamp.toString(),
+          "x-hmac": "some-hmac",
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(""),
+      } as unknown as NextRequest;
+
+      await middleware(mockRequest);
+
+      expect(NextResponse).toHaveBeenCalledWith(
+        "Request timed out or has invalid timestamp",
+        { status: 408 }
+      );
+    });
+
+    it("returns 401 for invalid HMAC", async () => {
+      const timestamp = Date.now();
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": timestamp.toString(),
+          "x-hmac": "invalid-hmac",
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue("request body"),
+      } as unknown as NextRequest;
+
+      // Mock verifyHmac to return false
+      (globalThis.crypto.subtle.verify as any).mockResolvedValue(false);
+
+      await middleware(mockRequest);
+
+      expect(NextResponse).toHaveBeenCalledWith(
+        "Unauthorized: Invalid signature",
+        { status: 401 }
+      );
+    });
+
+    it("passes through valid requests", async () => {
+      const timestamp = Date.now();
+      const body = "request body";
+      const pathAndQuery = "/api/test";
+
+      // Generate valid HMAC
+      const validHmac = await generateHmac(body, timestamp, pathAndQuery);
+
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": timestamp.toString(),
+          "x-hmac": validHmac,
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(body),
+      } as unknown as NextRequest;
+
+      // Mock verifyHmac to return true
+      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+
+      await middleware(mockRequest);
+
+      expect(NextResponse.next).toHaveBeenCalled();
+    });
+
+    it("includes query parameters in signature verification", async () => {
+      const timestamp = Date.now();
+      const body = "request body";
+      const pathAndQuery = "/api/test?param=value&other=123";
+
+      const validHmac = await generateHmac(body, timestamp, pathAndQuery);
+
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "?param=value&other=123" },
+        headers: new Headers({
+          "x-timestamp": timestamp.toString(),
+          "x-hmac": validHmac,
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(body),
+      } as unknown as NextRequest;
+
+      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+
+      await middleware(mockRequest);
+
+      expect(NextResponse.next).toHaveBeenCalled();
+    });
+
+    it("skips body reading for multipart/form-data", async () => {
+      const timestamp = Date.now();
+      const pathAndQuery = "/api/upload";
+
+      const validHmac = await generateHmac("", timestamp, pathAndQuery);
+
+      const mockRequest = {
+        nextUrl: { pathname: "/api/upload", search: "" },
+        headers: new Headers({
+          "x-timestamp": timestamp.toString(),
+          "x-hmac": validHmac,
+          "content-type": "multipart/form-data; boundary=boundary",
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn(), // Should not be called
+      } as unknown as NextRequest;
+
+      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+
+      await middleware(mockRequest);
+
+      expect(mockRequest.clone().text).not.toHaveBeenCalled();
+      expect(NextResponse.next).toHaveBeenCalled();
+    });
+
+    it("handles body reading errors gracefully", async () => {
+      const timestamp = Date.now();
+      const validHmac = await generateHmac("", timestamp, "/api/test");
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": timestamp.toString(),
+          "x-hmac": validHmac,
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockRejectedValue(new Error("Read error")),
+      } as unknown as NextRequest;
+
+      (globalThis.crypto.subtle.verify as any).mockResolvedValue(true);
+
+      // Should not throw, should continue with empty body
+      await middleware(mockRequest);
+
+      expect(NextResponse.next).toHaveBeenCalled();
+    });
+
+    it("returns 500 when HMAC_SECRET is not configured", async () => {
+      delete process.env.HMAC_SECRET;
+
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": "1234567890",
+          "x-hmac": "some-hmac",
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(""),
+      } as unknown as NextRequest;
+
+      await middleware(mockRequest);
+
+      expect(NextResponse).toHaveBeenCalledWith("Internal Server Error", {
+        status: 500,
+      });
+    });
+  });
+
+  describe("CSP and security headers", () => {
+    it("adds security headers to non-API routes", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/home", search: "" },
+        headers: new Headers(),
+      } as unknown as NextRequest;
+
+      const mockResponse = {
+        headers: new Headers(),
+      };
+      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+
+      await middleware(mockRequest);
+
+      expect(mockResponse.headers.get("Content-Security-Policy")).toBeDefined();
+      expect(
+        mockResponse.headers.get("Strict-Transport-Security")
+      ).toBeDefined();
+      expect(mockResponse.headers.get("X-Content-Type-Options")).toBe(
+        "nosniff"
+      );
+      expect(mockResponse.headers.get("X-Frame-Options")).toBe("SAMEORIGIN");
+      expect(mockResponse.headers.get("Referrer-Policy")).toBe(
+        "strict-origin-when-cross-origin"
+      );
+      expect(mockResponse.headers.get("Permissions-Policy")).toBe(
+        "camera=(), microphone=(), geolocation=(self)"
+      );
+    });
+
+    it("sets nonce in request headers", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/home", search: "" },
+        headers: new Headers(),
+      } as unknown as NextRequest;
+
+      const mockResponse = {
+        headers: new Headers(),
+      };
+      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+
+      await middleware(mockRequest);
+
+      const nextResponseCall = (NextResponse.next as Mock).mock.calls[0][0];
+      expect(nextResponseCall.request.headers.get("x-nonce")).toBe("test-uuid");
+      expect(nextResponseCall.request.headers.get("x-pathname")).toBe("/home");
+    });
+  });
+});
