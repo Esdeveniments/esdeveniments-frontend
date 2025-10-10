@@ -13,9 +13,10 @@ export async function fetchWithHmac(
   // For other body types like FormData, we won't include them in the signature.
   // The server-side middleware must have matching logic.
 
-  const urlPath = new URL(url).pathname;
+  const urlObject = new URL(url);
+  const pathAndQuery = urlObject.pathname + urlObject.search;
 
-  const hmac = generateHmac(bodyToSign, timestamp, urlPath);
+  const hmac = generateHmac(bodyToSign, timestamp, pathAndQuery);
 
   const headers = new Headers(options.headers);
   headers.set("x-timestamp", String(timestamp));
