@@ -1,4 +1,6 @@
 import { webcrypto } from "crypto";
+const encoder = new TextEncoder();
+const keyCache = new Map<string, Promise<CryptoKey>>();
 
 // Use crypto.subtle for consistency with middleware
 const cryptoSubtle = globalThis.crypto?.subtle || webcrypto.subtle;
@@ -10,7 +12,26 @@ if (!_hmacSecret) {
 }
 export const hmacSecret = _hmacSecret;
 
+function getHmacKey(secret: string = hmacSecret) {
+  let promise = keyCache.get(secret);
+  if (!promise) {
+    promise = cryptoSubtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign", "verify"]
+    );
+    keyCache.set(secret, promise);
+  }
+  return promise;
+}
+
 function hexToUint8Array(hex: string): Uint8Array {
+  if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]+$/.test(hex)) {
+    throw new Error("Invalid hex string");
+  }
+
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) {
     bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
@@ -24,15 +45,8 @@ export const generateHmac = async (
   pathAndQuery: string
 ): Promise<string> => {
   const stringToSign = `${body}${timestamp}${pathAndQuery}`;
-  const keyBytes = hexToUint8Array(hmacSecret);
-  const key = await cryptoSubtle.importKey(
-    "raw",
-    keyBytes as BufferSource,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const dataBuffer = new TextEncoder().encode(stringToSign);
+  const key = await getHmacKey(hmacSecret);
+  const dataBuffer = encoder.encode(stringToSign);
   const signatureBuffer = await cryptoSubtle.sign("HMAC", key, dataBuffer);
   const signatureHex = Array.from(new Uint8Array(signatureBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -66,14 +80,11 @@ export const verifyHmacSignature = async (
   secret: string = hmacSecret
 ): Promise<boolean> => {
   try {
-    const keyBytes = hexToUint8Array(secret);
-    const key = await cryptoSubtle.importKey(
-      "raw",
-      keyBytes as BufferSource,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
+    // Validate signature is valid hex
+    if (signature.length % 2 !== 0 || !/^[0-9a-fA-F]+$/.test(signature)) {
+      return false;
+    }
+    const key = await getHmacKey(secret);
     const dataBuffer = new TextEncoder().encode(stringToSign);
     const signatureBytes = hexToUint8Array(signature) as BufferSource;
     return await cryptoSubtle.verify("HMAC", key, signatureBytes, dataBuffer);

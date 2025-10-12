@@ -112,11 +112,11 @@ describe("middleware", () => {
     it("redirects legacy /tots/ routes", async () => {
       const mockRequest = {
         nextUrl: {
-          pathname: "/tots/barcelona/events",
+          pathname: "/barcelona/tots/events",
           search: "?param=value",
           searchParams: new URLSearchParams("?param=value"),
         },
-        url: "https://example.com/tots/barcelona/events?param=value",
+        url: "https://example.com/barcelona/tots/events?param=value",
         headers: new Headers(),
       } as unknown as NextRequest;
 
@@ -125,7 +125,7 @@ describe("middleware", () => {
       expect(NextResponse.redirect).toHaveBeenCalledWith(
         new URL(
           "/barcelona/events?param=value",
-          "https://example.com/tots/barcelona/events?param=value"
+          "https://example.com/barcelona/tots/events?param=value"
         ),
         301
       );
@@ -344,7 +344,7 @@ describe("middleware", () => {
     });
 
     it("returns 500 when HMAC_SECRET is not configured", async () => {
-      delete process.env.HMAC_SECRET;
+      process.env.HMAC_SECRET = undefined;
 
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
