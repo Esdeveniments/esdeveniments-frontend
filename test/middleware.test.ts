@@ -26,7 +26,7 @@ vi.mock("next/server", () => {
 
   Object.assign(MockNextResponse, {
     next: vi.fn(() => MockNextResponse()),
-    redirect: vi.fn((url, status) => MockNextResponse("redirect", { status })),
+    redirect: vi.fn((_, status) => MockNextResponse("redirect", { status })),
     json: vi.fn((data, options) =>
       MockNextResponse(JSON.stringify(data), options)
     ),
