@@ -65,24 +65,20 @@ export const verifyHmacSignature = async (
   signature: string,
   secret: string = hmacSecret
 ): Promise<boolean> => {
-  const keyBytes = hexToUint8Array(secret);
-  const key = await cryptoSubtle.importKey(
-    "raw",
-    keyBytes as BufferSource,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"]
-  );
-  const dataBuffer = new TextEncoder().encode(stringToSign);
-  const expectedSignatureBuffer = await cryptoSubtle.sign(
-    "HMAC",
-    key,
-    dataBuffer
-  );
-  const expectedSignatureHex = Array.from(
-    new Uint8Array(expectedSignatureBuffer)
-  )
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return expectedSignatureHex === signature;
+  try {
+    const keyBytes = hexToUint8Array(secret);
+    const key = await cryptoSubtle.importKey(
+      "raw",
+      keyBytes as BufferSource,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const dataBuffer = new TextEncoder().encode(stringToSign);
+    const signatureBytes = hexToUint8Array(signature) as BufferSource;
+    return await cryptoSubtle.verify("HMAC", key, signatureBytes, dataBuffer);
+  } catch (error) {
+    console.error("Error verifying HMAC signature:", error);
+    return false;
+  }
 };

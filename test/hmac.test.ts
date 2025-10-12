@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { generateHmac } from "../utils/hmac";
+import { generateHmac, verifyHmacSignature } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
 
@@ -8,6 +8,7 @@ describe("utils/hmac", () => {
     vi.resetModules();
     vi.restoreAllMocks();
     process.env = { ...originalEnv };
+    process.env.HMAC_SECRET = "746573742d736563726574"; // hex for "test-secret"
   });
 
   afterEach(() => {
@@ -72,16 +73,6 @@ describe("utils/hmac", () => {
       // The actual value depends on the secret, but we verify it's using some secret
     });
 
-    it("falls back to default secret when HMAC_SECRET is not set", async () => {
-      delete process.env.HMAC_SECRET;
-      const { generateHmac: generateHmacDefault } = await import(
-        "../utils/hmac"
-      );
-      const hmac = await generateHmacDefault("body", 1000, "/path");
-      expect(typeof hmac).toBe("string");
-      expect(hmac.length).toBe(64);
-    });
-
     it("handles large inputs", async () => {
       const largeBody = "a".repeat(10000);
       const hmac = await generateHmac(largeBody, 1000, "/path");
@@ -97,5 +88,104 @@ describe("utils/hmac", () => {
       expect(hmac.length).toBe(64);
       expect(/^[a-f0-9]{64}$/.test(hmac)).toBe(true);
     });
+  });
+
+  describe("verifyHmacSignature", () => {
+    it("verifies a valid signature", async () => {
+      const body = "test body";
+      const timestamp = 1234567890;
+      const pathAndQuery = "/api/test";
+      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
+      const hmac = await generateHmac(body, timestamp, pathAndQuery);
+      const isValid = await verifyHmacSignature(stringToSign, hmac);
+      expect(isValid).toBe(true);
+    });
+
+    it("rejects an invalid signature", async () => {
+      const body = "test body";
+      const timestamp = 1234567890;
+      const pathAndQuery = "/api/test";
+      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
+      const invalidHmac = "invalid-signature";
+      const isValid = await verifyHmacSignature(stringToSign, invalidHmac);
+      expect(isValid).toBe(false);
+    });
+
+    it("rejects signature for different string", async () => {
+      const body1 = "test body 1";
+      const body2 = "test body 2";
+      const timestamp = 1234567890;
+      const pathAndQuery = "/api/test";
+      const stringToSign2 = `${body2}${timestamp}${pathAndQuery}`;
+      const hmac = await generateHmac(body1, timestamp, pathAndQuery);
+      const isValid = await verifyHmacSignature(stringToSign2, hmac);
+      expect(isValid).toBe(false);
+    });
+
+    it("handles empty string", async () => {
+      const body = "";
+      const timestamp = 1234567890;
+      const pathAndQuery = "/api/test";
+      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
+      const hmac = await generateHmac(body, timestamp, pathAndQuery);
+      const isValid = await verifyHmacSignature(stringToSign, hmac);
+      expect(isValid).toBe(true);
+    });
+
+    it("handles large strings", async () => {
+      const largeBody = "a".repeat(10000);
+      const timestamp = 1234567890;
+      const pathAndQuery = "/api/test";
+      const stringToSign = `${largeBody}${timestamp}${pathAndQuery}`;
+      const hmac = await generateHmac(largeBody, timestamp, pathAndQuery);
+      const isValid = await verifyHmacSignature(stringToSign, hmac);
+      expect(isValid).toBe(true);
+    });
+
+    it("handles special characters", async () => {
+      const specialBody = "body with spaces & symbols !@#$%^&*()";
+      const timestamp = 1234567890123;
+      const specialPath = "/api/test?param=value&other=123";
+      const stringToSign = `${specialBody}${timestamp}${specialPath}`;
+      const hmac = await generateHmac(specialBody, timestamp, specialPath);
+      const isValid = await verifyHmacSignature(stringToSign, hmac);
+      expect(isValid).toBe(true);
+    });
+
+    it("rejects with wrong secret", async () => {
+      const body = "test body";
+      const timestamp = 1234567890;
+      const pathAndQuery = "/api/test";
+      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
+      const hmac = await generateHmac(body, timestamp, pathAndQuery);
+      const isValid = await verifyHmacSignature(
+        stringToSign,
+        hmac,
+        "77726f6e672d736563726574" // hex for "wrong-secret"
+      );
+      expect(isValid).toBe(false);
+    });
+
+    it("handles invalid hex signature gracefully", async () => {
+      const stringToSign = "test string";
+      const invalidHexHmac =
+        "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg"; // invalid hex
+      const isValid = await verifyHmacSignature(stringToSign, invalidHexHmac);
+      expect(isValid).toBe(false);
+    });
+
+    it("handles malformed signature", async () => {
+      const stringToSign = "test string";
+      const malformedHmac = "short";
+      const isValid = await verifyHmacSignature(stringToSign, malformedHmac);
+      expect(isValid).toBe(false);
+    });
+  });
+
+  it("throws error when HMAC_SECRET is not set", async () => {
+    delete process.env.HMAC_SECRET;
+    await expect(import("../utils/hmac")).rejects.toThrow(
+      "HMAC_SECRET environment variable must be set"
+    );
   });
 });

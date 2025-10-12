@@ -22,7 +22,5 @@ export async function fetchWithHmac(
   headers.set("x-timestamp", String(timestamp));
   headers.set("x-hmac", hmac);
 
-  options.headers = headers;
-
-  return fetch(url, options);
+  return fetch(url, { ...options, headers });
 }

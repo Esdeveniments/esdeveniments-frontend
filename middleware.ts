@@ -67,10 +67,6 @@ export async function middleware(request: NextRequest) {
         console.warn("Could not read request body in middleware:", error);
       }
     }
-    console.log("requestBody:", requestBody);
-    console.log("timestamp:", timestamp);
-    console.log("pathname:", pathname);
-    console.log("search:", request.nextUrl.search);
 
     if (!hmac || !timestamp) {
       return new NextResponse("Unauthorized: Missing security headers", {
@@ -90,10 +86,8 @@ export async function middleware(request: NextRequest) {
       pathname,
       request.nextUrl.search
     );
-    console.log("stringToSign:", stringToSign);
-    console.log("hmac:", hmac);
     const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
-    console.log("signatureIsValid:", signatureIsValid);
+
     if (!signatureIsValid) {
       return new NextResponse(`Unauthorized: Invalid signature`, {
         status: 401,
