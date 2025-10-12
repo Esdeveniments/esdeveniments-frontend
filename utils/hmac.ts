@@ -6,13 +6,15 @@ const keyCache = new Map<string, Promise<CryptoKey>>();
 const cryptoSubtle = globalThis.crypto?.subtle || webcrypto.subtle;
 
 // Use the server-only secret. This ensures the secret is never exposed to the browser.
-const _hmacSecret = process.env.HMAC_SECRET;
-if (!_hmacSecret) {
-  throw new Error("HMAC_SECRET environment variable must be set");
+function getHmacSecret(): string {
+  const secret = process.env.HMAC_SECRET;
+  if (!secret) {
+    throw new Error("HMAC_SECRET environment variable must be set");
+  }
+  return secret;
 }
-export const hmacSecret = _hmacSecret;
 
-function getHmacKey(secret: string = hmacSecret) {
+function getHmacKey(secret: string = getHmacSecret()) {
   let promise = keyCache.get(secret);
   if (!promise) {
     promise = cryptoSubtle.importKey(
@@ -45,7 +47,7 @@ export const generateHmac = async (
   pathAndQuery: string
 ): Promise<string> => {
   const stringToSign = `${body}${timestamp}${pathAndQuery}`;
-  const key = await getHmacKey(hmacSecret);
+  const key = await getHmacKey();
   const dataBuffer = encoder.encode(stringToSign);
   const signatureBuffer = await cryptoSubtle.sign("HMAC", key, dataBuffer);
   const signatureHex = Array.from(new Uint8Array(signatureBuffer))
@@ -77,7 +79,7 @@ export const buildStringToSign = (
 export const verifyHmacSignature = async (
   stringToSign: string,
   signature: string,
-  secret: string = hmacSecret
+  secret: string = getHmacSecret()
 ): Promise<boolean> => {
   try {
     // Validate signature is valid hex

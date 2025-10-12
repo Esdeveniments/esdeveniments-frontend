@@ -184,7 +184,7 @@ describe("utils/hmac", () => {
 
   it("throws error when HMAC_SECRET is not set", async () => {
     delete process.env.HMAC_SECRET;
-    await expect(import("../utils/hmac")).rejects.toThrow(
+    await expect(generateHmac("body", 1000, "/path")).rejects.toThrow(
       "HMAC_SECRET environment variable must be set"
     );
   });
