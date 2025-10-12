@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { generateHmac, verifyHmacSignature } from "../utils/hmac";
+import {
+  generateHmac,
+  verifyHmacSignature,
+  validateTimestamp,
+} from "../utils/hmac";
 
 const originalEnv = { ...process.env };
 
@@ -8,7 +12,7 @@ describe("utils/hmac", () => {
     vi.resetModules();
     vi.restoreAllMocks();
     process.env = { ...originalEnv };
-    process.env.HMAC_SECRET = "746573742d736563726574"; // hex for "test-secret"
+    process.env.HMAC_SECRET = "wrong-secret";
   });
 
   afterEach(() => {
@@ -161,7 +165,7 @@ describe("utils/hmac", () => {
       const isValid = await verifyHmacSignature(
         stringToSign,
         hmac,
-        "77726f6e672d736563726574" // hex for "wrong-secret"
+        "wrong-secret-2"
       );
       expect(isValid).toBe(false);
     });
@@ -179,6 +183,57 @@ describe("utils/hmac", () => {
       const malformedHmac = "short";
       const isValid = await verifyHmacSignature(stringToSign, malformedHmac);
       expect(isValid).toBe(false);
+    });
+  });
+
+  describe("validateTimestamp", () => {
+    it("returns false for invalid timestamp that parses to NaN", () => {
+      expect(validateTimestamp("abc")).toBe(false);
+      expect(validateTimestamp("")).toBe(false);
+      expect(validateTimestamp("NaN")).toBe(false);
+      expect(validateTimestamp("not-a-number")).toBe(false);
+    });
+
+    it("returns false for timestamp too far in the future beyond clock skew tolerance", () => {
+      const now = 1609459200000; // Fixed timestamp for consistency
+      const futureTooFar = now + 60001; // Beyond 1 minute (60000 ms)
+      vi.spyOn(Date, "now").mockReturnValue(now);
+      expect(validateTimestamp(futureTooFar.toString())).toBe(false);
+      vi.restoreAllMocks();
+    });
+
+    it("returns false for timestamp too old beyond 5 minutes", () => {
+      const now = 1609459200000; // Fixed timestamp for consistency
+      const oldTooFar = now - 300001; // Beyond 5 minutes (300000 ms)
+      vi.spyOn(Date, "now").mockReturnValue(now);
+      expect(validateTimestamp(oldTooFar.toString())).toBe(false);
+      vi.restoreAllMocks();
+    });
+
+    it("returns true for valid timestamp within tolerance", () => {
+      const now = 1609459200000; // Fixed timestamp for consistency
+      const validPast = now - 10000; // 10 seconds ago
+      const validFuture = now + 30000; // 30 seconds in future
+      vi.spyOn(Date, "now").mockReturnValue(now);
+      expect(validateTimestamp(validPast.toString())).toBe(true);
+      expect(validateTimestamp(validFuture.toString())).toBe(true);
+      vi.restoreAllMocks();
+    });
+
+    it("returns true for timestamp exactly at future tolerance boundary", () => {
+      const now = 1609459200000; // Fixed timestamp for consistency
+      const atFutureBoundary = now + 60000; // Exactly 1 minute in future
+      vi.spyOn(Date, "now").mockReturnValue(now);
+      expect(validateTimestamp(atFutureBoundary.toString())).toBe(true);
+      vi.restoreAllMocks();
+    });
+
+    it("returns true for timestamp exactly at past tolerance boundary", () => {
+      const now = 1609459200000; // Fixed timestamp for consistency
+      const atPastBoundary = now - 300000; // Exactly 5 minutes ago
+      vi.spyOn(Date, "now").mockReturnValue(now);
+      expect(validateTimestamp(atPastBoundary.toString())).toBe(true);
+      vi.restoreAllMocks();
     });
   });
 

@@ -203,5 +203,11 @@ describe("lib/api/fetch-wrapper", () => {
 
       expect(result).toBe(mockResponse);
     });
+
+    it("throws error for invalid URL", async () => {
+      await expect(fetchWithHmac("/api/test")).rejects.toThrow(
+        '[fetchWithHmac] Invalid URL: "/api/test". Server-side API calls must use absolute URLs.'
+      );
+    });
   });
 });

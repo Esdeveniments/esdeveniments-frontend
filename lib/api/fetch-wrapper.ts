@@ -13,7 +13,14 @@ export async function fetchWithHmac(
   // For other body types like FormData, we won't include them in the signature.
   // The server-side middleware must have matching logic.
 
-  const urlObject = new URL(url);
+  let urlObject: URL;
+  try {
+    urlObject = new URL(url);
+  } catch {
+    throw new Error(
+      `[fetchWithHmac] Invalid URL: "${url}". Server-side API calls must use absolute URLs.`
+    );
+  }
   const pathAndQuery = urlObject.pathname + urlObject.search;
 
   const hmac = await generateHmac(bodyToSign, timestamp, pathAndQuery);
