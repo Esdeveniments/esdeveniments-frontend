@@ -112,7 +112,7 @@ export const verifyHmacSignature = async (
     }
     return await cryptoSubtle.verify("HMAC", key, signatureBytes, dataBuffer);
   } catch (error) {
-    console.debug("Error verifying HMAC signature:", error);
+    console.error("Error verifying HMAC signature:", error);
     return false;
   }
 };
