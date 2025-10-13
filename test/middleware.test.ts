@@ -167,7 +167,7 @@ describe("middleware", () => {
       });
     });
 
-    it("returns 401 for invalid timestamp format", async () => {
+    it("returns 408 for invalid timestamp format", async () => {
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
         headers: new Headers({
@@ -186,7 +186,7 @@ describe("middleware", () => {
       });
     });
 
-    it("returns 401 for future timestamp", async () => {
+    it("returns 408 for future timestamp", async () => {
       const futureTimestamp = Date.now() + 120000; // 2 minutes in future
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
