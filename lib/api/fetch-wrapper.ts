@@ -12,7 +12,9 @@ export async function fetchWithHmac(
       bodyToSign = options.body;
     } else if (options.body instanceof URLSearchParams) {
       bodyToSign = options.body.toString();
-    } else if (!(options.body instanceof FormData)) {
+    } else if (options.body instanceof FormData) {
+      bodyToSign = "";
+    } else {
       // To prevent signature mismatches, we must be explicit about supported body types.
       // The server middleware can only reliably read string bodies (for non-FormData requests).
       // Other types like Blobs or ArrayBuffers would lead to signature failures.
@@ -20,8 +22,6 @@ export async function fetchWithHmac(
         `fetchWithHmac: Unsupported body type. Only string, URLSearchParams, and FormData are supported.`
       );
     }
-    // For FormData, bodyToSign remains an empty string, which is the intended behavior
-    // as multipart bodies are not signed.
   }
 
   let urlObject: URL;

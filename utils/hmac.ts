@@ -109,9 +109,6 @@ export const verifyHmacSignature = async (
     const key = await getHmacKey(secret);
     const dataBuffer = encoder.encode(stringToSign);
     const signatureBytes = hexToUint8Array(signature);
-    if (!signatureBytes) {
-      return false;
-    }
     return await cryptoSubtle.verify(
       "HMAC",
       key,
