@@ -21,10 +21,12 @@ test.describe("Sitemaps and feed", () => {
     const parser = new XMLParser();
     const xmlObj = parser.parse(text);
     expect(xmlObj.urlset).toBeDefined();
-    expect(Array.isArray(xmlObj.urlset.url)).toBe(true);
+    const urls = Array.isArray(xmlObj.urlset.url)
+      ? xmlObj.urlset.url
+      : [xmlObj.urlset.url];
 
     // Check lastmod dates are not 2023
-    xmlObj.urlset.url.forEach((url: any) => {
+    urls.forEach((url: any) => {
       expect(url.lastmod).toBeDefined();
       expect(url.lastmod).not.toContain("2023");
     });
@@ -41,17 +43,19 @@ test.describe("Sitemaps and feed", () => {
     const xmlObj = parser.parse(text);
     expect(xmlObj.urlset).toBeDefined();
     if (xmlObj.urlset.url) {
-      expect(Array.isArray(xmlObj.urlset.url)).toBe(true);
+      const urls = Array.isArray(xmlObj.urlset.url)
+        ? xmlObj.urlset.url
+        : [xmlObj.urlset.url];
 
       // Check presence of key place URLs if any
-      const urls = xmlObj.urlset.url.map((url: any) => url.loc);
-      if (urls.length > 0) {
+      const urlLocs = urls.map((url: any) => url.loc);
+      if (urlLocs.length > 0) {
         // At least some place URLs should be present
-        expect(urls.length).toBeGreaterThan(0);
+        expect(urlLocs.length).toBeGreaterThan(0);
       }
 
       // Check lastmod dates are not 2023
-      xmlObj.urlset.url.forEach((url: any) => {
+      urls.forEach((url: any) => {
         expect(url.lastmod).toBeDefined();
         expect(url.lastmod).not.toContain("2023");
       });

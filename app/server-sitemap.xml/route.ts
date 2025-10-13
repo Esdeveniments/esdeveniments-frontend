@@ -65,9 +65,13 @@ export async function GET() {
     .filter((event) => !event.isAd)
     .map((data) => {
       const image = data.imageUrl || defaultImage;
+      // Use event's updatedAt if available, otherwise fall back to endDate || startDate
+      const lastModDate = data.updatedAt
+        ? new Date(data.updatedAt)
+        : new Date(data.endDate || data.startDate);
       return {
         loc: `${siteUrl}/e/${data.slug}`,
-        lastmod: new Date().toISOString(),
+        lastmod: lastModDate.toISOString(),
         changefreq: "daily",
         priority: 0.7,
         image: image ? { loc: image, title: data.title } : undefined,

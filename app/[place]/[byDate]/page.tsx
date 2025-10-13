@@ -86,13 +86,21 @@ export async function generateStaticParams() {
   try {
     places = await fetchPlaces();
   } catch (error) {
-    console.error("generateStaticParams: Error fetching places:", error);
+    console.warn("generateStaticParams: Error fetching places:", error);
+    if (process.env.NODE_ENV === "production") {
+      throw error;
+    }
+    // Fallback: use highPrioritySlugs directly as topPlaces will be set below
   }
 
   // Filter high priority places to only include those that exist in API data
-  const topPlaces = highPrioritySlugs.filter((placeSlug) =>
-    places.some((place) => place.slug === placeSlug)
-  );
+  // If places fetch failed, use highPrioritySlugs as fallback
+  const topPlaces =
+    places.length > 0
+      ? highPrioritySlugs.filter((placeSlug) =>
+          places.some((place) => place.slug === placeSlug)
+        )
+      : highPrioritySlugs;
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {

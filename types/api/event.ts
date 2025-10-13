@@ -37,6 +37,7 @@ export interface EventSummaryResponseDTO {
   region: RegionSummaryResponseDTO;
   province: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
+  updatedAt?: string; // ISO date string for last update
   weather?: {
     temperature: string;
     description: string;

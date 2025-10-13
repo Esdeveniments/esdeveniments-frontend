@@ -1,6 +1,6 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { PlaceResponseDTO } from "types/api/place";
-import { createKeyedCache, createCache } from "lib/api/cache";
+import { createKeyedCache, createCache } from "@lib/api/cache";
 
 const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
 const placesCache = createCache<PlaceResponseDTO[]>(86400000);
@@ -46,7 +46,8 @@ async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
           next: { revalidate: 86400, tags: ["places"] },
         });
         if (!response.ok) return [];
-        return response.json();
+        const data = (await response.json()) as PlaceResponseDTO[];
+        return data;
       } catch (error) {
         console.error(`Error fetching from ${endpoint}:`, error);
         return [];
@@ -57,10 +58,11 @@ async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
   // Flatten and deduplicate by slug
   const allPlaces = results.flat();
   const uniquePlaces = allPlaces.filter(
-    (place, index, self) =>
-      self.findIndex((p) => p.slug === place.slug) === index
+    (place: PlaceResponseDTO, index: number, self: PlaceResponseDTO[]) =>
+      self.findIndex(
+        (candidate: PlaceResponseDTO) => candidate.slug === place.slug
+      ) === index
   );
-
   return uniquePlaces;
 }
 

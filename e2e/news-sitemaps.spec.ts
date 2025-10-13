@@ -15,10 +15,12 @@ test.describe("Server sitemaps (news/google)", () => {
     const parser = new XMLParser();
     const xmlObj = parser.parse(text);
     expect(xmlObj.urlset).toBeDefined();
-    expect(Array.isArray(xmlObj.urlset.url)).toBe(true);
+    const urls = Array.isArray(xmlObj.urlset.url)
+      ? xmlObj.urlset.url
+      : [xmlObj.urlset.url];
 
     // Check lastmod dates are not 2023
-    xmlObj.urlset.url.forEach((url: any) => {
+    urls.forEach((url: any) => {
       if (url.lastmod) {
         expect(url.lastmod).not.toContain("2023");
       }
@@ -36,10 +38,12 @@ test.describe("Server sitemaps (news/google)", () => {
     const xmlObj = parser.parse(text);
     expect(xmlObj.urlset).toBeDefined();
     if (xmlObj.urlset.url) {
-      expect(Array.isArray(xmlObj.urlset.url)).toBe(true);
+      const urls = Array.isArray(xmlObj.urlset.url)
+        ? xmlObj.urlset.url
+        : [xmlObj.urlset.url];
 
       // Check publication dates are not 2023
-      xmlObj.urlset.url.forEach((url: any) => {
+      urls.forEach((url: any) => {
         if (url.news && url.news.publication_date) {
           expect(url.news.publication_date).not.toContain("2023");
         }

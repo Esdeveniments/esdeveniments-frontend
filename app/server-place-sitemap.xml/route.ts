@@ -2,7 +2,8 @@ import { siteUrl } from "@config/index";
 import { fetchPlaces } from "@lib/api/places";
 import { fetchCategories } from "@lib/api/categories";
 import { VALID_DATES } from "@lib/dates";
-import { highPrioritySlugs } from "../../utils/priority-places";
+import { highPrioritySlugs } from "@utils/priority-places";
+import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 
 function buildSitemap(
   fields: Array<{
@@ -70,7 +71,10 @@ export async function GET() {
   for (const place of places) {
     // /[place]
     fields.push({
-      loc: `${siteUrl}/${place.slug}`,
+      loc: `${siteUrl}${buildCanonicalUrlDynamic(
+        { place: place.slug },
+        categories
+      )}`,
       lastmod: new Date().toISOString(),
       changefreq: "daily",
       priority: filteredHighPrioritySlugs.includes(place.slug) ? 0.9 : 0.6,
@@ -79,7 +83,10 @@ export async function GET() {
     // /[place]/[date]
     for (const date of topDates) {
       fields.push({
-        loc: `${siteUrl}/${place.slug}/${date}`,
+        loc: `${siteUrl}${buildCanonicalUrlDynamic(
+          { place: place.slug, byDate: date },
+          categories
+        )}`,
         lastmod: new Date().toISOString(),
         changefreq: "daily",
         priority: 0.7,
@@ -88,7 +95,10 @@ export async function GET() {
       // /[place]/[date]/[category]
       for (const category of topCategories) {
         fields.push({
-          loc: `${siteUrl}/${place.slug}/${date}/${category}`,
+          loc: `${siteUrl}${buildCanonicalUrlDynamic(
+            { place: place.slug, byDate: date, category },
+            categories
+          )}`,
           lastmod: new Date().toISOString(),
           changefreq: "daily",
           priority: 0.6,
@@ -100,7 +110,10 @@ export async function GET() {
     for (const category of topCategories) {
       if (category !== "tots") {
         fields.push({
-          loc: `${siteUrl}/${place.slug}/${category}`,
+          loc: `${siteUrl}${buildCanonicalUrlDynamic(
+            { place: place.slug, category },
+            categories
+          )}`,
           lastmod: new Date().toISOString(),
           changefreq: "daily",
           priority: 0.7,
