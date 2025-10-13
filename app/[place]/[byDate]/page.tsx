@@ -2,6 +2,7 @@ import Script from "next/script";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
+import { fetchPlaces } from "@lib/api/places";
 import { getPlaceTypeAndLabel, toLocalDateString } from "@utils/helpers";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -14,6 +15,7 @@ import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
 import type { DateFunctions } from "types/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import type { PlaceResponseDTO } from "types/api/place";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import HybridEventsList from "@components/ui/hybridEventsList";
@@ -24,6 +26,8 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { highPrioritySlugs } from "@utils/priority-places";
+import { VALID_DATES } from "@lib/dates";
 
 export async function generateMetadata({
   params,
@@ -74,13 +78,21 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  const topPlaces = ["catalunya", "barcelona", "girona", "lleida", "tarragona"];
-  const topDates = [
-    "avui",
-    "dema",
-    "setmana",
-    "cap-de-setmana",
-  ] as ByDateOptions[];
+  const topDates = VALID_DATES.filter(
+    (date) => date !== "tots"
+  ) as ByDateOptions[];
+
+  let places: PlaceResponseDTO[] = [];
+  try {
+    places = await fetchPlaces();
+  } catch (error) {
+    console.error("generateStaticParams: Error fetching places:", error);
+  }
+
+  // Filter high priority places to only include those that exist in API data
+  const topPlaces = highPrioritySlugs.filter((placeSlug) =>
+    places.some((place) => place.slug === placeSlug)
+  );
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {

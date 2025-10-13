@@ -2,6 +2,25 @@ import { MONTHS_URL as MONTHS } from "@utils/constants";
 import { nextDay, isWeekend } from "@utils/helpers";
 import { DateRange } from "types/common";
 
+// Valid date formats - this becomes the source of truth
+export const VALID_DATES = [
+  "tots",
+  "avui",
+  "dema",
+  "setmana",
+  "cap-de-setmana",
+] as const;
+
+// Export the type derived from the array
+export type ValidDateSlug = (typeof VALID_DATES)[number];
+
+/**
+ * Type guard to check if a string is a valid date slug
+ */
+export function isValidDateSlug(value: string): value is ValidDateSlug {
+  return VALID_DATES.includes(value as ValidDateSlug);
+}
+
 /**
  * Returns whether the current date is in daylight saving time
  * @returns {number} 2 if in daylight saving time, 1 if not

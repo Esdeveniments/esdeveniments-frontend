@@ -49,13 +49,16 @@ yarn-error.log*
 # vercel
 .vercel
 
-# Sitemap file
+# Sitemap files
 sitemap.xml
-sitemap-0.xml
+sitemap-*.xml
+server-place-sitemap.xml
 
 # Sentry
 .sentryclirc
 
+# Generated robots.txt
+/public/robots.txt
 
 .aider*
 

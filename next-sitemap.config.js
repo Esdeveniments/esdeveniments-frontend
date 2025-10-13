@@ -19,6 +19,12 @@ module.exports = {
     "server-sitemap.xml.js",
     "/server-sitemap.xml",
     "/server-sitemap.xml.js",
+    "server-news-sitemap.xml",
+    "/server-news-sitemap.xml",
+    "server-place-sitemap.xml",
+    "/server-place-sitemap.xml",
+    "server-google-news-sitemap.xml",
+    "/server-google-news-sitemap.xml",
     "rss.xml",
     "/rss.xml",
     ".next",
@@ -27,8 +33,38 @@ module.exports = {
     "node_modules",
     "package.json",
     "e/[eventId]",
-    "[place]",
   ],
+  additionalPaths: async () => [
+    {
+      loc: `${siteUrl}/`,
+      changefreq: "daily",
+      priority: 1.0,
+    },
+    {
+      loc: `${siteUrl}/publica`,
+      changefreq: "monthly",
+      priority: 0.8,
+    },
+    {
+      loc: `${siteUrl}/qui-som`,
+      changefreq: "monthly",
+      priority: 0.5,
+    },
+    {
+      loc: `${siteUrl}/sitemap`,
+      changefreq: "weekly",
+      priority: 0.5,
+    },
+  ],
+  transform: async (config, path) => {
+    // Use default transformation for all other cases
+    return {
+      loc: path,
+      changefreq: config.changefreq,
+      priority: config.priority,
+      lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
+    };
+  },
   generateRobotsTxt: true,
   robotsTxtOptions: {
     policies: [
@@ -39,9 +75,10 @@ module.exports = {
       { userAgent: "*", allow: "/" },
     ],
     additionalSitemaps: [
-      `${siteUrl}/sitemap.xml`,
       `${siteUrl}/server-sitemap.xml`,
       `${siteUrl}/server-news-sitemap.xml`,
+      `${siteUrl}/server-place-sitemap.xml`,
+      `${siteUrl}/server-google-news-sitemap.xml`,
     ],
   },
 };

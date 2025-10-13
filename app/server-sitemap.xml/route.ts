@@ -67,9 +67,7 @@ export async function GET() {
       const image = data.imageUrl || defaultImage;
       return {
         loc: `${siteUrl}/e/${data.slug}`,
-        lastmod: new Date(
-          data.endDate || data.startDate || Date.now()
-        ).toISOString(),
+        lastmod: new Date().toISOString(),
         changefreq: "daily",
         priority: 0.7,
         image: image ? { loc: image, title: data.title } : undefined,
