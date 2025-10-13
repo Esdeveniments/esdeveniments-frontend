@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getApiOrigin } from "./utils/api-helpers";
+import { getApiOrigin } from "@utils/api-helpers";
 import {
   validateTimestamp,
   buildStringToSign,
   verifyHmacSignature,
-} from "./utils/hmac";
+} from "@utils/hmac";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -72,14 +72,14 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!hmac || !timestamp) {
-      return new NextResponse("Unauthorized: Missing security headers", {
+      return new NextResponse("Unauthorized", {
         status: 401,
       });
     }
 
     if (!validateTimestamp(timestamp)) {
-      return new NextResponse("Request timed out or has invalid timestamp", {
-        status: 408,
+      return new NextResponse("Unauthorized", {
+        status: 401,
       });
     }
 

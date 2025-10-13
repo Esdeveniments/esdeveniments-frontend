@@ -1,3 +1,4 @@
+import { FIVE_MINUTES_IN_MS, ONE_MINUTE_IN_MS } from "./constants";
 const encoder = new TextEncoder();
 const keyCache = new Map<string, Promise<CryptoKey>>();
 
@@ -64,10 +65,6 @@ export const generateHmac = async (
 };
 
 export const validateTimestamp = (timestamp: string): boolean => {
-  // Define named constants for the timestamp tolerances
-  const FIVE_MINUTES_IN_MS = 5 * 60 * 1000; // 5 minutes tolerance for past timestamps
-  const ONE_MINUTE_IN_MS = 60000; // 1 minute tolerance for future timestamps to account for clock skew
-
   // Parse the timestamp string to a number
   const requestTimestamp = parseInt(timestamp, 10);
 
@@ -115,7 +112,7 @@ export const verifyHmacSignature = async (
     }
     return await cryptoSubtle.verify("HMAC", key, signatureBytes, dataBuffer);
   } catch (error) {
-    console.error("Error verifying HMAC signature:", error);
+    console.debug("Error verifying HMAC signature:", error);
     return false;
   }
 };

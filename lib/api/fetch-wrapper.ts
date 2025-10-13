@@ -1,4 +1,4 @@
-import { generateHmac } from "utils/hmac";
+import { generateHmac } from "@utils/hmac";
 
 export async function fetchWithHmac(
   url: string,
@@ -7,6 +7,7 @@ export async function fetchWithHmac(
   const timestamp = Date.now();
   let bodyToSign = "";
   let normalizedBody: BodyInit | null | undefined = options.body;
+  let wasUrlSearchParams = false;
 
   if (options.body) {
     if (typeof options.body === "string") {
@@ -16,6 +17,7 @@ export async function fetchWithHmac(
       // This ensures the client and server see the same string representation.
       bodyToSign = options.body.toString();
       normalizedBody = bodyToSign;
+      wasUrlSearchParams = true;
     } else if (options.body instanceof FormData) {
       bodyToSign = "";
     } else {
@@ -38,18 +40,22 @@ export async function fetchWithHmac(
   }
   const pathAndQuery = urlObject.pathname + urlObject.search;
 
-  const hmac = await generateHmac(
-    bodyToSign,
-    timestamp,
-    pathAndQuery,
-    options.method || "GET"
-  );
+  const method = options.method?.toUpperCase() || "GET";
+
+  const hmac = await generateHmac(bodyToSign, timestamp, pathAndQuery, method);
 
   const headers = new Headers(options.headers);
   headers.set("x-timestamp", String(timestamp));
   headers.set("x-hmac", hmac);
 
+  if (wasUrlSearchParams && !headers.has("content-type")) {
+    headers.set(
+      "content-type",
+      "application/x-www-form-urlencoded;charset=UTF-8"
+    );
+  }
+
   // Use the normalized body (URLSearchParams converted to string) to ensure
   // the server middleware reads the exact same string we signed.
-  return fetch(url, { ...options, body: normalizedBody, headers });
+  return fetch(url, { ...options, method, body: normalizedBody, headers });
 }

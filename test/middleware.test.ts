@@ -47,7 +47,6 @@ vi.mock("../utils/api-helpers", () => ({
 describe("middleware", () => {
   beforeEach(() => {
     vi.resetModules();
-    vi.restoreAllMocks();
     process.env = { ...originalEnv };
     process.env.HMAC_SECRET = "test-secret";
 
