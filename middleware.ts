@@ -60,7 +60,10 @@ export async function middleware(request: NextRequest) {
       return new NextResponse("Internal Server Error", { status: 500 });
     }
 
-    if (!contentType.includes("multipart/form-data")) {
+    if (
+      contentType.includes("application/json") ||
+      contentType.startsWith("text/")
+    ) {
       try {
         requestBody = await request.clone().text();
       } catch (error) {

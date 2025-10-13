@@ -29,9 +29,13 @@ function getHmacKey(secret: string = getHmacSecret()) {
   return promise;
 }
 
-function hexToUint8Array(hex: string): Uint8Array {
-  if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]+$/.test(hex)) {
-    throw new Error("Invalid hex string");
+function isValidHex(hex: string): boolean {
+  return hex.length % 2 === 0 && /^[0-9a-fA-F]+$/.test(hex);
+}
+
+function hexToUint8Array(hex: string): Uint8Array | null {
+  if (!isValidHex(hex)) {
+    return null;
   }
 
   const bytes = new Uint8Array(hex.length / 2);
@@ -100,14 +104,21 @@ export const verifyHmacSignature = async (
   secret: string = getHmacSecret()
 ): Promise<boolean> => {
   try {
-    // Validate signature is valid hex
-    if (signature.length % 2 !== 0 || !/^[0-9a-fA-F]+$/.test(signature)) {
+    if (!isValidHex(signature)) {
       return false;
     }
     const key = await getHmacKey(secret);
     const dataBuffer = new TextEncoder().encode(stringToSign);
-    const signatureBytes = hexToUint8Array(signature) as BufferSource;
-    return await cryptoSubtle.verify("HMAC", key, signatureBytes, dataBuffer);
+    const signatureBytes = hexToUint8Array(signature);
+    if (!signatureBytes) {
+      return false;
+    }
+    return await cryptoSubtle.verify(
+      "HMAC",
+      key,
+      signatureBytes as BufferSource,
+      dataBuffer
+    );
   } catch (error) {
     console.error("Error verifying HMAC signature:", error);
     return false;
