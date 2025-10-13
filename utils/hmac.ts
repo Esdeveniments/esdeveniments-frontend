@@ -108,7 +108,7 @@ export const verifyHmacSignature = async (
       return false;
     }
     const key = await getHmacKey(secret);
-    const dataBuffer = new TextEncoder().encode(stringToSign);
+    const dataBuffer = encoder.encode(stringToSign);
     const signatureBytes = hexToUint8Array(signature);
     if (!signatureBytes) {
       return false;
