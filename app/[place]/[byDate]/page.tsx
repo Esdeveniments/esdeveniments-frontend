@@ -87,14 +87,7 @@ export async function generateStaticParams() {
     places = await fetchPlaces();
   } catch (error) {
     console.warn("generateStaticParams: Error fetching places:", error);
-    if (process.env.NODE_ENV === "production") {
-      throw error;
-    }
     // Fallback: use highPrioritySlugs directly as topPlaces will be set below
-  }
-
-  if (process.env.NODE_ENV === "production" && places.length === 0) {
-    throw new Error("No places fetched in production");
   }
 
   // Filter high priority places to only include those that exist in API data

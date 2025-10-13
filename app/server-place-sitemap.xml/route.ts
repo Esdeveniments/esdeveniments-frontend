@@ -43,17 +43,23 @@ export async function GET() {
   );
 
   if (!Array.isArray(places)) {
-    return new Response("<error>places is not an array</error>", {
-      status: 500,
-      headers: { "Content-Type": "application/xml" },
-    });
+    return new Response(
+      '<?xml version="1.0" encoding="UTF-8"?><error>places is not an array</error>',
+      {
+        status: 500,
+        headers: { "Content-Type": "application/xml" },
+      }
+    );
   }
 
   if (!Array.isArray(categories)) {
-    return new Response("<error>categories is not an array</error>", {
-      status: 500,
-      headers: { "Content-Type": "application/xml" },
-    });
+    return new Response(
+      '<?xml version="1.0" encoding="UTF-8"?><error>categories is not an array</error>',
+      {
+        status: 500,
+        headers: { "Content-Type": "application/xml" },
+      }
+    );
   }
 
   // Top dates and categories (similar to static generation)

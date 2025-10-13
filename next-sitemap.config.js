@@ -17,6 +17,7 @@ const siteUrl = getSiteUrl();
 
 module.exports = {
   siteUrl,
+  generateSitemap: false,
   exclude: [
     "api",
     "_app.js",
@@ -43,37 +44,6 @@ module.exports = {
     "package.json",
     "e/[eventId]",
   ],
-  additionalPaths: async () => [
-    {
-      loc: `${siteUrl}/`,
-      changefreq: "daily",
-      priority: 1.0,
-    },
-    {
-      loc: `${siteUrl}/publica`,
-      changefreq: "monthly",
-      priority: 0.8,
-    },
-    {
-      loc: `${siteUrl}/qui-som`,
-      changefreq: "monthly",
-      priority: 0.5,
-    },
-    {
-      loc: `${siteUrl}/sitemap`,
-      changefreq: "weekly",
-      priority: 0.5,
-    },
-  ],
-  transform: async (config, path) => {
-    // Use default transformation for all other cases
-    return {
-      loc: path,
-      changefreq: config.changefreq,
-      priority: config.priority,
-      lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
-    };
-  },
   generateRobotsTxt: true,
   robotsTxtOptions: {
     policies: [

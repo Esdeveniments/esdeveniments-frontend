@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { test, expect } from "@playwright/test";
 import { XMLParser } from "fast-xml-parser";
 
@@ -26,7 +25,7 @@ test.describe("Sitemaps and feed", () => {
       : [xmlObj.urlset.url];
 
     // Check lastmod dates are not 2023
-    urls.forEach((url: any) => {
+    urls.forEach((url: { lastmod?: string }) => {
       expect(url.lastmod).toBeDefined();
       expect(url.lastmod).not.toContain("2023");
     });
@@ -48,14 +47,14 @@ test.describe("Sitemaps and feed", () => {
         : [xmlObj.urlset.url];
 
       // Check presence of key place URLs if any
-      const urlLocs = urls.map((url: any) => url.loc);
+      const urlLocs = urls.map((url: { loc: string }) => url.loc);
       if (urlLocs.length > 0) {
         // At least some place URLs should be present
         expect(urlLocs.length).toBeGreaterThan(0);
       }
 
       // Check lastmod dates are not 2023
-      urls.forEach((url: any) => {
+      urls.forEach((url: { lastmod?: string }) => {
         expect(url.lastmod).toBeDefined();
         expect(url.lastmod).not.toContain("2023");
       });
@@ -80,7 +79,7 @@ test.describe("Sitemaps and feed", () => {
       expect(sitemaps.length).toBeGreaterThan(0);
 
       // Check no self-reference
-      const locs = sitemaps.map((s: any) => s.loc);
+      const locs = sitemaps.map((s: { loc: string }) => s.loc);
       expect(locs).not.toContain(expect.stringContaining("/sitemap.xml"));
     } else if (xmlObj.urlset) {
       // If it's urlset, check no self-reference in urls
@@ -88,7 +87,7 @@ test.describe("Sitemaps and feed", () => {
         const urls = Array.isArray(xmlObj.urlset.url)
           ? xmlObj.urlset.url
           : [xmlObj.urlset.url];
-        const locs = urls.map((u: any) => u.loc);
+        const locs = urls.map((u: { loc: string }) => u.loc);
         expect(locs).not.toContain(expect.stringContaining("/sitemap.xml"));
       }
     }

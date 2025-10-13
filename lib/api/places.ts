@@ -57,6 +57,9 @@ async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
 
   // Flatten and deduplicate by slug
   const allPlaces = results.flat();
+  if (allPlaces.length === 0) {
+    console.warn("No places fetched from API endpoints");
+  }
   const uniquePlacesMap = new Map<string, PlaceResponseDTO>();
   for (const place of allPlaces) {
     if (!uniquePlacesMap.has(place.slug)) {

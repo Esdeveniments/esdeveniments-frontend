@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { test, expect } from "@playwright/test";
 import { XMLParser } from "fast-xml-parser";
 
@@ -20,11 +19,13 @@ test.describe("Server sitemaps (news/google)", () => {
       : [xmlObj.urlset.url];
 
     // Check lastmod dates are not 2023
-    urls.forEach((url: any) => {
-      if (url.lastmod) {
-        expect(url.lastmod).not.toContain("2023");
+    urls.forEach(
+      (url: { lastmod?: string; news?: { publication_date?: string } }) => {
+        if (url.lastmod) {
+          expect(url.lastmod).not.toContain("2023");
+        }
       }
-    });
+    );
   });
 
   test("/server-google-news-sitemap.xml responds 200", async ({ request }) => {
@@ -43,11 +44,13 @@ test.describe("Server sitemaps (news/google)", () => {
         : [xmlObj.urlset.url];
 
       // Check publication dates are not 2023
-      urls.forEach((url: any) => {
-        if (url.news && url.news.publication_date) {
-          expect(url.news.publication_date).not.toContain("2023");
+      urls.forEach(
+        (url: { lastmod?: string; news?: { publication_date?: string } }) => {
+          if (url.news && url.news.publication_date) {
+            expect(url.news.publication_date).not.toContain("2023");
+          }
         }
-      });
+      );
     }
   });
 });
