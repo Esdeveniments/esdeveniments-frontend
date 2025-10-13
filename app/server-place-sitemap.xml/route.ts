@@ -58,7 +58,10 @@ export async function GET() {
 
   // Top dates and categories (similar to static generation)
   const topDates = VALID_DATES.filter((date) => date !== "tots");
-  const topCategories = categories.slice(0, 5).map((cat) => cat.slug);
+  const topCategories = categories
+    .slice(0, 5)
+    .map((cat) => cat.slug)
+    .filter((slug) => slug && slug !== "tots");
 
   const fields: Array<{
     loc: string;
@@ -66,6 +69,8 @@ export async function GET() {
     changefreq: string;
     priority: number;
   }> = [];
+
+  const lastmod = new Date().toISOString();
 
   // Generate URLs for each place
   for (const place of places) {
@@ -75,7 +80,7 @@ export async function GET() {
         { place: place.slug },
         categories
       )}`,
-      lastmod: new Date().toISOString(),
+      lastmod: lastmod,
       changefreq: "daily",
       priority: filteredHighPrioritySlugs.includes(place.slug) ? 0.9 : 0.6,
     });
@@ -87,7 +92,7 @@ export async function GET() {
           { place: place.slug, byDate: date },
           categories
         )}`,
-        lastmod: new Date().toISOString(),
+        lastmod: lastmod,
         changefreq: "daily",
         priority: 0.7,
       });
@@ -99,7 +104,7 @@ export async function GET() {
             { place: place.slug, byDate: date, category },
             categories
           )}`,
-          lastmod: new Date().toISOString(),
+          lastmod: lastmod,
           changefreq: "daily",
           priority: 0.6,
         });
@@ -114,7 +119,7 @@ export async function GET() {
             { place: place.slug, category },
             categories
           )}`,
-          lastmod: new Date().toISOString(),
+          lastmod: lastmod,
           changefreq: "daily",
           priority: 0.7,
         });

@@ -66,9 +66,12 @@ export async function GET() {
     .map((data) => {
       const image = data.imageUrl || defaultImage;
       // Use event's updatedAt if available, otherwise fall back to endDate || startDate
-      const lastModDate = data.updatedAt
+      let lastModDate = data.updatedAt
         ? new Date(data.updatedAt)
         : new Date(data.endDate || data.startDate);
+      if (isNaN(lastModDate.getTime())) {
+        lastModDate = new Date();
+      }
       return {
         loc: `${siteUrl}/e/${data.slug}`,
         lastmod: lastModDate.toISOString(),

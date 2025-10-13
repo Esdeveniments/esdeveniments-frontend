@@ -57,12 +57,13 @@ async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
 
   // Flatten and deduplicate by slug
   const allPlaces = results.flat();
-  const uniquePlaces = allPlaces.filter(
-    (place: PlaceResponseDTO, index: number, self: PlaceResponseDTO[]) =>
-      self.findIndex(
-        (candidate: PlaceResponseDTO) => candidate.slug === place.slug
-      ) === index
-  );
+  const uniquePlacesMap = new Map<string, PlaceResponseDTO>();
+  for (const place of allPlaces) {
+    if (!uniquePlacesMap.has(place.slug)) {
+      uniquePlacesMap.set(place.slug, place);
+    }
+  }
+  const uniquePlaces = Array.from(uniquePlacesMap.values());
   return uniquePlaces;
 }
 
