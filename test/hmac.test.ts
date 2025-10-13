@@ -21,57 +21,67 @@ describe("utils/hmac", () => {
 
   describe("generateHmac", () => {
     it("generates a valid SHA-256 HMAC hex string", async () => {
-      const hmac = await generateHmac("test body", 1234567890, "/api/test");
+      const hmac = await generateHmac(
+        "test body",
+        1234567890,
+        "/api/test",
+        "GET"
+      );
       expect(typeof hmac).toBe("string");
       expect(hmac.length).toBe(64);
       expect(/^[a-f0-9]{64}$/.test(hmac)).toBe(true);
     });
 
     it("produces consistent output for identical inputs", async () => {
-      const hmac1 = await generateHmac("body", 1000, "/path");
-      const hmac2 = await generateHmac("body", 1000, "/path");
+      const hmac1 = await generateHmac("body", 1000, "/path", "GET");
+      const hmac2 = await generateHmac("body", 1000, "/path", "GET");
       expect(hmac1).toBe(hmac2);
     });
 
     it("produces different output for different body", async () => {
-      const hmac1 = await generateHmac("body1", 1000, "/path");
-      const hmac2 = await generateHmac("body2", 1000, "/path");
+      const hmac1 = await generateHmac("body1", 1000, "/path", "GET");
+      const hmac2 = await generateHmac("body2", 1000, "/path", "GET");
       expect(hmac1).not.toBe(hmac2);
     });
 
     it("produces different output for different timestamp", async () => {
-      const hmac1 = await generateHmac("body", 1000, "/path");
-      const hmac2 = await generateHmac("body", 1001, "/path");
+      const hmac1 = await generateHmac("body", 1000, "/path", "GET");
+      const hmac2 = await generateHmac("body", 1001, "/path", "GET");
       expect(hmac1).not.toBe(hmac2);
     });
 
     it("produces different output for different pathAndQuery", async () => {
-      const hmac1 = await generateHmac("body", 1000, "/path1");
-      const hmac2 = await generateHmac("body", 1000, "/path2");
+      const hmac1 = await generateHmac("body", 1000, "/path1", "GET");
+      const hmac2 = await generateHmac("body", 1000, "/path2", "GET");
       expect(hmac1).not.toBe(hmac2);
     });
 
     it("handles empty body", async () => {
-      const hmac = await generateHmac("", 1000, "/path");
+      const hmac = await generateHmac("", 1000, "/path", "GET");
       expect(typeof hmac).toBe("string");
       expect(hmac.length).toBe(64);
     });
 
     it("handles empty pathAndQuery", async () => {
-      const hmac = await generateHmac("body", 1000, "");
+      const hmac = await generateHmac("body", 1000, "", "GET");
       expect(typeof hmac).toBe("string");
       expect(hmac.length).toBe(64);
     });
 
     it("handles pathAndQuery with query parameters", async () => {
-      const hmac = await generateHmac("body", 1000, "/api/test?param=value");
+      const hmac = await generateHmac(
+        "body",
+        1000,
+        "/api/test?param=value",
+        "GET"
+      );
       expect(typeof hmac).toBe("string");
       expect(hmac.length).toBe(64);
     });
 
     it("uses HMAC_SECRET from environment", async () => {
       // Test that it uses the test secret set in setup
-      const hmac = await generateHmac("body", 1000, "/path");
+      const hmac = await generateHmac("body", 1000, "/path", "GET");
       expect(typeof hmac).toBe("string");
       expect(hmac.length).toBe(64);
       // The actual value depends on the secret, but we verify it's using some secret
@@ -79,7 +89,7 @@ describe("utils/hmac", () => {
 
     it("handles large inputs", async () => {
       const largeBody = "a".repeat(10000);
-      const hmac = await generateHmac(largeBody, 1000, "/path");
+      const hmac = await generateHmac(largeBody, 1000, "/path", "GET");
       expect(typeof hmac).toBe("string");
       expect(hmac.length).toBe(64);
     });
@@ -87,7 +97,12 @@ describe("utils/hmac", () => {
     it("handles special characters in inputs", async () => {
       const specialBody = "body with spaces & symbols !@#$%^&*()";
       const specialPath = "/api/test?param=value&other=123";
-      const hmac = await generateHmac(specialBody, 1234567890123, specialPath);
+      const hmac = await generateHmac(
+        specialBody,
+        1234567890123,
+        specialPath,
+        "GET"
+      );
       expect(typeof hmac).toBe("string");
       expect(hmac.length).toBe(64);
       expect(/^[a-f0-9]{64}$/.test(hmac)).toBe(true);
@@ -99,8 +114,8 @@ describe("utils/hmac", () => {
       const body = "test body";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
-      const hmac = await generateHmac(body, timestamp, pathAndQuery);
+      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${body}`;
+      const hmac = await generateHmac(body, timestamp, pathAndQuery, "GET");
       const isValid = await verifyHmacSignature(stringToSign, hmac);
       expect(isValid).toBe(true);
     });
@@ -109,7 +124,7 @@ describe("utils/hmac", () => {
       const body = "test body";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
+      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${body}`;
       const invalidHmac = "invalid-signature";
       const isValid = await verifyHmacSignature(stringToSign, invalidHmac);
       expect(isValid).toBe(false);
@@ -121,7 +136,7 @@ describe("utils/hmac", () => {
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
       const stringToSign2 = `${body2}${timestamp}${pathAndQuery}`;
-      const hmac = await generateHmac(body1, timestamp, pathAndQuery);
+      const hmac = await generateHmac(body1, timestamp, pathAndQuery, "GET");
       const isValid = await verifyHmacSignature(stringToSign2, hmac);
       expect(isValid).toBe(false);
     });
@@ -130,8 +145,8 @@ describe("utils/hmac", () => {
       const body = "";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
-      const hmac = await generateHmac(body, timestamp, pathAndQuery);
+      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${body}`;
+      const hmac = await generateHmac(body, timestamp, pathAndQuery, "GET");
       const isValid = await verifyHmacSignature(stringToSign, hmac);
       expect(isValid).toBe(true);
     });
@@ -141,7 +156,12 @@ describe("utils/hmac", () => {
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
       const stringToSign = `${largeBody}${timestamp}${pathAndQuery}`;
-      const hmac = await generateHmac(largeBody, timestamp, pathAndQuery);
+      const hmac = await generateHmac(
+        largeBody,
+        timestamp,
+        pathAndQuery,
+        "GET"
+      );
       const isValid = await verifyHmacSignature(stringToSign, hmac);
       expect(isValid).toBe(true);
     });
@@ -151,7 +171,12 @@ describe("utils/hmac", () => {
       const timestamp = 1234567890123;
       const specialPath = "/api/test?param=value&other=123";
       const stringToSign = `${specialBody}${timestamp}${specialPath}`;
-      const hmac = await generateHmac(specialBody, timestamp, specialPath);
+      const hmac = await generateHmac(
+        specialBody,
+        timestamp,
+        specialPath,
+        "GET"
+      );
       const isValid = await verifyHmacSignature(stringToSign, hmac);
       expect(isValid).toBe(true);
     });
@@ -160,8 +185,8 @@ describe("utils/hmac", () => {
       const body = "test body";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `${body}${timestamp}${pathAndQuery}`;
-      const hmac = await generateHmac(body, timestamp, pathAndQuery);
+      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${body}`;
+      const hmac = await generateHmac(body, timestamp, pathAndQuery, "GET");
       const isValid = await verifyHmacSignature(
         stringToSign,
         hmac,
@@ -239,7 +264,7 @@ describe("utils/hmac", () => {
 
   it("throws error when HMAC_SECRET is not set", async () => {
     delete process.env.HMAC_SECRET;
-    await expect(generateHmac("body", 1000, "/path")).rejects.toThrow(
+    await expect(generateHmac("body", 1000, "/path", "GET")).rejects.toThrow(
       "HMAC_SECRET environment variable must be set"
     );
   });

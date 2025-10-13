@@ -86,12 +86,13 @@ export async function middleware(request: NextRequest) {
     const stringToSign = buildStringToSign(
       requestBody,
       timestamp,
-      pathname + request.nextUrl.search
+      pathname + request.nextUrl.search,
+      request.method
     );
     const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
 
     if (!signatureIsValid) {
-      return new NextResponse(`Unauthorized: Invalid signature`, {
+      return new NextResponse(`Unauthorized`, {
         status: 401,
       });
     }

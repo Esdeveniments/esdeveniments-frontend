@@ -84,6 +84,7 @@ describe("middleware", () => {
         nextUrl: { pathname: "/home", search: "" },
         headers: new Headers(),
         clone: vi.fn().mockReturnThis(),
+        method: "GET",
       } as unknown as NextRequest;
 
       const result = await middleware(mockRequest);
@@ -96,6 +97,7 @@ describe("middleware", () => {
       const mockRequest = {
         nextUrl: { pathname: "/sw.js", search: "" },
         headers: new Headers(),
+        method: "GET",
       } as unknown as NextRequest;
 
       const mockResponse = { headers: new Headers() };
@@ -118,6 +120,7 @@ describe("middleware", () => {
         },
         url: "https://example.com/barcelona/tots/events?param=value",
         headers: new Headers(),
+        method: "GET",
       } as unknown as NextRequest;
 
       await middleware(mockRequest);
@@ -139,6 +142,7 @@ describe("middleware", () => {
         headers: new Headers({ "x-timestamp": "1234567890" }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(""),
+        method: "GET",
       } as unknown as NextRequest;
 
       await middleware(mockRequest);
@@ -155,6 +159,7 @@ describe("middleware", () => {
         headers: new Headers({ "x-hmac": "some-hmac" }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(""),
+        method: "GET",
       } as unknown as NextRequest;
 
       await middleware(mockRequest);
@@ -174,6 +179,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(""),
+        method: "GET",
       } as unknown as NextRequest;
 
       await middleware(mockRequest);
@@ -194,6 +200,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(""),
+        method: "GET",
       } as unknown as NextRequest;
 
       await middleware(mockRequest);
@@ -214,6 +221,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(""),
+        method: "GET",
       } as unknown as NextRequest;
 
       await middleware(mockRequest);
@@ -234,6 +242,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue("request body"),
+        method: "GET",
       } as unknown as NextRequest;
 
       // Mock verifyHmac to return false
@@ -241,10 +250,9 @@ describe("middleware", () => {
 
       await middleware(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith(
-        "Unauthorized: Invalid signature",
-        { status: 401 }
-      );
+      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
+        status: 401,
+      });
     });
 
     it("passes through valid requests", async () => {
@@ -253,7 +261,12 @@ describe("middleware", () => {
       const pathAndQuery = "/api/test";
 
       // Generate valid HMAC
-      const validHmac = await generateHmac(body, timestamp, pathAndQuery);
+      const validHmac = await generateHmac(
+        body,
+        timestamp,
+        pathAndQuery,
+        "GET"
+      );
 
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
@@ -263,6 +276,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(body),
+        method: "GET",
       } as unknown as NextRequest;
 
       // Mock verifyHmac to return true
@@ -278,7 +292,12 @@ describe("middleware", () => {
       const body = "request body";
       const pathAndQuery = "/api/test?param=value&other=123";
 
-      const validHmac = await generateHmac(body, timestamp, pathAndQuery);
+      const validHmac = await generateHmac(
+        body,
+        timestamp,
+        pathAndQuery,
+        "GET"
+      );
 
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "?param=value&other=123" },
@@ -288,6 +307,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(body),
+        method: "GET",
       } as unknown as NextRequest;
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
@@ -301,7 +321,7 @@ describe("middleware", () => {
       const timestamp = Date.now();
       const pathAndQuery = "/api/upload";
 
-      const validHmac = await generateHmac("", timestamp, pathAndQuery);
+      const validHmac = await generateHmac("", timestamp, pathAndQuery, "GET");
 
       const mockRequest = {
         nextUrl: { pathname: "/api/upload", search: "" },
@@ -312,6 +332,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn(), // Should not be called
+        method: "GET",
       } as unknown as NextRequest;
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
@@ -324,7 +345,7 @@ describe("middleware", () => {
 
     it("handles body reading errors gracefully", async () => {
       const timestamp = Date.now();
-      const validHmac = await generateHmac("", timestamp, "/api/test");
+      const validHmac = await generateHmac("", timestamp, "/api/test", "GET");
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
         headers: new Headers({
@@ -333,6 +354,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockRejectedValue(new Error("Read error")),
+        method: "GET",
       } as unknown as NextRequest;
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
@@ -356,6 +378,7 @@ describe("middleware", () => {
         }),
         clone: vi.fn().mockReturnThis(),
         text: vi.fn().mockResolvedValue(""),
+        method: "GET",
       } as unknown as NextRequest;
 
       await middleware(mockRequest);
@@ -371,6 +394,7 @@ describe("middleware", () => {
       const mockRequest = {
         nextUrl: { pathname: "/home", search: "" },
         headers: new Headers(),
+        method: "GET",
       } as unknown as NextRequest;
 
       const mockResponse = {
@@ -400,6 +424,7 @@ describe("middleware", () => {
       const mockRequest = {
         nextUrl: { pathname: "/home", search: "" },
         headers: new Headers(),
+        method: "GET",
       } as unknown as NextRequest;
 
       const mockResponse = {

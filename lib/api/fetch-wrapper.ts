@@ -34,7 +34,12 @@ export async function fetchWithHmac(
   }
   const pathAndQuery = urlObject.pathname + urlObject.search;
 
-  const hmac = await generateHmac(bodyToSign, timestamp, pathAndQuery);
+  const hmac = await generateHmac(
+    bodyToSign,
+    timestamp,
+    pathAndQuery,
+    options.method || "GET"
+  );
 
   const headers = new Headers(options.headers);
   headers.set("x-timestamp", String(timestamp));
