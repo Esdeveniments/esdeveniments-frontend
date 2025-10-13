@@ -6,12 +6,16 @@ export async function fetchWithHmac(
 ): Promise<Response> {
   const timestamp = Date.now();
   let bodyToSign = "";
+  let normalizedBody: BodyInit | null | undefined = options.body;
 
   if (options.body) {
     if (typeof options.body === "string") {
       bodyToSign = options.body;
     } else if (options.body instanceof URLSearchParams) {
+      // Convert URLSearchParams to string BEFORE signing and sending.
+      // This ensures the client and server see the same string representation.
       bodyToSign = options.body.toString();
+      normalizedBody = bodyToSign;
     } else if (options.body instanceof FormData) {
       bodyToSign = "";
     } else {
@@ -45,5 +49,7 @@ export async function fetchWithHmac(
   headers.set("x-timestamp", String(timestamp));
   headers.set("x-hmac", hmac);
 
-  return fetch(url, { ...options, headers });
+  // Use the normalized body (URLSearchParams converted to string) to ensure
+  // the server middleware reads the exact same string we signed.
+  return fetch(url, { ...options, body: normalizedBody, headers });
 }

@@ -209,5 +209,67 @@ describe("lib/api/fetch-wrapper", () => {
         '[fetchWithHmac] Invalid URL: "/api/test". Server-side API calls must use absolute URLs.'
       );
     });
+
+    it("handles URLSearchParams body and converts to string", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+      (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+
+      const params = new URLSearchParams();
+      params.append("key1", "value1");
+      params.append("key2", "value2");
+
+      await fetchWithHmac("https://api.example.com/test", {
+        method: "POST",
+        body: params,
+      });
+
+      const [url, options] = mockFetch.mock.calls[0];
+      expect(url).toBe("https://api.example.com/test");
+
+      // Verify the body was converted to string
+      expect(typeof options.body).toBe("string");
+      expect(options.body).toBe("key1=value1&key2=value2");
+
+      // Verify HMAC headers are present
+      const headers = options.headers as Headers;
+      expect(headers.get("x-timestamp")).toBeDefined();
+      expect(headers.get("x-hmac")).toBeDefined();
+    });
+
+    it("handles URLSearchParams with special characters", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+      (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+
+      const params = new URLSearchParams();
+      params.append("search", "hello world");
+      params.append("filter", "a&b=c");
+
+      await fetchWithHmac("https://api.example.com/test", {
+        method: "POST",
+        body: params,
+      });
+
+      const options = mockFetch.mock.calls[0][1];
+
+      // Verify the body was properly encoded and converted to string
+      expect(typeof options.body).toBe("string");
+      expect(options.body).toContain("hello+world");
+
+      const headers = options.headers as Headers;
+      expect(headers.get("x-hmac")).toBeDefined();
+    });
+
+    it("throws error for unsupported body types", async () => {
+      const blob = new Blob(["test"], { type: "text/plain" });
+
+      await expect(
+        fetchWithHmac("https://api.example.com/test", {
+          method: "POST",
+          body: blob as BodyInit,
+        })
+      ).rejects.toThrow(
+        "fetchWithHmac: Unsupported body type. Only string, URLSearchParams, and FormData are supported."
+      );
+    });
   });
 });

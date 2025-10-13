@@ -387,6 +387,40 @@ describe("middleware", () => {
         status: 500,
       });
     });
+
+    it("verifies URLSearchParams body signature correctly", async () => {
+      const timestamp = Date.now();
+      const params = new URLSearchParams();
+      params.append("key1", "value1");
+      params.append("key2", "value2");
+      const bodyString = params.toString(); // "key1=value1&key2=value2"
+      const pathAndQuery = "/api/test";
+
+      const validHmac = await generateHmac(
+        bodyString,
+        timestamp,
+        pathAndQuery,
+        "POST"
+      );
+
+      const mockRequest = {
+        nextUrl: { pathname: "/api/test", search: "" },
+        headers: new Headers({
+          "x-timestamp": timestamp.toString(),
+          "x-hmac": validHmac,
+          "content-type": "application/x-www-form-urlencoded",
+        }),
+        clone: vi.fn().mockReturnThis(),
+        text: vi.fn().mockResolvedValue(bodyString),
+        method: "POST",
+      } as unknown as NextRequest;
+
+      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
+
+      await middleware(mockRequest);
+
+      expect(NextResponse.next).toHaveBeenCalled();
+    });
   });
 
   describe("CSP and security headers", () => {
