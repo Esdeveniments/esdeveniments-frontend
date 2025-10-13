@@ -1,3 +1,4 @@
+import { fetchWithHmac } from "./fetch-wrapper";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -49,7 +50,7 @@ export async function fetchEvents(
     );
     const finalUrl = `${apiUrl}/events?${queryString}`;
 
-    const response = await fetch(finalUrl, {
+    const response = await fetchWithHmac(finalUrl, {
       // Cache on the edge for 10 minutes; allow background revalidation
       next: { revalidate: 600, tags: ["events"] },
     });
@@ -79,7 +80,7 @@ export async function fetchEventBySlug(
   }
 
   try {
-    const response = await fetch(`${apiUrl}/events/${fullSlug}`, {
+    const response = await fetchWithHmac(`${apiUrl}/events/${fullSlug}`, {
       next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
     });
     if (response.status === 404) return null;
@@ -95,7 +96,7 @@ export async function updateEventById(
   uuid: string,
   data: EventUpdateRequestDTO
 ): Promise<EventDetailResponseDTO> {
-  const response = await fetch(
+  const response = await fetchWithHmac(
     `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`,
     {
       method: "PUT",
@@ -128,7 +129,7 @@ export async function createEvent(
     formData.append("imageFile", imageFile);
   }
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
+  const response = await fetchWithHmac(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -162,7 +163,7 @@ export async function fetchCategorizedEvents(
     const finalUrl = `${apiUrl}/events/categorized${
       queryString ? `?${queryString}` : ""
     }`;
-    const response = await fetch(finalUrl, {
+    const response = await fetchWithHmac(finalUrl, {
       next: { revalidate: 3600, tags: ["events", "events:categorized"] },
     });
 

@@ -1,62 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getApiOrigin } from "./utils/api-helpers";
+import { getApiOrigin } from "@utils/api-helpers";
+import {
+  validateTimestamp,
+  buildStringToSign,
+  verifyHmacSignature,
+} from "@utils/hmac";
 
-// Determine if the environment is development
 const isDev = process.env.NODE_ENV !== "production";
 
-/**
- * Generates a balanced and maintainable Content Security Policy.
- * @param nonce - A unique string for the 'nonce-' directive.
- * @returns The CSP string.
- */
 function getCsp(nonce: string) {
   const apiOrigin = getApiOrigin();
 
   const cspDirectives = {
-    // By default, only allow resources from our own domain.
     "default-src": ["'self'"],
-
-    // --- SCRIPT SECURITY (The Most Important Part) ---
-    // This is the gold standard. It ensures only scripts with a nonce can run.
-    // 'strict-dynamic' allows a trusted script to load other scripts,
-    // which is essential for services like Google Ads and Analytics.
-    // This avoids having to whitelist every single Google domain for scripts.
     "script-src": [
       "'self'",
       `'nonce-${nonce}'`,
       "'strict-dynamic'",
-      isDev ? "'unsafe-eval'" : "", // For Next.js Fast Refresh in dev
-      isDev ? "localhost:*" : "", // Allow localhost scripts in dev for Next.js chunks
-      isDev ? "127.0.0.1:*" : "", // Allow 127.0.0.1 scripts in dev for Next.js chunks
+      isDev ? "'unsafe-eval'" : "",
+      isDev ? "localhost:*" : "",
+      isDev ? "127.0.0.1:*" : "",
     ],
-
-    // --- STYLE SECURITY ---
     "style-src": ["'self'", "'unsafe-inline'"],
-
-    // --- OTHER RESOURCES (More Flexible for Maintainability) ---
-    // Instead of whitelisting every domain, we allow connections to any secure (https) source.
-    // This prevents services from breaking if they change their endpoints.
     "connect-src": [
       "'self'",
-      apiOrigin, // Dynamic external API based on environment
-      "https:", // Allows any HTTPS connection
-      isDev ? "wss:" : "", // For Next.js Fast Refresh in dev
-      isDev ? "ws:" : "", // For Next.js Fast Refresh in dev (non-secure)
-      isDev ? "localhost:*" : "", // Allow localhost connections in dev
-      isDev ? "127.0.0.1:*" : "", // Allow 127.0.0.1 connections in dev
+      apiOrigin,
+      "https:",
+      isDev ? "wss:" : "",
+      isDev ? "ws:" : "",
+      isDev ? "localhost:*" : "",
+      isDev ? "127.0.0.1:*" : "",
     ],
-    "img-src": ["'self'", "data:", "https:"], // Allows any HTTPS image
+    "img-src": ["'self'", "data:", "https:"],
     "font-src": ["'self'"],
-    "frame-src": ["'self'", "https:"], // Allows any HTTPS iframe
-
-    // --- LOCKDOWN DIRECTIVES (Hardening) ---
+    "frame-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],
-    "object-src": ["'none'"], // Disallow plugins like Flash
+    "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],
-    "frame-ancestors": ["'self'"], // Prevents clickjacking
-
-    // 'report-uri': 'YOUR_SENTRY_REPORTING_ENDPOINT',
+    "frame-ancestors": ["'self'"],
   };
 
   return Object.entries(cspDirectives)
@@ -64,11 +46,60 @@ function getCsp(nonce: string) {
     .join("; ");
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // --- Handle Service Worker ---
-  // Apply specific caching headers for the service worker and return early.
+  if (pathname.startsWith("/api/")) {
+    const hmac = request.headers.get("x-hmac");
+    const timestamp = request.headers.get("x-timestamp");
+    const contentType = request.headers.get("content-type") || "";
+    let requestBody = "";
+
+    if (!process.env.HMAC_SECRET) {
+      console.error("HMAC_SECRET is not configured on the server.");
+      return new NextResponse("Internal Server Error", { status: 500 });
+    }
+
+    if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
+      try {
+        requestBody = await request.clone().text();
+      } catch (error) {
+        console.error("Could not read request body in middleware:", error);
+        return new NextResponse("Bad Request: Unable to read request body", {
+          status: 400,
+        });
+      }
+    }
+
+    if (!hmac || !timestamp) {
+      return new NextResponse("Unauthorized", {
+        status: 401,
+      });
+    }
+
+    if (!validateTimestamp(timestamp)) {
+      return new NextResponse("Unauthorized", {
+        status: 401,
+      });
+    }
+
+    const stringToSign = buildStringToSign(
+      requestBody,
+      timestamp,
+      pathname + request.nextUrl.search,
+      request.method
+    );
+    const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
+
+    if (!signatureIsValid) {
+      return new NextResponse(`Unauthorized`, {
+        status: 401,
+      });
+    }
+
+    return NextResponse.next();
+  }
+
   if (pathname === "/sw.js") {
     const response = NextResponse.next();
     response.headers.set(
@@ -79,9 +110,7 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // --- Handle Redirects ---
   const segments = pathname.split("/").filter(Boolean);
-
   if (
     (segments.length === 3 || segments.length === 2) &&
     segments[1] === "tots"
@@ -95,10 +124,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(finalUrl, request.url), 301);
   }
 
-  // --- Generate and Apply Security Headers for all other pages ---
   const nonce = crypto.randomUUID();
   const csp = getCsp(nonce);
-
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("x-pathname", pathname);
@@ -127,16 +154,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next (Next.js internal files)
-     * - favicon.ico (favicon file)
-     * - robots.txt, sitemap.xml, ads.txt (SEO files)
-     * - static (static assets)
-     * - styles (CSS files)
-     * - sw.js (service worker)
-     */
-    "/((?!api|_next|favicon.ico|robots.txt|sitemap\\.xml|ads.txt|static|styles|sw\\.js).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap\\.xml|ads.txt|static|styles).*)",
   ],
 };
