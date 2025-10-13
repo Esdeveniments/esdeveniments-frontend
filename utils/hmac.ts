@@ -61,9 +61,9 @@ export const generateHmac = async (
 };
 
 export const validateTimestamp = (timestamp: string): boolean => {
-  // Define tolerance constants for timestamp validation
-  const clockSkewTolerance = 5 * 60 * 1000; // 5 minutes tolerance for past timestamps
-  const futureTolerance = 60000; // 1 minute tolerance for future timestamps to account for clock skew
+  // Define named constants for the timestamp tolerances
+  const FIVE_MINUTES_IN_MS = 5 * 60 * 1000; // 5 minutes tolerance for past timestamps
+  const ONE_MINUTE_IN_MS = 60000; // 1 minute tolerance for future timestamps to account for clock skew
 
   // Parse the timestamp string to a number
   const requestTimestamp = parseInt(timestamp, 10);
@@ -76,12 +76,12 @@ export const validateTimestamp = (timestamp: string): boolean => {
   const now = Date.now();
 
   // Early return if timestamp is too far in the future
-  if (requestTimestamp > now + futureTolerance) {
+  if (requestTimestamp > now + ONE_MINUTE_IN_MS) {
     return false;
   }
 
   // Early return if timestamp is too old
-  if (now - requestTimestamp > clockSkewTolerance) {
+  if (now - requestTimestamp > FIVE_MINUTES_IN_MS) {
     return false;
   }
 

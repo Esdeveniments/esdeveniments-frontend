@@ -337,10 +337,12 @@ describe("middleware", () => {
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
-      // Should not throw, should continue with empty body
       await middleware(mockRequest);
 
-      expect(NextResponse.next).toHaveBeenCalled();
+      expect(NextResponse).toHaveBeenCalledWith(
+        "Bad Request: Unable to read request body",
+        { status: 400 }
+      );
     });
 
     it("returns 500 when HMAC_SECRET is not configured", async () => {

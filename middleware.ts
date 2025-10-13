@@ -60,11 +60,14 @@ export async function middleware(request: NextRequest) {
       return new NextResponse("Internal Server Error", { status: 500 });
     }
 
-    if (!contentType.startsWith("multipart/form-data")) {
+    if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
       try {
         requestBody = await request.clone().text();
       } catch (error) {
-        console.warn("Could not read request body in middleware:", error);
+        console.error("Could not read request body in middleware:", error);
+        return new NextResponse("Bad Request: Unable to read request body", {
+          status: 400,
+        });
       }
     }
 
