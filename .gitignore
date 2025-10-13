@@ -52,7 +52,9 @@ yarn-error.log*
 # Sitemap files
 sitemap.xml
 sitemap-*.xml
-server-place-sitemap.xml
+/server-place-sitemap.xml
+/server-google-news-sitemap.xml
+/server-sitemap.xml
 
 # Sentry
 .sentryclirc
