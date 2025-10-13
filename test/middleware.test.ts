@@ -146,10 +146,9 @@ describe("middleware", () => {
 
       await middleware(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith(
-        "Unauthorized: Missing security headers",
-        { status: 401 }
-      );
+      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
+        status: 401,
+      });
     });
 
     it("returns 401 when x-timestamp header is missing", async () => {
@@ -163,13 +162,12 @@ describe("middleware", () => {
 
       await middleware(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith(
-        "Unauthorized: Missing security headers",
-        { status: 401 }
-      );
+      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
+        status: 401,
+      });
     });
 
-    it("returns 408 for invalid timestamp format", async () => {
+    it("returns 401 for invalid timestamp format", async () => {
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
         headers: new Headers({
@@ -183,13 +181,12 @@ describe("middleware", () => {
 
       await middleware(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith(
-        "Request timed out or has invalid timestamp",
-        { status: 408 }
-      );
+      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
+        status: 401,
+      });
     });
 
-    it("returns 408 for future timestamp", async () => {
+    it("returns 401 for future timestamp", async () => {
       const futureTimestamp = Date.now() + 120000; // 2 minutes in future
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
@@ -204,13 +201,12 @@ describe("middleware", () => {
 
       await middleware(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith(
-        "Request timed out or has invalid timestamp",
-        { status: 408 }
-      );
+      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
+        status: 401,
+      });
     });
 
-    it("returns 408 for expired timestamp", async () => {
+    it("returns 401 for expired timestamp", async () => {
       const expiredTimestamp = Date.now() - 6 * 60 * 1000; // 6 minutes ago
       const mockRequest = {
         nextUrl: { pathname: "/api/test", search: "" },
@@ -225,10 +221,9 @@ describe("middleware", () => {
 
       await middleware(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith(
-        "Request timed out or has invalid timestamp",
-        { status: 408 }
-      );
+      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
+        status: 401,
+      });
     });
 
     it("returns 401 for invalid HMAC", async () => {
