@@ -83,8 +83,7 @@ export async function middleware(request: NextRequest) {
     const stringToSign = buildStringToSign(
       requestBody,
       timestamp,
-      pathname,
-      request.nextUrl.search
+      pathname + request.nextUrl.search
     );
     const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
 

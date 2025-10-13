@@ -50,7 +50,7 @@ export const generateHmac = async (
   timestamp: number,
   pathAndQuery: string
 ): Promise<string> => {
-  const stringToSign = `${body}${timestamp}${pathAndQuery}`;
+  const stringToSign = buildStringToSign(body, timestamp, pathAndQuery);
   const key = await getHmacKey();
   const dataBuffer = encoder.encode(stringToSign);
   const signatureBuffer = await cryptoSubtle.sign("HMAC", key, dataBuffer);
@@ -91,11 +91,10 @@ export const validateTimestamp = (timestamp: string): boolean => {
 
 export const buildStringToSign = (
   body: string,
-  timestamp: string,
-  pathname: string,
-  search: string
+  timestamp: string | number,
+  pathAndQuery: string
 ): string => {
-  return `${body}${timestamp}${pathname}${search}`;
+  return `${body}${timestamp}${pathAndQuery}`;
 };
 
 export const verifyHmacSignature = async (
