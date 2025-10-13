@@ -42,26 +42,6 @@ export async function GET() {
     places.some((place) => place.slug === slug)
   );
 
-  if (!Array.isArray(places)) {
-    return new Response(
-      '<?xml version="1.0" encoding="UTF-8"?><error>places is not an array</error>',
-      {
-        status: 500,
-        headers: { "Content-Type": "application/xml" },
-      }
-    );
-  }
-
-  if (!Array.isArray(categories)) {
-    return new Response(
-      '<?xml version="1.0" encoding="UTF-8"?><error>categories is not an array</error>',
-      {
-        status: 500,
-        headers: { "Content-Type": "application/xml" },
-      }
-    );
-  }
-
   // Top dates and categories (similar to static generation)
   const topDates = VALID_DATES.filter((date) => date !== "tots");
   const topCategories = categories
