@@ -1,17 +1,4 @@
-function getSiteUrl() {
-  if (process.env.NODE_ENV !== "production") {
-    return "http://localhost:3000";
-  }
-
-  if (
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "development"
-  ) {
-    return "https://esdeveniments.vercel.app";
-  }
-
-  return "https://www.esdeveniments.cat";
-}
+const { getSiteUrl } = require("./config/index");
 
 const siteUrl = getSiteUrl();
 
