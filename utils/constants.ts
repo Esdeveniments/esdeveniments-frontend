@@ -200,3 +200,14 @@ export const NEARBY_PLACES_BY_HUB: Record<
     { slug: "tarrega", name: "Tàrrega" },
   ],
 };
+
+// Time tolerance constants for HMAC timestamp validation
+// Configurable timestamp tolerances via environment variablesexport
+export const FIVE_MINUTES_IN_MS = parseInt(
+  process.env.HMAC_PAST_TOLERANCE_MS || "300000",
+  10
+); // 5 minutes tolerance for past timestamps
+export const ONE_MINUTE_IN_MS = parseInt(
+  process.env.HMAC_FUTURE_TOLERANCE_MS || "60000",
+  10
+); // 1 minute tolerance for future timestamps to account for clock skew

@@ -1,11 +1,12 @@
 import { CitySummaryResponseDTO } from "types/api/city";
 import { createCache, createKeyedCache } from "lib/api/cache";
+import { fetchWithHmac } from "lib/api/fetch-wrapper";
 
 const cache = createCache<CitySummaryResponseDTO[]>(86400000);
 const cityByIdCache = createKeyedCache<CitySummaryResponseDTO | null>(86400000);
 
 async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
-  const response = await fetch(
+  const response = await fetchWithHmac(
     `${process.env.NEXT_PUBLIC_API_URL}/places/cities`,
     { next: { revalidate: 86400, tags: ["cities"] } }
   );
@@ -27,7 +28,7 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 async function fetchCityByIdApi(
   id: string | number
 ): Promise<CitySummaryResponseDTO | null> {
-  const response = await fetch(
+  const response = await fetchWithHmac(
     `${process.env.NEXT_PUBLIC_API_URL}/places/cities/${id}`,
     { next: { revalidate: 86400, tags: ["cities", `city:${id}`] } }
   );

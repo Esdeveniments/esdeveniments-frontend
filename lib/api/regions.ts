@@ -1,3 +1,4 @@
+import { fetchWithHmac } from "./fetch-wrapper";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { createCache } from "lib/api/cache";
@@ -7,7 +8,7 @@ const regionsWithCitiesCache =
   createCache<RegionsGroupedByCitiesResponseDTO[]>(86400000);
 
 async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
-  const response = await fetch(
+  const response = await fetchWithHmac(
     `${process.env.NEXT_PUBLIC_API_URL}/places/regions`,
     { next: { revalidate: 86400, tags: ["regions"] } }
   );
@@ -29,7 +30,7 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
 async function fetchRegionsWithCitiesFromApi(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
-  const response = await fetch(
+  const response = await fetchWithHmac(
     `${process.env.NEXT_PUBLIC_API_URL}/places/regions/options`,
     { next: { revalidate: 86400, tags: ["regions", "regions:options"] } }
   );
@@ -88,7 +89,7 @@ export async function fetchRegionById(
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return null;
   try {
-  const response = await fetch(`${apiUrl}/places/regions/${id}`, {
+  const response = await fetchWithHmac(`${apiUrl}/places/regions/${id}`, {
     next: { revalidate: 86400, tags: ["regions", `region:${id}`] },
   });
     if (!response.ok) return null;

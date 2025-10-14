@@ -1,38 +1,19 @@
 import { siteUrl } from "@config/index";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
-import type { UrlField } from "types/sitemap";
-
-function buildSitemap(fields: UrlField[]): string {
-  return (
-    `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    fields
-      .map((field) => {
-        return (
-          `  <url>\n` +
-          `    <loc>${field.loc}</loc>\n` +
-          `    <lastmod>${field.lastmod}</lastmod>\n` +
-          `    <changefreq>${field.changefreq}</changefreq>\n` +
-          `    <priority>${field.priority}</priority>\n` +
-          `  </url>`
-        );
-      })
-      .join("\n") +
-    `\n</urlset>`
-  );
-}
+import { buildSitemap } from "@utils/sitemap";
+import type { SitemapField } from "types/sitemap";
 
 export async function GET() {
   // Include news list pages and a rolling window of article detail URLs per hub
-  const listEntries: UrlField[] = NEWS_HUBS.map((hub) => ({
+  const listEntries: SitemapField[] = NEWS_HUBS.map((hub) => ({
     loc: `${siteUrl}/noticies/${hub.slug}`,
     lastmod: new Date().toISOString(),
     changefreq: "daily",
     priority: 0.6,
   }));
 
-  const articleEntries: UrlField[] = [];
+  const articleEntries: SitemapField[] = [];
 
   // Fetch a limited number of recent articles per hub to avoid oversized sitemap
   for (const hub of NEWS_HUBS) {
@@ -59,7 +40,7 @@ export async function GET() {
     }
   }
 
-  const xml = buildSitemap([...listEntries, ...articleEntries]);
+  const xml = buildSitemap([...listEntries, ...articleEntries], {});
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",

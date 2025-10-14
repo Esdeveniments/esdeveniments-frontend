@@ -1,3 +1,4 @@
+import { fetchWithHmac } from "./fetch-wrapper";
 import type {
   PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
@@ -40,7 +41,7 @@ export async function fetchNews(
     );
     const finalUrl = `${apiUrl}/news?${queryString}`;
 
-    const response = await fetch(finalUrl, { next: { revalidate: 60 } });
+    const response = await fetchWithHmac(finalUrl, { next: { revalidate: 60 } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -67,7 +68,7 @@ export async function fetchNewsBySlug(
     return null;
   }
   try {
-    const response = await fetch(`${apiUrl}/news/${slug}`, {
+    const response = await fetchWithHmac(`${apiUrl}/news/${slug}`, {
       next: { revalidate: 60 },
     });
     if (response.status === 404) return null;

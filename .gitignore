@@ -42,6 +42,7 @@ yarn-error.log*
 
 # local env files
 .env
+.env.local
 .env.development
 .env.production
 .env.staging
@@ -49,13 +50,18 @@ yarn-error.log*
 # vercel
 .vercel
 
-# Sitemap file
+# Sitemap files
 sitemap.xml
-sitemap-0.xml
+sitemap-*.xml
+/server-place-sitemap.xml
+/server-google-news-sitemap.xml
+/server-sitemap.xml
 
 # Sentry
 .sentryclirc
 
+# Generated robots.txt
+/public/robots.txt
 
 .aider*
 
