@@ -2,7 +2,7 @@ import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
-import type { SitemapField } from "@types/sitemap";
+import type { SitemapField } from "types/sitemap";
 
 export async function GET() {
   // Removed date filtering - new API doesn't support it

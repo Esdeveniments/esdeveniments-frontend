@@ -5,7 +5,7 @@ import { VALID_DATES } from "@lib/dates";
 import { highPrioritySlugs } from "@utils/priority-places";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
-import type { SitemapField } from "@types/sitemap";
+import type { SitemapField } from "types/sitemap";
 
 export async function GET() {
   const [places, categories] = await Promise.all([

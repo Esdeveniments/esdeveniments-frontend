@@ -2,7 +2,7 @@ import { siteUrl } from "@config/index";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 import { buildSitemap } from "@utils/sitemap";
-import type { SitemapField } from "@types/sitemap";
+import type { SitemapField } from "types/sitemap";
 
 export async function GET() {
   // Include news list pages and a rolling window of article detail URLs per hub
