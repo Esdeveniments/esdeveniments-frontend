@@ -8,6 +8,8 @@ import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
 
 export async function GET() {
+  const TOP_CATEGORIES_COUNT = 5;
+
   const [places, categories] = await Promise.all([
     fetchPlaces(),
     fetchCategories(),
@@ -21,7 +23,7 @@ export async function GET() {
   // Top dates and categories (similar to static generation)
   const topDates = VALID_DATES.filter((date) => date !== "tots");
   const topCategories = categories
-    .slice(0, 5)
+    .slice(0, TOP_CATEGORIES_COUNT)
     .map((cat) => cat.slug)
     .filter((slug) => slug && slug !== "tots");
 

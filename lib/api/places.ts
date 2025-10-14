@@ -31,7 +31,6 @@ export async function fetchPlaceBySlug(
 
 async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return [];
 
   const endpoints = [
     `${apiUrl}/places/regions`,

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { XMLParser } from "fast-xml-parser";
+import { parseAndValidateSitemap } from "../test/sitemap-helpers";
 
 test.describe("Server sitemaps (news/google)", () => {
   test("/server-news-sitemap.xml responds 200 and contains urlset", async ({
@@ -11,12 +11,7 @@ test.describe("Server sitemaps (news/google)", () => {
     expect(text).toMatch(/<urlset|<sitemapindex/);
 
     // Parse XML and validate structure
-    const parser = new XMLParser();
-    const xmlObj = parser.parse(text);
-    expect(xmlObj.urlset).toBeDefined();
-    const urls = (
-      Array.isArray(xmlObj.urlset.url) ? xmlObj.urlset.url : [xmlObj.urlset.url]
-    ).filter(Boolean);
+    const urls = parseAndValidateSitemap(text);
 
     // Check lastmod dates are not 2023
     urls.forEach(
@@ -35,24 +30,15 @@ test.describe("Server sitemaps (news/google)", () => {
     expect(text).toContain("<urlset");
 
     // Parse XML and validate structure
-    const parser = new XMLParser();
-    const xmlObj = parser.parse(text);
-    expect(xmlObj.urlset).toBeDefined();
-    if (xmlObj.urlset.url) {
-      const urls = (
-        Array.isArray(xmlObj.urlset.url)
-          ? xmlObj.urlset.url
-          : [xmlObj.urlset.url]
-      ).filter(Boolean);
+    const urls = parseAndValidateSitemap(text);
 
-      // Check publication dates are not 2023
-      urls.forEach(
-        (url: { lastmod?: string; news?: { publication_date?: string } }) => {
-          if (url.news && url.news.publication_date) {
-            expect(url.news.publication_date).not.toContain("2023");
-          }
+    // Check publication dates are not 2023
+    urls.forEach(
+      (url: { lastmod?: string; news?: { publication_date?: string } }) => {
+        if (url.news && url.news.publication_date) {
+          expect(url.news.publication_date).not.toContain("2023");
         }
-      );
-    }
+      }
+    );
   });
 });

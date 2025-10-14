@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { XMLParser } from "fast-xml-parser";
+import { parseAndValidateSitemap } from "../test/sitemap-helpers";
 
 // Validate sitemap index and town pages render, and server sitemap + RSS endpoints respond 200.
 
@@ -14,15 +15,8 @@ test.describe("Sitemaps and feed", () => {
     const res = await request.get("/server-sitemap.xml");
     expect(res.status()).toBe(200);
     const text = await res.text();
-    expect(text).toContain("<urlset");
 
-    // Parse XML and validate structure
-    const parser = new XMLParser();
-    const xmlObj = parser.parse(text);
-    expect(xmlObj.urlset).toBeDefined();
-    const urls = Array.isArray(xmlObj.urlset.url)
-      ? xmlObj.urlset.url
-      : [xmlObj.urlset.url];
+    const urls = parseAndValidateSitemap(text);
 
     // Check lastmod dates are not 2023
     urls.forEach((url: { lastmod?: string }) => {
@@ -35,17 +29,10 @@ test.describe("Sitemaps and feed", () => {
     const res = await request.get("/server-place-sitemap.xml");
     expect(res.status()).toBe(200);
     const text = await res.text();
-    expect(text).toContain("<urlset");
 
-    // Parse XML and validate structure
-    const parser = new XMLParser();
-    const xmlObj = parser.parse(text);
-    expect(xmlObj.urlset).toBeDefined();
-    if (xmlObj.urlset.url) {
-      const urls = Array.isArray(xmlObj.urlset.url)
-        ? xmlObj.urlset.url
-        : [xmlObj.urlset.url];
+    const urls = parseAndValidateSitemap(text);
 
+    if (urls.length > 0) {
       // Check presence of key place URLs if any
       const urlLocs = urls.map((url: { loc: string }) => url.loc);
       if (urlLocs.length > 0) {

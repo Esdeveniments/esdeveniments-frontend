@@ -92,12 +92,13 @@ export async function generateStaticParams() {
 
   // Filter high priority places to only include those that exist in API data
   // If places fetch failed, use highPrioritySlugs as fallback
-  const topPlaces =
-    places.length > 0
-      ? highPrioritySlugs.filter((placeSlug) =>
-          places.some((place) => place.slug === placeSlug)
-        )
-      : highPrioritySlugs;
+  const topPlaces = (() => {
+    if (places.length === 0) {
+      return highPrioritySlugs;
+    }
+    const placeSlugs = new Set(places.map((p) => p.slug));
+    return highPrioritySlugs.filter((slug) => placeSlugs.has(slug));
+  })();
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {

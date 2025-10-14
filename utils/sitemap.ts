@@ -1,5 +1,5 @@
 import { escapeXml } from "./xml-escape";
-import type { SitemapField, BuildSitemapOptions } from "@types/sitemap";
+import type { SitemapField, BuildSitemapOptions } from "types/sitemap";
 
 export function buildSitemap(
   fields: SitemapField[],
