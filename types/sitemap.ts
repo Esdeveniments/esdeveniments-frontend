@@ -15,7 +15,7 @@ export interface SitemapImage {
 export interface SitemapField {
   loc: string;
   lastmod: string;
-  changefreq: string;
+  changefreq: ChangeFreq;
   priority: number;
   image?: SitemapImage;
 }
