@@ -1,4 +1,3 @@
-import { sanitize } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";

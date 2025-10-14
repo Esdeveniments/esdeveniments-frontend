@@ -14,9 +14,9 @@ test.describe("Server sitemaps (news/google)", () => {
     const parser = new XMLParser();
     const xmlObj = parser.parse(text);
     expect(xmlObj.urlset).toBeDefined();
-    const urls = Array.isArray(xmlObj.urlset.url)
-      ? xmlObj.urlset.url
-      : [xmlObj.urlset.url];
+    const urls = (
+      Array.isArray(xmlObj.urlset.url) ? xmlObj.urlset.url : [xmlObj.urlset.url]
+    ).filter(Boolean);
 
     // Check lastmod dates are not 2023
     urls.forEach(
@@ -39,9 +39,11 @@ test.describe("Server sitemaps (news/google)", () => {
     const xmlObj = parser.parse(text);
     expect(xmlObj.urlset).toBeDefined();
     if (xmlObj.urlset.url) {
-      const urls = Array.isArray(xmlObj.urlset.url)
-        ? xmlObj.urlset.url
-        : [xmlObj.urlset.url];
+      const urls = (
+        Array.isArray(xmlObj.urlset.url)
+          ? xmlObj.urlset.url
+          : [xmlObj.urlset.url]
+      ).filter(Boolean);
 
       // Check publication dates are not 2023
       urls.forEach(
