@@ -19,26 +19,30 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
     "paths": {
-      "@store": ["store.ts"],
-      "@app/*": ["app/*"],
-      "@components/*": ["components/*"],
-      "@styles/*": ["styles/*"],
-      "@content/*": ["content/*"],
-      "@utils/*": ["utils/*"],
-      "@lib/*": ["lib/*"],
-      "@config/*": ["config/*"],
-      "@public/*": ["public/*"],
-      "@types/*": ["types/*"],
-      "react": ["./node_modules/@types/react"]
+      "@store": ["./store.ts"],
+      "@app/*": ["./app/*"],
+      "@components/*": ["./components/*"],
+      "@styles/*": ["./styles/*"],
+      "@content/*": ["./content/*"],
+      "@utils/*": ["./utils/*"],
+      "@lib/*": ["./lib/*"],
+      "@config/*": ["./config/*"],
+      "@public/*": ["./public/*"],
+      "@types/*": ["./types/*"],
+      "react": ["./node_modules/@types/react"],
+      "types/*": ["./types/*"],
+      "lib/*": ["./lib/*"],
+      "utils/*": ["./utils/*"],
+      "config/*": ["./config/*"],
+      "components/*": ["./components/*"],
+      "app/*": ["./app/*"]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["vitest/globals", "./types/react-datepicker.d.ts"],
-    "ignoreDeprecations": "6.0"
+    "types": ["vitest/globals", "./types/react-datepicker.d.ts"]
   },
   "include": [
     "**/*.ts",
