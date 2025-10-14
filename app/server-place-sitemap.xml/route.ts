@@ -4,42 +4,8 @@ import { fetchCategories } from "@lib/api/categories";
 import { VALID_DATES } from "@lib/dates";
 import { highPrioritySlugs } from "@utils/priority-places";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
-
-function escapeXml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function buildSitemap(
-  fields: Array<{
-    loc: string;
-    lastmod: string;
-    changefreq: string;
-    priority: number;
-  }>
-): string {
-  return (
-    `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    fields
-      .map((field) => {
-        return (
-          `  <url>\n` +
-          `    <loc>${escapeXml(field.loc)}</loc>\n` +
-          `    <lastmod>${escapeXml(field.lastmod)}</lastmod>\n` +
-          `    <changefreq>${escapeXml(field.changefreq)}</changefreq>\n` +
-          `    <priority>${escapeXml(field.priority.toString())}</priority>\n` +
-          `  </url>`
-        );
-      })
-      .join("\n") +
-    `\n</urlset>`
-  );
-}
+import { buildSitemap } from "@utils/sitemap";
+import type { UrlField } from "types/sitemap";
 
 export async function GET() {
   const [places, categories] = await Promise.all([
@@ -47,8 +13,9 @@ export async function GET() {
     fetchCategories(),
   ]);
 
+  const placeSlugs = new Set(places.map((p) => p.slug));
   const filteredHighPrioritySlugs = highPrioritySlugs.filter((slug) =>
-    places.some((place) => place.slug === slug)
+    placeSlugs.has(slug)
   );
 
   // Top dates and categories (similar to static generation)
@@ -58,12 +25,7 @@ export async function GET() {
     .map((cat) => cat.slug)
     .filter((slug) => slug && slug !== "tots");
 
-  const fields: Array<{
-    loc: string;
-    lastmod: string;
-    changefreq: string;
-    priority: number;
-  }> = [];
+  const fields: UrlField[] = [];
 
   const lastmod = new Date().toISOString();
 
@@ -122,7 +84,7 @@ export async function GET() {
     }
   }
 
-  const xml = buildSitemap(fields);
+  const xml = buildSitemap(fields, {});
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",

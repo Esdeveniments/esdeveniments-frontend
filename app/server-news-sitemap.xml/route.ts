@@ -1,28 +1,8 @@
 import { siteUrl } from "@config/index";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
+import { buildSitemap } from "@utils/sitemap";
 import type { UrlField } from "types/sitemap";
-import { escapeXml } from "@utils/xml-escape";
-
-function buildSitemap(fields: UrlField[]): string {
-  return (
-    `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    fields
-      .map((field) => {
-        return (
-          `  <url>\n` +
-          `    <loc>${escapeXml(field.loc)}</loc>\n` +
-          `    <lastmod>${field.lastmod}</lastmod>\n` +
-          `    <changefreq>${field.changefreq}</changefreq>\n` +
-          `    <priority>${field.priority}</priority>\n` +
-          `  </url>`
-        );
-      })
-      .join("\n") +
-    `\n</urlset>`
-  );
-}
 
 export async function GET() {
   // Include news list pages and a rolling window of article detail URLs per hub
@@ -60,7 +40,7 @@ export async function GET() {
     }
   }
 
-  const xml = buildSitemap([...listEntries, ...articleEntries]);
+  const xml = buildSitemap([...listEntries, ...articleEntries], {});
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",

@@ -52,4 +52,13 @@ module.exports = {
       `${siteUrl}/server-google-news-sitemap.xml`,
     ],
   },
+  transform: async (config, path) => {
+    // Use the path as the default key
+    return {
+      loc: path,
+      changefreq: config.changefreq,
+      priority: config.priority,
+      lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
+    };
+  },
 };

@@ -278,11 +278,13 @@ export function getTopStaticCombinations(
   const topDates = VALID_DATES.filter((date) => date !== "tots"); // Exclude "tots" from static generation
 
   // Filter top places to only include those that exist in API data
-  const topPlaces = dynamicPlaces
-    ? hardcodedTopPlaces.filter((hardcodedPlace) =>
-        dynamicPlaces.some((place) => place.slug === hardcodedPlace)
-      )
-    : hardcodedTopPlaces;
+  let topPlaces;
+  if (dynamicPlaces) {
+    const placeSlugs = new Set(dynamicPlaces.map((p) => p.slug));
+    topPlaces = hardcodedTopPlaces.filter((slug) => placeSlugs.has(slug));
+  } else {
+    topPlaces = hardcodedTopPlaces;
+  }
 
   // Get top categories from dynamic data or fall back to legacy
   let topCategories = ["tots"];
