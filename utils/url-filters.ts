@@ -279,7 +279,7 @@ export function getTopStaticCombinations(
 
   // Filter top places to only include those that exist in API data
   let topPlaces;
-  if (dynamicPlaces) {
+  if (dynamicPlaces && dynamicPlaces.length > 0) {
     const placeSlugs = new Set(dynamicPlaces.map((p) => p.slug));
     topPlaces = hardcodedTopPlaces.filter((slug) => placeSlugs.has(slug));
   } else {

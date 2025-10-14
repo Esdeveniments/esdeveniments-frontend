@@ -5,7 +5,7 @@ import { VALID_DATES } from "@lib/dates";
 import { highPrioritySlugs } from "@utils/priority-places";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
-import type { UrlField } from "types/sitemap";
+import type { SitemapField } from "@types/sitemap";
 
 export async function GET() {
   const [places, categories] = await Promise.all([
@@ -25,7 +25,7 @@ export async function GET() {
     .map((cat) => cat.slug)
     .filter((slug) => slug && slug !== "tots");
 
-  const fields: UrlField[] = [];
+  const fields: SitemapField[] = [];
 
   const lastmod = new Date().toISOString();
 

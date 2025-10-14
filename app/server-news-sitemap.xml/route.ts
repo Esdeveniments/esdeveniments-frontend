@@ -2,18 +2,18 @@ import { siteUrl } from "@config/index";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 import { buildSitemap } from "@utils/sitemap";
-import type { UrlField } from "types/sitemap";
+import type { SitemapField } from "@types/sitemap";
 
 export async function GET() {
   // Include news list pages and a rolling window of article detail URLs per hub
-  const listEntries: UrlField[] = NEWS_HUBS.map((hub) => ({
+  const listEntries: SitemapField[] = NEWS_HUBS.map((hub) => ({
     loc: `${siteUrl}/noticies/${hub.slug}`,
     lastmod: new Date().toISOString(),
     changefreq: "daily",
     priority: 0.6,
   }));
 
-  const articleEntries: UrlField[] = [];
+  const articleEntries: SitemapField[] = [];
 
   // Fetch a limited number of recent articles per hub to avoid oversized sitemap
   for (const hub of NEWS_HUBS) {

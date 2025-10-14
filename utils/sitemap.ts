@@ -1,20 +1,16 @@
 import { escapeXml } from "./xml-escape";
-import type { SitemapField, BuildSitemapOptions } from "types/sitemap";
+import type { SitemapField, BuildSitemapOptions } from "@types/sitemap";
 
 export function buildSitemap(
   fields: SitemapField[],
   options: BuildSitemapOptions = {}
 ): string {
-  const { includeImage = false, includeNews = false } = options;
+  const { includeImage = false } = options;
 
   const namespaces = [];
   if (includeImage)
     namespaces.push(
       'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'
-    );
-  if (includeNews)
-    namespaces.push(
-      'xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"'
     );
 
   const namespaceString =

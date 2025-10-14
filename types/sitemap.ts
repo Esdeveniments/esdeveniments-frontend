@@ -1,9 +1,11 @@
-export interface UrlField {
-  loc: string;
-  lastmod: string;
-  changefreq: string;
-  priority: number;
-}
+export type ChangeFreq =
+  | "always"
+  | "hourly"
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "never";
 
 export interface SitemapImage {
   loc: string;
@@ -20,5 +22,6 @@ export interface SitemapField {
 
 export interface BuildSitemapOptions {
   includeImage?: boolean;
-  includeNews?: boolean;
 }
+
+export type UrlField = Omit<SitemapField, "image">;
