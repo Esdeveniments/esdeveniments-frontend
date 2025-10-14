@@ -2,6 +2,7 @@ import { siteUrl } from "@config/index";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 import type { UrlField } from "types/sitemap";
+import { escapeXml } from "@utils/xml-escape";
 
 function buildSitemap(fields: UrlField[]): string {
   return (
@@ -11,7 +12,7 @@ function buildSitemap(fields: UrlField[]): string {
       .map((field) => {
         return (
           `  <url>\n` +
-          `    <loc>${field.loc}</loc>\n` +
+          `    <loc>${escapeXml(field.loc)}</loc>\n` +
           `    <lastmod>${field.lastmod}</lastmod>\n` +
           `    <changefreq>${field.changefreq}</changefreq>\n` +
           `    <priority>${field.priority}</priority>\n` +

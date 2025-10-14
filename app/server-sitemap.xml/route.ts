@@ -2,6 +2,7 @@ import { sanitize } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
+import { escapeXml } from "@utils/xml-escape";
 
 function buildSitemap(
   fields: Array<{
@@ -19,14 +20,14 @@ function buildSitemap(
       .map((field) => {
         return (
           `  <url>\n` +
-          `    <loc>${field.loc}</loc>\n` +
+          `    <loc>${escapeXml(field.loc)}</loc>\n` +
           `    <lastmod>${field.lastmod}</lastmod>\n` +
           `    <changefreq>${field.changefreq}</changefreq>\n` +
           `    <priority>${field.priority}</priority>\n` +
           (field.image
             ? `    <image:image>\n      <image:loc>${
                 field.image.loc
-              }</image:loc>\n      <image:title>${sanitize(
+              }</image:loc>\n      <image:title>${escapeXml(
                 field.image.title
               )}</image:title>\n    </image:image>\n`
             : "") +

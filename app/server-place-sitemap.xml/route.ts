@@ -5,6 +5,15 @@ import { VALID_DATES } from "@lib/dates";
 import { highPrioritySlugs } from "@utils/priority-places";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 
+function escapeXml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildSitemap(
   fields: Array<{
     loc: string;
@@ -20,10 +29,10 @@ function buildSitemap(
       .map((field) => {
         return (
           `  <url>\n` +
-          `    <loc>${field.loc}</loc>\n` +
-          `    <lastmod>${field.lastmod}</lastmod>\n` +
-          `    <changefreq>${field.changefreq}</changefreq>\n` +
-          `    <priority>${field.priority}</priority>\n` +
+          `    <loc>${escapeXml(field.loc)}</loc>\n` +
+          `    <lastmod>${escapeXml(field.lastmod)}</lastmod>\n` +
+          `    <changefreq>${escapeXml(field.changefreq)}</changefreq>\n` +
+          `    <priority>${escapeXml(field.priority.toString())}</priority>\n` +
           `  </url>`
         );
       })
