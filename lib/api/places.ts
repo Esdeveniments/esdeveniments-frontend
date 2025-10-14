@@ -1,8 +1,9 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { PlaceResponseDTO } from "types/api/place";
-import { createKeyedCache } from "lib/api/cache";
+import { createKeyedCache, createCache } from "@lib/api/cache";
 
 const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
+const placesCache = createCache<PlaceResponseDTO[]>(86400000);
 
 async function fetchPlaceBySlugApi(
   key: string | number
@@ -26,4 +27,59 @@ export async function fetchPlaceBySlug(
   slug: string
 ): Promise<PlaceResponseDTO | null> {
   return placeBySlugCache(slug, fetchPlaceBySlugApi);
+}
+
+async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  const endpoints = [
+    `${apiUrl}/places/regions`,
+    `${apiUrl}/places/cities`,
+    // Add provinces if they exist: `${apiUrl}/places/provinces`
+  ];
+
+  const results = await Promise.all(
+    endpoints.map(async (endpoint) => {
+      try {
+        const response = await fetchWithHmac(endpoint, {
+          next: { revalidate: 86400, tags: ["places"] },
+        });
+        if (!response.ok) return [];
+        const data = (await response.json()) as PlaceResponseDTO[];
+        return data;
+      } catch (error) {
+        console.error(`Error fetching from ${endpoint}:`, error);
+        return [];
+      }
+    })
+  );
+
+  // Flatten and deduplicate by slug
+  const allPlaces = results.flat();
+  if (allPlaces.length === 0) {
+    console.warn("No places fetched from API endpoints");
+  }
+  const uniquePlacesMap = new Map<string, PlaceResponseDTO>();
+  for (const place of allPlaces) {
+    if (!uniquePlacesMap.has(place.slug)) {
+      uniquePlacesMap.set(place.slug, place);
+    }
+  }
+  const uniquePlaces = Array.from(uniquePlacesMap.values());
+  return uniquePlaces;
+}
+
+/**
+ * Fetch all places (regions, cities, and provinces if available)
+ * @returns Array of PlaceResponseDTO
+ */
+export async function fetchPlaces(): Promise<PlaceResponseDTO[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return [];
+  try {
+    return await placesCache(fetchPlacesFromApi);
+  } catch (e) {
+    console.error("Error fetching places:", e);
+    return [];
+  }
 }

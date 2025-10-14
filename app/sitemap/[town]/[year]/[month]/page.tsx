@@ -129,7 +129,7 @@ export default async function Page({
         id={`${town}-${month}-${year}-collection`}
         type="application/ld+json"
         strategy="afterInteractive"
-          nonce={nonce}
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(collectionPageSchema),
         }}

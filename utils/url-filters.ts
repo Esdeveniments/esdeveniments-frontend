@@ -14,8 +14,9 @@ import type {
   URLQueryParams,
   ParsedFilters,
 } from "types/url-filters";
-import { VALID_DATES, isValidDateSlug } from "types/dates";
+import { VALID_DATES, isValidDateSlug } from "@lib/dates";
 import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
+import { highPrioritySlugs } from "./priority-places";
 
 /**
  * Validate latitude coordinate
@@ -267,13 +268,23 @@ export function getCategorySlug(
 }
 
 /**
- * Generate static params for ISR - enhanced with dynamic categories
+ * Generate static params for ISR - enhanced with dynamic categories and places
  */
 export function getTopStaticCombinations(
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
+  dynamicPlaces?: { slug: string }[]
 ) {
-  const topPlaces = ["catalunya", "barcelona", "girona", "lleida", "tarragona"];
+  const hardcodedTopPlaces = highPrioritySlugs;
   const topDates = VALID_DATES.filter((date) => date !== "tots"); // Exclude "tots" from static generation
+
+  // Filter top places to only include those that exist in API data
+  let topPlaces;
+  if (dynamicPlaces && dynamicPlaces.length > 0) {
+    const placeSlugs = new Set(dynamicPlaces.map((p) => p.slug));
+    topPlaces = hardcodedTopPlaces.filter((slug) => placeSlugs.has(slug));
+  } else {
+    topPlaces = hardcodedTopPlaces;
+  }
 
   // Get top categories from dynamic data or fall back to legacy
   let topCategories = ["tots"];

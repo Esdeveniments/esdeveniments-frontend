@@ -1,42 +1,8 @@
-import { sanitize } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
-
-function buildSitemap(
-  fields: Array<{
-    loc: string;
-    lastmod: string;
-    changefreq: string;
-    priority: number;
-    image?: { loc: string; title: string };
-  }>
-): string {
-  return (
-    `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n` +
-    fields
-      .map((field) => {
-        return (
-          `  <url>\n` +
-          `    <loc>${field.loc}</loc>\n` +
-          `    <lastmod>${field.lastmod}</lastmod>\n` +
-          `    <changefreq>${field.changefreq}</changefreq>\n` +
-          `    <priority>${field.priority}</priority>\n` +
-          (field.image
-            ? `    <image:image>\n      <image:loc>${
-                field.image.loc
-              }</image:loc>\n      <image:title>${sanitize(
-                field.image.title
-              )}</image:title>\n    </image:image>\n`
-            : "") +
-          `  </url>`
-        );
-      })
-      .join("\n") +
-    `\n</urlset>`
-  );
-}
+import { buildSitemap } from "@utils/sitemap";
+import type { SitemapField } from "types/sitemap";
 
 export async function GET() {
   // Removed date filtering - new API doesn't support it
@@ -61,22 +27,27 @@ export async function GET() {
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
 
-  const fields = normalizedEvents
+  const fields: SitemapField[] = normalizedEvents
     .filter((event) => !event.isAd)
     .map((data) => {
       const image = data.imageUrl || defaultImage;
+      // Use event's updatedAt if available, otherwise fall back to endDate || startDate
+      let lastModDate = data.updatedAt
+        ? new Date(data.updatedAt)
+        : new Date(data.endDate || data.startDate);
+      if (isNaN(lastModDate.getTime())) {
+        lastModDate = new Date();
+      }
       return {
         loc: `${siteUrl}/e/${data.slug}`,
-        lastmod: new Date(
-          data.endDate || data.startDate || Date.now()
-        ).toISOString(),
+        lastmod: lastModDate.toISOString(),
         changefreq: "daily",
         priority: 0.7,
         image: image ? { loc: image, title: data.title } : undefined,
       };
     });
 
-  const xml = buildSitemap(fields);
+  const xml = buildSitemap(fields, { includeImage: true });
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
