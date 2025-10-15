@@ -10,7 +10,7 @@ This folder contains complete design system documentation for the Tailwind CSS m
 
 ### 1. **[design-system-overview.md](./design-system-overview.md)** 🎯 START HERE
 
-### WHAT & WHY
+**WHAT & WHY**
 
 Quick overview of the project:
 
@@ -26,7 +26,7 @@ Quick overview of the project:
 
 ### 2. **[implementation-reference.md](./implementation-reference.md)** 📦 CODE REFERENCE
 
-### ALL CODE & CONFIGURATION
+**ALL CODE & CONFIGURATION**
 
 Single source of truth for all code:
 
@@ -41,7 +41,7 @@ Single source of truth for all code:
 
 ### 3. **[migration-workflow.md](./migration-workflow.md)** ⚙️ HOW TO MIGRATE
 
-### STEP-BY-STEP PROCESS
+**STEP-BY-STEP PROCESS**
 
 Complete migration process:
 
@@ -58,7 +58,7 @@ Complete migration process:
 
 ### 4. **[reference-data.md](./reference-data.md)** 📊 LOOKUP TABLES
 
-### PURE DATA
+**PURE DATA**
 
 All lookup tables in one place:
 
@@ -73,7 +73,7 @@ All lookup tables in one place:
 
 ### 5. **[ai-batch-workflow.md](./ai-batch-workflow.md)** 🤖 AI PROCESS
 
-### AI-SPECIFIC WORKFLOW
+**AI-SPECIFIC WORKFLOW**
 
 Batch workflow for AI implementation:
 
@@ -88,7 +88,7 @@ Batch workflow for AI implementation:
 
 ### 6. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** 🛡️ AI RULES
 
-### MANDATORY FOR AI AGENTS
+**MANDATORY FOR AI AGENTS**
 
 Section 20: Design System Conventions
 
@@ -157,7 +157,7 @@ Each topic has ONE authoritative document:
 
 ## 📖 Documentation Structure
 
-```text
+```
 README.md (this file - navigation)
 │
 ├── design-system-overview.md (WHAT & WHY)
@@ -210,29 +210,3 @@ README.md (this file - navigation)
 
 **Status**: ✅ Consolidated and ready for implementation  
 **Last Updated**: October 2024
-
----
-
-## 🔒 Guardrails (Enforcement)
-
-- CI must pass: `yarn typecheck && yarn lint && yarn test`.
-- Failure criteria:
-  - Any usage of `text-gray-*`, `bg-gray-*`, `border-gray-*` in app/components.
-  - Repetitive flex patterns not replaced by semantic utilities where available.
-  - Long button class strings instead of `.btn-*` or `<Button variant="...">`.
-- Quick checks:
-  - Count gray usage: see commands in `reference-data.md`.
-  - Count semantic usage: see commands in `reference-data.md`.
-
-## 🧭 Decisions (Canonical)
-
-- Color tokens: `background`, `foreground`, `foreground-strong`, `muted`, `border`, `primary-foreground`.
-- Legacy aliases (during migration only): `whiteCorp`, `darkCorp`, `blackCorp`, `fullBlackCorp`, `bColor`.
-- Primary dark token: `primary-dark` (hyphen).
-- Stack spacing: `.stack = flex flex-col gap-element-gap`.
-- Border radius tokens: button 8px, card 12px, input 8px, badge full.
-
-## 🔗 Quick Links
-
-- Change tokens: `tailwind.config.js` (see `implementation-reference.md`).
-- Add semantic classes: `styles/globals.css` (see `implementation-reference.md`).

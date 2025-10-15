@@ -65,6 +65,14 @@ module.exports = {
         "primary-dark": "#C8033F",
         "primary-soft": "#FF003750",
 
+        // Semantic tokens (canonical)
+        background: "#ffffff",
+        foreground: "rgb(69 69 69 / <alpha-value>)",
+        "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
+        muted: "#F7F7F7",
+        border: "#CCCCCC",
+        "primary-foreground": "#ffffff",
+
         // Neutrals
         white: "#ffffff",
         "gray-50": "#F7F7F7",
@@ -84,7 +92,9 @@ module.exports = {
         info: "#3B82F6",
         "info-dark": "#2563EB",
 
-        // DEPRECATED - Keep as aliases during migration (remove in Week 8)
+        // Aliases used during migration (to be removed post-migration)
+        // Brand (deprecated): primarydark, primarySoft
+        // Legacy neutrals (aliases): whiteCorp, darkCorp, blackCorp, fullBlackCorp, bColor
         primarydark: "#C8033F",
         primarySoft: "#FF003750",
         whiteCorp: "#ffffff",
@@ -249,19 +259,19 @@ module.exports = {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-primary text-whiteCorp hover:bg-primarydark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-primary text-white hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 border-2 border-blackCorp text-blackCorp hover:bg-darkCorp transition-colors focus:outline-none focus:ring-2 focus:ring-blackCorp focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-whiteCorp transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-darkCorp text-blackCorp opacity-60 cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-muted text-foreground opacity-60 cursor-not-allowed;
   }
 
   /* ===================================== */
@@ -269,19 +279,19 @@ module.exports = {
   /* ===================================== */
 
   .card-bordered {
-    @apply bg-whiteCorp border border-bColor rounded-xl;
+    @apply bg-background border border-border rounded-xl;
   }
 
   .card-elevated {
-    @apply bg-whiteCorp shadow-lg rounded-xl;
+    @apply bg-white shadow-lg rounded-xl;
   }
 
   .card-body {
-    @apply p-4 md:p-6;
+    @apply p-card-padding-sm md:p-card-padding;
   }
 
   .card-footer {
-    @apply border-t border-bColor p-4;
+    @apply border-t border-border p-4;
   }
 
   /* ===================================== */
@@ -289,11 +299,11 @@ module.exports = {
   /* ===================================== */
 
   .badge-default {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-darkCorp text-blackCorp;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-foreground;
   }
 
   .badge-primary {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary text-whiteCorp;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary text-white;
   }
 
   /* ===================================== */
@@ -313,7 +323,7 @@ module.exports = {
   }
 
   .stack {
-    @apply flex flex-col gap-4;
+    @apply flex flex-col gap-element-gap;
   }
 
   /* ===================================== */
@@ -403,6 +413,21 @@ module.exports = {
 | `.body-normal` | Regular body text          | 16px, relaxed line-height                              |
 | `.body-small`  | Secondary info, captions   | 14px, relaxed line-height                              |
 | `.label`       | Form labels, badges        | 12px, uppercase, wide tracking                         |
+
+#### Recommended Typography Ramp
+
+| Token       | Mobile (rem) | Desktop (rem) | Line-height |
+| ----------- | ------------ | ------------- | ----------- |
+| heading-1   | 1.875        | 3             | tight       |
+| heading-2   | 1.5          | 2.25          | snug        |
+| heading-3   | 1.25         | 1.5           | snug        |
+| heading-4   | 1.125        | 1.25          | snug        |
+| body-large  | 1.125        | 1.125         | relaxed     |
+| body-normal | 1            | 1             | relaxed     |
+| body-small  | 0.875        | 0.875         | relaxed     |
+| label       | 0.75         | 0.75          | normal      |
+
+Use the semantic classes above; avoid ad-hoc `text-*` utilities.
 
 **Example:**
 
@@ -636,6 +661,16 @@ import Button from '@/components/ui/common/button';
 
 ---
 
+## ♿ Accessibility & Contrast Guidance
+
+- Use `text-primary-foreground` on `bg-primary`; use `text-white` on `bg-error` (verify contrast on small text).
+- Prefer `text-foreground` on `bg-muted` and `bg-background`.
+- For muted text, use opacity suffixes on `foreground` (`/80`, `/70`, `/60`) instead of lighter grays.
+- Interactive states should keep a minimum AA contrast ratio; when unsure, test tokens quickly with a contrast checker.
+- Avoid mixing generic `gray-*` for text; rely on `foreground` with opacity for hierarchy.
+
+---
+
 ## 🚫 Anti-Patterns (Don't Do This)
 
 ### ❌ Don't Mix Semantic Classes with Inline Utilities (Typography)
@@ -665,7 +700,7 @@ import Button from '@/components/ui/common/button';
 <p className="text-gray-600">Description</p>
 
 // GOOD
-<p className="text-blackCorp/80">Description</p>
+<p className="text-foreground/80">Description</p>
 ```
 
 ### ❌ Don't Use Non-Semantic HTML with Semantic Classes
@@ -707,7 +742,7 @@ import Button from '@/components/ui/common/button';
 **Before:**
 
 ```tsx
-<button className="inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-primary text-whiteCorp hover:bg-primarydark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+<button className="inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
   Submit
 </button>
 ```
@@ -733,7 +768,7 @@ import Button from '@/components/ui/common/button';
 **Before:**
 
 ```tsx
-<article className="bg-whiteCorp border border-bColor rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
+<article className="bg-background border border-border rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
   {/* content */}
 </article>
 ```

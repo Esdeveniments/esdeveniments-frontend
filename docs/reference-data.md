@@ -14,28 +14,34 @@
 
 ---
 
-## 🎨 Gray-to-Semantic Color Mapping
+## Gray-to-Semantic Color Mapping
 
 **Total Instances**: 112 (77 in `components/`, 35 in `app/`)  
 **Goal**: Replace all generic Tailwind grays with semantic color tokens by Week 3
 
 ### Mapping Table
 
-| Current Class     | Semantic Replacement | Context / Notes                               |
-| ----------------- | -------------------- | --------------------------------------------- |
-| `text-gray-900`   | `text-fullBlackCorp` | Headings, high emphasis text                  |
-| `text-gray-800`   | `text-blackCorp`     | Primary body text, strong labels              |
-| `text-gray-700`   | `text-blackCorp`     | Body text, default text color                 |
-| `text-gray-600`   | `text-blackCorp/80`  | Secondary text, muted descriptions, captions  |
-| `text-gray-500`   | `text-blackCorp/70`  | Tertiary text, placeholders, subtle hints     |
-| `text-gray-400`   | `text-blackCorp/60`  | Disabled text, icons, very light text         |
-| `text-gray-300`   | `text-blackCorp/40`  | Separators, dividers, very subtle elements    |
-| `bg-gray-50`      | `bg-darkCorp`        | Subtle backgrounds, light card backgrounds    |
-| `bg-gray-100`     | `bg-darkCorp`        | Input backgrounds, skeleton loaders (light)   |
-| `bg-gray-200`     | `bg-bColor/40`       | Skeleton loaders (medium), subtle backgrounds |
-| `border-gray-100` | `border-bColor/30`   | Very subtle borders                           |
-| `border-gray-200` | `border-bColor`      | Default borders, card borders                 |
-| `border-gray-300` | `border-bColor`      | Input borders, stronger dividers              |
+| Current Class     | Semantic Replacement     | Context / Notes                            |
+| ----------------- | ------------------------ | ------------------------------------------ |
+| `text-gray-900`   | `text-foreground-strong` | Headings, high emphasis text               |
+| `text-gray-800`   | `text-foreground`        | Primary body text, strong labels           |
+| `text-gray-700`   | `text-foreground`        | Body text, default text color              |
+| `text-gray-600`   | `text-foreground/80`     | Secondary text, muted descriptions         |
+| `text-gray-500`   | `text-foreground/70`     | Tertiary text, placeholders                |
+| `text-gray-400`   | `text-foreground/60`     | Disabled text, icons                       |
+| `text-gray-300`   | `text-foreground/40`     | Dividers, very subtle elements             |
+| `bg-gray-50`      | `bg-muted`               | Subtle backgrounds, light card backgrounds |
+| `bg-gray-100`     | `bg-muted`               | Input backgrounds, skeleton loaders        |
+| `bg-gray-200`     | `bg-border/40`           | Skeleton loaders (medium)                  |
+| `border-gray-100` | `border-border/30`       | Very subtle borders                        |
+| `border-gray-200` | `border-border`          | Default borders, card borders              |
+| `border-gray-300` | `border-border`          | Input borders, stronger dividers           |
+
+#### Additional Notes
+
+- Prefer `text-foreground-strong` for headings/high emphasis; otherwise `text-foreground`.
+- For muted text, use opacity suffixes on `foreground` rather than lighter `gray-*`.
+- Borders: default to `border-border`; use opacity variants (e.g., `border-border/30`) for subtle dividers.
 
 ### High Priority Files (Week 3 Days 1-2)
 
@@ -43,35 +49,35 @@
 
 1. **RestaurantPromotionForm.tsx** (21 instances)
 
-   - `text-gray-600` → `text-blackCorp/80`
-   - `text-gray-700` → `text-blackCorp`
-   - `text-gray-500` → `text-blackCorp/70`
-   - `bg-gray-200` → `bg-bColor/40`
-   - `border-gray-300` → `border-bColor`
-   - `bg-gray-50` → `bg-darkCorp`
+   - `text-gray-600` → `text-foreground/80`
+   - `text-gray-700` → `text-foreground`
+   - `text-gray-500` → `text-foreground/70`
+   - `bg-gray-200` → `bg-border/40`
+   - `border-gray-300` → `border-border`
+   - `bg-gray-50` → `bg-muted`
 
 2. **WhereToEatSection.tsx** (12 instances)
 
-   - `border-gray-200` → `border-bColor`
-   - `bg-gray-100` → `bg-darkCorp`
-   - `text-gray-400` → `text-blackCorp/60`
-   - `text-gray-900` → `text-fullBlackCorp`
-   - `text-gray-600` → `text-blackCorp/80`
-   - `text-gray-700` → `text-blackCorp`
+   - `border-gray-200` → `border-border`
+   - `bg-gray-100` → `bg-muted`
+   - `text-gray-400` → `text-foreground/60`
+   - `text-gray-900` → `text-foreground-strong`
+   - `text-gray-600` → `text-foreground/80`
+   - `text-gray-700` → `text-foreground`
 
 3. **locationDiscoveryWidget/index.tsx** (11 instances)
 
-   - `border-gray-200` → `border-bColor`
-   - `bg-gray-200` → `bg-bColor/40`
-   - `text-gray-400` → `text-blackCorp/60`
-   - `bg-gray-50` → `bg-darkCorp`
-   - `text-gray-700` → `text-blackCorp`
+   - `border-gray-200` → `border-border`
+   - `bg-gray-200` → `bg-border/40`
+   - `text-gray-400` → `text-foreground/60`
+   - `bg-gray-50` → `bg-muted`
+   - `text-gray-700` → `text-foreground`
 
 4. **WhereToEatSkeleton.tsx** (8 instances)
 
-   - `border-gray-200` → `border-bColor`
-   - `bg-gray-200` → `bg-bColor/40`
-   - `text-gray-400` → `text-blackCorp/60`
+   - `border-gray-200` → `border-border`
+   - `bg-gray-200` → `bg-border/40`
+   - `text-gray-400` → `text-foreground/60`
 
 5. **Sitemap Pages** (30 instances across 3 files)
    - `app/sitemap/page.tsx` (10 instances)
@@ -86,14 +92,25 @@ grep -r "text-gray-\|bg-gray-\|border-gray-" components/ app/ | wc -l
 
 # Count semantic class usage (should increase)
 grep -r "heading-\|body-\|btn-\|card-\|badge-\|flex-center\|stack" components/ app/ | wc -l
+
+# Detect new violations (CI grep-friendly)
+if grep -R --line-number -E "text-gray-|bg-gray-|border-gray-" components/ app/; then
+  echo "Found gray violations" && exit 1; fi
 ```
 
 ---
 
-## 📋 Component Migration Inventory
+## Component Migration Inventory
 
 **Total Components**: 88 TypeScript/TSX files in `components/ui/`  
 **Priority**: Based on usage + alignment + complexity + gray instances
+
+---
+
+### Ownership & Whitelisting
+
+- If mapping is unclear for a specific context, create a short PR updating this table before coding.
+- For rare legacy cases that must persist temporarily, add a comment with rationale and a TODO linking to an issue.
 
 ### Week 2: Typography Focus (10 Components)
 

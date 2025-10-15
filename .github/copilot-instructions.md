@@ -194,7 +194,8 @@ Adding a new filter:
 ## 20. Design System Conventions
 
 **Status**: Active (Week 0 - Foundation established)  
-**Reference**: `/docs/design-system-quick-start.md` (bookmark this)
+**Reference**: `/docs/design-system-quick-start.md` (bookmark this)  
+**Code Canonical**: `/docs/implementation-reference.md` (single source of truth for DS code)
 
 ### Mandatory Rules
 
@@ -207,16 +208,15 @@ Adding a new filter:
 
 2. **Colors**: ALWAYS use semantic tokens, NEVER generic Tailwind grays
 
-   - ✅ Use: `text-blackCorp`, `text-blackCorp/80`, `bg-darkCorp`, `border-bColor`
+   - ✅ Use: `text-foreground`, `text-foreground/80`, `bg-background`, `bg-muted`, `border-border`
    - ❌ Forbidden: `text-gray-*`, `bg-gray-*`, `border-gray-*`
-   - Opacity: Use `/80`, `/70`, `/60` suffixes (e.g., `text-blackCorp/80`)
+   - Opacity: Use `/80`, `/70`, `/60` suffixes (e.g., `text-foreground/80`)
    - Reference: Brand colors defined in `tailwind.config.js`
 
 3. **Buttons**: Use existing Button component or semantic classes
 
-   - Component: `<Button variant="neutral|primary|outline|muted|solid">`
-   - Classes: `.btn-neutral`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`
-   - Sizes: `.btn-sm`, `.btn-lg`
+   - Component: `<Button variant="primary|neutral|outline|muted">`
+   - Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`
    - NO manual button styling with inline utilities
 
 4. **Cards**: Use semantic card classes
@@ -229,8 +229,7 @@ Adding a new filter:
 5. **Badges**: Use semantic badge classes
 
    - `.badge-primary` (red background)
-   - `.badge-secondary` (gray background)
-   - `.badge-outline` (border, for filters)
+   - `.badge-default` (gray background)
    - Component: `<Badge>` already exists, use it
 
 6. **Layout Utilities**: Replace repetitive flex patterns
@@ -238,9 +237,7 @@ Adding a new filter:
    - `.flex-center` replaces `flex justify-center items-center`
    - `.flex-between` replaces `flex justify-between items-center`
    - `.flex-start` replaces `flex justify-start items-center`
-   - `.flex-end` replaces `flex justify-end items-center`
    - `.stack` replaces `flex flex-col gap-element-gap`
-   - `.stack-sm`, `.stack-lg` for different gaps
 
 7. **Spacing**: Use semantic tokens for consistency
 
@@ -250,7 +247,7 @@ Adding a new filter:
    - Still allowed: Standard Tailwind spacing (gap-2, p-4, etc.) when appropriate
 
 8. **Border Radius**: Use semantic tokens
-   - `rounded-button` for buttons (12px)
+   - `rounded-button` for buttons (8px)
    - `rounded-card` for cards (12px)
    - `rounded-input` for form inputs (8px)
    - `rounded-badge` for pills/badges (full)
@@ -286,7 +283,7 @@ When modifying existing components:
 <p className="text-gray-600">Secondary text</p>
 
 // ✅ Good
-<p className="text-blackCorp/80">Secondary text</p>
+<p className="text-foreground/80">Secondary text</p>
 ```
 
 **Buttons**:

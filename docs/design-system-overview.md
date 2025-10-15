@@ -32,9 +32,9 @@ This project standardizes the Tailwind CSS implementation across 88 UI component
 
 ### 2. Color System Inconsistency (112 generic gray instances)
 
-- `text-gray-600/700/800/900` instead of semantic `text-blackCorp`
-- `bg-gray-50/100/200` instead of `bg-darkCorp`
-- `border-gray-100/200/300` instead of `border-bColor`
+- `text-gray-600/700/800/900` instead of semantic `text-foreground`
+- `bg-gray-50/100/200` instead of `bg-muted`
+- `border-gray-100/200/300` instead of `border-border`
 - Visual hierarchy at risk during refactors
 
 ### 3. Button Patterns (8 different implementations)
@@ -111,6 +111,20 @@ Standardize button, card, badge, and layout patterns:
 - **Cards**: `.card-bordered`, `.card-elevated`, `.card-body`
 - **Badges**: `.badge-default`, `.badge-primary`
 - **Layout**: `.flex-center`, `.stack`, `.flex-between`
+- **Color tokens**: `background`, `foreground`, `foreground-strong`, `muted`, `border`, `primary-foreground` (legacy aliases exist during migration only)
+
+### Deprecation & Adoption Policy
+
+- During migration: legacy utilities permitted; semantic tokens/classes preferred.
+- Week 7: remove legacy aliases no longer referenced; ensure 0 `gray-*` usages remain.
+- CI guardrails: lint/test must pass; no new `gray-*`; repetitive flex patterns should prefer semantic utilities.
+
+### Adoption Timeline & Guardrails
+
+- Week 1: Tokens + semantic classes available; CI allows legacy usage.
+- Week 3: Enforce no `gray-*` in changed files; warn on repetitive flex patterns.
+- Week 5: Enforce semantic buttons/cards in changed files.
+- Week 7: Enforce across repo; remove legacy aliases where safe.
 
 ---
 
