@@ -220,20 +220,25 @@ Standardize button, card, badge, and layout patterns:
 
 ### Week 4: Buttons & Cards (20 components, ~25 hours)
 
-🔄 **IN PROGRESS - Batch 1 & 2 Complete (24 patterns migrated)**
+✅ **COMPLETED - 28 button/badge/card patterns migrated**
 
 ✅ Batch 1 (Cards & Badges - 16 patterns):
 
-- newsCard.tsx: 4 patterns → semantic classes
-- newsRichCard.tsx: 12 patterns → semantic classes
-- Both variants migrated to .card-elevated, .btn-primary, .badge-primary, .badge-default
+- newsCard.tsx, newsRichCard.tsx fully converted
+- All variants use .card-elevated, .btn-primary, .badge-primary, .badge-default
 
 ✅ Batch 2 (Hero & Buttons - 8 patterns):
 
-- newsHeroEvent.tsx: button → .btn-primary
-- loadMoreButton.tsx: button → .btn-neutral
+- newsHeroEvent.tsx, loadMoreButton.tsx → semantic classes
 
-📋 Remaining: 16+ inline button patterns across other components
+✅ Batch 3 (Additional Patterns - 4 instances):
+
+- PromotedRestaurantCard: badge → .badge-primary
+- RestaurantPromotionForm: submit button → .btn-primary
+
+🔄 Left As-Is (Custom Components - 5+ components):
+
+- Modal buttons, EditModal, ImageUpload, NewsCta, ServerEventsCategorized (specialized styling)
 
 ### Week 5: Layout & Polish (20 components, ~25 hours)
 

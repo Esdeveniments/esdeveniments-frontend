@@ -31,9 +31,7 @@ export default function PromotedRestaurantCard({
       <div className="w-11/12 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Restaurant promocionat</h2>
-          <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
-            Patrocinat
-          </span>
+          <span className="badge-primary">Patrocinat</span>
         </div>
 
         <div className="border border-primary/20 rounded-lg p-4 bg-gradient-to-r from-primary/5 to-primary/10">
