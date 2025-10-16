@@ -244,7 +244,10 @@ Adding a new filter:
    - `py-section-y`, `px-section-x` for section spacing
    - `p-card-padding` for card inner padding
    - `gap-element-gap` for default gaps
-   - Still allowed: Standard Tailwind spacing (gap-2, p-4, etc.) when appropriate
+   - Tailwind spacing (narrow exception)
+     - Allowed: one-off micro-spacing inside a leaf component (gap-1–2, p-1–2), no layout impact
+     - Not allowed: section/page/layout spacing; card/button/input paddings; shared components
+     - If repeated → create/extend a semantic token instead
 
 8. **Border Radius**: Use semantic tokens
    - `rounded-button` for buttons (8px)

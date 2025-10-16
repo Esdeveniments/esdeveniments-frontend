@@ -618,7 +618,9 @@ import Button from '@/components/ui/common/button';
 | `primary-dark` | `#C8033F`   | Hover states, pressed     |
 | `primary-soft` | `#FF003750` | Semi-transparent overlays |
 
-### Neutrals
+### Neutrals (reference-only)
+
+Note: Do not use `white` or `gray-*` classes in application code. These values are shown only for reference. Always use semantic tokens instead: `background`, `foreground`, `foreground-strong`, `muted`, `border`.
 
 | Token      | Value           | Usage                   |
 | ---------- | --------------- | ----------------------- |
@@ -685,8 +687,8 @@ import Button from '@/components/ui/common/button';
 // BAD
 <button className="btn-primary text-2xl">Submit</button>
 
-// GOOD - Create a new variant if needed frequently
-<button className="btn-primary text-2xl">Submit</button> // OK if one-off
+// GOOD - If a variation is needed frequently, create a new semantic class or component variant.
+<button className="btn-primary text-2xl">Submit</button> // AVOID: One-off overrides should be rare and justified.
 ```
 
 ### ❌ Don't Use Generic Gray Classes

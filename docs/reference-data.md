@@ -127,28 +127,42 @@ if grep -R --line-number -E "text-gray-|bg-gray-|border-gray-" components/ app/;
 9. `components/ui/common/loading/index.tsx`
 10. `components/ui/common/noEventsFound/index.tsx`
 
-### Week 3: Color System Cleanup (25 Components)
+### Week 3: Color System Cleanup (24 Components)
 
 **Target**: Replace all generic grays with semantic colors
 
-**High Gray Count:**
+**High Gray Count (≥ 8):**
 
-1. `components/ui/restaurantPromotion/RestaurantPromotionForm.tsx` (21 grays)
-2. `components/ui/restaurantPromotion/WhereToEatSection.tsx` (12 grays)
-3. `components/ui/locationDiscoveryWidget/index.tsx` (11 grays)
-4. `components/ui/restaurantPromotion/WhereToEatSkeleton.tsx` (8 grays)
-   5-7. Sitemap pages (30 grays across 3 files)
+1. `components/ui/restaurantPromotion/RestaurantPromotionForm.tsx` (21)
+2. `components/ui/restaurantPromotion/WhereToEatSection.tsx` (12)
+3. `components/ui/locationDiscoveryWidget/index.tsx` (11)
+4. `app/sitemap/[town]/[year]/[month]/page.tsx` (11)
+5. `app/sitemap/[town]/page.tsx` (9)
+6. `app/sitemap/page.tsx` (8)
+7. `components/ui/restaurantPromotion/WhereToEatSkeleton.tsx` (8)
 
-**Medium Gray Count:**
+**Medium Gray Count (3–5):**
 
-1. `components/ui/cardHorizontal/CardHorizontalServer.tsx` (3 grays)
-2. `components/ui/common/form/textarea/index.tsx` (3 grays)
-3. `components/ui/restaurantPromotion/PromotedRestaurantCard.tsx` (3 grays)
-4. `components/ui/restaurantPromotion/CloudinaryUploadWidget.tsx` (3 grays)
-5. `app/offline/page.tsx` (5 grays)
+1. `components/ui/restaurantPromotion/CloudinaryUploadWidget.tsx` (4)
+2. `components/ui/common/form/textarea/index.tsx` (4)
+3. `components/ui/cardHorizontal/CardHorizontalServer.tsx` (3)
+4. `components/ui/restaurantPromotion/PromotedRestaurantCard.tsx` (3)
+5. `app/offline/page.tsx` (5)
 
-**Low Gray Count:**
-13-25. Various components (1-2 grays each)
+**Low Gray Count (1–2):**
+
+1. `components/ui/locationDiscoveryWidget/LocationDropdown.tsx` (1)
+2. `components/ui/filters/FilterButton.tsx` (1)
+3. `components/ui/eventsAround/EventsAroundServer.tsx` (1)
+4. `components/ui/common/notification/index.tsx` (1)
+5. `components/ui/common/staticShareButtons/index.tsx` (1)
+6. `components/ui/common/form/select/index.tsx` (1)
+7. `components/ui/common/form/multiSelect/index.tsx` (1)
+8. `components/ui/EventForm/index.tsx` (1)
+9. `components/ui/restaurantPromotion/PromotionInfoModal.tsx` (1)
+10. `components/ui/viewCounter/ViewCounterIsland.tsx` (2)
+11. `app/e/[eventId]/components/EventDescription.tsx` (1)
+12. `app/e/[eventId]/components/EventTags.tsx` (1)
 
 ### Week 4: Button & Card Standardization (20 Components)
 
