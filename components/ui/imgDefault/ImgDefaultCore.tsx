@@ -1,5 +1,4 @@
 import NextImage from "next/image";
-import Tickets from "public/static/images/tickets-color.svg";
 import { ImgDefaultProps, Gradient } from "types/common";
 
 const gradients: Gradient[] = [
@@ -102,7 +101,7 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
         <div className="w-20 h-12">
           <NextImage
             className="w-full h-full drop-shadow-md"
-            src={Tickets}
+            src="/static/images/tickets-color.svg"
             alt="Tickets.svg"
             width={80}
             height={48}

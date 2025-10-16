@@ -11,7 +11,7 @@ import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFilter
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import { extractURLSegments, debugURLParsing } from "@utils/url-parsing";
 import { ClientInteractiveLayerProps } from "types/props";
-import Imago from "public/static/images/imago-esdeveniments.png";
+import Imago from "@public/static/images/imago-esdeveniments.png";
 
 function debounce(func: () => void, wait: number): () => void {
   let timeout: ReturnType<typeof setTimeout> | undefined;
