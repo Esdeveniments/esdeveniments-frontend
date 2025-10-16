@@ -50,6 +50,20 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
+    // Allowlist public API routes that don't require HMAC from the browser
+    if (
+      pathname === "/api/regions/options" ||
+      pathname === "/api/promotions/config" ||
+      pathname === "/api/promotions/price-preview" ||
+      pathname === "/api/categories" ||
+      pathname === "/api/leads/restaurant" ||
+      pathname === "/api/stripe/checkout" ||
+      pathname === "/api/cloudinary/sign" ||
+      pathname === "/api/places/nearby" ||
+      pathname === "/api/places/photo"
+    ) {
+      return NextResponse.next();
+    }
     const hmac = request.headers.get("x-hmac");
     const timestamp = request.headers.get("x-timestamp");
     const contentType = request.headers.get("content-type") || "";
