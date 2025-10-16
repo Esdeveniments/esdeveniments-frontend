@@ -163,9 +163,7 @@ export default async function Page({
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
-          <h1 className="text-4xl font-bold text-blackCorp mb-6 md:text-5xl lg:text-6xl leading-tight uppercase">
-            {detail.title}
-          </h1>
+          <h1 className="heading-1 mb-6">{detail.title}</h1>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-blackCorp/70">
             <div className="flex items-center gap-4">
               <span className="bg-primary text-whiteCorp px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
@@ -179,9 +177,7 @@ export default async function Page({
             </div>
           </div>
           {plainDescription && (
-            <p className="text-xl text-blackCorp/80 leading-relaxed">
-              {plainDescription}
-            </p>
+            <p className="body-large text-blackCorp/80">{plainDescription}</p>
           )}
         </div>
 

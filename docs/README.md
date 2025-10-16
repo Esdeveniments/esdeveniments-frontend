@@ -171,7 +171,7 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 
 ---
 
-**Status**: ✅ Week 1 Foundation Complete  
+**Status**: ✅ Week 2 Phase 1 Complete  
 **Last Updated**: October 2025
 
 ### Week 1 ✅ COMPLETED
@@ -191,9 +191,40 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 - Build successful with no errors
 - Professional shadow system (7 levels), spacing tokens, transitions, validation colors added
 
+### Week 2 Phase 1 (Batch 1) ✅ COMPLETED - Typography Migration
+
+- **HybridEventsList** (`components/ui/hybridEventsList/index.tsx`)
+
+  - Line 56: `<h1>` → `.heading-1` (replaced 8 inline utilities)
+  - Line 69: `<p>` → `.body-large` (replaced inline utilities)
+  - Impact: Every listing page (place, category, date filters)
+
+- **Footer** (`components/ui/common/footer/index.tsx`)
+
+  - Navigation links → `.label font-medium`
+  - Copyright text → `.label`
+  - Removed `text-xs` class
+  - Impact: Visible on every page
+
+- **News Article Page** (`app/noticies/[place]/[article]/page.tsx`)
+
+  - Line 166: `<h1>` → `.heading-1` (replaced 7 inline utilities)
+  - Line 182: `<p>` → `.body-large` (replaced inline utilities)
+  - Impact: All news detail pages
+
+- **Link Components**
+
+  - `components/ui/common/link/index.tsx` (ActiveLink)
+  - `components/ui/common/link/ServerNavLink.tsx` (ServerNavLink)
+  - Updated default className to use `.label` instead of 5 inline utilities
+  - Impact: All navigation links throughout the app
+
+- All tests passing (114 tests)
+- Build successful, TypeScript clean, linting passed
+
 ---
 
-**Status**: ✅ Consolidated and ready for Week 2  
+**Status**: ✅ Consolidated and ready for Week 2 Phase 2  
 **Last Updated**: October 2025
 
 ---
