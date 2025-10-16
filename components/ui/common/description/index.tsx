@@ -19,7 +19,7 @@ export default function Description({
   return (
     <section className="w-full flex justify-center items-start gap-2">
       <DocumentIcon className="w-5 h-5 mt-1" aria-hidden="true" />
-      <div className="w-11/12 flex flex-col gap-4">
+      <div className="stack w-11/12">
         <h2 className="heading-3">Descripció</h2>
         <div className="w-full break-words overflow-hidden space-y-4">
           {introText && (

@@ -27,10 +27,7 @@ export default function WhereToEatSection({
   return (
     <>
       <FireIcon className="w-5 h-5 mt-1" aria-hidden="true" />
-      <section
-        className="w-11/12 flex flex-col gap-4"
-        aria-labelledby="where-to-eat"
-      >
+      <section className="stack w-11/12" aria-labelledby="where-to-eat">
         <div className="flex items-center justify-between gap-2">
           <h2 id="where-to-eat" className="flex-1">
             On pots menjar
@@ -136,7 +133,9 @@ export default function WhereToEatSection({
                       {place.rating && price && (
                         <span className="text-foreground/40">·</span>
                       )}
-                      {price && <span className="text-foreground">{price}</span>}
+                      {price && (
+                        <span className="text-foreground">{price}</span>
+                      )}
                     </p>
                   </div>
                 </div>

@@ -10,7 +10,7 @@ const Modal = dynamic(() => import("@components/ui/common/modal"));
 const PromotionInfoModal: FC<PromotionInfoModalProps> = ({ open, setOpen }) => {
   return (
     <Modal open={open} setOpen={setOpen} title="Promociona el teu restaurant">
-      <div className="w-full flex flex-col gap-4 pt-10 pb-2 px-4 text-left">
+      <div className="stack w-full pt-10 pb-2 px-4 text-left">
         <p className="text-sm leading-relaxed">
           Vols que el teu restaurant aparegui destacat aquí quan la gent mira un
           esdeveniment proper? Estem preparant el sistema de promocions.

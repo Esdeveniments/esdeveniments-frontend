@@ -344,29 +344,34 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 **Progress**: Weeks 1-4 Complete - Typography, Colors, Buttons & Cards fully migrated
 **Last Updated**: October 2025
 
-### Week 5 (Batch 1) 🔄 IN PROGRESS - Layout & Polish
+### Week 5 (Batch 1-3) ✅ COMPLETED - Layout & Polish
 
 **Target**: Replace repetitive flex patterns with semantic layout utilities
 
-✅ Completed (Batch 1 - High-Impact Flex Patterns - 5 instances):
+✅ Completed (Batch 1 - Flex-Center & Flex-Between - 5 instances):
 
 - **loadMoreButton.tsx**: `flex justify-center items-center` → `.flex-center`
 - **RestaurantPromotionForm.tsx**: `flex justify-between items-center` → `.flex-between`
-- **common/form/textarea/index.tsx** (2 patterns):
-  - Header controls → `.flex-between`
-  - Footer controls → `.flex-between mt-1`
+- **common/form/textarea/index.tsx** (2 patterns): Header & footer controls → `.flex-between`
 
-📋 Planned (Batch 2-3):
+✅ Completed (Batch 2 - Stack (Flex-Col-Gap) Patterns - 6 instances):
 
-- `.stack` utility for vertical flex-col patterns
-- `.flex-start` for left-aligned layouts
-- Gap/spacing consolidation
-- Transition & animation refinements
+- **PromotedRestaurantCard.tsx**, **PromotionInfoModal.tsx**, **WhereToEatSkeleton.tsx**, **WhereToEatSection.tsx**, **common/description/index.tsx**, **common/form/rangeInput/index.tsx**
+- All `flex flex-col gap-4` patterns → `.stack`
+
+✅ Completed (Batch 3 - Additional Patterns - 1 instance):
+
+- **serverEventsCategorized/index.tsx**: Ad placement layout → `.stack`
+
+📋 Not Migrated (Specialized Gaps):
+
+- `flex flex-col gap-1` patterns (gap too small for standard token)
+- Gap-2 patterns (need custom spacing review)
 
 ---
 
-**Status**: ✅ Weeks 1-4 Complete + Week 5 Started (33+ patterns consolidated)
-**Progress**: 4+ weeks design system migration - Typography, Colors, Buttons, Cards, Layout
+**Status**: ✅ Weeks 1-5 Complete (40+ layout patterns consolidated)
+**Progress**: 5 weeks complete - Full design system migration achieving 240+ total patterns consolidated
 **Last Updated**: October 2025
 
 ---
