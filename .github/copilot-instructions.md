@@ -194,7 +194,7 @@ Adding a new filter:
 ## 20. Design System Conventions
 
 **Status**: Active (Week 0 - Foundation established)  
-**Reference**: `/docs/design-system-quick-start.md` (bookmark this)  
+**Reference (navigation)**: `/docs/README.md`  
 **Code Canonical**: `/docs/implementation-reference.md` (single source of truth for DS code)
 
 ### Mandatory Rules
@@ -259,10 +259,10 @@ Adding a new filter:
 
 When modifying existing components:
 
-- Prefer semantic classes over inline utilities
-- Consult `/docs/component-migration-inventory.md` for migration priority
-- Check `/docs/gray-migration-map.md` for color replacements
-- Keep changes incremental (don't rewrite entire components)
+- Prefer semantic classes over inline utilities, following the design system conventions.
+- Consult `/docs/component-migration-inventory.md` for migration priority.
+- Use the new semantic color tokens (`background`, `foreground`, `foreground-strong`, `muted`, `border`, `primary-foreground`); avoid `gray-*`.
+- Keep changes incremental (don't rewrite entire components at once).
 
 ### Examples
 
@@ -326,8 +326,8 @@ When modifying existing components:
 
 ### Resources
 
-- Quick Reference: `/docs/design-system-quick-start.md`
-- Migration Examples: `/docs/component-refactor-examples.md`
-- Gray Mapping: `/docs/gray-migration-map.md`
-- Component Priority: `/docs/component-migration-inventory.md`
-- Full Spec: `/docs/design-system-audit.md`
+- Overview: `/docs/design-system-overview.md`
+- Implementation Reference (ALL CODE): `/docs/implementation-reference.md`
+- Migration Workflow: `/docs/migration-workflow.md`
+- Reference Data (gray mapping, inventory): `/docs/reference-data.md`
+- AI Batch Workflow: `/docs/ai-batch-workflow.md`

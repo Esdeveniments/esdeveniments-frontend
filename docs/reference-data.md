@@ -88,10 +88,10 @@
 
 ```bash
 # Count remaining generic grays (target: 0)
-grep -r "text-gray-\|bg-gray-\|border-gray-" components/ app/ | wc -l
+grep -rE 'text-gray-|bg-gray-|border-gray-' components/ app/ | wc -l
 
 # Count semantic class usage (should increase)
-grep -r "heading-\|body-\|btn-\|card-\|badge-\|flex-center\|stack" components/ app/ | wc -l
+grep -rE 'heading-|body-|btn-|card-|badge-|flex-center|stack' components/ app/ | wc -l
 
 # Detect new violations (CI grep-friendly)
 if grep -R --line-number -E "text-gray-|bg-gray-|border-gray-" components/ app/; then

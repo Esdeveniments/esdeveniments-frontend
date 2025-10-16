@@ -259,19 +259,19 @@ module.exports = {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-primary text-white hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-white hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-muted text-foreground opacity-60 cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 bg-muted text-foreground opacity-60 cursor-not-allowed;
   }
 
   /* ===================================== */
@@ -279,11 +279,11 @@ module.exports = {
   /* ===================================== */
 
   .card-bordered {
-    @apply bg-background border border-border rounded-xl;
+    @apply bg-background border border-border rounded-card;
   }
 
   .card-elevated {
-    @apply bg-white shadow-lg rounded-xl;
+    @apply bg-background shadow-lg rounded-card;
   }
 
   .card-body {
@@ -299,11 +299,11 @@ module.exports = {
   /* ===================================== */
 
   .badge-default {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-foreground;
+    @apply inline-flex items-center px-3 py-1 rounded-badge text-xs font-medium bg-muted text-foreground;
   }
 
   .badge-primary {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary text-white;
+    @apply inline-flex items-center px-3 py-1 rounded-badge text-xs font-medium bg-primary text-white;
   }
 
   /* ===================================== */
@@ -742,7 +742,7 @@ import Button from '@/components/ui/common/button';
 **Before:**
 
 ```tsx
-<button className="inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-xl px-6 py-3 bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+<button className="inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
   Submit
 </button>
 ```
@@ -768,7 +768,7 @@ import Button from '@/components/ui/common/button';
 **Before:**
 
 ```tsx
-<article className="bg-background border border-border rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
+<article className="bg-background border border-border rounded-card p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
   {/* content */}
 </article>
 ```
