@@ -178,7 +178,7 @@ Standardize button, card, badge, and layout patterns:
 
 ### Week 2: Typography (10 components, ~20 hours)
 
-🔄 **IN PROGRESS - Phase 1 (Batch 1) Complete**
+🔄 **IN PROGRESS - Phase 1 & Phase 2 Complete**
 
 ✅ Completed (Phase 1):
 
@@ -187,11 +187,17 @@ Standardize button, card, badge, and layout patterns:
 - News Article page: h1 (`.heading-1`) + subtitle (`.body-large`)
 - Link components: ActiveLink + ServerNavLink (`.label`)
 
-📋 Remaining (Phase 2):
+✅ Completed (Phase 2):
 
-- Card components (NewsCard, NewsRichCard, EventsCard)
+- NewsCard: h2/h3 (`.heading-1`/`.heading-3`) + description (`.body-small`)
+- NewsRichCard: h3 (`.heading-2`/`.heading-3`) + description (`.body-normal`/`.body-small`)
+- CardContent: h3 (`.heading-4`) + metadata (`.body-small`)
+
+📋 Remaining (Phase 3):
+
 - Event Detail page typography
 - Other high-traffic components
+- Final verification: TypeScript, Lint, Build, Tests
 
 ### Week 3: Colors (25 components, ~30 hours)
 

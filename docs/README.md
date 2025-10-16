@@ -171,7 +171,7 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 
 ---
 
-**Status**: ✅ Week 2 Phase 1 Complete  
+**Status**: ✅ Week 2 Phase 2 Complete  
 **Last Updated**: October 2025
 
 ### Week 1 ✅ COMPLETED
@@ -222,9 +222,31 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 - All tests passing (114 tests)
 - Build successful, TypeScript clean, linting passed
 
+### Week 2 Phase 2 (Batch 2) ✅ COMPLETED - Card Components Typography
+
+- **NewsCard** (`components/ui/newsCard/index.tsx`)
+
+  - Hero variant: h2 → `.heading-1`, date/place labels → `.label`
+  - Default variant: h3 → `.heading-3`, description → `.body-small`
+  - Impact: All news listing pages
+
+- **NewsRichCard** (`components/ui/newsRichCard/index.tsx`)
+
+  - Horizontal variant: h3 → `.heading-2`, description → `.body-normal`
+  - Default variant: h3 → `.heading-3`, description → `.body-small`
+  - Impact: Featured news sections
+
+- **CardContent** (`components/ui/common/cardContent/index.tsx`)
+
+  - h3 title → `.heading-4` (replaced `uppercase`)
+  - Date, location, time info → `.body-small`
+  - Impact: All event cards in listings
+
+- Ready for verification: TypeScript, Lint, Build, Tests
+
 ---
 
-**Status**: ✅ Consolidated and ready for Week 2 Phase 2  
+**Status**: ✅ Consolidated and ready for Week 2 Phase 3  
 **Last Updated**: October 2025
 
 ---

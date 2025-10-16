@@ -42,7 +42,7 @@ export default function CardContentServer({
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
               <div className="w-2 h-6 bg-gradient-to-r from-primary to-primarydark" />
             </div>
-            <h3 className="w-full uppercase">{title}</h3>
+            <h3 className="heading-4 w-full">{title}</h3>
             <div className="flex items-end gap-2">
               {icon && (
                 <div className="flex items-center gap-1">
@@ -95,17 +95,17 @@ export default function CardContentServer({
       <div className="w-full flex flex-col px-4 gap-3">
         <div className="flex justify-start items-start">
           <CalendarIcon className="h-5 w-5" />
-          <p className="px-2 font-semibold">{eventDate}</p>
+          <p className="body-small px-2 font-semibold">{eventDate}</p>
         </div>
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-2">
-            <span className="max-w-full capitalize">{location}</span>
+            <span className="body-small max-w-full capitalize">{location}</span>
           </div>
         </div>
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
-          <p className="px-2">
+          <p className="body-small px-2">
             {event.startTime && event.endTime
               ? `${event.startTime} - ${event.endTime}`
               : "Consultar horaris"}

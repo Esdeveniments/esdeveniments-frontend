@@ -70,7 +70,7 @@ export default function NewsRichCard({
               </span>
             </div>
 
-            <h3 className="mb-3 text-2xl font-bold leading-tight text-blackCorp group-hover:text-primary transition-colors">
+            <h3 className="heading-2 mb-3 text-blackCorp group-hover:text-primary transition-colors">
               <Link
                 href={`/e/${event.slug}`}
                 prefetch={false}
@@ -82,7 +82,7 @@ export default function NewsRichCard({
             </h3>
 
             {plainDescription && (
-              <p className="mb-4 text-base leading-relaxed text-blackCorp/70 line-clamp-3">
+              <p className="body-normal mb-4 text-blackCorp/70 line-clamp-3">
                 {plainDescription}
               </p>
             )}
@@ -142,7 +142,7 @@ export default function NewsRichCard({
           </span>
         </div>
 
-        <h3 className="mb-4 text-xl font-bold leading-tight text-blackCorp group-hover:text-primary transition-colors">
+        <h3 className="heading-3 mb-4 text-blackCorp group-hover:text-primary transition-colors">
           <Link
             href={`/e/${event.slug}`}
             prefetch={false}
@@ -154,7 +154,7 @@ export default function NewsRichCard({
         </h3>
 
         {plainDescription && (
-          <p className="mb-5 text-sm leading-relaxed text-blackCorp/70 line-clamp-3">
+          <p className="body-small mb-5 text-blackCorp/70 line-clamp-3">
             {plainDescription}
           </p>
         )}

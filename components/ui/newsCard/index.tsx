@@ -40,16 +40,16 @@ export default function NewsCard({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-fullBlackCorp/95 via-fullBlackCorp/70 to-fullBlackCorp/40" />
 
         <div className="absolute inset-x-0 bottom-0 px-4 pt-6 pb-8 sm:p-6 text-whiteCorp">
-          <h2 className="mb-3 text-3xl font-extrabold leading-tight md:drop-shadow-2xl md:text-4xl lg:text-5xl text-balance">
+          <h2 className="heading-1 mb-3 md:drop-shadow-2xl text-balance">
             {event.title}
           </h2>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col gap-1 max-w-full">
-              <span className="inline-flex items-center text-sm font-medium md:drop-shadow-lg md:text-base">
+              <span className="label inline-flex items-center md:drop-shadow-lg">
                 📅 {dateLabel}
               </span>
               {placeLabel && (
-                <span className="inline-flex items-center text-sm font-medium md:drop-shadow-lg md:text-base">
+                <span className="label inline-flex items-center md:drop-shadow-lg">
                   📍 {placeLabel}
                 </span>
               )}
@@ -96,7 +96,7 @@ export default function NewsCard({
           </span>
         </div>
 
-        <h3 className="mb-4 text-xl font-bold leading-tight text-blackCorp group-hover:text-primary transition-colors">
+        <h3 className="heading-3 mb-4 text-blackCorp group-hover:text-primary transition-colors">
           <Link
             href={href}
             prefetch={false}
@@ -108,7 +108,7 @@ export default function NewsCard({
         </h3>
 
         {plainDescription && (
-          <p className="mb-5 text-sm leading-relaxed text-blackCorp/70 line-clamp-3">
+          <p className="body-small mb-5 text-blackCorp/70 line-clamp-3">
             {plainDescription}
           </p>
         )}
