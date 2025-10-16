@@ -128,7 +128,7 @@ Adding a new filter:
 - Centralize constants in `utils/constants.ts`; avoid duplicating literals (dates, distances, category labels).
 - When adding environment-dependent behavior for edge/server, follow existing pattern of safe fallbacks (see `middleware.getApiOrigin`).
 - Dates: Use `getFormattedDate(start, end)` from `utils/date-helpers.ts` for any human-readable date range in UI (e.g., pills, subtitles). Do not inline `toLocaleDateString` in components.
-- Colors: Use Tailwind theme tokens defined in `tailwind.config.js` (e.g., `primary`, `primarydark`, `whiteCorp`, `darkCorp`, `blackCorp`, `bColor`). Do not hardcode hex values in components/styles. If a new color is needed, add it to the Tailwind theme and reference by token.
+- Colors: Use Tailwind theme tokens defined in `tailwind.config.js` (e.g., `primary`, `background`, `foreground`, `muted`, `border`). Do not hardcode hex values in components/styles. If a new color is needed, add it to the Tailwind theme and reference by token. Do NOT use deprecated aliases (`primarydark`, `primarySoft`, `whiteCorp`, `darkCorp`, `blackCorp`, `fullBlackCorp`, `bColor`).
 
 ## 15. Common Pitfalls
 

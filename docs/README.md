@@ -8,7 +8,7 @@ This folder contains complete design system documentation for the Tailwind CSS m
 
 ## 🗂️ Document Index (6 Documents)
 
-### 1. **[design-system-overview.md](./design-system-overview.md)** 🎯 START HERE
+### 1. **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
 
 ### WHAT & WHY
 
@@ -24,7 +24,7 @@ Quick overview of the project:
 
 ---
 
-### 2. **[implementation-reference.md](./implementation-reference.md)** 📦 CODE REFERENCE
+### 2. **[`implementation-reference.md`](./implementation-reference.md)** 📦 CODE REFERENCE
 
 ### ALL CODE & CONFIGURATION
 
@@ -39,24 +39,7 @@ Single source of truth for all code:
 
 ---
 
-### 3. **[migration-workflow.md](./migration-workflow.md)** ⚙️ HOW TO MIGRATE
-
-### STEP-BY-STEP PROCESS
-
-Complete migration process:
-
-- Week 0: Pre-flight checklist
-- Week 1: Foundation setup
-- Weeks 2-6: Component migration template
-- Testing workflow (Playwright E2E + TypeScript)
-- Real before/after examples
-- Progress tracking
-
-**Audience**: Developers (during migration), AI agents
-
----
-
-### 4. **[reference-data.md](./reference-data.md)** 📊 LOOKUP TABLES
+### 3. **[`reference-data.md`](./reference-data.md)** 📊 LOOKUP TABLES
 
 ### PURE DATA
 
@@ -84,7 +67,7 @@ Batch workflow for AI implementation:
 
 ---
 
-### 5. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** 🛡️ AI RULES
+### 5. **[`.github/copilot-instructions.md`](../.github/copilot-instructions.md)** 🛡️ AI RULES
 
 ### MANDATORY FOR AI AGENTS
 
@@ -104,8 +87,7 @@ Section 20: Design System Conventions
 
 1. Read: **design-system-overview.md** (10 min) - Understand WHAT & WHY
 2. Reference: **implementation-reference.md** (bookmark) - Get code for Week 1
-3. Follow: **migration-workflow.md** - Execute week-by-week
-4. Lookup: **reference-data.md** - Gray mappings, component priorities
+3. Lookup: **reference-data.md** - Gray mappings, component priorities
 
 ### For AI Agents
 
@@ -119,13 +101,12 @@ Section 20: Design System Conventions
 
 Each topic has ONE authoritative document:
 
-| Topic          | Source of Truth                 | Other Docs          |
-| -------------- | ------------------------------- | ------------------- |
-| WHAT & WHY     | design-system-overview.md       | -                   |
-| ALL CODE       | implementation-reference.md     | Others reference it |
-| HOW TO MIGRATE | migration-workflow.md           | Others reference it |
-| LOOKUP TABLES  | reference-data.md               | Others link to it   |
-| AI RULES       | .github/copilot-instructions.md | -                   |
+| Topic         | Source of Truth                 | Other Docs          |
+| ------------- | ------------------------------- | ------------------- |
+| WHAT & WHY    | design-system-overview.md       | -                   |
+| ALL CODE      | implementation-reference.md     | Others reference it |
+| LOOKUP TABLES | reference-data.md               | Others link to it   |
+| AI RULES      | .github/copilot-instructions.md | -                   |
 
 **Zero duplication**: Update one place, reflects everywhere.
 
@@ -162,17 +143,12 @@ README.md (this file - navigation)
 ├── implementation-reference.md (ALL CODE)
 │   └── tailwind.config.js, globals.css, class reference
 │
-├── migration-workflow.md (HOW TO MIGRATE)
-│   └── Week 0-7 checklist, examples, testing
-│
 ├── reference-data.md (LOOKUP TABLES)
 │   └── Gray mappings, component inventory
 │
-├── .github/copilot-instructions.md (AI PROCESS)
-│   └── Batch workflow, templates, tips
-│
-└── .github/copilot-instructions.md (AI RULES)
-    └── Section 20: Design system conventions
+├── .github/copilot-instructions.md (AI PROCESS & RULES)
+│   ├── Batch workflow, templates, tips
+│   └── Section 20: Design system conventions
 ```
 
 ---
@@ -181,8 +157,7 @@ README.md (this file - navigation)
 
 1. **Don't know where to start?** → Read design-system-overview.md
 2. **Need Week 1 code?** → See implementation-reference.md
-3. **Don't know how to migrate?** → Follow migration-workflow.md
-4. **Looking for gray mapping?** → Check reference-data.md
+3. **Looking for gray mapping?** → Check reference-data.md
 
 ---
 
@@ -227,7 +202,6 @@ README.md (this file - navigation)
 - Tool: Playwright screenshots (already in repo).
 - Week 0: record baselines for 10 key pages.
 - Per PR: compare against baseline; diffs must be acknowledged or fixed.
-- See `migration-workflow.md` for exact commands and failure handling.
 
 ## 🧭 Decisions (Canonical)
 

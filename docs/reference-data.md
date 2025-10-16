@@ -43,6 +43,10 @@
 - Prefer `text-foreground-strong` for headings/high emphasis; otherwise `text-foreground`.
 - For muted text, use opacity suffixes on `foreground` rather than lighter `gray-*`.
 - Borders: default to `border-border`; use opacity variants (e.g., `border-border/30`) for subtle dividers.
+- Context-aware replacements:
+  - If `text-gray-600` is used for disabled or helper text → prefer `text-foreground/60`.
+  - If `text-gray-400` is used for icons with low emphasis → `text-foreground/60`; for very subtle dividers → `border-border/30`.
+  - If `bg-gray-100` is used as a container background → `bg-muted`; if it represents a skeleton shimmer layer → `bg-border/40`.
 
 ### High Priority Files (Week 3 Days 1-2)
 
@@ -261,5 +265,5 @@ fi
 
 ---
 
-**For detailed design system overview, see**: `design-system-overview.md.md`  
+**For detailed design system overview, see**: `design-system-overview.md`  
 **For all code needed, see**: `implementation-reference.md`

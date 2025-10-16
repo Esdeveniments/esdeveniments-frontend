@@ -817,6 +817,14 @@ Opacity modifier note: the `/NN` suffix (e.g., `text-foreground/80`, `bg-border/
 <p className="text-foreground/80">Description</p>
 ```
 
+### ❌ Specificity Conflicts & Utility Overrides
+
+Policy:
+
+- Do not override semantic typography or color with ad-hoc utilities. If variation is needed repeatedly, add/extend a semantic class.
+- Acceptable utility mixing: layout micro-spacing only (e.g., `mt-2`, `gap-2`) inside leaf components with no cross-component impact.
+- If a legacy CSS module overrides semantic classes due to specificity, prefer refactoring the component to rely on semantic classes. Avoid `!important` unless as a last resort and scoped to the component.
+
 ### ❌ Don't Use Non-Semantic HTML with Semantic Classes
 
 ```tsx

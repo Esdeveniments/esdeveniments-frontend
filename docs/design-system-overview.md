@@ -273,8 +273,7 @@ Standardize button, card, badge, and layout patterns:
 All implementation details are in **separate, focused documents**:
 
 1. **`implementation-reference.md`** - Complete `tailwind.config.js`, `globals.css`, class reference
-2. **`migration-workflow.md`** - Week-by-week checklist, testing strategy, examples
-3. **`reference-data.md`** - Gray mapping table (112 instances), component inventory (88 components)
+2. **`reference-data.md`** - Gray mapping table (112 instances), component inventory (88 components)
 
 **This document** provides the **WHAT and WHY**. See other docs for **HOW**.
 
