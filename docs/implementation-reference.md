@@ -24,6 +24,8 @@ This document contains **ALL code** needed for implementation:
 **Location**: `/tailwind.config.js`  
 **Action**: Replace entire `theme.extend` section
 
+⚠️ **Migration Note - Color Token Naming**: Current config uses `primarydark` (camelCase, deprecated). Week 1 replaces with `primary-dark` (kebab-case, canonical). During migration weeks 1-6, BOTH names work via legacy aliases. Week 7 removes `primarydark`, `primarySoft`, and other legacy aliases.
+
 ```js
 /** @type {import('tailwindcss').Config} */
 
@@ -663,7 +665,7 @@ Policy: In `app/` and `components/`, use semantic shadow classes exclusively. Si
 
 - Sections: use `py-section-y px-section-x` on the container.
 - Cards: use `p-card-padding-sm md:p-card-padding` inside `.card-*`.
-- Inline small gaps: use `gap-element-gap-sm` for horizontal stacks.
+- Inline small gaps: use `gap-*` utilities; mirror `element-gap` values for grids (`gap-3` as default), or use `gap-x-3 gap-y-3` where needed.
 
 **Example:**
 
@@ -891,8 +893,8 @@ Policy:
 **After:**
 
 ```tsx
-<article className="card-bordered card-spacing shadow-card hover-lift transition-card">
-  {/* content */}
+<article className="card-bordered shadow-card hover-lift transition-card">
+  <div className="card-body">{/* content */}</div>
 </article>
 ```
 

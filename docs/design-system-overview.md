@@ -152,10 +152,20 @@ Standardize button, card, badge, and layout patterns:
 
 ### Week 0: Pre-Flight (5-8 hours)
 
-- Establish baseline metrics (build sizes, test results)
-- Take screenshots (10 pages for visual regression comparison)
-- Review documentation with team
-- Set up tools (AI agent configuration)
+- Establish baseline metrics:
+
+  - Run: `yarn test && yarn typecheck` (record pass/fail, timing)
+  - Build CSS: `yarn build`, measure bundle size of `.next/static/css/`
+  - Gray count baseline: `grep -rE 'text-gray-|bg-gray-|border-gray-' components/ app/ | wc -l` (expect: 112)
+
+- Record Playwright visual regression baselines (10 key pages):
+
+  - Command: `yarn test:e2e` (existing suite or create baseline baseline recording)
+  - Pages to baseline: homepage, event-detail (any event), event-list (by category), event-list (by place), filters-page, news-list, news-detail, search-results, offline-page, error-page
+  - Storage: playwright-report/ directory (CI compares future runs against these)
+
+- Review documentation with team (read all 4 docs in docs/)
+- Set up AI agent config for batch workflow
 
 ### Week 1: Foundation + Quick Wins (8-12 hours)
 

@@ -125,6 +125,260 @@ p {
   }
 }
 
+@layer components {
+  /* ===================================== */
+  /* TYPOGRAPHY */
+  /* ===================================== */
+
+  .heading-1 {
+    @apply font-barlow text-3xl md:text-5xl font-bold tracking-tight leading-tight uppercase italic;
+  }
+
+  .heading-2 {
+    @apply font-barlow text-2xl md:text-4xl font-semibold tracking-wide leading-snug uppercase italic;
+  }
+
+  .heading-3 {
+    @apply font-barlow text-xl md:text-2xl font-semibold tracking-wide leading-snug uppercase italic;
+  }
+
+  .heading-4 {
+    @apply font-barlow text-lg md:text-xl font-semibold tracking-wide leading-snug uppercase italic;
+  }
+
+  .body-large {
+    @apply font-roboto text-lg leading-relaxed tracking-normal;
+  }
+
+  .body-normal {
+    @apply font-roboto text-base leading-relaxed tracking-normal;
+  }
+
+  .body-small {
+    @apply font-roboto text-sm leading-relaxed tracking-normal;
+  }
+
+  .label {
+    @apply font-roboto text-xs uppercase tracking-wider font-medium;
+  }
+
+  /* ===================================== */
+  /* BUTTONS */
+  /* ===================================== */
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .btn-neutral {
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .btn-muted {
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
+  }
+
+  /* ===================================== */
+  /* CARDS */
+  /* ===================================== */
+
+  .card-bordered {
+    @apply bg-background border border-border rounded-card;
+  }
+
+  .card-elevated {
+    @apply bg-background shadow-lg rounded-card;
+  }
+
+  .card-body {
+    @apply p-card-padding-sm md:p-card-padding;
+  }
+
+  .card-footer {
+    @apply border-t border-border p-card-padding-sm md:p-card-padding;
+  }
+
+  /* ===================================== */
+  /* BADGES */
+  /* ===================================== */
+
+  .badge-default {
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-muted text-foreground;
+  }
+
+  .badge-primary {
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-primary text-primary-foreground;
+  }
+
+  /* ===================================== */
+  /* LAYOUT UTILITIES */
+  /* ===================================== */
+
+  .flex-center {
+    @apply flex justify-center items-center;
+  }
+
+  .flex-between {
+    @apply flex justify-between items-center;
+  }
+
+  .flex-start {
+    @apply flex justify-start items-center;
+  }
+
+  .stack {
+    @apply flex flex-col gap-element-gap;
+  }
+
+  /* Containers (Semantic) */
+  .container-page {
+    @apply max-w-7xl mx-auto px-section-x;
+  }
+  .container-article {
+    @apply max-w-4xl mx-auto px-section-x;
+  }
+  .container-form {
+    @apply max-w-2xl mx-auto px-section-x;
+  }
+
+  /* ===================================== */
+  /* SHADOWS (SEMANTIC) */
+  /* ===================================== */
+
+  .shadow-card {
+    @apply shadow-sm;
+  }
+
+  .shadow-card-hover {
+    @apply shadow-md;
+  }
+
+  .shadow-modal {
+    @apply shadow-lg;
+  }
+
+  .shadow-dropdown {
+    @apply shadow-lg;
+  }
+
+  .shadow-hero {
+    @apply shadow-xl;
+  }
+
+  /* ===================================== */
+  /* SPACING (SEMANTIC TOKENS USAGE) */
+  /* ===================================== */
+
+  /* Use spacing tokens directly in components:
+     - Sections: py-section-y px-section-x
+     - Cards: p-card-padding-sm md:p-card-padding
+     - Inline small gaps: gap-element-gap-sm
+  */
+
+  /* ===================================== */
+  /* TRANSITIONS (SEMANTIC) */
+  /* ===================================== */
+
+  .transition-interactive {
+    @apply transition-all duration-fast ease-smooth;
+  }
+
+  .transition-card {
+    @apply transition-[shadow,transform,border-color] duration-normal ease-smooth;
+  }
+
+  .transition-modal {
+    @apply transition-[opacity,transform] duration-slow ease-smooth;
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  .hover-scale {
+    @apply hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .hover-glow {
+    @apply hover:shadow-focus;
+  }
+
+  /* ===================================== */
+  /* FORMS */
+  /* ===================================== */
+
+  .input {
+    @apply w-full rounded-input border border-border bg-background text-foreground px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+  }
+
+  .input-lg {
+    @apply h-12;
+  }
+
+  .input-error {
+    @apply border-error focus-visible:ring-error focus-visible:border-error;
+  }
+
+  .input-disabled {
+    @apply opacity-60 cursor-not-allowed bg-muted pointer-events-none;
+  }
+
+  .input-readonly {
+    @apply bg-muted;
+  }
+
+  .helper-text {
+    @apply body-small text-foreground/70 mt-1;
+  }
+
+  .helper-text-error {
+    @apply body-small text-error mt-1;
+  }
+
+  /* ===================================== */
+  /* FOCUS UTILITIES */
+  /* ===================================== */
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .focus-ring-error {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2;
+  }
+
+  /* ===================================== */
+  /* Z-INDEX (SEMANTIC) */
+  /* ===================================== */
+
+  .z-sticky {
+    @apply z-10;
+  }
+  .z-dropdown {
+    @apply z-100;
+  }
+  .z-modal {
+    @apply z-900;
+  }
+  .z-tooltip {
+    @apply z-1000;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .slider {
   -webkit-appearance: none;
   -moz-appearance: none;

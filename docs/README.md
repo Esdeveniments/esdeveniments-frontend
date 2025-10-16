@@ -149,9 +149,51 @@ docs/
 
 ---
 
+## ⚙️ Week 0: Pre-Flight Baseline Setup
+
+**Before starting migration**, capture baselines for metrics tracking:
+
+### Metrics to Measure
+
+- **CSS bundle size**: `yarn build` → record `.next/static/css/` total size (compare week 7: must be within 5%)
+- **Test suite baseline**: `yarn test && yarn typecheck` → both must pass (track regressions per week)
+- **Gray class count**: `grep -rE 'text-gray-|bg-gray-|border-gray-' components/ app/ | wc -l` → baseline: 112 (target week 7: 0)
+
+### Visual Regression Baselines
+
+- **Record Playwright baselines**: `yarn test:e2e` (stores screenshots in playwright-report/)
+- **Pages to baseline**: homepage, event-detail, event-list-category, event-list-place, filters-page, news-list, news-article, search-results, offline-page, error-page
+- **Usage**: CI compares future screenshots against baselines; diffs must be reviewed/approved
+
+See **design-system-overview.md Week 0 section** for exact commands and timing.
+
 ---
 
-**Status**: ✅ Consolidated and ready for implementation  
+---
+
+**Status**: ✅ Week 1 Foundation Complete  
+**Last Updated**: October 2025
+
+### Week 1 ✅ COMPLETED
+
+- Updated `tailwind.config.js` with complete design tokens (colors, spacing, border-radius, shadows, transitions)
+- Added semantic classes layer to `styles/globals.css`:
+  - Typography: `.heading-*`, `.body-*`, `.label`
+  - Buttons: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`
+  - Cards: `.card-bordered`, `.card-elevated`, `.card-body`, `.card-footer`
+  - Badges: `.badge-default`, `.badge-primary`
+  - Layout: `.flex-center`, `.flex-between`, `.flex-start`, `.stack`
+  - Forms: `.input`, `.input-lg`, `.input-error`, `.input-disabled`, `.input-readonly`
+  - Shadows: `.shadow-card`, `.shadow-card-hover`, `.shadow-modal`, `.shadow-dropdown`, `.shadow-hero`
+  - Transitions: `.transition-interactive`, `.transition-card`, `.transition-modal`, `.hover-lift`, `.hover-scale`, `.hover-glow`
+  - Focus utilities: `.focus-ring`, `.focus-ring-error`
+- All tests passing: `yarn test`, `yarn typecheck`, `yarn lint`
+- Build successful with no errors
+- Professional shadow system (7 levels), spacing tokens, transitions, validation colors added
+
+---
+
+**Status**: ✅ Consolidated and ready for Week 2  
 **Last Updated**: October 2025
 
 ---
