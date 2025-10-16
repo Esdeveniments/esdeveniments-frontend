@@ -103,15 +103,15 @@ export default async function Page() {
       >
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="mb-4">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+          <ol className="flex items-center space-x-2 text-sm text-foreground/80">
             <li>
-              <Link href="/" className="hover:text-gray-800">
+              <Link href="/" className="hover:text-foreground">
                 Inici
               </Link>
             </li>
             <li>
               <span className="mx-2">/</span>
-              <span className="text-gray-800">Arxiu</span>
+              <span className="text-foreground">Arxiu</span>
             </li>
           </ol>
         </nav>
@@ -122,9 +122,9 @@ export default async function Page() {
             <h1 className="text-3xl font-bold mb-4" data-testid="sitemap-title">
               Arxiu d&apos;esdeveniments culturals
             </h1>
-            <p className="mb-4 text-lg text-gray-700">
+            <p className="mb-4 text-lg text-foreground">
               Descobreix tot el què ha passat a Catalunya cada any. Navega per
-              comarques i poblacions per trobar l&apos;història cultural del
+              comarques i poblacions per trobar l&apos;história cultural del
               territori.
             </p>
           </header>
@@ -142,7 +142,7 @@ export default async function Page() {
                     className="hover:underline hover:text-blue-600 transition-colors"
                     data-testid="sitemap-region-link"
                   >
-                    <p className="text-gray-900">{region.name}</p>
+                    <p className="text-foreground-strong">{region.name}</p>
                   </Link>
                 </div>
               ))}
@@ -163,7 +163,7 @@ export default async function Page() {
                     className="hover:underline hover:text-blue-600 transition-colors"
                     data-testid="sitemap-city-link"
                   >
-                    <p className="text-gray-900">{city.name}</p>
+                    <p className="text-foreground-strong">{city.name}</p>
                   </Link>
                 </div>
               ))}
@@ -172,8 +172,8 @@ export default async function Page() {
         </section>
 
         {/* Footer information */}
-        <footer className="mt-12 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-600">
+        <footer className="mt-12 pt-8 border-t border-border">
+          <p className="text-sm text-foreground/80">
             L&apos;arxiu conté esdeveniments culturals de totes les comarques de
             Catalunya. Cada enllaç et porta a un històric detallat organitzat
             per anys i mesos.

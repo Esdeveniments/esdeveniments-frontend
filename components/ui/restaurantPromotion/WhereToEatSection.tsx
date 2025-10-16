@@ -57,12 +57,12 @@ export default function WhereToEatSection({
                 href={`https://www.google.com/maps/place/?q=place_id:${place.place_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block border border-gray-200 rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="group block border border-border rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
                 aria-label={`Obrir ${place.name} a Google Maps`}
               >
                 <div className="flex items-start gap-4">
                   {getPhotoUrl(place) ? (
-                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 ml-4">
+                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted ml-4">
                       <NextImage
                         src={getPhotoUrl(place)!}
                         alt={`Foto de ${place.name}`}
@@ -75,7 +75,7 @@ export default function WhereToEatSection({
                       />
                     </div>
                   ) : (
-                    <div className="w-20 h-20 rounded-md flex items-center justify-center bg-gray-100 text-gray-400 flex-shrink-0 ml-4">
+                    <div className="w-20 h-20 rounded-md flex items-center justify-center bg-muted text-foreground/60 flex-shrink-0 ml-4">
                       <svg
                         className="w-8 h-8"
                         fill="none"
@@ -93,7 +93,7 @@ export default function WhereToEatSection({
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-medium text-gray-900 line-clamp-1 group-hover:underline min-w-0">
+                      <h3 className="font-medium text-foreground-strong line-clamp-1 group-hover:underline min-w-0">
                         {place.name}
                       </h3>
                       <svg
@@ -110,13 +110,13 @@ export default function WhereToEatSection({
                         />
                       </svg>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                    <p className="text-sm text-foreground/80 mt-1 line-clamp-2">
                       {shortAddress}
                     </p>
-                    <p className="mt-2 text-xs flex flex-wrap items-center gap-2 text-gray-700">
+                    <p className="mt-2 text-xs flex flex-wrap items-center gap-2 text-foreground">
                       {openInfo?.hoursText && <span>{openInfo.hoursText}</span>}
                       {openInfo?.hoursText && openInfo?.openLabel && (
-                        <span className="text-gray-300">·</span>
+                        <span className="text-foreground/40">·</span>
                       )}
                       {openInfo?.openLabel && (
                         <span className={openInfo.toneClass}>
@@ -125,18 +125,18 @@ export default function WhereToEatSection({
                       )}
                       {(openInfo?.hoursText || openInfo?.openLabel) &&
                         (place.rating || price) && (
-                          <span className="text-gray-300">·</span>
+                          <span className="text-foreground/40">·</span>
                         )}
                       {place.rating && (
-                        <span className="text-gray-700 flex items-center gap-1">
+                        <span className="text-foreground flex items-center gap-1">
                           <span className="text-yellow-500">★</span>
                           {place.rating.toFixed(1)}
                         </span>
                       )}
                       {place.rating && price && (
-                        <span className="text-gray-300">·</span>
+                        <span className="text-foreground/40">·</span>
                       )}
-                      {price && <span className="text-gray-700">{price}</span>}
+                      {price && <span className="text-foreground">{price}</span>}
                     </p>
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export default function WhereToEatSection({
         </div>
 
         {/* Attribution */}
-        <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+        <div className="text-xs text-foreground/70 pt-2 border-t border-border/30">
           {attribution}
         </div>
       </section>

@@ -225,11 +225,11 @@ export default function RestaurantPromotionForm({
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="h-6 bg-border/40 rounded w-1/2 mb-4"></div>
           <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            <div className="h-4 bg-border/40 rounded w-3/4"></div>
+            <div className="h-4 bg-border/40 rounded w-1/2"></div>
+            <div className="h-4 bg-border/40 rounded w-2/3"></div>
           </div>
         </div>
       </div>
@@ -240,7 +240,7 @@ export default function RestaurantPromotionForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold mb-4">Promote Your Restaurant</h3>
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-foreground/80 mb-6">
           Get your restaurant featured on this event page and reach more
           customers.
         </p>
@@ -250,7 +250,7 @@ export default function RestaurantPromotionForm({
       <div>
         <label
           htmlFor="restaurantName"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-foreground mb-1"
         >
           Restaurant Name *
         </label>
@@ -261,7 +261,7 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, restaurantName: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder="Enter your restaurant name"
         />
         {errors.restaurantName && (
@@ -273,7 +273,7 @@ export default function RestaurantPromotionForm({
       <div>
         <label
           htmlFor="location"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-foreground mb-1"
         >
           Location *
         </label>
@@ -284,7 +284,7 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, location: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder="Enter restaurant location"
         />
         {errors.location && (
@@ -296,7 +296,7 @@ export default function RestaurantPromotionForm({
       <div>
         <label
           htmlFor="duration"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-foreground mb-1"
         >
           Promotion Duration *
         </label>
@@ -309,7 +309,7 @@ export default function RestaurantPromotionForm({
               displayDurationDays: parseInt(e.target.value),
             }))
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
           {durations.map((duration) => (
             <option key={duration} value={duration}>
@@ -323,7 +323,7 @@ export default function RestaurantPromotionForm({
       <div>
         <label
           htmlFor="geoScopeType"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-foreground mb-1"
         >
           Geographic Scope *
         </label>
@@ -336,7 +336,7 @@ export default function RestaurantPromotionForm({
               geoScopeType: e.target.value as GeoScopeType,
             }))
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
           {geoScopes.map((scope) => (
             <option key={scope} value={scope}>
@@ -350,7 +350,7 @@ export default function RestaurantPromotionForm({
       <div>
         <label
           htmlFor="geoScopeId"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-foreground mb-1"
         >
           {formData.geoScopeType === "town" ? "Town/City" : "Region"} *
         </label>
@@ -361,7 +361,7 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, geoScopeId: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={`Enter ${
             formData.geoScopeType === "town" ? "town or city" : "region"
           } name`}
@@ -375,7 +375,7 @@ export default function RestaurantPromotionForm({
       <div>
         <label
           htmlFor="placeId"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-foreground mb-1"
         >
           Google Place ID (Optional)
         </label>
@@ -386,10 +386,10 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, placeId: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder="Enter Google Place ID if available"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-foreground/70">
           If your restaurant is on Google Maps, you can find the Place ID in the
           URL
         </p>
@@ -397,7 +397,7 @@ export default function RestaurantPromotionForm({
 
       {/* Image Upload */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Restaurant Image *
         </label>
         <CloudinaryUploadWidget
@@ -410,14 +410,14 @@ export default function RestaurantPromotionForm({
       </div>
 
       {/* Price Display */}
-      <div className="bg-gray-50 p-4 rounded-md">
+      <div className="bg-muted p-4 rounded-md">
         <div className="flex justify-between items-center">
           <span className="font-medium">Total Price:</span>
           <span className="text-lg font-bold text-primary">
             {isLoadingPrice ? "Loading..." : getPriceDisplay()}
           </span>
         </div>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-foreground/70 mt-1">
           Payment will be processed securely via Stripe
         </p>
       </div>

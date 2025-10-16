@@ -154,27 +154,27 @@ export default async function Page({
       >
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="w-full mb-4">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+          <ol className="flex items-center space-x-2 text-sm text-foreground/80">
             <li>
-              <Link href="/" className="hover:text-gray-800">
+              <Link href="/" className="hover:text-foreground">
                 Inici
               </Link>
             </li>
             <li>
               <span className="mx-2">/</span>
-              <Link href="/sitemap" className="hover:text-gray-800">
+              <Link href="/sitemap" className="hover:text-foreground">
                 Arxiu
               </Link>
             </li>
             <li>
               <span className="mx-2">/</span>
-              <Link href={`/sitemap/${town}`} className="hover:text-gray-800">
+              <Link href={`/sitemap/${town}`} className="hover:text-foreground">
                 {townLabel}
               </Link>
             </li>
             <li>
               <span className="mx-2">/</span>
-              <span className="text-gray-800 capitalize">
+              <span className="text-foreground capitalize">
                 {textMonth} {year}
               </span>
             </li>
@@ -186,7 +186,7 @@ export default async function Page({
           <h1 className="font-semibold italic uppercase text-2xl mb-2">
             Arxiu {townLabel} - {textMonth} del {year}
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="text-foreground/80 mb-4">
             {filteredEvents.length > 0
               ? `${filteredEvents.length} esdeveniments culturals documentats`
               : `No s'han trobat esdeveniments per aquest període`}
@@ -206,7 +206,7 @@ export default async function Page({
                 return (
                   <article
                     key={event.id}
-                    className="border-b border-gray-100 pb-4 w-full"
+                    className="border-b border-border/30 pb-4 w-full"
                   >
                     <Link
                       href={`/e/${event.slug}`}
@@ -216,7 +216,7 @@ export default async function Page({
                       <h3 className="text-lg font-medium group-hover:text-blue-600 transition-colors">
                         {event.title}
                       </h3>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-600 mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-foreground/80 mt-1">
                         <time dateTime={event.startDate}>
                           {formattedEnd
                             ? `${formattedStart} - ${formattedEnd}`
@@ -238,7 +238,7 @@ export default async function Page({
                         )}
                       </div>
                       {event.description && (
-                        <p className="text-sm text-gray-700 mt-2 line-clamp-2">
+                        <p className="text-sm text-foreground mt-2 line-clamp-2">
                           {event.description}
                         </p>
                       )}
@@ -254,9 +254,9 @@ export default async function Page({
 
         {/* Footer with navigation hints */}
         {filteredEvents.length > 0 && (
-          <footer className="w-full mt-12 pt-8 border-t border-gray-200">
+          <footer className="w-full mt-12 pt-8 border-t border-border">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-foreground/80 mb-4">
                 Vols explorar més esdeveniments de {townLabel}?
               </p>
               <div className="flex justify-center space-x-4">

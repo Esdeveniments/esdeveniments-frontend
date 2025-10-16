@@ -152,19 +152,19 @@ export default function LocationDiscoveryWidget({
               {/* Dropdown Menu */}
               {isOpen && (
                 <div
-                  className="absolute top-8 left-1/2 transform -translate-x-1/2 sm:left-0 sm:transform-none w-80 max-w-[calc(100vw-2rem)] bg-whiteCorp opacity-100 rounded-xl shadow-xl border border-gray-200 py-3 z-20"
+                  className="absolute top-8 left-1/2 transform -translate-x-1/2 sm:left-0 sm:transform-none w-80 max-w-[calc(100vw-2rem)] bg-whiteCorp opacity-100 rounded-xl shadow-xl border border-border py-3 z-20"
                   style={{ backgroundColor: "rgb(255, 255, 255)" }}
                 >
                   {/* Search Input */}
-                  <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="px-4 py-3 border-b border-border/30">
                     <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/60 w-4 h-4" />
                       <input
                         type="text"
                         placeholder="Cercar ubicació..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-whiteCorp"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-border rounded-lg bg-muted focus:bg-whiteCorp"
                         autoFocus
                       />
                     </div>
@@ -185,7 +185,7 @@ export default function LocationDiscoveryWidget({
                         </div>
                       )}
                     </div>
-                    <span className="text-gray-700 text-base group-hover:text-blue-600 transition-colors font-medium">
+                    <span className="text-foreground text-base group-hover:text-blue-600 transition-colors font-medium">
                       {isGettingLocation
                         ? "Obtenint ubicació..."
                         : "Usar la meva ubicació actual"}
@@ -200,7 +200,7 @@ export default function LocationDiscoveryWidget({
                   )} */}
 
                   <button
-                    className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 border-b border-gray-100 group"
+                    className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 border-b border-border/30 group"
                     onClick={handleOtherEvents}
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
@@ -208,15 +208,15 @@ export default function LocationDiscoveryWidget({
                         <div className="w-2 h-1 bg-primary rounded-sm group-hover:bg-blue-600 transition-colors"></div>
                       </div>
                     </div>
-                    <span className="text-gray-700 text-base group-hover:text-blue-600 transition-colors font-medium">
+                    <span className="text-foreground text-base group-hover:text-blue-600 transition-colors font-medium">
                       Descobrir altres esdeveniments
                     </span>
                   </button>
 
                   {/* Location List */}
-                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                     {isLoading ? (
-                      <div className="px-4 py-3 text-gray-500 text-sm flex items-center space-x-2">
+                      <div className="px-4 py-3 text-foreground/70 text-sm flex items-center space-x-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
                         <span>Carregant ubicacions...</span>
                       </div>
@@ -228,15 +228,15 @@ export default function LocationDiscoveryWidget({
                           onClick={() => handleLocationSelect(location.label)}
                         >
                           <div className="w-6 h-6 flex items-center justify-center">
-                            <LocationMarkerIcon className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                            <LocationMarkerIcon className="w-4 h-4 text-foreground/60 group-hover:text-blue-600 transition-colors" />
                           </div>
-                          <span className="text-gray-700 text-base group-hover:text-blue-600 transition-colors">
+                          <span className="text-foreground text-base group-hover:text-blue-600 transition-colors">
                             {location.label}
                           </span>
                         </button>
                       ))
                     ) : (
-                      <div className="px-4 py-3 text-gray-500 text-sm text-center">
+                      <div className="px-4 py-3 text-foreground/70 text-sm text-center">
                         No s&apos;han trobat ubicacions
                       </div>
                     )}

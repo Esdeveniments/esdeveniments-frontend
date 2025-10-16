@@ -269,9 +269,50 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 - Total components migrated: 14 high-traffic components
 - Total typography utilities replaced: 50+ inline classes consolidated
 
+### Week 3 (Batch 1-3) 🔄 IN PROGRESS - Colors Migration
+
+**Target**: Replace 112 gray instances with semantic colors (`text-foreground`, `bg-muted`, `border-border`, etc.)
+
+✅ Completed (Batch 1 - High Priority Files):
+
+- **RestaurantPromotionForm.tsx** (21 instances → 0 gray classes)
+
+  - `text-gray-600/700` → `text-foreground/80` / `text-foreground`
+  - `text-gray-500` → `text-foreground/70`
+  - `bg-gray-50/200` → `bg-muted` / `bg-border/40`
+  - `border-gray-300` → `border-border`
+
+- **WhereToEatSection.tsx** (12 instances → 0 gray classes)
+
+  - `border-gray-200` → `border-border`
+  - `bg-gray-100` → `bg-muted`
+  - `text-gray-400/600/700/900` → semantic replacements with opacity
+  - `border-gray-100` → `border-border/30`
+
+- **locationDiscoveryWidget/index.tsx** (11 instances → 0 gray classes)
+
+  - `border-gray-200` → `border-border`
+  - `bg-gray-50` → `bg-muted`
+  - `text-gray-400/500/700` → semantic replacements
+  - `scrollbar-thumb-gray-300` → `scrollbar-thumb-border`
+
+- **WhereToEatSkeleton.tsx** (8 instances → 0 gray classes)
+  - Skeleton loader styling fully migrated
+
+✅ Completed (Batch 2 - Sitemap Pages):
+
+- **app/sitemap/page.tsx** (8 instances → 0 gray classes)
+- **app/sitemap/[town]/page.tsx** (8 instances → 0 gray classes)
+- **app/sitemap/[town]/[year]/[month]/page.tsx** (9 instances → 0 gray classes)
+
+📋 Remaining (Batch 3):
+
+- Other remaining files (38+ instances)
+
 ---
 
-**Status**: ✅ Week 2 Complete - All Typography Migrated  
+**Status**: ✅ Week 2 Complete + Week 3 Batch 1 & 2 Complete (74 instances migrated, 38 remaining)  
+**Progress**: 66% complete (74/112 gray instances migrated)  
 **Last Updated**: October 2025
 
 ---

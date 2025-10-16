@@ -92,21 +92,21 @@ export default async function Page({
       >
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="mb-4 w-full">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+          <ol className="flex items-center space-x-2 text-sm text-foreground/80">
             <li>
-              <Link href="/" className="hover:text-gray-800">
+              <Link href="/" className="hover:text-foreground">
                 Inici
               </Link>
             </li>
             <li>
               <span className="mx-2">/</span>
-              <Link href="/sitemap" className="hover:text-gray-800">
+              <Link href="/sitemap" className="hover:text-foreground">
                 Arxiu
               </Link>
             </li>
             <li>
               <span className="mx-2">/</span>
-              <span className="text-gray-800">{label}</span>
+              <span className="text-foreground">{label}</span>
             </li>
           </ol>
         </nav>
@@ -114,7 +114,7 @@ export default async function Page({
         {/* Header */}
         <header className="reset-this mb-6 w-full">
           <h1 className="pb-4 text-3xl font-bold">Arxiu històric de {label}</h1>
-          <p className="text-lg text-gray-700 mb-4">
+          <p className="text-lg text-foreground mb-4">
             Descobreix l&apos;evolució cultural de {label} any rere any. Cada
             enllaç et porta als esdeveniments d&apos;un mes específic.
           </p>
@@ -142,7 +142,7 @@ export default async function Page({
                         prefetch={false}
                         className="hover:underline hover:text-blue-600 transition-colors"
                       >
-                        <p className="text-md capitalize text-gray-900">
+                        <p className="text-md capitalize text-foreground-strong">
                           {textMonth}
                         </p>
                       </Link>
