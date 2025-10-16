@@ -72,15 +72,11 @@ module.exports = {
         muted: "#F7F7F7",
         border: "#CCCCCC",
         "primary-foreground": "#ffffff",
+        "error-foreground": "#ffffff",
 
-        // Neutrals
-        white: "#ffffff",
-        "gray-50": "#F7F7F7",
-        "gray-100": "#EEEEEE",
-        "gray-200": "#DDDDDD",
-        "gray-300": "#CCCCCC",
-        "gray-600": "rgb(69 69 69 / <alpha-value>)",
-        "gray-900": "rgb(0 0 0 / <alpha-value>)",
+        // Tailwind default neutrals (reference-only)
+        // Note: gray-* and white exist in Tailwind, but are NOT canonical here.
+        // Avoid using them directly; prefer the semantic tokens above.
 
         // Semantic colors (NEW)
         success: "#10B981",
@@ -259,7 +255,7 @@ module.exports = {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-white hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-neutral {
@@ -303,7 +299,7 @@ module.exports = {
   }
 
   .badge-primary {
-    @apply inline-flex items-center px-3 py-1 rounded-badge text-xs font-medium bg-primary text-white;
+    @apply inline-flex items-center px-3 py-1 rounded-badge text-xs font-medium bg-primary text-primary-foreground;
   }
 
   /* ===================================== */
@@ -522,7 +518,7 @@ import Button from '@/components/ui/common/button';
 | `.flex-center`  | `flex justify-center items-center`  | Center content horizontally & vertically |
 | `.flex-between` | `flex justify-between items-center` | Space-between with vertical center       |
 | `.flex-start`   | `flex justify-start items-center`   | Start alignment with vertical center     |
-| `.stack`        | `flex flex-col gap-4`               | Vertical stack with consistent gap       |
+| `.stack`        | `flex flex-col gap-element-gap`     | Vertical stack with consistent gap       |
 
 **Example:**
 
@@ -663,7 +659,7 @@ import Button from '@/components/ui/common/button';
 
 ## ♿ Accessibility & Contrast Guidance
 
-- Use `text-primary-foreground` on `bg-primary`; use `text-white` on `bg-error` (verify contrast on small text).
+- Use `text-primary-foreground` on `bg-primary`; use `text-error-foreground` on `bg-error` (verify contrast on small text).
 - Prefer `text-foreground` on `bg-muted` and `bg-background`.
 - For muted text, use opacity suffixes on `foreground` (`/80`, `/70`, `/60`) instead of lighter grays.
 - Interactive states should keep a minimum AA contrast ratio; when unsure, test tokens quickly with a contrast checker.
@@ -796,7 +792,7 @@ import Button from '@/components/ui/common/button';
 **After:**
 
 ```tsx
-<div className="flex-center gap-4">{/* content */}</div>
+<div className="flex-center gap-element-gap">{/* content */}</div>
 ```
 
 **Lines reduced**: 2 classes vs 4 classes (50% reduction)

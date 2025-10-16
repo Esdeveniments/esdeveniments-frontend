@@ -208,7 +208,7 @@ Adding a new filter:
 
 2. **Colors**: ALWAYS use semantic tokens, NEVER generic Tailwind grays
 
-   - ✅ Use: `text-foreground`, `text-foreground/80`, `bg-background`, `bg-muted`, `border-border`
+   - ✅ Use: `text-foreground`, `text-foreground-strong`, `text-foreground/80`, `bg-background`, `bg-muted`, `border-border`, `primary-foreground`
    - ❌ Forbidden: `text-gray-*`, `bg-gray-*`, `border-gray-*`
    - Opacity: Use `/80`, `/70`, `/60` suffixes (e.g., `text-foreground/80`)
    - Reference: Brand colors defined in `tailwind.config.js`
@@ -260,7 +260,7 @@ Adding a new filter:
 When modifying existing components:
 
 - Prefer semantic classes over inline utilities, following the design system conventions.
-- Consult `/docs/component-migration-inventory.md` for migration priority.
+- Consult `/docs/reference-data.md` for migration priority.
 - Use the new semantic color tokens (`background`, `foreground`, `foreground-strong`, `muted`, `border`, `primary-foreground`); avoid `gray-*`.
 - Keep changes incremental (don't rewrite entire components at once).
 
@@ -310,7 +310,7 @@ When modifying existing components:
 </div>
 
 // ✅ Good
-<div className="flex-center gap-4">
+<div className="flex-center gap-element-gap">
   <span>Icon</span>
   <span>Text</span>
 </div>
@@ -322,7 +322,7 @@ When modifying existing components:
 - **Before using text-gray-_/bg-gray-_/border-gray-\***: STOP. Use semantic tokens.
 - **Before writing long className strings**: Check if semantic class exists
 - **When reviewing code**: Flag any generic grays or repetitive patterns
-- **Context retention**: Reference `/docs/design-system-quick-start.md` when uncertain
+- **Context retention**: Reference `/docs/README.md` (navigation) and `/docs/design-system-overview.md` when uncertain
 
 ### Resources
 

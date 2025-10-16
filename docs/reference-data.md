@@ -139,7 +139,13 @@ if grep -R --line-number -E "text-gray-|bg-gray-|border-gray-" components/ app/;
 4. `components/ui/restaurantPromotion/WhereToEatSkeleton.tsx` (8 grays)
    5-7. Sitemap pages (30 grays across 3 files)
 
-**Medium Gray Count:** 8. `components/ui/cardHorizontal/CardHorizontalServer.tsx` (3 grays) 9. `components/ui/common/form/textarea/index.tsx` (3 grays) 10. `components/ui/restaurantPromotion/PromotedRestaurantCard.tsx` (3 grays) 11. `components/ui/restaurantPromotion/CloudinaryUploadWidget.tsx` (3 grays) 12. `app/offline/page.tsx` (5 grays)
+**Medium Gray Count:**
+
+1. `components/ui/cardHorizontal/CardHorizontalServer.tsx` (3 grays)
+2. `components/ui/common/form/textarea/index.tsx` (3 grays)
+3. `components/ui/restaurantPromotion/PromotedRestaurantCard.tsx` (3 grays)
+4. `components/ui/restaurantPromotion/CloudinaryUploadWidget.tsx` (3 grays)
+5. `app/offline/page.tsx` (5 grays)
 
 **Low Gray Count:**
 13-25. Various components (1-2 grays each)
