@@ -344,6 +344,31 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 **Progress**: Weeks 1-4 Complete - Typography, Colors, Buttons & Cards fully migrated
 **Last Updated**: October 2025
 
+### Week 5 (Batch 1) 🔄 IN PROGRESS - Layout & Polish
+
+**Target**: Replace repetitive flex patterns with semantic layout utilities
+
+✅ Completed (Batch 1 - High-Impact Flex Patterns - 5 instances):
+
+- **loadMoreButton.tsx**: `flex justify-center items-center` → `.flex-center`
+- **RestaurantPromotionForm.tsx**: `flex justify-between items-center` → `.flex-between`
+- **common/form/textarea/index.tsx** (2 patterns):
+  - Header controls → `.flex-between`
+  - Footer controls → `.flex-between mt-1`
+
+📋 Planned (Batch 2-3):
+
+- `.stack` utility for vertical flex-col patterns
+- `.flex-start` for left-aligned layouts
+- Gap/spacing consolidation
+- Transition & animation refinements
+
+---
+
+**Status**: ✅ Weeks 1-4 Complete + Week 5 Started (33+ patterns consolidated)
+**Progress**: 4+ weeks design system migration - Typography, Colors, Buttons, Cards, Layout
+**Last Updated**: October 2025
+
 ---
 
 ## 🔒 Guardrails (Enforcement)

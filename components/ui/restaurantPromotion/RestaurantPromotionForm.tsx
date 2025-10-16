@@ -411,7 +411,7 @@ export default function RestaurantPromotionForm({
 
       {/* Price Display */}
       <div className="bg-muted p-4 rounded-md">
-        <div className="flex justify-between items-center">
+        <div className="flex-between">
           <span className="font-medium">Total Price:</span>
           <span className="text-lg font-bold text-primary">
             {isLoadingPrice ? "Loading..." : getPriceDisplay()}

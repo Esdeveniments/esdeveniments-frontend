@@ -242,9 +242,20 @@ Standardize button, card, badge, and layout patterns:
 
 ### Week 5: Layout & Polish (20 components, ~25 hours)
 
-- Replace repetitive flex patterns with semantic utilities
-- Refactor medium-priority components
-- Apply spacing and transition improvements
+🔄 **IN PROGRESS - Batch 1 Complete (5 flex patterns consolidated)**
+
+✅ Batch 1 (High-Impact Flex Patterns - 5 instances):
+
+- loadMoreButton.tsx: .flex-center
+- RestaurantPromotionForm.tsx: .flex-between
+- textarea.tsx: 2x .flex-between patterns
+
+📋 Planned (Batches 2-3):
+
+- .stack utility for vertical flex patterns
+- .flex-start for left-aligned layouts
+- Gap & spacing token consolidation
+- Transition & animation refinements
 
 ### Week 6: Long Tail & Final (13 components, ~20 hours)
 

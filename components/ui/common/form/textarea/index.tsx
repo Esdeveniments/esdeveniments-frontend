@@ -26,7 +26,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center">
+      <div className="flex-between">
         <label htmlFor={id} className="text-blackCorp font-bold">
           Descripció *
         </label>
@@ -75,7 +75,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             maxLength={maxLength}
           />
         )}
-        <div className="flex justify-between items-center mt-1">
+        <div className="flex-between mt-1">
           <p className="text-sm text-foreground/80">
             {showPreview
               ? "Així és com veuran la descripció els visitants"

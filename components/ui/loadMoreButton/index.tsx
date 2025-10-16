@@ -19,7 +19,7 @@ export default function LoadMoreButton({
   }
 
   return (
-    <div className="w-full flex justify-center items-center py-8">
+    <div className="flex-center w-full py-8">
       <button
         type="button"
         onClick={handleLoadMore}
