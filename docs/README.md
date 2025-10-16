@@ -6,7 +6,7 @@ This folder contains complete design system documentation for the Tailwind CSS m
 
 ---
 
-## 🗂️ Document Index (5 Documents)
+## 🗂️ Document Index (4 Documents)
 
 ### 1. **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
 
