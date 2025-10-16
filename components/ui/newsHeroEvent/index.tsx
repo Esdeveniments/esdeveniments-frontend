@@ -45,7 +45,7 @@ export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
           <Link
             href={`/e/${event.slug}`}
             prefetch={false}
-            className="inline-flex items-center self-start sm:self-auto rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-whiteCorp shadow-md sm:shadow-xl transition-colors hover:bg-primarydark sm:hover:shadow-2xl md:px-6 md:py-3 md:text-base"
+            className="btn-primary"
           >
             Llegir més
           </Link>

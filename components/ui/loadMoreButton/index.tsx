@@ -24,7 +24,7 @@ export default function LoadMoreButton({
         type="button"
         onClick={handleLoadMore}
         disabled={isButtonDisabled}
-        className="w-[120px] bg-whiteCorp flex justify-center items-center gap-2 font-barlow italic uppercase tracking-wider font-semibold p-2 border-2 border-bColor rounded-lg hover:bg-primary hover:text-whiteCorp hover:border-whiteCorp ease-in-out duration-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-neutral font-barlow italic uppercase tracking-wider w-[120px]"
         aria-label={buttonText}
       >
         {/* Loading spinner */}

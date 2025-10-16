@@ -54,11 +54,7 @@ export default function NewsCard({
                 </span>
               )}
             </div>
-            <Link
-              href={href}
-              prefetch={false}
-              className="inline-flex items-center self-start sm:self-auto rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-whiteCorp shadow-md sm:shadow-xl transition-colors hover:bg-primarydark sm:hover:shadow-2xl md:px-6 md:py-3 md:text-base"
-            >
+            <Link href={href} prefetch={false} className="btn-primary">
               Llegir més
             </Link>
           </div>
@@ -68,7 +64,7 @@ export default function NewsCard({
   }
 
   return (
-    <article className="group w-full overflow-hidden rounded-xl border border-bColor bg-whiteCorp shadow-sm transition-all hover:shadow-lg hover:border-blackCorp/20">
+    <article className="card-elevated group w-full overflow-hidden">
       <div className="relative overflow-hidden">
         {image ? (
           <Image
@@ -86,14 +82,8 @@ export default function NewsCard({
 
       <div className="p-6">
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          {placeLabel && (
-            <span className="inline-flex items-center rounded-full bg-darkCorp px-3 py-1 text-xs font-medium text-blackCorp">
-              📍 {placeLabel}
-            </span>
-          )}
-          <span className="inline-flex items-center rounded-full bg-darkCorp px-3 py-1 text-xs font-medium text-blackCorp">
-            📅 {dateLabel}
-          </span>
+          {placeLabel && <span className="badge-default">📍 {placeLabel}</span>}
+          <span className="badge-default">📅 {dateLabel}</span>
         </div>
 
         <h3 className="heading-3 mb-4 text-blackCorp group-hover:text-primary transition-colors">
@@ -117,7 +107,7 @@ export default function NewsCard({
           <Link
             href={href}
             prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-whiteCorp transition-all hover:bg-primarydark hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="btn-primary"
             aria-label={`Llegir-ne més de ${event.title}`}
           >
             Llegir més

@@ -311,6 +311,42 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 **Progress**: 100% Complete - All gray colors replaced with semantic tokens  
 **Last Updated**: October 2025
 
+### Week 4 (Batch 1-2) 🔄 IN PROGRESS - Buttons & Cards
+
+**Target**: Replace 40+ inline button/badge patterns with semantic classes
+
+✅ Completed (Batch 1 - Card & Badge Migration - 16 instances):
+
+- **newsCard.tsx** (4 patterns → 0 inline)
+
+  - Hero button + default button → `.btn-primary`
+  - Default badges → `.badge-default`
+  - Article wrapper → `.card-elevated`
+
+- **newsRichCard.tsx** (12 patterns → 0 inline)
+  - Horizontal & default variants migrated
+  - Primary category badges → `.badge-primary`
+  - Location/date badges → `.badge-default`
+  - All buttons → `.btn-primary`
+  - Both card wrappers → `.card-elevated`
+
+✅ Completed (Batch 2 - Hero & Button Components - 8 patterns):
+
+- **newsHeroEvent.tsx** (1 button → `.btn-primary`)
+- **loadMoreButton.tsx** (1 pattern → `.btn-neutral` + custom tracking)
+
+📋 Remaining:
+
+- Other inline button patterns in components
+- Custom CTA components that need special handling
+- Final standardization pass
+
+---
+
+**Status**: ✅ Week 2 Complete + Week 3 Complete + Week 4 Started (24 patterns migrated, 16+ remaining)  
+**Progress**: Week 4 Batch 1 & 2 Complete  
+**Last Updated**: October 2025
+
 ---
 
 ## 🔒 Guardrails (Enforcement)

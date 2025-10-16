@@ -24,7 +24,7 @@ export default function NewsRichCard({
 
   if (variant === "horizontal") {
     return (
-      <article className="group w-full overflow-hidden rounded-xl border border-bColor bg-whiteCorp shadow-sm transition-all hover:shadow-lg hover:border-blackCorp/20">
+      <article className="card-elevated group w-full overflow-hidden">
         <div className="flex flex-col md:flex-row gap-6 p-6 relative z-[1]">
           {numbered && (
             <div className="flex-shrink-0">
@@ -54,20 +54,16 @@ export default function NewsRichCard({
                 <Link
                   href={`/catalunya/${primaryCategory.slug}`}
                   prefetch={false}
-                  className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-whiteCorp transition-colors hover:bg-primarydark"
+                  className="badge-primary"
                   aria-label={`Veure categoria ${primaryCategory.name}`}
                 >
                   {primaryCategory.name}
                 </Link>
               )}
               {event.location && (
-                <span className="inline-flex items-center rounded-full bg-darkCorp px-3 py-1 text-xs font-medium text-blackCorp">
-                  📍 {event.location}
-                </span>
+                <span className="badge-default">📍 {event.location}</span>
               )}
-              <span className="inline-flex items-center rounded-full bg-darkCorp px-3 py-1 text-xs font-medium text-blackCorp">
-                📅 {dateLabel}
-              </span>
+              <span className="badge-default">📅 {dateLabel}</span>
             </div>
 
             <h3 className="heading-2 mb-3 text-blackCorp group-hover:text-primary transition-colors">
@@ -91,7 +87,7 @@ export default function NewsRichCard({
               <Link
                 href={`/e/${event.slug}`}
                 prefetch={false}
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-whiteCorp transition-all hover:bg-primarydark hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="btn-primary"
                 aria-label={`Llegir-ne més de ${event.title}`}
               >
                 Llegir més
@@ -104,7 +100,7 @@ export default function NewsRichCard({
   }
 
   return (
-    <article className="group w-full overflow-hidden rounded-xl border border-bColor bg-whiteCorp shadow-sm transition-all hover:shadow-lg hover:border-blackCorp/20">
+    <article className="card-elevated group w-full overflow-hidden">
       <div className="relative overflow-hidden">
         {image ? (
           <Image
@@ -126,20 +122,16 @@ export default function NewsRichCard({
             <Link
               href={`/catalunya/${primaryCategory.slug}`}
               prefetch={false}
-              className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-whiteCorp transition-colors hover:bg-primarydark"
+              className="badge-primary"
               aria-label={`Veure categoria ${primaryCategory.name}`}
             >
               {primaryCategory.name}
             </Link>
           )}
           {event.location && (
-            <span className="inline-flex items-center rounded-full bg-darkCorp px-3 py-1 text-xs font-medium text-blackCorp">
-              📍 {event.location}
-            </span>
+            <span className="badge-default">📍 {event.location}</span>
           )}
-          <span className="inline-flex items-center rounded-full bg-darkCorp px-3 py-1 text-xs font-medium text-blackCorp">
-            📅 {dateLabel}
-          </span>
+          <span className="badge-default">📅 {dateLabel}</span>
         </div>
 
         <h3 className="heading-3 mb-4 text-blackCorp group-hover:text-primary transition-colors">
@@ -163,7 +155,7 @@ export default function NewsRichCard({
           <Link
             href={`/e/${event.slug}`}
             prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-whiteCorp transition-all hover:bg-primarydark hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="btn-primary"
             aria-label={`Llegir-ne més de ${event.title}`}
           >
             Llegir més
