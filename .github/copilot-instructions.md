@@ -297,9 +297,9 @@ When modifying existing components:
   Submit
 </button>
 
-// ✅ Good
+// ✅ Good (after Week 4)
 <Button variant="primary">Submit</Button>
-// OR
+// ✅ Good (until Week 4)
 <button className="btn-primary">Submit</button>
 ```
 

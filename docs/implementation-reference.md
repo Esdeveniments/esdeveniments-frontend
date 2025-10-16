@@ -360,20 +360,14 @@ module.exports = {
   }
 
   /* ===================================== */
-  /* SPACING (SEMANTIC) */
+  /* SPACING (SEMANTIC TOKENS USAGE) */
   /* ===================================== */
 
-  .section-spacing {
-    @apply py-section-y px-section-x;
-  }
-
-  .card-spacing {
-    @apply p-card-padding-sm md:p-card-padding;
-  }
-
-  .inline-stack {
-    @apply flex items-center gap-element-gap-sm;
-  }
+  /* Use spacing tokens directly in components:
+     - Sections: py-section-y px-section-x
+     - Cards: p-card-padding-sm md:p-card-padding
+     - Inline small gaps: gap-element-gap-sm
+  */
 
   /* ===================================== */
   /* TRANSITIONS (SEMANTIC) */
@@ -665,23 +659,22 @@ Policy: In `app/` and `components/`, use semantic shadow classes exclusively. Si
 
 ---
 
-### Spacing (Semantic)
+### Spacing (Tokens)
 
-| Class              | Replaces                  | Usage                           |
-| ------------------ | ------------------------- | ------------------------------- |
-| `.section-spacing` | `py-12 px-4`              | Section padding (responsive)    |
-| `.card-spacing`    | `p-4 md:p-6`              | Card inner padding (responsive) |
-| `.inline-stack`    | `flex items-center gap-2` | Horizontal items with small gap |
+- Sections: use `py-section-y px-section-x` on the container.
+- Cards: use `p-card-padding-sm md:p-card-padding` inside `.card-*`.
+- Inline small gaps: use `gap-element-gap-sm` for horizontal stacks.
 
 **Example:**
 
 ```tsx
-<section className="section-spacing">
+<section className="py-section-y px-section-x">
   {/* Section content with consistent spacing */}
 </section>
 
-<div className="card-bordered card-spacing">
+<div className="card-bordered p-card-padding-sm md:p-card-padding">
   {/* Card with responsive padding */}
+  ...
 </div>
 ```
 
@@ -763,11 +756,11 @@ Opacity modifier note: the `/NN` suffix (e.g., `text-foreground/80`, `bg-border/
 **Example:**
 
 ```tsx
-<div className="bg-success/10 border border-success text-success-dark card-spacing rounded-card">
+<div className="bg-success/10 border border-success text-success-dark p-card-padding-sm md:p-card-padding rounded-card">
   ✅ Event created successfully!
 </div>
 
-<div className="bg-error/10 border border-error text-error-dark card-spacing rounded-card">
+<div className="bg-error/10 border border-error text-error-dark p-card-padding-sm md:p-card-padding rounded-card">
   ❌ Please fill in all required fields.
 </div>
 ```

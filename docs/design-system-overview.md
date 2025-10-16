@@ -121,7 +121,7 @@ Standardize button, card, badge, and layout patterns:
 
 ### Adoption Timeline & Guardrails
 
-- Week 1: Tokens + semantic classes available; `<Button variant="...">` ready; CI allows legacy usage.
+- Week 1: Tokens + semantic classes available; use `.btn-*` classes (component adaptation lands Week 4); CI allows legacy usage.
 - Week 3: Error on `gray-*` in changed files; warn on repetitive flex patterns.
 - Week 5: Enforce semantic buttons/cards in changed files.
 - Week 7: Repo-wide enforcement; PR to remove legacy aliases.
@@ -425,10 +425,8 @@ All implementation details are in **separate, focused documents**:
 **Ready to start?**
 
 1. **Read**: `implementation-reference.md` (complete code for Week 1)
-2. **Read**: `migration-workflow.md` (detailed week-by-week plan)
-3. **Read**: `ai-batch-workflow.md` (if using AI for implementation)
-4. **Execute**: Week 0 pre-flight checklist
-5. **Execute**: Week 1 Quick Wins + foundation setup
+2. **Execute**: Week 0 pre-flight checklist
+3. **Execute**: Week 1 Quick Wins + foundation setup
 
 **Questions?** See `README.md` for document navigation.
 

@@ -1,21 +1,21 @@
 # Repository overview and always-load context
 
 - Primary sources to consult first:
-- `.github/copilot-instructions.md` (authoritative architecture and domain rules)
-- `project-snapshot.txt` (point-in-time config and script snapshot)
-- `types/README.md` (type organization and canonical sources)
+  - `.github/copilot-instructions.md` (authoritative architecture and domain rules)
+  - `project-snapshot.txt` (point-in-time config and script snapshot)
+  - `types/README.md` (type organization and canonical sources)
 - Core stack: Next.js App Router (TypeScript), URL-first filtering system, SSR + client enhancement (hybrid rendering), SW for offline/caching, strict CSP with nonces, design system with semantic Tailwind classes.
 
 - Key domains:
-- Filters & URLs: `config/filters.ts`, `utils/url-filters.ts`, `utils/url-parsing.ts`, `utils/filter-operations.ts`
-- API & caching: `lib/api/*`, `lib/api/cache.ts`
-- Security: `middleware.ts` (CSP, headers), `app/layout.tsx`, `app/GoogleScripts.tsx`
-- SEO: `components/partials/seo-meta.ts`, `lib/meta.ts`, page `generateMetadata`
-- Rendering: `components/ui/hybridEventsList`, `components/ui/clientInteractiveLayer`
-- SW: `public/sw-template.js`, `scripts/generate-sw.mjs`
-- Images: `utils/image-quality.ts`, `utils/image-preload.ts`, `components/hooks/useImageRetry.ts`
-- Types: `types/common.ts` (shared UI types), `types/api/*.ts` (API DTOs), `types/README.md` (organization guide)
-- Design System: `docs/implementation-reference.md` (canonical code), `docs/design-system-overview.md` (WHAT & WHY), `docs/reference-data.md` (lookup tables)
+  - Filters & URLs: `config/filters.ts`, `utils/url-filters.ts`, `utils/url-parsing.ts`, `utils/filter-operations.ts`
+  - API & caching: `lib/api/*`, `lib/api/cache.ts`
+  - Security: `middleware.ts` (CSP, headers), `app/layout.tsx`, `app/GoogleScripts.tsx`
+  - SEO: `components/partials/seo-meta.ts`, `lib/meta.ts`, page `generateMetadata`
+  - Rendering: `components/ui/hybridEventsList`, `components/ui/clientInteractiveLayer`
+  - SW: `public/sw-template.js`, `scripts/generate-sw.mjs`
+  - Images: `utils/image-quality.ts`, `utils/image-preload.ts`, `components/hooks/useImageRetry.ts`
+  - Types: `types/common.ts` (shared UI types), `types/api/*.ts` (API DTOs), `types/README.md` (organization guide)
+  - Design System: `docs/implementation-reference.md` (canonical code), `docs/design-system-overview.md` (WHAT & WHY), `docs/reference-data.md` (lookup tables)
 
 ## Start-of-prompt checklist (use every time)
 

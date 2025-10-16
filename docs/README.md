@@ -6,7 +6,7 @@ This folder contains complete design system documentation for the Tailwind CSS m
 
 ---
 
-## 🗂️ Document Index (6 Documents)
+## 🗂️ Document Index (5 Documents)
 
 ### 1. **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
 
@@ -54,20 +54,7 @@ All lookup tables in one place:
 
 ---
 
-### AI-SPECIFIC WORKFLOW
-
-Batch workflow for AI implementation:
-
-- AI implements → User verifies → Iterate
-- Per-batch output template
-- References to other docs (not duplication)
-- AI-specific tips (context retention, error handling)
-
-**Audience**: AI agents (primary)
-
----
-
-### 5. **[`.github/copilot-instructions.md`](../.github/copilot-instructions.md)** 🛡️ AI RULES
+### 4. **[`.github/copilot-instructions.md`](../.github/copilot-instructions.md)** 🛡️ AI RULES
 
 ### MANDATORY FOR AI AGENTS
 
@@ -93,7 +80,7 @@ Section 20: Design System Conventions
 
 1. **Reference**: **implementation-reference.md** - Get all code
 2. **Lookup**: **reference-data.md** - Gray mappings, component inventory
-3. **Rules**: **.github/copilot-instructions.md** Section 20 - Mandatory design system rules
+3. **Rules**: **..github/copilot-instructions.md** Section 20 - Mandatory design system rules
 
 ---
 
@@ -135,7 +122,8 @@ Each topic has ONE authoritative document:
 ## 📖 Documentation Structure
 
 ```text
-README.md (this file - navigation)
+docs/
+├── README.md (this file - navigation)
 │
 ├── design-system-overview.md (WHAT & WHY)
 │   └── Problems, solution, timeline, FAQ
@@ -143,12 +131,12 @@ README.md (this file - navigation)
 ├── implementation-reference.md (ALL CODE)
 │   └── tailwind.config.js, globals.css, class reference
 │
-├── reference-data.md (LOOKUP TABLES)
-│   └── Gray mappings, component inventory
-│
-├── .github/copilot-instructions.md (AI PROCESS & RULES)
-│   ├── Batch workflow, templates, tips
-│   └── Section 20: Design system conventions
+└── reference-data.md (LOOKUP TABLES)
+    └── Gray mappings, component inventory
+
+.github/copilot-instructions.md (AI PROCESS & RULES) - located in root .github/ directory
+    ├── Batch workflow, templates, tips
+    └── Section 20: Design system conventions
 ```
 
 ---
@@ -160,21 +148,6 @@ README.md (this file - navigation)
 3. **Looking for gray mapping?** → Check reference-data.md
 
 ---
-
-## 📊 Before/After Consolidation
-
-### OLD Structure (9 documents, ~7,800 lines)
-
-- ⚠️ High duplication (Week 0 in 3 places)
-- ⚠️ Unclear which doc is source of truth
-- ⚠️ Maintenance overhead (update 3-4 docs per change)
-
-### NEW Structure (6 documents, ~2,900 lines)
-
-- ✅ Zero duplication
-- ✅ Clear single source of truth
-- ✅ 67% less content
-- ✅ Update 1 place per change
 
 ---
 
