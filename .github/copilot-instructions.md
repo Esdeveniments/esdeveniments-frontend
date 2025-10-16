@@ -213,9 +213,9 @@ Adding a new filter:
    - Opacity: Use `/80`, `/70`, `/60` suffixes (e.g., `text-foreground/80`)
    - Reference: Brand colors defined in `tailwind.config.js`
 
-3. **Buttons**: Use existing Button component or semantic classes
+3. **Buttons**: Transitional policy → use semantic classes now; component available after Week 4
 
-   - Component: `<Button variant="primary|neutral|outline|muted">`
+   - Component (after Week 4): `<Button variant="primary|neutral|outline|muted">`
    - Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`
    - NO manual button styling with inline utilities
 
@@ -226,11 +226,11 @@ Adding a new filter:
    - `.card-body`, `.card-header`, `.card-footer` (spacing)
    - Example: `<div className="card-bordered"><div className="card-body">...</div></div>`
 
-5. **Badges**: Use semantic badge classes
+5. **Badges**: Transitional policy → use semantic badge classes now; component available after Week 4
 
    - `.badge-primary` (red background)
    - `.badge-default` (gray background)
-   - Component: `<Badge>` already exists, use it
+   - Component (after Week 4): `<Badge>`
 
 6. **Layout Utilities**: Replace repetitive flex patterns
 
@@ -258,7 +258,7 @@ Adding a new filter:
 ### Migration Context
 
 **Current Phase**: Week 0 - Foundation  
-**Status**: Design system classes added to `globals.css`, components being migrated incrementally
+**Status**: Design system classes added to `globals.css`. Button/Badge components will be adapted in Week 4; until then, use `.btn-*` and `.badge-*` classes.
 
 When modifying existing components:
 
@@ -331,4 +331,3 @@ When modifying existing components:
 
 - Overview: `/docs/design-system-overview.md`
 - Implementation Reference (ALL CODE): `/docs/implementation-reference.md`
-- Migration Workflow: `/docs/migration-workflow.md`

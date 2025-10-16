@@ -107,9 +107,9 @@ Upgrade design system values to modern, professional standards:
 
 Standardize button, card, badge, and layout patterns:
 
-- **Buttons**: Existing `<Button>` component adapted to use semantic classes (available from Week 1)
+- **Buttons**: Existing `<Button>` component will be adapted to use semantic classes in Week 4; until then use `.btn-*` classes
 - **Cards**: `.card-bordered`, `.card-elevated`, `.card-body`
-- **Badges**: `.badge-default`, `.badge-primary`
+- **Badges**: `.badge-default`, `.badge-primary` (existing `<Badge>` component adapted in Week 4; until then use `.badge-*` classes)
 - **Layout**: `.flex-center`, `.stack`, `.flex-between`, `.container-page`, `.container-article`, `.container-form`
 - **Color tokens**: `background`, `foreground`, `foreground-strong`, `muted`, `border`, `primary-foreground` (legacy aliases exist during migration only)
 
@@ -275,7 +275,6 @@ All implementation details are in **separate, focused documents**:
 1. **`implementation-reference.md`** - Complete `tailwind.config.js`, `globals.css`, class reference
 2. **`migration-workflow.md`** - Week-by-week checklist, testing strategy, examples
 3. **`reference-data.md`** - Gray mapping table (112 instances), component inventory (88 components)
-4. **`ai-batch-workflow.md`** - AI-specific process, batch templates, verification checklists
 
 **This document** provides the **WHAT and WHY**. See other docs for **HOW**.
 

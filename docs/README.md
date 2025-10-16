@@ -71,8 +71,6 @@ All lookup tables in one place:
 
 ---
 
-### 5. **[ai-batch-workflow.md](./ai-batch-workflow.md)** 🤖 AI PROCESS
-
 ### AI-SPECIFIC WORKFLOW
 
 Batch workflow for AI implementation:
@@ -86,7 +84,7 @@ Batch workflow for AI implementation:
 
 ---
 
-### 6. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** 🛡️ AI RULES
+### 5. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** 🛡️ AI RULES
 
 ### MANDATORY FOR AI AGENTS
 
@@ -111,10 +109,9 @@ Section 20: Design System Conventions
 
 ### For AI Agents
 
-1. ⭐ **START**: **ai-batch-workflow.md** - Understand batch process
-2. **Reference**: **implementation-reference.md** - Get all code
-3. **Lookup**: **reference-data.md** - Gray mappings, component inventory
-4. **Rules**: **.github/copilot-instructions.md** Section 20 - Mandatory design system rules
+1. **Reference**: **implementation-reference.md** - Get all code
+2. **Lookup**: **reference-data.md** - Gray mappings, component inventory
+3. **Rules**: **.github/copilot-instructions.md** Section 20 - Mandatory design system rules
 
 ---
 
@@ -128,7 +125,6 @@ Each topic has ONE authoritative document:
 | ALL CODE       | implementation-reference.md     | Others reference it |
 | HOW TO MIGRATE | migration-workflow.md           | Others reference it |
 | LOOKUP TABLES  | reference-data.md               | Others link to it   |
-| AI PROCESS     | ai-batch-workflow.md            | -                   |
 | AI RULES       | .github/copilot-instructions.md | -                   |
 
 **Zero duplication**: Update one place, reflects everywhere.
@@ -172,7 +168,7 @@ README.md (this file - navigation)
 ├── reference-data.md (LOOKUP TABLES)
 │   └── Gray mappings, component inventory
 │
-├── ai-batch-workflow.md (AI PROCESS)
+├── .github/copilot-instructions.md (AI PROCESS)
 │   └── Batch workflow, templates, tips
 │
 └── .github/copilot-instructions.md (AI RULES)
@@ -187,7 +183,6 @@ README.md (this file - navigation)
 2. **Need Week 1 code?** → See implementation-reference.md
 3. **Don't know how to migrate?** → Follow migration-workflow.md
 4. **Looking for gray mapping?** → Check reference-data.md
-5. **AI implementing?** → Follow ai-batch-workflow.md
 
 ---
 

@@ -121,6 +121,10 @@ module.exports = {
         "button-y": "0.5rem", // 8px - Button vertical padding
         "input-x": "0.75rem", // 12px - Input horizontal padding
         "input-y": "0.5rem", // 8px - Input vertical padding
+
+        // Badge spacing
+        "badge-x": "0.75rem", // 12px - Badge horizontal padding
+        "badge-y": "0.25rem", // 4px - Badge vertical padding
       },
 
       // === BORDER RADIUS === //
@@ -253,19 +257,19 @@ module.exports = {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-6 py-3 bg-muted text-foreground opacity-60 cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
   }
 
   /* ===================================== */
@@ -293,11 +297,11 @@ module.exports = {
   /* ===================================== */
 
   .badge-default {
-    @apply inline-flex items-center px-3 py-1 rounded-badge text-xs font-medium bg-muted text-foreground;
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-muted text-foreground;
   }
 
   .badge-primary {
-    @apply inline-flex items-center px-3 py-1 rounded-badge text-xs font-medium bg-primary text-primary-foreground;
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-primary text-primary-foreground;
   }
 
   /* ===================================== */
@@ -425,11 +429,11 @@ module.exports = {
   }
 
   .helper-text {
-    @apply text-foreground/70 text-sm mt-1;
+    @apply body-small text-foreground/70 mt-1;
   }
 
   .helper-text-error {
-    @apply text-error text-sm mt-1;
+    @apply body-small text-error mt-1;
   }
 
   /* ===================================== */
@@ -555,7 +559,7 @@ Use the semantic classes above; avoid ad-hoc `text-*` utilities.
 <button className="btn-primary w-full">Full Width</button>
 ```
 
-**Or use the Button component:**
+**Or use the Button component (available after Week 4 adaptation):**
 
 ```tsx
 import Button from '@/components/ui/common/button';

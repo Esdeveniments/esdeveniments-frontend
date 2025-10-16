@@ -92,7 +92,7 @@
 grep -rE 'text-gray-|bg-gray-|border-gray-' components/ app/ | wc -l
 
 # Count semantic class usage (should increase)
-grep -rE 'heading-|body-|btn-|card-|badge-|flex-center|stack' components/ app/ | wc -l
+grep -rE 'heading-|body-|btn-|card-|badge-|flex-center|stack|container-(page|article|form)' components/ app/ | wc -l
 
 # Detect new violations (CI grep-friendly)
 # Week 3+: error only on changed files (example with git diff against main)
@@ -253,13 +253,13 @@ fi
 12. `components/ui/restaurantPromotion/index.tsx`
 13. `components/ui/restaurantPromotion/RestaurantPromotionSection.tsx`
 
-### Already Aligned (No Migration Needed)
+### Already Aligned / Planned Adaptation
 
-- ✅ `components/ui/common/button/index.tsx` - Will be adapted internally
-- ✅ `components/ui/common/badge/index.tsx` - Will be updated internally
-- ✅ Image components - Minimal styling, no significant changes needed
+- `components/ui/common/button/index.tsx` - Planned adaptation in Week 4 to use semantic classes; until then use `.btn-*` classes
+- `components/ui/common/badge/index.tsx` - Planned adaptation in Week 4; until then use `.badge-*` classes
+- Image components - Minimal styling, no significant changes needed
 
 ---
 
-**For detailed migration workflow, see**: `migration-workflow.md`  
+**For detailed design system overview, see**: `design-system-overview.md.md`  
 **For all code needed, see**: `implementation-reference.md`
