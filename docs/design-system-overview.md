@@ -107,24 +107,24 @@ Upgrade design system values to modern, professional standards:
 
 Standardize button, card, badge, and layout patterns:
 
-- **Buttons**: Existing `<Button>` component adapted to use semantic classes
+- **Buttons**: Existing `<Button>` component adapted to use semantic classes (available from Week 1)
 - **Cards**: `.card-bordered`, `.card-elevated`, `.card-body`
 - **Badges**: `.badge-default`, `.badge-primary`
-- **Layout**: `.flex-center`, `.stack`, `.flex-between`
+- **Layout**: `.flex-center`, `.stack`, `.flex-between`, `.container-page`, `.container-article`, `.container-form`
 - **Color tokens**: `background`, `foreground`, `foreground-strong`, `muted`, `border`, `primary-foreground` (legacy aliases exist during migration only)
 
 ### Deprecation & Adoption Policy
 
 - During migration: legacy utilities permitted; semantic tokens/classes preferred.
 - Week 7: remove legacy aliases no longer referenced; ensure 0 `gray-*` usages remain.
-- CI guardrails: lint/test must pass; no new `gray-*`; repetitive flex patterns should prefer semantic utilities.
+- Enforcement approach: do not disable Tailwind `gray` palette; enforce via CI/lint rules.
 
 ### Adoption Timeline & Guardrails
 
-- Week 1: Tokens + semantic classes available; CI allows legacy usage.
-- Week 3: Enforce no `gray-*` in changed files; warn on repetitive flex patterns.
+- Week 1: Tokens + semantic classes available; `<Button variant="...">` ready; CI allows legacy usage.
+- Week 3: Error on `gray-*` in changed files; warn on repetitive flex patterns.
 - Week 5: Enforce semantic buttons/cards in changed files.
-- Week 7: Enforce across repo; remove legacy aliases where safe.
+- Week 7: Repo-wide enforcement; PR to remove legacy aliases.
 
 ---
 
@@ -198,7 +198,7 @@ Standardize button, card, badge, and layout patterns:
 ### Week 7 Post-Migration: Cleanup (4 hours)
 
 - Verify 0 generic gray instances remain
-- Remove deprecated color aliases
+- Remove deprecated color aliases (PR: "design-system: remove legacy aliases")
 - Final documentation updates
 - Production deployment
 
@@ -437,4 +437,4 @@ All implementation details are in **separate, focused documents**:
 ---
 
 **Status**: ✅ Ready for implementation  
-**Last Updated**: October 2024
+**Last Updated**: October 2025

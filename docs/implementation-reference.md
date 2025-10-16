@@ -27,6 +27,8 @@ This document contains **ALL code** needed for implementation:
 ```js
 /** @type {import('tailwindcss').Config} */
 
+const foregroundRgb = "69 69 69";
+
 module.exports = {
   content: ["./components/**/*.{js,ts,jsx,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
   theme: {
@@ -67,7 +69,7 @@ module.exports = {
 
         // Semantic tokens (canonical)
         background: "#ffffff",
-        foreground: "rgb(69 69 69 / <alpha-value>)",
+        foreground: `rgb(${foregroundRgb} / <alpha-value>)`,
         "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
         muted: "#F7F7F7",
         border: "#CCCCCC",
@@ -88,14 +90,14 @@ module.exports = {
         info: "#3B82F6",
         "info-dark": "#2563EB",
 
-        // Aliases used during migration (to be removed post-migration)
+        // Aliases used during migration (deprecated; removal scheduled Week 7 Day 1)
         // Brand (deprecated): primarydark, primarySoft
         // Legacy neutrals (aliases): whiteCorp, darkCorp, blackCorp, fullBlackCorp, bColor
         primarydark: "#C8033F",
         primarySoft: "#FF003750",
         whiteCorp: "#ffffff",
         darkCorp: "#F7F7F7",
-        blackCorp: "rgb(69 69 69 / <alpha-value>)",
+        blackCorp: `rgb(${foregroundRgb} / <alpha-value>)`,
         fullBlackCorp: "rgb(0 0 0 / <alpha-value>)",
         bColor: "#cccccc",
       },
@@ -133,13 +135,12 @@ module.exports = {
       // === SHADOWS (PROFESSIONAL SYSTEM) === //
       boxShadow: {
         none: "none",
-        xs: "0 1px 2px 0 rgba(69, 69, 69, 0.05)",
-        sm: "0 1px 3px 0 rgba(69, 69, 69, 0.1), 0 1px 2px -1px rgba(69, 69, 69, 0.06)",
-        DEFAULT:
-          "0 4px 6px -1px rgba(69, 69, 69, 0.1), 0 2px 4px -2px rgba(69, 69, 69, 0.06)",
-        md: "0 6px 16px -4px rgba(69, 69, 69, 0.12), 0 4px 8px -2px rgba(69, 69, 69, 0.08)",
-        lg: "0 12px 24px -6px rgba(69, 69, 69, 0.15), 0 6px 12px -3px rgba(69, 69, 69, 0.1)",
-        xl: "0 20px 32px -8px rgba(69, 69, 69, 0.18), 0 8px 16px -4px rgba(69, 69, 69, 0.12)",
+        xs: `0 1px 2px 0 rgba(${foregroundRgb}, 0.05)`,
+        sm: `0 1px 3px 0 rgba(${foregroundRgb}, 0.1), 0 1px 2px -1px rgba(${foregroundRgb}, 0.06)`,
+        DEFAULT: `0 4px 6px -1px rgba(${foregroundRgb}, 0.1), 0 2px 4px -2px rgba(${foregroundRgb}, 0.06)`,
+        md: `0 6px 16px -4px rgba(${foregroundRgb}, 0.12), 0 4px 8px -2px rgba(${foregroundRgb}, 0.08)`,
+        lg: `0 12px 24px -6px rgba(${foregroundRgb}, 0.15), 0 6px 12px -3px rgba(${foregroundRgb}, 0.1)`,
+        xl: `0 20px 32px -8px rgba(${foregroundRgb}, 0.18), 0 8px 16px -4px rgba(${foregroundRgb}, 0.12)`,
         focus: "0 0 0 3px rgba(255, 0, 55, 0.2)",
         "focus-error": "0 0 0 3px rgba(239, 68, 68, 0.2)",
       },
@@ -187,7 +188,10 @@ module.exports = {
       },
       zIndex: {
         1: "1",
-        900: "900",
+        10: "10", // sticky nav
+        100: "100", // dropdowns, popovers
+        900: "900", // modals
+        1000: "1000", // tooltips
       },
     },
   },
@@ -316,6 +320,17 @@ module.exports = {
     @apply flex flex-col gap-element-gap;
   }
 
+  /* Containers (Semantic) */
+  .container-page {
+    @apply max-w-7xl mx-auto px-section-x;
+  }
+  .container-article {
+    @apply max-w-4xl mx-auto px-section-x;
+  }
+  .container-form {
+    @apply max-w-2xl mx-auto px-section-x;
+  }
+
   /* ===================================== */
   /* SHADOWS (SEMANTIC) */
   /* ===================================== */
@@ -384,6 +399,79 @@ module.exports = {
   .hover-glow {
     @apply hover:shadow-focus;
   }
+
+  /* ===================================== */
+  /* FORMS */
+  /* ===================================== */
+
+  .input {
+    @apply w-full rounded-input border border-border bg-background text-foreground px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+  }
+
+  .input-lg {
+    @apply h-12;
+  }
+
+  .input-error {
+    @apply border-error focus-visible:ring-error focus-visible:border-error;
+  }
+
+  .input-disabled {
+    @apply opacity-60 cursor-not-allowed bg-muted pointer-events-none;
+  }
+
+  .input-readonly {
+    @apply bg-muted;
+  }
+
+  .helper-text {
+    @apply text-foreground/70 text-sm mt-1;
+  }
+
+  .helper-text-error {
+    @apply text-error text-sm mt-1;
+  }
+
+  /* ===================================== */
+  /* FOCUS UTILITIES */
+  /* ===================================== */
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .focus-ring-error {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2;
+  }
+
+  /* ===================================== */
+  /* Z-INDEX (SEMANTIC) */
+  /* ===================================== */
+
+  .z-sticky {
+    @apply z-10;
+  }
+  .z-dropdown {
+    @apply z-100;
+  }
+  .z-modal {
+    @apply z-900;
+  }
+  .z-tooltip {
+    @apply z-1000;
+  }
+}
+```
+
+```css
+/* Add to styles/globals.css (outside @layer) */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 ```
 
@@ -418,6 +506,22 @@ module.exports = {
 | label       | 0.75         | 0.75          | normal      |
 
 Use the semantic classes above; avoid ad-hoc `text-*` utilities.
+
+#### Responsive Defaults & Exceptions
+
+- Default: headings (`.heading-*`) are responsive; body (`.body-*`) is fixed.
+- Exceptions (use responsive text deliberately):
+  - Hero/marketing copy: responsive allowed.
+  - Card titles: prefer `.heading-3` fixed on mobile; allow responsive only if layout permits 2 lines.
+  - Narrow mobile nav buttons: keep button text fixed; truncate instead of scaling.
+  - Data tables: avoid responsive text to preserve alignment.
+
+#### Standard Weights, Tracking, Clamping, Decoration
+
+- Standard weights: 400 (normal), 500 (medium), 600 (semibold), 700 (bold).
+- Tracking: `tracking-tight` for headings; `tracking-wide` for labels; avoid ad-hoc tracking.
+- Clamping defaults: card titles `line-clamp-2`; descriptions `line-clamp-3`.
+- Links: `underline underline-offset-2 hover:no-underline` by default; prices/discounts may use `line-through`.
 
 **Example:**
 
@@ -553,6 +657,8 @@ import Button from '@/components/ui/common/button';
 </article>
 ```
 
+Policy: In `app/` and `components/`, use semantic shadow classes exclusively. Size-based Tailwind shadows (`shadow-sm/md/lg/xl`) are allowed only inside these semantic class definitions.
+
 ---
 
 ### Spacing (Semantic)
@@ -574,6 +680,15 @@ import Button from '@/components/ui/common/button';
   {/* Card with responsive padding */}
 </div>
 ```
+
+Guidelines:
+
+- Containers: use semantic classes
+  - Listings and wide pages: `.container-page`
+  - Articles and event detail: `.container-article`
+  - Forms and narrow content: `.container-form`
+- Margin vs padding: containers provide inner `padding`; spacing between blocks uses margins or the `.stack` utility.
+- Grid gaps: use `gap-*` utilities; mirror `element-gap` values for grids (`gap-3` as default), or use `gap-x-3 gap-y-3` where needed.
 
 ---
 
@@ -615,6 +730,8 @@ import Button from '@/components/ui/common/button';
 ### Neutrals (reference-only)
 
 Note: Do not use `white` or `gray-*` classes in application code. These values are shown only for reference. Always use semantic tokens instead: `background`, `foreground`, `foreground-strong`, `muted`, `border`.
+
+Opacity modifier note: the `/NN` suffix (e.g., `text-foreground/80`, `bg-border/40`) is native Tailwind v3+ color opacity syntax, not a custom class.
 
 | Token      | Value           | Usage                   |
 | ---------- | --------------- | ----------------------- |
@@ -660,6 +777,7 @@ Note: Do not use `white` or `gray-*` classes in application code. These values a
 - For muted text, use opacity suffixes on `foreground` (`/80`, `/70`, `/60`) instead of lighter grays.
 - Interactive states should keep a minimum AA contrast ratio; when unsure, test tokens quickly with a contrast checker.
 - Avoid mixing generic `gray-*` for text; rely on `foreground` with opacity for hierarchy.
+- Reduced motion: honor `prefers-reduced-motion`; see globals.css snippet above to dampen or remove animations/transitions.
 
 ---
 
@@ -811,13 +929,11 @@ Note: Do not use `white` or `gray-*` classes in application code. These values a
 ## 📚 Related Documents
 
 - **`design-system-overview.md`** - Why this design system exists
-- **`migration-workflow.md`** - How to migrate components step-by-step
 - **`reference-data.md`** - Gray migration mapping, component inventory
-- **`ai-batch-workflow.md`** - AI-specific implementation process
 
 ---
 
 **This is the SINGLE source of truth for all code.** All other documents reference this file.
 
 **Status**: ✅ Ready to use  
-**Last Updated**: October 2024
+**Last Updated**: October 2025

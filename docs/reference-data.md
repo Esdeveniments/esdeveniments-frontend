@@ -18,6 +18,7 @@
 
 **Total Instances**: 112 (77 in `components/`, 35 in `app/`)  
 **Goal**: Replace all generic Tailwind grays with semantic color tokens by Week 3
+**Enforcement**: Do not disable Tailwind `gray` palette. Enforce via CI/lint.
 
 ### Mapping Table
 
@@ -94,9 +95,29 @@ grep -rE 'text-gray-|bg-gray-|border-gray-' components/ app/ | wc -l
 grep -rE 'heading-|body-|btn-|card-|badge-|flex-center|stack' components/ app/ | wc -l
 
 # Detect new violations (CI grep-friendly)
-if grep -R --line-number -E "text-gray-|bg-gray-|border-gray-" components/ app/; then
-  echo "Found gray violations" && exit 1; fi
+# Week 3+: error only on changed files (example with git diff against main)
+if git diff --name-only origin/main...HEAD | grep -E '^(components/|app/).*\.(tsx|ts)$' | xargs -I {} grep -nE "text-gray-|bg-gray-|border-gray-" {} ; then
+  echo "Found gray violations in changed files" && exit 1; fi
+
+# Week 7+: repo-wide enforcement
+if [ "$ENFORCE_NO_GRAY_REPO_WIDE" = "1" ]; then
+  if grep -R --line-number -E "text-gray-|bg-gray-|border-gray-" components/ app/; then
+    echo "Found gray violations" && exit 1; fi
+fi
 ```
+
+### Per-Component Migration Checklist (Template)
+
+- [ ] Typography migrated (`.heading-*`, `.body-*`)
+- [ ] Colors migrated (no `gray-*`; semantic tokens only)
+- [ ] Buttons standardized (`<Button variant>` or `.btn-*`)
+- [ ] Cards standardized (`.card-*`)
+- [ ] Layout utilities used (`.flex-*`, `.stack`, containers: `.container-page|article|form`)
+- [ ] Line clamping applied where needed (titles/descriptions)
+- [ ] Form input states covered (default/hover/focus/error/disabled/readonly)
+- [ ] Focus-visible patterns used (`.focus-ring`)
+- [ ] Tests pass (TS, unit, e2e)
+- [ ] Visual QA completed (Playwright screenshots)
 
 ---
 

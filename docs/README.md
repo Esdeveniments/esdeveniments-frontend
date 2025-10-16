@@ -223,6 +223,16 @@ README.md (this file - navigation)
 - Quick checks:
   - Count gray usage: see commands in `reference-data.md`.
   - Count semantic usage: see commands in `reference-data.md`.
+- Phased enforcement:
+  - Week 3+: error on `gray-*` in changed files via CI grep (see `reference-data.md`).
+  - Week 7+: repo-wide enforcement; PR removes legacy aliases.
+
+## 🖼️ Visual Regression Testing
+
+- Tool: Playwright screenshots (already in repo).
+- Week 0: record baselines for 10 key pages.
+- Per PR: compare against baseline; diffs must be acknowledged or fixed.
+- See `migration-workflow.md` for exact commands and failure handling.
 
 ## 🧭 Decisions (Canonical)
 
