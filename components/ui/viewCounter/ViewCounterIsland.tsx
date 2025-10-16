@@ -29,8 +29,8 @@ export default function ViewCounterIsland({
         <ViewCounter visits={visits} hideText={hideText} />
       ) : (
         <div className="flex items-center gap-1 h-8 animate-pulse" aria-hidden="true">
-          <div className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700" />
-          <div className="w-10 h-4 rounded bg-gray-200 dark:bg-gray-700" />
+          <div className="w-5 h-5 rounded bg-border/40 dark:bg-border" />
+          <div className="w-10 h-4 rounded bg-border/40 dark:bg-border" />
         </div>
       )}
     </div>

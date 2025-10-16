@@ -116,7 +116,7 @@ export function CloudinaryUploadWidget({
         />
         <label
           htmlFor="restaurant-image-upload"
-          className={`block w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-md cursor-pointer text-center hover:border-primary transition-colors ${
+          className={`block w-full px-4 py-3 border-2 border-dashed border-border rounded-md cursor-pointer text-center hover:border-primary transition-colors ${
             isUploading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
@@ -128,7 +128,7 @@ export function CloudinaryUploadWidget({
           ) : (
             <div>
               <svg
-                className="mx-auto h-8 w-8 text-gray-400"
+                className="mx-auto h-8 w-8 text-foreground/60"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

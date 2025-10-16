@@ -51,13 +51,13 @@ export default function PromotedRestaurantCard({
 
             {/* Restaurant Info */}
             <div className="flex-1">
-              <h3 className="font-semibold text-lg text-gray-900">
+              <h3 className="font-semibold text-lg text-foreground-strong">
                 {promotion.restaurantName}
               </h3>
-              <p className="text-gray-600 mt-1">{promotion.location}</p>
+              <p className="text-foreground/80 mt-1">{promotion.location}</p>
 
               {/* Expiry Info */}
-              <div className="mt-2 text-sm text-gray-500">
+              <div className="mt-2 text-sm text-foreground/70">
                 <span>Promoció activa fins al </span>
                 <span className="font-medium">
                   {formatExpiryDate(promotion.expiresAt)}

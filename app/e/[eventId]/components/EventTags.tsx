@@ -8,7 +8,7 @@ const EventTags: React.FC<EventTagsProps> = ({ tags }) => {
       {tags.map((tag) => (
         <span
           key={tag}
-          className="bg-gray-200 text-gray-700 rounded-full px-3 py-1 text-xs font-medium"
+          className="bg-muted text-foreground rounded-full px-3 py-1 text-xs font-medium"
         >
           {tag}
         </span>

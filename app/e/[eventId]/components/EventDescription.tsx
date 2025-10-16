@@ -11,7 +11,7 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
 }) => {
   return (
     <div className="w-full flex justify-center items-start gap-2 px-4">
-      <div className="max-w-none text-gray-800">
+      <div className="max-w-none text-foreground">
         <Description
           description={description}
           location={location}

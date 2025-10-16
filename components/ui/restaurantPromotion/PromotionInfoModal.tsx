@@ -31,7 +31,7 @@ const PromotionInfoModal: FC<PromotionInfoModalProps> = ({ open, setOpen }) => {
           <li>Enllaç (web o xarxes)</li>
           <li>Telèfon de contacte</li>
         </ul>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-foreground/70">
           T&apos;informarem tan aviat com les promocions automatitzades estiguin
           disponibles.
         </p>

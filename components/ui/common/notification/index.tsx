@@ -39,7 +39,7 @@ const Notification: FC<EventNotificationProps> = ({
         <div className="absolute top-0 right-0 pt-4 pr-4">
           <button
             type="button"
-            className="rounded-md text-gray-400 hover:text-gray-500"
+            className="rounded-md text-foreground/60 hover:text-foreground/80"
             onClick={() => hideNotification?.(true)}
           >
             <span className="sr-only">Close</span>

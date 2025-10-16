@@ -198,7 +198,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             <>
               <svg
                 role="status"
-                className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600"
+                className="inline w-4 h-4 mr-2 text-border/40 animate-spin dark:text-border"
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

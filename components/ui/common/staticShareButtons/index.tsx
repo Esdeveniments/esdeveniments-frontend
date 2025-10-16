@@ -128,9 +128,9 @@ export default function StaticShareButtons({
 
       <Link
         href={shareUrls.email}
-        className="flex items-center gap-2 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+        className="flex items-center gap-2 p-2 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
       >
-        <svg className="w-5 h-5 fill-gray-600" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 fill-foreground/80" viewBox="0 0 24 24">
           <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
         </svg>
         <span className="text-sm">Email</span>

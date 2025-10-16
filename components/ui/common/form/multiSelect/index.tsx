@@ -99,7 +99,7 @@ export default function MultiSelectComponent({
       </label>
       <div className="mt-2">
         {!isMounted ? (
-          <div className="h-[42px] bg-gray-100 border border-gray-300 rounded-lg animate-pulse" />
+          <div className="h-[42px] bg-muted border border-border rounded-lg animate-pulse" />
         ) : (
           <CreatableSelect<Option, true>
             key={`multiselect-${id}-${isMounted}`}

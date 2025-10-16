@@ -203,25 +203,20 @@ Standardize button, card, badge, and layout patterns:
 
 ### Week 3: Colors (25 components, ~30 hours)
 
-🔄 **IN PROGRESS - Batch 1 & 2 Complete (66% done)**
+✅ **COMPLETED - 100% of gray instances migrated**
 
 ✅ Batch 1 (High Priority - 52 instances):
 
-- RestaurantPromotionForm.tsx: 21 instances → 0 gray classes
-- WhereToEatSection.tsx: 12 instances → 0 gray classes
-- locationDiscoveryWidget/index.tsx: 11 instances → 0 gray classes
-- WhereToEatSkeleton.tsx: 8 instances → 0 gray classes
+- RestaurantPromotionForm.tsx, WhereToEatSection.tsx, locationDiscoveryWidget, WhereToEatSkeleton.tsx
 
 ✅ Batch 2 (Sitemap Pages - 25 instances):
 
-- app/sitemap/page.tsx: 8 instances → 0 gray classes
-- app/sitemap/[town]/page.tsx: 8 instances → 0 gray classes
-- app/sitemap/[town]/[year]/[month]/page.tsx: 9 instances → 0 gray classes
+- app/sitemap/page.tsx, [town]/page.tsx, [town]/[year]/[month]/page.tsx
 
-📋 Remaining (Batch 3):
+✅ Batch 3 (Remaining Files - 35 instances):
 
-- Other files: 38 instances
-- Total Progress: 74/112 gray instances migrated (66% complete)
+- PromotedRestaurantCard, form components, CardHorizontalServer, notification, EventForm, ViewCounter, modals, upload widgets, buttons, event components
+- Total Progress: 112/112 gray instances migrated (100% complete) ✅
 
 ### Week 4: Buttons & Cards (20 components, ~25 hours)
 

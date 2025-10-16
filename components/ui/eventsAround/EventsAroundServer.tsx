@@ -222,7 +222,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                 </div>
                 {/* Date */}
                 <div className="pt-1">
-                  <div className="text-xs font-normal text-gray-600 text-ellipsis overflow-hidden whitespace-nowrap">
+                  <div className="text-xs font-normal text-foreground/80 text-ellipsis overflow-hidden whitespace-nowrap">
                     <span>{eventDate}</span>
                   </div>
                 </div>

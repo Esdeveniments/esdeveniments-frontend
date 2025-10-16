@@ -40,13 +40,13 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
       </div>
       <div className="mt-2">
         {showPreview ? (
-          <div className="w-full min-h-[300px] p-3 border rounded-xl border-bColor bg-gray-50">
+          <div className="w-full min-h-[300px] p-3 border rounded-xl border-bColor bg-muted">
             <div
               className="break-words preview-content"
               dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
             />
             {!value && (
-              <p className="text-gray-500 italic">
+              <p className="text-foreground/70 italic">
                 Escriu alguna cosa per veure la previsualització...
               </p>
             )}
@@ -76,7 +76,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
           />
         )}
         <div className="flex justify-between items-center mt-1">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-foreground/80">
             {showPreview
               ? "Així és com veuran la descripció els visitants"
               : "Els enllaços es convertiran automàticament. Prem Enter per fer salts de línia."}
@@ -85,7 +85,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             className={`text-sm ${
               characterCount > maxLength * 0.9
                 ? "text-orange-500"
-                : "text-gray-500"
+                : "text-foreground/70"
             }`}
           >
             {characterCount}/{maxLength}
