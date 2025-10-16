@@ -18,7 +18,7 @@ const EventDetailsSection: React.FC<{
     <div className="w-full flex justify-center items-start gap-2 px-4">
       <GlobeIcon className="w-5 h-5 mt-1" />
       <div className="w-11/12 flex flex-col gap-4">
-        <h2>Detalls de l&apos;Esdeveniment</h2>
+        <h2 className="heading-3">Detalls de l&apos;Esdeveniment</h2>
         <div className="flex justify-start items-center gap-2">
           <div className="flex flex-col gap-0.5 flex-1">
             <EventStatusGroup
@@ -29,7 +29,7 @@ const EventDetailsSection: React.FC<{
             />
 
             {event.duration && (
-              <div className="flex items-center gap-2 text-sm text-blackCorp/70">
+              <div className="body-small flex items-center gap-2 text-blackCorp/70">
                 <ClockIcon className="w-4 h-4" />
                 Durada aproximada: {event.duration}
               </div>
@@ -40,7 +40,7 @@ const EventDetailsSection: React.FC<{
                 Enllaç a l&apos;esdeveniment:{" "}
                 <Link
                   href={event.url}
-                  className="inline-block text-base font-medium text-blackCorp hover:text-primary transition-colors duration-200 border-b-2 border-blackCorp/20 hover:border-primary pb-0.1"
+                  className="body-normal inline-block text-blackCorp hover:text-primary transition-colors duration-200 border-b-2 border-blackCorp/20 hover:border-primary pb-0.1"
                   target="_blank"
                   rel="noreferrer"
                 >

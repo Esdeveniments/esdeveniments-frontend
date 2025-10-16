@@ -20,18 +20,16 @@ export default function Description({
     <section className="w-full flex justify-center items-start gap-2">
       <DocumentIcon className="w-5 h-5 mt-1" aria-hidden="true" />
       <div className="w-11/12 flex flex-col gap-4">
-        <h2>Descripció</h2>
+        <h2 className="heading-3">Descripció</h2>
         <div className="w-full break-words overflow-hidden space-y-4">
           {introText && (
-            <p className="text-base leading-relaxed font-normal text-blackCorp">
-              {introText}
-            </p>
+            <p className="body-normal text-blackCorp">{introText}</p>
           )}
           <div
-            className="text-base leading-relaxed font-normal text-blackCorp [&>*]:text-base [&>*]:leading-relaxed [&>*]:font-normal [&>*]:text-blackCorp"
+            className="body-normal text-blackCorp [&>*]:body-normal [&>*]:text-blackCorp"
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
-          <div className="text-base font-normal text-blackCorp">
+          <div className="body-normal text-blackCorp">
             <CulturalMessage
               location={location || ""}
               locationValue={locationValue || ""}
