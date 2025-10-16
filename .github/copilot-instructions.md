@@ -332,5 +332,3 @@ When modifying existing components:
 - Overview: `/docs/design-system-overview.md`
 - Implementation Reference (ALL CODE): `/docs/implementation-reference.md`
 - Migration Workflow: `/docs/migration-workflow.md`
-- Reference Data (gray mapping, inventory): `/docs/reference-data.md`
-- AI Batch Workflow: `/docs/ai-batch-workflow.md`

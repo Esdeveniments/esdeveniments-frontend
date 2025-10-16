@@ -19,7 +19,7 @@ This document contains **ALL code** needed for implementation:
 
 ---
 
-## 📦 Week 1: tailwind.config.js (Complete)
+## 📦 Week 1: tailwind.config.js
 
 **Location**: `/tailwind.config.js`  
 **Action**: Replace entire `theme.extend` section
@@ -191,12 +191,6 @@ module.exports = {
       },
     },
   },
-  variants: {
-    extend: {
-      opacity: ["disabled"],
-      cursor: ["disabled"],
-    },
-  },
   plugins: [
     require("@tailwindcss/aspect-ratio"),
     require("@tailwindcss/typography"),
@@ -287,7 +281,7 @@ module.exports = {
   }
 
   .card-footer {
-    @apply border-t border-border p-4;
+    @apply border-t border-border p-card-padding-sm md:p-card-padding;
   }
 
   /* ===================================== */
@@ -648,11 +642,11 @@ Note: Do not use `white` or `gray-*` classes in application code. These values a
 **Example:**
 
 ```tsx
-<div className="bg-success/10 border border-success text-success-dark p-4 rounded-lg">
+<div className="bg-success/10 border border-success text-success-dark card-spacing rounded-card">
   ✅ Event created successfully!
 </div>
 
-<div className="bg-error/10 border border-error text-error-dark p-4 rounded-lg">
+<div className="bg-error/10 border border-error text-error-dark card-spacing rounded-card">
   ❌ Please fill in all required fields.
 </div>
 ```
@@ -687,8 +681,8 @@ Note: Do not use `white` or `gray-*` classes in application code. These values a
 // BAD
 <button className="btn-primary text-2xl">Submit</button>
 
-// GOOD - If a variation is needed frequently, create a new semantic class or component variant.
-<button className="btn-primary text-2xl">Submit</button> // AVOID: One-off overrides should be rare and justified.
+// INSTEAD: If a variation is needed frequently, create a new semantic class or component variant.
+// One-off overrides are strongly discouraged and should be considered a code smell.
 ```
 
 ### ❌ Don't Use Generic Gray Classes
