@@ -87,7 +87,7 @@ export default async function Page({
       />
 
       <div
-        className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
+        className="container flex flex-col justify-center items-center pt-2 pb-14"
         role="main"
       >
         {/* Breadcrumb Navigation */}

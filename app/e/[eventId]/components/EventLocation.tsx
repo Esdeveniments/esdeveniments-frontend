@@ -44,7 +44,7 @@ export default function EventLocation({
       <div className="w-full flex justify-center items-start gap-2 px-4">
         <LocationIcon className="h-5 w-5 mt-1" aria-hidden="true" />
         <div className="w-11/12 flex flex-col gap-4 pr-4">
-          <h2>Ubicació</h2>
+          <h2 className="heading-3">Ubicació</h2>
           <div className="w-full flex flex-col justify-center items-center gap-4">
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <div className="w-full flex flex-col justify-start items-start gap-1">

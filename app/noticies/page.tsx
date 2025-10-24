@@ -86,7 +86,7 @@ export default async function Page() {
   };
 
   return (
-    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
+    <div className="container flex-col justify-center items-center mt-8">
       <Script
         id="news-list-webpage-breadcrumbs"
         type="application/ld+json"

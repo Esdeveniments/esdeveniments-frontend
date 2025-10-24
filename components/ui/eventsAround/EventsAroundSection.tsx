@@ -14,9 +14,12 @@ const EventsAroundSection: React.FC<EventsAroundProps> = ({
     <div className="w-full">
       {/* Title section - constrained width */}
       <div className="w-full flex justify-center items-start gap-2 px-4 mb-4">
-        <ShareIcon className="w-5 h-5 mt-1" />
-        <div className="w-11/12 min-w-0">
-          <h2>{title}</h2>
+        <ShareIcon
+          className="h-5 w-5 mt-1 text-blackCorp flex-shrink-0"
+          aria-hidden="true"
+        />
+        <div className="w-11/12 flex flex-col gap-4">
+          <h2 className="heading-3">{title}</h2>
         </div>
       </div>
       {/* Horizontal scroll section - full width to allow proper spacing */}

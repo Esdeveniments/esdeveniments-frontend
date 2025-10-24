@@ -13,9 +13,12 @@ const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
       className="w-full flex justify-center items-start gap-2 px-4"
       data-testid="event-weather"
     >
-      <CloudIcon className="w-5 h-5 mt-1" />
+      <CloudIcon
+        className="h-5 w-5 mt-1 text-blackCorp flex-shrink-0"
+        aria-hidden="true"
+      />
       <div className="w-11/12 flex flex-col gap-4">
-        <h2>El temps</h2>
+        <h2 className="heading-3">El temps</h2>
         <Weather weather={weather} />
       </div>
     </div>

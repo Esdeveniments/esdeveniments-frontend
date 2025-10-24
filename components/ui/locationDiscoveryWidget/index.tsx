@@ -126,7 +126,7 @@ export default function LocationDiscoveryWidget({
     <div
       className={`w-full bg-whiteCorp flex justify-center items-center pt-8 ${className}`}
     >
-      <div className="w-full flex flex-col justify-center items-center px-2 lg:px-0 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+      <div className="container flex flex-col justify-center items-center px-2 lg:px-0">
         <div className="relative w-full">
           {/* Main Location Selector */}
           <div className="flex items-center space-x-2 mb-6">

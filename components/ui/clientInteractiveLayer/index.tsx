@@ -122,7 +122,7 @@ function ClientInteractiveLayer({
       <div
         className={`w-full bg-whiteCorp fixed transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center pt-2`}
       >
-        <div className="w-full flex flex-col justify-center items-center md:items-start mx-auto px-2 pt-2 pb-2 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+        <div className="container flex flex-col justify-center items-center md:items-start px-2 pt-2 pb-2">
           <Suspense
             fallback={
               <div className="w-full h-12 bg-whiteCorp animate-pulse rounded-full" />

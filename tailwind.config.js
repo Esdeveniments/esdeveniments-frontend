@@ -5,6 +5,18 @@ const foregroundRgb = "69 69 69";
 module.exports = {
   content: ["./components/**/*.{js,ts,jsx,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
   theme: {
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: "0.5rem", // px-2
+        lg: "0rem", // lg:px-0
+      },
+      screens: {
+        sm: "580px",
+        md: "768px",
+        lg: "1024px",
+      },
+    },
     extend: {
       // === TYPOGRAPHY === //
       fontSize: {

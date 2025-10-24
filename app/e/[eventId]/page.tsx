@@ -163,7 +163,7 @@ export default async function EventPage({
         />
       )}
       <div className="w-full flex justify-center bg-whiteCorp pb-10">
-        <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[520px] md:w-[520px] lg:w-[520px] min-w-0">
+        <div className="container-detail flex flex-col justify-center items-center gap-4 min-w-0">
           <article className="w-full flex flex-col justify-center items-start gap-8">
             <div className="w-full flex flex-col justify-center items-start gap-4">
               <EventMedia event={event} title={title} />
@@ -283,7 +283,7 @@ export default async function EventPage({
 
       {latestNews.length > 0 && (
         <div className="w-full flex justify-center bg-whiteCorp pb-8">
-          <section className="w-full sm:w-[520px] md:w-[520px] lg:w-[520px] px-4 flex flex-col gap-4">
+          <section className="container-detail flex flex-col gap-4">
             <div className="w-full flex items-center justify-between">
               <h2 className="text-lg font-semibold">
                 Últimes notícies {placeLabel ? `a ${placeLabel}` : ""}

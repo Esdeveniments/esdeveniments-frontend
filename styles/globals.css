@@ -234,6 +234,26 @@ p {
     @apply flex flex-col gap-element-gap;
   }
 
+  /* Column-based horizontal centering (not vertical centering) */
+  .flex-center-col {
+    @apply flex flex-col items-center;
+  }
+
+  /* Horizontal centering wrapper for constrained children (row) */
+  .center-content {
+    @apply w-full flex justify-center;
+  }
+
+  /* Narrow constrained content container */
+  .container-narrow {
+    @apply w-full max-w-[580px] md:max-w-[768px] lg:max-w-[1024px];
+  }
+
+  /* Detail container matching event detail pattern */
+  .container-detail {
+    @apply w-full sm:max-w-[520px] md:max-w-[520px] lg:max-w-[520px] mx-auto px-4 lg:px-0;
+  }
+
   /* Containers (Semantic) */
   .container-page {
     @apply max-w-7xl mx-auto px-section-x;

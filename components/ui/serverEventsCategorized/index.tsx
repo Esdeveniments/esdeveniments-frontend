@@ -55,13 +55,13 @@ function ServerEventsCategorized({
 
   return (
     <>
-      <div className="w-full bg-whiteCorp flex flex-col justify-center items-center overflow-hidden">
-        <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-4">
+      <div className="w-full bg-background overflow-hidden">
+        <div className="container mt-4">
           {/* SEO Content */}
           {pageData && (
             <>
-              <h1 className="uppercase mb-2 px-2 lg:px-0">{pageData.title}</h1>
-              <h2 className="font-normal text-blackCorp text-left px-2 lg:px-0">
+              <h1 className="uppercase mb-2">{pageData.title}</h1>
+              <h2 className="font-normal text-foreground text-left">
                 {pageData.subTitle}
               </h2>
             </>
@@ -69,134 +69,134 @@ function ServerEventsCategorized({
 
           {/* Location Discovery Widget */}
           <LocationDiscoveryWidget />
+        </div>
 
-          <div className="p-2 lg:p-0">
-            {Object.entries(filteredCategorizedEvents).map(
-              ([category, events], index) => {
-                // Conservative priority logic for homepage main content:
-                // Only first 2 categories get priority to balance performance
-                // This gives priority to ~6 images (2 categories × 3 images each)
-                const shouldUsePriority = index < 2;
+        <div className="container">
+          {Object.entries(filteredCategorizedEvents).map(
+            ([category, events], index) => {
+              // Conservative priority logic for homepage main content:
+              // Only first 2 categories get priority to balance performance
+              // This gives priority to ~6 images (2 categories × 3 images each)
+              const shouldUsePriority = index < 2;
 
-                // Try to get category name from dynamic categories first, fallback to static mapping
-                let categoryName: string;
-                let categorySlug = category; // Use the key from categorizedEvents as the slug
+              // Try to get category name from dynamic categories first, fallback to static mapping
+              let categoryName: string;
+              let categorySlug = category; // Use the key from categorizedEvents as the slug
 
-                if (categories) {
-                  const dynamicCategory = categories.find(
-                    (cat) => cat.slug === category || cat.name === category
-                  );
-                  categoryName = dynamicCategory?.name || category;
-                  // Ensure we use the slug from the dynamicCategory if found, for consistency
-                  if (dynamicCategory) categorySlug = dynamicCategory.slug;
-                } else {
-                  // Fallback to static mapping
-                  categoryName =
-                    CATEGORY_NAMES_MAP[
-                      category as keyof typeof CATEGORY_NAMES_MAP
-                    ] || category;
-                }
+              if (categories) {
+                const dynamicCategory = categories.find(
+                  (cat) => cat.slug === category || cat.name === category
+                );
+                categoryName = dynamicCategory?.name || category;
+                // Ensure we use the slug from the dynamicCategory if found, for consistency
+                if (dynamicCategory) categorySlug = dynamicCategory.slug;
+              } else {
+                // Fallback to static mapping
+                categoryName =
+                  CATEGORY_NAMES_MAP[
+                    category as keyof typeof CATEGORY_NAMES_MAP
+                  ] || category;
+              }
 
-                // Build natural Catalan phrasing for headers/CTA
-                const normalizedName = (categoryName || "").toLowerCase();
-                const isGentGran =
-                  categorySlug === "gent-gran" ||
-                  normalizedName.includes("gent gran");
-                const headerCategoryPhrase = isGentGran
-                  ? `per a la ${normalizedName}`
-                  : formatCatalanDe(categoryName);
+              // Build natural Catalan phrasing for headers/CTA
+              const normalizedName = (categoryName || "").toLowerCase();
+              const isGentGran =
+                categorySlug === "gent-gran" ||
+                normalizedName.includes("gent gran");
+              const headerCategoryPhrase = isGentGran
+                ? `per a la ${normalizedName}`
+                : formatCatalanDe(categoryName);
 
-                return (
-                  <div key={categorySlug}>
-                    {/* Category Header */}
-                    <div className="flex justify-between">
-                      <h3 className="font-semibold">
-                        Què hi ha {headerCategoryPhrase} a Catalunya?
-                      </h3>
-                      <Link
-                        href={buildCanonicalUrl(
-                          {
-                            place: "catalunya",
-                            byDate: "tots",
-                            category: categorySlug,
-                          },
-                          categories
-                        )}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent dark:hover:bg-accent/50 h-9 px-4 py-2 has-[>svg]:px-3 text-primary hover:text-primary/80 gap-2 flex-shrink-0"
-                      >
-                        <span className="flex items-center">
-                          Veure més
-                          <ChevronRightIcon className="w-5 h-5 ml-1" />
-                        </span>
-                      </Link>
-                    </div>
+              return (
+                <div key={categorySlug}>
+                  {/* Category Header */}
+                  <div className="flex justify-between">
+                    <h3 className="font-semibold">
+                      Què hi ha {headerCategoryPhrase} a Catalunya?
+                    </h3>
+                    <Link
+                      href={buildCanonicalUrl(
+                        {
+                          place: "catalunya",
+                          byDate: "tots",
+                          category: categorySlug,
+                        },
+                        categories
+                      )}
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent dark:hover:bg-accent/50 h-9 px-4 py-2 has-[>svg]:px-3 text-primary hover:text-primary/80 gap-2 flex-shrink-0"
+                    >
+                      <span className="flex items-center">
+                        Veure més
+                        <ChevronRightIcon className="w-5 h-5 ml-1" />
+                      </span>
+                    </Link>
+                  </div>
 
-                    {/* Related canonical links for this category */}
-                    <nav aria-label="Vegeu també" className="mt-1 mb-2">
-                      <ul className="flex gap-3 text-sm">
-                        <li>
-                          <Badge
-                            href={buildCanonicalUrl(
-                              {
-                                place: "catalunya",
-                                byDate: "avui",
-                                category: categorySlug,
-                              },
-                              categories
-                            )}
-                            ariaLabel={`Veure activitats d'avui per la categoria ${categoryName}`}
-                          >
-                            Avui
-                          </Badge>
-                        </li>
-                        <li>
-                          <Badge
-                            href={buildCanonicalUrl(
-                              {
-                                place: "catalunya",
-                                byDate: "cap-de-setmana",
-                                category: categorySlug,
-                              },
-                              categories
-                            )}
-                            ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${categoryName}`}
-                          >
-                            Cap de setmana
-                          </Badge>
-                        </li>
-                      </ul>
-                    </nav>
+                  {/* Related canonical links for this category */}
+                  <nav aria-label="Vegeu també" className="mt-1 mb-2">
+                    <ul className="flex gap-3 text-sm">
+                      <li>
+                        <Badge
+                          href={buildCanonicalUrl(
+                            {
+                              place: "catalunya",
+                              byDate: "avui",
+                              category: categorySlug,
+                            },
+                            categories
+                          )}
+                          ariaLabel={`Veure activitats d'avui per la categoria ${categoryName}`}
+                        >
+                          Avui
+                        </Badge>
+                      </li>
+                      <li>
+                        <Badge
+                          href={buildCanonicalUrl(
+                            {
+                              place: "catalunya",
+                              byDate: "cap-de-setmana",
+                              category: categorySlug,
+                            },
+                            categories
+                          )}
+                          ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${categoryName}`}
+                        >
+                          Cap de setmana
+                        </Badge>
+                      </li>
+                    </ul>
+                  </nav>
 
-                    {/* Events Horizontal Scroll */}
-                    <EventsAroundServer
-                      events={events as EventSummaryResponseDTO[]}
-                      layout="horizontal"
-                      usePriority={shouldUsePriority}
-                      showJsonLd={true}
-                      title={categoryName}
-                      jsonLdId={`category-events-${categorySlug}`}
-                      nonce={nonce}
-                    />
+                  {/* Events Horizontal Scroll */}
+                  <EventsAroundServer
+                    events={events as EventSummaryResponseDTO[]}
+                    layout="horizontal"
+                    usePriority={shouldUsePriority}
+                    showJsonLd={true}
+                    title={categoryName}
+                    jsonLdId={`category-events-${categorySlug}`}
+                    nonce={nonce}
+                  />
 
-                    {/* Ad placement between category sections */}
-                    {adPositions.has(index) && (
-                      <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-2 mt-4 mb-2">
-                        <div className="w-full flex">
-                          <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
-                          <div className="stack w-11/12">
-                            <h3>Contingut patrocinat</h3>
-                          </div>
-                        </div>
-                        <div className="w-full">
-                          <AdArticle slot="8139041285" />
+                  {/* Ad placement between category sections */}
+                  {adPositions.has(index) && (
+                    <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-2 mt-4 mb-2">
+                      <div className="w-full flex">
+                        <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
+                        <div className="stack w-11/12">
+                          <h3>Contingut patrocinat</h3>
                         </div>
                       </div>
-                    )}
-                  </div>
-                );
-              }
-            )}
-          </div>
+                      <div className="w-full">
+                        <AdArticle slot="8139041285" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+          )}
         </div>
       </div>
     </>

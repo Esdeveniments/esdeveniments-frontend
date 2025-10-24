@@ -611,31 +611,46 @@ import Button from '@/components/ui/common/button';
 
 ### Layout Utilities
 
-| Class           | Replaces                            | Usage                                    |
-| --------------- | ----------------------------------- | ---------------------------------------- |
-| `.flex-center`  | `flex justify-center items-center`  | Center content horizontally & vertically |
-| `.flex-between` | `flex justify-between items-center` | Space-between with vertical center       |
-| `.flex-start`   | `flex justify-start items-center`   | Start alignment with vertical center     |
-| `.stack`        | `flex flex-col gap-element-gap`     | Vertical stack with consistent gap       |
+| Class                  | Replaces                            | Usage                                                          |
+| ---------------------- | ----------------------------------- | -------------------------------------------------------------- |
+| `.flex-center`         | `flex justify-center items-center`  | Center content horizontally & vertically (row layout)          |
+| `.flex-between`        | `flex justify-between items-center` | Space-between with vertical center                             |
+| `.flex-start`          | `flex justify-start items-center`   | Start alignment with vertical center                           |
+| `.stack`               | `flex flex-col gap-element-gap`     | Vertical stack with consistent gap                             |
+| `.flex-center-col`     | `flex flex-col items-center`        | Column layout with horizontal centering (children not w-full)  |
+| `.center-content`      | `w-full flex justify-center`        | Horizontal centering wrapper for bounded child                 |
+| `.container-narrow`    | `w-full px-section-x max-w-*`       | Constrained-width centered content container                   |
+| `container` (Tailwind) | theme.container                     | Site-wide nav-aligned container (centered + breakpoint widths) |
 
 **Example:**
 
 ```tsx
-<div className="flex-center">
-  <p>Centered content</p>
-</div>
+<div className="flex-center">...</div>
+<div className="flex-between">...</div>
+<div className="stack">...</div>
 
-<div className="flex-between">
-  <span>Left</span>
-  <span>Right</span>
-</div>
+// Canonical centering for constrained content (3-layer pattern)
+// Layer 1: Full-width outer (no centering)
+<div className="w-full bg-background">
+  // Layer 2: Horizontal centering wrapper (row)
+  <div className="center-content">
+    // Layer 3: Constrained width content (gets centered)
+    <div className="container-narrow">...</div>
+  </div>
 
-<div className="stack">
-  <p>Item 1</p>
-  <p>Item 2</p>
-  <p>Item 3</p>
+  // Sibling: full-width content (not nested)
+  <div className="w-full">...</div>
 </div>
 ```
+
+#### Container Policy (App Router)
+
+- Configure Tailwind `theme.container` once (center=true, padding: DEFAULT 0.5rem, lg 0, screens: sm 580, md 768, lg 1024).
+- Prefer applying `container` via route-group layouts:
+  - `app/(nav)/layout.tsx` wraps pages that must align with navbar/filters.
+  - For event detail pages, use `.container-detail` (520px fixed) at a layout or page wrapper.
+- Components MUST NOT set page-level widths. If a component needs local padding, only use `px-2 lg:px-0` inside the `container`.
+- Remove redundant `sm:w-[580px] md:w-[768px] lg:w-[1024px]` and `mx-auto px-2 lg:px-0` when the parent already provides `container`.
 
 ---
 

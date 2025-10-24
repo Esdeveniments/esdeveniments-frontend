@@ -32,7 +32,7 @@ export default function Navbar() {
     >
       {({ open }) => (
         <>
-          <div className="sm:w-[580px] md:w-[768px] lg:w-[1024px] bg-whiteCorp mx-auto py-2 h-14">
+          <div className="container bg-whiteCorp py-2 h-14">
             <div className="h-full flex flex-col justify-center">
               {/* FirstBar - Logo&LaptopMenu&MenuIcon */}
               <div className="flex justify-around items-center">
