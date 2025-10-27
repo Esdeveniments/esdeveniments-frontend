@@ -17,13 +17,13 @@ export default function ActiveLink({
 
   let classNameProps =
     className ||
-    "flex justify-center items-center gap-2 text-blackCorp bg-whiteCorp py-2 px-3 label ease-in-out duration-200";
+    "flex justify-center items-center gap-2 text-foreground-strong bg-background py-2 px-3 label ease-in-out duration-200";
 
   if (pathname === linkHref) {
     classNameProps = `${
       activeLinkClass
         ? activeLinkClass
-        : "text-primary bg-whiteCorp border-b-2 border-primary ease-in-out duration-200"
+        : "text-primary bg-background border-b-2 border-primary ease-in-out duration-200"
     } ${classNameProps}`;
   }
 

@@ -15,7 +15,7 @@ const CalendarButton: React.FC<CalendarButtonProps> = ({
     data-open={open}
     className="group"
   >
-    <span className="flex items-center justify-center w-6 h-6 rounded-md bg-whiteCorp p-1 mr-2 border border-blackCorp/10">
+    <span className="flex items-center justify-center w-6 h-6 rounded-md bg-background p-1 mr-2 border border-foreground-strong/10">
       <CalendarIcon className="w-4 h-4 text-primary" />
     </span>
     {!hideText && "Afegir al calendari"}

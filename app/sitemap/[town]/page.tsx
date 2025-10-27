@@ -155,11 +155,11 @@ export default async function Page({
         </section>
 
         {/* Footer information */}
-        <footer className="mt-12 pt-8 border-t border-gray-200 w-full">
+        <footer className="mt-12 pt-8 border-t border-border w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-2">Sobre aquest arxiu</h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-foreground/80">
                 Aquest arxiu conté una recopilació d&apos;esdeveniments
                 culturals de {label} organitzats cronològicament. Cada mes
                 inclou teatre, música, art, festivals i altres activitats
@@ -168,7 +168,7 @@ export default async function Page({
             </div>
             <div>
               <h3 className="font-semibold mb-2">Navegació ràpida</h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-foreground/80">
                 Utilitza els enllaços per navegar directament a un mes
                 específic. Els anys més recents apareixen primer per facilitar
                 la cerca.

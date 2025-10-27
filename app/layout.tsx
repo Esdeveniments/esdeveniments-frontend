@@ -1,4 +1,5 @@
 import "../styles/critical.css";
+import "../styles/globals.css";
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";

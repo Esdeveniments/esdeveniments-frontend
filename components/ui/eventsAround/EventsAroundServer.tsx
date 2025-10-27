@@ -12,8 +12,8 @@ import { siteUrl } from "@config/index";
 const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
   const cardClass =
     layout === "horizontal"
-      ? "flex-none w-96 min-w-[24rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer"
-      : "flex-none w-40 min-w-[10rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer";
+      ? "flex-none w-96 min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
+      : "flex-none w-40 min-w-[10rem] flex flex-col bg-background overflow-hidden cursor-pointer";
 
   const imageClass = layout === "horizontal" ? "w-full h-64" : "w-full h-32";
 
@@ -23,18 +23,18 @@ const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
       <div
         className={`${imageClass} flex justify-center items-center overflow-hidden animate-fast-pulse`}
       >
-        <div className="w-full h-full bg-darkCorp"></div>
+        <div className="w-full h-full bg-foreground-strong"></div>
       </div>
       {/* Title Placeholder */}
       <div className="p-1 pt-4">
-        <div className="w-2/3 h-5 bg-darkCorp rounded-xl animate-fast-pulse"></div>
+        <div className="w-2/3 h-5 bg-foreground-strong rounded-xl animate-fast-pulse"></div>
       </div>
       {/* Location Placeholder */}
       <div className="p-1">
         <div className="w-full h-full flex items-start animate-fast-pulse">
-          <div className="h-4 w-4 bg-darkCorp rounded-xl"></div>
+          <div className="h-4 w-4 bg-foreground-strong rounded-xl"></div>
           <div className="w-full h-full flex flex-col justify-center items-start px-2 gap-2">
-            <div className="w-2/3 my-1 bg-darkCorp h-3 rounded-xl"></div>
+            <div className="w-2/3 my-1 bg-foreground-strong h-3 rounded-xl"></div>
           </div>
         </div>
       </div>
@@ -107,8 +107,8 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   if (loading) {
     const containerClass =
       layout === "horizontal"
-        ? "w-full flex overflow-x-auto py-6 px-4 space-x-6 min-w-0"
-        : "w-full flex overflow-x-auto py-4 px-4 space-x-4 min-w-0";
+        ? "w-full flex overflow-x-auto px-4 min-w-0"
+        : "w-full flex overflow-x-auto px-4 min-w-0";
 
     return (
       <div className={containerClass}>
@@ -145,7 +145,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
             <div
               // key uses id or slug; index fallback should never be needed due to dedup above
               key={event.id ?? event.slug ?? index}
-              className="flex-none w-96 min-w-[24rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer"
+              className="flex-none w-96 min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
             >
               <CardHorizontalServer
                 event={event}
@@ -174,7 +174,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
         />
       )}
-      <div className="w-full flex overflow-x-auto py-4 px-4 space-x-4 min-w-0">
+      <div className="w-full flex overflow-x-auto px-4 min-w-0">
         {uniqueEvents.map((event, index) => {
           const eventTitle = truncateString(event.title || "", 60);
           const image = event.imageUrl;
@@ -191,7 +191,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           return (
             <div
               key={event.id ?? event.slug ?? index}
-              className="flex-none w-40 min-w-[10rem] flex flex-col bg-whiteCorp overflow-hidden cursor-pointer mb-10"
+              className="flex-none w-40 min-w-[10rem] flex flex-col bg-background overflow-hidden cursor-pointer"
             >
               <Link href={`/e/${event.slug}`}>
                 {/* ImageEvent */}
@@ -208,21 +208,21 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                 {/* Title */}
                 <div className="flex pt-2">
                   <div className="pt-[2px] pr-2">
-                    <div className="w-2 h-4 bg-gradient-to-r from-primary to-primarydark"></div>
+                    <div className="w-2 h-4 bg-gradient-to-r from-primary to-primary-dark"></div>
                   </div>
-                  <h3 className="text-sm font-semibold text-ellipsis overflow-hidden whitespace-nowrap">
+                  <h3 className="heading-4 text-ellipsis overflow-hidden whitespace-nowrap">
                     {eventTitle}
                   </h3>
                 </div>
                 {/* Location */}
                 <div className="pt-1">
-                  <div className="text-xs font-normal text-ellipsis overflow-hidden whitespace-nowrap">
+                  <div className="body-small font-normal text-ellipsis overflow-hidden whitespace-nowrap">
                     <span>{event.location || ""}</span>
                   </div>
                 </div>
                 {/* Date */}
                 <div className="pt-1">
-                  <div className="text-xs font-normal text-foreground/80 text-ellipsis overflow-hidden whitespace-nowrap">
+                  <div className="body-small font-normal text-foreground/80 text-ellipsis overflow-hidden whitespace-nowrap">
                     <span>{eventDate}</span>
                   </div>
                 </div>

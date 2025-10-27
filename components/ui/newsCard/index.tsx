@@ -22,7 +22,7 @@ export default function NewsCard({
 
   if (variant === "hero") {
     return (
-      <section className="relative w-full overflow-hidden rounded-xl bg-darkCorp shadow-lg">
+      <section className="relative w-full overflow-hidden rounded-xl bg-foreground-strong shadow-lg">
         {image ? (
           <div className="relative aspect-[16/9] w-full md:h-80">
             <Image
@@ -35,11 +35,11 @@ export default function NewsCard({
             />
           </div>
         ) : (
-          <div className="aspect-[16/9] w-full bg-gradient-to-br from-primarySoft to-primary md:h-80" />
+          <div className="aspect-[16/9] w-full bg-gradient-to-br from-primary-soft to-primary md:h-80" />
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-fullBlackCorp/95 via-fullBlackCorp/70 to-fullBlackCorp/40" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground-strong/95 via-foreground-strong/70 to-foreground-strong/40" />
 
-        <div className="absolute inset-x-0 bottom-0 px-4 pt-6 pb-8 sm:p-6 text-whiteCorp">
+        <div className="absolute inset-x-0 bottom-0 px-4 pt-6 pb-8 sm:p-6 text-background">
           <h2 className="heading-1 mb-3 md:drop-shadow-2xl text-balance">
             {event.title}
           </h2>
@@ -76,7 +76,7 @@ export default function NewsCard({
             className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (
-          <div className="aspect-[16/9] w-full bg-gradient-to-br from-darkCorp to-bColor" />
+          <div className="aspect-[16/9] w-full bg-gradient-to-br from-foreground-strong to-border" />
         )}
       </div>
 
@@ -86,7 +86,7 @@ export default function NewsCard({
           <span className="badge-default">📅 {dateLabel}</span>
         </div>
 
-        <h3 className="heading-3 mb-4 text-blackCorp group-hover:text-primary transition-colors">
+        <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
           <Link
             href={href}
             prefetch={false}
@@ -98,7 +98,7 @@ export default function NewsCard({
         </h3>
 
         {plainDescription && (
-          <p className="body-small mb-5 text-blackCorp/70 line-clamp-3">
+          <p className="body-small mb-5 text-foreground-strong/70 line-clamp-3">
             {plainDescription}
           </p>
         )}

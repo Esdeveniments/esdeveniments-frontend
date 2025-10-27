@@ -66,10 +66,10 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
           {/* Location Icon and City */}
           {location && (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-whiteCorp/20 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-whiteCorp"></div>
+              <div className="w-4 h-4 rounded-full bg-background/20 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-background"></div>
               </div>
-              <h2 className="font-bold uppercase text-whiteCorp text-lg drop-shadow-md">
+              <h2 className="font-bold uppercase text-background text-lg drop-shadow-md">
                 {location}
               </h2>
             </div>
@@ -77,21 +77,21 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
 
           {/* Region */}
           {region && (
-            <p className="text-whiteCorp/90 text-sm drop-shadow-md ml-6">
+            <p className="text-background/90 text-sm drop-shadow-md ml-6">
               {region}
             </p>
           )}
 
-          <div className="w-full h-px bg-whiteCorp/30 my-2"></div>
+          <div className="w-full h-px bg-background/30 my-2"></div>
 
           {/* Event Title (non-heading to avoid outline pollution) */}
-          <p className="font-bold uppercase font-roboto text-whiteCorp text-xl leading-tight tracking-wide drop-shadow-md break-words">
+          <p className="font-bold uppercase font-roboto text-background text-xl leading-tight tracking-wide drop-shadow-md break-words">
             {title}
           </p>
 
           {/* Date */}
           {date && (
-            <p className="text-whiteCorp/90 text-sm drop-shadow-md">{date}</p>
+            <p className="text-background/90 text-sm drop-shadow-md">{date}</p>
           )}
         </div>
       </div>

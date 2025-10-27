@@ -163,7 +163,7 @@ export default async function Page({
       />
       <nav
         aria-label="Breadcrumb"
-        className="mb-3 w-full px-2 lg:px-0 text-sm text-blackCorp/70"
+        className="mb-3 w-full px-2 lg:px-0 text-sm text-foreground-strong/70"
       >
         <ol className="flex items-center space-x-2">
           <li>
@@ -182,7 +182,7 @@ export default async function Page({
           <li>
             <span className="mx-1">/</span>
           </li>
-          <li className="text-blackCorp capitalize">{place}</li>
+          <li className="text-foreground-strong capitalize">{place}</li>
         </ol>
       </nav>
       <h1 className="uppercase mb-2 px-2 lg:px-0">

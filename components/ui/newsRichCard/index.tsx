@@ -28,7 +28,7 @@ export default function NewsRichCard({
         <div className="flex flex-col md:flex-row gap-6 p-6 relative z-[1]">
           {numbered && (
             <div className="flex-shrink-0">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-whiteCorp">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-background">
                 {numbered}
               </div>
             </div>
@@ -44,7 +44,7 @@ export default function NewsRichCard({
                 className="aspect-[4/3] w-full md:w-48 object-cover rounded-lg transition-transform group-hover:scale-105"
               />
             ) : (
-              <div className="aspect-[4/3] w-full md:w-48 bg-gradient-to-br from-darkCorp to-bColor rounded-lg" />
+              <div className="aspect-[4/3] w-full md:w-48 bg-gradient-to-br from-foreground-strong to-border rounded-lg" />
             )}
           </div>
 
@@ -66,7 +66,7 @@ export default function NewsRichCard({
               <span className="badge-default">📅 {dateLabel}</span>
             </div>
 
-            <h3 className="heading-2 mb-3 text-blackCorp group-hover:text-primary transition-colors">
+            <h3 className="heading-2 mb-3 text-foreground-strong group-hover:text-primary transition-colors">
               <Link
                 href={`/e/${event.slug}`}
                 prefetch={false}
@@ -78,7 +78,7 @@ export default function NewsRichCard({
             </h3>
 
             {plainDescription && (
-              <p className="body-normal mb-4 text-blackCorp/70 line-clamp-3">
+              <p className="body-normal mb-4 text-foreground-strong/70 line-clamp-3">
                 {plainDescription}
               </p>
             )}
@@ -112,7 +112,7 @@ export default function NewsRichCard({
             className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (
-          <div className="aspect-[16/9] w-full bg-gradient-to-br from-darkCorp to-bColor" />
+          <div className="aspect-[16/9] w-full bg-gradient-to-br from-foreground-strong to-border" />
         )}
       </div>
 
@@ -134,7 +134,7 @@ export default function NewsRichCard({
           <span className="badge-default">📅 {dateLabel}</span>
         </div>
 
-        <h3 className="heading-3 mb-4 text-blackCorp group-hover:text-primary transition-colors">
+        <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
           <Link
             href={`/e/${event.slug}`}
             prefetch={false}
@@ -146,7 +146,7 @@ export default function NewsRichCard({
         </h3>
 
         {plainDescription && (
-          <p className="body-small mb-5 text-blackCorp/70 line-clamp-3">
+          <p className="body-small mb-5 text-foreground-strong/70 line-clamp-3">
             {plainDescription}
           </p>
         )}

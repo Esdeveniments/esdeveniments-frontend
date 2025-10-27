@@ -21,7 +21,7 @@ export default function Footer(): JSX.Element {
   };
 
   return (
-    <footer className="w-full flex flex-col items-center gap-4 border-t border-bColor bg-whiteCorp py-4 px-6 md:py-8 md:px-4">
+    <footer className="w-full flex flex-col items-center gap-4 border-t border-border bg-background py-4 px-6 md:py-8 md:px-4">
       <Social links={links} />
       <div className="flex flex-col items-center gap-8">
         <div className="flex justify-center items-center gap-6">

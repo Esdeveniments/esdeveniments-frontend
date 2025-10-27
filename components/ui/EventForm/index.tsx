@@ -187,7 +187,7 @@ export const EventForm: React.FC<EventFormProps> = ({
         <button
           type="submit"
           disabled={currentFormState.isDisabled || isLoading}
-          className={`text-blackCorp bg-whiteCorp hover:bg-primary hover:border-whiteCorp hover:text-whiteCorp border-blackCorp rounded-xl py-3 px-6 ease-in-out duration-300 border focus:outline-none font-barlow italic uppercase font-semibold tracking-wide ${
+          className={`text-foreground-strong bg-background hover:bg-primary hover:border-background hover:text-background border-foreground-strong rounded-xl py-3 px-6 ease-in-out duration-300 border focus:outline-none font-barlow italic uppercase font-semibold tracking-wide ${
             currentFormState.isDisabled || isLoading
               ? "opacity-50 cursor-not-allowed"
               : "opacity-100"

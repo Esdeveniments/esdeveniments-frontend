@@ -22,7 +22,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
 
   return (
     <Link href={`/e/${event.slug}`} className="block group relative h-full">
-      <article className="w-full h-full bg-whiteCorp overflow-hidden cursor-pointer rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200 relative z-10 flex flex-col">
+      <article className="w-full h-full bg-background overflow-hidden cursor-pointer rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200 relative z-10 flex flex-col">
         {/* Image */}
         <div className="w-full h-48 overflow-hidden">
           <ImageServer
@@ -44,8 +44,8 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
           <div>
             <div className="flex justify-between items-start mb-3 gap-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-1 h-6 bg-gradient-to-b from-primary to-primarydark flex-shrink-0"></div>
-                <h3 className="text-lg font-semibold text-blackCorp line-clamp-2 flex-1 group-hover:underline transition-all duration-200">
+                <div className="w-1 h-6 bg-gradient-to-b from-primary to-primary-dark flex-shrink-0"></div>
+                <h3 className="text-lg font-semibold text-foreground-strong line-clamp-2 flex-1 group-hover:underline transition-all duration-200">
                   {title}
                 </h3>
               </div>

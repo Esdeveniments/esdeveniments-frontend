@@ -7,9 +7,9 @@ const EventHeader: React.FC<
   EventHeaderProps & { statusMeta?: EventStatusMeta }
 > = ({ title, statusMeta }) => {
   return (
-    <div className="w-full flex flex-col justify-start items-start gap-2 px-4">
+    <div className="w-full flex flex-col justify-start items-start gap-2">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="heading-3">{title}</h1>
+        <h1 className="heading-1">{title}</h1>
         <EventStatusBadge status={statusMeta} />
       </div>
     </div>

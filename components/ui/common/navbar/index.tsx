@@ -28,11 +28,11 @@ export default function Navbar() {
     <Disclosure
       key={pathname}
       as="nav"
-      className="w-full bg-whiteCorp relative top-0 z-10"
+      className="w-full bg-background relative top-0 z-10"
     >
       {({ open }) => (
         <>
-          <div className="container bg-whiteCorp py-2 h-14">
+          <div className="container bg-background py-2 h-14">
             <div className="h-full flex flex-col justify-center">
               {/* FirstBar - Logo&LaptopMenu&MenuIcon */}
               <div className="flex justify-around items-center">
@@ -41,7 +41,7 @@ export default function Navbar() {
                   <Link href="/">
                     <Image
                       src={logo}
-                      className="bg-whiteCorp flex justify-center items-center cursor-pointer"
+                      className="bg-background flex justify-center items-center cursor-pointer"
                       alt="Logo Esdeveniments.cat"
                       width={190}
                       height={18}
@@ -69,7 +69,7 @@ export default function Navbar() {
                       <ActiveLink
                         href={item.href}
                         key={item.name}
-                        className="border-b-2 border-b-whiteCorp"
+                        className="border-b-2 border-b-background"
                       >
                         {item.name}
                       </ActiveLink>
@@ -78,13 +78,13 @@ export default function Navbar() {
                 </div>
               </div>
               {/* SecondBar - Search&Share&MenuIcon */}
-              <div className="fixed h-content bottom-0 left-0 right-0 py-2 bg-whiteCorp flex justify-evenly items-center gap-16 md:hidden">
+              <div className="fixed h-content bottom-0 left-0 right-0 py-2 bg-background flex justify-evenly items-center gap-16 md:hidden">
                 {/* Home */}
                 <div className="flex justify-center items-center rounded-xl cursor-pointer">
                   <ActiveLink href="/">
                     <button
                       type="button"
-                      className="flex items-center p-2 border-b-whiteCorp focus:outline-none cursor-pointer rounded-xl"
+                      className="flex items-center p-2 border-b-background focus:outline-none cursor-pointer rounded-xl"
                       aria-label="Home"
                     >
                       <HomeIcon className="h-6 w-6" />
@@ -97,7 +97,7 @@ export default function Navbar() {
                   <ActiveLink href="/publica">
                     <button
                       type="button"
-                      className="flex items-center p-2 border-b-whiteCorp focus:outline-none cursor-pointer rounded-xl"
+                      className="flex items-center p-2 border-b-background focus:outline-none cursor-pointer rounded-xl"
                       aria-label="Publish"
                     >
                       <PlusSmIcon className="h-6 w-6" />
@@ -111,7 +111,7 @@ export default function Navbar() {
                   <ActiveLink href="/qui-som">
                     <button
                       type="button"
-                      className="flex items-center p-2 border-b-whiteCorp focus:outline-none cursor-pointer rounded-xl"
+                      className="flex items-center p-2 border-b-background focus:outline-none cursor-pointer rounded-xl"
                       aria-label="WhoAreWe"
                     >
                       <InfoIcon className="h-6 w-6" />
@@ -123,12 +123,12 @@ export default function Navbar() {
           </div>
           {/* MenuPanel (md:hidden) */}
           <Disclosure.Panel className="md:hidden">
-            <div className="w-full relative flex justify-evenly items-center bg-whiteCorp transition-transform">
+            <div className="w-full relative flex justify-evenly items-center bg-background transition-transform">
               {navigation.map((item) => (
                 <ActiveLink
                   href={item.href}
                   key={item.name}
-                  className="border-b-2 border-b-whiteCorp"
+                  className="border-b-2 border-b-background"
                 >
                   {item.name}
                 </ActiveLink>

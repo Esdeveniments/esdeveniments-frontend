@@ -12,7 +12,7 @@ const renderFacebook = (link: string | undefined): JSX.Element | null =>
       aria-label="Facebook"
     >
       <button
-        className="px-2 py-2 bg-whiteCorp rounded-full"
+        className="px-2 py-2 bg-background rounded-full"
         aria-label="Facebook"
       >
         <svg
@@ -37,7 +37,7 @@ const renderTwitter = (link: string | undefined): JSX.Element | null =>
       aria-label="Twitter"
     >
       <button
-        className="px-2 py-2 bg-whiteCorp rounded-full"
+        className="px-2 py-2 bg-background rounded-full"
         aria-label="Twitter"
       >
         <svg
@@ -62,7 +62,7 @@ const renderInstagram = (link: string | undefined): JSX.Element | null =>
       aria-label="Instagram"
     >
       <button
-        className="px-2 py-2 bg-whiteCorp rounded-full"
+        className="px-2 py-2 bg-background rounded-full"
         aria-label="Instagram"
       >
         <svg
@@ -87,7 +87,7 @@ const renderTelegram = (link: string | undefined): JSX.Element | null =>
       aria-label="Telegram"
     >
       <button
-        className="px-2 py-2 bg-whiteCorp rounded-full"
+        className="px-2 py-2 bg-background rounded-full"
         aria-label="Telegram"
       >
         <svg

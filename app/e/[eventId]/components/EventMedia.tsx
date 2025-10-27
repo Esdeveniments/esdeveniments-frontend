@@ -8,14 +8,14 @@ const VideoDisplay = dynamic(
   () => import("components/ui/common/videoDisplay"),
   {
     loading: () => (
-      <div className="w-full h-60 bg-darkCorp animate-pulse"></div>
+      <div className="w-full h-60 bg-foreground-strong animate-pulse"></div>
     ),
   }
 );
 
 // ImageDefault for fallback cases
 const ImageDefault = dynamic(() => import("components/ui/imgDefault"), {
-  loading: () => <div className="w-full h-60 bg-darkCorp animate-pulse"></div>,
+  loading: () => <div className="w-full h-60 bg-foreground-strong animate-pulse"></div>,
 });
 
 const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {

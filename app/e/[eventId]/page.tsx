@@ -30,6 +30,7 @@ import NewsCard from "@components/ui/newsCard";
 import Link from "next/link";
 import EventDetailsSection from "./components/EventDetailsSection";
 import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
+import SectionHeading from "@components/ui/common/SectionHeading";
 import {
   buildEventIntroText,
   buildFaqItems,
@@ -162,12 +163,12 @@ export default async function EventPage({
           }}
         />
       )}
-      <div className="w-full flex justify-center bg-whiteCorp pb-10">
-        <div className="container-detail flex flex-col justify-center items-center gap-4 min-w-0">
-          <article className="w-full flex flex-col justify-center items-start gap-8">
-            <div className="w-full flex flex-col justify-center items-start gap-4">
+      <div className="w-full bg-background pb-10">
+        <div className="container w-full flex flex-col gap-8 min-w-0">
+          <article className="w-full flex flex-col gap-8">
+            <div className="w-full flex flex-col justify-center items-start">
               <EventMedia event={event} title={title} />
-              <div className="w-full flex justify-between items-center px-4">
+              <div className="w-full flex justify-between items-center">
                 <EventShareBar
                   slug={eventSlug}
                   title={title}
@@ -240,23 +241,32 @@ export default async function EventPage({
 
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
-              <div className="w-full flex justify-center items-start gap-2 px-4">
-                <InfoIcon className="w-5 h-5 mt-1" />
-                <section
-                  className="w-11/12 flex flex-col gap-4"
-                  aria-labelledby="event-faq"
-                >
-                  <h2 id="event-faq">Preguntes freqüents</h2>
-                  <dl className="space-y-3">
+              <section className="w-full" aria-labelledby="event-faq">
+                <div className="w-full flex flex-col gap-4">
+                  <SectionHeading
+                    headingId="event-faq"
+                    icon={
+                      <InfoIcon
+                        className="w-5 h-5 text-foreground-strong flex-shrink-0"
+                        aria-hidden="true"
+                      />
+                    }
+                    title="Preguntes freqüents"
+                  />
+                  <dl className="space-y-3 px-4">
                     {faqItems.map((item) => (
                       <div key={item.q}>
-                        <dt className="font-medium">{item.q}</dt>
-                        <dd className="text-blackCorp/70">{item.a}</dd>
+                        <dt className="body-normal font-semibold text-foreground-strong">
+                          {item.q}
+                        </dt>
+                        <dd className="body-normal text-foreground-strong/70">
+                          {item.a}
+                        </dd>
                       </div>
                     ))}
                   </dl>
-                </section>
-              </div>
+                </div>
+              </section>
             )}
 
             {/* Restaurant Promotion Section */}
@@ -270,11 +280,20 @@ export default async function EventPage({
             />
 
             {/* Final Ad Section */}
-            <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-              <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-              <div className="w-11/12 flex flex-col gap-4">
-                <h2>Contingut patrocinat</h2>
-                <AdArticle slot="9643657007" />
+            <div className="w-full h-full min-h-[250px]">
+              <div className="w-full flex flex-col gap-4">
+                <SectionHeading
+                  icon={
+                    <SpeakerphoneIcon
+                      className="w-5 h-5 text-foreground-strong flex-shrink-0"
+                      aria-hidden="true"
+                    />
+                  }
+                  title="Contingut patrocinat"
+                />
+                <div className="px-4">
+                  <AdArticle slot="9643657007" />
+                </div>
               </div>
             </div>
           </article>
@@ -282,16 +301,16 @@ export default async function EventPage({
       </div>
 
       {latestNews.length > 0 && (
-        <div className="w-full flex justify-center bg-whiteCorp pb-8">
-          <section className="container-detail flex flex-col gap-4">
+        <div className="w-full bg-background pb-8">
+          <section className="container w-full flex flex-col gap-4">
             <div className="w-full flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
+              <h2 className="heading-4">
                 Últimes notícies {placeLabel ? `a ${placeLabel}` : ""}
               </h2>
               <Link
                 href={newsHref}
                 prefetch={false}
-                className="text-primary underline text-sm"
+                className="body-small text-primary underline hover:no-underline"
               >
                 Veure totes
               </Link>

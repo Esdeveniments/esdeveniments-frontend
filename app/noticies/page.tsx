@@ -113,7 +113,7 @@ export default async function Page() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
       />
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
-      <p className="text-[16px] font-normal text-blackCorp text-left mb-8 px-2 font-barlow">
+      <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.
       </p>
       <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
@@ -127,7 +127,7 @@ export default async function Page() {
       </div>
       <nav
         aria-label="Breadcrumb"
-        className="mb-6 px-2 lg:px-0 text-sm text-blackCorp/70"
+        className="mb-6 px-2 lg:px-0 text-sm text-foreground-strong/70"
       >
         <ol className="flex items-center space-x-2">
           <li>
@@ -138,7 +138,7 @@ export default async function Page() {
           <li>
             <span className="mx-1">/</span>
           </li>
-          <li className="text-blackCorp">Notícies</li>
+          <li className="text-foreground-strong">Notícies</li>
         </ol>
       </nav>
       <div className="flex flex-col gap-10 px-2 lg:px-0">
@@ -158,7 +158,7 @@ export default async function Page() {
                 </Link>
               </div>
               {NEARBY_PLACES_BY_HUB[hub.slug] && (
-                <nav className="mb-3 text-xs text-blackCorp/70">
+                <nav className="mb-3 text-xs text-foreground-strong/70">
                   <span className="mr-2">A prop:</span>
                   {NEARBY_PLACES_BY_HUB[hub.slug].map((p, i) => (
                     <>
@@ -179,7 +179,7 @@ export default async function Page() {
               )}
               <Suspense
                 fallback={
-                  <div className="w-full h-12 bg-whiteCorp animate-pulse rounded-full" />
+                  <div className="w-full h-12 bg-background animate-pulse rounded-full" />
                 }
               >
                 <NewsCard

@@ -22,7 +22,7 @@ const ButtonInput = React.forwardRef<
     <button
       ref={ref}
       type="button"
-      className="w-full p-2.5 border border-bColor rounded-xl text-blackCorp sm:text-sm focus:border-darkCorp focus:outline-none"
+      className="w-full p-2.5 border border-border rounded-xl text-foreground-strong sm:text-sm focus:border-foreground-strong focus:outline-none"
       {...restProps}
     >
       {value}
@@ -90,7 +90,7 @@ export default function DatePickerComponent({
       <div className="w-full">
         <label
           htmlFor={`${idPrefix}-start`}
-          className="w-full text-blackCorp font-bold"
+          className="w-full text-foreground-strong font-bold"
         >
           Inici *
         </label>
@@ -120,7 +120,7 @@ export default function DatePickerComponent({
               nextMonthButtonDisabled,
             }: CustomHeaderProps) => (
               <div className="flex justify-center items-center p-2">
-                <span className="w-1/2 text-blackCorp uppercase">
+                <span className="w-1/2 text-foreground-strong uppercase">
                   {format(date, "MMMM yyyy", { locale: ca })}
                 </span>
                 <div className="w-1/2 flex justify-evenly">
@@ -132,9 +132,9 @@ export default function DatePickerComponent({
                       prevMonthButtonDisabled
                         ? " cursor-not-allowed opacity-50"
                         : ""
-                    }flex p-1 text-blackCorp bg-whiteCorp border border-darkCorp rounded-xl focus:outline-none`}
+                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
                   >
-                    <ChevronLeftIcon className="w-5 h-5 text-blackCorp" />
+                    <ChevronLeftIcon className="w-5 h-5 text-foreground-strong" />
                   </button>
                   <button
                     onClick={increaseMonth}
@@ -144,9 +144,9 @@ export default function DatePickerComponent({
                       nextMonthButtonDisabled
                         ? " cursor-not-allowed opacity-50"
                         : ""
-                    }flex p-1 text-blackCorp bg-whiteCorp border border-darkCorp rounded-xl focus:outline-none`}
+                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
                   >
-                    <ChevronRightIcon className="w-5 h-5 text-blackCorp" />
+                    <ChevronRightIcon className="w-5 h-5 text-foreground-strong" />
                   </button>
                 </div>
               </div>
@@ -157,7 +157,7 @@ export default function DatePickerComponent({
       <div className="w-full">
         <label
           htmlFor={`${idPrefix}-end`}
-          className="w-full text-blackCorp font-bold"
+          className="w-full text-foreground-strong font-bold"
         >
           Final *
         </label>
@@ -187,7 +187,7 @@ export default function DatePickerComponent({
               nextMonthButtonDisabled,
             }: CustomHeaderProps) => (
               <div className="flex justify-center items-center p-2">
-                <span className="w-1/2 text-blackCorp uppercase">
+                <span className="w-1/2 text-foreground-strong uppercase">
                   {format(date, "MMMM yyyy", { locale: ca })}
                 </span>
                 <div className="w-1/2 flex justify-evenly">
@@ -199,9 +199,9 @@ export default function DatePickerComponent({
                       prevMonthButtonDisabled
                         ? " cursor-not-allowed opacity-50"
                         : ""
-                    }flex p-1 text-blackCorp bg-whiteCorp border border-darkCorp rounded-xl focus:outline-none`}
+                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
                   >
-                    <ChevronLeftIcon className="w-5 h-5 text-blackCorp" />
+                    <ChevronLeftIcon className="w-5 h-5 text-foreground-strong" />
                   </button>
                   <button
                     onClick={increaseMonth}
@@ -211,9 +211,9 @@ export default function DatePickerComponent({
                       nextMonthButtonDisabled
                         ? " cursor-not-allowed opacity-50"
                         : ""
-                    }flex p-1 text-blackCorp bg-whiteCorp border border-darkCorp rounded-xl focus:outline-none`}
+                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
                   >
-                    <ChevronRightIcon className="w-5 h-5 text-blackCorp" />
+                    <ChevronRightIcon className="w-5 h-5 text-foreground-strong" />
                   </button>
                 </div>
               </div>

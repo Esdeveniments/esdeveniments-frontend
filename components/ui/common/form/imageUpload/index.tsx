@@ -74,14 +74,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   return (
-    <div className="w-full text-blackCorp">
-      <label htmlFor="image" className="text-blackCorp font-bold">
+    <div className="w-full text-foreground-strong">
+      <label htmlFor="image" className="text-foreground-strong font-bold">
         Imatge *
       </label>
 
       <div
         className={`mt-2 border ${
-          dragOver ? "border-primary" : "border-bColor"
+          dragOver ? "border-primary" : "border-border"
         } rounded-xl cursor-pointer`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -95,15 +95,15 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           {progress === 0 ? (
             <div className="text-center">
               <button
-                className="bg-whiteCorp hover:bg-primary font-bold px-2 py-2 rounded-xl"
+                className="bg-background hover:bg-primary font-bold px-2 py-2 rounded-xl"
                 onClick={handleImageUpload}
                 type="button"
               >
-                <UploadIcon className="w-6 h-6 text-blackCorp hover:text-whiteCorp" />
+                <UploadIcon className="w-6 h-6 text-foreground-strong hover:text-background" />
               </button>
             </div>
           ) : (
-            <span className="text-blackCorp">{progress}%</span>
+            <span className="text-foreground-strong">{progress}%</span>
           )}
 
           <input
@@ -120,11 +120,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         <div className="flex justify-center items-start p-4">
           <button
             onClick={() => setImgData(null)}
-            className="bg-whiteCorp rounded-full p-1 hover:bg-primary"
+            className="bg-background rounded-full p-1 hover:bg-primary"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-blackCorp hover:text-whiteCorp"
+              className="h-6 w-6 text-foreground-strong hover:text-background"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

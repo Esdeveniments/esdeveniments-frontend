@@ -124,7 +124,7 @@ export default function LocationDiscoveryWidget({
 
   return (
     <div
-      className={`w-full bg-whiteCorp flex justify-center items-center pt-8 ${className}`}
+      className={`w-full bg-background flex justify-center items-center pt-8 ${className}`}
     >
       <div className="container flex flex-col justify-center items-center px-2 lg:px-0">
         <div className="relative w-full">
@@ -136,108 +136,59 @@ export default function LocationDiscoveryWidget({
             </h2>
             <div className="relative">
               <button
-                className="flex items-center space-x-2 group"
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex justify-between items-center border border-border border-opacity-50 rounded-full px-4 py-3 bg-background hover:border-primary transition-colors duration-200"
+                aria-expanded={isOpen}
+                aria-haspopup="listbox"
               >
+                <div className="flex items-center gap-2">
+                  <LocationMarkerIcon className="h-5 w-5 text-primary" />
+                  <span className="text-foreground-strong">
+                    {currentLocation || "Selecciona ubicació"}
+                  </span>
+                </div>
                 <ChevronDownIcon
-                  className={`w-5 h-5 text-primary transition-transform ${
+                  className={`h-5 w-5 text-foreground-strong transition-transform duration-200 ${
                     isOpen ? "rotate-180" : ""
                   }`}
                 />
-                <span className="text-bColor text-lg font-normal border-b border-bColor pb-0.5">
-                  {currentLocation}
-                </span>
               </button>
 
-              {/* Dropdown Menu */}
               {isOpen && (
-                <div
-                  className="absolute top-8 left-1/2 transform -translate-x-1/2 sm:left-0 sm:transform-none w-80 max-w-[calc(100vw-2rem)] bg-whiteCorp opacity-100 rounded-xl shadow-xl border border-border py-3 z-20"
-                  style={{ backgroundColor: "rgb(255, 255, 255)" }}
-                >
-                  {/* Search Input */}
-                  <div className="px-4 py-3 border-b border-border/30">
-                    <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/60 w-4 h-4" />
-                      <input
-                        type="text"
-                        placeholder="Cercar ubicació..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-border rounded-lg bg-muted focus:bg-whiteCorp"
-                        autoFocus
-                      />
-                    </div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+                  {/* Search input */}
+                  <div className="p-3 border-b border-border border-opacity-30">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Escriu per cercar..."
+                      className="w-full px-3 py-2 border border-border border-opacity-50 rounded-md focus:outline-none focus:border-primary text-sm"
+                      autoFocus
+                    />
                   </div>
 
-                  {/* Special Options */}
-                  {/* <button
-                    className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={handleCurrentLocation}
-                    disabled={isGettingLocation}
-                  >
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      {isGettingLocation ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center group-hover:border-blue-600 transition-colors">
-                          <div className="w-2 h-2 bg-primary rounded-full group-hover:bg-blue-600 transition-colors"></div>
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-foreground text-base group-hover:text-blue-600 transition-colors font-medium">
-                      {isGettingLocation
-                        ? "Obtenint ubicació..."
-                        : "Usar la meva ubicació actual"}
-                    </span>
-                  </button> */}
-
-                  {/* Error message */}
-                  {/* {locationError && (
-                    <div className="px-4 py-2 text-red-500 text-sm bg-red-50 mx-4 rounded-md">
-                      {locationError}
-                    </div>
-                  )} */}
-
-                  <button
-                    className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 border-b border-border/30 group"
-                    onClick={handleOtherEvents}
-                  >
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-primary rounded flex items-center justify-center group-hover:border-blue-600 transition-colors">
-                        <div className="w-2 h-1 bg-primary rounded-sm group-hover:bg-blue-600 transition-colors"></div>
-                      </div>
-                    </div>
-                    <span className="text-foreground text-base group-hover:text-blue-600 transition-colors font-medium">
-                      Descobrir altres esdeveniments
-                    </span>
-                  </button>
-
-                  {/* Location List */}
-                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-                    {isLoading ? (
-                      <div className="px-4 py-3 text-foreground/70 text-sm flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                        <span>Carregant ubicacions...</span>
-                      </div>
-                    ) : filteredLocations.length > 0 ? (
-                      filteredLocations.map((location) => (
-                        <button
-                          key={location.value}
-                          className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 text-left group"
-                          onClick={() => handleLocationSelect(location.label)}
-                        >
-                          <div className="w-6 h-6 flex items-center justify-center">
-                            <LocationMarkerIcon className="w-4 h-4 text-foreground/60 group-hover:text-blue-600 transition-colors" />
-                          </div>
-                          <span className="text-foreground text-base group-hover:text-blue-600 transition-colors">
+                  {/* Options list */}
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredLocations.length > 0 ? (
+                      <ul role="listbox">
+                        {filteredLocations.map((location) => (
+                          <li
+                            key={location.value}
+                            role="option"
+                            onClick={() => handleLocationSelect(location.label)}
+                            className="px-4 py-2 hover:bg-muted cursor-pointer text-sm text-foreground-strong flex items-center gap-2"
+                            aria-selected={currentLocation === location.label}
+                          >
+                            <LocationMarkerIcon className="h-4 w-4 text-primary flex-shrink-0" />
                             {location.label}
-                          </span>
-                        </button>
-                      ))
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
-                      <div className="px-4 py-3 text-foreground/70 text-sm text-center">
-                        No s&apos;han trobat ubicacions
+                      <div className="px-4 py-3 text-center text-sm text-foreground-strong/70">
+                        No hi ha resultats
                       </div>
                     )}
                   </div>

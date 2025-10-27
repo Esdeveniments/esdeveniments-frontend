@@ -76,7 +76,7 @@ const NativeShareButton = ({
     >
       <ShareIcon className="h-6 w-6" />
       {!hideText && (
-        <p className="text-blackCorp ml-2 hover:underline">Compartir</p>
+        <p className="text-foreground-strong ml-2 hover:underline">Compartir</p>
       )}
     </button>
   );

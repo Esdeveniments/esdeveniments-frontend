@@ -41,7 +41,7 @@ const ServerFilters = ({
     value || defaultValue;
 
   return (
-    <div className="w-full bg-whiteCorp flex justify-center items-center mt-2">
+    <div className="w-full bg-background flex justify-center items-center mt-2">
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
         <div
           onClick={onOpenModal}
@@ -52,7 +52,7 @@ const ServerFilters = ({
             className={
               isAnyFilterSelected()
                 ? "w-5 h-5 text-primary"
-                : "w-5 h-5 text-blackCorp"
+                : "w-5 h-5 text-foreground-strong"
             }
             aria-hidden="true"
           />
@@ -61,7 +61,7 @@ const ServerFilters = ({
           </p>
         </div>
         <div
-          className="flex-1 flex items-center gap-1 border-0 placeholder:text-bColor overflow-x-auto"
+          className="flex-1 flex items-center gap-1 border-0 placeholder:text-border overflow-x-auto"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: "#cccccc transparent",

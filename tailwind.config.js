@@ -74,17 +74,6 @@ module.exports = {
         "warning-dark": "#D97706",
         info: "#3B82F6",
         "info-dark": "#2563EB",
-
-        // Aliases used during migration (deprecated; removal scheduled Week 7 Day 1)
-        // Brand (deprecated): primarydark, primarySoft
-        // Legacy neutrals (aliases): whiteCorp, darkCorp, blackCorp, fullBlackCorp, bColor
-        primarydark: "#C8033F",
-        primarySoft: "#FF003750",
-        whiteCorp: "#ffffff",
-        darkCorp: "#F7F7F7",
-        blackCorp: `rgb(${foregroundRgb} / <alpha-value>)`,
-        fullBlackCorp: "rgb(0 0 0 / <alpha-value>)",
-        bColor: "#cccccc",
       },
 
       // === SPACING === //

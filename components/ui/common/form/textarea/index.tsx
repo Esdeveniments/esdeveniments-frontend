@@ -27,20 +27,20 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
   return (
     <div className="w-full">
       <div className="flex-between">
-        <label htmlFor={id} className="text-blackCorp font-bold">
+        <label htmlFor={id} className="text-foreground-strong font-bold">
           Descripció *
         </label>
         <button
           type="button"
           onClick={() => setShowPreview(!showPreview)}
-          className="text-sm text-primary hover:text-primarydark focus:outline-none"
+          className="text-sm text-primary hover:text-primary-dark focus:outline-none"
         >
           {showPreview ? "✏️ Editar" : "👁️ Previsualitzar"}
         </button>
       </div>
       <div className="mt-2">
         {showPreview ? (
-          <div className="w-full min-h-[300px] p-3 border rounded-xl border-bColor bg-muted">
+          <div className="w-full min-h-[300px] p-3 border rounded-xl border-border bg-muted">
             <div
               className="break-words preview-content"
               dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
@@ -70,8 +70,8 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             name={id}
             value={value}
             onChange={onChange}
-            className="w-full min-h-[300px] p-3 border rounded-xl border-bColor focus:border-darkCorp resize-vertical"
-            placeholder="Descriu el teu esdeveniment... Pots escriure enllaços directament i es convertiran automàticament."
+            className="w-full min-h-[300px] p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical"
+            placeholder="Descriu el teu desenvolupament... Pots escriure enllaços directament i es convertiran automàticament."
             maxLength={maxLength}
           />
         )}

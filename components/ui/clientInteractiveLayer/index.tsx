@@ -62,7 +62,7 @@ function ClientInteractiveLayer({
   const stickyClasses =
     isHydrated && isSticky
       ? "top-10 z-5"
-      : "!top-0 z-10 md:top-10 border-bColor md:border-b-0 shadow-sm md:shadow-none";
+      : "!top-0 z-10 md:top-10 border-border md:border-b-0 shadow-sm md:shadow-none";
 
   // Determine if it's the home page
   const isHomePage = pathname === "/";
@@ -103,7 +103,7 @@ function ClientInteractiveLayer({
         onClick={() =>
           isHydrated && window.scrollTo({ top: 0, behavior: "smooth" })
         }
-        className={`w-14 h-14 flex justify-center items-center bg-whiteCorp rounded-md shadow-xl cursor-pointer ${
+        className={`w-14 h-14 flex justify-center items-center bg-background rounded-md shadow-xl cursor-pointer ${
           isHydrated && scrollIcon
             ? "fixed z-10 bottom-28 right-10 flex justify-end animate-appear"
             : "hidden"
@@ -120,12 +120,12 @@ function ClientInteractiveLayer({
 
       {/* Fixed Search and Filters Bar */}
       <div
-        className={`w-full bg-whiteCorp fixed transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center pt-2`}
+        className={`w-full bg-background fixed transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center pt-2`}
       >
         <div className="container flex flex-col justify-center items-center md:items-start px-2 pt-2 pb-2">
           <Suspense
             fallback={
-              <div className="w-full h-12 bg-whiteCorp animate-pulse rounded-full" />
+              <div className="w-full h-12 bg-background animate-pulse rounded-full" />
             }
           >
             <Search />

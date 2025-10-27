@@ -74,7 +74,7 @@ const QuiSom: NextPage = () => {
           {teamMembers.map((member) => (
             <div
               key={member.name}
-              className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl"
+              className="w-[200px] h-[414px] bg-background rounded-md shadow-xl"
             >
               <div className="h-[185px] overflow-hidden">
                 <Image
@@ -96,7 +96,7 @@ const QuiSom: NextPage = () => {
                 </div>
                 <a
                   href={member.linkedin}
-                  className="w-full text-center hover:bg-primary hover:text-whiteCorp font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
+                  className="w-full text-center hover:bg-primary hover:text-background font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
                 >
                   <p>LinkedIn</p>
                 </a>

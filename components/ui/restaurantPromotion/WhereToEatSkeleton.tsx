@@ -13,7 +13,10 @@ export default function WhereToEatSkeleton({
   return (
     <>
       <FireIcon className="w-5 h-5 mt-1" aria-hidden="true" />
-      <section className="stack w-11/12" aria-labelledby="where-to-eat-skel">
+      <section
+        className="stack w-11/12 min-w-0"
+        aria-labelledby="where-to-eat-skel"
+      >
         <div className="flex items-center justify-between gap-2">
           <h2 id="where-to-eat-skel" className="flex-1">
             On pots menjar

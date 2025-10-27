@@ -15,9 +15,9 @@ export function NewsCta({ href, label, ...rest }: NewsCtaProps) {
       aria-label={`Accedeix a ${label}`}
       rel="related"
       {...rest}
-      className="group relative inline-flex items-center gap-2.5 rounded-xl border border-bColor/60 bg-whiteCorp px-4 py-2.5 sm:py-2 text-sm font-semibold text-fullBlackCorp shadow-sm hover:shadow-md hover:border-primary/50 hover:bg-darkCorp/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 active:scale-[0.99] sm:active:scale-[0.985] transition-[background,box-shadow,transform,border-color] duration-200 min-h-[44px] sm:min-h-[auto]"
+      className="group relative inline-flex items-center gap-2.5 rounded-xl border border-border/60 bg-background px-4 py-2.5 sm:py-2 text-sm font-semibold text-foreground-strong shadow-sm hover:shadow-md hover:border-primary/50 hover:bg-foreground-strong/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 active:scale-[0.99] sm:active:scale-[0.985] transition-[background,box-shadow,transform,border-color] duration-200 min-h-[44px] sm:min-h-[auto]"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-bColor bg-darkCorp group-hover:border-primary/40 group-hover:bg-whiteCorp transition-colors">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-foreground-strong group-hover:border-primary/40 group-hover:bg-background transition-colors">
         <svg
           aria-hidden
           viewBox="0 0 24 24"

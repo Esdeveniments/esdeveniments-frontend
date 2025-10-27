@@ -14,15 +14,15 @@ export default function PastEventBanner({
   return (
     <div className="w-full flex justify-center items-start px-4 sm:px-6 mt-4">
       <div
-        className="w-11/12 sm:w-10/12 lg:w-3/4 bg-darkCorp rounded-lg p-6 flex flex-col gap-4 shadow-sm"
+        className="w-11/12 sm:w-10/12 lg:w-3/4 bg-foreground-strong rounded-lg p-6 flex flex-col gap-4 shadow-sm min-w-0"
         role="status"
         aria-live="polite"
       >
         <div className="flex flex-col gap-3">
-          <h3 className="text-lg font-semibold tracking-wide uppercase text-blackCorp leading-tight">
+          <h3 className="heading-4 text-foreground-strong">
             Finalitzat — Descobreix alternatives
           </h3>
-          <p className="text-sm text-blackCorp/75 max-w-prose leading-relaxed">
+          <p className="body-small text-foreground-strong/75 max-w-prose">
             Ja ha finalitzat. No et perdis els que venen: descobreix què passa a{" "}
             {placeLabel} {timeWindow}.
           </p>
@@ -34,7 +34,7 @@ export default function PastEventBanner({
           <a
             href={explorePlaceHref}
             aria-label={`Veure esdeveniments a ${placeLabel}`}
-            className="w-full inline-flex items-center justify-center rounded-lg bg-blackCorp text-whiteCorp text-sm font-medium px-6 py-3 hover:bg-blackCorp/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blackCorp/50"
+            className="w-full inline-flex items-center justify-center rounded-lg bg-foreground-strong text-background body-small font-medium px-6 py-3 hover:bg-foreground-strong/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground-strong/50"
           >
             Veure esdeveniments a {placeLabel}
           </a>
@@ -43,7 +43,7 @@ export default function PastEventBanner({
             <a
               href={exploreCategoryHref}
               aria-label={`Més d'aquesta categoria`}
-              className="w-full inline-flex items-center justify-center rounded-lg border border-blackCorp/30 bg-transparent text-blackCorp text-sm font-medium px-6 py-3 hover:bg-blackCorp/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blackCorp/30"
+              className="w-full inline-flex items-center justify-center rounded-lg border border-foreground-strong/30 bg-transparent text-foreground-strong body-small font-medium px-6 py-3 hover:bg-foreground-strong/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground-strong/30"
             >
               Més d&apos;aquesta categoria
             </a>
@@ -51,7 +51,7 @@ export default function PastEventBanner({
             <a
               href={explorePlaceHref}
               aria-label={`Explorar més esdeveniments a ${placeLabel}`}
-              className="w-full inline-flex items-center justify-center rounded-lg border border-blackCorp/30 bg-transparent text-blackCorp text-sm font-medium px-6 py-3 hover:bg-blackCorp/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blackCorp/30"
+              className="w-full inline-flex items-center justify-center rounded-lg border border-foreground-strong/30 bg-transparent text-foreground-strong body-small font-medium px-6 py-3 hover:bg-foreground-strong/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground-strong/30"
             >
               Explorar més
             </a>

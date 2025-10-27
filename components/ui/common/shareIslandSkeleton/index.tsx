@@ -13,7 +13,7 @@ export default function ShareIslandSkeleton({
         // eslint-disable-next-line react/no-array-index-key
         <div
           key={i}
-          className="w-2 h-2 rounded-full bg-bColor dark:bg-blackCorp/30 animate-fast-pulse"
+          className="w-2 h-2 rounded-full bg-border dark:bg-foreground-strong/30 animate-fast-pulse"
         />
       ))}
     </div>

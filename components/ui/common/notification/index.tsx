@@ -23,7 +23,7 @@ const Notification: FC<EventNotificationProps> = ({
             />
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-semibold text-blackCorp">
+            <h3 className="text-sm font-semibold text-foreground-strong">
               Fantàstic!! L&apos;esdeveniment {title} s&apos;ha creat
               correctament i ja el pot veure tothom!
             </h3>
@@ -62,7 +62,7 @@ const Notification: FC<EventNotificationProps> = ({
           )}
         </div>
         <div className="ml-3">
-          <h3 className="text-sm font-semibold text-blackCorp">{title}</h3>
+          <h3 className="text-sm font-semibold text-foreground-strong">{title}</h3>
           {url && (
             <a
               href={url}

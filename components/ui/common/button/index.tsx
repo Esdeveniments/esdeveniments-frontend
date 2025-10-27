@@ -11,13 +11,13 @@ const ARIA_INVALID =
 
 const VARIANTS: Record<string, string> = {
   neutral:
-    "border border-blackCorp/60 text-blackCorp hover:bg-darkCorp/5 hover:border-blackCorp/50 font-medium bg-whiteCorp transition-shadow shadow-sm",
+    "border border-foreground-strong/60 text-foreground-strong hover:bg-foreground-strong/5 hover:border-foreground-strong/50 font-medium bg-background transition-shadow shadow-sm",
   primary:
     "border border-transparent bg-primary-600 text-white hover:bg-primary-700 font-medium shadow-sm",
   outline:
     "border border-primary/30 text-primary hover:bg-primary/5 bg-white/80 font-medium transition-shadow",
   muted:
-    "border border-bColor text-blackCorp/40 bg-whiteCorp cursor-not-allowed opacity-70 font-medium",
+    "border border-border text-foreground-strong/40 bg-background cursor-not-allowed opacity-70 font-medium",
   solid: "bg-primary-600 text-white border border-transparent font-medium",
 };
 

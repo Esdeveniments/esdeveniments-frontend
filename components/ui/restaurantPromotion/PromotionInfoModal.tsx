@@ -19,7 +19,7 @@ const PromotionInfoModal: FC<PromotionInfoModalProps> = ({ open, setOpen }) => {
           De moment, envia&apos;ns un correu a{" "}
           <a
             href="mailto:hola@esdeveniments.cat?subject=Promocionar%20restaurant"
-            className="underline text-primary hover:text-primarydark break-all"
+            className="underline text-primary hover:text-primary-dark break-all"
           >
             hola@esdeveniments.cat
           </a>{" "}
