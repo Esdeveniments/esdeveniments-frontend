@@ -482,3 +482,11 @@ export interface CollectionPageOptions {
   mainEntity?: Record<string, unknown>;
   numberOfItems?: number;
 }
+
+// E2E test component props
+export interface ClientTestProps {
+  initialEvents: EventSummaryResponseDTO[];
+  place: string;
+  category: string;
+  date: string;
+}

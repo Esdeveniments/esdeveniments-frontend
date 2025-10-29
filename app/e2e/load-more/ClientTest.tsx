@@ -1,18 +1,16 @@
 "use client";
 
 import { useMemo } from "react";
-import { EventSummaryResponseDTO } from "types/api/event";
 import { useEvents } from "@components/hooks/useEvents";
 import LoadMoreButton from "@components/ui/loadMoreButton";
+import type { ClientTestProps } from "types/common";
 
-interface ClientTestProps {
-  initialEvents: EventSummaryResponseDTO[];
-  place: string;
-  category: string;
-  date: string;
-}
-
-export default function ClientTest({ initialEvents, place, category, date }: ClientTestProps) {
+export default function ClientTest({
+  initialEvents,
+  place,
+  category,
+  date,
+}: ClientTestProps) {
   const realInitial = useMemo(() => initialEvents, [initialEvents]);
 
   const { events, hasMore, loadMore, isLoading, isValidating } = useEvents({
