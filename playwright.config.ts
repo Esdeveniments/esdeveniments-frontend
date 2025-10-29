@@ -21,9 +21,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "yarn dev",
+    command: "E2E_TEST_MODE=1 yarn dev",
     url: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120000,
   },
   expect: { timeout: 10000 },
