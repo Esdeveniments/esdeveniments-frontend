@@ -19,12 +19,8 @@ const EventDetailsSection: React.FC<{
     <div className="w-full">
       <div className="w-full flex flex-col gap-4 min-w-0">
         <SectionHeading
-          icon={
-            <GlobeIcon
-              className="h-5 w-5 text-foreground-strong flex-shrink-0"
-              aria-hidden="true"
-            />
-          }
+          Icon={GlobeIcon}
+          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title="Detalls de l'Esdeveniment"
         />
         <div className="flex flex-col px-4 gap-4">

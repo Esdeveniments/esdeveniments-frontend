@@ -22,7 +22,11 @@ export function createCache<T>(ttlMs: number) {
 export function createKeyedCache<T>(ttlMs: number) {
   const cache = new Map<string | number, { data: T; timestamp: number }>();
 
-  return async (key: string | number, fetcher: (key: string | number) => Promise<T>): Promise<T> => {
+  return async (
+    key: string | number,
+    // eslint-disable-next-line no-unused-vars
+    fetcher: (_key: string | number) => Promise<T>
+  ): Promise<T> => {
     const now = Date.now();
     const entry = cache.get(key);
     if (entry && now - entry.timestamp < ttlMs) {

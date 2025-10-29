@@ -30,12 +30,8 @@ export default function WhereToEatSection({
       <div className="flex items-center justify-between gap-element-gap">
         <SectionHeading
           headingId="where-to-eat"
-          icon={
-            <FireIcon
-              className="w-5 h-5 text-foreground-strong flex-shrink-0"
-              aria-hidden="true"
-            />
-          }
+          Icon={FireIcon}
+          iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
           title="On pots menjar"
         />
         {onPromoteClick && (

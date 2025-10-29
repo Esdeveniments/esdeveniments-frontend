@@ -16,12 +16,8 @@ const EventsAroundSection: React.FC<EventsAroundProps> = ({
       {/* Title section - constrained width */}
       <div className="w-full mb-4">
         <SectionHeading
-          icon={
-            <ShareIcon
-              className="h-5 w-5 text-foreground-strong flex-shrink-0"
-              aria-hidden="true"
-            />
-          }
+          Icon={ShareIcon}
+          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title={title}
         />
       </div>

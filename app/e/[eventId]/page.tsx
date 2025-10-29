@@ -238,12 +238,8 @@ export default async function EventPage({
                 <div className="w-full flex flex-col gap-4">
                   <SectionHeading
                     headingId="event-faq"
-                    icon={
-                      <InfoIcon
-                        className="w-5 h-5 text-foreground-strong flex-shrink-0"
-                        aria-hidden="true"
-                      />
-                    }
+                    Icon={InfoIcon}
+                    iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
                     title="Preguntes freqüents"
                   />
                   <dl className="space-y-3 px-4">
@@ -274,12 +270,8 @@ export default async function EventPage({
             <div className="w-full h-full min-h-[250px]">
               <div className="w-full flex flex-col gap-4">
                 <SectionHeading
-                  icon={
-                    <SpeakerphoneIcon
-                      className="w-5 h-5 text-foreground-strong flex-shrink-0"
-                      aria-hidden="true"
-                    />
-                  }
+                  Icon={SpeakerphoneIcon}
+                  iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
                   title="Contingut patrocinat"
                 />
                 <div className="px-4">

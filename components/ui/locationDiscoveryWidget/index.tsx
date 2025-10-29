@@ -6,9 +6,7 @@ import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCiti
 // import { useGeolocation } from "@components/hooks/useGeolocation";
 import { LocationDiscoveryWidgetProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
-import SearchIcon from "@heroicons/react/solid/SearchIcon";
-import LocationMarkerIcon from "@heroicons/react/solid/LocationMarkerIcon";
-import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
+import { SearchIcon, LocationMarkerIcon, ChevronDownIcon } from "@heroicons/react/solid";
 import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import { transformRegionsToOptions } from "./utils";
 
@@ -17,7 +15,7 @@ export default function LocationDiscoveryWidget({
   onLocationChange,
 }: LocationDiscoveryWidgetProps) {
   const router = useRouter();
-  const { regionsWithCities, isLoading, isError } = useGetRegionsWithCities();
+  const { regionsWithCities, isLoading: loadingRegions, isError } = useGetRegionsWithCities();
   // const {
   //   isLoading: isGettingLocation,
   //   error: locationError,
@@ -114,7 +112,7 @@ export default function LocationDiscoveryWidget({
   //   }
   // }, [regionsWithCities, requestLocation, onLocationChange, router]);
 
-  const handleOtherEvents = useCallback(() => {
+  const onDiscoverOtherEvents = useCallback(() => {
     //
     router.push("/catalunya");
   }, [router]);
@@ -142,6 +140,7 @@ export default function LocationDiscoveryWidget({
                 className="w-full flex justify-between items-center border border-border border-opacity-50 rounded-full px-4 py-3 bg-background hover:border-primary transition-colors duration-200"
                 aria-expanded={isOpen}
                 aria-haspopup="listbox"
+                data-testid="location-toggle-button"
               >
                 <div className="flex items-center gap-2">
                   <LocationMarkerIcon className="h-5 w-5 text-primary" />
@@ -166,9 +165,10 @@ export default function LocationDiscoveryWidget({
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Escriu per cercar..."
+                        placeholder="Cercar ubicació..."
                         className="w-full pl-9 pr-3 py-2 border border-border border-opacity-50 rounded-md bg-background focus:outline-none focus:border-primary text-sm"
                         autoFocus
+                        data-testid="location-search-input"
                       />
                     </div>
                   </div>
@@ -177,7 +177,7 @@ export default function LocationDiscoveryWidget({
                   <button
                     type="button"
                     className="w-full flex items-center gap-3 px-4 py-3 border-b border-border border-opacity-30 hover:bg-muted transition-colors duration-200 group"
-                    onClick={handleOtherEvents}
+                    onClick={onDiscoverOtherEvents}
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
                       <div className="w-5 h-5 border-2 border-primary rounded flex items-center justify-center group-hover:border-primary/80 transition-colors">
@@ -191,7 +191,7 @@ export default function LocationDiscoveryWidget({
 
                   {/* Options list */}
                   <div className="max-h-48 overflow-y-auto">
-                    {isLoading ? (
+                    {loadingRegions ? (
                       <div className="px-4 py-3 text-sm text-foreground-strong/70 flex items-center gap-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
                         <span>Carregant ubicacions...</span>

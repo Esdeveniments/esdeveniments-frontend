@@ -14,12 +14,8 @@ const EventCategories: React.FC<EventCategoriesProps> = ({
     <div className="w-full">
       <div className="w-full flex flex-col gap-4 min-w-0">
         <SectionHeading
-          icon={
-            <TagIcon
-              className="h-5 w-5 text-foreground-strong flex-shrink-0"
-              aria-hidden="true"
-            />
-          }
+          Icon={TagIcon}
+          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title="Categories"
         />
         <div className="flex flex-wrap gap-3 px-4">

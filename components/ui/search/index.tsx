@@ -14,11 +14,14 @@ import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import { sendGoogleEvent } from "@utils/analytics";
 
+// eslint-disable-next-line no-unused-vars
 function debounce(
-  func: (value: string) => void,
+  // eslint-disable-next-line no-unused-vars
+  func: (_value: string) => void,
   wait: number,
   immediate = false
-): (value: string) => void {
+  // eslint-disable-next-line no-unused-vars
+): (_value: string) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   return function executedFunction(value: string) {
     const later = () => {

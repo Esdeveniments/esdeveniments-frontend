@@ -24,6 +24,7 @@ export default function LoadMoreButton({
         type="button"
         onClick={handleLoadMore}
         disabled={isButtonDisabled}
+        data-testid="load-more-button"
         className="btn-neutral font-barlow italic uppercase tracking-wider w-[120px]"
         aria-label={buttonText}
       >

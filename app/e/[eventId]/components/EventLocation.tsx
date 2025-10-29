@@ -45,12 +45,8 @@ export default function EventLocation({
       <div className="w-full">
         <div className="w-full flex flex-col gap-4 pr-4 min-w-0">
           <SectionHeading
-            icon={
-              <LocationIcon
-                className="h-5 w-5 text-foreground-strong flex-shrink-0"
-                aria-hidden="true"
-              />
-            }
+            Icon={LocationIcon}
+            iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
             title="Ubicació"
           />
           <div className="w-full flex flex-col justify-center items-center gap-4 px-4">

@@ -87,12 +87,8 @@ export default function EventClient({
       <div className="w-full h-full min-h-[250px]">
         <div className="w-full flex flex-col gap-4">
           <SectionHeading
-            icon={
-              <SpeakerphoneIcon
-                className="w-5 h-5 text-foreground-strong flex-shrink-0"
-                aria-hidden="true"
-              />
-            }
+            Icon={SpeakerphoneIcon}
+            iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
             title="Contingut patrocinat"
           />
           <div className="px-4">

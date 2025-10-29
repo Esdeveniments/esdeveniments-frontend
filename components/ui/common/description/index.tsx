@@ -22,12 +22,8 @@ export default function Description({
       <div className="stack min-w-0">
         <SectionHeading
           headingId="description-section"
-          icon={
-            <DocumentIcon
-              className="w-5 h-5 text-foreground-strong flex-shrink-0"
-              aria-hidden="true"
-            />
-          }
+          Icon={DocumentIcon}
+          iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
           title="Descripció"
         />
         <div className="w-full break-words overflow-hidden space-y-4 px-4">
