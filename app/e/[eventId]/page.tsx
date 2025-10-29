@@ -166,32 +166,31 @@ export default async function EventPage({
       <div className="w-full bg-background pb-10">
         <div className="container w-full flex flex-col gap-8 min-w-0">
           <article className="w-full flex flex-col gap-8">
-            <div className="w-full flex flex-col justify-center items-start">
+            {/* Event Media Hero */}
+            <div className="w-full">
               <EventMedia event={event} title={title} />
-              <div className="w-full flex justify-between items-center">
-                <EventShareBar
-                  slug={eventSlug}
-                  title={title}
-                  description={event.description}
-                  eventDateString={eventDateString}
-                  location={event.location}
-                  initialIsMobile={initialIsMobile}
-                  cityName={cityName}
-                  regionName={regionName}
-                  postalCode={event.city?.postalCode || ""}
-                />
-                <div className="ml-2">
-                  <ViewCounter visits={event.visits} />
-                </div>
-              </div>
             </div>
-
+            {/* Share bar and view counter */}
+            <div className="w-full flex justify-between items-center -mt-4">
+              <EventShareBar
+                slug={eventSlug}
+                title={title}
+                description={event.description}
+                eventDateString={eventDateString}
+                location={event.location}
+                initialIsMobile={initialIsMobile}
+                cityName={cityName}
+                regionName={regionName}
+                postalCode={event.city?.postalCode || ""}
+              />
+              <div className="ml-2">
+                <ViewCounter visits={event.visits} />
+              </div>
+            </div>{" "}
             {/* Event Header with status pill - Server-side rendered */}
             <EventHeader title={title} statusMeta={statusMeta} />
-
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
-
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (
               <EventsAroundSection
@@ -200,7 +199,6 @@ export default async function EventPage({
                 nonce={nonce}
               />
             )}
-
             {/* Event Description - Server-side rendered for SEO */}
             <EventDescription
               description={event.description}
@@ -209,13 +207,11 @@ export default async function EventPage({
               introText={introText}
               locationType="town"
             />
-
             {/* Event Categories - Server-side rendered for SEO */}
             <EventCategories
               categories={event.categories}
               place={event.region?.slug || ""}
             />
-
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner
@@ -227,9 +223,7 @@ export default async function EventPage({
                 primaryCategorySlug={primaryCategorySlug}
               />
             )}
-
             <EventClient event={event} temporalStatus={temporalStatus} />
-
             {/* Event details (status, duration, external url) - server-rendered */}
             <EventDetailsSection
               event={event}
@@ -238,7 +232,6 @@ export default async function EventPage({
               formattedEnd={formattedEnd}
               nameDay={nameDay}
             />
-
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
               <section className="w-full" aria-labelledby="event-faq">
@@ -268,7 +261,6 @@ export default async function EventPage({
                 </div>
               </section>
             )}
-
             {/* Restaurant Promotion Section */}
             <RestaurantPromotionSection
               eventId={event.id}
@@ -278,7 +270,6 @@ export default async function EventPage({
               eventStartDate={event.startDate}
               eventEndDate={event.endDate}
             />
-
             {/* Final Ad Section */}
             <div className="w-full h-full min-h-[250px]">
               <div className="w-full flex flex-col gap-4">

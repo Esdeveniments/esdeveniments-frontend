@@ -8,22 +8,26 @@ const VideoDisplay = dynamic(
   () => import("components/ui/common/videoDisplay"),
   {
     loading: () => (
-      <div className="w-full h-60 bg-foreground-strong animate-pulse"></div>
+      <div className="w-full aspect-[16/9] bg-muted animate-pulse rounded-card"></div>
     ),
   }
 );
 
 // ImageDefault for fallback cases
 const ImageDefault = dynamic(() => import("components/ui/imgDefault"), {
-  loading: () => <div className="w-full h-60 bg-foreground-strong animate-pulse"></div>,
+  loading: () => (
+    <div className="w-full aspect-[16/9] sm:aspect-[21/9] bg-muted animate-pulse rounded-card"></div>
+  ),
 });
 
 const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
   // Check if we have a video URL - if so, display video
   if (event.videoUrl) {
     return (
-      <div className="w-full flex flex-col justify-center items-start gap-4 overflow-hidden">
-        <VideoDisplay videoUrl={event.videoUrl} />
+      <div className="w-full">
+        <div className="w-full aspect-[16/9] overflow-hidden rounded-card">
+          <VideoDisplay videoUrl={event.videoUrl} />
+        </div>
       </div>
     );
   }
@@ -31,7 +35,7 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
   // Check if we have an image - if so, display image using EventImage component
   if (event.imageUrl) {
     return (
-      <div className="w-full flex flex-col justify-center items-start gap-4 overflow-hidden">
+      <div className="w-full">
         <EventImage image={event.imageUrl} title={title} />
       </div>
     );
@@ -39,8 +43,10 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
 
   // Fallback to default image
   return (
-    <div className="w-full flex flex-col justify-center items-start gap-4 overflow-hidden">
-      <ImageDefault title={title} />
+    <div className="w-full">
+      <div className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card">
+        <ImageDefault title={title} />
+      </div>
     </div>
   );
 };

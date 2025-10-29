@@ -60,7 +60,9 @@ export async function middleware(request: NextRequest) {
       pathname === "/api/stripe/checkout" ||
       pathname === "/api/cloudinary/sign" ||
       pathname === "/api/places/nearby" ||
-      pathname === "/api/places/photo"
+      pathname === "/api/places/photo" ||
+      // Public proxy for events list used by client SWR (GET only)
+      (pathname === "/api/events" && request.method === "GET")
     ) {
       return NextResponse.next();
     }

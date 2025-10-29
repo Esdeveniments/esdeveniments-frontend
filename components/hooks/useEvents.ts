@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import useSWRInfinite from "swr/infinite";
-import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import {
   FetchEventsParams,
@@ -9,11 +8,28 @@ import {
 } from "types/event";
 import { captureException } from "@sentry/nextjs";
 
-// SWR fetcher function for events API (single page)
+// SWR fetcher function for events API (single page) via internal proxy
 const pageFetcher = async (
   params: FetchEventsParams
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
-  return await fetchEvents(params);
+  const qs = new URLSearchParams();
+  if (typeof params.page === "number") qs.set("page", String(params.page));
+  if (typeof params.size === "number") qs.set("size", String(params.size));
+  if (params.place) qs.set("place", params.place);
+  if (params.category) qs.set("category", params.category);
+  if (params.lat !== undefined) qs.set("lat", String(params.lat));
+  if (params.lon !== undefined) qs.set("lon", String(params.lon));
+  if (params.radius !== undefined) qs.set("radius", String(params.radius));
+  if (params.term) qs.set("term", params.term);
+  if (params.byDate) qs.set("byDate", params.byDate);
+  if (params.from) qs.set("from", params.from);
+  if (params.to) qs.set("to", params.to);
+
+  const res = await fetch(`/api/events?${qs.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch events: ${res.status}`);
+  }
+  return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
 
 export const useEvents = ({

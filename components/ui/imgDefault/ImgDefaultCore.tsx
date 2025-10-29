@@ -52,24 +52,24 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col justify-between items-start p-4"
+      className="w-full h-full flex flex-col justify-between items-start p-6 sm:p-8"
       style={{
         backgroundImage: background.gradient,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        minHeight: "260px",
+        minHeight: "100%",
       }}
     >
       {/* Top section - Event Info */}
       <div className="w-full flex justify-start items-start gap-2">
-        <div className="w-full flex flex-col justify-start items-start gap-2 min-w-0">
+        <div className="w-full flex flex-col justify-start items-start gap-3 min-w-0">
           {/* Location Icon and City */}
           {location && (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-background/20 flex items-center justify-center">
+              <div className="w-4 h-4 rounded-full bg-background/20 flex items-center justify-center flex-shrink-0">
                 <div className="w-2 h-2 rounded-full bg-background"></div>
               </div>
-              <h2 className="font-bold uppercase text-background text-lg drop-shadow-md">
+              <h2 className="font-bold uppercase text-background text-lg sm:text-xl drop-shadow-md">
                 {location}
               </h2>
             </div>
@@ -77,7 +77,7 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
 
           {/* Region */}
           {region && (
-            <p className="text-background/90 text-sm drop-shadow-md ml-6">
+            <p className="text-background/90 text-sm sm:text-base drop-shadow-md ml-6">
               {region}
             </p>
           )}
@@ -85,26 +85,28 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
           <div className="w-full h-px bg-background/30 my-2"></div>
 
           {/* Event Title (non-heading to avoid outline pollution) */}
-          <p className="font-bold uppercase font-roboto text-background text-xl leading-tight tracking-wide drop-shadow-md break-words">
+          <p className="font-bold uppercase font-roboto text-background text-2xl sm:text-3xl leading-tight tracking-wide drop-shadow-md break-words">
             {title}
           </p>
 
           {/* Date */}
           {date && (
-            <p className="text-background/90 text-sm drop-shadow-md">{date}</p>
+            <p className="text-background/90 text-sm sm:text-base drop-shadow-md">
+              {date}
+            </p>
           )}
         </div>
       </div>
 
       {/* Bottom section - Tickets */}
       <div className="w-full flex justify-end items-end">
-        <div className="w-20 h-12">
+        <div className="w-20 h-12 sm:w-24 sm:h-14">
           <NextImage
             className="w-full h-full drop-shadow-md"
             src="/static/images/tickets-color.svg"
             alt="Tickets.svg"
-            width={80}
-            height={48}
+            width={96}
+            height={56}
           />
         </div>
       </div>

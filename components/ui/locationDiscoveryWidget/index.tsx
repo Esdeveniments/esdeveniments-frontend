@@ -115,6 +115,7 @@ export default function LocationDiscoveryWidget({
   // }, [regionsWithCities, requestLocation, onLocationChange, router]);
 
   const handleOtherEvents = useCallback(() => {
+    //
     router.push("/catalunya");
   }, [router]);
 
@@ -159,19 +160,43 @@ export default function LocationDiscoveryWidget({
                 <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
                   {/* Search input */}
                   <div className="p-3 border-b border-border border-opacity-30">
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Escriu per cercar..."
-                      className="w-full px-3 py-2 border border-border border-opacity-50 rounded-md focus:outline-none focus:border-primary text-sm"
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Escriu per cercar..."
+                        className="w-full pl-9 pr-3 py-2 border border-border border-opacity-50 rounded-md bg-background focus:outline-none focus:border-primary text-sm"
+                        autoFocus
+                      />
+                    </div>
                   </div>
+
+                  {/* Discover other events */}
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-3 px-4 py-3 border-b border-border border-opacity-30 hover:bg-muted transition-colors duration-200 group"
+                    onClick={handleOtherEvents}
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-primary rounded flex items-center justify-center group-hover:border-primary/80 transition-colors">
+                        <div className="w-2 h-1 bg-primary rounded-sm group-hover:bg-primary/80 transition-colors" />
+                      </div>
+                    </div>
+                    <span className="text-foreground-strong text-sm font-medium group-hover:opacity-90">
+                      Descobrir altres esdeveniments
+                    </span>
+                  </button>
 
                   {/* Options list */}
                   <div className="max-h-48 overflow-y-auto">
-                    {filteredLocations.length > 0 ? (
+                    {isLoading ? (
+                      <div className="px-4 py-3 text-sm text-foreground-strong/70 flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+                        <span>Carregant ubicacions...</span>
+                      </div>
+                    ) : filteredLocations.length > 0 ? (
                       <ul role="listbox">
                         {filteredLocations.map((location) => (
                           <li
