@@ -18,19 +18,25 @@ test.describe("Search behavior", () => {
     expect(page.url()).not.toContain("search=castellers");
 
     // Wait beyond debounce threshold and for navigation
-    await page.waitForTimeout(1800);
-    await expect.poll(async () => page.url(), { timeout: 20000 }).toContain("search=castellers");
+    await page.waitForTimeout(2000);
+    await expect
+      .poll(async () => page.url(), { timeout: 20000 })
+      .toContain("search=castellers");
 
     // Press Enter for immediate submit on same path
     await input.fill("sardanes");
     await input.press("Enter");
-    await expect.poll(async () => page.url(), { timeout: 20000 }).toContain("search=sardanes");
+    await expect
+      .poll(async () => page.url(), { timeout: 20000 })
+      .toContain("search=sardanes");
 
     // Clear search via UI clear control if present, otherwise programmatically
     // We rely on value reset to propagate URL clearing
     await input.fill("");
     // Debounce to clear param and wait for URL reset
-    await page.waitForTimeout(1800);
-    await expect.poll(async () => page.url(), { timeout: 20000 }).not.toContain("search=");
+    await page.waitForTimeout(2000);
+    await expect
+      .poll(async () => page.url(), { timeout: 20000 })
+      .not.toContain("search=");
   });
 });

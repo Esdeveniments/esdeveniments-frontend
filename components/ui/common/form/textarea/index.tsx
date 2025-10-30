@@ -71,7 +71,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             value={value}
             onChange={onChange}
             className="w-full min-h-[300px] p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical"
-            placeholder="Descriu el teu desenvolupament... Pots escriure enllaços directament i es convertiran automàticament."
+            placeholder="Descriu el teu esdeveniment... Pots escriure enllaços directament i es convertiran automàticament."
             maxLength={maxLength}
           />
         )}
