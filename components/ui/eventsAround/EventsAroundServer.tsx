@@ -107,8 +107,8 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   if (loading) {
     const containerClass =
       layout === "horizontal"
-        ? "w-full flex overflow-x-auto px-4 min-w-0"
-        : "w-full flex overflow-x-auto px-4 min-w-0";
+        ? "w-full flex overflow-x-auto px-section-x min-w-0"
+        : "w-full flex overflow-x-auto px-section-x min-w-0";
 
     return (
       <div className={containerClass}>
@@ -140,7 +140,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
           />
         )}
-        <div className="w-full flex overflow-x-auto py-6 px-4 space-x-6 min-w-0">
+        <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
           {uniqueEvents.map((event, index) => (
             <div
               // key uses id or slug; index fallback should never be needed due to dedup above
@@ -174,7 +174,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
         />
       )}
-      <div className="w-full flex overflow-x-auto px-4 min-w-0">
+      <div className="w-full flex overflow-x-auto px-section-x min-w-0">
         {uniqueEvents.map((event, index) => {
           const eventTitle = truncateString(event.title || "", 60);
           const image = event.imageUrl;

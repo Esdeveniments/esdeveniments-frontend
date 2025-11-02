@@ -6,7 +6,7 @@ import { ServerNavLinkProps } from "types/props";
 export default async function ServerNavLink({
   href,
   children,
-  className = "flex justify-center items-center gap-2 text-foreground-strong bg-background py-2 px-3 label ease-in-out duration-200",
+  className = "flex justify-center items-center gap-2 text-foreground-strong bg-background px-button-x py-button-y label ease-in-out duration-200",
   activeLinkClass,
 }: ServerNavLinkProps) {
   // Get the current pathname from headers on the server

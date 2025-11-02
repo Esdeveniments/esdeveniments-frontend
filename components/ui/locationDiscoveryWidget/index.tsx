@@ -123,12 +123,12 @@ export default function LocationDiscoveryWidget({
 
   return (
     <div
-      className={`w-full bg-background flex justify-center items-center pt-8 ${className}`}
+      className={`w-full bg-background flex justify-center items-center pt-element-gap ${className}`}
     >
-      <div className="container flex flex-col justify-center items-center px-2 lg:px-0">
+      <div className="container flex flex-col justify-center items-center">
         <div className="relative w-full">
           {/* Main Location Selector */}
-          <div className="flex items-center space-x-2 mb-6">
+          <div className="flex items-center gap-element-gap mb-element-gap">
             <GlobeIcon className="w-4 h-4" />
             <h2 className="text-lg font-medium text-foreground">
               Mirant esdeveniments a
@@ -137,7 +137,7 @@ export default function LocationDiscoveryWidget({
               <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex justify-between items-center border border-border border-opacity-50 rounded-full px-4 py-3 bg-background hover:border-primary transition-colors duration-200"
+                className="w-full flex justify-between items-center border border-border rounded-input px-button-x py-button-y bg-background hover:border-primary transition-colors duration-200 focus-ring"
                 aria-expanded={isOpen}
                 aria-haspopup="listbox"
                 data-testid="location-toggle-button"
@@ -158,7 +158,7 @@ export default function LocationDiscoveryWidget({
               {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
                   {/* Search input */}
-                  <div className="p-3 border-b border-border border-opacity-30">
+                  <div className="p-input-x border-b border-border border-opacity-30">
                     <div className="relative">
                       <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 w-4 h-4" />
                       <input
@@ -166,7 +166,7 @@ export default function LocationDiscoveryWidget({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Cercar ubicació..."
-                        className="w-full pl-9 pr-3 py-2 border border-border border-opacity-50 rounded-md bg-background focus:outline-none focus:border-primary text-sm"
+                        className="input pl-9 text-sm"
                         autoFocus
                         data-testid="location-search-input"
                       />
@@ -176,7 +176,7 @@ export default function LocationDiscoveryWidget({
                   {/* Discover other events */}
                   <button
                     type="button"
-                    className="w-full flex items-center gap-3 px-4 py-3 border-b border-border border-opacity-30 hover:bg-muted transition-colors duration-200 group"
+                    className="w-full flex items-center gap-3 px-button-x py-button-y border-b border-border border-opacity-30 hover:bg-muted transition-colors duration-200 group focus-ring"
                     onClick={onDiscoverOtherEvents}
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
@@ -203,7 +203,7 @@ export default function LocationDiscoveryWidget({
                             key={location.value}
                             role="option"
                             onClick={() => handleLocationSelect(location.label)}
-                            className="px-4 py-2 hover:bg-muted cursor-pointer text-sm text-foreground-strong flex items-center gap-2"
+                            className="px-input-x py-input-y hover:bg-muted cursor-pointer text-sm text-foreground-strong flex items-center gap-2"
                             aria-selected={currentLocation === location.label}
                           >
                             <LocationMarkerIcon className="h-4 w-4 text-primary flex-shrink-0" />

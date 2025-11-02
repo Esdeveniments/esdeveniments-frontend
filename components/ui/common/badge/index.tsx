@@ -1,9 +1,9 @@
 import React, { forwardRef } from "react";
 import Link from "next/link";
 
-// Base classes requested by design, adapted to use the project's color palette
+// Base classes aligned with design tokens (badge sizing + transitions)
 const BASE_CLASS =
-  "rounded-lg px-4 py-2 text-sm font-medium border-2 border-foreground-strong/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98]";
+  "rounded-badge px-badge-x py-badge-y text-xs font-medium border border-border hover:bg-muted transition-interactive cursor-pointer";
 
 const Badge = forwardRef<
   HTMLSpanElement,

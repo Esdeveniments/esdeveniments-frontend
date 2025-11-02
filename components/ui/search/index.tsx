@@ -127,11 +127,11 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className="w-full flex justify-center border border-border border-opacity-50 rounded-full px-4 mt-2"
+      className="w-full flex justify-center border border-border rounded-input px-input-x mt-element-gap"
       data-testid="search-bar"
     >
-      <div className="w-full flex justify-start items-center gap-2 rounded-full">
-        <div className="h-10 flex justify-end items-center cursor-pointer">
+      <div className="w-full flex justify-start items-center gap-element-gap rounded-input">
+        <div className="h-10 flex justify-end items-center cursor-pointer px-button-x">
           <SearchIcon
             className="h-5 w-5 text-foreground-strong"
             onClick={() => searchEvents(urlSearchTerm)}
@@ -140,7 +140,7 @@ export default function Search(): JSX.Element {
         </div>
         <input
           type="text"
-          className="w-full border-0 placeholder:text-border text-[16px] rounded-tr-full rounded-br-full"
+          className="w-full border-0 placeholder:text-foreground/60 text-[16px] rounded-tr-input rounded-br-input focus:outline-none"
           placeholder="Què estàs buscant?"
           value={inputValue}
           onKeyDown={handleKeyPress}
@@ -150,7 +150,7 @@ export default function Search(): JSX.Element {
           data-testid="search-input"
         />
         {inputValue.length > 0 && (
-          <div className="flex justify-end items-center cursor-pointer">
+          <div className="flex justify-end items-center cursor-pointer px-button-x">
             <XIcon
               className="h-4 w-4 text-foreground-strong"
               onClick={clearSearchTerm}

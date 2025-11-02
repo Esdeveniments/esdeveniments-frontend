@@ -28,7 +28,7 @@ export default function Navbar() {
     <Disclosure
       key={pathname}
       as="nav"
-      className="w-full bg-background relative top-0 z-10"
+      className="w-full bg-background relative top-0 z-10 border-b border-border/50"
     >
       {({ open }) => (
         <>
@@ -69,7 +69,7 @@ export default function Navbar() {
                       <ActiveLink
                         href={item.href}
                         key={item.name}
-                        className="border-b-2 border-b-background"
+                        className="label px-button-x py-button-y border-b-2 border-b-background"
                       >
                         {item.name}
                       </ActiveLink>
@@ -78,7 +78,7 @@ export default function Navbar() {
                 </div>
               </div>
               {/* SecondBar - Search&Share&MenuIcon */}
-              <div className="fixed h-content bottom-0 left-0 right-0 py-2 bg-background flex justify-evenly items-center gap-16 md:hidden">
+              <div className="fixed bottom-0 left-0 right-0 h-14 border-t border-border bg-background flex justify-evenly items-center gap-element-gap md:hidden px-section-x">
                 {/* Home */}
                 <div className="flex justify-center items-center rounded-xl cursor-pointer">
                   <ActiveLink href="/">
@@ -101,7 +101,7 @@ export default function Navbar() {
                       aria-label="Publish"
                     >
                       <PlusSmIcon className="h-6 w-6" />
-                      <span className="hidden sm:visible">Publica</span>
+                      <span className="hidden sm:block label">Publica</span>
                     </button>
                   </ActiveLink>
                 </div>
@@ -128,7 +128,7 @@ export default function Navbar() {
                 <ActiveLink
                   href={item.href}
                   key={item.name}
-                  className="border-b-2 border-b-background"
+                  className="label px-button-x py-button-y border-b-2 border-b-background"
                 >
                   {item.name}
                 </ActiveLink>

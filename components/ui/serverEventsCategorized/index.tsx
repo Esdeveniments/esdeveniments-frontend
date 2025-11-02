@@ -56,7 +56,7 @@ function ServerEventsCategorized({
   return (
     <>
       <div className="w-full bg-background overflow-hidden">
-        <div className="container mt-4">
+        <div className="container mt-element-gap">
           {/* SEO Content */}
           {pageData && (
             <>
@@ -133,8 +133,8 @@ function ServerEventsCategorized({
                   </div>
 
                   {/* Related canonical links for this category */}
-                  <nav aria-label="Vegeu també" className="mt-1 mb-2">
-                    <ul className="flex gap-3 text-sm">
+                  <nav aria-label="Vegeu també" className="mt-element-gap-sm mb-element-gap-sm">
+                    <ul className="flex gap-element-gap text-sm">
                       <li>
                         <Badge
                           href={buildCanonicalUrl(
@@ -181,7 +181,7 @@ function ServerEventsCategorized({
 
                   {/* Ad placement between category sections */}
                   {adPositions.has(index) && (
-                    <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-2 mt-4 mb-2">
+                    <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-element-gap mt-element-gap mb-element-gap-sm">
                       <div className="w-full flex">
                         <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
                         <div className="stack w-11/12">

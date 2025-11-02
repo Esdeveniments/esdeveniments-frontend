@@ -17,7 +17,7 @@ export default function ActiveLink({
 
   let classNameProps =
     className ||
-    "flex justify-center items-center gap-2 text-foreground-strong bg-background py-2 px-3 label ease-in-out duration-200";
+    "flex justify-center items-center gap-2 text-foreground-strong bg-background px-button-x py-button-y label ease-in-out duration-200";
 
   if (pathname === linkHref) {
     classNameProps = `${
