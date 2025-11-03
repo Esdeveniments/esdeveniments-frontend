@@ -47,8 +47,16 @@ export function useNavbarVisible(navbarId: string = "site-navbar"): boolean {
     // In some TS environments, `window` may be incorrectly typed.
     // Cast to a minimal shape to avoid "never" narrowing issues.
     const w = window as unknown as {
-      addEventListener: (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => void;
-      removeEventListener: (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) => void;
+      addEventListener: (
+        _type: string,
+        _listener: EventListenerOrEventListenerObject,
+        _options?: boolean | AddEventListenerOptions
+      ) => void;
+      removeEventListener: (
+        _type: string,
+        _listener: EventListenerOrEventListenerObject,
+        _options?: boolean | EventListenerOptions
+      ) => void;
     };
     w.addEventListener("scroll", onScroll, { passive: true });
     return () => w.removeEventListener("scroll", onScroll);

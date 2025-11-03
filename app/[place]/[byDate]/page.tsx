@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
@@ -320,9 +319,7 @@ export default async function ByDatePage({
           ? [{ id: "collection-schema", data: collectionSchema }]
           : []),
         ...(structuredData
-          ? [
-              { id: `events-${place}-${actualDate}`, data: structuredData },
-            ]
+          ? [{ id: `events-${place}-${actualDate}`, data: structuredData }]
           : []),
       ]}
       initialEvents={eventsWithAds}

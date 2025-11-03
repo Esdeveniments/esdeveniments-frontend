@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { today, tomorrow, week, weekend } from "@lib/dates";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import {
@@ -57,13 +58,32 @@ export const useEvents = ({
   }, [place, category, date]);
 
   // Build base params for the key/fetcher
-  const baseParams: Omit<FetchEventsParams, "page" | "size"> & {
-    size: number;
-  } = {
+  // Derive explicit date range for known slugs to align with SSR behavior
+  const deriveRange = (slug?: string): { from?: string; to?: string } => {
+    if (!slug || slug === "tots") return {};
+    const map: Record<string, () => { from: Date; until: Date }> = {
+      avui: today,
+      dema: tomorrow,
+      setmana: week,
+      "cap-de-setmana": weekend,
+    };
+    const fn = map[slug] || today;
+    const { from, until } = fn();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const toIso = (d: Date) =>
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    return { from: toIso(from), to: toIso(until) };
+  };
+
+  const range = deriveRange(date);
+
+  const baseParams: Omit<FetchEventsParams, "page" | "size"> & { size: number } = {
     size: initialSize,
     place: place !== "catalunya" ? place : undefined,
     category,
-    byDate: date,
+    byDate: date, // keep for key clarity
+    from: range.from,
+    to: range.to,
   };
 
   // Key generator for SWR Infinite (page-by-page)
@@ -78,6 +98,8 @@ export const useEvents = ({
       baseParams.place,
       baseParams.category,
       baseParams.byDate,
+      baseParams.from,
+      baseParams.to,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -91,13 +113,15 @@ export const useEvents = ({
     setSize,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
-    ([, placeParam, categoryParam, byDateParam, pageIndex, sizeParam]) =>
+    ([, placeParam, categoryParam, byDateParam, fromParam, toParam, pageIndex, sizeParam]) =>
       pageFetcher({
         page: pageIndex as number,
         size: sizeParam as number,
         place: placeParam as string | undefined,
         category: categoryParam as string | undefined,
         byDate: byDateParam as string | undefined,
+        from: fromParam as string | undefined,
+        to: toParam as string | undefined,
       }),
     {
       // Provide SSR fallback as the first page when available

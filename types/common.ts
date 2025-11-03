@@ -500,3 +500,9 @@ export interface SitemapLayoutProps {
 export interface SitemapBreadcrumbProps {
   items: BreadcrumbItem[];
 }
+
+// PlacePageShell JSON-LD script type
+export interface JsonLdScript {
+  id: string;
+  data: unknown;
+}

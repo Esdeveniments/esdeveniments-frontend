@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Script from "next/script";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
