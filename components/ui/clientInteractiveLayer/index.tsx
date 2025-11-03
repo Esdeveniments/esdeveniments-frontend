@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useState, Suspense, useCallback } from "react";
 import NextImage from "next/image";
-import { useScrollVisibility } from "@components/hooks/useScrollVisibility";
+import { useNavbarVisible } from "@components/hooks/useNavbarVisible";
 import { useHydration } from "@components/hooks/useHydration";
 import { useSearchParams, usePathname } from "next/navigation"; // Added usePathname
 import Search from "@components/ui/search";
@@ -26,7 +26,7 @@ function ClientInteractiveLayer({
   categories = [],
   placeTypeLabel,
 }: ClientInteractiveLayerProps) {
-  const isSticky = useScrollVisibility(30);
+  const isNavbarVisible = useNavbarVisible();
   const isHydrated = useHydration();
   const [scrollIcon, setScrollIcon] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,10 +59,13 @@ function ClientInteractiveLayer({
   }, [isHydrated]);
 
   // Prevent hydration mismatch by using consistent initial state
+  // Use navbar visibility for robust positioning (works with mobile browser UI hide)
+  // - When navbar is visible: place just below it (top-14)
+  // - When navbar is out of view: stick to the very top (top-0)
   const stickyClasses =
-    isHydrated && isSticky
-      ? "top-10 z-5"
-      : "!top-0 z-10 md:top-10 border-border md:border-b-0 shadow-sm md:shadow-none";
+    isHydrated && isNavbarVisible
+      ? "top-14 z-sticky"
+      : "!top-0 z-sticky border-border md:border-b-0 shadow-sm md:shadow-none";
 
   // Determine if it's the home page
   const isHomePage = pathname === "/";
@@ -120,9 +123,9 @@ function ClientInteractiveLayer({
 
       {/* Fixed Search and Filters Bar */}
       <div
-        className={`w-full bg-background fixed transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center pt-2`}
+        className={`w-full bg-background fixed inset-x-0 transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center pt-element-gap-sm`}
       >
-        <div className="container flex flex-col justify-center items-center md:items-start px-2 pt-2 pb-2">
+        <div className="container flex flex-col justify-center items-center md:items-start px-section-x pt-element-gap-sm pb-element-gap-sm">
           <Suspense
             fallback={
               <div className="w-full h-12 bg-background animate-pulse rounded-full" />

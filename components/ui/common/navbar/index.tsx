@@ -28,6 +28,7 @@ export default function Navbar() {
     <Disclosure
       key={pathname}
       as="nav"
+      id="site-navbar"
       className="w-full bg-background relative top-0 z-10 border-b border-border/50"
     >
       {({ open }) => (
@@ -35,9 +36,9 @@ export default function Navbar() {
           <div className="container bg-background py-2 h-14">
             <div className="h-full flex flex-col justify-center">
               {/* FirstBar - Logo&LaptopMenu&MenuIcon */}
-              <div className="flex justify-around items-center">
+              <div className="flex justify-between items-center">
                 {/* Logo */}
-                <div className="flex w-full md:w-1/2 justify-start items-center py-2 px-3 cursor-pointer">
+                <div className="flex flex-1 md:w-1/2 justify-start items-center py-2 px-3 cursor-pointer">
                   <Link href="/">
                     <Image
                       src={logo}
@@ -63,8 +64,8 @@ export default function Navbar() {
                   </Disclosure.Button>
                 </div>
                 {/* LaptopMenu */}
-                <div className="md:w-1/2 flex justify-end items-center">
-                  <div className="hidden md:flex md:items-center gap-x-4">
+                <div className="hidden md:flex md:w-1/2 justify-end items-center">
+                  <div className="flex items-center gap-x-4">
                     {navigation.map((item) => (
                       <ActiveLink
                         href={item.href}

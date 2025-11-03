@@ -1,4 +1,3 @@
-import "../styles/critical.css";
 import "../styles/globals.css";
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
@@ -6,8 +5,8 @@ import { headers } from "next/headers";
 import GoogleScripts from "./GoogleScripts";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
-import CriticalCSS from "@components/partials/CriticalCSS";
-import { robotoFlex, barlowCondensed } from "../lib/fonts";
+// Removed custom fonts - now using system font stack
+// import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";
 
 export const metadata: Metadata = {
@@ -42,10 +41,7 @@ export default async function RootLayout({
   const apiOrigin = getApiOrigin();
 
   return (
-    <html
-      lang="ca"
-      className={`${robotoFlex.variable} ${barlowCondensed.variable}`}
-    >
+    <html lang="ca">
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
@@ -56,7 +52,6 @@ export default async function RootLayout({
       </head>
       <body>
         <WebsiteSchema nonce={nonce} />
-        <CriticalCSS />
         <GoogleScripts nonce={nonce} />
         <BaseLayout>{children}</BaseLayout>
       </body>

@@ -88,7 +88,7 @@ const QuiSom: NextPage = () => {
               <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
                 <div className="w-full flex justify-start items-start gap-2 pt-4">
                   <div className="w-2 h-6 bg-primary"></div>
-                  <h3>{member.name}</h3>
+                  <h3 className="heading-4">{member.name}</h3>
                 </div>
                 <div className="w-full flex flex-col justify-start items-start px-4">
                   <p className="w-full">{member.role}</p>

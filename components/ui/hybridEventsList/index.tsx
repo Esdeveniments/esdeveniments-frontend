@@ -52,7 +52,7 @@ function HybridEventsList({
     >
       {pageData && (
         <>
-          <div className="px-2 mt-2 md:flex md:items-start md:justify-between gap-4">
+          <div className="px-section-x mt-element-gap md:flex md:items-start md:justify-between gap-element-gap">
             <h1 className="heading-1 flex-1">{pageData.title}</h1>
             {place && (
               <div className="mb-4 md:mb-0 md:mt-0 shrink-0">
@@ -64,7 +64,7 @@ function HybridEventsList({
               </div>
             )}
           </div>
-          <p className="body-large text-left mb-8 px-2">{pageData.subTitle}</p>
+          <p className="body-large text-left mb-element-gap px-section-x">{pageData.subTitle}</p>
         </>
       )}
 

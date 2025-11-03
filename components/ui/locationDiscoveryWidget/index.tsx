@@ -6,7 +6,11 @@ import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCiti
 // import { useGeolocation } from "@components/hooks/useGeolocation";
 import { LocationDiscoveryWidgetProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
-import { SearchIcon, LocationMarkerIcon, ChevronDownIcon } from "@heroicons/react/solid";
+import {
+  SearchIcon,
+  LocationMarkerIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/solid";
 import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import { transformRegionsToOptions } from "./utils";
 
@@ -15,7 +19,11 @@ export default function LocationDiscoveryWidget({
   onLocationChange,
 }: LocationDiscoveryWidgetProps) {
   const router = useRouter();
-  const { regionsWithCities, isLoading: loadingRegions, isError } = useGetRegionsWithCities();
+  const {
+    regionsWithCities,
+    isLoading: loadingRegions,
+    isError,
+  } = useGetRegionsWithCities();
   // const {
   //   isLoading: isGettingLocation,
   //   error: locationError,
@@ -130,7 +138,7 @@ export default function LocationDiscoveryWidget({
           {/* Main Location Selector */}
           <div className="flex items-center gap-element-gap mb-element-gap">
             <GlobeIcon className="w-4 h-4" />
-            <h2 className="text-lg font-medium text-foreground">
+            <h2 className="body-small text-foreground">
               Mirant esdeveniments a
             </h2>
             <div className="relative">
@@ -166,7 +174,7 @@ export default function LocationDiscoveryWidget({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Cercar ubicació..."
-                        className="input pl-9 text-sm"
+                        className="input pl-9 body-small"
                         autoFocus
                         data-testid="location-search-input"
                       />
@@ -184,7 +192,7 @@ export default function LocationDiscoveryWidget({
                         <div className="w-2 h-1 bg-primary rounded-sm group-hover:bg-primary/80 transition-colors" />
                       </div>
                     </div>
-                    <span className="text-foreground-strong text-sm font-medium group-hover:opacity-90">
+                    <span className="text-foreground-strong body-small font-medium group-hover:opacity-90">
                       Descobrir altres esdeveniments
                     </span>
                   </button>
@@ -192,7 +200,7 @@ export default function LocationDiscoveryWidget({
                   {/* Options list */}
                   <div className="max-h-48 overflow-y-auto">
                     {loadingRegions ? (
-                      <div className="px-4 py-3 text-sm text-foreground-strong/70 flex items-center gap-2">
+                      <div className="px-4 py-3 body-small text-foreground-strong/70 flex items-center gap-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
                         <span>Carregant ubicacions...</span>
                       </div>
@@ -203,7 +211,7 @@ export default function LocationDiscoveryWidget({
                             key={location.value}
                             role="option"
                             onClick={() => handleLocationSelect(location.label)}
-                            className="px-input-x py-input-y hover:bg-muted cursor-pointer text-sm text-foreground-strong flex items-center gap-2"
+                            className="px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2"
                             aria-selected={currentLocation === location.label}
                           >
                             <LocationMarkerIcon className="h-4 w-4 text-primary flex-shrink-0" />
@@ -212,7 +220,7 @@ export default function LocationDiscoveryWidget({
                         ))}
                       </ul>
                     ) : (
-                      <div className="px-4 py-3 text-center text-sm text-foreground-strong/70">
+                      <div className="px-4 py-3 text-center body-small text-foreground-strong/70">
                         No hi ha resultats
                       </div>
                     )}

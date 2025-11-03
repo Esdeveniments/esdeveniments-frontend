@@ -32,8 +32,16 @@ module.exports = {
         "5xl": ["3rem", { lineHeight: "1.15" }], // 48px
       },
       fontFamily: {
-        roboto: ["var(--font-roboto-flex)", "sans-serif"],
-        barlow: ["var(--font-barlow-condensed)", "sans-serif"],
+        // Using system font stack (same as Facebook, GitHub, Instagram, Twitter)
+        sans: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          '"Segoe UI"',
+          "Roboto",
+          '"Helvetica Neue"',
+          "Arial",
+          "sans-serif",
+        ],
       },
 
       // === SCREENS === //

@@ -41,11 +41,11 @@ const ServerFilters = ({
     value || defaultValue;
 
   return (
-    <div className="w-full bg-background flex justify-center items-center mt-2">
+    <div className="w-full bg-background flex justify-center items-center mt-element-gap">
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
         <div
           onClick={onOpenModal}
-          className="mr-3 flex justify-center items-center gap-3 cursor-pointer"
+          className="mr-element-gap flex justify-center items-center gap-element-gap cursor-pointer"
           data-testid="filters-open"
         >
           <AdjustmentsIcon
@@ -56,12 +56,12 @@ const ServerFilters = ({
             }
             aria-hidden="true"
           />
-          <p className="hidden md:block uppercase italic font-semibold font-barlow text-[16px]">
+          <p className="hidden md:block uppercase italic font-semibold font-barlow text-base">
             Filtres
           </p>
         </div>
         <div
-          className="flex-1 flex items-center gap-1 border-0 placeholder:text-border overflow-x-auto"
+          className="flex-1 flex items-center gap-element-gap-sm border-0 placeholder:text-border overflow-x-auto"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: "#cccccc transparent",

@@ -45,7 +45,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             <div className="flex justify-between items-start mb-3 gap-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="w-1 h-6 bg-gradient-to-b from-primary to-primary-dark flex-shrink-0"></div>
-                <h3 className="text-lg font-semibold text-foreground-strong line-clamp-2 flex-1 group-hover:underline transition-all duration-200">
+                <h3 className="heading-4 text-foreground-strong line-clamp-2 flex-1 group-hover:underline transition-all duration-200">
                   {title}
                 </h3>
               </div>
@@ -58,7 +58,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
           {/* Date and Location - Bottom Section */}
           <div>
             {/* Date */}
-            <div className="flex items-center text-sm text-foreground mb-2">
+            <div className="flex items-center body-small text-foreground mb-2">
               <svg
                 className="w-4 h-4 mr-2 text-primary flex-shrink-0"
                 fill="none"
@@ -76,7 +76,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             </div>
 
             {/* Location */}
-            <div className="flex items-center text-sm text-foreground">
+            <div className="flex items-center body-small text-foreground">
               <svg
                 className="w-4 h-4 mr-2 text-primary flex-shrink-0"
                 fill="none"

@@ -1,4 +1,9 @@
 // lib/fonts.ts
+// DEPRECATED: Now using system font stack instead of custom fonts
+// Kept for reference in case we need to revert
+// System fonts provide better performance (zero download time) and native feel
+
+/*
 import localFont from "next/font/local";
 
 export const robotoFlex = localFont({
@@ -28,3 +33,4 @@ export const barlowCondensed = localFont({
   fallback: ["system-ui", "Arial"],
   adjustFontFallback: "Arial",
 });
+*/

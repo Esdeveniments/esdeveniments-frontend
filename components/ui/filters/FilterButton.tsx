@@ -27,15 +27,15 @@ const FilterButton = ({
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center gap-1 px-2 py-1 ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap ${
+        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border ${
           enabled
-            ? "text-primary"
-            : "border-background text-foreground-strong hover:bg-foreground-strong hover:text-background"
+            ? "border-primary text-primary"
+            : "border-border text-foreground-strong hover:bg-muted"
         }`}
       >
         <span
           onClick={onOpenModal}
-          className="text-center font-barlow uppercase text-[16px] cursor-pointer"
+          className="text-center font-barlow uppercase italic text-base cursor-pointer"
         >
           {text}
         </span>

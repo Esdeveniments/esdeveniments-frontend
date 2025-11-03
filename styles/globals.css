@@ -16,15 +16,17 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
+  overflow-x: hidden; /* prevent stray horizontal gap/scroll on mobile */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-font-smoothing: antialiased;
   -o-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font-roboto-flex), sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   color: #454545;
-  font-weight: 300;
-  letter-spacing: 0.01em;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 ::-webkit-scrollbar {
@@ -76,93 +78,59 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-h1 {
-  font-family: var(--font-barlow-condensed), sans-serif;
-  letter-spacing: 0.002em;
-  font-weight: 700;
-  font-size: 2rem; /* 32px */
-  line-height: 1.15;
-  margin: 0;
-}
-
-h2 {
-  font-family: var(--font-barlow-condensed), sans-serif;
-  letter-spacing: 0.002em;
-  font-weight: 700;
-  font-size: 1.5rem; /* 24px */
-  line-height: 1.2;
-  margin: 0;
-}
-h3 {
-  font-family: var(--font-barlow-condensed), sans-serif;
-  letter-spacing: 0.01em;
-  font-weight: 600;
-  font-size: 1.125rem; /* 18px */
-  line-height: 1.3;
-  margin: 0;
-}
-
 p {
-  font-family: var(--font-roboto-flex), sans-serif;
-  letter-spacing: 0.01em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0;
   font-size: 1rem; /* 16px */
   line-height: 1.6;
-}
-
-/* Responsive adjustments */
-@media (min-width: 768px) {
-  body {
-    font-size: 1.0625rem; /* ~17px */
-  }
-  h1 {
-    font-size: 2.25rem; /* 36px */
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    font-size: 1.125rem; /* ~18px */
-  }
-  h1 {
-    font-size: 2.5rem; /* 40px */
-  }
+  margin: 0;
 }
 
 @layer components {
   /* ===================================== */
-  /* TYPOGRAPHY */
+  /* TYPOGRAPHY - 4-LEVEL SYSTEM */
+  /* System font stack (GitHub, Facebook, Instagram, Twitter standard) */
+  /* Optimized weights for system fonts - stronger than custom fonts */
   /* ===================================== */
 
+  /* LEVEL 1: Hero/Brand - Main page title only */
   .heading-1 {
-    @apply font-barlow text-3xl md:text-5xl font-bold tracking-tight leading-tight uppercase italic;
+    @apply text-3xl md:text-4xl font-extrabold tracking-tight leading-none uppercase italic;
   }
 
+  /* LEVEL 2: Major Sections - Page subtitle, major section dividers */
   .heading-2 {
-    @apply font-barlow text-2xl md:text-4xl font-semibold tracking-wide leading-snug uppercase italic;
+    @apply text-2xl md:text-3xl font-bold tracking-tight leading-tight;
   }
 
+  /* LEVEL 3: Section Headers - Category sections, subsections */
   .heading-3 {
-    @apply font-barlow text-xl md:text-2xl font-semibold tracking-wide leading-snug uppercase italic;
+    @apply text-xl md:text-2xl font-bold tracking-tight leading-tight;
   }
 
+  /* LEVEL 4: Card Titles - Event titles in cards */
   .heading-4 {
-    @apply font-barlow text-lg md:text-xl font-semibold tracking-wide leading-snug uppercase italic;
+    @apply text-lg md:text-xl font-semibold tracking-normal leading-snug;
   }
 
+  /* BODY: Main content text - Descriptions, paragraphs */
   .body-large {
-    @apply font-roboto text-lg leading-relaxed tracking-normal;
+    @apply text-lg font-normal leading-relaxed tracking-normal;
   }
 
   .body-normal {
-    @apply font-roboto text-base leading-relaxed tracking-normal;
+    @apply text-base font-normal leading-relaxed tracking-normal;
   }
 
+  /* SMALL: Metadata - Dates, locations, captions, badges */
   .body-small {
-    @apply font-roboto text-sm leading-relaxed tracking-normal;
+    @apply text-sm font-normal leading-relaxed tracking-normal;
   }
 
+  /* LABEL: UI elements - Small badges, uppercase labels */
   .label {
-    @apply font-roboto text-xs uppercase tracking-wider font-medium;
+    @apply text-xs uppercase tracking-wider font-medium;
   }
 
   /* ===================================== */
@@ -170,19 +138,19 @@ p {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
   }
 
   /* ===================================== */

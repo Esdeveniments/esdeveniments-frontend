@@ -140,7 +140,7 @@ export default function Search(): JSX.Element {
         </div>
         <input
           type="text"
-          className="w-full border-0 placeholder:text-foreground/60 text-[16px] rounded-tr-input rounded-br-input focus:outline-none"
+          className="w-full border-0 placeholder:text-foreground/60 body-normal rounded-tr-input rounded-br-input focus:outline-none"
           placeholder="Què estàs buscant?"
           value={inputValue}
           onKeyDown={handleKeyPress}

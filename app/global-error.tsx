@@ -14,7 +14,7 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <h2>Alguna cosa ha anat malament (global)</h2>
+        <h2 className="heading-3">Alguna cosa ha anat malament (global)</h2>
         <button onClick={() => reset()}>Torna a carregar</button>
       </body>
     </html>
