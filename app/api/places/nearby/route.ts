@@ -14,18 +14,44 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const lat = searchParams.get("lat");
-  const lng = searchParams.get("lng");
-  const radius = searchParams.get("radius") || "5000";
-  const limit = parseInt(searchParams.get("limit") || "3", 10);
-  const eventDateISO = searchParams.get("date"); // YYYY-MM-DD in place-local calendar
+  const latStr = searchParams.get("lat");
+  const lngStr = searchParams.get("lng");
+  const radiusStr = searchParams.get("radius") || "5000";
+  const limitStr = searchParams.get("limit") || "3";
+  const rawDate = searchParams.get("date"); // YYYY-MM-DD in place-local calendar
 
-  if (!lat || !lng) {
+  // Validate coordinates
+  const lat = latStr ? parseFloat(latStr) : NaN;
+  const lng = lngStr ? parseFloat(lngStr) : NaN;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return NextResponse.json(
-      { error: "Missing required parameters: lat, lng" },
+      { error: "Invalid coordinates: lat,lng must be numbers" },
       { status: 400 }
     );
   }
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return NextResponse.json(
+      { error: "Invalid coordinates: lat ∈ [-90,90], lng ∈ [-180,180]" },
+      { status: 400 }
+    );
+  }
+
+  // Clamp radius (meters)
+  const radiusNum = parseFloat(radiusStr);
+  const radius = Number.isFinite(radiusNum)
+    ? Math.min(Math.max(radiusNum, 100), 50000)
+    : 5000;
+
+  // Clamp limit
+  const limitNum = parseInt(limitStr, 10);
+  const limit = Number.isFinite(limitNum)
+    ? Math.min(Math.max(limitNum, 1), 6)
+    : 3;
+
+  // Sanitize optional date (YYYY-MM-DD)
+  const eventDateISO = rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+    ? rawDate
+    : null;
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
@@ -317,8 +343,8 @@ export async function GET(request: NextRequest) {
       maxResultCount: requestedCount,
       locationRestriction: {
         circle: {
-          center: { latitude: parseFloat(lat), longitude: parseFloat(lng) },
-          radius: parseFloat(radius),
+          center: { latitude: lat, longitude: lng },
+          radius,
         },
       },
       rankPreference: "DISTANCE",
@@ -391,7 +417,7 @@ export async function GET(request: NextRequest) {
 
         const { info: opening_info, weekdayText } = buildOpeningInfo(
           place,
-          eventDateISO
+          eventDateISO ?? null
         );
         if (open_confidence) opening_info.open_confidence = open_confidence;
 

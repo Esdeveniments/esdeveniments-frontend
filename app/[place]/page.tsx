@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import Script from "next/script";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
@@ -19,8 +18,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
-import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import PlacePageShell from "@components/partials/PlacePageShell";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -209,37 +207,22 @@ export default async function Page({
       : null;
 
   return (
-    <>
-      {/* JSON-LD Structured Data */}
-      {structuredData && (
-        <Script
-          id={`events-${place}`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
-        />
-      )}
-
-      {/* Server-rendered events content (SEO optimized) */}
-      <HybridEventsList
-        initialEvents={eventsWithAds}
-        placeTypeLabel={placeTypeLabel}
-        pageData={pageData}
-        noEventsFound={noEventsFound}
-        place={place}
-        category={category}
-        date={date}
-        serverHasMore={!eventsResponse?.last}
-      />
-
-      {/* Client-side interactive layer (search, filters, floating button) */}
-      <ClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={placeTypeLabel}
-      />
-    </>
+    <PlacePageShell
+      nonce={nonce}
+      scripts={
+        structuredData
+          ? [{ id: `events-${place}`, data: structuredData }]
+          : []
+      }
+      initialEvents={eventsWithAds}
+      placeTypeLabel={placeTypeLabel}
+      pageData={pageData}
+      noEventsFound={noEventsFound}
+      place={place}
+      category={category}
+      date={date}
+      serverHasMore={!eventsResponse?.last}
+      categories={categories}
+    />
   );
 }

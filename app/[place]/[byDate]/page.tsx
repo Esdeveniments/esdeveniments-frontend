@@ -18,8 +18,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { PlaceResponseDTO } from "types/api/place";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
-import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import PlacePageShell from "@components/partials/PlacePageShell";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -313,57 +312,28 @@ export default async function ByDatePage({
       : null;
 
   return (
-    <>
-      {/* JSON-LD Structured Data */}
-      <Script
-        id="webpage-schema"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema),
-        }}
-      />
-      {collectionSchema && (
-        <Script
-          id="collection-schema"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(collectionSchema),
-          }}
-        />
-      )}
-      {structuredData && (
-        <Script
-          id={`events-${place}-${actualDate}`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
-        />
-      )}
-
-      {/* Server-rendered events content (SEO optimized) */}
-      <HybridEventsList
-        initialEvents={eventsWithAds}
-        placeTypeLabel={placeTypeLabel}
-        pageData={pageData}
-        noEventsFound={noEventsFound}
-        place={place}
-        category={finalCategory}
-        date={actualDate}
-        serverHasMore={serverHasMore}
-      />
-
-      {/* Client-side interactive layer (search, filters, floating button) */}
-      <ClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={placeTypeLabel}
-      />
-    </>
+    <PlacePageShell
+      nonce={nonce}
+      scripts={[
+        { id: "webpage-schema", data: webPageSchema },
+        ...(collectionSchema
+          ? [{ id: "collection-schema", data: collectionSchema }]
+          : []),
+        ...(structuredData
+          ? [
+              { id: `events-${place}-${actualDate}`, data: structuredData },
+            ]
+          : []),
+      ]}
+      initialEvents={eventsWithAds}
+      placeTypeLabel={placeTypeLabel}
+      pageData={pageData}
+      noEventsFound={noEventsFound}
+      place={place}
+      category={finalCategory}
+      date={actualDate}
+      serverHasMore={serverHasMore}
+      categories={categories}
+    />
   );
 }
