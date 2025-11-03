@@ -1,9 +1,9 @@
 import type { EventStatusMeta, EventTemporalStatus } from "types/event-status";
 
 const stateStyles: Record<EventStatusMeta["state"], string> = {
-  past: "bg-[#6b7280] text-background",
-  live: "bg-[#16a34a] text-background animate-pulse",
-  upcoming: "bg-[#2563eb] text-background",
+  past: "bg-foreground-strong/10 text-foreground-strong border border-foreground-strong/20",
+  live: "bg-success text-background border border-success-dark animate-pulse",
+  upcoming: "bg-info text-background border border-info-dark",
 };
 
 const EventStatusBadge: React.FC<{

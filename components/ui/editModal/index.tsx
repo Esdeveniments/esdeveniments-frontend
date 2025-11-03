@@ -79,7 +79,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="not-exist-description"
                   name="not-exist"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
@@ -97,7 +97,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="duplicated-description"
                   name="duplicated"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
@@ -115,7 +115,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="offensive-description"
                   name="offensive"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
@@ -133,7 +133,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="others-description"
                   name="others"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">

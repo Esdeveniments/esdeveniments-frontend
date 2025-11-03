@@ -68,7 +68,7 @@ export async function GET(request: Request) {
         totalPages: 0,
         last: true,
       },
-      { status: 200 }
+      { status: 500 }
     );
   }
 }

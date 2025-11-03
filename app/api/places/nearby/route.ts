@@ -48,10 +48,18 @@ export async function GET(request: NextRequest) {
     ? Math.min(Math.max(limitNum, 1), 6)
     : 3;
 
-  // Sanitize optional date (YYYY-MM-DD)
-  const eventDateISO = rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-    ? rawDate
-    : null;
+  // Sanitize optional date (YYYY-MM-DD) with calendar validation
+  let eventDateISO: string | null = null;
+  if (rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+    const candidate = `${rawDate}T00:00:00.000Z`;
+    const parsed = new Date(candidate);
+    if (
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.toISOString().startsWith(rawDate)
+    ) {
+      eventDateISO = rawDate;
+    }
+  }
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {

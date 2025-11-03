@@ -28,7 +28,16 @@ const pageFetcher = async (
 
   const res = await fetch(`/api/events?${qs.toString()}`);
   if (!res.ok) {
-    throw new Error(`Failed to fetch events: ${res.status}`);
+    console.error(`Failed to fetch events: ${res.status}`);
+    captureException(new Error(`Failed to fetch events: ${res.status}`));
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: params.size ?? 10,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
   }
   return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
@@ -77,7 +86,9 @@ export const useEvents = ({
 
   const range = deriveRange(date);
 
-  const baseParams: Omit<FetchEventsParams, "page" | "size"> & { size: number } = {
+  const baseParams: Omit<FetchEventsParams, "page" | "size"> & {
+    size: number;
+  } = {
     size: initialSize,
     place: place !== "catalunya" ? place : undefined,
     category,
@@ -113,7 +124,16 @@ export const useEvents = ({
     setSize,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
-    ([, placeParam, categoryParam, byDateParam, fromParam, toParam, pageIndex, sizeParam]) =>
+    ([
+      ,
+      placeParam,
+      categoryParam,
+      byDateParam,
+      fromParam,
+      toParam,
+      pageIndex,
+      sizeParam,
+    ]) =>
       pageFetcher({
         page: pageIndex as number,
         size: sizeParam as number,

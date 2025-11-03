@@ -210,12 +210,18 @@ export default function LocationDiscoveryWidget({
                           <li
                             key={location.value}
                             role="option"
-                            onClick={() => handleLocationSelect(location.label)}
-                            className="px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2"
                             aria-selected={currentLocation === location.label}
                           >
-                            <LocationMarkerIcon className="h-4 w-4 text-foreground/60 flex-shrink-0" />
-                            {location.label}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleLocationSelect(location.label)
+                              }
+                              className="w-full px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                            >
+                              <LocationMarkerIcon className="h-4 w-4 text-foreground/60 flex-shrink-0" />
+                              {location.label}
+                            </button>
                           </li>
                         ))}
                       </ul>

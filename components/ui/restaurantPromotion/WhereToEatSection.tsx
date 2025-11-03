@@ -61,36 +61,42 @@ export default function WhereToEatSection({
               aria-label={`Obrir ${place.name} a Google Maps`}
             >
               <div className="flex items-start gap-4">
-                {getPhotoUrl(place) ? (
-                  <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted ml-4">
-                    <NextImage
-                      src={getPhotoUrl(place)!}
-                      alt={`Foto de ${place.name}`}
-                      fill
-                      priority={false}
-                      sizes="80px"
-                      quality={getOptimalImageQuality({ isExternal: true })}
-                      className="object-cover"
-                      style={{ objectFit: "cover" }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-20 h-20 rounded-md flex items-center justify-center bg-muted text-foreground/60 flex-shrink-0 ml-4">
-                    <svg
-                      className="w-8 h-8"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                {(() => {
+                  const photoUrl = getPhotoUrl(place);
+                  if (!photoUrl) {
+                    return (
+                      <div className="w-20 h-20 rounded-md flex items-center justify-center bg-muted text-foreground/60 flex-shrink-0 ml-4">
+                        <svg
+                          className="w-8 h-8"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                          />
+                        </svg>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted ml-4">
+                      <NextImage
+                        src={photoUrl}
+                        alt={`Foto de ${place.name}`}
+                        fill
+                        priority={false}
+                        sizes="80px"
+                        quality={getOptimalImageQuality({ isExternal: true })}
+                        className="object-cover"
+                        style={{ objectFit: "cover" }}
                       />
-                    </svg>
-                  </div>
-                )}
+                    </div>
+                  );
+                })()}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-medium text-foreground-strong line-clamp-1 group-hover:underline min-w-0">

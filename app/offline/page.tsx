@@ -15,24 +15,14 @@ export default function OfflinePage() {
           No pots connectar-te a internet. Alguns continguts emmagatzemats
           podrien estar disponibles.
         </p>
-        <a
-          href="/"
-          className="inline-block bg-blue-500 hover:bg-blue-700 text-background font-bold py-2 px-4 rounded"
-          data-testid="offline-home-link"
-        >
+        <a href="/" className="btn-primary" data-testid="offline-home-link">
           Torna a l&apos;inici
         </a>
         <br />
-        <a
-          href="/barcelona"
-          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-background font-bold py-2 px-4 rounded mr-2"
-        >
+        <a href="/barcelona" className="btn-neutral mt-4 mr-2">
           Barcelona
         </a>
-        <a
-          href="/catalunya"
-          className="inline-block mt-4 bg-gray-500 hover:bg-gray-700 text-background font-bold py-2 px-4 rounded"
-        >
+        <a href="/catalunya" className="btn-neutral mt-4">
           Catalunya
         </a>
       </div>

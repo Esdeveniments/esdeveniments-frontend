@@ -21,7 +21,7 @@ export default async function ServerNavLink({
     const activeClass =
       activeLinkClass ||
       "text-primary bg-background border-b-2 border-primary ease-in-out duration-200";
-    classNameProps = `${activeClass} ${className}`;
+    classNameProps = `${className} ${activeClass}`;
   }
 
   return (

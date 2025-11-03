@@ -27,7 +27,7 @@ export default function LoadMoreButton({
         data-testid="load-more-button"
         className="btn-neutral transition-interactive"
         aria-label={
-          isLoading ? "Carregant esdeveniments" : "Carregar més esdeveniments"
+          showSpinner ? "Carregant esdeveniments" : "Carregar més esdeveniments"
         }
       >
         {showSpinner ? (

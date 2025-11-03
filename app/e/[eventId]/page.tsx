@@ -213,7 +213,7 @@ export default async function EventPage({
             {/* Event Categories - Server-side rendered for SEO */}
             <EventCategories
               categories={event.categories}
-              place={event.city?.slug || ""}
+              place={event.city?.slug || event.region?.slug || ""}
             />
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
