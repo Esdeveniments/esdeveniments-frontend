@@ -490,3 +490,13 @@ export interface ClientTestProps {
   category: string;
   date: string;
 }
+
+// Sitemap component props
+export interface SitemapLayoutProps {
+  children: React.ReactNode;
+  testId?: string;
+}
+
+export interface SitemapBreadcrumbProps {
+  items: BreadcrumbItem[];
+}

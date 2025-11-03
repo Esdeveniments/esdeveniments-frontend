@@ -14,6 +14,7 @@ import {
   generateCollectionPageSchema,
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
+import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -148,55 +149,23 @@ export default async function Page({
         />
       )}
 
-      <div
-        className="container flex flex-col justify-center items-center gap-2 pt-2 pb-14"
-        role="main"
-      >
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="w-full mb-4">
-          <ol className="flex items-center space-x-2 text-sm text-foreground/80">
-            <li>
-              <Link href="/" className="hover:text-foreground">
-                Inici
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <Link href="/sitemap" className="hover:text-foreground">
-                Arxiu
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <Link href={`/sitemap/${town}`} className="hover:text-foreground">
-                {townLabel}
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <span className="text-foreground capitalize">
-                {textMonth} {year}
-              </span>
-            </li>
-          </ol>
-        </nav>
+      <SitemapLayout>
+        <SitemapBreadcrumb items={breadcrumbs} />
 
-        {/* Header */}
-        <header className="w-full text-center mb-6">
-          <h1 className="font-semibold italic uppercase text-2xl mb-2">
+        <header className="text-center">
+          <h1 className="heading-2 mb-2">
             Arxiu {townLabel} - {textMonth} del {year}
           </h1>
-          <p className="text-foreground/80 mb-4">
+          <p className="body-normal text-foreground/80">
             {filteredEvents.length > 0
               ? `${filteredEvents.length} esdeveniments culturals documentats`
               : `No s'han trobat esdeveniments per aquest període`}
           </p>
         </header>
 
-        {/* Events List */}
         <section className="w-full">
           {filteredEvents.length > 0 ? (
-            <div className="flex flex-col items-start space-y-4">
+            <div className="stack gap-4">
               <h2 className="sr-only">Llista d&apos;esdeveniments</h2>
               {filteredEvents.map((event: EventSummaryResponseDTO) => {
                 const { formattedStart, formattedEnd } = getFormattedDate(
@@ -213,10 +182,10 @@ export default async function Page({
                       prefetch={false}
                       className="hover:text-primary block group"
                     >
-                      <h3 className="text-lg font-medium group-hover:text-blue-600 transition-colors">
+                      <h3 className="heading-4 group-hover:text-primary transition-colors">
                         {event.title}
                       </h3>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-foreground/80 mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 body-small text-foreground/80 mt-1">
                         <time dateTime={event.startDate}>
                           {formattedEnd
                             ? `${formattedStart} - ${formattedEnd}`
@@ -231,14 +200,14 @@ export default async function Page({
                         {event.categories && event.categories.length > 0 && (
                           <>
                             <span className="hidden sm:inline">•</span>
-                            <span className="text-blue-600">
+                            <span className="text-primary">
                               {event.categories[0].name}
                             </span>
                           </>
                         )}
                       </div>
                       {event.description && (
-                        <p className="text-sm text-foreground mt-2 line-clamp-2">
+                        <p className="body-small text-foreground mt-2 line-clamp-2">
                           {event.description}
                         </p>
                       )}
@@ -252,31 +221,28 @@ export default async function Page({
           )}
         </section>
 
-        {/* Footer with navigation hints */}
         {filteredEvents.length > 0 && (
-          <footer className="w-full mt-12 pt-8 border-t border-border">
-            <div className="text-center">
-              <p className="text-sm text-foreground/80 mb-4">
-                Vols explorar més esdeveniments de {townLabel}?
-              </p>
-              <div className="flex justify-center space-x-4">
-                <Link
-                  href={`/sitemap/${town}`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  Veure tots els arxius
-                </Link>
-                <Link
-                  href={`/${town}`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  Esdeveniments actuals
-                </Link>
-              </div>
+          <footer className="pt-8 border-t border-border text-center">
+            <p className="body-small text-foreground/80 mb-4">
+              Vols explorar més esdeveniments de {townLabel}?
+            </p>
+            <div className="flex-center gap-4">
+              <Link
+                href={`/sitemap/${town}`}
+                className="text-primary hover:text-primary-dark body-small transition-colors"
+              >
+                Veure tots els arxius
+              </Link>
+              <Link
+                href={`/${town}`}
+                className="text-primary hover:text-primary-dark body-small transition-colors"
+              >
+                Esdeveniments actuals
+              </Link>
             </div>
           </footer>
         )}
-      </div>
+      </SitemapLayout>
     </>
   );
 }
