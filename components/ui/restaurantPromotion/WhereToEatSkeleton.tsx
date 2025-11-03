@@ -18,7 +18,7 @@ export default function WhereToEatSkeleton({
         aria-labelledby="where-to-eat-skel"
       >
         <div className="flex items-center justify-between gap-2">
-          <h2 id="where-to-eat-skel" className="flex-1">
+          <h2 id="where-to-eat-skel" className="heading-2 flex-1">
             On pots menjar
           </h2>
           {onPromoteClick && (

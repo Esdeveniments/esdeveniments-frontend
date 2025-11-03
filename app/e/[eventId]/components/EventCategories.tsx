@@ -12,13 +12,14 @@ const EventCategories: React.FC<EventCategoriesProps> = ({
 
   return (
     <div className="w-full">
-      <div className="w-full flex flex-col gap-4 min-w-0">
+      <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
           Icon={TagIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title="Categories"
+          titleClassName="heading-2"
         />
-        <div className="flex flex-wrap gap-3 px-4">
+        <div className="flex flex-wrap gap-element-gap px-section-x">
           {categories.map((category) => (
             <Badge key={category.id} href={`/${place}/${category.slug}`}>
               {category.name}

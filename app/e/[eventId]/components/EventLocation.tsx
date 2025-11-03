@@ -43,14 +43,15 @@ export default function EventLocation({
   return (
     <>
       <div className="w-full">
-        <div className="w-full flex flex-col gap-4 pr-4 min-w-0">
+        <div className="w-full flex flex-col gap-element-gap pr-section-x min-w-0">
           <SectionHeading
             Icon={LocationIcon}
             iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
             title="Ubicació"
+            titleClassName="heading-2"
           />
-          <div className="w-full flex flex-col justify-center items-center gap-4 px-4">
-            <div className="w-full flex flex-col justify-center items-start gap-4">
+          <div className="w-full flex flex-col justify-center items-center gap-element-gap px-section-x">
+            <div className="w-full flex flex-col justify-center items-start gap-element-gap">
               <div className="w-full flex flex-col justify-start items-start gap-1">
                 <p className="body-normal text-foreground-strong">{location}</p>
                 {shouldShowCityRegion && (
@@ -78,12 +79,12 @@ export default function EventLocation({
       </div>
       {showMap && (
         <div
-          className="w-full flex flex-col justify-center items-end gap-6"
+          className="w-full flex flex-col justify-center items-end gap-card-padding"
           ref={mapsDivRef}
         >
           {isMapsVisible && <Maps location={location} />}
-          <div className="w-fit flex justify-end items-center gap-2 px-4 border-b-2 border-background hover:border-b-2 hover:border-foreground-strong ease-in-out duration-300 cursor-pointer">
-            <button className="flex gap-2" onClick={handleDirectionsClick}>
+          <div className="w-fit flex justify-end items-center gap-element-gap-sm px-section-x border-b-2 border-background hover:border-b-2 hover:border-foreground-strong ease-in-out duration-300 cursor-pointer">
+            <button className="flex gap-element-gap-sm" onClick={handleDirectionsClick}>
               <p className="body-normal font-medium">Com arribar</p>
               <ArrowRightIcon className="w-5 h-5" />
             </button>

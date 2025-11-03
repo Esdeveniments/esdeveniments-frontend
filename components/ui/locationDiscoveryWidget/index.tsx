@@ -164,7 +164,7 @@ export default function LocationDiscoveryWidget({
               </button>
 
               {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+                <div className="absolute top-full left-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden min-w-[300px] w-max">
                   {/* Search input */}
                   <div className="p-input-x border-b border-border border-opacity-30">
                     <div className="relative">
@@ -214,7 +214,7 @@ export default function LocationDiscoveryWidget({
                             className="px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2"
                             aria-selected={currentLocation === location.label}
                           >
-                            <LocationMarkerIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                            <LocationMarkerIcon className="h-4 w-4 text-foreground/60 flex-shrink-0" />
                             {location.label}
                           </li>
                         ))}

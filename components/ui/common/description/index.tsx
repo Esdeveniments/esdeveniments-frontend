@@ -25,6 +25,7 @@ export default function Description({
           Icon={DocumentIcon}
           iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
           title="Descripció"
+          titleClassName="heading-2"
         />
         <div className="w-full break-words overflow-hidden space-y-4 px-4">
           {introText && (

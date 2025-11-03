@@ -33,6 +33,7 @@ export default function WhereToEatSection({
           Icon={FireIcon}
           iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
           title="On pots menjar"
+          titleClassName="heading-2"
         />
         {onPromoteClick && (
           <button
@@ -44,7 +45,7 @@ export default function WhereToEatSection({
           </button>
         )}
       </div>
-      <div className="space-y-3  px-4">
+      <div className="space-y-element-gap  px-section-x">
         {places.slice(0, 3).map((place: GooglePlace) => {
           const openInfo = getOpenLineInfo(place);
           const price = formatPriceLevelGeneric(place.price_level);

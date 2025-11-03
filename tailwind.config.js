@@ -89,10 +89,18 @@ module.exports = {
         // Section spacing
         "section-y": "3rem", // 48px - Vertical section spacing
         "section-x": "1rem", // 16px - Horizontal section padding
+        // Variants for section spacing (optional tighter/looser)
+        "section-y-sm": "2rem", // 32px - Slightly tighter vertical spacing
+        "section-y-lg": "4rem", // 64px - Looser vertical spacing
 
         // Card spacing
         "card-padding": "1.5rem", // 24px - Card padding (desktop)
         "card-padding-sm": "1rem", // 16px - Card padding (mobile)
+
+        // Underlap/overlay spacing patterns
+        "underlap-hero-sm": "1rem", // 16px - Smaller pull variant
+        "underlap-hero": "1.5rem", // 24px - Default pull toward hero
+        "underlap-hero-lg": "2rem", // 32px - Stronger pull toward hero
 
         // Element gaps
         "element-gap": "0.75rem", // 12px - Default gap

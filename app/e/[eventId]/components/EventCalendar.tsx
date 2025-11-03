@@ -31,13 +31,14 @@ export default function EventCalendar({ event }: EventCalendarProps) {
 
   return (
     <div className="w-full">
-      <div className="w-full flex flex-col gap-4 min-w-0">
+      <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
           Icon={CalendarIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title="Data i hora"
+          titleClassName="heading-2"
         />
-        <div className="w-full flex flex-col gap-4 px-4">
+        <div className="w-full flex flex-col gap-element-gap px-section-x">
           <p className="body-normal font-semibold text-foreground-strong">
             {eventDate}
           </p>
@@ -48,7 +49,7 @@ export default function EventCalendar({ event }: EventCalendarProps) {
               : `${startTime} - ${endTime || ""}`}
           </p>
         </div>
-        <div className="px-4">
+        <div className="px-section-x">
           <AddToCalendar
             title={title}
             description={description}

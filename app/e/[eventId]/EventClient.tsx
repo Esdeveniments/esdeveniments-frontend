@@ -85,13 +85,14 @@ export default function EventClient({
 
       {/* Ad Section */}
       <div className="w-full h-full min-h-[250px]">
-        <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-element-gap">
           <SectionHeading
             Icon={SpeakerphoneIcon}
             iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
             title="Contingut patrocinat"
+            titleClassName="heading-2"
           />
-          <div className="px-4">
+          <div className="px-section-x">
             <AdArticle slot="9643657007" />
           </div>
         </div>

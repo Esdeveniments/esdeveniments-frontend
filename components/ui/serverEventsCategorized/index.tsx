@@ -110,7 +110,7 @@ function ServerEventsCategorized({
               return (
                 <div key={categorySlug}>
                   {/* Category Header */}
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <h3 className="heading-3">
                       Què hi ha {headerCategoryPhrase} a Catalunya?
                     </h3>
@@ -123,12 +123,10 @@ function ServerEventsCategorized({
                         },
                         categories
                       )}
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md body-small font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent dark:hover:bg-accent/50 h-9 px-4 py-2 has-[>svg]:px-3 text-primary hover:text-primary/80 gap-2 flex-shrink-0"
+                      className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
                     >
-                      <span className="flex items-center">
-                        Veure més
-                        <ChevronRightIcon className="w-5 h-5 ml-1" />
-                      </span>
+                      Veure més
+                      <ChevronRightIcon className="w-5 h-5" />
                     </Link>
                   </div>
 

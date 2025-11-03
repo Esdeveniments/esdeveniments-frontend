@@ -17,13 +17,14 @@ const EventDetailsSection: React.FC<{
 
   return (
     <div className="w-full">
-      <div className="w-full flex flex-col gap-4 min-w-0">
+      <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
           Icon={GlobeIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title="Detalls de l'Esdeveniment"
+          titleClassName="heading-2"
         />
-        <div className="flex flex-col px-4 gap-4">
+        <div className="flex flex-col px-section-x gap-element-gap">
           <EventStatusGroup
             temporalStatus={temporalStatus}
             formattedStart={formattedStart}

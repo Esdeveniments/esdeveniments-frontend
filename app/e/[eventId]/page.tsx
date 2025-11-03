@@ -164,27 +164,29 @@ export default async function EventPage({
         />
       )}
       <div className="w-full bg-background pb-10">
-        <div className="container w-full flex flex-col gap-8 min-w-0">
-          <article className="w-full flex flex-col gap-8">
-            {/* Event Media Hero */}
-            <div className="w-full">
-              <EventMedia event={event} title={title} />
-            </div>
-            {/* Share bar and view counter */}
-            <div className="w-full flex justify-between items-center -mt-4">
-              <EventShareBar
-                slug={eventSlug}
-                title={title}
-                description={event.description}
-                eventDateString={eventDateString}
-                location={event.location}
-                initialIsMobile={initialIsMobile}
-                cityName={cityName}
-                regionName={regionName}
-                postalCode={event.city?.postalCode || ""}
-              />
-              <div className="ml-2">
-                <ViewCounter visits={event.visits} />
+        <div className="container w-full flex flex-col gap-section-y min-w-0">
+          <article className="w-full flex flex-col gap-section-y">
+            {/* Event Media Hero + Share cluster */}
+            <div className="w-full flex flex-col">
+              <div className="w-full">
+                <EventMedia event={event} title={title} />
+              </div>
+              {/* Share bar and view counter */}
+              <div className="w-full flex justify-between items-center mt-element-gap-sm">
+                <EventShareBar
+                  slug={eventSlug}
+                  title={title}
+                  description={event.description}
+                  eventDateString={eventDateString}
+                  location={event.location}
+                  initialIsMobile={initialIsMobile}
+                  cityName={cityName}
+                  regionName={regionName}
+                  postalCode={event.city?.postalCode || ""}
+                />
+                <div className="ml-element-gap-sm">
+                  <ViewCounter visits={event.visits} />
+                </div>
               </div>
             </div>{" "}
             {/* Event Header with status pill - Server-side rendered */}
@@ -235,14 +237,15 @@ export default async function EventPage({
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
               <section className="w-full" aria-labelledby="event-faq">
-                <div className="w-full flex flex-col gap-4">
+                <div className="w-full flex flex-col gap-element-gap">
                   <SectionHeading
                     headingId="event-faq"
                     Icon={InfoIcon}
                     iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
                     title="Preguntes freqüents"
+                    titleClassName="heading-2"
                   />
-                  <dl className="space-y-3 px-4">
+                  <dl className="space-y-element-gap px-section-x">
                     {faqItems.map((item) => (
                       <div key={item.q}>
                         <dt className="body-normal font-semibold text-foreground-strong">
@@ -268,13 +271,14 @@ export default async function EventPage({
             />
             {/* Final Ad Section */}
             <div className="w-full h-full min-h-[250px]">
-              <div className="w-full flex flex-col gap-4">
+              <div className="w-full flex flex-col gap-element-gap">
                 <SectionHeading
                   Icon={SpeakerphoneIcon}
                   iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
                   title="Contingut patrocinat"
+                  titleClassName="heading-2"
                 />
-                <div className="px-4">
+                <div className="px-section-x">
                   <AdArticle slot="9643657007" />
                 </div>
               </div>
@@ -285,9 +289,9 @@ export default async function EventPage({
 
       {latestNews.length > 0 && (
         <div className="w-full bg-background pb-8">
-          <section className="container w-full flex flex-col gap-4">
+          <section className="container w-full flex flex-col gap-element-gap">
             <div className="w-full flex items-center justify-between">
-              <h2 className="heading-4">
+              <h2 className="heading-2">
                 Últimes notícies {placeLabel ? `a ${placeLabel}` : ""}
               </h2>
               <Link
@@ -298,7 +302,7 @@ export default async function EventPage({
                 Veure totes
               </Link>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-element-gap">
               {latestNews.map((newsItem, index) => (
                 <NewsCard
                   key={`${newsItem.id}-${index}`}

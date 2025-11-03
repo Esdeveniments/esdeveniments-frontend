@@ -11,11 +11,12 @@ const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
 
   return (
     <div className="w-full" data-testid="event-weather">
-      <div className="w-full flex flex-col gap-4 min-w-0">
+      <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
           Icon={CloudIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title="El temps"
+          titleClassName="heading-2"
         />
         <Weather weather={weather} />
       </div>

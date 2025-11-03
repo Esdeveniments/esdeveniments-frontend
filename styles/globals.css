@@ -96,22 +96,22 @@ p {
 
   /* LEVEL 1: Hero/Brand - Main page title only */
   .heading-1 {
-    @apply text-3xl md:text-4xl font-extrabold tracking-tight leading-none uppercase italic;
+    @apply text-3xl md:text-4xl font-bold tracking-tight leading-tight italic;
   }
 
   /* LEVEL 2: Major Sections - Page subtitle, major section dividers */
   .heading-2 {
-    @apply text-2xl md:text-3xl font-bold tracking-tight leading-tight;
+    @apply text-xl md:text-2xl font-semibold tracking-normal leading-relaxed;
   }
 
   /* LEVEL 3: Section Headers - Category sections, subsections */
   .heading-3 {
-    @apply text-xl md:text-2xl font-bold tracking-tight leading-tight;
+    @apply text-lg md:text-xl font-semibold tracking-normal leading-snug;
   }
 
   /* LEVEL 4: Card Titles - Event titles in cards */
   .heading-4 {
-    @apply text-lg md:text-xl font-semibold tracking-normal leading-snug;
+    @apply text-base md:text-lg font-medium tracking-normal leading-snug;
   }
 
   /* BODY: Main content text - Descriptions, paragraphs */
