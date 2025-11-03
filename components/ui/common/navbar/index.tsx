@@ -29,7 +29,7 @@ export default function Navbar() {
       key={pathname}
       as="nav"
       id="site-navbar"
-      className="w-full bg-background relative top-0 z-10 border-b border-border/50"
+      className="w-full bg-background sticky top-0 z-50 border-b border-border/50"
     >
       {({ open }) => (
         <>
@@ -65,7 +65,7 @@ export default function Navbar() {
                 </div>
                 {/* LaptopMenu */}
                 <div className="hidden md:flex md:w-1/2 justify-end items-center">
-                  <div className="flex items-center gap-x-4">
+                  <div className="flex-center gap-element-gap">
                     {navigation.map((item) => (
                       <ActiveLink
                         href={item.href}
@@ -79,13 +79,13 @@ export default function Navbar() {
                 </div>
               </div>
               {/* SecondBar - Search&Share&MenuIcon */}
-              <div className="fixed bottom-0 left-0 right-0 h-14 border-t border-border bg-background flex justify-evenly items-center gap-element-gap md:hidden px-section-x">
+              <div className="fixed bottom-0 left-0 right-0 h-14 border-t-2 border-border bg-background flex justify-evenly items-center gap-element-gap md:hidden px-section-x z-50 shadow-sm">
                 {/* Home */}
-                <div className="flex justify-center items-center rounded-xl cursor-pointer">
+                <div className="flex-center cursor-pointer">
                   <ActiveLink href="/">
                     <button
                       type="button"
-                      className="flex items-center p-2 border-b-background focus:outline-none cursor-pointer rounded-xl"
+                      className="flex-center p-2 focus:outline-none cursor-pointer"
                       aria-label="Home"
                     >
                       <HomeIcon className="h-6 w-6" />
@@ -94,11 +94,11 @@ export default function Navbar() {
                 </div>
 
                 {/* Share */}
-                <div className="flex justify-center items-center rounded-xl cursor-pointer">
+                <div className="flex-center cursor-pointer">
                   <ActiveLink href="/publica">
                     <button
                       type="button"
-                      className="flex items-center p-2 border-b-background focus:outline-none cursor-pointer rounded-xl"
+                      className="flex-center gap-element-gap-sm p-2 focus:outline-none cursor-pointer"
                       aria-label="Publish"
                     >
                       <PlusSmIcon className="h-6 w-6" />
@@ -108,11 +108,11 @@ export default function Navbar() {
                 </div>
 
                 {/* WhoAreWe */}
-                <div className="flex justify-center items-center rounded-xl cursor-pointer">
+                <div className="flex-center cursor-pointer">
                   <ActiveLink href="/qui-som">
                     <button
                       type="button"
-                      className="flex items-center p-2 border-b-background focus:outline-none cursor-pointer rounded-xl"
+                      className="flex-center p-2 focus:outline-none cursor-pointer"
                       aria-label="WhoAreWe"
                     >
                       <InfoIcon className="h-6 w-6" />

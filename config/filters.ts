@@ -32,7 +32,7 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
       const category = state.extraData?.categories?.find(
         (cat) => cat.slug === state.filters.category
       );
-      return category?.name.toUpperCase();
+      return category?.name;
     },
     getRemovalChanges: () => ({ category: "tots" }),
   },

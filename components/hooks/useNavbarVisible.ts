@@ -45,19 +45,9 @@ export function useNavbarVisible(navbarId: string = "site-navbar"): boolean {
 
     onScroll();
     // In some TS environments, `window` may be incorrectly typed.
-    // Cast to a minimal shape to avoid "never" narrowing issues.
-    const w = window as unknown as {
-      addEventListener: (
-        _type: string,
-        _listener: EventListenerOrEventListenerObject,
-        _options?: boolean | AddEventListenerOptions
-      ) => void;
-      removeEventListener: (
-        _type: string,
-        _listener: EventListenerOrEventListenerObject,
-        _options?: boolean | EventListenerOptions
-      ) => void;
-    };
+    // Use direct cast to avoid type narrowing issues.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
     w.addEventListener("scroll", onScroll, { passive: true });
     return () => w.removeEventListener("scroll", onScroll);
   }, [navbarId]);
