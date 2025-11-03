@@ -1,7 +1,11 @@
 import Script from "next/script";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { generateJsonData, getFormattedDate } from "@utils/helpers";
+import {
+  generateJsonData,
+  getFormattedDate,
+  formatCatalanA,
+} from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { fetchPlaceBySlug } from "@lib/api/places";
@@ -28,11 +32,15 @@ export async function generateMetadata({
   const { town, year, month } = await params;
   const place = await fetchPlaceBySlug(town);
   const townLabel = place?.name || town;
+  const placeType: "region" | "town" =
+    place?.type === "CITY" ? "town" : "region";
+  const locationPhrase = formatCatalanA(townLabel, placeType, false);
+
   let textMonth = month;
   if (month === "marc") textMonth = month.replace("c", "ç");
   return buildPageMeta({
     title: `Arxiu de ${townLabel} del ${textMonth} del ${year} - Esdeveniments.cat`,
-    description: `Descobreix què va passar a ${townLabel} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
+    description: `Descobreix què va passar ${locationPhrase} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
     canonical: `${siteUrl}/sitemap/${town}/${year}/${month}`,
   });
 }
@@ -60,6 +68,9 @@ export default async function Page({
     fetchPlaceBySlug(town),
   ]);
   const townLabel = place?.name || town;
+  const placeType: "region" | "town" =
+    place?.type === "CITY" ? "town" : "region";
+  const locationPhrase = formatCatalanA(townLabel, placeType, false);
 
   let textMonth = month;
   if (month === "marc") textMonth = month.replace("c", "ç");
@@ -101,7 +112,7 @@ export default async function Page({
   // Generate collection page schema
   const collectionPageSchema = generateCollectionPageSchema({
     title: `Arxiu de ${townLabel} - ${textMonth} ${year}`,
-    description: `Esdeveniments culturals que van tenir lloc a ${townLabel} durant el ${textMonth} del ${year}`,
+    description: `Esdeveniments culturals que van tenir lloc ${locationPhrase} durant el ${textMonth} del ${year}`,
     url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
     breadcrumbs,
     numberOfItems: filteredEvents.length,

@@ -14,7 +14,7 @@ import EventCalendar from "./components/EventCalendar";
 import { computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
 import EventClient from "./EventClient";
-import { getFormattedDate } from "@utils/helpers";
+import { getFormattedDate, formatCatalanA } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
@@ -105,6 +105,7 @@ export default async function EventPage({
   const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
   const latestNews = newsResponse.content || [];
   const placeLabel = event.city?.name || event.region?.name || "Catalunya";
+  const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref =
     placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`;
 
@@ -292,7 +293,10 @@ export default async function EventPage({
           <section className="container w-full flex flex-col gap-element-gap">
             <div className="w-full flex items-center justify-between">
               <h2 className="heading-2">
-                Últimes notícies {placeLabel ? `a ${placeLabel}` : ""}
+                Últimes notícies{" "}
+                {placeLabel && placeSlug !== "catalunya"
+                  ? formatCatalanA(placeLabel, placeType, false)
+                  : ""}
               </h2>
               <Link
                 href={newsHref}

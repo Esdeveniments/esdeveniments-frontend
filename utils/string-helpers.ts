@@ -84,6 +84,7 @@ export const truncateString = (str: string, num: number): string => {
  * @param name - The noun/place name to format
  * @param lowercase - Whether to lowercase the text (default: true)
  * @param includeArticle - Whether to include definite article (el/la/l') (default: false)
+ * @param type - Type of entity: "category", "region", "town", or "general" (default: "category")
  * @returns Formatted phrase with proper Catalan preposition (and article if requested)
  *
  * @example
@@ -92,11 +93,14 @@ export const truncateString = (str: string, num: number): string => {
  * formatCatalanDe("música", true, true) // "de la música"
  * formatCatalanDe("esport", true, true) // "de l'esport"
  * formatCatalanDe("teatre", true, true) // "del teatre"
+ * formatCatalanDe("Vallès Oriental", false, true, "region") // "del Vallès Oriental"
+ * formatCatalanDe("Selva", false, true, "region") // "de la Selva"
  */
 export function formatCatalanDe(
   name: string,
   lowercase: boolean = true,
-  includeArticle: boolean = false
+  includeArticle: boolean = false,
+  type: "category" | "region" | "town" | "general" = "category"
 ): string {
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
@@ -112,6 +116,23 @@ export function formatCatalanDe(
   const firstWord = text.split(/\s+/)[0];
   const firstWordStartsWithVowelOrH = /^[aeiouàéèíïòóúüh]/i.test(firstWord);
 
+  // Handle regions using the same logic as formatCatalanA
+  if (type === "region") {
+    if (firstWordStartsWithVowelOrH) {
+      return `de l'${text}`;
+    } else if (isFemininePlaceName(text)) {
+      return `de la ${text}`;
+    } else {
+      return `del ${text}`;
+    }
+  }
+
+  // Handle towns (always just "de" with no article for towns)
+  if (type === "town") {
+    return startsWithVowelOrH ? `d'${text}` : `de ${text}`;
+  }
+
+  // Handle categories and general nouns
   // Special cases for specific category names
   const FEMININE_EXCEPTIONS = [
     "gent gran", // la gent gran
@@ -140,6 +161,7 @@ export function formatCatalanDe(
     return isPlural ? `dels ${text}` : `del ${text}`;
   }
 }
+
 /**
  * Catalan preposition "a" with proper article handling.
  * Returns natural phrase like "al Montseny", "a Barcelona", or "a la Selva".

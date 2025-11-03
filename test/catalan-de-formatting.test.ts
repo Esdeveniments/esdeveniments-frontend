@@ -55,6 +55,34 @@ describe("formatCatalanDe with article support", () => {
         "de l'art contemporani"
       );
     });
+
+    it("should handle regions with proper articles", () => {
+      expect(formatCatalanDe("Vallès Oriental", false, true, "region")).toBe(
+        "del Vallès Oriental"
+      );
+      expect(formatCatalanDe("Selva", false, true, "region")).toBe(
+        "de la Selva"
+      );
+      expect(formatCatalanDe("Garrotxa", false, true, "region")).toBe(
+        "de la Garrotxa"
+      );
+      expect(formatCatalanDe("Alt Empordà", false, true, "region")).toBe(
+        "de l'Alt Empordà"
+      );
+      expect(formatCatalanDe("Penedès", false, true, "region")).toBe(
+        "del Penedès"
+      ); // masculine exception
+    });
+
+    it("should handle towns without articles", () => {
+      expect(formatCatalanDe("Barcelona", false, true, "town")).toBe(
+        "de Barcelona"
+      );
+      expect(formatCatalanDe("Hospitalet", false, true, "town")).toBe(
+        "d'Hospitalet"
+      );
+      expect(formatCatalanDe("Girona", false, true, "town")).toBe("de Girona");
+    });
   });
 
   describe("backward compatibility", () => {

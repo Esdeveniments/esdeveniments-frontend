@@ -17,6 +17,7 @@ export default function PlacePageShell({
   category,
   date,
   serverHasMore = false,
+  hasNews = false,
   // ClientInteractiveLayer props
   categories,
 }: {
@@ -30,6 +31,7 @@ export default function PlacePageShell({
   category?: string;
   date?: string;
   serverHasMore?: boolean;
+  hasNews?: boolean;
   categories: CategorySummaryResponseDTO[];
 }) {
   return (
@@ -54,6 +56,7 @@ export default function PlacePageShell({
         category={category}
         date={date}
         serverHasMore={serverHasMore}
+        hasNews={hasNews}
       />
 
       <ClientInteractiveLayer

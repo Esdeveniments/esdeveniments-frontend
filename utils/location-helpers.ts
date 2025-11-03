@@ -69,7 +69,8 @@ export const deg2rad = (deg: number): number => {
 // Preference: use provided human label when available, fallback to capitalized slug
 export function getNewsCta(
   place: string | undefined,
-  placeLabel?: string
+  placeLabel?: string,
+  placeType?: "region" | "town"
 ): { href: string; text: string } {
   const safePlace = (place || "").trim();
   const href =
@@ -95,8 +96,11 @@ export function getNewsCta(
       ? placeLabel
       : formatWords(safePlace.replace(/-/g, " "));
 
-  // Use existing Catalan contraction helper for "de" forms
-  const deLabel = formatCatalanDe(baseLabel, false); // keep original casing of baseLabel
+  // Use existing Catalan contraction helper for "de" forms with proper article handling
+  // For regions, use article (del/de la/de l'); for towns, no article (de)
+  const deLabel = placeType
+    ? formatCatalanDe(baseLabel, false, true, placeType)
+    : formatCatalanDe(baseLabel, false); // fallback to no article if type unknown
 
   // CTA copy: Simple and direct news label
   const text =

@@ -92,7 +92,7 @@ describe("Filter Configuration System", () => {
       ).toBeUndefined();
       expect(
         FilterOperations.getDisplayText("category", mockDisplayState)
-      ).toBe("CONCERTS");
+      ).toBe("Concerts");
     });
 
     test("hasActiveFilters works correctly", () => {

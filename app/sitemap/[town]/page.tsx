@@ -6,6 +6,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
+import { formatCatalanA } from "@utils/helpers";
 import {
   buildPageMeta,
   generateCollectionPageSchema,
@@ -20,9 +21,13 @@ export async function generateMetadata({
   const { town } = await params;
   const place = await fetchPlaceBySlug(town);
   const label = place?.name || town;
+  const placeType: "region" | "town" =
+    place?.type === "CITY" ? "town" : "region";
+  const locationPhrase = formatCatalanA(label, placeType, false);
+
   return buildPageMeta({
-    title: `Arxiu. Descobreix tot el que ha passat a ${label} - Esdeveniments.cat`,
-    description: `Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`,
+    title: `Arxiu. Descobreix tot el que ha passat ${locationPhrase} - Esdeveniments.cat`,
+    description: `Descobreix tot el què ha passat ${locationPhrase} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`,
     canonical: `${siteUrl}/sitemap/${town}`,
   });
 }

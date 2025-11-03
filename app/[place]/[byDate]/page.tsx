@@ -3,6 +3,7 @@ import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { fetchPlaces } from "@lib/api/places";
 import { getPlaceTypeAndLabel, toLocalDateString } from "@utils/helpers";
+import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -266,7 +267,11 @@ export default async function ByDatePage({
 
   const eventsWithAds = insertAds(events);
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
+  // Fetch place type and check news in parallel for better performance
+  const [placeTypeLabel, hasNews] = await Promise.all([
+    getPlaceTypeAndLabel(place),
+    hasNewsForPlace(place),
+  ]);
 
   const categoryData = categories.find((cat) => cat.slug === finalCategory);
 
@@ -331,6 +336,7 @@ export default async function ByDatePage({
       date={actualDate}
       serverHasMore={serverHasMore}
       categories={categories}
+      hasNews={hasNews}
     />
   );
 }

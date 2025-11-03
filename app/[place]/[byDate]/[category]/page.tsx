@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -185,11 +186,14 @@ export default async function FilteredPage({
     fetchParams.lon = filters.lon;
   }
 
-  // Fetch events and place label in parallel
-  const [placeTypeAndLabel, initialEventsResponse] = await Promise.all([
-    getPlaceTypeAndLabel(filters.place),
-    fetchEvents(fetchParams),
-  ]);
+  // Fetch events, place label, and news check in parallel
+  const [placeTypeAndLabel, initialEventsResponse, hasNews] = await Promise.all(
+    [
+      getPlaceTypeAndLabel(filters.place),
+      fetchEvents(fetchParams),
+      hasNewsForPlace(filters.place),
+    ]
+  );
   let eventsResponse = initialEventsResponse;
   let events = eventsResponse?.content || [];
   let noEventsFound = false;
@@ -322,6 +326,7 @@ export default async function FilteredPage({
       serverHasMore={!eventsResponse?.last}
       noEventsFound={noEventsFound}
       categories={categories}
+      hasNews={hasNews}
     />
   );
 }

@@ -5,6 +5,7 @@ import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { generatePagesData } from "@components/partials/generatePagesData";
+import { hasNewsForPlace } from "@lib/api/news";
 import {
   buildPageMeta,
   generateItemListStructuredData,
@@ -184,12 +185,14 @@ export default async function Page({
   const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await fetchCategories();
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-  }
+  // Fetch categories and check news in parallel for better performance
+  const [categories, hasNews] = await Promise.all([
+    fetchCategories().catch((error) => {
+      console.error("Error fetching categories:", error);
+      return [] as CategorySummaryResponseDTO[];
+    }),
+    hasNewsForPlace(place),
+  ]);
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
 
@@ -210,9 +213,7 @@ export default async function Page({
     <PlacePageShell
       nonce={nonce}
       scripts={
-        structuredData
-          ? [{ id: `events-${place}`, data: structuredData }]
-          : []
+        structuredData ? [{ id: `events-${place}`, data: structuredData }] : []
       }
       initialEvents={eventsWithAds}
       placeTypeLabel={placeTypeLabel}
@@ -223,6 +224,7 @@ export default async function Page({
       date={date}
       serverHasMore={!eventsResponse?.last}
       categories={categories}
+      hasNews={hasNews}
     />
   );
 }

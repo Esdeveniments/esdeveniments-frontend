@@ -9,21 +9,24 @@ import { getNewsCta } from "@utils/helpers";
 import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
 
-// Server wrapper: renders SEO content + initial SSR events (already including ads)
-// with no client hydration except where necessary (Card components are still
-// client, but wrapper & heading/subtitle remain server-only). Pagination &
-// dynamic fetching live in the client enhancer loaded below the fold.
-
 function HybridEventsList({
   initialEvents = [],
   pageData,
   noEventsFound = false,
   place,
+  placeTypeLabel,
   category,
   date,
   serverHasMore = false,
+  hasNews = false,
 }: HybridEventsListProps): ReactElement {
-  const { href: newsHref, text: newsText } = getNewsCta(place);
+  const placeLabel = placeTypeLabel?.label;
+  const placeType = placeTypeLabel?.type === "town" ? "town" : "region";
+  const { href: newsHref, text: newsText } = getNewsCta(
+    place,
+    placeLabel,
+    placeType
+  );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
 
@@ -56,7 +59,7 @@ function HybridEventsList({
         <>
           <div className="px-section-x mt-element-gap md:flex md:items-start md:justify-between gap-element-gap">
             <h1 className={`${titleClass} flex-1`}>{pageData.title}</h1>
-            {place && (
+            {place && hasNews && (
               <div className="mb-4 md:mb-0 md:mt-0 shrink-0">
                 <NewsCta
                   href={newsHref}
@@ -66,7 +69,11 @@ function HybridEventsList({
               </div>
             )}
           </div>
-          <p className={`${subtitleClass} text-left mb-element-gap px-section-x`}>{pageData.subTitle}</p>
+          <p
+            className={`${subtitleClass} text-left mb-element-gap px-section-x`}
+          >
+            {pageData.subTitle}
+          </p>
         </>
       )}
 
