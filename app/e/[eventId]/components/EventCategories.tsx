@@ -19,7 +19,7 @@ const EventCategories: React.FC<EventCategoriesProps> = ({
           title="Categories"
           titleClassName="heading-2"
         />
-        <div className="flex flex-wrap gap-element-gap px-section-x">
+        <div className="flex flex-wrap gap-element-gap px-section-x text-foreground-strong">
           {categories.map((category) => (
             <Badge key={category.id} href={`/${place}/${category.slug}`}>
               {category.name}

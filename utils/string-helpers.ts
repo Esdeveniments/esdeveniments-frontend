@@ -80,17 +80,66 @@ export const truncateString = (str: string, num: number): string => {
  * Catalan contraction for the preposition "de" before vowels/"h".
  * Returns natural phrase like "d'exposicions" or "de teatre".
  * Defaults to lowercasing the noun for natural reading in CT.
+ *
+ * @param name - The noun/place name to format
+ * @param lowercase - Whether to lowercase the text (default: true)
+ * @param includeArticle - Whether to include definite article (el/la/l') (default: false)
+ * @returns Formatted phrase with proper Catalan preposition (and article if requested)
+ *
+ * @example
+ * formatCatalanDe("Barcelona") // "de barcelona"
+ * formatCatalanDe("Barcelona", false) // "de Barcelona"
+ * formatCatalanDe("música", true, true) // "de la música"
+ * formatCatalanDe("esport", true, true) // "de l'esport"
+ * formatCatalanDe("teatre", true, true) // "del teatre"
  */
 export function formatCatalanDe(
   name: string,
-  lowercase: boolean = true
+  lowercase: boolean = true,
+  includeArticle: boolean = false
 ): string {
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
   const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(text);
-  return `${startsWithVowelOrH ? "d'" : "de "}${text}`;
-}
 
+  if (!includeArticle) {
+    // Original behavior: just "de" or "d'"
+    return `${startsWithVowelOrH ? "d'" : "de "}${text}`;
+  }
+
+  // With article: determine gender and apply proper article
+  // For multi-word phrases, analyze the first word for article determination
+  const firstWord = text.split(/\s+/)[0];
+  const firstWordStartsWithVowelOrH = /^[aeiouàéèíïòóúüh]/i.test(firstWord);
+
+  // Special cases for specific category names
+  const FEMININE_EXCEPTIONS = [
+    "gent gran", // la gent gran
+    "dansa", // la dansa
+  ];
+
+  const isFeminineException = FEMININE_EXCEPTIONS.some((exception) =>
+    text.includes(exception)
+  );
+
+  // Most Catalan nouns ending in -a are feminine, others typically masculine
+  // Common patterns for categories: música (f), teatre (m), cinema (m), etc.
+  const isFeminine =
+    isFeminineException ||
+    (/a$/i.test(firstWord) && !firstWord.match(/cinema|programa|tema$/i));
+  const isPlural = /s$/i.test(firstWord) && !isFeminineException; // Check first word for plural
+
+  if (firstWordStartsWithVowelOrH) {
+    // Vowel/h: use "de l'" regardless of gender (check first word)
+    return `de l'${text}`;
+  } else if (isFeminine) {
+    // Feminine: "de la" (singular) or "de les" (plural)
+    return isPlural ? `de les ${text}` : `de la ${text}`;
+  } else {
+    // Masculine: "del" (de + el, singular) or "dels" (de + els, plural)
+    return isPlural ? `dels ${text}` : `del ${text}`;
+  }
+}
 /**
  * Catalan preposition "a" with proper article handling.
  * Returns natural phrase like "al Montseny", "a Barcelona", or "a la Selva".

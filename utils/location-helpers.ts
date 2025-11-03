@@ -98,10 +98,8 @@ export function getNewsCta(
   // Use existing Catalan contraction helper for "de" forms
   const deLabel = formatCatalanDe(baseLabel, false); // keep original casing of baseLabel
 
-  // CTA copy (cultural focus). Uses contraction helper for natural Catalan.
+  // CTA copy: Simple and direct news label
   const text =
-    safePlace === "catalunya"
-      ? "Actualitat cultural de Catalunya"
-      : `Actualitat cultural ${deLabel}`;
+    safePlace === "catalunya" ? "Notícies de Catalunya" : `Notícies ${deLabel}`;
   return { href, text };
 }

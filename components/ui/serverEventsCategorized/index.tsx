@@ -98,21 +98,15 @@ function ServerEventsCategorized({
                   ] || category;
               }
 
-              // Build natural Catalan phrasing for headers/CTA
-              const normalizedName = (categoryName || "").toLowerCase();
-              const isGentGran =
-                categorySlug === "gent-gran" ||
-                normalizedName.includes("gent gran");
-              const headerCategoryPhrase = isGentGran
-                ? `per a la ${normalizedName}`
-                : formatCatalanDe(categoryName);
+              // Build natural Catalan phrasing: "L'agenda de/del/d'/de la [category]"
+              const categoryPhrase = formatCatalanDe(categoryName, true, true);
 
               return (
                 <div key={categorySlug}>
                   {/* Category Header */}
                   <div className="flex justify-between items-center">
                     <h3 className="heading-3">
-                      Què hi ha {headerCategoryPhrase} a Catalunya?
+                      L&apos;agenda {categoryPhrase} a Catalunya
                     </h3>
                     <Link
                       href={buildCanonicalUrl(
