@@ -24,11 +24,13 @@ function HybridEventsList({
   serverHasMore = false,
 }: HybridEventsListProps): ReactElement {
   const { href: newsHref, text: newsText } = getNewsCta(place);
+  const titleClass = place ? "heading-2" : "heading-1";
+  const subtitleClass = place ? "body-normal" : "body-large";
 
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
-        className="container flex-col justify-center items-center mt-32"
+        className="container flex-col justify-center items-center mt-sticky-offset"
         data-testid="events-list"
       >
         <NoEventsFound title={pageData?.notFoundText} />
@@ -47,13 +49,13 @@ function HybridEventsList({
 
   return (
     <div
-      className="container flex-col justify-center items-center mt-32"
+      className="container flex-col justify-center items-center mt-sticky-offset"
       data-testid="events-list"
     >
       {pageData && (
         <>
           <div className="px-section-x mt-element-gap md:flex md:items-start md:justify-between gap-element-gap">
-            <h1 className="heading-1 flex-1">{pageData.title}</h1>
+            <h1 className={`${titleClass} flex-1`}>{pageData.title}</h1>
             {place && (
               <div className="mb-4 md:mb-0 md:mt-0 shrink-0">
                 <NewsCta
@@ -64,7 +66,7 @@ function HybridEventsList({
               </div>
             )}
           </div>
-          <p className="body-large text-left mb-element-gap px-section-x">{pageData.subTitle}</p>
+          <p className={`${subtitleClass} text-left mb-element-gap px-section-x`}>{pageData.subTitle}</p>
         </>
       )}
 

@@ -49,14 +49,10 @@ const ServerFilters = ({
           data-testid="filters-open"
         >
           <AdjustmentsIcon
-            className={
-              isAnyFilterSelected()
-                ? "w-5 h-5 text-primary"
-                : "w-5 h-5 text-foreground-strong"
-            }
+            className="w-5 h-5 text-foreground-strong hover:text-primary"
             aria-hidden="true"
           />
-          <p className="hidden md:block uppercase italic font-semibold font-barlow text-base">
+          <p className="hidden md:block body-small font-medium">
             Filtres
           </p>
         </div>

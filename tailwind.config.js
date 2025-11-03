@@ -92,6 +92,8 @@ module.exports = {
         // Variants for section spacing (optional tighter/looser)
         "section-y-sm": "2rem", // 32px - Slightly tighter vertical spacing
         "section-y-lg": "4rem", // 64px - Looser vertical spacing
+        // Layout offsets for fixed UI (e.g., sticky search/filters)
+        "sticky-offset": "8rem", // 128px - Clear fixed search/filters on list pages
 
         // Card spacing
         "card-padding": "1.5rem", // 24px - Card padding (desktop)
