@@ -109,7 +109,7 @@ function capitalizePlaces(text: string): string {
   );
 
   // 2) Title-case inside parentheses
-  text = text.replace(/\(([^\)]+)\)/g, (_m, inside) => {
+  text = text.replace(/\(([^\\)]+)\)/g, (_m, inside) => {
     const words = inside
       .split(/\s+/)
       .map((w: string) => (w.length ? capitalizeFirstLetter(w) : w));
@@ -135,10 +135,12 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     ? `${cityName}${regionName ? ` (${regionName})` : ""}`
     : regionName || event.location || "";
 
-  const locationType = event.region
-    ? "region"
-    : event.city
+  // Determine location type: prioritize city over region
+  // If event has a city, it's a "town" even if it also has a region (e.g., "Tona (Osona)")
+  const locationType = event.city
     ? "town"
+    : event.region
+    ? "region"
     : "general";
   // formatCatalanA will handle "a", "al", "a la", etc.; we'll capitalize names afterwards
   const preposition = formatCatalanA(placeSummary, locationType);
