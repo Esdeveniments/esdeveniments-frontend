@@ -103,7 +103,10 @@ export function getNewsCta(
     : formatCatalanDe(baseLabel, false); // fallback to no article if type unknown
 
   // CTA copy: Simple and direct news label
+  // Fallback to "Catalunya" when place is empty to avoid dangling preposition
   const text =
-    safePlace === "catalunya" ? "Notícies de Catalunya" : `Notícies ${deLabel}`;
+    safePlace === "catalunya" || safePlace === ""
+      ? "Notícies de Catalunya"
+      : `Notícies ${deLabel}`;
   return { href, text };
 }

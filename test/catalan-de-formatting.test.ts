@@ -20,10 +20,34 @@ describe("formatCatalanDe with article support", () => {
   });
 
   describe("with article (new behavior)", () => {
-    it("should use 'de l'' before vowels regardless of gender", () => {
+    it("should use 'de l'' before vowels for singular nouns", () => {
       expect(formatCatalanDe("esport", true, true)).toBe("de l'esport");
       expect(formatCatalanDe("art", true, true)).toBe("de l'art");
       expect(formatCatalanDe("humor", true, true)).toBe("de l'humor");
+    });
+
+    it("should use proper plural articles before vowels (CRITICAL FIX)", () => {
+      // Feminine plural + vowel = "de les"
+      expect(formatCatalanDe("activitats", true, true)).toBe(
+        "de les activitats"
+      );
+      expect(formatCatalanDe("exposicions", true, true)).toBe(
+        "de les exposicions"
+      );
+
+      // Masculine plural + vowel = "dels"
+      expect(formatCatalanDe("espectacles", true, true)).toBe(
+        "dels espectacles"
+      );
+      expect(formatCatalanDe("events", true, true)).toBe("dels events");
+
+      // Should NOT produce "de l'activitats" or "de l'espectacles"
+      expect(formatCatalanDe("activitats", true, true)).not.toBe(
+        "de l'activitats"
+      );
+      expect(formatCatalanDe("espectacles", true, true)).not.toBe(
+        "de l'espectacles"
+      );
     });
 
     it("should use 'de la' before feminine consonants", () => {

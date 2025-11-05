@@ -145,14 +145,30 @@ export function formatCatalanDe(
 
   // Most Catalan nouns ending in -a are feminine, others typically masculine
   // Common patterns for categories: música (f), teatre (m), cinema (m), etc.
+  // For plural detection, check if ends with -s and analyze base form for gender
+  const isPlural = /s$/i.test(firstWord) && !isFeminineException;
+
+  // For gender detection on plural words, check the stem (without final 's')
+  const stemForGender = isPlural ? firstWord.slice(0, -1) : firstWord;
+
+  // Enhanced feminine detection for both singular and plural forms
+  // Feminine endings: -a, -tat (activitat), -ció/-cion (exposició/exposicion), -sió/-sion, -ina, -ena, -ura, -esa
+  const feminineSingularEndings =
+    /a$|tat$|ció$|cion$|sió$|sion$|ina$|ena$|ura$|esa$/i;
   const isFeminine =
     isFeminineException ||
-    (/a$/i.test(firstWord) && !firstWord.match(/cinema|programa|tema$/i));
-  const isPlural = /s$/i.test(firstWord) && !isFeminineException; // Check first word for plural
+    (feminineSingularEndings.test(stemForGender) &&
+      !stemForGender.match(/cinema|programa|tema$/i));
 
   if (firstWordStartsWithVowelOrH) {
-    // Vowel/h: use "de l'" regardless of gender (check first word)
-    return `de l'${text}`;
+    // For vowel/h: handle plural properly before applying elision
+    if (isPlural) {
+      // Plural + vowel: use proper plural articles
+      return isFeminine ? `de les ${text}` : `dels ${text}`;
+    } else {
+      // Singular + vowel: use "de l'" regardless of gender
+      return `de l'${text}`;
+    }
   } else if (isFeminine) {
     // Feminine: "de la" (singular) or "de les" (plural)
     return isPlural ? `de les ${text}` : `de la ${text}`;
