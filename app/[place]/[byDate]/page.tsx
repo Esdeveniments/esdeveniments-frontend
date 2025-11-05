@@ -11,8 +11,7 @@ import {
   generateWebPageSchema,
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
-import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
-import type { DateFunctions } from "types/dates";
+import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { PlaceResponseDTO } from "types/api/place";
@@ -161,26 +160,16 @@ export default async function ByDatePage({
     typeof search.category === "string" ? search.category : undefined;
   const finalCategory = searchCategory || actualCategory;
 
-  const dateFunctions: DateFunctions = {
-    avui: today,
-    dema: tomorrow,
-    setmana: week,
-    "cap-de-setmana": weekend,
-  };
-
   const paramsForFetch: FetchEventsParams = {
     page: 0,
     size: 10,
   };
 
   // Only add date filters if actualDate is not "tots"
-  if (actualDate !== "tots") {
-    const selectedFunction =
-      dateFunctions[actualDate as keyof typeof dateFunctions] || today;
-    const { from, until } = selectedFunction();
-
-    paramsForFetch.from = toLocalDateString(from);
-    paramsForFetch.to = toLocalDateString(until);
+  const dateRange = getDateRangeFromByDate(actualDate);
+  if (dateRange) {
+    paramsForFetch.from = toLocalDateString(dateRange.from);
+    paramsForFetch.to = toLocalDateString(dateRange.until);
   }
 
   if (place !== "catalunya") {

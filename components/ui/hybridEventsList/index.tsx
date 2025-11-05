@@ -21,7 +21,12 @@ function HybridEventsList({
   hasNews = false,
 }: HybridEventsListProps): ReactElement {
   const placeLabel = placeTypeLabel?.label;
-  const placeType = placeTypeLabel?.type === "town" ? "town" : "region";
+  const placeType =
+    placeTypeLabel?.type === "town"
+      ? "town"
+      : placeTypeLabel?.type === "region"
+      ? "region"
+      : undefined;
   const { href: newsHref, text: newsText } = getNewsCta(
     place,
     placeLabel,

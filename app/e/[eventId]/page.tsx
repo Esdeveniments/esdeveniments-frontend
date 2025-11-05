@@ -165,7 +165,7 @@ export default async function EventPage({
         />
       )}
       <div className="w-full bg-background pb-10">
-        <div className="container w-full flex flex-col gap-section-y min-w-0">
+        <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
             {/* Event Media Hero + Share cluster */}
             <div className="w-full flex flex-col">

@@ -118,6 +118,27 @@ export function formatCatalanDe(
 
   // Handle regions using the same logic as formatCatalanA
   if (type === "region") {
+    // Plural region detection: only true plurals, not singular -ès/-és names
+    // True plurals: "Terres de l'Ebre", "Garrigues" (end in -es with plural article)
+    // NOT plural: "Vallès", "Gironès", "Penedès" (singular masculine -ès suffix)
+    const firstWordLower = firstWord.toLowerCase();
+    const regionIsPlural =
+      /s$/i.test(firstWord) &&
+      firstWord.length > 2 &&
+      // Must end in -es (not -ès which is singular masculine)
+      /[^è]es$/i.test(firstWordLower);
+
+    if (regionIsPlural) {
+      // For plural regions, check if feminine using base word (stem without 's')
+      const stemForGender = firstWord.slice(0, -1);
+      const femininePluralEndings = /a$|e$/i; // terre(s), garrique(s)
+      const isFemininePlural =
+        femininePluralEndings.test(stemForGender) || isFemininePlaceName(text);
+
+      return isFemininePlural ? `de les ${text}` : `dels ${text}`;
+    }
+
+    // Singular regions: check vowel first, then gender
     if (firstWordStartsWithVowelOrH) {
       return `de l'${text}`;
     } else if (isFemininePlaceName(text)) {

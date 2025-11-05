@@ -30,7 +30,7 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { toLocalDateString } from "@utils/helpers";
-import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
+import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 
 export const revalidate = 600;
 
@@ -163,17 +163,10 @@ export default async function FilteredPage({
   }
 
   // Use explicit date range for reliability across backends
-  if (filters.byDate !== "tots") {
-    const map: Record<string, () => { from: Date; until: Date }> = {
-      avui: today,
-      dema: tomorrow,
-      setmana: week,
-      "cap-de-setmana": weekend,
-    };
-    const fn = map[filters.byDate] || today;
-    const { from, until } = fn();
-    fetchParams.from = toLocalDateString(from);
-    fetchParams.to = toLocalDateString(until);
+  const dateRange = getDateRangeFromByDate(filters.byDate);
+  if (dateRange) {
+    fetchParams.from = toLocalDateString(dateRange.from);
+    fetchParams.to = toLocalDateString(dateRange.until);
   }
 
   // Add distance/radius filter if coordinates are provided
@@ -216,17 +209,10 @@ export default async function FilteredPage({
           size: 7,
           place: regionWithSlug.slug,
         };
-        if (filters.byDate !== "tots") {
-          const map: Record<string, () => { from: Date; until: Date }> = {
-            avui: today,
-            dema: tomorrow,
-            setmana: week,
-            "cap-de-setmana": weekend,
-          };
-          const fn = map[filters.byDate] || today;
-          const { from, until } = fn();
-          fallbackParams.from = toLocalDateString(from);
-          fallbackParams.to = toLocalDateString(until);
+        const fallbackDateRange = getDateRangeFromByDate(filters.byDate);
+        if (fallbackDateRange) {
+          fallbackParams.from = toLocalDateString(fallbackDateRange.from);
+          fallbackParams.to = toLocalDateString(fallbackDateRange.until);
         }
         // Keep category constraint if present for consistency with other routes
         if (filters.category && filters.category !== "tots") {

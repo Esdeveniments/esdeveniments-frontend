@@ -106,7 +106,7 @@ export default async function Page() {
             </h1>
             <p className="body-large text-foreground">
               Descobreix tot el què ha passat a Catalunya cada any. Navega per
-              comarques i poblacions per trobar l&apos;história cultural del
+              comarques i poblacions per trobar l&apos;història cultural del
               territori.
             </p>
           </header>

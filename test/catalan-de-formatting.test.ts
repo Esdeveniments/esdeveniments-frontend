@@ -81,21 +81,34 @@ describe("formatCatalanDe with article support", () => {
     });
 
     it("should handle regions with proper articles", () => {
+      // Singular masculine regions
       expect(formatCatalanDe("Vallès Oriental", false, true, "region")).toBe(
         "del Vallès Oriental"
       );
+      expect(formatCatalanDe("Penedès", false, true, "region")).toBe(
+        "del Penedès"
+      ); // masculine exception
+
+      // Singular feminine regions
       expect(formatCatalanDe("Selva", false, true, "region")).toBe(
         "de la Selva"
       );
       expect(formatCatalanDe("Garrotxa", false, true, "region")).toBe(
         "de la Garrotxa"
       );
+
+      // Singular vowel-starting regions
       expect(formatCatalanDe("Alt Empordà", false, true, "region")).toBe(
         "de l'Alt Empordà"
       );
-      expect(formatCatalanDe("Penedès", false, true, "region")).toBe(
-        "del Penedès"
-      ); // masculine exception
+
+      // Plural feminine regions (CRITICAL FIX)
+      expect(formatCatalanDe("Terres de l'Ebre", false, true, "region")).toBe(
+        "de les Terres de l'Ebre"
+      );
+      expect(formatCatalanDe("Garrigues", false, true, "region")).toBe(
+        "de les Garrigues"
+      );
     });
 
     it("should handle towns without articles", () => {
