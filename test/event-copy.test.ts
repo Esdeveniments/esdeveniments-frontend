@@ -224,4 +224,28 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebren");
     });
   });
+
+  describe("parentheses capitalization with backslashes", () => {
+    it("should title-case content inside parentheses even with backslashes", () => {
+      const event = createTestEvent({
+        title: "Fira d'artesania",
+        city: {
+          id: 10,
+          name: "Foo",
+          slug: "foo",
+          latitude: 41.0,
+          longitude: 2.0,
+          postalCode: "00000",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: { id: 11, name: "test\\data", slug: "test-data" },
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Parentheses text should be title-cased even with a backslash
+      expect(result).toContain("(Test\\data)");
+    });
+  });
 });

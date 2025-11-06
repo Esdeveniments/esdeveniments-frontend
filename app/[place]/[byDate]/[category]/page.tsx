@@ -214,10 +214,10 @@ export default async function FilteredPage({
           fallbackParams.from = toLocalDateString(fallbackDateRange.from);
           fallbackParams.to = toLocalDateString(fallbackDateRange.until);
         }
-        // Keep category constraint if present for consistency with other routes
-        if (filters.category && filters.category !== "tots") {
-          fallbackParams.category = filters.category;
-        }
+        // Intentionally DO NOT include category filter here.
+        // Rationale: if a city has no events for a given category, the
+        // regional fallback should surface any relevant events to help users
+        // discover what's on nearby, rather than returning zero results again.
 
         eventsResponse = await fetchEvents(fallbackParams);
         events = eventsResponse?.content || [];

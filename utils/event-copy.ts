@@ -109,7 +109,8 @@ function capitalizePlaces(text: string): string {
   );
 
   // 2) Title-case inside parentheses
-  text = text.replace(/\(([^\\)]+)\)/g, (_m, inside) => {
+  // Match any content until a closing ')' (allow backslashes inside)
+  text = text.replace(/\(([^)]+)\)/g, (_m, inside) => {
     const words = inside
       .split(/\s+/)
       .map((w: string) => (w.length ? capitalizeFirstLetter(w) : w));
