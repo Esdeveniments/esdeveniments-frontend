@@ -120,6 +120,24 @@ describe("formatCatalanDe with article support", () => {
       );
       expect(formatCatalanDe("Girona", false, true, "town")).toBe("de Girona");
     });
+
+    it("should handle towns with embedded article L' (EDGE CASE FIX)", () => {
+      // Towns that already have "L'" should use "de" not "d'" to avoid double contraction
+      expect(
+        formatCatalanDe("L'Hospitalet de Llobregat", false, true, "town")
+      ).toBe("de L'Hospitalet de Llobregat");
+      expect(formatCatalanDe("L'Escala", false, true, "town")).toBe(
+        "de L'Escala"
+      );
+      expect(formatCatalanDe("l'escala", true, false, "town")).toBe(
+        "de l'escala"
+      );
+
+      // Should NOT produce "d'L'Hospitalet" or "d'l'escala"
+      expect(
+        formatCatalanDe("L'Hospitalet de Llobregat", false, true, "town")
+      ).not.toBe("d'L'Hospitalet de Llobregat");
+    });
   });
 
   describe("backward compatibility", () => {
