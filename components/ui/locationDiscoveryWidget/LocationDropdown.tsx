@@ -86,9 +86,9 @@ export default function LocationDropdown({
   if (isLoading) {
     return (
       <div
-        className={`w-full flex justify-center border border-bColor border-opacity-50 rounded-full px-4 py-3 ${className}`}
+        className={`w-full flex justify-center border border-border border-opacity-50 rounded-full px-4 py-3 ${className}`}
       >
-        <div className="animate-pulse text-bColor">Carregant ubicacions...</div>
+        <div className="animate-pulse text-border">Carregant ubicacions...</div>
       </div>
     );
   }
@@ -100,18 +100,18 @@ export default function LocationDropdown({
         type="button"
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="w-full flex justify-between items-center border border-bColor border-opacity-50 rounded-full px-4 py-3 bg-whiteCorp hover:border-primary transition-colors duration-200"
+        className="w-full flex justify-between items-center border border-border border-opacity-50 rounded-full px-4 py-3 bg-background hover:border-primary transition-colors duration-200"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
         <div className="flex items-center gap-2">
           <LocationIcon className="h-5 w-5 text-primary" />
-          <span className="text-blackCorp">
+          <span className="text-foreground-strong">
             {selectedLocation ? selectedLocation.label : placeholder}
           </span>
         </div>
         <ChevronDownIcon
-          className={`h-5 w-5 text-blackCorp transition-transform duration-200 ${
+          className={`h-5 w-5 text-foreground-strong transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
@@ -119,15 +119,15 @@ export default function LocationDropdown({
 
       {/* Dropdown content */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-whiteCorp border border-bColor border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
           {/* Search input */}
-          <div className="p-3 border-b border-bColor border-opacity-30">
+          <div className="p-3 border-b border-border border-opacity-30">
             <input
               type="text"
               value={searchTerm}
               onChange={handleSearchChange}
               placeholder="Escriu per cercar..."
-              className="w-full px-3 py-2 border border-bColor border-opacity-50 rounded-md focus:outline-none focus:border-primary text-sm"
+              className="w-full px-3 py-2 border border-border border-opacity-50 rounded-md focus:outline-none focus:border-primary text-sm"
               autoFocus
             />
           </div>
@@ -141,7 +141,7 @@ export default function LocationDropdown({
                     key={option.value}
                     role="option"
                     onClick={() => handleSelect(option)}
-                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-blackCorp flex items-center gap-2"
+                    className="px-4 py-2 hover:bg-muted cursor-pointer text-sm text-foreground-strong flex items-center gap-2"
                     aria-selected={selectedLocation?.value === option.value}
                   >
                     <LocationIcon className="h-4 w-4 text-primary flex-shrink-0" />
@@ -150,8 +150,8 @@ export default function LocationDropdown({
                 ))}
               </ul>
             ) : (
-              <div className="px-4 py-3 text-sm text-bColor text-center">
-                No s&apos;han trobat ubicacions
+              <div className="px-4 py-3 text-center text-sm text-foreground-strong/70">
+                No hi ha resultats
               </div>
             )}
           </div>

@@ -2,6 +2,7 @@
 import { siteUrl } from "@config/index";
 import type { Metadata } from "next";
 import type { EventDetailResponseDTO } from "types/api/event";
+import { formatCatalanA } from "@utils/helpers";
 
 // --- Sanitization/Truncation helpers ---
 function sanitizeInput(str: string = ""): string {
@@ -67,7 +68,8 @@ export function generateMetaDescription(
   // Add primary category context if available
   if (categories && categories.length > 0 && location) {
     const primaryCategory = categories[0].name;
-    metaDescription = `${primaryCategory} a ${location}: ${titleSanitized}`;
+    const locationPhrase = formatCatalanA(location, "general", false);
+    metaDescription = `${primaryCategory} ${locationPhrase}: ${titleSanitized}`;
   } else if (categories && categories.length > 0) {
     const primaryCategory = categories[0].name;
     metaDescription = `${primaryCategory}: ${titleSanitized}`;

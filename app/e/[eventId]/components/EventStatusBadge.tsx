@@ -1,9 +1,9 @@
 import type { EventStatusMeta, EventTemporalStatus } from "types/event-status";
 
 const stateStyles: Record<EventStatusMeta["state"], string> = {
-  past: "bg-[#6b7280] text-whiteCorp",
-  live: "bg-[#16a34a] text-whiteCorp animate-pulse",
-  upcoming: "bg-[#2563eb] text-whiteCorp",
+  past: "bg-foreground-strong/10 text-foreground-strong border border-foreground-strong/20",
+  live: "bg-success text-background border border-success-dark animate-pulse",
+  upcoming: "bg-info text-background border border-info-dark",
 };
 
 const EventStatusBadge: React.FC<{
@@ -22,7 +22,7 @@ const EventStatusBadge: React.FC<{
 
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+      className={`inline-flex items-center rounded-md px-2 py-1 label font-semibold ${
         stateStyles[status.state]
       } ${className}`}
       aria-label={`${ariaLabelPrefix} ${status.label}`}

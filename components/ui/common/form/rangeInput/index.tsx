@@ -12,7 +12,7 @@ const RangeInput: FC<RangeInputProps> = ({
   disabled,
 }) => {
   return (
-    <div id={id} className="w-full flex flex-col gap-4">
+    <div id={id} className="stack w-full">
       <div className="w-full flex justify-start items-center gap-2">
         <label htmlFor={id}>{label}</label>
         <div className="flex justify-start items-center text-primary gap-2 font-semibold font-barlow text-lg pb-1">

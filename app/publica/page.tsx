@@ -143,15 +143,15 @@ const Publica = () => {
     });
   };
   return (
-    <div className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="text-center italic uppercase font-semibold">
+    <div className="container flex flex-col justify-center pt-2 pb-14">
+      <div className="flex flex-col gap-4 px-2 lg:px-0">
+        <div className="flex flex-col gap-2">
+          <h1 className="italic uppercase font-semibold">
             Publica un esdeveniment
           </h1>
           <p className="text-sm text-center">* camps obligatoris</p>
         </div>
-        <div className="w-full flex flex-col justify-center items-center gap-y-4 pt-4 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+        <div className="w-full flex flex-col gap-y-4 pt-4">
           <EventForm
             form={form}
             onSubmit={onSubmit}

@@ -9,7 +9,7 @@ export default function Input({
 }: InputProps) {
   return (
     <div className="w-full">
-      <label htmlFor={id} className="text-blackCorp font-bold">
+      <label htmlFor={id} className="text-foreground-strong font-bold">
         {title}
       </label>
       <div className="mt-2">
@@ -20,7 +20,7 @@ export default function Input({
           type="text"
           name={id}
           id={id}
-          className="w-full rounded-xl border-bColor focus:border-darkCorp"
+          className="w-full rounded-xl border-border focus:border-foreground-strong"
         />
       </div>
     </div>

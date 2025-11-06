@@ -4,12 +4,16 @@ import type {
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
+import { createKeyedCache } from "./cache";
 
 export interface FetchNewsParams {
   page?: number;
   size?: number;
   place?: string;
 }
+
+// Cache for checking if place has news (24h TTL)
+const placeHasNewsCache = createKeyedCache<boolean>(86400000);
 
 export async function fetchNews(
   params: FetchNewsParams
@@ -41,7 +45,9 @@ export async function fetchNews(
     );
     const finalUrl = `${apiUrl}/news?${queryString}`;
 
-    const response = await fetchWithHmac(finalUrl, { next: { revalidate: 60 } });
+    const response = await fetchWithHmac(finalUrl, {
+      next: { revalidate: 60 },
+    });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -58,6 +64,49 @@ export async function fetchNews(
       last: true,
     };
   }
+}
+
+/**
+ * Lightweight check if a place has any news articles.
+ * Cached for 24h to minimize API calls.
+ * @param place - The place slug to check
+ * @returns boolean indicating if the place has news
+ */
+export async function hasNewsForPlace(place: string): Promise<boolean> {
+  // Catalunya always has news (main news page)
+  if (place === "catalunya" || !place) {
+    return true;
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    return false;
+  }
+
+  return placeHasNewsCache(place, async () => {
+    try {
+      // Fetch only 1 item to check existence
+      const queryString = new URLSearchParams({
+        page: "0",
+        size: "1",
+        place,
+      });
+      const finalUrl = `${apiUrl}/news?${queryString}`;
+
+      const response = await fetchWithHmac(finalUrl, {
+        next: { revalidate: 3600 },
+      });
+      if (!response.ok) {
+        return false;
+      }
+      const data: PagedNewsResponseDTO<NewsSummaryResponseDTO> =
+        await response.json();
+      return data.content.length > 0;
+    } catch (e) {
+      console.error("Error checking news for place:", place, e);
+      return false;
+    }
+  });
 }
 
 export async function fetchNewsBySlug(

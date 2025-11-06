@@ -139,11 +139,14 @@ export default async function Page({
   });
 
   return (
-    <div className="min-h-screen bg-whiteCorp mt-4">
+    <div className="min-h-screen bg-background mt-4">
       {/* Breadcrumbs */}
-      <div className="bg-whiteCorp border-b border-bColor">
+      <div className="bg-background border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="text-sm text-blackCorp/70" aria-label="Breadcrumb">
+          <nav
+            className="text-sm text-foreground-strong/70"
+            aria-label="Breadcrumb"
+          >
             <Link href="/" className="hover:underline">
               Inici
             </Link>{" "}
@@ -155,7 +158,10 @@ export default async function Page({
             <Link href={`/noticies/${place}`} className="hover:underline">
               {placeType.label}
             </Link>{" "}
-            / <span className="text-blackCorp font-medium">{detail.title}</span>
+            /{" "}
+            <span className="text-foreground-strong font-medium">
+              {detail.title}
+            </span>
           </nav>
         </div>
       </div>
@@ -163,12 +169,10 @@ export default async function Page({
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
-          <h1 className="text-4xl font-bold text-blackCorp mb-6 md:text-5xl lg:text-6xl leading-tight uppercase">
-            {detail.title}
-          </h1>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-blackCorp/70">
+          <h1 className="heading-1 mb-6">{detail.title}</h1>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-foreground-strong/70">
             <div className="flex items-center gap-4">
-              <span className="bg-primary text-whiteCorp px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
+              <span className="bg-primary text-background px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
                 {detail.type === "WEEKEND" ? "Cap de setmana" : "Setmana"}{" "}
                 {dateRangeText}
               </span>
@@ -179,7 +183,7 @@ export default async function Page({
             </div>
           </div>
           {plainDescription && (
-            <p className="text-xl text-blackCorp/80 leading-relaxed">
+            <p className="body-large text-foreground-strong/80">
               {plainDescription}
             </p>
           )}
@@ -235,7 +239,7 @@ function EventsSection({
   return (
     <section className="mb-16">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-blackCorp mb-3 md:text-4xl">
+        <h2 className="text-3xl font-bold text-foreground-strong mb-3 md:text-4xl">
           {title}
         </h2>
         <div className="w-20 h-1.5 bg-primary rounded-full"></div>
@@ -251,7 +255,7 @@ function EventsSection({
         <div className="space-y-8">
           {(showHero ? otherEvents : events).map((event, index) => (
             <div key={event.id} className="flex gap-6 items-start">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-whiteCorp rounded-full flex items-center justify-center font-bold text-sm">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary text-background rounded-full flex items-center justify-center font-bold text-sm">
                 {showHero ? index + 2 : index + 1}
               </div>
               <div className="flex-1">

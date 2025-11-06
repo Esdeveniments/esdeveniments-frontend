@@ -6,6 +6,8 @@ import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
 import { headers } from "next/headers";
 import Script from "next/script";
+import { redirect } from "next/navigation";
+import { extractUuidFromSlug } from "@utils/string-helpers";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
 import ViewCounter from "@components/ui/viewCounter";
@@ -14,7 +16,7 @@ import EventCalendar from "./components/EventCalendar";
 import { computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
 import EventClient from "./EventClient";
-import { getFormattedDate } from "@utils/helpers";
+import { getFormattedDate, formatCatalanA } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
@@ -30,6 +32,7 @@ import NewsCard from "@components/ui/newsCard";
 import Link from "next/link";
 import EventDetailsSection from "./components/EventDetailsSection";
 import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
+import SectionHeading from "@components/ui/common/SectionHeading";
 import {
   buildEventIntroText,
   buildFaqItems,
@@ -40,9 +43,18 @@ export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
-  const event = await fetchEventBySlug(slug);
+  let event = await fetchEventBySlug(slug);
+  if (!event) {
+    // Defensive: try fetching by trailing id (legacy slugs)
+    const id = extractUuidFromSlug(slug);
+    if (id && id !== slug) {
+      event = await fetchEventBySlug(id);
+    }
+  }
   if (!event) return { title: "No event found" };
-  return generateEventMetadata(event, `${siteUrl}/e/${slug}`);
+  // Use canonical derived from the event itself to avoid locking old slugs
+  // into metadata; this helps consolidate SEO to the canonical path.
+  return generateEventMetadata(event);
 }
 
 // Main page component
@@ -59,9 +71,25 @@ export default async function EventPage({
   const userAgent = headersList.get("user-agent") || "";
   const initialIsMobile = /mobile|iphone|android|ipad|mobi/i.test(userAgent);
 
-  const event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
+  let event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
+  if (!event) {
+    // Defensive: try fetching by trailing id (legacy slugs)
+    const id = extractUuidFromSlug(slug);
+    if (id && id !== slug) {
+      event = await fetchEventBySlug(id);
+    }
+  }
   if (!event) return <NoEventFound />;
   if (event.title === "CANCELLED") return <NoEventFound />;
+
+  // If the requested slug doesn't match the canonical one, optionally redirect
+  // to consolidate SEO. Gate with env to avoid surprises in rollout.
+  const enforceCanonicalRedirect =
+    process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "1" ||
+    process.env.CANONICAL_REDIRECT === "1";
+  if (enforceCanonicalRedirect && slug !== event.slug && event.slug) {
+    redirect(`/e/${event.slug}`);
+  }
 
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
@@ -81,7 +109,9 @@ export default async function EventPage({
   const jsonData = generateJsonData({ ...event });
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
-    event.endDate
+    event.endDate,
+    undefined,
+    event.startTime
   );
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
@@ -104,6 +134,7 @@ export default async function EventPage({
   const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
   const latestNews = newsResponse.content || [];
   const placeLabel = event.city?.name || event.region?.name || "Catalunya";
+  const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref =
     placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`;
 
@@ -162,12 +193,16 @@ export default async function EventPage({
           }}
         />
       )}
-      <div className="w-full flex justify-center bg-whiteCorp pb-10">
-        <div className="w-full flex flex-col justify-center items-center gap-4 sm:w-[520px] md:w-[520px] lg:w-[520px] min-w-0">
-          <article className="w-full flex flex-col justify-center items-start gap-8">
-            <div className="w-full flex flex-col justify-center items-start gap-4">
-              <EventMedia event={event} title={title} />
-              <div className="w-full flex justify-between items-center px-4">
+      <div className="w-full bg-background pb-10">
+        <div className="container flex flex-col gap-section-y min-w-0">
+          <article className="w-full flex flex-col gap-section-y">
+            {/* Event Media Hero + Share cluster */}
+            <div className="w-full flex flex-col">
+              <div className="w-full">
+                <EventMedia event={event} title={title} />
+              </div>
+              {/* Share bar and view counter */}
+              <div className="w-full flex justify-between items-center mt-element-gap-sm">
                 <EventShareBar
                   slug={eventSlug}
                   title={title}
@@ -179,18 +214,15 @@ export default async function EventPage({
                   regionName={regionName}
                   postalCode={event.city?.postalCode || ""}
                 />
-                <div className="ml-2">
+                <div className="ml-element-gap-sm">
                   <ViewCounter visits={event.visits} />
                 </div>
               </div>
-            </div>
-
+            </div>{" "}
             {/* Event Header with status pill - Server-side rendered */}
             <EventHeader title={title} statusMeta={statusMeta} />
-
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
-
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (
               <EventsAroundSection
@@ -199,7 +231,6 @@ export default async function EventPage({
                 nonce={nonce}
               />
             )}
-
             {/* Event Description - Server-side rendered for SEO */}
             <EventDescription
               description={event.description}
@@ -208,13 +239,11 @@ export default async function EventPage({
               introText={introText}
               locationType="town"
             />
-
             {/* Event Categories - Server-side rendered for SEO */}
             <EventCategories
               categories={event.categories}
-              place={event.region?.slug || ""}
+              place={event.city?.slug || event.region?.slug || ""}
             />
-
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner
@@ -226,9 +255,7 @@ export default async function EventPage({
                 primaryCategorySlug={primaryCategorySlug}
               />
             )}
-
             <EventClient event={event} temporalStatus={temporalStatus} />
-
             {/* Event details (status, duration, external url) - server-rendered */}
             <EventDetailsSection
               event={event}
@@ -237,28 +264,32 @@ export default async function EventPage({
               formattedEnd={formattedEnd}
               nameDay={nameDay}
             />
-
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
-              <div className="w-full flex justify-center items-start gap-2 px-4">
-                <InfoIcon className="w-5 h-5 mt-1" />
-                <section
-                  className="w-11/12 flex flex-col gap-4"
-                  aria-labelledby="event-faq"
-                >
-                  <h2 id="event-faq">Preguntes freqüents</h2>
-                  <dl className="space-y-3">
+              <section className="w-full" aria-labelledby="event-faq">
+                <div className="w-full flex flex-col gap-element-gap">
+                  <SectionHeading
+                    headingId="event-faq"
+                    Icon={InfoIcon}
+                    iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
+                    title="Preguntes freqüents"
+                    titleClassName="heading-2"
+                  />
+                  <dl className="space-y-element-gap px-section-x">
                     {faqItems.map((item) => (
                       <div key={item.q}>
-                        <dt className="font-medium">{item.q}</dt>
-                        <dd className="text-blackCorp/70">{item.a}</dd>
+                        <dt className="body-normal font-semibold text-foreground-strong">
+                          {item.q}
+                        </dt>
+                        <dd className="body-normal text-foreground-strong/70">
+                          {item.a}
+                        </dd>
                       </div>
                     ))}
                   </dl>
-                </section>
-              </div>
+                </div>
+              </section>
             )}
-
             {/* Restaurant Promotion Section */}
             <RestaurantPromotionSection
               eventId={event.id}
@@ -268,13 +299,18 @@ export default async function EventPage({
               eventStartDate={event.startDate}
               eventEndDate={event.endDate}
             />
-
             {/* Final Ad Section */}
-            <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-              <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-              <div className="w-11/12 flex flex-col gap-4">
-                <h2>Contingut patrocinat</h2>
-                <AdArticle slot="9643657007" />
+            <div className="w-full h-full min-h-[250px]">
+              <div className="w-full flex flex-col gap-element-gap">
+                <SectionHeading
+                  Icon={SpeakerphoneIcon}
+                  iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
+                  title="Contingut patrocinat"
+                  titleClassName="heading-2"
+                />
+                <div className="px-section-x">
+                  <AdArticle slot="9643657007" />
+                </div>
               </div>
             </div>
           </article>
@@ -282,21 +318,24 @@ export default async function EventPage({
       </div>
 
       {latestNews.length > 0 && (
-        <div className="w-full flex justify-center bg-whiteCorp pb-8">
-          <section className="w-full sm:w-[520px] md:w-[520px] lg:w-[520px] px-4 flex flex-col gap-4">
+        <div className="w-full bg-background pb-8">
+          <section className="container w-full flex flex-col gap-element-gap">
             <div className="w-full flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                Últimes notícies {placeLabel ? `a ${placeLabel}` : ""}
+              <h2 className="heading-2">
+                Últimes notícies{" "}
+                {placeLabel && placeSlug !== "catalunya"
+                  ? formatCatalanA(placeLabel, placeType, false)
+                  : ""}
               </h2>
               <Link
                 href={newsHref}
                 prefetch={false}
-                className="text-primary underline text-sm"
+                className="body-small text-primary underline hover:no-underline"
               >
                 Veure totes
               </Link>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-element-gap">
               {latestNews.map((newsItem, index) => (
                 <NewsCard
                   key={`${newsItem.id}-${index}`}

@@ -1,4 +1,5 @@
 import EventStatusGroup from "./EventStatusGroup";
+import SectionHeading from "@components/ui/common/SectionHeading";
 import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
@@ -15,40 +16,42 @@ const EventDetailsSection: React.FC<{
   if (!event) return null;
 
   return (
-    <div className="w-full flex justify-center items-start gap-2 px-4">
-      <GlobeIcon className="w-5 h-5 mt-1" />
-      <div className="w-11/12 flex flex-col gap-4">
-        <h2>Detalls de l&apos;Esdeveniment</h2>
-        <div className="flex justify-start items-center gap-2">
-          <div className="flex flex-col gap-0.5 flex-1">
-            <EventStatusGroup
-              temporalStatus={temporalStatus}
-              formattedStart={formattedStart}
-              formattedEnd={formattedEnd}
-              nameDay={nameDay}
-            />
+    <div className="w-full">
+      <div className="w-full flex flex-col gap-element-gap min-w-0">
+        <SectionHeading
+          Icon={GlobeIcon}
+          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
+          title="Detalls de l'Esdeveniment"
+          titleClassName="heading-2"
+        />
+        <div className="flex flex-col px-section-x gap-element-gap">
+          <EventStatusGroup
+            temporalStatus={temporalStatus}
+            formattedStart={formattedStart}
+            formattedEnd={formattedEnd}
+            nameDay={nameDay}
+          />
 
-            {event.duration && (
-              <div className="flex items-center gap-2 text-sm text-blackCorp/70">
-                <ClockIcon className="w-4 h-4" />
-                Durada aproximada: {event.duration}
-              </div>
-            )}
+          {event.duration && (
+            <div className="body-small flex items-center gap-element-gap text-foreground-strong/70">
+              <ClockIcon className="w-4 h-4" />
+              Durada aproximada: {event.duration}
+            </div>
+          )}
 
-            {event.url && (
-              <div className="font-bold">
-                Enllaç a l&apos;esdeveniment:{" "}
-                <Link
-                  href={event.url}
-                  className="inline-block text-base font-medium text-blackCorp hover:text-primary transition-colors duration-200 border-b-2 border-blackCorp/20 hover:border-primary pb-0.1"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {event.title}
-                </Link>
-              </div>
-            )}
-          </div>
+          {event.url && (
+            <div className="body-normal font-semibold text-foreground-strong">
+              Enllaç a l&apos;esdeveniment:{" "}
+              <Link
+                href={event.url}
+                className="body-normal inline-block text-foreground-strong hover:text-primary transition-colors duration-200 border-b-2 border-foreground-strong/20 hover:border-primary pb-0"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {event.title}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

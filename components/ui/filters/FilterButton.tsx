@@ -23,32 +23,32 @@ const FilterButton = ({
 
   return (
     <div
-      className="flex-shrink-0 bg-whiteCorp flex justify-center items-center nowrap min-w-max"
+      className="flex-shrink-0 bg-background flex justify-center items-center nowrap min-w-max"
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center gap-1 px-2 py-1 ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap ${
+        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border ${
           enabled
-            ? "text-primary"
-            : "border-whiteCorp text-blackCorp hover:bg-darkCorp hover:text-blackCorp"
+            ? "border-primary bg-primary/5 text-foreground-strong"
+            : "border-border text-foreground-strong hover:bg-muted"
         }`}
       >
         <span
           onClick={onOpenModal}
-          className="text-center font-barlow uppercase text-[16px] cursor-pointer"
+          className="text-center body-small cursor-pointer"
         >
           {text}
         </span>
         {enabled ? (
           <XIcon
-            className="h-5 w-5 cursor-pointer ml-1 p-1 hover:bg-gray-100 rounded"
+            className="h-4 w-4 cursor-pointer ml-1 p-0.5 hover:bg-muted rounded"
             aria-hidden="true"
             onClick={handleRemove}
             data-testid={`${testId}-remove`}
           />
         ) : (
           <ChevronDownIcon
-            className="h-5 w-5 cursor-pointer"
+            className="h-4 w-4 cursor-pointer"
             aria-hidden="true"
             onClick={(e: MouseEvent) => {
               e.stopPropagation();

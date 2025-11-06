@@ -6,9 +6,11 @@ import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCiti
 // import { useGeolocation } from "@components/hooks/useGeolocation";
 import { LocationDiscoveryWidgetProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
-import SearchIcon from "@heroicons/react/solid/SearchIcon";
-import LocationMarkerIcon from "@heroicons/react/solid/LocationMarkerIcon";
-import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
+import {
+  SearchIcon,
+  LocationMarkerIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/solid";
 import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import { transformRegionsToOptions } from "./utils";
 
@@ -17,7 +19,11 @@ export default function LocationDiscoveryWidget({
   onLocationChange,
 }: LocationDiscoveryWidgetProps) {
   const router = useRouter();
-  const { regionsWithCities, isLoading, isError } = useGetRegionsWithCities();
+  const {
+    regionsWithCities,
+    isLoading: loadingRegions,
+    isError,
+  } = useGetRegionsWithCities();
   // const {
   //   isLoading: isGettingLocation,
   //   error: locationError,
@@ -114,7 +120,8 @@ export default function LocationDiscoveryWidget({
   //   }
   // }, [regionsWithCities, requestLocation, onLocationChange, router]);
 
-  const handleOtherEvents = useCallback(() => {
+  const onDiscoverOtherEvents = useCallback(() => {
+    //
     router.push("/catalunya");
   }, [router]);
 
@@ -124,120 +131,103 @@ export default function LocationDiscoveryWidget({
 
   return (
     <div
-      className={`w-full bg-whiteCorp flex justify-center items-center pt-8 ${className}`}
+      className={`w-full bg-background flex justify-center items-center pt-element-gap ${className}`}
     >
-      <div className="w-full flex flex-col justify-center items-center px-2 lg:px-0 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+      <div className="container flex flex-col justify-center items-center">
         <div className="relative w-full">
           {/* Main Location Selector */}
-          <div className="flex items-center space-x-2 mb-6">
+          <div className="flex items-center gap-element-gap mb-element-gap">
             <GlobeIcon className="w-4 h-4" />
-            <h2 className="text-lg font-medium text-foreground">
+            <h2 className="body-small text-foreground">
               Mirant esdeveniments a
             </h2>
             <div className="relative">
               <button
-                className="flex items-center space-x-2 group"
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex justify-between items-center border border-border rounded-input px-button-x py-button-y bg-background hover:border-primary transition-colors duration-200 focus-ring"
+                aria-expanded={isOpen}
+                aria-haspopup="listbox"
+                data-testid="location-toggle-button"
               >
+                <div className="flex items-center gap-2">
+                  <LocationMarkerIcon className="h-5 w-5 text-primary" />
+                  <span className="text-foreground-strong">
+                    {currentLocation || "Selecciona ubicació"}
+                  </span>
+                </div>
                 <ChevronDownIcon
-                  className={`w-5 h-5 text-primary transition-transform ${
+                  className={`h-5 w-5 text-foreground-strong transition-transform duration-200 ${
                     isOpen ? "rotate-180" : ""
                   }`}
                 />
-                <span className="text-bColor text-lg font-normal border-b border-bColor pb-0.5">
-                  {currentLocation}
-                </span>
               </button>
 
-              {/* Dropdown Menu */}
               {isOpen && (
-                <div
-                  className="absolute top-8 left-1/2 transform -translate-x-1/2 sm:left-0 sm:transform-none w-80 max-w-[calc(100vw-2rem)] bg-whiteCorp opacity-100 rounded-xl shadow-xl border border-gray-200 py-3 z-20"
-                  style={{ backgroundColor: "rgb(255, 255, 255)" }}
-                >
-                  {/* Search Input */}
-                  <div className="px-4 py-3 border-b border-gray-100">
+                <div className="absolute top-full left-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden min-w-[300px] w-max">
+                  {/* Search input */}
+                  <div className="p-input-x border-b border-border border-opacity-30">
                     <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 w-4 h-4" />
                       <input
                         type="text"
-                        placeholder="Cercar ubicació..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-whiteCorp"
+                        placeholder="Cercar ubicació..."
+                        className="input pl-9 body-small"
                         autoFocus
+                        data-testid="location-search-input"
                       />
                     </div>
                   </div>
 
-                  {/* Special Options */}
-                  {/* <button
-                    className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={handleCurrentLocation}
-                    disabled={isGettingLocation}
-                  >
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      {isGettingLocation ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center group-hover:border-blue-600 transition-colors">
-                          <div className="w-2 h-2 bg-primary rounded-full group-hover:bg-blue-600 transition-colors"></div>
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-gray-700 text-base group-hover:text-blue-600 transition-colors font-medium">
-                      {isGettingLocation
-                        ? "Obtenint ubicació..."
-                        : "Usar la meva ubicació actual"}
-                    </span>
-                  </button> */}
-
-                  {/* Error message */}
-                  {/* {locationError && (
-                    <div className="px-4 py-2 text-red-500 text-sm bg-red-50 mx-4 rounded-md">
-                      {locationError}
-                    </div>
-                  )} */}
-
+                  {/* Discover other events */}
                   <button
-                    className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 border-b border-gray-100 group"
-                    onClick={handleOtherEvents}
+                    type="button"
+                    className="w-full flex items-center gap-3 px-button-x py-button-y border-b border-border border-opacity-30 hover:bg-muted transition-colors duration-200 group focus-ring"
+                    onClick={onDiscoverOtherEvents}
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-primary rounded flex items-center justify-center group-hover:border-blue-600 transition-colors">
-                        <div className="w-2 h-1 bg-primary rounded-sm group-hover:bg-blue-600 transition-colors"></div>
+                      <div className="w-5 h-5 border-2 border-primary rounded flex items-center justify-center group-hover:border-primary/80 transition-colors">
+                        <div className="w-2 h-1 bg-primary rounded-sm group-hover:bg-primary/80 transition-colors" />
                       </div>
                     </div>
-                    <span className="text-gray-700 text-base group-hover:text-blue-600 transition-colors font-medium">
+                    <span className="text-foreground-strong body-small font-medium group-hover:opacity-90">
                       Descobrir altres esdeveniments
                     </span>
                   </button>
 
-                  {/* Location List */}
-                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                    {isLoading ? (
-                      <div className="px-4 py-3 text-gray-500 text-sm flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                  {/* Options list */}
+                  <div className="max-h-48 overflow-y-auto">
+                    {loadingRegions ? (
+                      <div className="px-4 py-3 body-small text-foreground-strong/70 flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
                         <span>Carregant ubicacions...</span>
                       </div>
                     ) : filteredLocations.length > 0 ? (
-                      filteredLocations.map((location) => (
-                        <button
-                          key={location.value}
-                          className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition-all duration-200 text-left group"
-                          onClick={() => handleLocationSelect(location.label)}
-                        >
-                          <div className="w-6 h-6 flex items-center justify-center">
-                            <LocationMarkerIcon className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                          </div>
-                          <span className="text-gray-700 text-base group-hover:text-blue-600 transition-colors">
-                            {location.label}
-                          </span>
-                        </button>
-                      ))
+                      <ul role="listbox">
+                        {filteredLocations.map((location) => (
+                          <li
+                            key={location.value}
+                            role="option"
+                            aria-selected={currentLocation === location.label}
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleLocationSelect(location.label)
+                              }
+                              className="w-full px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                            >
+                              <LocationMarkerIcon className="h-4 w-4 text-foreground/60 flex-shrink-0" />
+                              {location.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
-                      <div className="px-4 py-3 text-gray-500 text-sm text-center">
-                        No s&apos;han trobat ubicacions
+                      <div className="px-4 py-3 text-center body-small text-foreground-strong/70">
+                        No hi ha resultats
                       </div>
                     )}
                   </div>

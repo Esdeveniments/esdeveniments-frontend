@@ -39,7 +39,7 @@ export default function CardShareButton({
 
       <TwitterShareButton url={eventUrl}>
         <svg
-          className="w-7 h-5 fill-blackCorp"
+          className="w-7 h-5 fill-foreground-strong"
           role="img"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"

@@ -3,6 +3,7 @@ import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
+import SectionHeading from "@components/ui/common/SectionHeading";
 
 export default function EventCalendar({ event }: EventCalendarProps) {
   // Extract needed fields
@@ -29,29 +30,37 @@ export default function EventCalendar({ event }: EventCalendarProps) {
     : `${nameDay}, ${formattedStart}`;
 
   return (
-    <div className="w-full flex justify-center items-start gap-2 px-4">
-      <CalendarIcon className="w-5 h-5 mt-1" />
-      <div className="w-11/12 flex flex-col gap-4">
-        <h2>Data i hora</h2>
-        <div className="w-full flex flex-col gap-4">
-          <p className="font-bold">{eventDate}</p>
-          <p className="capitalize flex items-center gap-2">
-            <ClockIcon className="w-4 h-4 text-blackCorp/70" />
+    <div className="w-full">
+      <div className="w-full flex flex-col gap-element-gap min-w-0">
+        <SectionHeading
+          Icon={CalendarIcon}
+          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
+          title="Data i hora"
+          titleClassName="heading-2"
+        />
+        <div className="w-full flex flex-col gap-element-gap px-section-x">
+          <p className="body-normal font-semibold text-foreground-strong">
+            {eventDate}
+          </p>
+          <p className="body-normal capitalize flex items-center gap-element-gap text-foreground-strong/80">
+            <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
             {!startTime || startTime === "00:00"
               ? "Consultar horaris"
               : `${startTime} - ${endTime || ""}`}
           </p>
         </div>
-        <AddToCalendar
-          title={title}
-          description={description}
-          location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${
-            city?.postalCode || ""
-          }`}
-          startDate={startDate}
-          endDate={endDate}
-          canonical={`${siteUrl}/e/${slug}`}
-        />
+        <div className="px-section-x">
+          <AddToCalendar
+            title={title}
+            description={description}
+            location={`${location}, ${city?.name || ""}, ${
+              region?.name || ""
+            }, ${city?.postalCode || ""}`}
+            startDate={startDate}
+            endDate={endDate}
+            canonical={`${siteUrl}/e/${slug}`}
+          />
+        </div>
       </div>
     </div>
   );

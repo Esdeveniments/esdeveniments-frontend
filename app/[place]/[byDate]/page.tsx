@@ -1,9 +1,9 @@
-import Script from "next/script";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { fetchPlaces } from "@lib/api/places";
 import { getPlaceTypeAndLabel, toLocalDateString } from "@utils/helpers";
+import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -11,15 +11,13 @@ import {
   generateWebPageSchema,
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
-import { today, tomorrow, week, weekend, twoWeeksDefault } from "@lib/dates";
-import type { DateFunctions } from "types/dates";
+import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { PlaceResponseDTO } from "types/api/place";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
-import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import PlacePageShell from "@components/partials/PlacePageShell";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -162,26 +160,16 @@ export default async function ByDatePage({
     typeof search.category === "string" ? search.category : undefined;
   const finalCategory = searchCategory || actualCategory;
 
-  const dateFunctions: DateFunctions = {
-    avui: today,
-    dema: tomorrow,
-    setmana: week,
-    "cap-de-setmana": weekend,
-  };
-
   const paramsForFetch: FetchEventsParams = {
     page: 0,
     size: 10,
   };
 
   // Only add date filters if actualDate is not "tots"
-  if (actualDate !== "tots") {
-    const selectedFunction =
-      dateFunctions[actualDate as keyof typeof dateFunctions] || today;
-    const { from, until } = selectedFunction();
-
-    paramsForFetch.from = toLocalDateString(from);
-    paramsForFetch.to = toLocalDateString(until);
+  const dateRange = getDateRangeFromByDate(actualDate);
+  if (dateRange) {
+    paramsForFetch.from = toLocalDateString(dateRange.from);
+    paramsForFetch.to = toLocalDateString(dateRange.until);
   }
 
   if (place !== "catalunya") {
@@ -268,7 +256,11 @@ export default async function ByDatePage({
 
   const eventsWithAds = insertAds(events);
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
+  // Fetch place type and check news in parallel for better performance
+  const [placeTypeLabel, hasNews] = await Promise.all([
+    getPlaceTypeAndLabel(place),
+    hasNewsForPlace(place),
+  ]);
 
   const categoryData = categories.find((cat) => cat.slug === finalCategory);
 
@@ -313,57 +305,27 @@ export default async function ByDatePage({
       : null;
 
   return (
-    <>
-      {/* JSON-LD Structured Data */}
-      <Script
-        id="webpage-schema"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema),
-        }}
-      />
-      {collectionSchema && (
-        <Script
-          id="collection-schema"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(collectionSchema),
-          }}
-        />
-      )}
-      {structuredData && (
-        <Script
-          id={`events-${place}-${actualDate}`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
-        />
-      )}
-
-      {/* Server-rendered events content (SEO optimized) */}
-      <HybridEventsList
-        initialEvents={eventsWithAds}
-        placeTypeLabel={placeTypeLabel}
-        pageData={pageData}
-        noEventsFound={noEventsFound}
-        place={place}
-        category={finalCategory}
-        date={actualDate}
-        serverHasMore={serverHasMore}
-      />
-
-      {/* Client-side interactive layer (search, filters, floating button) */}
-      <ClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={placeTypeLabel}
-      />
-    </>
+    <PlacePageShell
+      nonce={nonce}
+      scripts={[
+        { id: "webpage-schema", data: webPageSchema },
+        ...(collectionSchema
+          ? [{ id: "collection-schema", data: collectionSchema }]
+          : []),
+        ...(structuredData
+          ? [{ id: `events-${place}-${actualDate}`, data: structuredData }]
+          : []),
+      ]}
+      initialEvents={eventsWithAds}
+      placeTypeLabel={placeTypeLabel}
+      pageData={pageData}
+      noEventsFound={noEventsFound}
+      place={place}
+      category={finalCategory}
+      date={actualDate}
+      serverHasMore={serverHasMore}
+      categories={categories}
+      hasNews={hasNews}
+    />
   );
 }

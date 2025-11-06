@@ -37,12 +37,12 @@ export default function CardContentServer({
         prefetch={false}
         className="w-full"
       >
-        <div className="w-full flex flex-col justify-center bg-whiteCorp overflow-hidden cursor-pointer">
-          <div className="bg-whiteCorp h-fit flex justify-start items-start gap-2 pr-4">
+        <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
+          <div className="bg-background h-fit flex justify-start items-start gap-element-gap-sm pr-card-padding-sm">
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
-              <div className="w-2 h-6 bg-gradient-to-r from-primary to-primarydark" />
+              <div className="w-2 h-6 bg-gradient-to-r from-primary to-primary-dark" />
             </div>
-            <h3 className="w-full uppercase">{title}</h3>
+            <h3 className="heading-4 w-full">{title}</h3>
             <div className="flex items-end gap-2">
               {icon && (
                 <div className="flex items-center gap-1">
@@ -64,7 +64,7 @@ export default function CardContentServer({
               />
             </div>
           </div>
-          <div className="p-2 flex justify-center items-center">
+          <div className="p-card-padding-sm flex justify-center items-center">
             <div
               className="w-full relative"
               style={{ height: isHorizontal ? "16rem" : "auto" }}
@@ -83,7 +83,7 @@ export default function CardContentServer({
           </div>
         </div>
       </Link>
-      <div className="w-full flex justify-between items-center px-2 mb-2">
+      <div className="w-full flex justify-between items-center px-card-padding-sm mb-element-gap-sm">
         <DesktopShareIsland slug={event.slug} />
         <ViewCounterIsland
           visits={event.visits}
@@ -92,26 +92,26 @@ export default function CardContentServer({
           className="flex items-center justify-end"
         />
       </div>
-      <div className="w-full flex flex-col px-4 gap-3">
+      <div className="w-full flex flex-col px-card-padding-sm gap-element-gap">
         <div className="flex justify-start items-start">
           <CalendarIcon className="h-5 w-5" />
-          <p className="px-2 font-semibold">{eventDate}</p>
+          <p className="body-small px-element-gap-sm font-semibold">{eventDate}</p>
         </div>
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
-          <div className="h-full flex flex-col justify-start items-start px-2">
-            <span className="max-w-full capitalize">{location}</span>
+          <div className="h-full flex flex-col justify-start items-start px-element-gap-sm">
+            <span className="body-small max-w-full capitalize">{location}</span>
           </div>
         </div>
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
-          <p className="px-2">
+          <p className="body-small px-element-gap-sm">
             {event.startTime && event.endTime
               ? `${event.startTime} - ${event.endTime}`
               : "Consultar horaris"}
           </p>
         </div>
-        {!isHorizontal && <div className="mb-8" />}
+        {!isHorizontal && <div className="mb-element-gap" />}
       </div>
     </>
   );

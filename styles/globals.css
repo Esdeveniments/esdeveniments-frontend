@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  font-synthesis-weight: none;
+}
+
 body {
   @apply font-sans antialiased text-base leading-relaxed;
 }
@@ -12,15 +16,17 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
+  overflow-x: hidden; /* prevent stray horizontal gap/scroll on mobile */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-font-smoothing: antialiased;
   -o-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font-roboto-flex), sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   color: #454545;
-  font-weight: 300;
-  letter-spacing: 0.01em;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 ::-webkit-scrollbar {
@@ -72,56 +78,295 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-h1 {
-  font-family: var(--font-barlow-condensed), sans-serif;
-  letter-spacing: 0.002em;
-  font-weight: 700;
-  font-size: 2rem; /* 32px */
-  line-height: 1.15;
-  margin-top: 0;
-  margin-bottom: 0.6rem;
-}
-
-h2 {
-  font-family: var(--font-barlow-condensed), sans-serif;
-  letter-spacing: 0.002em;
-  font-weight: 700;
-  font-size: 1.5rem; /* 24px */
-  line-height: 1.2;
-  margin-top: 0.6rem;
-  margin-bottom: 0.4rem;
-}
-h3 {
-  font-family: var(--font-barlow-condensed), sans-serif;
-  letter-spacing: 0.01em;
-  font-weight: 600;
-  font-size: 1.125rem; /* 18px */
-  line-height: 1.3;
-}
-
 p {
-  font-family: var(--font-roboto-flex), sans-serif;
-  letter-spacing: 0.01em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0;
   font-size: 1rem; /* 16px */
   line-height: 1.6;
+  margin: 0;
 }
 
-/* Responsive adjustments */
-@media (min-width: 768px) {
-  body {
-    font-size: 1.0625rem; /* ~17px */
+@layer components {
+  /* ===================================== */
+  /* TYPOGRAPHY - 4-LEVEL SYSTEM */
+  /* System font stack (GitHub, Facebook, Instagram, Twitter standard) */
+  /* Optimized weights for system fonts - stronger than custom fonts */
+  /* ===================================== */
+
+  /* LEVEL 1: Hero/Brand - Main page title only */
+  .heading-1 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight leading-tight italic;
   }
-  h1 {
-    font-size: 2.25rem; /* 36px */
+
+  /* LEVEL 2: Major Sections - Page subtitle, major section dividers */
+  .heading-2 {
+    @apply text-xl md:text-2xl font-semibold tracking-normal leading-relaxed;
+  }
+
+  /* LEVEL 3: Section Headers - Category sections, subsections */
+  .heading-3 {
+    @apply text-lg md:text-xl font-semibold tracking-normal leading-snug;
+  }
+
+  /* LEVEL 4: Card Titles - Event titles in cards */
+  .heading-4 {
+    @apply text-base md:text-lg font-medium tracking-normal leading-snug;
+  }
+
+  /* BODY: Main content text - Descriptions, paragraphs */
+  .body-large {
+    @apply text-lg font-normal leading-relaxed tracking-normal;
+  }
+
+  .body-normal {
+    @apply text-base font-normal leading-relaxed tracking-normal;
+  }
+
+  /* SMALL: Metadata - Dates, locations, captions, badges */
+  .body-small {
+    @apply text-sm font-normal leading-relaxed tracking-normal;
+  }
+
+  /* LABEL: UI elements - Small badges, uppercase labels */
+  .label {
+    @apply text-xs uppercase tracking-wider font-medium;
+  }
+
+  /* ===================================== */
+  /* BUTTONS */
+  /* ===================================== */
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .btn-neutral {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .btn-muted {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
+  }
+
+  /* ===================================== */
+  /* CARDS */
+  /* ===================================== */
+
+  .card-bordered {
+    @apply bg-background border border-border rounded-card;
+  }
+
+  .card-elevated {
+    @apply bg-background shadow-lg rounded-card;
+  }
+
+  .card-body {
+    @apply p-card-padding-sm md:p-card-padding;
+  }
+
+  .card-footer {
+    @apply border-t border-border p-card-padding-sm md:p-card-padding;
+  }
+
+  /* ===================================== */
+  /* BADGES */
+  /* ===================================== */
+
+  .badge-default {
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-muted text-foreground;
+  }
+
+  .badge-primary {
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-primary text-primary-foreground;
+  }
+
+  /* ===================================== */
+  /* LAYOUT UTILITIES */
+  /* ===================================== */
+
+  .flex-center {
+    @apply flex justify-center items-center;
+  }
+
+  .flex-between {
+    @apply flex justify-between items-center;
+  }
+
+  .flex-start {
+    @apply flex justify-start items-center;
+  }
+
+  .stack {
+    @apply flex flex-col gap-element-gap;
+  }
+
+  /* Column-based horizontal centering (not vertical centering) */
+  .flex-center-col {
+    @apply flex flex-col items-center;
+  }
+
+  /* Horizontal centering wrapper for constrained children (row) */
+  .center-content {
+    @apply w-full flex justify-center;
+  }
+
+  /* Narrow constrained content container */
+  .container-narrow {
+    @apply w-full max-w-[580px] md:max-w-[768px] lg:max-w-[1024px];
+  }
+
+  /* Detail container matching event detail pattern */
+  .container-detail {
+    @apply w-full sm:w-[520px] md:w-[520px] lg:w-[520px] mx-auto px-4 lg:px-0;
+  }
+
+  /* Containers (Semantic) */
+  .container-page {
+    @apply max-w-7xl mx-auto px-section-x;
+  }
+  .container-article {
+    @apply max-w-4xl mx-auto px-section-x;
+  }
+  .container-form {
+    @apply max-w-2xl mx-auto px-section-x;
+  }
+
+  /* ===================================== */
+  /* SHADOWS (SEMANTIC) */
+  /* ===================================== */
+
+  .shadow-card {
+    @apply shadow-sm;
+  }
+
+  .shadow-card-hover {
+    @apply shadow-md;
+  }
+
+  .shadow-modal {
+    @apply shadow-lg;
+  }
+
+  .shadow-dropdown {
+    @apply shadow-lg;
+  }
+
+  .shadow-hero {
+    @apply shadow-xl;
+  }
+
+  /* ===================================== */
+  /* SPACING (SEMANTIC TOKENS USAGE) */
+  /* ===================================== */
+
+  /* Use spacing tokens directly in components:
+     - Sections: py-section-y px-section-x
+     - Cards: p-card-padding-sm md:p-card-padding
+     - Inline small gaps: gap-element-gap-sm
+  */
+
+  /* ===================================== */
+  /* TRANSITIONS (SEMANTIC) */
+  /* ===================================== */
+
+  .transition-interactive {
+    @apply transition-all duration-fast ease-smooth;
+  }
+
+  .transition-card {
+    @apply transition-[shadow,transform,border-color] duration-normal ease-smooth;
+  }
+
+  .transition-modal {
+    @apply transition-[opacity,transform] duration-slow ease-smooth;
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  .hover-scale {
+    @apply hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .hover-glow {
+    @apply hover:shadow-focus;
+  }
+
+  /* ===================================== */
+  /* FORMS */
+  /* ===================================== */
+
+  .input {
+    @apply w-full rounded-input border border-border bg-background text-foreground px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+  }
+
+  .input-lg {
+    @apply h-12;
+  }
+
+  .input-error {
+    @apply border-error focus-visible:ring-error focus-visible:border-error;
+  }
+
+  .input-disabled {
+    @apply opacity-60 cursor-not-allowed bg-muted pointer-events-none;
+  }
+
+  .input-readonly {
+    @apply bg-muted;
+  }
+
+  .helper-text {
+    @apply body-small text-foreground/70 mt-1;
+  }
+
+  .helper-text-error {
+    @apply body-small text-error mt-1;
+  }
+
+  /* ===================================== */
+  /* FOCUS UTILITIES */
+  /* ===================================== */
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .focus-ring-error {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2;
+  }
+
+  /* ===================================== */
+  /* Z-INDEX (SEMANTIC) */
+  /* ===================================== */
+
+  .z-sticky {
+    @apply z-10;
+  }
+  .z-dropdown {
+    @apply z-100;
+  }
+  .z-modal {
+    @apply z-900;
+  }
+  .z-tooltip {
+    @apply z-1000;
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    font-size: 1.125rem; /* ~18px */
-  }
-  h1 {
-    font-size: 2.5rem; /* 40px */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

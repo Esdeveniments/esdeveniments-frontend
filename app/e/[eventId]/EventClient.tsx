@@ -17,6 +17,7 @@ import {
   SpeakerphoneIcon,
 } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
+import SectionHeading from "@components/ui/common/SectionHeading";
 
 // const Tooltip = dynamic(() => import("components/ui/tooltip"), {
 //   ssr: false,
@@ -83,11 +84,17 @@ export default function EventClient({
       />
 
       {/* Ad Section */}
-      <div className="w-full h-full flex justify-center items-start px-4 min-h-[250px] gap-2">
-        <SpeakerphoneIcon className="w-5 h-5 mt-1" />
-        <div className="w-11/12 flex flex-col gap-4">
-          <h2>Contingut patrocinat</h2>
-          <AdArticle slot="9643657007" />
+      <div className="w-full h-full min-h-[250px]">
+        <div className="w-full flex flex-col gap-element-gap">
+          <SectionHeading
+            Icon={SpeakerphoneIcon}
+            iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
+            title="Contingut patrocinat"
+            titleClassName="heading-2"
+          />
+          <div className="px-section-x">
+            <AdArticle slot="9643657007" />
+          </div>
         </div>
       </div>
 
@@ -110,7 +117,7 @@ export default function EventClient({
                   setOpenModal(true);
                   sendGoogleEvent("open-change-modal", {});
                 }}
-                className="gap-2 ease-in-out duration-300 border-whiteCorp hover:border-blackCorp"
+                className="gap-2 ease-in-out duration-300 border-background hover:border-foreground-strong"
               >
                 <p className="font-medium flex items-center">Editar</p>
               </div>

@@ -11,6 +11,7 @@ import {
   generateWebPageSchema,
   generateSiteNavigationElementSchema,
 } from "@components/partials/seo-meta";
+import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 
 export const metadata = buildPageMeta({
   title: "Arxiu. Descobreix tot el que passa a Catalunya - Esdeveniments.cat",
@@ -95,75 +96,51 @@ export default async function Page() {
         }}
       />
 
-      {/* Enhanced HTML structure */}
-      <div
-        className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
-        role="main"
-        data-testid="sitemap-page"
-      >
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="mb-4">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
-            <li>
-              <Link href="/" className="hover:text-gray-800">
-                Inici
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <span className="text-gray-800">Arxiu</span>
-            </li>
-          </ol>
-        </nav>
+      <SitemapLayout testId="sitemap-page">
+        <SitemapBreadcrumb items={breadcrumbs} />
 
-        {/* Display regions */}
-        <section className="mb-8">
-          <header className="mb-6">
-            <h1 className="text-3xl font-bold mb-4" data-testid="sitemap-title">
+        <section className="stack gap-8">
+          <header>
+            <h1 className="heading-1 mb-4" data-testid="sitemap-title">
               Arxiu d&apos;esdeveniments culturals
             </h1>
-            <p className="mb-4 text-lg text-gray-700">
+            <p className="body-large text-foreground">
               Descobreix tot el què ha passat a Catalunya cada any. Navega per
               comarques i poblacions per trobar l&apos;història cultural del
               territori.
             </p>
           </header>
 
-          <div className="mb-8">
-            <h2 className="mb-4 text-2xl font-semibold">
-              Comarques de Catalunya
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="list">
+          <div className="stack gap-6">
+            <h2 className="heading-2">Comarques de Catalunya</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4" role="list">
               {regions.map((region) => (
-                <div key={region.slug} className="mb-2" role="listitem">
+                <div key={region.slug} role="listitem">
                   <Link
                     href={`/sitemap/${region.slug}`}
                     prefetch={false}
-                    className="hover:underline hover:text-blue-600 transition-colors"
+                    className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                     data-testid="sitemap-region-link"
                   >
-                    <p className="text-gray-900">{region.name}</p>
+                    {region.name}
                   </Link>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Display cities */}
-          <div>
-            <h2 className="mb-4 text-2xl font-semibold">
-              Poblacions principals
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="list">
+          <div className="stack gap-6">
+            <h2 className="heading-2">Poblacions principals</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
               {cities.map((city) => (
-                <div key={city.slug} className="mb-2" role="listitem">
+                <div key={city.slug} role="listitem">
                   <Link
                     href={`/sitemap/${city.slug}`}
                     prefetch={false}
-                    className="hover:underline hover:text-blue-600 transition-colors"
+                    className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                     data-testid="sitemap-city-link"
                   >
-                    <p className="text-gray-900">{city.name}</p>
+                    {city.name}
                   </Link>
                 </div>
               ))}
@@ -171,15 +148,14 @@ export default async function Page() {
           </div>
         </section>
 
-        {/* Footer information */}
-        <footer className="mt-12 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-600">
+        <footer className="pt-8 border-t border-border">
+          <p className="body-small text-foreground/80">
             L&apos;arxiu conté esdeveniments culturals de totes les comarques de
             Catalunya. Cada enllaç et porta a un històric detallat organitzat
             per anys i mesos.
           </p>
         </footer>
-      </div>
+      </SitemapLayout>
     </>
   );
 }

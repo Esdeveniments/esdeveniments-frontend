@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import Script from "next/script";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -16,8 +16,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { FilteredPageProps } from "types/props";
 import { distanceToRadius } from "types/event";
-import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
+import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
   getRedirectUrl,
@@ -31,7 +30,7 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { toLocalDateString } from "@utils/helpers";
-import { twoWeeksDefault } from "@lib/dates";
+import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 
 export const revalidate = 600;
 
@@ -150,14 +149,25 @@ export default async function FilteredPage({
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
 
-  // Prepare fetch params
+  // Prepare fetch params (align with byDate page behavior)
   const fetchParams: FetchEventsParams = {
-    place: filters.place,
-    byDate: filters.byDate as ByDateOptions,
-    isToday: filters.byDate === "tots",
+    page: 0,
+    size: 10,
     category: filters.category !== "tots" ? filters.category : undefined,
     term: filters.searchTerm || undefined,
   };
+
+  // Only add place when not catalunya (API treats empty as full Catalonia)
+  if (filters.place !== "catalunya") {
+    fetchParams.place = filters.place;
+  }
+
+  // Use explicit date range for reliability across backends
+  const dateRange = getDateRangeFromByDate(filters.byDate);
+  if (dateRange) {
+    fetchParams.from = toLocalDateString(dateRange.from);
+    fetchParams.to = toLocalDateString(dateRange.until);
+  }
 
   // Add distance/radius filter if coordinates are provided
   if (filters.lat && filters.lon) {
@@ -169,11 +179,14 @@ export default async function FilteredPage({
     fetchParams.lon = filters.lon;
   }
 
-  // Fetch events and place label in parallel
-  const [placeTypeAndLabel, initialEventsResponse] = await Promise.all([
-    getPlaceTypeAndLabel(filters.place),
-    fetchEvents(fetchParams),
-  ]);
+  // Fetch events, place label, and news check in parallel
+  const [placeTypeAndLabel, initialEventsResponse, hasNews] = await Promise.all(
+    [
+      getPlaceTypeAndLabel(filters.place),
+      fetchEvents(fetchParams),
+      hasNewsForPlace(filters.place),
+    ]
+  );
   let eventsResponse = initialEventsResponse;
   let events = eventsResponse?.content || [];
   let noEventsFound = false;
@@ -190,14 +203,21 @@ export default async function FilteredPage({
       const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
 
       if (regionWithSlug) {
-        // Fetch events from the parent region without the specific category filter
+        // Fetch events from the parent region (use explicit date range)
         const fallbackParams: FetchEventsParams = {
           page: 0,
           size: 7,
           place: regionWithSlug.slug,
-          byDate: filters.byDate as ByDateOptions,
-          isToday: filters.byDate === "tots",
         };
+        const fallbackDateRange = getDateRangeFromByDate(filters.byDate);
+        if (fallbackDateRange) {
+          fallbackParams.from = toLocalDateString(fallbackDateRange.from);
+          fallbackParams.to = toLocalDateString(fallbackDateRange.until);
+        }
+        // Intentionally DO NOT include category filter here.
+        // Rationale: if a city has no events for a given category, the
+        // regional fallback should surface any relevant events to help users
+        // discover what's on nearby, rather than returning zero results again.
 
         eventsResponse = await fetchEvents(fallbackParams);
         events = eventsResponse?.content || [];
@@ -267,54 +287,32 @@ export default async function FilteredPage({
       : null;
 
   return (
-    <>
-      {/* JSON-LD Structured Data */}
-      <Script
-        id="webpage-schema"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema),
-        }}
-      />
-      {collectionSchema && (
-        <Script
-          id="collection-schema"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(collectionSchema),
-          }}
-        />
-      )}
-      {structuredData && (
-        <Script
-          id={`events-${filters.place}-${filters.byDate}-${filters.category}`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
-        />
-      )}
-
-      <HybridEventsList
-        initialEvents={eventsWithAds}
-        pageData={pageData}
-        placeTypeLabel={placeTypeAndLabel}
-        place={filters.place}
-        category={filters.category}
-        date={filters.byDate}
-        serverHasMore={!eventsResponse?.last}
-        noEventsFound={noEventsFound}
-      />
-      <ClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={placeTypeAndLabel}
-      />
-    </>
+    <PlacePageShell
+      nonce={nonce}
+      scripts={[
+        { id: "webpage-schema", data: webPageSchema },
+        ...(collectionSchema
+          ? [{ id: "collection-schema", data: collectionSchema }]
+          : []),
+        ...(structuredData
+          ? [
+              {
+                id: `events-${filters.place}-${filters.byDate}-${filters.category}`,
+                data: structuredData,
+              },
+            ]
+          : []),
+      ]}
+      initialEvents={eventsWithAds}
+      pageData={pageData}
+      placeTypeLabel={placeTypeAndLabel}
+      place={filters.place}
+      category={filters.category}
+      date={filters.byDate}
+      serverHasMore={!eventsResponse?.last}
+      noEventsFound={noEventsFound}
+      categories={categories}
+      hasNews={hasNews}
+    />
   );
 }

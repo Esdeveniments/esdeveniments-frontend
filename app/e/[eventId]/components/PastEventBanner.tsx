@@ -1,4 +1,6 @@
 import type { PastEventBannerProps } from "types/common";
+import { ClockIcon } from "@heroicons/react/outline";
+import Link from "next/link";
 
 export default function PastEventBanner({
   temporalStatus,
@@ -12,50 +14,50 @@ export default function PastEventBanner({
   const timeWindow = "aquesta setmana";
 
   return (
-    <div className="w-full flex justify-center items-start px-4 sm:px-6 mt-4">
+    <div className="w-full px-section-x py-6">
       <div
-        className="w-11/12 sm:w-10/12 lg:w-3/4 bg-darkCorp rounded-lg p-6 flex flex-col gap-4 shadow-sm"
+        className="card-bordered max-w-3xl mx-auto bg-muted/30"
         role="status"
         aria-live="polite"
       >
-        <div className="flex flex-col gap-3">
-          <h3 className="text-lg font-semibold tracking-wide uppercase text-blackCorp leading-tight">
-            Finalitzat — Descobreix alternatives
-          </h3>
-          <p className="text-sm text-blackCorp/75 max-w-prose leading-relaxed">
-            Ja ha finalitzat. No et perdis els que venen: descobreix què passa a{" "}
-            {placeLabel} {timeWindow}.
-          </p>
-          {/* Hidden readable state for screen readers */}
-          <span className="sr-only">Estat: {temporalStatus.label}.</span>
-        </div>
+        <div className="card-body">
+          {/* Visual indicator with icon */}
+          <div className="flex sm:items-start md:items-center gap-4 mb-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+              <ClockIcon className="w-5 h-5 text-foreground/60" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="heading-3 text-foreground-strong mb-2">
+                Aquest esdeveniment ja ha finalitzat
+              </h3>
+              <p className="body-small text-foreground/60">
+                No et perdis els propers esdeveniments {timeWindow} a{" "}
+                {placeLabel}
+              </p>
+              {/* Hidden readable state for screen readers */}
+              <span className="sr-only">Estat: {temporalStatus.label}.</span>
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-3">
-          <a
-            href={explorePlaceHref}
-            aria-label={`Veure esdeveniments a ${placeLabel}`}
-            className="w-full inline-flex items-center justify-center rounded-lg bg-blackCorp text-whiteCorp text-sm font-medium px-6 py-3 hover:bg-blackCorp/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blackCorp/50"
-          >
-            Veure esdeveniments a {placeLabel}
-          </a>
-
-          {primaryCategorySlug ? (
-            <a
-              href={exploreCategoryHref}
-              aria-label={`Més d'aquesta categoria`}
-              className="w-full inline-flex items-center justify-center rounded-lg border border-blackCorp/30 bg-transparent text-blackCorp text-sm font-medium px-6 py-3 hover:bg-blackCorp/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blackCorp/30"
-            >
-              Més d&apos;aquesta categoria
-            </a>
-          ) : (
-            <a
+          {/* Single primary CTA with optional secondary link */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-start md:justify-center">
+            <Link
               href={explorePlaceHref}
-              aria-label={`Explorar més esdeveniments a ${placeLabel}`}
-              className="w-full inline-flex items-center justify-center rounded-lg border border-blackCorp/30 bg-transparent text-blackCorp text-sm font-medium px-6 py-3 hover:bg-blackCorp/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blackCorp/30"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground body-normal font-medium hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
             >
-              Explorar més
-            </a>
-          )}
+              Descobreix esdeveniments a {placeLabel}
+            </Link>
+
+            {primaryCategorySlug && (
+              <Link
+                href={exploreCategoryHref}
+                className="body-small text-primary hover:text-primary-dark font-medium transition-colors sm:ml-2 inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+              >
+                o explora aquesta categoria
+                <span aria-hidden="true">→</span>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>

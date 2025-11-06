@@ -38,70 +38,75 @@ const teamMembers: TeamMemberType[] = [
 
 const QuiSom: NextPage = () => {
   return (
-    <div className="w-full flex flex-col justify-center items-center gap-10 pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0">
-      <div>
-        <h1 className="text-center italic uppercase font-semibold">Qui som?</h1>
-        <h2 className="text-center italic font-normal text-primary">
-          esdeveniments.cat
-        </h2>
+    <div className="container py-section-y">
+      <div className="stack gap-6 items-center">
+        <div className="stack gap-2 items-center">
+          <h1 className="heading-1 text-center">Qui som?</h1>
+          <h2 className="heading-2 text-center text-primary">
+            esdeveniments.cat
+          </h2>
+        </div>
+        <div className="stack gap-6">
+          <p className="body-normal">
+            Esdeveniments.cat és una iniciativa ciutadana per veure de manera
+            fàcil i ràpida tots els actes culturals que es fan a Catalunya.
+          </p>
+          <p className="body-normal">
+            L&apos;agenda és col·laborativa, i cada persona que organitzi un
+            acte cultural podrà publicar-lo{" "}
+            <Link
+              href="/publica"
+              prefetch={false}
+              className="text-primary hover:underline underline-offset-2 font-medium"
+            >
+              aquí
+            </Link>{" "}
+            pel seu compte.
+          </p>
+          <p className="body-normal">
+            Podreu seguir l&apos;agenda cultural en aquesta pàgina web o
+            seguir-nos a les xarxes socials:
+          </p>
+        </div>
       </div>
-      <div className="flex flex-col justify-start items-start gap-6">
-        <p>
-          Esdeveniments.cat és una iniciativa ciutadana per veure de manera
-          fàcil i ràpida tots els actes culturals que es fan a Catalunya.
-        </p>
-        <p>
-          L&apos;agenda és col·laborativa, i cada persona que organitzi un acte
-          cultural podrà publicar-lo{" "}
-          <Link
-            href="/publica"
-            prefetch={false}
-            className="font-normal text-primary hover:underline"
-          >
-            aquí
-          </Link>{" "}
-          pel seu compte.
-        </p>
-        <p>
-          Podreu seguir l&apos;agenda cultural en aquesta pàgina web o
-          seguir-nos a les xarxes socials:
-        </p>
-      </div>
-      <div></div>
-      <div className="w-full flex flex-col justify-center gap-8 pb-20">
-        <h2 className="text-center">El nostre equip</h2>
+      <div className="w-full stack gap-8 items-center py-section-y">
+        <h2 className="heading-2 text-center">El nostre equip</h2>
         <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-8">
           {teamMembers.map((member) => (
-            <div
+            <article
               key={member.name}
-              className="w-[200px] h-[414px] bg-whiteCorp rounded-md shadow-xl"
+              className="card-elevated w-[200px] h-[414px] transition-card hover-lift"
             >
               <div className="h-[185px] overflow-hidden">
                 <Image
-                  className="object-cover object-top rounded-t-md"
+                  className="object-cover object-top rounded-t-card"
                   src={member.image}
                   alt={member.name}
                   width={200}
                   height={200}
                 />
               </div>
-              <div className="w-full flex flex-col justify-center items-center gap-6 py-8">
-                <div className="w-full flex justify-start items-start gap-2 pt-4">
+              <div className="stack gap-6 items-center p-card-padding-sm">
+                <div className="flex-start gap-2 w-full pt-2">
                   <div className="w-2 h-6 bg-primary"></div>
-                  <h3>{member.name}</h3>
+                  <h3 className="heading-4">{member.name}</h3>
                 </div>
-                <div className="w-full flex flex-col justify-start items-start px-4">
-                  <p className="w-full">{member.role}</p>
-                  <p className="w-full text-sm font-semibold">{member.title}</p>
+                <div className="stack gap-1 w-full">
+                  <p className="body-normal text-foreground">{member.role}</p>
+                  <p className="body-small font-semibold text-foreground-strong">
+                    {member.title}
+                  </p>
                 </div>
                 <a
                   href={member.linkedin}
-                  className="w-full text-center hover:bg-primary hover:text-whiteCorp font-bold px-4 py-3 my-3 ease-in-out duration-300 cursor-pointer"
+                  className="btn-primary w-full transition-interactive"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <p>LinkedIn</p>
+                  LinkedIn
                 </a>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>

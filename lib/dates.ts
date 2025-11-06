@@ -110,6 +110,27 @@ export const twoWeeksDefault = (): DateRange => {
 };
 
 /**
+ * Maps a byDate filter value to its corresponding date range function and returns the range
+ * @param {string} byDate - The byDate filter value (avui, dema, setmana, cap-de-setmana, etc.)
+ * @returns {DateRange | null} The date range for the given filter, or null if byDate is "tots"
+ */
+export const getDateRangeFromByDate = (byDate: string): DateRange | null => {
+  if (byDate === "tots") {
+    return null;
+  }
+
+  const map: Record<string, () => DateRange> = {
+    avui: today,
+    dema: tomorrow,
+    setmana: week,
+    "cap-de-setmana": weekend,
+  };
+
+  const fn = map[byDate] || today;
+  return fn();
+};
+
+/**
  * Returns date range for a specific month and year
  * @param {string} month - Month name in Catalan
  * @param {number} year - Year

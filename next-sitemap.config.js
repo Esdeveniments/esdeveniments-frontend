@@ -8,57 +8,27 @@ const siteUrl =
 
 module.exports = {
   siteUrl,
-  generateSitemap: false,
+  generateSitemap: true,
   exclude: [
-    "api",
-    "_app.js",
-    "_document.js",
-    "404.js",
-    "_error.js",
-    "sitemap.xml.js",
-    "server-sitemap.xml",
-    "server-sitemap.xml.js",
+    "/api/*", // APIs are not pages
     "/server-sitemap.xml",
-    "/server-sitemap.xml.js",
-    "server-news-sitemap.xml",
     "/server-news-sitemap.xml",
-    "server-place-sitemap.xml",
     "/server-place-sitemap.xml",
-    "server-google-news-sitemap.xml",
     "/server-google-news-sitemap.xml",
-    "rss.xml",
     "/rss.xml",
-    ".next",
-    "___next_launcher.js",
-    "___vc",
-    "node_modules",
-    "package.json",
-    "e/[eventId]",
+    "/e/*", // event detail URLs listed via dynamic server sitemap
   ],
   generateRobotsTxt: true,
   robotsTxtOptions: {
     policies: [
-      {
-        userAgent: "*",
-        disallow: ["/404"],
-      },
+      { userAgent: "*", disallow: ["/404"] },
       { userAgent: "*", allow: "/" },
     ],
     additionalSitemaps: [
-      `${siteUrl}/sitemap.xml`,
       `${siteUrl}/server-sitemap.xml`,
       `${siteUrl}/server-news-sitemap.xml`,
       `${siteUrl}/server-place-sitemap.xml`,
       `${siteUrl}/server-google-news-sitemap.xml`,
     ],
-  },
-  transform: async (config, path) => {
-    // Use the path as the default key
-    return {
-      loc: path,
-      changefreq: config.changefreq,
-      priority: config.priority,
-      lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
-    };
   },
 };

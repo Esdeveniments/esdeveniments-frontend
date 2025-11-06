@@ -49,10 +49,10 @@ export default async function Page(): Promise<JSX.Element> {
 
   return (
     <>
-      <div className="w-full flex justify-center items-center mx-auto px-2 lg:px-0 sm:w-[580px] md:w-[768px] lg:w-[1024px]">
+      <div className="container flex justify-center items-center">
         <Suspense
           fallback={
-            <div className="w-full h-12 bg-whiteCorp animate-pulse rounded-full" />
+            <div className="w-full h-12 bg-background animate-pulse rounded-full" />
           }
         >
           <Search />

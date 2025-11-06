@@ -23,7 +23,7 @@ export default function Modal({
       initialFocus={cancelButtonRef}
     >
       <div
-        className="w-full bg-bColor opacity-60 fixed inset-0"
+        className="w-full bg-border opacity-60 fixed inset-0"
         aria-hidden="true"
         onClick={() => setOpen(false)}
       />
@@ -40,7 +40,7 @@ export default function Modal({
               leaveTo="opacity-0"
             >
               <Dialog.Panel className="w-full flex justify-center items-center">
-                <div className="w-full flex flex-col justify-center items-center sm:w-[500px] bg-whiteCorp rounded-lg shadow-xl p-4 relative">
+                <div className="w-full flex flex-col justify-center items-center sm:w-[500px] bg-background rounded-lg shadow-xl p-4 relative">
                   <button
                     ref={cancelButtonRef}
                     onClick={() => setOpen(false)}
@@ -68,7 +68,7 @@ export default function Modal({
                             }
                             setOpen(false);
                           }}
-                          className="flex justify-center items-center gap-2 text-blackCorp bg-whiteCorp rounded-xl py-2 px-3 ease-in-out duration-300 border border-blackCorp font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-whiteCorp hover:text-whiteCorp"
+                          className="flex justify-center items-center gap-2 text-foreground-strong bg-background rounded-xl py-2 px-3 ease-in-out duration-300 border border-foreground-strong font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-background hover:text-background"
                         >
                           {actionButton}
                         </button>

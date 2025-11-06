@@ -119,7 +119,7 @@ export default function RestaurantPromotionSection({
   return (
     <div
       ref={sectionRef}
-      className="w-full flex justify-center items-start gap-2 px-4"
+      className="w-full flex justify-center items-start gap-2 min-w-0"
     >
       {/* Loading State */}
       {isLoading && (
@@ -132,7 +132,7 @@ export default function RestaurantPromotionSection({
       {/* Error State */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600 text-sm">{error}</p>
+          <p className="body-small text-error">{error}</p>
         </div>
       )}
 

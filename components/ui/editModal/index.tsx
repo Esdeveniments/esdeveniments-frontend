@@ -22,7 +22,7 @@ const EditModal: FC<EditModalProps> = ({
         setOpen={setOpenModal}
         title="Suggereix una edició"
       >
-        <ul role="list" className="divide-y divide-darkCorp text-left">
+        <ul role="list" className="divide-y divide-foreground-strong text-left">
           <li key="edit" className="p-4 flex">
             <Link href={`/e/${slug}/edita`} prefetch={false}>
               <div className="flex justify-center items-start gap-4">
@@ -79,11 +79,11 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="not-exist-description"
                   name="not-exist"
                   type="checkbox"
-                  className="h-5 w-5 text-primarydark border-darkCorp rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
-                <label htmlFor="not-exist" className="text-blackCorp">
+                <label htmlFor="not-exist" className="text-foreground-strong">
                   No existeix
                 </label>
               </div>
@@ -97,11 +97,11 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="duplicated-description"
                   name="duplicated"
                   type="checkbox"
-                  className="h-5 w-5 text-primarydark border-darkCorp rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
-                <label htmlFor="duplicated" className="text-blackCorp">
+                <label htmlFor="duplicated" className="text-foreground-strong">
                   Duplicat
                 </label>
               </div>
@@ -115,11 +115,11 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="offensive-description"
                   name="offensive"
                   type="checkbox"
-                  className="h-5 w-5 text-primarydark border-darkCorp rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
-                <label htmlFor="offensive" className="text-blackCorp">
+                <label htmlFor="offensive" className="text-foreground-strong">
                   Ofensiu, nociu o enganyós
                 </label>
               </div>
@@ -133,11 +133,11 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="others-description"
                   name="others"
                   type="checkbox"
-                  className="h-5 w-5 text-primarydark border-darkCorp rounded-xl focus:outline-none"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
-                <label htmlFor="others" className="text-blackCorp">
+                <label htmlFor="others" className="text-foreground-strong">
                   Altres
                 </label>
                 <p id="offers-description" className="text-sm">
@@ -160,7 +160,7 @@ const EditModal: FC<EditModalProps> = ({
                   onSendDeleteReason();
                 }
               }}
-              className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-whiteCorp bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-whiteCorp focus:outline-none font-barlow italic uppercase font-semibold tracking-wide"
+              className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-background bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-background focus:outline-none font-barlow italic uppercase font-semibold tracking-wide"
             >
               Enviar
             </button>

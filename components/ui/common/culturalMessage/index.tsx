@@ -16,7 +16,7 @@ const CulturalMessage: FC<CulturalMessageProps> = ({
 
   return (
     <div className="leading-relaxed">
-      <p className="text-base leading-relaxed text-blackCorp font-bold">
+      <p className="text-base leading-relaxed text-foreground-strong font-bold">
         Explora més plans{" "}
         {formatCatalanA(capitalizedLocation, locationType, false)}:
       </p>

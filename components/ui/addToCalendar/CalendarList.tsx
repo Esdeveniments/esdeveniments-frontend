@@ -45,8 +45,8 @@ const CalendarList: FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
   }, [title]);
 
   return (
-    <div className="absolute top-full left-0 mt-2 z-10 bg-whiteCorp">
-      <div className="shadow-md rounded-md p-4 border border-bColor animate-appear">
+    <div className="absolute top-full left-0 mt-2 z-10 bg-background">
+      <div className="shadow-md rounded-md p-4 border border-border animate-appear">
         {calendarOptions.map(
           (option) =>
             option.url && (

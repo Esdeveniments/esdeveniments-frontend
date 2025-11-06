@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { getDateRangeFromByDate } from "@lib/dates";
+import { toLocalDateString } from "@utils/helpers";
 import useSWRInfinite from "swr/infinite";
-import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import {
   FetchEventsParams,
@@ -9,11 +10,37 @@ import {
 } from "types/event";
 import { captureException } from "@sentry/nextjs";
 
-// SWR fetcher function for events API (single page)
+// SWR fetcher function for events API (single page) via internal proxy
 const pageFetcher = async (
   params: FetchEventsParams
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
-  return await fetchEvents(params);
+  const qs = new URLSearchParams();
+  if (typeof params.page === "number") qs.set("page", String(params.page));
+  if (typeof params.size === "number") qs.set("size", String(params.size));
+  if (params.place) qs.set("place", params.place);
+  if (params.category) qs.set("category", params.category);
+  if (params.lat !== undefined) qs.set("lat", String(params.lat));
+  if (params.lon !== undefined) qs.set("lon", String(params.lon));
+  if (params.radius !== undefined) qs.set("radius", String(params.radius));
+  if (params.term) qs.set("term", params.term);
+  if (params.byDate) qs.set("byDate", params.byDate);
+  if (params.from) qs.set("from", params.from);
+  if (params.to) qs.set("to", params.to);
+
+  const res = await fetch(`/api/events?${qs.toString()}`);
+  if (!res.ok) {
+    console.error(`Failed to fetch events: ${res.status}`);
+    captureException(new Error(`Failed to fetch events: ${res.status}`));
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: params.size ?? 10,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
+  }
+  return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
 
 export const useEvents = ({
@@ -41,13 +68,24 @@ export const useEvents = ({
   }, [place, category, date]);
 
   // Build base params for the key/fetcher
+  // Derive explicit date range for known slugs to align with SSR behavior
+  const dateRange = getDateRangeFromByDate(date || "tots");
+  const range = dateRange
+    ? {
+        from: toLocalDateString(dateRange.from),
+        to: toLocalDateString(dateRange.until),
+      }
+    : {};
+
   const baseParams: Omit<FetchEventsParams, "page" | "size"> & {
     size: number;
   } = {
     size: initialSize,
     place: place !== "catalunya" ? place : undefined,
     category,
-    byDate: date,
+    byDate: date, // keep for key clarity
+    from: range.from,
+    to: range.to,
   };
 
   // Key generator for SWR Infinite (page-by-page)
@@ -62,6 +100,8 @@ export const useEvents = ({
       baseParams.place,
       baseParams.category,
       baseParams.byDate,
+      baseParams.from,
+      baseParams.to,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -75,13 +115,24 @@ export const useEvents = ({
     setSize,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
-    ([, placeParam, categoryParam, byDateParam, pageIndex, sizeParam]) =>
+    ([
+      ,
+      placeParam,
+      categoryParam,
+      byDateParam,
+      fromParam,
+      toParam,
+      pageIndex,
+      sizeParam,
+    ]) =>
       pageFetcher({
         page: pageIndex as number,
         size: sizeParam as number,
         place: placeParam as string | undefined,
         category: categoryParam as string | undefined,
         byDate: byDateParam as string | undefined,
+        from: fromParam as string | undefined,
+        to: toParam as string | undefined,
       }),
     {
       // Provide SSR fallback as the first page when available

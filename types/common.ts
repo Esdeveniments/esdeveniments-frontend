@@ -482,3 +482,27 @@ export interface CollectionPageOptions {
   mainEntity?: Record<string, unknown>;
   numberOfItems?: number;
 }
+
+// E2E test component props
+export interface ClientTestProps {
+  initialEvents: EventSummaryResponseDTO[];
+  place: string;
+  category: string;
+  date: string;
+}
+
+// Sitemap component props
+export interface SitemapLayoutProps {
+  children: React.ReactNode;
+  testId?: string;
+}
+
+export interface SitemapBreadcrumbProps {
+  items: BreadcrumbItem[];
+}
+
+// PlacePageShell JSON-LD script type
+export interface JsonLdScript {
+  id: string;
+  data: unknown;
+}

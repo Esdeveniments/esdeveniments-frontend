@@ -1,101 +1,184 @@
-export const sanitize = (url: string): string => {
-  const accents = [
-    /[\u0300-\u030f]/g,
-    /[\u1AB0-\u1AFF]/g,
-    /[\u1DC0-\u1DFF]/g,
-    /[\u1F00-\u1FFF]/g,
-    /[\u2C80-\u2CFF]/g,
-    /[\uFB00-\uFB06]/g,
-  ];
+/* =========================================================
+ * String helpers (Catalan-aware)
+ * ======================================================= */
 
-  let sanitizedUrl = url.toLowerCase();
-  sanitizedUrl = sanitizedUrl.replace(/\s+$/, "");
-
-  accents.forEach((regex) => {
-    sanitizedUrl = sanitizedUrl.normalize("NFD").replace(regex, "");
-  });
-
-  sanitizedUrl = sanitizedUrl.replace(/[^\w\s-]/g, "").replace(/[\s_]+/g, "-");
-  sanitizedUrl = sanitizedUrl.replace(/[-\s]+/g, "-");
-
-  return sanitizedUrl;
-};
-
-export const slug = (str: string, formattedStart: string, id: string): string =>
-  `${sanitize(str)}-${formattedStart
+/** Lowercases, strips diacritics, handles Catalan l·l and apostrophes, collapses to ascii-friendly slugs. */
+export function sanitize(input: string): string {
+  if (!input) return "";
+  const s = input
+    .trim()
     .toLowerCase()
-    .replace(/ /g, "-")
-    .replace("---", "-")
-    .replace("ç", "c")
-    .replace(/--/g, "-")}-${id}`;
+    .normalize("NFKD") // split accents
+    .replace(/\p{M}+/gu, "") // remove all combining marks (faster than hand-picked ranges)
+    .replace(/·/g, "") // l·l -> ll
+    .replace(/['’]+/g, " ") // treat apostrophes as separators (l'escala -> l escala)
+    .replace(/[–—―]/g, "-") // en/em dashes -> hyphen
+    .replace(/&/g, " i ") // & -> i (Catalan)
+    .replace(/[^a-z0-9\s-]/g, "") // drop the rest
+    .replace(/[\s_-]+/g, "-") // collapse separators
+    .replace(/^-+|-+$/g, ""); // trim hyphens
+  return s || "n-a";
+}
 
 /**
- * Capitalize first letter of a string (safe)
+ * Legacy sanitize variant used only for matching incoming slugs from older content.
+ * Differs from sanitize() by removing apostrophes instead of spacing/hyphenating them.
+ * Example: "L'Escala" -> "lescala" (legacy) vs "l-escala" (current).
  */
+export function sanitizeLegacyApostrophe(input: string): string {
+  if (!input) return "";
+  const s = input
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .replace(/·/g, "")
+    .replace(/['’]+/g, "") // legacy: drop apostrophes
+    .replace(/[–—―]/g, "-")
+    .replace(/&/g, " i ")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return s || "n-a";
+}
+
+export const slug = (
+  title: string,
+  formattedStart: string,
+  id: string
+): string =>
+  [sanitize(title), sanitize(formattedStart), id?.trim()]
+    .filter(Boolean)
+    .join("-");
+
+/** Capitalize first letter (safe) */
 export function capitalizeFirstLetter(s: string): string {
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/**
- * Extracts UUID from event slug, handling both formats:
- * - Standard UUID v4 with dashes (new events): f9d240c2-25ae-4690-a745-f6e76e598bf3
- * - Custom IDs without dashes (older events): ea962ni7nis5ga0ppcu7n12pcg
- *
- * @param slug - The event slug containing the UUID at the end
- * @returns The extracted UUID or ID
- *
- * @example
- * // New event with UUID v4
- * extractUuidFromSlug('concert-jazz-15-febrer-2025-f9d240c2-25ae-4690-a745-f6e76e598bf3')
- * // Returns: 'f9d240c2-25ae-4690-a745-f6e76e598bf3'
- *
- * // Older event with custom ID
- * extractUuidFromSlug('festa-de-la-gent-gran-16-juliol-2025-ea962ni7nis5ga0ppcu7n12pcg')
- * // Returns: 'ea962ni7nis5ga0ppcu7n12pcg'
- */
-export const extractUuidFromSlug = (slug: string): string => {
-  // Try to match standard UUID v4 pattern at the end of the slug
-  // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-  const uuidPattern =
-    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const uuidMatch = slug.match(uuidPattern);
-
-  if (uuidMatch) {
-    // Found a standard UUID with dashes - return the full UUID
-    return uuidMatch[0];
-  } else {
-    // Fallback to old behavior for custom IDs without dashes
-    const parts = slug.split("-");
-    return parts[parts.length - 1];
-  }
+/** Extract trailing UUID v4 (or fallback last dash segment) */
+export const extractUuidFromSlug = (s: string): string => {
+  const m = s.match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  );
+  return m ? m[0] : s.split("-").pop() ?? "";
 };
 
-export const truncateString = (str: string, num: number): string => {
-  if (str.length <= num) return str;
-  return str.slice(0, num) + "...";
-};
+export const truncateString = (str: string, num: number): string =>
+  str.length <= num ? str : str.slice(0, num) + "...";
+
+/* =========================================================
+ * Catalan grammar helpers
+ * ======================================================= */
+
+const VOWEL_OR_H = /^[aeiouàáèéíïòóúüh]/i;
+
+function startsWithVowelOrH(s: string): boolean {
+  return VOWEL_OR_H.test((s || "").trim());
+}
+
+/** Keep first token as-is, lowercase the rest; for one-word names, lowercase it. */
+function narrativeRegionCase(name: string): string {
+  const parts = (name || "").trim().split(/\s+/);
+  if (parts.length <= 1) return (parts[0] ?? "").toLowerCase();
+  return [parts[0], parts.slice(1).join(" ").toLowerCase()].join(" ");
+}
+
+/* ---------- Category/general heuristics (used when includeArticle = true) ---------- */
+
+const FEMININE_EXCEPTIONS = ["gent gran", "dansa"];
+
+function classifyCategory(
+  firstWord: string,
+  full: string
+): { plural: boolean; feminine: boolean } {
+  const isPlural = /s$/i.test(firstWord);
+  const stem = isPlural ? firstWord.slice(0, -1) : firstWord;
+
+  const pluralCions = /cions$|sions$/i.test(firstWord);
+  const feminineEndings = /a$|tat$|ció$|sió$|ina$|ena$|ura$|esa$/i;
+  const masculineTraps = /(cinema|programa|tema)$/i;
+
+  const isFeminine =
+    FEMININE_EXCEPTIONS.some((e) => full.includes(e)) ||
+    pluralCions ||
+    (feminineEndings.test(stem) && !masculineTraps.test(stem));
+
+  return { plural: isPlural, feminine: isFeminine };
+}
 
 /**
- * Catalan contraction for the preposition "de" before vowels/"h".
- * Returns natural phrase like "d'exposicions" or "de teatre".
- * Defaults to lowercasing the noun for natural reading in CT.
+ * Catalan contraction for the preposition "de".
+ * - type "town": never injects articles; returns "de X" / "d'X"
+ * - type "region": heuristic handling for plural vs singular and gender
+ * - "category"/"general": if includeArticle=true, adds article with number/gender heuristics
  */
 export function formatCatalanDe(
   name: string,
-  lowercase: boolean = true
+  lowercase: boolean = true,
+  includeArticle: boolean = false,
+  type: "category" | "region" | "town" | "general" = "category"
 ): string {
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
-  const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(text);
-  return `${startsWithVowelOrH ? "d'" : "de "}${text}`;
+
+  // ---- towns: keep simple (your tests expect only "de"/"d'")
+  if (type === "town") {
+    return startsWithVowelOrH(text) ? `d'${text}` : `de ${text}`;
+  }
+
+  // ---- regions: plural detection + gender heuristic (no external table required)
+  if (type === "region") {
+    if (!includeArticle) {
+      return startsWithVowelOrH(text) ? `d'${text}` : `de ${text}`;
+    }
+
+    const firstWord = text.split(/\s+/)[0];
+    const fwLower = firstWord.toLowerCase();
+
+    // True plural only if ends in unaccented -es; exclude singular -ès/-és
+    const regionIsPlural =
+      /s$/i.test(firstWord) &&
+      firstWord.length > 2 &&
+      /[^èé]es$/i.test(fwLower);
+
+    if (regionIsPlural) {
+      // Feminine plural guess: stems ending in -a/-e or overall feminine pattern
+      const stem = firstWord.slice(0, -1);
+      const isFemPl = /a$|e$/i.test(stem) || isFemininePlaceName(text);
+      return isFemPl ? `de les ${text}` : `dels ${text}`;
+    }
+
+    if (startsWithVowelOrH(firstWord)) return `de l'${text}`;
+    return isFemininePlaceName(text) ? `de la ${text}` : `del ${text}`;
+  }
+
+  // ---- categories / general nouns
+  if (!includeArticle) {
+    return startsWithVowelOrH(text) ? `d'${text}` : `de ${text}`;
+  }
+
+  const firstWord = text.split(/\s+/)[0];
+  const { plural, feminine } = classifyCategory(firstWord, text);
+
+  if (startsWithVowelOrH(firstWord)) {
+    if (plural) return feminine ? `de les ${text}` : `dels ${text}`;
+    return `de l'${text}`;
+  }
+
+  if (plural) return feminine ? `de les ${text}` : `dels ${text}`;
+  return feminine ? `de la ${text}` : `del ${text}`;
 }
 
 /**
  * Catalan preposition "a" with proper article handling.
- * Returns natural phrase like "al Montseny", "a Barcelona", or "a la Selva".
- * Handles regions, towns, and general place names with proper gender/article rules.
- * Uses pattern-based detection for feminine place names.
+ * - "town": always "a <town>" (your tests assert this)
+ * - "region": narrative case + correct articles:
+ *     - plural: "a les … / als …"
+ *     - singular vowel/h: "a l’…"
+ *     - singular feminine consonant: "a La …" (capital La)
+ *     - singular masculine consonant: "al …"
  */
 export function formatCatalanA(
   name: string,
@@ -104,60 +187,85 @@ export function formatCatalanA(
 ): string {
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
+  const normalizedType = type === "" ? ("general" as const) : type;
 
-  // Handle empty type as general
-  const normalizedType = type === "" ? "general" : type;
-
-  // For vowels and 'h', use "a"
-  const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(text);
-  if (startsWithVowelOrH) {
+  if (normalizedType === "town") {
     return `a ${text}`;
   }
 
-  // For regions, check if it's feminine using pattern detection
   if (normalizedType === "region") {
-    if (isFemininePlaceName(text)) {
-      return `a la ${text}`;
-    } else {
-      return `al ${text}`;
+    // Use the original-cased name to build the narrative form expected by your specs
+    const display = raw || text;
+    const phrase = narrativeRegionCase(display);
+
+    // Quick plural detection for regions (same rule as above)
+    const firstWord = display.split(/\s+/)[0];
+    const fwLower = firstWord.toLowerCase();
+    const regionIsPlural =
+      /s$/i.test(firstWord) &&
+      firstWord.length > 2 &&
+      /[^èé]es$/i.test(fwLower);
+
+    if (regionIsPlural) {
+      const stem = firstWord.slice(0, -1);
+      const femPl = /a$|e$/i.test(stem) || isFemininePlaceName(display);
+      return femPl ? `a les ${phrase}` : `als ${phrase}`;
     }
+
+    if (startsWithVowelOrH(display)) {
+      return `a l'${phrase}`;
+    }
+
+    // singular consonant-start
+    return isFemininePlaceName(display) ? `a La ${phrase}` : `al ${phrase}`;
   }
 
-  // For towns and general, always use "a"
+  // general
   return `a ${text}`;
 }
 
 /**
  * Determines if a place name is feminine in Catalan using linguistic patterns.
- * This is more maintainable than hardcoding all feminine places.
+ * (Heuristic; we special-case a few masculine exceptions.)
  */
 function isFemininePlaceName(name: string): boolean {
-  const lowerName = name.toLowerCase();
+  const lowerName = (name || "").toLowerCase();
 
-  // Known exceptions: masculine places that might match feminine patterns
+  // Masculine exceptions that often match feminine-looking patterns
   const MASCULINE_EXCEPTIONS = [
-    "penedès", // el Penedès
-    "rosselló", // el Rosselló
-    "urgell", // l'Urgell
+    "penedès",
+    "alt penedès",
+    "baix penedès",
+    "rosselló",
+    "urgell",
+    "alt urgell",
+    "pla d'urgell",
+    "vallès",
+    "vallès oriental",
+    "vallès occidental",
+    "gironès",
+    "barcelonès",
+    "tarragonès",
+    "montsià",
+    "baix ebre",
+    "maresme",
+    "bages",
   ];
+  if (MASCULINE_EXCEPTIONS.includes(lowerName)) return false;
 
-  if (MASCULINE_EXCEPTIONS.includes(lowerName)) {
-    return false;
-  }
-
-  // Common feminine suffixes in Catalan place names
+  // Feminine-ish endings
   const feminineSuffixes = [
-    /a$/, // -a: Barcelona, Tarragona, Lleida, Girona
-    /ia$/, // -ia: Catalunya, València
-    /ella$/, // -ella: Sitges, etc.
-    /ona$/, // -ona: Tarragona, etc.
-    /ena$/, // -ena:
-    /ina$/, // -ina:
-    /ella$/, // -ella:
-    /ura$/, // -ura:
-    /osa$/, // -osa:
+    /a$/, // Selva, Noguera, Osona, Anoia…
+    /ia$/, // Cerdanya
+    /ona$/, // Tarragona
+    /ena$/, // Noguera (stem), etc.
+    /ina$/,
+    /ura$/,
+    /osa$/,
+    /ció$/,
+    /sió$/, // exposició (for categories)
+    /xa$/, // Garrotxa
   ];
 
-  // Check if the name matches any feminine suffix pattern
-  return feminineSuffixes.some((pattern) => pattern.test(lowerName));
+  return feminineSuffixes.some((p) => p.test(lowerName));
 }

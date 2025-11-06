@@ -14,11 +14,14 @@ import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import { sendGoogleEvent } from "@utils/analytics";
 
+// eslint-disable-next-line no-unused-vars
 function debounce(
-  func: (value: string) => void,
+  // eslint-disable-next-line no-unused-vars
+  func: (_value: string) => void,
   wait: number,
   immediate = false
-): (value: string) => void {
+  // eslint-disable-next-line no-unused-vars
+): (_value: string) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   return function executedFunction(value: string) {
     const later = () => {
@@ -124,20 +127,20 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className="w-full flex justify-center border border-bColor border-opacity-50 rounded-full px-4 mt-2"
+      className="w-full flex justify-center border border-border rounded-input px-input-x mt-element-gap"
       data-testid="search-bar"
     >
-      <div className="w-full flex justify-start items-center gap-2 rounded-full">
-        <div className="h-10 flex justify-end items-center cursor-pointer">
+      <div className="w-full flex justify-start items-center gap-element-gap rounded-input">
+        <div className="h-10 flex justify-end items-center cursor-pointer px-button-x">
           <SearchIcon
-            className="h-5 w-5 text-blackCorp"
+            className="h-5 w-5 text-foreground-strong"
             onClick={() => searchEvents(urlSearchTerm)}
             aria-label="Search"
           />
         </div>
         <input
           type="text"
-          className="w-full border-0 placeholder:text-bColor text-[16px] rounded-tr-full rounded-br-full"
+          className="w-full border-0 placeholder:text-foreground/60 body-normal rounded-tr-input rounded-br-input focus:outline-none"
           placeholder="Què estàs buscant?"
           value={inputValue}
           onKeyDown={handleKeyPress}
@@ -147,9 +150,9 @@ export default function Search(): JSX.Element {
           data-testid="search-input"
         />
         {inputValue.length > 0 && (
-          <div className="flex justify-end items-center cursor-pointer">
+          <div className="flex justify-end items-center cursor-pointer px-button-x">
             <XIcon
-              className="h-4 w-4 text-blackCorp"
+              className="h-4 w-4 text-foreground-strong"
               onClick={clearSearchTerm}
               aria-label="Clear search"
             />

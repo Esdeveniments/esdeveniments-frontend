@@ -109,7 +109,7 @@ export default function EditEventClient({
 
   return (
     <div>
-      <h1>Edita: {event.title}</h1>
+      <h1 className="heading-2">Edita: {event.title}</h1>
       <EventForm
         form={form}
         onSubmit={onSubmit}

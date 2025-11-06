@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
@@ -7,14 +6,14 @@ import { buildPageMeta } from "@components/partials/seo-meta";
 import Link from "next/link";
 import { NEWS_HUBS, NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
-import Script from "next/script";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
+import JsonLd from "@components/partials/JsonLd";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   // Basic SEO for the news listing page
@@ -27,8 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   // Fetch the most recent news per hub
   const hubResults = await Promise.all(
@@ -86,34 +83,14 @@ export default async function Page() {
   };
 
   return (
-    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
-      <Script
-        id="news-list-webpage-breadcrumbs"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
-      />
+    <div className="container flex-col justify-center items-center mt-8">
+      <JsonLd id="news-list-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
-        <Script
-          id="news-list-breadcrumbs"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema),
-          }}
-        />
+        <JsonLd id="news-list-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <Script
-        id="news-list-itemlist"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
-      />
+      <JsonLd id="news-list-itemlist" data={itemListSchema} />
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
-      <p className="text-[16px] font-normal text-blackCorp text-left mb-8 px-2 font-barlow">
+      <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.
       </p>
       <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
@@ -127,7 +104,7 @@ export default async function Page() {
       </div>
       <nav
         aria-label="Breadcrumb"
-        className="mb-6 px-2 lg:px-0 text-sm text-blackCorp/70"
+        className="mb-6 px-2 lg:px-0 text-sm text-foreground-strong/70"
       >
         <ol className="flex items-center space-x-2">
           <li>
@@ -138,7 +115,7 @@ export default async function Page() {
           <li>
             <span className="mx-1">/</span>
           </li>
-          <li className="text-blackCorp">Notícies</li>
+          <li className="text-foreground-strong">Notícies</li>
         </ol>
       </nav>
       <div className="flex flex-col gap-10 px-2 lg:px-0">
@@ -158,7 +135,7 @@ export default async function Page() {
                 </Link>
               </div>
               {NEARBY_PLACES_BY_HUB[hub.slug] && (
-                <nav className="mb-3 text-xs text-blackCorp/70">
+                <nav className="mb-3 text-xs text-foreground-strong/70">
                   <span className="mr-2">A prop:</span>
                   {NEARBY_PLACES_BY_HUB[hub.slug].map((p, i) => (
                     <>
@@ -179,7 +156,7 @@ export default async function Page() {
               )}
               <Suspense
                 fallback={
-                  <div className="w-full h-12 bg-whiteCorp animate-pulse rounded-full" />
+                  <div className="w-full h-12 bg-background animate-pulse rounded-full" />
                 }
               >
                 <NewsCard

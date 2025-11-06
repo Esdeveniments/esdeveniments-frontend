@@ -308,10 +308,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               Distància
             </p>
             {(userLocationLoading || userLocationError) && (
-              <div className="border-t border-bColor py-2">
+              <div className="border-t border-border py-2">
                 <div className="flex flex-col">
                   {userLocationLoading && (
-                    <div className="text-sm text-bColor">
+                    <div className="text-sm text-border">
                       Carregant localització...
                     </div>
                   )}

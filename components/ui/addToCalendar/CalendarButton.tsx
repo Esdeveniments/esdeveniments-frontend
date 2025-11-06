@@ -13,13 +13,13 @@ const CalendarButton: React.FC<CalendarButtonProps> = ({
     variant="neutral"
     aria-haspopup="menu"
     data-open={open}
-    className="group"
+    className="group py-2 px-3 h-auto text-sm"
   >
-    <span className="flex items-center justify-center w-6 h-6 rounded-md bg-whiteCorp p-1 mr-2 border border-blackCorp/10">
-      <CalendarIcon className="w-4 h-4 text-primary" />
+    <span className="flex-center w-5 h-5 rounded-button bg-background p-0.5 mr-1.5 border border-foreground-strong/10">
+      <CalendarIcon className="w-3.5 h-3.5 text-primary" />
     </span>
     {!hideText && "Afegir al calendari"}
-    <ChevronDownIcon className="w-4 h-4 ml-2 transition-transform duration-200 group-data-[open=true]:rotate-180" />
+    <ChevronDownIcon className="w-3.5 h-3.5 ml-1.5 transition-interactive group-data-[open=true]:rotate-180" />
   </Button>
 );
 

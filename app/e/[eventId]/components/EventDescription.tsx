@@ -10,16 +10,14 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   locationType = "general",
 }) => {
   return (
-    <div className="w-full flex justify-center items-start gap-2 px-4">
-      <div className="max-w-none text-gray-800">
-        <Description
-          description={description}
-          location={location}
-          locationValue={locationValue}
-          introText={introText}
-          locationType={locationType}
-        />
-      </div>
+    <div className="max-w-none text-foreground min-w-0">
+      <Description
+        description={description}
+        location={location}
+        locationValue={locationValue}
+        introText={introText}
+        locationType={locationType}
+      />
     </div>
   );
 };

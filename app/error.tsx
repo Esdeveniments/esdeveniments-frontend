@@ -11,7 +11,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 
   return (
     <div style={{ padding: 32, textAlign: "center" }}>
-      <h1>Alguna cosa ha anat malament</h1>
+      <h1 className="heading-2">Alguna cosa ha anat malament</h1>
       <p>{error?.message || "Si us plau, torna-ho a intentar."}</p>
       <button onClick={reset} style={{ marginTop: 16 }}>
         Torna a carregar

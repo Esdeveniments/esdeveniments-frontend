@@ -39,8 +39,8 @@ function HybridEventsListClient({
       serverHasMore,
     });
 
-  const mergedEvents: ListEvent[] = useMemo(() => {
-    if (!events || events.length === 0) return initialEvents; // nothing new yet
+  const appendedEvents: ListEvent[] = useMemo(() => {
+    if (!events || events.length === 0) return [];
 
     // Build a Set of existing real event ids from SSR to prevent duplication
     const seen = new Set<string>(realInitialEvents.map((e) => e.id));
@@ -50,8 +50,9 @@ function HybridEventsListClient({
       seen.add(e.id);
       uniqueAppended.push(e);
     }
-    return initialEvents.concat(uniqueAppended);
-  }, [events, initialEvents, realInitialEvents]);
+    // Only render items beyond SSR list; SSR list remains visible above
+    return uniqueAppended;
+  }, [events, realInitialEvents]);
 
   if (error) {
     console.error("Events loading error:", error);
@@ -59,7 +60,7 @@ function HybridEventsListClient({
 
   return (
     <>
-      <List events={mergedEvents}>
+      <List events={appendedEvents}>
         {(event: ListEvent, index: number) => (
           <Card
             key={`${event.id ?? "ad"}-${index}`}

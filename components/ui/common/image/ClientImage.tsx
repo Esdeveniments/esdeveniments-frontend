@@ -64,7 +64,7 @@ function ClientImage({
         ) : (
           <div className="flex justify-center items-center w-full">
             <div
-              className="w-full h-60 bg-darkCorp animate-fast-pulse"
+              className="w-full h-60 bg-muted animate-fast-pulse"
               ref={imgDefaultRef}
             ></div>
           </div>
@@ -76,8 +76,8 @@ function ClientImage({
   return (
     <div className={imageClassName} style={{ position: "relative" }}>
       {isLoading && (
-        <div className="absolute inset-0 flex justify-center items-center bg-darkCorp animate-fast-pulse">
-          <div className="w-full h-60 bg-darkCorp animate-fast-pulse"></div>
+        <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
+          <div className="w-full h-60 bg-muted animate-fast-pulse"></div>
         </div>
       )}
       <NextImage

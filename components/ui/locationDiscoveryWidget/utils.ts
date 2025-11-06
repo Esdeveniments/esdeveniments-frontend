@@ -47,10 +47,12 @@ export function findNearestCity(
 /**
  * Debounce function for search input
  */
-export function debounce<T extends (...args: unknown[]) => void>(
+// eslint-disable-next-line no-unused-vars
+export function debounce<T extends (..._args: unknown[]) => void>(
   func: T,
   wait: number
-): (...args: Parameters<T>) => void {
+// eslint-disable-next-line no-unused-vars
+): (..._args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
   return function (...args: Parameters<T>) {

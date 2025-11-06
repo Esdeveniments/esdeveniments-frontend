@@ -6,10 +6,12 @@ import Link from "next/link";
 import Script from "next/script";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
+import { formatCatalanA } from "@utils/helpers";
 import {
   buildPageMeta,
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
+import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 
 export async function generateMetadata({
   params,
@@ -19,9 +21,13 @@ export async function generateMetadata({
   const { town } = await params;
   const place = await fetchPlaceBySlug(town);
   const label = place?.name || town;
+  const placeType: "region" | "town" =
+    place?.type === "CITY" ? "town" : "region";
+  const locationPhrase = formatCatalanA(label, placeType, false);
+
   return buildPageMeta({
-    title: `Arxiu. Descobreix tot el que ha passat a ${label} - Esdeveniments.cat`,
-    description: `Descobreix tot el què ha passat a ${label} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`,
+    title: `Arxiu. Descobreix tot el que ha passat ${locationPhrase} - Esdeveniments.cat`,
+    description: `Descobreix tot el què ha passat ${locationPhrase} cada any. Les millors propostes culturals per esprémer al màxim de ${town} - Arxiu - Esdeveniments.cat`,
     canonical: `${siteUrl}/sitemap/${town}`,
   });
 }
@@ -86,65 +92,33 @@ export default async function Page({
         nonce={nonce}
       />
 
-      <div
-        className="w-full flex flex-col justify-center items-center pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
-        role="main"
-      >
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="mb-4 w-full">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
-            <li>
-              <Link href="/" className="hover:text-gray-800">
-                Inici
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <Link href="/sitemap" className="hover:text-gray-800">
-                Arxiu
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <span className="text-gray-800">{label}</span>
-            </li>
-          </ol>
-        </nav>
+      <SitemapLayout>
+        <SitemapBreadcrumb items={breadcrumbs} />
 
-        {/* Header */}
-        <header className="reset-this mb-6 w-full">
-          <h1 className="pb-4 text-3xl font-bold">Arxiu històric de {label}</h1>
-          <p className="text-lg text-gray-700 mb-4">
+        <header>
+          <h1 className="heading-1 mb-4">Arxiu històric de {label}</h1>
+          <p className="body-large text-foreground">
             Descobreix l&apos;evolució cultural de {label} any rere any. Cada
             enllaç et porta als esdeveniments d&apos;un mes específic.
           </p>
         </header>
 
-        {/* Archive Grid */}
-        <section className="grid overflow-hidden grid-cols-2 lg:grid-cols-4 auto-rows-auto gap-2 grid-flow-row w-full">
+        <section className="grid overflow-hidden grid-cols-2 lg:grid-cols-4 auto-rows-auto gap-4 grid-flow-row w-full">
           {years?.map((year) => (
-            <article key={year} className="box">
-              <header className="reset-this">
-                <h2 className="pb-2 text-xl font-semibold">{year}</h2>
-              </header>
-              <nav role="list" className="space-y-1">
+            <article key={year} className="stack gap-4">
+              <h2 className="heading-3">{year}</h2>
+              <nav role="list" className="stack gap-1">
                 {MONTHS_URL.map((month) => {
                   let textMonth: string = month;
                   if (month === "marc") textMonth = month.replace("c", "ç");
                   return (
-                    <div
-                      key={`${year}-${month}`}
-                      className="box py-1"
-                      role="listitem"
-                    >
+                    <div key={`${year}-${month}`} role="listitem">
                       <Link
                         href={`/sitemap/${town}/${year}/${month.toLocaleLowerCase()}`}
                         prefetch={false}
-                        className="hover:underline hover:text-blue-600 transition-colors"
+                        className="text-foreground-strong hover:text-primary hover:underline transition-colors capitalize"
                       >
-                        <p className="text-md capitalize text-gray-900">
-                          {textMonth}
-                        </p>
+                        {textMonth}
                       </Link>
                     </div>
                   );
@@ -154,21 +128,20 @@ export default async function Page({
           ))}
         </section>
 
-        {/* Footer information */}
-        <footer className="mt-12 pt-8 border-t border-gray-200 w-full">
+        <footer className="pt-8 border-t border-border">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-2">Sobre aquest arxiu</h3>
-              <p className="text-sm text-gray-600">
+            <div className="stack gap-2">
+              <h3 className="heading-4">Sobre aquest arxiu</h3>
+              <p className="body-small text-foreground/80">
                 Aquest arxiu conté una recopilació d&apos;esdeveniments
                 culturals de {label} organitzats cronològicament. Cada mes
                 inclou teatre, música, art, festivals i altres activitats
                 culturals.
               </p>
             </div>
-            <div>
-              <h3 className="font-semibold mb-2">Navegació ràpida</h3>
-              <p className="text-sm text-gray-600">
+            <div className="stack gap-2">
+              <h3 className="heading-4">Navegació ràpida</h3>
+              <p className="body-small text-foreground/80">
                 Utilitza els enllaços per navegar directament a un mes
                 específic. Els anys més recents apareixen primer per facilitar
                 la cerca.
@@ -176,7 +149,7 @@ export default async function Page({
             </div>
           </div>
         </footer>
-      </div>
+      </SitemapLayout>
     </>
   );
 }

@@ -1,7 +1,11 @@
 import Script from "next/script";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { generateJsonData, getFormattedDate } from "@utils/helpers";
+import {
+  generateJsonData,
+  getFormattedDate,
+  formatCatalanA,
+} from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { fetchPlaceBySlug } from "@lib/api/places";
@@ -14,6 +18,7 @@ import {
   generateCollectionPageSchema,
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
+import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -27,11 +32,15 @@ export async function generateMetadata({
   const { town, year, month } = await params;
   const place = await fetchPlaceBySlug(town);
   const townLabel = place?.name || town;
+  const placeType: "region" | "town" =
+    place?.type === "CITY" ? "town" : "region";
+  const locationPhrase = formatCatalanA(townLabel, placeType, false);
+
   let textMonth = month;
   if (month === "marc") textMonth = month.replace("c", "ç");
   return buildPageMeta({
     title: `Arxiu de ${townLabel} del ${textMonth} del ${year} - Esdeveniments.cat`,
-    description: `Descobreix què va passar a ${townLabel} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
+    description: `Descobreix què va passar ${locationPhrase} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
     canonical: `${siteUrl}/sitemap/${town}/${year}/${month}`,
   });
 }
@@ -59,6 +68,9 @@ export default async function Page({
     fetchPlaceBySlug(town),
   ]);
   const townLabel = place?.name || town;
+  const placeType: "region" | "town" =
+    place?.type === "CITY" ? "town" : "region";
+  const locationPhrase = formatCatalanA(townLabel, placeType, false);
 
   let textMonth = month;
   if (month === "marc") textMonth = month.replace("c", "ç");
@@ -100,7 +112,7 @@ export default async function Page({
   // Generate collection page schema
   const collectionPageSchema = generateCollectionPageSchema({
     title: `Arxiu de ${townLabel} - ${textMonth} ${year}`,
-    description: `Esdeveniments culturals que van tenir lloc a ${townLabel} durant el ${textMonth} del ${year}`,
+    description: `Esdeveniments culturals que van tenir lloc ${locationPhrase} durant el ${textMonth} del ${year}`,
     url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
     breadcrumbs,
     numberOfItems: filteredEvents.length,
@@ -148,55 +160,23 @@ export default async function Page({
         />
       )}
 
-      <div
-        className="w-full flex flex-col justify-center items-center gap-2 pt-2 pb-14 sm:w-[580px] md:w-[768px] lg:w-[1024px] px-4 md:px-0"
-        role="main"
-      >
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="w-full mb-4">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
-            <li>
-              <Link href="/" className="hover:text-gray-800">
-                Inici
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <Link href="/sitemap" className="hover:text-gray-800">
-                Arxiu
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <Link href={`/sitemap/${town}`} className="hover:text-gray-800">
-                {townLabel}
-              </Link>
-            </li>
-            <li>
-              <span className="mx-2">/</span>
-              <span className="text-gray-800 capitalize">
-                {textMonth} {year}
-              </span>
-            </li>
-          </ol>
-        </nav>
+      <SitemapLayout>
+        <SitemapBreadcrumb items={breadcrumbs} />
 
-        {/* Header */}
-        <header className="w-full text-center mb-6">
-          <h1 className="font-semibold italic uppercase text-2xl mb-2">
+        <header className="text-center">
+          <h1 className="heading-2 mb-2">
             Arxiu {townLabel} - {textMonth} del {year}
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="body-normal text-foreground/80">
             {filteredEvents.length > 0
               ? `${filteredEvents.length} esdeveniments culturals documentats`
               : `No s'han trobat esdeveniments per aquest període`}
           </p>
         </header>
 
-        {/* Events List */}
         <section className="w-full">
           {filteredEvents.length > 0 ? (
-            <div className="flex flex-col items-start space-y-4">
+            <div className="stack gap-4">
               <h2 className="sr-only">Llista d&apos;esdeveniments</h2>
               {filteredEvents.map((event: EventSummaryResponseDTO) => {
                 const { formattedStart, formattedEnd } = getFormattedDate(
@@ -206,17 +186,17 @@ export default async function Page({
                 return (
                   <article
                     key={event.id}
-                    className="border-b border-gray-100 pb-4 w-full"
+                    className="border-b border-border/30 pb-4 w-full"
                   >
                     <Link
                       href={`/e/${event.slug}`}
                       prefetch={false}
                       className="hover:text-primary block group"
                     >
-                      <h3 className="text-lg font-medium group-hover:text-blue-600 transition-colors">
+                      <h3 className="heading-4 group-hover:text-primary transition-colors">
                         {event.title}
                       </h3>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-600 mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 body-small text-foreground/80 mt-1">
                         <time dateTime={event.startDate}>
                           {formattedEnd
                             ? `${formattedStart} - ${formattedEnd}`
@@ -231,14 +211,14 @@ export default async function Page({
                         {event.categories && event.categories.length > 0 && (
                           <>
                             <span className="hidden sm:inline">•</span>
-                            <span className="text-blue-600">
+                            <span className="text-primary">
                               {event.categories[0].name}
                             </span>
                           </>
                         )}
                       </div>
                       {event.description && (
-                        <p className="text-sm text-gray-700 mt-2 line-clamp-2">
+                        <p className="body-small text-foreground mt-2 line-clamp-2">
                           {event.description}
                         </p>
                       )}
@@ -252,31 +232,28 @@ export default async function Page({
           )}
         </section>
 
-        {/* Footer with navigation hints */}
         {filteredEvents.length > 0 && (
-          <footer className="w-full mt-12 pt-8 border-t border-gray-200">
-            <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">
-                Vols explorar més esdeveniments de {townLabel}?
-              </p>
-              <div className="flex justify-center space-x-4">
-                <Link
-                  href={`/sitemap/${town}`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  Veure tots els arxius
-                </Link>
-                <Link
-                  href={`/${town}`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  Esdeveniments actuals
-                </Link>
-              </div>
+          <footer className="pt-8 border-t border-border text-center">
+            <p className="body-small text-foreground/80 mb-4">
+              Vols explorar més esdeveniments de {townLabel}?
+            </p>
+            <div className="flex-center gap-4">
+              <Link
+                href={`/sitemap/${town}`}
+                className="text-primary hover:text-primary-dark body-small transition-colors"
+              >
+                Veure tots els arxius
+              </Link>
+              <Link
+                href={`/${town}`}
+                className="text-primary hover:text-primary-dark body-small transition-colors"
+              >
+                Esdeveniments actuals
+              </Link>
             </div>
           </footer>
         )}
-      </div>
+      </SitemapLayout>
     </>
   );
 }

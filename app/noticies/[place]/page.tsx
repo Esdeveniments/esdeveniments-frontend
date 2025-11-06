@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
@@ -10,9 +9,11 @@ import {
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import Link from "next/link";
 import { siteUrl } from "@config/index";
-import Script from "next/script";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import Head from "next/head";
+import JsonLd from "@components/partials/JsonLd";
+
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -71,9 +72,8 @@ export default async function Page({
     : 0;
   const pageSize = Number.isFinite(Number(sizeParam)) ? Number(sizeParam) : 10;
 
-  const [response, headersList, placeType] = await Promise.all([
+  const [response, placeType] = await Promise.all([
     fetchNews({ page: currentPage, size: pageSize, place }),
-    headers(),
     getPlaceTypeAndLabel(place),
   ]);
   const items = response.content;
@@ -84,7 +84,6 @@ export default async function Page({
 
   const list = items;
 
-  const nonce = headersList.get("x-nonce") || "";
   const breadcrumbs = [
     { name: "Inici", url: siteUrl },
     { name: "Notícies", url: `${siteUrl}/noticies` },
@@ -117,7 +116,7 @@ export default async function Page({
   };
 
   return (
-    <div className="w-full flex-col justify-center items-center sm:w-[580px] md:w-[768px] lg:w-[1024px] mt-8">
+    <div className="container flex-col justify-center items-center mt-8">
       <Head>
         {currentPage > 0 && (
           <link
@@ -136,34 +135,14 @@ export default async function Page({
           />
         )}
       </Head>
-      <Script
-        id="news-place-webpage-breadcrumbs"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
-      />
+      <JsonLd id="news-place-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
-        <Script
-          id="news-place-breadcrumbs"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema),
-          }}
-        />
+        <JsonLd id="news-place-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <Script
-        id="news-place-itemlist"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(newsItemList) }}
-      />
+      <JsonLd id="news-place-itemlist" data={newsItemList} />
       <nav
         aria-label="Breadcrumb"
-        className="mb-3 w-full px-2 lg:px-0 text-sm text-blackCorp/70"
+        className="mb-3 w-full px-2 lg:px-0 text-sm text-foreground-strong/70"
       >
         <ol className="flex items-center space-x-2">
           <li>
@@ -182,7 +161,7 @@ export default async function Page({
           <li>
             <span className="mx-1">/</span>
           </li>
-          <li className="text-blackCorp capitalize">{place}</li>
+          <li className="text-foreground-strong capitalize">{place}</li>
         </ol>
       </nav>
       <h1 className="uppercase mb-2 px-2 lg:px-0">

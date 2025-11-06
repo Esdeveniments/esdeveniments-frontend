@@ -26,27 +26,27 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center">
-        <label htmlFor={id} className="text-blackCorp font-bold">
+      <div className="flex-between">
+        <label htmlFor={id} className="text-foreground-strong font-bold">
           Descripció *
         </label>
         <button
           type="button"
           onClick={() => setShowPreview(!showPreview)}
-          className="text-sm text-primary hover:text-primarydark focus:outline-none"
+          className="text-sm text-primary hover:text-primary-dark focus:outline-none"
         >
           {showPreview ? "✏️ Editar" : "👁️ Previsualitzar"}
         </button>
       </div>
       <div className="mt-2">
         {showPreview ? (
-          <div className="w-full min-h-[300px] p-3 border rounded-xl border-bColor bg-gray-50">
+          <div className="w-full min-h-[300px] p-3 border rounded-xl border-border bg-muted">
             <div
               className="break-words preview-content"
               dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
             />
             {!value && (
-              <p className="text-gray-500 italic">
+              <p className="text-foreground/70 italic">
                 Escriu alguna cosa per veure la previsualització...
               </p>
             )}
@@ -70,13 +70,13 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             name={id}
             value={value}
             onChange={onChange}
-            className="w-full min-h-[300px] p-3 border rounded-xl border-bColor focus:border-darkCorp resize-vertical"
+            className="w-full min-h-[300px] p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical"
             placeholder="Descriu el teu esdeveniment... Pots escriure enllaços directament i es convertiran automàticament."
             maxLength={maxLength}
           />
         )}
-        <div className="flex justify-between items-center mt-1">
-          <p className="text-sm text-gray-600">
+        <div className="flex-between mt-1">
+          <p className="text-sm text-foreground/80">
             {showPreview
               ? "Així és com veuran la descripció els visitants"
               : "Els enllaços es convertiran automàticament. Prem Enter per fer salts de línia."}
@@ -85,7 +85,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             className={`text-sm ${
               characterCount > maxLength * 0.9
                 ? "text-orange-500"
-                : "text-gray-500"
+                : "text-foreground/70"
             }`}
           >
             {characterCount}/{maxLength}

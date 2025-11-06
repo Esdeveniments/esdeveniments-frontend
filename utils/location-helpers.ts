@@ -1,6 +1,6 @@
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { fetchPlaceBySlug } from "@lib/api/places";
-import { sanitize, formatCatalanDe } from "./string-helpers";
+import { sanitize, sanitizeLegacyApostrophe, formatCatalanDe } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
 
 export const getPlaceTypeAndLabel = async (
@@ -26,7 +26,10 @@ export const getPlaceTypeAndLabel = async (
   try {
     const regionsWithCities = await fetchRegionsWithCities();
 
-    const region = regionsWithCities.find((r) => sanitize(r.name) === place);
+    const region = regionsWithCities.find(
+      (r) =>
+        sanitize(r.name) === place || sanitizeLegacyApostrophe(r.name) === place
+    );
     if (region) {
       return { type: "region", label: region.name };
     }
@@ -69,7 +72,8 @@ export const deg2rad = (deg: number): number => {
 // Preference: use provided human label when available, fallback to capitalized slug
 export function getNewsCta(
   place: string | undefined,
-  placeLabel?: string
+  placeLabel?: string,
+  placeType?: "region" | "town"
 ): { href: string; text: string } {
   const safePlace = (place || "").trim();
   const href =
@@ -95,13 +99,17 @@ export function getNewsCta(
       ? placeLabel
       : formatWords(safePlace.replace(/-/g, " "));
 
-  // Use existing Catalan contraction helper for "de" forms
-  const deLabel = formatCatalanDe(baseLabel, false); // keep original casing of baseLabel
+  // Use existing Catalan contraction helper for "de" forms with proper article handling
+  // For regions, use article (del/de la/de l'); for towns, no article (de)
+  const deLabel = placeType
+    ? formatCatalanDe(baseLabel, false, true, placeType)
+    : formatCatalanDe(baseLabel, false); // fallback to no article if type unknown
 
-  // CTA copy (cultural focus). Uses contraction helper for natural Catalan.
+  // CTA copy: Simple and direct news label
+  // Fallback to "Catalunya" when place is empty to avoid dangling preposition
   const text =
-    safePlace === "catalunya"
-      ? "Actualitat cultural de Catalunya"
-      : `Actualitat cultural ${deLabel}`;
+    safePlace === "catalunya" || safePlace === ""
+      ? "Notícies de Catalunya"
+      : `Notícies ${deLabel}`;
   return { href, text };
 }

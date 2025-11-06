@@ -128,7 +128,7 @@ Adding a new filter:
 - Centralize constants in `utils/constants.ts`; avoid duplicating literals (dates, distances, category labels).
 - When adding environment-dependent behavior for edge/server, follow existing pattern of safe fallbacks (see `middleware.getApiOrigin`).
 - Dates: Use `getFormattedDate(start, end)` from `utils/date-helpers.ts` for any human-readable date range in UI (e.g., pills, subtitles). Do not inline `toLocaleDateString` in components.
-- Colors: Use Tailwind theme tokens defined in `tailwind.config.js` (e.g., `primary`, `primarydark`, `whiteCorp`, `darkCorp`, `blackCorp`, `bColor`). Do not hardcode hex values in components/styles. If a new color is needed, add it to the Tailwind theme and reference by token.
+- Colors: Use Tailwind theme tokens defined in `tailwind.config.js` (e.g., `primary`, `background`, `foreground`, `muted`, `border`). Do not hardcode hex values in components/styles. If a new color is needed, add it to the Tailwind theme and reference by token. Do NOT use deprecated aliases (`primarydark`, `primarySoft`, `whiteCorp`, `darkCorp`, `blackCorp`, `fullBlackCorp`, `bColor`).
 
 ## 15. Common Pitfalls
 
@@ -170,7 +170,7 @@ Adding a new filter:
 
 ### Mandatory Constraints
 
-- Max 40 lines of code per function.
+- Max 100 lines of code per function.
 - Do **not** create generic utilities without immediate usage.
 - Do **not** duplicate logic that already exists in `/lib`, `/components`, or `/utils`.
 - Always prefer composition over inheritance.
@@ -190,3 +190,144 @@ Adding a new filter:
 - File exceeding 200 lines.
 - Logic duplicated across multiple locations.
 - Abstractions deeper than 3 levels.
+
+## 20. Design System Conventions
+
+**Status**: Active (Week 0 - Foundation established)  
+**Reference (navigation)**: `/docs/README.md`  
+**Code Canonical**: `/docs/implementation-reference.md` (single source of truth for DS code)
+
+### Mandatory Rules
+
+1. **Typography**: ALWAYS use semantic classes, NEVER arbitrary text-\* utilities
+
+   - Headings: `.heading-1`, `.heading-2`, `.heading-3`, `.heading-4`
+   - Body: `.body-large`, `.body-normal`, `.body-small`
+   - Labels: `.label`
+   - Example: `<h1 className="heading-1">` NOT `<h1 className="text-3xl font-bold">`
+
+2. **Colors**: ALWAYS use semantic tokens, NEVER generic Tailwind grays
+
+   - ✅ Use: `text-foreground`, `text-foreground-strong`, `text-foreground/80`, `bg-background`, `bg-muted`, `border-border`, `primary-foreground`
+   - ❌ Forbidden: `text-gray-*`, `bg-gray-*`, `border-gray-*`
+   - Opacity: Use `/80`, `/70`, `/60` suffixes (e.g., `text-foreground/80`)
+   - Reference: Brand colors defined in `tailwind.config.js`
+
+3. **Buttons**: Transitional policy → use semantic classes now; component available after Week 4
+
+   - Component (after Week 4): `<Button variant="primary|neutral|outline|muted">`
+   - Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`
+   - NO manual button styling with inline utilities
+
+4. **Cards**: Use semantic card classes
+
+   - `.card-bordered` (border + subtle shadow)
+   - `.card-elevated` (stronger shadow, no border)
+   - `.card-body`, `.card-header`, `.card-footer` (spacing)
+   - Example: `<div className="card-bordered"><div className="card-body">...</div></div>`
+
+5. **Badges**: Transitional policy → use semantic badge classes now; component available after Week 4
+
+   - `.badge-primary` (red background)
+   - `.badge-default` (gray background)
+   - Component (after Week 4): `<Badge>`
+
+6. **Layout Utilities**: Replace repetitive flex patterns
+
+   - `.flex-center` replaces `flex justify-center items-center`
+   - `.flex-between` replaces `flex justify-between items-center`
+   - `.flex-start` replaces `flex justify-start items-center`
+   - `.stack` replaces `flex flex-col gap-element-gap`
+
+7. **Spacing**: Use semantic tokens for consistency
+
+   - `py-section-y`, `px-section-x` for section spacing
+   - `p-card-padding` for card inner padding
+   - `gap-element-gap` for default gaps
+   - Tailwind spacing (narrow exception)
+     - Allowed: one-off micro-spacing inside a leaf component (gap-1–2, p-1–2), no layout impact
+     - Not allowed: section/page/layout spacing; card/button/input paddings; shared components
+     - If repeated → create/extend a semantic token instead
+
+8. **Border Radius**: Use semantic tokens
+   - `rounded-button` for buttons (8px)
+   - `rounded-card` for cards (12px)
+   - `rounded-input` for form inputs (8px)
+   - `rounded-badge` for pills/badges (full)
+
+### Migration Context
+
+**Current Phase**: Week 0 - Foundation  
+**Status**: Design system classes added to `globals.css`. Button/Badge components will be adapted in Week 4; until then, use `.btn-*` and `.badge-*` classes.
+
+When modifying existing components:
+
+- Prefer semantic classes over inline utilities, following the design system conventions.
+- Consult `/docs/reference-data.md` for migration priority.
+- Use the new semantic color tokens (`background`, `foreground`, `foreground-strong`, `muted`, `border`, `primary-foreground`); avoid `gray-*`.
+- Keep changes incremental (don't rewrite entire components at once).
+
+### Examples
+
+**Typography**:
+
+```tsx
+// ❌ Bad
+<h1 className="text-3xl md:text-4xl font-bold">Title</h1>
+
+// ✅ Good
+<h1 className="heading-1">Title</h1>
+```
+
+**Colors**:
+
+```tsx
+// ❌ Bad
+<p className="text-gray-600">Secondary text</p>
+
+// ✅ Good
+<p className="text-foreground/80">Secondary text</p>
+```
+
+**Buttons**:
+
+```tsx
+// ❌ Bad
+<button className="bg-primary text-whiteCorp px-6 py-3 rounded-xl hover:bg-primarydark">
+  Submit
+</button>
+
+// ✅ Good (after Week 4)
+<Button variant="primary">Submit</Button>
+// ✅ Good (until Week 4)
+<button className="btn-primary">Submit</button>
+```
+
+**Layout**:
+
+```tsx
+// ❌ Bad
+<div className="flex justify-center items-center gap-4">
+  <span>Icon</span>
+  <span>Text</span>
+</div>
+
+// ✅ Good
+<div className="flex-center gap-element-gap">
+  <span>Icon</span>
+  <span>Text</span>
+</div>
+```
+
+### AI Agent Reminders
+
+- **Before creating any component**: Check if semantic classes apply
+- **Before using text-gray-_/bg-gray-_/border-gray-\***: STOP. Use semantic tokens.
+- **Before writing long className strings**: Check if semantic class exists
+- **When reviewing code**: Flag any generic grays or repetitive patterns
+- **Context retention**: Reference `/docs/README.md` (navigation) and `/docs/design-system-overview.md` when uncertain
+
+### Resources
+
+- Overview: `/docs/design-system-overview.md`
+- Implementation Reference (ALL CODE): `/docs/implementation-reference.md`
