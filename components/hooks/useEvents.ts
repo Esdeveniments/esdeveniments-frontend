@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { today, tomorrow, week, weekend } from "@lib/dates";
+import { getDateRangeFromByDate } from "@lib/dates";
+import { toLocalDateString } from "@utils/helpers";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import {
@@ -68,23 +69,13 @@ export const useEvents = ({
 
   // Build base params for the key/fetcher
   // Derive explicit date range for known slugs to align with SSR behavior
-  const deriveRange = (slug?: string): { from?: string; to?: string } => {
-    if (!slug || slug === "tots") return {};
-    const map: Record<string, () => { from: Date; until: Date }> = {
-      avui: today,
-      dema: tomorrow,
-      setmana: week,
-      "cap-de-setmana": weekend,
-    };
-    const fn = map[slug] || today;
-    const { from, until } = fn();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const toIso = (d: Date) =>
-      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    return { from: toIso(from), to: toIso(until) };
-  };
-
-  const range = deriveRange(date);
+  const dateRange = getDateRangeFromByDate(date || "tots");
+  const range = dateRange
+    ? {
+        from: toLocalDateString(dateRange.from),
+        to: toLocalDateString(dateRange.until),
+      }
+    : {};
 
   const baseParams: Omit<FetchEventsParams, "page" | "size"> & {
     size: number;
