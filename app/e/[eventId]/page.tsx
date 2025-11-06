@@ -6,6 +6,8 @@ import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
 import { headers } from "next/headers";
 import Script from "next/script";
+import { redirect } from "next/navigation";
+import { extractUuidFromSlug } from "@utils/string-helpers";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
 import ViewCounter from "@components/ui/viewCounter";
@@ -41,9 +43,18 @@ export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
-  const event = await fetchEventBySlug(slug);
+  let event = await fetchEventBySlug(slug);
+  if (!event) {
+    // Defensive: try fetching by trailing id (legacy slugs)
+    const id = extractUuidFromSlug(slug);
+    if (id && id !== slug) {
+      event = await fetchEventBySlug(id);
+    }
+  }
   if (!event) return { title: "No event found" };
-  return generateEventMetadata(event, `${siteUrl}/e/${slug}`);
+  // Use canonical derived from the event itself to avoid locking old slugs
+  // into metadata; this helps consolidate SEO to the canonical path.
+  return generateEventMetadata(event);
 }
 
 // Main page component
@@ -60,9 +71,25 @@ export default async function EventPage({
   const userAgent = headersList.get("user-agent") || "";
   const initialIsMobile = /mobile|iphone|android|ipad|mobi/i.test(userAgent);
 
-  const event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
+  let event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
+  if (!event) {
+    // Defensive: try fetching by trailing id (legacy slugs)
+    const id = extractUuidFromSlug(slug);
+    if (id && id !== slug) {
+      event = await fetchEventBySlug(id);
+    }
+  }
   if (!event) return <NoEventFound />;
   if (event.title === "CANCELLED") return <NoEventFound />;
+
+  // If the requested slug doesn't match the canonical one, optionally redirect
+  // to consolidate SEO. Gate with env to avoid surprises in rollout.
+  const enforceCanonicalRedirect =
+    process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "1" ||
+    process.env.CANONICAL_REDIRECT === "1";
+  if (enforceCanonicalRedirect && slug !== event.slug && event.slug) {
+    redirect(`/e/${event.slug}`);
+  }
 
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";

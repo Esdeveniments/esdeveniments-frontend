@@ -1,6 +1,6 @@
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { fetchPlaceBySlug } from "@lib/api/places";
-import { sanitize, formatCatalanDe } from "./string-helpers";
+import { sanitize, sanitizeLegacyApostrophe, formatCatalanDe } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
 
 export const getPlaceTypeAndLabel = async (
@@ -26,7 +26,10 @@ export const getPlaceTypeAndLabel = async (
   try {
     const regionsWithCities = await fetchRegionsWithCities();
 
-    const region = regionsWithCities.find((r) => sanitize(r.name) === place);
+    const region = regionsWithCities.find(
+      (r) =>
+        sanitize(r.name) === place || sanitizeLegacyApostrophe(r.name) === place
+    );
     if (region) {
       return { type: "region", label: region.name };
     }

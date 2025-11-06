@@ -23,7 +23,7 @@ const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
       <div
         className={`${imageClass} flex justify-center items-center overflow-hidden animate-fast-pulse`}
       >
-        <div className="w-full h-full bg-foreground-strong"></div>
+        <div className="w-full h-full bg-muted"></div>
       </div>
       {/* Title Placeholder */}
       <div className="p-1 pt-4">

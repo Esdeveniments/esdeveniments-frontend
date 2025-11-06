@@ -20,6 +20,28 @@ export function sanitize(input: string): string {
   return s || "n-a";
 }
 
+/**
+ * Legacy sanitize variant used only for matching incoming slugs from older content.
+ * Differs from sanitize() by removing apostrophes instead of spacing/hyphenating them.
+ * Example: "L'Escala" -> "lescala" (legacy) vs "l-escala" (current).
+ */
+export function sanitizeLegacyApostrophe(input: string): string {
+  if (!input) return "";
+  const s = input
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .replace(/·/g, "")
+    .replace(/['’]+/g, "") // legacy: drop apostrophes
+    .replace(/[–—―]/g, "-")
+    .replace(/&/g, " i ")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return s || "n-a";
+}
+
 export const slug = (
   title: string,
   formattedStart: string,
