@@ -109,7 +109,9 @@ export default async function EventPage({
   const jsonData = generateJsonData({ ...event });
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
-    event.endDate
+    event.endDate,
+    undefined,
+    event.startTime
   );
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(

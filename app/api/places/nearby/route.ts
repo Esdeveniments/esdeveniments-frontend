@@ -460,16 +460,28 @@ export async function GET(request: NextRequest) {
         };
       });
 
-    return NextResponse.json({
-      results: limitedResults,
-      status: "OK",
-      attribution: "Powered by Google",
-    });
+    return NextResponse.json(
+      {
+        results: limitedResults,
+        status: "OK",
+        attribution: "Powered by Google",
+      },
+      {
+        status: 200,
+        headers: {
+          // Edge/CDN cache for 5 minutes, serve stale while revalidating
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error: unknown) {
     console.error("Error fetching places:", error);
     return NextResponse.json(
       { error: "Failed to fetch places" },
-      { status: 500 }
+      {
+        status: 500,
+        headers: { "Cache-Control": "no-store" },
+      }
     );
   }
 }

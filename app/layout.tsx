@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import GoogleScripts from "./GoogleScripts";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
+import { NonceProvider } from "@components/partials/NonceProvider";
 // Removed custom fonts - now using system font stack
 // import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";
@@ -51,9 +52,11 @@ export default async function RootLayout({
         )}
       </head>
       <body>
-        <WebsiteSchema nonce={nonce} />
-        <GoogleScripts nonce={nonce} />
-        <BaseLayout>{children}</BaseLayout>
+        <NonceProvider nonce={nonce}>
+          <WebsiteSchema nonce={nonce} />
+          <GoogleScripts nonce={nonce} />
+          <BaseLayout>{children}</BaseLayout>
+        </NonceProvider>
       </body>
     </html>
   );

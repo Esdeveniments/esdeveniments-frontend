@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
@@ -7,14 +6,14 @@ import { buildPageMeta } from "@components/partials/seo-meta";
 import Link from "next/link";
 import { NEWS_HUBS, NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
-import Script from "next/script";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
+import JsonLd from "@components/partials/JsonLd";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   // Basic SEO for the news listing page
@@ -27,8 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   // Fetch the most recent news per hub
   const hubResults = await Promise.all(
@@ -87,31 +84,11 @@ export default async function Page() {
 
   return (
     <div className="container flex-col justify-center items-center mt-8">
-      <Script
-        id="news-list-webpage-breadcrumbs"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
-      />
+      <JsonLd id="news-list-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
-        <Script
-          id="news-list-breadcrumbs"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema),
-          }}
-        />
+        <JsonLd id="news-list-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <Script
-        id="news-list-itemlist"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
-      />
+      <JsonLd id="news-list-itemlist" data={itemListSchema} />
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
       <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.

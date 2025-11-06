@@ -98,4 +98,44 @@ describe("computeTemporalStatus", () => {
     const status = computeTemporalStatus(start, undefined, baseNow);
     expect(status.state).toBe("live");
   });
+
+  // Tests for "Consultar horaris" (all-day events with startTime = "00:00" or null)
+  it("all-day event today with startTime=00:00 is live", () => {
+    const start = "2025-09-29"; // same date as baseNow
+    const status = computeTemporalStatus(start, undefined, baseNow, "00:00");
+    expect(status.state).toBe("live");
+    expect(status.label).toBe("En curs");
+  });
+
+  it("all-day event today with startTime=null is live", () => {
+    const start = "2025-09-29"; // same date as baseNow
+    const status = computeTemporalStatus(start, undefined, baseNow, null);
+    expect(status.state).toBe("live");
+    expect(status.label).toBe("En curs");
+  });
+
+  it("all-day event yesterday with startTime=00:00 is past", () => {
+    const start = "2025-09-28"; // day before baseNow
+    const status = computeTemporalStatus(start, undefined, baseNow, "00:00");
+    expect(status.state).toBe("past");
+  });
+
+  it("all-day event tomorrow with startTime=00:00 is upcoming", () => {
+    const start = "2025-09-30"; // day after baseNow
+    const status = computeTemporalStatus(start, undefined, baseNow, "00:00");
+    expect(status.state).toBe("upcoming");
+    if (status.state === "upcoming") {
+      expect(status.startsIn).toContain("1 dies");
+    }
+  });
+
+  it("multi-day all-day event (startTime=00:00) spanning today is live", () => {
+    const start = "2025-09-28"; // started yesterday
+    const end = "2025-09-30"; // ends tomorrow
+    const status = computeTemporalStatus(start, end, baseNow, "00:00");
+    expect(status.state).toBe("live");
+    if (status.state === "live" && status.endsIn) {
+      expect(status.endsIn).toContain("1 dies");
+    }
+  });
 });
