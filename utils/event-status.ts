@@ -91,8 +91,14 @@ export function computeTemporalStatus(
     }
 
     // Upcoming: start date is in the future
-    const diffMs = start.getTime() - now.getTime();
-    const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const startDay = new Date(
+      start.getFullYear(),
+      start.getMonth(),
+      start.getDate()
+    );
+    const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffMs = startDay.getTime() - nowDay.getTime();
+    const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
     if (days > 0) {
       return {
         state: "upcoming",
