@@ -182,6 +182,10 @@ export async function fetchCategorizedEvents(
   }
 }
 
+// Cached wrapper to deduplicate categorized events within the same request
+// Mirrors existing pattern used for events/news slugs
+export const getCategorizedEvents = cache(fetchCategorizedEvents);
+
 function insertAdsRandomly(
   events: EventSummaryResponseDTO[],
   ads: AdEvent[],
