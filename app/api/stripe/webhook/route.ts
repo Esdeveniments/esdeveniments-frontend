@@ -133,6 +133,11 @@ export async function POST(request: NextRequest) {
 
       // TODO: Update event visibility or add promotion to event display
       // This depends on how promotions are displayed on the event page
+
+      // TODO: When database writes are implemented, use revalidateTag() for cache invalidation
+      // Example: import { revalidateTag } from "next/cache"; import { eventTag, promotionsTag } from "lib/cache/tags";
+      // revalidateTag(eventTag(eventId), "default"); // SWR behavior for background revalidation
+      // revalidateTag(promotionsTag, "default"); // Invalidate promotions cache
     }
 
     return NextResponse.json({ received: true });

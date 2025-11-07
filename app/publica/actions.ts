@@ -1,7 +1,8 @@
 "use server";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { updateTag, refresh } from "next/cache";
 import { createEvent } from "lib/api/events";
 import type { EventCreateRequestDTO } from "types/api/event";
+import { eventsTag, eventsCategorizedTag } from "lib/cache/tags";
 
 export async function createEventAction(
   data: EventCreateRequestDTO,
@@ -10,12 +11,13 @@ export async function createEventAction(
   // 1. Create the event in your backend
   const created = await createEvent(data, imageFile);
 
-  // 2. Revalidate the event list page (purge ISR cache)
-  await revalidatePath("/e");
-  // Also invalidate cached event lists and categorized collections
-  revalidateTag("events", "default");
-  revalidateTag("events:categorized", "default");
+  // 2. Immediately expire cache tags for event lists and categorized collections
+  // This ensures read-your-own-writes: the new event appears immediately
+  updateTag(eventsTag);
+  updateTag(eventsCategorizedTag);
+  // Refresh the current request to reflect changes
+  refresh();
 
-  // 3. Optionally, return the created event or result for your client
+  // 3. Return the created event or result for your client
   return { success: true, event: created };
 }
