@@ -1,8 +1,8 @@
 "use server";
 import { updateTag, refresh } from "next/cache";
-import { updateEventById } from "lib/api/events";
+import { updateEventById } from "@lib/api/events";
 import type { EventUpdateRequestDTO } from "types/api/event";
-import { eventsTag, eventTag } from "lib/cache/tags";
+import { eventsTag, eventTag } from "@lib/cache/tags";
 
 export async function editEvent(
   eventId: string,
