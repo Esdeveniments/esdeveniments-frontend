@@ -6,7 +6,7 @@ import {
   buildPageMeta,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import Link from "next/link";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
@@ -21,7 +21,7 @@ export async function generateMetadata({
   params: Promise<{ place: string }>;
 }): Promise<Metadata> {
   const { place } = await params;
-  const placeType = await getPlaceTypeAndLabel(place);
+  const placeType = await getPlaceTypeAndLabelCached(place);
   const base = buildPageMeta({
     title: `Notícies de ${placeType.label} | Esdeveniments.cat`,
     description: `Arxiu i recomanacions d'esdeveniments a ${placeType.label}`,
@@ -74,7 +74,7 @@ export default async function Page({
 
   const [response, placeType] = await Promise.all([
     fetchNews({ page: currentPage, size: pageSize, place }),
-    getPlaceTypeAndLabel(place),
+    getPlaceTypeAndLabelCached(place),
   ]);
   const items = response.content;
 

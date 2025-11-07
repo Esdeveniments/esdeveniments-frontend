@@ -4,6 +4,7 @@ import {
 } from "types/api/category";
 import { createCache, createKeyedCache } from "lib/api/cache";
 import { fetchWithHmac } from "lib/api/fetch-wrapper";
+import { cache as reactCache } from "react";
 
 const cache = createCache<CategorySummaryResponseDTO[]>(86400000);
 const categoryByIdCache = createKeyedCache<CategoryDetailResponseDTO | null>(
@@ -31,6 +32,9 @@ export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
     return [];
   }
 }
+
+// React per-request memoization for metadata+page deduplication
+export const getCategories = reactCache(fetchCategories);
 
 async function fetchCategoryByIdApi(
   id: string | number

@@ -1,6 +1,7 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache, createCache } from "@lib/api/cache";
+import { cache } from "react";
 
 const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
 const placesCache = createCache<PlaceResponseDTO[]>(86400000);
@@ -28,6 +29,9 @@ export async function fetchPlaceBySlug(
 ): Promise<PlaceResponseDTO | null> {
   return placeBySlugCache(slug, fetchPlaceBySlugApi);
 }
+
+// Per-request memoized wrapper for metadata + page deduplication
+export const getPlaceBySlug = cache(fetchPlaceBySlug);
 
 async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;

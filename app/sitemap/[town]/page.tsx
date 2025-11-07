@@ -4,7 +4,7 @@ import { MONTHS_URL } from "@utils/constants";
 import { headers } from "next/headers";
 import Link from "next/link";
 import Script from "next/script";
-import { fetchPlaceBySlug } from "@lib/api/places";
+import { getPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
 import { formatCatalanA } from "@utils/helpers";
 import {
@@ -19,7 +19,7 @@ export async function generateMetadata({
   params: Promise<TownStaticPathParams>;
 }) {
   const { town } = await params;
-  const place = await fetchPlaceBySlug(town);
+  const place = await getPlaceBySlug(town);
   const label = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
@@ -44,7 +44,7 @@ export default async function Page({
   const nonce = headersList.get("x-nonce") || "";
 
   const years: number[] = getAllYears();
-  const place = await fetchPlaceBySlug(town);
+  const place = await getPlaceBySlug(town);
   const label = place?.name || town;
 
   // Generate structured data for the region/city sitemap

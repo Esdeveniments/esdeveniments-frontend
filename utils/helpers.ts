@@ -50,6 +50,7 @@ export {
 // Location helpers
 export {
   getPlaceTypeAndLabel,
+  getPlaceTypeAndLabelCached,
   getDistance,
   deg2rad,
   getNewsCta,
