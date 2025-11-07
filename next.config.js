@@ -45,6 +45,10 @@ const nextConfig = {
       {
         pathname: "/api/places/photo",
       },
+      // Allow loading local images from the public/static directory (e.g., /static/images/*)
+      {
+        pathname: "/static/**",
+      },
     ],
   },
 
