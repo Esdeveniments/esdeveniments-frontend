@@ -30,9 +30,6 @@ function ClientInteractiveLayer({
   const isHydrated = useHydration();
   const [scrollIcon, setScrollIcon] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userLocation, setUserLocation] = useState<
-    { latitude: number; longitude: number } | undefined
-  >();
   const searchParams = useSearchParams();
   const pathname = usePathname(); // Get current pathname
 
@@ -80,21 +77,14 @@ function ClientInteractiveLayer({
     urlSearchParams,
     categories // Pass dynamic categories for proper validation
   );
+  const lat = parsed.queryParams.lat;
+  const lon = parsed.queryParams.lon;
+  const userLocation =
+    lat && lon
+      ? { latitude: parseFloat(lat), longitude: parseFloat(lon) }
+      : undefined;
 
-  // Initialize user location from URL params if available
-  useEffect(() => {
-    const lat = parsed.queryParams.lat;
-    const lon = parsed.queryParams.lon;
-    if (lat && lon) {
-      setUserLocation({
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon),
-      });
-    } else {
-      // Clear user location when lat/lon are not in URL
-      setUserLocation(undefined);
-    }
-  }, [parsed.queryParams.lat, parsed.queryParams.lon]);
+  // removed effect; derived via useMemo above
 
   // Debug URL parsing in development
   debugURLParsing(pathname || "/", urlSegments, parsed);

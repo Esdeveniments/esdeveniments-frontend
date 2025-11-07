@@ -1,3 +1,10 @@
+export interface LatestNewsSectionProps {
+  placeSlug: string;
+  placeLabel: string;
+  placeType: "region" | "town";
+  newsHref: string;
+}
+
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
 import {
   Option,

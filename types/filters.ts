@@ -21,7 +21,6 @@ export interface FilterState {
   distance: string;
   openModal: boolean;
   setState: (
-    // eslint-disable-next-line no-unused-vars
     key:
       | "place"
       | "byDate"
@@ -29,7 +28,6 @@ export interface FilterState {
       | "searchTerm"
       | "distance"
       | "openModal",
-    // eslint-disable-next-line no-unused-vars
     value: string | boolean
   ) => void;
 }
@@ -54,18 +52,14 @@ export interface FilterConfig<T extends FilterValue = FilterValue> {
   type: "place" | "category" | "date" | "distance" | "search" | "coordinates";
 
   // Behavior functions
-  // eslint-disable-next-line no-unused-vars
   isEnabled: (_state: FilterDisplayState) => boolean;
-  // eslint-disable-next-line no-unused-vars
   getDisplayText: (_state: FilterDisplayState) => string | undefined;
   getRemovalChanges: () => Partial<URLFilterState>;
 
   // Optional configurations
   dependencies?: Array<keyof URLFilterState>;
-  // eslint-disable-next-line no-unused-vars
   validation?: (_value: T) => boolean;
   specialCases?: {
-    // eslint-disable-next-line no-unused-vars
     homeRedirect?: (_segments: RouteSegments) => boolean;
   };
 }
@@ -74,7 +68,6 @@ export interface FilterConfig<T extends FilterValue = FilterValue> {
 export type FilterErrorBoundaryProps = {
   children: ReactNode;
   fallbackMessage?: string;
-  // eslint-disable-next-line no-unused-vars
   onError?: (_error: Error, _errorInfo: ErrorInfo) => void;
 };
 

@@ -1,12 +1,4 @@
-import {
-  useMemo,
-  useState,
-  useCallback,
-  useEffect,
-  memo,
-  ChangeEvent,
-  FC,
-} from "react";
+import { useMemo, useState, useCallback, memo, ChangeEvent, FC } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
@@ -41,17 +33,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
-  const [localPlace, setLocalPlace] = useState<string>("");
-  const [localByDate, setLocalByDate] = useState<string>("");
-  const [localCategory, setLocalCategory] = useState<string>("");
-  const [localDistance, setLocalDistance] = useState<string>("");
-  const [localUserLocation, setLocalUserLocation] =
-    useState(initialUserLocation);
-  const [userLocationLoading, setUserLocationLoading] =
-    useState<boolean>(false);
-  const [userLocationError, setUserLocationError] = useState<string>("");
-  const [selectOption, setSelectOption] = useState<Option | null>(null);
-
   const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
     useGetRegionsWithCities();
 
@@ -60,39 +41,41 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
 
-  useEffect(() => {
-    if (isOpen) {
-      const place =
-        currentSegments.place === "catalunya" ? "" : currentSegments.place;
+  const defaults = useMemo(() => {
+    const place =
+      currentSegments.place === "catalunya" ? "" : currentSegments.place;
+    const byDate = currentSegments.date;
+    const category =
+      currentSegments.category === "tots" ? "" : currentSegments.category;
+    const distance =
+      currentQueryParams.distance ||
+      (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
+    const regionOption = regionsAndCitiesArray
+      .flatMap((group) => group.options)
+      .find((option) => option.value === place);
+    return {
+      place,
+      byDate,
+      category,
+      distance,
+      userLocation: initialUserLocation,
+      selectOption: regionOption || null,
+    };
+  }, [currentSegments, currentQueryParams, initialUserLocation, regionsAndCitiesArray]);
 
-      const byDate = currentSegments.date;
+  const seedKey = isOpen
+    ? `${defaults.place}|${defaults.byDate}|${defaults.category}|${defaults.distance}|${defaults.userLocation?.latitude ?? ""}|${defaults.userLocation?.longitude ?? ""}`
+    : "closed";
 
-      const category =
-        currentSegments.category === "tots" ? "" : currentSegments.category;
-
-      // Infer distance from URL: if lat/lon exist but no distance, assume default 50
-      const distance =
-        currentQueryParams.distance ||
-        (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
-
-      setLocalPlace(place);
-      setLocalByDate(byDate);
-      setLocalCategory(category);
-      setLocalDistance(distance);
-      setLocalUserLocation(initialUserLocation);
-
-      const regionOption = regionsAndCitiesArray
-        .flatMap((group) => group.options)
-        .find((option) => option.value === place);
-      setSelectOption(regionOption || null);
-    }
-  }, [
-    isOpen,
-    currentSegments,
-    currentQueryParams,
-    initialUserLocation,
-    regionsAndCitiesArray,
-  ]);
+  function InnerContent() {
+    const [localPlace, setLocalPlace] = useState<string>(defaults.place);
+    const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
+    const [localCategory, setLocalCategory] = useState<string>(defaults.category);
+    const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
+    const [localUserLocation, setLocalUserLocation] = useState(defaults.userLocation);
+    const [userLocationLoading, setUserLocationLoading] = useState<boolean>(false);
+    const [userLocationError, setUserLocationError] = useState<string>("");
+    const [selectOption, setSelectOption] = useState<Option | null>(defaults.selectOption);
 
   const router = useRouter();
 
@@ -236,116 +219,128 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     userLocationLoading ||
     Boolean(userLocationError);
 
-  return (
-    <>
-      <Modal
-        open={isOpen}
-        setOpen={onClose}
-        title="Filtres"
-        actionButton="Aplicar filtres"
-        onActionButtonClick={applyFilters}
-      >
-        <div className="w-full h-full flex flex-col justify-start items-start gap-5 py-8">
-          <div className="w-full flex flex-col justify-start items-start gap-4">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Poblacions
-            </p>
-            <div className="w-full flex flex-col px-0">
-              <Select
-                id="options"
-                title="Poblacions"
-                options={regionsAndCitiesArray}
-                value={selectOption}
-                onChange={handlePlaceChange}
-                isClearable
-                placeholder={
-                  isLoadingRegionsWithCities
-                    ? "Carregant poblacions..."
-                    : "Selecciona població"
-                }
-                isDisabled={isLoadingRegionsWithCities || disablePlace}
-              />
-            </div>
-          </div>
-          <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-            <p className="w-full font-semibold font-barlow uppercase">
-              Categories
-            </p>
-            <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
-              {categories.map((category: CategorySummaryResponseDTO) => (
-                <RadioInput
-                  key={category.id}
-                  id={category.slug}
-                  name="category"
-                  value={category.slug}
-                  checkedValue={localCategory}
-                  onChange={handleCategoryChange}
-                  label={category.name}
+    return (
+      <>
+        <Modal
+          open={isOpen}
+          setOpen={onClose}
+          title="Filtres"
+          actionButton="Aplicar filtres"
+          onActionButtonClick={applyFilters}
+        >
+          <div className="w-full h-full flex flex-col justify-start items-start gap-5 py-8">
+            <div className="w-full flex flex-col justify-start items-start gap-4">
+              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+                Poblacions
+              </p>
+              <div className="w-full flex flex-col px-0">
+                <Select
+                  id="options"
+                  title="Poblacions"
+                  options={regionsAndCitiesArray}
+                  value={selectOption}
+                  onChange={handlePlaceChange}
+                  isClearable
+                  placeholder={
+                    isLoadingRegionsWithCities
+                      ? "Carregant poblacions..."
+                      : "Selecciona població"
+                  }
+                  isDisabled={isLoadingRegionsWithCities || disablePlace}
                 />
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Data
-            </p>
-            <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-              {BYDATES.map(({ value, label }) => (
-                <RadioInput
-                  key={value}
-                  id={value}
-                  name="byDate"
-                  value={value}
-                  checkedValue={localByDate}
-                  onChange={handleByDateChange}
-                  label={label}
-                />
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Distància
-            </p>
-            {(userLocationLoading || userLocationError) && (
-              <div className="border-t border-border py-2">
-                <div className="flex flex-col">
-                  {userLocationLoading && (
-                    <div className="text-sm text-border">
-                      Carregant localització...
-                    </div>
-                  )}
-                  {userLocationError && (
-                    <div className="text-sm text-primary">
-                      {userLocationError}
-                    </div>
-                  )}
-                </div>
               </div>
-            )}
-            <div
-              className={`w-full flex flex-col justify-start items-start gap-3px-0 ${
-                disableDistance ? "opacity-30" : ""
-              }`}
-            >
-              <RangeInput
-                key="distance"
-                id="distance"
-                min={Number(DISTANCES[0])}
-                max={Number(DISTANCES[DISTANCES.length - 1])}
-                value={Number(localDistance) || 50}
-                onChange={handleDistanceChange}
-                label="Esdeveniments a"
-                disabled={disableDistance}
-              />
             </div>
-          </fieldset>
-        </div>
-      </Modal>
-    </>
-  );
+            <fieldset className="w-full flex flex-col justify-start items-start gap-4">
+              <p className="w-full font-semibold font-barlow uppercase">
+                Categories
+              </p>
+              <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
+                {categories.map((category: CategorySummaryResponseDTO) => (
+                  <RadioInput
+                    key={category.id}
+                    id={category.slug}
+                    name="category"
+                    value={category.slug}
+                    checkedValue={localCategory}
+                    onChange={handleCategoryChange}
+                    label={category.name}
+                  />
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+                Data
+              </p>
+              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+                {BYDATES.map(({ value, label }) => (
+                  <RadioInput
+                    key={value}
+                    id={value}
+                    name="byDate"
+                    value={value}
+                    checkedValue={localByDate}
+                    onChange={handleByDateChange}
+                    label={label}
+                  />
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+                Distància
+              </p>
+              {(userLocationLoading || userLocationError) && (
+                <div className="border-t border-border py-2">
+                  <div className="flex flex-col">
+                    {userLocationLoading && (
+                      <div className="text-sm text-border">
+                        Carregant localització...
+                      </div>
+                    )}
+                    {userLocationError && (
+                      <div className="text-sm text-primary">
+                        {userLocationError}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div
+                className={`w-full flex flex-col justify-start items-start gap-3px-0 ${
+                  disableDistance ? "opacity-30" : ""
+                }`}
+              >
+                <RangeInput
+                  key="distance"
+                  id="distance"
+                  min={Number(DISTANCES[0])}
+                  max={Number(DISTANCES[DISTANCES.length - 1])}
+                  value={Number(localDistance) || 50}
+                  onChange={handleDistanceChange}
+                  label="Esdeveniments a"
+                  disabled={disableDistance}
+                />
+              </div>
+            </fieldset>
+          </div>
+        </Modal>
+      </>
+    );
+  }
+
+  return <InnerContent key={seedKey} />;
 };
 
 NavigationFiltersModal.displayName = "NavigationFiltersModal";
 
-export default memo(NavigationFiltersModal);
+const NavigationFiltersModalWithKey: FC<NavigationFiltersModalProps> = (
+  props
+) => {
+  const { isOpen } = props;
+  const seed = isOpen ? "open" : "closed";
+  return <NavigationFiltersModal {...props} key={seed} />;
+};
+NavigationFiltersModalWithKey.displayName = "NavigationFiltersModalWithKey";
+
+export default memo(NavigationFiltersModalWithKey);

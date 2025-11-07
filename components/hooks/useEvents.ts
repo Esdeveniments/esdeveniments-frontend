@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import useSWRInfinite from "swr/infinite";
@@ -51,7 +51,7 @@ export const useEvents = ({
   fallbackData = [],
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {
-  const [isActivated, setIsActivated] = useState(false);
+  const [activationKey, setActivationKey] = useState<string | null>(null);
   // When the user clicks loadMore the first time we need to both activate and
   // fetch the *next* page beyond the SSR list. Previously we called setSize
   // during the same tick while the key was still null (because isActivated was
@@ -61,11 +61,11 @@ export const useEvents = ({
   // activation so the first click yields new events immediately.
   const fetchNextAfterActivateRef = useRef(false);
 
-  // Reset activation when filters change (place, category, date)
-  useEffect(() => {
-    setIsActivated(false);
-    fetchNextAfterActivateRef.current = false;
-  }, [place, category, date]);
+  const currentKey = useMemo(
+    () => `${place}|${category}|${date}|${initialSize}`,
+    [place, category, date, initialSize]
+  );
+  const isActivated = activationKey === currentKey;
 
   // Build base params for the key/fetcher
   // Derive explicit date range for known slugs to align with SSR behavior
@@ -205,7 +205,7 @@ export const useEvents = ({
     if (!isActivated) {
       // Mark that once activation completes we should fetch the next page.
       fetchNextAfterActivateRef.current = true;
-      setIsActivated(true);
+      setActivationKey(currentKey);
       return; // size bump will occur in the activation effect
     }
 

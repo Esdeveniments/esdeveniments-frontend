@@ -8,7 +8,8 @@ export function useHydration() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(true);
+    const id = requestAnimationFrame(() => setHydrated(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   return hydrated;

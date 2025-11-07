@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
@@ -15,7 +15,6 @@ const ButtonInput = React.forwardRef<
   React.ButtonHTMLAttributes<HTMLButtonElement> & { value?: string }
 >(({ value, ...props }, ref) => {
   // Extract className from props to prevent it from overriding our styling
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   const { className: _className, ...restProps } = props;
 
   return (
@@ -67,10 +66,6 @@ export default function DatePickerComponent({
   const [startDate, setStartDate] = useState<Date>(startingDate);
   const [endDate, setEndDate] = useState<Date>(endingDate);
 
-  useEffect(() => {
-    if (startDate > endDate)
-      setEndDate(new Date(startDate.getTime() + 60 * 60 * 1000));
-  }, [startDate, endDate]);
 
   // Emit string values on change
   const onChangeStart = (date: Date) => {

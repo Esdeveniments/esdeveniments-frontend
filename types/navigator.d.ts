@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NetworkInformation } from "./common";
 
 // Navigator interface augmentation for network connection properties

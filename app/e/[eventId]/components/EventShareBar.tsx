@@ -27,7 +27,8 @@ export default function EventShareBar({
   // mobile on the client.
   const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {
-    setHasMounted(true);
+    const id = requestAnimationFrame(() => setHasMounted(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   return (

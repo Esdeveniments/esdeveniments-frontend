@@ -17,7 +17,6 @@ async function createStripeClient(): Promise<unknown | null> {
   if (!secretKey) return null;
   try {
     const mod = await import("stripe");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Ctor = (mod as { default: any }).default;
     return new Ctor(secretKey, { apiVersion: "2025-08-27.basil" });
   } catch {
@@ -129,7 +128,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await (stripe as any).checkout.sessions.create(
       sessionParams
     );

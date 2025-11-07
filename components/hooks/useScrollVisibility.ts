@@ -17,17 +17,11 @@ export const useScrollVisibility = (scrollThreshold: number): boolean => {
   }, [isVisible, scrollThreshold]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.addEventListener("scroll", handleScroll);
-
-      // Call the handleScroll function immediately to check the initial scroll position
-      handleScroll();
-
-      return () => {
-        window.removeEventListener("scroll", handleScroll);
-      };
-    }
-    return undefined;
+    if (typeof window === "undefined") return;
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [handleScroll]);
 
   return isVisible;

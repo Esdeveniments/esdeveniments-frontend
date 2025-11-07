@@ -2,13 +2,7 @@ import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import Link from "next/link";
 import { formatCatalanA } from "@utils/helpers";
-
-interface LatestNewsSectionProps {
-  placeSlug: string;
-  placeLabel: string;
-  placeType: "region" | "town";
-  newsHref: string;
-}
+import type { LatestNewsSectionProps } from "types/props";
 
 export default async function LatestNewsSection({
   placeSlug,

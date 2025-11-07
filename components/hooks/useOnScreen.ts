@@ -22,11 +22,7 @@ function useOnScreen<T extends Element = Element>(
     }
 
     const currentRef = ref.current;
-    if (!currentRef) {
-      setIntersecting(false);
-
-      return;
-    }
+    if (!currentRef) return;
     if (frozenRef.current) return;
 
     const updateEntry = ([entry]: IntersectionObserverEntry[]) => {
