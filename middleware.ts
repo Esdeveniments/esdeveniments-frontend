@@ -31,7 +31,15 @@ function getCsp(nonce: string) {
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
     ],
-    "img-src": ["'self'", "data:", "https:"],
+    // Images: allow self, data URIs, HTTPS everywhere; add blob for previews
+    // In development, also allow HTTP to ease testing against non-TLS sources
+    "img-src": [
+      "'self'",
+      "data:",
+      "https:",
+      "blob:",
+      isDev ? "http:" : "",
+    ],
     "font-src": ["'self'"],
     "frame-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],

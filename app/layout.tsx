@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import GoogleScripts from "./GoogleScripts";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
-import { NonceProvider } from "@components/partials/NonceProvider";
+import { NonceProvider } from "@components/partials/NonceContext";
 // Removed custom fonts - now using system font stack
 // import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";

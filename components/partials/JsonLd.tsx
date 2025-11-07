@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useNonce } from "./NonceProvider";
+import { useNonce } from "./useNonce";
 
 export default function JsonLd({
   id,
@@ -25,4 +25,3 @@ export default function JsonLd({
     />
   );
 }
-
