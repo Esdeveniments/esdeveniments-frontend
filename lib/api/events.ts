@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import {
   ListEvent,
@@ -91,6 +92,10 @@ export async function fetchEventBySlug(
     return null;
   }
 }
+
+// Cached wrapper to deduplicate event fetches within the same request
+// Used by both generateMetadata and the page component
+export const getEventBySlug = cache(fetchEventBySlug);
 
 export async function updateEventById(
   uuid: string,

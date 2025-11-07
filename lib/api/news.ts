@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import type {
   PagedResponseDTO as PagedNewsResponseDTO,
@@ -128,3 +129,7 @@ export async function fetchNewsBySlug(
     return null;
   }
 }
+
+// Cached wrapper to deduplicate news fetches within the same request
+// Used by both generateMetadata and the page component
+export const getNewsBySlug = cache(fetchNewsBySlug);
