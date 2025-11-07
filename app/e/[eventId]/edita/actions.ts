@@ -18,8 +18,8 @@ export async function editEvent(
   }
   await revalidatePath(`/e/${updatedEvent.slug}`);
   // Invalidate lists and the specific event cache tag
-  revalidateTag("events");
-  revalidateTag(`event:${updatedEvent.slug}`);
+  revalidateTag("events", "default");
+  revalidateTag(`event:${updatedEvent.slug}`, "default");
 
   // 3. Return result with new slug for client redirection
   return { success: true, newSlug: updatedEvent.slug };

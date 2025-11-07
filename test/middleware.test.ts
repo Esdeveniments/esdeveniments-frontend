@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
-import { middleware } from "../middleware";
+import proxy from "../proxy";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -44,7 +44,7 @@ vi.mock("../utils/api-helpers", () => ({
   getApiOrigin: vi.fn().mockReturnValue("https://api.example.com"),
 }));
 
-describe("middleware", () => {
+describe("proxy", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env = { ...originalEnv };
@@ -86,7 +86,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      const result = await middleware(mockRequest);
+      const result = await proxy(mockRequest);
 
       expect(NextResponse.next).toHaveBeenCalled();
       expect(result).toBeDefined();
@@ -102,7 +102,7 @@ describe("middleware", () => {
       const mockResponse = { headers: new Headers() };
       (NextResponse.next as Mock).mockReturnValue(mockResponse);
 
-      const result = await middleware(mockRequest);
+      const result = await proxy(mockRequest);
 
       expect(result.headers.get("Cache-Control")).toBe(
         "no-cache, no-store, must-revalidate"
@@ -122,7 +122,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse.redirect).toHaveBeenCalledWith(
         new URL(
@@ -144,7 +144,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
         status: 401,
@@ -160,7 +160,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
         status: 401,
@@ -179,7 +179,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
         status: 401,
@@ -199,7 +199,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
         status: 401,
@@ -219,7 +219,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
         status: 401,
@@ -242,7 +242,7 @@ describe("middleware", () => {
       // Mock verifyHmac to return false
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(false);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
         status: 401,
@@ -276,7 +276,7 @@ describe("middleware", () => {
       // Mock verifyHmac to return true
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse.next).toHaveBeenCalled();
     });
@@ -306,7 +306,7 @@ describe("middleware", () => {
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse.next).toHaveBeenCalled();
     });
@@ -331,7 +331,7 @@ describe("middleware", () => {
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(mockRequest.clone().text).not.toHaveBeenCalled();
       expect(NextResponse.next).toHaveBeenCalled();
@@ -353,7 +353,7 @@ describe("middleware", () => {
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith(
         "Bad Request: Unable to read request body",
@@ -375,7 +375,7 @@ describe("middleware", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse).toHaveBeenCalledWith("Internal Server Error", {
         status: 500,
@@ -411,7 +411,7 @@ describe("middleware", () => {
 
       (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(NextResponse.next).toHaveBeenCalled();
     });
@@ -430,7 +430,7 @@ describe("middleware", () => {
       };
       (NextResponse.next as Mock).mockReturnValue(mockResponse);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       expect(mockResponse.headers.get("Content-Security-Policy")).toBeDefined();
       expect(
@@ -460,7 +460,7 @@ describe("middleware", () => {
       };
       (NextResponse.next as Mock).mockReturnValue(mockResponse);
 
-      await middleware(mockRequest);
+      await proxy(mockRequest);
 
       const nextResponseCall = (NextResponse.next as Mock).mock.calls[0][0];
       expect(nextResponseCall.request.headers.get("x-nonce")).toBe("test-uuid");

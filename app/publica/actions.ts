@@ -13,8 +13,8 @@ export async function createEventAction(
   // 2. Revalidate the event list page (purge ISR cache)
   await revalidatePath("/e");
   // Also invalidate cached event lists and categorized collections
-  revalidateTag("events");
-  revalidateTag("events:categorized");
+  revalidateTag("events", "default");
+  revalidateTag("events:categorized", "default");
 
   // 3. Optionally, return the created event or result for your client
   return { success: true, event: created };

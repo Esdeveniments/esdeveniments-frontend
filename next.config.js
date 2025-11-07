@@ -8,10 +8,15 @@ const nextConfig = {
 	compress: true,
 	productionBrowserSourceMaps: false,
 
+	// --- React Compiler (Next 16: moved to top-level) ---
+	reactCompiler: true,
+
+	// --- Turbopack (Next 16: default bundler) ---
+	turbopack: {},
+
 	// --- Experimental Features ---
 	experimental: {
 		scrollRestoration: true,
-		reactCompiler: true, // React Compiler is experimental
 	},
 
 	// --- Optimizations ---
@@ -31,6 +36,9 @@ const nextConfig = {
 		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
 		formats: ["image/avif", "image/webp"],
 		minimumCacheTTL: 86400,
+		// Next.js 16: Explicitly configure allowed quality values
+		// Values used by getOptimalImageQuality: 35, 40, 45, 50, 60, 70, 75, 80, 85
+		qualities: [35, 40, 45, 50, 60, 70, 75, 80, 85],
 	},
 
 	// The `headers` block has been removed.

@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function ShareIslandSkeleton({
   count = 4,
   className = "w-[172px] h-8 flex items-center gap-4",
