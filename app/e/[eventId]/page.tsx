@@ -237,10 +237,7 @@ export default async function EventPage({
               locationType="town"
             />
             {/* Event Categories - Server-side rendered for SEO */}
-            <EventCategories
-              categories={event.categories}
-              place={event.city?.slug || event.region?.slug || ""}
-            />
+            <EventCategories categories={event.categories} place={placeSlug} />
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner

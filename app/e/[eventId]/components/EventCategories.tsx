@@ -3,6 +3,7 @@ import Badge from "@components/ui/common/badge";
 import { TagIcon } from "@heroicons/react/outline";
 import type { EventCategoriesProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { buildCanonicalUrl } from "@utils/url-filters";
 
 const EventCategories: React.FC<EventCategoriesProps> = ({
   categories,
@@ -21,7 +22,10 @@ const EventCategories: React.FC<EventCategoriesProps> = ({
         />
         <div className="flex flex-wrap gap-element-gap px-section-x text-foreground-strong">
           {categories.map((category) => (
-            <Badge key={category.id} href={`/${place}/${category.slug}`}>
+            <Badge
+              key={category.id}
+              href={buildCanonicalUrl({ place, category: category.slug })}
+            >
               {category.name}
             </Badge>
           ))}
