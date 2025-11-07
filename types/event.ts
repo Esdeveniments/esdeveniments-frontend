@@ -8,6 +8,32 @@ import type { CitySummaryResponseDTO } from "./api/city";
 import type { CategorySummaryResponseDTO } from "./api/category";
 import type { DeleteReason, Option } from "./common";
 
+// Helper schemas for form validation
+const OptionSchema = z.object({ value: z.string(), label: z.string() });
+
+const RegionSummaryResponseDTOSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+});
+
+const CitySummaryResponseDTOSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  postalCode: z.string(),
+  rssFeed: z.string().nullable(),
+  enabled: z.boolean(),
+});
+
+const CategoryFormItemSchema = z.union([
+  z.object({ id: z.number(), name: z.string() }),
+  OptionSchema,
+  z.number(),
+]);
+
 // --- Zod schema for canonical event form data ---
 export const EventFormSchema = z.object({
   id: z.string().optional(),
@@ -18,12 +44,12 @@ export const EventFormSchema = z.object({
   startTime: z.string().nullable(), // ISO time string or null - consistent with API
   endDate: z.string(), // "YYYY-MM-DD" - consistent with API
   endTime: z.string().nullable(), // ISO time string or null - consistent with API
-  region: z.any().nullable(),
-  town: z.any().nullable(),
+  region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
+  town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
   location: z.string().min(1, "Localització obligatòria"),
   imageUrl: z.string().nullable(),
   url: z.string().url("URL invàlida"),
-  categories: z.array(z.any()),
+  categories: z.array(CategoryFormItemSchema),
   email: z.string().email("Email invàlid").or(z.literal("")).optional(),
 });
 
