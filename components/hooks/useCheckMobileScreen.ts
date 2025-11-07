@@ -1,9 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
 const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
-  const [width, setWidth] = useState<number | undefined>(() =>
-    typeof window === "undefined" ? undefined : window.innerWidth
-  );
+  const [width, setWidth] = useState<number | undefined>(undefined);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
@@ -24,6 +22,7 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
 
   useEffect(() => {
     isMountedRef.current = true;
+    setWidth(window.innerWidth);
     window.addEventListener("resize", handleWindowSizeChange);
     return () => {
       isMountedRef.current = false;

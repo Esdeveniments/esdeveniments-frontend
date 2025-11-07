@@ -1,8 +1,8 @@
 "use server";
 import { updateTag, refresh } from "next/cache";
-import { createEvent } from "lib/api/events";
+import { createEvent } from "@lib/api/events";
 import type { EventCreateRequestDTO } from "types/api/event";
-import { eventsTag, eventsCategorizedTag } from "lib/cache/tags";
+import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 
 export async function createEventAction(
   data: EventCreateRequestDTO,

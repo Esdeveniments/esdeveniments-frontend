@@ -17,7 +17,7 @@ vi.mock("next/cache", () => ({
 const mockCreateEvent = vi.fn();
 const mockUpdateEventById = vi.fn();
 
-vi.mock("lib/api/events", () => ({
+vi.mock("@lib/api/events", () => ({
   createEvent: (data: EventCreateRequestDTO, imageFile?: File) =>
     mockCreateEvent(data, imageFile),
   updateEventById: (uuid: string, data: EventUpdateRequestDTO) =>

@@ -59,6 +59,10 @@ export default [
     rules: {
       "no-undef": "off",
       "no-unused-vars": "off", // TypeScript handles this
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
   {

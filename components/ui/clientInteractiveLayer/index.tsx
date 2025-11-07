@@ -79,9 +79,11 @@ function ClientInteractiveLayer({
   );
   const lat = parsed.queryParams.lat;
   const lon = parsed.queryParams.lon;
+  const latitude = lat ? parseFloat(lat) : NaN;
+  const longitude = lon ? parseFloat(lon) : NaN;
   const userLocation =
-    lat && lon
-      ? { latitude: parseFloat(lat), longitude: parseFloat(lon) }
+    lat && lon && !isNaN(latitude) && !isNaN(longitude)
+      ? { latitude, longitude }
       : undefined;
 
   // removed effect; derived via useMemo above

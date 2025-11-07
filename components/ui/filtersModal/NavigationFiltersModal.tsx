@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, memo, ChangeEvent, FC } from "react";
+import { useMemo, useState, useCallback, memo, ChangeEvent, FC, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
@@ -62,24 +62,36 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     };
   }, [currentSegments, currentQueryParams, initialUserLocation, regionsAndCitiesArray]);
 
-  const seedKey = isOpen
-    ? `${defaults.place}|${defaults.byDate}|${defaults.category}|${defaults.distance}|${defaults.userLocation?.latitude ?? ""}|${defaults.userLocation?.longitude ?? ""}`
-    : "closed";
+  const [localPlace, setLocalPlace] = useState<string>(defaults.place);
+  const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
+  const [localCategory, setLocalCategory] = useState<string>(defaults.category);
+  const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
+  const [localUserLocation, setLocalUserLocation] = useState(defaults.userLocation);
+  const [userLocationLoading, setUserLocationLoading] = useState<boolean>(false);
+  const [userLocationError, setUserLocationError] = useState<string>("");
 
-  function InnerContent() {
-    const [localPlace, setLocalPlace] = useState<string>(defaults.place);
-    const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
-    const [localCategory, setLocalCategory] = useState<string>(defaults.category);
-    const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
-    const [localUserLocation, setLocalUserLocation] = useState(defaults.userLocation);
-    const [userLocationLoading, setUserLocationLoading] = useState<boolean>(false);
-    const [userLocationError, setUserLocationError] = useState<string>("");
-    const [selectOption, setSelectOption] = useState<Option | null>(defaults.selectOption);
+  // Reset local state whenever the modal opens or the default inputs change while open
+  useEffect(() => {
+    if (!isOpen) return;
+    setLocalPlace(defaults.place);
+    setLocalByDate(defaults.byDate);
+    setLocalCategory(defaults.category);
+    setLocalDistance(defaults.distance);
+    setLocalUserLocation(defaults.userLocation);
+    setUserLocationLoading(false);
+    setUserLocationError("");
+  }, [
+    isOpen,
+    defaults.place,
+    defaults.byDate,
+    defaults.category,
+    defaults.distance,
+    defaults.userLocation,
+  ]);
 
   const router = useRouter();
 
   const handlePlaceChange = useCallback((option: Option | null) => {
-    setSelectOption(option);
     setLocalPlace(option?.value || "");
   }, []);
 
@@ -218,128 +230,125 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     userLocationLoading ||
     Boolean(userLocationError);
 
-    return (
-      <>
-        <Modal
-          open={isOpen}
-          setOpen={onClose}
-          title="Filtres"
-          actionButton="Aplicar filtres"
-          onActionButtonClick={applyFilters}
-        >
-          <div className="w-full h-full flex flex-col justify-start items-start gap-5 py-8">
-            <div className="w-full flex flex-col justify-start items-start gap-4">
-              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-                Poblacions
-              </p>
-              <div className="w-full flex flex-col px-0">
-                <Select
-                  id="options"
-                  title="Poblacions"
-                  options={regionsAndCitiesArray}
-                  value={selectOption}
-                  onChange={handlePlaceChange}
-                  isClearable
-                  placeholder={
-                    isLoadingRegionsWithCities
-                      ? "Carregant poblacions..."
-                      : "Selecciona població"
-                  }
-                  isDisabled={isLoadingRegionsWithCities || disablePlace}
-                />
-              </div>
-            </div>
-            <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-              <p className="w-full font-semibold font-barlow uppercase">
-                Categories
-              </p>
-              <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
-                {categories.map((category: CategorySummaryResponseDTO) => (
-                  <RadioInput
-                    key={category.id}
-                    id={category.slug}
-                    name="category"
-                    value={category.slug}
-                    checkedValue={localCategory}
-                    onChange={handleCategoryChange}
-                    label={category.name}
-                  />
-                ))}
-              </div>
-            </fieldset>
-            <fieldset className="w-full flex flex-col justify-start items-start gap-6">
-              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-                Data
-              </p>
-              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-                {BYDATES.map(({ value, label }) => (
-                  <RadioInput
-                    key={value}
-                    id={value}
-                    name="byDate"
-                    value={value}
-                    checkedValue={localByDate}
-                    onChange={handleByDateChange}
-                    label={label}
-                  />
-                ))}
-              </div>
-            </fieldset>
-            <fieldset className="w-full flex flex-col justify-start items-start gap-6">
-              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-                Distància
-              </p>
-              {(userLocationLoading || userLocationError) && (
-                <div className="border-t border-border py-2">
-                  <div className="flex flex-col">
-                    {userLocationLoading && (
-                      <div className="text-sm text-border">
-                        Carregant localització...
-                      </div>
-                    )}
-                    {userLocationError && (
-                      <div className="text-sm text-primary">
-                        {userLocationError}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              <div
-                className={`w-full flex flex-col justify-start items-start gap-3px-0 ${
-                  disableDistance ? "opacity-30" : ""
-                }`}
-              >
-                <RangeInput
-                  key="distance"
-                  id="distance"
-                  min={Number(DISTANCES[0])}
-                  max={Number(DISTANCES[DISTANCES.length - 1])}
-                  value={Number(localDistance) || 50}
-                  onChange={handleDistanceChange}
-                  label="Esdeveniments a"
-                  disabled={disableDistance}
-                />
-              </div>
-            </fieldset>
-          </div>
-        </Modal>
-      </>
-    );
-  }
+  const selectedOption = useMemo<Option | null>(() => {
+    if (!localPlace) return null;
+    for (const group of regionsAndCitiesArray) {
+      const found = group.options.find((option) => option.value === localPlace);
+      if (found) return found;
+    }
+    return null;
+  }, [localPlace, regionsAndCitiesArray]);
 
-  return <InnerContent key={seedKey} />;
+  return (
+    <>
+      <Modal
+        open={isOpen}
+        setOpen={onClose}
+        title="Filtres"
+        actionButton="Aplicar filtres"
+        onActionButtonClick={applyFilters}
+      >
+        <div className="w-full h-full flex flex-col justify-start items-start gap-5 py-8">
+          <div className="w-full flex flex-col justify-start items-start gap-4">
+            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+              Poblacions
+            </p>
+            <div className="w-full flex flex-col px-0">
+              <Select
+                id="options"
+                title="Poblacions"
+                options={regionsAndCitiesArray}
+                value={selectedOption}
+                onChange={handlePlaceChange}
+                isClearable
+                placeholder={
+                  isLoadingRegionsWithCities
+                    ? "Carregant poblacions..."
+                    : "Selecciona població"
+                }
+                isDisabled={isLoadingRegionsWithCities || disablePlace}
+              />
+            </div>
+          </div>
+          <fieldset className="w-full flex flex-col justify-start items-start gap-4">
+            <p className="w-full font-semibold font-barlow uppercase">
+              Categories
+            </p>
+            <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
+              {categories.map((category: CategorySummaryResponseDTO) => (
+                <RadioInput
+                  key={category.id}
+                  id={category.slug}
+                  name="category"
+                  value={category.slug}
+                  checkedValue={localCategory}
+                  onChange={handleCategoryChange}
+                  label={category.name}
+                />
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+              Data
+            </p>
+            <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+              {BYDATES.map(({ value, label }) => (
+                <RadioInput
+                  key={value}
+                  id={value}
+                  name="byDate"
+                  value={value}
+                  checkedValue={localByDate}
+                  onChange={handleByDateChange}
+                  label={label}
+                />
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+              Distància
+            </p>
+            {(userLocationLoading || userLocationError) && (
+              <div className="border-t border-border py-2">
+                <div className="flex flex-col">
+                  {userLocationLoading && (
+                    <div className="text-sm text-border">
+                      Carregant localització...
+                    </div>
+                  )}
+                  {userLocationError && (
+                    <div className="text-sm text-primary">
+                      {userLocationError}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            <div
+              className={`w-full flex flex-col justify-start items-start gap-3px-0 ${
+                disableDistance ? "opacity-30" : ""
+              }`}
+            >
+              <RangeInput
+                key="distance"
+                id="distance"
+                min={Number(DISTANCES[0])}
+                max={Number(DISTANCES[DISTANCES.length - 1])}
+                value={Number(localDistance) || 50}
+                onChange={handleDistanceChange}
+                label="Esdeveniments a"
+                disabled={disableDistance}
+              />
+            </div>
+          </fieldset>
+        </div>
+      </Modal>
+    </>
+  );
 };
 
 NavigationFiltersModal.displayName = "NavigationFiltersModal";
 
-const NavigationFiltersModalWithKey: FC<NavigationFiltersModalProps> = (
-  props
-) => {
-  const { isOpen } = props;
-  const seed = isOpen ? "open" : "closed";
-  return <NavigationFiltersModal {...props} key={seed} />;
-};
-NavigationFiltersModalWithKey.displayName = "NavigationFiltersModalWithKey";
-
-export default memo(NavigationFiltersModalWithKey);
+export default memo(NavigationFiltersModal);
