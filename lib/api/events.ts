@@ -11,6 +11,7 @@ import {
   PagedResponseDTO,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
+import { parseEventDetail } from "lib/validation/event";
 
 export async function fetchEvents(
   params: FetchEventsParams
@@ -86,7 +87,8 @@ export async function fetchEventBySlug(
     });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return response.json();
+    const json = await response.json();
+    return parseEventDetail(json);
   } catch (error) {
     console.error("Error fetching event by slug:", error);
     return null;

@@ -14,7 +14,6 @@ import {
   GeolocationError,
 } from "types/common";
 import { buildFilterUrl } from "@utils/url-filters";
-import type { EventCategory } from "@store";
 import { NavigationFiltersModalProps } from "types/props";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
@@ -170,7 +169,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           ? "catalunya"
           : localPlace || "catalunya",
       byDate: localByDate || "avui",
-      category: (localCategory || "tots") as EventCategory,
+      category: localCategory || "tots",
       searchTerm: currentQueryParams.search || "",
       distance: hasDistance ? parseInt(localDistance) : 50,
       // Only include lat/lon if we have both distance and user location

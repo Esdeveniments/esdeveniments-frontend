@@ -20,29 +20,7 @@ export interface Location {
   lng: number;
 }
 
-export type CategoryKey =
-  | "Festes Majors"
-  | "Festivals"
-  | "Familiar"
-  | "Música"
-  | "Cinema"
-  | "Teatre"
-  | "Exposicions"
-  | "Fires"
-  | "Espectacles";
-
-export type CategoryValue =
-  | "Festa Major"
-  | "Festival"
-  | "Familiar"
-  | "Música"
-  | "Cinema"
-  | "Teatre"
-  | "Exposició"
-  | "Fira"
-  | "Espectacles";
-
-export type Categories = Record<CategoryKey, CategoryValue>;
+// Legacy category unions removed in favor of backend DTOs
 
 export interface CalendarOption {
   name: string;

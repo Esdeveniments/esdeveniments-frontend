@@ -1,4 +1,3 @@
-import type { CategoryKey, CategoryValue } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { CATEGORIES } from "./constants";
 
@@ -6,8 +5,8 @@ import { CATEGORIES } from "./constants";
  * Maps a legacy category key to a URL-friendly slug
  * This function creates backward-compatible slugs for ISR route generation
  */
-export function mapLegacyCategoryToSlug(categoryKey: CategoryKey): string {
-  const slugMap: Record<CategoryKey, string> = {
+export function mapLegacyCategoryToSlug(categoryKey: string): string {
+  const slugMap: Record<string, string> = {
     "Festes Majors": "festes-majors",
     Festivals: "festivals",
     Familiar: "familiar",
@@ -67,7 +66,7 @@ export function getDefaultCategories(): CategorySummaryResponseDTO[] {
   return Object.entries(CATEGORIES).map(([key], index) => ({
     id: index + 1, // Temporary IDs for fallback
     name: key,
-    slug: mapLegacyCategoryToSlug(key as CategoryKey),
+    slug: mapLegacyCategoryToSlug(key),
   }));
 }
 
@@ -75,7 +74,7 @@ export function getDefaultCategories(): CategorySummaryResponseDTO[] {
  * Gets URL slug for a category key (for ISR route generation)
  * Falls back to legacy mapping if dynamic data not available
  */
-export function getCategorySlug(categoryKey: CategoryKey): string {
+export function getCategorySlug(categoryKey: string): string {
   return mapLegacyCategoryToSlug(categoryKey);
 }
 
@@ -96,7 +95,7 @@ export function getCategoryBySlug(
  */
 export function mapLegacyValueToCategory(
   categories: CategorySummaryResponseDTO[],
-  categoryValue: CategoryValue
+  categoryValue: string
 ): CategorySummaryResponseDTO | null {
   if (!categories || !Array.isArray(categories)) {
     return null;
@@ -105,7 +104,7 @@ export function mapLegacyValueToCategory(
   // Find the legacy key that maps to this value
   const legacyKey = Object.entries(CATEGORIES).find(
     ([_, value]) => value === categoryValue
-  )?.[0] as CategoryKey | undefined;
+  )?.[0] as string | undefined;
 
   if (!legacyKey) {
     return null;
@@ -123,14 +122,14 @@ export function mapLegacyValueToCategory(
 export function createLegacyDynamicMap(
   categories: CategorySummaryResponseDTO[]
 ): {
-  legacyToSlug: Map<CategoryKey, string>;
-  slugToLegacy: Map<string, CategoryKey>;
+  legacyToSlug: Map<string, string>;
+  slugToLegacy: Map<string, string>;
 } {
-  const legacyToSlug = new Map<CategoryKey, string>();
-  const slugToLegacy = new Map<string, CategoryKey>();
+  const legacyToSlug = new Map<string, string>();
+  const slugToLegacy = new Map<string, string>();
 
   Object.keys(CATEGORIES).forEach((key) => {
-    const categoryKey = key as CategoryKey;
+    const categoryKey = key;
     const slug = mapLegacyCategoryToSlug(categoryKey);
 
     legacyToSlug.set(categoryKey, slug);
@@ -142,7 +141,7 @@ export function createLegacyDynamicMap(
     // Try to find corresponding legacy key by name similarity
     const matchingLegacyKey = Object.keys(CATEGORIES).find(
       (key) => key.toLowerCase() === category.name.toLowerCase()
-    ) as CategoryKey | undefined;
+    ) as string | undefined;
 
     if (matchingLegacyKey && !slugToLegacy.has(category.slug)) {
       legacyToSlug.set(matchingLegacyKey, category.slug);
@@ -173,7 +172,7 @@ export function getAllCategorySlugs(
 
   // Add legacy category slugs
   Object.keys(CATEGORIES).forEach((key) => {
-    const slug = mapLegacyCategoryToSlug(key as CategoryKey);
+    const slug = mapLegacyCategoryToSlug(key);
     if (isValidCategorySlug(slug)) {
       slugs.add(slug);
     }

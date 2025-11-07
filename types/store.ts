@@ -10,27 +10,7 @@ export interface EventLocation {
   longitude: number;
 }
 
-export enum EventCategory {
-  "Festes Majors" = "Festa Major",
-  Festivals = "Festival",
-  Familiar = "Familiar",
-  Música = "Música",
-  Cinema = "Cinema",
-  Teatre = "Teatre",
-  Exposicions = "Exposició",
-  Fires = "Fira",
-  Espectacles = "Espectacles",
-}
-
-// Dynamic category interface for new system
-export interface DynamicEventCategory {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-// Union type for transition period - supports both legacy and dynamic
-export type EventCategoryType = EventCategory | DynamicEventCategory | string;
+// Legacy category enum and related unions removed in favor of backend DTOs
 
 // Frontend-only/transformed event shape
 export interface Event {
@@ -48,7 +28,7 @@ export interface Event {
   startTime: string;
   endTime: string;
   place: string;
-  category: EventCategory | "";
+  category: string | "";
   distance?: number;
   location?: string;
   subLocation?: string;

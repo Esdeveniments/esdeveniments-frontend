@@ -6,6 +6,7 @@ import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { isAdEvent } from "types/api/isAdEvent";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
 
@@ -21,13 +22,11 @@ function HybridEventsListClient({
   date,
   serverHasMore = false,
 }: HybridEventsListProps): ReactElement | null {
-  const realInitialEvents = useMemo(
-    () =>
-      initialEvents
-        .filter((e) => !("isAd" in e && e.isAd))
-        .filter(isEventSummaryResponseDTO) as EventSummaryResponseDTO[],
-    [initialEvents]
-  );
+  const realInitialEvents = useMemo(() => {
+    return initialEvents
+      .filter((e) => !isAdEvent(e))
+      .filter(isEventSummaryResponseDTO) as EventSummaryResponseDTO[];
+  }, [initialEvents]);
 
   const { events, hasMore, loadMore, isLoading, isValidating, error } =
     useEvents({

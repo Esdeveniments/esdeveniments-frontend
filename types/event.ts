@@ -246,3 +246,12 @@ export interface EventCategoriesProps {
 }
 
 export { DeleteReason };
+
+// --- UI Event (DTO + computed view fields) ---
+export type UIEvent = EventSummaryResponseDTO & {
+  formattedStart: string;
+  formattedEnd?: string;
+  isFullDayEvent: boolean;
+  duration: string;
+  timeUntilEvent: string;
+};

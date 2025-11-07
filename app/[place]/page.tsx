@@ -16,7 +16,6 @@ import type {
   PageData,
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
@@ -103,7 +102,7 @@ export default async function Page({
     const canonicalUrl = buildCanonicalUrl({
       place,
       byDate: date || "tots",
-      category: (category as EventCategory) || "tots",
+      category: category || "tots",
       searchTerm: query || "",
       distance: distance ? parseInt(distance) : 50,
       lat: lat ? parseFloat(lat) : undefined,

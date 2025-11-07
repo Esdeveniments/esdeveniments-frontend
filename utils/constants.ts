@@ -1,9 +1,4 @@
-import type {
-  Option,
-  Categories,
-  CategoryValue,
-  CategoryKey,
-} from "types/common";
+import type { Option } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 export const MAX_RESULTS = 15;
@@ -48,7 +43,7 @@ export const MONTHS_URL: string[] = [
   "desembre",
 ];
 
-export const CATEGORIES: Categories = {
+export const CATEGORIES: Record<string, string> = {
   "Festes Majors": "Festa Major",
   Festivals: "Festival",
   Familiar: "Familiar",
@@ -67,13 +62,12 @@ export const SEARCH_TERMS_SUBSET: string[] = [
   "Música",
 ];
 
-export const CATEGORY_NAMES_MAP: Record<CategoryValue, CategoryKey> =
-  Object.fromEntries(
-    Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
-      searchTerm,
-      displayName,
-    ])
-  ) as Record<CategoryValue, CategoryKey>;
+export const CATEGORY_NAMES_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
+    searchTerm,
+    displayName,
+  ])
+);
 
 export const BYDATES: Option[] = [
   { value: "avui", label: "Avui" },
@@ -161,7 +155,7 @@ export function getCategoryDisplayName(
   }
 
   // Fallback to static mapping
-  return CATEGORY_NAMES_MAP[categorySlug as CategoryValue] || categorySlug;
+  return CATEGORY_NAMES_MAP[categorySlug] || categorySlug;
 }
 
 // --- News UI constants ---

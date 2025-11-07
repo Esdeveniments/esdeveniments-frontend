@@ -1,12 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Store } from "types/store";
-export { EventCategory } from "types/store";
 export type {
   UserLocation,
   EventLocation,
-  DynamicEventCategory,
-  EventCategoryType,
   Event,
   UIState,
   StoreActions,
