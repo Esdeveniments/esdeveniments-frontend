@@ -38,7 +38,7 @@ export default async function LatestNewsSection({
         <div className="flex flex-col gap-element-gap">
           {latestNews.map((newsItem, index) => (
             <NewsCard
-              key={`${newsItem.id}-${index}`}
+              key={newsItem.id}
               event={newsItem}
               placeSlug={placeSlug}
               placeLabel={placeLabel}
@@ -50,4 +50,3 @@ export default async function LatestNewsSection({
     </div>
   );
 }
-
