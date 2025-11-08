@@ -6,6 +6,7 @@ import type {
   NewsDetailResponseDTO,
 } from "types/api/news";
 import { createKeyedCache } from "./cache";
+import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 
 export interface FetchNewsParams {
   page?: number;
@@ -46,8 +47,12 @@ export async function fetchNews(
     );
     const finalUrl = `${apiUrl}/news?${queryString}`;
 
+    const tags = [newsTag];
+    if (params.place) {
+      tags.push(newsPlaceTag(params.place));
+    }
     const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags },
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -95,7 +100,7 @@ export async function hasNewsForPlace(place: string): Promise<boolean> {
       const finalUrl = `${apiUrl}/news?${queryString}`;
 
       const response = await fetchWithHmac(finalUrl, {
-        next: { revalidate: 3600 },
+        next: { revalidate: 3600, tags: [newsTag, newsPlaceTag(place)] },
       });
       if (!response.ok) {
         return false;
@@ -119,7 +124,7 @@ export async function fetchNewsBySlug(
   }
   try {
     const response = await fetchWithHmac(`${apiUrl}/news/${slug}`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: [newsTag, newsSlugTag(slug)] },
     });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

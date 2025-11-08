@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/solid";
 import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import { transformRegionsToOptions } from "./utils";
+import { normalizeForSearch } from "@utils/string-helpers";
 
 export default function LocationDiscoveryWidget({
   className = "",
@@ -41,10 +42,11 @@ export default function LocationDiscoveryWidget({
       : [];
   }, [regionsWithCities]);
 
-  // Filter locations based on search term
-  const filteredLocations = allLocations.filter((location) =>
-    location.label.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter locations based on search term (accent-insensitive)
+  const filteredLocations = allLocations.filter((location) => {
+    const normalizedSearch = normalizeForSearch(searchTerm);
+    return normalizeForSearch(location.label).includes(normalizedSearch);
+  });
 
   // Handle location selection
   const handleLocationSelect = useCallback(

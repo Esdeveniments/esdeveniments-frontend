@@ -110,7 +110,8 @@ export default async function EventPage({
     event.startDate,
     event.endDate,
     undefined,
-    event.startTime
+    event.startTime,
+    event.endTime
   );
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(

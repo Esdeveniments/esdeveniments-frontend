@@ -4,6 +4,7 @@ import {
   sanitizeLegacyApostrophe,
   slug,
   extractUuidFromSlug,
+  normalizeForSearch,
 } from "@utils/string-helpers";
 
 describe("sanitize()", () => {
@@ -88,5 +89,32 @@ describe("extractUuidFromSlug()", () => {
   it("falls back to last dash segment for legacy IDs", () => {
     const s = "festa-16-juliol-2025-ea962ni7nis5ga0ppcu7n12pcg";
     expect(extractUuidFromSlug(s)).toBe("ea962ni7nis5ga0ppcu7n12pcg");
+  });
+});
+
+describe("normalizeForSearch()", () => {
+  it("removes accents and converts to lowercase", () => {
+    expect(normalizeForSearch("Premià")).toBe("premia");
+    expect(normalizeForSearch("Barcelona")).toBe("barcelona");
+    expect(normalizeForSearch("Gironès")).toBe("girones");
+    expect(normalizeForSearch("Lleida")).toBe("lleida");
+  });
+
+  it("handles multiple accents in a string", () => {
+    expect(normalizeForSearch("Montjuïc")).toBe("montjuic");
+    expect(normalizeForSearch("Àrea Metropolitana")).toBe("area metropolitana");
+  });
+
+  it("trims whitespace", () => {
+    expect(normalizeForSearch("  Premià  ")).toBe("premia");
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(normalizeForSearch("")).toBe("");
+  });
+
+  it("preserves spaces and other characters", () => {
+    expect(normalizeForSearch("Sant Cugat")).toBe("sant cugat");
+    expect(normalizeForSearch("L'Hospitalet")).toBe("l'hospitalet");
   });
 });

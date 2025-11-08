@@ -60,6 +60,9 @@ export const useEvents = ({
   // click a second time. We capture that intent here and apply it *after*
   // activation so the first click yields new events immediately.
   const fetchNextAfterActivateRef = useRef(false);
+  // Track which key requested the post-activation next-page fetch to avoid
+  // applying a stale intent after filters change.
+  const pendingActivationKeyRef = useRef<string | null>(null);
 
   const currentKey = useMemo(
     () => `${place}|${category}|${date}|${initialSize}`,
@@ -175,11 +178,22 @@ export const useEvents = ({
   // perform the size increment now (when keys are established) so both page 0
   // (SSR/fallback) and page 1 are available right after the first click.
   useEffect(() => {
-    if (isActivated && fetchNextAfterActivateRef.current) {
+    if (!isActivated) return;
+    if (
+      fetchNextAfterActivateRef.current &&
+      pendingActivationKeyRef.current === currentKey
+    ) {
       fetchNextAfterActivateRef.current = false;
+      pendingActivationKeyRef.current = null;
       setSize((prev) => prev + 1);
+      return;
     }
-  }, [isActivated, setSize]);
+    // Clear any stale intent that does not match the current key
+    if (fetchNextAfterActivateRef.current) {
+      fetchNextAfterActivateRef.current = false;
+      pendingActivationKeyRef.current = null;
+    }
+  }, [isActivated, currentKey, setSize]);
 
   // Use fallback data when not activated, SWR data when activated
   const clientEvents = isActivated
@@ -204,6 +218,7 @@ export const useEvents = ({
 
     if (!isActivated) {
       // Mark that once activation completes we should fetch the next page.
+      pendingActivationKeyRef.current = currentKey;
       fetchNextAfterActivateRef.current = true;
       setActivationKey(currentKey);
       return; // size bump will occur in the activation effect

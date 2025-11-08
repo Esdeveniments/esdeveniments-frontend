@@ -34,3 +34,10 @@ export const categoryTag = (id: string | number): `category:${string}` =>
 // Promotion tags
 export const promotionsTag = "promotions" as const satisfies CacheTag;
 
+// News tags
+export const newsTag = "news" as const satisfies CacheTag;
+export const newsPlaceTag = (slug: string): `news:place:${string}` =>
+  `news:place:${slug}` as const;
+export const newsSlugTag = (slug: string): `news:${string}` =>
+  `news:${slug}` as const;
+

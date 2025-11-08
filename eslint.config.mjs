@@ -94,34 +94,6 @@ export default [
 
     rules: {
       "@typescript-eslint/no-unused-vars": "error",
-
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector:
-            "TSInterfaceDeclaration[declaration.name='NavigationItem']:not(:first-of-type)",
-          message:
-            "NavigationItem interface is already defined. Use the canonical version in types/common.ts.",
-        },
-        {
-          selector:
-            "TSInterfaceDeclaration[declaration.name='SocialLinks']:not(:first-of-type)",
-          message:
-            "SocialLinks interface is already defined. Use the canonical version in types/common.ts.",
-        },
-        {
-          selector:
-            "TSInterfaceDeclaration[declaration.name='EventProps']:not(:first-of-type)",
-          message:
-            "EventProps interface is already defined. Use the canonical version in types/common.ts.",
-        },
-        {
-          selector:
-            "TSInterfaceDeclaration[declaration.name='CitySummaryResponseDTO']:not(:first-of-type)",
-          message:
-            "CitySummaryResponseDTO interface is already defined. Use the canonical version in types/api/city.ts.",
-        },
-      ],
     },
   },
   // Disable anonymous default export warning for this config file

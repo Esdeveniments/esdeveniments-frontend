@@ -15,5 +15,8 @@ export type CacheTag =
   | "regions:options"
   | "categories"
   | `category:${string}`
-  | "promotions";
+  | "promotions"
+  | "news"
+  | `news:place:${string}`
+  | `news:${string}`;
 
