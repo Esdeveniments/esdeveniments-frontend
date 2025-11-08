@@ -7,6 +7,7 @@ import type {
 } from "types/api/news";
 import { createKeyedCache } from "./cache";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
+import type { CacheTag } from "types/cache";
 
 export interface FetchNewsParams {
   page?: number;
@@ -47,7 +48,7 @@ export async function fetchNews(
     );
     const finalUrl = `${apiUrl}/news?${queryString}`;
 
-    const tags = [newsTag];
+    const tags: CacheTag[] = [newsTag];
     if (params.place) {
       tags.push(newsPlaceTag(params.place));
     }
