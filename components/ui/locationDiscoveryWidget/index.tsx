@@ -43,10 +43,13 @@ export default function LocationDiscoveryWidget({
   }, [regionsWithCities]);
 
   // Filter locations based on search term (accent-insensitive)
-  const filteredLocations = allLocations.filter((location) => {
+  const filteredLocations = useMemo(() => {
+    if (!searchTerm) return allLocations;
     const normalizedSearch = normalizeForSearch(searchTerm);
-    return normalizeForSearch(location.label).includes(normalizedSearch);
-  });
+    return allLocations.filter((location) =>
+      normalizeForSearch(location.label).includes(normalizedSearch)
+    );
+  }, [allLocations, searchTerm]);
 
   // Handle location selection
   const handleLocationSelect = useCallback(
