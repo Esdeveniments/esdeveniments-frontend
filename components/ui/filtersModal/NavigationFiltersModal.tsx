@@ -1,4 +1,12 @@
-import { useMemo, useState, useCallback, memo, ChangeEvent, FC, useEffect } from "react";
+import {
+  useMemo,
+  useState,
+  useCallback,
+  memo,
+  ChangeEvent,
+  FC,
+  useEffect,
+} from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
@@ -60,14 +68,22 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       userLocation: initialUserLocation,
       selectOption: regionOption || null,
     };
-  }, [currentSegments, currentQueryParams, initialUserLocation, regionsAndCitiesArray]);
+  }, [
+    currentSegments,
+    currentQueryParams,
+    initialUserLocation,
+    regionsAndCitiesArray,
+  ]);
 
   const [localPlace, setLocalPlace] = useState<string>(defaults.place);
   const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
   const [localCategory, setLocalCategory] = useState<string>(defaults.category);
   const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
-  const [localUserLocation, setLocalUserLocation] = useState(defaults.userLocation);
-  const [userLocationLoading, setUserLocationLoading] = useState<boolean>(false);
+  const [localUserLocation, setLocalUserLocation] = useState(
+    defaults.userLocation
+  );
+  const [userLocationLoading, setUserLocationLoading] =
+    useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
 
   // Reset local state whenever the modal opens or the default inputs change while open
@@ -248,7 +264,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         actionButton="Aplicar filtres"
         onActionButtonClick={applyFilters}
       >
-        <div className="w-full h-full flex flex-col justify-start items-start gap-5 py-8">
+        <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
           <div className="w-full flex flex-col justify-start items-start gap-4">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Poblacions

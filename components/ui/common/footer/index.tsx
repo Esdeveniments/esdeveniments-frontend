@@ -22,21 +22,23 @@ export default function Footer(): JSX.Element {
 
   return (
     <footer className="w-full border-t border-border bg-background">
-      <div className="container flex flex-col items-center gap-element-gap py-section-y">
+      <div className="container flex flex-col items-center gap-element-gap pt-section-y pb-14 md:pb-section-y px-section-x">
         <Social links={links} />
-        <nav className="flex justify-center items-center gap-element-gap">
+        <nav className="flex flex-wrap justify-center items-center gap-element-gap w-full max-w-full">
           {navigation.map((item) => (
             <ActiveLink
               href={item.href}
               key={item.name}
-              className="label font-medium px-button-x py-button-y"
+              className="label font-medium px-button-x py-button-y whitespace-nowrap"
             >
               {item.name}
             </ActiveLink>
           ))}
         </nav>
-        <div className="w-full flex justify-center">
-          <span className="label">© {new Date().getFullYear()} Esdeveniments.cat</span>
+        <div className="w-full flex justify-center px-section-x">
+          <span className="label text-center">
+            © {new Date().getFullYear()} Esdeveniments.cat
+          </span>
         </div>
       </div>
     </footer>
