@@ -104,8 +104,11 @@ describe("proxy", () => {
 
       const result = await proxy(mockRequest);
 
+      // We intentionally avoid `no-store` here so the bfcache (back/forward cache)
+      // can keep this navigation eligible. `no-cache, max-age=0, must-revalidate`
+      // forces revalidation without blocking bfcache. See proxy.ts for rationale.
       expect(result.headers.get("Cache-Control")).toBe(
-        "no-cache, no-store, must-revalidate"
+        "no-cache, max-age=0, must-revalidate"
       );
       expect(result.headers.get("Service-Worker-Allowed")).toBe("/");
     });
