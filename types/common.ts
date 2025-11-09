@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StoreState } from "@store";
+import type { StoreState } from "types/store";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";

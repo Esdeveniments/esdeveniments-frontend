@@ -23,7 +23,7 @@ function useOnScreen<T extends Element = Element>(
 
     const currentRef = ref.current;
     if (!currentRef) {
-      setIntersecting(false);
+      // No element to observe; keep previous state (default false)
       return;
     }
     if (frozenRef.current) return;

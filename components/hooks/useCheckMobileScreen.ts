@@ -22,7 +22,6 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
 
   useEffect(() => {
     isMountedRef.current = true;
-    setWidth(window.innerWidth);
     window.addEventListener("resize", handleWindowSizeChange);
     return () => {
       isMountedRef.current = false;

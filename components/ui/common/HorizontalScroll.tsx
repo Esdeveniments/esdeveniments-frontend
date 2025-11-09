@@ -79,8 +79,8 @@ export default function HorizontalScroll({
         el.scrollLeft <= 1
       ) {
         sessionStorage.setItem(storageKey, "1");
-        // Make the hint a bit stronger while nudging
-        setShowHint(true);
+        // Make the hint a bit stronger while nudging (defer to avoid direct setState in effect)
+        window.setTimeout(() => setShowHint(true), 0);
         // small delayed nudge then reset
         const nudgePx = 16;
         const nudgeDelay = 250;
@@ -92,10 +92,12 @@ export default function HorizontalScroll({
           el.scrollTo({ left: 0, behavior: "smooth" });
         }, nudgeDelay + backDelay);
       }
-    } catch {}
+    } catch {
+      // noop: sessionStorage or matchMedia may be unavailable
+    }
     const onScroll = () => {
       updateFlags();
-      if (showHint && el.scrollLeft > 8) setShowHint(false);
+      if (el.scrollLeft > 8) setShowHint(false);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
 
@@ -112,7 +114,7 @@ export default function HorizontalScroll({
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
-  }, [showHint]);
+  }, [ariaLabel, hintStorageKey, nudgeOnFirstLoad]);
 
   const computeStep = () => {
     if (typeof scrollStepPx === "number") return scrollStepPx;

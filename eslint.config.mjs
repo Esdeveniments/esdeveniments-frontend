@@ -72,6 +72,9 @@ export default [
       "**/store.ts",
       "utils/**/*.{ts,tsx,js,jsx}",
     ],
+    ignores: [
+      "types/**/*.ts",
+    ],
 
     rules: {
       "no-restricted-syntax": [
@@ -91,9 +94,35 @@ export default [
   },
   {
     files: ["types/**/*.ts"],
-
+    ignores: [
+      "types/common.ts",
+      "types/api/city.ts",
+    ],
     rules: {
       "@typescript-eslint/no-unused-vars": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "TSInterfaceDeclaration[id.name='NavigationItem']",
+          message:
+            "NavigationItem interface is already defined. Use the canonical version in types/common.ts.",
+        },
+        {
+          selector: "TSInterfaceDeclaration[id.name='SocialLinks']",
+          message:
+            "SocialLinks interface is already defined. Use the canonical version in types/common.ts.",
+        },
+        {
+          selector: "TSInterfaceDeclaration[id.name='EventProps']",
+          message:
+            "EventProps interface is already defined. Use the canonical version in types/common.ts.",
+        },
+        {
+          selector: "TSInterfaceDeclaration[id.name='CitySummaryResponseDTO']",
+          message:
+            "CitySummaryResponseDTO interface is already defined. Use the canonical version in types/api/city.ts.",
+        },
+      ],
     },
   },
   // Disable anonymous default export warning for this config file

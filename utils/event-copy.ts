@@ -282,6 +282,8 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
           article = articleFromWord;
         }
       }
+      // Recompute isPlural after finalizing the article
+      isPlural = /^(els|les)$/i.test(article);
       // Keep the word after Roman numeral lowercase
       const restOfTitle =
         words.length > 2 ? " " + words.slice(2).join(" ") : "";

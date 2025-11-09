@@ -66,7 +66,10 @@ export async function GET(request: NextRequest) {
     console.error("GOOGLE_PLACES_API_KEY is not configured");
     return NextResponse.json(
       { error: "Places API not configured" },
-      { status: 500 }
+      {
+        status: 500,
+        headers: { "Cache-Control": "no-store" },
+      }
     );
   }
 
@@ -383,7 +386,10 @@ export async function GET(request: NextRequest) {
       console.error("Google Places API error:", response.status, data);
       return NextResponse.json(
         { error: "Places API error", status: response.status, details: data },
-        { status: 500 }
+        {
+          status: 500,
+          headers: { "Cache-Control": "no-store" },
+        }
       );
     }
 
@@ -480,8 +486,7 @@ export async function GET(request: NextRequest) {
       { error: "Failed to fetch places" },
       {
         status: 500,
-        // Avoid no-store to keep pages eligible for bfcache; still prevent caching
-        headers: { "Cache-Control": "public, max-age=0, must-revalidate" },
+        headers: { "Cache-Control": "no-store" },
       }
     );
   }

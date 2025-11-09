@@ -1,14 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Store } from "types/store";
-export type {
-  UserLocation,
-  EventLocation,
-  Event,
-  UIState,
-  StoreActions,
-  StoreState,
-} from "types/store";
 
 // Create the store with minimal state
 const useStore = create<Store>()(

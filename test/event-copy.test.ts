@@ -619,5 +619,31 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("El llum");
       expect(result).toContain("se celebra");
     });
+
+    it("should use plural verb for plural titles starting with Roman numeral", () => {
+      const event = createTestEvent({
+        title: "xx festes majors",
+        startDate: "2025-07-15",
+        endDate: undefined,
+        city: {
+          id: 26,
+          name: "Girona",
+          slug: "girona",
+          latitude: 41.98,
+          longitude: 2.82,
+          postalCode: "17001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "Les" (festes is plural feminine) and "se celebren" (plural verb)
+      expect(result).toContain("Les XX festes");
+      expect(result).toContain("se celebren");
+      expect(result).not.toContain("se celebra");
+    });
   });
 });
