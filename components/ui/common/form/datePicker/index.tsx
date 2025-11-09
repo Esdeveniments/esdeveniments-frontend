@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import format from "date-fns/format";
 import setHours from "date-fns/setHours";
 import setMinutes from "date-fns/setMinutes";
+import setSeconds from "date-fns/setSeconds";
 import ca from "date-fns/locale/ca";
 import { DatePickerComponentProps, CustomHeaderProps } from "types/props";
 
@@ -66,16 +67,32 @@ export default function DatePickerComponent({
   const [startDate, setStartDate] = useState<Date>(startingDate);
   const [endDate, setEndDate] = useState<Date>(endingDate);
 
+  // Ensure endDate is always after startDate and propagate changes
+  useEffect(() => {
+    if (startDate > endDate) {
+      const newEndDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      setEndDate(newEndDate);
+      onChange("endDate", toISOString(newEndDate));
+    }
+  }, [startDate, endDate, onChange]);
 
+  
   // Emit string values on change
   const onChangeStart = (date: Date) => {
     setStartDate(date);
-    if (date > endDate) setEndDate(new Date(date.getTime() + 60 * 60 * 1000));
+    if (date > endDate) {
+      const corrected = new Date(date.getTime() + 60 * 60 * 1000);
+      setEndDate(corrected);
+      onChange("endDate", toISOString(corrected));
+    }
     onChange("startDate", toISOString(date));
   };
   const onChangeEnd = (date: Date) => {
-    setEndDate(date);
-    onChange("endDate", toISOString(date));
+    const corrected = date < startDate
+      ? new Date(startDate.getTime() + 60 * 60 * 1000)
+      : date;
+    setEndDate(corrected);
+    onChange("endDate", toISOString(corrected));
   };
 
   return (
@@ -167,6 +184,16 @@ export default function DatePickerComponent({
             startDate={startDate}
             endDate={endDate}
             minDate={startDate}
+            minTime={
+              startDate.toDateString() === endDate.toDateString()
+                ? startDate
+                : undefined
+            }
+            maxTime={
+              startDate.toDateString() === endDate.toDateString()
+                ? setSeconds(setMinutes(setHours(new Date(), 23), 59), 59)
+                : undefined
+            }
             required={required}
             nextMonthButtonLabel=">"
             previousMonthButtonLabel="<"
