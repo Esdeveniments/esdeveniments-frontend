@@ -8,7 +8,7 @@ import {
   XIcon,
   PlusIcon as PlusSmIcon,
   HomeIcon,
-  InformationCircleIcon as InfoIcon,
+  NewspaperIcon,
 } from "@heroicons/react/outline";
 import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
@@ -107,15 +107,15 @@ export default function Navbar() {
                   </ActiveLink>
                 </div>
 
-                {/* WhoAreWe */}
+                {/* Notícies */}
                 <div className="flex-center cursor-pointer">
-                  <ActiveLink href="/qui-som">
+                  <ActiveLink href="/noticies">
                     <button
                       type="button"
                       className="flex-center p-2 focus:outline-none cursor-pointer"
-                      aria-label="WhoAreWe"
+                      aria-label="Notícies"
                     >
-                      <InfoIcon className="h-6 w-6" />
+                      <NewspaperIcon className="h-6 w-6" />
                     </button>
                   </ActiveLink>
                 </div>

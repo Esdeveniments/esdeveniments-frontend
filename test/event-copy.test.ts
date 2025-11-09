@@ -248,4 +248,376 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("(Test\\data)");
     });
   });
+
+  describe("article gender validation and correction", () => {
+    it("should correct wrong masculine plural article to feminine plural", () => {
+      const event = createTestEvent({
+        title: "Els festes d'aniversari",
+        startDate: "2025-11-09",
+        endDate: undefined,
+        city: {
+          id: 12,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should correct "Els festes" to "Les festes" (first word is lowercase)
+      expect(result).toContain("Les festes");
+      expect(result).not.toContain("Els festes");
+      // Should use plural verb
+      expect(result).toContain("se celebren");
+    });
+
+    it("should correct wrong feminine article to masculine", () => {
+      const event = createTestEvent({
+        title: "La festival de música",
+        startDate: "2025-07-15",
+        endDate: undefined,
+        city: {
+          id: 13,
+          name: "Girona",
+          slug: "girona",
+          latitude: 41.98,
+          longitude: 2.82,
+          postalCode: "17001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should correct "La festival" to "El festival" (first word is lowercase)
+      expect(result).toContain("El festival");
+      expect(result).not.toContain("La festival");
+      // Should use singular verb
+      expect(result).toContain("se celebra");
+    });
+
+    it("should correct wrong singular article to plural", () => {
+      const event = createTestEvent({
+        title: "El fires de Sant Miquel",
+        startDate: "2025-09-29",
+        endDate: undefined,
+        city: {
+          id: 14,
+          name: "Lleida",
+          slug: "lleida",
+          latitude: 41.62,
+          longitude: 0.63,
+          postalCode: "25001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should correct "El fires" to "Les fires" (plural feminine, first word lowercase)
+      expect(result).toContain("Les fires");
+      expect(result).not.toContain("El fires");
+      // Should use plural verb
+      expect(result).toContain("se celebren");
+    });
+
+    it("should keep correct article when it matches the noun", () => {
+      const event = createTestEvent({
+        title: "Les festes de Tardor",
+        startDate: "2025-11-14",
+        endDate: undefined,
+        city: {
+          id: 15,
+          name: "Vilassar de Mar",
+          slug: "vilassar-de-mar",
+          latitude: 41.5,
+          longitude: 2.4,
+          postalCode: "08340",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should keep "Les festes" as it's correct (first word is lowercase)
+      expect(result).toContain("Les festes");
+      expect(result).not.toContain("Els festes");
+      expect(result).toContain("se celebren");
+    });
+
+    it("should handle L' article correctly", () => {
+      const event = createTestEvent({
+        title: "L'activitat cultural",
+        startDate: "2025-06-20",
+        endDate: undefined,
+        city: {
+          id: 16,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should keep "L'activitat" as it's correct for vowel-starting feminine noun (first word is lowercase)
+      expect(result).toContain("L'activitat");
+      expect(result).not.toContain("La activitat");
+      expect(result).toContain("se celebra");
+    });
+  });
+
+  describe("Roman numeral handling", () => {
+    it("should handle Roman numeral at start of title and capitalize it", () => {
+      const event = createTestEvent({
+        title: "ii fira animalista del Masnou",
+        startDate: "2025-11-09",
+        endDate: undefined,
+        city: {
+          id: 17,
+          name: "El Masnou",
+          slug: "el-masnou",
+          latitude: 41.48,
+          longitude: 2.32,
+          postalCode: "08320",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "La" article, capitalize Roman numeral, and keep next word lowercase
+      expect(result).toContain("La II fira");
+      expect(result).not.toContain("ii fira");
+      expect(result).not.toContain("L'ii");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should correct L' article before Roman numeral to La", () => {
+      const event = createTestEvent({
+        title: "L'ii fira animalista del Masnou",
+        startDate: "2025-11-09",
+        endDate: undefined,
+        city: {
+          id: 18,
+          name: "El Masnou",
+          slug: "el-masnou",
+          latitude: 41.48,
+          longitude: 2.32,
+          postalCode: "08320",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should correct "L'ii" to "La II" and keep next word lowercase
+      expect(result).toContain("La II fira");
+      expect(result).not.toContain("L'ii");
+      expect(result).not.toContain("L'II");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should handle lowercase Roman numeral and capitalize it", () => {
+      const event = createTestEvent({
+        title: "iii edició del festival",
+        startDate: "2025-08-15",
+        endDate: undefined,
+        city: {
+          id: 19,
+          name: "Girona",
+          slug: "girona",
+          latitude: 41.98,
+          longitude: 2.82,
+          postalCode: "17001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "La" (edició is feminine), capitalize Roman numeral to "III", and keep next word lowercase
+      expect(result).toContain("La III edició");
+      expect(result).not.toContain("iii");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should handle Roman numeral with correct article already present", () => {
+      const event = createTestEvent({
+        title: "La II Fira Animalista",
+        startDate: "2025-11-09",
+        endDate: undefined,
+        city: {
+          id: 20,
+          name: "El Masnou",
+          slug: "el-masnou",
+          latitude: 41.48,
+          longitude: 2.32,
+          postalCode: "08320",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should keep "La II fira" as it's already correct (Roman numeral capitalized, word lowercase)
+      expect(result).toContain("La II fira");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should handle single Roman numeral I", () => {
+      const event = createTestEvent({
+        title: "i jornada de poesia",
+        startDate: "2025-05-10",
+        endDate: undefined,
+        city: {
+          id: 21,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "La", capitalize Roman numeral to "I", and keep next word lowercase
+      expect(result).toContain("La I jornada");
+      expect(result).not.toContain("i jornada");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should handle Roman numeral not at the start of title", () => {
+      const event = createTestEvent({
+        title: "Fira de la II edició",
+        startDate: "2025-09-20",
+        endDate: undefined,
+        city: {
+          id: 22,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should detect "fira" as the first word and use "La fira" (lowercase)
+      expect(result).toContain("La fira");
+      // Roman numeral in the middle should remain as is (not capitalized by our logic)
+      expect(result).toContain("se celebra");
+    });
+
+    it("should use masculine article for Roman numeral with masculine noun", () => {
+      const event = createTestEvent({
+        title: "xx campionat de parxís",
+        startDate: "2025-08-16",
+        endDate: undefined,
+        city: {
+          id: 23,
+          name: "Ullastrell",
+          slug: "ullastrell",
+          latitude: 41.52,
+          longitude: 1.96,
+          postalCode: "08231",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (campionat is masculine), not "La"
+      expect(result).toContain("El XX campionat");
+      expect(result).not.toContain("La XX campionat");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should detect feminine noun 'nit' correctly", () => {
+      const event = createTestEvent({
+        title: "la nit jove",
+        startDate: "2025-08-15",
+        endDate: undefined,
+        city: {
+          id: 24,
+          name: "Ullastrell",
+          slug: "ullastrell",
+          latitude: 41.52,
+          longitude: 1.96,
+          postalCode: "08231",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "La" (nit is feminine), not "El"
+      expect(result).toContain("La nit");
+      expect(result).not.toContain("El nit");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should detect other feminine nouns without typical endings", () => {
+      const event = createTestEvent({
+        title: "la llum de la ciutat",
+        startDate: "2025-08-20",
+        endDate: undefined,
+        city: {
+          id: 25,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "La" (llum is feminine)
+      expect(result).toContain("La llum");
+      expect(result).not.toContain("El llum");
+      expect(result).toContain("se celebra");
+    });
+  });
 });

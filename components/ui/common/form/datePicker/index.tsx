@@ -21,7 +21,7 @@ const ButtonInput = React.forwardRef<
     <button
       ref={ref}
       type="button"
-      className="w-full p-2.5 border border-border rounded-xl text-foreground-strong sm:text-sm focus:border-foreground-strong focus:outline-none"
+      className="w-full p-2.5 border border-border rounded-xl text-foreground-strong text-base focus:border-foreground-strong focus:outline-none"
       {...restProps}
     >
       {value}

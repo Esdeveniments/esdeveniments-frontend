@@ -480,7 +480,8 @@ export async function GET(request: NextRequest) {
       { error: "Failed to fetch places" },
       {
         status: 500,
-        headers: { "Cache-Control": "no-store" },
+        // Avoid no-store to keep pages eligible for bfcache; still prevent caching
+        headers: { "Cache-Control": "public, max-age=0, must-revalidate" },
       }
     );
   }

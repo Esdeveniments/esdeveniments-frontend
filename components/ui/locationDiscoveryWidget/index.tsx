@@ -179,7 +179,8 @@ export default function LocationDiscoveryWidget({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Cercar ubicació..."
-                        className="input pl-9 body-small"
+                        className="input pl-9 text-base"
+                        inputMode="search"
                         autoFocus
                         data-testid="location-search-input"
                       />
