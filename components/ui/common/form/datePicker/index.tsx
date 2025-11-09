@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
@@ -59,22 +59,17 @@ export default function DatePickerComponent({
 }: DatePickerComponentProps) {
   // Convert incoming strings to Date objects
   const startingDate = toDate(initialStartDate);
-  const endingDate = initialEndDate
+  const initialEndCandidate = initialEndDate
     ? toDate(initialEndDate)
     : setMinutes(startingDate, startingDate.getMinutes() + 60);
+  const endingDate =
+    initialEndCandidate > startingDate
+      ? initialEndCandidate
+      : new Date(startingDate.getTime() + 60 * 60 * 1000);
   const minDateObj = minDate ? toDate(minDate) : undefined;
 
   const [startDate, setStartDate] = useState<Date>(startingDate);
   const [endDate, setEndDate] = useState<Date>(endingDate);
-
-  // Ensure endDate is always after startDate and propagate changes
-  useEffect(() => {
-    if (startDate > endDate) {
-      const newEndDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-      setEndDate(newEndDate);
-      onChange("endDate", toISOString(newEndDate));
-    }
-  }, [startDate, endDate, onChange]);
 
   
   // Emit string values on change

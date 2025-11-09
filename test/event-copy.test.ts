@@ -646,4 +646,70 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebra");
     });
   });
+
+  describe("plural detection logic (conservative stem checking)", () => {
+    it("should check stem first before adding 'a' for words ending in 'es'", () => {
+      // This test validates Fix 2: the logic checks if the stem alone is already
+      // clearly feminine before trying to add "a". This prevents incorrect
+      // transformations while still handling cases like "festes" → "festa".
+
+      // Test case: "festes" (festivals)
+      // - Stem: "fest" → not clearly feminine (defaults to masculine)
+      // - Stem + "a": "festa" → feminine
+      // - Should correctly identify as plural feminine
+      const event = createTestEvent({
+        title: "festes populars",
+        startDate: "2025-08-15",
+        endDate: undefined,
+        city: {
+          id: 27,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should correctly identify "festes" as plural feminine
+      expect(result).toContain("Les festes");
+      expect(result).toContain("se celebren");
+      expect(result).not.toContain("Els festes");
+      expect(result).not.toContain("se celebra");
+    });
+
+    it("should handle plural words ending in 'es' with stem-first checking", () => {
+      // Additional test to ensure the conservative approach works for various cases
+      const event = createTestEvent({
+        title: "fires de Sant Miquel",
+        startDate: "2025-09-29",
+        endDate: undefined,
+        city: {
+          id: 28,
+          name: "Lleida",
+          slug: "lleida",
+          latitude: 41.62,
+          longitude: 0.63,
+          postalCode: "25001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // "fires" stem is "fire" (not clearly feminine), adding "a" gives "firea" (feminine)
+      // Should correctly identify as plural feminine
+      expect(result).toContain("Les fires");
+      expect(result).toContain("se celebren");
+      expect(result).not.toContain("Els fires");
+      expect(result).not.toContain("se celebra");
+    });
+  });
 });

@@ -81,11 +81,16 @@ function detectCatalanGenderAndNumber(word: string): {
     // For words ending in "es", check if adding "a" makes it feminine
     // This handles cases like "festes" (plural of "festa") where removing "es" gives "fest"
     // but the actual singular is "festa" (feminine)
+    // Only add "a" if the stem alone is not already clearly feminine
     if (norm.endsWith("es") && singular.length > 0) {
-      const singularWithA = singular + "a";
-      // If adding "a" makes it detect as feminine, use that
-      if (detectCatalanGender(singularWithA) === "f") {
-        singular = singularWithA;
+      const stemGender = detectCatalanGender(singular);
+      // If stem is not clearly feminine, try adding "a"
+      if (stemGender !== "f") {
+        const singularWithA = singular + "a";
+        // If adding "a" makes it detect as feminine, use that
+        if (detectCatalanGender(singularWithA) === "f") {
+          singular = singularWithA;
+        }
       }
     }
 
