@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import type { HorizontalScrollProps } from "types/ui";
@@ -20,6 +20,7 @@ export default function HorizontalScroll({
   scrollStepPx,
   hintStorageKey,
 }: HorizontalScrollProps) {
+  const uniqueId = useId();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -60,7 +61,10 @@ export default function HorizontalScroll({
     let backward: number | undefined;
     try {
       const storageKey =
-        hintStorageKey || `hs_seen_hint_${(ariaLabel || "default").toLowerCase()}`;
+        hintStorageKey ||
+        (ariaLabel
+          ? `hs_seen_hint_${ariaLabel.toLowerCase()}`
+          : `hs_seen_hint_${uniqueId.replace(/:/g, "-")}`);
       const prefersReduced =
         window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
