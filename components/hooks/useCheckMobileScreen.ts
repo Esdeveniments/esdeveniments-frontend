@@ -22,10 +22,21 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
 
   useEffect(() => {
     isMountedRef.current = true;
-    window.addEventListener("resize", handleWindowSizeChange);
+    // Initialize width on mount so initial render after hydration reflects
+    // the actual client viewport, not just the server hint/fallback.
+    let rafId: number | null = null;
+    if (typeof window !== "undefined") {
+      rafId = window.requestAnimationFrame(() => {
+        if (isMountedRef.current) setWidth(window.innerWidth);
+      });
+      window.addEventListener("resize", handleWindowSizeChange);
+    }
     return () => {
       isMountedRef.current = false;
-      window.removeEventListener("resize", handleWindowSizeChange);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("resize", handleWindowSizeChange);
+        if (rafId !== null) window.cancelAnimationFrame(rafId);
+      }
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }

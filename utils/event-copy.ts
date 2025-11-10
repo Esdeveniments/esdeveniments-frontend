@@ -17,6 +17,38 @@ function normalize(s: string): string {
 }
 
 /**
+ * Checks if a word matches explicit masculine patterns (not just default masculine).
+ * This distinguishes words that are explicitly masculine from those that default to masculine.
+ */
+function isExplicitlyMasculine(word: string): boolean {
+  const raw = (word || "").trim();
+  if (!raw) return false;
+
+  const norm = normalize(raw);
+
+  // Greek/loanword masculine endings (many -ma, -ema, -oma are masculine)
+  // This covers: problema, sistema, tema, dilema, esquema, programa, cinema, clima, etc.
+  if (/(ma|ema|oma|ama)$/.test(norm)) return true;
+
+  // Small unavoidable list of masculine nouns ending in -a that don't match the -ma pattern.
+  // These are Greek/loanwords ending in -eta or -ia that can't be generalized because
+  // many feminine words also end in -eta (festa, carta, porta) or -ia (farmacia, mania).
+  // We can't make a generic pattern for these without catching feminine words.
+  const manualMasculineExceptions = /^(dia|poeta|planeta|cometa)$/;
+  if (manualMasculineExceptions.test(norm)) return true;
+
+  // Masculine nouns ending in -e that could be confused with feminine plurals
+  // e.g., "pare" (parent, masculine) vs "para" (feminine but not the singular of "pares")
+  const manualMasculineERegex = /^(pare)$/;
+  if (manualMasculineERegex.test(norm)) return true;
+
+  // -or -> usually masculine
+  if (/or$/.test(norm)) return true;
+
+  return false;
+}
+
+/**
  * Heuristic gender detection:
  * - small set of unavoidable exceptions (handled by regex)
  * - greek/loanword endings (-ma, -ema, -oma...) => masculine
@@ -32,22 +64,13 @@ function detectCatalanGender(word: string): "m" | "f" {
 
   const norm = normalize(raw);
 
-  // Small unavoidable list of masculine nouns that end in -a (Greek/loanword or irregular).
-  // Kept minimal. If you see common false positives, add them here (rare).
-  const manualMasculineRegex =
-    /^(dia|poeta|planeta|cometa|problema|sistema|tema|dilema|esquema)$/;
-  if (manualMasculineRegex.test(norm)) return "m";
-
-  // Greek/loanword masculine endings (many -ma, -ema, -oma are masculine)
-  if (/(ma|ema|oma|ama)$/.test(norm)) return "m";
+  // Check explicit masculine patterns first
+  if (isExplicitlyMasculine(word)) return "m";
 
   // Feminine endings (normalized)
   // -tat (ciutat, universitat, qualitat) -> feminine (normalized to -tat, but we check before normalization)
   if (/tat$/.test(norm)) return "f";
   if (/(a|cio|sio|tud|essa|ncia|tza)$/.test(norm)) return "f";
-
-  // -or -> usually masculine
-  if (/or$/.test(norm)) return "m";
 
   // Small list of unavoidable exceptions that don't follow patterns
   // These are common feminine nouns that don't end in typical feminine endings
@@ -86,10 +109,24 @@ function detectCatalanGenderAndNumber(word: string): {
       const stemGender = detectCatalanGender(singular);
       // If stem is not clearly feminine, try adding "a"
       if (stemGender !== "f") {
-        const singularWithA = singular + "a";
-        // If adding "a" makes it detect as feminine, use that
-        if (detectCatalanGender(singularWithA) === "f") {
-          singular = singularWithA;
+        // Before adding "a", check if adding "e" would make it explicitly masculine
+        // This prevents cases like "pares" (from "pare", masculine) being incorrectly
+        // feminized to "para" (which is feminine but not the correct singular)
+        const singularWithE = singular + "e";
+
+        // If stem + "e" is explicitly masculine (matches explicit patterns), don't add "a"
+        // This handles "pare" (masculine, explicit) vs "festa" (feminine)
+        // "feste" would be default masculine (not explicit), so we still try adding "a"
+        if (isExplicitlyMasculine(singularWithE)) {
+          // Stem + "e" is explicitly masculine, so the word is likely masculine
+          // Don't add "a" - keep the masculine stem
+        } else {
+          // Try adding "a" to see if it makes it feminine
+          const singularWithA = singular + "a";
+          // If adding "a" makes it detect as feminine, use that
+          if (detectCatalanGender(singularWithA) === "f") {
+            singular = singularWithA;
+          }
         }
       }
     }

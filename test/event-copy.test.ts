@@ -711,5 +711,36 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("Els fires");
       expect(result).not.toContain("se celebra");
     });
+
+    it("should keep masculine plural words masculine (e.g., 'pares' from 'pare')", () => {
+      // Test case: "pares" (parents, plural of "pare" which is masculine)
+      // - Stem: "par" → detected as masculine (default)
+      // - Should NOT try to add "a" to make it "para" (feminine)
+      // - Should correctly identify as plural masculine → "Els pares"
+      const event = createTestEvent({
+        title: "Pares musicals",
+        startDate: "2025-08-15",
+        endDate: undefined,
+        city: {
+          id: 29,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should correctly identify "pares" as plural masculine
+      expect(result).toContain("Els pares");
+      expect(result).toContain("se celebren");
+      expect(result).not.toContain("Les pares");
+      expect(result).not.toContain("se celebra");
+    });
   });
 });
