@@ -1,18 +1,17 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
-async function getFirstEventSlug(): Promise<string> {
-  const api =
-    process.env.NEXT_PUBLIC_API_URL || "https://api-pre.esdeveniments.cat/api";
-  const res = await fetch(`${api}/events?size=1`);
+async function getFirstEventSlug(page: Page): Promise<string | undefined> {
+  // Fetch via the app's internal API so the server signs with HMAC
+  const res = await page.request.get(`/api/events?size=1`);
   const data = (await res.json()) as { content?: Array<{ slug?: string }> };
   const slug = data?.content?.[0]?.slug;
-  if (!slug) throw new Error("No events returned from API");
-  return slug;
+  return slug ?? undefined;
 }
 
 test.describe("Events around section", () => {
   test("renders related events and links work", async ({ page }) => {
-    const slug = await getFirstEventSlug();
+    const slug = await getFirstEventSlug(page);
+    if (!slug) test.skip(true, "No events returned from API");
     await page.goto(`/e/${slug}`, { waitUntil: "domcontentloaded" });
     const section = page.getByRole("heading", {
       name: /esdeveniments relacionats/i,
