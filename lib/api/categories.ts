@@ -4,6 +4,8 @@ import {
 } from "types/api/category";
 import { createCache, createKeyedCache } from "lib/api/cache";
 import { fetchWithHmac } from "lib/api/fetch-wrapper";
+import { cache as reactCache } from "react";
+import { parseCategories } from "lib/validation/category";
 
 const cache = createCache<CategorySummaryResponseDTO[]>(86400000);
 const categoryByIdCache = createKeyedCache<CategoryDetailResponseDTO | null>(
@@ -18,7 +20,8 @@ async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
     }
   );
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return response.json();
+  const json = await response.json();
+  return parseCategories(json);
 }
 
 export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
@@ -31,6 +34,9 @@ export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
     return [];
   }
 }
+
+// React per-request memoization for metadata+page deduplication
+export const getCategories = reactCache(fetchCategories);
 
 async function fetchCategoryByIdApi(
   id: string | number

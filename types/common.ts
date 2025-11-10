@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { StoreState } from "@store";
+import type { StoreState } from "types/store";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
@@ -20,29 +20,7 @@ export interface Location {
   lng: number;
 }
 
-export type CategoryKey =
-  | "Festes Majors"
-  | "Festivals"
-  | "Familiar"
-  | "Música"
-  | "Cinema"
-  | "Teatre"
-  | "Exposicions"
-  | "Fires"
-  | "Espectacles";
-
-export type CategoryValue =
-  | "Festa Major"
-  | "Festival"
-  | "Familiar"
-  | "Música"
-  | "Cinema"
-  | "Teatre"
-  | "Exposició"
-  | "Fira"
-  | "Espectacles";
-
-export type Categories = Record<CategoryKey, CategoryValue>;
+// Legacy category unions removed in favor of backend DTOs
 
 export interface CalendarOption {
   name: string;

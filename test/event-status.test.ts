@@ -138,4 +138,60 @@ describe("computeTemporalStatus", () => {
       expect(status.endsIn).toContain("1 dies");
     }
   });
+
+  // Test for timed events with separate date and time strings (bug fix)
+  it("timed event on same day with current time between startTime and endTime is live", () => {
+    // Event: Nov 8, 2025, 10:00 - 14:00
+    // Current time: Nov 8, 2025, 12:00 (between start and end, using local time)
+    const eventDate = "2025-11-08";
+    const startTime = "10:00";
+    const endTime = "14:00";
+    // Use local time construction to match how buildDateTime works
+    const currentTime = new Date("2025-11-08T12:00");
+    const status = computeTemporalStatus(
+      eventDate,
+      eventDate, // same day
+      currentTime,
+      startTime,
+      endTime
+    );
+    expect(status.state).toBe("live");
+    expect(status.label).toBe("En curs");
+  });
+
+  it("timed event on same day with current time before startTime is upcoming", () => {
+    // Event: Nov 8, 2025, 10:00 - 14:00
+    // Current time: Nov 8, 2025, 08:00 (before start, using local time to avoid timezone issues)
+    const eventDate = "2025-11-08";
+    const startTime = "10:00";
+    const endTime = "14:00";
+    // Use local time construction to match how buildDateTime works
+    const currentTime = new Date("2025-11-08T08:00");
+    const status = computeTemporalStatus(
+      eventDate,
+      eventDate,
+      currentTime,
+      startTime,
+      endTime
+    );
+    expect(status.state).toBe("upcoming");
+  });
+
+  it("timed event on same day with current time after endTime is past", () => {
+    // Event: Nov 8, 2025, 10:00 - 14:00
+    // Current time: Nov 8, 2025, 15:00 (after end, using local time)
+    const eventDate = "2025-11-08";
+    const startTime = "10:00";
+    const endTime = "14:00";
+    // Use local time construction to match how buildDateTime works
+    const currentTime = new Date("2025-11-08T15:00");
+    const status = computeTemporalStatus(
+      eventDate,
+      eventDate,
+      currentTime,
+      startTime,
+      endTime
+    );
+    expect(status.state).toBe("past");
+  });
 });

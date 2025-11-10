@@ -20,7 +20,7 @@ export default function Input({
           type="text"
           name={id}
           id={id}
-          className="w-full rounded-xl border-border focus:border-foreground-strong"
+          className="w-full rounded-xl border-border focus:border-foreground-strong text-base"
         />
       </div>
     </div>

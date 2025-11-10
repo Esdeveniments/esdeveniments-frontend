@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "es2021",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -11,7 +15,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "downlevelIteration": true,
     "plugins": [
@@ -20,29 +24,66 @@
       }
     ],
     "paths": {
-      "@store": ["./store.ts"],
-      "@app/*": ["./app/*"],
-      "@components/*": ["./components/*"],
-      "@styles/*": ["./styles/*"],
-      "@content/*": ["./content/*"],
-      "@utils/*": ["./utils/*"],
-      "@lib/*": ["./lib/*"],
-      "@config/*": ["./config/*"],
-      "@public/*": ["./public/*"],
-      "@types/*": ["./types/*"],
-      "react": ["./node_modules/@types/react"],
-      "types/*": ["./types/*"],
-      "lib/*": ["./lib/*"],
-      "utils/*": ["./utils/*"],
-      "config/*": ["./config/*"],
-      "components/*": ["./components/*"],
-      "app/*": ["./app/*"]
+      "@store": [
+        "./store.ts"
+      ],
+      "@app/*": [
+        "./app/*"
+      ],
+      "@components/*": [
+        "./components/*"
+      ],
+      "@styles/*": [
+        "./styles/*"
+      ],
+      "@content/*": [
+        "./content/*"
+      ],
+      "@utils/*": [
+        "./utils/*"
+      ],
+      "@lib/*": [
+        "./lib/*"
+      ],
+      "@config/*": [
+        "./config/*"
+      ],
+      "@public/*": [
+        "./public/*"
+      ],
+      "@types/*": [
+        "./types/*"
+      ],
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "types/*": [
+        "./types/*"
+      ],
+      "lib/*": [
+        "./lib/*"
+      ],
+      "utils/*": [
+        "./utils/*"
+      ],
+      "config/*": [
+        "./config/*"
+      ],
+      "components/*": [
+        "./components/*"
+      ],
+      "app/*": [
+        "./app/*"
+      ]
     },
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["vitest/globals", "./types/react-datepicker.d.ts"]
+    "types": [
+      "vitest/globals",
+      "./types/react-datepicker.d.ts"
+    ]
   },
   "include": [
     "**/*.ts",
@@ -51,7 +92,11 @@
     "next.config.js",
     "postcss.config.js",
     "tailwind.config.js",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }

@@ -1,13 +1,11 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
-async function fetchAnyEventSlug(): Promise<string> {
-  const api =
-    process.env.NEXT_PUBLIC_API_URL || "https://api-pre.esdeveniments.cat/api";
-  const res = await fetch(`${api}/events?size=1`);
+async function fetchAnyEventSlug(page: Page): Promise<string | undefined> {
+  // Go through internal API proxy so server signs with HMAC
+  const res = await page.request.get(`/api/events?size=1`);
   const data = (await res.json()) as { content?: Array<{ slug?: string }> };
   const slug = data?.content?.[0]?.slug;
-  if (!slug) throw new Error("No events returned from API");
-  return slug;
+  return slug ?? undefined;
 }
 
 test.describe("JSON-LD presence", () => {
@@ -38,7 +36,8 @@ test.describe("JSON-LD presence", () => {
   });
 
   test("Event detail page exposes Event JSON-LD", async ({ page }) => {
-    const slug = await fetchAnyEventSlug();
+    const slug = await fetchAnyEventSlug(page);
+    if (!slug) test.skip(true, "No events returned from API");
     await page.goto(`/e/${slug}`, {
       waitUntil: "domcontentloaded",
       timeout: 60000,

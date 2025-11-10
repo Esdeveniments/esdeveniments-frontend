@@ -2,7 +2,8 @@ import useSWR from "swr";
 import { CategorySummaryResponseDTO } from "../../types/api/category";
 
 async function fetcher(): Promise<CategorySummaryResponseDTO[]> {
-  const res = await fetch("/api/categories", { cache: "no-store" });
+  // Allow browser/proxy caching based on API response headers
+  const res = await fetch("/api/categories");
   if (!res.ok) throw new Error("Failed to fetch categories");
   return res.json();
 }

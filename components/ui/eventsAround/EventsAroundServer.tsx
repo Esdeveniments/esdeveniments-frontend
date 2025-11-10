@@ -3,6 +3,7 @@ import Script from "next/script";
 import Link from "next/link";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
+import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
@@ -140,20 +141,29 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
           />
         )}
-        <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
-          {uniqueEvents.map((event, index) => (
-            <div
-              // key uses id or slug; index fallback should never be needed due to dedup above
-              key={event.id ?? event.slug ?? index}
-              className="flex-none w-96 min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
-            >
-              <CardHorizontalServer
-                event={event}
-                isPriority={usePriority && index <= 2}
-              />
-            </div>
-          ))}
-        </div>
+        <HorizontalScroll
+          className="py-element-gap px-section-x"
+          ariaLabel={title ? `${title} - carrusel d'esdeveniments` : undefined}
+          nudgeOnFirstLoad
+          showDesktopArrows
+          hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
+        >
+          <div className="flex gap-element-gap">
+            {uniqueEvents.map((event, index) => (
+              <div
+                role="listitem"
+                // key uses id or slug; index fallback should never be needed due to dedup above
+                key={event.id ?? event.slug ?? index}
+                className="snap-start flex-none w-[85vw] min-w-[85vw] sm:w-96 sm:min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
+              >
+                <CardHorizontalServer
+                  event={event}
+                  isPriority={usePriority && index <= 2}
+                />
+              </div>
+            ))}
+          </div>
+        </HorizontalScroll>
       </>
     );
   }

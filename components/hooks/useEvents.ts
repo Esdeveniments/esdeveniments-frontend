@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import useSWRInfinite from "swr/infinite";
@@ -51,7 +51,7 @@ export const useEvents = ({
   fallbackData = [],
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {
-  const [isActivated, setIsActivated] = useState(false);
+  const [activationKey, setActivationKey] = useState<string | null>(null);
   // When the user clicks loadMore the first time we need to both activate and
   // fetch the *next* page beyond the SSR list. Previously we called setSize
   // during the same tick while the key was still null (because isActivated was
@@ -60,12 +60,15 @@ export const useEvents = ({
   // click a second time. We capture that intent here and apply it *after*
   // activation so the first click yields new events immediately.
   const fetchNextAfterActivateRef = useRef(false);
+  // Track which key requested the post-activation next-page fetch to avoid
+  // applying a stale intent after filters change.
+  const pendingActivationKeyRef = useRef<string | null>(null);
 
-  // Reset activation when filters change (place, category, date)
-  useEffect(() => {
-    setIsActivated(false);
-    fetchNextAfterActivateRef.current = false;
-  }, [place, category, date]);
+  const currentKey = useMemo(
+    () => `${place}|${category}|${date}|${initialSize}`,
+    [place, category, date, initialSize]
+  );
+  const isActivated = activationKey === currentKey;
 
   // Build base params for the key/fetcher
   // Derive explicit date range for known slugs to align with SSR behavior
@@ -175,11 +178,22 @@ export const useEvents = ({
   // perform the size increment now (when keys are established) so both page 0
   // (SSR/fallback) and page 1 are available right after the first click.
   useEffect(() => {
-    if (isActivated && fetchNextAfterActivateRef.current) {
+    if (!isActivated) return;
+    if (
+      fetchNextAfterActivateRef.current &&
+      pendingActivationKeyRef.current === currentKey
+    ) {
       fetchNextAfterActivateRef.current = false;
+      pendingActivationKeyRef.current = null;
       setSize((prev) => prev + 1);
+      return;
     }
-  }, [isActivated, setSize]);
+    // Clear any stale intent that does not match the current key
+    if (fetchNextAfterActivateRef.current) {
+      fetchNextAfterActivateRef.current = false;
+      pendingActivationKeyRef.current = null;
+    }
+  }, [isActivated, currentKey, setSize]);
 
   // Use fallback data when not activated, SWR data when activated
   const clientEvents = isActivated
@@ -204,8 +218,9 @@ export const useEvents = ({
 
     if (!isActivated) {
       // Mark that once activation completes we should fetch the next page.
+      pendingActivationKeyRef.current = currentKey;
       fetchNextAfterActivateRef.current = true;
-      setIsActivated(true);
+      setActivationKey(currentKey);
       return; // size bump will occur in the activation effect
     }
 

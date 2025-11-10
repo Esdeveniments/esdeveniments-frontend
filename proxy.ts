@@ -54,7 +54,7 @@ function getCsp(nonce: string) {
     .join("; ");
 }
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
@@ -126,10 +126,8 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/sw.js") {
     const response = NextResponse.next();
-    response.headers.set(
-      "Cache-Control",
-      "no-cache, no-store, must-revalidate"
-    );
+    // Avoid no-store here so bfcache isn't blocked by this request
+    response.headers.set("Cache-Control", "no-cache, max-age=0, must-revalidate");
     response.headers.set("Service-Worker-Allowed", "/");
     return response;
   }

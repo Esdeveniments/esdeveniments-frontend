@@ -1,7 +1,8 @@
 "use server";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { updateEventById } from "lib/api/events";
+import { updateTag, refresh } from "next/cache";
+import { updateEventById } from "@lib/api/events";
 import type { EventUpdateRequestDTO } from "types/api/event";
+import { eventsTag, eventTag } from "@lib/cache/tags";
 
 export async function editEvent(
   eventId: string,
@@ -11,15 +12,16 @@ export async function editEvent(
   // 1. Update the event in your backend
   const updatedEvent = await updateEventById(eventId, data);
 
-  // 2. Revalidate the event detail page (purge ISR cache)
-  // If slug changed, clear old path; always revalidate the new one
+  // 2. Immediately expire cache tags for event lists and the specific event
+  // This ensures read-your-own-writes: the updated event appears immediately
+  updateTag(eventsTag);
+  // If slug changed, also expire the old event tag
   if (updatedEvent.slug !== slug) {
-    await revalidatePath(`/e/${slug}`);
+    updateTag(eventTag(slug));
   }
-  await revalidatePath(`/e/${updatedEvent.slug}`);
-  // Invalidate lists and the specific event cache tag
-  revalidateTag("events");
-  revalidateTag(`event:${updatedEvent.slug}`);
+  updateTag(eventTag(updatedEvent.slug));
+  // Refresh the current request to reflect changes
+  refresh();
 
   // 3. Return result with new slug for client redirection
   return { success: true, newSlug: updatedEvent.slug };

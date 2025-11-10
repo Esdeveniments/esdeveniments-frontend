@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/solid";
 import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import { transformRegionsToOptions } from "./utils";
+import { normalizeForSearch } from "@utils/string-helpers";
 
 export default function LocationDiscoveryWidget({
   className = "",
@@ -41,10 +42,14 @@ export default function LocationDiscoveryWidget({
       : [];
   }, [regionsWithCities]);
 
-  // Filter locations based on search term
-  const filteredLocations = allLocations.filter((location) =>
-    location.label.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter locations based on search term (accent-insensitive)
+  const filteredLocations = useMemo(() => {
+    if (!searchTerm) return allLocations;
+    const normalizedSearch = normalizeForSearch(searchTerm);
+    return allLocations.filter((location) =>
+      normalizeForSearch(location.label).includes(normalizedSearch)
+    );
+  }, [allLocations, searchTerm]);
 
   // Handle location selection
   const handleLocationSelect = useCallback(
@@ -174,7 +179,8 @@ export default function LocationDiscoveryWidget({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Cercar ubicació..."
-                        className="input pl-9 body-small"
+                        className="input pl-9 text-base"
+                        inputMode="search"
                         autoFocus
                         data-testid="location-search-input"
                       />

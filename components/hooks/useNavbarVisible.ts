@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -46,8 +47,7 @@ export function useNavbarVisible(navbarId: string = "site-navbar"): boolean {
     onScroll();
     // In some TS environments, `window` may be incorrectly typed.
     // Use direct cast to avoid type narrowing issues.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any;
+    const w = window as unknown as { addEventListener: any; removeEventListener: any };
     w.addEventListener("scroll", onScroll, { passive: true });
     return () => w.removeEventListener("scroll", onScroll);
   }, [navbarId]);

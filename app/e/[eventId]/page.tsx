@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import { generateJsonData } from "@utils/helpers";
-import { fetchEventBySlug } from "@lib/api/events";
+import { getEventBySlug } from "@lib/api/events";
 import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
@@ -15,8 +16,7 @@ import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
 import { computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
-import EventClient from "./EventClient";
-import { getFormattedDate, formatCatalanA } from "@utils/helpers";
+import { getFormattedDate } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
@@ -26,10 +26,6 @@ import {
   SpeakerphoneIcon,
   InformationCircleIcon as InfoIcon,
 } from "@heroicons/react/outline";
-import AdArticle from "components/ui/adArticle";
-import { fetchNews } from "@lib/api/news";
-import NewsCard from "@components/ui/newsCard";
-import Link from "next/link";
 import EventDetailsSection from "./components/EventDetailsSection";
 import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
 import SectionHeading from "@components/ui/common/SectionHeading";
@@ -38,17 +34,20 @@ import {
   buildFaqItems,
   buildFaqJsonLd,
 } from "@utils/helpers";
+import LatestNewsSection from "./components/LatestNewsSection";
+import ClientEventClient from "./components/ClientEventClient";
+import AdArticleIsland from "./components/AdArticleIsland";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
-  let event = await fetchEventBySlug(slug);
+  let event = await getEventBySlug(slug);
   if (!event) {
     // Defensive: try fetching by trailing id (legacy slugs)
     const id = extractUuidFromSlug(slug);
     if (id && id !== slug) {
-      event = await fetchEventBySlug(id);
+      event = await getEventBySlug(id);
     }
   }
   if (!event) return { title: "No event found" };
@@ -71,12 +70,12 @@ export default async function EventPage({
   const userAgent = headersList.get("user-agent") || "";
   const initialIsMobile = /mobile|iphone|android|ipad|mobi/i.test(userAgent);
 
-  let event: EventDetailResponseDTO | null = await fetchEventBySlug(slug);
+  let event: EventDetailResponseDTO | null = await getEventBySlug(slug);
   if (!event) {
     // Defensive: try fetching by trailing id (legacy slugs)
     const id = extractUuidFromSlug(slug);
     if (id && id !== slug) {
-      event = await fetchEventBySlug(id);
+      event = await getEventBySlug(id);
     }
   }
   if (!event) return <NoEventFound />;
@@ -111,7 +110,8 @@ export default async function EventPage({
     event.startDate,
     event.endDate,
     undefined,
-    event.startTime
+    event.startTime,
+    event.endTime
   );
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
@@ -129,10 +129,8 @@ export default async function EventPage({
   const faqItems = buildFaqItems(event);
   const faqJsonLd = buildFaqJsonLd(faqItems);
 
-  // Fetch latest news for the event's place (prefer city, then region, fallback Catalunya)
+  // Prepare place data for LatestNewsSection (streamed separately)
   const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
-  const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
-  const latestNews = newsResponse.content || [];
   const placeLabel = event.city?.name || event.region?.name || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref =
@@ -240,10 +238,7 @@ export default async function EventPage({
               locationType="town"
             />
             {/* Event Categories - Server-side rendered for SEO */}
-            <EventCategories
-              categories={event.categories}
-              place={event.city?.slug || event.region?.slug || ""}
-            />
+            <EventCategories categories={event.categories} place={placeSlug} />
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner
@@ -255,7 +250,7 @@ export default async function EventPage({
                 primaryCategorySlug={primaryCategorySlug}
               />
             )}
-            <EventClient event={event} temporalStatus={temporalStatus} />
+            <ClientEventClient event={event} temporalStatus={temporalStatus} />
             {/* Event details (status, duration, external url) - server-rendered */}
             <EventDetailsSection
               event={event}
@@ -309,7 +304,7 @@ export default async function EventPage({
                   titleClassName="heading-2"
                 />
                 <div className="px-section-x">
-                  <AdArticle slot="9643657007" />
+                  <AdArticleIsland slot="9643657007" />
                 </div>
               </div>
             </div>
@@ -317,38 +312,15 @@ export default async function EventPage({
         </div>
       </div>
 
-      {latestNews.length > 0 && (
-        <div className="w-full bg-background pb-8">
-          <section className="container w-full flex flex-col gap-element-gap">
-            <div className="w-full flex items-center justify-between">
-              <h2 className="heading-2">
-                Últimes notícies{" "}
-                {placeLabel && placeSlug !== "catalunya"
-                  ? formatCatalanA(placeLabel, placeType, false)
-                  : ""}
-              </h2>
-              <Link
-                href={newsHref}
-                prefetch={false}
-                className="body-small text-primary underline hover:no-underline"
-              >
-                Veure totes
-              </Link>
-            </div>
-            <div className="flex flex-col gap-element-gap">
-              {latestNews.map((newsItem, index) => (
-                <NewsCard
-                  key={`${newsItem.id}-${index}`}
-                  event={newsItem}
-                  placeSlug={placeSlug}
-                  placeLabel={placeLabel}
-                  variant={index === 0 ? "hero" : "default"}
-                />
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
+      {/* Latest News Section - Streamed separately to improve TTFB */}
+      <Suspense fallback={null}>
+        <LatestNewsSection
+          placeSlug={placeSlug}
+          placeLabel={placeLabel}
+          placeType={placeType}
+          newsHref={newsHref}
+        />
+      </Suspense>
 
       {/* FAQ JSON-LD (only when we have 2+ items) */}
       {faqJsonLd && (

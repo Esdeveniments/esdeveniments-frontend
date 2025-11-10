@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
-import { fetchCategories } from "@lib/api/categories";
-import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { getCategories } from "@lib/api/categories";
+import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -50,7 +50,7 @@ export async function generateMetadata({
   // Fetch categories for metadata generation FIRST
   let categories: CategorySummaryResponseDTO[] = [];
   try {
-    categories = await fetchCategories();
+    categories = await getCategories();
   } catch (error) {
     console.error("Error fetching categories for metadata:", error);
     categories = [];
@@ -67,7 +67,7 @@ export async function generateMetadata({
   // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === filters.category);
 
-  const placeTypeAndLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(
+  const placeTypeAndLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
     filters.place
   );
 
@@ -126,7 +126,7 @@ export default async function FilteredPage({
   // Fetch dynamic categories BEFORE parsing URL to validate category slugs
   let categories: CategorySummaryResponseDTO[] = [];
   try {
-    categories = await fetchCategories();
+    categories = await getCategories();
   } catch (error) {
     // Continue without categories - will use static fallbacks
     console.error("Error fetching categories:", error);
@@ -182,7 +182,7 @@ export default async function FilteredPage({
   // Fetch events, place label, and news check in parallel
   const [placeTypeAndLabel, initialEventsResponse, hasNews] = await Promise.all(
     [
-      getPlaceTypeAndLabel(filters.place),
+      getPlaceTypeAndLabelCached(filters.place),
       fetchEvents(fetchParams),
       hasNewsForPlace(filters.place),
     ]

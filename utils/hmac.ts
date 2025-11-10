@@ -93,9 +93,11 @@ export const buildStringToSign = (
   body: string,
   timestamp: string | number,
   pathAndQuery: string,
-  method: string
+  _method: string
 ): string => {
-  return `${method.toUpperCase()}|${timestamp}|${pathAndQuery}|${body}`;
+  // Align with backend filter: message = body + timestamp + pathAndQuery
+  // Note: method is intentionally ignored to match server implementation.
+  return `${body}${timestamp}${pathAndQuery}`;
 };
 
 export const verifyHmacSignature = async (

@@ -24,7 +24,6 @@ export function createKeyedCache<T>(ttlMs: number) {
 
   return async (
     key: string | number,
-    // eslint-disable-next-line no-unused-vars
     fetcher: (_key: string | number) => Promise<T>
   ): Promise<T> => {
     const now = Date.now();

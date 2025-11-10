@@ -2,10 +2,10 @@ import {
   useMemo,
   useState,
   useCallback,
-  useEffect,
   memo,
   ChangeEvent,
   FC,
+  useEffect,
 } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -22,7 +22,6 @@ import {
   GeolocationError,
 } from "types/common";
 import { buildFilterUrl } from "@utils/url-filters";
-import type { EventCategory } from "@store";
 import { NavigationFiltersModalProps } from "types/props";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
@@ -41,17 +40,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
-  const [localPlace, setLocalPlace] = useState<string>("");
-  const [localByDate, setLocalByDate] = useState<string>("");
-  const [localCategory, setLocalCategory] = useState<string>("");
-  const [localDistance, setLocalDistance] = useState<string>("");
-  const [localUserLocation, setLocalUserLocation] =
-    useState(initialUserLocation);
-  const [userLocationLoading, setUserLocationLoading] =
-    useState<boolean>(false);
-  const [userLocationError, setUserLocationError] = useState<string>("");
-  const [selectOption, setSelectOption] = useState<Option | null>(null);
-
   const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
     useGetRegionsWithCities();
 
@@ -60,44 +48,69 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
 
-  useEffect(() => {
-    if (isOpen) {
-      const place =
-        currentSegments.place === "catalunya" ? "" : currentSegments.place;
-
-      const byDate = currentSegments.date;
-
-      const category =
-        currentSegments.category === "tots" ? "" : currentSegments.category;
-
-      // Infer distance from URL: if lat/lon exist but no distance, assume default 50
-      const distance =
-        currentQueryParams.distance ||
-        (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
-
-      setLocalPlace(place);
-      setLocalByDate(byDate);
-      setLocalCategory(category);
-      setLocalDistance(distance);
-      setLocalUserLocation(initialUserLocation);
-
-      const regionOption = regionsAndCitiesArray
-        .flatMap((group) => group.options)
-        .find((option) => option.value === place);
-      setSelectOption(regionOption || null);
-    }
+  const defaults = useMemo(() => {
+    const place =
+      currentSegments.place === "catalunya" ? "" : currentSegments.place;
+    const byDate = currentSegments.date;
+    const category =
+      currentSegments.category === "tots" ? "" : currentSegments.category;
+    const distance =
+      currentQueryParams.distance ||
+      (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
+    const regionOption = regionsAndCitiesArray
+      .flatMap((group) => group.options)
+      .find((option) => option.value === place);
+    return {
+      place,
+      byDate,
+      category,
+      distance,
+      userLocation: initialUserLocation,
+      selectOption: regionOption || null,
+    };
   }, [
-    isOpen,
     currentSegments,
     currentQueryParams,
     initialUserLocation,
     regionsAndCitiesArray,
   ]);
 
+  const [localPlace, setLocalPlace] = useState<string>(defaults.place);
+  const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
+  const [localCategory, setLocalCategory] = useState<string>(defaults.category);
+  const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
+  const [localUserLocation, setLocalUserLocation] = useState(
+    defaults.userLocation
+  );
+  const [userLocationLoading, setUserLocationLoading] =
+    useState<boolean>(false);
+  const [userLocationError, setUserLocationError] = useState<string>("");
+
+  // Reset local state whenever the modal opens or the default inputs change while open
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = window.setTimeout(() => {
+      setLocalPlace(defaults.place);
+      setLocalByDate(defaults.byDate);
+      setLocalCategory(defaults.category);
+      setLocalDistance(defaults.distance);
+      setLocalUserLocation(defaults.userLocation);
+      setUserLocationLoading(false);
+      setUserLocationError("");
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [
+    isOpen,
+    defaults.place,
+    defaults.byDate,
+    defaults.category,
+    defaults.distance,
+    defaults.userLocation,
+  ]);
+
   const router = useRouter();
 
   const handlePlaceChange = useCallback((option: Option | null) => {
-    setSelectOption(option);
     setLocalPlace(option?.value || "");
   }, []);
 
@@ -187,7 +200,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           ? "catalunya"
           : localPlace || "catalunya",
       byDate: localByDate || "avui",
-      category: (localCategory || "tots") as EventCategory,
+      category: localCategory || "tots",
       searchTerm: currentQueryParams.search || "",
       distance: hasDistance ? parseInt(localDistance) : 50,
       // Only include lat/lon if we have both distance and user location
@@ -236,6 +249,15 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     userLocationLoading ||
     Boolean(userLocationError);
 
+  const selectedOption = useMemo<Option | null>(() => {
+    if (!localPlace) return null;
+    for (const group of regionsAndCitiesArray) {
+      const found = group.options.find((option) => option.value === localPlace);
+      if (found) return found;
+    }
+    return null;
+  }, [localPlace, regionsAndCitiesArray]);
+
   return (
     <>
       <Modal
@@ -245,7 +267,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         actionButton="Aplicar filtres"
         onActionButtonClick={applyFilters}
       >
-        <div className="w-full h-full flex flex-col justify-start items-start gap-5 py-8">
+        <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
           <div className="w-full flex flex-col justify-start items-start gap-4">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Poblacions
@@ -255,7 +277,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 id="options"
                 title="Poblacions"
                 options={regionsAndCitiesArray}
-                value={selectOption}
+                value={selectedOption}
                 onChange={handlePlaceChange}
                 isClearable
                 placeholder={

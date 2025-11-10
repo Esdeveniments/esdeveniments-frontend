@@ -88,12 +88,16 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
+          # Provide server-only secret to the preview deployment so server HMAC signing works
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
         run: |
           # Deploy and capture logs
           LOG=$(mktemp)
           npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
             --env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-            --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL | tee "$LOG"
+            --env HMAC_SECRET=$HMAC_SECRET \
+            --build-env NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+            --build-env HMAC_SECRET=$HMAC_SECRET | tee "$LOG"
           # Extract the last vercel.app URL (alias line usually printed last)
           URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)
           if [ -z "$URL" ]; then

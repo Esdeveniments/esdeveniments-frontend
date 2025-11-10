@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import {
   ListEvent,
@@ -10,6 +11,7 @@ import {
   PagedResponseDTO,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
+import { parseEventDetail } from "lib/validation/event";
 
 export async function fetchEvents(
   params: FetchEventsParams
@@ -85,12 +87,17 @@ export async function fetchEventBySlug(
     });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return response.json();
+    const json = await response.json();
+    return parseEventDetail(json);
   } catch (error) {
     console.error("Error fetching event by slug:", error);
     return null;
   }
 }
+
+// Cached wrapper to deduplicate event fetches within the same request
+// Used by both generateMetadata and the page component
+export const getEventBySlug = cache(fetchEventBySlug);
 
 export async function updateEventById(
   uuid: string,
@@ -176,6 +183,10 @@ export async function fetchCategorizedEvents(
     return {};
   }
 }
+
+// Cached wrapper to deduplicate categorized events within the same request
+// Mirrors existing pattern used for events/news slugs
+export const getCategorizedEvents = cache(fetchCategorizedEvents);
 
 function insertAdsRandomly(
   events: EventSummaryResponseDTO[],

@@ -1,4 +1,4 @@
-import { fetchCategorizedEvents } from "@lib/api/events";
+import { getCategorizedEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { buildPageMeta } from "@components/partials/seo-meta";
@@ -29,7 +29,7 @@ export default async function Page(): Promise<JSX.Element> {
   const nonce = headersList.get("x-nonce") || "";
 
   // Always fetch categorized events (no URL filters support)
-  const categorizedEvents: CategorizedEvents = await fetchCategorizedEvents(5);
+  const categorizedEvents: CategorizedEvents = await getCategorizedEvents(5);
 
   // Fetch dynamic categories for enhanced category support
   let categories: CategorySummaryResponseDTO[] = [];

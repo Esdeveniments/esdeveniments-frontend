@@ -8,7 +8,7 @@ import {
 } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
-import { fetchPlaceBySlug } from "@lib/api/places";
+import { getPlaceBySlug } from "@lib/api/places";
 import { getHistoricDates } from "@lib/dates";
 import dynamic from "next/dynamic";
 import type { MonthStaticPathParams } from "types/common";
@@ -30,7 +30,7 @@ export async function generateMetadata({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
-  const place = await fetchPlaceBySlug(town);
+  const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
@@ -65,7 +65,7 @@ export default async function Page({
       to: until.toISOString().split("T")[0],
       size: 2500,
     }),
-    fetchPlaceBySlug(town),
+    getPlaceBySlug(town),
   ]);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =

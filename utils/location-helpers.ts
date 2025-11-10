@@ -2,6 +2,7 @@ import { fetchRegionsWithCities } from "@lib/api/regions";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import { sanitize, sanitizeLegacyApostrophe, formatCatalanDe } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
+import { cache } from "react";
 
 export const getPlaceTypeAndLabel = async (
   place: string
@@ -46,6 +47,9 @@ export const getPlaceTypeAndLabel = async (
 
   return { type: "town", label: place };
 };
+
+// Per-request memoized wrapper for server routes
+export const getPlaceTypeAndLabelCached = cache(getPlaceTypeAndLabel);
 
 export const getDistance = (
   location1: Location,

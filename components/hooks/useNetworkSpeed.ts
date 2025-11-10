@@ -92,19 +92,16 @@ export function useNetworkSpeed(): NetworkQuality {
     useState<NetworkQuality>("unknown");
 
   useEffect(() => {
-    // Check cache first
     const cached = getNetworkQualityFromCache();
     if (cached) {
-      setNetworkQuality(cached);
-      return;
+      const id = requestAnimationFrame(() => setNetworkQuality(cached));
+      return () => cancelAnimationFrame(id);
     }
 
-    // Detect network quality
     const detectedQuality = detectNetworkQuality();
-    setNetworkQuality(detectedQuality);
-
-    // Cache the result
+    const id = requestAnimationFrame(() => setNetworkQuality(detectedQuality));
     cacheNetworkQuality(detectedQuality);
+    return () => cancelAnimationFrame(id);
   }, []);
 
   return networkQuality;

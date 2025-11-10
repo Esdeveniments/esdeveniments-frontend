@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function OfflinePage() {
   return (
     <div
@@ -15,16 +17,16 @@ export default function OfflinePage() {
           No pots connectar-te a internet. Alguns continguts emmagatzemats
           podrien estar disponibles.
         </p>
-        <a href="/" className="btn-primary" data-testid="offline-home-link">
+        <Link href="/" className="btn-primary" data-testid="offline-home-link">
           Torna a l&apos;inici
-        </a>
+        </Link>
         <br />
-        <a href="/barcelona" className="btn-neutral mt-4 mr-2">
+        <Link href="/barcelona" className="btn-neutral mt-4 mr-2">
           Barcelona
-        </a>
-        <a href="/catalunya" className="btn-neutral mt-4">
+        </Link>
+        <Link href="/catalunya" className="btn-neutral mt-4">
           Catalunya
-        </a>
+        </Link>
       </div>
     </div>
   );

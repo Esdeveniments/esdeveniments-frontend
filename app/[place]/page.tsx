@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
-import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { hasNewsForPlace } from "@lib/api/news";
@@ -16,7 +16,6 @@ import type {
   PageData,
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import type { EventCategory } from "@store";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
@@ -51,7 +50,7 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place,
@@ -103,7 +102,7 @@ export default async function Page({
     const canonicalUrl = buildCanonicalUrl({
       place,
       byDate: date || "tots",
-      category: (category as EventCategory) || "tots",
+      category: category || "tots",
       searchTerm: query || "",
       distance: distance ? parseInt(distance) : 50,
       lat: lat ? parseFloat(lat) : undefined,
@@ -194,7 +193,7 @@ export default async function Page({
     hasNewsForPlace(place),
   ]);
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
 
   const pageData = await generatePagesData({
     currentYear: new Date().getFullYear(),

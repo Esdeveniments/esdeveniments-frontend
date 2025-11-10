@@ -12,7 +12,6 @@ async function createStripeClient(): Promise<unknown | null> {
   if (!secretKey) return null;
   try {
     const mod = await import("stripe");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Ctor = (mod as { default: any }).default;
     return new Ctor(secretKey, { apiVersion: "2025-08-27.basil" });
   } catch {
@@ -47,7 +46,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let event: any;
 
     try {
@@ -70,7 +68,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       event = (stripe as any).webhooks.constructEvent(
         body,
         signature,
@@ -133,6 +130,11 @@ export async function POST(request: NextRequest) {
 
       // TODO: Update event visibility or add promotion to event display
       // This depends on how promotions are displayed on the event page
+
+      // TODO: When database writes are implemented, use revalidateTag() for cache invalidation
+      // Example: import { revalidateTag } from "next/cache"; import { eventTag, promotionsTag } from "lib/cache/tags";
+      // revalidateTag(eventTag(eventId), "default"); // SWR behavior for background revalidation
+      // revalidateTag(promotionsTag, "default"); // Invalidate promotions cache
     }
 
     return NextResponse.json({ received: true });

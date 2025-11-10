@@ -16,11 +16,27 @@ export function computeTemporalStatus(
   startDate: string,
   endDate?: string,
   nowOverride?: Date,
-  startTime?: string | null
+  startTime?: string | null,
+  endTime?: string | null
 ): EventTemporalStatus {
   const now = nowOverride ? new Date(nowOverride) : new Date();
-  const start = new Date(startDate);
-  const end = endDate ? new Date(endDate) : undefined;
+
+  // Helper to construct a Date from date and time strings
+  const buildDateTime = (date: string, time?: string | null): Date => {
+    if (time && time.trim().length > 0) {
+      // Combine date and time as local time: "2025-11-08" + "10:00" -> local "2025-11-08T10:00"
+      return new Date(`${date}T${time}`);
+    }
+    // If date is a bare date (YYYY-MM-DD), parse as local midnight.
+    // Otherwise, delegate to Date parsing (handles full ISO with timezone/Z).
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return new Date(`${date}T00:00`);
+    }
+    return new Date(date);
+  };
+
+  const start = buildDateTime(startDate, startTime);
+  const end = endDate ? buildDateTime(endDate, endTime) : undefined;
 
   // Check if this is an all-day event (no specific time, i.e., "Consultar horaris")
   // Only treat as all-day if startTime is explicitly provided and is "00:00" or null

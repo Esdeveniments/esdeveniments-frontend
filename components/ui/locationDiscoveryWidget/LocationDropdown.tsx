@@ -6,6 +6,7 @@ import { LocationDropdownProps } from "types/props";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import LocationIcon from "@heroicons/react/solid/LocationMarkerIcon";
 import { transformRegionsToOptions } from "./utils";
+import { normalizeForSearch } from "@utils/string-helpers";
 
 export default function LocationDropdown({
   selectedLocation,
@@ -24,12 +25,13 @@ export default function LocationDropdown({
     return transformRegionsToOptions(regions);
   }, [regions]);
 
-  // Filter options based on search term
+  // Filter options based on search term (accent-insensitive)
   const filteredOptions = useMemo(() => {
     if (!searchTerm) return allOptions;
 
+    const normalizedSearch = normalizeForSearch(searchTerm);
     return allOptions.filter((option) =>
-      option.label.toLowerCase().includes(searchTerm.toLowerCase())
+      normalizeForSearch(option.label).includes(normalizedSearch)
     );
   }, [allOptions, searchTerm]);
 
@@ -127,7 +129,8 @@ export default function LocationDropdown({
               value={searchTerm}
               onChange={handleSearchChange}
               placeholder="Escriu per cercar..."
-              className="w-full px-3 py-2 border border-border border-opacity-50 rounded-md focus:outline-none focus:border-primary text-sm"
+              className="w-full px-3 py-2 border border-border border-opacity-50 rounded-md focus:outline-none focus:border-primary text-base"
+              inputMode="search"
               autoFocus
             />
           </div>

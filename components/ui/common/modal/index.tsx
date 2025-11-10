@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useRef } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle, Transition } from "@headlessui/react";
 import ArrowLeftIcon from "@heroicons/react/outline/ArrowLeftIcon";
 import { ModalProps } from "types/props";
 
@@ -14,12 +14,13 @@ export default function Modal({
   onActionButtonClick,
 }: ModalProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <Dialog
       open={open}
       onClose={() => setOpen(false)}
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-modal overflow-y-auto"
       initialFocus={cancelButtonRef}
     >
       <div
@@ -28,8 +29,8 @@ export default function Modal({
         onClick={() => setOpen(false)}
       />
       <div className="w-full fixed inset-0 overflow-y-auto">
-        <div className="w-full h-screen flex items-center justify-center">
-          <Transition.Root show={open} as={Fragment}>
+        <div className="w-full min-h-screen flex items-start md:items-center justify-center pt-0">
+          <Transition show={open} as={Fragment}>
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -39,46 +40,51 @@ export default function Modal({
               leaveFrom="opacity-70"
               leaveTo="opacity-0"
             >
-              <Dialog.Panel className="w-full flex justify-center items-center">
-                <div className="w-full flex flex-col justify-center items-center sm:w-[500px] bg-background rounded-lg shadow-xl p-4 relative">
-                  <button
-                    ref={cancelButtonRef}
-                    onClick={() => setOpen(false)}
-                    className="absolute top-0 left-2 p-3 focus:outline-none"
-                  >
-                    <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                  <Dialog.Title
-                    as="h3"
-                    className="absolute top-0 p-3 text-center font-barlow uppercase italic font-semibold"
-                  >
-                    {title}
-                  </Dialog.Title>
-                  {children}
-                  {actionButton && (
-                    <div className="w-full flex justify-center items-end bottom-0 left-0 p-4">
-                      <div
-                        className="flex justify-center"
-                        style={{ position: "sticky", bottom: 0 }}
+              <DialogPanel className="w-full flex justify-center items-start">
+                <div className="w-full flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-lg shadow-xl relative">
+                  <div className="sticky top-0 bg-background px-4 z-10">
+                    <div className="relative h-12 flex items-center justify-center">
+                      <button
+                        ref={cancelButtonRef}
+                        onClick={() => setOpen(false)}
+                        className="absolute left-2 p-3 focus:outline-none"
+                        aria-label="Tanca"
                       >
-                        <button
-                          onClick={() => {
-                            if (onActionButtonClick) {
-                              onActionButtonClick();
-                            }
-                            setOpen(false);
-                          }}
-                          className="flex justify-center items-center gap-2 text-foreground-strong bg-background rounded-xl py-2 px-3 ease-in-out duration-300 border border-foreground-strong font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-background hover:text-background"
-                        >
-                          {actionButton}
-                        </button>
-                      </div>
+                        <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                      <DialogTitle
+                        as="h3"
+                        className="text-center font-barlow uppercase italic font-semibold"
+                      >
+                        {title}
+                      </DialogTitle>
+                    </div>
+                  </div>
+                  <div
+                    ref={scrollContainerRef}
+                    className="flex-1 overflow-y-auto overscroll-contain px-4"
+                  >
+                    {children}
+                  </div>
+                  {actionButton && (
+                    <div className="flex-shrink-0 w-full flex justify-center items-end pt-4 px-4 border-t border-border bg-background pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+                      <button
+                        onClick={() => {
+                          if (onActionButtonClick) {
+                            onActionButtonClick();
+                          }
+                          setOpen(false);
+                        }}
+                        className="flex justify-center items-center gap-2 text-foreground-strong bg-background rounded-xl py-2 px-3 ease-in-out duration-300 border border-foreground-strong font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-background hover:text-background"
+                      >
+                        {actionButton}
+                      </button>
                     </div>
                   )}
                 </div>
-              </Dialog.Panel>
+              </DialogPanel>
             </Transition.Child>
-          </Transition.Root>
+          </Transition>
         </div>
       </div>
     </Dialog>

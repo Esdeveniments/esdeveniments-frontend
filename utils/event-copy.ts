@@ -17,6 +17,47 @@ function normalize(s: string): string {
 }
 
 /**
+ * Checks if a word matches explicit masculine patterns (not just default masculine).
+ * This distinguishes words that are explicitly masculine from those that default to masculine.
+ */
+function isExplicitlyMasculine(word: string): boolean {
+  const raw = (word || "").trim();
+  if (!raw) return false;
+
+  const norm = normalize(raw);
+
+  // Greek/loanword masculine endings (many -ma, -ema, -oma are masculine)
+  // This covers: problema, sistema, tema, dilema, esquema, cinema, etc.
+  // Note: -ama is excluded from the generic pattern to avoid false positives with feminine words
+  // However, "programa" and "drama" are masculine exceptions ending in -ama
+  // "clima" ends in -ima, not -ma, so it's also an exception
+  const masculineAmaExceptions = /^(programa|drama|clima)$/;
+  if (masculineAmaExceptions.test(norm)) return true;
+
+  // We match -ema and -oma, and -ma but explicitly exclude -ama
+  if (/ema$|oma$/.test(norm)) return true;
+  // Match -ma but not -ama (check that it doesn't end in -ama)
+  if (/ma$/.test(norm) && !/ama$/.test(norm)) return true;
+
+  // Small unavoidable list of masculine nouns ending in -a that don't match the -ma pattern.
+  // These are Greek/loanwords ending in -eta or -ia that can't be generalized because
+  // many feminine words also end in -eta (festa, carta, porta) or -ia (farmacia, mania).
+  // We can't make a generic pattern for these without catching feminine words.
+  const manualMasculineExceptions = /^(dia|poeta|planeta|cometa)$/;
+  if (manualMasculineExceptions.test(norm)) return true;
+
+  // Masculine nouns ending in -e that could be confused with feminine plurals
+  // e.g., "pare" (parent, masculine) vs "para" (feminine but not the singular of "pares")
+  const manualMasculineERegex = /^(pare)$/;
+  if (manualMasculineERegex.test(norm)) return true;
+
+  // -or -> usually masculine
+  if (/or$/.test(norm)) return true;
+
+  return false;
+}
+
+/**
  * Heuristic gender detection:
  * - small set of unavoidable exceptions (handled by regex)
  * - greek/loanword endings (-ma, -ema, -oma...) => masculine
@@ -32,20 +73,18 @@ function detectCatalanGender(word: string): "m" | "f" {
 
   const norm = normalize(raw);
 
-  // Small unavoidable list of masculine nouns that end in -a (Greek/loanword or irregular).
-  // Kept minimal. If you see common false positives, add them here (rare).
-  const manualMasculineRegex =
-    /^(dia|poeta|planeta|cometa|problema|sistema|tema|dilema|esquema)$/;
-  if (manualMasculineRegex.test(norm)) return "m";
-
-  // Greek/loanword masculine endings (many -ma, -ema, -oma are masculine)
-  if (/(ma|ema|oma|ama)$/.test(norm)) return "m";
+  // Check explicit masculine patterns first
+  if (isExplicitlyMasculine(word)) return "m";
 
   // Feminine endings (normalized)
+  // -tat (ciutat, universitat, qualitat) -> feminine (normalized to -tat, but we check before normalization)
+  if (/tat$/.test(norm)) return "f";
   if (/(a|cio|sio|tud|essa|ncia|tza)$/.test(norm)) return "f";
 
-  // -or -> usually masculine
-  if (/or$/.test(norm)) return "m";
+  // Small list of unavoidable exceptions that don't follow patterns
+  // These are common feminine nouns that don't end in typical feminine endings
+  const manualFeminineExceptions = /^(nit|llum|veu|mar)$/;
+  if (manualFeminineExceptions.test(norm)) return "f";
 
   // fallback to masculine
   return "m";
@@ -60,11 +99,51 @@ function detectCatalanGenderAndNumber(word: string): {
 
   const norm = normalize(raw);
 
+  // Handle Roman numerals (I, II, III, IV, V, etc.) - they don't affect gender/number
+  // but we should skip them for article detection
+  if (/^[ivxlcdm]+$/i.test(norm)) {
+    // Roman numeral - return default, will be handled specially in article detection
+    return { gender: "m", number: "sg" };
+  }
+
   // quick plural detection: ends with s (es or s)
-  if (norm.length > 1 && /s$/.test(norm)) {
-    const singular = norm.endsWith("es")
-      ? norm.slice(0, -2)
-      : norm.slice(0, -1);
+  // Skip plural detection for singular words ending in accented -s (e.g., "congrés", "parís")
+  // These are singular nouns, not plurals, so they should be handled as singular
+  const hasAccentedSingularS = /[àèéíïòóú]s$/i.test(raw);
+  if (!hasAccentedSingularS && norm.length > 1 && /s$/.test(norm)) {
+    let singular = norm.endsWith("es") ? norm.slice(0, -2) : norm.slice(0, -1);
+
+    // For words ending in "es", check if adding "a" makes it feminine
+    // This handles cases like "festes" (plural of "festa") where removing "es" gives "fest"
+    // but the actual singular is "festa" (feminine)
+    // Only add "a" if the stem alone is not already clearly feminine
+    if (norm.endsWith("es") && singular.length > 0) {
+      const stemGender = detectCatalanGender(singular);
+      // If stem is not clearly feminine, try adding "a"
+      if (stemGender !== "f") {
+        // Before adding "a", check if adding "e" would make it explicitly masculine
+        // This prevents cases like "pares" (from "pare", masculine) being incorrectly
+        // feminized to "para" (which is feminine but not the correct singular)
+        const singularWithE = singular + "e";
+
+        // If stem + "e" is explicitly masculine (matches explicit patterns), don't add "a"
+        // This handles "pare" (masculine, explicit) vs "festa" (feminine)
+        // "feste" would be default masculine (not explicit), so we still try adding "a"
+        if (isExplicitlyMasculine(singularWithE)) {
+          // Stem + "e" is explicitly masculine, so the word is likely masculine
+          // Don't add "a" - keep the masculine stem
+          singular = singularWithE;
+        } else {
+          // Try adding "a" to see if it makes it feminine
+          const singularWithA = singular + "a";
+          // If adding "a" makes it detect as feminine, use that
+          if (detectCatalanGender(singularWithA) === "f") {
+            singular = singularWithA;
+          }
+        }
+      }
+    }
+
     const gender = detectCatalanGender(singular);
     return { gender, number: "pl" };
   }
@@ -76,6 +155,13 @@ function detectCatalanGenderAndNumber(word: string): {
 function getCatalanArticleForWord(
   word: string
 ): "El" | "La" | "L'" | "Els" | "Les" {
+  // Handle Roman numerals specially - they should use "La" for feminine contexts
+  const norm = (word || "").trim().toLowerCase();
+  if (/^[ivxlcdm]+$/.test(norm)) {
+    // Roman numeral - default to "La" (most common for "Fira", "Edició", etc.)
+    return "La";
+  }
+
   const { gender, number } = detectCatalanGenderAndNumber(word);
   const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(word);
 
@@ -157,21 +243,125 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
   let isPlural = false;
 
   if (articleToken) {
-    // Rebuild title but with capitalized article
-    const articleCap =
-      articleToken === "l'" ? "L'" : capitalizeFirstLetter(articleToken);
+    // Validate and correct the article if needed
+    // Get the first word after the article to check gender/number
+    let firstWordAfterArticle = (rest.split(/\s+/)[0] || "").replace(/^l'/, "");
+
+    // Check if first word is a Roman numeral
+    const isFirstWordRomanNumeral = /^[ivxlcdm]+$/i.test(firstWordAfterArticle);
+    if (isFirstWordRomanNumeral && rest.split(/\s+/).length > 1) {
+      // If it's a Roman numeral, look at the next word for article detection
+      firstWordAfterArticle = rest.split(/\s+/)[1] || "";
+    }
+
+    const correctArticle = getCatalanArticleForWord(firstWordAfterArticle);
+
+    // If correct article is L' and we have a Roman numeral, convert to La/El
+    let finalCorrectArticle = correctArticle;
+    if (correctArticle === "L'" && isFirstWordRomanNumeral) {
+      const { gender } = detectCatalanGenderAndNumber(firstWordAfterArticle);
+      finalCorrectArticle = gender === "f" ? "La" : "El";
+    }
+
+    // Check if the provided article matches the correct one
+    // Special case: if we have "L'" before a Roman numeral, use the article for the word after the numeral
+    const shouldUseArticleForRomanNumeral =
+      articleToken === "l'" && isFirstWordRomanNumeral;
+
+    // Don't include shouldUseArticleForRomanNumeral in articleMatches - we want to correct it
+    const articleMatches =
+      articleToken.toLowerCase() === finalCorrectArticle.toLowerCase() ||
+      (articleToken === "l'" &&
+        correctArticle === "L'" &&
+        !isFirstWordRomanNumeral);
+
+    // Use the correct article if there's a mismatch
+    let finalArticle: string;
+    if (shouldUseArticleForRomanNumeral) {
+      // Special case: correct "L'" to the appropriate article before Roman numeral
+      finalArticle = finalCorrectArticle;
+    } else if (articleMatches) {
+      // Article is correct, keep it (capitalized)
+      finalArticle =
+        articleToken === "l'" ? "L'" : capitalizeFirstLetter(articleToken);
+    } else {
+      // Article is wrong, use the correct one
+      finalArticle = finalCorrectArticle;
+    }
+
+    // Handle capitalization: if first word is Roman numeral, capitalize it and next word
+    const restWords = rest.trim().split(/\s+/);
+    let capitalizedTitle: string;
+
+    if (isFirstWordRomanNumeral && restWords.length > 1) {
+      const romanNumeral = restWords[0].toUpperCase();
+      // Keep the word after Roman numeral lowercase
+      const nextWord = restWords[1] || "";
+      const remainingWords =
+        restWords.length > 2 ? " " + restWords.slice(2).join(" ") : "";
+      capitalizedTitle = `${romanNumeral} ${nextWord}${remainingWords}`;
+    } else {
+      // Keep the first word after the article lowercase
+      const firstRestWord = restWords[0] || "";
+      const remainingWords =
+        restWords.length > 1 ? " " + restWords.slice(1).join(" ") : "";
+      capitalizedTitle = firstRestWord + remainingWords;
+    }
+
     displayedTitle =
-      articleCap + (articleCap.endsWith("'") ? "" : " ") + rest.trim();
-    isPlural = /^(els|les)$/i.test(articleToken);
+      finalArticle + (finalArticle.endsWith("'") ? "" : " ") + capitalizedTitle;
+    isPlural = /^(els|les)$/i.test(finalArticle.toLowerCase());
   } else {
     // Derive article from first word
-    const firstWord = (titleLower.split(/\s+/)[0] || "").replace(/^l'/, "");
+    // Skip Roman numerals and get the actual noun
+    const words = titleLower.split(/\s+/);
+    let firstWord = (words[0] || "").replace(/^l'/, "");
+
+    // If first word is a Roman numeral, look at the next word
+    if (/^[ivxlcdm]+$/i.test(firstWord) && words.length > 1) {
+      firstWord = words[1].replace(/^l'/, "");
+    }
+
     const article = getCatalanArticleForWord(firstWord);
     isPlural = /^(Els|Les)$/i.test(article);
-    // attach article to title (L' + title vs El + ' ' + title)
-    displayedTitle = article.endsWith("'")
-      ? `${article}${titleLower}`
-      : `${article} ${titleLower}`;
+
+    // For Roman numerals at the start, determine article from the following word
+    const hasLeadingRomanNumeral =
+      words.length > 0 && /^[ivxlcdm]+$/i.test(words[0]);
+    if (hasLeadingRomanNumeral) {
+      const romanNumeral = words[0].toUpperCase();
+      // Determine article based on the word after the Roman numeral
+      const nextWord = words.length > 1 ? words[1] : "";
+      let article = "La"; // default
+      if (nextWord) {
+        const articleFromWord = getCatalanArticleForWord(nextWord);
+        // If we get "L'", convert to "La" or "El" based on gender
+        if (articleFromWord === "L'") {
+          const { gender } = detectCatalanGenderAndNumber(nextWord);
+          article = gender === "f" ? "La" : "El";
+        } else {
+          article = articleFromWord;
+        }
+      }
+      // Recompute isPlural after finalizing the article
+      isPlural = /^(els|les)$/i.test(article);
+      // Keep the word after Roman numeral lowercase
+      const restOfTitle =
+        words.length > 2 ? " " + words.slice(2).join(" ") : "";
+      displayedTitle = `${article} ${romanNumeral} ${nextWord}${restOfTitle}`;
+    } else {
+      // attach article to title (L' + title vs El + ' ' + title)
+      // Keep first word of title lowercase
+      const firstWord = titleLower.split(/\s+/)[0] || "";
+      const restOfTitleLower = titleLower.split(/\s+/).slice(1).join(" ");
+      displayedTitle = article.endsWith("'")
+        ? `${article}${firstWord}${
+            restOfTitleLower ? " " + restOfTitleLower : ""
+          }`
+        : `${article} ${firstWord}${
+            restOfTitleLower ? " " + restOfTitleLower : ""
+          }`;
+    }
   }
 
   const timePart = startTimeLabel
@@ -179,6 +369,8 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     : "";
 
   // Verb agreement: plural/singular
+  // In Catalan, "se celebra" is correct (preferred over "es celebra" or "s'celebra")
+  // Before verbs starting with voiceless "s" sound (s-, ce-, ci-), "se" is preferred
   const verb = isPlural ? "se celebren" : "se celebra";
 
   let datePart: string;

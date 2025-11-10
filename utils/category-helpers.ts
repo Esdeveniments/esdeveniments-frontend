@@ -3,15 +3,12 @@ import {
   findCategoryBySlug,
   mapLegacyValueToCategory,
 } from "./category-mapping";
-import type { CategoryKey, CategoryValue } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 export const findCategoryKeyByValue = (
   value: string
-): CategoryKey | undefined => {
-  return (Object.keys(CATEGORIES) as CategoryKey[]).find(
-    (key) => CATEGORIES[key] === value
-  );
+): string | undefined => {
+  return Object.keys(CATEGORIES).find((key) => CATEGORIES[key] === value);
 };
 
 /**
@@ -55,7 +52,7 @@ export function getCategoryFromDynamicData(
     if (byName) return byName;
 
     // Finally, try to map from legacy value to dynamic category
-    return mapLegacyValueToCategory(categories, identifier as CategoryValue);
+    return mapLegacyValueToCategory(categories, identifier as string);
   }
 
   return null;

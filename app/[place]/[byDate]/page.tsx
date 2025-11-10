@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
-import { fetchCategories } from "@lib/api/categories";
+import { getCategories } from "@lib/api/categories";
 import { fetchPlaces } from "@lib/api/places";
-import { getPlaceTypeAndLabel, toLocalDateString } from "@utils/helpers";
+import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -41,7 +41,7 @@ export async function generateMetadata({
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {
-    categories = await fetchCategories();
+    categories = await getCategories();
   } catch (error) {
     console.error("generateMetadata: Error fetching categories:", error);
   }
@@ -55,7 +55,7 @@ export async function generateMetadata({
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabel(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
 
   const categoryData = categories.find((cat) => cat.slug === actualCategory);
 
@@ -100,7 +100,7 @@ export async function generateStaticParams() {
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {
-    categories = await fetchCategories();
+    categories = await getCategories();
   } catch (error) {
     console.error("generateStaticParams: Error fetching categories:", error);
   }
@@ -138,7 +138,7 @@ export default async function ByDatePage({
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {
-    categories = await fetchCategories();
+    categories = await getCategories();
   } catch (error) {
     console.error(
       "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
@@ -258,7 +258,7 @@ export default async function ByDatePage({
 
   // Fetch place type and check news in parallel for better performance
   const [placeTypeLabel, hasNews] = await Promise.all([
-    getPlaceTypeAndLabel(place),
+    getPlaceTypeAndLabelCached(place),
     hasNewsForPlace(place),
   ]);
 

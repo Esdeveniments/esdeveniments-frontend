@@ -21,13 +21,9 @@ function HybridEventsListClient({
   date,
   serverHasMore = false,
 }: HybridEventsListProps): ReactElement | null {
-  const realInitialEvents = useMemo(
-    () =>
-      initialEvents
-        .filter((e) => !("isAd" in e && e.isAd))
-        .filter(isEventSummaryResponseDTO) as EventSummaryResponseDTO[],
-    [initialEvents]
-  );
+  const realInitialEvents = useMemo(() => {
+    return initialEvents.filter(isEventSummaryResponseDTO);
+  }, [initialEvents]);
 
   const { events, hasMore, loadMore, isLoading, isValidating, error } =
     useEvents({

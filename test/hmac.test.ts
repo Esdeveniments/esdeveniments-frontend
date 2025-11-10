@@ -3,6 +3,7 @@ import {
   generateHmac,
   verifyHmacSignature,
   validateTimestamp,
+  buildStringToSign,
 } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -114,7 +115,7 @@ describe("utils/hmac", () => {
       const body = "test body";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${body}`;
+      const stringToSign = buildStringToSign(body, timestamp, pathAndQuery, "GET");
       const hmac = await generateHmac(body, timestamp, pathAndQuery, "GET");
       const isValid = await verifyHmacSignature(stringToSign, hmac);
       expect(isValid).toBe(true);
@@ -124,7 +125,7 @@ describe("utils/hmac", () => {
       const body = "test body";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${body}`;
+      const stringToSign = buildStringToSign(body, timestamp, pathAndQuery, "GET");
       const invalidHmac = "invalid-signature";
       const isValid = await verifyHmacSignature(stringToSign, invalidHmac);
       expect(isValid).toBe(false);
@@ -135,7 +136,7 @@ describe("utils/hmac", () => {
       const body2 = "test body 2";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign2 = `GET|${timestamp}|${pathAndQuery}|${body2}`;
+      const stringToSign2 = buildStringToSign(body2, timestamp, pathAndQuery, "GET");
       const hmac = await generateHmac(body1, timestamp, pathAndQuery, "GET");
       const isValid = await verifyHmacSignature(stringToSign2, hmac);
       expect(isValid).toBe(false);
@@ -145,7 +146,7 @@ describe("utils/hmac", () => {
       const body = "";
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${body}`;
+      const stringToSign = buildStringToSign(body, timestamp, pathAndQuery, "GET");
       const hmac = await generateHmac(body, timestamp, pathAndQuery, "GET");
       const isValid = await verifyHmacSignature(stringToSign, hmac);
       expect(isValid).toBe(true);
@@ -155,7 +156,7 @@ describe("utils/hmac", () => {
       const largeBody = "a".repeat(10000);
       const timestamp = 1234567890;
       const pathAndQuery = "/api/test";
-      const stringToSign = `GET|${timestamp}|${pathAndQuery}|${largeBody}`;
+      const stringToSign = buildStringToSign(largeBody, timestamp, pathAndQuery, "GET");
       const hmac = await generateHmac(
         largeBody,
         timestamp,
@@ -170,7 +171,7 @@ describe("utils/hmac", () => {
       const specialBody = "body with spaces & symbols !@#$%^&*()";
       const timestamp = 1234567890123;
       const specialPath = "/api/test?param=value&other=123";
-      const stringToSign = `GET|${timestamp}|${specialPath}|${specialBody}`;
+      const stringToSign = buildStringToSign(specialBody, timestamp, specialPath, "GET");
       const hmac = await generateHmac(
         specialBody,
         timestamp,

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
 import DOMPurify from "isomorphic-dompurify";
-import { fetchNewsBySlug } from "@lib/api/news";
+import { getNewsBySlug } from "@lib/api/news";
 import type { NewsDetailResponseDTO } from "types/api/news";
 import type { NewsEventsSectionProps } from "types/props";
 import { siteUrl } from "@config/index";
@@ -14,7 +14,7 @@ import AdArticle from "@components/ui/adArticle";
 import NewsHeroEvent from "@components/ui/newsHeroEvent";
 import NewsRichCard from "@components/ui/newsRichCard";
 import { getFormattedDate } from "@utils/date-helpers";
-import { getPlaceTypeAndLabel } from "@utils/helpers";
+import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 
 export async function generateMetadata({
   params,
@@ -22,8 +22,8 @@ export async function generateMetadata({
   params: Promise<{ place: string; article: string }>;
 }): Promise<Metadata> {
   const { place, article } = await params;
-  const detail: NewsDetailResponseDTO | null = await fetchNewsBySlug(article);
-  const placeType = await getPlaceTypeAndLabel(place);
+  const detail: NewsDetailResponseDTO | null = await getNewsBySlug(article);
+  const placeType = await getPlaceTypeAndLabelCached(place);
   if (detail) {
     const base = buildPageMeta({
       title: `${detail.title} | ${placeType.label}`,
@@ -56,8 +56,8 @@ export default async function Page({
 }) {
   const { place, article } = await params;
   const [detail, placeType, headersList] = await Promise.all([
-    fetchNewsBySlug(article),
-    getPlaceTypeAndLabel(place),
+    getNewsBySlug(article),
+    getPlaceTypeAndLabelCached(place),
     headers(),
   ]);
 

@@ -68,6 +68,20 @@ export const extractUuidFromSlug = (s: string): string => {
 export const truncateString = (str: string, num: number): string =>
   str.length <= num ? str : str.slice(0, num) + "...";
 
+/**
+ * Normalizes a string for search/filtering by removing accents and converting to lowercase.
+ * Useful for case-insensitive and accent-insensitive text matching.
+ * Example: "Premià" -> "premia", "Barcelona" -> "barcelona"
+ */
+export function normalizeForSearch(input: string): string {
+  if (!input) return "";
+  return input
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 /* =========================================================
  * Catalan grammar helpers
  * ======================================================= */

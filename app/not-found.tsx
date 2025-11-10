@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -8,13 +9,13 @@ export default function NotFound() {
     >
       <h1 className="heading-2" data-testid="not-found-title">Pàgina no trobada</h1>
       <p>No s&apos;ha pogut trobar la pàgina que busques.</p>
-      <a
+      <Link
         href="/"
         style={{ color: "#0070f3", textDecoration: "underline" }}
         data-testid="not-found-home-link"
       >
         Torna a l&apos;inici
-      </a>
+      </Link>
     </div>
   );
 }

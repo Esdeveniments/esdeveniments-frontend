@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
 const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
-  const [width, setWidth] = useState<number | undefined>(undefined);
-  const [hasMounted, setHasMounted] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isMountedRef = useRef(true);
+  const [width, setWidth] = useState<number | undefined>(() =>
+    typeof window !== "undefined" ? window.innerWidth : undefined
+  );
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleWindowSizeChange = useCallback((): void => {
     // Clear any existing timeout
@@ -14,25 +14,18 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
 
     // Debounce the resize event to prevent too many state updates
     timeoutRef.current = setTimeout(() => {
-      // Only update if component is still mounted
-      if (isMountedRef.current) {
-        setWidth(window.innerWidth);
-      }
+      setWidth(window.innerWidth);
     }, 100);
   }, []);
 
   useEffect(() => {
-    isMountedRef.current = true;
-
-    // Set initial width and mark as mounted
-    setWidth(window.innerWidth);
-    setHasMounted(true);
-
-    window.addEventListener("resize", handleWindowSizeChange);
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", handleWindowSizeChange);
+    }
     return () => {
-      isMountedRef.current = false;
-      window.removeEventListener("resize", handleWindowSizeChange);
-      // Clear any pending timeout on cleanup
+      if (typeof window !== "undefined") {
+        window.removeEventListener("resize", handleWindowSizeChange);
+      }
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -42,15 +35,11 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
   // If the component hasn't mounted yet, prefer a server-provided hint when
   // available. This avoids rendering a desktop-only UI on the server and
   // then swapping to mobile after hydration (layout shift).
-  if (!hasMounted) {
-    if (typeof initialIsMobile === "boolean") {
-      return initialIsMobile;
-    }
-    // Fallback during SSR/initial render: be conservative and return false.
+  if (width === undefined) {
+    if (typeof initialIsMobile === "boolean") return initialIsMobile;
     return false;
   }
-
-  return width !== undefined ? width <= 768 : false;
+  return width <= 768;
 };
 
 export default useCheckMobileScreen;
