@@ -47,7 +47,7 @@ export const EventSummaryResponseDTOSchema = z
     imageUrl: z.string().nullable(),
     startDate: z.string(),
     startTime: z.string().nullable(),
-    endDate: z.string(),
+    endDate: z.string().nullable(),
     endTime: z.string().nullable(),
     location: z.string(),
     visits: z.number(),

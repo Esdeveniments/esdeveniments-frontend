@@ -21,8 +21,8 @@ export async function GET(
         const now = Date.now();
         if (new Date(data.endDate).getTime() < now) {
           revalidatedPastEvents.add(key);
-          revalidateTag(eventsTag, "manual");
-          revalidateTag(eventsCategorizedTag, "manual");
+          revalidateTag(eventsTag, "max");
+          revalidateTag(eventsCategorizedTag, "max");
         }
       }
     }

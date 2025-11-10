@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
+import { parseEventDetail } from "@lib/validation/event";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -49,7 +50,7 @@ export async function fetchEventBySlug(
     });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    return (await res.json()) as EventDetailResponseDTO | null;
+    return parseEventDetail(await res.json());
   } catch (error) {
     console.error("Error fetching event by slug (internal):", error);
     return null;
