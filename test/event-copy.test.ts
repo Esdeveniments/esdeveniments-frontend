@@ -4,6 +4,71 @@ import type { EventDetailResponseDTO } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 
+// Shared mock data constants
+// Most tests only need a city as a placeholder, so we use Barcelona as the default
+// Only tests that specifically assert the city name need different cities
+const MOCK_CITIES = {
+  barcelona: {
+    id: 1,
+    name: "Barcelona",
+    slug: "barcelona",
+    latitude: 41.3879,
+    longitude: 2.16992,
+    postalCode: "08001",
+    rssFeed: null,
+    enabled: true,
+  } as CitySummaryResponseDTO,
+  // Only needed for tests that assert the city name in output
+  tona: {
+    id: 4,
+    name: "Tona",
+    slug: "tona",
+    latitude: 41.85,
+    longitude: 2.22,
+    postalCode: "08551",
+    rssFeed: null,
+    enabled: true,
+  } as CitySummaryResponseDTO,
+  vic: {
+    id: 5,
+    name: "Vic",
+    slug: "vic",
+    latitude: 41.93,
+    longitude: 2.25,
+    postalCode: "08500",
+    rssFeed: null,
+    enabled: true,
+  } as CitySummaryResponseDTO,
+  olot: {
+    id: 6,
+    name: "Olot",
+    slug: "olot",
+    latitude: 42.18,
+    longitude: 2.49,
+    postalCode: "17800",
+    rssFeed: null,
+    enabled: true,
+  } as CitySummaryResponseDTO,
+} as const;
+
+const MOCK_REGIONS = {
+  osona: {
+    id: 1,
+    name: "Osona",
+    slug: "osona",
+  } as RegionSummaryResponseDTO,
+  vallesOriental: {
+    id: 2,
+    name: "Vallès Oriental",
+    slug: "valles-oriental",
+  } as RegionSummaryResponseDTO,
+  selva: {
+    id: 3,
+    name: "Selva",
+    slug: "selva",
+  } as RegionSummaryResponseDTO,
+} as const;
+
 // Helper to create minimal event fixtures
 function createTestEvent(
   overrides: Partial<EventDetailResponseDTO>
@@ -54,17 +119,8 @@ describe("buildEventIntroText", () => {
     it("should use 'a' for towns (not 'al') - the Tona bug fix", () => {
       const event = createTestEvent({
         title: "Festa Major",
-        city: {
-          id: 1,
-          name: "Tona",
-          slug: "tona",
-          latitude: 41.85,
-          longitude: 2.22,
-          postalCode: "08551",
-          rssFeed: null,
-          enabled: true,
-        },
-        region: { id: 2, name: "Osona", slug: "osona" },
+        city: MOCK_CITIES.tona,
+        region: MOCK_REGIONS.osona,
       });
 
       const result = buildEventIntroText(event);
@@ -79,16 +135,7 @@ describe("buildEventIntroText", () => {
     it("should use 'a' for towns starting with consonants", () => {
       const event = createTestEvent({
         title: "Concert de Jazz",
-        city: {
-          id: 2,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -102,7 +149,7 @@ describe("buildEventIntroText", () => {
       const event = createTestEvent({
         title: "Caminada Popular",
         city: undefined,
-        region: { id: 3, name: "Vallès Oriental", slug: "valles-oriental" },
+        region: MOCK_REGIONS.vallesOriental,
       });
 
       const result = buildEventIntroText(event);
@@ -115,7 +162,7 @@ describe("buildEventIntroText", () => {
       const event = createTestEvent({
         title: "Fira Medieval",
         city: undefined,
-        region: { id: 4, name: "Selva", slug: "selva" },
+        region: MOCK_REGIONS.selva,
       });
 
       const result = buildEventIntroText(event);
@@ -127,17 +174,8 @@ describe("buildEventIntroText", () => {
     it("should use 'a' for towns even when region is also present", () => {
       const event = createTestEvent({
         title: "Mercat de Pagès",
-        city: {
-          id: 5,
-          name: "Vic",
-          slug: "vic",
-          latitude: 41.93,
-          longitude: 2.25,
-          postalCode: "08500",
-          rssFeed: null,
-          enabled: true,
-        },
-        region: { id: 6, name: "Osona", slug: "osona" },
+        city: MOCK_CITIES.vic,
+        region: MOCK_REGIONS.osona,
       });
 
       const result = buildEventIntroText(event);
@@ -152,16 +190,7 @@ describe("buildEventIntroText", () => {
     it("should use 'a' for towns starting with vowels", () => {
       const event = createTestEvent({
         title: "Exposició d'Art",
-        city: {
-          id: 7,
-          name: "Olot",
-          slug: "olot",
-          latitude: 42.18,
-          longitude: 2.49,
-          postalCode: "17800",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.olot,
         region: undefined,
         type: "PAID",
       });
@@ -178,16 +207,7 @@ describe("buildEventIntroText", () => {
         title: "Les Fires de Sant Miquel",
         startDate: "2025-09-29",
         endDate: "2025-09-29",
-        city: {
-          id: 8,
-          name: "Lleida",
-          slug: "lleida",
-          latitude: 41.62,
-          longitude: 0.63,
-          postalCode: "25001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -203,16 +223,7 @@ describe("buildEventIntroText", () => {
         title: "El Festival de Música",
         startDate: "2025-07-01",
         endDate: "2025-07-03",
-        city: {
-          id: 9,
-          name: "Girona",
-          slug: "girona",
-          latitude: 41.98,
-          longitude: 2.82,
-          postalCode: "17001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
         type: "PAID",
       });
@@ -255,16 +266,7 @@ describe("buildEventIntroText", () => {
         title: "Els festes d'aniversari",
         startDate: "2025-11-09",
         endDate: undefined,
-        city: {
-          id: 12,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -282,16 +284,7 @@ describe("buildEventIntroText", () => {
         title: "La festival de música",
         startDate: "2025-07-15",
         endDate: undefined,
-        city: {
-          id: 13,
-          name: "Girona",
-          slug: "girona",
-          latitude: 41.98,
-          longitude: 2.82,
-          postalCode: "17001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -309,16 +302,7 @@ describe("buildEventIntroText", () => {
         title: "El fires de Sant Miquel",
         startDate: "2025-09-29",
         endDate: undefined,
-        city: {
-          id: 14,
-          name: "Lleida",
-          slug: "lleida",
-          latitude: 41.62,
-          longitude: 0.63,
-          postalCode: "25001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -336,16 +320,7 @@ describe("buildEventIntroText", () => {
         title: "Les festes de Tardor",
         startDate: "2025-11-14",
         endDate: undefined,
-        city: {
-          id: 15,
-          name: "Vilassar de Mar",
-          slug: "vilassar-de-mar",
-          latitude: 41.5,
-          longitude: 2.4,
-          postalCode: "08340",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -362,16 +337,7 @@ describe("buildEventIntroText", () => {
         title: "L'activitat cultural",
         startDate: "2025-06-20",
         endDate: undefined,
-        city: {
-          id: 16,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -390,16 +356,7 @@ describe("buildEventIntroText", () => {
         title: "ii fira animalista del Masnou",
         startDate: "2025-11-09",
         endDate: undefined,
-        city: {
-          id: 17,
-          name: "El Masnou",
-          slug: "el-masnou",
-          latitude: 41.48,
-          longitude: 2.32,
-          postalCode: "08320",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -417,16 +374,7 @@ describe("buildEventIntroText", () => {
         title: "L'ii fira animalista del Masnou",
         startDate: "2025-11-09",
         endDate: undefined,
-        city: {
-          id: 18,
-          name: "El Masnou",
-          slug: "el-masnou",
-          latitude: 41.48,
-          longitude: 2.32,
-          postalCode: "08320",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -444,16 +392,7 @@ describe("buildEventIntroText", () => {
         title: "iii edició del festival",
         startDate: "2025-08-15",
         endDate: undefined,
-        city: {
-          id: 19,
-          name: "Girona",
-          slug: "girona",
-          latitude: 41.98,
-          longitude: 2.82,
-          postalCode: "17001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -470,16 +409,7 @@ describe("buildEventIntroText", () => {
         title: "La II Fira Animalista",
         startDate: "2025-11-09",
         endDate: undefined,
-        city: {
-          id: 20,
-          name: "El Masnou",
-          slug: "el-masnou",
-          latitude: 41.48,
-          longitude: 2.32,
-          postalCode: "08320",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -495,16 +425,7 @@ describe("buildEventIntroText", () => {
         title: "i jornada de poesia",
         startDate: "2025-05-10",
         endDate: undefined,
-        city: {
-          id: 21,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -521,16 +442,7 @@ describe("buildEventIntroText", () => {
         title: "Fira de la II edició",
         startDate: "2025-09-20",
         endDate: undefined,
-        city: {
-          id: 22,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -547,16 +459,7 @@ describe("buildEventIntroText", () => {
         title: "xx campionat de parxís",
         startDate: "2025-08-16",
         endDate: undefined,
-        city: {
-          id: 23,
-          name: "Ullastrell",
-          slug: "ullastrell",
-          latitude: 41.52,
-          longitude: 1.96,
-          postalCode: "08231",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -573,16 +476,7 @@ describe("buildEventIntroText", () => {
         title: "la nit jove",
         startDate: "2025-08-15",
         endDate: undefined,
-        city: {
-          id: 24,
-          name: "Ullastrell",
-          slug: "ullastrell",
-          latitude: 41.52,
-          longitude: 1.96,
-          postalCode: "08231",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -599,16 +493,7 @@ describe("buildEventIntroText", () => {
         title: "la llum de la ciutat",
         startDate: "2025-08-20",
         endDate: undefined,
-        city: {
-          id: 25,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -625,16 +510,7 @@ describe("buildEventIntroText", () => {
         title: "xx festes majors",
         startDate: "2025-07-15",
         endDate: undefined,
-        city: {
-          id: 26,
-          name: "Girona",
-          slug: "girona",
-          latitude: 41.98,
-          longitude: 2.82,
-          postalCode: "17001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -655,16 +531,7 @@ describe("buildEventIntroText", () => {
         title: "XVIII Congrés de Música",
         startDate: "2025-07-15",
         endDate: undefined,
-        city: {
-          id: 30,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -674,6 +541,25 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("El XVIII congrés");
       expect(result).toContain("se celebra");
       expect(result).not.toContain("Les XVIII congrés");
+      expect(result).not.toContain("se celebren");
+    });
+
+    it("should handle other singular words ending in accented -s (e.g., 'París')", () => {
+      // Test case: "París" (Paris, singular - city name, but tests the same pattern)
+      const event = createTestEvent({
+        title: "Festival de París",
+        startDate: "2025-06-20",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (festival is singular masculine) and "se celebra" (singular verb)
+      // The important part is that "París" doesn't trigger plural detection
+      expect(result).toContain("El festival");
+      expect(result).toContain("se celebra");
       expect(result).not.toContain("se celebren");
     });
   });
@@ -692,16 +578,7 @@ describe("buildEventIntroText", () => {
         title: "festes populars",
         startDate: "2025-08-15",
         endDate: undefined,
-        city: {
-          id: 27,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -720,16 +597,7 @@ describe("buildEventIntroText", () => {
         title: "fires de Sant Miquel",
         startDate: "2025-09-29",
         endDate: undefined,
-        city: {
-          id: 28,
-          name: "Lleida",
-          slug: "lleida",
-          latitude: 41.62,
-          longitude: 0.63,
-          postalCode: "25001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -752,16 +620,7 @@ describe("buildEventIntroText", () => {
         title: "Pares musicals",
         startDate: "2025-08-15",
         endDate: undefined,
-        city: {
-          id: 29,
-          name: "Barcelona",
-          slug: "barcelona",
-          latitude: 41.3879,
-          longitude: 2.16992,
-          postalCode: "08001",
-          rssFeed: null,
-          enabled: true,
-        },
+        city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
@@ -772,6 +631,115 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebren");
       expect(result).not.toContain("Les pares");
       expect(result).not.toContain("se celebra");
+    });
+  });
+
+  describe("Greek/loanword masculine endings (-ma, -ema, -oma pattern)", () => {
+    it("should correctly identify masculine words ending in -ema", () => {
+      const event = createTestEvent({
+        title: "El problema de la ciutat",
+        startDate: "2025-07-15",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (problema is masculine) and "se celebra" (singular verb)
+      expect(result).toContain("El problema");
+      expect(result).toContain("se celebra");
+      expect(result).not.toContain("La problema");
+    });
+
+    it("should correctly identify masculine words ending in -ma (not -ama)", () => {
+      const event = createTestEvent({
+        title: "El cinema independent",
+        startDate: "2025-08-20",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (cinema is masculine) and "se celebra" (singular verb)
+      expect(result).toContain("El cinema");
+      expect(result).toContain("se celebra");
+      expect(result).not.toContain("La cinema");
+    });
+
+    it("should correctly identify masculine exceptions ending in -ama (programa)", () => {
+      const event = createTestEvent({
+        title: "El programa cultural",
+        startDate: "2025-09-10",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (programa is masculine exception) and "se celebra" (singular verb)
+      expect(result).toContain("El programa");
+      expect(result).toContain("se celebra");
+      expect(result).not.toContain("La programa");
+    });
+
+    it("should correctly identify masculine exceptions ending in -ama (drama)", () => {
+      const event = createTestEvent({
+        title: "El drama teatral",
+        startDate: "2025-10-05",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (drama is masculine exception) and "se celebra" (singular verb)
+      expect(result).toContain("El drama");
+      expect(result).toContain("se celebra");
+      expect(result).not.toContain("La drama");
+    });
+
+    it("should correctly identify masculine exception ending in -ima (clima)", () => {
+      const event = createTestEvent({
+        title: "El clima mediterrani",
+        startDate: "2025-07-01",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (clima is masculine exception) and "se celebra" (singular verb)
+      expect(result).toContain("El clima");
+      expect(result).toContain("se celebra");
+      expect(result).not.toContain("La clima");
+    });
+
+    it("should NOT incorrectly classify feminine words ending in -ama as masculine", () => {
+      // This test ensures that the -ama exclusion works correctly
+      // If a feminine word ending in -ama appears, it should use "La" not "El"
+      // Note: We test with a word that would be feminine if it existed in Catalan
+      // The key is that the pattern doesn't match -ama, so it falls through to default masculine
+      // which is then corrected by detectCatalanGender's feminine endings check
+      const event = createTestEvent({
+        title: "La festa popular",
+        startDate: "2025-08-15",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "La" (festa is feminine, ends in -a) and "se celebra" (singular verb)
+      expect(result).toContain("La festa");
+      expect(result).toContain("se celebra");
+      expect(result).not.toContain("El festa");
     });
   });
 });

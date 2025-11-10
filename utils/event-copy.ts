@@ -27,8 +27,17 @@ function isExplicitlyMasculine(word: string): boolean {
   const norm = normalize(raw);
 
   // Greek/loanword masculine endings (many -ma, -ema, -oma are masculine)
-  // This covers: problema, sistema, tema, dilema, esquema, programa, cinema, clima, etc.
-  if (/(ma|ema|oma|ama)$/.test(norm)) return true;
+  // This covers: problema, sistema, tema, dilema, esquema, cinema, etc.
+  // Note: -ama is excluded from the generic pattern to avoid false positives with feminine words
+  // However, "programa" and "drama" are masculine exceptions ending in -ama
+  // "clima" ends in -ima, not -ma, so it's also an exception
+  const masculineAmaExceptions = /^(programa|drama|clima)$/;
+  if (masculineAmaExceptions.test(norm)) return true;
+
+  // We match -ema and -oma, and -ma but explicitly exclude -ama
+  if (/ema$|oma$/.test(norm)) return true;
+  // Match -ma but not -ama (check that it doesn't end in -ama)
+  if (/ma$/.test(norm) && !/ama$/.test(norm)) return true;
 
   // Small unavoidable list of masculine nouns ending in -a that don't match the -ma pattern.
   // These are Greek/loanwords ending in -eta or -ia that can't be generalized because
