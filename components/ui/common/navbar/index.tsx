@@ -29,7 +29,7 @@ export default function Navbar() {
       key={pathname}
       as="nav"
       id="site-navbar"
-      className="w-full bg-background sticky top-0 z-50 border-b border-border/50"
+      className="w-full bg-background md:sticky md:top-0 z-50 border-b border-border/50"
     >
       {({ open }) => (
         <>
