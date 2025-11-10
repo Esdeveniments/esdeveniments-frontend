@@ -39,6 +39,18 @@ export function getApiOrigin(): string {
  */
 export function getInternalApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
+  // Prefer the current deployment's origin when available (Vercel previews/production)
+  // VERCEL_URL is provided at runtime and points to the exact deployment host.
+  // It does not include the protocol.
+  const vercelUrl =
+    process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL || "";
+  if (vercelUrl) {
+    const origin = vercelUrl.startsWith("http")
+      ? vercelUrl
+      : `https://${vercelUrl}`;
+    return new URL(normalized, origin).toString();
+  }
+  // Fallback to siteUrl (localhost in dev; canonical domains in other envs)
   return new URL(normalized, siteUrl).toString();
 }
 

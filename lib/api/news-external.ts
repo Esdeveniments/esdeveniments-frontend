@@ -5,7 +5,6 @@ import type {
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
-import type { FetchNewsParams } from "@lib/api/news";
 
 export interface FetchNewsParamsExternal {
   page?: number;
@@ -30,7 +29,7 @@ export async function fetchNewsExternal(
   try {
     // Use buildNewsQuery with setDefaults=false to match original behavior
     // (only add params if they're defined)
-    const query = buildNewsQuery(params as FetchNewsParams, false);
+    const query = buildNewsQuery(params, false);
     const res = await fetchWithHmac(`${api}/news?${query.toString()}`);
     if (!res.ok) {
       console.error(`fetchNewsExternal: HTTP ${res.status}`);
@@ -75,4 +74,3 @@ export async function fetchNewsBySlugExternal(
     return null;
   }
 }
-

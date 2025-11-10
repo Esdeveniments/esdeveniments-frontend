@@ -25,6 +25,18 @@ describe("utils/api-helpers:getInternalApiUrl", () => {
     );
     expect(getInternalApiUrl("api/bar")).toBe("http://localhost:3000/api/bar");
   });
+
+  it("prefers VERCEL_URL origin when available", () => {
+    process.env.VERCEL_URL = "preview-abc.vercel.app";
+    expect(getInternalApiUrl("/api/test")).toBe(
+      "https://preview-abc.vercel.app/api/test"
+    );
+    // Accept already-prefixed protocol
+    process.env.VERCEL_URL = "https://another.vercel.app";
+    expect(getInternalApiUrl("/api/test")).toBe(
+      "https://another.vercel.app/api/test"
+    );
+  });
 });
 
 describe("utils/api-helpers:buildEventsQuery", () => {
