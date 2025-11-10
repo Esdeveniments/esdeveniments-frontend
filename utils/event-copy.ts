@@ -98,7 +98,10 @@ function detectCatalanGenderAndNumber(word: string): {
   }
 
   // quick plural detection: ends with s (es or s)
-  if (norm.length > 1 && /s$/.test(norm)) {
+  // Skip plural detection for singular words ending in accented -s (e.g., "congrés", "parís")
+  // These are singular nouns, not plurals, so they should be handled as singular
+  const hasAccentedSingularS = /[àèéíïòóú]s$/i.test(raw);
+  if (!hasAccentedSingularS && norm.length > 1 && /s$/.test(norm)) {
     let singular = norm.endsWith("es") ? norm.slice(0, -2) : norm.slice(0, -1);
 
     // For words ending in "es", check if adding "a" makes it feminine

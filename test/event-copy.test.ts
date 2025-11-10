@@ -645,6 +645,37 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebren");
       expect(result).not.toContain("se celebra");
     });
+
+    it("should handle singular words ending in accented -s (e.g., 'Congrés')", () => {
+      // Test case: "Congrés" (congress, singular masculine)
+      // Words ending in accented -s are singular, not plural, so they should not trigger
+      // plural detection logic. After normalization, "congrés" becomes "congres" which ends
+      // in "s", but we should detect it as singular masculine, not plural.
+      const event = createTestEvent({
+        title: "XVIII Congrés de Música",
+        startDate: "2025-07-15",
+        endDate: undefined,
+        city: {
+          id: 30,
+          name: "Barcelona",
+          slug: "barcelona",
+          latitude: 41.3879,
+          longitude: 2.16992,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        },
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should use "El" (congrés is singular masculine) and "se celebra" (singular verb)
+      expect(result).toContain("El XVIII congrés");
+      expect(result).toContain("se celebra");
+      expect(result).not.toContain("Les XVIII congrés");
+      expect(result).not.toContain("se celebren");
+    });
   });
 
   describe("plural detection logic (conservative stem checking)", () => {
