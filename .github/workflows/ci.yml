@@ -79,7 +79,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npx vercel@25 pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel@25 pull --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Preview to Vercel (CLI)
         if: github.event_name == 'pull_request'
         id: deploy_preview
@@ -102,7 +102,7 @@ jobs:
             --env HMAC_SECRET="$HMAC_SECRET" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --build-env HMAC_SECRET="$HMAC_SECRET" \
-            --yes | tee "$LOG"
+            --confirm | tee "$LOG"
           # Extract the last vercel.app URL (alias line usually printed last)
           URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)
           if [ -z "$URL" ]; then
