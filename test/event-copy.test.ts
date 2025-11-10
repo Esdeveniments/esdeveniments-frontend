@@ -562,6 +562,67 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
       expect(result).not.toContain("se celebren");
     });
+
+    it("should convert L' to La when followed by Roman numeral and feminine vowel-starting word", () => {
+      // Test case: "L'XVIII edició" - "edició" starts with vowel and is feminine
+      // getCatalanArticleForWord would return "L'" for vowel-starting words, but "L'"
+      // cannot precede a Roman numeral, so it must be converted to "La"
+      const event = createTestEvent({
+        title: "L'xviii edició del festival",
+        startDate: "2025-08-15",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should convert "L'XVIII" to "La XVIII" (edició is feminine)
+      expect(result).toContain("La XVIII edició");
+      expect(result).not.toContain("L' XVIII");
+      expect(result).not.toContain("L'XVIII");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should convert L' to El when followed by Roman numeral and masculine vowel-starting word", () => {
+      // Test case: "L'XVIII congrés" - "congrés" starts with vowel and is masculine
+      // getCatalanArticleForWord would return "L'" for vowel-starting words, but "L'"
+      // cannot precede a Roman numeral, so it must be converted to "El"
+      const event = createTestEvent({
+        title: "L'xviii congrés de música",
+        startDate: "2025-07-15",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should convert "L'XVIII" to "El XVIII" (congrés is masculine)
+      expect(result).toContain("El XVIII congrés");
+      expect(result).not.toContain("L' XVIII");
+      expect(result).not.toContain("L'XVIII");
+      expect(result).toContain("se celebra");
+    });
+
+    it("should convert L' to La/El when article is wrong and followed by Roman numeral", () => {
+      // Test case: Wrong article "L'" before Roman numeral should be corrected
+      // even when the article doesn't match (testing the else branch)
+      const event = createTestEvent({
+        title: "L'xix edició",
+        startDate: "2025-09-20",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should convert "L'XIX" to "La XIX" (edició is feminine)
+      expect(result).toContain("La XIX edició");
+      expect(result).not.toContain("L' XIX");
+      expect(result).toContain("se celebra");
+    });
   });
 
   describe("plural detection logic (conservative stem checking)", () => {
@@ -627,6 +688,28 @@ describe("buildEventIntroText", () => {
       const result = buildEventIntroText(event);
 
       // Should correctly identify "pares" as plural masculine
+      expect(result).toContain("Els pares");
+      expect(result).toContain("se celebren");
+      expect(result).not.toContain("Les pares");
+      expect(result).not.toContain("se celebra");
+    });
+
+    it("should set singular to 'pare' when stem+e is explicitly masculine", () => {
+      // Test case: "pares" → stem "par" + "e" = "pare" (explicitly masculine)
+      // This test verifies Fix 1: when isExplicitlyMasculine(singularWithE) is true,
+      // the singular variable should be updated to singularWithE ("pare"), not left as "par"
+      // This ensures gender detection uses the correct singular form
+      const event = createTestEvent({
+        title: "pares",
+        startDate: "2025-08-15",
+        endDate: undefined,
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
+      });
+
+      const result = buildEventIntroText(event);
+
+      // Should correctly identify as plural masculine using "pare" (not "par") for gender detection
       expect(result).toContain("Els pares");
       expect(result).toContain("se celebren");
       expect(result).not.toContain("Les pares");

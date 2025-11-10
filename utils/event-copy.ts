@@ -132,6 +132,7 @@ function detectCatalanGenderAndNumber(word: string): {
         if (isExplicitlyMasculine(singularWithE)) {
           // Stem + "e" is explicitly masculine, so the word is likely masculine
           // Don't add "a" - keep the masculine stem
+          singular = singularWithE;
         } else {
           // Try adding "a" to see if it makes it feminine
           const singularWithA = singular + "a";
@@ -254,7 +255,13 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     }
 
     const correctArticle = getCatalanArticleForWord(firstWordAfterArticle);
-    const correctArticleLower = correctArticle.toLowerCase();
+
+    // If correct article is L' and we have a Roman numeral, convert to La/El
+    let finalCorrectArticle = correctArticle;
+    if (correctArticle === "L'" && isFirstWordRomanNumeral) {
+      const { gender } = detectCatalanGenderAndNumber(firstWordAfterArticle);
+      finalCorrectArticle = gender === "f" ? "La" : "El";
+    }
 
     // Check if the provided article matches the correct one
     // Special case: if we have "L'" before a Roman numeral, use the article for the word after the numeral
@@ -263,7 +270,7 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
 
     // Don't include shouldUseArticleForRomanNumeral in articleMatches - we want to correct it
     const articleMatches =
-      articleToken.toLowerCase() === correctArticleLower ||
+      articleToken.toLowerCase() === finalCorrectArticle.toLowerCase() ||
       (articleToken === "l'" &&
         correctArticle === "L'" &&
         !isFirstWordRomanNumeral);
@@ -272,14 +279,14 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     let finalArticle: string;
     if (shouldUseArticleForRomanNumeral) {
       // Special case: correct "L'" to the appropriate article before Roman numeral
-      finalArticle = correctArticle;
+      finalArticle = finalCorrectArticle;
     } else if (articleMatches) {
       // Article is correct, keep it (capitalized)
       finalArticle =
         articleToken === "l'" ? "L'" : capitalizeFirstLetter(articleToken);
     } else {
       // Article is wrong, use the correct one
-      finalArticle = correctArticle;
+      finalArticle = finalCorrectArticle;
     }
 
     // Handle capitalization: if first word is Roman numeral, capitalize it and next word
