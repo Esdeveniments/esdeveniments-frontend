@@ -5,7 +5,7 @@ import type {
   NewsDetailResponseDTO,
 } from "types/api/news";
 import { createKeyedCache } from "./cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, buildNewsQuery } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 
@@ -23,17 +23,8 @@ export async function fetchNews(
 ): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
   // Use internal API route for stable caching
 
-  const query: Partial<FetchNewsParams> = {};
-  query.page = typeof params.page === "number" ? params.page : 0;
-  query.size = typeof params.size === "number" ? params.size : 100;
-  if (params.place) query.place = params.place;
-
   try {
-    const filteredEntries = Object.entries(query)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, String(v)]);
-
-    const queryString = new URLSearchParams(Object.fromEntries(filteredEntries));
+    const queryString = buildNewsQuery(params);
     const finalUrl = getInternalApiUrl(`/api/news?${queryString}`);
 
     const tags: CacheTag[] = [newsTag];

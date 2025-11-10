@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
+import { revalidateTag } from "next/cache";
+import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+
+const revalidatedPastEvents = new Set<string>();
 
 export const runtime = "nodejs";
 
@@ -11,6 +15,17 @@ export async function GET(
   try {
     const { slug } = await context.params;
     const data = await fetchExternalEvent(slug);
+    if (data?.endDate && data.id) {
+      const key = String(data.id);
+      if (!revalidatedPastEvents.has(key)) {
+        const now = Date.now();
+        if (new Date(data.endDate).getTime() < now) {
+          revalidatedPastEvents.add(key);
+          revalidateTag(eventsTag, "manual");
+          revalidateTag(eventsCategorizedTag, "manual");
+        }
+      }
+    }
     return NextResponse.json(data ?? null, {
       status: data ? 200 : 404,
       headers: {
@@ -23,4 +38,3 @@ export async function GET(
     return NextResponse.json(null, { status: 500 });
   }
 }
-

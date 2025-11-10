@@ -3,6 +3,10 @@
  * Follows the same fallback strategy as middleware.ts for edge runtime compatibility
  */
 
+import { siteUrl } from "@config/index";
+import type { FetchEventsParams } from "types/event";
+import type { FetchNewsParams } from "@lib/api/news";
+
 /**
  * Get API origin with multiple fallback strategies for Edge Runtime
  * Edge runtime has limitations with environment variables
@@ -33,8 +37,68 @@ export function getApiOrigin(): string {
  * This is necessary when running without a request context (e.g., during build
  * or static generation), where relative URLs are invalid in Node's fetch.
  */
-import { siteUrl } from "@config/index";
 export function getInternalApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return new URL(normalized, siteUrl).toString();
+}
+
+/**
+ * Build URLSearchParams from FetchEventsParams.
+ * Centralizes query string construction to eliminate duplication between
+ * internal and external API calls.
+ */
+export function buildEventsQuery(
+  params: FetchEventsParams
+): URLSearchParams {
+  const query: Partial<FetchEventsParams> = {};
+  query.page = typeof params.page === "number" ? params.page : 0;
+  query.size = typeof params.size === "number" ? params.size : 10;
+
+  if (params.place) query.place = params.place;
+  if (params.category) query.category = params.category;
+  if (params.lat) query.lat = params.lat;
+  if (params.lon) query.lon = params.lon;
+  if (params.radius) query.radius = params.radius;
+  if (params.term) query.term = params.term;
+  if (params.byDate) query.byDate = params.byDate;
+  if (params.from) query.from = params.from;
+  if (params.to) query.to = params.to;
+
+  return new URLSearchParams(
+    Object.fromEntries(
+      Object.entries(query)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, String(v)])
+    )
+  );
+}
+
+/**
+ * Build URLSearchParams from news fetch parameters.
+ * Centralizes query string construction to eliminate duplication between
+ * internal and external API calls.
+ * @param params - News fetch parameters
+ * @param setDefaults - If true, sets default values for page (0) and size (100). Default: true
+ */
+export function buildNewsQuery(
+  params: FetchNewsParams,
+  setDefaults = true
+): URLSearchParams {
+  const query: Partial<FetchNewsParams> = {};
+  if (setDefaults) {
+    query.page = typeof params.page === "number" ? params.page : 0;
+    query.size = typeof params.size === "number" ? params.size : 100;
+  } else {
+    if (typeof params.page === "number") query.page = params.page;
+    if (typeof params.size === "number") query.size = params.size;
+  }
+  if (params.place) query.place = params.place;
+
+  return new URLSearchParams(
+    Object.fromEntries(
+      Object.entries(query)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, String(v)])
+    )
+  );
 }

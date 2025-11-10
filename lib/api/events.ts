@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -16,26 +16,8 @@ import { FetchEventsParams } from "types/event";
 export async function fetchEvents(
   params: FetchEventsParams
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const query: Partial<FetchEventsParams> = {};
-  query.page = typeof params.page === "number" ? params.page : 0;
-  query.size = typeof params.size === "number" ? params.size : 10;
-
-  if (params.place) query.place = params.place;
-  if (params.category) query.category = params.category;
-  if (params.lat) query.lat = params.lat;
-  if (params.lon) query.lon = params.lon;
-  if (params.radius) query.radius = params.radius;
-  if (params.term) query.term = params.term;
-  if (params.byDate) query.byDate = params.byDate;
-  if (params.from) query.from = params.from;
-  if (params.to) query.to = params.to;
-
   try {
-    const filteredEntries = Object.entries(query)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, String(v)]);
-
-    const queryString = new URLSearchParams(Object.fromEntries(filteredEntries));
+    const queryString = buildEventsQuery(params);
     const finalUrl = getInternalApiUrl(`/api/events?${queryString}`);
 
     const response = await fetch(finalUrl, {

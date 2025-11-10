@@ -1,9 +1,11 @@
 import { fetchWithHmac } from "./fetch-wrapper";
+import { buildNewsQuery } from "@utils/api-helpers";
 import type {
   PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
+import type { FetchNewsParams } from "@lib/api/news";
 
 export interface FetchNewsParamsExternal {
   page?: number;
@@ -26,10 +28,9 @@ export async function fetchNewsExternal(
     };
   }
   try {
-    const query = new URLSearchParams();
-    if (typeof params.page === "number") query.set("page", String(params.page));
-    if (typeof params.size === "number") query.set("size", String(params.size));
-    if (params.place) query.set("place", params.place);
+    // Use buildNewsQuery with setDefaults=false to match original behavior
+    // (only add params if they're defined)
+    const query = buildNewsQuery(params as FetchNewsParams, false);
     const res = await fetchWithHmac(`${api}/news?${query.toString()}`);
     if (!res.ok) {
       console.error(`fetchNewsExternal: HTTP ${res.status}`);

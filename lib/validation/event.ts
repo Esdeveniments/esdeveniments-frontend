@@ -1,10 +1,16 @@
 import { z } from "zod";
 import type { EventDetailResponseDTO } from "types/api/event";
-import { CategorySummaryResponseDTOSchema } from "./category";
 
 // --- Summary DTOs needed for event payload validation ---
 const EventTypeEnum = z.enum(["FREE", "PAID"]);
 const EventOriginEnum = z.enum(["SCRAPE", "RSS", "MANUAL", "MIGRATION"]);
+
+// Category schema - defined here to avoid circular dependency with category.ts
+export const CategorySummaryResponseDTOSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+});
 
 const RegionSummaryResponseDTOSchema = z.object({
   id: z.number(),
@@ -18,7 +24,7 @@ const ProvinceSummaryResponseDTOSchema = z.object({
   slug: z.string(),
 });
 
-const CitySummaryResponseDTOSchema = z.object({
+export const CitySummaryResponseDTOSchema = z.object({
   id: z.number(),
   name: z.string(),
   slug: z.string(),
@@ -41,7 +47,7 @@ export const EventSummaryResponseDTOSchema = z
     imageUrl: z.string().nullable(),
     startDate: z.string(),
     startTime: z.string().nullable(),
-    endDate: z.string().nullable(),
+    endDate: z.string(),
     endTime: z.string().nullable(),
     location: z.string(),
     visits: z.number(),

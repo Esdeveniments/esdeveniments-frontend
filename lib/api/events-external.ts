@@ -1,5 +1,6 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseEventDetail } from "lib/validation/event";
+import { buildEventsQuery } from "@utils/api-helpers";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
@@ -43,25 +44,7 @@ export async function fetchEventsExternal(
     };
   }
   try {
-    const query: Partial<FetchEventsParams> = {};
-    query.page = typeof params.page === "number" ? params.page : 0;
-    query.size = typeof params.size === "number" ? params.size : 10;
-    if (params.place) query.place = params.place;
-    if (params.category) query.category = params.category;
-    if (params.lat) query.lat = params.lat;
-    if (params.lon) query.lon = params.lon;
-    if (params.radius) query.radius = params.radius;
-    if (params.term) query.term = params.term;
-    if (params.byDate) query.byDate = params.byDate;
-    if (params.from) query.from = params.from;
-    if (params.to) query.to = params.to;
-    const qs = new URLSearchParams(
-      Object.fromEntries(
-        Object.entries(query)
-          .filter(([, v]) => v !== undefined)
-          .map(([k, v]) => [k, String(v)])
-      )
-    );
+    const qs = buildEventsQuery(params);
     const res = await fetchWithHmac(`${api}/events?${qs.toString()}`);
     if (!res.ok) {
       console.error(`fetchEventsExternal: HTTP ${res.status}`);
