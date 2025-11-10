@@ -48,6 +48,9 @@ export async function fetchWithHmac(
   headers.set("x-timestamp", String(timestamp));
   headers.set("x-hmac", hmac);
 
+  // Note: The caller can provide an explicit 'x-visitor-id' header in
+  // options.headers when needed (e.g., counting event detail views).
+
   if (wasUrlSearchParams && !headers.has("content-type")) {
     headers.set(
       "content-type",

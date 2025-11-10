@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { fetchCategoriesExternal } from "@lib/api/categories-external";
+import { fetchRegionsExternal } from "@lib/api/regions-external";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const data = await fetchCategoriesExternal();
+    const data = await fetchRegionsExternal();
     return NextResponse.json(data, {
       status: 200,
       headers: {
@@ -13,10 +13,8 @@ export async function GET() {
       },
     });
   } catch (e) {
-    console.error("/api/categories error", e);
-    return NextResponse.json(
-      { error: "Failed to load categories" },
-      { status: 500 }
-    );
+    console.error("/api/regions error", e);
+    return NextResponse.json([], { status: 500 });
   }
 }
+

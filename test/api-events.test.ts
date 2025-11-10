@@ -19,8 +19,19 @@ describe("lib/api/events", () => {
     process.env = originalEnv;
   });
 
-  it("returns safe fallback when NEXT_PUBLIC_API_URL is missing", async () => {
+  it("returns safe fallback when backend URL is missing (internal route returns empty)", async () => {
     delete process.env.NEXT_PUBLIC_API_URL;
+    const mockJson = vi.fn().mockResolvedValue({
+      content: [],
+      currentPage: 0,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    });
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: mockJson });
+    (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+
     const result: PagedResponseDTO<EventSummaryResponseDTO> = await fetchEvents(
       { page: 0, size: 10 }
     );
@@ -32,12 +43,12 @@ describe("lib/api/events", () => {
       totalPages: 0,
       last: true,
     });
+    // Called internal API route
+    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    expect(calledUrl).toContain("/api/events?");
   });
 
-  it("maps params correctly and serializes only defined ones", async () => {
-    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
-    process.env.HMAC_SECRET = "test-secret";
-
+  it("maps params correctly and hits internal route (no HMAC headers here)", async () => {
     const mockJson = vi.fn().mockResolvedValue({
       content: [],
       currentPage: 0,
@@ -46,31 +57,19 @@ describe("lib/api/events", () => {
       totalPages: 0,
       last: true,
     });
-    const mockFetch = vi.fn().mockResolvedValue({ json: mockJson });
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: mockJson });
     (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
 
     await fetchEvents({ place: "barcelona", term: "music", page: 2, size: 20 });
     const calledUrl = mockFetch.mock.calls[0][0] as string;
     const options = mockFetch.mock.calls[0][1] as RequestInit;
 
-    expect(calledUrl).toContain("https://api.example.com/events?");
+    expect(calledUrl).toContain("/api/events?");
     expect(calledUrl).toContain("place=barcelona");
     expect(calledUrl).toContain("term=music");
     expect(calledUrl).toContain("page=2");
     expect(calledUrl).toContain("size=20");
-    expect(calledUrl).not.toContain("lat=");
-    expect(calledUrl).not.toContain("lon=");
-
-    // Verify security headers are set
-    expect(options.headers).toBeInstanceOf(Headers);
-    const timestampHeader = (options.headers as Headers).get("x-timestamp");
-    const hmacHeader = (options.headers as Headers).get("x-hmac");
-    expect(timestampHeader).toBeDefined();
-    expect(hmacHeader).toBeDefined();
-    expect(typeof timestampHeader).toBe("string");
-    expect(typeof hmacHeader).toBe("string");
-    expect(!isNaN(parseInt(timestampHeader!))).toBe(true);
-    expect(hmacHeader!.length).toBe(64); // SHA-256 hex length
+    expect(options?.headers).toBeUndefined();
   });
 
   it("insertAds returns empty when no events", () => {

@@ -3,7 +3,7 @@ import {
   CategorySummaryResponseDTO,
 } from "types/api/category";
 import { createCache, createKeyedCache } from "lib/api/cache";
-import { fetchWithHmac } from "lib/api/fetch-wrapper";
+import { getInternalApiUrl } from "@utils/api-helpers";
 import { cache as reactCache } from "react";
 import { parseCategories } from "lib/validation/category";
 
@@ -13,12 +13,9 @@ const categoryByIdCache = createKeyedCache<CategoryDetailResponseDTO | null>(
 );
 
 async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
-  const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/categories`,
-    {
-      next: { revalidate: 86400, tags: ["categories"] },
-    }
-  );
+  const response = await fetch(getInternalApiUrl(`/api/categories`), {
+    next: { revalidate: 86400, tags: ["categories"] },
+  });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   const json = await response.json();
   return parseCategories(json);
@@ -41,10 +38,9 @@ export const getCategories = reactCache(fetchCategories);
 async function fetchCategoryByIdApi(
   id: string | number
 ): Promise<CategoryDetailResponseDTO | null> {
-  const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`,
-    { next: { revalidate: 86400, tags: ["categories", `category:${id}`] } }
-  );
+  const response = await fetch(getInternalApiUrl(`/api/categories/${id}`), {
+    next: { revalidate: 86400, tags: ["categories", `category:${id}`] },
+  });
   if (!response.ok) return null;
   return response.json();
 }
@@ -52,8 +48,6 @@ async function fetchCategoryByIdApi(
 export async function fetchCategoryById(
   id: string | number
 ): Promise<CategoryDetailResponseDTO | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return null;
   try {
     return await categoryByIdCache(id, fetchCategoryByIdApi);
   } catch (e) {

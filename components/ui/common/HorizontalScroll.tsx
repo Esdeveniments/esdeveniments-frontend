@@ -69,8 +69,7 @@ export default function HorizontalScroll({
         window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const prefersCoarse =
-        window.matchMedia &&
-        window.matchMedia("(pointer: coarse)").matches;
+        window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
       const hasSeen = sessionStorage.getItem(storageKey) === "1";
       const hasOverflow = el.scrollWidth > el.clientWidth + 2;
 
@@ -118,17 +117,23 @@ export default function HorizontalScroll({
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
-  }, [ariaLabel, hintStorageKey, nudgeOnFirstLoad]);
+  }, [ariaLabel, hintStorageKey, nudgeOnFirstLoad, uniqueId]);
 
   const computeStep = () => {
     if (typeof scrollStepPx === "number") return scrollStepPx;
     const el = scrollerRef.current;
     if (!el) return 320;
     // try to measure a listitem width + gap
-    const firstItem = el.querySelector('[role="listitem"]') as HTMLElement | null;
+    const firstItem = el.querySelector(
+      '[role="listitem"]'
+    ) as HTMLElement | null;
     const track = el.firstElementChild as HTMLElement | null;
     const gapPx = track
-      ? parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || "0")
+      ? parseFloat(
+          getComputedStyle(track).columnGap ||
+            getComputedStyle(track).gap ||
+            "0"
+        )
       : 0;
     if (firstItem) {
       return Math.round(firstItem.getBoundingClientRect().width + gapPx);
@@ -144,7 +149,7 @@ export default function HorizontalScroll({
   };
 
   return (
-    <div className={["relative", className].filter(Boolean).join(" ") }>
+    <div className={["relative", className].filter(Boolean).join(" ")}>
       {/* Scroll container */}
       <div
         ref={scrollerRef}
@@ -191,7 +196,9 @@ export default function HorizontalScroll({
             ].join(" ")}
           >
             {!(isFinePointer && showDesktopArrows) && (
-              <ChevronRightIcon className={showHint ? "h-5 w-5 drop-shadow" : "h-4 w-4"} />
+              <ChevronRightIcon
+                className={showHint ? "h-5 w-5 drop-shadow" : "h-4 w-4"}
+              />
             )}
           </div>
         </div>

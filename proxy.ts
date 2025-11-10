@@ -60,18 +60,50 @@ export default async function proxy(request: NextRequest) {
   if (pathname.startsWith("/api/")) {
     // Allowlist public API routes that don't require HMAC from the browser
     if (
+      pathname === "/api/regions" ||
       pathname === "/api/regions/options" ||
+      pathname.startsWith("/api/regions/") ||
       pathname === "/api/promotions/config" ||
       pathname === "/api/promotions/price-preview" ||
       pathname === "/api/categories" ||
+      pathname.startsWith("/api/categories/") ||
       pathname === "/api/leads/restaurant" ||
       pathname === "/api/stripe/checkout" ||
       pathname === "/api/cloudinary/sign" ||
+      pathname === "/api/places" ||
+      pathname.startsWith("/api/places/") ||
       pathname === "/api/places/nearby" ||
       pathname === "/api/places/photo" ||
+      pathname === "/api/cities" ||
+      pathname.startsWith("/api/cities/") ||
+      pathname === "/api/news" ||
+      pathname.startsWith("/api/news/") ||
+      // Event detail proxy
+      (pathname.startsWith("/api/events/") && request.method === "GET") ||
       // Public proxy for events list used by client SWR (GET only)
-      (pathname === "/api/events" && request.method === "GET")
+      (pathname === "/api/events" && request.method === "GET") ||
+      // Events categorized list (GET)
+      (pathname === "/api/events/categorized" && request.method === "GET") ||
+      // Visit counter endpoint (browser-callable)
+      (pathname === "/api/visits" && request.method === "POST")
     ) {
+      // Special case: visits endpoint should receive/stamp visitor id
+      if (pathname === "/api/visits" && request.method === "POST") {
+        const apiReqHeaders = new Headers(request.headers);
+        const cookieVisitor = request.cookies.get("visitor_id")?.value;
+        const visitorId = cookieVisitor || crypto.randomUUID().replace(/-/g, "");
+        apiReqHeaders.set("x-visitor-id", visitorId);
+        const response = NextResponse.next({ request: { headers: apiReqHeaders } });
+        if (!cookieVisitor) {
+          response.cookies.set("visitor_id", visitorId, {
+            path: "/",
+            maxAge: 60 * 60 * 24 * 365,
+            sameSite: "lax",
+            secure: !isDev,
+          });
+        }
+        return response;
+      }
       return NextResponse.next();
     }
     const hmac = request.headers.get("x-hmac");
@@ -152,11 +184,15 @@ export default async function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("x-pathname", pathname);
 
+  // No per-page visitor id injection; handled only for /api/visits.
+
   const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
+
+  // visitor_id cookie is set only when calling /api/visits if missing.
 
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set(

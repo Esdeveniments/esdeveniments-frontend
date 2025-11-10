@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { fetchCategoriesExternal } from "@lib/api/categories-external";
+import { fetchCitiesExternal } from "@lib/api/cities-external";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const data = await fetchCategoriesExternal();
+    const data = await fetchCitiesExternal();
     return NextResponse.json(data, {
       status: 200,
       headers: {
@@ -13,10 +13,8 @@ export async function GET() {
       },
     });
   } catch (e) {
-    console.error("/api/categories error", e);
-    return NextResponse.json(
-      { error: "Failed to load categories" },
-      { status: 500 }
-    );
+    console.error("/api/cities error", e);
+    return NextResponse.json([], { status: 500 });
   }
 }
+

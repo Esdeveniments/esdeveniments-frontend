@@ -27,3 +27,14 @@ export function getApiOrigin(): string {
   // Strategy 3: Default fallback (development/staging)
   return "https://api-pre.esdeveniments.cat";
 }
+
+/**
+ * Build an absolute URL to the app's own API routes (App Router `/api/*`).
+ * This is necessary when running without a request context (e.g., during build
+ * or static generation), where relative URLs are invalid in Node's fetch.
+ */
+import { siteUrl } from "@config/index";
+export function getInternalApiUrl(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return new URL(normalized, siteUrl).toString();
+}
