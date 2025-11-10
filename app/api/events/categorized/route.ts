@@ -7,7 +7,9 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const raw = url.searchParams.get("maxEventsPerCategory");
-    const maxEventsPerCategory = raw ? parseInt(raw, 10) : undefined;
+    const parsed = raw ? parseInt(raw, 10) : NaN;
+    const maxEventsPerCategory =
+      Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 100) : undefined;
     const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
     return NextResponse.json(data, {
       status: 200,

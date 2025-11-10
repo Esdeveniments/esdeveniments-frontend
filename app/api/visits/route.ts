@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     console.error("/api/visits error:", e);
-    return new NextResponse(null, { status: 204 });
+    return new NextResponse(null, { status: 500 });
   }
 }
 

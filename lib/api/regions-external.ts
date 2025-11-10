@@ -5,9 +5,17 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 export async function fetchRegionsExternal(): Promise<RegionSummaryResponseDTO[]> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
-  const res = await fetchWithHmac(`${api}/places/regions`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetchWithHmac(`${api}/places/regions`);
+    if (!res.ok) {
+      console.error(`fetchRegionsExternal: HTTP ${res.status}`);
+      return [];
+    }
+    return res.json();
+  } catch (error) {
+    console.error("fetchRegionsExternal: failed", error);
+    return [];
+  }
 }
 
 export async function fetchRegionsOptionsExternal(): Promise<
@@ -15,9 +23,17 @@ export async function fetchRegionsOptionsExternal(): Promise<
 > {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
-  const res = await fetchWithHmac(`${api}/places/regions/options`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetchWithHmac(`${api}/places/regions/options`);
+    if (!res.ok) {
+      console.error(`fetchRegionsOptionsExternal: HTTP ${res.status}`);
+      return [];
+    }
+    return res.json();
+  } catch (error) {
+    console.error("fetchRegionsOptionsExternal: failed", error);
+    return [];
+  }
 }
 
 export async function fetchRegionByIdExternal(
@@ -25,8 +41,13 @@ export async function fetchRegionByIdExternal(
 ): Promise<RegionSummaryResponseDTO | null> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
-  const res = await fetchWithHmac(`${api}/places/regions/${id}`);
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    const res = await fetchWithHmac(`${api}/places/regions/${id}`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`fetchRegionByIdExternal(${id}): failed`, error);
+    return null;
+  }
 }
 

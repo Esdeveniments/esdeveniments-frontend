@@ -33,13 +33,7 @@ function getCsp(nonce: string) {
     ],
     // Images: allow self, data URIs, HTTPS everywhere; add blob for previews
     // In development, also allow HTTP to ease testing against non-TLS sources
-    "img-src": [
-      "'self'",
-      "data:",
-      "https:",
-      "blob:",
-      isDev ? "http:" : "",
-    ],
+    "img-src": ["'self'", "data:", "https:", "blob:", isDev ? "http:" : ""],
     "font-src": ["'self'"],
     "frame-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],
@@ -59,41 +53,47 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/")) {
     // Allowlist public API routes that don't require HMAC from the browser
-    if (
-      pathname === "/api/regions" ||
-      pathname === "/api/regions/options" ||
-      pathname.startsWith("/api/regions/") ||
-      pathname === "/api/promotions/config" ||
-      pathname === "/api/promotions/price-preview" ||
-      pathname === "/api/categories" ||
-      pathname.startsWith("/api/categories/") ||
-      pathname === "/api/leads/restaurant" ||
-      pathname === "/api/stripe/checkout" ||
-      pathname === "/api/cloudinary/sign" ||
-      pathname === "/api/places" ||
-      pathname.startsWith("/api/places/") ||
-      pathname === "/api/places/nearby" ||
-      pathname === "/api/places/photo" ||
-      pathname === "/api/cities" ||
-      pathname.startsWith("/api/cities/") ||
-      pathname === "/api/news" ||
-      pathname.startsWith("/api/news/") ||
-      // Event detail proxy
-      (pathname.startsWith("/api/events/") && request.method === "GET") ||
-      // Public proxy for events list used by client SWR (GET only)
-      (pathname === "/api/events" && request.method === "GET") ||
-      // Events categorized list (GET)
-      (pathname === "/api/events/categorized" && request.method === "GET") ||
-      // Visit counter endpoint (browser-callable)
-      (pathname === "/api/visits" && request.method === "POST")
-    ) {
+    // Routes that accept both base path and sub-paths
+    const publicApiPrefixes = [
+      "/api/regions",
+      "/api/categories",
+      "/api/cities",
+      "/api/news",
+      "/api/places",
+    ];
+
+    // Routes that require exact match (not covered by prefix patterns)
+    const publicApiExactPaths = [
+      "/api/promotions/config",
+      "/api/promotions/price-preview",
+      "/api/leads/restaurant",
+      "/api/stripe/checkout",
+      "/api/cloudinary/sign",
+    ];
+
+    const isPublicApiRequest =
+      // Prefix-based routes (base path or any sub-path)
+      publicApiPrefixes.some(
+        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+      ) ||
+      // Exact match routes
+      publicApiExactPaths.includes(pathname) ||
+      // Event routes (GET only)
+      (pathname.startsWith("/api/events") && request.method === "GET") ||
+      // Visit counter endpoint (POST only)
+      (pathname === "/api/visits" && request.method === "POST");
+
+    if (isPublicApiRequest) {
       // Special case: visits endpoint should receive/stamp visitor id
       if (pathname === "/api/visits" && request.method === "POST") {
         const apiReqHeaders = new Headers(request.headers);
         const cookieVisitor = request.cookies.get("visitor_id")?.value;
-        const visitorId = cookieVisitor || crypto.randomUUID().replace(/-/g, "");
+        const visitorId =
+          cookieVisitor || crypto.randomUUID().replace(/-/g, "");
         apiReqHeaders.set("x-visitor-id", visitorId);
-        const response = NextResponse.next({ request: { headers: apiReqHeaders } });
+        const response = NextResponse.next({
+          request: { headers: apiReqHeaders },
+        });
         if (!cookieVisitor) {
           response.cookies.set("visitor_id", visitorId, {
             path: "/",
@@ -159,7 +159,10 @@ export default async function proxy(request: NextRequest) {
   if (pathname === "/sw.js") {
     const response = NextResponse.next();
     // Avoid no-store here so bfcache isn't blocked by this request
-    response.headers.set("Cache-Control", "no-cache, max-age=0, must-revalidate");
+    response.headers.set(
+      "Cache-Control",
+      "no-cache, max-age=0, must-revalidate"
+    );
     response.headers.set("Service-Worker-Allowed", "/");
     return response;
   }

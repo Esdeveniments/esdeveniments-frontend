@@ -21,7 +21,8 @@ export async function fetchPlacesAggregatedExternal(): Promise<PlaceResponseDTO[
         const response = await fetchWithHmac(endpoint);
         if (!response.ok) return [] as PlaceResponseDTO[];
         return (await response.json()) as PlaceResponseDTO[];
-      } catch {
+      } catch (error) {
+        console.error(`Error fetching from ${endpoint}:`, error);
         return [] as PlaceResponseDTO[];
       }
     })

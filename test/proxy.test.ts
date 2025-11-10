@@ -418,6 +418,45 @@ describe("proxy", () => {
 
       expect(NextResponse.next).toHaveBeenCalled();
     });
+
+    it("injects x-visitor-id and sets cookie for /api/visits POST when missing", async () => {
+      // Prepare a NextResponse.next that captures cookies.set calls
+      const cookieCalls: Array<{ name: string; value: string; options: any }> = [];
+      const mockResponse = {
+        status: 200,
+        headers: new Headers(),
+        cookies: {
+          set: (name: string, value: string, options: any) => {
+            cookieCalls.push({ name, value, options });
+          },
+        },
+        text: () => Promise.resolve(""),
+      } as unknown as NextResponse;
+      (NextResponse.next as unknown as any).mockReturnValue(mockResponse);
+
+      // No visitor cookie present
+      const mockRequest = {
+        nextUrl: { pathname: "/api/visits", search: "" },
+        headers: new Headers(),
+        cookies: { get: vi.fn().mockReturnValue(undefined) },
+        method: "POST",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      // Ensure x-visitor-id was injected into the forwarded request headers
+      const nextArgs = (NextResponse.next as unknown as any).mock.calls[0][0];
+      const forwardedVisitorId = nextArgs.request.headers.get("x-visitor-id");
+      expect(forwardedVisitorId).toBeDefined();
+      // crypto.randomUUID() is mocked to 'test-uuid' => header should be without dashes
+      expect(forwardedVisitorId).toBe("testuuid");
+
+      // Cookie should be set when it was missing
+      expect(cookieCalls.length).toBe(1);
+      expect(cookieCalls[0].name).toBe("visitor_id");
+      expect(cookieCalls[0].value).toBe("testuuid");
+      expect(cookieCalls[0].options.path).toBe("/");
+    });
   });
 
   describe("CSP and security headers", () => {
