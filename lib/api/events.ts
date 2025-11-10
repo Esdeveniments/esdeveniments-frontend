@@ -1,7 +1,11 @@
 import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
-import { parseEventDetail } from "@lib/validation/event";
+import {
+  parseEventDetail,
+  parsePagedEvents,
+  parseCategorizedEvents,
+} from "@lib/validation/event";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -25,8 +29,19 @@ export async function fetchEvents(
       next: { revalidate: 600, tags: ["events"] },
     });
     const data = await response.json();
-
-    return data;
+    const validated = parsePagedEvents(data);
+    if (!validated) {
+      console.error("fetchEvents: validation failed, returning fallback");
+      return {
+        content: [],
+        currentPage: 0,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      };
+    }
+    return validated;
   } catch (e) {
     console.error("Error fetching events:", e);
     return {
@@ -129,10 +144,16 @@ export async function fetchCategorizedEvents(
       next: { revalidate: 3600, tags: ["events", "events:categorized"] },
     });
 
-    const data = await response.json();
-
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return data;
+    const data = await response.json();
+    const validated = parseCategorizedEvents(data);
+    if (!validated) {
+      console.error(
+        "fetchCategorizedEvents: validation failed, returning fallback"
+      );
+      return {};
+    }
+    return validated;
   } catch (e) {
     console.error("Error fetching categorized events:", e);
     return {};

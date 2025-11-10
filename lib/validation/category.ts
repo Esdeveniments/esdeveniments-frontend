@@ -8,9 +8,7 @@ import {
   CategorySummaryResponseDTOSchema,
 } from "./event";
 
-// More lenient schema for events in category details
-// The API may return events with slight variations, so we use passthrough
-// to allow extra fields and be more forgiving of missing optional fields
+// Events in category details use the standard event summary schema
 const CategoryEventSchema = EventSummaryResponseDTOSchema;
 
 export const CategorySummaryArraySchema = z.array(
@@ -49,7 +47,7 @@ export function parseCategoryDetail(
     );
     return null;
   }
+  // Type assertion needed due to passthrough() allowing extra fields
+  // that may not match the exact TypeScript type
   return result.data as CategoryDetailResponseDTO;
 }
-
-

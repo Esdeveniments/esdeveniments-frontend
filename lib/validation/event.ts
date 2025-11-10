@@ -1,5 +1,10 @@
 import { z } from "zod";
-import type { EventDetailResponseDTO } from "types/api/event";
+import type {
+  EventDetailResponseDTO,
+  EventSummaryResponseDTO,
+  PagedResponseDTO,
+  CategorizedEvents,
+} from "types/api/event";
 
 // --- Summary DTOs needed for event payload validation ---
 const EventTypeEnum = z.enum(["FREE", "PAID"]);
@@ -120,4 +125,52 @@ export function parseEventDetail(
     return null;
   }
   return result.data as EventDetailResponseDTO;
+}
+
+// Paged response schema for events
+export const PagedEventResponseDTOSchema = z.object({
+  content: z.array(EventSummaryResponseDTOSchema),
+  currentPage: z.number(),
+  pageSize: z.number(),
+  totalElements: z.number(),
+  totalPages: z.number(),
+  last: z.boolean(),
+});
+
+export function parsePagedEvents(
+  input: unknown
+): PagedResponseDTO<EventSummaryResponseDTO> | null {
+  const result = PagedEventResponseDTOSchema.safeParse(input);
+  if (!result.success) {
+    console.error(
+      "parsePagedEvents: invalid paged events payload",
+      result.error
+    );
+    return null;
+  }
+  // Type assertion needed due to passthrough() allowing extra fields
+  // that may not match the exact TypeScript type
+  return result.data as PagedResponseDTO<EventSummaryResponseDTO>;
+}
+
+// Categorized events schema
+export const CategorizedEventsSchema = z.record(
+  z.string(),
+  z.array(EventSummaryResponseDTOSchema)
+);
+
+export function parseCategorizedEvents(
+  input: unknown
+): CategorizedEvents | null {
+  const result = CategorizedEventsSchema.safeParse(input);
+  if (!result.success) {
+    console.error(
+      "parseCategorizedEvents: invalid categorized events payload",
+      result.error
+    );
+    return null;
+  }
+  // Type assertion needed due to passthrough() allowing extra fields
+  // that may not match the exact TypeScript type
+  return result.data as CategorizedEvents;
 }

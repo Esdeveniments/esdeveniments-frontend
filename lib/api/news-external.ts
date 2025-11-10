@@ -5,15 +5,10 @@ import type {
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
-
-export interface FetchNewsParamsExternal {
-  page?: number;
-  size?: number;
-  place?: string;
-}
+import type { FetchNewsParams } from "./news";
 
 export async function fetchNewsExternal(
-  params: FetchNewsParamsExternal
+  params: FetchNewsParams
 ): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) {
