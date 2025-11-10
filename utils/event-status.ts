@@ -24,10 +24,14 @@ export function computeTemporalStatus(
   // Helper to construct a Date from date and time strings
   const buildDateTime = (date: string, time?: string | null): Date => {
     if (time && time.trim().length > 0) {
-      // Combine date and time: "2025-11-08" + "10:00" -> "2025-11-08T10:00"
+      // Combine date and time as local time: "2025-11-08" + "10:00" -> local "2025-11-08T10:00"
       return new Date(`${date}T${time}`);
     }
-    // No time provided, default to start of day (midnight)
+    // If date is a bare date (YYYY-MM-DD), parse as local midnight.
+    // Otherwise, delegate to Date parsing (handles full ISO with timezone/Z).
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return new Date(`${date}T00:00`);
+    }
     return new Date(date);
   };
 

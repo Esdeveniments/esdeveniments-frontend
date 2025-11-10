@@ -186,7 +186,7 @@ export default function DatePickerComponent({
             }
             maxTime={
               startDate.toDateString() === endDate.toDateString()
-                ? setSeconds(setMinutes(setHours(new Date(), 23), 59), 59)
+                ? setSeconds(setMinutes(setHours(endDate, 23), 59), 59)
                 : undefined
             }
             required={required}
