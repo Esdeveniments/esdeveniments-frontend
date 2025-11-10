@@ -66,12 +66,12 @@ export async function fetchNewsBySlugExternal(
     const res = await fetchWithHmac(`${api}/news/${slug}`);
     if (res.status === 404) return null;
     if (!res.ok) {
-      console.error(`fetchNewsBySlugExternal(${slug}): HTTP ${res.status}`);
+      console.error("fetchNewsBySlugExternal:", slug, "HTTP", res.status);
       return null;
     }
     return (await res.json()) as NewsDetailResponseDTO;
   } catch (error) {
-    console.error(`fetchNewsBySlugExternal(${slug}): failed`, error);
+    console.error("fetchNewsBySlugExternal:", slug, "failed", error);
     return null;
   }
 }

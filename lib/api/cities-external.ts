@@ -27,13 +27,13 @@ export async function fetchCityByIdExternal(
   try {
     const res = await fetchWithHmac(`${api}/places/cities/${id}`);
     if (!res.ok) {
-      console.error(`fetchCityByIdExternal(${id}): HTTP ${res.status}`);
+      console.error("fetchCityByIdExternal:", id, "HTTP", res.status);
       return null;
     }
     const json = await res.json();
     return parseCity(json);
   } catch (error) {
-    console.error(`fetchCityByIdExternal(${id}): failed`, error);
+    console.error("fetchCityByIdExternal:", id, "failed", error);
     return null;
   }
 }

@@ -30,13 +30,13 @@ export async function fetchCategoryByIdExternal(
   try {
     const res = await fetchWithHmac(`${api}/categories/${id}`);
     if (!res.ok) {
-      console.error(`fetchCategoryByIdExternal(${id}): HTTP ${res.status}`);
+      console.error("fetchCategoryByIdExternal:", id, "HTTP", res.status);
       return null;
     }
     const json = await res.json();
     return parseCategoryDetail(json);
   } catch (error) {
-    console.error(`fetchCategoryByIdExternal(${id}): failed`, error);
+    console.error("fetchCategoryByIdExternal:", id, "failed", error);
     return null;
   }
 }

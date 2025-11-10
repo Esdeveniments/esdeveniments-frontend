@@ -46,7 +46,7 @@ export async function fetchRegionByIdExternal(
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
-    console.error(`fetchRegionByIdExternal(${id}): failed`, error);
+    console.error("fetchRegionByIdExternal:", id, "failed", error);
     return null;
   }
 }
