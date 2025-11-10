@@ -19,7 +19,11 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { buildCanonicalUrl } from "@utils/url-filters";
+import {
+  parseFiltersFromUrl,
+  getRedirectUrl,
+  urlToFilterState,
+} from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -89,28 +93,35 @@ export default async function Page({
     }
   });
 
-  const category =
-    typeof search.category === "string" ? search.category : undefined;
-  const date = typeof search.date === "string" ? search.date : undefined;
-  const distance =
-    typeof search.distance === "string" ? search.distance : undefined;
-  const lat = typeof search.lat === "string" ? search.lat : undefined;
-  const lon = typeof search.lon === "string" ? search.lon : undefined;
-  const query = typeof search.search === "string" ? search.search : undefined;
-
-  if (category || date) {
-    const canonicalUrl = buildCanonicalUrl({
-      place,
-      byDate: date || "tots",
-      category: category || "tots",
-      searchTerm: query || "",
-      distance: distance ? parseInt(distance) : 50,
-      lat: lat ? parseFloat(lat) : undefined,
-      lon: lon ? parseFloat(lon) : undefined,
-    });
-
-    redirect(canonicalUrl);
+  // Fetch dynamic categories BEFORE parsing URL to validate category slugs
+  let categories: CategorySummaryResponseDTO[] = [];
+  try {
+    categories = await fetchCategories();
+  } catch (error) {
+    // Continue without categories - will use static fallbacks
+    console.error("Error fetching categories:", error);
+    categories = []; // Fallback to empty array if fetch fails
   }
+
+  // Parse filters from URL with dynamic categories for validation
+  const parsed = parseFiltersFromUrl(
+    { place },
+    urlSearchParams,
+    categories
+  );
+
+  // Check if redirect is needed for non-canonical URLs (e.g., query params for category/date)
+  const redirectUrl = getRedirectUrl(parsed);
+  if (redirectUrl) {
+    redirect(redirectUrl);
+  }
+
+  // Convert to FilterState for compatibility
+  const filters = urlToFilterState(parsed);
+
+  const category = filters.category !== "tots" ? filters.category : undefined;
+  const date = filters.byDate !== "tots" ? filters.byDate : undefined;
+  const query = filters.searchTerm || undefined;
 
   const fetchParams: FetchEventsParams = {
     page: 0,
@@ -124,13 +135,13 @@ export default async function Page({
   if (category) fetchParams.category = category;
 
   // Add distance/radius filter if coordinates are provided
-  if (lat && lon) {
-    const maybeRadius = distanceToRadius(distance);
+  if (filters.lat && filters.lon) {
+    const maybeRadius = distanceToRadius(filters.distance);
     if (maybeRadius !== undefined) {
       fetchParams.radius = maybeRadius;
     }
-    fetchParams.lat = parseFloat(lat);
-    fetchParams.lon = parseFloat(lon);
+    fetchParams.lat = filters.lat;
+    fetchParams.lon = filters.lon;
   }
 
   // Add search query if provided
@@ -184,14 +195,8 @@ export default async function Page({
   const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 
-  // Fetch categories and check news in parallel for better performance
-  const [categories, hasNews] = await Promise.all([
-    fetchCategories().catch((error) => {
-      console.error("Error fetching categories:", error);
-      return [] as CategorySummaryResponseDTO[];
-    }),
-    hasNewsForPlace(place),
-  ]);
+  // Check news (categories already fetched above)
+  const hasNews = await hasNewsForPlace(place);
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
 

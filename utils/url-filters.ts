@@ -105,11 +105,16 @@ export function parseFiltersFromUrl(
   let date: string;
   let category: string;
 
+  // Check query params for category and date if not in segments
+  const queryCategory = searchParams.get("category");
+  const queryDate = searchParams.get("date");
+
   if (segmentCount === 1) {
-    // /catalunya
+    // /catalunya or /catalunya?category=teatre&date=tots
     place = segments.place || "catalunya";
-    date = "tots";
-    category = "tots";
+    // Use query params if present, otherwise defaults
+    date = queryDate || "tots";
+    category = queryCategory || "tots";
   } else if (segmentCount === 2) {
     // /catalunya/something - determine if 'something' is date or category
     place = segments.place || "catalunya";
@@ -118,17 +123,18 @@ export function parseFiltersFromUrl(
     if (isValidDateSlug(secondSegment)) {
       // It's a date: /catalunya/avui
       date = secondSegment;
-      category = "tots";
+      // Use query category if present, otherwise default
+      category = queryCategory || "tots";
     } else {
       // It's a category: /catalunya/festivals
-      date = "tots";
+      date = queryDate || "tots";
       category = secondSegment;
     }
   } else {
     // 3 segments: /catalunya/avui/festivals (explicit structure)
     place = segments.place || "catalunya";
-    date = segments.date || "tots";
-    category = segments.category || "tots";
+    date = segments.date || queryDate || "tots";
+    category = segments.category || queryCategory || "tots";
   }
 
   // Validate and normalize segments
@@ -138,11 +144,14 @@ export function parseFiltersFromUrl(
     : "tots";
 
   // Determine if this is a canonical URL structure
+  // Non-canonical if category/date are in query params but not in segments
+  const hasQueryCategoryOrDate = queryCategory || queryDate;
   const isCanonical =
-    segmentCount <= 2 ||
+    (segmentCount <= 2 && !hasQueryCategoryOrDate) ||
     (!!(segments.place && segments.date && segments.category) &&
       isValidDateSlug(date) &&
-      isValidCategorySlug(category, dynamicCategories));
+      isValidCategorySlug(category, dynamicCategories) &&
+      !hasQueryCategoryOrDate);
 
   return {
     segments: {

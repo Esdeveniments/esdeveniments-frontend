@@ -115,6 +115,120 @@ describe("url-filters: canonical building and parsing", () => {
     // invalid date/category should normalize to tots/tots -> /tarragona
     expect(redirect).toBe("/tarragona");
   });
+
+  it("reads category from query params when only place segment exists", () => {
+    const dynamicCategories = [
+      { id: 1, name: "Teatre", slug: "teatre" },
+    ];
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("category=teatre"),
+      dynamicCategories
+    );
+    expect(parsed.segments).toEqual({
+      place: "barcelona",
+      date: "tots",
+      category: "teatre",
+    });
+    expect(parsed.isCanonical).toBe(false);
+  });
+
+  it("reads date from query params when only place segment exists", () => {
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("date=avui")
+    );
+    expect(parsed.segments).toEqual({
+      place: "barcelona",
+      date: "avui",
+      category: "tots",
+    });
+    expect(parsed.isCanonical).toBe(false);
+  });
+
+  it("reads both category and date from query params", () => {
+    const dynamicCategories = [
+      { id: 1, name: "Teatre", slug: "teatre" },
+    ];
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("category=teatre&date=tots"),
+      dynamicCategories
+    );
+    expect(parsed.segments).toEqual({
+      place: "barcelona",
+      date: "tots",
+      category: "teatre",
+    });
+    expect(parsed.isCanonical).toBe(false);
+  });
+
+  it("marks URL as non-canonical when category/date are in query params", () => {
+    const withCategory = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("category=concerts")
+    );
+    expect(withCategory.isCanonical).toBe(false);
+
+    const withDate = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("date=avui")
+    );
+    expect(withDate.isCanonical).toBe(false);
+
+    const withBoth = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("category=concerts&date=avui")
+    );
+    expect(withBoth.isCanonical).toBe(false);
+  });
+
+  it("getRedirectUrl redirects query params to canonical path", () => {
+    // Test case from E2E: /barcelona?category=teatre&date=tots -> /barcelona/teatre
+    const dynamicCategories = [
+      { id: 1, name: "Teatre", slug: "teatre" },
+    ];
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("category=teatre&date=tots"),
+      dynamicCategories
+    );
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona/teatre");
+  });
+
+  it("preserves search query params when redirecting from query params", () => {
+    const dynamicCategories = [
+      { id: 1, name: "Teatre", slug: "teatre" },
+    ];
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("category=teatre&date=tots&search=castellers"),
+      dynamicCategories
+    );
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona/teatre?search=castellers");
+  });
+
+  it("handles query params with 2-segment URLs", () => {
+    // /barcelona/teatre?date=avui should redirect to /barcelona/avui/teatre
+    const dynamicCategories = [
+      { id: 1, name: "Teatre", slug: "teatre" },
+    ];
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", category: "teatre" },
+      new URLSearchParams("date=avui"),
+      dynamicCategories
+    );
+    expect(parsed.segments).toEqual({
+      place: "barcelona",
+      date: "avui",
+      category: "teatre",
+    });
+    expect(parsed.isCanonical).toBe(false);
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona/avui/teatre");
+  });
 });
 
 describe("url-filters: category slug validation", () => {
