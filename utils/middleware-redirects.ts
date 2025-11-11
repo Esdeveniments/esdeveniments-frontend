@@ -58,14 +58,13 @@ export function handleCanonicalRedirects(
 
     // Determine date: from segment (if not tots) or query param
     let date: string | null = null;
-    if (hasTotsInSegments && segmentCount === 3) {
-      // /place/tots/category - date is "tots" (omitted)
-      date = null;
-    } else if (segmentCount === 2 && segments[1] !== "tots") {
+    if (segmentCount === 2 && segments[1] !== "tots") {
       // /place/date - check if it's a valid date
       const secondSegment = segments[1];
       date = isValidDateSlug(secondSegment) ? secondSegment : null;
-    } else if (
+    }
+    if (
+      !date &&
       queryDate &&
       isValidDateSlug(queryDate) &&
       queryDate !== "tots"

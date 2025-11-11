@@ -125,7 +125,12 @@ export const generateJsonData = (
   // For cultural events, organizer and performer are often the same entity
   const getOrganizerName = (): string => {
     // Use location (venue name) as primary fallback, then city name, then default
-    return location || city?.name || "Esdeveniments Catalunya";
+    // Explicitly filter out empty/whitespace-only strings to ensure we always return a meaningful name
+    const locationName = location.trim();
+    const cityName = city?.name?.trim();
+    if (locationName.length > 0) return locationName;
+    if (cityName && cityName.length > 0) return cityName;
+    return "Esdeveniments Catalunya";
   };
 
   // Dynamic eventStatus (improves accuracy for past/ongoing events)
