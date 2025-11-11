@@ -206,7 +206,9 @@ export default async function EventPage({
         id={event.id ? String(event.id) : undefined}
         type="application/ld+json"
         nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonData).replace(/</g, "\\u003c"),
+        }}
       />
       {/* Related Events JSON-LD */}
       {relatedEventsJsonData && (
@@ -215,7 +217,7 @@ export default async function EventPage({
           type="application/ld+json"
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(relatedEventsJsonData),
+            __html: JSON.stringify(relatedEventsJsonData).replace(/</g, "\\u003c"),
           }}
         />
       )}
@@ -225,7 +227,7 @@ export default async function EventPage({
         type="application/ld+json"
         nonce={nonce}
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd),
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
         }}
       />
       <div className="w-full bg-background pb-10">
@@ -365,7 +367,9 @@ export default async function EventPage({
           id={`faq-${event.id}`}
           type="application/ld+json"
           nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c"),
+          }}
         />
       )}
     </>

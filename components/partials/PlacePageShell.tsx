@@ -1,4 +1,3 @@
-import Script from "next/script";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import type { PageData, PlaceTypeAndLabel, JsonLdScript } from "types/common";
@@ -37,13 +36,14 @@ export default function PlacePageShell({
   return (
     <>
       {scripts.map((s) => (
-        <Script
+        <script
           key={s.id}
           id={s.id}
           type="application/ld+json"
-          strategy="afterInteractive"
           nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(s.data) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(s.data).replace(/</g, "\\u003c"),
+          }}
         />
       ))}
 

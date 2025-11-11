@@ -11,7 +11,7 @@ import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import JsonLd from "@components/partials/JsonLd";
+import { headers } from "next/headers";
 
 export const revalidate = 60;
 
@@ -26,6 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
 
   // Fetch the most recent news per hub
   const hubResults = await Promise.all(
@@ -84,11 +86,32 @@ export default async function Page() {
 
   return (
     <div className="container flex-col justify-center items-center mt-8">
-      <JsonLd id="news-list-webpage-breadcrumbs" data={webPageSchema} />
+      <script
+        id="news-list-webpage-breadcrumbs"
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
+        }}
+      />
       {breadcrumbListSchema && (
-        <JsonLd id="news-list-breadcrumbs" data={breadcrumbListSchema} />
+        <script
+          id="news-list-breadcrumbs"
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
+          }}
+        />
       )}
-      <JsonLd id="news-list-itemlist" data={itemListSchema} />
+      <script
+        id="news-list-itemlist"
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
+        }}
+      />
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
       <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.

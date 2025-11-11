@@ -11,7 +11,7 @@ import Link from "next/link";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import Head from "next/head";
-import JsonLd from "@components/partials/JsonLd";
+import { headers } from "next/headers";
 
 export const revalidate = 60;
 
@@ -52,6 +52,8 @@ export default async function Page({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { place } = await params;
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") || "";
   const query = (await (searchParams || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };
@@ -135,11 +137,32 @@ export default async function Page({
           />
         )}
       </Head>
-      <JsonLd id="news-place-webpage-breadcrumbs" data={webPageSchema} />
+      <script
+        id="news-place-webpage-breadcrumbs"
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
+        }}
+      />
       {breadcrumbListSchema && (
-        <JsonLd id="news-place-breadcrumbs" data={breadcrumbListSchema} />
+        <script
+          id="news-place-breadcrumbs"
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
+          }}
+        />
       )}
-      <JsonLd id="news-place-itemlist" data={newsItemList} />
+      <script
+        id="news-place-itemlist"
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(newsItemList).replace(/</g, "\\u003c"),
+        }}
+      />
       <nav
         aria-label="Breadcrumb"
         className="mb-3 w-full px-2 lg:px-0 text-sm text-foreground-strong/70"

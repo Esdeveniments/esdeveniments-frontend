@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { headers } from "next/headers";
 import Link from "next/link";
 import {
@@ -127,35 +126,34 @@ export default async function Page({
     <>
       {/* Individual Events JSON-LD - kept for backward compatibility */}
       {jsonData.length > 0 && (
-        <Script
+        <script
           id={`${town}-${month}-${year}-events`}
           type="application/ld+json"
-          strategy="afterInteractive"
           nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonData).replace(/</g, "\\u003c"),
+          }}
         />
       )}
 
       {/* Enhanced Collection Page Schema */}
-      <Script
+      <script
         id={`${town}-${month}-${year}-collection`}
         type="application/ld+json"
-        strategy="afterInteractive"
         nonce={nonce}
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(collectionPageSchema),
+          __html: JSON.stringify(collectionPageSchema).replace(/</g, "\\u003c"),
         }}
       />
 
       {/* Enhanced Events ItemList Schema */}
       {eventsItemList && (
-        <Script
+        <script
           id={`${town}-${month}-${year}-itemlist`}
           type="application/ld+json"
-          strategy="afterInteractive"
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(eventsItemList),
+            __html: JSON.stringify(eventsItemList).replace(/</g, "\\u003c"),
           }}
         />
       )}

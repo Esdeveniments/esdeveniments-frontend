@@ -3,7 +3,6 @@ import { fetchRegions } from "@lib/api/regions";
 import { fetchCities } from "@lib/api/cities";
 import { headers } from "next/headers";
 import Link from "next/link";
-import Script from "next/script";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import {
@@ -77,22 +76,20 @@ export default async function Page() {
   return (
     <>
       {/* Structured Data */}
-      <Script
+      <script
         id="webpage-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
         nonce={nonce}
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema),
+          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
         }}
       />
-      <Script
+      <script
         id="site-navigation-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
         nonce={nonce}
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(siteNavigationSchema),
+          __html: JSON.stringify(siteNavigationSchema).replace(/</g, "\\u003c"),
         }}
       />
 

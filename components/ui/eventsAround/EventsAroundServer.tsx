@@ -1,5 +1,4 @@
 import { memo, FC } from "react";
-import Script from "next/script";
 import Link from "next/link";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
@@ -129,7 +128,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     return (
       <>
         {jsonLdData && (
-          <Script
+          <script
             id={
               jsonLdId ||
               (title
@@ -138,7 +137,9 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
             }
             type="application/ld+json"
             nonce={nonce}
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(jsonLdData).replace(/</g, "\\u003c"),
+            }}
           />
         )}
         <HorizontalScroll
@@ -172,7 +173,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   return (
     <>
       {jsonLdData && (
-        <Script
+        <script
           id={
             jsonLdId ||
             (title
@@ -181,7 +182,9 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           }
           type="application/ld+json"
           nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLdData).replace(/</g, "\\u003c"),
+          }}
         />
       )}
       <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">

@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import type { Metadata } from "next";
-import Script from "next/script";
 import Link from "next/link";
 import DOMPurify from "isomorphic-dompurify";
 import { getNewsBySlug } from "@lib/api/news";
@@ -210,19 +209,21 @@ export default async function Page({
         )}
       </div>
 
-      <Script
+      <script
         id="news-article-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
         nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(articleSchema).replace(/</g, "\\u003c"),
+        }}
       />
-      <Script
+      <script
         id="news-webpage-breadcrumbs"
         type="application/ld+json"
-        strategy="afterInteractive"
         nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
+        }}
       />
     </div>
   );

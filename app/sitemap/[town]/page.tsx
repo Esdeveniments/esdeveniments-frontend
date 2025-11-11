@@ -3,7 +3,6 @@ import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 import { headers } from "next/headers";
 import Link from "next/link";
-import Script from "next/script";
 import { getPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
 import { formatCatalanA } from "@utils/helpers";
@@ -82,14 +81,13 @@ export default async function Page({
   return (
     <>
       {/* Structured Data */}
-      <Script
+      <script
         id="collectionpage-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(collectionPageSchema),
-        }}
         nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(collectionPageSchema).replace(/</g, "\\u003c"),
+        }}
       />
 
       <SitemapLayout>
