@@ -11,9 +11,7 @@ import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { headers } from "next/headers";
-
-export const revalidate = 60;
+export const revalidate = 600;
 
 export async function generateMetadata(): Promise<Metadata> {
   // Basic SEO for the news listing page
@@ -26,8 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
+  // No nonce required with relaxed CSP
 
   // Fetch the most recent news per hub
   const hubResults = await Promise.all(
@@ -89,7 +86,6 @@ export default async function Page() {
       <script
         id="news-list-webpage-breadcrumbs"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
         }}
@@ -98,16 +94,17 @@ export default async function Page() {
         <script
           id="news-list-breadcrumbs"
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
+            __html: JSON.stringify(breadcrumbListSchema).replace(
+              /</g,
+              "\\u003c"
+            ),
           }}
         />
       )}
       <script
         id="news-list-itemlist"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
         }}

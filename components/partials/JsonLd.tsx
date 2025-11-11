@@ -1,7 +1,6 @@
 "use client";
 
 import Script from "next/script";
-import { useNonce } from "./useNonce";
 
 export default function JsonLd({
   id,
@@ -12,7 +11,6 @@ export default function JsonLd({
   data?: unknown;
   dangerouslyRaw?: string;
 }) {
-  const nonce = useNonce();
   const __html =
     typeof dangerouslyRaw === "string" ? dangerouslyRaw : JSON.stringify(data ?? {});
   return (
@@ -20,7 +18,6 @@ export default function JsonLd({
       id={id}
       type="application/ld+json"
       strategy="afterInteractive"
-      nonce={nonce}
       dangerouslySetInnerHTML={{ __html }}
     />
   );

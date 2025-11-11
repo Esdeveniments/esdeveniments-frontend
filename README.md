@@ -55,7 +55,7 @@ yarn build && yarn start
 ## Security & API
 
 - Middleware enforces HMAC on most `/api/*` routes (`x-hmac`, `x-timestamp`); avoid signing in the browser. Use server routes or allowlisted endpoints.
-- CSP nonce is injected by middleware; pass to `<Script nonce>` (see `app/layout.tsx`, `app/GoogleScripts.tsx`).
+- CSP: Relaxed policy with host allowlisting for Google Analytics, Ads, and trusted domains. Inline scripts are allowed via `'unsafe-inline'` to enable ISR/PPR caching. See `proxy.ts` for full CSP configuration.
 
 ## Deploy
 

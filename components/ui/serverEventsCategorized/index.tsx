@@ -18,7 +18,6 @@ function ServerEventsCategorized({
   categorizedEvents,
   pageData,
   categories,
-  nonce = "",
 }: ServerEventsCategorizedProps): ReactElement {
   // Filter out ads before processing
   const filteredCategorizedEvents = Object.entries(categorizedEvents).reduce(
@@ -164,15 +163,14 @@ function ServerEventsCategorized({
                   </nav>
 
                   {/* Events Horizontal Scroll */}
-                  <EventsAroundServer
-                    events={events as EventSummaryResponseDTO[]}
-                    layout="horizontal"
-                    usePriority={shouldUsePriority}
-                    showJsonLd={true}
-                    title={categoryName}
-                    jsonLdId={`category-events-${categorySlug}`}
-                    nonce={nonce}
-                  />
+          <EventsAroundServer
+            events={events as EventSummaryResponseDTO[]}
+            layout="horizontal"
+            usePriority={shouldUsePriority}
+            showJsonLd={true}
+            title={categoryName}
+            jsonLdId={`category-events-${categorySlug}`}
+          />
 
                   {/* Ad placement between category sections */}
                   {adPositions.has(index) && (

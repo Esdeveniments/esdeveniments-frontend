@@ -18,15 +18,7 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
 
-// Google Scripts Props
-export interface GoogleScriptsProps {
-  nonce: string;
-}
-
-// WebsiteSchema Props
-export interface WebsiteSchemaProps {
-  nonce: string;
-}
+// Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
 export interface SelectComponentProps {
   id: string;
@@ -258,7 +250,6 @@ export interface ServerEventsCategorizedProps {
   categorizedEvents: Record<string, ListEvent[]>;
   pageData?: PageData;
   categories?: CategorySummaryResponseDTO[];
-  nonce?: string;
 }
 
 // Location Discovery Widget Props

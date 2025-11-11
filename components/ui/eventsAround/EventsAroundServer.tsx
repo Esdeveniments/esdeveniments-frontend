@@ -50,7 +50,6 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   showJsonLd = false,
   jsonLdId,
   title,
-  nonce = "",
 }) => {
   // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
   // Keep first occurrence order-stable. Key used: id fallback to slug.
@@ -136,7 +135,6 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                 : "events-around")
             }
             type="application/ld+json"
-            nonce={nonce}
             dangerouslySetInnerHTML={{
               __html: JSON.stringify(jsonLdData).replace(/</g, "\\u003c"),
             }}
@@ -181,7 +179,6 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
               : "events-around")
           }
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(jsonLdData).replace(/</g, "\\u003c"),
           }}

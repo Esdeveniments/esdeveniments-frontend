@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { fetchPlaces } from "@lib/api/places";
@@ -27,6 +26,8 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { highPrioritySlugs } from "@utils/priority-places";
 import { VALID_DATES } from "@lib/dates";
+
+// page-level ISR not set here; fetch-level caching applies
 
 export async function generateMetadata({
   params,
@@ -132,8 +133,6 @@ export default async function ByDatePage({
   const { place, byDate } = await params;
   const search = await searchParams;
 
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   validatePlaceOrThrow(place);
 
@@ -323,7 +322,6 @@ export default async function ByDatePage({
 
   return (
     <PlacePageShell
-      nonce={nonce}
       scripts={[
         { id: "webpage-schema", data: webPageSchema },
         ...(collectionSchema

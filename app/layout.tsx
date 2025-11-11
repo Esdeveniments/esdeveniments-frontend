@@ -1,11 +1,9 @@
 import "../styles/globals.css";
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import GoogleScripts from "./GoogleScripts";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
-import { NonceProvider } from "@components/partials/NonceContext";
 // Removed custom fonts - now using system font stack
 // import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";
@@ -36,9 +34,6 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // Read the nonce from the middleware headers
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
   const apiOrigin = getApiOrigin();
 
   return (
@@ -52,11 +47,9 @@ export default async function RootLayout({
         )}
       </head>
       <body>
-        <NonceProvider nonce={nonce}>
-          <WebsiteSchema nonce={nonce} />
-          <GoogleScripts nonce={nonce} />
-          <BaseLayout>{children}</BaseLayout>
-        </NonceProvider>
+        <WebsiteSchema />
+        <GoogleScripts />
+        <BaseLayout>{children}</BaseLayout>
       </body>
     </html>
   );

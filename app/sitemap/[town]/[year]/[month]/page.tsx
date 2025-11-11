@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+// No headers/nonce needed with relaxed CSP
 import Link from "next/link";
 import {
   generateJsonData,
@@ -18,6 +18,8 @@ import {
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
+
+export const revalidate = 86400;
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -51,9 +53,6 @@ export default async function Page({
 }) {
   const { town, year, month } = await params;
   if (!town || !year || !month) return null;
-
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   const { from, until } = getHistoricDates(month, Number(year));
 
@@ -129,7 +128,6 @@ export default async function Page({
         <script
           id={`${town}-${month}-${year}-events`}
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(jsonData).replace(/</g, "\\u003c"),
           }}
@@ -140,7 +138,6 @@ export default async function Page({
       <script
         id={`${town}-${month}-${year}-collection`}
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(collectionPageSchema).replace(/</g, "\\u003c"),
         }}
@@ -151,7 +148,6 @@ export default async function Page({
         <script
           id={`${town}-${month}-${year}-itemlist`}
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(eventsItemList).replace(/</g, "\\u003c"),
           }}

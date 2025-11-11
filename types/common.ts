@@ -254,7 +254,6 @@ export type EventsAroundLayout = "compact" | "horizontal" | "cards";
 export interface EventsAroundProps {
   events: EventSummaryResponseDTO[];
   title?: string;
-  nonce?: string;
 }
 
 export interface EventsAroundServerProps extends EventsAroundProps {
@@ -264,7 +263,6 @@ export interface EventsAroundServerProps extends EventsAroundProps {
   showJsonLd?: boolean;
   jsonLdId?: string;
   analyticsCategory?: string;
-  nonce?: string;
 }
 
 export interface BaseLayoutProps {

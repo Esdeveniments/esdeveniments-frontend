@@ -1,7 +1,7 @@
 import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
-import { headers } from "next/headers";
+// No headers/nonce needed with relaxed CSP
 import Link from "next/link";
 import { getPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
@@ -11,6 +11,8 @@ import {
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
+
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,
@@ -37,10 +39,6 @@ export default async function Page({
   params: Promise<TownStaticPathParams>;
 }) {
   const { town } = await params;
-
-  // Read the nonce from the middleware headers
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   const years: number[] = getAllYears();
   const place = await getPlaceBySlug(town);
@@ -84,7 +82,6 @@ export default async function Page({
       <script
         id="collectionpage-schema"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(collectionPageSchema).replace(/</g, "\\u003c"),
         }}

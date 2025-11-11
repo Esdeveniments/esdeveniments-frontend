@@ -7,7 +7,6 @@ import { ShareIcon } from "@heroicons/react/outline";
 const EventsAroundSection: React.FC<EventsAroundProps> = ({
   events,
   title = "Esdeveniments relacionats",
-  nonce = "",
 }) => {
   if (!events || events.length === 0) return null;
 
@@ -29,7 +28,6 @@ const EventsAroundSection: React.FC<EventsAroundProps> = ({
           layout="compact"
           showJsonLd={false} // JSON-LD handled server-side for SEO
           title={title}
-          nonce={nonce}
         />
       </div>
     </div>

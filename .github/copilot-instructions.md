@@ -109,8 +109,9 @@ Adding a new filter:
 
 ## 11. Security & Analytics
 
-- CSP: Only nonce-based scripts allowed; no inline scripts without nonce. When adding new `<Script>` blocks or inline JSON-LD, pass `nonce` from `headers()` (layout pattern in `app/layout.tsx`). If in a page, read `const nonce = (await headers()).get('x-nonce') || ''` and pass it to all Script tags.
-- External tracking (GA, Ads, Sentry) loaded afterInteractive with nonce to satisfy CSP `'strict-dynamic'` policy.
+- CSP: Relaxed policy with host allowlisting (configured in `proxy.ts`). Allows `'unsafe-inline'` for inline scripts and JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains (googletagmanager.com, google-analytics.com, googlesyndication.com, etc.) are allowlisted in `script-src` and `script-src-elem`. No nonce required—scripts work without nonce props.
+- External tracking (GA, Ads, Sentry) loaded via Next.js `<Script>` component with `strategy="afterInteractive"`. No nonce props needed.
+- Rationale: For a cultural events site with HMAC-protected backend, relaxed CSP enables better performance (ISR/PPR) while maintaining security through host allowlisting.
 
 ## 12. Image Performance Strategy
 

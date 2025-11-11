@@ -48,7 +48,7 @@
 - `NEXT_PUBLIC_API_URL` influences the service worker (generated from `public/sw-template.js`) and tests. If it changes, re‑run prebuild/dev.
 - Sentry is configured (`sentry.*.config.ts`); set DSN only in non‑local environments.
 - Yarn 4 workspace; prefer `yarn` over `npm`.
-- CSP nonce: middleware injects `x-nonce`; pass it to `<Script nonce={...}>` (see `app/layout.tsx:28`, `app/GoogleScripts.tsx:7`).
+- CSP: Relaxed policy with host allowlisting (see `proxy.ts`). Allows `'unsafe-inline'` for inline scripts/JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains are allowlisted. No nonce required.
 
 ## Agent-Specific Instructions
 

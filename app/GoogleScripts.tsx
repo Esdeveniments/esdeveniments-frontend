@@ -1,9 +1,8 @@
 "use client";
 
 import Script from "next/script";
-import { GoogleScriptsProps } from "types/props";
 
-export default function GoogleScripts({ nonce }: GoogleScriptsProps) {
+export default function GoogleScripts() {
   return (
     <>
       {/* Google Analytics */}
@@ -11,12 +10,10 @@ export default function GoogleScripts({ nonce }: GoogleScriptsProps) {
         id="google-analytics-gtag"
         strategy="afterInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
-        nonce={nonce}
       />
       <Script
         id="google-analytics-lazy-load"
         strategy="afterInteractive"
-        nonce={nonce}
       >
         {`
           window.dataLayer = window.dataLayer || [];
@@ -33,9 +30,8 @@ export default function GoogleScripts({ nonce }: GoogleScriptsProps) {
         strategy="afterInteractive"
         crossOrigin="anonymous"
         src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADS}`}
-        nonce={nonce}
       />
-      <Script id="google-adblock" strategy="afterInteractive" nonce={nonce}>
+      <Script id="google-adblock" strategy="afterInteractive">
         {`
           (function() {
             function signalGooglefcPresent() {
@@ -58,13 +54,11 @@ export default function GoogleScripts({ nonce }: GoogleScriptsProps) {
       <Script
         src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
         strategy="afterInteractive"
-        nonce={nonce}
       />
       {/* AI Referrer Analytics */}
       <Script
         id="ai-referrer-analytics"
         strategy="afterInteractive"
-        nonce={nonce}
       >
         {`
           (function() {

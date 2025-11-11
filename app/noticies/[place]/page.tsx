@@ -11,9 +11,7 @@ import Link from "next/link";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import Head from "next/head";
-import { headers } from "next/headers";
-
-export const revalidate = 60;
+export const revalidate = 600;
 
 export async function generateMetadata({
   params,
@@ -52,8 +50,6 @@ export default async function Page({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { place } = await params;
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
   const query = (await (searchParams || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };
@@ -140,7 +136,6 @@ export default async function Page({
       <script
         id="news-place-webpage-breadcrumbs"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
         }}
@@ -149,16 +144,17 @@ export default async function Page({
         <script
           id="news-place-breadcrumbs"
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
+            __html: JSON.stringify(breadcrumbListSchema).replace(
+              /</g,
+              "\\u003c"
+            ),
           }}
         />
       )}
       <script
         id="news-place-itemlist"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(newsItemList).replace(/</g, "\\u003c"),
         }}

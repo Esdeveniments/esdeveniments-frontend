@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+// No headers/nonce needed with relaxed CSP
 import type { Metadata } from "next";
 import Link from "next/link";
 import DOMPurify from "isomorphic-dompurify";
@@ -54,10 +54,9 @@ export default async function Page({
   params: Promise<{ place: string; article: string }>;
 }) {
   const { place, article } = await params;
-  const [detail, placeType, headersList] = await Promise.all([
+  const [detail, placeType] = await Promise.all([
     getNewsBySlug(article),
     getPlaceTypeAndLabelCached(place),
-    headers(),
   ]);
 
   if (!detail) {
@@ -66,7 +65,6 @@ export default async function Page({
     return notFound();
   }
 
-  const nonce = headersList.get("x-nonce") || "";
   const plainDescription = DOMPurify.sanitize(detail.description || "", {
     ALLOWED_TAGS: [],
   });
@@ -212,7 +210,6 @@ export default async function Page({
       <script
         id="news-article-schema"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(articleSchema).replace(/</g, "\\u003c"),
         }}
@@ -220,7 +217,6 @@ export default async function Page({
       <script
         id="news-webpage-breadcrumbs"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
         }}

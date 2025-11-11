@@ -1,8 +1,7 @@
 // components/partials/WebsiteSchema.tsx
 import { siteUrl } from "@config/index";
-import { WebsiteSchemaProps } from "types/props";
 
-export default function WebsiteSchema({ nonce }: WebsiteSchemaProps) {
+export default function WebsiteSchema() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -41,7 +40,6 @@ export default function WebsiteSchema({ nonce }: WebsiteSchemaProps) {
     <script
       id="website-schema"
       type="application/ld+json"
-      nonce={nonce}
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(websiteSchema).replace(/</g, "\\u003c"),
       }}

@@ -9,15 +9,45 @@ import { isValidDateSlug } from "@lib/dates";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-function getCsp(nonce: string) {
+function getCsp() {
   const apiOrigin = getApiOrigin();
 
   const cspDirectives = {
     "default-src": ["'self'"],
     "script-src": [
       "'self'",
-      `'nonce-${nonce}'`,
-      "'strict-dynamic'",
+      // Relaxed policy: allow inline scripts and trusted third-parties
+      "'unsafe-inline'",
+      "https://www.googletagmanager.com",
+      "https://www.google-analytics.com",
+      "https://www.gstatic.com",
+      "https://pagead2.googlesyndication.com",
+      "https://*.googlesyndication.com",
+      "https://fundingchoicesmessages.google.com",
+      "https://*.adtrafficquality.google",
+      "https://*.doubleclick.net",
+      "https://*.googleadservices.com",
+      "https://*.googletagservices.com",
+      "https://*.google.com",
+      isDev ? "'unsafe-eval'" : "",
+      isDev ? "localhost:*" : "",
+      isDev ? "127.0.0.1:*" : "",
+    ],
+    // Be explicit for browsers that differentiate element/script contexts
+    "script-src-elem": [
+      "'self'",
+      "'unsafe-inline'",
+      "https://www.googletagmanager.com",
+      "https://www.google-analytics.com",
+      "https://www.gstatic.com",
+      "https://pagead2.googlesyndication.com",
+      "https://*.googlesyndication.com",
+      "https://fundingchoicesmessages.google.com",
+      "https://*.adtrafficquality.google",
+      "https://*.doubleclick.net",
+      "https://*.googleadservices.com",
+      "https://*.googletagservices.com",
+      "https://*.google.com",
       isDev ? "'unsafe-eval'" : "",
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
@@ -267,10 +297,8 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
-  const nonce = crypto.randomUUID();
-  const csp = getCsp(nonce);
+  const csp = getCsp();
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("x-pathname", pathname);
 
   // No per-page visitor id injection; handled only for /api/visits.
@@ -301,6 +329,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap\\.xml|ads.txt|static|styles).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap\\.xml|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
   ],
 };

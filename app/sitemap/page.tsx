@@ -1,7 +1,7 @@
 import { siteUrl } from "@config/index";
 import { fetchRegions } from "@lib/api/regions";
 import { fetchCities } from "@lib/api/cities";
-import { headers } from "next/headers";
+// No headers/nonce needed with relaxed CSP
 import Link from "next/link";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
@@ -11,6 +11,8 @@ import {
   generateSiteNavigationElementSchema,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
+
+export const revalidate = 86400;
 
 export const metadata = buildPageMeta({
   title: "Arxiu. Descobreix tot el que passa a Catalunya - Esdeveniments.cat",
@@ -30,10 +32,6 @@ async function getData(): Promise<{
 
 export default async function Page() {
   const { regions, cities } = await getData();
-
-  // Read the nonce from the middleware headers
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   // Generate structured data for the sitemap
   const breadcrumbs = [
@@ -79,7 +77,6 @@ export default async function Page() {
       <script
         id="webpage-schema"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
         }}
@@ -87,7 +84,6 @@ export default async function Page() {
       <script
         id="site-navigation-schema"
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(siteNavigationSchema).replace(/</g, "\\u003c"),
         }}

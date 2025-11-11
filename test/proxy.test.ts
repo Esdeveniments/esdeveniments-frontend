@@ -576,7 +576,7 @@ describe("proxy", () => {
       );
     });
 
-    it("sets nonce in request headers", async () => {
+    it("sets pathname in request headers", async () => {
       const mockRequest = {
         nextUrl: { pathname: "/home", search: "" },
         headers: new Headers(),
@@ -591,7 +591,7 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       const nextResponseCall = (NextResponse.next as Mock).mock.calls[0][0];
-      expect(nextResponseCall.request.headers.get("x-nonce")).toBe("test-uuid");
+      // Nonce header removed - no longer needed with relaxed CSP
       expect(nextResponseCall.request.headers.get("x-pathname")).toBe("/home");
     });
   });

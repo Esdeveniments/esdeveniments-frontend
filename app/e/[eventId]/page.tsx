@@ -5,8 +5,6 @@ import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
-import { headers } from "next/headers";
-import Script from "next/script";
 import { redirect } from "next/navigation";
 import { extractUuidFromSlug } from "@utils/string-helpers";
 import EventMedia from "./components/EventMedia";
@@ -64,11 +62,8 @@ export default async function EventPage({
 }) {
   const slug = (await params).eventId;
 
-  // Read the nonce from the middleware headers
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
-  const userAgent = headersList.get("user-agent") || "";
-  const initialIsMobile = /mobile|iphone|android|ipad|mobi/i.test(userAgent);
+  // With relaxed CSP we no longer require a nonce here; compute mobile on client
+  const initialIsMobile = false;
 
   let event: EventDetailResponseDTO | null = await getEventBySlug(slug);
   if (!event) {
@@ -205,7 +200,6 @@ export default async function EventPage({
       <script
         id={event.id ? String(event.id) : undefined}
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonData).replace(/</g, "\\u003c"),
         }}
@@ -215,9 +209,11 @@ export default async function EventPage({
         <script
           id={`related-events-${event.id}`}
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(relatedEventsJsonData).replace(/</g, "\\u003c"),
+            __html: JSON.stringify(relatedEventsJsonData).replace(
+              /</g,
+              "\\u003c"
+            ),
           }}
         />
       )}
@@ -225,7 +221,6 @@ export default async function EventPage({
       <script
         id={`breadcrumbs-${event.id}`}
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
         }}
@@ -265,7 +260,6 @@ export default async function EventPage({
               <EventsAroundSection
                 events={event.relatedEvents}
                 title="Esdeveniments relacionats"
-                nonce={nonce}
               />
             )}
             {/* Event Description - Server-side rendered for SEO */}
@@ -366,7 +360,6 @@ export default async function EventPage({
         <script
           id={`faq-${event.id}`}
           type="application/ld+json"
-          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c"),
           }}

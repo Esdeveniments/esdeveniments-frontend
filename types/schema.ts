@@ -51,18 +51,17 @@ export interface SchemaOrgEvent {
   image: string[];
   description: string;
   inLanguage: string;
-  keywords?: string;
   genre?: string[];
   performer: {
     "@type": "PerformingGroup";
-    name: string | undefined;
+    name: string;
   };
   organizer: {
     "@type": "Organization";
-    name: string | undefined;
+    name: string;
     url: string;
   };
-  offers: {
+  offers?: {
     "@type": "Offer";
     price: number | string;
     priceCurrency: string;

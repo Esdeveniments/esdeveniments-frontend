@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -107,8 +106,6 @@ export default async function FilteredPage({
   const { place, byDate, category } = await params;
   const search = await searchParams;
 
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
@@ -288,7 +285,6 @@ export default async function FilteredPage({
 
   return (
     <PlacePageShell
-      nonce={nonce}
       scripts={[
         { id: "webpage-schema", data: webPageSchema },
         ...(collectionSchema
