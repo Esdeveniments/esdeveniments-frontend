@@ -11,6 +11,7 @@ import Link from "next/link";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import Head from "next/head";
+import JsonLdServer from "@components/partials/JsonLdServer";
 export const revalidate = 600;
 
 export async function generateMetadata({
@@ -133,32 +134,11 @@ export default async function Page({
           />
         )}
       </Head>
-      <script
-        id="news-place-webpage-breadcrumbs"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
-        <script
-          id="news-place-breadcrumbs"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema).replace(
-              /</g,
-              "\\u003c"
-            ),
-          }}
-        />
+        <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <script
-        id="news-place-itemlist"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(newsItemList).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLdServer id="news-place-itemlist" data={newsItemList} />
       <nav
         aria-label="Breadcrumb"
         className="mb-3 w-full px-2 lg:px-0 text-sm text-foreground-strong/70"

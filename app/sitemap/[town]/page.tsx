@@ -3,6 +3,7 @@ import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
 import Link from "next/link";
+import JsonLdServer from "@components/partials/JsonLdServer";
 import { getPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
 import { formatCatalanA } from "@utils/helpers";
@@ -79,13 +80,7 @@ export default async function Page({
   return (
     <>
       {/* Structured Data */}
-      <script
-        id="collectionpage-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(collectionPageSchema).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLdServer id="collectionpage-schema" data={collectionPageSchema} />
 
       <SitemapLayout>
         <SitemapBreadcrumb items={breadcrumbs} />

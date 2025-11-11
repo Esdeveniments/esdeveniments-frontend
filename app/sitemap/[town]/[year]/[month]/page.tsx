@@ -1,5 +1,6 @@
 // No headers/nonce needed with relaxed CSP
 import Link from "next/link";
+import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   generateJsonData,
   getFormattedDate,
@@ -125,32 +126,20 @@ export default async function Page({
     <>
       {/* Individual Events JSON-LD - kept for backward compatibility */}
       {jsonData.length > 0 && (
-        <script
-          id={`${town}-${month}-${year}-events`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonData).replace(/</g, "\\u003c"),
-          }}
-        />
+        <JsonLdServer id={`${town}-${month}-${year}-events`} data={jsonData} />
       )}
 
       {/* Enhanced Collection Page Schema */}
-      <script
+      <JsonLdServer
         id={`${town}-${month}-${year}-collection`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(collectionPageSchema).replace(/</g, "\\u003c"),
-        }}
+        data={collectionPageSchema}
       />
 
       {/* Enhanced Events ItemList Schema */}
       {eventsItemList && (
-        <script
+        <JsonLdServer
           id={`${town}-${month}-${year}-itemlist`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(eventsItemList).replace(/</g, "\\u003c"),
-          }}
+          data={eventsItemList}
         />
       )}
 

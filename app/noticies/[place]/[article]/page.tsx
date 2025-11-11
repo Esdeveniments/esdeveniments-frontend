@@ -14,6 +14,7 @@ import NewsHeroEvent from "@components/ui/newsHeroEvent";
 import NewsRichCard from "@components/ui/newsRichCard";
 import { getFormattedDate } from "@utils/date-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import JsonLdServer from "@components/partials/JsonLdServer";
 
 export async function generateMetadata({
   params,
@@ -207,20 +208,8 @@ export default async function Page({
         )}
       </div>
 
-      <script
-        id="news-article-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(articleSchema).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
-        id="news-webpage-breadcrumbs"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLdServer id="news-article-schema" data={articleSchema} />
+      <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
     </div>
   );
 }

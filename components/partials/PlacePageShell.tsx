@@ -1,6 +1,7 @@
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import type { PageData, PlaceTypeAndLabel, JsonLdScript } from "types/common";
+import JsonLdServer from "./JsonLdServer";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { ListEvent } from "types/api/event";
 
@@ -34,14 +35,7 @@ export default function PlacePageShell({
   return (
     <>
       {scripts.map((s) => (
-        <script
-          key={s.id}
-          id={s.id}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(s.data).replace(/</g, "\\u003c"),
-          }}
-        />
+        <JsonLdServer key={s.id} id={s.id} data={s.data} />
       ))}
 
       <HybridEventsList

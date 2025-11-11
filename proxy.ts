@@ -9,18 +9,24 @@ import { isValidDateSlug } from "@lib/dates";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-function getCsp() {
+function buildCsp(nonce: string) {
   const apiOrigin = getApiOrigin();
   const isVercelPreview =
     process.env.VERCEL_ENV === "preview" ||
     process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  const adsEnabled =
+    process.env.NEXT_PUBLIC_GOOGLE_ADS &&
+    String(process.env.NEXT_PUBLIC_GOOGLE_ADS).trim() !== "";
 
   const cspDirectives = {
     "default-src": ["'self'"],
     "script-src": [
       "'self'",
-      // Relaxed policy: allow inline scripts and trusted third-parties
-      "'unsafe-inline'",
+      // Modern strict policy: allow only nonce-tagged scripts and those they load
+      "'strict-dynamic'",
+      `'nonce-${nonce}'`,
+      // Fallback for non-strict-dynamic UAs
+      "https:",
       "https://www.googletagmanager.com",
       "https://www.google-analytics.com",
       "https://www.gstatic.com",
@@ -34,6 +40,10 @@ function getCsp() {
       "https://*.google.com",
       // Vercel preview feedback script
       ...(isVercelPreview ? ["https://vercel.live"] : []),
+      // Keep unsafe-inline as legacy fallback (ignored by modern browsers when nonce/strict-dynamic present)
+      "'unsafe-inline'",
+      // Only include unsafe-eval if ads truly require it
+      adsEnabled ? "'unsafe-eval'" : "",
       isDev ? "'unsafe-eval'" : "",
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
@@ -41,7 +51,9 @@ function getCsp() {
     // Be explicit for browsers that differentiate element/script contexts
     "script-src-elem": [
       "'self'",
-      "'unsafe-inline'",
+      "'strict-dynamic'",
+      `'nonce-${nonce}'`,
+      "https:",
       "https://www.googletagmanager.com",
       "https://www.google-analytics.com",
       "https://www.gstatic.com",
@@ -55,6 +67,8 @@ function getCsp() {
       "https://*.google.com",
       // Vercel preview feedback script
       ...(isVercelPreview ? ["https://vercel.live"] : []),
+      "'unsafe-inline'",
+      adsEnabled ? "'unsafe-eval'" : "",
       isDev ? "'unsafe-eval'" : "",
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
@@ -304,9 +318,35 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
-  const csp = getCsp();
+  // Generate per-request nonce (base64) with cross-runtime fallback
+  const toBase64 = (input: string) => {
+    if (typeof Buffer !== "undefined") {
+      return Buffer.from(input, "utf-8").toString("base64");
+    }
+    // @ts-ignore btoa may exist in edge/browser
+    if (typeof btoa === "function") {
+      // @ts-ignore
+      return btoa(input);
+    }
+    return input;
+  };
+  const g: any = globalThis as any;
+  let nonce: string;
+  if (g.crypto && typeof g.crypto.getRandomValues === "function") {
+    const arr = new Uint8Array(16);
+    g.crypto.getRandomValues(arr);
+    const bin = String.fromCharCode(...Array.from(arr));
+    nonce = toBase64(bin);
+  } else if (g.crypto && typeof g.crypto.randomUUID === "function") {
+    nonce = toBase64(g.crypto.randomUUID());
+  } else {
+    nonce = toBase64(`${Date.now()}-${Math.random()}`);
+  }
+
+  const csp = buildCsp(nonce);
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
+  requestHeaders.set("x-nonce", nonce);
 
   // No per-page visitor id injection; handled only for /api/visits.
 
@@ -318,7 +358,16 @@ export default async function proxy(request: NextRequest) {
 
   // visitor_id cookie is set only when calling /api/visits if missing.
 
-  response.headers.set("Content-Security-Policy", csp);
+  // Use Report-Only in preview (or when explicitly requested), enforce otherwise
+  const reportOnly =
+    process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1" ||
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  if (reportOnly) {
+    response.headers.set("Content-Security-Policy-Report-Only", csp);
+  } else {
+    response.headers.set("Content-Security-Policy", csp);
+  }
   response.headers.set(
     "Strict-Transport-Security",
     "max-age=63072000; includeSubDomains; preload"

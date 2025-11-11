@@ -560,7 +560,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(mockResponse.headers.get("Content-Security-Policy")).toBeDefined();
+      expect(
+        mockResponse.headers.get("Content-Security-Policy") ||
+          mockResponse.headers.get("Content-Security-Policy-Report-Only")
+      ).toBeDefined();
       expect(
         mockResponse.headers.get("Strict-Transport-Security")
       ).toBeDefined();
@@ -574,6 +577,28 @@ describe("proxy", () => {
       expect(mockResponse.headers.get("Permissions-Policy")).toBe(
         "camera=(), microphone=(), geolocation=(self)"
       );
+    });
+
+    it("CSP includes strict-dynamic and a nonce value", async () => {
+      const mockRequest = {
+        nextUrl: { pathname: "/home", search: "" },
+        headers: new Headers(),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      const mockResponse = {
+        headers: new Headers(),
+      };
+      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+
+      await proxy(mockRequest);
+
+      const csp =
+        mockResponse.headers.get("Content-Security-Policy") ||
+        mockResponse.headers.get("Content-Security-Policy-Report-Only") ||
+        "";
+      expect(csp).toContain("'strict-dynamic'");
+      expect(csp).toMatch(/nonce-[A-Za-z0-9+/=]+/);
     });
 
     it("sets pathname in request headers", async () => {
@@ -591,8 +616,8 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       const nextResponseCall = (NextResponse.next as Mock).mock.calls[0][0];
-      // Nonce header removed - no longer needed with relaxed CSP
       expect(nextResponseCall.request.headers.get("x-pathname")).toBe("/home");
+      expect(nextResponseCall.request.headers.get("x-nonce")).toBeTruthy();
     });
   });
 });

@@ -33,6 +33,7 @@ import {
   buildFaqJsonLd,
 } from "@utils/helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
+import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
 import AdArticleIsland from "./components/AdArticleIsland";
 
@@ -197,34 +198,19 @@ export default async function EventPage({
   return (
     <>
       {/* Main Event JSON-LD */}
-      <script
+      <JsonLdServer
         id={event.id ? String(event.id) : undefined}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonData).replace(/</g, "\\u003c"),
-        }}
+        data={jsonData}
       />
       {/* Related Events JSON-LD */}
       {relatedEventsJsonData && (
-        <script
+        <JsonLdServer
           id={`related-events-${event.id}`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(relatedEventsJsonData).replace(
-              /</g,
-              "\\u003c"
-            ),
-          }}
+          data={relatedEventsJsonData}
         />
       )}
       {/* Breadcrumbs JSON-LD */}
-      <script
-        id={`breadcrumbs-${event.id}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
@@ -356,15 +342,7 @@ export default async function EventPage({
       </Suspense>
 
       {/* FAQ JSON-LD (only when we have 2+ items) */}
-      {faqJsonLd && (
-        <script
-          id={`faq-${event.id}`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-      )}
+      {faqJsonLd && <JsonLdServer id={`faq-${event.id}`} data={faqJsonLd} />}
     </>
   );
 }

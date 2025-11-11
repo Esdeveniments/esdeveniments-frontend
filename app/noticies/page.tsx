@@ -11,6 +11,7 @@ import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
+import JsonLdServer from "@components/partials/JsonLdServer";
 export const revalidate = 600;
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,8 +25,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  // No nonce required with relaxed CSP
-
   // Fetch the most recent news per hub
   const hubResults = await Promise.all(
     NEWS_HUBS.map(async (hub) => {
@@ -83,32 +82,11 @@ export default async function Page() {
 
   return (
     <div className="container flex-col justify-center items-center mt-8">
-      <script
-        id="news-list-webpage-breadcrumbs"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
-        <script
-          id="news-list-breadcrumbs"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema).replace(
-              /</g,
-              "\\u003c"
-            ),
-          }}
-        />
+        <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <script
-        id="news-list-itemlist"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLdServer id="news-list-itemlist" data={itemListSchema} />
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
       <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.

@@ -8,6 +8,7 @@ import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
+import JsonLdServer from "@components/partials/JsonLdServer";
 
 const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
   const cardClass =
@@ -127,17 +128,14 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     return (
       <>
         {jsonLdData && (
-          <script
+          <JsonLdServer
             id={
               jsonLdId ||
               (title
                 ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
                 : "events-around")
             }
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(jsonLdData).replace(/</g, "\\u003c"),
-            }}
+            data={jsonLdData}
           />
         )}
         <HorizontalScroll
@@ -171,17 +169,14 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   return (
     <>
       {jsonLdData && (
-        <script
+        <JsonLdServer
           id={
             jsonLdId ||
             (title
               ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
               : "events-around")
           }
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLdData).replace(/</g, "\\u003c"),
-          }}
+          data={jsonLdData}
         />
       )}
       <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">

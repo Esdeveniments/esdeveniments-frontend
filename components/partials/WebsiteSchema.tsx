@@ -1,5 +1,6 @@
 // components/partials/WebsiteSchema.tsx
 import { siteUrl } from "@config/index";
+import JsonLdServer from "./JsonLdServer";
 
 export default function WebsiteSchema() {
   const websiteSchema = {
@@ -36,13 +37,5 @@ export default function WebsiteSchema() {
     },
   };
 
-  return (
-    <script
-      id="website-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(websiteSchema).replace(/</g, "\\u003c"),
-      }}
-    />
-  );
+  return <JsonLdServer id="website-schema" data={websiteSchema} />;
 }

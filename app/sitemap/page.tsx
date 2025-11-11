@@ -3,6 +3,7 @@ import { fetchRegions } from "@lib/api/regions";
 import { fetchCities } from "@lib/api/cities";
 // No headers/nonce needed with relaxed CSP
 import Link from "next/link";
+import JsonLdServer from "@components/partials/JsonLdServer";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import {
@@ -74,19 +75,10 @@ export default async function Page() {
   return (
     <>
       {/* Structured Data */}
-      <script
-        id="webpage-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageSchema).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
+      <JsonLdServer id="webpage-schema" data={webPageSchema} />
+      <JsonLdServer
         id="site-navigation-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(siteNavigationSchema).replace(/</g, "\\u003c"),
-        }}
+        data={siteNavigationSchema}
       />
 
       <SitemapLayout testId="sitemap-page">
