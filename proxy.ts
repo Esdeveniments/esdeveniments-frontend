@@ -169,73 +169,90 @@ export default async function proxy(request: NextRequest) {
   }
 
   const segments = pathname.split("/").filter(Boolean);
-  const searchParams = request.nextUrl.searchParams;
+  const searchParams =
+    (request.nextUrl as any).searchParams instanceof URLSearchParams
+      ? ((request.nextUrl as any).searchParams as URLSearchParams)
+      : new URLSearchParams((request.nextUrl as any).search || "");
   const queryCategory = searchParams.get("category");
   const queryDate = searchParams.get("date");
 
-  // Redirect /tots in segments (e.g., /barcelona/tots → /barcelona)
-  if (
-    (segments.length === 3 || segments.length === 2) &&
-    segments[1] === "tots"
-  ) {
-    const newPath =
-      segments.length === 3
-        ? `/${segments[0]}/${segments[2]}`
-        : `/${segments[0]}`;
-    const remainingParams = new URLSearchParams(searchParams);
-    remainingParams.delete("category");
-    remainingParams.delete("date");
-    const remainingQuery = remainingParams.toString();
-    const finalUrl = remainingQuery ? `${newPath}?${remainingQuery}` : newPath;
-    return NextResponse.redirect(new URL(finalUrl, request.url), 301);
-  }
+  // Skip known non-place top-level routes
+  const firstSegment = segments[0] || "";
+  const nonPlaceFirstSegments = new Set([
+    "noticies",
+    "publica",
+    "login",
+    "offline",
+    "e",
+    "sitemap",
+    "rss.xml",
+    "qui-som",
+    "server-sitemap.xml",
+    "server-news-sitemap.xml",
+    "server-google-news-sitemap.xml",
+  ]);
 
-  // Redirect query params for category/date to canonical URLs (e.g., /barcelona?category=teatre&date=tots → /barcelona/teatre)
-  // This prevents CSP errors by redirecting before page renders
-  if (queryCategory || queryDate) {
+  // Only process redirects for place routes
+  if (nonPlaceFirstSegments.has(firstSegment)) {
+    // Continue to normal processing for non-place routes
+  } else {
     const place = segments[0] || "catalunya";
     const segmentCount = segments.length;
+    const hasTotsInSegments =
+      (segmentCount === 3 || segmentCount === 2) && segments[1] === "tots";
 
-    // Only handle redirects for 1-segment URLs (e.g., /barcelona?category=teatre)
-    // 2-segment URLs are handled by page components (they may be valid canonical URLs)
-    // Skip known non-place top-level routes
-    const firstSegment = segments[0] || "";
-    const nonPlaceFirstSegments = new Set([
-      "noticies",
-      "publica",
-      "login",
-      "offline",
-      "e",
-      "sitemap",
-      "rss.xml",
-      "qui-som",
-      "server-sitemap.xml",
-      "server-news-sitemap.xml",
-      "server-google-news-sitemap.xml",
-    ]);
-
-    if (segmentCount === 1 && !nonPlaceFirstSegments.has(firstSegment)) {
+    // Handle redirects: combine /tots segments with query params if present
+    if (
+      hasTotsInSegments ||
+      (segmentCount === 1 && (queryCategory || queryDate))
+    ) {
       // Build canonical URL: omit "tots" values
       let canonicalPath = `/${place}`;
-      const date =
-        queryDate && isValidDateSlug(queryDate)
-          ? queryDate === "tots"
-            ? null
-            : queryDate
-          : null;
-      const category = queryCategory === "tots" ? null : queryCategory;
 
+      // Determine date: from segment (if not tots) or query param
+      let date: string | null = null;
+      if (hasTotsInSegments && segmentCount === 3) {
+        // /place/tots/category - date is "tots" (omitted)
+        date = null;
+      } else if (segmentCount === 2 && segments[1] !== "tots") {
+        // /place/date - check if it's a valid date
+        const secondSegment = segments[1];
+        date =
+          isValidDateSlug(secondSegment) && secondSegment !== "tots"
+            ? secondSegment
+            : null;
+      } else if (
+        queryDate &&
+        isValidDateSlug(queryDate) &&
+        queryDate !== "tots"
+      ) {
+        date = queryDate;
+      }
+
+      // Determine category: from segment (if not tots) or query param
+      let category: string | null = null;
+      if (hasTotsInSegments && segmentCount === 3) {
+        // /place/tots/category - category is in third segment
+        category = segments[2] !== "tots" ? segments[2] : null;
+      } else if (segmentCount === 2 && segments[1] !== "tots") {
+        // /place/X - check if X is a category (not a date)
+        const secondSegment = segments[1];
+        if (!isValidDateSlug(secondSegment)) {
+          category = secondSegment !== "tots" ? secondSegment : null;
+        }
+      } else if (queryCategory && queryCategory !== "tots") {
+        category = queryCategory;
+      }
+
+      // Build canonical path based on date and category
       if (date && category) {
-        // Both specific: /place/date/category
         canonicalPath = `/${place}/${date}/${category}`;
       } else if (date) {
-        // Only date: /place/date
         canonicalPath = `/${place}/${date}`;
       } else if (category) {
-        // Only category: /place/category
         canonicalPath = `/${place}/${category}`;
       }
-      // If both are "tots" or null, canonicalPath stays as /place
+      // If both are null/tots, canonicalPath stays as /place
 
       // Preserve other query params (search, distance, lat, lon)
       const remainingParams = new URLSearchParams(searchParams);
