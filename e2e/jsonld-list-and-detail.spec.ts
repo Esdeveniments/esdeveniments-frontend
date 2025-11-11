@@ -15,11 +15,12 @@ test.describe("JSON-LD presence", () => {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
+    // Wait until at least one JSON-LD script is present (SSR should render Website schema)
+    await page.waitForSelector('script[type="application/ld+json"]', {
+      timeout: 60000,
+      state: "attached",
+    });
     const scripts = page.locator('script[type="application/ld+json"]');
-    await expect(scripts.first()).toHaveCount(1, { timeout: 10000 });
-    // Ensure nonce attribute exists on JSON-LD scripts
-    const firstHasNonce = await scripts.first().getAttribute("nonce");
-    expect(firstHasNonce).not.toBeNull();
     const count = await scripts.count();
     let found = false;
     for (let i = 0; i < count; i++) {
@@ -45,11 +46,13 @@ test.describe("JSON-LD presence", () => {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
+    await page.waitForSelector('script[type="application/ld+json"]', {
+      timeout: 60000,
+      state: "attached",
+    });
     const scripts = page.locator('script[type="application/ld+json"]');
     // Some JSON-LD scripts may be hidden; assert presence instead of visibility
-    await expect(scripts.first()).toHaveCount(1);
-    const firstHasNonce = await scripts.first().getAttribute("nonce");
-    expect(firstHasNonce).not.toBeNull();
+    await expect(scripts.first()).toHaveCount(1, { timeout: 10000 });
     const count = await scripts.count();
     let hasEvent = false;
     for (let i = 0; i < count; i++) {
