@@ -10,7 +10,6 @@ import type {
 const EventTypeEnum = z.enum(["FREE", "PAID"]);
 const EventOriginEnum = z.enum(["SCRAPE", "RSS", "MANUAL", "MIGRATION"]);
 
-// Category schema - defined here to avoid circular dependency with category.ts
 export const CategorySummaryResponseDTOSchema = z.object({
   id: z.number(),
   name: z.string(),

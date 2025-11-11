@@ -116,6 +116,28 @@ describe("url-filters: canonical building and parsing", () => {
     expect(redirect).toBe("/tarragona");
   });
 
+  it("redirects /place/invalid-category to /place", () => {
+    // No dynamic categories provided -> unknown category normalizes to 'tots'
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", category: "not-a-category" },
+      new URLSearchParams("")
+    );
+    expect(parsed.isCanonical).toBe(false);
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona");
+  });
+
+  it("redirects /place/date/invalid-category to /place/date", () => {
+    // Unknown category with valid date -> category becomes 'tots' and is omitted
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", date: "avui", category: "not-a-category" },
+      new URLSearchParams("")
+    );
+    expect(parsed.isCanonical).toBe(false);
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona/avui");
+  });
+
   it("reads category from query params when only place segment exists", () => {
     const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
     const parsed = parseFiltersFromUrl(

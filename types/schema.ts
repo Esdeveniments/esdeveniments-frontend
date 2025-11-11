@@ -21,6 +21,14 @@ export interface SchemaPlaceLocation {
   };
 }
 
+/**
+ * Schema.org Event structured data for SEO and rich snippets.
+ *
+ * Note: The `keywords` property was intentionally removed in favor of `genre`.
+ * Schema.org Event type recommends using `genre` for event categorization,
+ * which aligns better with our category-based classification system.
+ * Keywords remain available for NewsArticle schema where they are more appropriate.
+ */
 export interface SchemaOrgEvent {
   "@context": "https://schema.org";
   "@type": "Event";
@@ -45,12 +53,20 @@ export interface SchemaOrgEvent {
       addressLocality: string | undefined;
       postalCode: string | undefined;
       addressCountry: string;
+      /**
+       * Region name (e.g., "Catalunya", "CT"). Defaults to "CT" (Catalonia) when region data is unavailable.
+       * All events are in Catalonia, so this default ensures accurate schema.org data.
+       */
       addressRegion: string;
     };
   };
   image: string[];
   description: string;
   inLanguage: string;
+  /**
+   * Event genres/categories. Replaces the removed `keywords` property.
+   * More semantically appropriate for schema.org Event type.
+   */
   genre?: string[];
   performer: {
     "@type": "PerformingGroup";

@@ -163,7 +163,11 @@ export default async function ByDatePage({
     categories
   );
 
-  // Check if redirect is needed for non-canonical URLs (e.g., /barcelona/tots, query params)
+  // Canonicalization note:
+  // - Middleware handles structural normalization (folding query date/category, omitting "tots")
+  // - This page-level redirect remains to validate category slugs against dynamic categories
+  //   and normalize unknown slugs (middleware cannot fetch categories at edge time)
+  // - When middleware already normalized, this is a no-op
   const redirectUrl = getRedirectUrl(parsed);
   if (redirectUrl) {
     redirect(redirectUrl);

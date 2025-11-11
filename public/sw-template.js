@@ -24,7 +24,8 @@ workbox.navigationPreload.enable();
 // This ensures the basic app shell is always available, even offline.
 const APP_SHELL_ASSETS = [
   { url: "/offline", revision: null },
-  // FIXED: Precache the main stylesheet to ensure the offline page is always styled correctly.
+  // Precache a minimal offline stylesheet (hashed Next CSS cannot be reliably precached)
+  { url: "/static/css/offline.css", revision: null },
   { url: "/static/icons/icon-192x192.png", revision: null },
   { url: "/static/icons/icon-512x512.png", revision: null },
   { url: "/static/icons/today-icon.png", revision: null },

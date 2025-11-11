@@ -308,6 +308,52 @@ export default async function proxy(request: NextRequest) {
         : canonicalPath;
 
       return NextResponse.redirect(new URL(finalUrl, request.url), 301);
+    } else if (segmentCount === 2 && (queryCategory || queryDate)) {
+      // Handle redirects for 2-segment paths with legacy query params
+      // Examples:
+      // - /place/date?category=foo      -> /place/date/foo
+      // - /place/category?date=avui     -> /place/avui/category
+      const secondSegment = segments[1];
+      const secondIsDate =
+        isValidDateSlug(secondSegment) && secondSegment !== "tots";
+
+      let date: string | null = null;
+      let category: string | null = null;
+
+      if (secondIsDate) {
+        // /place/date?category=foo
+        date = secondSegment;
+        if (queryCategory && queryCategory !== "tots") {
+          category = queryCategory;
+        }
+      } else {
+        // /place/category?date=foo
+        category = secondSegment !== "tots" ? secondSegment : null;
+        if (queryDate && isValidDateSlug(queryDate) && queryDate !== "tots") {
+          date = queryDate;
+        }
+      }
+
+      // Build canonical path based on date and category
+      let canonicalPath = `/${place}`;
+      if (date && category) {
+        canonicalPath = `/${place}/${date}/${category}`;
+      } else if (date) {
+        canonicalPath = `/${place}/${date}`;
+      } else if (category) {
+        canonicalPath = `/${place}/${category}`;
+      }
+
+      // Preserve other query params (search, distance, lat, lon)
+      const remainingParams = new URLSearchParams(searchParams);
+      remainingParams.delete("category");
+      remainingParams.delete("date");
+      const remainingQuery = remainingParams.toString();
+      const finalUrl = remainingQuery
+        ? `${canonicalPath}?${remainingQuery}`
+        : canonicalPath;
+
+      return NextResponse.redirect(new URL(finalUrl, request.url), 301);
     }
   }
 

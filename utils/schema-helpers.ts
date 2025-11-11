@@ -74,7 +74,8 @@ export const generateJsonData = (
       addressLocality: city?.name || "",
       postalCode: city?.postalCode || "",
       addressCountry: "ES", // Fixed: Always use "ES" for Spain
-      addressRegion: region?.name || "",
+      // All events are in Catalonia, so default to "CT" when region data is unavailable
+      addressRegion: region?.name || "CT",
     };
   };
 
