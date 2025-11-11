@@ -18,7 +18,8 @@ import type { PlaceResponseDTO } from "types/api/place";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { parseFiltersFromUrl } from "@utils/url-filters";
+import { parseFiltersFromUrl, getRedirectUrl } from "@utils/url-filters";
+import { redirect } from "next/navigation";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -147,11 +148,27 @@ export default async function ByDatePage({
     categories = [];
   }
 
+  // Convert searchParams to URLSearchParams for parsing
+  const urlSearchParams = new URLSearchParams();
+  Object.entries(search).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      urlSearchParams.set(key, value);
+    } else if (Array.isArray(value)) {
+      urlSearchParams.set(key, value[0]);
+    }
+  });
+
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
-    new URLSearchParams(),
+    urlSearchParams,
     categories
   );
+
+  // Check if redirect is needed for non-canonical URLs (e.g., /barcelona/tots, query params)
+  const redirectUrl = getRedirectUrl(parsed);
+  if (redirectUrl) {
+    redirect(redirectUrl);
+  }
 
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;

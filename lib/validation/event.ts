@@ -57,6 +57,10 @@ export const EventSummaryResponseDTOSchema = z
     location: z.string(),
     visits: z.number(),
     origin: EventOriginEnum,
+    // NOTE: These fields are marked optional due to a backend API issue where events
+    // queried without a 'place' parameter may be returned without city/region/province.
+    // According to Swagger, these should always be present. This is a workaround.
+    // TODO: Fix backend to always return these fields and make them required again.
     city: CitySummaryResponseDTOSchema.optional(),
     region: RegionSummaryResponseDTOSchema.optional(),
     province: ProvinceSummaryResponseDTOSchema.optional(),

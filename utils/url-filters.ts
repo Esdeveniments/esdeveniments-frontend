@@ -86,7 +86,10 @@ export function isValidCategorySlug(
 
 /**
  * Parse URL segments and query params into filter state
- * Enhanced with dynamic category support and smart 2-segment detection
+ *
+ * NOTE: Query params for category/date are supported for backward compatibility only.
+ * They are immediately redirected to canonical URLs (e.g., /barcelona?category=teatre -> /barcelona/teatre).
+ * Only search, distance, lat, and lon are valid query params in canonical URLs.
  */
 export function parseFiltersFromUrl(
   segments: { place?: string; date?: string; category?: string },
@@ -105,14 +108,16 @@ export function parseFiltersFromUrl(
   let date: string;
   let category: string;
 
-  // Check query params for category and date if not in segments
+  // Legacy support: Check query params for category and date
+  // NOTE: Production doesn't currently use query params, but we support them for:
+  // 1. Any legacy indexed URLs that might exist
+  // 2. Defensive redirects to canonical URL structure
   const queryCategory = searchParams.get("category");
   const queryDate = searchParams.get("date");
 
   if (segmentCount === 1) {
-    // /catalunya or /catalunya?category=teatre&date=tots
+    // /catalunya or /catalunya?category=teatre&date=tots (legacy - redirects)
     place = segments.place || "catalunya";
-    // Use query params if present, otherwise defaults
     date = queryDate || "tots";
     category = queryCategory || "tots";
   } else if (segmentCount === 2) {
@@ -123,15 +128,14 @@ export function parseFiltersFromUrl(
     if (isValidDateSlug(secondSegment)) {
       // It's a date: /catalunya/avui
       date = secondSegment;
-      // Use query category if present, otherwise default
-      category = queryCategory || "tots";
+      category = queryCategory || "tots"; // Legacy: query category if present
     } else {
       // It's a category: /catalunya/festivals
-      date = queryDate || "tots";
+      date = queryDate || "tots"; // Legacy: query date if present
       category = secondSegment;
     }
   } else {
-    // 3 segments: /catalunya/avui/festivals (explicit structure)
+    // 3 segments: /catalunya/avui/festivals (canonical structure)
     place = segments.place || "catalunya";
     date = segments.date || queryDate || "tots";
     category = segments.category || queryCategory || "tots";
@@ -144,14 +148,42 @@ export function parseFiltersFromUrl(
     : "tots";
 
   // Determine if this is a canonical URL structure
-  // Non-canonical if category/date are in query params but not in segments
+  //
+  // Production currently only uses: /place and /place/byDate (2-segment routes)
+  // The 3-segment route (/place/byDate/category) exists in code but isn't deployed yet
+  //
+  // Non-canonical patterns that need redirect (to avoid breaking indexed URLs):
+  // 1. "tots" appears in URL segments (should be omitted per omission rules)
+  //    - /barcelona/tots → /barcelona
+  // 2. category/date in query params (defensive - for any legacy indexed URLs)
+  //    - /barcelona?category=teatre → /barcelona/teatre
+  //    - /barcelona?date=avui → /barcelona/avui
   const hasQueryCategoryOrDate = queryCategory || queryDate;
+  const hasTotsInSegments =
+    segments.date === "tots" || segments.category === "tots";
+
+  // Canonical URLs should:
+  // - Not have "tots" in segments (it should be omitted)
+  // - Not have category/date in query params (they should be in segments)
+  // - Follow the omission rules:
+  //   * date=tots AND category=tots → /place (1 segment)
+  //   * date=tots AND category=specific → /place/category (2 segments)
+  //   * date=specific AND category=tots → /place/date (2 segments)
+  //   * date=specific AND category=specific → /place/date/category (3 segments)
   const isCanonical =
-    (segmentCount <= 2 && !hasQueryCategoryOrDate) ||
-    (!!(segments.place && segments.date && segments.category) &&
-      isValidDateSlug(date) &&
-      isValidCategorySlug(category, dynamicCategories) &&
-      !hasQueryCategoryOrDate);
+    !hasQueryCategoryOrDate &&
+    !hasTotsInSegments &&
+    ((segmentCount === 1 &&
+      normalizedDate === "tots" &&
+      normalizedCategory === "tots") ||
+      (segmentCount === 2 &&
+        ((normalizedDate === "tots" && normalizedCategory !== "tots") ||
+          (normalizedDate !== "tots" && normalizedCategory === "tots"))) ||
+      (segmentCount === 3 &&
+        normalizedDate !== "tots" &&
+        normalizedCategory !== "tots" &&
+        isValidDateSlug(normalizedDate) &&
+        isValidCategorySlug(normalizedCategory, dynamicCategories)));
 
   return {
     segments: {

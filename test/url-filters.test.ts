@@ -117,9 +117,7 @@ describe("url-filters: canonical building and parsing", () => {
   });
 
   it("reads category from query params when only place segment exists", () => {
-    const dynamicCategories = [
-      { id: 1, name: "Teatre", slug: "teatre" },
-    ];
+    const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre"),
@@ -147,9 +145,7 @@ describe("url-filters: canonical building and parsing", () => {
   });
 
   it("reads both category and date from query params", () => {
-    const dynamicCategories = [
-      { id: 1, name: "Teatre", slug: "teatre" },
-    ];
+    const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre&date=tots"),
@@ -185,9 +181,7 @@ describe("url-filters: canonical building and parsing", () => {
 
   it("getRedirectUrl redirects query params to canonical path", () => {
     // Test case from E2E: /barcelona?category=teatre&date=tots -> /barcelona/teatre
-    const dynamicCategories = [
-      { id: 1, name: "Teatre", slug: "teatre" },
-    ];
+    const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre&date=tots"),
@@ -198,9 +192,7 @@ describe("url-filters: canonical building and parsing", () => {
   });
 
   it("preserves search query params when redirecting from query params", () => {
-    const dynamicCategories = [
-      { id: 1, name: "Teatre", slug: "teatre" },
-    ];
+    const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre&date=tots&search=castellers"),
@@ -212,9 +204,7 @@ describe("url-filters: canonical building and parsing", () => {
 
   it("handles query params with 2-segment URLs", () => {
     // /barcelona/teatre?date=avui should redirect to /barcelona/avui/teatre
-    const dynamicCategories = [
-      { id: 1, name: "Teatre", slug: "teatre" },
-    ];
+    const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", category: "teatre" },
       new URLSearchParams("date=avui"),
@@ -228,6 +218,43 @@ describe("url-filters: canonical building and parsing", () => {
     expect(parsed.isCanonical).toBe(false);
     const redirect = getRedirectUrl(parsed);
     expect(redirect).toBe("/barcelona/avui/teatre");
+  });
+
+  it("redirects /place/tots to /place (omits tots segment)", () => {
+    // /barcelona/tots should redirect to /barcelona
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", date: "tots" },
+      new URLSearchParams(),
+      []
+    );
+    expect(parsed.isCanonical).toBe(false);
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona");
+  });
+
+  it("redirects /place/tots/category to /place/category (omits tots segment)", () => {
+    // /barcelona/tots/teatre should redirect to /barcelona/teatre
+    const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", date: "tots", category: "teatre" },
+      new URLSearchParams(),
+      dynamicCategories
+    );
+    expect(parsed.isCanonical).toBe(false);
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona/teatre");
+  });
+
+  it("preserves query params when redirecting /place/tots", () => {
+    // /barcelona/tots?search=castellers should redirect to /barcelona?search=castellers
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", date: "tots" },
+      new URLSearchParams("search=castellers"),
+      []
+    );
+    expect(parsed.isCanonical).toBe(false);
+    const redirect = getRedirectUrl(parsed);
+    expect(redirect).toBe("/barcelona?search=castellers");
   });
 });
 

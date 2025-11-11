@@ -33,6 +33,10 @@ export interface EventSummaryResponseDTO {
   location: string;
   visits: number;
   origin: EventOrigin;
+  // NOTE: These fields are marked optional due to a backend API issue where events
+  // queried without a 'place' parameter may be returned without city/region/province.
+  // According to Swagger, these should always be present. This is a workaround.
+  // TODO: Fix backend to always return these fields and make them required again.
   city?: CitySummaryResponseDTO;
   region?: RegionSummaryResponseDTO;
   province?: ProvinceSummaryResponseDTO;
