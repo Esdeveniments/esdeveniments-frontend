@@ -169,28 +169,65 @@ export default async function EventPage({
         }
       : null;
 
+  // Generate BreadcrumbList JSON-LD
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Inici",
+        item: siteUrl,
+      },
+      ...(placeSlug
+        ? [
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: placeLabel,
+              item: `${siteUrl}/${placeSlug}`,
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: placeSlug ? 3 : 2,
+        name: title,
+        item: `${siteUrl}/e/${event.slug}`,
+      },
+    ],
+  };
+
   return (
     <>
       {/* Main Event JSON-LD */}
-      <Script
+      <script
         id={event.id ? String(event.id) : undefined}
         type="application/ld+json"
-        strategy="afterInteractive"
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
       />
       {/* Related Events JSON-LD */}
       {relatedEventsJsonData && (
-        <Script
+        <script
           id={`related-events-${event.id}`}
           type="application/ld+json"
-          strategy="afterInteractive"
           nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(relatedEventsJsonData),
           }}
         />
       )}
+      {/* Breadcrumbs JSON-LD */}
+      <script
+        id={`breadcrumbs-${event.id}`}
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd),
+        }}
+      />
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
@@ -324,10 +361,9 @@ export default async function EventPage({
 
       {/* FAQ JSON-LD (only when we have 2+ items) */}
       {faqJsonLd && (
-        <Script
+        <script
           id={`faq-${event.id}`}
           type="application/ld+json"
-          strategy="afterInteractive"
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
         />

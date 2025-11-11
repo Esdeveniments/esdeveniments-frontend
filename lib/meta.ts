@@ -2,7 +2,7 @@
 import { siteUrl } from "@config/index";
 import type { Metadata } from "next";
 import type { EventDetailResponseDTO } from "types/api/event";
-import { formatCatalanA } from "@utils/helpers";
+import { formatCatalanA, getFormattedDate } from "@utils/helpers";
 
 // --- Sanitization/Truncation helpers ---
 function sanitizeInput(str: string = ""): string {
@@ -110,6 +110,16 @@ export function generateEventMetadata(
     event.categories,
     event.location
   );
+  // Enrich description with date and venue, keeping under 156 chars
+  const { formattedStart } = getFormattedDate(event.startDate, event.endDate);
+  const descriptionParts = [enhancedDescription];
+  if (formattedStart && formattedStart.trim().length > 0) {
+    descriptionParts.push(formattedStart);
+  }
+  if (event.location && event.location.trim().length > 0) {
+    descriptionParts.push(event.location);
+  }
+  const finalDescription = smartTruncate(descriptionParts.join(" - "), 156);
 
   const image = event.imageUrl ? [event.imageUrl] : [];
   const canonical = url || `${siteUrl}/e/${event.slug}`;
@@ -129,11 +139,11 @@ export function generateEventMetadata(
 
   return {
     title: pageTitle,
-    description: enhancedDescription,
+    description: finalDescription,
     ...(keywords && { keywords }),
     openGraph: {
       title: pageTitle,
-      description: enhancedDescription,
+      description: finalDescription,
       url: canonical,
       images: image,
       type: "article",
@@ -143,7 +153,7 @@ export function generateEventMetadata(
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
-      description: enhancedDescription,
+      description: finalDescription,
       site: "@esdeveniments",
       creator: "Esdeveniments.cat",
       images: image,

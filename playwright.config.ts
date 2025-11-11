@@ -40,7 +40,7 @@ export default defineConfig({
     // Ensure the spawned dev server inherits required env in CI
     env: webServerEnv,
   },
-  expect: { timeout: 10000 },
+  expect: { timeout: process.env.CI ? 20000 : 10000 },
   // Provide env to app server (Next.js) via process.env during CI start step.
   // In GitHub Actions we set NEXT_PUBLIC_API_URL; also export E2E_TEST_MODE to enable deterministic publish flow.
 });

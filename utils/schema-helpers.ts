@@ -69,13 +69,16 @@ export const generateJsonData = (
 
   // Enhanced location data with better fallbacks and fixed country
   const getLocationData = () => {
-    return {
+    const baseAddress: Record<string, string> = {
       streetAddress: location || "",
       addressLocality: city?.name || "",
       postalCode: city?.postalCode || "",
       addressCountry: "ES", // Fixed: Always use "ES" for Spain
-      addressRegion: region?.name || "CT",
     };
+    if (region?.name && region.name.trim().length > 0) {
+      baseAddress.addressRegion = region.name;
+    }
+    return baseAddress;
   };
 
   // Generate genre from categories
@@ -127,13 +130,9 @@ export const generateJsonData = (
         price: 0,
       };
     } else {
+      // If price is unknown, do not emit an invalid price value. Return the base offer only.
       return {
         ...baseOffer,
-        price: "Contact for pricing",
-        priceSpecification: {
-          "@type": "PriceSpecification" as const,
-          priceCurrency: "EUR",
-        },
       };
     }
   };
@@ -198,17 +197,17 @@ export const generateJsonData = (
     inLanguage: "ca",
     ...(getKeywords() && { keywords: getKeywords() }),
     ...(getGenre() && { genre: getGenre() }),
-    performer: {
-      "@type": "PerformingGroup" as const,
-      name: location,
-    },
-    organizer: {
-      "@type": "Organization" as const,
-      name: location,
-      url: siteUrl,
-    },
     offers: getOffers(),
     isAccessibleForFree: event.type === "FREE",
+    ...(isValidHttpUrl(("url" in event ? (event as any).url : undefined) as
+      | string
+      | undefined) && {
+      sameAs: (event as any).url as string,
+    }),
+    mainEntityOfPage: {
+      "@type": "WebPage" as const,
+      "@id": `${siteUrl}/e/${slug}`,
+    },
     ...(eventDuration &&
       eventDuration.trim() !== "" && { duration: eventDuration }),
     ...(videoObject ? { video: videoObject } : {}),
