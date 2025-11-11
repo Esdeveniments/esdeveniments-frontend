@@ -4,6 +4,7 @@ import type { PageData, PlaceTypeAndLabel, JsonLdScript } from "types/common";
 import JsonLdServer from "./JsonLdServer";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { ListEvent } from "types/api/event";
+import { Suspense } from "react";
 
 export default function PlacePageShell({
   scripts = [],
@@ -50,10 +51,16 @@ export default function PlacePageShell({
         hasNews={hasNews}
       />
 
-      <ClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={placeTypeLabel}
-      />
+      <Suspense
+        fallback={
+          <div className="w-full h-12 bg-background animate-pulse rounded-full" />
+        }
+      >
+        <ClientInteractiveLayer
+          categories={categories}
+          placeTypeLabel={placeTypeLabel}
+        />
+      </Suspense>
     </>
   );
 }
