@@ -11,6 +11,9 @@ const isDev = process.env.NODE_ENV !== "production";
 
 function getCsp() {
   const apiOrigin = getApiOrigin();
+  const isVercelPreview =
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 
   const cspDirectives = {
     "default-src": ["'self'"],
@@ -29,6 +32,8 @@ function getCsp() {
       "https://*.googleadservices.com",
       "https://*.googletagservices.com",
       "https://*.google.com",
+      // Vercel preview feedback script
+      ...(isVercelPreview ? ["https://vercel.live"] : []),
       isDev ? "'unsafe-eval'" : "",
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
@@ -48,6 +53,8 @@ function getCsp() {
       "https://*.googleadservices.com",
       "https://*.googletagservices.com",
       "https://*.google.com",
+      // Vercel preview feedback script
+      ...(isVercelPreview ? ["https://vercel.live"] : []),
       isDev ? "'unsafe-eval'" : "",
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
