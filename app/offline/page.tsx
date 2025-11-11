@@ -6,9 +6,6 @@ export default function OfflinePage() {
       className="min-h-screen flex items-center justify-center bg-muted"
       data-testid="offline-page"
     >
-      {/* Minimal stylesheet to ensure basic styling when offline CSS chunks are unavailable */}
-      {/* eslint-disable-next-line @next/next/no-css-tags */}
-      <link rel="stylesheet" href="/static/css/offline.css" />
       <div className="text-center">
         <h1
           className="text-4xl font-bold text-foreground-strong mb-4"

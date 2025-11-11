@@ -22,9 +22,13 @@ test.describe("Weekly category consistency (catalunya)", () => {
     const { from, to } = computeWeekRange();
 
     // Query internal API for a weekly+category sample (without place)
-    const res = await page.request.get(
-      `/api/events?category=teatre&from=${from}&to=${to}&size=10`
-    );
+    const params = new URLSearchParams({
+      category: "teatre",
+      from,
+      to,
+      size: "10",
+    });
+    const res = await page.request.get(`/api/events?${params}`);
     expect(res.ok()).toBeTruthy();
     const data = (await res.json()) as unknown;
     const list = (() => {
@@ -98,9 +102,13 @@ test.describe("Today and Weekend category consistency (catalunya)", () => {
 
   for (const c of cases) {
     test(`${c.path} shows at least one event from API`, async ({ page }) => {
-      const res = await page.request.get(
-        `/api/events?category=teatre&from=${c.range.from}&to=${c.range.to}&size=10`
-      );
+      const params = new URLSearchParams({
+        category: "teatre",
+        from: c.range.from,
+        to: c.range.to,
+        size: "10",
+      });
+      const res = await page.request.get(`/api/events?${params}`);
       expect(res.ok()).toBeTruthy();
       const data = (await res.json()) as unknown;
       const list = (() => {
