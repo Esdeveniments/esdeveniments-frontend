@@ -9,7 +9,7 @@ import { isValidDateSlug } from "@lib/dates";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-function buildCsp(nonce: string) {
+function getCsp() {
   const apiOrigin = getApiOrigin();
   const isVercelPreview =
     process.env.VERCEL_ENV === "preview" ||
@@ -22,11 +22,9 @@ function buildCsp(nonce: string) {
     "default-src": ["'self'"],
     "script-src": [
       "'self'",
-      // Modern strict policy: allow only nonce-tagged scripts and those they load
-      "'strict-dynamic'",
-      `'nonce-${nonce}'`,
-      // Fallback for non-strict-dynamic UAs
-      "https:",
+      // Relaxed policy: allow inline scripts and trusted third-parties
+      // This enables ISR/PPR caching while maintaining security through host allowlisting
+      "'unsafe-inline'",
       "https://www.googletagmanager.com",
       "https://www.google-analytics.com",
       "https://www.gstatic.com",
@@ -40,8 +38,6 @@ function buildCsp(nonce: string) {
       "https://*.google.com",
       // Vercel preview feedback script
       ...(isVercelPreview ? ["https://vercel.live"] : []),
-      // Keep unsafe-inline as legacy fallback (ignored by modern browsers when nonce/strict-dynamic present)
-      "'unsafe-inline'",
       // Only include unsafe-eval if ads truly require it
       adsEnabled ? "'unsafe-eval'" : "",
       isDev ? "'unsafe-eval'" : "",
@@ -51,9 +47,7 @@ function buildCsp(nonce: string) {
     // Be explicit for browsers that differentiate element/script contexts
     "script-src-elem": [
       "'self'",
-      "'strict-dynamic'",
-      `'nonce-${nonce}'`,
-      "https:",
+      "'unsafe-inline'",
       "https://www.googletagmanager.com",
       "https://www.google-analytics.com",
       "https://www.gstatic.com",
@@ -67,7 +61,6 @@ function buildCsp(nonce: string) {
       "https://*.google.com",
       // Vercel preview feedback script
       ...(isVercelPreview ? ["https://vercel.live"] : []),
-      "'unsafe-inline'",
       adsEnabled ? "'unsafe-eval'" : "",
       isDev ? "'unsafe-eval'" : "",
       isDev ? "localhost:*" : "",
@@ -318,35 +311,9 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
-  // Generate per-request nonce (base64) with cross-runtime fallback
-  const toBase64 = (input: string) => {
-    if (typeof Buffer !== "undefined") {
-      return Buffer.from(input, "utf-8").toString("base64");
-    }
-    // @ts-ignore btoa may exist in edge/browser
-    if (typeof btoa === "function") {
-      // @ts-ignore
-      return btoa(input);
-    }
-    return input;
-  };
-  const g: any = globalThis as any;
-  let nonce: string;
-  if (g.crypto && typeof g.crypto.getRandomValues === "function") {
-    const arr = new Uint8Array(16);
-    g.crypto.getRandomValues(arr);
-    const bin = String.fromCharCode(...Array.from(arr));
-    nonce = toBase64(bin);
-  } else if (g.crypto && typeof g.crypto.randomUUID === "function") {
-    nonce = toBase64(g.crypto.randomUUID());
-  } else {
-    nonce = toBase64(`${Date.now()}-${Math.random()}`);
-  }
-
-  const csp = buildCsp(nonce);
+  const csp = getCsp();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
-  requestHeaders.set("x-nonce", nonce);
 
   // No per-page visitor id injection; handled only for /api/visits.
 

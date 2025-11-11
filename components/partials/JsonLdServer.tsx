@@ -1,6 +1,4 @@
-import { headers } from "next/headers";
-
-export default async function JsonLdServer({
+export default function JsonLdServer({
   id,
   data,
   dangerouslyRaw,
@@ -9,8 +7,7 @@ export default async function JsonLdServer({
   data?: unknown;
   dangerouslyRaw?: string;
 }) {
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
+  // No headers() needed - relaxed CSP allows inline scripts for ISR/PPR compatibility
   const json =
     typeof dangerouslyRaw === "string"
       ? dangerouslyRaw
@@ -20,7 +17,6 @@ export default async function JsonLdServer({
     <script
       id={id}
       type="application/ld+json"
-      nonce={nonce}
       suppressHydrationWarning={true}
       dangerouslySetInnerHTML={{ __html }}
     />

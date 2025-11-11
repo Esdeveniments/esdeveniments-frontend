@@ -579,7 +579,7 @@ describe("proxy", () => {
       );
     });
 
-    it("CSP includes strict-dynamic and a nonce value", async () => {
+    it("CSP includes unsafe-inline for ISR compatibility", async () => {
       const mockRequest = {
         nextUrl: { pathname: "/home", search: "" },
         headers: new Headers(),
@@ -597,8 +597,9 @@ describe("proxy", () => {
         mockResponse.headers.get("Content-Security-Policy") ||
         mockResponse.headers.get("Content-Security-Policy-Report-Only") ||
         "";
-      expect(csp).toContain("'strict-dynamic'");
-      expect(csp).toMatch(/nonce-[A-Za-z0-9+/=]+/);
+      expect(csp).toContain("'unsafe-inline'");
+      // Should not contain strict-dynamic or nonce (relaxed CSP for ISR)
+      expect(csp).not.toContain("'strict-dynamic'");
     });
 
     it("sets pathname in request headers", async () => {
@@ -617,7 +618,8 @@ describe("proxy", () => {
 
       const nextResponseCall = (NextResponse.next as Mock).mock.calls[0][0];
       expect(nextResponseCall.request.headers.get("x-pathname")).toBe("/home");
-      expect(nextResponseCall.request.headers.get("x-nonce")).toBeTruthy();
+      // No nonce header with relaxed CSP
+      expect(nextResponseCall.request.headers.get("x-nonce")).toBeNull();
     });
   });
 });
