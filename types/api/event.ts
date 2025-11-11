@@ -33,9 +33,9 @@ export interface EventSummaryResponseDTO {
   location: string;
   visits: number;
   origin: EventOrigin;
-  city: CitySummaryResponseDTO;
-  region: RegionSummaryResponseDTO;
-  province: ProvinceSummaryResponseDTO;
+  city?: CitySummaryResponseDTO;
+  region?: RegionSummaryResponseDTO;
+  province?: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
   updatedAt?: string; // ISO date string for last update
   weather?: {

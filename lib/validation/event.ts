@@ -57,9 +57,9 @@ export const EventSummaryResponseDTOSchema = z
     location: z.string(),
     visits: z.number(),
     origin: EventOriginEnum,
-    city: CitySummaryResponseDTOSchema,
-    region: RegionSummaryResponseDTOSchema,
-    province: ProvinceSummaryResponseDTOSchema,
+    city: CitySummaryResponseDTOSchema.optional(),
+    region: RegionSummaryResponseDTOSchema.optional(),
+    province: ProvinceSummaryResponseDTOSchema.optional(),
     categories: z.array(CategorySummaryResponseDTOSchema),
     updatedAt: z.string().optional(),
     weather: z

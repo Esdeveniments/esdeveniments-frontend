@@ -59,18 +59,6 @@ export function createCategoryLookupMap(
 }
 
 /**
- * Returns default/fallback categories when API fails
- * These mirror the static CATEGORIES object but in the dynamic format
- */
-export function getDefaultCategories(): CategorySummaryResponseDTO[] {
-  return Object.entries(CATEGORIES).map(([key], index) => ({
-    id: index + 1, // Temporary IDs for fallback
-    name: key,
-    slug: mapLegacyCategoryToSlug(key),
-  }));
-}
-
-/**
  * Gets URL slug for a category key (for ISR route generation)
  * Falls back to legacy mapping if dynamic data not available
  */

@@ -3,14 +3,39 @@ import { test, expect } from "@playwright/test";
 test.describe("Navigation and SEO basics", () => {
   test("Navbar links navigate to core pages", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    // Disambiguate header nav
+    // Wait for navigation to be ready
     const nav = page.getByRole("navigation").first();
-    await nav.getByRole("link", { name: "Publicar" }).click();
-    await expect(page).toHaveURL(/\/publica$/);
-    await nav.getByRole("link", { name: "Agenda" }).click();
-    await expect(page).toHaveURL(/\/$/);
-    await nav.getByRole("link", { name: "Notícies" }).click();
-    await expect(page).toHaveURL(/\/noticies$/);
+    await nav.waitFor({ state: "visible" });
+    
+    // Navigate to Publicar
+    const publicarLink = nav.getByRole("link", { name: "Publicar" });
+    await publicarLink.waitFor({ state: "visible" });
+    await Promise.all([
+      page.waitForURL(/\/publica$/, { timeout: 20000 }),
+      publicarLink.click(),
+    ]);
+    
+    // Wait for navigation to be ready again after navigation
+    await nav.waitFor({ state: "visible" });
+    
+    // Navigate back to Agenda (home)
+    const agendaLink = nav.getByRole("link", { name: "Agenda" });
+    await agendaLink.waitFor({ state: "visible" });
+    await Promise.all([
+      page.waitForURL(/\/$/, { timeout: 20000 }),
+      agendaLink.click(),
+    ]);
+    
+    // Wait for navigation to be ready again
+    await nav.waitFor({ state: "visible" });
+    
+    // Navigate to Notícies
+    const noticiesLink = nav.getByRole("link", { name: "Notícies" });
+    await noticiesLink.waitFor({ state: "visible" });
+    await Promise.all([
+      page.waitForURL(/\/noticies$/, { timeout: 20000 }),
+      noticiesLink.click(),
+    ]);
   });
 
   test("Core pages expose canonical link and basic OG tags", async ({
