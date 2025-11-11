@@ -204,10 +204,8 @@ export const generateJsonData = (
     // Only include offers for FREE events (omit for PAID without price)
     ...(offers ? { offers } : {}),
     isAccessibleForFree: event.type === "FREE",
-    ...(isValidHttpUrl(
-      ("url" in event ? (event as any).url : undefined) as string | undefined
-    ) && {
-      sameAs: (event as any).url as string,
+    ...(isValidHttpUrl(event.url) && {
+      sameAs: event.url,
     }),
     ...(eventDuration &&
       eventDuration.trim() !== "" && { duration: eventDuration }),

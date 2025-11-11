@@ -60,9 +60,9 @@ export const EventSummaryResponseDTOSchema = z
     // queried without a 'place' parameter may be returned without city/region/province.
     // According to Swagger, these should always be present. This is a workaround.
     // TODO: Fix backend to always return these fields and make them required again.
-    city: CitySummaryResponseDTOSchema.optional(),
-    region: RegionSummaryResponseDTOSchema.optional(),
-    province: ProvinceSummaryResponseDTOSchema.optional(),
+    city: CitySummaryResponseDTOSchema.optional().nullable(),
+    region: RegionSummaryResponseDTOSchema.optional().nullable(),
+    province: ProvinceSummaryResponseDTOSchema.optional().nullable(),
     categories: z.array(CategorySummaryResponseDTOSchema),
     updatedAt: z.string().optional(),
     weather: z
@@ -93,9 +93,9 @@ const RelatedEventSummarySchema = z
     location: z.string().optional(),
     visits: z.number().optional(),
     categories: z.array(CategorySummaryResponseDTOSchema).optional(),
-    city: CitySummaryResponseDTOSchema.optional(),
-    region: RegionSummaryResponseDTOSchema.optional(),
-    province: ProvinceSummaryResponseDTOSchema.optional(),
+    city: CitySummaryResponseDTOSchema.optional().nullable(),
+    region: RegionSummaryResponseDTOSchema.optional().nullable(),
+    province: ProvinceSummaryResponseDTOSchema.optional().nullable(),
     type: EventTypeEnum.optional(),
     origin: EventOriginEnum.optional(),
     hash: z.string().optional(),

@@ -37,9 +37,9 @@ export interface EventSummaryResponseDTO {
   // queried without a 'place' parameter may be returned without city/region/province.
   // According to Swagger, these should always be present. This is a workaround.
   // TODO: Fix backend to always return these fields and make them required again.
-  city?: CitySummaryResponseDTO;
-  region?: RegionSummaryResponseDTO;
-  province?: ProvinceSummaryResponseDTO;
+  city?: CitySummaryResponseDTO | null;
+  region?: RegionSummaryResponseDTO | null;
+  province?: ProvinceSummaryResponseDTO | null;
   categories: CategorySummaryResponseDTO[];
   updatedAt?: string; // ISO date string for last update
   weather?: {
