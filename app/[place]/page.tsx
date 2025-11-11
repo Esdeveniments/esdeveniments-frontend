@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -18,11 +17,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import {
-  parseFiltersFromUrl,
-  getRedirectUrl,
-  urlToFilterState,
-} from "@utils/url-filters";
+import { parseFiltersFromUrl, urlToFilterState } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -53,7 +48,9 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+    place
+  );
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place,
@@ -69,25 +66,12 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
-  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { place } = await params;
-  const search = await searchParams;
-
 
   validatePlaceOrThrow(place);
-
-  const urlSearchParams = new URLSearchParams();
-  Object.entries(search).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      urlSearchParams.set(key, value);
-    } else if (Array.isArray(value)) {
-      urlSearchParams.set(key, value[0]);
-    }
-  });
 
   // Fetch dynamic categories BEFORE parsing URL to validate category slugs
   let categories: CategorySummaryResponseDTO[] = [];
@@ -99,18 +83,13 @@ export default async function Page({
     categories = []; // Fallback to empty array if fetch fails
   }
 
-  // Parse filters from URL with dynamic categories for validation
+  // Parse filters from path only (ignore searchParams on server to keep ISR)
+  // Canonicalization of query params is handled in proxy.ts
   const parsed = parseFiltersFromUrl(
     { place },
-    urlSearchParams,
+    new URLSearchParams(),
     categories
   );
-
-  // Check if redirect is needed for non-canonical URLs (e.g., query params for category/date)
-  const redirectUrl = getRedirectUrl(parsed);
-  if (redirectUrl) {
-    redirect(redirectUrl);
-  }
 
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
@@ -194,7 +173,9 @@ export default async function Page({
   // Check news (categories already fetched above)
   const hasNews = await hasNewsForPlace(place);
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+    place
+  );
 
   const pageData = await generatePagesData({
     currentYear: new Date().getFullYear(),

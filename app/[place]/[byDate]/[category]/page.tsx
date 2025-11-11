@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -13,12 +12,10 @@ import {
 import type { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { FilteredPageProps } from "types/props";
 import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
-  getRedirectUrl,
   urlToFilterState,
   getTopStaticCombinations,
 } from "@utils/url-filters";
@@ -101,24 +98,13 @@ export async function generateStaticParams() {
 
 export default async function FilteredPage({
   params,
-  searchParams,
-}: FilteredPageProps) {
+}: {
+  params: Promise<{ place: string; byDate: string; category: string }>;
+}) {
   const { place, byDate, category } = await params;
-  const search = await searchParams;
-
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
-
-  // Convert searchParams to URLSearchParams
-  const urlSearchParams = new URLSearchParams();
-  Object.entries(search).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      urlSearchParams.set(key, value);
-    } else if (Array.isArray(value)) {
-      urlSearchParams.set(key, value[0]);
-    }
-  });
 
   // Fetch dynamic categories BEFORE parsing URL to validate category slugs
   let categories: CategorySummaryResponseDTO[] = [];
@@ -133,15 +119,11 @@ export default async function FilteredPage({
   // Parse filters from URL with dynamic categories for validation
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    urlSearchParams,
+    new URLSearchParams(), // ignore search params on server; handled by client layer
     categories
   );
 
-  // Check if redirect is needed for non-canonical URLs
-  const redirectUrl = getRedirectUrl(parsed);
-  if (redirectUrl) {
-    redirect(redirectUrl);
-  }
+  // Canonical redirection from query param forms is handled in proxy.ts middleware
 
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
@@ -151,7 +133,7 @@ export default async function FilteredPage({
     page: 0,
     size: 10,
     category: filters.category !== "tots" ? filters.category : undefined,
-    term: filters.searchTerm || undefined,
+    // term is client-driven via SWR; omit on server to keep ISR static
   };
 
   // Only add place when not catalunya (API treats empty as full Catalonia)
