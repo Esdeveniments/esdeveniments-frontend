@@ -5,6 +5,7 @@ import {
   buildStringToSign,
   verifyHmacSignature,
 } from "@utils/hmac";
+import { isValidDateSlug } from "@lib/dates";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -168,6 +169,11 @@ export default async function proxy(request: NextRequest) {
   }
 
   const segments = pathname.split("/").filter(Boolean);
+  const searchParams = request.nextUrl.searchParams;
+  const queryCategory = searchParams.get("category");
+  const queryDate = searchParams.get("date");
+
+  // Redirect /tots in segments (e.g., /barcelona/tots → /barcelona)
   if (
     (segments.length === 3 || segments.length === 2) &&
     segments[1] === "tots"
@@ -176,9 +182,72 @@ export default async function proxy(request: NextRequest) {
       segments.length === 3
         ? `/${segments[0]}/${segments[2]}`
         : `/${segments[0]}`;
-    const searchParams = request.nextUrl.searchParams.toString();
-    const finalUrl = searchParams ? `${newPath}?${searchParams}` : newPath;
+    const remainingParams = new URLSearchParams(searchParams);
+    remainingParams.delete("category");
+    remainingParams.delete("date");
+    const remainingQuery = remainingParams.toString();
+    const finalUrl = remainingQuery ? `${newPath}?${remainingQuery}` : newPath;
     return NextResponse.redirect(new URL(finalUrl, request.url), 301);
+  }
+
+  // Redirect query params for category/date to canonical URLs (e.g., /barcelona?category=teatre&date=tots → /barcelona/teatre)
+  // This prevents CSP errors by redirecting before page renders
+  if (queryCategory || queryDate) {
+    const place = segments[0] || "catalunya";
+    const segmentCount = segments.length;
+
+    // Only handle redirects for 1-segment URLs (e.g., /barcelona?category=teatre)
+    // 2-segment URLs are handled by page components (they may be valid canonical URLs)
+    // Skip known non-place top-level routes
+    const firstSegment = segments[0] || "";
+    const nonPlaceFirstSegments = new Set([
+      "noticies",
+      "publica",
+      "login",
+      "offline",
+      "e",
+      "sitemap",
+      "rss.xml",
+      "qui-som",
+      "server-sitemap.xml",
+      "server-news-sitemap.xml",
+      "server-google-news-sitemap.xml",
+    ]);
+
+    if (segmentCount === 1 && !nonPlaceFirstSegments.has(firstSegment)) {
+      // Build canonical URL: omit "tots" values
+      let canonicalPath = `/${place}`;
+      const date =
+        queryDate && isValidDateSlug(queryDate)
+          ? queryDate === "tots"
+            ? null
+            : queryDate
+          : null;
+      const category = queryCategory === "tots" ? null : queryCategory;
+
+      if (date && category) {
+        // Both specific: /place/date/category
+        canonicalPath = `/${place}/${date}/${category}`;
+      } else if (date) {
+        // Only date: /place/date
+        canonicalPath = `/${place}/${date}`;
+      } else if (category) {
+        // Only category: /place/category
+        canonicalPath = `/${place}/${category}`;
+      }
+      // If both are "tots" or null, canonicalPath stays as /place
+
+      // Preserve other query params (search, distance, lat, lon)
+      const remainingParams = new URLSearchParams(searchParams);
+      remainingParams.delete("category");
+      remainingParams.delete("date");
+      const remainingQuery = remainingParams.toString();
+      const finalUrl = remainingQuery
+        ? `${canonicalPath}?${remainingQuery}`
+        : canonicalPath;
+
+      return NextResponse.redirect(new URL(finalUrl, request.url), 301);
+    }
   }
 
   const nonce = crypto.randomUUID();

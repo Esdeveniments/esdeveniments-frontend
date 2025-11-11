@@ -135,6 +135,91 @@ describe("proxy", () => {
         301
       );
     });
+
+    it("redirects query params to canonical path (/barcelona?category=teatre&date=tots → /barcelona/teatre)", async () => {
+      const mockRequest = {
+        nextUrl: {
+          pathname: "/barcelona",
+          search: "?category=teatre&date=tots",
+          searchParams: new URLSearchParams("?category=teatre&date=tots"),
+        },
+        url: "https://example.com/barcelona?category=teatre&date=tots",
+        headers: new Headers(),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL(
+          "/barcelona/teatre",
+          "https://example.com/barcelona?category=teatre&date=tots"
+        ),
+        301
+      );
+    });
+
+    it("preserves other query params on redirect (e.g., search)", async () => {
+      const mockRequest = {
+        nextUrl: {
+          pathname: "/barcelona",
+          search: "?category=teatre&date=tots&search=castellers",
+          searchParams: new URLSearchParams(
+            "?category=teatre&date=tots&search=castellers"
+          ),
+        },
+        url: "https://example.com/barcelona?category=teatre&date=tots&search=castellers",
+        headers: new Headers(),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL(
+          "/barcelona/teatre?search=castellers",
+          "https://example.com/barcelona?category=teatre&date=tots&search=castellers"
+        ),
+        301
+      );
+    });
+
+    it("does not redirect non-place routes with query params", async () => {
+      const mockRequest = {
+        nextUrl: {
+          pathname: "/noticies",
+          search: "?category=teatre&date=avui",
+          searchParams: new URLSearchParams("?category=teatre&date=avui"),
+        },
+        url: "https://example.com/noticies?category=teatre&date=avui",
+        headers: new Headers(),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.next).toHaveBeenCalled();
+    });
+
+    it("removes invalid date query by redirecting to /place (no extra segment)", async () => {
+      const mockRequest = {
+        nextUrl: {
+          pathname: "/barcelona",
+          search: "?date=invalid",
+          searchParams: new URLSearchParams("?date=invalid"),
+        },
+        url: "https://example.com/barcelona?date=invalid",
+        headers: new Headers(),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL("/barcelona", "https://example.com/barcelona?date=invalid"),
+        301
+      );
+    });
   });
 
   describe("API routes", () => {
@@ -421,7 +506,8 @@ describe("proxy", () => {
 
     it("injects x-visitor-id and sets cookie for /api/visits POST when missing", async () => {
       // Prepare a NextResponse.next that captures cookies.set calls
-      const cookieCalls: Array<{ name: string; value: string; options: any }> = [];
+      const cookieCalls: Array<{ name: string; value: string; options: any }> =
+        [];
       const mockResponse = {
         status: 200,
         headers: new Headers(),
