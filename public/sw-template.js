@@ -25,7 +25,6 @@ workbox.navigationPreload.enable();
 const APP_SHELL_ASSETS = [
   { url: "/offline", revision: null },
   // FIXED: Precache the main stylesheet to ensure the offline page is always styled correctly.
-  { url: "/styles/globals.css", revision: null },
   { url: "/static/icons/icon-192x192.png", revision: null },
   { url: "/static/icons/icon-512x512.png", revision: null },
   { url: "/static/icons/today-icon.png", revision: null },
