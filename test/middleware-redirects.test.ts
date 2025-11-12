@@ -226,4 +226,99 @@ describe("handleCanonicalRedirects", () => {
       expect(redirectCall[1]).toBe(301);
     });
   });
+
+  describe("DOS protection", () => {
+    it("rejects query strings longer than 2048 characters", () => {
+      // Create a query string with a very long parameter value
+      const longValue = "a".repeat(2000);
+      const request = createMockRequest(
+        "/barcelona",
+        `?category=teatre&long=${longValue}`
+      );
+      const result = handleCanonicalRedirects(request);
+
+      // Should return null to skip processing (DOS protection)
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("rejects requests with more than 50 query parameters", () => {
+      // Create a query string with 51 parameters
+      const params: string[] = [];
+      for (let i = 0; i < 51; i++) {
+        params.push(`param${i}=value${i}`);
+      }
+      const request = createMockRequest("/barcelona", `?${params.join("&")}`);
+      const result = handleCanonicalRedirects(request);
+
+      // Should return null to skip processing (DOS protection)
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("rejects parameter values longer than 500 characters", () => {
+      const longValue = "a".repeat(501);
+      const request = createMockRequest("/barcelona", `?category=${longValue}`);
+      const result = handleCanonicalRedirects(request);
+
+      // Should return null to skip processing (DOS protection)
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("rejects parameter keys longer than 100 characters", () => {
+      const longKey = "a".repeat(101);
+      const request = createMockRequest("/barcelona", `?${longKey}=value`);
+      const result = handleCanonicalRedirects(request);
+
+      // Should return null to skip processing (DOS protection)
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("allows valid requests with reasonable query parameters", () => {
+      // Test with 10 parameters (well under the limit)
+      const params: string[] = [];
+      for (let i = 0; i < 10; i++) {
+        params.push(`param${i}=value${i}`);
+      }
+      const request = createMockRequest(
+        "/barcelona/tots",
+        `?${params.join("&")}&date=avui`
+      );
+      handleCanonicalRedirects(request);
+
+      // Should process normally (may or may not redirect depending on logic)
+      // The important thing is it doesn't return null due to DOS protection
+      expect(NextResponse.redirect).toHaveBeenCalled();
+    });
+
+    it("allows requests with parameter values at the limit (500 chars)", () => {
+      const longValue = "a".repeat(500); // Exactly at the limit
+      const request = createMockRequest(
+        "/barcelona/tots",
+        `?date=avui&search=${longValue}`
+      );
+      const result = handleCanonicalRedirects(request);
+
+      // Should process normally (not rejected by DOS protection)
+      // Since we have /tots and date=avui, it should redirect
+      expect(result).not.toBeNull();
+      expect(NextResponse.redirect).toHaveBeenCalled();
+    });
+
+    it("allows requests with exactly 50 query parameters", () => {
+      // Create a query string with exactly 50 parameters (at the limit)
+      const params: string[] = [];
+      for (let i = 0; i < 50; i++) {
+        params.push(`param${i}=value${i}`);
+      }
+      const request = createMockRequest("/barcelona", `?${params.join("&")}`);
+      const result = handleCanonicalRedirects(request);
+
+      // Should process normally (not rejected by DOS protection)
+      // May return null for other reasons, but DOS protection should pass
+      expect(result).toBeNull(); // This is expected since there's no redirect needed
+    });
+  });
 });

@@ -125,10 +125,10 @@ describe("proxy", () => {
       const mockRequest = {
         nextUrl: {
           pathname: "/barcelona/tots/events",
-          search: "?param=value",
-          searchParams: new URLSearchParams("?param=value"),
+          search: "?search=rock",
+          searchParams: new URLSearchParams("?search=rock"),
         },
-        url: "https://example.com/barcelona/tots/events?param=value",
+        url: "https://example.com/barcelona/tots/events?search=rock",
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -137,8 +137,8 @@ describe("proxy", () => {
 
       expect(NextResponse.redirect).toHaveBeenCalledWith(
         new URL(
-          "/barcelona/events?param=value",
-          "https://example.com/barcelona/tots/events?param=value"
+          "/barcelona/events?search=rock",
+          "https://example.com/barcelona/tots/events?search=rock"
         ),
         301
       );

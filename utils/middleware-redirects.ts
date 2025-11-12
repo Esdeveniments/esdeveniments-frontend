@@ -6,6 +6,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidDateSlug } from "@lib/dates";
 
+// DOS protection: limits on query parameters
+const MAX_QUERY_STRING_LENGTH = 2048; // Total query string length
+const MAX_QUERY_PARAMS = 50; // Maximum number of query parameters
+const MAX_PARAM_VALUE_LENGTH = 500; // Maximum length of individual parameter value
+
+// Allowed query parameters to preserve in redirects (security: allowlist only)
+const ALLOWED_QUERY_PARAMS = new Set(["search", "distance", "lat", "lon"]);
+
+/**
+ * Validates query parameters to prevent DOS attacks
+ * Returns true if query params are within safe limits, false otherwise
+ */
+function validateQueryParams(
+  searchParams: URLSearchParams,
+  queryString: string
+): boolean {
+  // Check total query string length (use raw query string to avoid toString() overhead)
+  if (queryString.length > MAX_QUERY_STRING_LENGTH) {
+    return false;
+  }
+
+  // Check number of parameters and individual value lengths in a single pass
+  let paramCount = 0;
+  for (const [key, value] of searchParams.entries()) {
+    paramCount++;
+    if (paramCount > MAX_QUERY_PARAMS) {
+      return false;
+    }
+    if (value.length > MAX_PARAM_VALUE_LENGTH) {
+      return false;
+    }
+    // Also check key length (though keys are typically short)
+    if (key.length > 100) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /**
  * Handles canonical redirects for place routes
  * Returns a redirect response if the URL needs to be canonicalized, null otherwise
@@ -15,11 +55,8 @@ export function handleCanonicalRedirects(
 ): NextResponse | null {
   const { pathname } = request.nextUrl;
   const segments = pathname.split("/").filter(Boolean);
-  const searchParams = request.nextUrl.searchParams;
-  const queryCategory = searchParams.get("category");
-  const queryDate = searchParams.get("date");
 
-  // Skip known non-place top-level routes
+  // Skip known non-place top-level routes early (performance: avoid query validation)
   const firstSegment = segments[0] || "";
   const nonPlaceFirstSegments = new Set([
     "noticies",
@@ -39,6 +76,19 @@ export function handleCanonicalRedirects(
   if (nonPlaceFirstSegments.has(firstSegment)) {
     return null;
   }
+
+  const searchParams = request.nextUrl.searchParams;
+  const queryString = request.nextUrl.search; // Raw query string (includes '?')
+
+  // DOS protection: validate query parameters before processing
+  if (!validateQueryParams(searchParams, queryString)) {
+    // Return null to skip redirect processing for suspicious requests
+    // This prevents resource exhaustion while still allowing the request to proceed
+    return null;
+  }
+
+  const queryCategory = searchParams.get("category");
+  const queryDate = searchParams.get("date");
 
   const place = segments[0] || "catalunya";
   const segmentCount = segments.length;
@@ -94,10 +144,14 @@ export function handleCanonicalRedirects(
     }
     // If both are null/tots, canonicalPath stays as /place
 
-    // Preserve other query params (search, distance, lat, lon)
-    const remainingParams = new URLSearchParams(searchParams);
-    remainingParams.delete("category");
-    remainingParams.delete("date");
+    // Preserve allowed query params only (security: allowlist approach)
+    const remainingParams = new URLSearchParams();
+    for (const key of ALLOWED_QUERY_PARAMS) {
+      const value = searchParams.get(key);
+      if (value !== null) {
+        remainingParams.set(key, value);
+      }
+    }
     const remainingQuery = remainingParams.toString();
     const finalUrl = remainingQuery
       ? `${canonicalPath}?${remainingQuery}`
@@ -140,10 +194,14 @@ export function handleCanonicalRedirects(
       canonicalPath = `/${place}/${category}`;
     }
 
-    // Preserve other query params (search, distance, lat, lon)
-    const remainingParams = new URLSearchParams(searchParams);
-    remainingParams.delete("category");
-    remainingParams.delete("date");
+    // Preserve allowed query params only (security: allowlist approach)
+    const remainingParams = new URLSearchParams();
+    for (const key of ALLOWED_QUERY_PARAMS) {
+      const value = searchParams.get(key);
+      if (value !== null) {
+        remainingParams.set(key, value);
+      }
+    }
     const remainingQuery = remainingParams.toString();
     const finalUrl = remainingQuery
       ? `${canonicalPath}?${remainingQuery}`
