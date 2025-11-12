@@ -35,6 +35,7 @@ frontend:
         - rm -rf .next/cache
         - rm -rf .next/types
         - rm -rf .next/trace
+        - rm -rf .next/standalone
         # Remove source maps and other unnecessary files
         - find .next -name "*.map" -type f -delete || true
         - find .next -name "*.d.ts" -type f -delete || true
@@ -46,6 +47,9 @@ frontend:
         - du -sh .next || true
         - echo "Directory sizes after cleanup:"
         - du -sh .next/* 2>/dev/null | sort -h || true
+        # Check what's taking up space in .next/server
+        - echo "Largest files/directories in .next/server:"
+        - du -sh .next/server/* 2>/dev/null | sort -h | tail -10 || true
         - echo "Build cleanup complete"
   artifacts:
     # AWS Amplify standard pattern: baseDirectory should be .next for Next.js
