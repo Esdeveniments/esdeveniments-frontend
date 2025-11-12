@@ -29,5 +29,3 @@ export function parsePlaces(input: unknown): PlaceResponseDTO[] {
   }
   return result.data;
 }
-
-

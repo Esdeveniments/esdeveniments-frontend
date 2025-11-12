@@ -39,10 +39,7 @@ describe("handleCanonicalRedirects", () => {
 
   describe("tots redirects with query params", () => {
     it("preserves date query param for /place/tots/category?date=avui", () => {
-      const request = createMockRequest(
-        "/barcelona/tots/teatre",
-        "?date=avui"
-      );
+      const request = createMockRequest("/barcelona/tots/teatre", "?date=avui");
       const result = handleCanonicalRedirects(request);
 
       expect(result).not.toBeNull();
@@ -208,10 +205,7 @@ describe("handleCanonicalRedirects", () => {
     });
 
     it("ignores 'tots' as date query param", () => {
-      const request = createMockRequest(
-        "/barcelona/tots/teatre",
-        "?date=tots"
-      );
+      const request = createMockRequest("/barcelona/tots/teatre", "?date=tots");
       const result = handleCanonicalRedirects(request);
 
       expect(result).not.toBeNull();
@@ -224,10 +218,7 @@ describe("handleCanonicalRedirects", () => {
 
   describe("redirect status code", () => {
     it("uses 301 status code for redirects", () => {
-      const request = createMockRequest(
-        "/barcelona/tots/teatre",
-        "?date=avui"
-      );
+      const request = createMockRequest("/barcelona/tots/teatre", "?date=avui");
       const result = handleCanonicalRedirects(request);
 
       expect(result).not.toBeNull();
@@ -236,4 +227,3 @@ describe("handleCanonicalRedirects", () => {
     });
   });
 });
-

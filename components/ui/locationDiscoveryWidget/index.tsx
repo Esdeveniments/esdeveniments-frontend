@@ -141,12 +141,12 @@ export default function LocationDiscoveryWidget({
       <div className="container flex flex-col justify-center items-center">
         <div className="relative w-full">
           {/* Main Location Selector */}
-          <div className="flex items-center gap-element-gap mb-element-gap">
+          <div className="flex items-center gap-element-gap mb-element-gap flex-wrap md:flex-nowrap">
             <GlobeIcon className="w-4 h-4" />
             <h2 className="body-small text-foreground">
               Mirant esdeveniments a
             </h2>
-            <div className="relative">
+            <div className="relative w-full md:w-auto flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
@@ -169,7 +169,7 @@ export default function LocationDiscoveryWidget({
               </button>
 
               {isOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden min-w-[300px] w-max">
+                <div className="absolute top-full left-0 right-0 md:right-auto mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden w-full md:w-max md:min-w-[300px] md:max-w-md">
                   {/* Search input */}
                   <div className="p-input-x border-b border-border border-opacity-30">
                     <div className="relative">
