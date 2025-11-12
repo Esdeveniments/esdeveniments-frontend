@@ -163,12 +163,15 @@ export default async function FilteredPage({
         notFound();
       }
     } catch (error) {
-      // Transient errors (500, network failures, etc.) - log but continue
-      // The page will handle gracefully, and the error might be transient
+      // Transient errors (500, network failures, etc.) - fail fast to avoid cache poisoning
+      // If the upstream place service is down we should not continue and risk serving a 200 for
+      // a potentially non-existent place. Surface the error so Next.js will render an error
+      // (500) instead of caching an incorrect successful response.
       console.error(
-        `Error checking place existence for ${place}, continuing anyway:`,
+        `Error checking place existence for ${place}; failing fast to avoid poisoning cache:`,
         error
       );
+      throw error;
     }
   }
 
