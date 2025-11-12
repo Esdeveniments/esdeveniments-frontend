@@ -39,7 +39,8 @@ export const CitySummaryResponseDTOSchema = z.object({
   enabled: z.boolean(),
 });
 
-export const EventSummaryResponseDTOSchema = z
+// Base event schema for list endpoints - does not include location fields
+const EventSummaryBaseSchema = z
   .object({
     id: z.string(),
     hash: z.string(),
@@ -56,13 +57,6 @@ export const EventSummaryResponseDTOSchema = z
     location: z.string(),
     visits: z.number(),
     origin: EventOriginEnum,
-    // NOTE: These fields are marked optional due to a backend API issue where events
-    // queried without a 'place' parameter may be returned without city/region/province.
-    // According to Swagger, these should always be present. This is a workaround.
-    // TODO: Fix backend to always return these fields and make them required again.
-    city: CitySummaryResponseDTOSchema.optional().nullable(),
-    region: RegionSummaryResponseDTOSchema.optional().nullable(),
-    province: ProvinceSummaryResponseDTOSchema.optional().nullable(),
     categories: z.array(CategorySummaryResponseDTOSchema),
     updatedAt: z.string().optional(),
     weather: z
@@ -75,6 +69,16 @@ export const EventSummaryResponseDTOSchema = z
       .optional(),
   })
   .passthrough();
+
+// Event summary schema for list endpoints (no location fields)
+export const EventSummaryResponseDTOSchema = EventSummaryBaseSchema;
+
+// Event detail schema - includes required location fields
+const EventDetailBaseSchema = EventSummaryBaseSchema.extend({
+  city: CitySummaryResponseDTOSchema,
+  region: RegionSummaryResponseDTOSchema,
+  province: ProvinceSummaryResponseDTOSchema,
+});
 
 // Related events from the backend can be partial/minimal.
 // Accept a more lenient shape to avoid dropping valid payloads.
@@ -111,13 +115,12 @@ const RelatedEventSummarySchema = z
   })
   .passthrough();
 
-export const EventDetailResponseDTOSchema =
-  EventSummaryResponseDTOSchema.extend({
-    videoUrl: z.string().optional(),
-    duration: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    relatedEvents: z.array(RelatedEventSummarySchema).optional(),
-  });
+export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
+  videoUrl: z.string().optional(),
+  duration: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  relatedEvents: z.array(RelatedEventSummarySchema).optional(),
+});
 
 export function parseEventDetail(
   input: unknown
@@ -127,6 +130,7 @@ export function parseEventDetail(
     console.error("parseEventDetail: invalid event payload", result.error);
     return null;
   }
+
   return result.data as EventDetailResponseDTO;
 }
 
@@ -151,8 +155,7 @@ export function parsePagedEvents(
     );
     return null;
   }
-  // Type assertion needed due to passthrough() allowing extra fields
-  // that may not match the exact TypeScript type
+
   return result.data as PagedResponseDTO<EventSummaryResponseDTO>;
 }
 
@@ -173,7 +176,6 @@ export function parseCategorizedEvents(
     );
     return null;
   }
-  // Type assertion needed due to passthrough() allowing extra fields
-  // that may not match the exact TypeScript type
+
   return result.data as CategorizedEvents;
 }

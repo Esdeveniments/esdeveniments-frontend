@@ -119,7 +119,7 @@ export default async function FilteredPage({
   // Parse filters from URL with dynamic categories for validation
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    new URLSearchParams(), // ignore search params on server; handled by client layer
+    new URLSearchParams(), // Ignore search params on server. Canonicalization of legacy query params (e.g., ?date=, ?category=) is handled by the middleware. This route already has all required segments in the path, so there's no need to parse searchParams for redirection. Client-side filtering will re-fetch data using SWR.
     categories
   );
 

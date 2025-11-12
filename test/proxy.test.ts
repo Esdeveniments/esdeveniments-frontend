@@ -543,6 +543,44 @@ describe("proxy", () => {
       expect(cookieCalls[0].value).toBe("testuuid");
       expect(cookieCalls[0].options.path).toBe("/");
     });
+
+    it("uses existing visitor_id cookie and does not set new cookie for /api/visits POST", async () => {
+      // Prepare a NextResponse.next that captures cookies.set calls
+      const cookieCalls: Array<{ name: string; value: string; options: any }> =
+        [];
+      const mockResponse = {
+        status: 200,
+        headers: new Headers(),
+        cookies: {
+          set: (name: string, value: string, options: any) => {
+            cookieCalls.push({ name, value, options });
+          },
+        },
+        text: () => Promise.resolve(""),
+      } as unknown as NextResponse;
+      (NextResponse.next as unknown as any).mockReturnValue(mockResponse);
+
+      // Existing visitor cookie present
+      const existingVisitorId = "existing-visitor-123";
+      const mockRequest = {
+        nextUrl: { pathname: "/api/visits", search: "" },
+        headers: new Headers(),
+        cookies: {
+          get: vi.fn().mockReturnValue({ value: existingVisitorId }),
+        },
+        method: "POST",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      // Ensure x-visitor-id header uses the existing cookie value
+      const nextArgs = (NextResponse.next as unknown as any).mock.calls[0][0];
+      const forwardedVisitorId = nextArgs.request.headers.get("x-visitor-id");
+      expect(forwardedVisitorId).toBe(existingVisitorId);
+
+      // Cookie should NOT be set when it already exists
+      expect(cookieCalls.length).toBe(0);
+    });
   });
 
   describe("CSP and security headers", () => {

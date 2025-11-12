@@ -33,13 +33,9 @@ export interface EventSummaryResponseDTO {
   location: string;
   visits: number;
   origin: EventOrigin;
-  // NOTE: These fields are marked optional due to a backend API issue where events
-  // queried without a 'place' parameter may be returned without city/region/province.
-  // According to Swagger, these should always be present. This is a workaround.
-  // TODO: Fix backend to always return these fields and make them required again.
-  city?: CitySummaryResponseDTO | null;
-  region?: RegionSummaryResponseDTO | null;
-  province?: ProvinceSummaryResponseDTO | null;
+  city?: CitySummaryResponseDTO;
+  region?: RegionSummaryResponseDTO;
+  province?: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
   updatedAt?: string; // ISO date string for last update
   weather?: {
@@ -70,11 +66,15 @@ export interface PagedResponseDTO<T> {
   last: boolean;
 }
 
+// Detail endpoint always includes location fields
 export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
+  city: CitySummaryResponseDTO;
+  region: RegionSummaryResponseDTO;
+  province: ProvinceSummaryResponseDTO;
   duration?: string;
   videoUrl?: string;
   tags?: string[];
-  relatedEvents?: EventSummaryResponseDTO[]; // Add related events from backend
+  relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
 }
 
 export type CategorizedEvents = {
