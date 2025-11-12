@@ -17,6 +17,7 @@ import type {
 import { VALID_DATES, isValidDateSlug } from "@lib/dates";
 import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
 import { topStaticGenerationPlaces } from "./priority-places";
+import { DEFAULT_FILTER_VALUE } from "./constants";
 
 /**
  * Convert Next.js searchParams object to URLSearchParams
@@ -72,7 +73,7 @@ function parseLongitude(value: string): number | undefined {
 
 // Legacy categories for backward compatibility
 const LEGACY_CATEGORIES: Record<string, URLCategory> = {
-  tots: "tots",
+  tots: DEFAULT_FILTER_VALUE,
   concerts: "concerts",
   festivals: "festivals",
   espectacles: "espectacles",
@@ -103,7 +104,7 @@ export function isValidCategorySlug(
   }
 
   // Default valid categories for fallback
-  return categorySlug === "tots";
+  return categorySlug === DEFAULT_FILTER_VALUE;
 }
 
 /**
@@ -140,8 +141,8 @@ export function parseFiltersFromUrl(
   if (segmentCount === 1) {
     // /catalunya or /catalunya?category=teatre&date=tots (legacy - redirects)
     place = segments.place || "catalunya";
-    date = queryDate || "tots";
-    category = queryCategory || "tots";
+    date = queryDate || DEFAULT_FILTER_VALUE;
+    category = queryCategory || DEFAULT_FILTER_VALUE;
   } else if (segmentCount === 2) {
     // /catalunya/something - determine if 'something' is date or category
     place = segments.place || "catalunya";
@@ -150,24 +151,24 @@ export function parseFiltersFromUrl(
     if (isValidDateSlug(secondSegment)) {
       // It's a date: /catalunya/avui
       date = secondSegment;
-      category = queryCategory || "tots"; // Legacy: query category if present
+      category = queryCategory || DEFAULT_FILTER_VALUE; // Legacy: query category if present
     } else {
       // It's a category: /catalunya/festivals
-      date = queryDate || "tots"; // Legacy: query date if present
+      date = queryDate || DEFAULT_FILTER_VALUE; // Legacy: query date if present
       category = secondSegment;
     }
   } else {
     // 3 segments: /catalunya/avui/festivals (canonical structure)
     place = segments.place || "catalunya";
-    date = segments.date || queryDate || "tots";
-    category = segments.category || queryCategory || "tots";
+    date = segments.date || queryDate || DEFAULT_FILTER_VALUE;
+    category = segments.category || queryCategory || DEFAULT_FILTER_VALUE;
   }
 
   // Validate and normalize segments
-  const normalizedDate = isValidDateSlug(date) ? date : "tots";
+  const normalizedDate = isValidDateSlug(date) ? date : DEFAULT_FILTER_VALUE;
   const normalizedCategory = isValidCategorySlug(category, dynamicCategories)
     ? category
-    : "tots";
+    : DEFAULT_FILTER_VALUE;
 
   // Determine if this is a canonical URL structure
   //
@@ -182,7 +183,7 @@ export function parseFiltersFromUrl(
   //    - /barcelona?date=avui → /barcelona/avui
   const hasQueryCategoryOrDate = queryCategory || queryDate;
   const hasTotsInSegments =
-    segments.date === "tots" || segments.category === "tots";
+    segments.date === DEFAULT_FILTER_VALUE || segments.category === DEFAULT_FILTER_VALUE;
 
   // Canonical URLs should:
   // - Not have "tots" in segments (it should be omitted)
@@ -196,14 +197,14 @@ export function parseFiltersFromUrl(
     !hasQueryCategoryOrDate &&
     !hasTotsInSegments &&
     ((segmentCount === 1 &&
-      normalizedDate === "tots" &&
-      normalizedCategory === "tots") ||
+      normalizedDate === DEFAULT_FILTER_VALUE &&
+      normalizedCategory === DEFAULT_FILTER_VALUE) ||
       (segmentCount === 2 &&
-        ((normalizedDate === "tots" && normalizedCategory !== "tots") ||
-          (normalizedDate !== "tots" && normalizedCategory === "tots"))) ||
+        ((normalizedDate === DEFAULT_FILTER_VALUE && normalizedCategory !== DEFAULT_FILTER_VALUE) ||
+          (normalizedDate !== DEFAULT_FILTER_VALUE && normalizedCategory === DEFAULT_FILTER_VALUE))) ||
       (segmentCount === 3 &&
-        normalizedDate !== "tots" &&
-        normalizedCategory !== "tots" &&
+        normalizedDate !== DEFAULT_FILTER_VALUE &&
+        normalizedCategory !== DEFAULT_FILTER_VALUE &&
         isValidDateSlug(normalizedDate) &&
         isValidCategorySlug(normalizedCategory, dynamicCategories)));
 
@@ -290,8 +291,8 @@ export function buildFallbackUrlForInvalidPlace(opts: {
   const filters: Partial<URLFilterState> = {
     place: "catalunya",
     byDate:
-      opts.byDate && isValidDateSlug(opts.byDate) ? opts.byDate : "tots",
-    category: opts.category || "tots",
+      opts.byDate && isValidDateSlug(opts.byDate) ? opts.byDate : DEFAULT_FILTER_VALUE,
+    category: opts.category || DEFAULT_FILTER_VALUE,
     searchTerm: params.get("search") || undefined,
     distance: params.get("distance")
       ? parseInt(params.get("distance") || "50")
@@ -356,7 +357,7 @@ export function getCategorySlug(
   }
 
   // Fall back to legacy mapping or return as-is if already a valid slug
-  return LEGACY_CATEGORIES[category] || category || "tots";
+  return LEGACY_CATEGORIES[category] || category || DEFAULT_FILTER_VALUE;
 }
 
 /**
@@ -369,7 +370,7 @@ export function getTopStaticCombinations(
   // Use smaller list for static generation to keep build size under 230MB
   // Each place generates ~4.6MB, so ~15 places = ~69MB (within limit)
   const hardcodedTopPlaces = topStaticGenerationPlaces;
-  const topDates = VALID_DATES.filter((date) => date !== "tots"); // Exclude "tots" from static generation
+  const topDates = VALID_DATES.filter((date) => date !== DEFAULT_FILTER_VALUE); // Exclude "tots" from static generation
 
   // Filter top places to only include those that exist in API data
   let topPlaces;
@@ -381,15 +382,15 @@ export function getTopStaticCombinations(
   }
 
   // Get top categories from dynamic data or fall back to legacy
-  let topCategories = ["tots"];
+  let topCategories = [DEFAULT_FILTER_VALUE];
 
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
     // Use first 5 dynamic categories + "tots"
     const dynamicSlugs = dynamicCategories.slice(0, 4).map((cat) => cat.slug);
-    topCategories = ["tots", ...dynamicSlugs];
+    topCategories = [DEFAULT_FILTER_VALUE, ...dynamicSlugs];
   } else {
     // Fall back to legacy categories
-    topCategories = ["tots", "concerts", "festivals", "espectacles", "familia"];
+    topCategories = [DEFAULT_FILTER_VALUE, "concerts", "festivals", "espectacles", "familia"];
   }
 
   const combinations = [];
@@ -460,24 +461,24 @@ export function buildCanonicalUrlDynamic(
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): string {
   const place = filters.place || "catalunya";
-  const date = filters.byDate || "tots";
-  let categorySlug = filters.category || "tots";
+  const date = filters.byDate || DEFAULT_FILTER_VALUE;
+  let categorySlug = filters.category || DEFAULT_FILTER_VALUE;
 
   // Ensure we use the correct slug for the category
-  if (filters.category && filters.category !== "tots") {
+  if (filters.category && filters.category !== DEFAULT_FILTER_VALUE) {
     categorySlug = getCategorySlug(filters.category, dynamicCategories);
   }
 
   // Build URL based on filter values, omitting /tots/ when it's default
   let url: string;
 
-  if (date === "tots" && categorySlug === "tots") {
+  if (date === DEFAULT_FILTER_VALUE && categorySlug === DEFAULT_FILTER_VALUE) {
     // Both default: /catalunya
     url = `/${place}`;
-  } else if (date === "tots") {
+  } else if (date === DEFAULT_FILTER_VALUE) {
     // Date is default, category is specific: /catalunya/festivals
     url = `/${place}/${categorySlug}`;
-  } else if (categorySlug === "tots") {
+  } else if (categorySlug === DEFAULT_FILTER_VALUE) {
     // Date is specific, category is default: /catalunya/avui
     url = `/${place}/${date}`;
   } else {

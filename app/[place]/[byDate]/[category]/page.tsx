@@ -33,6 +33,7 @@ import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { redirect } from "next/navigation";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -97,7 +98,8 @@ export async function generateMetadata({
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
     placeTypeLabel: placeTypeAndLabel,
-    category: filters.category !== "tots" ? filters.category : undefined,
+    category:
+      filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
   });
 
@@ -227,7 +229,8 @@ export default async function FilteredPage({
   const fetchParams: FetchEventsParams = {
     page: 0,
     size: 10,
-    category: filters.category !== "tots" ? filters.category : undefined,
+    category:
+      filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     // term is client-driven via SWR; omit on server to keep ISR static
   };
 
@@ -324,7 +327,8 @@ export default async function FilteredPage({
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
     placeTypeLabel: placeTypeAndLabel,
-    category: filters.category !== "tots" ? filters.category : undefined,
+    category:
+      filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
   });
 

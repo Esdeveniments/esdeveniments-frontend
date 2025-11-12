@@ -70,8 +70,12 @@ const EventSummaryBaseSchema = z
   })
   .passthrough();
 
-// Event summary schema for list endpoints (no location fields)
-export const EventSummaryResponseDTOSchema = EventSummaryBaseSchema;
+// Event summary schema for list endpoints (optional location fields)
+export const EventSummaryResponseDTOSchema = EventSummaryBaseSchema.extend({
+  city: CitySummaryResponseDTOSchema.optional().nullable(),
+  region: RegionSummaryResponseDTOSchema.optional().nullable(),
+  province: ProvinceSummaryResponseDTOSchema.optional().nullable(),
+});
 
 // Event detail schema - includes required location fields
 const EventDetailBaseSchema = EventSummaryBaseSchema.extend({
@@ -120,6 +124,8 @@ export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
   relatedEvents: z.array(RelatedEventSummarySchema).optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
 });
 
 export function parseEventDetail(

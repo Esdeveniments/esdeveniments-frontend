@@ -32,6 +32,7 @@ import { topStaticGenerationPlaces } from "@utils/priority-places";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { redirect } from "next/navigation";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -165,8 +166,10 @@ export default async function Page({
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
 
-  const category = filters.category !== "tots" ? filters.category : undefined;
-  const date = filters.byDate !== "tots" ? filters.byDate : undefined;
+  const category =
+    filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined;
+  const date =
+    filters.byDate !== DEFAULT_FILTER_VALUE ? filters.byDate : undefined;
   const query = filters.searchTerm || undefined;
 
   const fetchParams: FetchEventsParams = {

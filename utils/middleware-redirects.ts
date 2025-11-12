@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { isValidDateSlug } from "@lib/dates";
+import { DEFAULT_FILTER_VALUE } from "./constants";
 
 // DOS protection: limits on query parameters
 const MAX_QUERY_STRING_LENGTH = 2048; // Total query string length
@@ -93,8 +94,10 @@ export function handleCanonicalRedirects(
   const place = segments[0] || "catalunya";
   const segmentCount = segments.length;
   const hasTotsInSegments =
-    (segmentCount === 3 || segmentCount === 2) && segments[1] === "tots";
-  const hasTotsCategory = segmentCount >= 3 && segments[2] === "tots";
+    (segmentCount === 3 || segmentCount === 2) &&
+    segments[1] === DEFAULT_FILTER_VALUE;
+  const hasTotsCategory =
+    segmentCount >= 3 && segments[2] === DEFAULT_FILTER_VALUE;
 
   // Handle redirects: combine /tots segments with query params if present
   if (
@@ -107,7 +110,7 @@ export function handleCanonicalRedirects(
 
     // Determine date: from segment (if not tots) or query param
     let date: string | null = null;
-    if (segmentCount >= 2 && segments[1] !== "tots") {
+    if (segmentCount >= 2 && segments[1] !== DEFAULT_FILTER_VALUE) {
       // /place/date - check if it's a valid date
       const secondSegment = segments[1];
       date = isValidDateSlug(secondSegment) ? secondSegment : null;
@@ -116,7 +119,7 @@ export function handleCanonicalRedirects(
       !date &&
       queryDate &&
       isValidDateSlug(queryDate) &&
-      queryDate !== "tots"
+      queryDate !== DEFAULT_FILTER_VALUE
     ) {
       date = queryDate;
     }
@@ -126,23 +129,27 @@ export function handleCanonicalRedirects(
     if (segmentCount >= 3) {
       const secondSegment = segments[1];
       const thirdSegment = segments[2];
-      if (thirdSegment !== "tots") {
+      if (thirdSegment !== DEFAULT_FILTER_VALUE) {
         // /place/<something>/<category>
         category = thirdSegment;
-      } else if (!isValidDateSlug(secondSegment) && secondSegment !== "tots") {
+      } else if (
+        !isValidDateSlug(secondSegment) &&
+        secondSegment !== DEFAULT_FILTER_VALUE
+      ) {
         // /place/<category>/tots -> keep category from second segment
         category = secondSegment;
       } else {
         // /place/<date>/tots or /place/tots/tots -> drop category placeholder
         category = null;
       }
-    } else if (segmentCount === 2 && segments[1] !== "tots") {
+    } else if (segmentCount === 2 && segments[1] !== DEFAULT_FILTER_VALUE) {
       // /place/X - check if X is a category (not a date)
       const secondSegment = segments[1];
       if (!isValidDateSlug(secondSegment)) {
-        category = secondSegment !== "tots" ? secondSegment : null;
+        category =
+          secondSegment !== DEFAULT_FILTER_VALUE ? secondSegment : null;
       }
-    } else if (queryCategory && queryCategory !== "tots") {
+    } else if (queryCategory && queryCategory !== DEFAULT_FILTER_VALUE) {
       category = queryCategory;
     }
 
@@ -177,7 +184,7 @@ export function handleCanonicalRedirects(
     // - /place/category?date=avui     -> /place/avui/category
     const secondSegment = segments[1];
     const secondIsDate =
-      isValidDateSlug(secondSegment) && secondSegment !== "tots";
+      isValidDateSlug(secondSegment) && secondSegment !== DEFAULT_FILTER_VALUE;
 
     let date: string | null = null;
     let category: string | null = null;
@@ -185,13 +192,17 @@ export function handleCanonicalRedirects(
     if (secondIsDate) {
       // /place/date?category=foo
       date = secondSegment;
-      if (queryCategory && queryCategory !== "tots") {
+      if (queryCategory && queryCategory !== DEFAULT_FILTER_VALUE) {
         category = queryCategory;
       }
     } else {
       // /place/category?date=foo
-      category = secondSegment !== "tots" ? secondSegment : null;
-      if (queryDate && isValidDateSlug(queryDate) && queryDate !== "tots") {
+      category = secondSegment !== DEFAULT_FILTER_VALUE ? secondSegment : null;
+      if (
+        queryDate &&
+        isValidDateSlug(queryDate) &&
+        queryDate !== DEFAULT_FILTER_VALUE
+      ) {
         date = queryDate;
       }
     }

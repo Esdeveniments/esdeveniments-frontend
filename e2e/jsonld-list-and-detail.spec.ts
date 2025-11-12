@@ -12,7 +12,7 @@ test.describe("JSON-LD presence", () => {
   test("List page exposes JSON-LD (ItemList or Event)", async ({ page }) => {
     // Use a deterministic list route that always has content (Catalunya root)
     await page.goto("/catalunya", {
-      waitUntil: "domcontentloaded",
+      waitUntil: "networkidle",
       timeout: 60000,
     });
     // Wait until at least one JSON-LD script is present (SSR should render Website schema)

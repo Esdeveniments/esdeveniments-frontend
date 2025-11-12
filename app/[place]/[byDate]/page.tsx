@@ -32,6 +32,7 @@ import { topStaticGenerationPlaces } from "@utils/priority-places";
 import { VALID_DATES } from "@lib/dates";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 // page-level ISR not set here; fetch-level caching applies
 export const revalidate = 600;
@@ -94,7 +95,9 @@ export async function generateMetadata({
     byDate: actualDate as ByDateOptions,
     placeTypeLabel,
     category:
-      actualCategory && actualCategory !== "tots" ? actualCategory : undefined,
+      actualCategory && actualCategory !== DEFAULT_FILTER_VALUE
+        ? actualCategory
+        : undefined,
     categoryName: categoryData?.name,
   });
   return buildPageMeta({
@@ -143,7 +146,7 @@ export async function generateStaticParams() {
       : topStaticGenerationPlaces; // Fallback if API failed
 
   const topDates = VALID_DATES.filter(
-    (date) => date !== "tots"
+    (date) => date !== DEFAULT_FILTER_VALUE
   ) as ByDateOptions[];
 
   // Get top categories from dynamic data or fall back to legacy
@@ -287,7 +290,7 @@ export default async function ByDatePage({
     paramsForFetch.place = place;
   }
 
-  if (finalCategory && finalCategory !== "tots") {
+  if (finalCategory && finalCategory !== DEFAULT_FILTER_VALUE) {
     paramsForFetch.category = finalCategory;
   }
 
@@ -335,7 +338,7 @@ export default async function ByDatePage({
           to: toLocalDateString(until),
         };
 
-        if (finalCategory && finalCategory !== "tots") {
+        if (finalCategory && finalCategory !== DEFAULT_FILTER_VALUE) {
           fallbackParams.category = finalCategory;
         }
 
@@ -378,7 +381,9 @@ export default async function ByDatePage({
     byDate: actualDate as ByDateOptions,
     placeTypeLabel,
     category:
-      finalCategory && finalCategory !== "tots" ? finalCategory : undefined,
+      finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
+        ? finalCategory
+        : undefined,
     categoryName: categoryData?.name,
   });
 
@@ -389,7 +394,7 @@ export default async function ByDatePage({
     validEvents.length > 0
       ? generateItemListStructuredData(
           validEvents,
-          finalCategory && finalCategory !== "tots"
+          finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
             ? `Esdeveniments ${finalCategory} ${place}`
             : `Esdeveniments ${actualDate} ${place}`
         )

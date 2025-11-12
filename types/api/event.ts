@@ -75,6 +75,8 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   videoUrl?: string;
   tags?: string[];
   relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export type CategorizedEvents = {

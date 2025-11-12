@@ -1,10 +1,10 @@
-import { MONTHS_URL as MONTHS } from "@utils/constants";
+import { MONTHS_URL as MONTHS, DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { nextDay, isWeekend } from "@utils/helpers";
 import { DateRange } from "types/common";
 
 // Valid date formats - this becomes the source of truth
 export const VALID_DATES = [
-  "tots",
+  DEFAULT_FILTER_VALUE,
   "avui",
   "dema",
   "setmana",
@@ -115,7 +115,7 @@ export const twoWeeksDefault = (): DateRange => {
  * @returns {DateRange | null} The date range for the given filter, or null if byDate is "tots"
  */
 export const getDateRangeFromByDate = (byDate: string): DateRange | null => {
-  if (byDate === "tots") {
+  if (byDate === DEFAULT_FILTER_VALUE) {
     return null;
   }
 

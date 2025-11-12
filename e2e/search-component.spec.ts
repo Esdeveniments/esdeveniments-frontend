@@ -5,7 +5,7 @@ test.describe("Search behavior", () => {
     page,
   }) => {
     test.setTimeout(45000);
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/", { waitUntil: "networkidle" });
 
     const input = page.getByTestId("search-input");
     await expect(input).toBeVisible();

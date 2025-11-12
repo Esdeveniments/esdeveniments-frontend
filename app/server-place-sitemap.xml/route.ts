@@ -5,6 +5,7 @@ import { VALID_DATES } from "@lib/dates";
 import { highPrioritySlugs } from "@utils/priority-places";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { SitemapField } from "types/sitemap";
 
 export async function GET() {
@@ -21,11 +22,11 @@ export async function GET() {
   );
 
   // Top dates and categories (similar to static generation)
-  const topDates = VALID_DATES.filter((date) => date !== "tots");
+  const topDates = VALID_DATES.filter((date) => date !== DEFAULT_FILTER_VALUE);
   const topCategories = categories
     .slice(0, TOP_CATEGORIES_COUNT)
     .map((cat) => cat.slug)
-    .filter((slug) => slug && slug !== "tots");
+    .filter((slug) => slug && slug !== DEFAULT_FILTER_VALUE);
 
   const fields: SitemapField[] = [];
 
@@ -72,7 +73,7 @@ export async function GET() {
 
     // /[place]/[category] (when date is "tots" but omitted in URL)
     for (const category of topCategories) {
-      if (category !== "tots") {
+      if (category !== DEFAULT_FILTER_VALUE) {
         fields.push({
           loc: `${siteUrl}${buildCanonicalUrlDynamic(
             { place: place.slug, category },

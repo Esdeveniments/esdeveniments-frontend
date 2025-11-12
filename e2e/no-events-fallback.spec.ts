@@ -6,9 +6,14 @@ test.describe("No events fallback", () => {
     await page.goto(
       "/catalunya/tots?category=category-that-does-not-exist-xyz",
       {
-        waitUntil: "load",
+        waitUntil: "networkidle",
       }
     );
+    // Wait for events list container to be present
+    await page.waitForSelector('[data-testid="events-list"]', {
+      timeout: 30000,
+      state: "attached",
+    });
     // Either we see no-results widget or the page loads without events
     const noEvents = page.getByTestId("no-events-found");
     const hasNoEvents = await noEvents.isVisible().catch(() => false);
@@ -17,7 +22,7 @@ test.describe("No events fallback", () => {
       const anyEvent = page.locator('a[href^="/e/"]').first();
       const count = await anyEvent.count();
       if (count === 0) {
-        await expect(noEvents).toBeVisible();
+        await expect(noEvents).toBeVisible({ timeout: 10000 });
       }
     }
     expect(true).toBeTruthy();

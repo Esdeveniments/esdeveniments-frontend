@@ -86,6 +86,12 @@ export const dateFunctions: { [key: string]: string } = {
 export const DISTANCES: number[] = [5, 10, 25, 50, 100];
 
 /**
+ * Default filter value representing "all" (no filter applied)
+ * Used for both category and date filters throughout the application
+ */
+export const DEFAULT_FILTER_VALUE = "tots";
+
+/**
  * Dynamic category support functions
  * These functions use dynamic categories when available, fallback to static
  */

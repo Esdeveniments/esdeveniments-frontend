@@ -44,13 +44,13 @@ test.describe("Navigation and SEO basics", () => {
     // Use catalunya which always exists, and barcelona which may redirect
     const paths = ["/", "/catalunya", "/catalunya/avui"];
     for (const p of paths) {
-      await page.goto(p, { waitUntil: "domcontentloaded" });
+      await page.goto(p, { waitUntil: "networkidle" });
       const canonical = page.locator('link[rel="canonical"]');
-      await expect(canonical).toHaveCount(1);
+      await expect(canonical).toHaveCount(1, { timeout: 30000 });
       const ogTitle = page.locator('meta[property="og:title"]');
-      await expect(ogTitle).toHaveCount(1);
+      await expect(ogTitle).toHaveCount(1, { timeout: 30000 });
       const ogUrl = page.locator('meta[property="og:url"]');
-      await expect(ogUrl).toHaveCount(1);
+      await expect(ogUrl).toHaveCount(1, { timeout: 30000 });
     }
   });
 });

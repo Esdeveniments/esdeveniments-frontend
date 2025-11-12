@@ -4,6 +4,7 @@ import { FilterOperations } from "@utils/filter-operations";
 import type { FilterDisplayState } from "types/filters";
 import FilterButton from "./FilterButton";
 import { ServerFiltersProps } from "types/props";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 const ServerFilters = ({
   segments,
@@ -15,8 +16,8 @@ const ServerFilters = ({
   // Convert URL data to filter state for display
   const filters = {
     place: segments.place || "catalunya",
-    byDate: segments.date || "tots",
-    category: segments.category || "tots",
+    byDate: segments.date || DEFAULT_FILTER_VALUE,
+    category: segments.category || DEFAULT_FILTER_VALUE,
     searchTerm: queryParams.search || "",
     distance: parseInt(queryParams.distance || "50"),
     lat: queryParams.lat ? parseFloat(queryParams.lat) : undefined,

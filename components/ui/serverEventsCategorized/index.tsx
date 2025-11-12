@@ -5,7 +5,7 @@ import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
 import AdArticle from "@components/ui/adArticle";
-import { CATEGORY_NAMES_MAP } from "@utils/constants";
+import { CATEGORY_NAMES_MAP, DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
@@ -111,7 +111,7 @@ function ServerEventsCategorized({
                       href={buildCanonicalUrl(
                         {
                           place: "catalunya",
-                          byDate: "tots",
+                          byDate: DEFAULT_FILTER_VALUE,
                           category: categorySlug,
                         },
                         categories

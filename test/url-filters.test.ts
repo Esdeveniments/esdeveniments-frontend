@@ -8,13 +8,14 @@ import {
   toUrlSearchParams,
   buildFallbackUrlForInvalidPlace,
 } from "../utils/url-filters";
+import { DEFAULT_FILTER_VALUE } from "../utils/constants";
 
 describe("url-filters: canonical building and parsing", () => {
   it("omits tots date and category when both default", () => {
     const url = buildCanonicalUrlDynamic({
       place: "barcelona",
-      byDate: "tots",
-      category: "tots",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
     });
     expect(url).toBe("/barcelona");
   });
@@ -22,7 +23,7 @@ describe("url-filters: canonical building and parsing", () => {
   it("omits tots date when category is specific", () => {
     const url = buildCanonicalUrlDynamic({
       place: "barcelona",
-      byDate: "tots",
+      byDate: DEFAULT_FILTER_VALUE,
       category: "concerts",
     });
     expect(url).toBe("/barcelona/concerts");
@@ -32,7 +33,7 @@ describe("url-filters: canonical building and parsing", () => {
     const url = buildCanonicalUrlDynamic({
       place: "barcelona",
       byDate: "avui",
-      category: "tots",
+      category: DEFAULT_FILTER_VALUE,
     });
     expect(url).toBe("/barcelona/avui");
   });
@@ -41,7 +42,7 @@ describe("url-filters: canonical building and parsing", () => {
     const url = buildCanonicalUrlDynamic({
       place: "barcelona",
       byDate: "avui",
-      category: "tots",
+      category: DEFAULT_FILTER_VALUE,
       searchTerm: "rock",
       distance: 25,
     });
@@ -55,8 +56,8 @@ describe("url-filters: canonical building and parsing", () => {
     );
     expect(one.segments).toEqual({
       place: "catalunya",
-      date: "tots",
-      category: "tots",
+      date: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
     });
 
     const twoDate = parseFiltersFromUrl(
@@ -66,7 +67,7 @@ describe("url-filters: canonical building and parsing", () => {
     expect(twoDate.segments).toEqual({
       place: "catalunya",
       date: "avui",
-      category: "tots",
+      category: DEFAULT_FILTER_VALUE,
     });
 
     const twoCat = parseFiltersFromUrl(
@@ -75,7 +76,7 @@ describe("url-filters: canonical building and parsing", () => {
     );
     expect(twoCat.segments).toEqual({
       place: "catalunya",
-      date: "tots",
+      date: DEFAULT_FILTER_VALUE,
       category: "concerts",
     });
 
@@ -99,8 +100,8 @@ describe("url-filters: canonical building and parsing", () => {
     const state = urlToFilterState(parsed);
     expect(state).toEqual({
       place: "lleida",
-      byDate: "tots",
-      category: "tots",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
       searchTerm: "",
       distance: 50,
       lat: undefined,
@@ -149,7 +150,7 @@ describe("url-filters: canonical building and parsing", () => {
     );
     expect(parsed.segments).toEqual({
       place: "barcelona",
-      date: "tots",
+      date: DEFAULT_FILTER_VALUE,
       category: "teatre",
     });
     expect(parsed.isCanonical).toBe(false);
@@ -163,7 +164,7 @@ describe("url-filters: canonical building and parsing", () => {
     expect(parsed.segments).toEqual({
       place: "barcelona",
       date: "avui",
-      category: "tots",
+      category: DEFAULT_FILTER_VALUE,
     });
     expect(parsed.isCanonical).toBe(false);
   });
@@ -177,7 +178,7 @@ describe("url-filters: canonical building and parsing", () => {
     );
     expect(parsed.segments).toEqual({
       place: "barcelona",
-      date: "tots",
+      date: DEFAULT_FILTER_VALUE,
       category: "teatre",
     });
     expect(parsed.isCanonical).toBe(false);
@@ -247,7 +248,7 @@ describe("url-filters: canonical building and parsing", () => {
   it("redirects /place/tots to /place (omits tots segment)", () => {
     // /barcelona/tots should redirect to /barcelona
     const parsed = parseFiltersFromUrl(
-      { place: "barcelona", date: "tots" },
+      { place: "barcelona", date: DEFAULT_FILTER_VALUE },
       new URLSearchParams(),
       []
     );
@@ -260,7 +261,7 @@ describe("url-filters: canonical building and parsing", () => {
     // /barcelona/tots/teatre should redirect to /barcelona/teatre
     const dynamicCategories = [{ id: 1, name: "Teatre", slug: "teatre" }];
     const parsed = parseFiltersFromUrl(
-      { place: "barcelona", date: "tots", category: "teatre" },
+      { place: "barcelona", date: DEFAULT_FILTER_VALUE, category: "teatre" },
       new URLSearchParams(),
       dynamicCategories
     );
@@ -272,7 +273,7 @@ describe("url-filters: canonical building and parsing", () => {
   it("preserves query params when redirecting /place/tots", () => {
     // /barcelona/tots?search=castellers should redirect to /barcelona?search=castellers
     const parsed = parseFiltersFromUrl(
-      { place: "barcelona", date: "tots" },
+      { place: "barcelona", date: DEFAULT_FILTER_VALUE },
       new URLSearchParams("search=castellers"),
       []
     );
@@ -285,7 +286,7 @@ describe("url-filters: canonical building and parsing", () => {
 describe("url-filters: category slug validation", () => {
   it("accepts legacy category slugs and tots by default", () => {
     expect(isValidCategorySlug("concerts")).toBe(true);
-    expect(isValidCategorySlug("tots")).toBe(true);
+    expect(isValidCategorySlug(DEFAULT_FILTER_VALUE)).toBe(true);
   });
 
   it("accepts dynamic categories when provided", () => {
@@ -413,7 +414,7 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
 
     it("omits 'tots' date slug (default)", () => {
       const url = buildFallbackUrlForInvalidPlace({
-        byDate: "tots",
+        byDate: DEFAULT_FILTER_VALUE,
         rawSearchParams: {},
       });
       expect(url).toBe("/catalunya");
@@ -481,7 +482,7 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
 
     it("omits 'tots' category (default)", () => {
       const url = buildFallbackUrlForInvalidPlace({
-        category: "tots",
+        category: DEFAULT_FILTER_VALUE,
         rawSearchParams: {},
       });
       expect(url).toBe("/catalunya");
@@ -519,8 +520,8 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
 
     it("omits date when both are 'tots'", () => {
       const url = buildFallbackUrlForInvalidPlace({
-        byDate: "tots",
-        category: "tots",
+        byDate: DEFAULT_FILTER_VALUE,
+        category: DEFAULT_FILTER_VALUE,
         rawSearchParams: {},
       });
       expect(url).toBe("/catalunya");
@@ -528,7 +529,7 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
 
     it("omits date when date is 'tots' but category is specific", () => {
       const url = buildFallbackUrlForInvalidPlace({
-        byDate: "tots",
+        byDate: DEFAULT_FILTER_VALUE,
         category: "concerts",
         rawSearchParams: {},
       });
@@ -538,7 +539,7 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
     it("omits category when category is 'tots' but date is specific", () => {
       const url = buildFallbackUrlForInvalidPlace({
         byDate: "avui",
-        category: "tots",
+        category: DEFAULT_FILTER_VALUE,
         rawSearchParams: {},
       });
       expect(url).toBe("/catalunya/avui");
@@ -882,7 +883,7 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
         byDate: "teatre", // This is actually a category, not a date
         rawSearchParams: {},
       });
-      // Since "teatre" is not a valid date slug, it defaults to "tots" and is omitted
+      // Since "teatre" is not a valid date slug, it defaults to DEFAULT_FILTER_VALUE and is omitted
       expect(url).toBe("/catalunya");
     });
 

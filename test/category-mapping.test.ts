@@ -3,6 +3,7 @@ import {
   isValidCategorySlugFormat,
   isValidCategorySlug,
 } from "../utils/category-mapping";
+import { DEFAULT_FILTER_VALUE } from "../utils/constants";
 
 describe("category-mapping: isValidCategorySlugFormat", () => {
   describe("valid format", () => {
@@ -154,7 +155,7 @@ describe("category-mapping: isValidCategorySlugFormat", () => {
   describe("real-world category examples", () => {
     it("accepts all legacy category slugs", () => {
       const legacySlugs = [
-        "tots",
+        DEFAULT_FILTER_VALUE,
         "concerts",
         "festivals",
         "espectacles",
@@ -205,7 +206,7 @@ describe("category-mapping: isValidCategorySlug (deprecated)", () => {
 
   it("maintains backward compatibility", () => {
     // Should work the same as before for valid formats
-    expect(isValidCategorySlug("tots")).toBe(true);
+    expect(isValidCategorySlug(DEFAULT_FILTER_VALUE)).toBe(true);
     expect(isValidCategorySlug("teatre")).toBe(true);
     expect(isValidCategorySlug("category-123")).toBe(true);
   });

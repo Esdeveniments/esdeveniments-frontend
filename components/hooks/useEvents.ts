@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import {
@@ -72,7 +73,7 @@ export const useEvents = ({
 
   // Build base params for the key/fetcher
   // Derive explicit date range for known slugs to align with SSR behavior
-  const dateRange = getDateRangeFromByDate(date || "tots");
+  const dateRange = getDateRangeFromByDate(date || DEFAULT_FILTER_VALUE);
   const range = dateRange
     ? {
         from: toLocalDateString(dateRange.from),

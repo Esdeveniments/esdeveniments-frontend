@@ -5,6 +5,7 @@ import { describe, test, expect } from "vitest";
 import { FilterOperations } from "../utils/filter-operations";
 import { FILTER_CONFIGURATIONS } from "../config/filters";
 import type { FilterDisplayState } from "../types/filters";
+import { DEFAULT_FILTER_VALUE } from "../utils/constants";
 
 describe("Filter Configuration System", () => {
   describe("Configuration Integrity", () => {
@@ -45,7 +46,7 @@ describe("Filter Configuration System", () => {
     const mockDisplayState: FilterDisplayState = {
       filters: {
         place: "barcelona",
-        byDate: "tots",
+        byDate: DEFAULT_FILTER_VALUE,
         category: "concerts",
         searchTerm: "",
         distance: 50,
@@ -53,7 +54,7 @@ describe("Filter Configuration System", () => {
         lon: undefined,
       },
       queryParams: {},
-      segments: { place: "barcelona", date: "tots", category: "concerts" },
+      segments: { place: "barcelona", date: DEFAULT_FILTER_VALUE, category: "concerts" },
       extraData: {
         categories: [{ slug: "concerts", name: "Concerts" }],
         placeTypeLabel: { label: "Barcelona" },
@@ -102,14 +103,14 @@ describe("Filter Configuration System", () => {
         ...mockDisplayState,
         filters: {
           place: "catalunya",
-          byDate: "tots",
-          category: "tots",
+          byDate: DEFAULT_FILTER_VALUE,
+          category: DEFAULT_FILTER_VALUE,
           searchTerm: "",
           distance: 50,
           lat: undefined,
           lon: undefined,
         },
-        segments: { place: "catalunya", date: "tots", category: "tots" },
+        segments: { place: "catalunya", date: DEFAULT_FILTER_VALUE, category: DEFAULT_FILTER_VALUE },
       };
       expect(FilterOperations.hasActiveFilters(inactiveState)).toBe(false);
     });
@@ -124,8 +125,8 @@ describe("Filter Configuration System", () => {
       const defaults = FilterOperations.getDefaultFilterState();
       expect(defaults).toEqual({
         place: "catalunya",
-        byDate: "tots",
-        category: "tots",
+        byDate: DEFAULT_FILTER_VALUE,
+        category: DEFAULT_FILTER_VALUE,
         searchTerm: "",
         distance: 50,
         lat: undefined,
@@ -163,15 +164,15 @@ describe("Filter Configuration System", () => {
       const byDateConfig = FilterOperations.getConfig("byDate");
       const shouldRedirectToHome = byDateConfig?.specialCases?.homeRedirect?.({
         place: "catalunya",
-        category: "tots",
-        date: "tots",
+        category: DEFAULT_FILTER_VALUE,
+        date: DEFAULT_FILTER_VALUE,
       });
       expect(shouldRedirectToHome).toBe(true);
 
       const shouldNotRedirect = byDateConfig?.specialCases?.homeRedirect?.({
         place: "barcelona",
-        category: "tots",
-        date: "tots",
+        category: DEFAULT_FILTER_VALUE,
+        date: DEFAULT_FILTER_VALUE,
       });
       expect(shouldNotRedirect).toBe(false);
     });
