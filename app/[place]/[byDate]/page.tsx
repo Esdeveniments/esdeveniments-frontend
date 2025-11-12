@@ -20,7 +20,7 @@ import {
   getRedirectUrl,
   toUrlSearchParams,
 } from "@utils/url-filters";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -28,7 +28,7 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 import { VALID_DATES } from "@lib/dates";
-import { fetchPlaces } from "@lib/api/places";
+import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 
 // page-level ISR not set here; fetch-level caching applies
 export const revalidate = 600;
@@ -190,6 +190,16 @@ export default async function ByDatePage({
 
   validatePlaceOrThrow(place);
 
+  // 🛡️ SECURITY: Early place existence check to prevent DoS via arbitrary slug enumeration
+  // This validates the place exists in the API before any expensive operations
+  // Special case: "catalunya" is always valid (homepage equivalent)
+  if (place !== "catalunya") {
+    const placeExists = await fetchPlaceBySlug(place);
+    if (!placeExists) {
+      notFound();
+    }
+  }
+
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await getCategories();
@@ -202,14 +212,7 @@ export default async function ByDatePage({
   }
 
   // Convert searchParams to URLSearchParams for parsing
-  const urlSearchParams = new URLSearchParams();
-  Object.entries(search).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      urlSearchParams.set(key, value);
-    } else if (Array.isArray(value)) {
-      urlSearchParams.set(key, value[0]);
-    }
-  });
+  const urlSearchParams = toUrlSearchParams(search);
 
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },

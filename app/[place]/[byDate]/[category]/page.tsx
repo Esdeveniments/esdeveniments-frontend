@@ -26,10 +26,10 @@ import {
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
-import { fetchPlaces } from "@lib/api/places";
+import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -141,6 +141,16 @@ export default async function FilteredPage({
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
+
+  // 🛡️ SECURITY: Early place existence check to prevent DoS via arbitrary slug enumeration
+  // This validates the place exists in the API before any expensive operations
+  // Special case: "catalunya" is always valid (homepage equivalent)
+  if (place !== "catalunya") {
+    const placeExists = await fetchPlaceBySlug(place);
+    if (!placeExists) {
+      notFound();
+    }
+  }
 
   // Fetch dynamic categories BEFORE parsing URL to validate category slugs
   let categories: CategorySummaryResponseDTO[] = [];
