@@ -163,14 +163,14 @@ function ServerEventsCategorized({
                   </nav>
 
                   {/* Events Horizontal Scroll */}
-          <EventsAroundServer
-            events={events as EventSummaryResponseDTO[]}
-            layout="horizontal"
-            usePriority={shouldUsePriority}
-            showJsonLd={true}
-            title={categoryName}
-            jsonLdId={`category-events-${categorySlug}`}
-          />
+                  <EventsAroundServer
+                    events={events as EventSummaryResponseDTO[]}
+                    layout="horizontal"
+                    usePriority={shouldUsePriority}
+                    showJsonLd={true}
+                    title={categoryName}
+                    jsonLdId={`category-events-${categorySlug}`}
+                  />
 
                   {/* Ad placement between category sections */}
                   {adPositions.has(index) && (
