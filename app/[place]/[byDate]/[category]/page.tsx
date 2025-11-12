@@ -31,7 +31,7 @@ import { redirect } from "next/navigation";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
-export const dynamicParams = true;
+export const dynamicParams = false; // Prevent uncontrolled dynamic pages (DoS via ISR/SSR). Review generateStaticParams to include required routes.
 
 export async function generateMetadata({
   params,
