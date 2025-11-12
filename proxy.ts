@@ -128,7 +128,9 @@ export default async function proxy(request: NextRequest) {
 
     const isPublicApiRequest =
       // Pattern-based routes (base path, dynamic segments, or specific sub-paths)
-      publicApiPatterns.some((pattern) => pattern.test(pathname)) ||
+      // Only allow these patterns for GET requests to prevent non-GET methods
+      // from bypassing HMAC/timestamp/signature checks.
+      (request.method === "GET" && publicApiPatterns.some((pattern) => pattern.test(pathname))) ||
       // Exact match routes
       publicApiExactPaths.includes(pathname) ||
       // Event routes (GET only): base, [slug], or /categorized
