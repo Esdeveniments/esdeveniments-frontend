@@ -201,7 +201,7 @@ export interface ClientInteractiveLayerProps {
   placeTypeLabel?: PlaceTypeAndLabel;
 }
 
-export interface ServerNavLinkProps {
+export interface ActiveNavLinkProps {
   href: string;
   children: ReactNode;
   className?: string;

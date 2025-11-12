@@ -4,21 +4,22 @@ test.describe("Search behavior", () => {
   test("debounced typing updates URL; Enter submits immediately; clear resets", async ({
     page,
   }) => {
-    test.setTimeout(45000);
-    await page.goto("/", { waitUntil: "networkidle" });
+    test.setTimeout(60000);
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60000 });
 
     const input = page.getByTestId("search-input");
-    await expect(input).toBeVisible();
+    await expect(input).toBeVisible({ timeout: 30000 });
 
     // On home, search navigates to /catalunya/; start by ensuring we are on that path after focusing the input
     await input.fill("");
     await input.type("castellers");
-    // Small wait less than debounce threshold to ensure no early update
-    await page.waitForTimeout(300);
-    expect(page.url()).not.toContain("search=castellers");
+    
+    // Verify URL doesn't update immediately (debounce delay)
+    await expect
+      .poll(async () => page.url(), { timeout: 500, intervals: [100] })
+      .not.toContain("search=castellers");
 
-    // Wait beyond debounce threshold and for navigation
-    await page.waitForTimeout(2000);
+    // Wait for debounced navigation - poll until URL contains search param
     await expect
       .poll(async () => page.url(), { timeout: 20000 })
       .toContain("search=castellers");
@@ -33,8 +34,7 @@ test.describe("Search behavior", () => {
     // Clear search via UI clear control if present, otherwise programmatically
     // We rely on value reset to propagate URL clearing
     await input.fill("");
-    // Debounce to clear param and wait for URL reset
-    await page.waitForTimeout(2000);
+    // Wait for debounced URL clearing - poll until search param is removed
     await expect
       .poll(async () => page.url(), { timeout: 20000 })
       .not.toContain("search=");

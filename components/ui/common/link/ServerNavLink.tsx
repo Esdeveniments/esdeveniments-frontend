@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ServerNavLinkProps } from "types/props";
+import { ActiveNavLinkProps } from "types/props";
 
 // Client-side navigation link component with active state detection
 // Converted from server component to avoid headers() usage for ISR compatibility
-export default function ServerNavLink({
+export default function ActiveNavLink({
   href,
   children,
   className = "flex justify-center items-center gap-2 text-foreground-strong bg-background px-button-x py-button-y label ease-in-out duration-200",
   activeLinkClass,
-}: ServerNavLinkProps) {
+}: ActiveNavLinkProps) {
   // Get the current pathname from client-side hook (no headers() needed)
   const pathname = usePathname();
 

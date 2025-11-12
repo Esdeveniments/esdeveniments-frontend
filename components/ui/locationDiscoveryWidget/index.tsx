@@ -138,7 +138,7 @@ export default function LocationDiscoveryWidget({
     <div
       className={`w-full bg-background flex justify-center items-center pt-element-gap ${className}`}
     >
-      <div className="container flex flex-col justify-center items-center">
+      <div className="flex flex-col justify-center items-center w-full">
         <div className="relative w-full">
           {/* Main Location Selector */}
           <div className="flex items-center gap-element-gap mb-element-gap flex-wrap md:flex-nowrap">

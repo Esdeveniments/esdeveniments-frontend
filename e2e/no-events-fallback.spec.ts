@@ -6,13 +6,13 @@ test.describe("No events fallback", () => {
     await page.goto(
       "/catalunya/tots?category=category-that-does-not-exist-xyz",
       {
-        waitUntil: "networkidle",
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
       }
     );
-    // Wait for events list container to be present
-    await page.waitForSelector('[data-testid="events-list"]', {
+    // Wait for events list container to be present (auto-waits)
+    await expect(page.getByTestId("events-list")).toBeAttached({
       timeout: 30000,
-      state: "attached",
     });
     // Either we see no-results widget or the page loads without events
     const noEvents = page.getByTestId("no-events-found");

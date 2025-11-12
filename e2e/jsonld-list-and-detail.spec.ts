@@ -12,14 +12,12 @@ test.describe("JSON-LD presence", () => {
   test("List page exposes JSON-LD (ItemList or Event)", async ({ page }) => {
     // Use a deterministic list route that always has content (Catalunya root)
     await page.goto("/catalunya", {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeout: 60000,
     });
     // Wait until at least one JSON-LD script is present (SSR should render Website schema)
-    await page.waitForSelector('script[type="application/ld+json"]', {
-      timeout: 60000,
-      state: "attached",
-    });
+    // Use auto-waiting assertion instead of waitForSelector
+    await expect(page.locator('script[type="application/ld+json"]').first()).toBeAttached({ timeout: 60000 });
     const scripts = page.locator('script[type="application/ld+json"]');
     const count = await scripts.count();
     let found = false;
@@ -46,10 +44,8 @@ test.describe("JSON-LD presence", () => {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
-    await page.waitForSelector('script[type="application/ld+json"]', {
-      timeout: 60000,
-      state: "attached",
-    });
+    // Use auto-waiting assertion instead of waitForSelector
+    await expect(page.locator('script[type="application/ld+json"]').first()).toBeAttached({ timeout: 60000 });
     const scripts = page.locator('script[type="application/ld+json"]');
     // Some JSON-LD scripts may be hidden; assert presence instead of visibility
     await expect(scripts.first()).toHaveCount(1, { timeout: 10000 });

@@ -11,6 +11,7 @@ import { DEFAULT_FILTER_VALUE } from "./constants";
 const MAX_QUERY_STRING_LENGTH = 2048; // Total query string length
 const MAX_QUERY_PARAMS = 50; // Maximum number of query parameters
 const MAX_PARAM_VALUE_LENGTH = 500; // Maximum length of individual parameter value
+const MAX_PARAM_KEY_LENGTH = 100; // Maximum length of individual parameter key
 
 // Allowed query parameters to preserve in redirects (security: allowlist only)
 const ALLOWED_QUERY_PARAMS = new Set(["search", "distance", "lat", "lon"]);
@@ -39,7 +40,7 @@ function validateQueryParams(
       return false;
     }
     // Also check key length (though keys are typically short)
-    if (key.length > 100) {
+    if (key.length > MAX_PARAM_KEY_LENGTH) {
       return false;
     }
   }

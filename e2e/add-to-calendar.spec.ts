@@ -14,13 +14,9 @@ test.describe("Add to calendar menu", () => {
     if (!slug) test.skip(true, "No events returned from API");
     await page.goto(`/e/${slug}`, { waitUntil: "domcontentloaded", timeout: 60000 });
 
-    // Wait for the page to be interactive
-    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {
-      // Ignore if networkidle times out, continue anyway
-    });
-
+    // Auto-waiting assertion - no need for manual waits
     const button = page.getByRole("button", { name: /Afegir al calendari/i });
-    await button.waitFor({ state: "visible", timeout: 30000 });
+    await expect(button).toBeVisible({ timeout: 30000 });
     await button.click();
 
     await expect(

@@ -18,7 +18,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? "blob" : [["list"], ["html", { open: "never" }]],
+  reporter: process.env.CI
+    ? [
+        ["blob"],
+        ["html", { open: "never", outputFolder: "playwright-report" }],
+      ]
+    : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
     navigationTimeout: 90000,

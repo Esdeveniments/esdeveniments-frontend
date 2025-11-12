@@ -215,7 +215,7 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 - **Link Components**
 
   - `components/ui/common/link/index.tsx` (ActiveLink)
-  - `components/ui/common/link/ServerNavLink.tsx` (ServerNavLink)
+  - `components/ui/common/link/ActiveNavLink.tsx`
   - Updated default className to use `.label` instead of 5 inline utilities
   - Impact: All navigation links throughout the app
 
@@ -418,6 +418,7 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 - Outcome: Full coherence from navbar (`.label` via `ActiveLink`) to final sections
 
 Updated files
+
 - `app/e/[eventId]/page.tsx` (FAQ, news, ad headings/links)
 - `app/e/[eventId]/components/EventCalendar.tsx`
 - `app/e/[eventId]/components/EventDetailsSection.tsx`
@@ -431,16 +432,19 @@ Updated files
 - `components/ui/eventsAround/EventsAroundServer.tsx` (compact layout)
 
 Rules enforced
+
 - Headings: `.heading-3` / `.heading-4`
 - Body text: `.body-normal` / `.body-small`
 - Labels/badges: `.label` / `.badge-*`
 - No arbitrary `text-[size]` or `text-md` left in changed files
 
 Known exceptions (intentional)
+
 - `PastEventBanner` CTA anchors keep custom colors/borders, with `.body-small` applied for size consistency.
 - Status badge colors keep existing hex values (to be migrated in a future color pass).
 
 Cross‑page audit checklist (next)
+
 - Navbar mobile second bar text ("Publica") → ensure `.label` if text remains visible on some breakpoints
 - Place listing pages: headings and card texts (`components/ui/card*`, `hybridEventsList`)
 - Category listing pages
@@ -451,9 +455,11 @@ Cross‑page audit checklist (next)
 - Sitemap pages (already color‑migrated; verify headings/body text)
 
 Validation
+
 - Lint/type checks pass on modified files
 - Visual check preserves heading hierarchy; body sizes consistent
 
 Reference
+
 - Design system code: `docs/implementation-reference.md`
 - Enforced rules: `.github/copilot-instructions.md` §20
