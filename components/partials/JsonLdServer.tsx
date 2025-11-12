@@ -23,8 +23,12 @@ export default function JsonLdServer({
   // Escape </script> and < to prevent XSS in JSON-LD scripts
   // Order matters: escape </script> first, then any remaining < characters
   // This is safe because data comes from server-side API responses, not user input
+  // Escape </script>, U+2028, U+2029 and < to prevent XSS in JSON-LD scripts
+  // Order matters: escape </script> first, then any remaining line/paragraph separators, then any remaining < characters
   const sanitizedHtml = json
     .replace(/<\/script>/gi, "\\u003c/script\\u003e")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029")
     .replace(/</g, "\\u003c");
 
   // Create sanitized data object separately (React best practice)
