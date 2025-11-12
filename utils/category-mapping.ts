@@ -141,12 +141,30 @@ export function createLegacyDynamicMap(
 }
 
 /**
+ * Validates if a category slug has a valid format (security/DoS prevention)
+ * Checks format only, not whether the category exists in the system
+ * @param slug - The slug to validate
+ * @param maxLength - Maximum allowed length (default: 64)
+ * @returns true if the slug has valid format
+ */
+export function isValidCategorySlugFormat(
+  slug: string,
+  maxLength: number = 64
+): boolean {
+  return (
+    typeof slug === "string" &&
+    slug.length > 0 &&
+    slug.length <= maxLength &&
+    /^[a-z0-9-]+$/.test(slug)
+  );
+}
+
+/**
  * Validates if a category slug is valid for ISR generation
+ * @deprecated Use isValidCategorySlugFormat for format validation
  */
 export function isValidCategorySlug(slug: string): boolean {
-  return (
-    typeof slug === "string" && slug.length > 0 && /^[a-z0-9-]+$/.test(slug)
-  );
+  return isValidCategorySlugFormat(slug, Infinity);
 }
 
 /**

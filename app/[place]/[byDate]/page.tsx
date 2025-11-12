@@ -19,9 +19,10 @@ import {
   parseFiltersFromUrl,
   getRedirectUrl,
   toUrlSearchParams,
+  buildFallbackUrlForInvalidPlace,
 } from "@utils/url-filters";
 import { applyDistanceToParams } from "@utils/api-helpers";
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -30,6 +31,7 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 import { VALID_DATES } from "@lib/dates";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
+import { isValidCategorySlugFormat } from "@utils/category-mapping";
 
 // page-level ISR not set here; fetch-level caching applies
 export const revalidate = 600;
@@ -66,7 +68,7 @@ export async function generateMetadata({
   // Preserve user-requested category even if categories API fails
   if (categories.length === 0) {
     const fallbackSlug = canonicalSearchParams.get("category");
-    if (fallbackSlug && /^[a-z0-9-]{1,64}$/.test(fallbackSlug)) {
+    if (fallbackSlug && isValidCategorySlugFormat(fallbackSlug)) {
       categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
     }
   }
@@ -203,12 +205,9 @@ export default async function ByDatePage({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
+    let placeExists: unknown = null;
     try {
-      const placeExists = await fetchPlaceBySlug(place);
-      if (!placeExists) {
-        // Place definitively doesn't exist (404) - show not found
-        notFound();
-      }
+      placeExists = await fetchPlaceBySlug(place);
     } catch (error) {
       // Transient errors (500, network failures, etc.) - log but continue
       // The page will handle gracefully, and the error might be transient
@@ -216,6 +215,14 @@ export default async function ByDatePage({
         `Error checking place existence for ${place}, continuing anyway:`,
         error
       );
+    }
+    if (!placeExists) {
+      // Place definitively doesn't exist - redirect to default place preserving intent
+      const target = buildFallbackUrlForInvalidPlace({
+        byDate,
+        rawSearchParams: search,
+      });
+      redirect(target);
     }
   }
 
@@ -236,7 +243,7 @@ export default async function ByDatePage({
   // Preserve user-requested category even if categories API fails
   if (categories.length === 0) {
     const fallbackSlug = urlSearchParams.get("category");
-    if (fallbackSlug && /^[a-z0-9-]{1,64}$/.test(fallbackSlug)) {
+    if (fallbackSlug && isValidCategorySlugFormat(fallbackSlug)) {
       categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
     }
   }

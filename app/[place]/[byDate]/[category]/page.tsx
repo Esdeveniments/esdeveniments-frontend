@@ -19,6 +19,7 @@ import {
   getTopStaticCombinations,
   getRedirectUrl,
   toUrlSearchParams,
+  buildFallbackUrlForInvalidPlace,
 } from "@utils/url-filters";
 import { applyDistanceToParams } from "@utils/api-helpers";
 import {
@@ -30,7 +31,8 @@ import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
+import { isValidCategorySlugFormat } from "@utils/category-mapping";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -70,7 +72,7 @@ export async function generateMetadata({
   if (
     categories.length === 0 &&
     category &&
-    /^[a-z0-9-]{1,64}$/.test(category)
+    isValidCategorySlugFormat(category)
   ) {
     categories = [{ id: -1, name: category, slug: category }];
   }
@@ -156,12 +158,9 @@ export default async function FilteredPage({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
+    let placeExists: unknown = null;
     try {
-      const placeExists = await fetchPlaceBySlug(place);
-      if (!placeExists) {
-        // Place definitively doesn't exist (404) - show not found
-        notFound();
-      }
+      placeExists = await fetchPlaceBySlug(place);
     } catch (error) {
       // Transient errors (500, network failures, etc.) - log but continue
       // The page will handle gracefully, and the error might be transient
@@ -169,6 +168,15 @@ export default async function FilteredPage({
         `Error checking place existence for ${place}, continuing anyway:`,
         error
       );
+    }
+    if (!placeExists) {
+      // Place definitively doesn't exist - redirect to default place preserving intent
+      const target = buildFallbackUrlForInvalidPlace({
+        byDate,
+        category,
+        rawSearchParams: rawSearchParams,
+      });
+      redirect(target);
     }
   }
 
@@ -189,7 +197,7 @@ export default async function FilteredPage({
   if (
     categories.length === 0 &&
     category &&
-    /^[a-z0-9-]{1,64}$/.test(category)
+    isValidCategorySlugFormat(category)
   ) {
     categories = [{ id: -1, name: category, slug: category }];
   }

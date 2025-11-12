@@ -85,6 +85,18 @@ describe("utils/api-helpers:buildEventsQuery", () => {
     expect(query.get("radius")).toBe("25");
   });
 
+  it("preserves zero-valued location filters (equator/prime meridian)", () => {
+    const params: FetchEventsParams = {
+      lat: 0,
+      lon: 0,
+      radius: 0,
+    };
+    const query = buildEventsQuery(params);
+    expect(query.get("lat")).toBe("0");
+    expect(query.get("lon")).toBe("0");
+    expect(query.get("radius")).toBe("0");
+  });
+
   it("omits undefined optional parameters", () => {
     const params: FetchEventsParams = {
       page: 1,

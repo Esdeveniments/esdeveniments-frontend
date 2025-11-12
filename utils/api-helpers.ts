@@ -69,9 +69,9 @@ export function buildEventsQuery(
 
   if (params.place) query.place = params.place;
   if (params.category) query.category = params.category;
-  if (params.lat) query.lat = params.lat;
-  if (params.lon) query.lon = params.lon;
-  if (params.radius) query.radius = params.radius;
+  if (params.lat !== undefined) query.lat = params.lat;
+  if (params.lon !== undefined) query.lon = params.lon;
+  if (params.radius !== undefined) query.radius = params.radius;
   if (params.term) query.term = params.term;
   if (params.byDate) query.byDate = params.byDate;
   if (params.from) query.from = params.from;

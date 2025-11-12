@@ -275,6 +275,35 @@ export function buildFilterUrl(
 }
 
 /**
+ * Build a canonical fallback URL to Catalunya when the requested place is invalid.
+ * - Preserves intent (date/category) when provided, normalizing invalid dates to "tots"
+ * - Preserves only allowed query params (search, distance, lat, lon)
+ * - Uses existing canonical URL builder to avoid hand-crafted strings
+ */
+export function buildFallbackUrlForInvalidPlace(opts: {
+  byDate?: string;
+  category?: string;
+  rawSearchParams: Record<string, string | string[] | undefined>;
+}): string {
+  const params = toUrlSearchParams(opts.rawSearchParams);
+
+  const filters: Partial<URLFilterState> = {
+    place: "catalunya",
+    byDate:
+      opts.byDate && isValidDateSlug(opts.byDate) ? opts.byDate : "tots",
+    category: opts.category || "tots",
+    searchTerm: params.get("search") || undefined,
+    distance: params.get("distance")
+      ? parseInt(params.get("distance") || "50")
+      : undefined,
+    lat: params.get("lat") ? parseLatitude(params.get("lat") as string) : undefined,
+    lon: params.get("lon") ? parseLongitude(params.get("lon") as string) : undefined,
+  };
+
+  return buildCanonicalUrl(filters);
+}
+
+/**
  * Convert URL segments to FilterState for compatibility with existing components
  */
 export function urlToFilterState(parsed: ParsedFilters): URLFilterState {

@@ -41,7 +41,8 @@ test.describe("Navigation and SEO basics", () => {
   test("Core pages expose canonical link and basic OG tags", async ({
     page,
   }) => {
-    const paths = ["/", "/barcelona", "/barcelona/avui"];
+    // Use catalunya which always exists, and barcelona which may redirect
+    const paths = ["/", "/catalunya", "/catalunya/avui"];
     for (const p of paths) {
       await page.goto(p, { waitUntil: "domcontentloaded" });
       const canonical = page.locator('link[rel="canonical"]');

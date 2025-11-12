@@ -20,6 +20,7 @@ import {
   parseFiltersFromUrl,
   urlToFilterState,
   toUrlSearchParams,
+  buildFallbackUrlForInvalidPlace,
 } from "@utils/url-filters";
 import { applyDistanceToParams } from "@utils/api-helpers";
 import {
@@ -29,7 +30,8 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
+import { isValidCategorySlugFormat } from "@utils/category-mapping";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -111,12 +113,9 @@ export default async function Page({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
+    let placeExists: unknown = null;
     try {
-      const placeExists = await fetchPlaceBySlug(place);
-      if (!placeExists) {
-        // Place definitively doesn't exist (404) - show not found
-        notFound();
-      }
+      placeExists = await fetchPlaceBySlug(place);
     } catch (error) {
       // Transient errors (500, network failures, etc.) - log but continue
       // The page will handle gracefully, and the error might be transient
@@ -124,6 +123,13 @@ export default async function Page({
         `Error checking place existence for ${place}, continuing anyway:`,
         error
       );
+    }
+    if (!placeExists) {
+      // Place definitively doesn't exist - redirect to default place preserving intent
+      const target = buildFallbackUrlForInvalidPlace({
+        rawSearchParams: rawSearchParams,
+      });
+      redirect(target);
     }
   }
 
@@ -143,7 +149,7 @@ export default async function Page({
   // Preserve user-requested category if categories API failed
   if (categories.length === 0) {
     const fallbackSlug = canonicalSearchParams.get("category");
-    if (fallbackSlug && /^[a-z0-9-]{1,64}$/.test(fallbackSlug)) {
+    if (fallbackSlug && isValidCategorySlugFormat(fallbackSlug)) {
       categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
     }
   }
