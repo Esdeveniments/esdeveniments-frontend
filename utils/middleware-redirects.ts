@@ -15,7 +15,9 @@ export function handleCanonicalRedirects(
 ): NextResponse | null {
   const { pathname } = request.nextUrl;
   const segments = pathname.split("/").filter(Boolean);
-  const searchParams = request.nextUrl.searchParams;
+  const rawSearchParams = request.nextUrl?.searchParams;
+  const searchParams =
+    rawSearchParams instanceof URLSearchParams ? rawSearchParams : new URLSearchParams();
   const queryCategory = searchParams.get("category");
   const queryDate = searchParams.get("date");
 
