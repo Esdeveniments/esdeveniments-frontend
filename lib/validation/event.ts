@@ -124,8 +124,23 @@ export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
   relatedEvents: z.array(RelatedEventSummarySchema).optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
+  // Limit and sanitize meta fields to prevent DoS or injection via overly long or HTML-containing strings.
+  metaTitle: z
+    .string()
+    .optional()
+    .transform((s) => {
+      if (s == null) return s;
+      const stripped = s.replace(/<[^>]*>/g, "");
+      return stripped.slice(0, 150);
+    }),
+  metaDescription: z
+    .string()
+    .optional()
+    .transform((s) => {
+      if (s == null) return s;
+      const stripped = s.replace(/<[^>]*>/g, "");
+      return stripped.slice(0, 300);
+    }),
 });
 
 export function parseEventDetail(
