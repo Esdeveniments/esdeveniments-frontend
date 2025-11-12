@@ -27,12 +27,25 @@ frontend:
         # Clean up unnecessary files to reduce build output size
         # This must happen AFTER build but BEFORE artifacts are collected
         - echo "Cleaning up build artifacts to reduce size..."
+        - echo "Build size before cleanup:"
+        - du -sh .next || true
+        - echo "Directory sizes before cleanup:"
+        - du -sh .next/* 2>/dev/null | sort -h || true
+        # Remove unnecessary directories
         - rm -rf .next/cache
         - rm -rf .next/types
+        - rm -rf .next/trace
+        # Remove source maps and other unnecessary files
         - find .next -name "*.map" -type f -delete || true
+        - find .next -name "*.d.ts" -type f -delete || true
         # Remove SWC binaries (build-time only, not needed at runtime)
         - rm -f node_modules/@swc/core-linux-x64-gnu/swc.linux-x64-gnu.node 2>/dev/null || true
         - rm -f node_modules/@swc/core-linux-x64-musl/swc.linux-x64-musl.node 2>/dev/null || true
+        # Check build size after cleanup
+        - echo "Build size after cleanup:"
+        - du -sh .next || true
+        - echo "Directory sizes after cleanup:"
+        - du -sh .next/* 2>/dev/null | sort -h || true
         - echo "Build cleanup complete"
   artifacts:
     # AWS Amplify standard pattern: baseDirectory should be .next for Next.js
