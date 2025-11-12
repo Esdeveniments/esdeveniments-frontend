@@ -12,12 +12,12 @@ import {
 import type { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
   urlToFilterState,
   getTopStaticCombinations,
+  getRedirectUrl,
 } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -27,6 +27,7 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
+import { redirect } from "next/navigation";
 
 export const revalidate = 600;
 
@@ -119,11 +120,20 @@ export default async function FilteredPage({
   // Parse filters from URL with dynamic categories for validation
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    new URLSearchParams(), // Ignore search params on server. Canonicalization of legacy query params (e.g., ?date=, ?category=) is handled by the middleware. This route already has all required segments in the path, so there's no need to parse searchParams for redirection. Client-side filtering will re-fetch data using SWR.
+    new URLSearchParams(),
     categories
   );
 
-  // Canonical redirection from query param forms is handled in proxy.ts middleware
+  // Canonicalization note:
+  // - Middleware handles structural normalization (folding query date/category, omitting "tots")
+  // - Since category/date are in the path, we ignore searchParams on the server to keep ISR stable
+  // - This page-level redirect remains to validate category slugs against dynamic categories
+  //   and normalize unknown slugs (middleware cannot fetch categories at edge time)
+  // - When middleware already normalized, this is a no-op
+  const redirectUrl = getRedirectUrl(parsed);
+  if (redirectUrl) {
+    redirect(redirectUrl);
+  }
 
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
@@ -146,16 +156,6 @@ export default async function FilteredPage({
   if (dateRange) {
     fetchParams.from = toLocalDateString(dateRange.from);
     fetchParams.to = toLocalDateString(dateRange.until);
-  }
-
-  // Add distance/radius filter if coordinates are provided
-  if (filters.lat && filters.lon) {
-    const maybeRadius = distanceToRadius(filters.distance);
-    if (maybeRadius !== undefined) {
-      fetchParams.radius = maybeRadius;
-    }
-    fetchParams.lat = filters.lat;
-    fetchParams.lon = filters.lon;
   }
 
   // Fetch events, place label, and news check in parallel

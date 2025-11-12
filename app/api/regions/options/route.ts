@@ -14,7 +14,10 @@ export async function GET() {
     });
   } catch (e) {
     console.error("/api/regions/options error", e);
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to load regions" },
+      { status: 500 }
+    );
   }
 }
 

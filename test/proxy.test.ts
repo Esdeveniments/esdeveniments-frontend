@@ -80,7 +80,11 @@ describe("proxy", () => {
   describe("non-API routes", () => {
     it("passes through non-API routes", async () => {
       const mockRequest = {
-        nextUrl: { pathname: "/home", search: "" },
+        nextUrl: {
+          pathname: "/home",
+          search: "",
+          searchParams: new URLSearchParams(),
+        },
         headers: new Headers(),
         clone: vi.fn().mockReturnThis(),
         method: "GET",
@@ -94,7 +98,11 @@ describe("proxy", () => {
 
     it("handles /sw.js route with cache headers", async () => {
       const mockRequest = {
-        nextUrl: { pathname: "/sw.js", search: "" },
+        nextUrl: {
+          pathname: "/sw.js",
+          search: "",
+          searchParams: new URLSearchParams(),
+        },
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -586,7 +594,11 @@ describe("proxy", () => {
   describe("CSP and security headers", () => {
     it("adds security headers to non-API routes", async () => {
       const mockRequest = {
-        nextUrl: { pathname: "/home", search: "" },
+        nextUrl: {
+          pathname: "/home",
+          search: "",
+          searchParams: new URLSearchParams(),
+        },
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -619,7 +631,11 @@ describe("proxy", () => {
 
     it("CSP includes unsafe-inline for ISR compatibility", async () => {
       const mockRequest = {
-        nextUrl: { pathname: "/home", search: "" },
+        nextUrl: {
+          pathname: "/home",
+          search: "",
+          searchParams: new URLSearchParams(),
+        },
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -642,7 +658,11 @@ describe("proxy", () => {
 
     it("sets pathname in request headers", async () => {
       const mockRequest = {
-        nextUrl: { pathname: "/home", search: "" },
+        nextUrl: {
+          pathname: "/home",
+          search: "",
+          searchParams: new URLSearchParams(),
+        },
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
