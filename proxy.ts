@@ -98,33 +98,42 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/")) {
     // Allowlist public API routes that don't require HMAC from the browser
-    // Routes that accept both base path and sub-paths
-    const publicApiPrefixes = [
-      "/api/regions",
-      "/api/categories",
-      "/api/cities",
-      "/api/news",
-      "/api/places",
+    // Use regex patterns for precise matching to prevent accidental exposure of
+    // deep nested private routes (e.g., /api/regions/admin/users would be blocked).
+    // Note: Single-segment routes like /api/regions/admin are still allowed to
+    // support dynamic routes like [id] and [slug], but routes must be explicitly
+    // created as files in the codebase.
+    const publicApiPatterns = [
+      // Regions: base, [id], or /options
+      /^\/api\/regions(\/(options|[\w-]+))?$/,
+      // Categories: base or [id]
+      /^\/api\/categories(\/[\w-]+)?$/,
+      // Cities: base or [id]
+      /^\/api\/cities(\/[\w-]+)?$/,
+      // News: base or [slug]
+      /^\/api\/news(\/[\w-]+)?$/,
+      // Places: base, [slug], /nearby, or /photo
+      /^\/api\/places(\/(nearby|photo|[\w-]+))?$/,
     ];
 
-    // Routes that require exact match (not covered by prefix patterns)
+    // Routes that require exact match
     const publicApiExactPaths = [
       "/api/promotions/config",
       "/api/promotions/price-preview",
+      "/api/promotions/active",
       "/api/leads/restaurant",
       "/api/stripe/checkout",
       "/api/cloudinary/sign",
     ];
 
     const isPublicApiRequest =
-      // Prefix-based routes (base path or any sub-path)
-      publicApiPrefixes.some(
-        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-      ) ||
+      // Pattern-based routes (base path, dynamic segments, or specific sub-paths)
+      publicApiPatterns.some((pattern) => pattern.test(pathname)) ||
       // Exact match routes
       publicApiExactPaths.includes(pathname) ||
-      // Event routes (GET only)
-      (pathname.startsWith("/api/events") && request.method === "GET") ||
+      // Event routes (GET only): base, [slug], or /categorized
+      (request.method === "GET" &&
+        /^\/api\/events(\/(categorized|[\w-]+))?$/.test(pathname)) ||
       // Visit counter endpoint (POST only)
       (pathname === "/api/visits" && request.method === "POST");
 

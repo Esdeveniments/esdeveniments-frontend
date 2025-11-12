@@ -122,6 +122,27 @@ describe("handleCanonicalRedirects", () => {
     });
   });
 
+  describe("tots in category slot", () => {
+    it("redirects /place/date/tots to /place/date", () => {
+      const request = createMockRequest("/barcelona/avui/tots");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona/avui");
+    });
+
+    it("redirects /place/category/tots to /place/category", () => {
+      const request = createMockRequest("/barcelona/teatre/tots");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona/teatre");
+    });
+  });
   describe("date segment handling", () => {
     it("preserves date from segment when present", () => {
       const request = createMockRequest("/barcelona/avui/teatre");

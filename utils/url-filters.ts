@@ -19,6 +19,28 @@ import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
 import { topStaticGenerationPlaces } from "./priority-places";
 
 /**
+ * Convert Next.js searchParams object to URLSearchParams
+ * Handles string, string[], and undefined values correctly
+ */
+export function toUrlSearchParams(
+  raw: Record<string, string | string[] | undefined>
+): URLSearchParams {
+  const params = new URLSearchParams();
+  Object.entries(raw).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry != null) {
+          params.append(key, entry);
+        }
+      });
+    } else if (value != null) {
+      params.append(key, value);
+    }
+  });
+  return params;
+}
+
+/**
  * Validate latitude coordinate
  */
 function isValidLatitude(lat: number): boolean {

@@ -18,6 +18,7 @@ import {
   urlToFilterState,
   getTopStaticCombinations,
   getRedirectUrl,
+  toUrlSearchParams,
 } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
@@ -25,6 +26,7 @@ import {
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { fetchPlaces } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { redirect } from "next/navigation";
@@ -35,10 +37,15 @@ export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string; category: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { place, byDate, category } = await params;
+  const [{ place, byDate, category }, rawSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   // 🛡️ SECURITY: Validate place parameter
   const validation = validatePlaceForMetadata(place);
@@ -55,10 +62,13 @@ export async function generateMetadata({
     categories = [];
   }
 
+  // Convert searchParams to URLSearchParams for parsing
+  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
   // Parse filters for metadata generation WITH categories
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    new URLSearchParams(),
+    canonicalSearchParams,
     categories // ✅ Now passing categories like in main function
   );
   const filters = urlToFilterState(parsed);
@@ -89,7 +99,25 @@ export async function generateMetadata({
 export async function generateStaticParams() {
   // Generate static params for top combinations only
   // Other combinations will be generated on-demand with ISR
-  const combinations = getTopStaticCombinations();
+
+  // Validate places exist in API to avoid generating pages for removed/renamed places
+  let places: { slug: string }[] = [];
+  try {
+    places = await fetchPlaces();
+  } catch (error) {
+    console.warn(
+      "generateStaticParams: Error fetching places for validation:",
+      error
+    );
+    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
+    places = [];
+  }
+
+  // Pass validated places to getTopStaticCombinations
+  const combinations = getTopStaticCombinations(
+    undefined, // categories - use hardcoded fallback
+    places.length > 0 ? places : undefined // places - validate if available
+  );
 
   // Transform the returned format from { place, date, category } to { place, byDate, category }
   return combinations.map(({ place, date, category }) => ({
@@ -101,10 +129,15 @@ export async function generateStaticParams() {
 
 export default async function FilteredPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string; category: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { place, byDate, category } = await params;
+  const [{ place, byDate, category }, rawSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
@@ -119,19 +152,22 @@ export default async function FilteredPage({
     categories = []; // Fallback to empty array if fetch fails
   }
 
+  // Convert searchParams to URLSearchParams for parsing
+  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
   // Parse filters from URL with dynamic categories for validation
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    new URLSearchParams(),
+    canonicalSearchParams,
     categories
   );
 
   // Canonicalization note:
   // - Middleware handles structural normalization (folding query date/category, omitting "tots")
-  // - Since category/date are in the path, we ignore searchParams on the server to keep ISR stable
   // - This page-level redirect remains to validate category slugs against dynamic categories
   //   and normalize unknown slugs (middleware cannot fetch categories at edge time)
   // - When middleware already normalized, this is a no-op
+  // - Query params (search, distance, lat, lon) are preserved through redirects
   const redirectUrl = getRedirectUrl(parsed);
   if (redirectUrl) {
     redirect(redirectUrl);

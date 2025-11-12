@@ -5,6 +5,7 @@ import {
   urlToFilterState,
   getRedirectUrl,
   isValidCategorySlug,
+  toUrlSearchParams,
 } from "../utils/url-filters";
 
 describe("url-filters: canonical building and parsing", () => {
@@ -293,5 +294,59 @@ describe("url-filters: category slug validation", () => {
 
   it("rejects unknown categories when not present dynamically", () => {
     expect(isValidCategorySlug("unknown-slug")).toBe(false);
+  });
+});
+
+describe("url-filters: toUrlSearchParams conversion", () => {
+  it("converts string values correctly", () => {
+    const raw = { search: "rock", distance: "25" };
+    const params = toUrlSearchParams(raw);
+    expect(params.get("search")).toBe("rock");
+    expect(params.get("distance")).toBe("25");
+  });
+
+  it("handles array values by appending all entries", () => {
+    const raw = { category: ["concerts", "festivals"] };
+    const params = toUrlSearchParams(raw);
+    expect(params.getAll("category")).toEqual(["concerts", "festivals"]);
+  });
+
+  it("filters out undefined values", () => {
+    const raw = { search: "rock", distance: undefined, lat: "41.3888" };
+    const params = toUrlSearchParams(raw);
+    expect(params.has("distance")).toBe(false);
+    expect(params.get("search")).toBe("rock");
+    expect(params.get("lat")).toBe("41.3888");
+  });
+
+  it("filters out null values in arrays", () => {
+    const raw = { category: ["concerts", null as any, "festivals"] };
+    const params = toUrlSearchParams(raw);
+    expect(params.getAll("category")).toEqual(["concerts", "festivals"]);
+  });
+
+  it("handles empty object", () => {
+    const raw = {};
+    const params = toUrlSearchParams(raw);
+    expect(params.toString()).toBe("");
+  });
+
+  it("handles mixed string and array values", () => {
+    const raw = {
+      search: "rock",
+      category: ["concerts", "festivals"],
+      distance: "25",
+    };
+    const params = toUrlSearchParams(raw);
+    expect(params.get("search")).toBe("rock");
+    expect(params.getAll("category")).toEqual(["concerts", "festivals"]);
+    expect(params.get("distance")).toBe("25");
+  });
+
+  it("handles empty arrays", () => {
+    const raw = { category: [], search: "rock" };
+    const params = toUrlSearchParams(raw);
+    expect(params.has("category")).toBe(false);
+    expect(params.get("search")).toBe("rock");
   });
 });

@@ -94,10 +94,12 @@ export function handleCanonicalRedirects(
   const segmentCount = segments.length;
   const hasTotsInSegments =
     (segmentCount === 3 || segmentCount === 2) && segments[1] === "tots";
+  const hasTotsCategory = segmentCount >= 3 && segments[2] === "tots";
 
   // Handle redirects: combine /tots segments with query params if present
   if (
     hasTotsInSegments ||
+    hasTotsCategory ||
     (segmentCount === 1 && (queryCategory || queryDate))
   ) {
     // Build canonical URL: omit "tots" values
@@ -105,7 +107,7 @@ export function handleCanonicalRedirects(
 
     // Determine date: from segment (if not tots) or query param
     let date: string | null = null;
-    if (segmentCount === 2 && segments[1] !== "tots") {
+    if (segmentCount >= 2 && segments[1] !== "tots") {
       // /place/date - check if it's a valid date
       const secondSegment = segments[1];
       date = isValidDateSlug(secondSegment) ? secondSegment : null;
@@ -121,9 +123,19 @@ export function handleCanonicalRedirects(
 
     // Determine category: from segment (if not tots) or query param
     let category: string | null = null;
-    if (hasTotsInSegments && segmentCount === 3) {
-      // /place/tots/category - category is in third segment
-      category = segments[2] !== "tots" ? segments[2] : null;
+    if (segmentCount >= 3) {
+      const secondSegment = segments[1];
+      const thirdSegment = segments[2];
+      if (thirdSegment !== "tots") {
+        // /place/<something>/<category>
+        category = thirdSegment;
+      } else if (!isValidDateSlug(secondSegment) && secondSegment !== "tots") {
+        // /place/<category>/tots -> keep category from second segment
+        category = secondSegment;
+      } else {
+        // /place/<date>/tots or /place/tots/tots -> drop category placeholder
+        category = null;
+      }
     } else if (segmentCount === 2 && segments[1] !== "tots") {
       // /place/X - check if X is a category (not a date)
       const secondSegment = segments[1];

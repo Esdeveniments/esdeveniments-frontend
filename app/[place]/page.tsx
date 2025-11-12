@@ -17,13 +17,18 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { parseFiltersFromUrl, urlToFilterState } from "@utils/url-filters";
+import {
+  parseFiltersFromUrl,
+  urlToFilterState,
+  toUrlSearchParams,
+} from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
+import { fetchPlaces } from "@lib/api/places";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -34,13 +39,35 @@ export async function generateStaticParams() {
   // Each place generates ~4.6MB, so 15 places = ~69MB (within limit)
   // Other places will be generated on-demand with ISR (revalidate: 600)
   // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
-  return topStaticGenerationPlaces.map((slug) => ({ place: slug }));
+
+  // Validate places exist in API to avoid generating pages for removed/renamed places
+  let places: { slug: string }[] = [];
+  try {
+    places = await fetchPlaces();
+  } catch (error) {
+    console.warn(
+      "generateStaticParams: Error fetching places for validation:",
+      error
+    );
+    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
+    return topStaticGenerationPlaces.map((slug) => ({ place: slug }));
+  }
+
+  // Filter to only places that exist in API
+  const placeSlugs = new Set(places.map((p) => p.slug));
+  const validPlaces = topStaticGenerationPlaces.filter((slug) =>
+    placeSlugs.has(slug)
+  );
+
+  return validPlaces.map((slug) => ({ place: slug }));
 }
 
 export async function generateMetadata({
   params,
+  searchParams: _searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
 
@@ -67,10 +94,15 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { place } = await params;
+  const [{ place }, rawSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   validatePlaceOrThrow(place);
 
@@ -84,11 +116,14 @@ export default async function Page({
     categories = []; // Fallback to empty array if fetch fails
   }
 
-  // Parse filters from path only (ignore searchParams on server to keep ISR)
+  // Convert searchParams to URLSearchParams for parsing
+  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
+  // Parse filters from URL with searchParams preserved
   // Canonicalization of query params is handled in proxy.ts
   const parsed = parseFiltersFromUrl(
     { place },
-    new URLSearchParams(),
+    canonicalSearchParams,
     categories
   );
 

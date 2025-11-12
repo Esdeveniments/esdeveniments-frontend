@@ -1,5 +1,5 @@
 import { fetchEvents, insertAds } from "@lib/api/events";
-import { getCategories } from "@lib/api/categories";
+import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -15,7 +15,11 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { parseFiltersFromUrl, getRedirectUrl } from "@utils/url-filters";
+import {
+  parseFiltersFromUrl,
+  getRedirectUrl,
+  toUrlSearchParams,
+} from "@utils/url-filters";
 import { redirect } from "next/navigation";
 import {
   validatePlaceOrThrow,
@@ -24,6 +28,7 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 import { VALID_DATES } from "@lib/dates";
+import { fetchPlaces } from "@lib/api/places";
 
 // page-level ISR not set here; fetch-level caching applies
 export const revalidate = 600;
@@ -32,10 +37,15 @@ export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { place, byDate } = await params;
+  const [{ place, byDate }, rawSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   const validation = validatePlaceForMetadata(place);
   if (!validation.isValid) {
@@ -49,9 +59,12 @@ export async function generateMetadata({
     console.error("generateMetadata: Error fetching categories:", error);
   }
 
+  // Convert searchParams to URLSearchParams for parsing
+  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
-    new URLSearchParams(),
+    canonicalSearchParams,
     categories
   );
 
@@ -81,19 +94,78 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  // Only generate static pages for high-priority places to reduce build size
+  // Only generate static pages for top ~15 places to keep build size under 230MB
   // Other places will be generated on-demand with ISR (revalidate: 600)
   // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
+
+  // Validate places exist in API to avoid generating pages for removed/renamed places
+  let places: { slug: string }[] = [];
+  try {
+    places = await fetchPlaces();
+  } catch (error) {
+    console.warn(
+      "generateStaticParams: Error fetching places for validation:",
+      error
+    );
+    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
+    places = [];
+  }
+
+  // Validate categories exist in API to avoid generating pages for removed/renamed categories
+  let categories: CategorySummaryResponseDTO[] = [];
+  try {
+    categories = await fetchCategories();
+  } catch (error) {
+    console.warn(
+      "generateStaticParams: Error fetching categories for validation:",
+      error
+    );
+    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
+    categories = [];
+  }
+
+  // Filter to only places that exist in API
+  const placeSlugs = new Set(places.map((p) => p.slug));
+  const validPlaces =
+    places.length > 0
+      ? topStaticGenerationPlaces.filter((slug) => placeSlugs.has(slug))
+      : topStaticGenerationPlaces; // Fallback if API failed
+
   const topDates = VALID_DATES.filter(
     (date) => date !== "tots"
   ) as ByDateOptions[];
 
-  // Use hardcoded legacy categories (same as getTopStaticCombinations fallback)
-  // Runtime will handle dynamic categories via ISR
-  const topCategories = ["concerts", "festivals", "espectacles", "familia"];
+  // Get top categories from dynamic data or fall back to legacy
+  // Validate categories exist in API to avoid generating pages for removed/renamed categories
+  let topCategories: string[] = [];
+  if (categories.length > 0) {
+    // Use first 4 dynamic categories (same as getTopStaticCombinations)
+    const categorySlugs = new Set(categories.map((cat) => cat.slug));
+    const dynamicTopCategories = categories.slice(0, 4).map((cat) => cat.slug);
+
+    // Also validate legacy categories if they exist in API
+    const legacyCategories = [
+      "concerts",
+      "festivals",
+      "espectacles",
+      "familia",
+    ];
+    const validLegacyCategories = legacyCategories.filter((slug) =>
+      categorySlugs.has(slug)
+    );
+
+    // Prefer dynamic categories, but include valid legacy ones
+    topCategories = Array.from(
+      new Set([...dynamicTopCategories, ...validLegacyCategories])
+    ).slice(0, 4); // Limit to 4 total
+  } else {
+    // Fallback to hardcoded legacy categories if API failed
+    topCategories = ["concerts", "festivals", "espectacles", "familia"];
+  }
+
   const combinations = [];
 
-  for (const place of topStaticGenerationPlaces) {
+  for (const place of validPlaces) {
     for (const date of topDates) {
       combinations.push({ place, byDate: date });
     }
