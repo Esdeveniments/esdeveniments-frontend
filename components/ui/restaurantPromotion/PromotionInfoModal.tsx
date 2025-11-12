@@ -28,8 +28,7 @@ const PromotionInfoModal: FC<PromotionInfoModalProps> = ({ open, setOpen }) => {
         <ul className="list-disc list-inside text-sm space-y-1">
           <li>Nom del restaurant</li>
           <li>Població / Regió</li>
-          <li>Enllaç (web o xarxes)</li>
-          <li>Telèfon de contacte</li>
+          <li>Enllaç (Google Maps o web / xarxes socials)</li>
         </ul>
         <p className="text-xs text-foreground/70">
           T&apos;informarem tan aviat com les promocions automatitzades estiguin

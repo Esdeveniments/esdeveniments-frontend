@@ -275,7 +275,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             <div className="w-full flex flex-col px-0">
               <Select
                 id="options"
-                title="Poblacions"
+                title=""
                 options={regionsAndCitiesArray}
                 value={selectedOption}
                 onChange={handlePlaceChange}
