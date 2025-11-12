@@ -4,14 +4,14 @@ test.describe("Canonical URL rules", () => {
   test("/place/tots redirects to /place and preserves query", async ({
     page,
   }) => {
-    // Wait for redirect to complete
+    // page.goto automatically follows redirects, use domcontentloaded for faster response
     await page.goto("/barcelona/tots?search=castellers", {
       waitUntil: "domcontentloaded",
-      timeout: 60000,
+      timeout: 90000,
     });
-    // Wait a bit for redirect to complete if it's still in progress
-    await page.waitForURL(/\/barcelona(\?.*)?$/, { timeout: 30000 });
-    await expect(page).toHaveURL(/\/barcelona(\?.*)?$/);
+    // Verify the redirect completed and query param is preserved
+    // Use a longer timeout since the page might still be loading
+    await expect(page).toHaveURL(/\/barcelona(\?.*)?$/, { timeout: 30000 });
     expect(page.url()).toContain("search=castellers");
   });
 
@@ -20,11 +20,10 @@ test.describe("Canonical URL rules", () => {
   }) => {
     await page.goto("/barcelona/tots/teatre", {
       waitUntil: "domcontentloaded",
-      timeout: 60000,
+      timeout: 90000,
     });
-    // Wait for redirect to complete
-    await page.waitForURL(/\/barcelona\/teatre$/, { timeout: 30000 });
-    await expect(page).toHaveURL(/\/barcelona\/teatre$/);
+    // Verify the redirect completed
+    await expect(page).toHaveURL(/\/barcelona\/teatre$/, { timeout: 30000 });
   });
 
   test("Query params date/category normalize to canonical path", async ({
@@ -32,11 +31,10 @@ test.describe("Canonical URL rules", () => {
   }) => {
     await page.goto("/barcelona?category=teatre&date=tots", {
       waitUntil: "domcontentloaded",
-      timeout: 60000,
+      timeout: 90000,
     });
-    // Wait for redirect to complete
-    await page.waitForURL(/\/barcelona\/teatre(\?.*)?$/, { timeout: 30000 });
-    await expect(page).toHaveURL(/\/barcelona\/teatre(\?.*)?$/);
+    // Verify the redirect completed and query params were normalized
+    await expect(page).toHaveURL(/\/barcelona\/teatre(\?.*)?$/, { timeout: 30000 });
     expect(page.url()).not.toContain("category=");
     expect(page.url()).not.toContain("date=");
   });

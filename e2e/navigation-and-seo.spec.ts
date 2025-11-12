@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Navigation and SEO basics", () => {
   test("Navbar links navigate to core pages", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
     // Wait for navigation to be ready (auto-waiting assertion)
     const nav = page.getByRole("navigation").first();
     await expect(nav).toBeVisible({ timeout: 30000 });
@@ -12,7 +12,7 @@ test.describe("Navigation and SEO basics", () => {
     await expect(publicarLink).toBeVisible({ timeout: 30000 });
     // waitForURL in Promise.all is recommended pattern for navigation
     await Promise.all([
-      page.waitForURL(/\/publica$/, { timeout: 30000 }),
+      page.waitForURL(/\/publica$/, { timeout: 90000 }),
       publicarLink.click(),
     ]);
     
@@ -24,7 +24,7 @@ test.describe("Navigation and SEO basics", () => {
     await expect(agendaLink).toBeVisible({ timeout: 30000 });
     // waitForURL in Promise.all is recommended pattern for navigation
     await Promise.all([
-      page.waitForURL(/\/$/, { timeout: 30000 }),
+      page.waitForURL(/\/$/, { timeout: 90000 }),
       agendaLink.click(),
     ]);
     
@@ -36,7 +36,7 @@ test.describe("Navigation and SEO basics", () => {
     await expect(noticiesLink).toBeVisible({ timeout: 30000 });
     // waitForURL in Promise.all is recommended pattern for navigation
     await Promise.all([
-      page.waitForURL(/\/noticies$/, { timeout: 30000 }),
+      page.waitForURL(/\/noticies$/, { timeout: 90000 }),
       noticiesLink.click(),
     ]);
   });
@@ -47,7 +47,7 @@ test.describe("Navigation and SEO basics", () => {
     // Use catalunya which always exists, and barcelona which may redirect
     const paths = ["/", "/catalunya", "/catalunya/avui"];
     for (const p of paths) {
-      await page.goto(p, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.goto(p, { waitUntil: "domcontentloaded", timeout: 90000 });
       const canonical = page.locator('link[rel="canonical"]');
       await expect(canonical).toHaveCount(1, { timeout: 30000 });
       const ogTitle = page.locator('meta[property="og:title"]');

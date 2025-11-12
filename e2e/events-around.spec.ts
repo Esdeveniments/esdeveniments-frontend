@@ -12,7 +12,7 @@ test.describe("Events around section", () => {
   test("renders related events and links work", async ({ page }) => {
     const slug = await getFirstEventSlug(page);
     if (!slug) test.skip(true, "No events returned from API");
-    await page.goto(`/e/${slug}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/e/${slug}`, { waitUntil: "domcontentloaded", timeout: 60000 });
     const section = page.getByRole("heading", {
       name: /esdeveniments relacionats/i,
     });

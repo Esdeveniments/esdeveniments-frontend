@@ -119,13 +119,32 @@ const RelatedEventSummarySchema = z
   })
   .passthrough();
 
+// 🛡️ SECURITY: Sanitize HTML tags from meta fields to prevent XSS
+function sanitizeMetaField(
+  value: string | null | undefined
+): string | null | undefined {
+  if (!value || typeof value !== "string") return value;
+  // Remove HTML tags and trim whitespace
+  return value.replace(/<[^>]*>/g, "").trim() || null;
+}
+
 export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
   videoUrl: z.string().optional(),
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
   relatedEvents: z.array(RelatedEventSummarySchema).optional(),
-  metaTitle: z.string().optional().nullable(),
-  metaDescription: z.string().optional().nullable(),
+  metaTitle: z
+    .string()
+    .max(200, "Meta title too long")
+    .optional()
+    .nullable()
+    .transform(sanitizeMetaField),
+  metaDescription: z
+    .string()
+    .max(500, "Meta description too long")
+    .optional()
+    .nullable()
+    .transform(sanitizeMetaField),
 });
 
 export function parseEventDetail(

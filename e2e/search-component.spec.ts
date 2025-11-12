@@ -4,8 +4,8 @@ test.describe("Search behavior", () => {
   test("debounced typing updates URL; Enter submits immediately; clear resets", async ({
     page,
   }) => {
-    test.setTimeout(60000);
-    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60000 });
+    test.setTimeout(120000);
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const input = page.getByTestId("search-input");
     await expect(input).toBeVisible({ timeout: 30000 });

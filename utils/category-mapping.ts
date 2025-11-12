@@ -162,9 +162,11 @@ export function isValidCategorySlugFormat(
 /**
  * Validates if a category slug is valid for ISR generation
  * @deprecated Use isValidCategorySlugFormat for format validation
+ *
+ * 🛡️ SECURITY: Uses default maxLength (64) instead of Infinity to prevent DoS
  */
 export function isValidCategorySlug(slug: string): boolean {
-  return isValidCategorySlugFormat(slug, Infinity);
+  return isValidCategorySlugFormat(slug, 64);
 }
 
 /**

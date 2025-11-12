@@ -208,6 +208,12 @@ export function formatCatalanA(
   }
 
   if (normalizedType === "region") {
+    // Special-case proper name that does not take an article in Catalan
+    // e.g., "Catalunya" → "a Catalunya" (never "a la Catalunya")
+    if ((raw || "").trim().toLowerCase() === "catalunya") {
+      return "a Catalunya";
+    }
+
     // Use the original-cased name to build the narrative form expected by your specs
     const display = raw || text;
     const phrase = narrativeRegionCase(display);

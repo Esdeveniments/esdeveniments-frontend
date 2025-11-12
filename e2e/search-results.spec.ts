@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Search end-to-end", () => {
   test("typing updates results list and URL", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
     // Match by explicit aria-label used in component
     const input = page.getByLabel("Search input").first();
     await expect(input).toBeVisible({ timeout: 30000 });

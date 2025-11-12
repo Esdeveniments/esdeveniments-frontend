@@ -19,8 +19,8 @@ import {
   getTopStaticCombinations,
   getRedirectUrl,
   toUrlSearchParams,
-  buildFallbackUrlForInvalidPlace,
 } from "@utils/url-filters";
+import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import { applyDistanceToParams } from "@utils/api-helpers";
 import {
   validatePlaceOrThrow,
@@ -156,31 +156,8 @@ export default async function FilteredPage({
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
 
-  // 🛡️ SECURITY: Early place existence check to prevent DoS via arbitrary slug enumeration
-  // This validates the place exists in the API before any expensive operations
-  // Special case: "catalunya" is always valid (homepage equivalent)
-  if (place !== "catalunya") {
-    let placeExists: boolean | undefined;
-    try {
-      placeExists = (await fetchPlaceBySlug(place)) !== null;
-    } catch (error) {
-      // Transient errors (500, network failures, etc.) - log but continue
-      // The page will handle gracefully, and the error might be transient
-      console.error(
-        `Error checking place existence for ${place}, continuing anyway:`,
-        error
-      );
-    }
-    if (placeExists === false) {
-      // Place definitively doesn't exist - redirect to default place preserving intent
-      const target = buildFallbackUrlForInvalidPlace({
-        byDate,
-        category,
-        rawSearchParams: rawSearchParams,
-      });
-      redirect(target);
-    }
-  }
+  // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
+  // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
   // Fetch dynamic categories BEFORE parsing URL to validate category slugs
   let categories: CategorySummaryResponseDTO[] = [];
@@ -360,6 +337,24 @@ export default async function FilteredPage({
           numberOfItems: validEvents.length,
         })
       : null;
+
+  // Late existence check to preserve UX without creating an early oracle
+  if (place !== "catalunya") {
+    let placeExists: boolean | undefined;
+    try {
+      placeExists = (await fetchPlaceBySlug(place)) !== null;
+    } catch {
+      // ignore transient errors
+    }
+    if (placeExists === false) {
+      const target = buildFallbackUrlForInvalidPlace({
+        byDate,
+        category,
+        rawSearchParams: rawSearchParams,
+      });
+      redirect(target);
+    }
+  }
 
   return (
     <PlacePageShell

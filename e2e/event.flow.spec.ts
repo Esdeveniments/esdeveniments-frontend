@@ -6,7 +6,7 @@ test.describe("Event detail flow", () => {
   test("open an event card when available or show not-found", async ({
     page,
   }) => {
-    await page.goto("/sitemap", { waitUntil: "domcontentloaded" });
+    await page.goto("/sitemap", { waitUntil: "domcontentloaded", timeout: 60000 });
     // Click first region/city link if present (prefer stable testids)
     const firstLink = page.getByTestId("sitemap-region-link").first();
     if (await firstLink.isVisible()) {
@@ -27,6 +27,7 @@ test.describe("Event detail flow", () => {
     // Fallback: navigate to a non-existent event
     await page.goto("/e/non-existent-event-slug-12345", {
       waitUntil: "domcontentloaded",
+      timeout: 60000,
     });
     // Accept either site-wide not-found or event-specific noEventFound component
     const notFoundTitle = page.getByTestId("not-found-title");

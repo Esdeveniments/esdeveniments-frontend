@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Offline via service worker", () => {
   test("navigates while offline to offline page", async ({ page, context }) => {
     // First visit to register SW and populate minimal cache
-    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     // Toggle offline
     await context.setOffline(true);

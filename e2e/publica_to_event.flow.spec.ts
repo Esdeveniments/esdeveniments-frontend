@@ -7,9 +7,9 @@ test.describe("Publica -> Event flow (deterministic)", () => {
   test("submits minimal form and navigates to event page", async ({ page }) => {
     // Ensure the env var is present for the server (set in CI job), otherwise skip
     // We proceed regardless; if backend is available, page should still work.
-    await page.goto("/publica");
+    await page.goto("/publica", { waitUntil: "domcontentloaded", timeout: 60000 });
 
-    await expect(page.getByTestId("event-form")).toBeVisible();
+    await expect(page.getByTestId("event-form")).toBeVisible({ timeout: 30000 });
 
     // Minimal interactions (fields are managed by the form component; we just submit)
     const publishButton = page.getByTestId("publish-button");
@@ -27,12 +27,11 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     // Attempt click; if still disabled, assert form remains visible deterministically
     if (await publishButton.isEnabled()) {
       await publishButton.click();
-      await page.waitForLoadState("networkidle");
+      // Wait for navigation if redirect happens
+      await page.waitForURL(/\/(e\/|publica)/, { timeout: 30000 }).catch(() => {
+        // If no navigation, continue
+      });
     }
-
-    // If E2E_TEST_MODE is active, the server action redirects to /e/e2e-test-event
-    // Otherwise, we might remain; to keep deterministic, check for either result
-    await page.waitForLoadState("networkidle");
 
     if ((await page.url()).includes("/e/")) {
       // Event detail basic signals

@@ -26,22 +26,45 @@ import { DEFAULT_FILTER_VALUE } from "./constants";
 /**
  * Convert Next.js searchParams object to URLSearchParams
  * Handles string, string[], and undefined values correctly
+ * 
+ * 🛡️ SECURITY: Limits parameter count and size to prevent DoS attacks
  */
 export function toUrlSearchParams(
   raw: Record<string, string | string[] | undefined>
 ): URLSearchParams {
   const params = new URLSearchParams();
-  Object.entries(raw).forEach(([key, value]) => {
+  const MAX_PARAMS = 50; // Maximum number of distinct parameters
+  const MAX_VALUE_LENGTH = 1000; // Maximum length per parameter value
+  const MAX_TOTAL_LENGTH = 10000; // Maximum total length of all values combined
+  
+  let paramCount = 0;
+  let totalLength = 0;
+  
+  for (const [key, value] of Object.entries(raw)) {
+    if (paramCount >= MAX_PARAMS) break;
+    
+    // Validate key length
+    if (key.length > 100) continue;
+    
     if (Array.isArray(value)) {
-      value.forEach((entry) => {
-        if (entry != null) {
-          params.append(key, entry);
+      for (const entry of value) {
+        if (entry != null && typeof entry === "string") {
+          const truncated = entry.slice(0, MAX_VALUE_LENGTH);
+          if (totalLength + truncated.length > MAX_TOTAL_LENGTH) break;
+          params.append(key, truncated);
+          totalLength += truncated.length;
         }
-      });
-    } else if (value != null) {
-      params.append(key, value);
+      }
+    } else if (value != null && typeof value === "string") {
+      const truncated = value.slice(0, MAX_VALUE_LENGTH);
+      if (totalLength + truncated.length > MAX_TOTAL_LENGTH) break;
+      params.append(key, truncated);
+      totalLength += truncated.length;
     }
-  });
+    
+    paramCount++;
+  }
+  
   return params;
 }
 
@@ -313,15 +336,24 @@ export function buildFallbackUrlForInvalidPlace(opts: {
 
   const derivedCategory = opts.category ?? derivedCategoryFromByDate;
 
+  // 🛡️ SECURITY: Validate distance to prevent NaN in URLs
+  const distanceParam = params.get("distance");
+  let distance: number | undefined;
+  if (distanceParam) {
+    const parsed = parseInt(distanceParam, 10);
+    // Only use if parsing succeeded and result is a valid number
+    if (!isNaN(parsed) && isFinite(parsed) && parsed > 0) {
+      distance = parsed;
+    }
+  }
+
   const filters: Partial<URLFilterState> = {
     place: "catalunya",
     byDate:
       opts.byDate && isValidDateSlug(opts.byDate) ? opts.byDate : DEFAULT_FILTER_VALUE,
     category: derivedCategory || DEFAULT_FILTER_VALUE,
     searchTerm: params.get("search") || undefined,
-    distance: params.get("distance")
-      ? parseInt(params.get("distance") || "50")
-      : undefined,
+    distance,
     lat: params.get("lat") ? parseLatitude(params.get("lat") as string) : undefined,
     lon: params.get("lon") ? parseLongitude(params.get("lon") as string) : undefined,
   };
