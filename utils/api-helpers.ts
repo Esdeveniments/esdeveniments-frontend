@@ -145,9 +145,20 @@ export function applyDistanceToParams(
         : input.lon
       : undefined;
 
-  // Only apply if both coordinates are valid numbers
-  if (lat !== undefined && lon !== undefined && !isNaN(lat) && !isNaN(lon)) {
-    const maybeRadius = distanceToRadius(input.distance);
+  // Validate coordinates: must be finite numbers within geographic bounds
+  const validLat = lat !== undefined && Number.isFinite(lat) && lat >= -90 && lat <= 90;
+  const validLon = lon !== undefined && Number.isFinite(lon) && lon >= -180 && lon <= 180;
+
+  if (validLat && validLon) {
+    // Validate distance if present (ensure it's a finite, non-negative number)
+    let maybeRadius: number | undefined;
+    if (input.distance !== undefined) {
+      const numericDistance = typeof input.distance === "string" ? parseFloat(input.distance) : input.distance;
+      if (Number.isFinite(numericDistance) && numericDistance >= 0) {
+        maybeRadius = distanceToRadius(numericDistance);
+      }
+    }
+
     if (maybeRadius !== undefined) {
       params.radius = maybeRadius;
     }
