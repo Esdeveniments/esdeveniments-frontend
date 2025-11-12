@@ -164,7 +164,7 @@ export function isValidCategorySlugFormat(
  * @deprecated Use isValidCategorySlugFormat for format validation
  */
 export function isValidCategorySlug(slug: string): boolean {
-  return isValidCategorySlugFormat(slug, Infinity);
+  return isValidCategorySlugFormat(slug);
 }
 
 /**
