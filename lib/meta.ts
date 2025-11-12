@@ -92,7 +92,7 @@ export function generateEventMetadata(
 
   // Use backend metaTitle if available and non-empty, otherwise generate it
   const enhancedTitle = event.metaTitle?.trim()
-    ? event.metaTitle.trim()
+    ? sanitizeAndTrim(event.metaTitle)
     : generateMetaTitle(
         event.title,
         event.description,
@@ -108,7 +108,7 @@ export function generateEventMetadata(
   // Use backend metaDescription if available and non-empty, otherwise generate it
   let finalDescription: string;
   if (event.metaDescription?.trim()) {
-    finalDescription = event.metaDescription.trim();
+    finalDescription = sanitizeAndTrim(event.metaDescription);
   } else {
     // Generate enhanced description like the old version
     const enhancedDescription = generateMetaDescription(
