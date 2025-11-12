@@ -118,12 +118,14 @@ export default async function Page({
         notFound();
       }
     } catch (error) {
-      // Transient errors (500, network failures, etc.) - log but continue
-      // The page will handle gracefully, and the error might be transient
+      // Transient errors (500, network failures, etc.) - do NOT continue
+      // Returning a 503 prevents serving 200 OK responses for unknown slugs
       console.error(
-        `Error checking place existence for ${place}, continuing anyway:`,
+        `Error checking place existence for ${place}:`,
         error
       );
+      // Respond with 503 Service Unavailable to avoid cache poisoning of invalid slugs
+      throw new Response("Upstream place service unavailable", { status: 503 });
     }
   }
 
