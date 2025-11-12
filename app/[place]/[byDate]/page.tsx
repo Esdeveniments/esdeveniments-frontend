@@ -210,12 +210,14 @@ export default async function ByDatePage({
         notFound();
       }
     } catch (error) {
-      // Transient errors (500, network failures, etc.) - log but continue
-      // The page will handle gracefully, and the error might be transient
+      // Upstream errors (500, network failures, etc.) must not be silently ignored.
+      // Rethrow after logging so the page generation fails rather than producing
+      // a 200 response for a potentially non-existent slug (prevents cache poisoning).
       console.error(
-        `Error checking place existence for ${place}, continuing anyway:`,
+        `Error checking place existence for ${place}; aborting page render to avoid cache poisoning:`,
         error
       );
+      throw error;
     }
   }
 
