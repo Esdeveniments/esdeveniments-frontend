@@ -22,7 +22,7 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { highPrioritySlugs } from "@utils/priority-places";
+import { topStaticGenerationPlaces } from "@utils/priority-places";
 import { VALID_DATES } from "@lib/dates";
 
 // page-level ISR not set here; fetch-level caching applies
@@ -93,7 +93,7 @@ export async function generateStaticParams() {
   const topCategories = ["concerts", "festivals", "espectacles", "familia"];
   const combinations = [];
 
-  for (const place of highPrioritySlugs) {
+  for (const place of topStaticGenerationPlaces) {
     for (const date of topDates) {
       combinations.push({ place, byDate: date });
     }

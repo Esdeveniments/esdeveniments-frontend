@@ -23,17 +23,18 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { highPrioritySlugs } from "@utils/priority-places";
+import { topStaticGenerationPlaces } from "@utils/priority-places";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  // Only generate static pages for high-priority places to reduce build size
+  // Only generate static pages for top ~15 places to keep build size under 230MB
+  // Each place generates ~4.6MB, so 15 places = ~69MB (within limit)
   // Other places will be generated on-demand with ISR (revalidate: 600)
   // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
-  return highPrioritySlugs.map((slug) => ({ place: slug }));
+  return topStaticGenerationPlaces.map((slug) => ({ place: slug }));
 }
 
 export async function generateMetadata({

@@ -53,6 +53,9 @@ frontend:
         # Check what's inside .next/server/app (the largest directory)
         - echo "Largest subdirectories in .next/server/app:"
         - du -sh .next/server/app/* 2>/dev/null | sort -h | tail -20 || true
+        # Check what's inside a sample place directory to understand the size
+        - echo "Sample place directory structure (barcelona):"
+        - du -sh .next/server/app/barcelona/* 2>/dev/null | sort -h | tail -10 || true
         # Count files in .next/server/app to see if there are too many pages
         - echo "File count in .next/server/app:"
         - find .next/server/app -type f | wc -l || true
@@ -74,7 +77,6 @@ frontend:
   # Custom HTTP headers have been moved to customHttp.yml
   # See: https://docs.aws.amazon.com/amplify/latest/userguide/custom-headers.html
   # Static asset caching and security headers are configured in customHttp.yml
-
 # Environment variables should be set in the Amplify Console for better security.
 # Go to: App settings > Environment variables
 # Recommended variables:

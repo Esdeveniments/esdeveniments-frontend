@@ -16,7 +16,7 @@ import type {
 } from "types/url-filters";
 import { VALID_DATES, isValidDateSlug } from "@lib/dates";
 import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
-import { highPrioritySlugs } from "./priority-places";
+import { topStaticGenerationPlaces } from "./priority-places";
 
 /**
  * Validate latitude coordinate
@@ -315,7 +315,9 @@ export function getTopStaticCombinations(
   dynamicCategories?: CategorySummaryResponseDTO[],
   dynamicPlaces?: { slug: string }[]
 ) {
-  const hardcodedTopPlaces = highPrioritySlugs;
+  // Use smaller list for static generation to keep build size under 230MB
+  // Each place generates ~4.6MB, so ~15 places = ~69MB (within limit)
+  const hardcodedTopPlaces = topStaticGenerationPlaces;
   const topDates = VALID_DATES.filter((date) => date !== "tots"); // Exclude "tots" from static generation
 
   // Filter top places to only include those that exist in API data
