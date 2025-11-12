@@ -122,7 +122,6 @@ export default async function proxy(request: NextRequest) {
       "/api/promotions/price-preview",
       "/api/promotions/active",
       "/api/leads/restaurant",
-      "/api/stripe/checkout",
       "/api/cloudinary/sign",
     ];
 

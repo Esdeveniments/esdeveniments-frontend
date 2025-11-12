@@ -9,7 +9,11 @@ import {
   generateWebPageSchema,
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
-import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
+import {
+  twoWeeksDefault,
+  getDateRangeFromByDate,
+  isValidDateSlug,
+} from "@lib/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
@@ -208,9 +212,9 @@ export default async function ByDatePage({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
-    let placeExists: unknown = null;
+    let placeExists: boolean | undefined;
     try {
-      placeExists = await fetchPlaceBySlug(place);
+      placeExists = (await fetchPlaceBySlug(place)) !== null;
     } catch (error) {
       // Transient errors (500, network failures, etc.) - log but continue
       // The page will handle gracefully, and the error might be transient
@@ -219,7 +223,7 @@ export default async function ByDatePage({
         error
       );
     }
-    if (!placeExists) {
+    if (placeExists === false) {
       // Place definitively doesn't exist - redirect to default place preserving intent
       const target = buildFallbackUrlForInvalidPlace({
         byDate,
@@ -248,6 +252,10 @@ export default async function ByDatePage({
     const fallbackSlug = urlSearchParams.get("category");
     if (fallbackSlug && isValidCategorySlugFormat(fallbackSlug)) {
       categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
+    } else if (!isValidDateSlug(byDate) && isValidCategorySlugFormat(byDate)) {
+      // For two-segment URLs like /barcelona/teatre, byDate might actually be a category
+      // Create a synthetic category to preserve user intent when categories API fails
+      categories = [{ id: -1, name: byDate, slug: byDate }];
     }
   }
 

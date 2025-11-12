@@ -9,6 +9,11 @@ export async function GET(
 ) {
   try {
     const { slug } = await ctx.params;
+    // "catalunya" is a frontend-only SEO concept, not a real place in the backend
+    // Return 404 early to avoid unnecessary API calls
+    if (slug === "catalunya") {
+      return NextResponse.json(null, { status: 404 });
+    }
     const data = await fetchPlaceBySlugExternal(slug);
     if (!data) {
       // fetchPlaceBySlugExternal returns null only for 404

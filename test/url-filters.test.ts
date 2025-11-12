@@ -563,6 +563,34 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
       // Date is preserved, category may be normalized
       expect(url).toContain("/catalunya/avui");
     });
+
+    it("derives category from byDate when byDate is not a valid date but is a valid category slug", () => {
+      // Scenario: /foo/festivals where "festivals" is parsed as byDate but is actually a category
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "festivals",
+        rawSearchParams: {},
+      });
+      // Should preserve the category intent: /catalunya/festivals
+      expect(url).toBe("/catalunya/festivals");
+    });
+
+    it("derives category from byDate when byDate is a category slug format", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "teatre",
+        rawSearchParams: {},
+      });
+      // Should preserve the category intent: /catalunya/teatre
+      expect(url).toBe("/catalunya/teatre");
+    });
+
+    it("prefers explicit category over derived from byDate", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "festivals", // Could be derived as category
+        category: "teatre", // But explicit category takes precedence
+        rawSearchParams: {},
+      });
+      expect(url).toBe("/catalunya/teatre");
+    });
   });
 
   describe("allowed query params preservation", () => {
@@ -883,8 +911,8 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
         byDate: "teatre", // This is actually a category, not a date
         rawSearchParams: {},
       });
-      // Since "teatre" is not a valid date slug, it defaults to DEFAULT_FILTER_VALUE and is omitted
-      expect(url).toBe("/catalunya");
+      // "teatre" is not a valid date slug but is a known category, so it should be preserved
+      expect(url).toBe("/catalunya/teatre");
     });
 
     it("handles invalid place with valid date and category", () => {

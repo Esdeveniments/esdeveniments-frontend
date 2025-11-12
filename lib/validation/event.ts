@@ -124,8 +124,8 @@ export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
   relatedEvents: z.array(RelatedEventSummarySchema).optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
+  metaTitle: z.string().optional().nullable(),
+  metaDescription: z.string().optional().nullable(),
 });
 
 export function parseEventDetail(

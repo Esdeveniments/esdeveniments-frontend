@@ -114,9 +114,9 @@ export default async function Page({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
-    let placeExists: unknown = null;
+    let placeExists: boolean | undefined;
     try {
-      placeExists = await fetchPlaceBySlug(place);
+      placeExists = (await fetchPlaceBySlug(place)) !== null;
     } catch (error) {
       // Transient errors (500, network failures, etc.) - log but continue
       // The page will handle gracefully, and the error might be transient
@@ -125,7 +125,7 @@ export default async function Page({
         error
       );
     }
-    if (!placeExists) {
+    if (placeExists === false) {
       // Place definitively doesn't exist - redirect to default place preserving intent
       const target = buildFallbackUrlForInvalidPlace({
         rawSearchParams: rawSearchParams,

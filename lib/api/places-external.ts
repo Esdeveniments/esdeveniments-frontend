@@ -5,6 +5,12 @@ import { parsePlace, parsePlaces } from "lib/validation/place";
 export async function fetchPlaceBySlugExternal(
   slug: string
 ): Promise<PlaceResponseDTO | null> {
+  // "catalunya" is a frontend-only SEO concept, not a real place in the backend
+  // Return null early to avoid unnecessary API calls
+  if (slug === "catalunya") {
+    return null;
+  }
+
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
@@ -36,11 +42,13 @@ export async function fetchPlacesAggregatedExternal(): Promise<
 > {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
-  const endpoints = ["/places/regions", "/places/cities"].map(
-    (p) => `${api}${p}`
-  );
+  const endpoints: Array<{ path: string; type: "REGION" | "CITY" }> = [
+    { path: "/places/regions", type: "REGION" },
+    { path: "/places/cities", type: "CITY" },
+  ];
   const results = await Promise.all(
-    endpoints.map(async (endpoint) => {
+    endpoints.map(async ({ path, type }) => {
+      const endpoint = `${api}${path}`;
       try {
         const response = await fetchWithHmac(endpoint);
         if (!response.ok) {
@@ -53,7 +61,14 @@ export async function fetchPlacesAggregatedExternal(): Promise<
           return [] as PlaceResponseDTO[];
         }
         const json = await response.json();
-        return parsePlaces(json);
+        // Add type field to each place based on the endpoint
+        const placesWithType = Array.isArray(json)
+          ? json.map((place: unknown) => ({
+              ...(place as Record<string, unknown>),
+              type,
+            }))
+          : [];
+        return parsePlaces(placesWithType);
       } catch (error) {
         console.error("Error fetching from", endpoint, error);
         return [] as PlaceResponseDTO[];

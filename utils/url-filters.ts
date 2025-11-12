@@ -15,7 +15,11 @@ import type {
   ParsedFilters,
 } from "types/url-filters";
 import { VALID_DATES, isValidDateSlug } from "@lib/dates";
-import { findCategoryBySlug, getAllCategorySlugs } from "./category-mapping";
+import {
+  findCategoryBySlug,
+  getAllCategorySlugs,
+  isValidCategorySlugFormat,
+} from "./category-mapping";
 import { topStaticGenerationPlaces } from "./priority-places";
 import { DEFAULT_FILTER_VALUE } from "./constants";
 
@@ -72,6 +76,7 @@ function parseLongitude(value: string): number | undefined {
 }
 
 // Legacy categories for backward compatibility
+// Includes all known category slugs that might be mis-parsed as dates
 const LEGACY_CATEGORIES: Record<string, URLCategory> = {
   tots: DEFAULT_FILTER_VALUE,
   concerts: "concerts",
@@ -83,6 +88,11 @@ const LEGACY_CATEGORIES: Record<string, URLCategory> = {
   esports: "esports",
   gastronomia: "gastronomia",
   "cursos-i-conferencies": "cursos-i-conferencies",
+  teatre: "teatre",
+  cinema: "cinema",
+  musica: "musica",
+  "festes-majors": "festes-majors",
+  fires: "fires",
 } as const;
 
 /**
@@ -287,12 +297,27 @@ export function buildFallbackUrlForInvalidPlace(opts: {
   rawSearchParams: Record<string, string | string[] | undefined>;
 }): string {
   const params = toUrlSearchParams(opts.rawSearchParams);
+  
+  // Derive category from byDate if it's not a valid date but is a known category slug
+  // This handles the case where /foo/festivals is parsed as [place]/[byDate] but
+  // "festivals" is actually a category, not a date
+  const derivedCategoryFromByDate =
+    opts.byDate &&
+    !isValidDateSlug(opts.byDate) &&
+    isValidCategorySlugFormat(opts.byDate) &&
+    // Only treat as category if it's a known legacy category slug
+    // (we can't check dynamic categories here without passing them in)
+    LEGACY_CATEGORIES[opts.byDate]
+      ? opts.byDate
+      : undefined;
+
+  const derivedCategory = opts.category ?? derivedCategoryFromByDate;
 
   const filters: Partial<URLFilterState> = {
     place: "catalunya",
     byDate:
       opts.byDate && isValidDateSlug(opts.byDate) ? opts.byDate : DEFAULT_FILTER_VALUE,
-    category: opts.category || DEFAULT_FILTER_VALUE,
+    category: derivedCategory || DEFAULT_FILTER_VALUE,
     searchTerm: params.get("search") || undefined,
     distance: params.get("distance")
       ? parseInt(params.get("distance") || "50")

@@ -25,6 +25,5 @@ test.describe("No events fallback", () => {
         await expect(noEvents).toBeVisible({ timeout: 10000 });
       }
     }
-    expect(true).toBeTruthy();
   });
 });
