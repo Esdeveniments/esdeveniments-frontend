@@ -15,13 +15,13 @@ import type {
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
   urlToFilterState,
   toUrlSearchParams,
 } from "@utils/url-filters";
+import { applyDistanceToParams } from "@utils/api-helpers";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -111,9 +111,19 @@ export default async function Page({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
-    const placeExists = await fetchPlaceBySlug(place);
-    if (!placeExists) {
-      notFound();
+    try {
+      const placeExists = await fetchPlaceBySlug(place);
+      if (!placeExists) {
+        // Place definitively doesn't exist (404) - show not found
+        notFound();
+      }
+    } catch (error) {
+      // Transient errors (500, network failures, etc.) - log but continue
+      // The page will handle gracefully, and the error might be transient
+      console.error(
+        `Error checking place existence for ${place}, continuing anyway:`,
+        error
+      );
     }
   }
 
@@ -129,6 +139,14 @@ export default async function Page({
 
   // Convert searchParams to URLSearchParams for parsing
   const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
+  // Preserve user-requested category if categories API failed
+  if (categories.length === 0) {
+    const fallbackSlug = canonicalSearchParams.get("category");
+    if (fallbackSlug && /^[a-z0-9-]{1,64}$/.test(fallbackSlug)) {
+      categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
+    }
+  }
 
   // Parse filters from URL with searchParams preserved
   // Canonicalization of query params is handled in proxy.ts
@@ -157,14 +175,11 @@ export default async function Page({
   if (category) fetchParams.category = category;
 
   // Add distance/radius filter if coordinates are provided
-  if (filters.lat && filters.lon) {
-    const maybeRadius = distanceToRadius(filters.distance);
-    if (maybeRadius !== undefined) {
-      fetchParams.radius = maybeRadius;
-    }
-    fetchParams.lat = filters.lat;
-    fetchParams.lon = filters.lon;
-  }
+  applyDistanceToParams(fetchParams, {
+    lat: filters.lat,
+    lon: filters.lon,
+    distance: filters.distance,
+  });
 
   // Add search query if provided
   if (query) {

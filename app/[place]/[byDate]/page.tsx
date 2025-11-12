@@ -12,7 +12,7 @@ import {
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import { FetchEventsParams, distanceToRadius } from "types/event";
+import { FetchEventsParams } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import {
@@ -20,6 +20,7 @@ import {
   getRedirectUrl,
   toUrlSearchParams,
 } from "@utils/url-filters";
+import { applyDistanceToParams } from "@utils/api-helpers";
 import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
@@ -61,6 +62,14 @@ export async function generateMetadata({
 
   // Convert searchParams to URLSearchParams for parsing
   const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
+  // Preserve user-requested category even if categories API fails
+  if (categories.length === 0) {
+    const fallbackSlug = canonicalSearchParams.get("category");
+    if (fallbackSlug && /^[a-z0-9-]{1,64}$/.test(fallbackSlug)) {
+      categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
+    }
+  }
 
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
@@ -194,9 +203,19 @@ export default async function ByDatePage({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
-    const placeExists = await fetchPlaceBySlug(place);
-    if (!placeExists) {
-      notFound();
+    try {
+      const placeExists = await fetchPlaceBySlug(place);
+      if (!placeExists) {
+        // Place definitively doesn't exist (404) - show not found
+        notFound();
+      }
+    } catch (error) {
+      // Transient errors (500, network failures, etc.) - log but continue
+      // The page will handle gracefully, and the error might be transient
+      console.error(
+        `Error checking place existence for ${place}, continuing anyway:`,
+        error
+      );
     }
   }
 
@@ -213,6 +232,14 @@ export default async function ByDatePage({
 
   // Convert searchParams to URLSearchParams for parsing
   const urlSearchParams = toUrlSearchParams(search);
+
+  // Preserve user-requested category even if categories API fails
+  if (categories.length === 0) {
+    const fallbackSlug = urlSearchParams.get("category");
+    if (fallbackSlug && /^[a-z0-9-]{1,64}$/.test(fallbackSlug)) {
+      categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
+    }
+  }
 
   const parsed = parseFiltersFromUrl(
     { place, date: byDate },
@@ -265,14 +292,11 @@ export default async function ByDatePage({
   const query = typeof search.search === "string" ? search.search : undefined;
 
   // Add distance/radius filter if coordinates are provided
-  if (lat && lon) {
-    const maybeRadius = distanceToRadius(distance);
-    if (maybeRadius !== undefined) {
-      paramsForFetch.radius = maybeRadius;
-    }
-    paramsForFetch.lat = parseFloat(lat);
-    paramsForFetch.lon = parseFloat(lon);
-  }
+  applyDistanceToParams(paramsForFetch, {
+    lat,
+    lon,
+    distance,
+  });
 
   // Add search query if provided
   if (query) {

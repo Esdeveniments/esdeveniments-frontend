@@ -5,6 +5,7 @@
 
 import { siteUrl } from "@config/index";
 import type { FetchEventsParams } from "types/event";
+import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 
 /**
@@ -113,4 +114,46 @@ export function buildNewsQuery(
         .map(([k, v]) => [k, String(v)])
     )
   );
+}
+
+/**
+ * Apply distance/radius filter to FetchEventsParams if coordinates are provided.
+ * Centralizes the distance filter logic used across all event list pages.
+ * @param params - The fetch params object to mutate
+ * @param input - Location data (lat, lon, distance) - accepts numbers or strings for flexibility
+ * @returns The same params object (for chaining if needed)
+ */
+export function applyDistanceToParams(
+  params: FetchEventsParams,
+  input: {
+    lat?: number | string;
+    lon?: number | string;
+    distance?: number | string;
+  }
+): FetchEventsParams {
+  // Parse lat/lon from string or number
+  const lat =
+    input.lat !== undefined
+      ? typeof input.lat === "string"
+        ? parseFloat(input.lat)
+        : input.lat
+      : undefined;
+  const lon =
+    input.lon !== undefined
+      ? typeof input.lon === "string"
+        ? parseFloat(input.lon)
+        : input.lon
+      : undefined;
+
+  // Only apply if both coordinates are valid numbers
+  if (lat !== undefined && lon !== undefined && !isNaN(lat) && !isNaN(lon)) {
+    const maybeRadius = distanceToRadius(input.distance);
+    if (maybeRadius !== undefined) {
+      params.radius = maybeRadius;
+    }
+    params.lat = lat;
+    params.lon = lon;
+  }
+
+  return params;
 }

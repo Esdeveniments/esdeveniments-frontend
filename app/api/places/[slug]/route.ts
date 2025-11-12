@@ -10,7 +10,10 @@ export async function GET(
   try {
     const { slug } = await ctx.params;
     const data = await fetchPlaceBySlugExternal(slug);
-    if (!data) return NextResponse.json(null, { status: 404 });
+    if (!data) {
+      // fetchPlaceBySlugExternal returns null only for 404
+      return NextResponse.json(null, { status: 404 });
+    }
     return NextResponse.json(data, {
       status: 200,
       headers: {
@@ -18,8 +21,12 @@ export async function GET(
       },
     });
   } catch (e) {
+    // fetchPlaceBySlugExternal throws for non-404 errors (500, network, etc.)
     console.error("/api/places/[slug] error", e);
-    return NextResponse.json(null, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 

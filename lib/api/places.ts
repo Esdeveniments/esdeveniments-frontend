@@ -13,7 +13,14 @@ async function fetchPlaceBySlugApi(
   const response = await fetch(getInternalApiUrl(`/api/places/${slug}`), {
     next: { revalidate: 86400, tags: ["places", `place:${slug}`] },
   });
-  if (!response.ok) return null;
+  if (response.status === 404) {
+    // Place definitively doesn't exist - return null to signal not found
+    return null;
+  }
+  if (!response.ok) {
+    // Other errors (500, network, etc.) - throw to distinguish from 404
+    throw new Error(`Failed to fetch place ${slug}: HTTP ${response.status}`);
+  }
   return response.json();
 }
 

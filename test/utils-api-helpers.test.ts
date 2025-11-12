@@ -3,6 +3,7 @@ import {
   getInternalApiUrl,
   buildEventsQuery,
   buildNewsQuery,
+  applyDistanceToParams,
 } from "../utils/api-helpers";
 import type { FetchEventsParams } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
@@ -221,5 +222,227 @@ describe("utils/api-helpers:buildNewsQuery", () => {
     expect(typeof query.get("page")).toBe("string");
     expect(typeof query.get("size")).toBe("string");
     expect(typeof query.get("place")).toBe("string");
+  });
+});
+
+describe("utils/api-helpers:applyDistanceToParams", () => {
+  it("applies lat and lon when both are provided as numbers", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+    });
+    expect(params.lat).toBe(41.3851);
+    expect(params.lon).toBe(2.1734);
+  });
+
+  it("applies lat and lon when both are provided as strings", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: "41.3851",
+      lon: "2.1734",
+    });
+    expect(params.lat).toBe(41.3851);
+    expect(params.lon).toBe(2.1734);
+  });
+
+  it("applies radius when distance is not the default (50)", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+      distance: 25,
+    });
+    expect(params.lat).toBe(41.3851);
+    expect(params.lon).toBe(2.1734);
+    expect(params.radius).toBe(25);
+  });
+
+  it("does not apply radius when distance equals default (50)", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+      distance: 50,
+    });
+    expect(params.lat).toBe(41.3851);
+    expect(params.lon).toBe(2.1734);
+    expect(params.radius).toBeUndefined();
+  });
+
+  it("handles distance as string", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+      distance: "30",
+    });
+    expect(params.radius).toBe(30);
+  });
+
+  it("does not apply filters when lat is missing", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lon: 2.1734,
+      distance: 25,
+    });
+    expect(params.lat).toBeUndefined();
+    expect(params.lon).toBeUndefined();
+    expect(params.radius).toBeUndefined();
+  });
+
+  it("does not apply filters when lon is missing", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      distance: 25,
+    });
+    expect(params.lat).toBeUndefined();
+    expect(params.lon).toBeUndefined();
+    expect(params.radius).toBeUndefined();
+  });
+
+  it("does not apply filters when both lat and lon are missing", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      distance: 25,
+    });
+    expect(params.lat).toBeUndefined();
+    expect(params.lon).toBeUndefined();
+    expect(params.radius).toBeUndefined();
+  });
+
+  it("does not apply filters when lat is NaN", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: "invalid",
+      lon: 2.1734,
+    });
+    expect(params.lat).toBeUndefined();
+    expect(params.lon).toBeUndefined();
+    expect(params.radius).toBeUndefined();
+  });
+
+  it("does not apply filters when lon is NaN", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: "invalid",
+    });
+    expect(params.lat).toBeUndefined();
+    expect(params.lon).toBeUndefined();
+    expect(params.radius).toBeUndefined();
+  });
+
+  it("handles zero coordinates", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 0,
+      lon: 0,
+      distance: 25,
+    });
+    expect(params.lat).toBe(0);
+    expect(params.lon).toBe(0);
+    expect(params.radius).toBe(25);
+  });
+
+  it("handles negative coordinates (valid for some locations)", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: -41.3851,
+      lon: -2.1734,
+      distance: 25,
+    });
+    expect(params.lat).toBe(-41.3851);
+    expect(params.lon).toBe(-2.1734);
+    expect(params.radius).toBe(25);
+  });
+
+  it("preserves existing params properties", () => {
+    const params: FetchEventsParams = {
+      page: 1,
+      size: 20,
+      place: "barcelona",
+      category: "concerts",
+    };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+      distance: 25,
+    });
+    expect(params.page).toBe(1);
+    expect(params.size).toBe(20);
+    expect(params.place).toBe("barcelona");
+    expect(params.category).toBe("concerts");
+    expect(params.lat).toBe(41.3851);
+    expect(params.lon).toBe(2.1734);
+    expect(params.radius).toBe(25);
+  });
+
+  it("overwrites existing lat/lon/radius if present", () => {
+    const params: FetchEventsParams = {
+      lat: 40.4168,
+      lon: -3.7038,
+      radius: 100,
+    };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+      distance: 25,
+    });
+    expect(params.lat).toBe(41.3851);
+    expect(params.lon).toBe(2.1734);
+    expect(params.radius).toBe(25);
+  });
+
+  it("returns the params object for chaining", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    const result = applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+    });
+    expect(result).toBe(params);
+  });
+
+  it("handles mixed string and number inputs", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: "41.3851",
+      lon: 2.1734,
+      distance: "30",
+    });
+    expect(params.lat).toBe(41.3851);
+    expect(params.lon).toBe(2.1734);
+    expect(params.radius).toBe(30);
+  });
+
+  it("handles empty string inputs as undefined", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: "",
+      lon: "",
+    });
+    expect(params.lat).toBeUndefined();
+    expect(params.lon).toBeUndefined();
+  });
+
+  it("handles distance of 0 (non-default)", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+      distance: 0,
+    });
+    expect(params.radius).toBe(0);
+  });
+
+  it("handles very large distance values", () => {
+    const params: FetchEventsParams = { page: 0, size: 10 };
+    applyDistanceToParams(params, {
+      lat: 41.3851,
+      lon: 2.1734,
+      distance: 1000,
+    });
+    expect(params.radius).toBe(1000);
   });
 });

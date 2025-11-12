@@ -20,6 +20,7 @@ import {
   getRedirectUrl,
   toUrlSearchParams,
 } from "@utils/url-filters";
+import { applyDistanceToParams } from "@utils/api-helpers";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -64,6 +65,15 @@ export async function generateMetadata({
 
   // Convert searchParams to URLSearchParams for parsing
   const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
+  // Preserve user-requested category from path if categories API fails
+  if (
+    categories.length === 0 &&
+    category &&
+    /^[a-z0-9-]{1,64}$/.test(category)
+  ) {
+    categories = [{ id: -1, name: category, slug: category }];
+  }
 
   // Parse filters for metadata generation WITH categories
   const parsed = parseFiltersFromUrl(
@@ -146,9 +156,19 @@ export default async function FilteredPage({
   // This validates the place exists in the API before any expensive operations
   // Special case: "catalunya" is always valid (homepage equivalent)
   if (place !== "catalunya") {
-    const placeExists = await fetchPlaceBySlug(place);
-    if (!placeExists) {
-      notFound();
+    try {
+      const placeExists = await fetchPlaceBySlug(place);
+      if (!placeExists) {
+        // Place definitively doesn't exist (404) - show not found
+        notFound();
+      }
+    } catch (error) {
+      // Transient errors (500, network failures, etc.) - log but continue
+      // The page will handle gracefully, and the error might be transient
+      console.error(
+        `Error checking place existence for ${place}, continuing anyway:`,
+        error
+      );
     }
   }
 
@@ -164,6 +184,15 @@ export default async function FilteredPage({
 
   // Convert searchParams to URLSearchParams for parsing
   const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
+  // Preserve user-requested category from path if categories API fails
+  if (
+    categories.length === 0 &&
+    category &&
+    /^[a-z0-9-]{1,64}$/.test(category)
+  ) {
+    categories = [{ id: -1, name: category, slug: category }];
+  }
 
   // Parse filters from URL with dynamic categories for validation
   const parsed = parseFiltersFromUrl(
@@ -205,6 +234,13 @@ export default async function FilteredPage({
     fetchParams.from = toLocalDateString(dateRange.from);
     fetchParams.to = toLocalDateString(dateRange.until);
   }
+
+  // Add distance/radius filter if coordinates are provided
+  applyDistanceToParams(fetchParams, {
+    lat: filters.lat,
+    lon: filters.lon,
+    distance: filters.distance,
+  });
 
   // Fetch events, place label, and news check in parallel
   const [placeTypeAndLabel, initialEventsResponse, hasNews] = await Promise.all(

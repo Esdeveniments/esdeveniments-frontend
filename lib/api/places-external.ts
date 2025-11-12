@@ -9,15 +9,25 @@ export async function fetchPlaceBySlugExternal(
   if (!api) return null;
   try {
     const res = await fetchWithHmac(`${api}/places/${slug}`);
-    if (!res.ok) {
-      console.error("fetchPlaceBySlugExternal:", slug, "HTTP", res.status);
+    if (res.status === 404) {
+      // Place definitively doesn't exist - return null to signal not found
       return null;
+    }
+    if (!res.ok) {
+      // Other HTTP errors (500, etc.) - throw to distinguish from 404
+      console.error("fetchPlaceBySlugExternal:", slug, "HTTP", res.status);
+      throw new Error(`Failed to fetch place ${slug}: HTTP ${res.status}`);
     }
     const json = await res.json();
     return parsePlace(json);
   } catch (error) {
+    // Network errors or other exceptions - rethrow to distinguish from 404
+    // Only log if it's not already an Error with message (to avoid double logging)
+    if (error instanceof Error && error.message.includes("HTTP")) {
+      throw error; // Re-throw HTTP errors
+    }
     console.error("fetchPlaceBySlugExternal:", slug, "failed", error);
-    return null;
+    throw new Error(`Network error fetching place ${slug}: ${error}`);
   }
 }
 
