@@ -190,12 +190,15 @@ describe("category-mapping: isValidCategorySlugFormat", () => {
 });
 
 describe("category-mapping: isValidCategorySlug (deprecated)", () => {
-  it("accepts valid format slugs (no length limit)", () => {
+  it("accepts valid format slugs (up to 64 characters)", () => {
     expect(isValidCategorySlug("concerts")).toBe(true);
     expect(isValidCategorySlug("fires-i-festes")).toBe(true);
-    // Should accept very long slugs (no length limit)
-    const veryLongSlug = "a".repeat(200);
-    expect(isValidCategorySlug(veryLongSlug)).toBe(true);
+    // Should accept slugs up to 64 characters (security limit)
+    const maxLengthSlug = "a".repeat(64);
+    expect(isValidCategorySlug(maxLengthSlug)).toBe(true);
+    // Should reject slugs longer than 64 characters
+    const tooLongSlug = "a".repeat(65);
+    expect(isValidCategorySlug(tooLongSlug)).toBe(false);
   });
 
   it("rejects invalid format slugs", () => {
@@ -211,4 +214,3 @@ describe("category-mapping: isValidCategorySlug (deprecated)", () => {
     expect(isValidCategorySlug("category-123")).toBe(true);
   });
 });
-

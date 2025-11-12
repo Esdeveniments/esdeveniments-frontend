@@ -34,7 +34,9 @@ test.describe("Canonical URL rules", () => {
       timeout: 90000,
     });
     // Verify the redirect completed and query params were normalized
-    await expect(page).toHaveURL(/\/barcelona\/teatre(\?.*)?$/, { timeout: 30000 });
+    await expect(page).toHaveURL(/\/barcelona\/teatre(\?.*)?$/, {
+      timeout: 30000,
+    });
     expect(page.url()).not.toContain("category=");
     expect(page.url()).not.toContain("date=");
   });
