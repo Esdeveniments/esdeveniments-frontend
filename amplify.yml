@@ -50,6 +50,14 @@ frontend:
         # Check what's taking up space in .next/server
         - echo "Largest files/directories in .next/server:"
         - du -sh .next/server/* 2>/dev/null | sort -h | tail -10 || true
+        # Check what's inside .next/server/app (the largest directory)
+        - echo "Largest subdirectories in .next/server/app:"
+        - du -sh .next/server/app/* 2>/dev/null | sort -h | tail -20 || true
+        # Count files in .next/server/app to see if there are too many pages
+        - echo "File count in .next/server/app:"
+        - find .next/server/app -type f | wc -l || true
+        - echo "Directory count in .next/server/app:"
+        - find .next/server/app -type d | wc -l || true
         - echo "Build cleanup complete"
   artifacts:
     # AWS Amplify standard pattern: baseDirectory should be .next for Next.js

@@ -30,6 +30,8 @@ import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { redirect } from "next/navigation";
 
 export const revalidate = 600;
+// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,

@@ -1,6 +1,5 @@
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
-import { fetchPlaces } from "@lib/api/places";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -13,7 +12,6 @@ import {
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import type { PlaceResponseDTO } from "types/api/place";
 import { FetchEventsParams, distanceToRadius } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import PlacePageShell from "@components/partials/PlacePageShell";
@@ -28,6 +26,9 @@ import { highPrioritySlugs } from "@utils/priority-places";
 import { VALID_DATES } from "@lib/dates";
 
 // page-level ISR not set here; fetch-level caching applies
+export const revalidate = 600;
+// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
@@ -57,7 +58,9 @@ export async function generateMetadata({
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+    place
+  );
 
   const categoryData = categories.find((cat) => cat.slug === actualCategory);
 
@@ -78,39 +81,19 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
+  // Only generate static pages for high-priority places to reduce build size
+  // Other places will be generated on-demand with ISR (revalidate: 600)
+  // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
   const topDates = VALID_DATES.filter(
     (date) => date !== "tots"
   ) as ByDateOptions[];
 
-  let places: PlaceResponseDTO[] = [];
-  try {
-    places = await fetchPlaces();
-  } catch (error) {
-    console.warn("generateStaticParams: Error fetching places:", error);
-    // Fallback: use highPrioritySlugs directly as topPlaces will be set below
-  }
-
-  // Filter high priority places to only include those that exist in API data
-  // If places fetch failed, use highPrioritySlugs as fallback
-  const topPlaces = (() => {
-    if (places.length === 0) {
-      return highPrioritySlugs;
-    }
-    const placeSlugs = new Set(places.map((p) => p.slug));
-    return highPrioritySlugs.filter((slug) => placeSlugs.has(slug));
-  })();
-
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await getCategories();
-  } catch (error) {
-    console.error("generateStaticParams: Error fetching categories:", error);
-  }
-
-  const topCategories = categories.slice(0, 4).map((cat) => cat.slug);
+  // Use hardcoded legacy categories (same as getTopStaticCombinations fallback)
+  // Runtime will handle dynamic categories via ISR
+  const topCategories = ["concerts", "festivals", "espectacles", "familia"];
   const combinations = [];
 
-  for (const place of topPlaces) {
+  for (const place of highPrioritySlugs) {
     for (const date of topDates) {
       combinations.push({ place, byDate: date });
     }
@@ -132,7 +115,6 @@ export default async function ByDatePage({
 }) {
   const { place, byDate } = await params;
   const search = await searchParams;
-
 
   validatePlaceOrThrow(place);
 

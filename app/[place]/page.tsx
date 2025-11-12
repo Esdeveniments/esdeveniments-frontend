@@ -23,17 +23,17 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { fetchCities } from "@lib/api/cities";
+import { highPrioritySlugs } from "@utils/priority-places";
 
 export const revalidate = 600;
+// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const [regions, cities] = await Promise.all([fetchRegions(), fetchCities()]);
-
-  return [
-    ...regions.map((region) => ({ place: region.slug })),
-    ...cities.map((city) => ({ place: city.slug })),
-  ];
+  // Only generate static pages for high-priority places to reduce build size
+  // Other places will be generated on-demand with ISR (revalidate: 600)
+  // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
+  return highPrioritySlugs.map((slug) => ({ place: slug }));
 }
 
 export async function generateMetadata({
