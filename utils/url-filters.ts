@@ -21,22 +21,53 @@ import { topStaticGenerationPlaces } from "./priority-places";
 /**
  * Convert Next.js searchParams object to URLSearchParams
  * Handles string, string[], and undefined values correctly
+ *
+ * NOTE: Limit incoming data to prevent resource exhaustion (DoS).
+ * - Caps the total number of appended parameters
+ * - Caps the number of values per key (for array values)
+ * - Truncates individual values longer than MAX_VALUE_LENGTH
+ * These limits are intentionally generous to avoid breaking normal usage
+ * while protecting the server from maliciously large query payloads.
  */
 export function toUrlSearchParams(
   raw: Record<string, string | string[] | undefined>
 ): URLSearchParams {
   const params = new URLSearchParams();
-  Object.entries(raw).forEach(([key, value]) => {
+
+  const MAX_TOTAL_PARAMS = 5000; // overall cap across all keys
+  const MAX_VALUES_PER_KEY = 200; // cap for array values per key
+  const MAX_VALUE_LENGTH = 2048; // cap for each value's length
+
+  let totalCount = 0;
+  const perKeyCounts = new Map<string, number>();
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (totalCount >= MAX_TOTAL_PARAMS) break;
+
     if (Array.isArray(value)) {
-      value.forEach((entry) => {
-        if (entry != null) {
-          params.append(key, entry);
-        }
-      });
+      for (const entry of value) {
+        if (entry == null) continue;
+
+        const keyCount = perKeyCounts.get(key) ?? 0;
+        if (keyCount >= MAX_VALUES_PER_KEY) break;
+
+        const safeValue = entry.length > MAX_VALUE_LENGTH ? entry.slice(0, MAX_VALUE_LENGTH) : entry;
+        params.append(key, safeValue);
+
+        perKeyCounts.set(key, keyCount + 1);
+        totalCount += 1;
+
+        if (totalCount >= MAX_TOTAL_PARAMS) break;
+      }
     } else if (value != null) {
-      params.append(key, value);
+      if (totalCount < MAX_TOTAL_PARAMS) {
+        const safeValue = value.length > MAX_VALUE_LENGTH ? value.slice(0, MAX_VALUE_LENGTH) : value;
+        params.append(key, safeValue);
+        totalCount += 1;
+      }
     }
-  });
+  }
+
   return params;
 }
 
