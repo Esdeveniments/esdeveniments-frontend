@@ -210,6 +210,56 @@ describe("handleCanonicalRedirects", () => {
     });
   });
 
+  describe("invalid route structures", () => {
+    it("does not process paths with 4+ segments (invalid place routes)", () => {
+      // Paths with 4+ segments are not valid place routes
+      // Max valid structure is /place[/date][/category] (3 segments)
+      const request = createMockRequest("/barcelona/avui/teatre/something");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("does not process paths with 5 segments", () => {
+      const request = createMockRequest("/barcelona/avui/teatre/extra/more");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("does not process 4+ segment paths even with tots", () => {
+      // Even if it has "tots", 4+ segments should not be processed
+      const request = createMockRequest("/barcelona/tots/teatre/extra");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("does not process 4+ segment paths even with query params", () => {
+      // Even with query params, 4+ segments should not be processed
+      const request = createMockRequest(
+        "/barcelona/avui/teatre/extra",
+        "?date=dema&category=concerts"
+      );
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("still processes valid 3-segment paths", () => {
+      // Ensure valid 3-segment paths still work
+      const request = createMockRequest("/barcelona/avui/teatre");
+      const result = handleCanonicalRedirects(request);
+
+      // Should not redirect if already canonical (no tots, no query params)
+      expect(result).toBeNull();
+    });
+  });
+
   describe("invalid date slugs", () => {
     it("ignores invalid date query params", () => {
       const request = createMockRequest(

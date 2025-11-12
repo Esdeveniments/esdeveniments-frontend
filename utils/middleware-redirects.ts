@@ -101,10 +101,12 @@ export function handleCanonicalRedirects(
     segmentCount >= 3 && segments[2] === DEFAULT_FILTER_VALUE;
 
   // Handle redirects: combine /tots segments with query params if present
+  // Only process valid place routes (max 3 segments: /place[/date][/category])
   if (
-    hasTotsInSegments ||
-    hasTotsCategory ||
-    (segmentCount === 1 && (queryCategory || queryDate))
+    segmentCount <= 3 &&
+    (hasTotsInSegments ||
+      hasTotsCategory ||
+      (segmentCount === 1 && (queryCategory || queryDate)))
   ) {
     // Build canonical URL: omit "tots" values
     let canonicalPath = `/${place}`;
