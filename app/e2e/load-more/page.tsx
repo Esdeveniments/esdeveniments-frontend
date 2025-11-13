@@ -54,8 +54,6 @@ export default function Page() {
     <ClientTest
       initialEvents={initialEvents as EventSummaryResponseDTO[]}
       place="catalunya"
-      category={undefined}
-      date={undefined}
     />
   );
 }

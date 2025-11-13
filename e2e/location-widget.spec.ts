@@ -18,14 +18,12 @@ test.describe("Location discovery widget", () => {
     await expect(input).toBeVisible({ timeout: 15000 });
     
     // Wait for regions to be available (either already loaded or loading)
-    // Check if options list is visible or loading text is present
+    // Check if options list is visible or loading indicator is present
     await page.waitForFunction(
       () => {
         const listbox = document.querySelector('[role="listbox"]');
-        const loadingText = Array.from(document.querySelectorAll('*')).find(
-          el => el.textContent?.includes('Carregant ubicacions')
-        );
-        return listbox !== null || loadingText !== undefined;
+        const loadingIndicator = document.querySelector('[data-testid="location-loading"]');
+        return listbox !== null || loadingIndicator !== null;
       },
       { timeout: 10000 }
     );

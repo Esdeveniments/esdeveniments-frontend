@@ -196,8 +196,6 @@ export default async function Page({
       pageData={pageData}
       noEventsFound={noEventsFound}
       place={place}
-      category={undefined}
-      date={undefined}
       serverHasMore={!eventsResponse?.last}
       categories={categories}
       hasNews={hasNews}

@@ -92,11 +92,17 @@ function startsWithVowelOrH(s: string): boolean {
   return VOWEL_OR_H.test((s || "").trim());
 }
 
-/** Keep first token as-is, lowercase the rest; for one-word names, lowercase it. */
+/** Capitalize first token, lowercase the rest; for one-word names, lowercase it. */
 function narrativeRegionCase(name: string): string {
   const parts = (name || "").trim().split(/\s+/);
-  if (parts.length <= 1) return (parts[0] ?? "").toLowerCase();
-  return [parts[0], parts.slice(1).join(" ").toLowerCase()].join(" ");
+  if (parts.length <= 1) {
+    const word = parts[0] ?? "";
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  }
+  const firstWord = parts[0];
+  const capitalizedFirst =
+    firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
+  return [capitalizedFirst, parts.slice(1).join(" ").toLowerCase()].join(" ");
 }
 
 /* ---------- Category/general heuristics (used when includeArticle = true) ---------- */
@@ -208,18 +214,25 @@ export function formatCatalanA(
   }
 
   if (normalizedType === "region") {
+    // Handle empty string early
+    if (!raw) {
+      return "a ";
+    }
+
     // Special-case proper name that does not take an article in Catalan
     // e.g., "Catalunya" → "a Catalunya" (never "a la Catalunya")
     if ((raw || "").trim().toLowerCase() === "catalunya") {
-      return "a Catalunya";
+      return lowercase ? "a catalunya" : "a Catalunya";
     }
 
-    // Use the original-cased name to build the narrative form expected by your specs
-    const display = raw || text;
-    const phrase = narrativeRegionCase(display);
+    // Respect requested casing:
+    // - when lowercase=true → narrative/lowercased style (phrase = narrativeRegionCase)
+    // - when lowercase=false → preserve original casing (phrase = raw)
+    const display = lowercase ? text : raw;
+    const phrase = lowercase ? narrativeRegionCase(display) : display;
 
     // Quick plural detection for regions (same rule as above)
-    const firstWord = display.split(/\s+/)[0];
+    const firstWord = (display || "").split(/\s+/)[0];
     const fwLower = firstWord.toLowerCase();
     const regionIsPlural =
       /s$/i.test(firstWord) &&
@@ -237,7 +250,17 @@ export function formatCatalanA(
     }
 
     // singular consonant-start
-    return isFemininePlaceName(display) ? `a La ${phrase}` : `al ${phrase}`;
+    // For single-word regions with lowercase=true, use fully lowercased phrase
+    // For multi-word regions with lowercase=true, use narrative case (first word capitalized)
+    if (isFemininePlaceName(display)) {
+      // Single-word feminine regions should be fully lowercased when lowercase=true
+      const finalPhrase =
+        lowercase && phrase.split(/\s+/).length === 1
+          ? phrase.toLowerCase()
+          : phrase;
+      return `a La ${finalPhrase}`;
+    }
+    return `al ${phrase}`;
   }
 
   // general

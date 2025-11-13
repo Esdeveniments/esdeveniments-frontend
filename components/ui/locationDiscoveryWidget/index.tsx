@@ -206,7 +206,10 @@ export default function LocationDiscoveryWidget({
                   {/* Options list */}
                   <div className="max-h-48 overflow-y-auto">
                     {loadingRegions ? (
-                      <div className="px-4 py-3 body-small text-foreground-strong/70 flex items-center gap-2">
+                      <div 
+                        className="px-4 py-3 body-small text-foreground-strong/70 flex items-center gap-2"
+                        data-testid="location-loading"
+                      >
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
                         <span>Carregant ubicacions...</span>
                       </div>
