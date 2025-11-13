@@ -7,12 +7,12 @@ test.describe("No events fallback", () => {
       "/catalunya/tots?category=category-that-does-not-exist-xyz",
       {
         waitUntil: "domcontentloaded",
-        timeout: 60000,
+        timeout: 90000,
       }
     );
-    // Wait for events list container to be present (auto-waits)
+    // Wait for events list container to be present (auto-waits, longer timeout for remote URLs)
     await expect(page.getByTestId("events-list")).toBeAttached({
-      timeout: 30000,
+      timeout: process.env.CI ? 60000 : 30000,
     });
     // Either we see no-results widget or the page loads without events
     const noEvents = page.getByTestId("no-events-found");

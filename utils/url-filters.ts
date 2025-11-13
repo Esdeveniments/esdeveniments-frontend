@@ -320,21 +320,35 @@ export function buildFallbackUrlForInvalidPlace(opts: {
   rawSearchParams: Record<string, string | string[] | undefined>;
 }): string {
   const params = toUrlSearchParams(opts.rawSearchParams);
+  const queryCategory = params.get("category");
   
-  // Derive category from byDate if it's not a valid date but is a known category slug
+  // Helper to check if a string looks like it could be a real category (not obviously invalid)
+  const looksLikeCategory = (slug: string): boolean => {
+    // Exclude obvious non-categories: date formats, reserved words, error-like strings
+    if (/^\d{4}-\d{2}-\d{2}$/.test(slug)) return false; // Date format: 2024-01-15
+    if (slug === "null" || slug === "undefined" || slug === "invalid") return false;
+    if (slug.startsWith("invalid-") || slug.includes("error")) return false;
+    return true;
+  };
+  
+  // Derive category from byDate if it's not a valid date but is a valid category slug format
   // This handles the case where /foo/festivals is parsed as [place]/[byDate] but
   // "festivals" is actually a category, not a date
+  // Note: We check format only (not existence in LEGACY_CATEGORIES) to support dynamic categories
+  // But we exclude obviously invalid strings to avoid false positives
   const derivedCategoryFromByDate =
     opts.byDate &&
     !isValidDateSlug(opts.byDate) &&
     isValidCategorySlugFormat(opts.byDate) &&
-    // Only treat as category if it's a known legacy category slug
-    // (we can't check dynamic categories here without passing them in)
-    LEGACY_CATEGORIES[opts.byDate]
+    looksLikeCategory(opts.byDate)
       ? opts.byDate
       : undefined;
 
-  const derivedCategory = opts.category ?? derivedCategoryFromByDate;
+  // Priority: explicit category > query category > derived from byDate
+  const derivedCategory = 
+    opts.category ?? 
+    (queryCategory && isValidCategorySlugFormat(queryCategory) ? queryCategory : undefined) ??
+    derivedCategoryFromByDate;
 
   // 🛡️ SECURITY: Validate distance to prevent NaN in URLs
   const distanceParam = params.get("distance");

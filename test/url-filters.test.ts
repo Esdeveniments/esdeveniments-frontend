@@ -653,12 +653,14 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
   });
 
   describe("disallowed query params filtering", () => {
-    it("filters out category query param", () => {
+    it("uses category query param (preserves category intent)", () => {
+      // Category query params are now used to preserve category intent
+      // This is the fix: /foo?category=teatre should redirect to /catalunya/teatre
       const url = buildFallbackUrlForInvalidPlace({
         rawSearchParams: { category: "teatre", search: "rock" },
       });
-      expect(url).toBe("/catalunya?search=rock");
-      expect(url).not.toContain("category");
+      expect(url).toBe("/catalunya/teatre?search=rock");
+      expect(url).not.toContain("category="); // Query param is used, not included in URL
     });
 
     it("filters out date query param", () => {
@@ -669,7 +671,8 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
       expect(url).not.toContain("date");
     });
 
-    it("filters out both category and date query params", () => {
+    it("uses category query param and filters out date query param", () => {
+      // Category query param is used, date query param is filtered (date should be in path)
       const url = buildFallbackUrlForInvalidPlace({
         rawSearchParams: {
           category: "teatre",
@@ -677,9 +680,9 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
           search: "rock",
         },
       });
-      expect(url).toBe("/catalunya?search=rock");
-      expect(url).not.toContain("category");
-      expect(url).not.toContain("date");
+      expect(url).toBe("/catalunya/teatre?search=rock");
+      expect(url).not.toContain("category="); // Used but not in query string
+      expect(url).not.toContain("date="); // Filtered out
     });
 
     it("filters out arbitrary query params", () => {
@@ -939,6 +942,96 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
       // parseFloat removes trailing zeros, so 2.1590 becomes 2.159
       expect(url).toContain("lon=2.159");
       expect(url).toContain("distance=25");
+    });
+  });
+
+  describe("category derivation from query params and dynamic categories", () => {
+    it("should preserve dynamic category from byDate when not in LEGACY_CATEGORIES", () => {
+      // Scenario: /foo/literatura where "literatura" is a dynamic category
+      // Current behavior: loses category intent, redirects to /catalunya
+      // Expected: should preserve as /catalunya/literatura
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "literatura", // Dynamic category, not in LEGACY_CATEGORIES
+        rawSearchParams: {},
+      });
+      // Currently fails: returns /catalunya instead of /catalunya/literatura
+      expect(url).toBe("/catalunya/literatura");
+    });
+
+    it("should preserve dynamic category 'fires-i-mercats' from byDate", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "fires-i-mercats", // Dynamic category
+        rawSearchParams: {},
+      });
+      expect(url).toBe("/catalunya/fires-i-mercats");
+    });
+
+    it("should preserve dynamic category 'festes-populars' from byDate", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "festes-populars", // Dynamic category
+        rawSearchParams: {},
+      });
+      expect(url).toBe("/catalunya/festes-populars");
+    });
+
+    it("should read category from query params when present", () => {
+      // Scenario: /foo?category=literatura
+      const url = buildFallbackUrlForInvalidPlace({
+        rawSearchParams: { category: "literatura" },
+      });
+      expect(url).toBe("/catalunya/literatura");
+    });
+
+    it("should prefer explicit category over query category", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        category: "teatre", // Explicit
+        rawSearchParams: { category: "literatura" }, // Query param
+      });
+      expect(url).toBe("/catalunya/teatre");
+    });
+
+    it("should prefer query category over derived from byDate", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "festivals", // Could be derived as category
+        rawSearchParams: { category: "literatura" }, // But query takes precedence
+      });
+      expect(url).toBe("/catalunya/literatura");
+    });
+
+    it("should prefer explicit category over query category over derived from byDate", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        category: "teatre", // Highest priority
+        byDate: "festivals", // Could be derived
+        rawSearchParams: { category: "literatura" }, // Query param
+      });
+      expect(url).toBe("/catalunya/teatre");
+    });
+
+    it("should handle dynamic category in query params with valid date", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        byDate: "avui",
+        rawSearchParams: { category: "literatura" },
+      });
+      expect(url).toBe("/catalunya/avui/literatura");
+    });
+
+    it("should handle dynamic category in query params with other query params", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        rawSearchParams: {
+          category: "literatura",
+          search: "books",
+          distance: "25",
+        },
+      });
+      expect(url).toBe("/catalunya/literatura?search=books&distance=25");
+    });
+
+    it("should not treat invalid slug format as category even if in query", () => {
+      const url = buildFallbackUrlForInvalidPlace({
+        rawSearchParams: { category: "invalid category!" }, // Invalid format
+      });
+      // Should not include invalid category
+      expect(url).toBe("/catalunya");
     });
   });
 });

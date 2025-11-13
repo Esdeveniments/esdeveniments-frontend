@@ -219,3 +219,30 @@ export const formatTimeFromAPI = (timeObj: EventTimeDTO): string => {
   const minute = String(timeObj.minute).padStart(2, "0");
   return `${hour}:${minute}`;
 };
+
+/**
+ * Format event time for display in UI
+ * Returns "Consultar horaris" if no start time or start time is "00:00" (all-day event)
+ * Returns just the start time if no end time is provided
+ * Returns time range "HH:mm - HH:mm" if both times are available
+ * @param startTime - Start time in HH:mm format or null/undefined
+ * @param endTime - End time in HH:mm format or null/undefined
+ * @returns Formatted time string for display
+ */
+export const formatEventTimeDisplay = (
+  startTime?: string | null,
+  endTime?: string | null
+): string => {
+  // No start time or all-day event (00:00) -> show "Consultar horaris"
+  if (!startTime || startTime === "00:00") {
+    return "Consultar horaris";
+  }
+
+  // Has start time but no end time -> show just start time
+  if (!endTime) {
+    return startTime;
+  }
+
+  // Both times available -> show range
+  return `${startTime} - ${endTime}`;
+};

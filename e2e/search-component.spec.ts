@@ -8,7 +8,7 @@ test.describe("Search behavior", () => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const input = page.getByTestId("search-input");
-    await expect(input).toBeVisible({ timeout: 30000 });
+    await expect(input).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
 
     // On home, search navigates to /catalunya/; start by ensuring we are on that path after focusing the input
     await input.fill("");

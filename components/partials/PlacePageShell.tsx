@@ -51,16 +51,10 @@ export default function PlacePageShell({
         hasNews={hasNews}
       />
 
-      <Suspense
-        fallback={
-          <div className="w-full h-12 bg-background animate-pulse rounded-full" />
-        }
-      >
-        <ClientInteractiveLayer
-          categories={categories}
-          placeTypeLabel={placeTypeLabel}
-        />
-      </Suspense>
+      <ClientInteractiveLayer
+        categories={categories}
+        placeTypeLabel={placeTypeLabel}
+      />
     </>
   );
 }

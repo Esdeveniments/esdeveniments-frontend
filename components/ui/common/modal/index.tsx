@@ -46,8 +46,8 @@ export default function Modal({
               leaveTo="opacity-0"
             >
               <DialogPanel className="w-full flex justify-center items-center relative z-10">
-                <div className="w-full h-screen sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-lg shadow-xl relative">
-                  <div className="sticky top-0 bg-background px-4 z-10">
+                <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-lg shadow-xl relative">
+                  <div className="sticky top-0 bg-background px-4 z-10 flex-shrink-0">
                     <div className="relative min-h-12 flex items-center py-2">
                       <button
                         ref={cancelButtonRef}
@@ -67,7 +67,7 @@ export default function Modal({
                   </div>
                   <div
                     ref={scrollContainerRef}
-                    className="flex-1 overflow-y-auto overscroll-contain px-4"
+                    className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4"
                   >
                     {children}
                   </div>

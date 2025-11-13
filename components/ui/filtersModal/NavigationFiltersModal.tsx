@@ -26,10 +26,12 @@ import { NavigationFiltersModalProps } from "types/props";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
+  ssr: false,
 });
 
 const Select = dynamic(() => import("@components/ui/common/form/select"), {
   loading: () => <></>,
+  ssr: false,
 });
 
 const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
