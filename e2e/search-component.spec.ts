@@ -17,9 +17,9 @@ test.describe("Search behavior", () => {
     await input.type("castellers");
     
     // Verify URL doesn't update after typing (no debounced auto-search)
-    await expect
-      .poll(async () => page.url(), { timeout: 2000, intervals: [200] })
-      .not.toContain("search=castellers");
+    // Wait briefly to ensure no auto-search triggers, then check once
+    await page.waitForTimeout(1000);
+    await expect(page).not.toHaveURL(/search=castellers/);
 
     // Click search button to trigger search
     await searchButton.click();

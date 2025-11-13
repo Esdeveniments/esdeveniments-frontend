@@ -463,8 +463,8 @@ export interface CollectionPageOptions {
 export interface ClientTestProps {
   initialEvents: EventSummaryResponseDTO[];
   place: string;
-  category: string;
-  date: string;
+  category?: string;
+  date?: string;
 }
 
 // Sitemap component props

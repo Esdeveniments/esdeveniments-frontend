@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, ReactElement, useMemo, Suspense, useEffect } from "react";
+import { memo, ReactElement, useMemo, Suspense } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
@@ -63,20 +63,6 @@ function HybridEventsListClientContent({
       serverHasMore,
     });
 
-  // Hide SSR list when filters are active (replace with filtered results)
-  useEffect(() => {
-    const ssrWrapper = document.querySelector("[data-ssr-list-wrapper]");
-    if (ssrWrapper) {
-      if (hasClientFilters) {
-        ssrWrapper.setAttribute("style", "display: none;");
-        ssrWrapper.setAttribute("aria-hidden", "true");
-      } else {
-        ssrWrapper.removeAttribute("style");
-        ssrWrapper.removeAttribute("aria-hidden");
-      }
-    }
-  }, [hasClientFilters]);
-
   // When filters are active, show ALL filtered events (replace SSR list)
   // When no filters, show only appended events (SSR list remains visible)
   const displayedEvents: ListEvent[] = useMemo(() => {
@@ -98,22 +84,29 @@ function HybridEventsListClientContent({
     return uniqueAppended;
   }, [events, realInitialEvents, hasClientFilters]);
 
+  // Log errors for debugging
   if (error) {
     console.error("Events loading error:", error);
   }
+
+  // Show error state when there's an error and filters are active
+  const showErrorState =
+    error && hasClientFilters && !isLoading && !isValidating;
 
   // Show loading state when filters are active and events are being fetched
   const showLoadingState =
     hasClientFilters &&
     (isLoading || isValidating) &&
-    displayedEvents.length === 0;
+    displayedEvents.length === 0 &&
+    !error;
 
   // Show no events found when filters are active, fetch completed, and no results
   const showNoEventsFound =
     hasClientFilters &&
     !isLoading &&
     !isValidating &&
-    displayedEvents.length === 0;
+    displayedEvents.length === 0 &&
+    !error;
 
   // Show fallback events when filters return no results but we have initial events
   // (initialEvents may contain region or latest events as fallback from server)
@@ -121,7 +114,19 @@ function HybridEventsListClientContent({
 
   return (
     <>
-      {showLoadingState ? (
+      {showErrorState ? (
+        // Show error message when events fail to load
+        <div className="w-full flex flex-col items-center gap-element-gap py-section-y px-section-x">
+          <div className="w-full text-center">
+            <p className="body-normal text-foreground-strong mb-element-gap">
+              Error al carregar esdeveniments
+            </p>
+            <p className="body-small text-foreground/80">
+              Si us plau, torna-ho a intentar més tard.
+            </p>
+          </div>
+        </div>
+      ) : showLoadingState ? (
         // Show skeleton loading cards matching the event card layout
         <div className="w-full">
           {Array.from({ length: 3 }).map((_, index) => (

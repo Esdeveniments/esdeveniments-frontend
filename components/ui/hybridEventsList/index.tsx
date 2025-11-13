@@ -8,6 +8,7 @@ import Card from "@components/ui/card";
 import { getNewsCta } from "@utils/helpers";
 import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
+import SsrListWrapper from "./SsrListWrapper";
 
 function HybridEventsList({
   initialEvents = [],
@@ -84,8 +85,8 @@ function HybridEventsList({
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
-      {/* Hidden when client filters are active (handled by HybridEventsListClient) */}
-      <div data-ssr-list-wrapper>
+      {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}
+      <SsrListWrapper categories={categories}>
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
             <Card
@@ -96,7 +97,7 @@ function HybridEventsList({
           )}
         </List>
         <AdArticle slot="9643657007" />
-      </div>
+      </SsrListWrapper>
 
       {/* Client enhancer for pagination */}
       <HybridEventsListClient

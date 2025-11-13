@@ -63,9 +63,12 @@ export default function Search(): JSX.Element {
   // Function to trigger search (called by button click or Enter key)
   const triggerSearch = useCallback(() => {
     const value = inputValue.trim();
+    // Avoid redundant searches if the term hasn't changed
+    if (value === urlSearchTerm) return;
+
     sendSearchTermGA(value);
     updateSearchUrl(value);
-  }, [inputValue, updateSearchUrl]);
+  }, [inputValue, updateSearchUrl, urlSearchTerm]);
 
   // Sync input with URL search term when URL changes
   useEffect(() => {
