@@ -21,7 +21,6 @@ import {
   toUrlSearchParams,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
-import { applyDistanceToParams } from "@utils/api-helpers";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -223,12 +222,8 @@ export default async function FilteredPage({
     fetchParams.to = toLocalDateString(dateRange.until);
   }
 
-  // Add distance/radius filter if coordinates are provided
-  applyDistanceToParams(fetchParams, {
-    lat: filters.lat,
-    lon: filters.lon,
-    distance: filters.distance,
-  });
+  // Intentionally do NOT apply querystring filters (search/distance/lat/lon) on the server.
+  // These are handled client-side to keep ISR query-agnostic.
 
   // Fetch events, place label, and news check in parallel
   const [placeTypeAndLabel, initialEventsResponse, hasNews] = await Promise.all(

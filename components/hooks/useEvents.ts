@@ -48,6 +48,10 @@ export const useEvents = ({
   place,
   category,
   date,
+  search,
+  distance,
+  lat,
+  lon,
   initialSize = 10,
   fallbackData = [],
   serverHasMore = false,
@@ -66,8 +70,8 @@ export const useEvents = ({
   const pendingActivationKeyRef = useRef<string | null>(null);
 
   const currentKey = useMemo(
-    () => `${place}|${category}|${date}|${initialSize}`,
-    [place, category, date, initialSize]
+    () => `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${initialSize}`,
+    [place, category, date, search, distance, lat, lon, initialSize]
   );
   const isActivated = activationKey === currentKey;
 
@@ -90,6 +94,10 @@ export const useEvents = ({
     byDate: date, // keep for key clarity
     from: range.from,
     to: range.to,
+    term: search,
+    radius: distance ? parseFloat(distance) : undefined,
+    lat: lat ? parseFloat(lat) : undefined,
+    lon: lon ? parseFloat(lon) : undefined,
   };
 
   // Key generator for SWR Infinite (page-by-page)
@@ -106,6 +114,10 @@ export const useEvents = ({
       baseParams.byDate,
       baseParams.from,
       baseParams.to,
+      baseParams.term,
+      baseParams.radius,
+      baseParams.lat,
+      baseParams.lon,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -126,6 +138,10 @@ export const useEvents = ({
       byDateParam,
       fromParam,
       toParam,
+      termParam,
+      radiusParam,
+      latParam,
+      lonParam,
       pageIndex,
       sizeParam,
     ]) =>
@@ -137,6 +153,10 @@ export const useEvents = ({
         byDate: byDateParam as string | undefined,
         from: fromParam as string | undefined,
         to: toParam as string | undefined,
+        term: termParam as string | undefined,
+        radius: radiusParam as number | undefined,
+        lat: latParam as number | undefined,
+        lon: lonParam as number | undefined,
       }),
     {
       // Provide SSR fallback as the first page when available

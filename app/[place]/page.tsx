@@ -16,62 +16,34 @@ import type {
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import {
-  parseFiltersFromUrl,
-  urlToFilterState,
-  toUrlSearchParams,
-} from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
-import { applyDistanceToParams } from "@utils/api-helpers";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { topStaticGenerationPlaces } from "@utils/priority-places";
-import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
-import { isValidCategorySlugFormat } from "@utils/category-mapping";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect } from "next/navigation";
+import { topStaticGenerationPlaces } from "@utils/priority-places";
 
 export const revalidate = 600;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
 export const dynamicParams = true;
+// Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
+// All query filters (search, distance, lat, lon) are handled client-side.
 
 export async function generateStaticParams() {
   // Only generate static pages for top ~15 places to keep build size under 230MB
   // Each place generates ~4.6MB, so 15 places = ~69MB (within limit)
   // Other places will be generated on-demand with ISR (revalidate: 600)
   // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
-
-  // Validate places exist in API to avoid generating pages for removed/renamed places
-  let places: { slug: string }[] = [];
-  try {
-    places = await fetchPlaces();
-  } catch (error) {
-    console.warn(
-      "generateStaticParams: Error fetching places for validation:",
-      error
-    );
-    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
-    return topStaticGenerationPlaces.map((slug) => ({ place: slug }));
-  }
-
-  // Filter to only places that exist in API
-  const placeSlugs = new Set(places.map((p) => p.slug));
-  const validPlaces = topStaticGenerationPlaces.filter((slug) =>
-    placeSlugs.has(slug)
-  );
-
-  return validPlaces.map((slug) => ({ place: slug }));
+  return topStaticGenerationPlaces.map((slug) => ({ place: slug }));
 }
 
 export async function generateMetadata({
   params,
-  searchParams: _searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
 
@@ -98,22 +70,17 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
-  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ place }, rawSearchParams] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const { place } = await params;
 
   validatePlaceOrThrow(place);
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
-  // Fetch dynamic categories BEFORE parsing URL to validate category slugs
+  // Fetch dynamic categories for metadata and client-side filtering
   let categories: CategorySummaryResponseDTO[] = [];
   try {
     categories = await fetchCategories();
@@ -123,34 +90,8 @@ export default async function Page({
     categories = []; // Fallback to empty array if fetch fails
   }
 
-  // Convert searchParams to URLSearchParams for parsing
-  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
-
-  // Preserve user-requested category if categories API failed
-  if (categories.length === 0) {
-    const fallbackSlug = canonicalSearchParams.get("category");
-    if (fallbackSlug && isValidCategorySlugFormat(fallbackSlug)) {
-      categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
-    }
-  }
-
-  // Parse filters from URL with searchParams preserved
-  // Canonicalization of query params is handled in proxy.ts
-  const parsed = parseFiltersFromUrl(
-    { place },
-    canonicalSearchParams,
-    categories
-  );
-
-  // Convert to FilterState for compatibility
-  const filters = urlToFilterState(parsed);
-
-  const category =
-    filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined;
-  const date =
-    filters.byDate !== DEFAULT_FILTER_VALUE ? filters.byDate : undefined;
-  const query = filters.searchTerm || undefined;
-
+  // Server-side fetch: canonical, query-agnostic (no search, distance, lat, lon)
+  // All query filters are handled client-side via HybridEventsListClient
   const fetchParams: FetchEventsParams = {
     page: 0,
     size: 10,
@@ -160,19 +101,8 @@ export default async function Page({
     fetchParams.place = place;
   }
 
-  if (category) fetchParams.category = category;
-
-  // Add distance/radius filter if coordinates are provided
-  applyDistanceToParams(fetchParams, {
-    lat: filters.lat,
-    lon: filters.lon,
-    distance: filters.distance,
-  });
-
-  // Add search query if provided
-  if (query) {
-    fetchParams.term = query;
-  }
+  // Note: category, search, distance, lat, lon filters are NOT applied server-side
+  // to keep this route ISR-compatible. They are handled client-side.
 
   // Fetch events and categories in parallel when safe to do so later
   let eventsResponse = await fetchEvents(fetchParams);
@@ -250,7 +180,7 @@ export default async function Page({
     }
     if (placeExists === false) {
       const target = buildFallbackUrlForInvalidPlace({
-        rawSearchParams: rawSearchParams,
+        rawSearchParams: {},
       });
       redirect(target);
     }
@@ -266,8 +196,8 @@ export default async function Page({
       pageData={pageData}
       noEventsFound={noEventsFound}
       place={place}
-      category={category}
-      date={date}
+      category={undefined}
+      date={undefined}
       serverHasMore={!eventsResponse?.last}
       categories={categories}
       hasNews={hasNews}

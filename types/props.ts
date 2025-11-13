@@ -243,6 +243,7 @@ export interface HybridEventsListProps {
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
   hasNews?: boolean; // Whether the place has news articles
+  categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
 

@@ -25,7 +25,6 @@ import {
   toUrlSearchParams,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
-import { applyDistanceToParams } from "@utils/api-helpers";
 import { redirect } from "next/navigation";
 import {
   validatePlaceOrThrow,
@@ -261,24 +260,8 @@ export default async function ByDatePage({
     paramsForFetch.category = finalCategory;
   }
 
-  // Add distance/radius filter if provided
-  const distance =
-    typeof search.distance === "string" ? search.distance : undefined;
-  const lat = typeof search.lat === "string" ? search.lat : undefined;
-  const lon = typeof search.lon === "string" ? search.lon : undefined;
-  const query = typeof search.search === "string" ? search.search : undefined;
-
-  // Add distance/radius filter if coordinates are provided
-  applyDistanceToParams(paramsForFetch, {
-    lat,
-    lon,
-    distance,
-  });
-
-  // Add search query if provided
-  if (query) {
-    paramsForFetch.term = query;
-  }
+  // Intentionally do NOT apply querystring filters (search/distance/lat/lon) on the server.
+  // These are handled client-side to keep ISR query-agnostic.
 
   let noEventsFound = false;
   // Fetch events and place label in parallel when possible

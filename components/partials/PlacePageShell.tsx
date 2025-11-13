@@ -48,6 +48,7 @@ export default function PlacePageShell({
         date={date}
         serverHasMore={serverHasMore}
         hasNews={hasNews}
+        categories={categories}
       />
 
       <ClientInteractiveLayer
