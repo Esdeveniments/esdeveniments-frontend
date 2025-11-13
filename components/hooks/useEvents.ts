@@ -70,10 +70,18 @@ export const useEvents = ({
   const pendingActivationKeyRef = useRef<string | null>(null);
 
   const currentKey = useMemo(
-    () => `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${initialSize}`,
+    () =>
+      `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${initialSize}`,
     [place, category, date, search, distance, lat, lon, initialSize]
   );
-  const isActivated = activationKey === currentKey;
+
+  // Auto-activate when filters (search, distance, lat, lon) are present
+  // This ensures filtered queries fetch immediately without requiring "loadMore"
+  const hasClientFilters = !!(search || distance || lat || lon);
+
+  // Auto-activate when filters are present, or when manually activated via loadMore
+  // When filters change, currentKey changes, which triggers SWR to fetch with new key
+  const isActivated = hasClientFilters || activationKey === currentKey;
 
   // Build base params for the key/fetcher
   // Derive explicit date range for known slugs to align with SSR behavior
@@ -105,7 +113,7 @@ export const useEvents = ({
     pageIndex: number,
     previousPageData: PagedResponseDTO<EventSummaryResponseDTO> | null
   ) => {
-    if (!isActivated) return null; // do not fetch until activated
+    // Always provide a key; SWR will skip fetch on mount when revalidateOnMount=false
     if (previousPageData && previousPageData.last) return null; // reached the end
     return [
       "events",
@@ -160,8 +168,9 @@ export const useEvents = ({
       }),
     {
       // Provide SSR fallback as the first page when available
+      // BUT: Don't use SSR fallback when client filters are active (different query)
       fallbackData:
-        fallbackData.length > 0
+        !hasClientFilters && fallbackData.length > 0
           ? [
               {
                 content: fallbackData,
@@ -173,10 +182,12 @@ export const useEvents = ({
               },
             ]
           : undefined,
-      keepPreviousData: true,
+      // Don't keep previous data when filters change (different query)
+      keepPreviousData: !hasClientFilters,
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      revalidateIfStale: false,
+      // For filtered queries, allow revalidation for freshness
+      revalidateIfStale: hasClientFilters,
       refreshWhenOffline: false,
       refreshInterval: 0,
       dedupingInterval: 10000,
@@ -190,8 +201,8 @@ export const useEvents = ({
       },
       // Avoid revalidating the first page (SSR) on every size change
       revalidateFirstPage: false,
-      // We already have SSR fallback; don't revalidate on mount
-      revalidateOnMount: false,
+      // Revalidate immediately on mount when filters are active (no SSR fallback)
+      revalidateOnMount: hasClientFilters,
     }
   );
 
@@ -248,6 +259,9 @@ export const useEvents = ({
     // Already active: directly request one more page.
     setSize((prev) => prev + 1);
   };
+
+  // Note: activationKey is only used for the base route to enable loadMore.
+  // For filtered queries, fetching is controlled by revalidateOnMount and keys.
 
   return {
     events: clientEvents,

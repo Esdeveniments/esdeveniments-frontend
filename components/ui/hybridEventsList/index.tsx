@@ -84,17 +84,19 @@ function HybridEventsList({
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
-      <List events={initialEvents}>
-        {(event: ListEvent, index: number) => (
-          <Card
-            key={`${event.id ?? "ad"}-${index}`}
-            event={event}
-            isPriority={index === 0}
-          />
-        )}
-      </List>
-
-      <AdArticle slot="9643657007" />
+      {/* Hidden when client filters are active (handled by HybridEventsListClient) */}
+      <div data-ssr-list-wrapper>
+        <List events={initialEvents}>
+          {(event: ListEvent, index: number) => (
+            <Card
+              key={`${event.id ?? "ad"}-${index}`}
+              event={event}
+              isPriority={index === 0}
+            />
+          )}
+        </List>
+        <AdArticle slot="9643657007" />
+      </div>
 
       {/* Client enhancer for pagination */}
       <HybridEventsListClient

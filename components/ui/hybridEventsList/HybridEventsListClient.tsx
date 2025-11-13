@@ -1,10 +1,11 @@
 "use client";
 
-import { memo, ReactElement, useMemo, Suspense } from "react";
+import { memo, ReactElement, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
+import CardLoading from "@components/ui/cardLoading";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
@@ -43,6 +44,9 @@ function HybridEventsListClientContent({
     return initialEvents.filter(isEventSummaryResponseDTO);
   }, [initialEvents]);
 
+  // Check if client-side filters are active
+  const hasClientFilters = !!(search || distance || lat || lon);
+
   const { events, hasMore, loadMore, isLoading, isValidating, error } =
     useEvents({
       place,
@@ -57,10 +61,31 @@ function HybridEventsListClientContent({
       serverHasMore,
     });
 
-  const appendedEvents: ListEvent[] = useMemo(() => {
+  // Hide SSR list when filters are active (replace with filtered results)
+  useEffect(() => {
+    const ssrWrapper = document.querySelector("[data-ssr-list-wrapper]");
+    if (ssrWrapper) {
+      if (hasClientFilters) {
+        ssrWrapper.setAttribute("style", "display: none;");
+        ssrWrapper.setAttribute("aria-hidden", "true");
+      } else {
+        ssrWrapper.removeAttribute("style");
+        ssrWrapper.removeAttribute("aria-hidden");
+      }
+    }
+  }, [hasClientFilters]);
+
+  // When filters are active, show ALL filtered events (replace SSR list)
+  // When no filters, show only appended events (SSR list remains visible)
+  const displayedEvents: ListEvent[] = useMemo(() => {
     if (!events || events.length === 0) return [];
 
-    // Build a Set of existing real event ids from SSR to prevent duplication
+    if (hasClientFilters) {
+      // Filters active: show all filtered events (replace SSR list)
+      return events;
+    }
+
+    // No filters: only show appended events beyond SSR list
     const seen = new Set<string>(realInitialEvents.map((e) => e.id));
     const uniqueAppended: EventSummaryResponseDTO[] = [];
     for (const e of events) {
@@ -68,36 +93,54 @@ function HybridEventsListClientContent({
       seen.add(e.id);
       uniqueAppended.push(e);
     }
-    // Only render items beyond SSR list; SSR list remains visible above
     return uniqueAppended;
-  }, [events, realInitialEvents]);
+  }, [events, realInitialEvents, hasClientFilters]);
 
   if (error) {
     console.error("Events loading error:", error);
   }
 
+  // Show loading state when filters are active and events are being fetched
+  const showLoadingState =
+    hasClientFilters &&
+    (isLoading || isValidating) &&
+    displayedEvents.length === 0;
+
   return (
     <>
-      <List events={appendedEvents}>
-        {(event: ListEvent, index: number) => (
-          <Card
-            key={`${event.id ?? "ad"}-${index}`}
-            event={event}
-            isPriority={index === 0}
+      {showLoadingState ? (
+        // Show skeleton loading cards matching the event card layout
+        <div className="w-full">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <CardLoading key={`loading-${index}`} />
+          ))}
+        </div>
+      ) : (
+        <>
+          <List events={displayedEvents}>
+            {(event: ListEvent, index: number) => (
+              <Card
+                key={`${event.id ?? "ad"}-${index}`}
+                event={event}
+                isPriority={index === 0}
+              />
+            )}
+          </List>
+          <LoadMoreButton
+            onLoadMore={loadMore}
+            isLoading={isLoading}
+            isValidating={isValidating}
+            hasMore={hasMore}
           />
-        )}
-      </List>
-      <LoadMoreButton
-        onLoadMore={loadMore}
-        isLoading={isLoading}
-        isValidating={isValidating}
-        hasMore={hasMore}
-      />
+        </>
+      )}
     </>
   );
 }
 
-function HybridEventsListClient(props: HybridEventsListProps): ReactElement | null {
+function HybridEventsListClient(
+  props: HybridEventsListProps
+): ReactElement | null {
   return (
     <Suspense fallback={null}>
       <HybridEventsListClientContent {...props} />
