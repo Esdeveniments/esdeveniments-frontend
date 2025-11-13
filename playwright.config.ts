@@ -18,7 +18,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  timeout: 60000, // Global test timeout (60s) to match page.goto timeouts
+  timeout: process.env.CI ? 120000 : 60000, // Global test timeout: 120s in CI (remote URLs), 60s locally
   reporter: process.env.CI
     ? [
         ["blob"],
@@ -27,7 +27,7 @@ export default defineConfig({
     : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
-    navigationTimeout: 90000,
+    navigationTimeout: process.env.CI ? 120000 : 90000, // Higher timeout in CI for remote URLs
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
