@@ -1,4 +1,4 @@
-import { ReactElement, memo } from "react";
+import { ReactElement, memo, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
@@ -86,18 +86,37 @@ function HybridEventsList({
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
       {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}
-      <SsrListWrapper categories={categories}>
-        <List events={initialEvents}>
-          {(event: ListEvent, index: number) => (
-            <Card
-              key={`${event.id ?? "ad"}-${index}`}
-              event={event}
-              isPriority={index === 0}
-            />
-          )}
-        </List>
-        <AdArticle slot="9643657007" />
-      </SsrListWrapper>
+      {/* Wrapped in Suspense because SsrListWrapper uses useSearchParams() */}
+      {/* Fallback renders SSR content directly to ensure SEO visibility */}
+      <Suspense
+        fallback={
+          <div data-ssr-list-wrapper>
+            <List events={initialEvents}>
+              {(event: ListEvent, index: number) => (
+                <Card
+                  key={`${event.id ?? "ad"}-${index}`}
+                  event={event}
+                  isPriority={index === 0}
+                />
+              )}
+            </List>
+            <AdArticle slot="9643657007" />
+          </div>
+        }
+      >
+        <SsrListWrapper categories={categories}>
+          <List events={initialEvents}>
+            {(event: ListEvent, index: number) => (
+              <Card
+                key={`${event.id ?? "ad"}-${index}`}
+                event={event}
+                isPriority={index === 0}
+              />
+            )}
+          </List>
+          <AdArticle slot="9643657007" />
+        </SsrListWrapper>
+      </Suspense>
 
       {/* Client enhancer for pagination */}
       <HybridEventsListClient
