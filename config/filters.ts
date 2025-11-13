@@ -86,12 +86,10 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
     displayName: "Cerca",
     defaultValue: "",
     type: "search",
-    isEnabled: (state: FilterDisplayState) =>
-      Boolean(state.filters.searchTerm?.trim()),
-    getDisplayText: (state: FilterDisplayState) => {
-      const term = state.filters.searchTerm?.trim();
-      return term ? `"${term}"` : undefined;
-    },
+    // Don't show search term as a chip - it's always visible in the search input field
+    // Users can see and edit it directly there, no need for redundant chip display
+    isEnabled: () => false,
+    getDisplayText: () => undefined,
     getRemovalChanges: () => ({ searchTerm: "" }),
   },
 ];

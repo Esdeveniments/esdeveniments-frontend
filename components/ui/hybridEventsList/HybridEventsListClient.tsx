@@ -6,6 +6,7 @@ import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import CardLoading from "@components/ui/cardLoading";
+import NoEventsFound from "@components/ui/common/noEventsFound";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
@@ -26,6 +27,7 @@ function HybridEventsListClientContent({
   date,
   serverHasMore = false,
   categories = [],
+  pageData,
 }: HybridEventsListProps): ReactElement | null {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -106,6 +108,17 @@ function HybridEventsListClientContent({
     (isLoading || isValidating) &&
     displayedEvents.length === 0;
 
+  // Show no events found when filters are active, fetch completed, and no results
+  const showNoEventsFound =
+    hasClientFilters &&
+    !isLoading &&
+    !isValidating &&
+    displayedEvents.length === 0;
+
+  // Show fallback events when filters return no results but we have initial events
+  // (initialEvents may contain region or latest events as fallback from server)
+  const showFallbackEvents = showNoEventsFound && realInitialEvents.length > 0;
+
   return (
     <>
       {showLoadingState ? (
@@ -115,6 +128,24 @@ function HybridEventsListClientContent({
             <CardLoading key={`loading-${index}`} />
           ))}
         </div>
+      ) : showNoEventsFound ? (
+        // Show no events found message when filters return no results
+        <>
+          <NoEventsFound title={pageData?.notFoundText} />
+          {showFallbackEvents && (
+            <div className="w-full mt-section-y">
+              <List events={realInitialEvents}>
+                {(event: ListEvent, index: number) => (
+                  <Card
+                    key={`${event.id ?? "ad"}-${index}`}
+                    event={event}
+                    isPriority={index === 0}
+                  />
+                )}
+              </List>
+            </div>
+          )}
+        </>
       ) : (
         <>
           <List events={displayedEvents}>

@@ -41,6 +41,11 @@ const ServerFilters = ({
   const getText = (value: string | undefined, defaultValue: string): string =>
     value || defaultValue;
 
+  // Filter out searchTerm - it's always visible in the search input, no need for chip
+  const visibleConfigurations = configurations.filter(
+    (config) => config.key !== "searchTerm"
+  );
+
   return (
     <div className="w-full bg-background flex justify-center items-center mt-element-gap">
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
@@ -66,7 +71,7 @@ const ServerFilters = ({
             scrollbarColor: "#cccccc transparent",
           }}
         >
-          {configurations.map((config) => (
+          {visibleConfigurations.map((config) => (
             <FilterButton
               key={config.key}
               text={getText(

@@ -106,6 +106,7 @@ function HybridEventsList({
         date={date}
         serverHasMore={serverHasMore}
         categories={categories}
+        pageData={pageData}
       />
     </div>
   );
