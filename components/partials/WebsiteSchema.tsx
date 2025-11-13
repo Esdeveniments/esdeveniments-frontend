@@ -1,9 +1,8 @@
 // components/partials/WebsiteSchema.tsx
-import Script from "next/script";
 import { siteUrl } from "@config/index";
-import { WebsiteSchemaProps } from "types/props";
+import JsonLdServer from "./JsonLdServer";
 
-export default function WebsiteSchema({ nonce }: WebsiteSchemaProps) {
+export default function WebsiteSchema() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -38,13 +37,5 @@ export default function WebsiteSchema({ nonce }: WebsiteSchemaProps) {
     },
   };
 
-  return (
-    <Script
-      id="website-schema"
-      type="application/ld+json"
-      strategy="afterInteractive"
-      nonce={nonce}
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-    />
-  );
+  return <JsonLdServer id="website-schema" data={websiteSchema} />;
 }

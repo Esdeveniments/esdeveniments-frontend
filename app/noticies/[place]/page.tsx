@@ -11,9 +11,8 @@ import Link from "next/link";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import Head from "next/head";
-import JsonLd from "@components/partials/JsonLd";
-
-export const revalidate = 60;
+import JsonLdServer from "@components/partials/JsonLdServer";
+export const revalidate = 600;
 
 export async function generateMetadata({
   params,
@@ -135,11 +134,11 @@ export default async function Page({
           />
         )}
       </Head>
-      <JsonLd id="news-place-webpage-breadcrumbs" data={webPageSchema} />
+      <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
-        <JsonLd id="news-place-breadcrumbs" data={breadcrumbListSchema} />
+        <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <JsonLd id="news-place-itemlist" data={newsItemList} />
+      <JsonLdServer id="news-place-itemlist" data={newsItemList} />
       <nav
         aria-label="Breadcrumb"
         className="mb-3 w-full px-2 lg:px-0 text-sm text-foreground-strong/70"

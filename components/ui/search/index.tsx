@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   ChangeEvent,
   KeyboardEvent,
@@ -12,33 +11,18 @@ import {
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
+import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { sendGoogleEvent } from "@utils/analytics";
 
-function debounce(
-  func: (_value: string) => void,
-  wait: number,
-  immediate = false
-): (_value: string) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  return function executedFunction(value: string) {
-    const later = () => {
-      timeout = null;
-      if (!immediate) func(value);
-    };
-    const callNow = immediate && !timeout;
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-    if (callNow) func(value);
-  };
-}
-
 const sendSearchTermGA = (searchTerm: string): void => {
-  sendGoogleEvent("search", {
-    category: "search",
-    label: searchTerm,
-    search_term: searchTerm,
-    value: searchTerm,
-  });
+  if (searchTerm && searchTerm.length > 0) {
+    sendGoogleEvent("search", {
+      category: "search",
+      label: searchTerm,
+      search_term: searchTerm,
+      value: searchTerm,
+    });
+  }
 };
 
 export default function Search(): JSX.Element {
@@ -47,7 +31,7 @@ export default function Search(): JSX.Element {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
 
-  // Get current search term from URL (not Zustand)
+  // Get current search term from URL
   const urlSearchTerm = searchParams?.get("search") || "";
 
   const [inputValue, setInputValue] = useState<string>(urlSearchTerm);
@@ -76,45 +60,35 @@ export default function Search(): JSX.Element {
     [searchParams, router, pathname, isHomePage]
   );
 
-  // Debounce URL update only (no more Zustand)
-  const debouncedUpdateUrl = useMemo(
-    () =>
-      debounce((value: string) => {
-        updateSearchUrl(value);
-      }, 1500),
-    [updateSearchUrl]
-  );
+  // Function to trigger search (called by button click or Enter key)
+  const triggerSearch = useCallback(() => {
+    const value = inputValue.trim();
+    // Avoid redundant searches if the term hasn't changed
+    if (value === urlSearchTerm) return;
 
-  const searchEvents = useCallback((term: string): void => {
-    if (term && term.length > 0) {
-      sendSearchTermGA(term);
-    }
-  }, []);
+    sendSearchTermGA(value);
+    updateSearchUrl(value);
+  }, [inputValue, updateSearchUrl, urlSearchTerm]);
 
   // Sync input with URL search term when URL changes
   useEffect(() => {
     setInputValue(urlSearchTerm);
   }, [urlSearchTerm]);
 
-  const handleChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setInputValue(value);
-      debouncedUpdateUrl(value);
-      sendSearchTermGA(value);
-    },
-    [debouncedUpdateUrl]
-  );
+  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    // No auto-search - user must click button or press Enter
+  }, []);
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
-        const value = e.currentTarget.value;
-        sendSearchTermGA(value);
-        updateSearchUrl(value);
+        e.preventDefault();
+        triggerSearch();
       }
     },
-    [updateSearchUrl]
+    [triggerSearch]
   );
 
   const clearSearchTerm = useCallback((): void => {
@@ -124,20 +98,21 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className="w-full flex justify-center border border-border rounded-input px-input-x mt-element-gap"
+      className="w-full flex justify-center border border-border rounded-input pl-input-x mt-element-gap"
       data-testid="search-bar"
     >
       <div className="w-full flex justify-start items-center gap-element-gap rounded-input">
-        <div className="h-10 flex justify-end items-center cursor-pointer px-button-x">
+        {/* Decorative search icon on the left */}
+        <div className="h-10 flex justify-center items-center px-button-x">
           <SearchIcon
             className="h-5 w-5 text-foreground-strong"
-            onClick={() => searchEvents(urlSearchTerm)}
-            aria-label="Search"
+            aria-hidden="true"
           />
         </div>
+        {/* Input field in the middle */}
         <input
           type="text"
-          className="w-full border-0 placeholder:text-foreground/60 body-normal rounded-tr-input rounded-br-input focus:outline-none"
+          className="w-full border-0 placeholder:text-foreground/60 body-normal focus:outline-none"
           placeholder="Què estàs buscant?"
           value={inputValue}
           onKeyDown={handleKeyPress}
@@ -146,6 +121,7 @@ export default function Search(): JSX.Element {
           aria-label="Search input"
           data-testid="search-input"
         />
+        {/* Clear button (X) when there's text */}
         {inputValue.length > 0 && (
           <div className="flex justify-end items-center cursor-pointer px-button-x">
             <XIcon
@@ -155,6 +131,16 @@ export default function Search(): JSX.Element {
             />
           </div>
         )}
+        {/* Search button on the right */}
+        <button
+          type="button"
+          onClick={triggerSearch}
+          className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
+          aria-label="Search"
+          data-testid="search-button"
+        >
+          <ChevronRightIcon className="h-5 w-5 text-foreground-strong" />
+        </button>
       </div>
     </div>
   );

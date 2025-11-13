@@ -8,7 +8,7 @@ Purpose: Catalan events discovery web app (Next.js 15 App Router + TypeScript) f
 - Filters are configuration‑driven: single source in `config/filters.ts`; operations in `utils/filter-operations.ts`; URL parsing/building in `utils/url-filters.ts` + `utils/url-parsing.ts`.
 - Pages fetch data server-side (edge friendly) and render a hybrid list: SSR list + client enhancement (`HybridEventsList`, `ClientInteractiveLayer`). Ads inserted via `insertAds` during server fetch.
 - Service Worker generated at build (`scripts/generate-sw.mjs` → `public/sw.js` from `sw-template.js`) enabling offline + caching strategies (Workbox 7).
-- Security: `middleware.ts` injects CSP nonce (`x-nonce`) & security headers; components requiring inline scripts (e.g. `GoogleScripts`, JSON-LD) must accept `nonce`.
+- Security: `middleware.ts` injects security headers and CSP (relaxed policy with host allowlisting). JSON-LD rendered server-side via `JsonLdServer` component (no nonce required).
 
 ## 2. Filters & URLs (MOST IMPORTANT DOMAIN LOGIC)
 
@@ -25,28 +25,42 @@ Adding a new filter:
 - Canonical omission rules: if date === `tots` AND category === `tots` → `/place`; if date === `tots` and category != `tots` → `/place/category`; if category === `tots` and date != `tots` → `/place/date`.
 - Query params for non‑segment filters: `search`, `distance`, `lat`, `lon` (distance omitted when default 50). Parsing helpers: `parseFiltersFromUrl`, `urlToFilterState`, `getRedirectUrl` enforce normalization.
 - Dynamic categories supported; fallback to legacy list (see `utils/url-filters.ts` & `utils/constants.ts`). Always validate slugs via `isValidCategorySlug`.
+- **URL Canonicalization**: Middleware (`utils/middleware-redirects.ts`, `handleCanonicalRedirects`) automatically redirects non-canonical URLs to canonical form:
+  - Legacy query params (`?category=X&date=Y`) → canonical path segments (`/place/date/category`)
+  - `/tots` in path segments → omitted in canonical URLs (e.g., `/place/tots/category` → `/place/category`)
+  - Preserves unrelated query params (e.g., `search`, `distance`, `lat`, `lon`) during redirects
+  - Returns 301 permanent redirects for SEO
 
 ## 4. Data Fetch & API Layer
 
-- Location: `lib/api/*` (events, categories, regions, cities, places, cache helpers, news).
-- News endpoints are called directly from `lib/api/news.ts`. There are no Next.js API proxies for news (both list and detail). The POST creation endpoint is not used by the frontend (temporary: run via Swagger/cron).
-- Env guard: every fetch first checks `NEXT_PUBLIC_API_URL`; if missing returns safe empty shape (prevents build/runtime crashes on preview environments).
-- Guarded pattern (required):
+- **Architecture**: Internal API proxy layer pattern. Client libraries (`lib/api/*.ts`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers using `fetchWithHmac`.
+- Location: `lib/api/*` (events, categories, regions, cities, places, cache helpers, news) call internal routes via `getInternalApiUrl` from `utils/api-helpers.ts`.
+- Internal API routes: `app/api/*` (events, events/[slug], events/categorized, news, news/[slug], places, places/[slug], categories, categories/[id], cities, cities/[id], regions, regions/[id], regions/options, visits). These routes use `*-external.ts` wrappers that call `fetchWithHmac` against `NEXT_PUBLIC_API_URL`, parse with Zod, and return safe fallbacks.
+- External API wrappers: `lib/api/*-external.ts` (e.g., `events-external.ts`, `news-external.ts`) handle direct external API calls with HMAC signing. Used only by internal API routes, never called directly from pages/components.
+- Query builders: Use `buildEventsQuery`, `buildNewsQuery` from `utils/api-helpers.ts` to construct URLSearchParams. Centralizes query string construction and eliminates duplication.
+- Env guard: External wrappers check `NEXT_PUBLIC_API_URL`; if missing return safe empty shape (prevents build/runtime crashes on preview environments). Internal routes handle missing env gracefully.
+- Guarded pattern (required for external wrappers):
   - Guard: if `!NEXT_PUBLIC_API_URL` → return safe fallback (array `[]`, map `{}`, or null depending on DTO).
-  - Build query by filtering undefined keys → `URLSearchParams`.
+  - Build query using query builders (`buildEventsQuery`, `buildNewsQuery`) → `URLSearchParams`.
   - Wrap in try/catch, log errors, and return a safe fallback DTO for read endpoints.
-  - Use cache wrappers `createCache`/`createKeyedCache` where appropriate.
+  - Use cache wrappers `createCache`/`createKeyedCache` where appropriate (in-memory caching, not for external wrappers).
 - Pagination: API returns `PagedResponseDTO` `{ content[], currentPage, pageSize, totalElements, totalPages, last }`; use `last` to stop infinite scroll.
-- Caching: lightweight in‑memory TTL (24h = 86400000 ms) via `createCache` (single value) & `createKeyedCache` (per id/slug). Used for categories, regions, cities, place lookups to cut edge fetch latency.
-- Resilience: regions & regions-with-cities endpoints fall back to mock or safe empty data on failure (keep UX functional offline / during API outages). Apply env guard consistently across categories, cities, regions, and events.
+- Caching: Internal API routes set Cache-Control headers (`s-maxage`, `stale-while-revalidate`) with standardized TTLs (e.g., events 600s, news 60s, sitemaps 86400s). Lightweight in‑memory TTL (24h = 86400000 ms) via `createCache` (single value) & `createKeyedCache` (per id/slug) used for categories, regions, cities, place lookups to cut edge fetch latency.
+- Resilience: External wrappers fall back to safe empty data on failure (keep UX functional offline / during API outages). Apply env guard consistently across categories, cities, regions, and events.
 - Events fallback chain (place page): requested place → region (lookup in grouped regions) → latest global (no filters). Maintain this order when altering fetch logic.
 - Event create/update: `createEvent` posts multipart with `request` JSON + optional `imageFile`; `updateEventById` is JSON PUT. On non-OK, read `response.text()` for detailed error before throwing (uniform policy for all mutations).
-- Distance & geo: UI “distance” + `lat/lon` become API `radius/lat/lon`; compute `radius` via `distanceToRadius(distance)` and only send when defined (avoid default 50). Helper: `distanceToRadius` in `types/event.ts`.
+- Distance & geo: UI "distance" + `lat/lon` become API `radius/lat/lon`; compute `radius` via `distanceToRadius(distance)` and only send when defined (avoid default 50). Helper: `distanceToRadius` in `types/event.ts`.
 - Search term: internal filter key `searchTerm` maps to API param `term`; maintain mapping when extending filters.
-- Date filtering: `byDate` shortcut (avui, dema, setmana, cap-de-setmana) and optional explicit `from/to`; don’t send both unless intentional.
+- Date filtering: `byDate` shortcut (avui, dema, setmana, cap-de-setmana) and optional explicit `from/to`; don't send both unless intentional.
 - Ad insertion: `insertAds` decorates event list with synthetic `{ isAd: true }` items. See Hybrid Rendering contract for client append rules.
-- Adding new API call (pattern): define DTO in `types/api/*` → implement fetch with env guard + try/catch + safe fallback → consider cache if low volatility → expose minimal params object → keep query param names identical to backend.
-- Avoid: duplicating manual query string concatenation, bypassing cache wrappers, throwing raw fetch errors without fallback object.
+- Visit tracking: Client beacon (`navigator.sendBeacon` / `fetch` with `keepalive`) on event pages to `/api/visits`. Middleware stamps `x-visitor-id` header and issues `visitor_id` cookie when missing; server forwards to backend (HMAC) and returns 204.
+- Adding new API call (pattern): 
+  1. Define DTO in `types/api/*`
+  2. Create `*-external.ts` wrapper with env guard + `fetchWithHmac` + Zod parsing + safe fallback
+  3. Create internal API route in `app/api/*` that calls external wrapper and sets cache headers
+  4. Update client library in `lib/api/*.ts` to call internal route via `getInternalApiUrl` and query builders
+  5. Use `next: { revalidate, tags }` for Next.js fetch caching
+- Avoid: calling external API directly from pages/components (use internal routes), duplicating manual query string concatenation (use query builders), bypassing cache wrappers, throwing raw fetch errors without fallback object.
 
 ## 5. News Pages
 
@@ -109,8 +123,10 @@ Adding a new filter:
 
 ## 11. Security & Analytics
 
-- CSP: Only nonce-based scripts allowed; no inline scripts without nonce. When adding new `<Script>` blocks or inline JSON-LD, pass `nonce` from `headers()` (layout pattern in `app/layout.tsx`). If in a page, read `const nonce = (await headers()).get('x-nonce') || ''` and pass it to all Script tags.
-- External tracking (GA, Ads, Sentry) loaded afterInteractive with nonce to satisfy CSP `'strict-dynamic'` policy.
+- CSP: Relaxed policy with host allowlisting (configured in `proxy.ts`). Allows `'unsafe-inline'` for inline scripts and JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains (googletagmanager.com, google-analytics.com, googlesyndication.com, etc.) are allowlisted in `script-src` and `script-src-elem`. No nonce required—scripts work without nonce props.
+- External tracking (GA, Ads, Sentry) loaded via Next.js `<Script>` component with `strategy="afterInteractive"`. No nonce props needed.
+- JSON-LD: Server-rendered via `JsonLdServer` component (`components/partials/JsonLdServer.tsx`). Escapes `</script>` and `<` to prevent XSS. Data comes from server-side API responses, not user input. No nonce required due to relaxed CSP.
+- Rationale: For a cultural events site with HMAC-protected backend, relaxed CSP enables better performance (ISR/PPR) while maintaining security through host allowlisting.
 
 ## 12. Image Performance Strategy
 
@@ -133,10 +149,12 @@ Adding a new filter:
 ## 15. Common Pitfalls
 
 - Forgetting to regenerate SW after changing template (always rely on `prebuild`).
-- Adding inline script without nonce (breaks under CSP).
+- Calling external API directly from pages/components instead of using internal API routes (`app/api/*`).
 - Encoding filter defaults in multiple places instead of relying on config defaults.
 - Creating URLs that include unused default segments (`/tots/`). Always use `buildCanonicalUrl` helpers.
 - **Type duplication**: Creating duplicate interfaces instead of importing from canonical sources in `types/common.ts`.
+- Forgetting to use query builders (`buildEventsQuery`, `buildNewsQuery`) and manually constructing URLSearchParams.
+- Not setting appropriate cache headers (`s-maxage`, `stale-while-revalidate`) in internal API routes.
 
 ## 16. Quick Examples
 

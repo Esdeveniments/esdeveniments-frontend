@@ -1,5 +1,4 @@
 import { memo, FC } from "react";
-import Script from "next/script";
 import Link from "next/link";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
@@ -9,6 +8,7 @@ import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
+import JsonLdServer from "@components/partials/JsonLdServer";
 
 const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
   const cardClass =
@@ -51,7 +51,6 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   showJsonLd = false,
   jsonLdId,
   title,
-  nonce = "",
 }) => {
   // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
   // Keep first occurrence order-stable. Key used: id fallback to slug.
@@ -129,16 +128,14 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     return (
       <>
         {jsonLdData && (
-          <Script
+          <JsonLdServer
             id={
               jsonLdId ||
               (title
                 ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
                 : "events-around")
             }
-            type="application/ld+json"
-            nonce={nonce}
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+            data={jsonLdData}
           />
         )}
         <HorizontalScroll
@@ -172,16 +169,14 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   return (
     <>
       {jsonLdData && (
-        <Script
+        <JsonLdServer
           id={
             jsonLdId ||
             (title
               ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
               : "events-around")
           }
-          type="application/ld+json"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+          data={jsonLdData}
         />
       )}
       <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">

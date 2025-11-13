@@ -4,17 +4,23 @@ alwaysApply: false
 
 ### API access, fallbacks, and caching
 
-- Always guard env: If `NEXT_PUBLIC_API_URL` missing → return safe empty DTO; never throw for reads.
-- DTO shape: Paged responses use `PagedResponseDTO` with `{ content[], currentPage, pageSize, totalElements, totalPages, last }`.
-- Param building: Filter undefined keys; build via `URLSearchParams`; keep backend param names identical.
-- Resilience: Wrap fetch in try/catch; log and return safe fallback.
-- Caching (Next): Use `next: { revalidate, tags }` per endpoint. Standard tags: `events`, `events:categorized`, `event:{slug}`.
-- Caching (in-memory): Use `createCache` (single value) / `createKeyedCache` (per id/slug) in `lib/api/cache.ts` for low-volatility endpoints (categories, regions, cities, places).
-- Events fallback chain (place pages):
+- **Architecture**: Internal API proxy layer. Client libraries (`lib/api/*.ts`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers using `fetchWithHmac`. Never call external API directly from pages/components.
+- **Query builders**: Use `buildEventsQuery`, `buildNewsQuery` from `utils/api-helpers.ts` to construct URLSearchParams. Centralizes query string construction and eliminates duplication.
+- **Internal routes**: `app/api/*` (events, events/[slug], events/categorized, news, news/[slug], places, places/[slug], categories, categories/[id], cities, cities/[id], regions, regions/[id], regions/options, visits). These routes use `*-external.ts` wrappers that call `fetchWithHmac` against `NEXT_PUBLIC_API_URL`, parse with Zod, and return safe fallbacks.
+- **External wrappers**: `lib/api/*-external.ts` handle direct external API calls with HMAC signing. Used only by internal API routes, never called directly from pages/components.
+- **Env guard**: External wrappers check `NEXT_PUBLIC_API_URL`; if missing return safe empty shape (prevents build/runtime crashes). Internal routes handle missing env gracefully.
+- **DTO shape**: Paged responses use `PagedResponseDTO` with `{ content[], currentPage, pageSize, totalElements, totalPages, last }`.
+- **Resilience**: External wrappers wrap fetch in try/catch; log and return safe fallback.
+- **Caching (Next)**: Internal API routes use `next: { revalidate, tags }` when calling internal routes. Standard tags: `events`, `events:categorized`, `event:{slug}`. Standard revalidate: events 600s, news 60s, sitemaps 86400s.
+- **Caching (API routes)**: Set Cache-Control headers (`s-maxage`, `stale-while-revalidate`) with standardized TTLs in internal API routes.
+- **Caching (in-memory)**: Use `createCache` (single value) / `createKeyedCache` (per id/slug) in `lib/api/cache.ts` for low-volatility endpoints (categories, regions, cities, places).
+- **Events fallback chain** (place pages):
   1. requested place
   2. parent region (lookup from grouped regions)
   3. latest global (no filters)
-- Distance & geo: UI `distance` + `lat/lon` map to API `radius/lat/lon`; compute `radius` via `distanceToRadius(distance)`; only send when defined.
-- Search term: internal key `searchTerm` maps to API param `term`.
-- Mutations: On non-OK, read `response.text()` for detailed error, then throw; keep this policy uniform.
-- Do not duplicate manual query-string concatenation or bypass cache wrappers.
+- **Distance & geo**: UI `distance` + `lat/lon` map to API `radius/lat/lon`; compute `radius` via `distanceToRadius(distance)`; only send when defined.
+- **Search term**: internal key `searchTerm` maps to API param `term`.
+- **Mutations**: On non-OK, read `response.text()` for detailed error, then throw; keep this policy uniform.
+- **Visit tracking**: Client beacon (`navigator.sendBeacon` / `fetch` with `keepalive`) on event pages to `/api/visits`. Middleware stamps `x-visitor-id` header and issues `visitor_id` cookie when missing.
+- **Adding new API**: 1) Define DTO in `types/api/*`, 2) Create `*-external.ts` wrapper, 3) Create internal API route, 4) Update client library to call internal route via `getInternalApiUrl`, 5) Use `next: { revalidate, tags }` for Next.js fetch caching.
+- **Avoid**: Calling external API directly from pages/components, duplicating manual query-string concatenation (use query builders), bypassing cache wrappers.

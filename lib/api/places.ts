@@ -1,6 +1,6 @@
-import { fetchWithHmac } from "./fetch-wrapper";
 import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache, createCache } from "@lib/api/cache";
+import { getInternalApiUrl } from "@utils/api-helpers";
 import { cache } from "react";
 
 const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
@@ -10,11 +10,17 @@ async function fetchPlaceBySlugApi(
   key: string | number
 ): Promise<PlaceResponseDTO | null> {
   const slug = String(key);
-  const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/places/${slug}`,
-    { next: { revalidate: 86400, tags: ["places", `place:${slug}`] } }
-  );
-  if (!response.ok) return null;
+  const response = await fetch(getInternalApiUrl(`/api/places/${slug}`), {
+    next: { revalidate: 86400, tags: ["places", `place:${slug}`] },
+  });
+  if (response.status === 404) {
+    // Place definitively doesn't exist - return null to signal not found
+    return null;
+  }
+  if (!response.ok) {
+    // Other errors (500, network, etc.) - throw to distinguish from 404
+    throw new Error(`Failed to fetch place ${slug}: HTTP ${response.status}`);
+  }
   return response.json();
 }
 
@@ -34,43 +40,11 @@ export async function fetchPlaceBySlug(
 export const getPlaceBySlug = cache(fetchPlaceBySlug);
 
 async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  const endpoints = [
-    `${apiUrl}/places/regions`,
-    `${apiUrl}/places/cities`,
-    // Add provinces if they exist: `${apiUrl}/places/provinces`
-  ];
-
-  const results = await Promise.all(
-    endpoints.map(async (endpoint) => {
-      try {
-        const response = await fetchWithHmac(endpoint, {
-          next: { revalidate: 86400, tags: ["places"] },
-        });
-        if (!response.ok) return [];
-        const data = (await response.json()) as PlaceResponseDTO[];
-        return data;
-      } catch (error) {
-        console.error(`Error fetching from ${endpoint}:`, error);
-        return [];
-      }
-    })
-  );
-
-  // Flatten and deduplicate by slug
-  const allPlaces = results.flat();
-  if (allPlaces.length === 0) {
-    console.warn("No places fetched from API endpoints");
-  }
-  const uniquePlacesMap = new Map<string, PlaceResponseDTO>();
-  for (const place of allPlaces) {
-    if (!uniquePlacesMap.has(place.slug)) {
-      uniquePlacesMap.set(place.slug, place);
-    }
-  }
-  const uniquePlaces = Array.from(uniquePlacesMap.values());
-  return uniquePlaces;
+  const response = await fetch(getInternalApiUrl(`/api/places`), {
+    next: { revalidate: 86400, tags: ["places"] },
+  });
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  return response.json();
 }
 
 /**

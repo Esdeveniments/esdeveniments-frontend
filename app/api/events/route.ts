@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchEvents } from "@lib/api/events";
+import { fetchEventsExternal } from "@lib/api/events-external";
 import { FetchEventsParams } from "types/event";
 
 export const runtime = "nodejs";
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
           : undefined,
     };
 
-    const data = await fetchEvents(params);
+    const data = await fetchEventsExternal(params);
     return NextResponse.json(data, {
       status: 200,
       headers: {

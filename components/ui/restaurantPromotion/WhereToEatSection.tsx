@@ -51,10 +51,13 @@ export default function WhereToEatSection({
           const price = formatPriceLevelGeneric(place.price_level);
           const shortAddress =
             formatAddressLines(place.address_lines) || place.vicinity;
+          // Google Maps requires both query and query_place_id parameters
+          // query serves as fallback if place_id is not found
+          const encodedPlaceName = encodeURIComponent(place.name);
           return (
             <a
               key={place.place_id}
-              href={`https://www.google.com/maps/place/?q=place_id:${place.place_id}`}
+              href={`https://www.google.com/maps/search/?api=1&query=${encodedPlaceName}&query_place_id=${place.place_id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="group block border border-border rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"

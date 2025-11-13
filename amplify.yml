@@ -24,7 +24,25 @@ frontend:
         - test -f scripts/generate-sw.mjs || { echo "generate-sw.mjs missing"; exit 1; }
         - node scripts/generate-sw.mjs
         - yarn build
+        # Clean up unnecessary files to reduce build output size
+        # This must happen AFTER build but BEFORE artifacts are collected
+        - echo "Cleaning up build artifacts to reduce size..."
+        # Remove unnecessary directories
+        - rm -rf .next/cache
+        - rm -rf .next/types
+        - rm -rf .next/trace
+        - rm -rf .next/standalone
+        # Remove source maps and other unnecessary files
+        - find .next -name "*.map" -type f -delete || true
+        - find .next -name "*.d.ts" -type f -delete || true
+        # Remove SWC binaries (build-time only, not needed at runtime)
+        - rm -f node_modules/@swc/core-linux-x64-gnu/swc.linux-x64-gnu.node 2>/dev/null || true
+        - rm -f node_modules/@swc/core-linux-x64-musl/swc.linux-x64-musl.node 2>/dev/null || true
+        - echo "Build cleanup complete"
+        # Note: For build size diagnostics, run scripts/diagnose-build-size.sh on-demand
   artifacts:
+    # AWS Amplify standard pattern: baseDirectory should be .next for Next.js
+    # After cleanup, all remaining files in .next are needed
     baseDirectory: .next
     files:
       - "**/*"
@@ -34,123 +52,9 @@ frontend:
       - .next/cache/**/*
       - .yarn/cache/**/*
 
-  # Static asset caching is configured here for optimal performance.
-  # Security headers for dynamic content are managed in middleware.ts.
-  # Static assets use long-lived caching; Next.js hashed assets are safe.
-  customHeaders:
-    # Service worker: avoid caching and allow root scope
-    - pattern: "/sw.js"
-      headers:
-        - key: Cache-Control
-          value: "no-cache, no-store, must-revalidate"
-        - key: Service-Worker-Allowed
-          value: "/"
-    # Next.js built assets - these are automatically hashed, safe for long cache
-    - pattern: "/_next/static/**"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000, immutable"
-
-    # Next.js optimized images - 1 year cache (CRITICAL for performance)
-    - pattern: "/_next/image*"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000, immutable"
-
-    # CSS files - safe for long cache; cache-busting handled by deployment
-    - pattern: "/styles/**"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000, immutable"
-        - key: Content-Type
-          value: "text/css; charset=utf-8"
-
-    # Font files - longer cache with CORS headers for cross-origin loading
-    - pattern: "/static/fonts/**"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000, immutable"
-        - key: Access-Control-Allow-Origin
-          value: "*"
-        - key: Cross-Origin-Resource-Policy
-          value: "cross-origin"
-
-    # Static assets - be more conservative since not all may use getVersionedUrl
-    - pattern: "/static/**"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-
-    # Static images only (not user uploads) - conservative approach
-    # Separate patterns for common image extensions (brace expansion not supported)
-    - pattern: "/static/**/*.png"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-    - pattern: "/static/**/*.jpg"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-    - pattern: "/static/**/*.jpeg"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-    - pattern: "/static/**/*.gif"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-    - pattern: "/static/**/*.webp"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-    - pattern: "/static/**/*.svg"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-    - pattern: "/static/**/*.ico"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=2592000" # 30 days
-
-    # Fonts - longer cache since they rarely change (avoid brace expansion)
-    - pattern: "/**/*.woff"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000" # 1 year
-    - pattern: "/**/*.woff2"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000" # 1 year
-    - pattern: "/**/*.ttf"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000" # 1 year
-    - pattern: "/**/*.eot"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=31536000" # 1 year
-
-    # Next.js pages - enable back/forward cache for better performance
-    # This pattern matches all HTML pages and routes without file extensions
-    - pattern: "/*"
-      headers:
-        - key: Cache-Control
-          value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
-
-    # API routes - CORS headers for functionality (middleware excludes these)
-    - pattern: "/api/**"
-      headers:
-        - key: Access-Control-Allow-Origin
-          value: "https://esdeveniments.cat"
-        - key: Access-Control-Allow-Methods
-          value: "GET,OPTIONS,PATCH,DELETE,POST,PUT"
-        - key: Access-Control-Allow-Headers
-          value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-        - key: Vary
-          value: "Origin"
-        - key: Cache-Control
-          value: "public, max-age=3600" # 1 hour - conservative for API responses
-
+  # Custom HTTP headers have been moved to customHttp.yml
+  # See: https://docs.aws.amazon.com/amplify/latest/userguide/custom-headers.html
+  # Static asset caching and security headers are configured in customHttp.yml
 # Environment variables should be set in the Amplify Console for better security.
 # Go to: App settings > Environment variables
 # Recommended variables:

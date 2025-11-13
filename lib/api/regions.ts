@@ -1,17 +1,16 @@
-import { fetchWithHmac } from "./fetch-wrapper";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { createCache } from "lib/api/cache";
+import { getInternalApiUrl } from "@utils/api-helpers";
 
 const regionsCache = createCache<RegionSummaryResponseDTO[]>(86400000);
 const regionsWithCitiesCache =
   createCache<RegionsGroupedByCitiesResponseDTO[]>(86400000);
 
 async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
-  const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/places/regions`,
-    { next: { revalidate: 86400, tags: ["regions"] } }
-  );
+  const response = await fetch(getInternalApiUrl(`/api/regions`), {
+    next: { revalidate: 86400, tags: ["regions"] },
+  });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
 }
@@ -30,10 +29,9 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
 async function fetchRegionsWithCitiesFromApi(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
-  const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/places/regions/options`,
-    { next: { revalidate: 86400, tags: ["regions", "regions:options"] } }
-  );
+  const response = await fetch(getInternalApiUrl(`/api/regions/options`), {
+    next: { revalidate: 86400, tags: ["regions", "regions:options"] },
+  });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
 }
@@ -86,10 +84,8 @@ export async function fetchRegionsWithCities(): Promise<
 export async function fetchRegionById(
   id: string | number
 ): Promise<RegionSummaryResponseDTO | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return null;
   try {
-  const response = await fetchWithHmac(`${apiUrl}/places/regions/${id}`, {
+  const response = await fetch(getInternalApiUrl(`/api/regions/${id}`), {
     next: { revalidate: 86400, tags: ["regions", `region:${id}`] },
   });
     if (!response.ok) return null;

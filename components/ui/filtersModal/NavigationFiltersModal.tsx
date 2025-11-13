@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
-import { BYDATES, DISTANCES } from "@utils/constants";
+import { BYDATES, DISTANCES, DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { sendEventToGA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option } from "types/common";
@@ -26,10 +26,12 @@ import { NavigationFiltersModalProps } from "types/props";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
+  ssr: false,
 });
 
 const Select = dynamic(() => import("@components/ui/common/form/select"), {
   loading: () => <></>,
+  ssr: false,
 });
 
 const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
@@ -53,7 +55,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       currentSegments.place === "catalunya" ? "" : currentSegments.place;
     const byDate = currentSegments.date;
     const category =
-      currentSegments.category === "tots" ? "" : currentSegments.category;
+      currentSegments.category === DEFAULT_FILTER_VALUE
+        ? ""
+        : currentSegments.category;
     const distance =
       currentQueryParams.distance ||
       (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
@@ -200,7 +204,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           ? "catalunya"
           : localPlace || "catalunya",
       byDate: localByDate || "avui",
-      category: localCategory || "tots",
+      category: localCategory || DEFAULT_FILTER_VALUE,
       searchTerm: currentQueryParams.search || "",
       distance: hasDistance ? parseInt(localDistance) : 50,
       // Only include lat/lon if we have both distance and user location
@@ -275,7 +279,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             <div className="w-full flex flex-col px-0">
               <Select
                 id="options"
-                title="Poblacions"
+                title=""
                 options={regionsAndCitiesArray}
                 value={selectedOption}
                 onChange={handlePlaceChange}

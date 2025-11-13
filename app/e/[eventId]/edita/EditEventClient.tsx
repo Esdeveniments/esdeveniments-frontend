@@ -5,7 +5,7 @@ import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
-import { EventSummaryResponseDTO } from "types/api/event";
+import { EventDetailResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { Option } from "types/common";
 import { useCategories } from "@components/hooks/useCategories";
@@ -14,7 +14,7 @@ export default function EditEventClient({
   event,
   regions,
 }: {
-  event: EventSummaryResponseDTO;
+  event: EventDetailResponseDTO;
   regions: RegionsGroupedByCitiesResponseDTO[] | null;
 }) {
   const router = useRouter();

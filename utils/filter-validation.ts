@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FILTER_CONFIGURATIONS } from "config/filters";
 import { FilterOperations } from "./filter-operations";
+import { DEFAULT_FILTER_VALUE } from "./constants";
 
 // Dynamic schema generation based on configuration
 const createFilterSchema = () => {
@@ -88,8 +89,8 @@ export function parseFiltersFromUrlSafe(
     // Build filter state from segments and validated query params
     const filterState = {
       place: segments.place || "catalunya",
-      byDate: segments.date || "tots",
-      category: segments.category || "tots",
+      byDate: segments.date || DEFAULT_FILTER_VALUE,
+      category: segments.category || DEFAULT_FILTER_VALUE,
       searchTerm: queryResult.data.search || "",
       distance: queryResult.data.distance
         ? parseInt(queryResult.data.distance)

@@ -1,6 +1,7 @@
 import { CalendarIcon, ClockIcon } from "@heroicons/react/outline";
 import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
+import { formatEventTimeDisplay } from "@utils/date-helpers";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
 import SectionHeading from "@components/ui/common/SectionHeading";
@@ -44,9 +45,7 @@ export default function EventCalendar({ event }: EventCalendarProps) {
           </p>
           <p className="body-normal capitalize flex items-center gap-element-gap text-foreground-strong/80">
             <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
-            {!startTime || startTime === "00:00"
-              ? "Consultar horaris"
-              : `${startTime} - ${endTime || ""}`}
+            {formatEventTimeDisplay(startTime, endTime)}
           </p>
         </div>
         <div className="px-section-x">

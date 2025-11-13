@@ -5,8 +5,6 @@ import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
-import { headers } from "next/headers";
-import Script from "next/script";
 import { redirect } from "next/navigation";
 import { extractUuidFromSlug } from "@utils/string-helpers";
 import EventMedia from "./components/EventMedia";
@@ -35,6 +33,7 @@ import {
   buildFaqJsonLd,
 } from "@utils/helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
+import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
 import AdArticleIsland from "./components/AdArticleIsland";
 
@@ -64,11 +63,8 @@ export default async function EventPage({
 }) {
   const slug = (await params).eventId;
 
-  // Read the nonce from the middleware headers
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
-  const userAgent = headersList.get("user-agent") || "";
-  const initialIsMobile = /mobile|iphone|android|ipad|mobi/i.test(userAgent);
+  // With relaxed CSP we no longer require a nonce here; compute mobile on client
+  const initialIsMobile = false;
 
   let event: EventDetailResponseDTO | null = await getEventBySlug(slug);
   if (!event) {
@@ -169,28 +165,52 @@ export default async function EventPage({
         }
       : null;
 
+  // Generate BreadcrumbList JSON-LD
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Inici",
+        item: siteUrl,
+      },
+      ...(placeSlug
+        ? [
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: placeLabel,
+              item: `${siteUrl}/${placeSlug}`,
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: placeSlug ? 3 : 2,
+        name: title,
+        item: `${siteUrl}/e/${event.slug}`,
+      },
+    ],
+  };
+
   return (
     <>
       {/* Main Event JSON-LD */}
-      <Script
+      <JsonLdServer
         id={event.id ? String(event.id) : undefined}
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
+        data={jsonData}
       />
       {/* Related Events JSON-LD */}
       {relatedEventsJsonData && (
-        <Script
+        <JsonLdServer
           id={`related-events-${event.id}`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(relatedEventsJsonData),
-          }}
+          data={relatedEventsJsonData}
         />
       )}
+      {/* Breadcrumbs JSON-LD */}
+      <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
@@ -226,7 +246,6 @@ export default async function EventPage({
               <EventsAroundSection
                 events={event.relatedEvents}
                 title="Esdeveniments relacionats"
-                nonce={nonce}
               />
             )}
             {/* Event Description - Server-side rendered for SEO */}
@@ -323,15 +342,7 @@ export default async function EventPage({
       </Suspense>
 
       {/* FAQ JSON-LD (only when we have 2+ items) */}
-      {faqJsonLd && (
-        <Script
-          id={`faq-${event.id}`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
-      )}
+      {faqJsonLd && <JsonLdServer id={`faq-${event.id}`} data={faqJsonLd} />}
     </>
   );
 }

@@ -33,9 +33,9 @@ export interface EventSummaryResponseDTO {
   location: string;
   visits: number;
   origin: EventOrigin;
-  city: CitySummaryResponseDTO;
-  region: RegionSummaryResponseDTO;
-  province: ProvinceSummaryResponseDTO;
+  city?: CitySummaryResponseDTO;
+  region?: RegionSummaryResponseDTO;
+  province?: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
   updatedAt?: string; // ISO date string for last update
   weather?: {
@@ -66,11 +66,17 @@ export interface PagedResponseDTO<T> {
   last: boolean;
 }
 
+// Detail endpoint always includes location fields
 export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
+  city: CitySummaryResponseDTO;
+  region: RegionSummaryResponseDTO;
+  province: ProvinceSummaryResponseDTO;
   duration?: string;
   videoUrl?: string;
   tags?: string[];
-  relatedEvents?: EventSummaryResponseDTO[]; // Add related events from backend
+  relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export type CategorizedEvents = {

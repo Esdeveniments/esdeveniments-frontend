@@ -54,7 +54,7 @@ const nextConfig = {
 
   // The `headers` block has been removed.
   // Security and caching headers are now managed dynamically in `proxy.ts` (Next.js 16: renamed from middleware.ts).
-  // This is the recommended approach for implementing a strict CSP with nonces.
+  // CSP uses a relaxed policy with host allowlisting to enable ISR/PPR caching.
 
   // --- Redirects ---
   async redirects() {

@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -14,32 +12,43 @@ import {
 import type { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { FilteredPageProps } from "types/props";
-import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
-  getRedirectUrl,
   urlToFilterState,
   getTopStaticCombinations,
+  getRedirectUrl,
+  toUrlSearchParams,
 } from "@utils/url-filters";
+import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
+import { redirect } from "next/navigation";
+import { isValidCategorySlugFormat } from "@utils/category-mapping";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 export const revalidate = 600;
+// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string; category: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { place, byDate, category } = await params;
+  const [{ place, byDate, category }, rawSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   // 🛡️ SECURITY: Validate place parameter
   const validation = validatePlaceForMetadata(place);
@@ -56,10 +65,22 @@ export async function generateMetadata({
     categories = [];
   }
 
+  // Convert searchParams to URLSearchParams for parsing
+  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
+  // Preserve user-requested category from path if categories API fails
+  if (
+    categories.length === 0 &&
+    category &&
+    isValidCategorySlugFormat(category)
+  ) {
+    categories = [{ id: -1, name: category, slug: category }];
+  }
+
   // Parse filters for metadata generation WITH categories
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    new URLSearchParams(),
+    canonicalSearchParams,
     categories // ✅ Now passing categories like in main function
   );
   const filters = urlToFilterState(parsed);
@@ -76,7 +97,8 @@ export async function generateMetadata({
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
     placeTypeLabel: placeTypeAndLabel,
-    category: filters.category !== "tots" ? filters.category : undefined,
+    category:
+      filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
   });
 
@@ -90,7 +112,25 @@ export async function generateMetadata({
 export async function generateStaticParams() {
   // Generate static params for top combinations only
   // Other combinations will be generated on-demand with ISR
-  const combinations = getTopStaticCombinations();
+
+  // Validate places exist in API to avoid generating pages for removed/renamed places
+  let places: { slug: string }[] = [];
+  try {
+    places = await fetchPlaces();
+  } catch (error) {
+    console.warn(
+      "generateStaticParams: Error fetching places for validation:",
+      error
+    );
+    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
+    places = [];
+  }
+
+  // Pass validated places to getTopStaticCombinations
+  const combinations = getTopStaticCombinations(
+    undefined, // categories - use hardcoded fallback
+    places.length > 0 ? places : undefined // places - validate if available
+  );
 
   // Transform the returned format from { place, date, category } to { place, byDate, category }
   return combinations.map(({ place, date, category }) => ({
@@ -103,25 +143,20 @@ export async function generateStaticParams() {
 export default async function FilteredPage({
   params,
   searchParams,
-}: FilteredPageProps) {
-  const { place, byDate, category } = await params;
-  const search = await searchParams;
-
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
+}: {
+  params: Promise<{ place: string; byDate: string; category: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ place, byDate, category }, rawSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
 
-  // Convert searchParams to URLSearchParams
-  const urlSearchParams = new URLSearchParams();
-  Object.entries(search).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      urlSearchParams.set(key, value);
-    } else if (Array.isArray(value)) {
-      urlSearchParams.set(key, value[0]);
-    }
-  });
+  // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
+  // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
   // Fetch dynamic categories BEFORE parsing URL to validate category slugs
   let categories: CategorySummaryResponseDTO[] = [];
@@ -133,14 +168,31 @@ export default async function FilteredPage({
     categories = []; // Fallback to empty array if fetch fails
   }
 
+  // Convert searchParams to URLSearchParams for parsing
+  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+
+  // Preserve user-requested category from path if categories API fails
+  if (
+    categories.length === 0 &&
+    category &&
+    isValidCategorySlugFormat(category)
+  ) {
+    categories = [{ id: -1, name: category, slug: category }];
+  }
+
   // Parse filters from URL with dynamic categories for validation
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
-    urlSearchParams,
+    canonicalSearchParams,
     categories
   );
 
-  // Check if redirect is needed for non-canonical URLs
+  // Canonicalization note:
+  // - Middleware handles structural normalization (folding query date/category, omitting "tots")
+  // - This page-level redirect remains to validate category slugs against dynamic categories
+  //   and normalize unknown slugs (middleware cannot fetch categories at edge time)
+  // - When middleware already normalized, this is a no-op
+  // - Query params (search, distance, lat, lon) are preserved through redirects
   const redirectUrl = getRedirectUrl(parsed);
   if (redirectUrl) {
     redirect(redirectUrl);
@@ -153,8 +205,9 @@ export default async function FilteredPage({
   const fetchParams: FetchEventsParams = {
     page: 0,
     size: 10,
-    category: filters.category !== "tots" ? filters.category : undefined,
-    term: filters.searchTerm || undefined,
+    category:
+      filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
+    // term is client-driven via SWR; omit on server to keep ISR static
   };
 
   // Only add place when not catalunya (API treats empty as full Catalonia)
@@ -169,15 +222,8 @@ export default async function FilteredPage({
     fetchParams.to = toLocalDateString(dateRange.until);
   }
 
-  // Add distance/radius filter if coordinates are provided
-  if (filters.lat && filters.lon) {
-    const maybeRadius = distanceToRadius(filters.distance);
-    if (maybeRadius !== undefined) {
-      fetchParams.radius = maybeRadius;
-    }
-    fetchParams.lat = filters.lat;
-    fetchParams.lon = filters.lon;
-  }
+  // Intentionally do NOT apply querystring filters (search/distance/lat/lon) on the server.
+  // These are handled client-side to keep ISR query-agnostic.
 
   // Fetch events, place label, and news check in parallel
   const [placeTypeAndLabel, initialEventsResponse, hasNews] = await Promise.all(
@@ -253,7 +299,8 @@ export default async function FilteredPage({
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
     placeTypeLabel: placeTypeAndLabel,
-    category: filters.category !== "tots" ? filters.category : undefined,
+    category:
+      filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
   });
 
@@ -286,9 +333,26 @@ export default async function FilteredPage({
         })
       : null;
 
+  // Late existence check to preserve UX without creating an early oracle
+  if (place !== "catalunya") {
+    let placeExists: boolean | undefined;
+    try {
+      placeExists = (await fetchPlaceBySlug(place)) !== null;
+    } catch {
+      // ignore transient errors
+    }
+    if (placeExists === false) {
+      const target = buildFallbackUrlForInvalidPlace({
+        byDate,
+        category,
+        rawSearchParams: rawSearchParams,
+      });
+      redirect(target);
+    }
+  }
+
   return (
     <PlacePageShell
-      nonce={nonce}
       scripts={[
         { id: "webpage-schema", data: webPageSchema },
         ...(collectionSchema

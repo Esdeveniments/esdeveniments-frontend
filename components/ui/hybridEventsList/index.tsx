@@ -1,4 +1,4 @@
-import { ReactElement, memo } from "react";
+import { ReactElement, memo, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
@@ -8,6 +8,7 @@ import Card from "@components/ui/card";
 import { getNewsCta } from "@utils/helpers";
 import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
+import SsrListWrapper from "./SsrListWrapper";
 
 function HybridEventsList({
   initialEvents = [],
@@ -19,6 +20,7 @@ function HybridEventsList({
   date,
   serverHasMore = false,
   hasNews = false,
+  categories,
 }: HybridEventsListProps): ReactElement {
   const placeLabel = placeTypeLabel?.label;
   const placeType =
@@ -83,17 +85,38 @@ function HybridEventsList({
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
-      <List events={initialEvents}>
-        {(event: ListEvent, index: number) => (
-          <Card
-            key={`${event.id ?? "ad"}-${index}`}
-            event={event}
-            isPriority={index === 0}
-          />
-        )}
-      </List>
-
-      <AdArticle slot="9643657007" />
+      {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}
+      {/* Wrapped in Suspense because SsrListWrapper uses useSearchParams() */}
+      {/* Fallback renders SSR content directly to ensure SEO visibility */}
+      <Suspense
+        fallback={
+          <div data-ssr-list-wrapper>
+            <List events={initialEvents}>
+              {(event: ListEvent, index: number) => (
+                <Card
+                  key={`${event.id ?? "ad"}-${index}`}
+                  event={event}
+                  isPriority={index === 0}
+                />
+              )}
+            </List>
+            <AdArticle slot="9643657007" />
+          </div>
+        }
+      >
+        <SsrListWrapper categories={categories}>
+          <List events={initialEvents}>
+            {(event: ListEvent, index: number) => (
+              <Card
+                key={`${event.id ?? "ad"}-${index}`}
+                event={event}
+                isPriority={index === 0}
+              />
+            )}
+          </List>
+          <AdArticle slot="9643657007" />
+        </SsrListWrapper>
+      </Suspense>
 
       {/* Client enhancer for pagination */}
       <HybridEventsListClient
@@ -102,6 +125,8 @@ function HybridEventsList({
         category={category}
         date={date}
         serverHasMore={serverHasMore}
+        categories={categories}
+        pageData={pageData}
       />
     </div>
   );

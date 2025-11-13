@@ -145,7 +145,7 @@ fi
 2. `components/ui/common/footer/index.tsx`
 3. `components/ui/filters/ServerFilters.tsx`
 4. `components/ui/filters/FilterButton.tsx`
-5. `components/ui/common/link/ServerNavLink.tsx`
+5. `components/ui/common/link/ActiveNavLink.tsx`
 6. `components/ui/common/link/index.tsx`
 7. `components/ui/layout/base/index.tsx`
 8. `components/ui/clientInteractiveLayer/index.tsx`

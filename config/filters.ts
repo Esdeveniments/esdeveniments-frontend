@@ -4,7 +4,7 @@
  */
 
 import type { FilterConfig, FilterDisplayState } from "types/filters";
-import { BYDATES } from "utils/constants";
+import { BYDATES, DEFAULT_FILTER_VALUE } from "utils/constants";
 
 export const FILTER_CONFIGURATIONS: FilterConfig[] = [
   {
@@ -24,35 +24,35 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
   {
     key: "category",
     displayName: "Categoria",
-    defaultValue: "tots",
+    defaultValue: DEFAULT_FILTER_VALUE,
     type: "category",
-    isEnabled: (state: FilterDisplayState) => state.filters.category !== "tots",
+    isEnabled: (state: FilterDisplayState) => state.filters.category !== DEFAULT_FILTER_VALUE,
     getDisplayText: (state: FilterDisplayState) => {
-      if (state.filters.category === "tots") return undefined;
+      if (state.filters.category === DEFAULT_FILTER_VALUE) return undefined;
       const category = state.extraData?.categories?.find(
         (cat) => cat.slug === state.filters.category
       );
       return category?.name;
     },
-    getRemovalChanges: () => ({ category: "tots" }),
+    getRemovalChanges: () => ({ category: DEFAULT_FILTER_VALUE }),
   },
 
   {
     key: "byDate",
     displayName: "Data",
-    defaultValue: "tots",
+    defaultValue: DEFAULT_FILTER_VALUE,
     type: "date",
-    isEnabled: (state: FilterDisplayState) => state.filters.byDate !== "tots",
+    isEnabled: (state: FilterDisplayState) => state.filters.byDate !== DEFAULT_FILTER_VALUE,
     getDisplayText: (state: FilterDisplayState) => {
       const byDate = BYDATES.find(
         (item) => item.value === state.filters.byDate
       );
       return byDate?.label;
     },
-    getRemovalChanges: () => ({ byDate: "tots" }),
+    getRemovalChanges: () => ({ byDate: DEFAULT_FILTER_VALUE }),
     specialCases: {
       homeRedirect: (segments) =>
-        segments.place === "catalunya" && segments.category === "tots",
+        segments.place === "catalunya" && segments.category === DEFAULT_FILTER_VALUE,
     },
   },
 
@@ -86,12 +86,10 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
     displayName: "Cerca",
     defaultValue: "",
     type: "search",
-    isEnabled: (state: FilterDisplayState) =>
-      Boolean(state.filters.searchTerm?.trim()),
-    getDisplayText: (state: FilterDisplayState) => {
-      const term = state.filters.searchTerm?.trim();
-      return term ? `"${term}"` : undefined;
-    },
+    // Don't show search term as a chip - it's always visible in the search input field
+    // Users can see and edit it directly there, no need for redundant chip display
+    isEnabled: () => false,
+    getDisplayText: () => undefined,
     getRemovalChanges: () => ({ searchTerm: "" }),
   },
 ];

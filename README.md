@@ -54,8 +54,9 @@ yarn build && yarn start
 
 ## Security & API
 
-- Middleware enforces HMAC on most `/api/*` routes (`x-hmac`, `x-timestamp`); avoid signing in the browser. Use server routes or allowlisted endpoints.
-- CSP nonce is injected by middleware; pass to `<Script nonce>` (see `app/layout.tsx`, `app/GoogleScripts.tsx`).
+- Internal API proxy layer: Client libraries (`lib/api/*`) call internal Next.js API routes (`app/api/*`) which proxy to external backend with HMAC signing via `*-external.ts` wrappers. Never call external API directly from pages/components.
+- Middleware enforces HMAC on most `/api/*` routes (`x-hmac`, `x-timestamp`); public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Avoid signing in the browser—always use internal API routes.
+- CSP: Relaxed policy with host allowlisting for Google Analytics, Ads, and trusted domains. Inline scripts are allowed via `'unsafe-inline'` to enable ISR/PPR caching. JSON-LD rendered server-side via `JsonLdServer` component. See `proxy.ts` for full CSP configuration.
 
 ## Deploy
 

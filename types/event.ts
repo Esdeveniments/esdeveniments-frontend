@@ -251,6 +251,10 @@ export interface UseEventsOptions {
   place?: string;
   category?: string;
   date?: string;
+  search?: string; // Client-side search term filter
+  distance?: string; // Client-side distance filter
+  lat?: string; // Client-side latitude filter
+  lon?: string; // Client-side longitude filter
   initialSize?: number;
   fallbackData?: EventSummaryResponseDTO[];
   serverHasMore?: boolean; // Add server pagination info

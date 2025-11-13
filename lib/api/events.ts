@@ -1,5 +1,11 @@
 import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
+import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
+import {
+  parseEventDetail,
+  parsePagedEvents,
+  parseCategorizedEvents,
+} from "@lib/validation/event";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -11,54 +17,31 @@ import {
   PagedResponseDTO,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
-import { parseEventDetail } from "lib/validation/event";
 
 export async function fetchEvents(
   params: FetchEventsParams
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
-
-  const query: Partial<FetchEventsParams> = {};
-  query.page = typeof params.page === "number" ? params.page : 0;
-  query.size = typeof params.size === "number" ? params.size : 10;
-
-  if (params.place) query.place = params.place;
-  if (params.category) query.category = params.category;
-  if (params.lat) query.lat = params.lat;
-  if (params.lon) query.lon = params.lon;
-  if (params.radius) query.radius = params.radius;
-  if (params.term) query.term = params.term;
-  if (params.byDate) query.byDate = params.byDate;
-  if (params.from) query.from = params.from;
-  if (params.to) query.to = params.to;
-
   try {
-    const filteredEntries = Object.entries(query)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, String(v)]);
+    const queryString = buildEventsQuery(params);
+    const finalUrl = getInternalApiUrl(`/api/events?${queryString}`);
 
-    const queryString = new URLSearchParams(
-      Object.fromEntries(filteredEntries)
-    );
-    const finalUrl = `${apiUrl}/events?${queryString}`;
-
-    const response = await fetchWithHmac(finalUrl, {
-      // Cache on the edge for 10 minutes; allow background revalidation
+    const response = await fetch(finalUrl, {
       next: { revalidate: 600, tags: ["events"] },
     });
     const data = await response.json();
-
-    return data;
+    const validated = parsePagedEvents(data);
+    if (!validated) {
+      console.error("fetchEvents: validation failed, returning fallback");
+      return {
+        content: [],
+        currentPage: 0,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      };
+    }
+    return validated;
   } catch (e) {
     console.error("Error fetching events:", e);
     return {
@@ -75,22 +58,16 @@ export async function fetchEvents(
 export async function fetchEventBySlug(
   fullSlug: string
 ): Promise<EventDetailResponseDTO | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    console.error("NEXT_PUBLIC_API_URL is not defined");
-    return null;
-  }
-
   try {
-    const response = await fetchWithHmac(`${apiUrl}/events/${fullSlug}`, {
+    // Read via internal API route (stable cache, HMAC stays server-side)
+    const res = await fetch(getInternalApiUrl(`/api/events/${fullSlug}`), {
       next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
     });
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const json = await response.json();
-    return parseEventDetail(json);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return parseEventDetail(await res.json());
   } catch (error) {
-    console.error("Error fetching event by slug:", error);
+    console.error("Error fetching event by slug (internal):", error);
     return null;
   }
 }
@@ -157,27 +134,26 @@ export async function createEvent(
 export async function fetchCategorizedEvents(
   maxEventsPerCategory?: number
 ): Promise<CategorizedEvents> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    return {};
-  }
   try {
     const params = new URLSearchParams();
     if (maxEventsPerCategory !== undefined) {
       params.append("maxEventsPerCategory", String(maxEventsPerCategory));
     }
-    const queryString = params.toString();
-    const finalUrl = `${apiUrl}/events/categorized${
-      queryString ? `?${queryString}` : ""
-    }`;
-    const response = await fetchWithHmac(finalUrl, {
+    const finalUrl = getInternalApiUrl(`/api/events/categorized${params.toString() ? `?${params.toString()}` : ""}`);
+    const response = await fetch(finalUrl, {
       next: { revalidate: 3600, tags: ["events", "events:categorized"] },
     });
 
-    const data = await response.json();
-
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return data;
+    const data = await response.json();
+    const validated = parseCategorizedEvents(data);
+    if (!validated) {
+      console.error(
+        "fetchCategorizedEvents: validation failed, returning fallback"
+      );
+      return {};
+    }
+    return validated;
   } catch (e) {
     console.error("Error fetching categorized events:", e);
     return {};

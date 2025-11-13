@@ -48,7 +48,8 @@
 - `NEXT_PUBLIC_API_URL` influences the service worker (generated from `public/sw-template.js`) and tests. If it changes, re‑run prebuild/dev.
 - Sentry is configured (`sentry.*.config.ts`); set DSN only in non‑local environments.
 - Yarn 4 workspace; prefer `yarn` over `npm`.
-- CSP nonce: middleware injects `x-nonce`; pass it to `<Script nonce={...}>` (see `app/layout.tsx:28`, `app/GoogleScripts.tsx:7`).
+- CSP: Relaxed policy with host allowlisting (see `proxy.ts`). Allows `'unsafe-inline'` for inline scripts/JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains are allowlisted. No nonce required.
+- API security: Internal API proxy layer (`app/api/*`) handles HMAC signing server-side via `*-external.ts` wrappers using `fetchWithHmac`. Client libraries call internal routes, never external API directly. Middleware enforces HMAC on most `/api/*` routes; public endpoints (GET events, news, categories, etc.) are allowlisted.
 
 ## Agent-Specific Instructions
 
@@ -56,13 +57,15 @@
 - Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
 - Types live only in `types/`; avoid redefining `NavigationItem`, `SocialLinks`, `EventProps`, `CitySummaryResponseDTO` (see `types/common.ts`, `types/api/city.ts`).
 - Server-first by default; mark client components with `"use client"` only when necessary. Avoid exposing secrets in client code.
-- API security: middleware enforces HMAC on most `/api/*`. For browser-callable endpoints, prefer a server proxy or a narrow allowlist entry; never sign requests in the browser.
+- API security: Internal API routes (`app/api/*`) handle HMAC signing server-side via `*-external.ts` wrappers. Middleware enforces HMAC on most `/api/*` routes; public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Never sign requests in the browser—always use internal API routes.
 - Use Yarn 4 commands and Node 20 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
 
 ## Architecture Overview
 
 - Next.js App Router with server‑first rendering; client state via Zustand (`store.ts`) and client data fetching via SWR.
-- SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `middleware.ts` handles edge behavior.
+- API layer: Internal proxy pattern—client libraries (`lib/api/*`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers with HMAC signing.
+- SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `middleware.ts` handles edge behavior, canonical redirects, and CSP.
+- URL canonicalization: Middleware automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
 
 ## Local Setup
 
@@ -76,7 +79,7 @@
 
 - Types: add/extend only in `types/` (no inline app/component types).
 - UI/Pages: place components under `components/ui/<feature>/`; routes in `app/<segment>/` (server‑first; add `"use client"` only if needed).
-- API: call from server code or via internal API; respect HMAC middleware. For public endpoints, use or extend allowlist carefully.
+- API: call from server code via internal API routes (`app/api/*`); these proxy to external backend with HMAC. Use query builders (`buildEventsQuery`, `buildNewsQuery`) from `utils/api-helpers.ts`. Respect HMAC middleware; public GET endpoints are allowlisted.
 - Tests: add unit tests under `test/` and E2E flows under `e2e/` when user‑visible.
 - SW/Caching: if adding external API usage or offline behavior, edit `public/sw-template.js` and re‑run prebuild/dev.
 - Pre‑PR: `yarn lint && yarn typecheck && yarn test` (and E2E if applicable); include screenshots for UI.

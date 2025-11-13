@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { fetchEvents, insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -17,25 +15,29 @@ import type {
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { distanceToRadius } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { buildCanonicalUrl } from "@utils/url-filters";
+import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { fetchCities } from "@lib/api/cities";
+import { fetchPlaceBySlug } from "@lib/api/places";
+import { redirect } from "next/navigation";
+import { topStaticGenerationPlaces } from "@utils/priority-places";
 
 export const revalidate = 600;
+// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
+export const dynamicParams = true;
+// Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
+// All query filters (search, distance, lat, lon) are handled client-side.
 
 export async function generateStaticParams() {
-  const [regions, cities] = await Promise.all([fetchRegions(), fetchCities()]);
-
-  return [
-    ...regions.map((region) => ({ place: region.slug })),
-    ...cities.map((city) => ({ place: city.slug })),
-  ];
+  // Only generate static pages for top ~15 places to keep build size under 230MB
+  // Each place generates ~4.6MB, so 15 places = ~69MB (within limit)
+  // Other places will be generated on-demand with ISR (revalidate: 600)
+  // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
+  return topStaticGenerationPlaces.map((slug) => ({ place: slug }));
 }
 
 export async function generateMetadata({
@@ -50,7 +52,9 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+    place
+  );
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
     place,
@@ -66,52 +70,28 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
-  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { place } = await params;
-  const search = await searchParams;
-
-  // Read the nonce from the middleware headers
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   validatePlaceOrThrow(place);
 
-  const urlSearchParams = new URLSearchParams();
-  Object.entries(search).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      urlSearchParams.set(key, value);
-    } else if (Array.isArray(value)) {
-      urlSearchParams.set(key, value[0]);
-    }
-  });
+  // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
+  // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
-  const category =
-    typeof search.category === "string" ? search.category : undefined;
-  const date = typeof search.date === "string" ? search.date : undefined;
-  const distance =
-    typeof search.distance === "string" ? search.distance : undefined;
-  const lat = typeof search.lat === "string" ? search.lat : undefined;
-  const lon = typeof search.lon === "string" ? search.lon : undefined;
-  const query = typeof search.search === "string" ? search.search : undefined;
-
-  if (category || date) {
-    const canonicalUrl = buildCanonicalUrl({
-      place,
-      byDate: date || "tots",
-      category: category || "tots",
-      searchTerm: query || "",
-      distance: distance ? parseInt(distance) : 50,
-      lat: lat ? parseFloat(lat) : undefined,
-      lon: lon ? parseFloat(lon) : undefined,
-    });
-
-    redirect(canonicalUrl);
+  // Fetch dynamic categories for metadata and client-side filtering
+  let categories: CategorySummaryResponseDTO[] = [];
+  try {
+    categories = await fetchCategories();
+  } catch (error) {
+    // Continue without categories - will use static fallbacks
+    console.error("Error fetching categories:", error);
+    categories = []; // Fallback to empty array if fetch fails
   }
 
+  // Server-side fetch: canonical, query-agnostic (no search, distance, lat, lon)
+  // All query filters are handled client-side via HybridEventsListClient
   const fetchParams: FetchEventsParams = {
     page: 0,
     size: 10,
@@ -121,22 +101,8 @@ export default async function Page({
     fetchParams.place = place;
   }
 
-  if (category) fetchParams.category = category;
-
-  // Add distance/radius filter if coordinates are provided
-  if (lat && lon) {
-    const maybeRadius = distanceToRadius(distance);
-    if (maybeRadius !== undefined) {
-      fetchParams.radius = maybeRadius;
-    }
-    fetchParams.lat = parseFloat(lat);
-    fetchParams.lon = parseFloat(lon);
-  }
-
-  // Add search query if provided
-  if (query) {
-    fetchParams.term = query;
-  }
+  // Note: category, search, distance, lat, lon filters are NOT applied server-side
+  // to keep this route ISR-compatible. They are handled client-side.
 
   // Fetch events and categories in parallel when safe to do so later
   let eventsResponse = await fetchEvents(fetchParams);
@@ -184,16 +150,12 @@ export default async function Page({
   const events = eventsResponse?.content || [];
   const eventsWithAds = insertAds(events);
 
-  // Fetch categories and check news in parallel for better performance
-  const [categories, hasNews] = await Promise.all([
-    fetchCategories().catch((error) => {
-      console.error("Error fetching categories:", error);
-      return [] as CategorySummaryResponseDTO[];
-    }),
-    hasNewsForPlace(place),
-  ]);
+  // Check news (categories already fetched above)
+  const hasNews = await hasNewsForPlace(place);
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(place);
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+    place
+  );
 
   const pageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
@@ -208,9 +170,24 @@ export default async function Page({
       ? generateItemListStructuredData(validEvents, `Esdeveniments ${place}`)
       : null;
 
+  // Late existence check to preserve UX without creating an early oracle
+  if (place !== "catalunya") {
+    let placeExists: boolean | undefined;
+    try {
+      placeExists = (await fetchPlaceBySlug(place)) !== null;
+    } catch {
+      // ignore transient errors
+    }
+    if (placeExists === false) {
+      const target = buildFallbackUrlForInvalidPlace({
+        rawSearchParams: {},
+      });
+      redirect(target);
+    }
+  }
+
   return (
     <PlacePageShell
-      nonce={nonce}
       scripts={
         structuredData ? [{ id: `events-${place}`, data: structuredData }] : []
       }
@@ -219,8 +196,6 @@ export default async function Page({
       pageData={pageData}
       noEventsFound={noEventsFound}
       place={place}
-      category={category}
-      date={date}
       serverHasMore={!eventsResponse?.last}
       categories={categories}
       hasNews={hasNews}

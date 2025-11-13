@@ -7,6 +7,12 @@ import { cache } from "react";
 export const getPlaceTypeAndLabel = async (
   place: string
 ): Promise<PlaceTypeAndLabel> => {
+  // "catalunya" is a frontend-only SEO concept, not a real place in the backend
+  // Return early without making API calls
+  if (place === "catalunya") {
+    return { type: "region", label: "Catalunya" };
+  }
+
   try {
     const placeInfo = await fetchPlaceBySlug(place);
     if (placeInfo) {

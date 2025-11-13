@@ -2,7 +2,7 @@
 import { siteUrl } from "@config/index";
 import type { Metadata } from "next";
 import type { EventDetailResponseDTO } from "types/api/event";
-import { formatCatalanA } from "@utils/helpers";
+import { formatCatalanA, getFormattedDate } from "@utils/helpers";
 
 // --- Sanitization/Truncation helpers ---
 function sanitizeInput(str: string = ""): string {
@@ -90,26 +90,44 @@ export function generateEventMetadata(
 ): Metadata {
   if (!event) return { title: "No event found" };
 
-  // Generate enhanced title using the helper functions like the old version
-  const enhancedTitle = generateMetaTitle(
-    event.title,
-    event.description,
-    event.location,
-    event.city?.name,
-    event.region?.name
-  );
+  // Use backend metaTitle if available and non-empty, otherwise generate it
+  const enhancedTitle = event.metaTitle?.trim()
+    ? event.metaTitle.trim()
+    : generateMetaTitle(
+        event.title,
+        event.description,
+        event.location,
+        event.city?.name,
+        event.region?.name
+      );
 
   const pageTitle = prefixTitle
     ? `${prefixTitle}: ${enhancedTitle}`
     : enhancedTitle;
 
-  // Generate enhanced description like the old version
-  const enhancedDescription = generateMetaDescription(
-    event.title,
-    event.description,
-    event.categories,
-    event.location
-  );
+  // Use backend metaDescription if available and non-empty, otherwise generate it
+  let finalDescription: string;
+  if (event.metaDescription?.trim()) {
+    finalDescription = event.metaDescription.trim();
+  } else {
+    // Generate enhanced description like the old version
+    const enhancedDescription = generateMetaDescription(
+      event.title,
+      event.description,
+      event.categories,
+      event.location
+    );
+    // Enrich description with date and venue, keeping under 156 chars
+    const { formattedStart } = getFormattedDate(event.startDate, event.endDate);
+    const descriptionParts = [enhancedDescription];
+    if (formattedStart && formattedStart.trim().length > 0) {
+      descriptionParts.push(formattedStart);
+    }
+    if (event.location && event.location.trim().length > 0) {
+      descriptionParts.push(event.location);
+    }
+    finalDescription = smartTruncate(descriptionParts.join(" - "), 156);
+  }
 
   const image = event.imageUrl ? [event.imageUrl] : [];
   const canonical = url || `${siteUrl}/e/${event.slug}`;
@@ -129,11 +147,11 @@ export function generateEventMetadata(
 
   return {
     title: pageTitle,
-    description: enhancedDescription,
+    description: finalDescription,
     ...(keywords && { keywords }),
     openGraph: {
       title: pageTitle,
-      description: enhancedDescription,
+      description: finalDescription,
       url: canonical,
       images: image,
       type: "article",
@@ -143,7 +161,7 @@ export function generateEventMetadata(
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
-      description: enhancedDescription,
+      description: finalDescription,
       site: "@esdeveniments",
       creator: "Esdeveniments.cat",
       images: image,

@@ -43,31 +43,7 @@ export const MONTHS_URL: string[] = [
   "desembre",
 ];
 
-export const CATEGORIES: Record<string, string> = {
-  "Festes Majors": "Festa Major",
-  Festivals: "Festival",
-  Familiar: "Familiar",
-  Música: "Música",
-  Cinema: "Cinema",
-  Teatre: "Teatre",
-  Exposicions: "Exposició",
-  Fires: "Fira",
-  Espectacles: "Espectacles",
-};
-
-export const SEARCH_TERMS_SUBSET: string[] = [
-  "Festa Major",
-  "Festival",
-  "Familiar",
-  "Música",
-];
-
-export const CATEGORY_NAMES_MAP: Record<string, string> = Object.fromEntries(
-  Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
-    searchTerm,
-    displayName,
-  ])
-);
+// Legacy category constants removed - API is now the source of truth
 
 export const BYDATES: Option[] = [
   { value: "avui", label: "Avui" },
@@ -86,14 +62,20 @@ export const dateFunctions: { [key: string]: string } = {
 export const DISTANCES: number[] = [5, 10, 25, 50, 100];
 
 /**
+ * Default filter value representing "all" (no filter applied)
+ * Used for both category and date filters throughout the application
+ */
+export const DEFAULT_FILTER_VALUE = "tots";
+
+/**
  * Dynamic category support functions
  * These functions use dynamic categories when available, fallback to static
  */
 
 /**
- * Get category names mapping (dynamic or static fallback)
+ * Get category names mapping from dynamic categories (API is source of truth)
  * @param categories - Dynamic categories from API
- * @returns Record mapping category values to display names
+ * @returns Record mapping category slugs to display names
  */
 export function getDynamicCategoryNamesMap(
   categories?: CategorySummaryResponseDTO[]
@@ -106,12 +88,12 @@ export function getDynamicCategoryNamesMap(
     }, {} as Record<string, string>);
   }
 
-  // Fallback to static mapping
-  return CATEGORY_NAMES_MAP;
+  // Return empty object if no categories available
+  return {};
 }
 
 /**
- * Get search terms subset (dynamic or static fallback)
+ * Get search terms subset from dynamic categories (API is source of truth)
  * @param categories - Dynamic categories from API
  * @returns Array of category names for search
  */
@@ -123,8 +105,8 @@ export function getDynamicSearchTermsSubset(
     return categories.slice(0, 4).map((cat) => cat.name);
   }
 
-  // Fallback to static subset
-  return SEARCH_TERMS_SUBSET;
+  // Return empty array if no categories available
+  return [];
 }
 
 /**
@@ -138,10 +120,10 @@ export function shouldUseDynamicCategories(): boolean {
 }
 
 /**
- * Get category display name (dynamic or static fallback)
- * @param categorySlug - Category slug or key
+ * Get category display name from dynamic categories (API is source of truth)
+ * @param categorySlug - Category slug
  * @param categories - Dynamic categories from API
- * @returns Display name for the category
+ * @returns Display name for the category, or slug if not found
  */
 export function getCategoryDisplayName(
   categorySlug: string,
@@ -154,8 +136,8 @@ export function getCategoryDisplayName(
     }
   }
 
-  // Fallback to static mapping
-  return CATEGORY_NAMES_MAP[categorySlug] || categorySlug;
+  // Return slug as fallback (capitalize first letter for readability)
+  return categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, " ");
 }
 
 // --- News UI constants ---
@@ -205,3 +187,18 @@ export const ONE_MINUTE_IN_MS = parseInt(
   process.env.HMAC_FUTURE_TOLERANCE_MS || "60000",
   10
 ); // 1 minute tolerance for future timestamps to account for clock skew
+
+/**
+ * DOS protection: limits on query parameters
+ * These constants are used consistently across middleware and URL utilities
+ * to prevent denial-of-service attacks via malicious query parameters.
+ * 
+ * Since middleware runs first and validates/rejects requests, these limits
+ * should be enforced at the edge. Internal utilities can use the same limits
+ * for defensive validation and truncation.
+ */
+export const MAX_QUERY_STRING_LENGTH = 2048; // Total query string length
+export const MAX_QUERY_PARAMS = 50; // Maximum number of query parameters
+export const MAX_PARAM_VALUE_LENGTH = 500; // Maximum length of individual parameter value
+export const MAX_PARAM_KEY_LENGTH = 100; // Maximum length of individual parameter key
+export const MAX_TOTAL_VALUE_LENGTH = 10000; // Maximum total length of all parameter values combined (for truncation scenarios)

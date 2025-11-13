@@ -1,12 +1,11 @@
-import Script from "next/script";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import type { PageData, PlaceTypeAndLabel, JsonLdScript } from "types/common";
+import JsonLdServer from "./JsonLdServer";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { ListEvent } from "types/api/event";
 
 export default function PlacePageShell({
-  nonce = "",
   scripts = [],
   // HybridEventsList props
   initialEvents,
@@ -21,7 +20,6 @@ export default function PlacePageShell({
   // ClientInteractiveLayer props
   categories,
 }: {
-  nonce?: string;
   scripts?: JsonLdScript[];
   initialEvents: ListEvent[];
   placeTypeLabel: PlaceTypeAndLabel;
@@ -37,14 +35,7 @@ export default function PlacePageShell({
   return (
     <>
       {scripts.map((s) => (
-        <Script
-          key={s.id}
-          id={s.id}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(s.data) }}
-        />
+        <JsonLdServer key={s.id} id={s.id} data={s.data} />
       ))}
 
       <HybridEventsList
@@ -57,6 +48,7 @@ export default function PlacePageShell({
         date={date}
         serverHasMore={serverHasMore}
         hasNews={hasNews}
+        categories={categories}
       />
 
       <ClientInteractiveLayer

@@ -185,7 +185,7 @@ Standardize button, card, badge, and layout patterns:
 - HybridEventsList: h1 (`.heading-1`) + subtitle (`.body-large`)
 - Footer: Navigation links + copyright (`.label`)
 - News Article page: h1 (`.heading-1`) + subtitle (`.body-large`)
-- Link components: ActiveLink + ServerNavLink (`.label`)
+- Link components: ActiveLink + ActiveNavLink (`.label`)
 
 ✅ Completed (Phase 2):
 

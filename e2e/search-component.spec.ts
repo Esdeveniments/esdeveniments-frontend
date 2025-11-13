@@ -1,42 +1,49 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Search behavior", () => {
-  test("debounced typing updates URL; Enter submits immediately; clear resets", async ({
+  test("typing does not auto-search; button click and Enter trigger search; clear resets", async ({
     page,
   }) => {
-    test.setTimeout(45000);
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    test.setTimeout(120000);
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const input = page.getByTestId("search-input");
-    await expect(input).toBeVisible();
+    const searchButton = page.getByTestId("search-button");
+    await expect(input).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(searchButton).toBeVisible();
 
-    // On home, search navigates to /catalunya/; start by ensuring we are on that path after focusing the input
+    // Type text - URL should NOT update (no auto-search)
     await input.fill("");
     await input.type("castellers");
-    // Small wait less than debounce threshold to ensure no early update
-    await page.waitForTimeout(300);
-    expect(page.url()).not.toContain("search=castellers");
+    
+    // Verify URL doesn't update after typing (no debounced auto-search)
+    // Wait briefly to ensure no auto-search triggers, then check once
+    await page.waitForTimeout(1000);
+    await expect(page).not.toHaveURL(/search=castellers/);
 
-    // Wait beyond debounce threshold and for navigation
-    await page.waitForTimeout(2000);
+    // Click search button to trigger search
+    await searchButton.click();
     await expect
       .poll(async () => page.url(), { timeout: 20000 })
       .toContain("search=castellers");
 
-    // Press Enter for immediate submit on same path
+    // Test Enter key - type new term and press Enter
     await input.fill("sardanes");
     await input.press("Enter");
     await expect
       .poll(async () => page.url(), { timeout: 20000 })
       .toContain("search=sardanes");
 
-    // Clear search via UI clear control if present, otherwise programmatically
-    // We rely on value reset to propagate URL clearing
-    await input.fill("");
-    // Debounce to clear param and wait for URL reset
-    await page.waitForTimeout(2000);
+    // Clear search - type new text first so clear button is visible
+    await input.fill("test");
+    const clearButton = page.getByLabel("Clear search");
+    await expect(clearButton).toBeVisible();
+    // Click clear button - should reset immediately
+    await clearButton.click();
     await expect
       .poll(async () => page.url(), { timeout: 20000 })
       .not.toContain("search=");
+    // Verify input is also cleared
+    await expect(input).toHaveValue("");
   });
 });

@@ -1,6 +1,6 @@
-import Script from "next/script";
-import { headers } from "next/headers";
+// No headers/nonce needed with relaxed CSP
 import Link from "next/link";
+import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   generateJsonData,
   getFormattedDate,
@@ -19,6 +19,8 @@ import {
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
+
+export const revalidate = 86400;
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -52,9 +54,6 @@ export default async function Page({
 }) {
   const { town, year, month } = await params;
   if (!town || !year || !month) return null;
-
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") || "";
 
   const { from, until } = getHistoricDates(month, Number(year));
 
@@ -127,36 +126,20 @@ export default async function Page({
     <>
       {/* Individual Events JSON-LD - kept for backward compatibility */}
       {jsonData.length > 0 && (
-        <Script
-          id={`${town}-${month}-${year}-events`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonData) }}
-        />
+        <JsonLdServer id={`${town}-${month}-${year}-events`} data={jsonData} />
       )}
 
       {/* Enhanced Collection Page Schema */}
-      <Script
+      <JsonLdServer
         id={`${town}-${month}-${year}-collection`}
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(collectionPageSchema),
-        }}
+        data={collectionPageSchema}
       />
 
       {/* Enhanced Events ItemList Schema */}
       {eventsItemList && (
-        <Script
+        <JsonLdServer
           id={`${town}-${month}-${year}-itemlist`}
-          type="application/ld+json"
-          strategy="afterInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(eventsItemList),
-          }}
+          data={eventsItemList}
         />
       )}
 

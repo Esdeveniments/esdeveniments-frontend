@@ -96,7 +96,7 @@ p {
 
   /* LEVEL 1: Hero/Brand - Main page title only */
   .heading-1 {
-    @apply text-3xl md:text-4xl font-bold tracking-tight leading-tight italic;
+    @apply text-2xl md:text-4xl font-bold tracking-tight leading-tight;
   }
 
   /* LEVEL 2: Major Sections - Page subtitle, major section dividers */

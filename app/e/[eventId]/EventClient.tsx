@@ -61,6 +61,27 @@ export default function EventClient({
     sendGoogleEvent("view_event_page", {});
   }, []);
 
+  // Count a visit (client beacon). Backend dedupes by event + visitor id.
+  useEffect(() => {
+    const payload = { eventId: event.id, slug: event.slug };
+    try {
+      const json = JSON.stringify(payload);
+      if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+        const blob = new Blob([json], { type: "application/json" });
+        navigator.sendBeacon("/api/visits", blob);
+      } else {
+        fetch("/api/visits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: json,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    } catch {
+      // no-op
+    }
+  }, [event.id, event.slug]);
+
   const slug = event.slug ?? "";
   const title = event.title ?? "";
   const cityName = event.city?.name || "";

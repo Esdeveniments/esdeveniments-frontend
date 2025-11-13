@@ -1,11 +1,11 @@
 import { cache } from "react";
-import { fetchWithHmac } from "./fetch-wrapper";
 import type {
   PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
 import { createKeyedCache } from "./cache";
+import { getInternalApiUrl, buildNewsQuery } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 
@@ -21,38 +21,17 @@ const placeHasNewsCache = createKeyedCache<boolean>(86400000);
 export async function fetchNews(
   params: FetchNewsParams
 ): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
-
-  const query: Partial<FetchNewsParams> = {};
-  query.page = typeof params.page === "number" ? params.page : 0;
-  query.size = typeof params.size === "number" ? params.size : 100;
-  if (params.place) query.place = params.place;
+  // Use internal API route for stable caching
 
   try {
-    const filteredEntries = Object.entries(query)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, String(v)]);
-
-    const queryString = new URLSearchParams(
-      Object.fromEntries(filteredEntries)
-    );
-    const finalUrl = `${apiUrl}/news?${queryString}`;
+    const queryString = buildNewsQuery(params);
+    const finalUrl = getInternalApiUrl(`/api/news?${queryString}`);
 
     const tags: CacheTag[] = [newsTag];
     if (params.place) {
       tags.push(newsPlaceTag(params.place));
     }
-    const response = await fetchWithHmac(finalUrl, {
+    const response = await fetch(finalUrl, {
       next: { revalidate: 60, tags },
     });
     if (!response.ok) {
@@ -85,10 +64,7 @@ export async function hasNewsForPlace(place: string): Promise<boolean> {
     return true;
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    return false;
-  }
+  // Internal route; if errors, return false
 
   return placeHasNewsCache(place, async () => {
     try {
@@ -98,9 +74,9 @@ export async function hasNewsForPlace(place: string): Promise<boolean> {
         size: "1",
         place,
       });
-      const finalUrl = `${apiUrl}/news?${queryString}`;
+      const finalUrl = getInternalApiUrl(`/api/news?${queryString}`);
 
-      const response = await fetchWithHmac(finalUrl, {
+      const response = await fetch(finalUrl, {
         next: { revalidate: 3600, tags: [newsTag, newsPlaceTag(place)] },
       });
       if (!response.ok) {
@@ -119,12 +95,9 @@ export async function hasNewsForPlace(place: string): Promise<boolean> {
 export async function fetchNewsBySlug(
   slug: string
 ): Promise<NewsDetailResponseDTO | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    return null;
-  }
+  // Internal route
   try {
-    const response = await fetchWithHmac(`${apiUrl}/news/${slug}`, {
+    const response = await fetch(getInternalApiUrl(`/api/news/${slug}`), {
       next: { revalidate: 60, tags: [newsTag, newsSlugTag(slug)] },
     });
     if (response.status === 404) return null;

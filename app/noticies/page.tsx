@@ -11,9 +11,8 @@ import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import JsonLd from "@components/partials/JsonLd";
-
-export const revalidate = 60;
+import JsonLdServer from "@components/partials/JsonLdServer";
+export const revalidate = 600;
 
 export async function generateMetadata(): Promise<Metadata> {
   // Basic SEO for the news listing page
@@ -26,7 +25,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-
   // Fetch the most recent news per hub
   const hubResults = await Promise.all(
     NEWS_HUBS.map(async (hub) => {
@@ -84,11 +82,11 @@ export default async function Page() {
 
   return (
     <div className="container flex-col justify-center items-center mt-8">
-      <JsonLd id="news-list-webpage-breadcrumbs" data={webPageSchema} />
+      <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
-        <JsonLd id="news-list-breadcrumbs" data={breadcrumbListSchema} />
+        <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <JsonLd id="news-list-itemlist" data={itemListSchema} />
+      <JsonLdServer id="news-list-itemlist" data={itemListSchema} />
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
       <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.

@@ -74,6 +74,7 @@ export const generateJsonData = (
       addressLocality: city?.name || "",
       postalCode: city?.postalCode || "",
       addressCountry: "ES", // Fixed: Always use "ES" for Spain
+      // All events are in Catalonia, so default to "CT" when region data is unavailable
       addressRegion: region?.name || "CT",
     };
   };
@@ -97,45 +98,39 @@ export const generateJsonData = (
     return unique.length > 0 ? unique : undefined;
   };
 
-  // Generate keywords from available data
-  const getKeywords = () => {
-    const raw = [...(getGenre() || []), city?.name, region?.name]
-      .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
-      .map((v) => v.trim());
-    const unique = Array.from(new Set(raw));
-    return unique.length > 0 ? unique.join(", ") : undefined;
-  };
-
   // Enhanced datetime with time if available
   const getEnhancedDateTime = (date: string, time: string | null) => {
     return time ? `${date}T${time}` : date;
   };
 
-  // Enhanced offers based on event type
+  // Enhanced offers based on event type - only include for FREE events
+  // For PAID events without known price, omit offers entirely per Google's best practices
   const getOffers = () => {
-    const baseOffer = {
-      "@type": "Offer" as const,
-      priceCurrency: "EUR",
-      availability: "https://schema.org/InStock",
-      url: `${siteUrl}/e/${slug}`,
-      validFrom: getEnhancedDateTime(startDate, startTime),
-    };
-
+    // Only include offers for FREE events
     if (event.type === "FREE") {
       return {
-        ...baseOffer,
+        "@type": "Offer" as const,
         price: 0,
-      };
-    } else {
-      return {
-        ...baseOffer,
-        price: "Contact for pricing",
-        priceSpecification: {
-          "@type": "PriceSpecification" as const,
-          priceCurrency: "EUR",
-        },
+        priceCurrency: "EUR",
+        availability: "https://schema.org/InStock",
+        url: `${siteUrl}/e/${slug}`,
+        validFrom: getEnhancedDateTime(startDate, startTime),
       };
     }
+    // For PAID events without price data, omit offers entirely
+    return undefined;
+  };
+
+  // Get organizer/performer name with fallback to location/venue or city name
+  // For cultural events, organizer and performer are often the same entity
+  const getOrganizerName = (): string => {
+    // Use location (venue name) as primary fallback, then city name, then default
+    // Explicitly filter out empty/whitespace-only strings to ensure we always return a meaningful name
+    const locationName = location.trim();
+    const cityName = city?.name?.trim();
+    if (locationName.length > 0) return locationName;
+    if (cityName && cityName.length > 0) return cityName;
+    return "Esdeveniments Catalunya";
   };
 
   // Dynamic eventStatus (improves accuracy for past/ongoing events)
@@ -167,6 +162,9 @@ export const generateJsonData = (
     eventStatusValue = "https://schema.org/EventInProgress"; // Live
   }
 
+  // Compute offers once (only for FREE events)
+  const offers = getOffers();
+
   return {
     "@context": "https://schema.org" as const,
     "@type": "Event" as const,
@@ -196,19 +194,24 @@ export const generateJsonData = (
     image: images,
     description,
     inLanguage: "ca",
-    ...(getKeywords() && { keywords: getKeywords() }),
     ...(getGenre() && { genre: getGenre() }),
+    // For cultural events, performer and organizer are often the same entity
+    // Use same fallback logic for both (venue/city name)
     performer: {
       "@type": "PerformingGroup" as const,
-      name: location,
+      name: getOrganizerName(),
     },
     organizer: {
       "@type": "Organization" as const,
-      name: location,
+      name: getOrganizerName(),
       url: siteUrl,
     },
-    offers: getOffers(),
+    // Only include offers for FREE events (omit for PAID without price)
+    ...(offers ? { offers } : {}),
     isAccessibleForFree: event.type === "FREE",
+    ...(isValidHttpUrl(event.url) && {
+      sameAs: event.url,
+    }),
     ...(eventDuration &&
       eventDuration.trim() !== "" && { duration: eventDuration }),
     ...(videoObject ? { video: videoObject } : {}),

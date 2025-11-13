@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
+// No headers/nonce needed with relaxed CSP
 import type { Metadata } from "next";
-import Script from "next/script";
 import Link from "next/link";
 import DOMPurify from "isomorphic-dompurify";
 import { getNewsBySlug } from "@lib/api/news";
@@ -15,6 +14,7 @@ import NewsHeroEvent from "@components/ui/newsHeroEvent";
 import NewsRichCard from "@components/ui/newsRichCard";
 import { getFormattedDate } from "@utils/date-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import JsonLdServer from "@components/partials/JsonLdServer";
 
 export async function generateMetadata({
   params,
@@ -55,10 +55,9 @@ export default async function Page({
   params: Promise<{ place: string; article: string }>;
 }) {
   const { place, article } = await params;
-  const [detail, placeType, headersList] = await Promise.all([
+  const [detail, placeType] = await Promise.all([
     getNewsBySlug(article),
     getPlaceTypeAndLabelCached(place),
-    headers(),
   ]);
 
   if (!detail) {
@@ -67,7 +66,6 @@ export default async function Page({
     return notFound();
   }
 
-  const nonce = headersList.get("x-nonce") || "";
   const plainDescription = DOMPurify.sanitize(detail.description || "", {
     ALLOWED_TAGS: [],
   });
@@ -210,20 +208,8 @@ export default async function Page({
         )}
       </div>
 
-      <Script
-        id="news-article-schema"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-      />
-      <Script
-        id="news-webpage-breadcrumbs"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
-      />
+      <JsonLdServer id="news-article-schema" data={articleSchema} />
+      <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
     </div>
   );
 }
