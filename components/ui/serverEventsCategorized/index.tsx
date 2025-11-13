@@ -13,18 +13,30 @@ import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ServerEventsCategorizedProps } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
 import Link from "next/link";
+import { computeTemporalStatus } from "@utils/event-status";
 
 function ServerEventsCategorized({
   categorizedEvents,
   pageData,
   categories,
 }: ServerEventsCategorizedProps): ReactElement {
-  // Filter out ads before processing
+  // Filter out ads and past events before processing
   const filteredCategorizedEvents = Object.entries(categorizedEvents).reduce(
     (acc, [category, events]) => {
-      const filteredEvents = events.filter(isEventSummaryResponseDTO);
-      if (filteredEvents.length > 0) {
-        acc[category] = filteredEvents;
+      const realEvents = events.filter(isEventSummaryResponseDTO);
+      // Filter out past events
+      const activeEvents = realEvents.filter((event) => {
+        const status = computeTemporalStatus(
+          event.startDate,
+          event.endDate,
+          undefined,
+          event.startTime,
+          event.endTime
+        );
+        return status.state !== "past";
+      });
+      if (activeEvents.length > 0) {
+        acc[category] = activeEvents;
       }
       return acc;
     },

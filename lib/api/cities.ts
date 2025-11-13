@@ -6,10 +6,17 @@ const cache = createCache<CitySummaryResponseDTO[]>(86400000);
 const cityByIdCache = createKeyedCache<CitySummaryResponseDTO | null>(86400000);
 
 async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
-  const response = await fetch(getInternalApiUrl(`/api/cities`), {
+  const url = getInternalApiUrl(`/api/cities`);
+  const response = await fetch(url, {
     next: { revalidate: 86400, tags: ["cities"] },
   });
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unable to read error response");
+    console.error(
+      `fetchCitiesFromApi: HTTP error! status: ${response.status}, url: ${url}, error: ${errorText}`
+    );
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
   return response.json();
 }
 

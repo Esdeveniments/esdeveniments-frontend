@@ -13,6 +13,7 @@ import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import { extractURLSegments } from "@utils/url-parsing";
+import { computeTemporalStatus } from "@utils/event-status";
 
 // Client side enhancer: handles pagination & de-duplication.
 // Expects initialEvents to be the SSR list (may include ad markers). We pass only
@@ -65,18 +66,33 @@ function HybridEventsListClientContent({
 
   // When filters are active, show ALL filtered events (replace SSR list)
   // When no filters, show only appended events (SSR list remains visible)
+  // Filter out past events in both cases
   const displayedEvents: ListEvent[] = useMemo(() => {
     if (!events || events.length === 0) return [];
 
+    // Filter out past events
+    const activeEvents = events.filter((event) => {
+      if (!isEventSummaryResponseDTO(event)) return true; // Keep ads
+      const status = computeTemporalStatus(
+        event.startDate,
+        event.endDate,
+        undefined,
+        event.startTime,
+        event.endTime
+      );
+      return status.state !== "past";
+    });
+
     if (hasClientFilters) {
       // Filters active: show all filtered events (replace SSR list)
-      return events;
+      return activeEvents;
     }
 
     // No filters: only show appended events beyond SSR list
     const seen = new Set<string>(realInitialEvents.map((e) => e.id));
     const uniqueAppended: EventSummaryResponseDTO[] = [];
-    for (const e of events) {
+    for (const e of activeEvents) {
+      if (!isEventSummaryResponseDTO(e)) continue; // Skip ads in appended list
       if (seen.has(e.id)) continue;
       seen.add(e.id);
       uniqueAppended.push(e);

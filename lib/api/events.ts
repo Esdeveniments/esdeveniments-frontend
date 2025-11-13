@@ -17,6 +17,7 @@ import {
   PagedResponseDTO,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
+import { computeTemporalStatus } from "@utils/event-status";
 
 export async function fetchEvents(
   params: FetchEventsParams
@@ -26,7 +27,7 @@ export async function fetchEvents(
     const finalUrl = getInternalApiUrl(`/api/events?${queryString}`);
 
     const response = await fetch(finalUrl, {
-      next: { revalidate: 600, tags: ["events"] },
+      next: { revalidate: 300, tags: ["events"] },
     });
     const data = await response.json();
     const validated = parsePagedEvents(data);
@@ -141,10 +142,16 @@ export async function fetchCategorizedEvents(
     }
     const finalUrl = getInternalApiUrl(`/api/events/categorized${params.toString() ? `?${params.toString()}` : ""}`);
     const response = await fetch(finalUrl, {
-      next: { revalidate: 3600, tags: ["events", "events:categorized"] },
+      next: { revalidate: 300, tags: ["events", "events:categorized"] },
     });
 
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unable to read error response");
+      console.error(
+        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+      );
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     const validated = parseCategorizedEvents(data);
     if (!validated) {
@@ -156,6 +163,9 @@ export async function fetchCategorizedEvents(
     return validated;
   } catch (e) {
     console.error("Error fetching categorized events:", e);
+    if (e instanceof Error) {
+      console.error("Error details:", e.message, e.stack);
+    }
     return {};
   }
 }
@@ -163,6 +173,25 @@ export async function fetchCategorizedEvents(
 // Cached wrapper to deduplicate categorized events within the same request
 // Mirrors existing pattern used for events/news slugs
 export const getCategorizedEvents = cache(fetchCategorizedEvents);
+
+/**
+ * Filter out past events from an array of events
+ * Uses computeTemporalStatus to determine if an event is past
+ */
+export function filterPastEvents(
+  events: EventSummaryResponseDTO[]
+): EventSummaryResponseDTO[] {
+  return events.filter((event) => {
+    const status = computeTemporalStatus(
+      event.startDate,
+      event.endDate,
+      undefined,
+      event.startTime,
+      event.endTime
+    );
+    return status.state !== "past";
+  });
+}
 
 function insertAdsRandomly(
   events: EventSummaryResponseDTO[],

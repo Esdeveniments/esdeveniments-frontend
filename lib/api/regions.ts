@@ -8,10 +8,17 @@ const regionsWithCitiesCache =
   createCache<RegionsGroupedByCitiesResponseDTO[]>(86400000);
 
 async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
-  const response = await fetch(getInternalApiUrl(`/api/regions`), {
+  const url = getInternalApiUrl(`/api/regions`);
+  const response = await fetch(url, {
     next: { revalidate: 86400, tags: ["regions"] },
   });
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unable to read error response");
+    console.error(
+      `fetchRegionsFromApi: HTTP error! status: ${response.status}, url: ${url}, error: ${errorText}`
+    );
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
   return response.json();
 }
 

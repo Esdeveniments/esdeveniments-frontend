@@ -1,4 +1,4 @@
-import { fetchEvents, insertAds } from "@lib/api/events";
+import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
 import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
@@ -38,7 +38,7 @@ import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 // page-level ISR not set here; fetch-level caching applies
-export const revalidate = 600;
+export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
 export const dynamicParams = true;
 
@@ -315,7 +315,8 @@ export default async function ByDatePage({
     noEventsFound = true;
   }
 
-  const eventsWithAds = insertAds(events);
+  const filteredEvents = filterPastEvents(events);
+  const eventsWithAds = insertAds(filteredEvents);
 
   // Fetch place type and check news in parallel for better performance
   const [placeTypeLabel, hasNews] = await Promise.all([

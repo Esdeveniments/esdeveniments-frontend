@@ -1,4 +1,4 @@
-import { fetchEvents, insertAds } from "@lib/api/events";
+import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
@@ -26,7 +26,7 @@ import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect } from "next/navigation";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 
-export const revalidate = 600;
+export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
 export const dynamicParams = true;
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
@@ -148,7 +148,8 @@ export default async function Page({
   }
 
   const events = eventsResponse?.content || [];
-  const eventsWithAds = insertAds(events);
+  const filteredEvents = filterPastEvents(events);
+  const eventsWithAds = insertAds(filteredEvents);
 
   // Check news (categories already fetched above)
   const hasNews = await hasNewsForPlace(place);

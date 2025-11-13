@@ -1,4 +1,4 @@
-import { fetchEvents, insertAds } from "@lib/api/events";
+import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
@@ -34,7 +34,7 @@ import { redirect } from "next/navigation";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
-export const revalidate = 600;
+export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
 export const dynamicParams = true;
 
@@ -288,7 +288,8 @@ export default async function FilteredPage({
     noEventsFound = true;
   }
 
-  const eventsWithAds = insertAds(events);
+  const filteredEvents = filterPastEvents(events);
+  const eventsWithAds = insertAds(filteredEvents);
 
   // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === filters.category);
