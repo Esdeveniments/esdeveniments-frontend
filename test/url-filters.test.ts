@@ -115,14 +115,16 @@ describe("url-filters: canonical building and parsing", () => {
       new URLSearchParams("")
     );
     const redirect = getRedirectUrl(parsed);
-    // invalid date/category should normalize to tots/tots -> /tarragona
-    expect(redirect).toBe("/tarragona");
+    // "xx" is not a valid date, "yy" is format-valid but not in API
+    // Without dynamic categories, format-valid slugs are accepted
+    // The category will be validated at runtime against API
+    expect(redirect).toBe("/tarragona/yy");
   });
 
-  it("redirects /place/invalid-category to /place", () => {
-    // No dynamic categories provided -> unknown category normalizes to 'tots'
+  it("redirects /place/invalid-category to /place when category format is invalid", () => {
+    // Invalid format category -> normalizes to 'tots'
     const parsed = parseFiltersFromUrl(
-      { place: "barcelona", category: "not-a-category" },
+      { place: "barcelona", category: "not a category!" }, // Invalid format (has spaces)
       new URLSearchParams("")
     );
     expect(parsed.isCanonical).toBe(false);
@@ -130,15 +132,35 @@ describe("url-filters: canonical building and parsing", () => {
     expect(redirect).toBe("/barcelona");
   });
 
-  it("redirects /place/date/invalid-category to /place/date", () => {
-    // Unknown category with valid date -> category becomes 'tots' and is omitted
+  it("preserves format-valid category when dynamic categories not provided", () => {
+    // Format-valid category is preserved (will be validated at runtime)
     const parsed = parseFiltersFromUrl(
-      { place: "barcelona", date: "avui", category: "not-a-category" },
+      { place: "barcelona", category: "not-a-category" }, // Valid format
+      new URLSearchParams("")
+    );
+    // Without dynamic categories, format-valid slugs are accepted
+    expect(parsed.isCanonical).toBe(true);
+  });
+
+  it("redirects /place/date/invalid-format-category to /place/date", () => {
+    // Invalid format category with valid date -> category becomes 'tots' and is omitted
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", date: "avui", category: "not a category!" }, // Invalid format
       new URLSearchParams("")
     );
     expect(parsed.isCanonical).toBe(false);
     const redirect = getRedirectUrl(parsed);
     expect(redirect).toBe("/barcelona/avui");
+  });
+
+  it("preserves format-valid category with date when dynamic categories not provided", () => {
+    // Format-valid category is preserved (will be validated at runtime)
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona", date: "avui", category: "not-a-category" }, // Valid format
+      new URLSearchParams("")
+    );
+    // Without dynamic categories, format-valid slugs are accepted
+    expect(parsed.isCanonical).toBe(true);
   });
 
   it("reads category from query params when only place segment exists", () => {
@@ -284,8 +306,9 @@ describe("url-filters: canonical building and parsing", () => {
 });
 
 describe("url-filters: category slug validation", () => {
-  it("accepts legacy category slugs and tots by default", () => {
-    expect(isValidCategorySlug("concerts")).toBe(true);
+  it("accepts format-valid category slugs and tots when no dynamic categories", () => {
+    // Without dynamic categories, format validation is used
+    expect(isValidCategorySlug("concerts")).toBe(true); // Valid format
     expect(isValidCategorySlug(DEFAULT_FILTER_VALUE)).toBe(true);
   });
 
@@ -294,8 +317,17 @@ describe("url-filters: category slug validation", () => {
     expect(isValidCategorySlug("fires-i-mercats", dynamic)).toBe(true);
   });
 
-  it("rejects unknown categories when not present dynamically", () => {
-    expect(isValidCategorySlug("unknown-slug")).toBe(false);
+  it("accepts format-valid categories when dynamic categories not provided", () => {
+    // Without dynamic categories, format validation is used (allows build-time scenarios)
+    // The category will be validated against API at runtime
+    expect(isValidCategorySlug("unknown-slug")).toBe(true); // Valid format
+    expect(isValidCategorySlug("unknown slug!")).toBe(false); // Invalid format
+  });
+
+  it("rejects unknown categories when dynamic categories are provided", () => {
+    const dynamic = [{ id: 1, name: "Teatre", slug: "teatre" }];
+    expect(isValidCategorySlug("unknown-slug", dynamic)).toBe(false);
+    expect(isValidCategorySlug("teatre", dynamic)).toBe(true);
   });
 });
 
@@ -946,15 +978,13 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
   });
 
   describe("category derivation from query params and dynamic categories", () => {
-    it("should preserve dynamic category from byDate when not in LEGACY_CATEGORIES", () => {
+    it("should preserve dynamic category from byDate", () => {
       // Scenario: /foo/literatura where "literatura" is a dynamic category
-      // Current behavior: loses category intent, redirects to /catalunya
       // Expected: should preserve as /catalunya/literatura
       const url = buildFallbackUrlForInvalidPlace({
-        byDate: "literatura", // Dynamic category, not in LEGACY_CATEGORIES
+        byDate: "literatura", // Dynamic category from API
         rawSearchParams: {},
       });
-      // Currently fails: returns /catalunya instead of /catalunya/literatura
       expect(url).toBe("/catalunya/literatura");
     });
 

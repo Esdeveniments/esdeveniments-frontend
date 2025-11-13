@@ -40,7 +40,6 @@ export {
 
 // Category helpers
 export {
-  findCategoryKeyByValue,
   findCategoryBySlugDynamic,
   getCategoryFromDynamicData,
   getCategoryId,

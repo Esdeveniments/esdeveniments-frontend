@@ -1,25 +1,4 @@
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import { CATEGORIES } from "./constants";
-
-/**
- * Maps a legacy category key to a URL-friendly slug
- * This function creates backward-compatible slugs for ISR route generation
- */
-export function mapLegacyCategoryToSlug(categoryKey: string): string {
-  const slugMap: Record<string, string> = {
-    "Festes Majors": "festes-majors",
-    Festivals: "festivals",
-    Familiar: "familiar",
-    Música: "musica",
-    Cinema: "cinema",
-    Teatre: "teatre",
-    Exposicions: "exposicions",
-    Fires: "fires",
-    Espectacles: "espectacles",
-  };
-
-  return slugMap[categoryKey] || categoryKey.toLowerCase().replace(/\s+/g, "-");
-}
 
 /**
  * Finds a category by slug in the dynamic categories array
@@ -60,10 +39,12 @@ export function createCategoryLookupMap(
 
 /**
  * Gets URL slug for a category key (for ISR route generation)
- * Falls back to legacy mapping if dynamic data not available
+ * @deprecated Use dynamic categories from API instead
+ * This function is kept for backward compatibility but should not be used
  */
 export function getCategorySlug(categoryKey: string): string {
-  return mapLegacyCategoryToSlug(categoryKey);
+  // Simple slug conversion - no legacy mapping
+  return categoryKey.toLowerCase().replace(/\s+/g, "-");
 }
 
 /**
@@ -75,69 +56,6 @@ export function getCategoryBySlug(
   slug: string
 ): CategorySummaryResponseDTO | null {
   return findCategoryBySlug(categories, slug);
-}
-
-/**
- * Maps legacy CategoryValue to corresponding dynamic category
- * Used during transition period for backward compatibility
- */
-export function mapLegacyValueToCategory(
-  categories: CategorySummaryResponseDTO[],
-  categoryValue: string
-): CategorySummaryResponseDTO | null {
-  if (!categories || !Array.isArray(categories)) {
-    return null;
-  }
-
-  // Find the legacy key that maps to this value
-  const legacyKey = Object.entries(CATEGORIES).find(
-    ([_, value]) => value === categoryValue
-  )?.[0] as string | undefined;
-
-  if (!legacyKey) {
-    return null;
-  }
-
-  // Convert legacy key to slug and find in dynamic categories
-  const slug = mapLegacyCategoryToSlug(legacyKey);
-  return findCategoryBySlug(categories, slug);
-}
-
-/**
- * Creates a bidirectional mapping between legacy and dynamic categories
- * Used for migration and compatibility
- */
-export function createLegacyDynamicMap(
-  categories: CategorySummaryResponseDTO[]
-): {
-  legacyToSlug: Map<string, string>;
-  slugToLegacy: Map<string, string>;
-} {
-  const legacyToSlug = new Map<string, string>();
-  const slugToLegacy = new Map<string, string>();
-
-  Object.keys(CATEGORIES).forEach((key) => {
-    const categoryKey = key;
-    const slug = mapLegacyCategoryToSlug(categoryKey);
-
-    legacyToSlug.set(categoryKey, slug);
-    slugToLegacy.set(slug, categoryKey);
-  });
-
-  // Also map dynamic categories that might have different slugs
-  categories.forEach((category) => {
-    // Try to find corresponding legacy key by name similarity
-    const matchingLegacyKey = Object.keys(CATEGORIES).find(
-      (key) => key.toLowerCase() === category.name.toLowerCase()
-    ) as string | undefined;
-
-    if (matchingLegacyKey && !slugToLegacy.has(category.slug)) {
-      legacyToSlug.set(matchingLegacyKey, category.slug);
-      slugToLegacy.set(category.slug, matchingLegacyKey);
-    }
-  });
-
-  return { legacyToSlug, slugToLegacy };
 }
 
 /**
@@ -171,24 +89,16 @@ export function isValidCategorySlug(slug: string): boolean {
 
 /**
  * Generates all possible category slugs for ISR pre-generation
- * Returns both legacy-mapped slugs and dynamic category slugs
+ * Uses dynamic categories from API as source of truth
  */
 export function getAllCategorySlugs(
   categories: CategorySummaryResponseDTO[] = []
 ): string[] {
   const slugs = new Set<string>();
 
-  // Add legacy category slugs
-  Object.keys(CATEGORIES).forEach((key) => {
-    const slug = mapLegacyCategoryToSlug(key);
-    if (isValidCategorySlug(slug)) {
-      slugs.add(slug);
-    }
-  });
-
-  // Add dynamic category slugs
+  // Add dynamic category slugs only
   categories.forEach((category) => {
-    if (isValidCategorySlug(category.slug)) {
+    if (isValidCategorySlugFormat(category.slug)) {
       slugs.add(category.slug);
     }
   });

@@ -20,10 +20,10 @@ test.describe("Filters canonical flows", () => {
     await expect(page.getByTestId("events-list")).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
   });
 
-  test("place + category canonical: /barcelona/concerts", async ({ page }) => {
-    await page.goto("/barcelona/concerts", { waitUntil: "domcontentloaded", timeout: 90000 });
-    // If barcelona doesn't exist, it redirects to /catalunya/concerts (preserves category)
-    await expect(page).toHaveURL(/\/(barcelona|catalunya)\/concerts$/);
+  test("place + category canonical: /barcelona/teatre", async ({ page }) => {
+    await page.goto("/barcelona/teatre", { waitUntil: "domcontentloaded", timeout: 90000 });
+    // If barcelona doesn't exist, it redirects to /catalunya/teatre (preserves category)
+    await expect(page).toHaveURL(/\/(barcelona|catalunya)\/teatre$/);
     // Wait for events list to be visible (may take time after redirect, especially on remote URLs)
     await expect(page.getByTestId("events-list")).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
   });

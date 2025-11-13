@@ -5,7 +5,7 @@ import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
 import AdArticle from "@components/ui/adArticle";
-import { CATEGORY_NAMES_MAP, DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
@@ -96,11 +96,10 @@ function ServerEventsCategorized({
                 // Ensure we use the slug from the dynamicCategory if found, for consistency
                 if (dynamicCategory) categorySlug = dynamicCategory.slug;
               } else {
-                // Fallback to static mapping
+                // Fallback: format slug as readable name
                 categoryName =
-                  CATEGORY_NAMES_MAP[
-                    category as keyof typeof CATEGORY_NAMES_MAP
-                  ] || category;
+                  category.charAt(0).toUpperCase() +
+                  category.slice(1).replace(/-/g, " ");
               }
 
               // Build natural Catalan phrasing: "L'agenda de/del/d'/de la [category]"

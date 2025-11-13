@@ -98,46 +98,29 @@ function parseLongitude(value: string): number | undefined {
   return isValidLongitude(lon) ? lon : undefined;
 }
 
-// Legacy categories for backward compatibility
-// Includes all known category slugs that might be mis-parsed as dates
-const LEGACY_CATEGORIES: Record<string, URLCategory> = {
-  tots: DEFAULT_FILTER_VALUE,
-  concerts: "concerts",
-  festivals: "festivals",
-  espectacles: "espectacles",
-  familia: "familia",
-  "fires-i-festes": "fires-i-festes",
-  exposicions: "exposicions",
-  esports: "esports",
-  gastronomia: "gastronomia",
-  "cursos-i-conferencies": "cursos-i-conferencies",
-  teatre: "teatre",
-  cinema: "cinema",
-  musica: "musica",
-  "festes-majors": "festes-majors",
-  fires: "fires",
-} as const;
-
 /**
- * Check if a category slug is valid (either legacy or dynamic)
+ * Check if a category slug is valid (dynamic categories or format validation)
+ * Relies on API categories as the source of truth
  */
 export function isValidCategorySlug(
   categorySlug: string,
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): boolean {
-  // Check legacy categories first
-  if (LEGACY_CATEGORIES[categorySlug]) {
+  // Always allow "tots" (default filter value)
+  if (categorySlug === DEFAULT_FILTER_VALUE) {
     return true;
   }
 
-  // Check dynamic categories if available
-  if (dynamicCategories && Array.isArray(dynamicCategories)) {
+  // Check dynamic categories if available (primary source of truth)
+  if (dynamicCategories && Array.isArray(dynamicCategories) && dynamicCategories.length > 0) {
     const found = dynamicCategories.some((cat) => cat.slug === categorySlug);
-    if (found) return true;
+    return found;
   }
 
-  // Default valid categories for fallback
-  return categorySlug === DEFAULT_FILTER_VALUE;
+  // If no dynamic categories available, validate format only
+  // This allows URLs to work during build/fallback scenarios
+  // The category will be validated against API at runtime
+  return isValidCategorySlugFormat(categorySlug);
 }
 
 /**
@@ -334,7 +317,7 @@ export function buildFallbackUrlForInvalidPlace(opts: {
   // Derive category from byDate if it's not a valid date but is a valid category slug format
   // This handles the case where /foo/festivals is parsed as [place]/[byDate] but
   // "festivals" is actually a category, not a date
-  // Note: We check format only (not existence in LEGACY_CATEGORIES) to support dynamic categories
+  // Note: We check format only to support dynamic categories from API
   // But we exclude obviously invalid strings to avoid false positives
   const derivedCategoryFromByDate =
     opts.byDate &&
@@ -408,8 +391,7 @@ export function getRedirectUrl(parsed: ParsedFilters): string | null {
 }
 
 /**
- * Get category slug from category value - enhanced with dynamic support
- * Falls back to legacy mapping if dynamic categories not available
+ * Get category slug from category value - uses dynamic categories as source of truth
  */
 export function getCategorySlug(
   category: URLCategory,
@@ -427,8 +409,9 @@ export function getCategorySlug(
     }
   }
 
-  // Fall back to legacy mapping or return as-is if already a valid slug
-  return LEGACY_CATEGORIES[category] || category || DEFAULT_FILTER_VALUE;
+  // Return as-is if already a valid slug format, or default
+  // No legacy mapping - API is the source of truth
+  return category || DEFAULT_FILTER_VALUE;
 }
 
 /**
@@ -452,17 +435,15 @@ export function getTopStaticCombinations(
     topPlaces = hardcodedTopPlaces;
   }
 
-  // Get top categories from dynamic data or fall back to legacy
+  // Get top categories from dynamic data (API is source of truth)
   let topCategories = [DEFAULT_FILTER_VALUE];
 
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
     // Use first 5 dynamic categories + "tots"
     const dynamicSlugs = dynamicCategories.slice(0, 4).map((cat) => cat.slug);
     topCategories = [DEFAULT_FILTER_VALUE, ...dynamicSlugs];
-  } else {
-    // Fall back to legacy categories
-    topCategories = [DEFAULT_FILTER_VALUE, "concerts", "festivals", "espectacles", "familia"];
   }
+  // If no dynamic categories, only use "tots" (empty array would skip category generation)
 
   const combinations = [];
 
@@ -479,7 +460,7 @@ export function getTopStaticCombinations(
 
 /**
  * Get all possible category slugs for ISR generation
- * Combines legacy and dynamic categories
+ * Uses dynamic categories from API as source of truth
  */
 export function getAllCategorySlugsForISR(
   dynamicCategories?: CategorySummaryResponseDTO[]
@@ -488,19 +469,21 @@ export function getAllCategorySlugsForISR(
     return getAllCategorySlugs(dynamicCategories);
   }
 
-  // Fall back to legacy categories
-  return Object.keys(LEGACY_CATEGORIES);
+  // If no dynamic categories available, return empty array
+  // ISR generation should fetch categories before calling this
+  return [];
 }
 
 /**
- * Find category by slug in dynamic or legacy data
+ * Find category by slug in dynamic categories
  * Returns category info for routing and display
+ * Note: This function is currently unused but kept for potential future use
  */
 export function findCategoryForRouting(
   slug: string,
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): { id?: number; name: string; slug: string } | null {
-  // Try dynamic categories first
+  // Use dynamic categories as source of truth
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
     const category = findCategoryBySlug(dynamicCategories, slug);
     if (category) {
@@ -512,14 +495,7 @@ export function findCategoryForRouting(
     }
   }
 
-  // Fall back to legacy categories
-  if (LEGACY_CATEGORIES[slug]) {
-    return {
-      name: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "),
-      slug: slug,
-    };
-  }
-
+  // No legacy fallback - API is the source of truth
   return null;
 }
 

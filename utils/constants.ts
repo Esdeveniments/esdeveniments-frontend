@@ -43,31 +43,7 @@ export const MONTHS_URL: string[] = [
   "desembre",
 ];
 
-export const CATEGORIES: Record<string, string> = {
-  "Festes Majors": "Festa Major",
-  Festivals: "Festival",
-  Familiar: "Familiar",
-  Música: "Música",
-  Cinema: "Cinema",
-  Teatre: "Teatre",
-  Exposicions: "Exposició",
-  Fires: "Fira",
-  Espectacles: "Espectacles",
-};
-
-export const SEARCH_TERMS_SUBSET: string[] = [
-  "Festa Major",
-  "Festival",
-  "Familiar",
-  "Música",
-];
-
-export const CATEGORY_NAMES_MAP: Record<string, string> = Object.fromEntries(
-  Object.entries(CATEGORIES).map(([displayName, searchTerm]) => [
-    searchTerm,
-    displayName,
-  ])
-);
+// Legacy category constants removed - API is now the source of truth
 
 export const BYDATES: Option[] = [
   { value: "avui", label: "Avui" },
@@ -97,9 +73,9 @@ export const DEFAULT_FILTER_VALUE = "tots";
  */
 
 /**
- * Get category names mapping (dynamic or static fallback)
+ * Get category names mapping from dynamic categories (API is source of truth)
  * @param categories - Dynamic categories from API
- * @returns Record mapping category values to display names
+ * @returns Record mapping category slugs to display names
  */
 export function getDynamicCategoryNamesMap(
   categories?: CategorySummaryResponseDTO[]
@@ -112,12 +88,12 @@ export function getDynamicCategoryNamesMap(
     }, {} as Record<string, string>);
   }
 
-  // Fallback to static mapping
-  return CATEGORY_NAMES_MAP;
+  // Return empty object if no categories available
+  return {};
 }
 
 /**
- * Get search terms subset (dynamic or static fallback)
+ * Get search terms subset from dynamic categories (API is source of truth)
  * @param categories - Dynamic categories from API
  * @returns Array of category names for search
  */
@@ -129,8 +105,8 @@ export function getDynamicSearchTermsSubset(
     return categories.slice(0, 4).map((cat) => cat.name);
   }
 
-  // Fallback to static subset
-  return SEARCH_TERMS_SUBSET;
+  // Return empty array if no categories available
+  return [];
 }
 
 /**
@@ -144,10 +120,10 @@ export function shouldUseDynamicCategories(): boolean {
 }
 
 /**
- * Get category display name (dynamic or static fallback)
- * @param categorySlug - Category slug or key
+ * Get category display name from dynamic categories (API is source of truth)
+ * @param categorySlug - Category slug
  * @param categories - Dynamic categories from API
- * @returns Display name for the category
+ * @returns Display name for the category, or slug if not found
  */
 export function getCategoryDisplayName(
   categorySlug: string,
@@ -160,8 +136,8 @@ export function getCategoryDisplayName(
     }
   }
 
-  // Fallback to static mapping
-  return CATEGORY_NAMES_MAP[categorySlug] || categorySlug;
+  // Return slug as fallback (capitalize first letter for readability)
+  return categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, " ");
 }
 
 // --- News UI constants ---

@@ -153,33 +153,14 @@ export async function generateStaticParams() {
     (date) => date !== DEFAULT_FILTER_VALUE
   ) as ByDateOptions[];
 
-  // Get top categories from dynamic data or fall back to legacy
+  // Get top categories from dynamic data (API is source of truth)
   // Validate categories exist in API to avoid generating pages for removed/renamed categories
   let topCategories: string[] = [];
   if (categories.length > 0) {
     // Use first 4 dynamic categories (same as getTopStaticCombinations)
-    const categorySlugs = new Set(categories.map((cat) => cat.slug));
-    const dynamicTopCategories = categories.slice(0, 4).map((cat) => cat.slug);
-
-    // Also validate legacy categories if they exist in API
-    const legacyCategories = [
-      "concerts",
-      "festivals",
-      "espectacles",
-      "familia",
-    ];
-    const validLegacyCategories = legacyCategories.filter((slug) =>
-      categorySlugs.has(slug)
-    );
-
-    // Prefer dynamic categories, but include valid legacy ones
-    topCategories = Array.from(
-      new Set([...dynamicTopCategories, ...validLegacyCategories])
-    ).slice(0, 4); // Limit to 4 total
-  } else {
-    // Fallback to hardcoded legacy categories if API failed
-    topCategories = ["concerts", "festivals", "espectacles", "familia"];
+    topCategories = categories.slice(0, 4).map((cat) => cat.slug);
   }
+  // If no categories available, don't generate category pages (only place/date combinations)
 
   const combinations = [];
 
