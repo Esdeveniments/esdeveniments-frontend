@@ -1,4 +1,4 @@
-import { memo, ReactElement, Suspense } from "react";
+import { memo, ReactElement } from "react";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import Badge from "@components/ui/common/badge";
@@ -67,13 +67,7 @@ function ServerEventsCategorized({
           )}
 
           {/* Location Discovery Widget */}
-          <Suspense
-            fallback={
-              <div className="w-full h-12 bg-background animate-pulse rounded-full" />
-            }
-          >
-            <LocationDiscoveryWidget />
-          </Suspense>
+          <LocationDiscoveryWidget />
         </div>
 
         <div className="container">
