@@ -21,43 +21,51 @@ import {
   isValidCategorySlugFormat,
 } from "./category-mapping";
 import { topStaticGenerationPlaces } from "./priority-places";
-import { DEFAULT_FILTER_VALUE } from "./constants";
+import {
+  DEFAULT_FILTER_VALUE,
+  MAX_QUERY_PARAMS,
+  MAX_PARAM_VALUE_LENGTH,
+  MAX_PARAM_KEY_LENGTH,
+  MAX_TOTAL_VALUE_LENGTH,
+} from "./constants";
 
 /**
  * Convert Next.js searchParams object to URLSearchParams
  * Handles string, string[], and undefined values correctly
  * 
  * 🛡️ SECURITY: Limits parameter count and size to prevent DoS attacks
+ * Uses the same limits as middleware for consistency. Since middleware runs first
+ * and validates/rejects requests, this function primarily serves as a defensive
+ * measure for truncation scenarios (e.g., when called from other contexts).
  */
 export function toUrlSearchParams(
   raw: Record<string, string | string[] | undefined>
 ): URLSearchParams {
   const params = new URLSearchParams();
-  const MAX_PARAMS = 50; // Maximum number of distinct parameters
-  const MAX_VALUE_LENGTH = 1000; // Maximum length per parameter value
-  const MAX_TOTAL_LENGTH = 10000; // Maximum total length of all values combined
   
   let paramCount = 0;
   let totalLength = 0;
   
   for (const [key, value] of Object.entries(raw)) {
-    if (paramCount >= MAX_PARAMS) break;
+    if (paramCount >= MAX_QUERY_PARAMS) break;
     
-    // Validate key length
-    if (key.length > 100) continue;
+    // Validate key length (same limit as middleware)
+    if (key.length > MAX_PARAM_KEY_LENGTH) continue;
     
     if (Array.isArray(value)) {
       for (const entry of value) {
         if (entry != null && typeof entry === "string") {
-          const truncated = entry.slice(0, MAX_VALUE_LENGTH);
-          if (totalLength + truncated.length > MAX_TOTAL_LENGTH) break;
+          // Truncate to middleware's stricter limit (500) for consistency
+          const truncated = entry.slice(0, MAX_PARAM_VALUE_LENGTH);
+          if (totalLength + truncated.length > MAX_TOTAL_VALUE_LENGTH) break;
           params.append(key, truncated);
           totalLength += truncated.length;
         }
       }
     } else if (value != null && typeof value === "string") {
-      const truncated = value.slice(0, MAX_VALUE_LENGTH);
-      if (totalLength + truncated.length > MAX_TOTAL_LENGTH) break;
+      // Truncate to middleware's stricter limit (500) for consistency
+      const truncated = value.slice(0, MAX_PARAM_VALUE_LENGTH);
+      if (totalLength + truncated.length > MAX_TOTAL_VALUE_LENGTH) break;
       params.append(key, truncated);
       totalLength += truncated.length;
     }

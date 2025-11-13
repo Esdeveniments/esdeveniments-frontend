@@ -201,6 +201,15 @@ export interface ClientInteractiveLayerProps {
   placeTypeLabel?: PlaceTypeAndLabel;
 }
 
+export interface ClientInteractiveLayerContentProps
+  extends ClientInteractiveLayerProps {
+  isNavbarVisible: boolean;
+  isHydrated: boolean;
+  isModalOpen: boolean;
+  handleOpenModal: () => void;
+  handleCloseModal: () => void;
+}
+
 export interface ActiveNavLinkProps {
   href: string;
   children: ReactNode;

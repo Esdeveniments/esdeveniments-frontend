@@ -10,7 +10,10 @@ import ServerFilters from "@components/ui/filters/ServerFilters";
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import { extractURLSegments, debugURLParsing } from "@utils/url-parsing";
-import { ClientInteractiveLayerProps } from "types/props";
+import {
+  ClientInteractiveLayerProps,
+  ClientInteractiveLayerContentProps,
+} from "types/props";
 import Imago from "@public/static/images/imago-esdeveniments.png";
 
 function debounce(func: () => void, wait: number): () => void {
@@ -31,14 +34,7 @@ function ClientInteractiveLayerContent({
   isModalOpen,
   handleOpenModal,
   handleCloseModal,
-}: ClientInteractiveLayerProps & {
-  isNavbarVisible: boolean;
-  isHydrated: boolean;
-  scrollIcon: boolean;
-  isModalOpen: boolean;
-  handleOpenModal: () => void;
-  handleCloseModal: () => void;
-}) {
+}: ClientInteractiveLayerContentProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
@@ -178,7 +174,6 @@ function ClientInteractiveLayer({
           placeTypeLabel={placeTypeLabel}
           isNavbarVisible={isNavbarVisible}
           isHydrated={isHydrated}
-          scrollIcon={scrollIcon}
           isModalOpen={isModalOpen}
           handleOpenModal={handleOpenModal}
           handleCloseModal={handleCloseModal}

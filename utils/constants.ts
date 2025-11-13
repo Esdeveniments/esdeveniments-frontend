@@ -187,3 +187,18 @@ export const ONE_MINUTE_IN_MS = parseInt(
   process.env.HMAC_FUTURE_TOLERANCE_MS || "60000",
   10
 ); // 1 minute tolerance for future timestamps to account for clock skew
+
+/**
+ * DOS protection: limits on query parameters
+ * These constants are used consistently across middleware and URL utilities
+ * to prevent denial-of-service attacks via malicious query parameters.
+ * 
+ * Since middleware runs first and validates/rejects requests, these limits
+ * should be enforced at the edge. Internal utilities can use the same limits
+ * for defensive validation and truncation.
+ */
+export const MAX_QUERY_STRING_LENGTH = 2048; // Total query string length
+export const MAX_QUERY_PARAMS = 50; // Maximum number of query parameters
+export const MAX_PARAM_VALUE_LENGTH = 500; // Maximum length of individual parameter value
+export const MAX_PARAM_KEY_LENGTH = 100; // Maximum length of individual parameter key
+export const MAX_TOTAL_VALUE_LENGTH = 10000; // Maximum total length of all parameter values combined (for truncation scenarios)

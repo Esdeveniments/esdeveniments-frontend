@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { isValidDateSlug } from "@lib/dates";
-import { DEFAULT_FILTER_VALUE } from "./constants";
-
-// DOS protection: limits on query parameters
-const MAX_QUERY_STRING_LENGTH = 2048; // Total query string length
-const MAX_QUERY_PARAMS = 50; // Maximum number of query parameters
-const MAX_PARAM_VALUE_LENGTH = 500; // Maximum length of individual parameter value
-const MAX_PARAM_KEY_LENGTH = 100; // Maximum length of individual parameter key
+import {
+  DEFAULT_FILTER_VALUE,
+  MAX_QUERY_STRING_LENGTH,
+  MAX_QUERY_PARAMS,
+  MAX_PARAM_VALUE_LENGTH,
+  MAX_PARAM_KEY_LENGTH,
+} from "./constants";
 
 // Allowed query parameters to preserve in redirects (security: allowlist only)
 const ALLOWED_QUERY_PARAMS = new Set(["search", "distance", "lat", "lon"]);
