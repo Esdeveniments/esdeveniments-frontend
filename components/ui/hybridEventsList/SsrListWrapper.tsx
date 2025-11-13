@@ -1,15 +1,10 @@
 "use client";
 
-import { ReactNode, useMemo, JSX } from "react";
+import { useMemo, JSX } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import { extractURLSegments } from "@utils/url-parsing";
-import type { CategorySummaryResponseDTO } from "types/api/category";
-
-interface SsrListWrapperProps {
-  children: ReactNode;
-  categories?: CategorySummaryResponseDTO[];
-}
+import type { SsrListWrapperProps } from "types/props";
 
 // Declaratively controls visibility of the SSR list based on client-only filters.
 // Keeps SSR content in the initial HTML for SEO, then hides it after hydration

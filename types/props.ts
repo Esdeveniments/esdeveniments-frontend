@@ -256,6 +256,11 @@ export interface HybridEventsListProps {
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
+export interface SsrListWrapperProps {
+  children: ReactNode;
+  categories?: CategorySummaryResponseDTO[];
+}
+
 export interface ServerEventsCategorizedProps {
   categorizedEvents: Record<string, ListEvent[]>;
   pageData?: PageData;
