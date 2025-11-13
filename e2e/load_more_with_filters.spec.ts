@@ -1,12 +1,17 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Load more with filters via proxy", () => {
-  test.skip("appends pages and hides button when last", async ({ page }) => {
+  test("appends pages and hides button when last", async ({ page }) => {
     test.setTimeout(45000);
     // Intercept client calls to the internal proxy
-    await page.route(/\/api\/events\?.*/, async (route) => {
+    await page.route(/\/api\/events/, async (route) => {
       const url = new URL(route.request().url());
       const pageParam = url.searchParams.get("page");
+
+      // Continue with normal request for pages we don't mock
+      if (pageParam !== "1" && pageParam !== "2") {
+        return route.continue();
+      }
 
       if (pageParam === "1") {
         return route.fulfill({
@@ -77,7 +82,7 @@ test.describe("Load more with filters via proxy", () => {
             ],
             currentPage: 1,
             pageSize: 10,
-            totalElements: 4,
+            totalElements: 5,
             totalPages: 2,
             last: false,
           }),
@@ -123,40 +128,45 @@ test.describe("Load more with filters via proxy", () => {
             currentPage: 2,
             pageSize: 10,
             totalElements: 5,
-            totalPages: 3,
+            totalPages: 2,
             last: true,
           }),
         });
       }
-      // Default for unexpected
-      return route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          content: [],
-          currentPage: 0,
-          pageSize: 10,
-          totalElements: 0,
-          totalPages: 0,
-          last: true,
-        }),
-      });
+      // Should not reach here, but continue just in case
+      return route.continue();
     });
 
-    await page.goto("/e2e/load-more", { waitUntil: "domcontentloaded" });
+    await page.goto("/e2e/load-more", { waitUntil: "networkidle" });
     // Load more should be available initially
     await expect(page.getByTestId("hasMore")).toHaveText("true");
     const loadMore = page.getByTestId("load-more-button");
     await expect(loadMore).toBeVisible();
 
-    // First click fetches page=1 and shows events 3 & 4
-    await Promise.all([
-      page.waitForResponse(
-        (res) =>
-          res.url().includes("/api/events") && res.url().includes("page=1")
-      ),
-      loadMore.click(),
-    ]);
+    // First click activates and fetches page=1 (fallbackData is treated as page 0)
+    // Set up listener before clicking
+    let page1Fetched = false;
+    const responsePromise = page.waitForResponse(
+      (res) => {
+        if (!res.url().includes("/api/events")) return false;
+        try {
+          const url = new URL(res.url());
+          const pageParam = url.searchParams.get("page");
+          if (pageParam === "1") {
+            page1Fetched = true;
+            return true;
+          }
+        } catch {
+          return false;
+        }
+        return false;
+      },
+      { timeout: 20000 }
+    );
+    
+    await loadMore.click();
+    await responsePromise;
+    expect(page1Fetched).toBe(true);
     await expect(page.getByTestId("appended-list")).toContainText(
       "E2E Event 3"
     );
@@ -165,14 +175,20 @@ test.describe("Load more with filters via proxy", () => {
     );
 
     // Second click fetches page=2 and shows event 5, then button disappears
-    await Promise.all([
-      page.waitForResponse(
-        (res) =>
-          res.url().includes("/api/events") && res.url().includes("page=2")
-      ),
-      loadMore.click(),
-    ]);
-    // Ensure the last page item appears and button disappears
+    const responsePromise2 = page.waitForResponse(
+      (res) => {
+        const url = res.url();
+        return url.includes("/api/events") && url.includes("page=2");
+      },
+      { timeout: 15000 }
+    );
+    await loadMore.click();
+    await responsePromise2;
+    // Ensure the last page item appears
+    await expect(page.getByTestId("appended-list")).toContainText(
+      "E2E Event 5"
+    );
+    // Button should disappear when last page is reached
     await expect(
       page.getByRole("button", { name: "Carregar més" })
     ).toHaveCount(0);

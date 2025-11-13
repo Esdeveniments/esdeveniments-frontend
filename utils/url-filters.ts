@@ -32,7 +32,7 @@ import {
 /**
  * Convert Next.js searchParams object to URLSearchParams
  * Handles string, string[], and undefined values correctly
- * 
+ *
  * 🛡️ SECURITY: Limits parameter count and size to prevent DoS attacks
  * Uses the same limits as middleware for consistency. Since middleware runs first
  * and validates/rejects requests, this function primarily serves as a defensive
@@ -42,37 +42,43 @@ export function toUrlSearchParams(
   raw: Record<string, string | string[] | undefined>
 ): URLSearchParams {
   const params = new URLSearchParams();
-  
+
   let paramCount = 0;
   let totalLength = 0;
-  
+
   for (const [key, value] of Object.entries(raw)) {
     if (paramCount >= MAX_QUERY_PARAMS) break;
-    
+
     // Validate key length (same limit as middleware)
     if (key.length > MAX_PARAM_KEY_LENGTH) continue;
-    
+
+    const appendIfRoom = (entry: string): boolean => {
+      if (paramCount >= MAX_QUERY_PARAMS) {
+        return false;
+      }
+      const truncated = entry.slice(0, MAX_PARAM_VALUE_LENGTH);
+      if (totalLength + truncated.length > MAX_TOTAL_VALUE_LENGTH) {
+        return false;
+      }
+      params.append(key, truncated);
+      totalLength += truncated.length;
+      paramCount += 1;
+      return true;
+    };
+
     if (Array.isArray(value)) {
       for (const entry of value) {
         if (entry != null && typeof entry === "string") {
-          // Truncate to middleware's stricter limit (500) for consistency
-          const truncated = entry.slice(0, MAX_PARAM_VALUE_LENGTH);
-          if (totalLength + truncated.length > MAX_TOTAL_VALUE_LENGTH) break;
-          params.append(key, truncated);
-          totalLength += truncated.length;
+          if (!appendIfRoom(entry)) {
+            break;
+          }
         }
       }
     } else if (value != null && typeof value === "string") {
-      // Truncate to middleware's stricter limit (500) for consistency
-      const truncated = value.slice(0, MAX_PARAM_VALUE_LENGTH);
-      if (totalLength + truncated.length > MAX_TOTAL_VALUE_LENGTH) break;
-      params.append(key, truncated);
-      totalLength += truncated.length;
+      appendIfRoom(value);
     }
-    
-    paramCount++;
   }
-  
+
   return params;
 }
 
@@ -120,7 +126,11 @@ export function isValidCategorySlug(
   }
 
   // Check dynamic categories if available (primary source of truth)
-  if (dynamicCategories && Array.isArray(dynamicCategories) && dynamicCategories.length > 0) {
+  if (
+    dynamicCategories &&
+    Array.isArray(dynamicCategories) &&
+    dynamicCategories.length > 0
+  ) {
     const found = dynamicCategories.some((cat) => cat.slug === categorySlug);
     return found;
   }
@@ -207,7 +217,8 @@ export function parseFiltersFromUrl(
   //    - /barcelona?date=avui → /barcelona/avui
   const hasQueryCategoryOrDate = queryCategory || queryDate;
   const hasTotsInSegments =
-    segments.date === DEFAULT_FILTER_VALUE || segments.category === DEFAULT_FILTER_VALUE;
+    segments.date === DEFAULT_FILTER_VALUE ||
+    segments.category === DEFAULT_FILTER_VALUE;
 
   // Canonical URLs should:
   // - Not have "tots" in segments (it should be omitted)
@@ -224,8 +235,10 @@ export function parseFiltersFromUrl(
       normalizedDate === DEFAULT_FILTER_VALUE &&
       normalizedCategory === DEFAULT_FILTER_VALUE) ||
       (segmentCount === 2 &&
-        ((normalizedDate === DEFAULT_FILTER_VALUE && normalizedCategory !== DEFAULT_FILTER_VALUE) ||
-          (normalizedDate !== DEFAULT_FILTER_VALUE && normalizedCategory === DEFAULT_FILTER_VALUE))) ||
+        ((normalizedDate === DEFAULT_FILTER_VALUE &&
+          normalizedCategory !== DEFAULT_FILTER_VALUE) ||
+          (normalizedDate !== DEFAULT_FILTER_VALUE &&
+            normalizedCategory === DEFAULT_FILTER_VALUE))) ||
       (segmentCount === 3 &&
         normalizedDate !== DEFAULT_FILTER_VALUE &&
         normalizedCategory !== DEFAULT_FILTER_VALUE &&
@@ -312,16 +325,17 @@ export function buildFallbackUrlForInvalidPlace(opts: {
 }): string {
   const params = toUrlSearchParams(opts.rawSearchParams);
   const queryCategory = params.get("category");
-  
+
   // Helper to check if a string looks like it could be a real category (not obviously invalid)
   const looksLikeCategory = (slug: string): boolean => {
     // Exclude obvious non-categories: date formats, reserved words, error-like strings
     if (/^\d{4}-\d{2}-\d{2}$/.test(slug)) return false; // Date format: 2024-01-15
-    if (slug === "null" || slug === "undefined" || slug === "invalid") return false;
+    if (slug === "null" || slug === "undefined" || slug === "invalid")
+      return false;
     if (slug.startsWith("invalid-") || slug.includes("error")) return false;
     return true;
   };
-  
+
   // Derive category from byDate if it's not a valid date but is a valid category slug format
   // This handles the case where /foo/festivals is parsed as [place]/[byDate] but
   // "festivals" is actually a category, not a date
@@ -336,9 +350,11 @@ export function buildFallbackUrlForInvalidPlace(opts: {
       : undefined;
 
   // Priority: explicit category > query category > derived from byDate
-  const derivedCategory = 
-    opts.category ?? 
-    (queryCategory && isValidCategorySlugFormat(queryCategory) ? queryCategory : undefined) ??
+  const derivedCategory =
+    opts.category ??
+    (queryCategory && isValidCategorySlugFormat(queryCategory)
+      ? queryCategory
+      : undefined) ??
     derivedCategoryFromByDate;
 
   // 🛡️ SECURITY: Validate distance to prevent NaN in URLs
@@ -355,12 +371,18 @@ export function buildFallbackUrlForInvalidPlace(opts: {
   const filters: Partial<URLFilterState> = {
     place: "catalunya",
     byDate:
-      opts.byDate && isValidDateSlug(opts.byDate) ? opts.byDate : DEFAULT_FILTER_VALUE,
+      opts.byDate && isValidDateSlug(opts.byDate)
+        ? opts.byDate
+        : DEFAULT_FILTER_VALUE,
     category: derivedCategory || DEFAULT_FILTER_VALUE,
     searchTerm: params.get("search") || undefined,
     distance,
-    lat: params.get("lat") ? parseLatitude(params.get("lat") as string) : undefined,
-    lon: params.get("lon") ? parseLongitude(params.get("lon") as string) : undefined,
+    lat: params.get("lat")
+      ? parseLatitude(params.get("lat") as string)
+      : undefined,
+    lon: params.get("lon")
+      ? parseLongitude(params.get("lon") as string)
+      : undefined,
   };
 
   return buildCanonicalUrl(filters);

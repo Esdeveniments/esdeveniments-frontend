@@ -8,7 +8,7 @@ import {
   toUrlSearchParams,
   buildFallbackUrlForInvalidPlace,
 } from "../utils/url-filters";
-import { DEFAULT_FILTER_VALUE } from "../utils/constants";
+import { DEFAULT_FILTER_VALUE, MAX_QUERY_PARAMS } from "../utils/constants";
 
 describe("url-filters: canonical building and parsing", () => {
   it("omits tots date and category when both default", () => {
@@ -382,6 +382,68 @@ describe("url-filters: toUrlSearchParams conversion", () => {
     const params = toUrlSearchParams(raw);
     expect(params.has("category")).toBe(false);
     expect(params.get("search")).toBe("rock");
+  });
+
+  describe("security: MAX_QUERY_PARAMS limit enforcement", () => {
+    it("enforces MAX_QUERY_PARAMS limit per parameter value, not per key", () => {
+      // Create an array with more values than MAX_QUERY_PARAMS
+      const manyValues = Array.from({ length: MAX_QUERY_PARAMS + 10 }, (_, i) => `value${i}`);
+      const raw = { foo: manyValues };
+      const params = toUrlSearchParams(raw);
+      
+      // Should only append MAX_QUERY_PARAMS values, not all of them
+      expect(params.getAll("foo").length).toBe(MAX_QUERY_PARAMS);
+      expect(params.getAll("foo")[0]).toBe("value0");
+      expect(params.getAll("foo")[MAX_QUERY_PARAMS - 1]).toBe(`value${MAX_QUERY_PARAMS - 1}`);
+    });
+
+    it("stops appending when MAX_QUERY_PARAMS is reached across multiple keys", () => {
+      // Create multiple keys that together exceed the limit
+      const raw: Record<string, string | string[]> = {};
+      for (let i = 0; i < 10; i++) {
+        raw[`key${i}`] = Array.from({ length: 10 }, (_, j) => `value${i}-${j}`);
+      }
+      const params = toUrlSearchParams(raw);
+      
+      // Count total parameters
+      let totalParams = 0;
+      for (const key of Object.keys(raw)) {
+        totalParams += params.getAll(key).length;
+      }
+      
+      // Should not exceed MAX_QUERY_PARAMS
+      expect(totalParams).toBeLessThanOrEqual(MAX_QUERY_PARAMS);
+    });
+
+    it("handles single string values correctly within limit", () => {
+      const raw: Record<string, string> = {};
+      for (let i = 0; i < MAX_QUERY_PARAMS; i++) {
+        raw[`key${i}`] = `value${i}`;
+      }
+      const params = toUrlSearchParams(raw);
+      
+      // All should be present
+      expect(params.get("key0")).toBe("value0");
+      expect(params.get(`key${MAX_QUERY_PARAMS - 1}`)).toBe(`value${MAX_QUERY_PARAMS - 1}`);
+    });
+
+    it("stops at MAX_QUERY_PARAMS even with mixed arrays and strings", () => {
+      const raw: Record<string, string | string[]> = {
+        single1: "value1",
+        array: Array.from({ length: MAX_QUERY_PARAMS }, (_, i) => `array${i}`),
+        single2: "value2",
+      };
+      const params = toUrlSearchParams(raw);
+      
+      // Count total parameters
+      let totalParams = 0;
+      totalParams += params.getAll("single1").length;
+      totalParams += params.getAll("array").length;
+      totalParams += params.getAll("single2").length;
+      
+      // Should not exceed MAX_QUERY_PARAMS
+      expect(totalParams).toBeLessThanOrEqual(MAX_QUERY_PARAMS);
+    });
   });
 });
 
