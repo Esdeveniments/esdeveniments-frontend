@@ -80,10 +80,19 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
       const data = await fetchRegionsExternal();
       return data;
     } catch (fallbackError) {
-      console.error(
-        "fetchRegions: Both internal and external API failed:",
-        fallbackError
-      );
+      // Avoid logging raw error objects (may contain sensitive data).
+      // Log only the error message or a stringified value to reduce exposure of stack traces or internal context.
+      if (fallbackError instanceof Error) {
+        console.error(
+          "fetchRegions: Both internal and external API failed:",
+          fallbackError.message
+        );
+      } else {
+        console.error(
+          "fetchRegions: Both internal and external API failed:",
+          String(fallbackError)
+        );
+      }
       return [];
     }
   }
