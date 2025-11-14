@@ -86,11 +86,13 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     const publishButton = page.getByTestId("publish-button");
     await expect(publishButton).toBeEnabled();
 
-    const navigationPromise = page.waitForURL(/\/e\/e2e-event-/, {
-      timeout: 60000,
-    });
-    await publishButton.click();
-    await navigationPromise;
+    await Promise.all([
+      publishButton.click(),
+      page.waitForURL(/\/e\/e2e-event-/, {
+        timeout: 60000,
+        waitUntil: "domcontentloaded",
+      }),
+    ]);
 
     await expect(page).toHaveURL(/\/e\/e2e-event-/);
     await expect(page.locator("h1")).toHaveText(title);
