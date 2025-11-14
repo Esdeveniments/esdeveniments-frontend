@@ -422,25 +422,36 @@ export function getRedirectUrl(parsed: ParsedFilters): string | null {
 
 /**
  * Get category slug from category value - uses dynamic categories as source of truth
+ * Categories API returns id, name, and slug - no transformation needed
  */
 export function getCategorySlug(
   category: URLCategory,
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): string {
-  // If we have dynamic categories, try to find the category
+  if (!category || category === DEFAULT_FILTER_VALUE) {
+    return DEFAULT_FILTER_VALUE;
+  }
+
+  // If we have dynamic categories, try to find the category by slug or name
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
     const foundCategory = dynamicCategories.find(
       (cat) =>
         cat.name.toLowerCase() === category.toLowerCase() ||
-        cat.slug === category
+        cat.slug === category ||
+        cat.slug.toLowerCase() === category.toLowerCase()
     );
     if (foundCategory) {
       return foundCategory.slug;
     }
   }
 
-  // Return as-is if already a valid slug format, or default
-  // No legacy mapping - API is the source of truth
+  // If already a valid slug format, return as-is
+  if (isValidCategorySlugFormat(category)) {
+    return category;
+  }
+
+  // Return as-is if no match found (categories API is source of truth)
+  // No transformation needed - API provides proper slugs
   return category || DEFAULT_FILTER_VALUE;
 }
 

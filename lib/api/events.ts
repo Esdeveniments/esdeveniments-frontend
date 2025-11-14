@@ -31,6 +31,17 @@ export async function fetchEvents(
     const response = await fetch(finalUrl, {
       next: { revalidate: 300, tags: ["events"] },
     });
+
+    if (!response.ok) {
+      const errorText = await response
+        .text()
+        .catch(() => "Unable to read error response");
+      console.error(
+        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+      );
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     const validated = parsePagedEvents(data);
     if (!validated) {
@@ -116,13 +127,16 @@ export async function createEvent(
     formData.append("imageFile", imageFile);
   }
 
-  const response = await fetchWithHmac(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-    },
-    body: formData,
-  });
+  const response = await fetchWithHmac(
+    `${process.env.NEXT_PUBLIC_API_URL}/events`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: formData,
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -144,7 +158,9 @@ export async function fetchCategorizedEvents(
 ): Promise<CategorizedEvents> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
-    console.warn("fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object");
+    console.warn(
+      "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object"
+    );
     return {};
   }
 
@@ -160,20 +176,15 @@ export async function fetchCategorizedEvents(
       const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
       const validated = parseCategorizedEvents(data);
       if (!validated) {
-        console.error(
-          "fetchCategorizedEvents: Build phase validation failed, returning fallback"
-        );
+        console.error("fetchCategorizedEvents: Build phase validation failed");
         return {};
-      }
-      if (Object.keys(validated).length === 0) {
-        console.warn("fetchCategorizedEvents: Build phase fetch returned empty categorized events");
       }
       return validated;
     } catch (e) {
-      console.error("fetchCategorizedEvents: Build phase external fetch failed:", e);
-      if (e instanceof Error) {
-        console.error("Error details:", e.message, e.stack);
-      }
+      console.error(
+        "fetchCategorizedEvents: Build phase external fetch failed:",
+        e
+      );
       return {};
     }
   }
@@ -185,13 +196,19 @@ export async function fetchCategorizedEvents(
     if (maxEventsPerCategory !== undefined) {
       params.append("maxEventsPerCategory", String(maxEventsPerCategory));
     }
-    const finalUrl = getInternalApiUrl(`/api/events/categorized${params.toString() ? `?${params.toString()}` : ""}`);
+    const finalUrl = getInternalApiUrl(
+      `/api/events/categorized${
+        params.toString() ? `?${params.toString()}` : ""
+      }`
+    );
     const response = await fetch(finalUrl, {
       next: { revalidate: 300, tags: ["events", "events:categorized"] },
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unable to read error response");
+      const errorText = await response
+        .text()
+        .catch(() => "Unable to read error response");
       console.error(
         `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
       );
@@ -200,21 +217,21 @@ export async function fetchCategorizedEvents(
     const data = await response.json();
     const validated = parseCategorizedEvents(data);
     if (!validated) {
-      console.error(
-        "fetchCategorizedEvents: Runtime validation failed, returning fallback"
-      );
+      console.error("fetchCategorizedEvents: Runtime validation failed");
       return {};
     }
     return validated;
-  } catch (e) {
+  } catch {
     // If internal API fails, try external API as fallback (handles edge cases)
-    console.warn("fetchCategorizedEvents: Internal API failed, trying external API as fallback");
     try {
       const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
       const validated = parseCategorizedEvents(data);
       return validated || {};
     } catch (fallbackError) {
-      console.error("fetchCategorizedEvents: Both internal and external API failed:", fallbackError);
+      console.error(
+        "fetchCategorizedEvents: Both internal and external API failed:",
+        fallbackError
+      );
       return {};
     }
   }

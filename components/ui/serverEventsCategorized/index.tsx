@@ -90,29 +90,61 @@ function ServerEventsCategorized({
               // This gives priority to ~6 images (2 categories × 3 images each)
               const shouldUsePriority = index < 2;
 
-              // Try to get category name from dynamic categories first, fallback to static mapping
+              // Get category slug and name - match the category key to the event's categories
+              // The category key is the category name from the API (e.g., "Patrimoni Cultural")
+              // We need to find the matching category in the event's categories array
+              const firstEvent = events.find(isEventSummaryResponseDTO);
               let categoryName: string;
-              let categorySlug = category; // Use the key from categorizedEvents as the slug
+              let categorySlug: string;
 
-              if (categories) {
-                const dynamicCategory = categories.find(
-                  (cat) => cat.slug === category || cat.name === category
+              // Try to find the category that matches the category key (name) from the API
+              if (firstEvent?.categories && firstEvent.categories.length > 0) {
+                // Find the category in the event that matches the category key (name)
+                const matchingCategory = firstEvent.categories.find(
+                  (cat) =>
+                    cat.name.toLowerCase() === category.toLowerCase() ||
+                    cat.slug.toLowerCase() === category.toLowerCase()
                 );
-                categoryName = dynamicCategory?.name || category;
-                // Ensure we use the slug from the dynamicCategory if found, for consistency
-                if (dynamicCategory) categorySlug = dynamicCategory.slug;
+                if (matchingCategory) {
+                  // Found matching category in event
+                  categoryName = matchingCategory.name;
+                  categorySlug = matchingCategory.slug;
+                } else {
+                  // Fallback: use first category from event
+                  const eventCategory = firstEvent.categories[0];
+                  categoryName = eventCategory.name;
+                  categorySlug = eventCategory.slug;
+                }
+              } else if (categories) {
+                // Fallback: try to find category by name in categories API
+                const dynamicCategory = categories.find(
+                  (cat) =>
+                    cat.slug.toLowerCase() === category.toLowerCase() ||
+                    cat.name.toLowerCase() === category.toLowerCase()
+                );
+                if (dynamicCategory) {
+                  categoryName = dynamicCategory.name;
+                  categorySlug = dynamicCategory.slug;
+                } else {
+                  // Last resort: use the key as-is
+                  categoryName = category;
+                  categorySlug = category;
+                }
               } else {
                 // Fallback: format slug as readable name
                 categoryName =
                   category.charAt(0).toUpperCase() +
                   category.slice(1).replace(/-/g, " ");
+                categorySlug = category;
               }
 
               // Build natural Catalan phrasing: "L'agenda de/del/d'/de la [category]"
               const categoryPhrase = formatCatalanDe(categoryName, true, true);
 
+              // Use the original category key (from API) as React key to ensure uniqueness
+              // Multiple category names might resolve to the same slug, so we need the original key
               return (
-                <div key={categorySlug}>
+                <div key={category}>
                   {/* Category Header */}
                   <div className="flex justify-between items-center">
                     <h3 className="heading-3">

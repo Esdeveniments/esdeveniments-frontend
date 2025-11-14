@@ -53,16 +53,9 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
 
   if (isBuildPhase) {
     try {
-      const data = await fetchRegionsExternal();
-      if (data.length === 0) {
-        console.warn("fetchRegions: Build phase fetch returned empty array");
-      }
-      return data;
+      return await fetchRegionsExternal();
     } catch (e) {
       console.error("fetchRegions: Build phase external fetch failed:", e);
-      if (e instanceof Error) {
-        console.error("Error details:", e.message, e.stack);
-      }
       return [];
     }
   }
@@ -71,14 +64,10 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
   // If internal API fails (e.g., during build when server isn't running), fallback to external
   try {
     return await regionsCache(fetchRegionsFromApi);
-  } catch (e) {
+  } catch {
     // If internal API fails, try external API as fallback (handles edge cases)
-    console.warn(
-      "fetchRegions: Internal API failed, trying external API as fallback"
-    );
     try {
-      const data = await fetchRegionsExternal();
-      return data;
+      return await fetchRegionsExternal();
     } catch (fallbackError) {
       console.error(
         "fetchRegions: Both internal and external API failed:",

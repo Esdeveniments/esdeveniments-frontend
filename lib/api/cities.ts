@@ -43,16 +43,9 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 
   if (isBuildPhase) {
     try {
-      const data = await fetchCitiesExternal();
-      if (data.length === 0) {
-        console.warn("fetchCities: Build phase fetch returned empty array");
-      }
-      return data;
+      return await fetchCitiesExternal();
     } catch (e) {
       console.error("fetchCities: Build phase external fetch failed:", e);
-      if (e instanceof Error) {
-        console.error("Error details:", e.message, e.stack);
-      }
       return [];
     }
   }
@@ -61,12 +54,10 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
   // If internal API fails (e.g., during build when server isn't running), fallback to external
   try {
     return await cache(fetchCitiesFromApi);
-  } catch (e) {
+  } catch {
     // If internal API fails, try external API as fallback (handles edge cases)
-    console.warn("fetchCities: Internal API failed, trying external API as fallback");
     try {
-      const data = await fetchCitiesExternal();
-      return data;
+      return await fetchCitiesExternal();
     } catch (fallbackError) {
       console.error("fetchCities: Both internal and external API failed:", fallbackError);
       return [];

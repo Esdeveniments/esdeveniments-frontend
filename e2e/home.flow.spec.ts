@@ -38,5 +38,17 @@ test.describe("Home flow", () => {
     // If the API call failed, categorizedEvents would be {} and no-events-found would show
     const noEventsFound = page.getByTestId("no-events-found");
     await expect(noEventsFound).not.toBeVisible();
+
+    // Verify that each category "Veure més" link points to a canonical slug path
+    const seeMoreLinks = page.getByRole("link", { name: /Veure més/i });
+    const seeMoreCount = await seeMoreLinks.count();
+    expect(seeMoreCount).toBeGreaterThan(0);
+
+    for (let index = 0; index < seeMoreCount; index += 1) {
+      const href = await seeMoreLinks.nth(index).getAttribute("href");
+      expect(href).toBeTruthy();
+      expect(href).not.toContain("%20");
+      expect(href).toMatch(/^\/catalunya\/[a-z0-9-]+$/);
+    }
   });
 });

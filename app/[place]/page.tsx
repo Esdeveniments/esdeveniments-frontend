@@ -165,7 +165,7 @@ export default async function Page({
     placeTypeLabel,
   });
 
-  const validEvents = events.filter(isEventSummaryResponseDTO);
+  const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
   const structuredData =
     validEvents.length > 0
       ? generateItemListStructuredData(validEvents, `Esdeveniments ${place}`)
