@@ -60,11 +60,19 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     // Log and capture to Sentry, but still return placeholder to avoid breaking UI
-    console.error("Places photo fetch error", error);
+    // Log locally (sanitized) and capture a sanitized Sentry event in production.
+    // Avoid sending the raw error object to Sentry to prevent leaking sensitive data.
+    console.error("Places photo fetch error", {
+      message: error && (error as any).message ? (error as any).message : String(error),
+    });
     if (process.env.NODE_ENV === "production") {
-      Sentry.captureException(error, {
-        tags: { route: "/api/places/photo", type: "photo_fetch_error" },
+      Sentry.withScope((scope) => {
+        scope.setTag("route", "/api/places/photo");
+        scope.setTag("type", "photo_fetch_error");
+        // Capture a generic message rather than the raw error object to avoid leaking sensitive data.
+        Sentry.captureMessage("Places photo fetch error", Sentry.Severity.Error);
       });
+    }
     }
     return buildPlaceholderResponse();
   }
