@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
+import { slugifySegment } from "@utils/string-helpers";
 import {
   parseEventDetail,
   parsePagedEvents,
@@ -167,15 +168,6 @@ export async function createEvent(
   return response.json();
 }
 
-function normalizeSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 function createE2EEvent(
   data: EventCreateRequestDTO,
   extras?: E2EEventExtras
@@ -187,7 +179,7 @@ function createE2EEvent(
   const fallbackCity = extras?.city ?? {
     id: safeCityId,
     name: `Ciutat ${safeCityId}`,
-    slug: normalizeSlug(`ciutat-${safeCityId}`),
+    slug: slugifySegment(`ciutat-${safeCityId}`),
     latitude: 41.3851,
     longitude: 2.1734,
     postalCode: "08001",
@@ -198,7 +190,7 @@ function createE2EEvent(
   const fallbackRegion = extras?.region ?? {
     id: safeRegionId,
     name: `Regió ${safeRegionId}`,
-    slug: normalizeSlug(`regio-${safeRegionId}`),
+    slug: slugifySegment(`regio-${safeRegionId}`),
   };
 
   const fallbackProvince = extras?.province ?? {

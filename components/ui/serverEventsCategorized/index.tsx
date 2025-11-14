@@ -27,13 +27,25 @@ const resolveCategoryDetails = (
 
   const normalizedKey = safeToLowerCase(categoryKey);
 
-  if (firstEvent?.categories?.length) {
-    const matchingCategory = firstEvent.categories.find((cat) => {
+  // Helper function to find a matching category in an array
+  const findMatchingCategory = (
+    categories: Array<{ name?: string; slug?: string }>
+  ): { name: string; slug: string } | undefined => {
+    const found = categories.find((cat) => {
       if (!cat?.name || !cat.slug) return false;
       const catName = safeToLowerCase(cat.name);
       const catSlug = safeToLowerCase(cat.slug);
       return catName === normalizedKey || catSlug === normalizedKey;
     });
+    // Type guard: we know name and slug exist because of the check above
+    if (found?.name && found.slug) {
+      return { name: found.name, slug: found.slug };
+    }
+    return undefined;
+  };
+
+  if (firstEvent?.categories?.length) {
+    const matchingCategory = findMatchingCategory(firstEvent.categories);
 
     if (matchingCategory) {
       return {
@@ -54,12 +66,7 @@ const resolveCategoryDetails = (
   }
 
   if (allCategories?.length) {
-    const matchingCategory = allCategories.find((cat) => {
-      if (!cat?.name || !cat.slug) return false;
-      const catName = safeToLowerCase(cat.name);
-      const catSlug = safeToLowerCase(cat.slug);
-      return catName === normalizedKey || catSlug === normalizedKey;
-    });
+    const matchingCategory = findMatchingCategory(allCategories);
 
     if (matchingCategory) {
       return {

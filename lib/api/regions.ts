@@ -136,7 +136,10 @@ export async function fetchRegionsWithCities(): Promise<
   }
 
   // During build phase, bypass internal proxy
-  const isBuildPhase = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD;
+  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
+  const isBuildPhase =
+    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
+    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
   if (isBuildPhase) {
     try {
       const data = await fetchRegionsOptionsExternal();

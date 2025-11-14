@@ -168,5 +168,87 @@ describe("ServerEventsCategorized", () => {
     const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
     expect(seeMoreLink).toHaveAttribute("href", "/catalunya/literatura");
   });
+
+  it("matches category by name (case-insensitive) when slug doesn't match", () => {
+    const categorizedEvents: Record<string, ListEvent[]> = {
+      "CONCERTS": [
+        {
+          ...baseEvent,
+          categories: [
+            {
+              id: 1,
+              slug: "concerts",
+              name: "Concerts",
+            },
+          ],
+        },
+      ],
+    };
+
+    renderComponent(categorizedEvents);
+
+    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    expect(seeMoreLink).toHaveAttribute("href", "/catalunya/concerts");
+  });
+
+  it("matches category by slug (case-insensitive) when name doesn't match", () => {
+    const categorizedEvents: Record<string, ListEvent[]> = {
+      "festivals": [
+        {
+          ...baseEvent,
+          categories: [
+            {
+              id: 2,
+              slug: "festivals",
+              name: "Festivals i Música",
+            },
+          ],
+        },
+      ],
+    };
+
+    renderComponent(categorizedEvents);
+
+    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    expect(seeMoreLink).toHaveAttribute("href", "/catalunya/festivals");
+  });
+
+  it("falls back to first valid category when no match is found", () => {
+    const categorizedEvents: Record<string, ListEvent[]> = {
+      "Unknown Category": [
+        {
+          ...baseEvent,
+          categories: [
+            {
+              id: 1,
+              slug: "concerts",
+              name: "Concerts",
+            },
+          ],
+        },
+      ],
+    };
+
+    renderComponent(categorizedEvents);
+
+    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    expect(seeMoreLink).toHaveAttribute("href", "/catalunya/concerts");
+  });
+
+  it("falls back to categoryKey when no categories are available", () => {
+    const categorizedEvents: Record<string, ListEvent[]> = {
+      "custom-category": [
+        {
+          ...baseEvent,
+          categories: [],
+        },
+      ],
+    };
+
+    renderComponent(categorizedEvents);
+
+    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    expect(seeMoreLink).toHaveAttribute("href", "/catalunya/custom-category");
+  });
 });
 

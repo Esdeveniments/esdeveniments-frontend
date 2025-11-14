@@ -51,6 +51,21 @@ export const slug = (
     .filter(Boolean)
     .join("-");
 
+/**
+ * Simple slugify function that converts a string to a URL-friendly slug.
+ * Lowercases, removes diacritics, and replaces non-alphanumeric characters with hyphens.
+ * Returns empty string if result is empty (callers should provide fallbacks).
+ * For more robust Catalan-aware slugification, use `sanitize()` instead.
+ */
+export function slugifySegment(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 /** Capitalize first letter (safe) */
 export function capitalizeFirstLetter(s: string): string {
   if (!s) return s;

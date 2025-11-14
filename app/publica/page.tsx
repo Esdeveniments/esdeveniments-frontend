@@ -8,7 +8,7 @@ import {
   formDataToBackendDTO,
   getTownValue,
 } from "@utils/helpers";
-import { normalizeUrl } from "@utils/string-helpers";
+import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
@@ -44,14 +44,6 @@ const defaultForm: FormData = {
   categories: [],
   email: "",
 };
-
-const slugifySegment = (value: string) =>
-  value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 
 const isRegionDTO = (
   region: FormData["region"]

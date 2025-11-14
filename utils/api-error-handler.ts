@@ -9,7 +9,7 @@ import type { ApiErrorOptions } from "types/api-error";
  * 3. Returns a standardized error response
  *
  * @param error - The error that occurred
- * 2. @param routePath - The API route path for context (e.g., "/api/events")
+ * @param routePath - The API route path for context (e.g., "/api/events")
  * @param options - Optional configuration for error response
  * @returns NextResponse with appropriate error status and body
  */
@@ -18,20 +18,13 @@ export function handleApiError(
   routePath: string,
   options: ApiErrorOptions = {}
 ): NextResponse {
-  const {
-    status = 500,
-    errorMessage,
-    fallbackData,
-    sentryContext,
-  } = options;
+  const { status = 500, errorMessage, fallbackData, sentryContext } = options;
 
   // Normalize error to Error object for better logging
   const errorObj =
     error instanceof Error
       ? error
-      : new Error(
-          typeof error === "string" ? error : "Unknown error occurred"
-        );
+      : new Error(typeof error === "string" ? error : "Unknown error occurred");
 
   // Log to console for local debugging
   console.error(`${routePath} error:`, errorObj);
@@ -65,4 +58,3 @@ export function handleApiError(
 
   return NextResponse.json(responseBody, { status });
 }
-
