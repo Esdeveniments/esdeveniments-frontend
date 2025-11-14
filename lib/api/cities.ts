@@ -68,8 +68,14 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
       const data = await fetchCitiesExternal();
       return data;
     } catch (fallbackError) {
-      console.error("fetchCities: Both internal and external API failed:", fallbackError);
+      // Avoid logging raw error objects (may contain sensitive info). Log a safe message and the error message only.
+      if (fallbackError instanceof Error) {
+        console.error("fetchCities: Both internal and external API failed:", fallbackError.message);
+      } else {
+        console.error("fetchCities: Both internal and external API failed");
+      }
       return [];
+    }
     }
   }
 }
