@@ -25,6 +25,7 @@ const EventCategories: React.FC<EventCategoriesProps> = ({
             <Badge
               key={category.id}
               href={buildCanonicalUrl({ place, category: category.slug })}
+              usePendingLink={true}
             >
               {category.name}
             </Badge>

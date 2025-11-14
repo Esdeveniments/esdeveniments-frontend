@@ -39,11 +39,15 @@ export function PendingLink({
   }, [pathname, done]);
 
   const handleClick = useCallback(() => {
+    // Don't set pending if navigating to current page
+    if (href === pathname) {
+      return;
+    }
     // Set pending immediately on click for instant feedback
     pendingRef.current = true;
     setIsPending(true);
     start(); // Also trigger global progress
-  }, [start]);
+  }, [start, href, pathname]);
 
   const combinedClassName = isPending
     ? `${className ?? ""} ${pendingClassName}`.trim()
@@ -56,6 +60,7 @@ export function PendingLink({
       prefetch={false}
       className={combinedClassName}
       onClick={handleClick}
+      aria-busy={isPending}
     >
       {children}
     </Link>

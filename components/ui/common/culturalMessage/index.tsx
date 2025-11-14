@@ -21,12 +21,16 @@ const CulturalMessage: FC<CulturalMessageProps> = ({
         {formatCatalanA(capitalizedLocation, locationType, false)}:
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
-        <Badge href={`/${locationValue}/avui`}>Què fer avui</Badge>
-        <Badge href={`/${locationValue}/dema`}>Què fer demà</Badge>
-        <Badge href={`/${locationValue}/setmana`}>
+        <Badge href={`/${locationValue}/avui`} usePendingLink={true}>
+          Què fer avui
+        </Badge>
+        <Badge href={`/${locationValue}/dema`} usePendingLink={true}>
+          Què fer demà
+        </Badge>
+        <Badge href={`/${locationValue}/setmana`} usePendingLink={true}>
           Què fer aquesta setmana
         </Badge>
-        <Badge href={`/${locationValue}/cap-de-setmana`}>
+        <Badge href={`/${locationValue}/cap-de-setmana`} usePendingLink={true}>
           Què fer aquest cap de setmana
         </Badge>
       </div>

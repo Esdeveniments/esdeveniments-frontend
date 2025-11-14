@@ -1,5 +1,5 @@
 import { memo, FC } from "react";
-import Link from "next/link";
+import { CardLink } from "@components/ui/navigation/CardLink";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
@@ -198,7 +198,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
               key={event.id ?? event.slug ?? index}
               className="flex-none w-40 min-w-[10rem] flex flex-col bg-background overflow-hidden cursor-pointer"
             >
-              <Link href={`/e/${event.slug}`}>
+              <CardLink href={`/e/${event.slug}`}>
                 {/* ImageEvent */}
                 <div className="w-full h-32 flex justify-center items-center overflow-hidden">
                   <ImageServer
@@ -231,7 +231,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     <span>{eventDate}</span>
                   </div>
                 </div>
-              </Link>
+              </CardLink>
             </div>
           );
         })}

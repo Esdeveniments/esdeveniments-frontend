@@ -1,5 +1,6 @@
 // No headers/nonce needed with relaxed CSP
 import Link from "next/link";
+import { CardLink } from "@components/ui/navigation/CardLink";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   generateJsonData,
@@ -171,9 +172,8 @@ export default async function Page({
                     key={event.id}
                     className="border-b border-border/30 pb-4 w-full"
                   >
-                    <Link
+                    <CardLink
                       href={`/e/${event.slug}`}
-                      prefetch={false}
                       className="hover:text-primary block group"
                     >
                       <h3 className="heading-4 group-hover:text-primary transition-colors">
@@ -205,7 +205,7 @@ export default async function Page({
                           {event.description}
                         </p>
                       )}
-                    </Link>
+                    </CardLink>
                   </article>
                 );
               })}

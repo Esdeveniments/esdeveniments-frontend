@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CardLink } from "@components/ui/navigation/CardLink";
 import NextImage from "next/image";
 import {
   ClockIcon,
@@ -31,10 +31,8 @@ function CardContentServer({
 
   return (
     <>
-      <Link
+      <CardLink
         href={`/e/${event.slug}`}
-        passHref
-        prefetch={false}
         className="w-full"
       >
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
@@ -83,7 +81,7 @@ function CardContentServer({
             </div>
           </div>
         </div>
-      </Link>
+      </CardLink>
       <div className="w-full flex flex-col px-4 gap-3">
         <div className="flex justify-start items-start">
           <CalendarIcon className="h-5 w-5" />

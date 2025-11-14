@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CardLink } from "@components/ui/navigation/CardLink";
 import Image from "next/image";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
@@ -42,13 +42,12 @@ export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
               </span>
             )}
           </div>
-          <Link
+          <CardLink
             href={`/e/${event.slug}`}
-            prefetch={false}
             className="btn-primary"
           >
             Llegir més
-          </Link>
+          </CardLink>
         </div>
       </div>
     </section>
