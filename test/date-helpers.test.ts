@@ -4,7 +4,9 @@ import { formatEventTimeDisplay } from "../utils/date-helpers";
 describe("formatEventTimeDisplay", () => {
   describe("when no start time or start time is '00:00'", () => {
     it("returns 'Consultar horaris' when startTime is undefined", () => {
-      expect(formatEventTimeDisplay(undefined, "21:00")).toBe("Consultar horaris");
+      expect(formatEventTimeDisplay(undefined, "21:00")).toBe(
+        "Consultar horaris"
+      );
     });
 
     it("returns 'Consultar horaris' when startTime is null", () => {
@@ -12,15 +14,21 @@ describe("formatEventTimeDisplay", () => {
     });
 
     it("returns 'Consultar horaris' when startTime is '00:00'", () => {
-      expect(formatEventTimeDisplay("00:00", "21:00")).toBe("Consultar horaris");
+      expect(formatEventTimeDisplay("00:00", "21:00")).toBe(
+        "Consultar horaris"
+      );
     });
 
     it("returns 'Consultar horaris' when startTime is '00:00' and endTime is undefined", () => {
-      expect(formatEventTimeDisplay("00:00", undefined)).toBe("Consultar horaris");
+      expect(formatEventTimeDisplay("00:00", undefined)).toBe(
+        "Consultar horaris"
+      );
     });
 
     it("returns 'Consultar horaris' when both times are undefined", () => {
-      expect(formatEventTimeDisplay(undefined, undefined)).toBe("Consultar horaris");
+      expect(formatEventTimeDisplay(undefined, undefined)).toBe(
+        "Consultar horaris"
+      );
     });
   });
 
@@ -78,4 +86,3 @@ describe("formatEventTimeDisplay", () => {
     });
   });
 });
-

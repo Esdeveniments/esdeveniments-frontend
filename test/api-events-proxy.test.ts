@@ -24,7 +24,9 @@ describe("/api/events proxy", () => {
   });
 
   it("forwards filters and clamps page/size; sets cache headers", async () => {
-    (fetchEventsExternal as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (
+      fetchEventsExternal as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({
       content: [],
       currentPage: 0,
       pageSize: 10,
@@ -40,7 +42,7 @@ describe("/api/events proxy", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe(
-      "public, s-maxage=600, stale-while-revalidate=600"
+      "public, s-maxage=300, stale-while-revalidate=300"
     );
 
     // Verify mapping and clamping
@@ -60,7 +62,9 @@ describe("/api/events proxy", () => {
   });
 
   it("ignores invalid numeric params", async () => {
-    (fetchEventsExternal as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (
+      fetchEventsExternal as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({
       content: [],
       currentPage: 0,
       pageSize: 10,
