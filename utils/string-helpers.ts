@@ -96,13 +96,27 @@ export function normalizeForSearch(input: string): string {
  */
 export function normalizeUrl(url: string): string {
   if (!url || typeof url !== "string") return "";
-  
+
   const trimmed = url.trim();
   if (!trimmed) return "";
 
-  // If already has protocol, return as-is
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
+  // Reject inputs with whitespace/control characters or angle brackets to avoid injection
+  if (/[\s<>\r\n]/.test(trimmed)) return "";
+
+  // Protocol-relative URLs: //example.com -> https://example.com
+  if (trimmed.startsWith("//")) {
+    return `https://${trimmed.slice(2)}`;
+  }
+
+  // If a scheme is present (e.g. "scheme:") only allow http/https; reject others (e.g. javascript:, data:)
+  const schemeMatch = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
+  if (schemeMatch) {
+    const scheme = schemeMatch[1].toLowerCase();
+    if (scheme === "http" || scheme === "https") {
+      return trimmed;
+    }
+    // Unknown or potentially dangerous scheme -> reject
+    return "";
   }
 
   // Add https:// protocol if missing
