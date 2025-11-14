@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import { ActiveLinkProps } from "types/common";
 
 export default function ActiveLink({
@@ -28,13 +28,12 @@ export default function ActiveLink({
   }
 
   return (
-    <Link
+    <PendingLink
       {...props}
       href={linkHref}
-      prefetch={false}
       className={classNameProps}
     >
       {children}
-    </Link>
+    </PendingLink>
   );
 }

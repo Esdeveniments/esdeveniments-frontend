@@ -378,6 +378,20 @@ export interface BadgeProps {
   ariaLabel?: string;
 }
 
+// Navigation progress store types
+export interface NavigationState {
+  isNavigating: boolean;
+  start: () => void;
+  done: () => void;
+}
+
+// PendingLink component props (extends LinkProps)
+export interface PendingLinkProps extends Omit<LinkProps, "children"> {
+  children: React.ReactNode;
+  className?: string;
+  pendingClassName?: string;
+}
+
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "neutral" | "primary" | "muted" | "outline" | "solid";

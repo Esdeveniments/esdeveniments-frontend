@@ -1,9 +1,9 @@
 "use client";
 import { JSX, MouseEvent } from "react";
-import { useRouter } from "next/navigation";
 import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import { FilterButtonProps } from "types/props";
+import { useNavigationFeedback } from "@components/hooks/useNavigationFeedback";
 
 const FilterButton = ({
   text,
@@ -12,11 +12,11 @@ const FilterButton = ({
   onOpenModal,
   testId,
 }: FilterButtonProps): JSX.Element => {
-  const router = useRouter();
+  const { navigateWithFeedback } = useNavigationFeedback();
 
   const handleRemove = (e: MouseEvent) => {
     e.stopPropagation();
-    router.push(removeUrl);
+    navigateWithFeedback(removeUrl);
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

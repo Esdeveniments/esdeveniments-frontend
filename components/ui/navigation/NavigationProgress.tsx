@@ -1,0 +1,29 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useNavigationProgressStore } from "@components/hooks/useNavigationProgress";
+
+export function NavigationProgress() {
+  const isNavigating = useNavigationProgressStore((s) => s.isNavigating);
+  const { done } = useNavigationProgressStore();
+  const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
+
+  // Reset progress when pathname changes (navigation completes)
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      done();
+    }
+  }, [pathname, done]);
+
+  if (!isNavigating) return null;
+
+  return (
+    <div className="fixed inset-x-0 top-0 z-50 h-1 bg-primary/20">
+      <div className="h-full w-1/3 bg-primary animate-[progress_1s_ease-in-out_infinite]" />
+    </div>
+  );
+}
+

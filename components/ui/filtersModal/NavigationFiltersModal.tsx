@@ -7,7 +7,7 @@ import {
   FC,
   useEffect,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigationFeedback } from "@components/hooks/useNavigationFeedback";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
@@ -112,7 +112,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.userLocation,
   ]);
 
-  const router = useRouter();
+  const { navigateWithFeedback } = useNavigationFeedback();
 
   const handlePlaceChange = useCallback((option: Option | null) => {
     setLocalPlace(option?.value || "");
@@ -225,7 +225,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendEventToGA("Category", changes.category);
     sendEventToGA("Distance", changes.distance.toString());
 
-    router.push(newUrl);
+    navigateWithFeedback(newUrl);
     onClose();
   };
 

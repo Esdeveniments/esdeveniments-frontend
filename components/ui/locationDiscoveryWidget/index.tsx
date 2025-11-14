@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
+import { useNavigationFeedback } from "@components/hooks/useNavigationFeedback";
 // import { useGeolocation } from "@components/hooks/useGeolocation";
 import { LocationDiscoveryWidgetProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
@@ -19,7 +19,7 @@ export default function LocationDiscoveryWidget({
   className = "",
   onLocationChange,
 }: LocationDiscoveryWidgetProps) {
-  const router = useRouter();
+  const { navigateWithFeedback } = useNavigationFeedback();
   const {
     regionsWithCities,
     isLoading: loadingRegions,
@@ -76,9 +76,9 @@ export default function LocationDiscoveryWidget({
 
       // Navigate to location using the correct URL value
       const urlValue = locationOption?.value || "catalunya";
-      router.push(`/${urlValue}`);
+      navigateWithFeedback(`/${urlValue}`);
     },
-    [allLocations, onLocationChange, router]
+    [allLocations, onLocationChange, navigateWithFeedback]
   );
 
   // Handle current location
@@ -126,9 +126,8 @@ export default function LocationDiscoveryWidget({
   // }, [regionsWithCities, requestLocation, onLocationChange, router]);
 
   const onDiscoverOtherEvents = useCallback(() => {
-    //
-    router.push("/catalunya");
-  }, [router]);
+    navigateWithFeedback("/catalunya");
+  }, [navigateWithFeedback]);
 
   if (isError) {
     console.error("Failed to load regions data");

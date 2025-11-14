@@ -8,11 +8,12 @@ import {
   KeyboardEvent,
   JSX,
 } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { sendGoogleEvent } from "@utils/analytics";
+import { useNavigationFeedback } from "@components/hooks/useNavigationFeedback";
 
 const sendSearchTermGA = (searchTerm: string): void => {
   if (searchTerm && searchTerm.length > 0) {
@@ -26,10 +27,10 @@ const sendSearchTermGA = (searchTerm: string): void => {
 };
 
 export default function Search(): JSX.Element {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const { navigateWithFeedback } = useNavigationFeedback();
 
   // Get current search term from URL
   const urlSearchTerm = searchParams?.get("search") || "";
@@ -55,9 +56,10 @@ export default function Search(): JSX.Element {
         ? "/catalunya/"
         : pathname || "/";
 
-      router.push(newUrl);
+      // Use navigation feedback for progress indication
+      navigateWithFeedback(newUrl);
     },
-    [searchParams, router, pathname, isHomePage]
+    [searchParams, pathname, isHomePage, navigateWithFeedback]
   );
 
   // Function to trigger search (called by button click or Enter key)
