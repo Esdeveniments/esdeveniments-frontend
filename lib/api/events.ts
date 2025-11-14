@@ -23,7 +23,10 @@ import {
 import { FetchEventsParams } from "types/event";
 import { computeTemporalStatus } from "@utils/event-status";
 
-const isE2ETestMode = process.env.E2E_TEST_MODE === "1";
+// E2E test mode should only be enabled in non-production environments.
+// Prevent accidental initialization of a global events store in production.
+const isE2ETestMode =
+  process.env.E2E_TEST_MODE === "1" && process.env.NODE_ENV !== "production";
 
 const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
 
