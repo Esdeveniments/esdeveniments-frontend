@@ -59,9 +59,14 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
       }
       return data;
     } catch (e) {
-      console.error("fetchRegions: Build phase external fetch failed:", e);
-      if (e instanceof Error) {
-        console.error("Error details:", e.message, e.stack);
+      // In production (build) avoid logging full error objects or stacks to prevent leaking
+      // internal details (file paths, stack frames) in build logs. In development, keep
+      // verbose logging to aid debugging.
+      if (process.env.NODE_ENV === "development") {
+        console.error("fetchRegions: Build phase external fetch failed:", e);
+      } else {
+        const message = e instanceof Error ? e.message : String(e);
+        console.error(`fetchRegions: Build phase external fetch failed: ${message}`);
       }
       return [];
     }
