@@ -45,8 +45,11 @@ export async function POST(request: Request) {
       // Log forward errors but don't fail the request
       console.error("/api/visits forward error:", e);
       if (process.env.NODE_ENV === "production") {
-        Sentry.captureException(e, {
-          tags: { route: "/api/visits", type: "forward_error" },
+        Sentry.withScope((scope) => {
+          scope.setTag("route", "/api/visits");
+          scope.setTag("type", "forward_error");
+          // Capture a sanitized error message to avoid logging sensitive request or payload data
+          Sentry.captureException(new Error("Forward error in /api/visits (sanitized)"));
         });
       }
     });
