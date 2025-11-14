@@ -52,17 +52,40 @@ export function handleApiError(
   // Log to console for local debugging
   console.error(`${routePath} error:`, errorObj);
 
-  // Capture to Sentry in production
+  // Capture to Sentry in production (send only sanitized, minimal data)
   if (process.env.NODE_ENV === "production") {
-    Sentry.captureException(errorObj, {
-      tags: {
-        route: routePath,
-        ...sentryContext?.tags,
-      },
-      extra: {
-        routePath,
-        ...sentryContext?.extra,
-      },
+    // Build sanitized tags
+    const sentryTags = {
+      route: routePath,
+      ...sentryContext?.tags,
+    };
+
+    // Build sanitized extras: only primitive values, limited length, and excluding sensitive keys
+    const sanitizedExtra: Record<string, unknown> = { routePath };
+    if (sentryContext?.extra && typeof sentryContext.extra === "object") {
+      const sensitiveKeyPattern = /(pass(word)?|token|secret|ssn|credit|card|session|auth)/i;
+      for (const [k, v] of Object.entries(sentryContext.extra)) {
+        if (sensitiveKeyPattern.test(k)) continue;
+        const t = typeof v;
+        if (v === null) {
+          sanitizedExtra[k] = null;
+        } else if (t === "string") {
+          const str = v as string;
+          sanitizedExtra[k] =
+            str.length > 200 ? str.slice(0, 200) + "...[truncated]" : str;
+        } else if (t === "number" || t === "boolean") {
+          sanitizedExtra[k] = v;
+        } else {
+          // skip objects/arrays to avoid leaking nested sensitive data
+        }
+      }
+    }
+
+    Sentry.withScope((scope) => {
+      scope.setTags(sentryTags);
+      scope.setExtras(sanitizedExtra);
+      // Send only the error message to avoid transmitting full stack traces or error objects
+      Sentry.captureException({ message: errorObj.message ?? "Error" });
     });
   }
 
