@@ -86,19 +86,16 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     const publishButton = page.getByTestId("publish-button");
     await expect(publishButton).toBeEnabled();
 
-    await Promise.all([
-      publishButton.click(),
-      page.waitForURL(/\/e\/e2e-event-/, {
-        timeout: 60000,
-        waitUntil: "commit",
-      }),
-    ]);
+    const waitForEventDetail = page.waitForURL(/\/e\/e2e-event-/, {
+      timeout: 60000,
+      waitUntil: "commit",
+    });
+    await publishButton.click();
+    await waitForEventDetail;
 
     await expect(page).toHaveURL(/\/e\/e2e-event-/);
     await expect(page.locator("h1")).toHaveText(title);
-    await expect(
-      page.getByText(description, { exact: false })
-    ).toBeVisible();
+    await expect(page.getByText(description, { exact: false })).toBeVisible();
     await expect(
       page.getByText(`${venue}, Cardedeu, Vallès Oriental`, { exact: false })
     ).toBeVisible();
