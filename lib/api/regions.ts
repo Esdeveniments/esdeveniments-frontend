@@ -104,33 +104,27 @@ export async function fetchRegionsWithCities(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    console.warn(
-      "fetchRegionsWithCities: NEXT_PUBLIC_API_URL not set, returning mock data"
-    );
-    // MOCK DATA: fallback for Vercel or missing backend
-    return [
-      {
-        id: 1,
-        name: "Barcelona",
-        cities: [
-          { id: 1, label: "Barcelona", value: "barcelona" },
-          { id: 2, label: "Hospitalet", value: "hospitalet" },
-        ],
-      },
-      {
-        id: 2,
-        name: "Girona",
-        cities: [{ id: 1, label: "Girona", value: "girona" }],
-      },
-    ];
-  }
 
   // During build phase, bypass internal proxy
   // Detection: Check if NEXT_PHASE is set, or if we're in production build context
   const isBuildPhase =
     process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
     (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
+
+  if (!apiUrl) {
+    if (isBuildPhase) {
+      // Fail build if API URL is missing - this is a configuration error
+      throw new Error(
+        "fetchRegionsWithCities: NEXT_PUBLIC_API_URL not set during build. Cannot proceed without API configuration."
+      );
+    }
+
+    // Runtime: return empty array if API URL is missing
+    console.warn(
+      "fetchRegionsWithCities: NEXT_PUBLIC_API_URL not set, returning empty array"
+    );
+    return [];
+  }
   if (isBuildPhase) {
     try {
       const data = await fetchRegionsOptionsExternal();
@@ -141,29 +135,17 @@ export async function fetchRegionsWithCities(): Promise<
       }
       return data;
     } catch (e) {
+      // Sanitize error logging to prevent information disclosure
+      const errorMessage = getSanitizedErrorMessage(e);
       console.error(
         "fetchRegionsWithCities: Build phase external fetch failed:",
-        e
+        errorMessage
       );
-      if (e instanceof Error) {
-        console.error("Error details:", e.message, e.stack);
-      }
-      // Fallback to mock data on build failure
-      return [
-        {
-          id: 1,
-          name: "Barcelona",
-          cities: [
-            { id: 1, label: "Barcelona", value: "barcelona" },
-            { id: 2, label: "Hospitalet", value: "hospitalet" },
-          ],
-        },
-        {
-          id: 2,
-          name: "Girona",
-          cities: [{ id: 1, label: "Girona", value: "girona" }],
-        },
-      ];
+      // Fail the build rather than deploying with incomplete/incorrect data
+      // This ensures API issues are caught during deployment, not in production
+      throw new Error(
+        `fetchRegionsWithCities: Build failed due to API error. Cannot proceed with incomplete data. ${errorMessage}`
+      );
     }
   }
 
@@ -177,22 +159,9 @@ export async function fetchRegionsWithCities(): Promise<
       "fetchRegionsWithCities: Runtime internal API fetch failed:",
       errorMessage
     );
-    // If fetch fails, fallback to mock data
-    return [
-      {
-        id: 1,
-        name: "Barcelona",
-        cities: [
-          { id: 1, label: "Barcelona", value: "barcelona" },
-          { id: 2, label: "Hospitalet", value: "hospitalet" },
-        ],
-      },
-      {
-        id: 2,
-        name: "Girona",
-        cities: [{ id: 1, label: "Girona", value: "girona" }],
-      },
-    ];
+    // Return empty array on failure - UI should handle gracefully
+    // This is safer than returning incomplete mock data
+    return [];
   }
 }
 
