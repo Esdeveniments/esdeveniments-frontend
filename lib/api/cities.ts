@@ -49,9 +49,11 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
       }
       return data;
     } catch (e) {
-      console.error("fetchCities: Build phase external fetch failed:", e);
+      // Log a generic error to avoid leaking internal stack traces or file paths.
+      console.error("fetchCities: Build phase external fetch failed");
       if (e instanceof Error) {
-        console.error("Error details:", e.message, e.stack);
+        // Log only the error name and message; avoid stack traces.
+        console.error("Error:", e.name, e.message);
       }
       return [];
     }
