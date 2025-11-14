@@ -186,10 +186,8 @@ function createE2EEvent(
 
   const fallbackCity = extras?.city ?? {
     id: safeCityId,
-    name: extras?.city?.name ?? `Ciutat ${safeCityId}`,
-    slug:
-      extras?.city?.slug ??
-      normalizeSlug(extras?.city?.name ?? `ciutat-${safeCityId}`),
+    name: `Ciutat ${safeCityId}`,
+    slug: normalizeSlug(`ciutat-${safeCityId}`),
     latitude: 41.3851,
     longitude: 2.1734,
     postalCode: "08001",
@@ -199,10 +197,8 @@ function createE2EEvent(
 
   const fallbackRegion = extras?.region ?? {
     id: safeRegionId,
-    name: extras?.region?.name ?? `Regió ${safeRegionId}`,
-    slug:
-      extras?.region?.slug ??
-      normalizeSlug(extras?.region?.name ?? `regio-${safeRegionId}`),
+    name: `Regió ${safeRegionId}`,
+    slug: normalizeSlug(`regio-${safeRegionId}`),
   };
 
   const fallbackProvince = extras?.province ?? {

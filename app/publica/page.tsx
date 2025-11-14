@@ -159,40 +159,40 @@ const Publica = () => {
     const regionIdValue = getRegionValue(form.region);
     const townIdValue = getTownValue(form.town);
 
-    const regionMeta = regionIdValue
-      ? isRegionDTO(form.region)
-        ? form.region
-        : form.region
-        ? {
-            id: Number(regionIdValue),
-            name: (form.region as Option)?.label ?? `Regió ${regionIdValue}`,
-            slug:
-              slugifySegment(
-                (form.region as Option)?.label ?? `region-${regionIdValue}`
-              ) || `region-${regionIdValue}`,
-          }
-        : undefined
-      : undefined;
+    let regionMeta: RegionSummaryResponseDTO | undefined;
+    if (regionIdValue) {
+      if (isRegionDTO(form.region)) {
+        regionMeta = form.region;
+      } else if (form.region) {
+        const option = form.region as Option;
+        const name = option?.label ?? `Regió ${regionIdValue}`;
+        regionMeta = {
+          id: Number(regionIdValue),
+          name,
+          slug: slugifySegment(name) || `region-${regionIdValue}`,
+        };
+      }
+    }
 
-    const cityMeta = townIdValue
-      ? isCityDTO(form.town)
-        ? form.town
-        : form.town
-        ? {
-            id: Number(townIdValue),
-            name: (form.town as Option)?.label ?? `Ciutat ${townIdValue}`,
-            slug:
-              slugifySegment(
-                (form.town as Option)?.label ?? `ciutat-${townIdValue}`
-              ) || `ciutat-${townIdValue}`,
-            latitude: 41.3851,
-            longitude: 2.1734,
-            postalCode: "08001",
-            rssFeed: null,
-            enabled: true,
-          }
-        : undefined
-      : undefined;
+    let cityMeta: CitySummaryResponseDTO | undefined;
+    if (townIdValue) {
+      if (isCityDTO(form.town)) {
+        cityMeta = form.town;
+      } else if (form.town) {
+        const option = form.town as Option;
+        const name = option?.label ?? `Ciutat ${townIdValue}`;
+        cityMeta = {
+          id: Number(townIdValue),
+          name,
+          slug: slugifySegment(name) || `ciutat-${townIdValue}`,
+          latitude: 41.3851,
+          longitude: 2.1734,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        };
+      }
+    }
 
     const categoriesMeta =
       Array.isArray(form.categories) && form.categories.length > 0
