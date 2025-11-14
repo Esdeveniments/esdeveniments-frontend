@@ -3,6 +3,7 @@ import { createCache, createKeyedCache } from "lib/api/cache";
 import { getInternalApiUrl } from "@utils/api-helpers";
 import { fetchCitiesExternal } from "./cities-external";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const cache = createCache<CitySummaryResponseDTO[]>(86400000);
 const cityByIdCache = createKeyedCache<CitySummaryResponseDTO | null>(86400000);
@@ -46,8 +47,7 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
       return await fetchCitiesExternal();
     } catch (e) {
       // Sanitize error logging to prevent information disclosure
-      const errorMessage =
-        e instanceof Error ? e.message : typeof e === "string" ? e : "Unknown error";
+      const errorMessage = getSanitizedErrorMessage(e);
       console.error("fetchCities: Build phase external fetch failed:", errorMessage);
       return [];
     }
@@ -63,12 +63,7 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
       return await fetchCitiesExternal();
     } catch (fallbackError) {
       // Sanitize error logging to prevent information disclosure
-      const errorMessage =
-        fallbackError instanceof Error
-          ? fallbackError.message
-          : typeof fallbackError === "string"
-            ? fallbackError
-            : "Unknown error";
+      const errorMessage = getSanitizedErrorMessage(fallbackError);
       console.error(
         "fetchCities: Both internal and external API failed:",
         errorMessage

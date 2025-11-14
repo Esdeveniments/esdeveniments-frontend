@@ -7,6 +7,7 @@ import {
   fetchRegionsOptionsExternal,
 } from "./regions-external";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const regionsCache = createCache<RegionSummaryResponseDTO[]>(86400000);
 const regionsWithCitiesCache =
@@ -56,12 +57,7 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
       return await fetchRegionsExternal();
     } catch (e) {
       // Sanitize error logging to prevent information disclosure
-      const errorMessage =
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-          ? e
-          : "Unknown error";
+      const errorMessage = getSanitizedErrorMessage(e);
       console.error(
         "fetchRegions: Build phase external fetch failed:",
         errorMessage
@@ -80,12 +76,7 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
       return await fetchRegionsExternal();
     } catch (fallbackError) {
       // Sanitize error logging to prevent information disclosure
-      const errorMessage =
-        fallbackError instanceof Error
-          ? fallbackError.message
-          : typeof fallbackError === "string"
-          ? fallbackError
-          : "Unknown error";
+      const errorMessage = getSanitizedErrorMessage(fallbackError);
       console.error(
         "fetchRegions: Both internal and external API failed:",
         errorMessage
@@ -181,12 +172,7 @@ export async function fetchRegionsWithCities(): Promise<
     return await regionsWithCitiesCache(fetchRegionsWithCitiesFromApi);
   } catch (e) {
     // Sanitize error logging to prevent information disclosure
-    const errorMessage =
-      e instanceof Error
-        ? e.message
-        : typeof e === "string"
-        ? e
-        : "Unknown error";
+    const errorMessage = getSanitizedErrorMessage(e);
     console.error(
       "fetchRegionsWithCities: Runtime internal API fetch failed:",
       errorMessage

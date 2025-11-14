@@ -9,6 +9,7 @@ import {
 } from "@lib/validation/event";
 import { fetchCategorizedEventsExternal } from "./events-external";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -320,12 +321,7 @@ export async function fetchCategorizedEvents(
       return validated || {};
     } catch (fallbackError) {
       // Sanitize error logging to prevent information disclosure
-      const errorMessage =
-        fallbackError instanceof Error
-          ? fallbackError.message
-          : typeof fallbackError === "string"
-          ? fallbackError
-          : "Unknown error";
+      const errorMessage = getSanitizedErrorMessage(fallbackError);
       console.error(
         "fetchCategorizedEvents: Both internal and external API failed:",
         errorMessage

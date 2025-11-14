@@ -5,6 +5,7 @@ import { ShareIcon } from "@heroicons/react/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { sendGoogleEvent } from "@utils/analytics";
 import { NativeShareButtonProps } from "../../../../types/props";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const NativeShareButton = ({
   title,
@@ -55,7 +56,7 @@ const NativeShareButton = ({
           console.error("Error sharing:", error);
           sendGoogleEvent("share_error", {
             method: "native",
-            error: error instanceof Error ? error.message : String(error),
+            error: getSanitizedErrorMessage(error),
           });
         }
       }

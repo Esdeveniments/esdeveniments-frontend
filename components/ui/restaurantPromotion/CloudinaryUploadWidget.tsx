@@ -6,6 +6,7 @@ import {
   CloudinarySignatureResponse,
   CloudinaryUploadWidgetProps,
 } from "types/api/restaurant";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 export function CloudinaryUploadWidget({
   onUpload,
@@ -88,7 +89,7 @@ export function CloudinaryUploadWidget({
       });
     } catch (error) {
       console.error("Upload error:", error);
-      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      setUploadError(getSanitizedErrorMessage(error) || "Upload failed");
     } finally {
       setIsUploading(false);
     }

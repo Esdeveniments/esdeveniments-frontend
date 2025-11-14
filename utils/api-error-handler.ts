@@ -3,6 +3,23 @@ import * as Sentry from "@sentry/nextjs";
 import type { ApiErrorOptions } from "types/api-error";
 
 /**
+ * Sanitizes error messages before logging to prevent information disclosure.
+ * Extracts a safe string representation from unknown error types.
+ *
+ * @param error - The error to sanitize (Error, string, or unknown)
+ * @returns A safe error message string
+ */
+export function getSanitizedErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "Unknown error";
+}
+
+/**
  * Shared error handler for API routes that:
  * 1. Captures exceptions to Sentry (production only)
  * 2. Logs errors to console
@@ -21,10 +38,9 @@ export function handleApiError(
   const { status = 500, errorMessage, fallbackData, sentryContext } = options;
 
   // Normalize error to Error object for better logging
+  // Use getSanitizedErrorMessage for consistency with other error handling
   const errorObj =
-    error instanceof Error
-      ? error
-      : new Error(typeof error === "string" ? error : "Unknown error occurred");
+    error instanceof Error ? error : new Error(getSanitizedErrorMessage(error));
 
   // Log to console for local debugging
   console.error(`${routePath} error:`, errorObj);
