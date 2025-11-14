@@ -90,7 +90,7 @@ test.describe("Publica -> Event flow (deterministic)", () => {
       publishButton.click(),
       page.waitForURL(/\/e\/e2e-event-/, {
         timeout: 60000,
-        waitUntil: "domcontentloaded",
+        waitUntil: "commit",
       }),
     ]);
 
