@@ -3,13 +3,21 @@
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
-import { getRegionValue, formDataToBackendDTO } from "@utils/helpers";
+import {
+  getRegionValue,
+  formDataToBackendDTO,
+  getTownValue,
+} from "@utils/helpers";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
 import type { FormData } from "types/event";
 import { Option } from "types/common";
+import type { E2EEventExtras } from "types/api/event";
+import type { CitySummaryResponseDTO } from "types/api/city";
+import type { RegionSummaryResponseDTO } from "types/api/event";
+import type { CategorySummaryResponseDTO } from "types/api/category";
 
 const defaultForm: FormData = {
   title: "",
@@ -35,6 +43,42 @@ const defaultForm: FormData = {
   categories: [],
   email: "",
 };
+
+const slugifySegment = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const isRegionDTO = (
+  region: FormData["region"]
+): region is RegionSummaryResponseDTO =>
+  Boolean(region && typeof region === "object" && "slug" in region);
+
+const isCityDTO = (town: FormData["town"]): town is CitySummaryResponseDTO =>
+  Boolean(town && typeof town === "object" && "latitude" in town);
+
+const isCategoryNamePair = (
+  category: unknown
+): category is { id: number; name: string } =>
+  Boolean(
+    category &&
+      typeof category === "object" &&
+      "id" in category &&
+      "name" in category
+  );
+
+const isCategoryOption = (
+  category: unknown
+): category is { value: string; label: string } =>
+  Boolean(
+    category &&
+      typeof category === "object" &&
+      "value" in category &&
+      "label" in category
+  );
 
 const Publica = () => {
   const router = useRouter();
@@ -110,6 +154,106 @@ const Publica = () => {
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
 
+  const buildE2EExtras = (): E2EEventExtras | undefined => {
+    const regionIdValue = getRegionValue(form.region);
+    const townIdValue = getTownValue(form.town);
+
+    const regionMeta = regionIdValue
+      ? isRegionDTO(form.region)
+        ? form.region
+        : form.region
+        ? {
+            id: Number(regionIdValue),
+            name: (form.region as Option)?.label ?? `Regió ${regionIdValue}`,
+            slug:
+              slugifySegment(
+                (form.region as Option)?.label ?? `region-${regionIdValue}`
+              ) || `region-${regionIdValue}`,
+          }
+        : undefined
+      : undefined;
+
+    const cityMeta = townIdValue
+      ? isCityDTO(form.town)
+        ? form.town
+        : form.town
+        ? {
+            id: Number(townIdValue),
+            name: (form.town as Option)?.label ?? `Ciutat ${townIdValue}`,
+            slug:
+              slugifySegment(
+                (form.town as Option)?.label ?? `ciutat-${townIdValue}`
+              ) || `ciutat-${townIdValue}`,
+            latitude: 41.3851,
+            longitude: 2.1734,
+            postalCode: "08001",
+            rssFeed: null,
+            enabled: true,
+          }
+        : undefined
+      : undefined;
+
+    const categoriesMeta =
+      Array.isArray(form.categories) && form.categories.length > 0
+        ? form.categories
+            .map((category, index) => {
+              if (isCategoryNamePair(category)) {
+                const slug =
+                  slugifySegment(category.name) || `categoria-${category.id}`;
+                return {
+                  id: category.id,
+                  name: category.name,
+                  slug,
+                };
+              }
+              if (isCategoryOption(category)) {
+                const numericId = Number(category.value) || index + 1;
+                const slug =
+                  slugifySegment(category.label) || `categoria-${numericId}`;
+                return {
+                  id: numericId,
+                  name: category.label,
+                  slug,
+                };
+              }
+              if (typeof category === "number") {
+                return {
+                  id: category,
+                  name: `Categoria ${category}`,
+                  slug: `categoria-${category}`,
+                };
+              }
+              return null;
+            })
+            .filter(
+              (
+                category
+              ): category is {
+                id: number;
+                name: string;
+                slug: string;
+              } => Boolean(category)
+            )
+        : undefined;
+
+    if (!regionMeta && !cityMeta && !categoriesMeta) {
+      return undefined;
+    }
+
+    return {
+      region: regionMeta,
+      city: cityMeta,
+      province: regionMeta
+        ? {
+            id: regionMeta.id,
+            name: regionMeta.name,
+            slug: regionMeta.slug,
+          }
+        : undefined,
+      categories: categoriesMeta as CategorySummaryResponseDTO[] | undefined,
+    };
+  };
+
   const onSubmit = async () => {
     startTransition(async () => {
       try {
@@ -124,9 +268,11 @@ const Publica = () => {
           location,
         });
 
+        const e2eExtras = buildE2EExtras();
         const result = await createEventAction(
           eventData,
-          imageFile || undefined
+          imageFile || undefined,
+          e2eExtras
         );
 
         if (result && result.success && result.event) {

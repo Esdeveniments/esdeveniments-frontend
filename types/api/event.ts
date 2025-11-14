@@ -124,3 +124,15 @@ export interface EventCreateRequestDTO {
   location: string;
   categories: number[];
 }
+
+// --- E2E Testing Types ---
+export type E2EEventExtras = {
+  region?: EventDetailResponseDTO["region"];
+  city?: EventDetailResponseDTO["city"];
+  province?: EventDetailResponseDTO["province"];
+  categories?: EventDetailResponseDTO["categories"];
+};
+
+export type GlobalWithE2EStore = typeof globalThis & {
+  __E2E_EVENTS__?: Map<string, EventDetailResponseDTO>;
+};

@@ -17,9 +17,20 @@ import {
   EventUpdateRequestDTO,
   EventCreateRequestDTO,
   PagedResponseDTO,
+  E2EEventExtras,
+  GlobalWithE2EStore,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
 import { computeTemporalStatus } from "@utils/event-status";
+
+const isE2ETestMode = process.env.E2E_TEST_MODE === "1";
+
+const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
+
+const e2eEventsStore = isE2ETestMode
+  ? getE2EGlobal().__E2E_EVENTS__ ??
+    (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
+  : null;
 
 export async function fetchEvents(
   params: FetchEventsParams
@@ -72,6 +83,9 @@ export async function fetchEvents(
 export async function fetchEventBySlug(
   fullSlug: string
 ): Promise<EventDetailResponseDTO | null> {
+  if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
+    return e2eEventsStore.get(fullSlug) ?? null;
+  }
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
     const res = await fetch(getInternalApiUrl(`/api/events/${fullSlug}`), {
@@ -117,8 +131,13 @@ export async function updateEventById(
 
 export async function createEvent(
   data: EventCreateRequestDTO,
-  imageFile?: File
+  imageFile?: File,
+  e2eExtras?: E2EEventExtras
 ): Promise<EventDetailResponseDTO> {
+  if (isE2ETestMode && e2eEventsStore) {
+    return createE2EEvent(data, e2eExtras);
+  }
+
   const formData = new FormData();
 
   formData.append("request", JSON.stringify(data));
@@ -146,6 +165,88 @@ export async function createEvent(
     );
   }
   return response.json();
+}
+
+function normalizeSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function createE2EEvent(
+  data: EventCreateRequestDTO,
+  extras?: E2EEventExtras
+): EventDetailResponseDTO {
+  const slug = `e2e-event-${Date.now()}`;
+  const safeCityId = data.cityId || 1;
+  const safeRegionId = data.regionId || 1;
+
+  const fallbackCity = extras?.city ?? {
+    id: safeCityId,
+    name: extras?.city?.name ?? `Ciutat ${safeCityId}`,
+    slug:
+      extras?.city?.slug ??
+      normalizeSlug(extras?.city?.name ?? `ciutat-${safeCityId}`),
+    latitude: 41.3851,
+    longitude: 2.1734,
+    postalCode: "08001",
+    rssFeed: null,
+    enabled: true,
+  };
+
+  const fallbackRegion = extras?.region ?? {
+    id: safeRegionId,
+    name: extras?.region?.name ?? `Regió ${safeRegionId}`,
+    slug:
+      extras?.region?.slug ??
+      normalizeSlug(extras?.region?.name ?? `regio-${safeRegionId}`),
+  };
+
+  const fallbackProvince = extras?.province ?? {
+    id: fallbackRegion.id,
+    name: fallbackRegion.name,
+    slug: fallbackRegion.slug,
+  };
+
+  const categories =
+    extras?.categories && extras.categories.length > 0
+      ? extras.categories
+      : data.categories.map((id, index) => ({
+          id,
+          name: `Categoria ${id || index + 1}`,
+          slug: `categoria-${id || index + 1}`,
+        }));
+
+  const event: EventDetailResponseDTO = {
+    id: slug,
+    hash: `hash-${slug}`,
+    slug,
+    title: data.title,
+    type: data.type,
+    url: data.url || "",
+    description: data.description,
+    imageUrl: data.imageUrl || "",
+    startDate: data.startDate,
+    startTime: data.startTime,
+    endDate: data.endDate,
+    endTime: data.endTime,
+    location: data.location,
+    visits: 0,
+    origin: "MANUAL",
+    city: fallbackCity,
+    region: fallbackRegion,
+    province: fallbackProvince,
+    categories,
+    relatedEvents: [],
+    metaTitle: data.title,
+    metaDescription: data.description,
+  };
+
+  e2eEventsStore?.set(slug, event);
+  return event;
 }
 
 /**
@@ -327,3 +428,6 @@ export function insertAds(
 
   return insertAdsRandomly(events, ads);
 }
+
+// Re-export for backward compatibility
+export type { E2EEventExtras } from "types/api/event";

@@ -71,6 +71,7 @@ export default [
       "app/**/*.{ts,tsx,js,jsx}",
       "**/store.ts",
       "utils/**/*.{ts,tsx,js,jsx}",
+      "lib/**/*.{ts,tsx,js,jsx}",
     ],
     ignores: [
       "types/**/*.ts",

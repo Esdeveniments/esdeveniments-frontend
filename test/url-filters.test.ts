@@ -7,8 +7,10 @@ import {
   isValidCategorySlug,
   toUrlSearchParams,
   buildFallbackUrlForInvalidPlace,
+  getCategorySlug,
 } from "../utils/url-filters";
 import { DEFAULT_FILTER_VALUE, MAX_QUERY_PARAMS } from "../utils/constants";
+import type { CategorySummaryResponseDTO } from "../types/api/category";
 
 describe("url-filters: canonical building and parsing", () => {
   it("omits tots date and category when both default", () => {
@@ -1124,6 +1126,269 @@ describe("url-filters: buildFallbackUrlForInvalidPlace", () => {
       });
       // Should not include invalid category
       expect(url).toBe("/catalunya");
+    });
+  });
+});
+
+describe("url-filters: getCategorySlug", () => {
+  const mockCategories: CategorySummaryResponseDTO[] = [
+    { id: 1, name: "Teatre", slug: "teatre" },
+    { id: 2, name: "Concerts", slug: "concerts" },
+    { id: 3, name: "Fires i Mercats", slug: "fires-i-mercats" },
+    { id: 4, name: "Festes Populars", slug: "festes-populars" },
+    { id: 5, name: "Literatura", slug: "literatura" },
+  ];
+
+  describe("early returns for empty/null/default values", () => {
+    it("returns DEFAULT_FILTER_VALUE for empty string", () => {
+      expect(getCategorySlug("")).toBe(DEFAULT_FILTER_VALUE);
+    });
+
+    it("returns DEFAULT_FILTER_VALUE for null", () => {
+      expect(getCategorySlug(null as any)).toBe(DEFAULT_FILTER_VALUE);
+    });
+
+    it("returns DEFAULT_FILTER_VALUE for undefined", () => {
+      expect(getCategorySlug(undefined as any)).toBe(DEFAULT_FILTER_VALUE);
+    });
+
+    it("returns DEFAULT_FILTER_VALUE when category is DEFAULT_FILTER_VALUE", () => {
+      expect(getCategorySlug(DEFAULT_FILTER_VALUE)).toBe(DEFAULT_FILTER_VALUE);
+    });
+
+    it("returns DEFAULT_FILTER_VALUE for empty string even with dynamic categories", () => {
+      expect(getCategorySlug("", mockCategories)).toBe(DEFAULT_FILTER_VALUE);
+    });
+
+    it("returns DEFAULT_FILTER_VALUE for null even with dynamic categories", () => {
+      expect(getCategorySlug(null as any, mockCategories)).toBe(
+        DEFAULT_FILTER_VALUE
+      );
+    });
+  });
+
+  describe("dynamic category lookup by name (case-insensitive)", () => {
+    it("finds category by exact name match", () => {
+      expect(getCategorySlug("Teatre", mockCategories)).toBe("teatre");
+    });
+
+    it("finds category by name case-insensitive (lowercase)", () => {
+      expect(getCategorySlug("teatre", mockCategories)).toBe("teatre");
+    });
+
+    it("finds category by name case-insensitive (uppercase)", () => {
+      expect(getCategorySlug("TEATRE", mockCategories)).toBe("teatre");
+    });
+
+    it("finds category by name case-insensitive (mixed case)", () => {
+      expect(getCategorySlug("TeAtRe", mockCategories)).toBe("teatre");
+    });
+
+    it("finds category with spaces in name", () => {
+      expect(getCategorySlug("Fires i Mercats", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+
+    it("finds category with spaces in name (case-insensitive)", () => {
+      expect(getCategorySlug("FIRES I MERCATS", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+
+    it("finds category with spaces in name (mixed case)", () => {
+      expect(getCategorySlug("Fires I Mercats", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+
+    it("finds category with accented characters in name", () => {
+      expect(getCategorySlug("Festes Populars", mockCategories)).toBe(
+        "festes-populars"
+      );
+    });
+  });
+
+  describe("dynamic category lookup by slug (exact match)", () => {
+    it("finds category by exact slug match", () => {
+      expect(getCategorySlug("teatre", mockCategories)).toBe("teatre");
+    });
+
+    it("finds category by exact slug match with hyphens", () => {
+      expect(getCategorySlug("fires-i-mercats", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+
+    it("finds category by exact slug match with multiple hyphens", () => {
+      expect(getCategorySlug("festes-populars", mockCategories)).toBe(
+        "festes-populars"
+      );
+    });
+  });
+
+  describe("dynamic category lookup by slug (case-insensitive)", () => {
+    it("finds category by slug case-insensitive (uppercase)", () => {
+      expect(getCategorySlug("TEATRE", mockCategories)).toBe("teatre");
+    });
+
+    it("finds category by slug case-insensitive (mixed case)", () => {
+      expect(getCategorySlug("TeAtRe", mockCategories)).toBe("teatre");
+    });
+
+    it("finds category by slug case-insensitive with hyphens", () => {
+      expect(getCategorySlug("FIRES-I-MERCATS", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+
+    it("finds category by slug case-insensitive with hyphens (mixed case)", () => {
+      expect(getCategorySlug("Fires-I-Mercats", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+  });
+
+  describe("format validation fallback when no dynamic match found", () => {
+    it("returns category as-is when format is valid and no dynamic categories", () => {
+      expect(getCategorySlug("valid-slug")).toBe("valid-slug");
+    });
+
+    it("returns category as-is when format is valid and dynamic categories don't match", () => {
+      expect(getCategorySlug("unknown-slug", mockCategories)).toBe(
+        "unknown-slug"
+      );
+    });
+
+    it("returns category as-is for valid format with numbers", () => {
+      expect(getCategorySlug("category123", mockCategories)).toBe(
+        "category123"
+      );
+    });
+
+    it("returns category as-is for valid format with hyphens", () => {
+      expect(getCategorySlug("test-category-slug", mockCategories)).toBe(
+        "test-category-slug"
+      );
+    });
+
+    it("returns category as-is for valid format with multiple hyphens", () => {
+      expect(getCategorySlug("test---category", mockCategories)).toBe(
+        "test---category"
+      );
+    });
+
+    it("returns category as-is for single character valid slug", () => {
+      expect(getCategorySlug("a", mockCategories)).toBe("a");
+    });
+
+    it("returns category as-is for numeric slug", () => {
+      expect(getCategorySlug("123", mockCategories)).toBe("123");
+    });
+  });
+
+  describe("edge cases and special characters", () => {
+    it("returns category as-is for invalid format when no dynamic match", () => {
+      // Invalid format (has spaces) but no dynamic match
+      // Function returns as-is per implementation
+      expect(getCategorySlug("invalid category", mockCategories)).toBe(
+        "invalid category"
+      );
+    });
+
+    it("returns category as-is for invalid format with special characters", () => {
+      expect(getCategorySlug("category!", mockCategories)).toBe("category!");
+    });
+
+    it("returns category as-is for invalid format with uppercase when no match", () => {
+      // "Concerts" (uppercase) doesn't match name "Concerts" exactly
+      // but should match via case-insensitive name matching
+      expect(getCategorySlug("Concerts", mockCategories)).toBe("concerts");
+    });
+
+    it("handles empty dynamic categories array", () => {
+      expect(getCategorySlug("teatre", [])).toBe("teatre");
+    });
+
+    it("handles undefined dynamic categories", () => {
+      expect(getCategorySlug("teatre", undefined)).toBe("teatre");
+    });
+
+    it("handles null dynamic categories", () => {
+      expect(getCategorySlug("teatre", null as any)).toBe("teatre");
+    });
+
+    it("handles non-array dynamic categories", () => {
+      expect(getCategorySlug("teatre", {} as any)).toBe("teatre");
+    });
+  });
+
+  describe("priority of matching strategies", () => {
+    it("prefers name match over slug match when both match", () => {
+      // If a category has name "teatre" and slug "teatre", both match
+      // The find() will return the first match, which should be correct
+      const categories: CategorySummaryResponseDTO[] = [
+        { id: 1, name: "Teatre", slug: "teatre" },
+      ];
+      expect(getCategorySlug("teatre", categories)).toBe("teatre");
+    });
+
+    it("handles category where name differs from slug", () => {
+      const categories: CategorySummaryResponseDTO[] = [
+        { id: 1, name: "Fires i Mercats", slug: "fires-i-mercats" },
+      ];
+      // Match by name
+      expect(getCategorySlug("Fires i Mercats", categories)).toBe(
+        "fires-i-mercats"
+      );
+      // Match by slug
+      expect(getCategorySlug("fires-i-mercats", categories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+  });
+
+  describe("mixed case scenarios", () => {
+    it("handles mixed case category name", () => {
+      expect(getCategorySlug("CoNcErTs", mockCategories)).toBe("concerts");
+    });
+
+    it("handles mixed case slug", () => {
+      expect(getCategorySlug("TeAtRe", mockCategories)).toBe("teatre");
+    });
+
+    it("handles mixed case with hyphens", () => {
+      expect(getCategorySlug("FiReS-i-MeRcAtS", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+  });
+
+  describe("real-world category scenarios", () => {
+    it("handles typical category lookup by name", () => {
+      expect(getCategorySlug("Teatre", mockCategories)).toBe("teatre");
+    });
+
+    it("handles typical category lookup by slug", () => {
+      expect(getCategorySlug("teatre", mockCategories)).toBe("teatre");
+    });
+
+    it("handles category with special name format", () => {
+      expect(getCategorySlug("Fires i Mercats", mockCategories)).toBe(
+        "fires-i-mercats"
+      );
+    });
+
+    it("handles category with accented characters", () => {
+      expect(getCategorySlug("Festes Populars", mockCategories)).toBe(
+        "festes-populars"
+      );
+    });
+
+    it("handles unknown category gracefully", () => {
+      expect(getCategorySlug("unknown-category", mockCategories)).toBe(
+        "unknown-category"
+      );
     });
   });
 });
