@@ -53,3 +53,9 @@ export interface NewsDetailResponseDTO {
 }
 
 export type PagedResponseDTO<T> = EventPagedResponseDTO<T>;
+
+export interface FetchNewsParams {
+  page?: number;
+  size?: number;
+  place?: string;
+}

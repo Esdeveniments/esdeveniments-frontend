@@ -329,9 +329,16 @@ export async function fetchCategorizedEvents(
       const validated = parseCategorizedEvents(data);
       return validated || {};
     } catch (fallbackError) {
+      // Sanitize error logging to prevent information disclosure
+      const errorMessage =
+        fallbackError instanceof Error
+          ? fallbackError.message
+          : typeof fallbackError === "string"
+          ? fallbackError
+          : "Unknown error";
       console.error(
         "fetchCategorizedEvents: Both internal and external API failed:",
-        fallbackError
+        errorMessage
       );
       return {};
     }

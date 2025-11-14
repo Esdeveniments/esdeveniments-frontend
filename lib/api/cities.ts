@@ -45,7 +45,10 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
     try {
       return await fetchCitiesExternal();
     } catch (e) {
-      console.error("fetchCities: Build phase external fetch failed:", e);
+      // Sanitize error logging to prevent information disclosure
+      const errorMessage =
+        e instanceof Error ? e.message : typeof e === "string" ? e : "Unknown error";
+      console.error("fetchCities: Build phase external fetch failed:", errorMessage);
       return [];
     }
   }
@@ -59,7 +62,17 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
     try {
       return await fetchCitiesExternal();
     } catch (fallbackError) {
-      console.error("fetchCities: Both internal and external API failed:", fallbackError);
+      // Sanitize error logging to prevent information disclosure
+      const errorMessage =
+        fallbackError instanceof Error
+          ? fallbackError.message
+          : typeof fallbackError === "string"
+            ? fallbackError
+            : "Unknown error";
+      console.error(
+        "fetchCities: Both internal and external API failed:",
+        errorMessage
+      );
       return [];
     }
   }

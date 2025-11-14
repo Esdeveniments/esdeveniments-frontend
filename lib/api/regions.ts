@@ -55,7 +55,17 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
     try {
       return await fetchRegionsExternal();
     } catch (e) {
-      console.error("fetchRegions: Build phase external fetch failed:", e);
+      // Sanitize error logging to prevent information disclosure
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+          ? e
+          : "Unknown error";
+      console.error(
+        "fetchRegions: Build phase external fetch failed:",
+        errorMessage
+      );
       return [];
     }
   }
@@ -69,9 +79,16 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
     try {
       return await fetchRegionsExternal();
     } catch (fallbackError) {
+      // Sanitize error logging to prevent information disclosure
+      const errorMessage =
+        fallbackError instanceof Error
+          ? fallbackError.message
+          : typeof fallbackError === "string"
+          ? fallbackError
+          : "Unknown error";
       console.error(
         "fetchRegions: Both internal and external API failed:",
-        fallbackError
+        errorMessage
       );
       return [];
     }
@@ -160,13 +177,17 @@ export async function fetchRegionsWithCities(): Promise<
   try {
     return await regionsWithCitiesCache(fetchRegionsWithCitiesFromApi);
   } catch (e) {
+    // Sanitize error logging to prevent information disclosure
+    const errorMessage =
+      e instanceof Error
+        ? e.message
+        : typeof e === "string"
+        ? e
+        : "Unknown error";
     console.error(
       "fetchRegionsWithCities: Runtime internal API fetch failed:",
-      e
+      errorMessage
     );
-    if (e instanceof Error) {
-      console.error("Error details:", e.message, e.stack);
-    }
     // If fetch fails, fallback to mock data
     return [
       {

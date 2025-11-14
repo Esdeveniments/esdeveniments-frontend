@@ -97,45 +97,84 @@ function ServerEventsCategorized({
               let categoryName: string;
               let categorySlug: string;
 
+              // Safe string comparison helper - guards against undefined/null values
+              const safeToLowerCase = (value: unknown): string => {
+                if (typeof value !== "string" || !value) {
+                  return "";
+                }
+                return value.toLowerCase();
+              };
+
+              // Safe category key normalization
+              const normalizedCategoryKey = safeToLowerCase(category);
+
               // Try to find the category that matches the category key (name) from the API
               if (firstEvent?.categories && firstEvent.categories.length > 0) {
                 // Find the category in the event that matches the category key (name)
-                const matchingCategory = firstEvent.categories.find(
-                  (cat) =>
-                    cat.name.toLowerCase() === category.toLowerCase() ||
-                    cat.slug.toLowerCase() === category.toLowerCase()
-                );
-                if (matchingCategory) {
+                const matchingCategory = firstEvent.categories.find((cat) => {
+                  if (!cat) return false;
+                  const catName = safeToLowerCase(cat.name);
+                  const catSlug = safeToLowerCase(cat.slug);
+                  return (
+                    catName === normalizedCategoryKey ||
+                    catSlug === normalizedCategoryKey
+                  );
+                });
+                if (
+                  matchingCategory &&
+                  matchingCategory.name &&
+                  matchingCategory.slug
+                ) {
                   // Found matching category in event
                   categoryName = matchingCategory.name;
                   categorySlug = matchingCategory.slug;
                 } else {
-                  // Fallback: use first category from event
-                  const eventCategory = firstEvent.categories[0];
-                  categoryName = eventCategory.name;
-                  categorySlug = eventCategory.slug;
+                  // Fallback: use first valid category from event
+                  const eventCategory = firstEvent.categories.find(
+                    (cat) => cat && cat.name && cat.slug
+                  );
+                  if (eventCategory) {
+                    categoryName = eventCategory.name;
+                    categorySlug = eventCategory.slug;
+                  } else {
+                    // Last resort: use the key as-is (will be sanitized by getCategorySlug)
+                    categoryName = typeof category === "string" ? category : "";
+                    categorySlug = typeof category === "string" ? category : "";
+                  }
                 }
               } else if (categories) {
                 // Fallback: try to find category by name in categories API
-                const dynamicCategory = categories.find(
-                  (cat) =>
-                    cat.slug.toLowerCase() === category.toLowerCase() ||
-                    cat.name.toLowerCase() === category.toLowerCase()
-                );
-                if (dynamicCategory) {
+                const dynamicCategory = categories.find((cat) => {
+                  if (!cat) return false;
+                  const catName = safeToLowerCase(cat.name);
+                  const catSlug = safeToLowerCase(cat.slug);
+                  return (
+                    catName === normalizedCategoryKey ||
+                    catSlug === normalizedCategoryKey
+                  );
+                });
+                if (
+                  dynamicCategory &&
+                  dynamicCategory.name &&
+                  dynamicCategory.slug
+                ) {
                   categoryName = dynamicCategory.name;
                   categorySlug = dynamicCategory.slug;
                 } else {
-                  // Last resort: use the key as-is
-                  categoryName = category;
-                  categorySlug = category;
+                  // Last resort: use the key as-is (will be sanitized by getCategorySlug)
+                  categoryName = typeof category === "string" ? category : "";
+                  categorySlug = typeof category === "string" ? category : "";
                 }
               } else {
                 // Fallback: format slug as readable name
+                const safeCategory =
+                  typeof category === "string" ? category : "";
                 categoryName =
-                  category.charAt(0).toUpperCase() +
-                  category.slice(1).replace(/-/g, " ");
-                categorySlug = category;
+                  safeCategory.length > 0
+                    ? safeCategory.charAt(0).toUpperCase() +
+                      safeCategory.slice(1).replace(/-/g, " ")
+                    : "";
+                categorySlug = safeCategory;
               }
 
               // Build natural Catalan phrasing: "L'agenda de/del/d'/de la [category]"

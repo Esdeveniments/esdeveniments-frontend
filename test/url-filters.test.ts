@@ -1288,16 +1288,16 @@ describe("url-filters: getCategorySlug", () => {
   });
 
   describe("edge cases and special characters", () => {
-    it("returns category as-is for invalid format when no dynamic match", () => {
-      // Invalid format (has spaces) but no dynamic match
-      // Function returns as-is per implementation
+    it("normalizes invalid format with spaces when no dynamic match", () => {
+      // Invalid format (has spaces) - should be sanitized to valid slug
       expect(getCategorySlug("invalid category", mockCategories)).toBe(
-        "invalid category"
+        "invalid-category"
       );
     });
 
-    it("returns category as-is for invalid format with special characters", () => {
-      expect(getCategorySlug("category!", mockCategories)).toBe("category!");
+    it("normalizes invalid format with special characters", () => {
+      // Invalid format with special characters - should be sanitized
+      expect(getCategorySlug("category!", mockCategories)).toBe("category");
     });
 
     it("returns category as-is for invalid format with uppercase when no match", () => {
@@ -1389,6 +1389,102 @@ describe("url-filters: getCategorySlug", () => {
       expect(getCategorySlug("unknown-category", mockCategories)).toBe(
         "unknown-category"
       );
+    });
+  });
+
+  describe("security: path traversal and injection prevention", () => {
+    it("normalizes path traversal attempts to safe slug", () => {
+      // Path traversal attempts are sanitized to safe slugs (slashes removed)
+      const result = getCategorySlug("../../../etc/passwd", mockCategories);
+      expect(result).toBe("etcpasswd");
+      // Verify it's a valid slug format (no path traversal possible)
+      expect(result).toMatch(/^[a-z0-9-]+$/);
+    });
+
+    it("normalizes category with slashes to safe slug", () => {
+      expect(getCategorySlug("category/with/slashes", mockCategories)).toBe(
+        "categorywithslashes"
+      );
+    });
+
+    it("normalizes category with query parameters", () => {
+      // Query parameters are sanitized (removed or converted to safe chars)
+      const result = getCategorySlug("category?param=value", mockCategories);
+      expect(result).toBe("categoryparamvalue");
+      expect(result).toMatch(/^[a-z0-9-]+$/);
+    });
+
+    it("normalizes category with hash fragments", () => {
+      expect(getCategorySlug("category#fragment", mockCategories)).toBe(
+        "categoryfragment"
+      );
+    });
+
+    it("normalizes category with percent-encoded sequences", () => {
+      // Percent-encoded sequences are sanitized
+      const result = getCategorySlug("category%2Fpath", mockCategories);
+      expect(result).toBe("category2fpath");
+      expect(result).toMatch(/^[a-z0-9-]+$/);
+    });
+
+    it("normalizes category with null bytes", () => {
+      expect(getCategorySlug("category\0null", mockCategories)).toBe(
+        "categorynull"
+      );
+    });
+
+    it("normalizes category with unicode control characters", () => {
+      expect(getCategorySlug("category\u0000\u0001", mockCategories)).toBe(
+        "category"
+      );
+    });
+
+    it("returns DEFAULT_FILTER_VALUE for category that sanitizes to empty", () => {
+      // Category that sanitizes to empty or invalid should return default
+      expect(getCategorySlug("!!!", mockCategories)).toBe(DEFAULT_FILTER_VALUE);
+    });
+
+    it("normalizes category with mixed unsafe characters", () => {
+      // Mixed unsafe characters are sanitized to safe slug
+      const result = getCategorySlug("cat/egory?test#frag", mockCategories);
+      expect(result).toBe("categorytestfrag");
+      expect(result).toMatch(/^[a-z0-9-]+$/);
+    });
+
+    it("handles category with only special characters", () => {
+      // Special characters are sanitized (e.g., & becomes " i ")
+      const result = getCategorySlug("!@#$%^&*()", mockCategories);
+      // Result may be a short valid slug or DEFAULT_FILTER_VALUE
+      expect(
+        result === DEFAULT_FILTER_VALUE || /^[a-z0-9-]+$/.test(result)
+      ).toBe(true);
+    });
+
+    it("validates found category slug is safe before returning", () => {
+      // Even if a category is found, validate its slug is safe
+      const unsafeCategories: CategorySummaryResponseDTO[] = [
+        { id: 1, name: "Unsafe", slug: "../../etc" },
+      ];
+      // Slug "../../etc" is not a valid format, so should return DEFAULT_FILTER_VALUE
+      // However, if it gets sanitized to "unsafe" or similar, that's also acceptable
+      const result = getCategorySlug("Unsafe", unsafeCategories);
+      // Either DEFAULT_FILTER_VALUE or a valid sanitized slug
+      expect(
+        result === DEFAULT_FILTER_VALUE || /^[a-z0-9-]+$/.test(result)
+      ).toBe(true);
+      // Ensure no path traversal characters remain
+      expect(result).not.toContain("/");
+      expect(result).not.toContain("..");
+    });
+
+    it("handles category with missing name or slug in dynamic categories", () => {
+      const incompleteCategories: CategorySummaryResponseDTO[] = [
+        { id: 1, name: "", slug: "valid-slug" },
+        { id: 2, name: "Valid", slug: "" },
+        { id: 3, name: "Valid", slug: "valid-slug" },
+      ];
+      // Should skip categories with missing name or slug
+      expect(getCategorySlug("Valid", incompleteCategories)).toBe("valid-slug");
     });
   });
 });
