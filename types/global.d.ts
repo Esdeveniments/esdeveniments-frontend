@@ -5,6 +5,7 @@ declare global {
 
   interface Window {
     gtag?: (command: string, event: string, params?: unknown) => void;
+    __LAST_E2E_PUBLISH_SLUG__?: string;
   }
 }
 

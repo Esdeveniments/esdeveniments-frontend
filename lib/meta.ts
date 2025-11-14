@@ -2,7 +2,7 @@
 import { siteUrl } from "@config/index";
 import type { Metadata } from "next";
 import type { EventDetailResponseDTO } from "types/api/event";
-import { formatCatalanA, getFormattedDate } from "@utils/helpers";
+import { getFormattedDate } from "@utils/helpers";
 
 // --- Sanitization/Truncation helpers ---
 function sanitizeInput(str: string = ""): string {
@@ -58,23 +58,13 @@ export function generateMetaTitle(
 
 export function generateMetaDescription(
   title: string,
-  description?: string,
-  categories?: Array<{ name: string; slug: string }>,
-  location?: string
+  description?: string
 ): string {
   const titleSanitized = sanitizeInput(title);
   let metaDescription = titleSanitized;
 
-  // Add primary category context if available
-  if (categories && categories.length > 0 && location) {
-    const primaryCategory = categories[0].name;
-    const locationPhrase = formatCatalanA(location, "general", false);
-    metaDescription = `${primaryCategory} ${locationPhrase}: ${titleSanitized}`;
-  } else if (categories && categories.length > 0) {
-    const primaryCategory = categories[0].name;
-    metaDescription = `${primaryCategory}: ${titleSanitized}`;
-  }
-
+  // Category information is handled via structured data (article:tag, article:section)
+  // Keep description natural and benefit-driven per 2025 SEO best practices
   if (metaDescription.length < 120 && description) {
     const descriptionSanitized = sanitizeInput(description);
     metaDescription += ` - ${descriptionSanitized}`;
@@ -113,9 +103,7 @@ export function generateEventMetadata(
     // Generate enhanced description like the old version
     const enhancedDescription = generateMetaDescription(
       event.title,
-      event.description,
-      event.categories,
-      event.location
+      event.description
     );
     // Enrich description with date and venue, keeping under 156 chars
     const { formattedStart } = getFormattedDate(event.startDate, event.endDate);

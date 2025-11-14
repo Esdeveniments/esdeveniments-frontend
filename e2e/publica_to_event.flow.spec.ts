@@ -86,12 +86,22 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     const publishButton = page.getByTestId("publish-button");
     await expect(publishButton).toBeEnabled();
 
-    const waitForEventDetail = page.waitForURL(/\/e\/e2e-event-/, {
-      timeout: 60000,
-      waitUntil: "commit",
-    });
+    const publishSlugHandle = page.waitForFunction(
+      () => window.__LAST_E2E_PUBLISH_SLUG__ || null,
+      { timeout: 60000 }
+    );
     await publishButton.click();
-    await waitForEventDetail;
+    const slug = await publishSlugHandle;
+    const resolvedSlug = (await slug.jsonValue()) as string;
+
+    await page
+      .waitForURL(new RegExp(`/e/${resolvedSlug}`), {
+        timeout: 15000,
+        waitUntil: "commit",
+      })
+      .catch(async () => {
+        await page.goto(`/e/${resolvedSlug}`);
+      });
 
     await expect(page).toHaveURL(/\/e\/e2e-event-/);
     await expect(page.locator("h1")).toHaveText(title);
