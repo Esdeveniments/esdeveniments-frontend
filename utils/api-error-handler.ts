@@ -1,22 +1,6 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-
-/**
- * Error response options for API error handling
- */
-export interface ApiErrorOptions {
-  /** HTTP status code (default: 500) */
-  status?: number;
-  /** Error message to return in response */
-  errorMessage?: string;
-  /** Fallback data structure to return (e.g., empty array, empty object) */
-  fallbackData?: unknown;
-  /** Additional context for Sentry (tags, extra data, etc.) */
-  sentryContext?: {
-    tags?: Record<string, string>;
-    extra?: Record<string, unknown>;
-  };
-}
+import type { ApiErrorOptions } from "types/api-error";
 
 /**
  * Shared error handler for API routes that:
