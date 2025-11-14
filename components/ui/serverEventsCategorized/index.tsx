@@ -15,6 +15,72 @@ import { formatCatalanDe } from "@utils/helpers";
 import Link from "next/link";
 import { computeTemporalStatus } from "@utils/event-status";
 
+const resolveCategoryDetails = (
+  categoryKey: string,
+  firstEvent: EventSummaryResponseDTO | undefined,
+  allCategories: ServerEventsCategorizedProps["categories"]
+): { categoryName: string; categorySlug: string } => {
+  const safeToLowerCase = (value: unknown): string => {
+    if (typeof value !== "string" || !value) return "";
+    return value.toLowerCase();
+  };
+
+  const normalizedKey = safeToLowerCase(categoryKey);
+
+  if (firstEvent?.categories?.length) {
+    const matchingCategory = firstEvent.categories.find((cat) => {
+      if (!cat?.name || !cat.slug) return false;
+      const catName = safeToLowerCase(cat.name);
+      const catSlug = safeToLowerCase(cat.slug);
+      return catName === normalizedKey || catSlug === normalizedKey;
+    });
+
+    if (matchingCategory) {
+      return {
+        categoryName: matchingCategory.name,
+        categorySlug: matchingCategory.slug,
+      };
+    }
+
+    const firstValid = firstEvent.categories.find(
+      (cat) => cat?.name && cat.slug
+    );
+    if (firstValid) {
+      return {
+        categoryName: firstValid.name,
+        categorySlug: firstValid.slug,
+      };
+    }
+  }
+
+  if (allCategories?.length) {
+    const matchingCategory = allCategories.find((cat) => {
+      if (!cat?.name || !cat.slug) return false;
+      const catName = safeToLowerCase(cat.name);
+      const catSlug = safeToLowerCase(cat.slug);
+      return catName === normalizedKey || catSlug === normalizedKey;
+    });
+
+    if (matchingCategory) {
+      return {
+        categoryName: matchingCategory.name,
+        categorySlug: matchingCategory.slug,
+      };
+    }
+  }
+
+  const safeCategory = typeof categoryKey === "string" ? categoryKey : "";
+  const categoryName =
+    safeCategory.length > 0
+      ? safeCategory.charAt(0).toUpperCase() +
+        safeCategory.slice(1).replace(/-/g, " ")
+      : "";
+  return {
+    categoryName,
+    categorySlug: safeCategory,
+  };
+};
+
 function ServerEventsCategorized({
   categorizedEvents,
   pageData,
@@ -90,92 +156,12 @@ function ServerEventsCategorized({
               // This gives priority to ~6 images (2 categories × 3 images each)
               const shouldUsePriority = index < 2;
 
-              // Get category slug and name - match the category key to the event's categories
-              // The category key is the category name from the API (e.g., "Patrimoni Cultural")
-              // We need to find the matching category in the event's categories array
               const firstEvent = events.find(isEventSummaryResponseDTO);
-              let categoryName: string;
-              let categorySlug: string;
-
-              // Safe string comparison helper - guards against undefined/null values
-              const safeToLowerCase = (value: unknown): string => {
-                if (typeof value !== "string" || !value) {
-                  return "";
-                }
-                return value.toLowerCase();
-              };
-
-              // Safe category key normalization
-              const normalizedCategoryKey = safeToLowerCase(category);
-
-              // Try to find the category that matches the category key (name) from the API
-              if (firstEvent?.categories && firstEvent.categories.length > 0) {
-                // Find the category in the event that matches the category key (name)
-                const matchingCategory = firstEvent.categories.find((cat) => {
-                  if (!cat) return false;
-                  const catName = safeToLowerCase(cat.name);
-                  const catSlug = safeToLowerCase(cat.slug);
-                  return (
-                    catName === normalizedCategoryKey ||
-                    catSlug === normalizedCategoryKey
-                  );
-                });
-                if (
-                  matchingCategory &&
-                  matchingCategory.name &&
-                  matchingCategory.slug
-                ) {
-                  // Found matching category in event
-                  categoryName = matchingCategory.name;
-                  categorySlug = matchingCategory.slug;
-                } else {
-                  // Fallback: use first valid category from event
-                  const eventCategory = firstEvent.categories.find(
-                    (cat) => cat && cat.name && cat.slug
-                  );
-                  if (eventCategory) {
-                    categoryName = eventCategory.name;
-                    categorySlug = eventCategory.slug;
-                  } else {
-                    // Last resort: use the key as-is (will be sanitized by getCategorySlug)
-                    categoryName = typeof category === "string" ? category : "";
-                    categorySlug = typeof category === "string" ? category : "";
-                  }
-                }
-              } else if (categories) {
-                // Fallback: try to find category by name in categories API
-                const dynamicCategory = categories.find((cat) => {
-                  if (!cat) return false;
-                  const catName = safeToLowerCase(cat.name);
-                  const catSlug = safeToLowerCase(cat.slug);
-                  return (
-                    catName === normalizedCategoryKey ||
-                    catSlug === normalizedCategoryKey
-                  );
-                });
-                if (
-                  dynamicCategory &&
-                  dynamicCategory.name &&
-                  dynamicCategory.slug
-                ) {
-                  categoryName = dynamicCategory.name;
-                  categorySlug = dynamicCategory.slug;
-                } else {
-                  // Last resort: use the key as-is (will be sanitized by getCategorySlug)
-                  categoryName = typeof category === "string" ? category : "";
-                  categorySlug = typeof category === "string" ? category : "";
-                }
-              } else {
-                // Fallback: format slug as readable name
-                const safeCategory =
-                  typeof category === "string" ? category : "";
-                categoryName =
-                  safeCategory.length > 0
-                    ? safeCategory.charAt(0).toUpperCase() +
-                      safeCategory.slice(1).replace(/-/g, " ")
-                    : "";
-                categorySlug = safeCategory;
-              }
+              const { categoryName, categorySlug } = resolveCategoryDetails(
+                category,
+                firstEvent,
+                categories
+              );
 
               // Build natural Catalan phrasing: "L'agenda de/del/d'/de la [category]"
               const categoryPhrase = formatCatalanDe(categoryName, true, true);
