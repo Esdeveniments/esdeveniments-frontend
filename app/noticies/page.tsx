@@ -3,7 +3,7 @@ import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import { NEWS_HUBS, NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
 import type { NewsSummaryResponseDTO } from "types/api/news";
@@ -92,13 +92,12 @@ export default async function Page() {
         Les últimes notícies i recomanacions d&apos;esdeveniments.
       </p>
       <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
-        <Link
+        <PendingLink
           href={`/noticies/rss.xml`}
           className="text-primary underline text-sm"
-          prefetch={false}
         >
           RSS
-        </Link>
+        </PendingLink>
       </div>
       <nav
         aria-label="Breadcrumb"
@@ -106,9 +105,9 @@ export default async function Page() {
       >
         <ol className="flex items-center space-x-2">
           <li>
-            <Link href="/" className="hover:underline">
+            <PendingLink href="/" className="hover:underline">
               Inici
-            </Link>
+            </PendingLink>
           </li>
           <li>
             <span className="mx-1">/</span>
@@ -124,27 +123,25 @@ export default async function Page() {
             <section key={hub.slug} className="w-full">
               <div className="flex items-baseline justify-between mb-1">
                 <h2 className="uppercase">{`Últimes notícies ${hub.name}`}</h2>
-                <Link
+                <PendingLink
                   href={`/noticies/${hub.slug}`}
                   className="text-primary underline text-sm"
-                  prefetch={false}
                 >
                   Veure més…
-                </Link>
+                </PendingLink>
               </div>
               {NEARBY_PLACES_BY_HUB[hub.slug] && (
                 <nav className="mb-3 text-xs text-foreground-strong/70">
                   <span className="mr-2">A prop:</span>
                   {NEARBY_PLACES_BY_HUB[hub.slug].map((p, i) => (
                     <>
-                      <Link
+                      <PendingLink
                         key={p.slug}
                         href={`/noticies/${p.slug}`}
-                        prefetch={false}
                         className="underline hover:text-primary"
                       >
                         {p.name}
-                      </Link>
+                      </PendingLink>
                       {i < NEARBY_PLACES_BY_HUB[hub.slug].length - 1 && (
                         <span className="mx-1">·</span>
                       )}

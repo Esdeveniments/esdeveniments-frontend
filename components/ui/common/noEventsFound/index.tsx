@@ -1,5 +1,5 @@
 import { FC } from "react";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import type { NoEventsFoundProps } from "types/props";
 
 const NoEventsFound: FC<NoEventsFoundProps> = ({ title }) => {
@@ -109,13 +109,12 @@ const NoEventsFound: FC<NoEventsFoundProps> = ({ title }) => {
       </div>
       <div className="w-full text-center p-6 ">
         Trobes a faltar algun esdeveniment? Fes clic{" "}
-        <Link
+        <PendingLink
           href="/publica"
-          prefetch={false}
           className="uppercase font-barlow italic font-bold text-primary hover:underline"
         >
           aquí
-        </Link>{" "}
+        </PendingLink>{" "}
         per afegir-lo!
       </div>
     </div>

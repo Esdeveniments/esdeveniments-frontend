@@ -1,6 +1,6 @@
 import { FC } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import eventNotFound from "@public/static/images/error_404_page_not_found.png";
 
 const NoEventFound: FC = () => {
@@ -26,29 +26,26 @@ const NoEventFound: FC = () => {
         </div>
         <p className="mb-4">
           Pots provar sort amb el{" "}
-          <Link
+          <PendingLink
             href="/catalunya"
-            prefetch={false}
             className="font-bold text-black hover:underline"
           >
             cercador
-          </Link>
+          </PendingLink>
           , veure{" "}
-          <Link
+          <PendingLink
             href="/"
-            prefetch={false}
             className="font-bold text-black hover:underline"
           >
             que passa avui a Catalunya
-          </Link>
+          </PendingLink>
           , o bé,{" "}
-          <Link
+          <PendingLink
             href="/publica"
-            prefetch={false}
             className="font-bold text-black hover:underline"
           >
             publicar l&apos;esdeveniment
-          </Link>
+          </PendingLink>
           . Si creus que hi ha un error, posa&apos;t en contacte amb nosaltres
           a:{" "}
           <a

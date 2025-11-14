@@ -7,9 +7,9 @@ export default function PublicaPageSkeleton() {
           <h1 className="italic uppercase font-semibold">
             <div className="h-8 bg-border/40 rounded w-64 animate-pulse" />
           </h1>
-          <p className="text-sm text-center">
+          <div className="text-sm text-center">
             <div className="h-4 bg-border/40 rounded w-32 mx-auto animate-pulse" />
-          </p>
+          </div>
         </div>
 
         {/* Form skeleton */}

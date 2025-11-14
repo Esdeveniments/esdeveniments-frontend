@@ -7,7 +7,7 @@ import {
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import Head from "next/head";
@@ -145,17 +145,17 @@ export default async function Page({
       >
         <ol className="flex items-center space-x-2">
           <li>
-            <Link href="/" className="hover:underline">
+            <PendingLink href="/" className="hover:underline">
               Inici
-            </Link>
+            </PendingLink>
           </li>
           <li>
             <span className="mx-1">/</span>
           </li>
           <li>
-            <Link href="/noticies" className="hover:underline">
+            <PendingLink href="/noticies" className="hover:underline">
               Notícies
-            </Link>
+            </PendingLink>
           </li>
           <li>
             <span className="mx-1">/</span>
@@ -167,21 +167,19 @@ export default async function Page({
         Notícies de {placeType.label}
       </h1>
       <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
-        <Link
+        <PendingLink
           href={`/noticies`}
           className="text-primary underline text-sm"
-          prefetch={false}
         >
           Veure totes les notícies
-        </Link>
+        </PendingLink>
         <span className="mx-2">·</span>
-        <Link
+        <PendingLink
           href={`/noticies/${place}/rss.xml`}
           className="text-primary underline text-sm"
-          prefetch={false}
         >
           RSS
-        </Link>
+        </PendingLink>
       </div>
       <section className="flex flex-col gap-6 px-2 lg:px-0">
         {list.map((event, index) => (
@@ -196,30 +194,28 @@ export default async function Page({
       </section>
       <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
         {currentPage > 0 ? (
-          <Link
+          <PendingLink
             href={{
               pathname: `/noticies/${place}`,
               query: { page: String(currentPage - 1), size: String(pageSize) },
             }}
-            prefetch={false}
             className="text-primary underline"
           >
             ← Anterior
-          </Link>
+          </PendingLink>
         ) : (
           <span />
         )}
         {!response.last && (
-          <Link
+          <PendingLink
             href={{
               pathname: `/noticies/${place}`,
               query: { page: String(currentPage + 1), size: String(pageSize) },
             }}
-            prefetch={false}
             className="text-primary underline"
           >
             Més notícies →
-          </Link>
+          </PendingLink>
         )}
       </div>
     </div>

@@ -5,9 +5,9 @@ export default function NewsPageSkeleton() {
       <h1 className="uppercase mb-2 px-2 lg:px-0">
         <div className="h-8 bg-border/40 rounded w-32 animate-pulse" />
       </h1>
-      <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
+      <div className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         <div className="h-4 bg-border/40 rounded w-2/3 animate-pulse" />
-      </p>
+      </div>
 
       {/* RSS link skeleton */}
       <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">

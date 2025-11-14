@@ -1,5 +1,6 @@
 import React, { forwardRef } from "react";
 import Link from "next/link";
+import { BadgeLink } from "./BadgeLink";
 
 // Base classes aligned with design tokens (badge sizing + transitions)
 const BASE_CLASS =
@@ -13,11 +14,23 @@ const Badge = forwardRef<
     variant?: "outline" | "solid";
     onClick?: () => void;
     ariaLabel?: string;
+    usePendingLink?: boolean; // Opt-in to navigation progress feedback
   }>
->(({ href, children, className = "", onClick, ariaLabel }, ref) => {
+>(({ href, children, className = "", onClick, ariaLabel, usePendingLink = false }, ref) => {
   const combined = `${BASE_CLASS} ${className}`.trim();
 
   if (href) {
+    // Use PendingLink only when explicitly requested (for navigation feedback)
+    if (usePendingLink) {
+      return (
+        <BadgeLink href={href} className={combined} aria-label={ariaLabel}>
+          <span data-slot="badge" ref={ref}>
+            {children}
+          </span>
+        </BadgeLink>
+      );
+    }
+    // Default: use regular Link for server-side rendering (better SEO/performance)
     return (
       <Link href={href} className={combined} aria-label={ariaLabel}>
         <span data-slot="badge" ref={ref}>

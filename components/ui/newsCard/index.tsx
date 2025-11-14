@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import Image from "next/image";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
@@ -54,9 +54,9 @@ export default function NewsCard({
                 </span>
               )}
             </div>
-            <Link href={href} prefetch={false} className="btn-primary">
+            <PendingLink href={href} className="btn-primary">
               Llegir més
-            </Link>
+            </PendingLink>
           </div>
         </div>
       </section>
@@ -87,14 +87,13 @@ export default function NewsCard({
         </div>
 
         <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
-          <Link
+          <PendingLink
             href={href}
-            prefetch={false}
             className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
             aria-label={event.title}
           >
             {event.title}
-          </Link>
+          </PendingLink>
         </h3>
 
         {plainDescription && (
@@ -104,14 +103,13 @@ export default function NewsCard({
         )}
 
         <div className="flex items-center justify-between">
-          <Link
+          <PendingLink
             href={href}
-            prefetch={false}
             className="btn-primary"
             aria-label={`Llegir-ne més de ${event.title}`}
           >
             Llegir més
-          </Link>
+          </PendingLink>
         </div>
       </div>
     </article>

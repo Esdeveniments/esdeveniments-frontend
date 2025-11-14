@@ -3,44 +3,71 @@
 import { create } from "zustand";
 import type { NavigationState } from "types/common";
 
-let timeoutId: NodeJS.Timeout | null = null;
-let debounceTimeoutId: NodeJS.Timeout | null = null;
+const MIN_DISPLAY_TIME = 200; // Minimum time to show progress bar (200ms)
 
-export const useNavigationProgressStore = create<NavigationState>((set) => ({
-  isNavigating: false,
-  start: () => {
-    // Clear any existing timeouts
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
-    if (debounceTimeoutId) {
-      clearTimeout(debounceTimeoutId);
-      debounceTimeoutId = null;
-    }
+export const useNavigationProgressStore = create<NavigationState>(
+  (set, get) => ({
+    isNavigating: false,
+    _timeoutId: null,
+    _debounceTimeoutId: null,
+    _startTime: null,
+    start: () => {
+      // Clear any existing timeouts from the state
+      const { _timeoutId, _debounceTimeoutId } = get();
+      if (_timeoutId) clearTimeout(_timeoutId);
+      if (_debounceTimeoutId) clearTimeout(_debounceTimeoutId);
 
-    set({ isNavigating: true });
+      const startTime = Date.now();
 
-    // Auto-clear after 5 seconds to prevent stuck state
-    timeoutId = setTimeout(() => {
-      set({ isNavigating: false });
-      timeoutId = null;
-    }, 5000);
-  },
-  done: () => {
-    // Debounce done() by 150ms to reduce flicker
-    if (debounceTimeoutId) {
-      clearTimeout(debounceTimeoutId);
-    }
+      // Set a new timeout to prevent a stuck state
+      const newTimeoutId = setTimeout(() => {
+        set({ isNavigating: false, _timeoutId: null, _startTime: null });
+      }, 5000);
 
-    debounceTimeoutId = setTimeout(() => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      set({ isNavigating: false });
-      debounceTimeoutId = null;
-    }, 150);
-  },
-}));
+      // Update the state
+      set({
+        isNavigating: true,
+        _timeoutId: newTimeoutId,
+        _debounceTimeoutId: null,
+        _startTime: startTime,
+      });
+    },
+    done: () => {
+      // Clear any pending done() call
+      const { _debounceTimeoutId } = get();
+      if (_debounceTimeoutId) clearTimeout(_debounceTimeoutId);
 
+      // Debounce done() to reduce flicker
+      const newDebounceTimeoutId = setTimeout(() => {
+        const { _timeoutId, _startTime } = get();
+        if (_timeoutId) clearTimeout(_timeoutId);
+
+        // Ensure progress bar is visible for at least MIN_DISPLAY_TIME
+        const elapsed = _startTime ? Date.now() - _startTime : MIN_DISPLAY_TIME;
+        const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsed);
+
+        if (remainingTime > 0) {
+          // Wait for remaining time before hiding
+          setTimeout(() => {
+            set({
+              isNavigating: false,
+              _timeoutId: null,
+              _debounceTimeoutId: null,
+              _startTime: null,
+            });
+          }, remainingTime);
+        } else {
+          // Already shown long enough, hide immediately
+          set({
+            isNavigating: false,
+            _timeoutId: null,
+            _debounceTimeoutId: null,
+            _startTime: null,
+          });
+        }
+      }, 150);
+
+      set({ _debounceTimeoutId: newDebounceTimeoutId });
+    },
+  })
+);

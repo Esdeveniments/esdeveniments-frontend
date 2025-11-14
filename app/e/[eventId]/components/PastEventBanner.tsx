@@ -1,6 +1,6 @@
 import type { PastEventBannerProps } from "types/common";
 import { ClockIcon } from "@heroicons/react/outline";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 
 export default function PastEventBanner({
   temporalStatus,
@@ -41,21 +41,21 @@ export default function PastEventBanner({
 
           {/* Single primary CTA with optional secondary link */}
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-start md:justify-center">
-            <Link
+            <PendingLink
               href={explorePlaceHref}
               className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground body-normal font-medium hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
             >
               Descobreix esdeveniments a {placeLabel}
-            </Link>
+            </PendingLink>
 
             {primaryCategorySlug && (
-              <Link
+              <PendingLink
                 href={exploreCategoryHref}
                 className="body-small text-primary hover:text-primary-dark font-medium transition-colors sm:ml-2 inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
               >
                 o explora aquesta categoria
                 <span aria-hidden="true">→</span>
-              </Link>
+              </PendingLink>
             )}
           </div>
         </div>

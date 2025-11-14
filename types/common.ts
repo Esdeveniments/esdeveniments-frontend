@@ -376,6 +376,7 @@ export interface BadgeProps {
   variant?: "outline" | "solid";
   onClick?: () => void;
   ariaLabel?: string;
+  usePendingLink?: boolean; // Opt-in to navigation progress feedback
 }
 
 // Navigation progress store types
@@ -383,6 +384,10 @@ export interface NavigationState {
   isNavigating: boolean;
   start: () => void;
   done: () => void;
+  // Internal state (not accessed directly by consumers)
+  _timeoutId?: NodeJS.Timeout | null;
+  _debounceTimeoutId?: NodeJS.Timeout | null;
+  _startTime?: number | null;
 }
 
 // PendingLink component props (extends LinkProps)

@@ -12,7 +12,7 @@ import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ServerEventsCategorizedProps } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import { computeTemporalStatus } from "@utils/event-status";
 
 const resolveCategoryDetails = (
@@ -182,7 +182,7 @@ function ServerEventsCategorized({
                     <h3 className="heading-3">
                       L&apos;agenda {categoryPhrase} a Catalunya
                     </h3>
-                    <Link
+                    <PendingLink
                       href={buildCanonicalUrl(
                         {
                           place: "catalunya",
@@ -195,7 +195,7 @@ function ServerEventsCategorized({
                     >
                       Veure més
                       <ChevronRightIcon className="w-5 h-5" />
-                    </Link>
+                    </PendingLink>
                   </div>
 
                   {/* Related canonical links for this category */}
@@ -215,6 +215,7 @@ function ServerEventsCategorized({
                             categories
                           )}
                           ariaLabel={`Veure activitats d'avui per la categoria ${categoryName}`}
+                          usePendingLink={true}
                         >
                           Avui
                         </Badge>
@@ -230,6 +231,7 @@ function ServerEventsCategorized({
                             categories
                           )}
                           ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${categoryName}`}
+                          usePendingLink={true}
                         >
                           Cap de setmana
                         </Badge>

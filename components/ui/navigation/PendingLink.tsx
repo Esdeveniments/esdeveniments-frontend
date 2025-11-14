@@ -26,12 +26,16 @@ export function PendingLink({
       if (pendingRef.current) {
         pendingRef.current = false;
         // Defer state update to avoid setState in effect warning
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
           setIsPending(false);
         }, 0);
         done(); // Also reset global progress
+        // Clean up timeout if component unmounts before it executes
+        return () => clearTimeout(timerId);
       }
     }
+    // Return undefined cleanup function if no timeout was created
+    return undefined;
   }, [pathname, done]);
 
   const handleClick = useCallback(() => {
@@ -54,12 +58,6 @@ export function PendingLink({
       onClick={handleClick}
     >
       {children}
-      {isPending && (
-        <span aria-hidden className="ml-2 inline-block animate-pulse">
-          …
-        </span>
-      )}
     </Link>
   );
 }
-

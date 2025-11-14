@@ -1,6 +1,6 @@
 // No headers/nonce needed with relaxed CSP
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import DOMPurify from "isomorphic-dompurify";
 import { getNewsBySlug } from "@lib/api/news";
 import type { NewsDetailResponseDTO } from "types/api/news";
@@ -145,17 +145,17 @@ export default async function Page({
             className="text-sm text-foreground-strong/70"
             aria-label="Breadcrumb"
           >
-            <Link href="/" className="hover:underline">
+            <PendingLink href="/" className="hover:underline">
               Inici
-            </Link>{" "}
+            </PendingLink>{" "}
             /{" "}
-            <Link href="/noticies" className="hover:underline">
+            <PendingLink href="/noticies" className="hover:underline">
               Notícies
-            </Link>{" "}
+            </PendingLink>{" "}
             /{" "}
-            <Link href={`/noticies/${place}`} className="hover:underline">
+            <PendingLink href={`/noticies/${place}`} className="hover:underline">
               {placeType.label}
-            </Link>{" "}
+            </PendingLink>{" "}
             /{" "}
             <span className="text-foreground-strong font-medium">
               {detail.title}

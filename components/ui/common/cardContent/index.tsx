@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import NextImage from "next/image";
 import {
   ClockIcon,
@@ -32,10 +32,8 @@ export default function CardContentServer({
 
   return (
     <>
-      <Link
+      <PendingLink
         href={`/e/${event.slug}`}
-        passHref
-        prefetch={false}
         className="w-full"
       >
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
@@ -83,7 +81,7 @@ export default function CardContentServer({
             </div>
           </div>
         </div>
-      </Link>
+      </PendingLink>
       <div className="w-full flex justify-between items-center px-card-padding-sm mb-element-gap-sm">
         <DesktopShareIsland slug={event.slug} />
         <ViewCounterIsland

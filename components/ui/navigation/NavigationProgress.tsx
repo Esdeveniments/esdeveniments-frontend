@@ -3,8 +3,10 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useNavigationProgressStore } from "@components/hooks/useNavigationProgress";
+import { useHydration } from "@components/hooks/useHydration";
 
 export function NavigationProgress() {
+  const isHydrated = useHydration();
   const isNavigating = useNavigationProgressStore((s) => s.isNavigating);
   const { done } = useNavigationProgressStore();
   const pathname = usePathname();
@@ -18,7 +20,8 @@ export function NavigationProgress() {
     }
   }, [pathname, done]);
 
-  if (!isNavigating) return null;
+  // Don't render on server or before hydration
+  if (!isHydrated || !isNavigating) return null;
 
   return (
     <div className="fixed inset-x-0 top-0 z-50 h-1 bg-primary/20">
@@ -26,4 +29,3 @@ export function NavigationProgress() {
     </div>
   );
 }
-

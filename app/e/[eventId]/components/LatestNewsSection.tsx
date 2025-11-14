@@ -1,6 +1,6 @@
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
-import Link from "next/link";
+import { PendingLink } from "@components/ui/navigation/PendingLink";
 import { formatCatalanA } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
 
@@ -27,13 +27,12 @@ export default async function LatestNewsSection({
               ? formatCatalanA(placeLabel, placeType, false)
               : ""}
           </h2>
-          <Link
+          <PendingLink
             href={newsHref}
-            prefetch={false}
             className="body-small text-primary underline hover:no-underline"
           >
             Veure totes
-          </Link>
+          </PendingLink>
         </div>
         <div className="flex flex-col gap-element-gap">
           {latestNews.map((newsItem, index) => (
