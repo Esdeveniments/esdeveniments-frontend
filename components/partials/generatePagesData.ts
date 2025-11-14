@@ -225,7 +225,7 @@ export async function generatePagesData({
         `${categorySEO.titleSuffix} avui ${labelWithArticle}`,
         `${categorySEO.titleSuffix} avui ${labelWithArticle}. Agenda actualitzada.`,
         `${categoryTitle} avui ${labelWithArticle} - Agenda Cultural`,
-        `${categoryTitle} avui ${labelWithArticle}. ${categorySEO.description}.`,
+        `${categorySEO.culturalContext} avui ${labelWithArticle}. Agenda actualitzada amb les millors propostes.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
@@ -236,7 +236,7 @@ export async function generatePagesData({
         `${categorySEO.titleSuffix} demà ${labelWithArticle}`,
         `${categorySEO.titleSuffix} demà ${labelWithArticle}. Agenda actualitzada.`,
         `${categoryTitle} demà ${labelWithArticle} - Agenda Cultural`,
-        `${categoryTitle} demà ${labelWithArticle}. ${categorySEO.description}.`,
+        `${categorySEO.culturalContext} demà ${labelWithArticle}. Agenda actualitzada amb les millors propostes.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
@@ -247,7 +247,7 @@ export async function generatePagesData({
         `${categorySEO.titleSuffix} aquesta setmana ${labelWithArticle}`,
         `${categorySEO.titleSuffix} aquesta setmana ${labelWithArticle}. Agenda actualitzada.`,
         `${categoryTitle} aquesta setmana ${labelWithArticle} - Agenda Cultural`,
-        `${categoryTitle} aquesta setmana ${labelWithArticle}. ${categorySEO.description}.`,
+        `${categorySEO.culturalContext} aquesta setmana ${labelWithArticle}. Agenda actualitzada amb les millors propostes.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
@@ -258,7 +258,7 @@ export async function generatePagesData({
         `${categorySEO.titleSuffix} aquest cap de setmana ${labelWithArticle}`,
         `${categorySEO.titleSuffix} aquest cap de setmana ${labelWithArticle}. Agenda actualitzada.`,
         `${categoryTitle} aquest cap de setmana ${labelWithArticle} - Agenda Cultural`,
-        `${categoryTitle} aquest cap de setmana ${labelWithArticle}. ${categorySEO.description}.`,
+        `${categorySEO.culturalContext} aquest cap de setmana ${labelWithArticle}. Agenda actualitzada amb les millors propostes.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
@@ -270,7 +270,7 @@ export async function generatePagesData({
         `${categorySEO.titleSuffix} ${labelWithArticle}`,
         `${categorySEO.titleSuffix} ${labelWithArticle}. Agenda cultural actualitzada.`,
         `${categoryTitle} ${labelWithArticle} - Agenda Cultural Catalunya`,
-        `${categoryTitle} ${labelWithArticle}. ${categorySEO.description}.`,
+        `${categorySEO.culturalContext} ${labelWithArticle}. Agenda cultural actualitzada amb les millors propostes.`,
         baseCanonical,
         `Ho sentim, però no hi ha ${
           categorySEO.noEventsText || categorySEO.description.split(",")[0]
@@ -282,9 +282,9 @@ export async function generatePagesData({
   if (type === "region" && !byDate) {
     return createPageData(
       `Què fer ${labelWithArticle}. Agenda ${currentYear}`,
-      `Agenda cultural ${labelWithArticle} aquest ${month}. Selecció d’activitats.`,
+      `Agenda cultural ${labelWithArticle} aquest ${month}. Selecció d'activitats.`,
       `Esdeveniments destacats ${labelWithArticle}. Agenda ${currentYear}`,
-      `Esdeveniments culturals i propostes destacades ${labelWithArticle} aquest ${month}.`,
+      `Explora la millor agenda cultural ${labelWithArticle} aquest ${month}. Concerts, exposicions, teatre i propostes destacades.`,
       `${siteUrl}/${place}`,
       `Ho sentim, però no hi ha esdeveniments ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
     );
@@ -295,7 +295,7 @@ export async function generatePagesData({
       `Què fer ${labelWithArticle}. Agenda ${currentYear}`,
       `Agenda cultural ${labelWithArticle} aquest ${month}. Activitats destacades.`,
       `Guia d'activitats ${labelWithArticle} - ${month} ${currentYear}`,
-      `Concerts, exposicions i més ${labelWithArticle} aquest ${month}.`,
+      `Descobreix què fer ${labelWithArticle} aquest ${month}. Concerts, exposicions, teatre i activitats culturals destacades.`,
       `${siteUrl}/${place}`,
       `Ho sentim, però no hi ha esdeveniments ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
     );
@@ -305,18 +305,18 @@ export async function generatePagesData({
     if (byDate === "avui") {
       return createPageData(
         `Què fer ${byDate} ${labelWithArticle}`,
-        `Agenda ${byDate} ${labelWithArticle}. Selecció d’activitats.`,
+        `Agenda ${byDate} ${labelWithArticle}. Selecció d'activitats.`,
         `Esdeveniments ${byDate} ${labelWithArticle}`,
-        `Esdeveniments ${byDate} ${labelWithArticle}. Agenda cultural actualitzada.`,
+        `Descobreix què fer avui ${labelWithArticle}. Agenda cultural actualitzada amb concerts, exposicions i activitats destacades.`,
         `${siteUrl}/${place}/${byDate}`,
         `Ho sentim, però no hi ha esdeveniments avui ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
       );
     } else if (byDate === "dema") {
       return createPageData(
         `Què fer demà ${labelWithArticle}`,
-        `Agenda demà ${labelWithArticle}. Selecció d’activitats.`,
+        `Agenda demà ${labelWithArticle}. Selecció d'activitats.`,
         `Esdeveniments demà ${labelWithArticle}`,
-        `Esdeveniments demà ${labelWithArticle}. Agenda cultural actualitzada.`,
+        `Descobreix què fer demà ${labelWithArticle}. Agenda cultural actualitzada amb concerts, exposicions i activitats destacades.`,
         `${siteUrl}/${place}/${byDate}`,
         `Ho sentim, però no hi ha esdeveniments demà ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
       );
@@ -325,7 +325,7 @@ export async function generatePagesData({
         `Agenda setmanal ${labelWithArticle}`,
         `Agenda aquesta ${byDate} ${labelWithArticle}. Activitats destacades.`,
         `Esdeveniments aquesta ${byDate} ${labelWithArticle}`,
-        `Esdeveniments aquesta ${byDate} ${labelWithArticle}. Agenda cultural actualitzada.`,
+        `Explora l'agenda cultural aquesta setmana ${labelWithArticle}. Concerts, exposicions, teatre i activitats destacades.`,
         `${siteUrl}/${place}/${byDate}`,
         `Ho sentim, però no hi ha esdeveniments aquesta setmana ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
       );
@@ -334,7 +334,7 @@ export async function generatePagesData({
         `Què fer aquest cap de setmana ${labelWithArticle}`,
         `Agenda aquest cap de setmana ${labelWithArticle}. Activitats destacades.`,
         `Plans per aquest cap de setmana ${labelWithArticle}`,
-        `Esdeveniments aquest cap de setmana ${labelWithArticle}. Agenda cultural actualitzada.`,
+        `Descobreix els millors plans per aquest cap de setmana ${labelWithArticle}. Agenda cultural amb concerts, exposicions i activitats destacades.`,
         `${siteUrl}/${place}/${byDate}`,
         `Ho sentim, però no hi ha esdeveniments aquest cap de setmana ${labelWithArticle}. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
       );
@@ -345,18 +345,18 @@ export async function generatePagesData({
     if (byDate === "avui") {
       return createPageData(
         "Què fer avui a Catalunya",
-        "Agenda avui a Catalunya. Selecció d’activitats.",
+        "Agenda avui a Catalunya. Selecció d'activitats.",
         "Esdeveniments avui a Catalunya",
-        "Esdeveniments avui a Catalunya. Agenda cultural actualitzada.",
+        "Descobreix què fer avui a Catalunya. Agenda cultural actualitzada amb concerts, exposicions i activitats destacades.",
         `${siteUrl}/${byDate}`,
         "Ho sentim, però no hi ha esdeveniments avui a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
       );
     } else if (byDate === "dema") {
       return createPageData(
         "Què fer demà a Catalunya",
-        "Agenda demà a Catalunya. Selecció d’activitats.",
+        "Agenda demà a Catalunya. Selecció d'activitats.",
         "Esdeveniments demà a Catalunya",
-        "Esdeveniments demà a Catalunya. Agenda cultural actualitzada.",
+        "Descobreix què fer demà a Catalunya. Agenda cultural actualitzada amb concerts, exposicions i activitats destacades.",
         `${siteUrl}/${byDate}`,
         "Ho sentim, però no hi ha esdeveniments demà a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
       );
@@ -365,7 +365,7 @@ export async function generatePagesData({
         "Agenda setmanal a Catalunya",
         "Agenda aquesta setmana a Catalunya. Activitats destacades.",
         "Esdeveniments aquesta setmana a Catalunya",
-        "Esdeveniments aquesta setmana a Catalunya. Agenda cultural actualitzada.",
+        "Explora l'agenda cultural aquesta setmana a Catalunya. Concerts, exposicions, teatre i activitats destacades.",
         `${siteUrl}/${byDate}`,
         "Ho sentim, però no hi ha esdeveniments aquesta setmana a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
       );
@@ -374,7 +374,7 @@ export async function generatePagesData({
         "Què fer aquest cap de setmana a Catalunya",
         "Agenda aquest cap de setmana a Catalunya. Activitats destacades.",
         "Esdeveniments aquest cap de setmana a Catalunya",
-        "Esdeveniments aquest cap de setmana a Catalunya. Agenda cultural actualitzada.",
+        "Descobreix els millors plans per aquest cap de setmana a Catalunya. Agenda cultural amb concerts, exposicions i activitats destacades.",
         `${siteUrl}/${byDate}`,
         "Ho sentim, però no hi ha esdeveniments aquest cap de setmana a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions."
       );
@@ -384,9 +384,9 @@ export async function generatePagesData({
   // Default fallback
   return createPageData(
     `Què fer a Catalunya. Agenda ${currentYear}`,
-    `Agenda cultural de Catalunya aquest ${month}. Selecció d’activitats.`,
+    `Agenda cultural de Catalunya aquest ${month}. Selecció d'activitats.`,
     `Descobreix esdeveniments a Catalunya aquest ${currentYear}`,
-    `Esdeveniments culturals, concerts, exposicions i més a Catalunya.`,
+    `Explora la millor agenda cultural de Catalunya. Concerts, exposicions, teatre i activitats culturals destacades.`,
     siteUrl,
     `Ho sentim, però no hi ha esdeveniments a Catalunya. Hem rebuscat en l'agenda i pot ser que també t'agradin aquestes altres opcions.`
   );

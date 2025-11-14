@@ -1,6 +1,7 @@
 import { MONTHS_URL as MONTHS, DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { nextDay, isWeekend } from "@utils/helpers";
 import { DateRange } from "types/common";
+import type { ValidDateSlug } from "types/dates";
 
 // Valid date formats - this becomes the source of truth
 export const VALID_DATES = [
@@ -10,9 +11,6 @@ export const VALID_DATES = [
   "setmana",
   "cap-de-setmana",
 ] as const;
-
-// Export the type derived from the array
-export type ValidDateSlug = (typeof VALID_DATES)[number];
 
 /**
  * Type guard to check if a string is a valid date slug

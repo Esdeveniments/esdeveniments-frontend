@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchCitiesExternal } from "@lib/api/cities-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -13,8 +14,9 @@ export async function GET() {
       },
     });
   } catch (e) {
-    console.error("/api/cities error", e);
-    return NextResponse.json([], { status: 500 });
+    return handleApiError(e, "/api/cities", {
+      fallbackData: [],
+    });
   }
 }
 

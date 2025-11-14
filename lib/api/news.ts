@@ -3,17 +3,15 @@ import type {
   PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
+  FetchNewsParams,
 } from "types/api/news";
 import { createKeyedCache } from "./cache";
 import { getInternalApiUrl, buildNewsQuery } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 
-export interface FetchNewsParams {
-  page?: number;
-  size?: number;
-  place?: string;
-}
+// Re-export for backward compatibility
+export type { FetchNewsParams } from "types/api/news";
 
 // Cache for checking if place has news (24h TTL)
 const placeHasNewsCache = createKeyedCache<boolean>(86400000);

@@ -4,6 +4,7 @@ import {
   PricePreviewRequest,
   PricePreviewResponse,
 } from "types/api/restaurant";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -30,7 +31,9 @@ export async function POST(req: NextRequest) {
     };
     return NextResponse.json(resp, { status: 200 });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    return handleApiError(e, "/api/promotions/price-preview", {
+      status: 400,
+      errorMessage: "Bad request",
+    });
   }
 }

@@ -4,6 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
 const webServerEnv: Record<string, string> = {
   NODE_ENV: process.env.NODE_ENV || "development",
   E2E_TEST_MODE: "1",
+  NEXT_PUBLIC_E2E_TEST_MODE: "1",
 };
 if (process.env.NEXT_PUBLIC_API_URL) {
   webServerEnv.NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;

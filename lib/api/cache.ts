@@ -1,7 +1,4 @@
-type CacheEntry<T> = {
-  data: T;
-  timestamp: number;
-};
+import type { CacheEntry } from "types/cache";
 
 // Simple time-based cache for single values
 export function createCache<T>(ttlMs: number) {

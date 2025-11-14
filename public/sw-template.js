@@ -9,7 +9,7 @@ importScripts(
 // Set a more descriptive name for your caches for easier debugging.
 workbox.core.setCacheNameDetails({
   prefix: "esdeveniments-app",
-  suffix: "v3",
+  suffix: "v4",
   precache: "precache",
   runtime: "runtime-cache",
 });
@@ -99,7 +99,22 @@ workbox.routing.registerRoute(
   })
 );
 
-// Strategy for Local API Requests - Stale-While-Revalidate
+// Strategy for Event API Requests - Stale-While-Revalidate with 5-minute TTL
+// Events need fresher data, so we use a shorter cache duration
+workbox.routing.registerRoute(
+  ({ url }) => url.pathname === "/api/events" || url.pathname === "/api/events/categorized",
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: "esdeveniments-events-api-cache",
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 300, // 5 minutes
+      }),
+    ],
+  })
+);
+
+// Strategy for Other Local API Requests - Stale-While-Revalidate
 // This strategy serves a cached response immediately for speed,
 // then updates the cache in the background with a fresh network response for the next time.
 // It's a great balance of performance and data freshness.

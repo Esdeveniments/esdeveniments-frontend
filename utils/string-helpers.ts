@@ -51,6 +51,21 @@ export const slug = (
     .filter(Boolean)
     .join("-");
 
+/**
+ * Simple slugify function that converts a string to a URL-friendly slug.
+ * Lowercases, removes diacritics, and replaces non-alphanumeric characters with hyphens.
+ * Returns empty string if result is empty (callers should provide fallbacks).
+ * For more robust Catalan-aware slugification, use `sanitize()` instead.
+ */
+export function slugifySegment(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 /** Capitalize first letter (safe) */
 export function capitalizeFirstLetter(s: string): string {
   if (!s) return s;
@@ -80,6 +95,33 @@ export function normalizeForSearch(input: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * Normalizes a URL input by automatically adding https:// protocol if missing.
+ * Handles common URL formats:
+ * - "example.com" -> "https://example.com"
+ * - "www.example.com" -> "https://www.example.com"
+ * - "https://example.com" -> "https://example.com" (unchanged)
+ * - "http://example.com" -> "http://example.com" (unchanged)
+ * - "" -> "" (empty string preserved)
+ *
+ * @param url - The URL string to normalize
+ * @returns Normalized URL with protocol, or empty string if input is empty/whitespace
+ */
+export function normalizeUrl(url: string): string {
+  if (!url || typeof url !== "string") return "";
+  
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  // If already has protocol, return as-is
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Add https:// protocol if missing
+  return `https://${trimmed}`;
 }
 
 /* =========================================================

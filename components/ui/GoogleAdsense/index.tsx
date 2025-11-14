@@ -1,5 +1,6 @@
 import { useEffect, useRef, CSSProperties, JSX } from "react";
 import { AdStatus, GoogleAdsenseContainerProps } from "types/common";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const GoogleAdsenseContainer = ({
   id,
@@ -31,10 +32,7 @@ const GoogleAdsenseContainer = ({
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (err) {
-      console.error(
-        "adsense error",
-        err instanceof Error ? err.message : String(err)
-      );
+      console.error("adsense error", getSanitizedErrorMessage(err));
     }
   }, []);
 

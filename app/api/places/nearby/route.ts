@@ -9,6 +9,7 @@ import {
   OpeningInfo,
   OpeningSegment,
 } from "types/api/restaurant";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -481,13 +482,8 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error: unknown) {
-    console.error("Error fetching places:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch places" },
-      {
-        status: 500,
-        headers: { "Cache-Control": "no-store" },
-      }
-    );
+    return handleApiError(error, "/api/places/nearby", {
+      errorMessage: "Failed to fetch places",
+    });
   }
 }

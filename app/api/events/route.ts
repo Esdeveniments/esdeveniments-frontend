@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchEventsExternal } from "@lib/api/events-external";
 import { FetchEventsParams } from "types/event";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -54,13 +55,12 @@ export async function GET(request: Request) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=600",
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=300",
       },
     });
   } catch (e) {
-    console.error("/api/events proxy error:", e);
-    return NextResponse.json(
-      {
+    return handleApiError(e, "/api/events", {
+      fallbackData: {
         content: [],
         currentPage: 0,
         pageSize: 10,
@@ -68,7 +68,6 @@ export async function GET(request: Request) {
         totalPages: 0,
         last: true,
       },
-      { status: 500 }
-    );
+    });
   }
 }

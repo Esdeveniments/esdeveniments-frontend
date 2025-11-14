@@ -20,3 +20,11 @@ export type CacheTag =
   | `news:place:${string}`
   | `news:${string}`;
 
+/**
+ * Cache entry type for time-based caching utilities
+ */
+export type CacheEntry<T> = {
+  data: T;
+  timestamp: number;
+};
+

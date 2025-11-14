@@ -5,6 +5,7 @@ import {
   slug,
   extractUuidFromSlug,
   normalizeForSearch,
+  slugifySegment,
 } from "@utils/string-helpers";
 
 describe("sanitize()", () => {
@@ -116,5 +117,44 @@ describe("normalizeForSearch()", () => {
   it("preserves spaces and other characters", () => {
     expect(normalizeForSearch("Sant Cugat")).toBe("sant cugat");
     expect(normalizeForSearch("L'Hospitalet")).toBe("l'hospitalet");
+  });
+});
+
+describe("slugifySegment()", () => {
+  it("lowercases and removes diacritics", () => {
+    expect(slugifySegment("Hola Món")).toBe("hola-mon");
+    expect(slugifySegment("Çedilla, Ñandú!")).toBe("cedilla-nandu");
+    expect(slugifySegment("Montjuïc")).toBe("montjuic");
+  });
+
+  it("replaces non-alphanumeric characters with hyphens", () => {
+    expect(slugifySegment("Rock & Roll")).toBe("rock-roll");
+    expect(slugifySegment("foo___bar   baz")).toBe("foo-bar-baz");
+    expect(slugifySegment("a-- --b")).toBe("a-b");
+  });
+
+  it("trims leading and trailing hyphens", () => {
+    expect(slugifySegment("---test---")).toBe("test");
+    expect(slugifySegment("-hello-world-")).toBe("hello-world");
+  });
+
+  it("returns empty string for strings that clean to empty", () => {
+    expect(slugifySegment("###")).toBe("");
+    expect(slugifySegment("!!!")).toBe("");
+    expect(slugifySegment("   ")).toBe("");
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(slugifySegment("")).toBe("");
+  });
+
+  it("handles simple alphanumeric strings", () => {
+    expect(slugifySegment("Barcelona")).toBe("barcelona");
+    expect(slugifySegment("Girona123")).toBe("girona123");
+  });
+
+  it("collapses multiple consecutive separators", () => {
+    expect(slugifySegment("foo___bar")).toBe("foo-bar");
+    expect(slugifySegment("a   b")).toBe("a-b");
   });
 });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchCategoriesExternal } from "@lib/api/categories-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -13,10 +14,8 @@ export async function GET() {
       },
     });
   } catch (e) {
-    console.error("/api/categories error", e);
-    return NextResponse.json(
-      { error: "Failed to load categories" },
-      { status: 500 }
-    );
+    return handleApiError(e, "/api/categories", {
+      errorMessage: "Failed to load categories",
+    });
   }
 }

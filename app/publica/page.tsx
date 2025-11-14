@@ -3,13 +3,22 @@
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
-import { getRegionValue, formDataToBackendDTO } from "@utils/helpers";
+import {
+  getRegionValue,
+  formDataToBackendDTO,
+  getTownValue,
+} from "@utils/helpers";
+import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
 import type { FormData } from "types/event";
 import { Option } from "types/common";
+import type { E2EEventExtras } from "types/api/event";
+import type { CitySummaryResponseDTO } from "types/api/city";
+import type { RegionSummaryResponseDTO } from "types/api/event";
+import type { CategorySummaryResponseDTO } from "types/api/category";
 
 const defaultForm: FormData = {
   title: "",
@@ -35,6 +44,34 @@ const defaultForm: FormData = {
   categories: [],
   email: "",
 };
+
+const isRegionDTO = (
+  region: FormData["region"]
+): region is RegionSummaryResponseDTO =>
+  Boolean(region && typeof region === "object" && "slug" in region);
+
+const isCityDTO = (town: FormData["town"]): town is CitySummaryResponseDTO =>
+  Boolean(town && typeof town === "object" && "latitude" in town);
+
+const isCategoryNamePair = (
+  category: unknown
+): category is { id: number; name: string } =>
+  Boolean(
+    category &&
+      typeof category === "object" &&
+      "id" in category &&
+      "name" in category
+  );
+
+const isCategoryOption = (
+  category: unknown
+): category is { value: string; label: string } =>
+  Boolean(
+    category &&
+      typeof category === "object" &&
+      "value" in category &&
+      "label" in category
+  );
 
 const Publica = () => {
   const router = useRouter();
@@ -110,6 +147,106 @@ const Publica = () => {
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
 
+  const buildE2EExtras = (): E2EEventExtras | undefined => {
+    const regionIdValue = getRegionValue(form.region);
+    const townIdValue = getTownValue(form.town);
+
+    let regionMeta: RegionSummaryResponseDTO | undefined;
+    if (regionIdValue) {
+      if (isRegionDTO(form.region)) {
+        regionMeta = form.region;
+      } else if (form.region) {
+        const option = form.region as Option;
+        const name = option?.label ?? `Regió ${regionIdValue}`;
+        regionMeta = {
+          id: Number(regionIdValue),
+          name,
+          slug: slugifySegment(name) || `region-${regionIdValue}`,
+        };
+      }
+    }
+
+    let cityMeta: CitySummaryResponseDTO | undefined;
+    if (townIdValue) {
+      if (isCityDTO(form.town)) {
+        cityMeta = form.town;
+      } else if (form.town) {
+        const option = form.town as Option;
+        const name = option?.label ?? `Ciutat ${townIdValue}`;
+        cityMeta = {
+          id: Number(townIdValue),
+          name,
+          slug: slugifySegment(name) || `ciutat-${townIdValue}`,
+          latitude: 41.3851,
+          longitude: 2.1734,
+          postalCode: "08001",
+          rssFeed: null,
+          enabled: true,
+        };
+      }
+    }
+
+    const categoriesMeta =
+      Array.isArray(form.categories) && form.categories.length > 0
+        ? form.categories
+            .map((category, index) => {
+              if (isCategoryNamePair(category)) {
+                const slug =
+                  slugifySegment(category.name) || `categoria-${category.id}`;
+                return {
+                  id: category.id,
+                  name: category.name,
+                  slug,
+                };
+              }
+              if (isCategoryOption(category)) {
+                const numericId = Number(category.value) || index + 1;
+                const slug =
+                  slugifySegment(category.label) || `categoria-${numericId}`;
+                return {
+                  id: numericId,
+                  name: category.label,
+                  slug,
+                };
+              }
+              if (typeof category === "number") {
+                return {
+                  id: category,
+                  name: `Categoria ${category}`,
+                  slug: `categoria-${category}`,
+                };
+              }
+              return null;
+            })
+            .filter(
+              (
+                category
+              ): category is {
+                id: number;
+                name: string;
+                slug: string;
+              } => Boolean(category)
+            )
+        : undefined;
+
+    if (!regionMeta && !cityMeta && !categoriesMeta) {
+      return undefined;
+    }
+
+    return {
+      region: regionMeta,
+      city: cityMeta,
+      province: regionMeta
+        ? {
+            id: regionMeta.id,
+            name: regionMeta.name,
+            slug: regionMeta.slug,
+          }
+        : undefined,
+      categories: categoriesMeta as CategorySummaryResponseDTO[] | undefined,
+    };
+  };
+
   const onSubmit = async () => {
     startTransition(async () => {
       try {
@@ -119,18 +256,28 @@ const Publica = () => {
           form.town && "label" in form.town ? form.town.label : "";
         const location = `${form.location}, ${townLabel}, ${regionLabel}`;
 
+        // Normalize URL before sending to backend (auto-add https:// if missing)
         const eventData = formDataToBackendDTO({
           ...form,
+          url: normalizeUrl(form.url),
           location,
         });
 
+        const e2eExtras = buildE2EExtras();
         const result = await createEventAction(
           eventData,
-          imageFile || undefined
+          imageFile || undefined,
+          e2eExtras
         );
 
         if (result && result.success && result.event) {
           const { slug } = result.event;
+          if (typeof document !== "undefined") {
+            document.body.dataset.lastE2eSlug = slug;
+          }
+          if (typeof window !== "undefined") {
+            window.__LAST_E2E_PUBLISH_SLUG__ = slug;
+          }
 
           router.push(`/e/${slug}`);
         } else {

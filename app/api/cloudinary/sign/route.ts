@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinarySignatureResponse } from "types/api/restaurant";
+import { handleApiError } from "@utils/api-error-handler";
 
 /**
  * Cloudinary signed upload endpoint
@@ -53,10 +54,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Error generating Cloudinary signature:", error);
-    return NextResponse.json(
-      { error: "Failed to generate upload signature" },
-      { status: 500 }
-    );
+    return handleApiError(error, "/api/cloudinary/sign", {
+      errorMessage: "Failed to generate upload signature",
+    });
   }
 }

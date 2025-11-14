@@ -3,7 +3,7 @@
  * Follows the same fallback strategy as middleware.ts for edge runtime compatibility
  */
 
-import { siteUrl } from "@config/index";
+import { getSiteUrl } from "@config/index";
 import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
@@ -51,7 +51,9 @@ export function getInternalApiUrl(path: string): string {
       : `https://${vercelUrl}`;
     return new URL(normalized, origin).toString();
   }
-  // Fallback to siteUrl (localhost in dev; canonical domains in other envs)
+  // Fallback to runtime-computed siteUrl (ensures correct env vars are used)
+  // Call getSiteUrl() at runtime instead of using module-level constant
+  const siteUrl = getSiteUrl();
   return new URL(normalized, siteUrl).toString();
 }
 

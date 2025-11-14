@@ -28,6 +28,7 @@ import {
   MAX_PARAM_KEY_LENGTH,
   MAX_TOTAL_VALUE_LENGTH,
 } from "./constants";
+import { sanitize } from "./string-helpers";
 
 /**
  * Convert Next.js searchParams object to URLSearchParams
@@ -422,26 +423,68 @@ export function getRedirectUrl(parsed: ParsedFilters): string | null {
 
 /**
  * Get category slug from category value - uses dynamic categories as source of truth
+ * Categories API returns id, name, and slug - no transformation needed
+ * 
+ * 🛡️ SECURITY: Normalizes unsafe category values to prevent path traversal/injection
  */
 export function getCategorySlug(
   category: URLCategory,
   dynamicCategories?: CategorySummaryResponseDTO[]
 ): string {
-  // If we have dynamic categories, try to find the category
+  if (!category || category === DEFAULT_FILTER_VALUE) {
+    return DEFAULT_FILTER_VALUE;
+  }
+
+  // Ensure category is a string
+  const categoryStr = typeof category === "string" ? category : String(category);
+  if (!categoryStr) {
+    return DEFAULT_FILTER_VALUE;
+  }
+
+  // Safe string comparison helper
+  const safeToLowerCase = (value: unknown): string => {
+    if (typeof value !== "string" || !value) {
+      return "";
+    }
+    return value.toLowerCase();
+  };
+
+  // If we have dynamic categories, try to find the category by slug or name
   if (dynamicCategories && Array.isArray(dynamicCategories)) {
-    const foundCategory = dynamicCategories.find(
-      (cat) =>
-        cat.name.toLowerCase() === category.toLowerCase() ||
-        cat.slug === category
-    );
-    if (foundCategory) {
-      return foundCategory.slug;
+    const normalizedCategory = safeToLowerCase(categoryStr);
+    const foundCategory = dynamicCategories.find((cat) => {
+      if (!cat || !cat.name || !cat.slug) return false;
+      const catName = safeToLowerCase(cat.name);
+      const catSlug = safeToLowerCase(cat.slug);
+      return (
+        catName === normalizedCategory ||
+        cat.slug === categoryStr ||
+        catSlug === normalizedCategory
+      );
+    });
+    if (foundCategory && foundCategory.slug) {
+      // Validate the found slug is safe before returning
+      if (isValidCategorySlugFormat(foundCategory.slug)) {
+        return foundCategory.slug;
+      }
     }
   }
 
-  // Return as-is if already a valid slug format, or default
-  // No legacy mapping - API is the source of truth
-  return category || DEFAULT_FILTER_VALUE;
+  // If already a valid slug format, return as-is
+  if (isValidCategorySlugFormat(categoryStr)) {
+    return categoryStr;
+  }
+
+  // 🛡️ SECURITY: Normalize unsafe category values to prevent path traversal
+  // If the category doesn't match and isn't a valid slug, sanitize it
+  const normalized = sanitize(categoryStr);
+  // If sanitization produces a valid slug, use it; otherwise fall back to default
+  if (normalized && normalized !== "n-a" && isValidCategorySlugFormat(normalized)) {
+    return normalized;
+  }
+
+  // Last resort: return default to prevent unsafe values in URLs
+  return DEFAULT_FILTER_VALUE;
 }
 
 /**

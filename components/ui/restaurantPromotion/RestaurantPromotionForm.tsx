@@ -14,6 +14,7 @@ import {
   RestaurantPromotionFormProps,
   RestaurantFormData,
 } from "types/api/restaurant";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 export default function RestaurantPromotionForm({
   eventId,
@@ -185,8 +186,7 @@ export default function RestaurantPromotionForm({
       window.location.href = sessionUrl;
     } catch (error) {
       console.error("Error submitting promotion:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "An error occurred";
+      const errorMessage = getSanitizedErrorMessage(error) || "An error occurred";
       setErrors({ submit: errorMessage });
       onError?.(errorMessage);
     } finally {

@@ -6,8 +6,8 @@ import type { GooglePlace } from "../types/api/restaurant";
 
 // Mock Next.js Image component
 vi.mock("next/image", () => ({
-  default: ({ src, alt }: { src: string; alt: string }) => (
-    <img src={src} alt={alt} />
+  default: ({ alt }: { alt: string }) => (
+    <span role="img" aria-label={alt} data-testid="mock-image" />
   ),
 }));
 

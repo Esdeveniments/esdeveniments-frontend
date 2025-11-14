@@ -11,6 +11,36 @@ test.describe("Sitemaps and feed", () => {
     await expect(page.getByTestId("sitemap-title")).toBeVisible();
   });
 
+  test("sitemap displays regions and cities data", async ({ page }) => {
+    await page.goto("/sitemap", { waitUntil: "domcontentloaded", timeout: 60000 });
+    
+    // Verify page structure
+    await expect(page.getByTestId("sitemap-page")).toBeVisible();
+    await expect(page.getByTestId("sitemap-title")).toBeVisible();
+    
+    // Verify regions section has data
+    const regionLinks = page.getByTestId("sitemap-region-link");
+    const regionCount = await regionLinks.count();
+    
+    // If API call failed, we'd have 0 regions
+    // This test verifies that fetchRegions() succeeded
+    expect(regionCount).toBeGreaterThan(0);
+    
+    // Verify at least one region link is visible and clickable
+    await expect(regionLinks.first()).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    
+    // Verify cities section has data
+    const cityLinks = page.getByTestId("sitemap-city-link");
+    const cityCount = await cityLinks.count();
+    
+    // If API call failed, we'd have 0 cities
+    // This test verifies that fetchCities() succeeded
+    expect(cityCount).toBeGreaterThan(0);
+    
+    // Verify at least one city link is visible
+    await expect(cityLinks.first()).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+  });
+
   test("server sitemap responds", async ({ request }) => {
     const res = await request.get("/server-sitemap.xml");
     expect(res.status()).toBe(200);

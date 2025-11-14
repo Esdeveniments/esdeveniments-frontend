@@ -27,7 +27,7 @@ const NoEventFound: FC = () => {
         <p className="mb-4">
           Pots provar sort amb el{" "}
           <Link
-            href="/cerca"
+            href="/catalunya"
             prefetch={false}
             className="font-bold text-black hover:underline"
           >

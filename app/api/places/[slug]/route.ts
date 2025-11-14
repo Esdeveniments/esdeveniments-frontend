@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchPlaceBySlugExternal } from "@lib/api/places-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -27,11 +28,9 @@ export async function GET(
     });
   } catch (e) {
     // fetchPlaceBySlugExternal throws for non-404 errors (500, network, etc.)
-    console.error("/api/places/[slug] error", e);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(e, "/api/places/[slug]", {
+      errorMessage: "Internal server error",
+    });
   }
 }
 

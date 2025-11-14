@@ -1,11 +1,15 @@
 import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
+import { slugifySegment } from "@utils/string-helpers";
 import {
   parseEventDetail,
   parsePagedEvents,
   parseCategorizedEvents,
 } from "@lib/validation/event";
+import { fetchCategorizedEventsExternal } from "./events-external";
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -15,8 +19,22 @@ import {
   EventUpdateRequestDTO,
   EventCreateRequestDTO,
   PagedResponseDTO,
+  E2EEventExtras,
+  GlobalWithE2EStore,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
+import { computeTemporalStatus } from "@utils/event-status";
+
+const isE2ETestMode =
+  process.env.E2E_TEST_MODE === "1" ||
+  process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
+
+const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
+
+const e2eEventsStore = isE2ETestMode
+  ? getE2EGlobal().__E2E_EVENTS__ ??
+    (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
+  : null;
 
 export async function fetchEvents(
   params: FetchEventsParams
@@ -26,8 +44,19 @@ export async function fetchEvents(
     const finalUrl = getInternalApiUrl(`/api/events?${queryString}`);
 
     const response = await fetch(finalUrl, {
-      next: { revalidate: 600, tags: ["events"] },
+      next: { revalidate: 300, tags: ["events"] },
     });
+
+    if (!response.ok) {
+      const errorText = await response
+        .text()
+        .catch(() => "Unable to read error response");
+      console.error(
+        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+      );
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     const validated = parsePagedEvents(data);
     if (!validated) {
@@ -58,6 +87,9 @@ export async function fetchEvents(
 export async function fetchEventBySlug(
   fullSlug: string
 ): Promise<EventDetailResponseDTO | null> {
+  if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
+    return e2eEventsStore.get(fullSlug) ?? null;
+  }
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
     const res = await fetch(getInternalApiUrl(`/api/events/${fullSlug}`), {
@@ -103,8 +135,13 @@ export async function updateEventById(
 
 export async function createEvent(
   data: EventCreateRequestDTO,
-  imageFile?: File
+  imageFile?: File,
+  e2eExtras?: E2EEventExtras
 ): Promise<EventDetailResponseDTO> {
+  if (isE2ETestMode && e2eEventsStore) {
+    return createE2EEvent(data, e2eExtras);
+  }
+
   const formData = new FormData();
 
   formData.append("request", JSON.stringify(data));
@@ -113,13 +150,16 @@ export async function createEvent(
     formData.append("imageFile", imageFile);
   }
 
-  const response = await fetchWithHmac(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-    },
-    body: formData,
-  });
+  const response = await fetchWithHmac(
+    `${process.env.NEXT_PUBLIC_API_URL}/events`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: formData,
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -131,38 +171,188 @@ export async function createEvent(
   return response.json();
 }
 
+function createE2EEvent(
+  data: EventCreateRequestDTO,
+  extras?: E2EEventExtras
+): EventDetailResponseDTO {
+  const slug = `e2e-event-${Date.now()}`;
+  const safeCityId = data.cityId || 1;
+  const safeRegionId = data.regionId || 1;
+
+  const fallbackCity = extras?.city ?? {
+    id: safeCityId,
+    name: `Ciutat ${safeCityId}`,
+    slug: slugifySegment(`ciutat-${safeCityId}`),
+    latitude: 41.3851,
+    longitude: 2.1734,
+    postalCode: "08001",
+    rssFeed: null,
+    enabled: true,
+  };
+
+  const fallbackRegion = extras?.region ?? {
+    id: safeRegionId,
+    name: `Regió ${safeRegionId}`,
+    slug: slugifySegment(`regio-${safeRegionId}`),
+  };
+
+  const fallbackProvince = extras?.province ?? {
+    id: fallbackRegion.id,
+    name: fallbackRegion.name,
+    slug: fallbackRegion.slug,
+  };
+
+  const categories =
+    extras?.categories && extras.categories.length > 0
+      ? extras.categories
+      : data.categories.map((id, index) => ({
+          id,
+          name: `Categoria ${id || index + 1}`,
+          slug: `categoria-${id || index + 1}`,
+        }));
+
+  const event: EventDetailResponseDTO = {
+    id: slug,
+    hash: `hash-${slug}`,
+    slug,
+    title: data.title,
+    type: data.type,
+    url: data.url || "",
+    description: data.description,
+    imageUrl: data.imageUrl || "",
+    startDate: data.startDate,
+    startTime: data.startTime,
+    endDate: data.endDate,
+    endTime: data.endTime,
+    location: data.location,
+    visits: 0,
+    origin: "MANUAL",
+    city: fallbackCity,
+    region: fallbackRegion,
+    province: fallbackProvince,
+    categories,
+    relatedEvents: [],
+    metaTitle: data.title,
+    metaDescription: data.description,
+  };
+
+  e2eEventsStore?.set(slug, event);
+  return event;
+}
+
+/**
+ * Fetch events categorized by category.
+ * During build phase (SSG), calls external API directly to avoid internal proxy issues.
+ * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
+ */
 export async function fetchCategorizedEvents(
   maxEventsPerCategory?: number
 ): Promise<CategorizedEvents> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    console.warn(
+      "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object"
+    );
+    return {};
+  }
+
+  // During build phase, bypass internal proxy and call external API directly
+  // This ensures SSG pages (homepage) can fetch data during next build
+  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
+  const isBuildPhase =
+    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
+    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
+
+  if (isBuildPhase) {
+    try {
+      const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
+      const validated = parseCategorizedEvents(data);
+      if (!validated) {
+        console.error("fetchCategorizedEvents: Build phase validation failed");
+        return {};
+      }
+      return validated;
+    } catch (e) {
+      console.error(
+        "fetchCategorizedEvents: Build phase external fetch failed:",
+        e
+      );
+      return {};
+    }
+  }
+
+  // Runtime: use internal API proxy
+  // If internal API fails (e.g., during build when server isn't running), fallback to external
   try {
     const params = new URLSearchParams();
     if (maxEventsPerCategory !== undefined) {
       params.append("maxEventsPerCategory", String(maxEventsPerCategory));
     }
-    const finalUrl = getInternalApiUrl(`/api/events/categorized${params.toString() ? `?${params.toString()}` : ""}`);
+    const finalUrl = getInternalApiUrl(
+      `/api/events/categorized${
+        params.toString() ? `?${params.toString()}` : ""
+      }`
+    );
     const response = await fetch(finalUrl, {
-      next: { revalidate: 3600, tags: ["events", "events:categorized"] },
+      next: { revalidate: 300, tags: ["events", "events:categorized"] },
     });
 
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response
+        .text()
+        .catch(() => "Unable to read error response");
+      console.error(
+        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+      );
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     const validated = parseCategorizedEvents(data);
     if (!validated) {
-      console.error(
-        "fetchCategorizedEvents: validation failed, returning fallback"
-      );
+      console.error("fetchCategorizedEvents: Runtime validation failed");
       return {};
     }
     return validated;
-  } catch (e) {
-    console.error("Error fetching categorized events:", e);
-    return {};
+  } catch {
+    // If internal API fails, try external API as fallback (handles edge cases)
+    try {
+      const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
+      const validated = parseCategorizedEvents(data);
+      return validated || {};
+    } catch (fallbackError) {
+      // Sanitize error logging to prevent information disclosure
+      const errorMessage = getSanitizedErrorMessage(fallbackError);
+      console.error(
+        "fetchCategorizedEvents: Both internal and external API failed:",
+        errorMessage
+      );
+      return {};
+    }
   }
 }
 
 // Cached wrapper to deduplicate categorized events within the same request
 // Mirrors existing pattern used for events/news slugs
 export const getCategorizedEvents = cache(fetchCategorizedEvents);
+
+/**
+ * Filter out past events from an array of events
+ * Uses computeTemporalStatus to determine if an event is past
+ */
+export function filterPastEvents(
+  events: EventSummaryResponseDTO[]
+): EventSummaryResponseDTO[] {
+  return events.filter((event) => {
+    const status = computeTemporalStatus(
+      event.startDate,
+      event.endDate,
+      undefined,
+      event.startTime,
+      event.endTime
+    );
+    return status.state !== "past";
+  });
+}
 
 function insertAdsRandomly(
   events: EventSummaryResponseDTO[],
@@ -231,3 +421,6 @@ export function insertAds(
 
   return insertAdsRandomly(events, ads);
 }
+
+// Re-export for backward compatibility
+export type { E2EEventExtras } from "types/api/event";
