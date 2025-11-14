@@ -170,10 +170,11 @@ export async function fetchCategorizedEvents(
       }
       return validated;
     } catch (e) {
-      console.error("fetchCategorizedEvents: Build phase external fetch failed:", e);
-      if (e instanceof Error) {
-        console.error("Error details:", e.message, e.stack);
-      }
+      // Avoid exposing sensitive internal details (stack traces, full error messages) in logs.
+      console.error("fetchCategorizedEvents: Build phase external fetch failed");
+      // Optionally route the full error to a secure/internal telemetry system instead of stdout/stderr.
+      // For example: telemetry?.captureException?.(e);
+      // Do not print e.message or e.stack to console to prevent information leakage.
       return {};
     }
   }
