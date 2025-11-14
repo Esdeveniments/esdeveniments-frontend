@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchRegionsOptionsExternal } from "@lib/api/regions-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -13,11 +14,9 @@ export async function GET() {
       },
     });
   } catch (e) {
-    console.error("/api/regions/options error", e);
-    return NextResponse.json(
-      { error: "Failed to load regions" },
-      { status: 500 }
-    );
+    return handleApiError(e, "/api/regions/options", {
+      errorMessage: "Failed to load regions",
+    });
   }
 }
 

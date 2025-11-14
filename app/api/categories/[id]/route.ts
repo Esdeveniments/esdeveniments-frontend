@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchCategoryByIdExternal } from "@lib/api/categories-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -18,8 +19,9 @@ export async function GET(
       },
     });
   } catch (e) {
-    console.error("/api/categories/[id] error", e);
-    return NextResponse.json(null, { status: 500 });
+    return handleApiError(e, "/api/categories/[id]", {
+      fallbackData: null,
+    });
   }
 }
 

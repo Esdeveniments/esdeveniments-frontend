@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { revalidateTag } from "next/cache";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -27,7 +28,8 @@ export async function GET(
       },
     });
   } catch (e) {
-    console.error("/api/events/[slug] proxy error:", e);
-    return NextResponse.json(null, { status: 500 });
+    return handleApiError(e, "/api/events/[slug]", {
+      fallbackData: null,
+    });
   }
 }

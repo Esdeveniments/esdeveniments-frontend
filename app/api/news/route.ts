@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchNewsExternal } from "@lib/api/news-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -21,9 +22,8 @@ export async function GET(request: Request) {
       },
     });
   } catch (e) {
-    console.error("/api/news error", e);
-    return NextResponse.json(
-      {
+    return handleApiError(e, "/api/news", {
+      fallbackData: {
         content: [],
         currentPage: 0,
         pageSize: 0,
@@ -31,8 +31,7 @@ export async function GET(request: Request) {
         totalPages: 0,
         last: true,
       },
-      { status: 500 }
-    );
+    });
   }
 }
 

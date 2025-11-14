@@ -8,6 +8,7 @@
  */
 
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 // 1x1 transparent PNG (base64) to serve as safe fallback
 const TRANSPARENT_PNG_BASE64 =
@@ -58,7 +59,13 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    // Log and capture to Sentry, but still return placeholder to avoid breaking UI
     console.error("Places photo fetch error", error);
+    if (process.env.NODE_ENV === "production") {
+      Sentry.captureException(error, {
+        tags: { route: "/api/places/photo", type: "photo_fetch_error" },
+      });
+    }
     return buildPlaceholderResponse();
   }
 }

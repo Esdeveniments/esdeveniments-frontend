@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchRegionByIdExternal } from "@lib/api/regions-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -18,8 +19,9 @@ export async function GET(
       },
     });
   } catch (e) {
-    console.error("/api/regions/[id] error", e);
-    return NextResponse.json(null, { status: 500 });
+    return handleApiError(e, "/api/regions/[id]", {
+      fallbackData: null,
+    });
   }
 }
 

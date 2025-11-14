@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
+import { handleApiError } from "@utils/api-error-handler";
+import * as Sentry from "@sentry/nextjs";
 
 export const runtime = "nodejs";
 
@@ -40,13 +42,20 @@ export async function POST(request: Request) {
       headers,
       body: JSON.stringify({ eventId, slug }),
     }).catch((e) => {
+      // Log forward errors but don't fail the request
       console.error("/api/visits forward error:", e);
+      if (process.env.NODE_ENV === "production") {
+        Sentry.captureException(e, {
+          tags: { route: "/api/visits", type: "forward_error" },
+        });
+      }
     });
 
     return new NextResponse(null, { status: 204 });
   } catch (e) {
-    console.error("/api/visits error:", e);
-    return new NextResponse(null, { status: 500 });
+    return handleApiError(e, "/api/visits", {
+      fallbackData: null,
+    });
   }
 }
 

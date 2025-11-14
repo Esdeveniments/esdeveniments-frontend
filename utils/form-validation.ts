@@ -1,4 +1,5 @@
 import { EventFormSchema, type EventFormSchemaType } from "types/event";
+import { normalizeUrl } from "./string-helpers";
 
 export const getZodValidationState = (
   form: EventFormSchemaType,
@@ -6,7 +7,12 @@ export const getZodValidationState = (
   imageFile?: File | null,
   isEditMode?: boolean
 ): { isDisabled: boolean; isPristine: boolean; message: string } => {
-  const result = EventFormSchema.safeParse(form);
+  // Normalize URL before validation (auto-add https:// if missing)
+  const normalizedForm = {
+    ...form,
+    url: normalizeUrl(form.url),
+  };
+  const result = EventFormSchema.safeParse(normalizedForm);
   if (!result.success) {
     // Collect first error message
     const firstError =

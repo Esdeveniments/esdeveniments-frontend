@@ -5,6 +5,7 @@ import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
+import { normalizeUrl } from "@utils/string-helpers";
 import { EventDetailResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { Option } from "types/common";
@@ -94,7 +95,11 @@ export default function EditEventClient({
     startTransition(async () => {
       try {
         if (!event) return;
-        const data = formDataToBackendDTO(form);
+        // Normalize URL before sending to backend (auto-add https:// if missing)
+        const data = formDataToBackendDTO({
+          ...form,
+          url: normalizeUrl(form.url),
+        });
         const result = await editEvent(event.id, event.slug, data);
         if (result && result.success) {
           router.push(`/e/${result.newSlug}`);

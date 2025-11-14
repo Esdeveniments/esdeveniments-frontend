@@ -8,6 +8,7 @@ import {
   formDataToBackendDTO,
   getTownValue,
 } from "@utils/helpers";
+import { normalizeUrl } from "@utils/string-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
@@ -263,8 +264,10 @@ const Publica = () => {
           form.town && "label" in form.town ? form.town.label : "";
         const location = `${form.location}, ${townLabel}, ${regionLabel}`;
 
+        // Normalize URL before sending to backend (auto-add https:// if missing)
         const eventData = formDataToBackendDTO({
           ...form,
+          url: normalizeUrl(form.url),
           location,
         });
 

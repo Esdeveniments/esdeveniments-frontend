@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchCategorizedEventsExternal } from "@lib/api/events-external";
+import { handleApiError } from "@utils/api-error-handler";
 
 export const runtime = "nodejs";
 
@@ -18,8 +19,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (e) {
-    console.error("/api/events/categorized error:", e);
-    return NextResponse.json({}, { status: 500 });
+    return handleApiError(e, "/api/events/categorized", {
+      fallbackData: {},
+    });
   }
 }
 

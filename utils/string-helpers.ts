@@ -82,6 +82,33 @@ export function normalizeForSearch(input: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+/**
+ * Normalizes a URL input by automatically adding https:// protocol if missing.
+ * Handles common URL formats:
+ * - "example.com" -> "https://example.com"
+ * - "www.example.com" -> "https://www.example.com"
+ * - "https://example.com" -> "https://example.com" (unchanged)
+ * - "http://example.com" -> "http://example.com" (unchanged)
+ * - "" -> "" (empty string preserved)
+ *
+ * @param url - The URL string to normalize
+ * @returns Normalized URL with protocol, or empty string if input is empty/whitespace
+ */
+export function normalizeUrl(url: string): string {
+  if (!url || typeof url !== "string") return "";
+  
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  // If already has protocol, return as-is
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Add https:// protocol if missing
+  return `https://${trimmed}`;
+}
+
 /* =========================================================
  * Catalan grammar helpers
  * ======================================================= */

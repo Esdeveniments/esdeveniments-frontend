@@ -48,7 +48,12 @@ export const EventFormSchema = z.object({
   town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
   location: z.string().min(1, "Localització obligatòria"),
   imageUrl: z.string().nullable(),
-  url: z.string().url("URL invàlida"),
+  url: z
+    .string()
+    .refine(
+      (val) => !val || z.string().url().safeParse(val).success,
+      "URL invàlida"
+    ),
   categories: z.array(CategoryFormItemSchema),
   email: z.string().email("Email invàlid").or(z.literal("")).optional(),
 });

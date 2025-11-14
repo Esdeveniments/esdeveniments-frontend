@@ -4,6 +4,7 @@ import {
   CreateRestaurantLeadResponse,
 } from "types/api/restaurant";
 import { isPricingAvailable } from "config/pricing";
+import { handleApiError } from "@utils/api-error-handler";
 
 /**
  * Create a restaurant promotion lead
@@ -105,10 +106,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
-    console.error("Error creating restaurant lead:", error);
-    return NextResponse.json(
-      { error: "Failed to create lead" },
-      { status: 500 }
-    );
+    return handleApiError(error, "/api/leads/restaurant", {
+      errorMessage: "Failed to create lead",
+    });
   }
 }
