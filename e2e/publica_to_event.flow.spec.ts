@@ -87,7 +87,12 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     await expect(publishButton).toBeEnabled();
 
     const publishSlugHandle = page.waitForFunction(
-      () => window.__LAST_E2E_PUBLISH_SLUG__ || null,
+      () =>
+        document.body.dataset.lastE2eSlug ||
+        (typeof window !== "undefined"
+          ? window.__LAST_E2E_PUBLISH_SLUG__
+          : null) ||
+        null,
       { timeout: 60000 }
     );
     await publishButton.click();

@@ -24,7 +24,9 @@ import {
 import { FetchEventsParams } from "types/event";
 import { computeTemporalStatus } from "@utils/event-status";
 
-const isE2ETestMode = process.env.E2E_TEST_MODE === "1";
+const isE2ETestMode =
+  process.env.E2E_TEST_MODE === "1" ||
+  process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
 
 const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
 

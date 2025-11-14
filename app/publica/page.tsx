@@ -272,10 +272,10 @@ const Publica = () => {
 
         if (result && result.success && result.event) {
           const { slug } = result.event;
-          if (
-            process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1" &&
-            typeof window !== "undefined"
-          ) {
+          if (typeof document !== "undefined") {
+            document.body.dataset.lastE2eSlug = slug;
+          }
+          if (typeof window !== "undefined") {
             window.__LAST_E2E_PUBLISH_SLUG__ = slug;
           }
 
