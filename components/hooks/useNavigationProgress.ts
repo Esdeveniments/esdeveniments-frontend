@@ -20,9 +20,9 @@ export const useNavigationProgressStore = create<NavigationState>(
       const startTime = Date.now();
 
       // Set a new timeout to prevent a stuck state
-      const newTimeoutId = setTimeout(() => {
+      const newTimeoutId: number = setTimeout(() => {
         set({ isNavigating: false, _timeoutId: null, _startTime: null });
-      }, 5000);
+      }, 5000) as number;
 
       // Update the state
       set({
@@ -38,7 +38,7 @@ export const useNavigationProgressStore = create<NavigationState>(
       if (_debounceTimeoutId) clearTimeout(_debounceTimeoutId);
 
       // Debounce done() to reduce flicker
-      const newDebounceTimeoutId = setTimeout(() => {
+      const newDebounceTimeoutId: number = setTimeout(() => {
         const { _timeoutId, _startTime } = get();
         if (_timeoutId) clearTimeout(_timeoutId);
 
@@ -65,9 +65,9 @@ export const useNavigationProgressStore = create<NavigationState>(
             _startTime: null,
           });
         }
-      }, 150) as unknown as number;
+      }, 150) as number;
 
-      set({ _debounceTimeoutId: newDebounceTimeoutId as number });
+      set({ _debounceTimeoutId: newDebounceTimeoutId });
     },
   })
 );
