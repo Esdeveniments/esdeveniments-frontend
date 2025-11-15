@@ -6,6 +6,13 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useNavigationProgressStore } from "@components/hooks/useNavigationProgress";
 import type { PendingLinkProps } from "types/common";
 
+/**
+ * PendingLink - Optional enhanced Link with visual feedback.
+ *
+ * NOTE: Global navigation progress is now handled automatically via useGlobalNavigation.
+ * Only use PendingLink when you need link-specific visual feedback (opacity change, etc.)
+ * For most links, use regular Next.js Link - the progress bar will still show.
+ */
 export function PendingLink({
   children,
   className,
@@ -16,7 +23,7 @@ export function PendingLink({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, setIsPending] = useState(false);
-  const { start, done } = useNavigationProgressStore();
+  const { start } = useNavigationProgressStore();
 
   // Memoize search params string to avoid recalculating on every render
   const searchParamsString = useMemo(
@@ -43,7 +50,7 @@ export function PendingLink({
         timerId = setTimeout(() => {
           setIsPending(false);
         }, 0);
-        done(); // Also reset global progress
+        // Note: Global progress is reset by NavigationProgress via pathname change
       }
     }
 
@@ -53,7 +60,7 @@ export function PendingLink({
         clearTimeout(timerId);
       }
     };
-  }, [currentPath, done]);
+  }, [currentPath]);
 
   const handleClick = useCallback(() => {
     // Don't set pending if navigating to current page

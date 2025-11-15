@@ -1,24 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
 import { useNavigationProgressStore } from "@components/hooks/useNavigationProgress";
 import { useHydration } from "@components/hooks/useHydration";
+import { useGlobalNavigation } from "@components/hooks/useGlobalNavigation";
 
 export function NavigationProgress() {
   const isHydrated = useHydration();
   const isNavigating = useNavigationProgressStore((s) => s.isNavigating);
-  const done = useNavigationProgressStore((s) => s.done);
-  const pathname = usePathname();
-  const prevPathnameRef = useRef(pathname);
-
-  // Reset progress when pathname changes (navigation completes)
-  useEffect(() => {
-    if (prevPathnameRef.current !== pathname) {
-      prevPathnameRef.current = pathname;
-      done();
-    }
-  }, [pathname, done]);
+  
+  // Set up global navigation listener (intercepts all Link clicks)
+  useGlobalNavigation();
 
   // Don't render on server or before hydration, or if not navigating
   // Early return to avoid unnecessary DOM work

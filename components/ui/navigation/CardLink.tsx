@@ -1,15 +1,13 @@
-"use client";
-
-import { PendingLink } from "./PendingLink";
-import type { PendingLinkProps } from "types/common";
+import Link from "next/link";
+import type { LinkProps } from "next/link";
+import type { ReactNode } from "react";
 
 /**
- * CardLink - A lightweight wrapper around PendingLink for card components.
+ * CardLink - A lightweight wrapper around Next.js Link for card components.
  *
- * This component allows server-rendered card components to use navigation progress
- * feedback without making the entire card a client component. Only the anchor element
- * becomes client-side, preserving SEO benefits (server-rendered HTML with proper
- * anchor tags) while adding minimal JavaScript overhead.
+ * NOTE: Navigation progress is now handled globally via useGlobalNavigation.
+ * This component is now just a regular Link - no client-side overhead!
+ * The progress bar will still show automatically on click.
  *
  * Usage in server components:
  * import { CardLink } from "@components/ui/navigation/CardLink";
@@ -21,7 +19,10 @@ import type { PendingLinkProps } from "types/common";
  *   );
  * }
  */
-export function CardLink(props: PendingLinkProps) {
-  return <PendingLink {...props} />;
+export function CardLink({
+  children,
+  ...props
+}: LinkProps & { children: ReactNode; className?: string }) {
+  return <Link {...props}>{children}</Link>;
 }
 
