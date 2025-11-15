@@ -119,15 +119,18 @@ function HybridEventsList({
       </Suspense>
 
       {/* Client enhancer for pagination */}
-      <HybridEventsListClient
-        initialEvents={initialEvents}
-        place={place}
-        category={category}
-        date={date}
-        serverHasMore={serverHasMore}
-        categories={categories}
-        pageData={pageData}
-      />
+      {/* Wrapped in Suspense because HybridEventsListClient uses useSearchParams() */}
+      <Suspense fallback={null}>
+        <HybridEventsListClient
+          initialEvents={initialEvents}
+          place={place}
+          category={category}
+          date={date}
+          serverHasMore={serverHasMore}
+          categories={categories}
+          pageData={pageData}
+        />
+      </Suspense>
     </div>
   );
 }
