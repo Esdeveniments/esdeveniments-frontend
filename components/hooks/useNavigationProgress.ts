@@ -14,15 +14,16 @@ export const useNavigationProgressStore = create<NavigationState>(
     start: () => {
       // Clear any existing timeouts from the state
       const { _timeoutId, _debounceTimeoutId } = get();
-      if (_timeoutId) clearTimeout(_timeoutId);
-      if (_debounceTimeoutId) clearTimeout(_debounceTimeoutId);
+      if (_timeoutId) window.clearTimeout(_timeoutId);
+      if (_debounceTimeoutId) window.clearTimeout(_debounceTimeoutId);
 
       const startTime = Date.now();
 
       // Set a new timeout to prevent a stuck state
-      const newTimeoutId: number = setTimeout(() => {
+      // Using window.setTimeout to ensure browser type (returns number)
+      const newTimeoutId: number = window.setTimeout(() => {
         set({ isNavigating: false, _timeoutId: null, _startTime: null });
-      }, 5000) as number;
+      }, 5000);
 
       // Update the state
       set({
@@ -35,12 +36,13 @@ export const useNavigationProgressStore = create<NavigationState>(
     done: () => {
       // Clear any pending done() call
       const { _debounceTimeoutId } = get();
-      if (_debounceTimeoutId) clearTimeout(_debounceTimeoutId);
+      if (_debounceTimeoutId) window.clearTimeout(_debounceTimeoutId);
 
       // Debounce done() to reduce flicker
-      const newDebounceTimeoutId: number = setTimeout(() => {
+      // Using window.setTimeout to ensure browser type (returns number)
+      const newDebounceTimeoutId: number = window.setTimeout(() => {
         const { _timeoutId, _startTime } = get();
-        if (_timeoutId) clearTimeout(_timeoutId);
+        if (_timeoutId) window.clearTimeout(_timeoutId);
 
         // Ensure progress bar is visible for at least MIN_DISPLAY_TIME
         const elapsed = _startTime ? Date.now() - _startTime : MIN_DISPLAY_TIME;
@@ -48,7 +50,7 @@ export const useNavigationProgressStore = create<NavigationState>(
 
         if (remainingTime > 0) {
           // Wait for remaining time before hiding
-          setTimeout(() => {
+          window.setTimeout(() => {
             set({
               isNavigating: false,
               _timeoutId: null,
@@ -65,7 +67,7 @@ export const useNavigationProgressStore = create<NavigationState>(
             _startTime: null,
           });
         }
-      }, 150) as number;
+      }, 150);
 
       set({ _debounceTimeoutId: newDebounceTimeoutId });
     },
