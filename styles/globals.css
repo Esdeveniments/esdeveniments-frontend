@@ -551,3 +551,9 @@ video {
     transform: translateX(300%);
   }
 }
+
+/* Optimize progress animation for performance - use GPU acceleration */
+.animate-\[progress_1s_ease-in-out_infinite\] {
+  will-change: transform;
+  transform: translateZ(0); /* Force GPU acceleration */
+}

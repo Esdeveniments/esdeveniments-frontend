@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useNavigationProgressStore } from "@components/hooks/useNavigationProgress";
 import type { PendingLinkProps } from "types/common";
 
@@ -17,14 +17,24 @@ export function PendingLink({
   const searchParams = useSearchParams();
   const [isPending, setIsPending] = useState(false);
   const { start, done } = useNavigationProgressStore();
-  const prevPathRef = useRef(pathname + (searchParams?.toString() || ""));
+
+  // Memoize search params string to avoid recalculating on every render
+  const searchParamsString = useMemo(
+    () => searchParams?.toString() || "",
+    [searchParams]
+  );
+  const currentPath = useMemo(
+    () => pathname + searchParamsString,
+    [pathname, searchParamsString]
+  );
+
+  const prevPathRef = useRef(currentPath);
   const pendingRef = useRef(false);
 
   // Reset pending state when pathname or searchParams change
   useEffect(() => {
     let timerId: ReturnType<typeof setTimeout> | undefined;
 
-    const currentPath = pathname + (searchParams?.toString() || "");
     if (prevPathRef.current !== currentPath) {
       prevPathRef.current = currentPath;
       if (pendingRef.current) {
@@ -43,7 +53,7 @@ export function PendingLink({
         clearTimeout(timerId);
       }
     };
-  }, [pathname, searchParams, done]);
+  }, [currentPath, done]);
 
   const handleClick = useCallback(() => {
     // Don't set pending if navigating to current page

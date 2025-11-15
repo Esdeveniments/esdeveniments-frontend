@@ -385,8 +385,8 @@ export interface NavigationState {
   start: () => void;
   done: () => void;
   // Internal state (not accessed directly by consumers)
-  _timeoutId?: number | null;
-  _debounceTimeoutId?: number | null;
+  _timeoutId?: ReturnType<typeof setTimeout> | null;
+  _debounceTimeoutId?: ReturnType<typeof setTimeout> | null;
   _startTime?: number | null;
 }
 

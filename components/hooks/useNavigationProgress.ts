@@ -65,9 +65,9 @@ export const useNavigationProgressStore = create<NavigationState>(
             _startTime: null,
           });
         }
-      }, 150);
+      }, 150) as unknown as number;
 
-      set({ _debounceTimeoutId: newDebounceTimeoutId });
+      set({ _debounceTimeoutId: newDebounceTimeoutId as number });
     },
   })
 );
