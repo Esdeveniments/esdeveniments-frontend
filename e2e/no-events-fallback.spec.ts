@@ -10,6 +10,11 @@ test.describe("No events fallback", () => {
         timeout: 90000,
       }
     );
+    // Wait for skeleton to be removed (if present) before checking for actual content
+    const skeleton = page.getByTestId("events-list-skeleton");
+    await skeleton.waitFor({ state: "hidden", timeout: 5000 }).catch(() => {
+      // Skeleton might not be present, which is fine
+    });
     // Wait for events list container to be present (auto-waits, longer timeout for remote URLs)
     await expect(page.getByTestId("events-list")).toBeAttached({
       timeout: process.env.CI ? 60000 : 30000,

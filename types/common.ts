@@ -385,8 +385,8 @@ export interface NavigationState {
   start: () => void;
   done: () => void;
   // Internal state (not accessed directly by consumers)
-  _timeoutId?: NodeJS.Timeout | null;
-  _debounceTimeoutId?: NodeJS.Timeout | null;
+  _timeoutId?: number | null;
+  _debounceTimeoutId?: number | null;
   _startTime?: number | null;
 }
 

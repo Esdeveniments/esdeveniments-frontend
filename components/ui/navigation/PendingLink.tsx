@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigationProgressStore } from "@components/hooks/useNavigationProgress";
 import type { PendingLinkProps } from "types/common";
@@ -14,29 +14,36 @@ export function PendingLink({
   ...props
 }: PendingLinkProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isPending, setIsPending] = useState(false);
   const { start, done } = useNavigationProgressStore();
-  const prevPathnameRef = useRef(pathname);
+  const prevPathRef = useRef(pathname + (searchParams?.toString() || ""));
   const pendingRef = useRef(false);
 
-  // Reset pending state when pathname changes
+  // Reset pending state when pathname or searchParams change
   useEffect(() => {
-    if (prevPathnameRef.current !== pathname) {
-      prevPathnameRef.current = pathname;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
+
+    const currentPath = pathname + (searchParams?.toString() || "");
+    if (prevPathRef.current !== currentPath) {
+      prevPathRef.current = currentPath;
       if (pendingRef.current) {
         pendingRef.current = false;
         // Defer state update to avoid setState in effect warning
-        const timerId = setTimeout(() => {
+        timerId = setTimeout(() => {
           setIsPending(false);
         }, 0);
         done(); // Also reset global progress
-        // Clean up timeout if component unmounts before it executes
-        return () => clearTimeout(timerId);
       }
     }
-    // Return undefined cleanup function if no timeout was created
-    return undefined;
-  }, [pathname, done]);
+
+    // Clean up timeout if component unmounts before it executes
+    return () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
+  }, [pathname, searchParams, done]);
 
   const handleClick = useCallback(() => {
     // Don't set pending if navigating to current page
@@ -57,7 +64,7 @@ export function PendingLink({
     <Link
       {...props}
       href={href}
-      prefetch={false}
+      prefetch={true}
       className={combinedClassName}
       onClick={handleClick}
       aria-busy={isPending}
