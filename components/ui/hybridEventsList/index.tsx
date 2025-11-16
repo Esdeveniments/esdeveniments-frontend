@@ -38,49 +38,6 @@ function HybridEventsList({
   );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
-  const normalizedDate = date && date.length > 0 ? date : DEFAULT_FILTER_VALUE;
-  const normalizedCategory =
-    category && category.length > 0 ? category : DEFAULT_FILTER_VALUE;
-
-  const buildLink = (options: {
-    byDate?: string;
-    category?: string;
-    searchTerm?: string;
-  }) =>
-    buildCanonicalUrl(
-      {
-        place,
-        byDate: options.byDate ?? normalizedDate,
-        category:
-          options.category ??
-          (options.searchTerm ? DEFAULT_FILTER_VALUE : normalizedCategory),
-        searchTerm: options.searchTerm,
-      },
-      categories
-    );
-
-  if (noEventsFound || initialEvents.length === 0) {
-    return (
-      <div
-        className="container flex-col justify-center items-center mt-sticky-offset"
-        data-testid="events-list"
-      >
-        <NoEventsFound
-          title={pageData?.notFoundTitle}
-          description={pageData?.notFoundDescription}
-        />
-        <List events={initialEvents}>
-          {(event: ListEvent, index: number) => (
-            <Card
-              key={`${event.id}-${index}`}
-              event={event}
-              isPriority={index === 0}
-            />
-          )}
-        </List>
-      </div>
-    );
-  }
 
   return (
     <div
