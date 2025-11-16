@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  type MockInstance,
+} from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import RestaurantPromotionSection from "../components/ui/restaurantPromotion/RestaurantPromotionSection";
@@ -29,7 +37,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
   const baseNow = new Date("2025-11-16T12:00:00.000Z");
   const addDays = (d: number) =>
     new Date(baseNow.getTime() + d * 24 * 60 * 60 * 1000);
-  let dateNowSpy: ReturnType<typeof vi.spyOn> | undefined;
+  let dateNowSpy: MockInstance<[], number> | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
