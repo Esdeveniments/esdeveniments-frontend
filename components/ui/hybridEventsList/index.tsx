@@ -1,6 +1,5 @@
 import { ReactElement, memo, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
-import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
 import List from "@components/ui/list";
@@ -9,13 +8,10 @@ import { getNewsCta } from "@utils/helpers";
 import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
-import { buildCanonicalUrl } from "@utils/url-filters";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 function HybridEventsList({
   initialEvents = [],
   pageData,
-  noEventsFound = false,
   place,
   placeTypeLabel,
   category,
