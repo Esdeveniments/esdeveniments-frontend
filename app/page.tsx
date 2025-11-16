@@ -14,6 +14,7 @@ import { CategorizedEvents } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
+import VisuallyHidden from "@components/ui/primitives/VisuallyHidden";
 import Link from "next/link";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { Suspense, JSX } from "react";
@@ -160,24 +161,6 @@ export default async function Page(): Promise<JSX.Element> {
         categories={categories}
       />
 
-      <nav
-        aria-label="Destinacions destacades"
-        className="sr-only"
-        data-testid="home-top-city-links"
-      >
-        {homeSeoLinkSections.map((section) => (
-          <div key={section.title}>
-            <p className="font-semibold">{section.title}</p>
-            <ul>
-              {section.links.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href}>{link.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
     </>
   );
 }

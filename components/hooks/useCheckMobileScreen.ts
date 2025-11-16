@@ -6,10 +6,9 @@ const getIsMobile = (): boolean =>
   typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT;
 
 const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof initialIsMobile === "boolean") return initialIsMobile;
-    return getIsMobile();
-  });
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof initialIsMobile === "boolean" ? initialIsMobile : false
+  );
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleWindowSizeChange = useCallback((): void => {
@@ -25,7 +24,7 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    handleWindowSizeChange();
+    setIsMobile(getIsMobile());
     window.addEventListener("resize", handleWindowSizeChange);
 
     return () => {

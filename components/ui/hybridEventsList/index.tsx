@@ -11,24 +11,6 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import Link from "next/link";
-
-const quickDateLinks = [
-  { label: "Què fer avui", byDate: "avui" },
-  { label: "Què fer demà", byDate: "dema" },
-  { label: "Què fer aquesta setmana", byDate: "setmana" },
-  { label: "Què fer aquest cap de setmana", byDate: "cap-de-setmana" },
-] as const;
-
-const quickCategoryLinks = [
-  { label: "Plans amb nens", category: "familia-i-infants" },
-  { label: "Concerts i música", category: "musica" },
-  { label: "Teatre i arts escèniques", category: "teatre" },
-] as const;
-
-const quickSearchLinks = [
-  { label: "Plans gratis o low-cost", searchTerm: "gratis" },
-] as const;
 
 function HybridEventsList({
   initialEvents = [],
@@ -125,45 +107,6 @@ function HybridEventsList({
             {pageData.subTitle}
           </p>
         </>
-      )}
-
-      {place && (
-        <nav
-          className="sr-only"
-          aria-label={`Enllaços destacats per ${placeLabel || place}`}
-        >
-          <div>
-            <p className="font-semibold">Dates ràpides</p>
-            <ul>
-              {quickDateLinks.map((link) => (
-                <li key={link.byDate}>
-                  <Link href={buildLink({ byDate: link.byDate })}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="font-semibold">Plans populars</p>
-            <ul>
-              {quickCategoryLinks.map((link) => (
-                <li key={link.category}>
-                  <Link href={buildLink({ category: link.category })}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-              {quickSearchLinks.map((link) => (
-                <li key={link.searchTerm}>
-                  <Link href={buildLink({ searchTerm: link.searchTerm })}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </nav>
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
