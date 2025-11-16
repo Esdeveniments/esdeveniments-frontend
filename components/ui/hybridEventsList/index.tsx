@@ -1,5 +1,6 @@
 import { ReactElement, memo, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
+import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
 import List from "@components/ui/list";
@@ -12,6 +13,7 @@ import SsrListWrapper from "./SsrListWrapper";
 function HybridEventsList({
   initialEvents = [],
   pageData,
+  noEventsFound = false,
   place,
   placeTypeLabel,
   category,
@@ -34,6 +36,29 @@ function HybridEventsList({
   );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
+
+  if (noEventsFound || initialEvents.length === 0) {
+    return (
+      <div
+        className="container flex-col justify-center items-center mt-sticky-offset"
+        data-testid="events-list"
+      >
+        <NoEventsFound
+          title={pageData?.notFoundTitle}
+          description={pageData?.notFoundDescription}
+        />
+        <List events={initialEvents}>
+          {(event: ListEvent, index: number) => (
+            <Card
+              key={`${event.id}-${index}`}
+              event={event}
+              isPriority={index === 0}
+            />
+          )}
+        </List>
+      </div>
+    );
+  }
 
   return (
     <div

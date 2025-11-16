@@ -247,6 +247,7 @@ export interface HybridEventsListProps {
   initialEvents: ListEvent[];
   placeTypeLabel?: PlaceTypeAndLabel;
   pageData?: PageData;
+  noEventsFound?: boolean;
   place: string;
   category?: string;
   date?: string;
