@@ -170,6 +170,7 @@ export interface RangeInputProps {
 
 export interface NoEventsFoundProps {
   title?: string;
+  description?: string;
 }
 
 export interface VideoDisplayProps {

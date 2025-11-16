@@ -100,6 +100,7 @@ export async function generateMetadata({
     category:
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
+    search: parsed.queryParams.search,
   });
 
   return buildPageMeta({
@@ -303,6 +304,7 @@ export default async function FilteredPage({
     category:
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
+    search: parsed.queryParams.search,
   });
 
   // Generate JSON-LD structured data for events

@@ -94,7 +94,8 @@ const pageData: PageData = {
   title: "Title",
   subTitle: "Subtitle",
   canonical: "/",
-  notFoundText: "No events",
+  notFoundTitle: "No events",
+  notFoundDescription: "",
 };
 
 describe("ServerEventsCategorized", () => {

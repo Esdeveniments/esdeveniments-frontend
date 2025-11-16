@@ -62,7 +62,8 @@ export interface PageData {
   title: string;
   subTitle: string;
   canonical: string;
-  notFoundText: string;
+  notFoundTitle: string;
+  notFoundDescription: string;
 }
 
 export interface GeneratePagesDataProps {
@@ -72,6 +73,7 @@ export interface GeneratePagesDataProps {
   placeTypeLabel?: PlaceTypeAndLabel;
   category?: string;
   categoryName?: string;
+  search?: string;
 }
 
 export interface PlaceTypeAndLabel {
