@@ -2,10 +2,13 @@ import { useEffect, useState, useRef, useCallback } from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
+const getIsMobile = (): boolean =>
+  typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT;
+
 const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof initialIsMobile === "boolean") return initialIsMobile;
-    return false;
+    return getIsMobile();
   });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -15,16 +18,14 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
     }
 
     timeoutRef.current = setTimeout(() => {
-      if (typeof window !== "undefined") {
-        setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
-      }
+      setIsMobile(getIsMobile());
     }, 100);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return () => undefined;
+    if (typeof window === "undefined") return undefined;
 
-    setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    handleWindowSizeChange();
     window.addEventListener("resize", handleWindowSizeChange);
 
     return () => {

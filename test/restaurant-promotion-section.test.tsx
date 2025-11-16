@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import RestaurantPromotionSection from "../components/ui/restaurantPromotion/RestaurantPromotionSection";
@@ -29,13 +29,19 @@ describe("RestaurantPromotionSection - Date Logic", () => {
   const baseNow = new Date("2025-11-16T12:00:00.000Z");
   const addDays = (d: number) =>
     new Date(baseNow.getTime() + d * 24 * 60 * 60 * 1000);
+  let dateNowSpy: ReturnType<typeof vi.spyOn> | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
     // Use real timers for async operations (fetch, useEffect)
     vi.useRealTimers();
+    dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(baseNow.getTime());
     // Set up default fetch mock
     global.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    dateNowSpy?.mockRestore();
   });
 
   const defaultProps = {
@@ -45,7 +51,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
   };
 
   describe("Event visibility (eventIsInFuture)", () => {
-    it("shows component for future events", () => {
+    it("shows component for future events", async () => {
       const startDate = addDays(3).toISOString().split("T")[0]; // 3 days in future
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
@@ -62,10 +68,10 @@ describe("RestaurantPromotionSection - Date Logic", () => {
         />
       );
       // Component should render (not return null)
-      expect(screen.queryByTestId("loading-skeleton")).toBeInTheDocument();
+      await screen.findByTestId("loading-skeleton");
     });
 
-    it("shows component for events happening today that haven't finished", () => {
+    it("shows component for events happening today that haven't finished", async () => {
       const today = baseNow.toISOString().split("T")[0]; // Today
       const endTime = "18:00"; // Ends at 6 PM, current time is 12 PM
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -84,7 +90,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           eventEndTime={endTime}
         />
       );
-      expect(screen.queryByTestId("loading-skeleton")).toBeInTheDocument();
+      await screen.findByTestId("loading-skeleton");
     });
 
     it("does not show component for events that finished today", () => {
@@ -128,7 +134,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       expect(container.firstChild).not.toBeNull();
     });
 
-    it("handles all-day events (no time) happening today", () => {
+    it("handles all-day events (no time) happening today", async () => {
       const today = baseNow.toISOString().split("T")[0];
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
@@ -145,7 +151,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           eventStartTime={null}
         />
       );
-      expect(screen.queryByTestId("loading-skeleton")).toBeInTheDocument();
+      await screen.findByTestId("loading-skeleton");
     });
   });
 
@@ -243,7 +249,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       const mockFetch = vi.fn();
       global.fetch = mockFetch;
 
-      render(
+      const { container } = render(
         <RestaurantPromotionSection
           {...defaultProps}
           eventStartDate={today}
@@ -252,8 +258,9 @@ describe("RestaurantPromotionSection - Date Logic", () => {
         />
       );
 
-      // Component should not render at all (event finished)
+      // Component should not render at all (event finished) and fetch should not run
       await new Promise((resolve) => setTimeout(resolve, 500));
+      expect(container.firstChild).toBeNull();
       expect(mockFetch).not.toHaveBeenCalled();
     });
   });
