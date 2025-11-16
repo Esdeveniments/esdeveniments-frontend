@@ -123,7 +123,7 @@ export default function Navbar() {
             </div>
           </div>
           {/* MenuPanel (md:hidden) */}
-          <Disclosure.Panel className="md:hidden">
+          <Disclosure.Panel className="md:hidden relative z-50">
             <div className="w-full relative flex justify-evenly items-center bg-background transition-transform">
               {navigation.map((item) => (
                 <ActiveLink
