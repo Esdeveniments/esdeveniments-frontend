@@ -14,8 +14,6 @@ import { CategorizedEvents } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
-import VisuallyHidden from "@components/ui/primitives/VisuallyHidden";
-import Link from "next/link";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { Suspense, JSX } from "react";
 
@@ -132,8 +130,12 @@ export default async function Page(): Promise<JSX.Element> {
 
   const structuredSchemas = [
     { id: "webpage-schema", data: webPageSchema },
-    ...(collectionSchema ? [{ id: "collection-schema", data: collectionSchema }] : []),
-    ...(itemListSchema ? [{ id: "homepage-events", data: itemListSchema }] : []),
+    ...(collectionSchema
+      ? [{ id: "collection-schema", data: collectionSchema }]
+      : []),
+    ...(itemListSchema
+      ? [{ id: "homepage-events", data: itemListSchema }]
+      : []),
     ...(siteNavigationSchema
       ? [{ id: "site-navigation", data: siteNavigationSchema }]
       : []),
@@ -160,7 +162,6 @@ export default async function Page(): Promise<JSX.Element> {
         pageData={pageData}
         categories={categories}
       />
-
     </>
   );
 }
