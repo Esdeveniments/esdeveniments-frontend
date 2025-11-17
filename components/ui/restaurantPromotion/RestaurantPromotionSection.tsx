@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   parseISO,
   isValid,
@@ -45,11 +45,11 @@ export default function RestaurantPromotionSection({
     freezeOnceVisible: true,
   });
 
-  // Compute once per render; safe primitive usage inside effect
+  // Memoize derived state to avoid recalculating on every render
   // We keep two booleans:
   // - eventIsInFuture: whether the event is today (and not finished) or in the future (used to decide render)
   // - eventIsWithinFetchWindow: whether the event is within the next MAX_DAYS days
-  const { eventIsInFuture, eventIsWithinFetchWindow } = (() => {
+  const { eventIsInFuture, eventIsWithinFetchWindow } = useMemo(() => {
     const MAX_DAYS = 15;
     if (!eventStartDate)
       return { eventIsInFuture: false, eventIsWithinFetchWindow: false };
@@ -85,7 +85,7 @@ export default function RestaurantPromotionSection({
     // (we still show them if they haven't finished, but won't fetch restaurant data)
     const eventIsWithinFetchWindow = daysAhead >= 0 && daysAhead <= MAX_DAYS && !eventHasFinished;
     return { eventIsInFuture, eventIsWithinFetchWindow };
-  })();
+  }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime]);
 
   // Fetch places when section becomes visible and event is in future and within the fetch window
   useEffect(() => {

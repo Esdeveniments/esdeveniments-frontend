@@ -5,7 +5,6 @@ import {
   vi,
   beforeEach,
   afterEach,
-  type MockInstance,
 } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
@@ -64,7 +63,8 @@ describe("RestaurantPromotionSection - Date Logic", () => {
   const baseNow = new Date("2025-11-16T12:00:00.000Z");
   const addDays = (d: number) =>
     new Date(baseNow.getTime() + d * 24 * 60 * 60 * 1000);
-  let DateSpy: ReturnType<typeof vi.spyOn> | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let DateSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -74,6 +74,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
     // Mock Date constructor to return baseNow when called without arguments
     // This ensures both computeTemporalStatus and component's direct Date usage work
     const OriginalDate = global.Date;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DateSpy = vi.spyOn(global, "Date").mockImplementation(
       ((...args: unknown[]) => {
         // When called without arguments (new Date()), return mocked time
@@ -81,10 +82,10 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           return new OriginalDate(baseNow.getTime());
         }
         // Otherwise, use original Date constructor for date parsing
-        return new (OriginalDate as unknown as new (...args: unknown[]) => Date)(
-          ...args
-        );
-      }) as unknown as new (...args: unknown[]) => Date
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return new (OriginalDate as any)(...args);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any
     );
     
     // Preserve Date static methods (now, parse, UTC, etc.)
