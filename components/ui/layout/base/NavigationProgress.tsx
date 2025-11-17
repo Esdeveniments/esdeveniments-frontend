@@ -9,7 +9,7 @@ import {
   startNavigationFeedback,
 } from "@lib/navigation-feedback";
 
-export default function NavigationProgress(): JSX.Element | null {
+export default function NavigationProgress(): JSX.Element {
   const { isVisible, progress } = useNavigationProgress();
 
   useEffect(() => {
@@ -22,17 +22,7 @@ export default function NavigationProgress(): JSX.Element | null {
       if (anchor.dataset.pressableManaged === "true") return;
       if (anchor.dataset.disableNavigationSignal === "true") return;
       if (anchor.getAttribute("target") === "_blank") return;
-      if (
-        !isPlainLeftClick(
-          event as MouseEvent & {
-            button: number;
-            metaKey: boolean;
-            ctrlKey: boolean;
-            shiftKey: boolean;
-            altKey: boolean;
-          }
-        )
-      ) {
+      if (!isPlainLeftClick(event)) {
         return;
       }
       startNavigationFeedback();

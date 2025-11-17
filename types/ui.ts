@@ -32,15 +32,10 @@ export interface NavigationProgressState {
   progress: number;
 }
 
-export type PlainMouseEvent =
-  | React.MouseEvent<Element>
-  | (MouseEvent & {
-      button: number;
-      metaKey: boolean;
-      ctrlKey: boolean;
-      shiftKey: boolean;
-      altKey: boolean;
-    });
+export type PlainMouseEvent = Pick<
+  React.MouseEvent | MouseEvent,
+  "button" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey"
+>;
 
 export interface NewsCtaProps {
   href: string;
