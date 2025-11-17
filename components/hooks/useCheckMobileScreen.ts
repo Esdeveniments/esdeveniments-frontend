@@ -25,17 +25,13 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
     }
 
     timeoutRef.current = setTimeout(() => {
-      // Use functional setState to avoid unnecessary updates
-      // Only update if the value actually changed
-      setIsMobile((prev) => {
-        const next = getIsMobile();
-        return prev !== next ? next : prev;
-      });
+      // React automatically skips updates when the value is the same (Object.is comparison)
+      setIsMobile(getIsMobile());
     }, 100);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return undefined;
+    if (typeof window === "undefined") return;
 
     // Set up resize listener - state is already initialized correctly
     // via the lazy initializer, so no need to setState here
