@@ -152,7 +152,10 @@ function HybridEventsListClientContent({
       ) : showNoEventsFound ? (
         // Show no events found message when filters return no results
         <>
-          <NoEventsFound title={pageData?.notFoundText} />
+          <NoEventsFound
+            title={pageData?.notFoundTitle}
+            description={pageData?.notFoundDescription}
+          />
           {showFallbackEvents && (
             <div className="w-full mt-section-y">
               <List events={realInitialEvents}>

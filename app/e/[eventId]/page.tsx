@@ -312,6 +312,8 @@ export default async function EventPage({
               eventLng={event.city?.longitude}
               eventStartDate={event.startDate}
               eventEndDate={event.endDate}
+              eventStartTime={event.startTime}
+              eventEndTime={event.endTime}
             />
             {/* Final Ad Section */}
             <div className="w-full h-full min-h-[250px]">

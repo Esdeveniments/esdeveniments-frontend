@@ -102,6 +102,7 @@ export async function generateMetadata({
         ? actualCategory
         : undefined,
     categoryName: categoryData?.name,
+    search: parsed.queryParams.search,
   });
   return buildPageMeta({
     title: pageData.metaTitle,
@@ -336,6 +337,7 @@ export default async function ByDatePage({
         ? finalCategory
         : undefined,
     categoryName: categoryData?.name,
+    search: parsed.queryParams.search,
   });
 
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;

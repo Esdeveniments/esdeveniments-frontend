@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import ClientTest from "./ClientTest";
+
+export const metadata: Metadata = {
+  title: "E2E Load More Test",
+  description:
+    "Entorn intern per validar la càrrega infinita de resultats durant els tests E2E.",
+  robots: "noindex, nofollow",
+};
 
 function makeEvent(id: string, title: string, slug: string): EventSummaryResponseDTO {
   return {

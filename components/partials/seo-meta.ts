@@ -251,16 +251,43 @@ export function generateSiteNavigationElementSchema(
 ) {
   if (!navigationItems || navigationItems.length === 0) return null;
 
+  const normalizeToAbsoluteUrl = (value: string) => {
+    if (/^https?:\/\//i.test(value)) return value;
+    const normalized = value.startsWith("/") ? value : `/${value}`;
+    return `${siteUrl}${normalized}`;
+  };
+
+  const fallbackPathFromName = (value: string) => {
+    const slug = value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return `/${slug || "agenda"}`;
+  };
+
+  const navigationElements = navigationItems.map((item, index) => {
+    const candidateUrl =
+      item.url?.trim() ||
+      item.href?.trim() ||
+      fallbackPathFromName(item.name || `item-${index + 1}`);
+    const absoluteUrl = normalizeToAbsoluteUrl(candidateUrl);
+
+    return {
+      "@type": "SiteNavigationElement",
+      name: item.name,
+      url: absoluteUrl,
+    };
+  });
+
   return {
     "@context": "https://schema.org",
     "@type": "SiteNavigationElement",
     "@id": `${siteUrl}#sitenavigation`,
     name: "Sitemap de Catalunya",
     url: `${siteUrl}/sitemap`,
-    hasPart: navigationItems.map((item) => ({
-      "@type": "SiteNavigationElement",
-      name: item.name,
-      url: item.url || item.href || `${siteUrl}/${item.name.toLowerCase()}`,
-    })),
+    hasPart: navigationElements,
   };
 }

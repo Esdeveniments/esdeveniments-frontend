@@ -43,7 +43,10 @@ function HybridEventsList({
         className="container flex-col justify-center items-center mt-sticky-offset"
         data-testid="events-list"
       >
-        <NoEventsFound title={pageData?.notFoundText} />
+        <NoEventsFound
+          title={pageData?.notFoundTitle}
+          description={pageData?.notFoundDescription}
+        />
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
             <Card
