@@ -53,6 +53,11 @@ export default function PressableLink({
       onClick={handleClick}
       target={target}
       data-pressed={isPressed ? "true" : undefined}
+      data-pressable-link={variant}
+      data-pressable-managed="true"
+      data-disable-navigation-signal={
+        disableNavigationSignal ? "true" : undefined
+      }
       {...handlers}
     >
       {children}

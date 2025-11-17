@@ -2,7 +2,7 @@ import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import { formatCatalanA } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export default async function LatestNewsSection({
   placeSlug,
@@ -27,14 +27,14 @@ export default async function LatestNewsSection({
               ? formatCatalanA(placeLabel, placeType, false)
               : ""}
           </h2>
-          <PressableLink
+          <PressableAnchor
             href={newsHref}
             prefetch={false}
             className="body-small text-primary underline hover:no-underline"
             variant="inline"
           >
             Veure totes
-          </PressableLink>
+          </PressableAnchor>
         </div>
         <div className="flex flex-col gap-element-gap">
           {latestNews.map((newsItem, index) => (

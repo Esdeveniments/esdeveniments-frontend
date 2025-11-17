@@ -7,11 +7,11 @@ import {
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import PressableLink from "@components/ui/primitives/PressableLink";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import Head from "next/head";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 export const revalidate = 600;
 
 export async function generateMetadata({
@@ -145,27 +145,27 @@ export default async function Page({
       >
         <ol className="flex items-center space-x-2">
           <li>
-            <PressableLink
+            <PressableAnchor
               href="/"
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
               Inici
-            </PressableLink>
+            </PressableAnchor>
           </li>
           <li>
             <span className="mx-1">/</span>
           </li>
           <li>
-            <PressableLink
+            <PressableAnchor
               href="/noticies"
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
               Notícies
-            </PressableLink>
+            </PressableAnchor>
           </li>
           <li>
             <span className="mx-1">/</span>
@@ -177,23 +177,23 @@ export default async function Page({
         Notícies de {placeType.label}
       </h1>
       <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
-        <PressableLink
+        <PressableAnchor
           href={`/noticies`}
           className="text-primary underline text-sm"
           prefetch={false}
           variant="inline"
         >
           Veure totes les notícies
-        </PressableLink>
+        </PressableAnchor>
         <span className="mx-2">·</span>
-        <PressableLink
+        <PressableAnchor
           href={`/noticies/${place}/rss.xml`}
           className="text-primary underline text-sm"
           prefetch={false}
           variant="inline"
         >
           RSS
-        </PressableLink>
+        </PressableAnchor>
       </div>
       <section className="flex flex-col gap-6 px-2 lg:px-0">
         {list.map((event, index) => (
@@ -208,7 +208,7 @@ export default async function Page({
       </section>
       <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
         {currentPage > 0 ? (
-          <PressableLink
+          <PressableAnchor
             href={{
               pathname: `/noticies/${place}`,
               query: { page: String(currentPage - 1), size: String(pageSize) },
@@ -218,12 +218,12 @@ export default async function Page({
             variant="inline"
           >
             ← Anterior
-          </PressableLink>
+          </PressableAnchor>
         ) : (
           <span />
         )}
         {!response.last && (
-          <PressableLink
+          <PressableAnchor
             href={{
               pathname: `/noticies/${place}`,
               query: { page: String(currentPage + 1), size: String(pageSize) },
@@ -233,7 +233,7 @@ export default async function Page({
             variant="inline"
           >
             Més notícies →
-          </PressableLink>
+          </PressableAnchor>
         )}
       </div>
     </div>

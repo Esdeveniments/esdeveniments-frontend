@@ -2,7 +2,7 @@ import Image from "next/image";
 import type { NewsRichCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export default function NewsRichCard({
   event,
@@ -51,7 +51,7 @@ export default function NewsRichCard({
           <div className="flex-1 min-w-0">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {primaryCategory && (
-                <PressableLink
+                <PressableAnchor
                   href={`/catalunya/${primaryCategory.slug}`}
                   prefetch={false}
                   className="badge-primary"
@@ -59,7 +59,7 @@ export default function NewsRichCard({
                   variant="inline"
                 >
                   {primaryCategory.name}
-                </PressableLink>
+                </PressableAnchor>
               )}
               {event.location && (
                 <span className="badge-default">📍 {event.location}</span>
@@ -68,7 +68,7 @@ export default function NewsRichCard({
             </div>
 
             <h3 className="heading-2 mb-3 text-foreground-strong group-hover:text-primary transition-colors">
-              <PressableLink
+              <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
                 className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
@@ -76,7 +76,7 @@ export default function NewsRichCard({
                 variant="inline"
               >
                 {event.title}
-              </PressableLink>
+              </PressableAnchor>
             </h3>
 
             {plainDescription && (
@@ -86,7 +86,7 @@ export default function NewsRichCard({
             )}
 
             <div className="flex items-center justify-between">
-              <PressableLink
+              <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
                 className="btn-primary"
@@ -94,7 +94,7 @@ export default function NewsRichCard({
                 variant="inline"
               >
                 Llegir més
-              </PressableLink>
+              </PressableAnchor>
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function NewsRichCard({
       <div className="p-6">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {primaryCategory && (
-            <PressableLink
+            <PressableAnchor
               href={`/catalunya/${primaryCategory.slug}`}
               prefetch={false}
               className="badge-primary"
@@ -130,7 +130,7 @@ export default function NewsRichCard({
               variant="inline"
             >
               {primaryCategory.name}
-            </PressableLink>
+            </PressableAnchor>
           )}
           {event.location && (
             <span className="badge-default">📍 {event.location}</span>
@@ -139,7 +139,7 @@ export default function NewsRichCard({
         </div>
 
         <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
-          <PressableLink
+          <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
             className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
@@ -147,7 +147,7 @@ export default function NewsRichCard({
             variant="inline"
           >
             {event.title}
-          </PressableLink>
+          </PressableAnchor>
         </h3>
 
         {plainDescription && (
@@ -157,7 +157,7 @@ export default function NewsRichCard({
         )}
 
         <div className="flex items-center justify-between">
-          <PressableLink
+          <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
             className="btn-primary"
@@ -165,7 +165,7 @@ export default function NewsRichCard({
             variant="inline"
           >
             Llegir més
-          </PressableLink>
+          </PressableAnchor>
         </div>
       </div>
     </article>

@@ -2,7 +2,7 @@ import Image from "next/image";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export default function NewsCard({
   event,
@@ -54,14 +54,14 @@ export default function NewsCard({
                 </span>
               )}
             </div>
-            <PressableLink
+            <PressableAnchor
               href={href}
               prefetch={false}
               className="btn-primary"
               variant="inline"
             >
               Llegir més
-            </PressableLink>
+            </PressableAnchor>
           </div>
         </div>
       </section>
@@ -92,7 +92,7 @@ export default function NewsCard({
         </div>
 
         <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
-          <PressableLink
+          <PressableAnchor
             href={href}
             prefetch={false}
             className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
@@ -100,7 +100,7 @@ export default function NewsCard({
             variant="inline"
           >
             {event.title}
-          </PressableLink>
+          </PressableAnchor>
         </h3>
 
         {plainDescription && (
@@ -110,7 +110,7 @@ export default function NewsCard({
         )}
 
         <div className="flex items-center justify-between">
-          <PressableLink
+          <PressableAnchor
             href={href}
             prefetch={false}
             className="btn-primary"
@@ -118,7 +118,7 @@ export default function NewsCard({
             variant="inline"
           >
             Llegir més
-          </PressableLink>
+          </PressableAnchor>
         </div>
       </div>
     </article>

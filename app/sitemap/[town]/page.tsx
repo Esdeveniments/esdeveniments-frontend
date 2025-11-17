@@ -11,7 +11,7 @@ import {
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export const revalidate = 86400;
 
@@ -103,14 +103,14 @@ export default async function Page({
                   if (month === "marc") textMonth = month.replace("c", "ç");
                   return (
                     <div key={`${year}-${month}`} role="listitem">
-                      <PressableLink
+                      <PressableAnchor
                         href={`/sitemap/${town}/${year}/${month.toLocaleLowerCase()}`}
                         className="text-foreground-strong hover:text-primary hover:underline transition-colors capitalize"
                         variant="inline"
                         prefetch={false}
                       >
                         {textMonth}
-                      </PressableLink>
+                      </PressableAnchor>
                     </div>
                   );
                 }).reverse()}

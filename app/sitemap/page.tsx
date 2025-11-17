@@ -11,7 +11,7 @@ import {
   generateSiteNavigationElementSchema,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export const revalidate = 86400;
 
@@ -101,14 +101,14 @@ export default async function Page() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4" role="list">
               {regions.map((region) => (
                 <div key={region.slug} role="listitem">
-                  <PressableLink
+                  <PressableAnchor
                     href={`/sitemap/${region.slug}`}
                     className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                     data-testid="sitemap-region-link"
                     variant="inline"
                   >
                     {region.name}
-                  </PressableLink>
+                  </PressableAnchor>
                 </div>
               ))}
             </div>
@@ -119,14 +119,14 @@ export default async function Page() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
               {cities.map((city) => (
                 <div key={city.slug} role="listitem">
-                  <PressableLink
+                  <PressableAnchor
                     href={`/sitemap/${city.slug}`}
                     className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                     data-testid="sitemap-city-link"
                     variant="inline"
                   >
                     {city.name}
-                  </PressableLink>
+                  </PressableAnchor>
                 </div>
               ))}
             </div>

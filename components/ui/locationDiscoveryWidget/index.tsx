@@ -14,6 +14,7 @@ import {
 import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import { transformRegionsToOptions } from "./utils";
 import { normalizeForSearch } from "@utils/string-helpers";
+import { startNavigationFeedback } from "@lib/navigation-feedback";
 
 export default function LocationDiscoveryWidget({
   className = "",
@@ -76,6 +77,7 @@ export default function LocationDiscoveryWidget({
 
       // Navigate to location using the correct URL value
       const urlValue = locationOption?.value || "catalunya";
+      startNavigationFeedback();
       router.push(`/${urlValue}`);
     },
     [allLocations, onLocationChange, router]
@@ -127,6 +129,7 @@ export default function LocationDiscoveryWidget({
 
   const onDiscoverOtherEvents = useCallback(() => {
     //
+    startNavigationFeedback();
     router.push("/catalunya");
   }, [router]);
 

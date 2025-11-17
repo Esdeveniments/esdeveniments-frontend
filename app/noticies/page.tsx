@@ -3,7 +3,6 @@ import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
-import PressableLink from "@components/ui/primitives/PressableLink";
 import { NEWS_HUBS, NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
 import type { NewsSummaryResponseDTO } from "types/api/news";
@@ -12,6 +11,7 @@ import {
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 export const revalidate = 600;
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -92,14 +92,14 @@ export default async function Page() {
         Les últimes notícies i recomanacions d&apos;esdeveniments.
       </p>
       <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
-        <PressableLink
+        <PressableAnchor
           href={`/noticies/rss.xml`}
           className="text-primary underline text-sm"
           prefetch={false}
           variant="inline"
         >
           RSS
-        </PressableLink>
+        </PressableAnchor>
       </div>
       <nav
         aria-label="Breadcrumb"
@@ -107,14 +107,14 @@ export default async function Page() {
       >
         <ol className="flex items-center space-x-2">
           <li>
-            <PressableLink
+            <PressableAnchor
               href="/"
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
               Inici
-            </PressableLink>
+            </PressableAnchor>
           </li>
           <li>
             <span className="mx-1">/</span>
@@ -130,28 +130,28 @@ export default async function Page() {
             <section key={hub.slug} className="w-full">
               <div className="flex items-baseline justify-between mb-1">
                 <h2 className="uppercase">{`Últimes notícies ${hub.name}`}</h2>
-                <PressableLink
+                <PressableAnchor
                   href={`/noticies/${hub.slug}`}
                   className="text-primary underline text-sm"
                   prefetch={false}
                   variant="inline"
                 >
                   Veure més…
-                </PressableLink>
+                </PressableAnchor>
               </div>
               {NEARBY_PLACES_BY_HUB[hub.slug] && (
                 <nav className="mb-3 text-xs text-foreground-strong/70">
                   <span className="mr-2">A prop:</span>
                   {NEARBY_PLACES_BY_HUB[hub.slug].map((p, i) => (
                     <span key={p.slug} className="inline-flex items-center">
-                      <PressableLink
+                      <PressableAnchor
                         href={`/noticies/${p.slug}`}
                         prefetch={false}
                         className="underline hover:text-primary"
                         variant="inline"
                       >
                         {p.name}
-                      </PressableLink>
+                      </PressableAnchor>
                       {i < NEARBY_PLACES_BY_HUB[hub.slug].length - 1 && (
                         <span className="mx-1">·</span>
                       )}

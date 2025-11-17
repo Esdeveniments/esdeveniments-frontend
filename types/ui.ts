@@ -63,11 +63,11 @@ export interface HorizontalScrollProps {
 }
 
 export interface CardLinkProps
-  extends Omit<PressableLinkProps, "variant" | "disableNavigationSignal"> {}
+  extends Omit<PressableLinkBaseProps, "variant" | "disableNavigationSignal"> {}
 
 export type PressableLinkVariant = "inline" | "card" | "chip" | "plain";
 
-export interface PressableLinkProps
+export interface PressableLinkBaseProps
   extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps>,
     LinkProps {
   className?: string;
@@ -75,3 +75,7 @@ export interface PressableLinkProps
   variant?: PressableLinkVariant;
   disableNavigationSignal?: boolean;
 }
+
+export interface PressableLinkProps extends PressableLinkBaseProps {}
+
+export interface PressableAnchorProps extends PressableLinkBaseProps {}

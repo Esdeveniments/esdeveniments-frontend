@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 // Base classes aligned with design tokens (badge sizing + transitions)
 const BASE_CLASS =
@@ -19,7 +19,7 @@ const Badge = forwardRef<
 
   if (href) {
     return (
-      <PressableLink
+      <PressableAnchor
         href={href}
         className={combined}
         aria-label={ariaLabel}
@@ -29,7 +29,7 @@ const Badge = forwardRef<
         <span data-slot="badge" ref={ref}>
           {children}
         </span>
-      </PressableLink>
+      </PressableAnchor>
     );
   }
 

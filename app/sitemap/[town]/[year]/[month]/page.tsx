@@ -18,7 +18,7 @@ import {
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export const revalidate = 86400;
 
@@ -171,7 +171,7 @@ export default async function Page({
                     key={event.id}
                     className="border-b border-border/30 pb-4 w-full"
                   >
-                    <PressableLink
+                    <PressableAnchor
                       href={`/e/${event.slug}`}
                       className="hover:text-primary block group"
                       variant="inline"
@@ -206,7 +206,7 @@ export default async function Page({
                           {event.description}
                         </p>
                       )}
-                    </PressableLink>
+                    </PressableAnchor>
                   </article>
                 );
               })}
@@ -222,22 +222,22 @@ export default async function Page({
               Vols explorar més esdeveniments de {townLabel}?
             </p>
             <div className="flex-center gap-4">
-              <PressableLink
+              <PressableAnchor
                 href={`/sitemap/${town}`}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
                 variant="inline"
                 prefetch={false}
               >
                 Veure tots els arxius
-              </PressableLink>
-              <PressableLink
+              </PressableAnchor>
+              <PressableAnchor
                 href={`/${town}`}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
                 variant="inline"
                 prefetch={false}
               >
                 Esdeveniments actuals
-              </PressableLink>
+              </PressableAnchor>
             </div>
           </footer>
         )}

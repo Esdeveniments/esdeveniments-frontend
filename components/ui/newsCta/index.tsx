@@ -1,5 +1,5 @@
 import type { NewsCtaProps } from "types/ui";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 /**
  * Polished inline CTA inspired by large event platforms (Timeout/Eventbrite style):
@@ -9,7 +9,7 @@ import PressableLink from "@components/ui/primitives/PressableLink";
  */
 export function NewsCta({ href, label, ...rest }: NewsCtaProps) {
   return (
-    <PressableLink
+    <PressableAnchor
       href={href}
       prefetch={false}
       aria-label={`Accedeix a ${label}`}
@@ -57,7 +57,7 @@ export function NewsCta({ href, label, ...rest }: NewsCtaProps) {
           <path d="m13 6 6 6-6 6" />
         </svg>
       </span>
-    </PressableLink>
+    </PressableAnchor>
   );
 }
 

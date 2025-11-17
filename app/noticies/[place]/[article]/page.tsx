@@ -14,7 +14,7 @@ import NewsRichCard from "@components/ui/newsRichCard";
 import { getFormattedDate } from "@utils/date-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export async function generateMetadata({
   params,
@@ -145,32 +145,32 @@ export default async function Page({
             className="text-sm text-foreground-strong/70"
             aria-label="Breadcrumb"
           >
-            <PressableLink
+            <PressableAnchor
               href="/"
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
               Inici
-            </PressableLink>{" "}
+            </PressableAnchor>{" "}
             /{" "}
-            <PressableLink
+            <PressableAnchor
               href="/noticies"
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
               Notícies
-            </PressableLink>{" "}
+            </PressableAnchor>{" "}
             /{" "}
-            <PressableLink
+            <PressableAnchor
               href={`/noticies/${place}`}
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
               {placeType.label}
-            </PressableLink>{" "}
+            </PressableAnchor>{" "}
             /{" "}
             <span className="text-foreground-strong font-medium">
               {detail.title}

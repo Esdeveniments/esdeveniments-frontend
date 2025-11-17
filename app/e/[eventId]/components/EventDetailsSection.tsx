@@ -4,7 +4,7 @@ import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
 import { ClockIcon } from "@heroicons/react/outline";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 const EventDetailsSection: React.FC<{
   event: EventDetailResponseDTO;
@@ -42,7 +42,7 @@ const EventDetailsSection: React.FC<{
           {event.url && (
             <div className="body-normal font-semibold text-foreground-strong">
               Enllaç a l&apos;esdeveniment:{" "}
-              <PressableLink
+              <PressableAnchor
                 href={event.url}
                 className="body-normal inline-block text-foreground-strong hover:text-primary transition-colors duration-200 hover:border-primary pb-0"
                 target="_blank"
@@ -51,7 +51,7 @@ const EventDetailsSection: React.FC<{
                 disableNavigationSignal
               >
                 {event.title}
-              </PressableLink>
+              </PressableAnchor>
             </div>
           )}
         </div>

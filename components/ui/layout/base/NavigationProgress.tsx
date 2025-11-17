@@ -1,11 +1,47 @@
 "use client";
 
 import type { JSX } from "react";
+import { useEffect } from "react";
 import clsx from "clsx";
 import { useNavigationProgress } from "@components/hooks/useNavigationProgress";
+import {
+  isPlainLeftClick,
+  startNavigationFeedback,
+} from "@lib/navigation-feedback";
 
 export default function NavigationProgress(): JSX.Element | null {
   const { isVisible, progress } = useNavigationProgress();
+
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      if (event.defaultPrevented) return;
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const anchor = target.closest<HTMLAnchorElement>("[data-pressable-link]");
+      if (!anchor) return;
+      if (anchor.dataset.pressableManaged === "true") return;
+      if (anchor.dataset.disableNavigationSignal === "true") return;
+      if (anchor.getAttribute("target") === "_blank") return;
+      if (
+        !isPlainLeftClick(
+          event as MouseEvent & {
+            button: number;
+            metaKey: boolean;
+            ctrlKey: boolean;
+            shiftKey: boolean;
+            altKey: boolean;
+          }
+        )
+      ) {
+        return;
+      }
+      startNavigationFeedback();
+    };
+
+    const options: AddEventListenerOptions = { capture: true };
+    document.addEventListener("click", handleClick, options);
+    return () => document.removeEventListener("click", handleClick, options);
+  }, []);
 
   return (
     <div

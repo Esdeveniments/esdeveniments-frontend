@@ -23,6 +23,7 @@ import {
 } from "types/common";
 import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
+import { startNavigationFeedback } from "@lib/navigation-feedback";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
@@ -225,6 +226,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendEventToGA("Category", changes.category);
     sendEventToGA("Distance", changes.distance.toString());
 
+    startNavigationFeedback();
     router.push(newUrl);
     onClose();
   };

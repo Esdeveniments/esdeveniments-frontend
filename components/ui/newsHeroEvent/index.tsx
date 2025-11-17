@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
-import PressableLink from "@components/ui/primitives/PressableLink";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
   const image = event.imageUrl;
@@ -42,14 +42,14 @@ export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
               </span>
             )}
           </div>
-          <PressableLink
+          <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
             className="btn-primary"
             variant="inline"
           >
             Llegir més
-          </PressableLink>
+          </PressableAnchor>
         </div>
       </div>
     </section>
