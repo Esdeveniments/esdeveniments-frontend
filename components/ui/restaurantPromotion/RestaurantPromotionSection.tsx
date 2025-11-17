@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import {
-  parseISO,
-  isValid,
-  differenceInCalendarDays,
-  format,
-} from "date-fns";
+import { parseISO, isValid, differenceInCalendarDays, format } from "date-fns";
 import { computeTemporalStatus } from "@utils/event-status";
 import {
   RestaurantPromotionSectionProps,
@@ -26,7 +21,7 @@ const PromotionInfoModal = dynamic(() => import("./PromotionInfoModal"), {
 // import PromotedRestaurantCard from "./PromotedRestaurantCard";
 
 export default function RestaurantPromotionSection({
-  // eventId,
+  eventId, // Used in commented-out RestaurantPromotionForm
   // eventLocation,
   eventLat,
   eventLng,
@@ -35,6 +30,8 @@ export default function RestaurantPromotionSection({
   eventStartTime,
   eventEndTime,
 }: RestaurantPromotionSectionProps) {
+  // Suppress unused parameter warning - eventId is used in commented-out form
+  void eventId;
   // All hooks must be called at the top level before any conditional returns
   const [placesResp, setPlacesResp] = useState<PlacesResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,27 +60,30 @@ export default function RestaurantPromotionSection({
       eventStartTime,
       eventEndTime
     );
-    
+
     // Event has finished if temporal status is "past"
     const eventHasFinished = temporalStatus.state === "past";
-    
+
     // Calculate days ahead for start date (for fetch window logic)
     const startDate = parseISO(eventStartDate);
-    const startDateTime = isValid(startDate) ? startDate : new Date(eventStartDate);
+    const startDateTime = isValid(startDate)
+      ? startDate
+      : new Date(eventStartDate);
     const now = new Date();
     const daysAhead = differenceInCalendarDays(startDateTime, now);
-    
+
     // Event should show if it hasn't finished yet
     // This includes:
     // - Events in the future (daysAhead > 0)
     // - Events happening today that haven't finished (daysAhead === 0 && !eventHasFinished)
     // - Events that started earlier but are still ongoing (daysAhead < 0 && !eventHasFinished)
     const eventIsInFuture = !eventHasFinished;
-    
+
     // For fetch window, only fetch for events that start today or in the future (within 15 days)
     // This prevents fetching for events that started in the past, even if still ongoing
     // (we still show them if they haven't finished, but won't fetch restaurant data)
-    const eventIsWithinFetchWindow = daysAhead >= 0 && daysAhead <= MAX_DAYS && !eventHasFinished;
+    const eventIsWithinFetchWindow =
+      daysAhead >= 0 && daysAhead <= MAX_DAYS && !eventHasFinished;
     return { eventIsInFuture, eventIsWithinFetchWindow };
   }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime]);
 

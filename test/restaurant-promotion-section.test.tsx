@@ -1,11 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-} from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import RestaurantPromotionSection from "../components/ui/restaurantPromotion/RestaurantPromotionSection";
@@ -63,31 +56,30 @@ describe("RestaurantPromotionSection - Date Logic", () => {
   const baseNow = new Date("2025-11-16T12:00:00.000Z");
   const addDays = (d: number) =>
     new Date(baseNow.getTime() + d * 24 * 60 * 60 * 1000);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let DateSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
     // Use real timers for async operations (fetch, useEffect, waitFor)
     vi.useRealTimers();
-    
+
     // Mock Date constructor to return baseNow when called without arguments
     // This ensures both computeTemporalStatus and component's direct Date usage work
+    // Note: We use manual mocking instead of vi.useFakeTimers() because fake timers
+    // don't work well with async operations like waitFor and fetch
     const OriginalDate = global.Date;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    DateSpy = vi.spyOn(global, "Date").mockImplementation(
-      ((...args: unknown[]) => {
-        // When called without arguments (new Date()), return mocked time
-        if (args.length === 0) {
-          return new OriginalDate(baseNow.getTime());
-        }
-        // Otherwise, use original Date constructor for date parsing
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return new (OriginalDate as any)(...args);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any
-    );
-    
+
+    const DateSpy = vi.spyOn(global, "Date").mockImplementation(((
+      ...args: unknown[]
+    ) => {
+      // When called without arguments (new Date()), return mocked time
+      if (args.length === 0) {
+        return new OriginalDate(baseNow.getTime());
+      }
+      // Otherwise, use original Date constructor for date parsing
+
+      return new (OriginalDate as any)(...args);
+    }) as any);
+
     // Preserve Date static methods (now, parse, UTC, etc.)
     Object.setPrototypeOf(DateSpy, OriginalDate);
     Object.defineProperty(DateSpy, "now", {
@@ -95,17 +87,12 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       writable: true,
       configurable: true,
     });
-    
+
     // Set up default fetch mock
     global.fetch = vi.fn();
   });
 
-  afterEach(() => {
-    DateSpy?.mockRestore();
-  });
-
   const defaultProps = {
-    eventId: "test-event-id",
     eventLat: 41.3851,
     eventLng: 2.1734,
   };
@@ -337,15 +324,21 @@ describe("RestaurantPromotionSection - Date Logic", () => {
     });
 
     it("handles invalid date strings", () => {
+      const mockFetch = vi.fn();
+      global.fetch = mockFetch;
+
       const { container } = render(
         <RestaurantPromotionSection
           {...defaultProps}
           eventStartDate="invalid-date"
         />
       );
-      // Should handle gracefully - component may render wrapper but not fetch
-      // The important thing is it doesn't crash
+      // Should handle gracefully without crashing
+      // Invalid dates may still render (depending on how Date.parse handles them)
+      // but should not fetch restaurant data
       expect(container).toBeTruthy();
+      // Verify it doesn't crash and doesn't attempt to fetch
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it("includes event date in API call when provided", async () => {

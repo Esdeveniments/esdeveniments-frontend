@@ -9,12 +9,15 @@ const getIsMobile = (): boolean =>
 
 const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
+    // On the client, always prioritize the actual window size.
+    if (typeof window !== "undefined") {
+      return getIsMobile();
+    }
+    // On the server, use the provided hint.
     if (typeof initialIsMobile === "boolean") {
       return initialIsMobile;
     }
-    if (typeof window !== "undefined") {
-      return window.innerWidth <= MOBILE_BREAKPOINT;
-    }
+    // Fallback for server-side rendering without a hint.
     return false;
   });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

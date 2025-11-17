@@ -267,7 +267,7 @@ export interface PricePreviewResponse {
 }
 
 export interface RestaurantPromotionSectionProps {
-  eventId: string;
+  eventId?: string; // Required if RestaurantPromotionForm is enabled
   eventLocation?: string;
   eventLat?: number;
   eventLng?: number;
