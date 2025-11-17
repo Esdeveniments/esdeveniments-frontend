@@ -30,6 +30,33 @@ vi.mock("../components/hooks/useOnScreen", () => ({
   default: () => true, // Always visible for testing
 }));
 
+// Mock computeTemporalStatus to use mocked time
+vi.mock("@utils/event-status", async () => {
+  const actual = await vi.importActual<typeof import("@utils/event-status")>(
+    "@utils/event-status"
+  );
+  return {
+    ...actual,
+    computeTemporalStatus: (
+      startDate: string,
+      endDate?: string,
+      nowOverride?: Date,
+      startTime?: string | null,
+      endTime?: string | null
+    ) => {
+      // Use the mocked baseNow if no override is provided
+      const baseNow = new Date("2025-11-16T12:00:00.000Z");
+      return actual.computeTemporalStatus(
+        startDate,
+        endDate,
+        nowOverride || baseNow,
+        startTime,
+        endTime
+      );
+    },
+  };
+});
+
 // Mock fetch
 global.fetch = vi.fn();
 
@@ -37,19 +64,43 @@ describe("RestaurantPromotionSection - Date Logic", () => {
   const baseNow = new Date("2025-11-16T12:00:00.000Z");
   const addDays = (d: number) =>
     new Date(baseNow.getTime() + d * 24 * 60 * 60 * 1000);
-  let dateNowSpy: MockInstance<[], number> | undefined;
+  let DateSpy: ReturnType<typeof vi.spyOn> | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Use real timers for async operations (fetch, useEffect)
+    // Use real timers for async operations (fetch, useEffect, waitFor)
     vi.useRealTimers();
-    dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(baseNow.getTime());
+    
+    // Mock Date constructor to return baseNow when called without arguments
+    // This ensures both computeTemporalStatus and component's direct Date usage work
+    const OriginalDate = global.Date;
+    DateSpy = vi.spyOn(global, "Date").mockImplementation(
+      ((...args: unknown[]) => {
+        // When called without arguments (new Date()), return mocked time
+        if (args.length === 0) {
+          return new OriginalDate(baseNow.getTime());
+        }
+        // Otherwise, use original Date constructor for date parsing
+        return new (OriginalDate as unknown as new (...args: unknown[]) => Date)(
+          ...args
+        );
+      }) as unknown as new (...args: unknown[]) => Date
+    );
+    
+    // Preserve Date static methods (now, parse, UTC, etc.)
+    Object.setPrototypeOf(DateSpy, OriginalDate);
+    Object.defineProperty(DateSpy, "now", {
+      value: () => baseNow.getTime(),
+      writable: true,
+      configurable: true,
+    });
+    
     // Set up default fetch mock
     global.fetch = vi.fn();
   });
 
   afterEach(() => {
-    dateNowSpy?.mockRestore();
+    DateSpy?.mockRestore();
   });
 
   const defaultProps = {
