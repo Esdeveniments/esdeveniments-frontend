@@ -1,7 +1,7 @@
 import { FC } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import eventNotFound from "@public/static/images/error_404_page_not_found.png";
+import PressableLink from "@components/ui/primitives/PressableLink";
 
 const NoEventFound: FC = () => {
   return (
@@ -26,29 +26,32 @@ const NoEventFound: FC = () => {
         </div>
         <p className="mb-4">
           Pots provar sort amb el{" "}
-          <Link
+          <PressableLink
             href="/catalunya"
             prefetch={false}
             className="font-bold text-black hover:underline"
+            variant="inline"
           >
             cercador
-          </Link>
+          </PressableLink>
           , veure{" "}
-          <Link
+          <PressableLink
             href="/"
             prefetch={false}
             className="font-bold text-black hover:underline"
+            variant="inline"
           >
             que passa avui a Catalunya
-          </Link>
+          </PressableLink>
           , o bé,{" "}
-          <Link
+          <PressableLink
             href="/publica"
             prefetch={false}
             className="font-bold text-black hover:underline"
+            variant="inline"
           >
             publicar l&apos;esdeveniment
-          </Link>
+          </PressableLink>
           . Si creus que hi ha un error, posa&apos;t en contacte amb nosaltres
           a:{" "}
           <a

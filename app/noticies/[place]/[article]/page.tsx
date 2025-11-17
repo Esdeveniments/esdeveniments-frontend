@@ -1,6 +1,5 @@
 // No headers/nonce needed with relaxed CSP
 import type { Metadata } from "next";
-import Link from "next/link";
 import DOMPurify from "isomorphic-dompurify";
 import { getNewsBySlug } from "@lib/api/news";
 import type { NewsDetailResponseDTO } from "types/api/news";
@@ -15,6 +14,7 @@ import NewsRichCard from "@components/ui/newsRichCard";
 import { getFormattedDate } from "@utils/date-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import PressableLink from "@components/ui/primitives/PressableLink";
 
 export async function generateMetadata({
   params,
@@ -145,17 +145,32 @@ export default async function Page({
             className="text-sm text-foreground-strong/70"
             aria-label="Breadcrumb"
           >
-            <Link href="/" className="hover:underline">
+            <PressableLink
+              href="/"
+              className="hover:underline"
+              variant="inline"
+              prefetch={false}
+            >
               Inici
-            </Link>{" "}
+            </PressableLink>{" "}
             /{" "}
-            <Link href="/noticies" className="hover:underline">
+            <PressableLink
+              href="/noticies"
+              className="hover:underline"
+              variant="inline"
+              prefetch={false}
+            >
               Notícies
-            </Link>{" "}
+            </PressableLink>{" "}
             /{" "}
-            <Link href={`/noticies/${place}`} className="hover:underline">
+            <PressableLink
+              href={`/noticies/${place}`}
+              className="hover:underline"
+              variant="inline"
+              prefetch={false}
+            >
               {placeType.label}
-            </Link>{" "}
+            </PressableLink>{" "}
             /{" "}
             <span className="text-foreground-strong font-medium">
               {detail.title}

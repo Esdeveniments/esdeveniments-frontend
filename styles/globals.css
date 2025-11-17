@@ -286,6 +286,49 @@ p {
     @apply transition-[opacity,transform] duration-slow ease-smooth;
   }
 
+  .pressable-inline,
+  .pressable-chip,
+  .pressable-card {
+    @apply transition-[transform,opacity] duration-fast ease-smooth;
+    transform-origin: center;
+  }
+
+  .pressable-chip {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2;
+  }
+
+  .pressable-card {
+    @apply transition-[transform,box-shadow] duration-normal ease-smooth;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .pressable-inline[data-pressed="true"],
+    .pressable-inline:active {
+      @apply opacity-80;
+      transform: translateY(1px);
+    }
+
+    .pressable-chip[data-pressed="true"],
+    .pressable-chip:active {
+      transform: translateY(1px);
+      @apply shadow-card;
+    }
+
+    .pressable-card[data-pressed="true"],
+    .pressable-card:active {
+      transform: translateY(1px) scale(0.995);
+      @apply shadow-card-hover;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pressable-inline,
+    .pressable-chip,
+    .pressable-card {
+      @apply transition-none;
+    }
+  }
+
   /* Hover effects */
   .hover-lift {
     @apply hover:-translate-y-0.5 hover:shadow-card-hover;

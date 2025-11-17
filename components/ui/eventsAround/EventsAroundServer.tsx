@@ -1,5 +1,4 @@
 import { memo, FC } from "react";
-import Link from "next/link";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
@@ -9,6 +8,7 @@ import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import CardLink from "@components/ui/common/cardContent/CardLink";
 
 const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
   const cardClass =
@@ -198,7 +198,10 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
               key={event.id ?? event.slug ?? index}
               className="flex-none w-40 min-w-[10rem] flex flex-col bg-background overflow-hidden cursor-pointer"
             >
-              <Link href={`/e/${event.slug}`}>
+              <CardLink
+                href={`/e/${event.slug}`}
+                className="block pressable-card transition-card"
+              >
                 {/* ImageEvent */}
                 <div className="w-full h-32 flex justify-center items-center overflow-hidden">
                   <ImageServer
@@ -231,7 +234,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     <span>{eventDate}</span>
                   </div>
                 </div>
-              </Link>
+              </CardLink>
             </div>
           );
         })}

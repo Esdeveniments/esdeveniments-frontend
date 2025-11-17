@@ -1,4 +1,4 @@
-import Link from "next/link";
+import PressableLink from "@components/ui/primitives/PressableLink";
 import type { SitemapBreadcrumbProps } from "types/common";
 
 /**
@@ -16,12 +16,14 @@ export default function SitemapBreadcrumb({ items }: SitemapBreadcrumbProps) {
             <li key={item.url} className="flex-start gap-2">
               {!isLast ? (
                 <>
-                  <Link
+                  <PressableLink
                     href={item.url}
                     className="hover:text-foreground transition-colors"
+                    variant="inline"
+                    prefetch={false}
                   >
                     {item.name}
-                  </Link>
+                  </PressableLink>
                   <span className="text-foreground/60">/</span>
                 </>
               ) : (

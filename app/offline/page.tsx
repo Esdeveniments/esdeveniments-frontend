@@ -1,8 +1,8 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import PressableLink from "@components/ui/primitives/PressableLink";
 
 const offlineDescription =
   "Pàgina en mode offline d'Esdeveniments.cat per continuar navegant mentre es recupera la connexió.";
@@ -47,16 +47,29 @@ export default function OfflinePage() {
             No pots connectar-te a internet. Alguns continguts emmagatzemats
             podrien estar disponibles.
           </p>
-          <Link href="/" className="btn-primary" data-testid="offline-home-link">
+          <PressableLink
+            href="/"
+            className="btn-primary"
+            data-testid="offline-home-link"
+            variant="inline"
+          >
             Torna a l&apos;inici
-          </Link>
+          </PressableLink>
           <br />
-          <Link href="/barcelona" className="btn-neutral mt-4 mr-2">
+          <PressableLink
+            href="/barcelona"
+            className="btn-neutral mt-4 mr-2"
+            variant="inline"
+          >
             Barcelona
-          </Link>
-          <Link href="/catalunya" className="btn-neutral mt-4">
+          </PressableLink>
+          <PressableLink
+            href="/catalunya"
+            className="btn-neutral mt-4"
+            variant="inline"
+          >
             Catalunya
-          </Link>
+          </PressableLink>
         </div>
       </div>
     </>

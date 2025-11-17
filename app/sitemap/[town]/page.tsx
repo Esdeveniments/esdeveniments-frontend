@@ -2,7 +2,6 @@ import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
-import Link from "next/link";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getPlaceBySlug } from "@lib/api/places";
 import type { TownStaticPathParams } from "types/common";
@@ -12,6 +11,7 @@ import {
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
+import PressableLink from "@components/ui/primitives/PressableLink";
 
 export const revalidate = 86400;
 
@@ -103,13 +103,14 @@ export default async function Page({
                   if (month === "marc") textMonth = month.replace("c", "ç");
                   return (
                     <div key={`${year}-${month}`} role="listitem">
-                      <Link
+                      <PressableLink
                         href={`/sitemap/${town}/${year}/${month.toLocaleLowerCase()}`}
-                        prefetch={false}
                         className="text-foreground-strong hover:text-primary hover:underline transition-colors capitalize"
+                        variant="inline"
+                        prefetch={false}
                       >
                         {textMonth}
-                      </Link>
+                      </PressableLink>
                     </div>
                   );
                 }).reverse()}

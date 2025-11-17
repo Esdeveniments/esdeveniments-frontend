@@ -1,8 +1,8 @@
-import Link from "next/link";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import ViewCounter from "@components/ui/viewCounter";
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import type { CardHorizontalServerProps } from "types/common";
+import CardLink from "@components/ui/common/cardContent/CardLink";
 
 const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
   event,
@@ -21,7 +21,10 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
     : `${nameDay}, ${formattedStart}`;
 
   return (
-    <Link href={`/e/${event.slug}`} className="block group relative h-full">
+    <CardLink
+      href={`/e/${event.slug}`}
+      className="block group relative h-full pressable-card transition-card"
+    >
       <article className="w-full h-full bg-background overflow-hidden cursor-pointer rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200 relative z-10 flex flex-col">
         {/* Image */}
         <div className="w-full h-48 overflow-hidden">
@@ -120,7 +123,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
           )} */}
         </div>
       </article>
-    </Link>
+    </CardLink>
   );
 };
 
