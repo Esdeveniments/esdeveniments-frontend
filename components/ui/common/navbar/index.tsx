@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { Disclosure } from "@headlessui/react";
 import {
   MenuIcon,
@@ -13,6 +12,7 @@ import {
 import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
 import logo from "@public/static/images/logo-esdeveniments.webp";
+import PressableLink from "@components/ui/primitives/PressableLink";
 import { NavigationItem } from "types/common";
 
 const navigation: NavigationItem[] = [
@@ -39,7 +39,7 @@ export default function Navbar() {
               <div className="flex justify-between items-center">
                 {/* Logo */}
                 <div className="flex flex-1 md:w-1/2 justify-start items-center py-2 px-3 cursor-pointer">
-                  <Link href="/">
+                  <PressableLink href="/" prefetch={false} variant="inline">
                     <Image
                       src={logo}
                       className="bg-background flex justify-center items-center cursor-pointer"
@@ -48,7 +48,7 @@ export default function Navbar() {
                       height={18}
                       priority={true}
                     />
-                  </Link>
+                  </PressableLink>
                 </div>
                 {/* MenuIcon */}
                 <div className="flex justify-center items-center md:hidden">

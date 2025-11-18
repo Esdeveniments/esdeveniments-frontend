@@ -1,4 +1,4 @@
-import Link from "next/link";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { siteUrl } from "@config/index";
 import Image from "next/image";
 import type { NextPage } from "next";
@@ -87,13 +87,14 @@ const QuiSom: NextPage = () => {
             <p className="body-normal">
               L&apos;agenda és col·laborativa, i cada persona que organitzi un
               acte cultural podrà publicar-lo{" "}
-              <Link
+              <PressableAnchor
                 href="/publica"
                 prefetch={false}
                 className="text-primary hover:underline underline-offset-2 font-medium"
+                variant="inline"
               >
                 aquí
-              </Link>{" "}
+              </PressableAnchor>{" "}
               pel seu compte.
             </p>
             <p className="body-normal">

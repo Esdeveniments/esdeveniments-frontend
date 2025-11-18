@@ -1,6 +1,6 @@
 import { FC } from "react";
-import Link from "next/link";
 import type { NoEventsFoundProps } from "types/props";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 const NoEventsFound: FC<NoEventsFoundProps> = ({ title, description }) => {
   return (
@@ -214,10 +214,11 @@ const NoEventsFound: FC<NoEventsFoundProps> = ({ title, description }) => {
         )}
       </div>
       <div className="flex flex-col items-center gap-3">
-        <Link
+        <PressableAnchor
           href="/publica"
           prefetch={false}
           className="group relative inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-dark text-primary-foreground font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          variant="inline"
         >
           <svg
             className="w-5 h-5 transition-transform group-hover:rotate-90 duration-300"
@@ -235,7 +236,7 @@ const NoEventsFound: FC<NoEventsFoundProps> = ({ title, description }) => {
           <span className="uppercase tracking-wide text-sm">
             Afegeix un esdeveniment
           </span>
-        </Link>
+        </PressableAnchor>
         <p className="text-sm text-foreground opacity-70">
           És gratuït i només triga un minut
         </p>

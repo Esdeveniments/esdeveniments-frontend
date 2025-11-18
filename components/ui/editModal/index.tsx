@@ -1,5 +1,5 @@
 import { FC } from "react";
-import Link from "next/link";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import Modal from "@components/ui/common/modal";
 import { PencilIcon, XCircleIcon } from "@heroicons/react/outline";
 import type { EditModalProps } from "types/editModal";
@@ -24,7 +24,11 @@ const EditModal: FC<EditModalProps> = ({
       >
         <ul role="list" className="divide-y divide-foreground-strong text-left">
           <li key="edit" className="p-4 flex">
-            <Link href={`/e/${slug}/edita`} prefetch={false}>
+            <PressableAnchor
+              href={`/e/${slug}/edita`}
+              prefetch={false}
+              variant="inline"
+            >
               <div className="flex justify-center items-start gap-4">
                 <PencilIcon
                   className="h-6 w-6 text-primary"
@@ -39,7 +43,7 @@ const EditModal: FC<EditModalProps> = ({
                   </p>
                 </div>
               </div>
-            </Link>
+            </PressableAnchor>
           </li>
           <li key="remove" className="p-4 flex">
             <button className="cursor-pointer" onClick={onRemove}>

@@ -1,5 +1,4 @@
 // No headers/nonce needed with relaxed CSP
-import Link from "next/link";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   generateJsonData,
@@ -19,6 +18,7 @@ import {
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export const revalidate = 86400;
 
@@ -171,10 +171,11 @@ export default async function Page({
                     key={event.id}
                     className="border-b border-border/30 pb-4 w-full"
                   >
-                    <Link
+                    <PressableAnchor
                       href={`/e/${event.slug}`}
-                      prefetch={false}
                       className="hover:text-primary block group"
+                      variant="inline"
+                      prefetch={false}
                     >
                       <h3 className="heading-4 group-hover:text-primary transition-colors">
                         {event.title}
@@ -205,7 +206,7 @@ export default async function Page({
                           {event.description}
                         </p>
                       )}
-                    </Link>
+                    </PressableAnchor>
                   </article>
                 );
               })}
@@ -221,18 +222,22 @@ export default async function Page({
               Vols explorar més esdeveniments de {townLabel}?
             </p>
             <div className="flex-center gap-4">
-              <Link
+              <PressableAnchor
                 href={`/sitemap/${town}`}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
+                variant="inline"
+                prefetch={false}
               >
                 Veure tots els arxius
-              </Link>
-              <Link
+              </PressableAnchor>
+              <PressableAnchor
                 href={`/${town}`}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
+                variant="inline"
+                prefetch={false}
               >
                 Esdeveniments actuals
-              </Link>
+              </PressableAnchor>
             </div>
           </footer>
         )}

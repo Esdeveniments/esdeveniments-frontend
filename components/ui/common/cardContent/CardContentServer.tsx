@@ -1,4 +1,3 @@
-import Link from "next/link";
 import NextImage from "next/image";
 import {
   ClockIcon,
@@ -8,6 +7,7 @@ import {
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplay } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
+import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
 
 function CardContentServer({
@@ -31,12 +31,7 @@ function CardContentServer({
 
   return (
     <>
-      <Link
-        href={`/e/${event.slug}`}
-        passHref
-        prefetch={false}
-        className="w-full"
-      >
+      <CardLink href={`/e/${event.slug}`} className="w-full">
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
           {/* Title and Weather Icon */}
           <div className="bg-background h-fit flex justify-start items-start gap-2 pr-4">
@@ -83,7 +78,7 @@ function CardContentServer({
             </div>
           </div>
         </div>
-      </Link>
+      </CardLink>
       <div className="w-full flex flex-col px-4 gap-3">
         <div className="flex justify-start items-start">
           <CalendarIcon className="h-5 w-5" />

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ActiveNavLinkProps } from "types/props";
+import PressableLink from "@components/ui/primitives/PressableLink";
 
 // Client-side navigation link component with active state detection
 // Converted from server component to avoid headers() usage for ISR compatibility
@@ -26,8 +26,13 @@ export default function ActiveNavLink({
   }
 
   return (
-    <Link href={href} prefetch={false} className={classNameProps}>
+    <PressableLink
+      href={href}
+      prefetch={false}
+      className={classNameProps}
+      variant="inline"
+    >
       {children}
-    </Link>
+    </PressableLink>
   );
 }

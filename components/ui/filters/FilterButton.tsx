@@ -3,6 +3,11 @@ import { JSX, MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
+import { usePressFeedback } from "@components/hooks/usePressFeedback";
+import {
+  isPlainLeftClick,
+  startNavigationFeedback,
+} from "@lib/navigation-feedback";
 import { FilterButtonProps } from "types/props";
 
 const FilterButton = ({
@@ -13,9 +18,13 @@ const FilterButton = ({
   testId,
 }: FilterButtonProps): JSX.Element => {
   const router = useRouter();
+  const { handlers, isPressed } = usePressFeedback();
 
   const handleRemove = (e: MouseEvent) => {
     e.stopPropagation();
+    if (isPlainLeftClick(e)) {
+      startNavigationFeedback();
+    }
     router.push(removeUrl);
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -27,11 +36,13 @@ const FilterButton = ({
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border ${
+        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive ${
           enabled
             ? "border-primary bg-primary/5 text-foreground-strong"
             : "border-border text-foreground-strong hover:bg-muted"
         }`}
+        data-pressed={isPressed ? "true" : undefined}
+        {...handlers}
       >
         <span
           onClick={onOpenModal}

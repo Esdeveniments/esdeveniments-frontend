@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import PressableLink from "@components/ui/primitives/PressableLink";
 import { ActiveLinkProps } from "types/common";
 
 export default function ActiveLink({
@@ -15,26 +15,27 @@ export default function ActiveLink({
   const pathname = usePathname();
   const linkHref = href || url || "/";
 
-  let classNameProps =
+  const classNames = [
     className ||
-    "flex-center gap-element-gap-sm text-foreground-strong px-button-x py-button-y label transition-interactive";
+      "flex-center gap-element-gap-sm text-foreground-strong px-button-x py-button-y label transition-interactive",
+  ];
 
   if (pathname === linkHref) {
-    classNameProps = `${
-      activeLinkClass
-        ? activeLinkClass
-        : "text-primary border-b-2 border-primary transition-interactive"
-    } ${classNameProps}`;
+    classNames.push(
+      activeLinkClass ||
+        "text-primary border-b-2 border-primary transition-interactive"
+    );
   }
 
   return (
-    <Link
+    <PressableLink
       {...props}
       href={linkHref}
       prefetch={false}
-      className={classNameProps}
+      className={classNames.join(" ")}
+      variant="inline"
     >
       {children}
-    </Link>
+    </PressableLink>
   );
 }

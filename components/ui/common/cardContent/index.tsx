@@ -1,4 +1,3 @@
-import Link from "next/link";
 import NextImage from "next/image";
 import {
   ClockIcon,
@@ -11,6 +10,7 @@ import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import MobileShareIsland from "./MobileShareIsland";
 import DesktopShareIsland from "./DesktopShareIsland";
+import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
 
 export default function CardContentServer({
@@ -32,11 +32,9 @@ export default function CardContentServer({
 
   return (
     <>
-      <Link
+      <CardLink
         href={`/e/${event.slug}`}
-        passHref
-        prefetch={false}
-        className="w-full"
+        className="w-full pressable-card transition-card"
       >
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
           <div className="bg-background h-fit flex justify-start items-start gap-element-gap-sm pr-card-padding-sm">
@@ -83,7 +81,7 @@ export default function CardContentServer({
             </div>
           </div>
         </div>
-      </Link>
+      </CardLink>
       <div className="w-full flex justify-between items-center px-card-padding-sm mb-element-gap-sm">
         <DesktopShareIsland slug={event.slug} />
         <ViewCounterIsland

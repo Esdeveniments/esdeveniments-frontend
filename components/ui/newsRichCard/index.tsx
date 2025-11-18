@@ -1,8 +1,8 @@
-import Link from "next/link";
 import Image from "next/image";
 import type { NewsRichCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
 export default function NewsRichCard({
   event,
@@ -51,14 +51,15 @@ export default function NewsRichCard({
           <div className="flex-1 min-w-0">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {primaryCategory && (
-                <Link
+                <PressableAnchor
                   href={`/catalunya/${primaryCategory.slug}`}
                   prefetch={false}
                   className="badge-primary"
                   aria-label={`Veure categoria ${primaryCategory.name}`}
+                  variant="inline"
                 >
                   {primaryCategory.name}
-                </Link>
+                </PressableAnchor>
               )}
               {event.location && (
                 <span className="badge-default">📍 {event.location}</span>
@@ -67,14 +68,15 @@ export default function NewsRichCard({
             </div>
 
             <h3 className="heading-2 mb-3 text-foreground-strong group-hover:text-primary transition-colors">
-              <Link
+              <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
                 className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
                 aria-label={event.title}
+                variant="inline"
               >
                 {event.title}
-              </Link>
+              </PressableAnchor>
             </h3>
 
             {plainDescription && (
@@ -84,14 +86,15 @@ export default function NewsRichCard({
             )}
 
             <div className="flex items-center justify-between">
-              <Link
+              <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
                 className="btn-primary"
                 aria-label={`Llegir-ne més de ${event.title}`}
+                variant="inline"
               >
                 Llegir més
-              </Link>
+              </PressableAnchor>
             </div>
           </div>
         </div>
@@ -119,14 +122,15 @@ export default function NewsRichCard({
       <div className="p-6">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {primaryCategory && (
-            <Link
+            <PressableAnchor
               href={`/catalunya/${primaryCategory.slug}`}
               prefetch={false}
               className="badge-primary"
               aria-label={`Veure categoria ${primaryCategory.name}`}
+              variant="inline"
             >
               {primaryCategory.name}
-            </Link>
+            </PressableAnchor>
           )}
           {event.location && (
             <span className="badge-default">📍 {event.location}</span>
@@ -135,14 +139,15 @@ export default function NewsRichCard({
         </div>
 
         <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
-          <Link
+          <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
             className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
             aria-label={event.title}
+            variant="inline"
           >
             {event.title}
-          </Link>
+          </PressableAnchor>
         </h3>
 
         {plainDescription && (
@@ -152,14 +157,15 @@ export default function NewsRichCard({
         )}
 
         <div className="flex items-center justify-between">
-          <Link
+          <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
             className="btn-primary"
             aria-label={`Llegir-ne més de ${event.title}`}
+            variant="inline"
           >
             Llegir més
-          </Link>
+          </PressableAnchor>
         </div>
       </div>
     </article>
