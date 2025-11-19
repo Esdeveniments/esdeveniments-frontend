@@ -5,7 +5,9 @@ test.describe("News article pages", () => {
     // Navigate to place news index (may redirect or render a list)
     await page.goto("/noticies/barcelona", { waitUntil: "load" });
     // Try to click the first article link if present
-    const article = page.locator('a[href^="/noticies/barcelona/"]').first();
+    const article = page
+      .locator('a[href^="/noticies/barcelona/"]:not([href$="rss.xml"])')
+      .first();
     if (await article.isVisible()) {
       const href = await article.getAttribute("href");
       await article.click();
