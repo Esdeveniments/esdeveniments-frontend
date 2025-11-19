@@ -66,10 +66,15 @@ export default async function Page({
       : Array.isArray(query.size)
       ? query.size[0]
       : undefined;
-  const currentPage = Number.isFinite(Number(pageParam))
+  const parsedPage = Number.isFinite(Number(pageParam))
     ? Number(pageParam)
     : 0;
-  const pageSize = Number.isFinite(Number(sizeParam)) ? Number(sizeParam) : 10;
+  const currentPage = parsedPage >= 0 ? parsedPage : 0;
+
+  const parsedSize = Number.isFinite(Number(sizeParam))
+    ? Number(sizeParam)
+    : 10;
+  const pageSize = parsedSize > 0 ? parsedSize : 10;
 
   // Start fetches immediately
   const newsPromise = fetchNews({ page: currentPage, size: pageSize, place });

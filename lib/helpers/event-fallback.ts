@@ -1,6 +1,6 @@
 import { fetchEvents } from "@lib/api/events";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
-import {
+import type {
   FetchEventsParams,
   FetchEventsWithFallbackResult,
   FetchEventsWithFallbackOptions,

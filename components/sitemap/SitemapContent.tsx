@@ -35,7 +35,12 @@ export default async function SitemapContent({
 
   return (
     <>
-      <JsonLdServer id="site-navigation-schema" data={siteNavigationSchema} />
+      {siteNavigationSchema && (
+        <JsonLdServer
+          id="site-navigation-schema"
+          data={siteNavigationSchema}
+        />
+      )}
 
       <section className="stack gap-8">
         <header>

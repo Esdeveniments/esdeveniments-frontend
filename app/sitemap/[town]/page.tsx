@@ -43,20 +43,6 @@ export default function Page({
 }: {
   params: Promise<TownStaticPathParams>;
 }) {
-
-  
-  // We need to unwrap params to get town for synchronous usage (if possible) or just use the promise.
-  // But we can't unwrap it synchronously in a server component if it's a promise.
-  // Actually, in Next.js 15, params is a promise.
-  // But we can use `use` hook if we were in a client component, but this is a server component.
-  // We have to await params to get the town slug.
-  // Awaiting params is fast, it's not a network request.
-  // So we can await params.
-  
-  // Wait, if I await params, does it block?
-  // It blocks until params are resolved, which is immediate for the framework.
-  // So:
-  
   return (
     <Suspense fallback={<SitemapSkeleton />}>
       <AsyncPage params={params} />
@@ -82,12 +68,8 @@ async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) 
     { name: town, url: `${siteUrl}/sitemap/${town}` }, // Use slug as fallback
   ];
 
-  // We can't generate full schema with correct label without awaiting.
-  // We'll use slug or skip schema for now?
-  // Or we can generate schema inside a suspended component?
-  // Schema usually goes in head or top level.
-  // I'll generate a basic one with slug.
-  
+
+  // Use slug for schema to avoid blocking on place fetch
   const collectionPageSchema = generateCollectionPageSchema({
     title: `Arxiu de ${town}`,
     description: `Històric d'esdeveniments culturals de ${town} organitzat per anys i mesos`,

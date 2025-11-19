@@ -45,28 +45,13 @@ export default function Page() {
   });
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
 
-  // Structured data: ItemList for the first article of each hub
-  // We can't generate this synchronously anymore if we want to stream.
-  // However, for SEO, we might want to await it if it's critical?
-  // But the user asked to stop blocking.
-  // If we want to keep the structured data, we have to await.
-  // But usually structured data can be omitted or loaded later?
-  // Actually, for SEO, it should be in the initial HTML.
-  // If we stream, the initial HTML won't have the ItemList based on data.
-  // But the user explicitly asked to fix the blocking.
-  // I will comment out the data-dependent structured data or move it to the client/suspended component if possible.
-  // But JsonLdServer is a server component.
-  // If I put it inside NewsHubsGrid, it will be streamed.
-  // Googlebot supports streaming.
-  // So I should move the ItemList generation inside NewsHubsGrid.
-
   return (
     <div className="container flex-col justify-center items-center mt-8">
       <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
         <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      
+
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
       <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.
@@ -102,7 +87,7 @@ export default function Page() {
           <li className="text-foreground-strong">Notícies</li>
         </ol>
       </nav>
-      
+
       <Suspense fallback={<NewsGridSkeleton />}>
         <NewsHubsGrid promise={hubResultsPromise} />
       </Suspense>

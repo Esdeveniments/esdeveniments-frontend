@@ -364,27 +364,7 @@ async function buildPlaceByDateEventsPromise({
       place,
       initialParams: paramsForFetch,
       onFallbackParams: (params) => {
-        // When falling back, we might want to ensure we have a default date range
-        // if the original request was specific but failed.
-        // However, the original logic had specific fallback behavior:
-        // 1. Region fallback: used same params (implied, but code constructed new params)
-        // 2. Global fallback: used same params (implied)
-        // BUT, there was also a specific "latest events" fallback if everything else failed?
-        // Let's look at the original code again.
-
-        // Original logic:
-        // 1. fetchEvents(paramsForFetch)
-        // 2. If empty -> Region fallback (with size 7, page 0, place=region.slug, AND explicit date range from twoWeeksDefault if region found)
-        // 3. If empty -> Global fallback (size 7, page 0, explicit date range from twoWeeksDefault)
-
-        // The helper `fetchEventsWithFallback` does:
-        // 1. initialParams
-        // 2. Region fallback: ...initialParams, place: region.slug, size 7, page 0.
-        // 3. Global fallback: ...initialParams, size 7, page 0 (place removed).
-
-        // So we need to inject the date range into the fallback params if we want to match the original behavior exactly.
-        // The original code used `twoWeeksDefault()` for fallbacks.
-
+        // Apply default date range for fallbacks to match legacy behavior
         const { from, until } = twoWeeksDefault();
         return {
           ...params,

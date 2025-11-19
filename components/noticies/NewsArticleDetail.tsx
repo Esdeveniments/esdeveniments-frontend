@@ -90,7 +90,7 @@ export default async function NewsArticleDetail({
   const breadcrumbs = [
     { name: "Inici", url: siteUrl },
     { name: "Notícies", url: `${siteUrl}/noticies` },
-    { name: place, url: `${siteUrl}/noticies/${place}` },
+    { name: placeType.label, url: `${siteUrl}/noticies/${place}` },
     { name: detail.title, url: `${siteUrl}/noticies/${place}/${article}` },
   ];
   const webPageSchema = generateWebPageSchema({

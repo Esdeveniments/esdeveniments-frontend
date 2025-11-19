@@ -14,7 +14,7 @@ import type {
   PageData,
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import { FetchEventsParams } from "types/event";
+import type { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {

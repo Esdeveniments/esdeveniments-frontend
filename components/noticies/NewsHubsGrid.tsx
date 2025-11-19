@@ -1,13 +1,52 @@
+import JsonLdServer from "@components/partials/JsonLdServer";
 import NewsCard from "@components/ui/newsCard";
-import { NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { NEARBY_PLACES_BY_HUB } from "@utils/constants";
+import { siteUrl } from "@config/index";
+import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsHubsGridProps } from "types/props";
 
 export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
   const hubResults = await promise;
+  const firstArticles = hubResults
+    .map(({ hub, items }) =>
+      items?.[0] ? { hub, item: items[0] as NewsSummaryResponseDTO } : null
+    )
+    .filter(
+      (
+        v
+      ): v is {
+        hub: { slug: string; name: string };
+        item: NewsSummaryResponseDTO;
+      } => v !== null
+    );
+  const itemListSchema =
+    firstArticles.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "@id": `${siteUrl}/noticies#news-itemlist`,
+          name: "Últimes notícies per hub",
+          numberOfItems: firstArticles.length,
+          itemListElement: firstArticles.map(({ hub, item }, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+              "@type": "NewsArticle",
+              "@id": `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
+              url: `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
+              headline: item.title,
+              ...(item.imageUrl ? { image: item.imageUrl } : {}),
+            },
+          })),
+        }
+      : null;
 
   return (
     <div className="flex flex-col gap-10 px-2 lg:px-0">
+      {itemListSchema && (
+        <JsonLdServer id="news-hubs-itemlist" data={itemListSchema} />
+      )}
       {hubResults.map(({ hub, items }) => {
         const first = items?.[0];
         if (!first) return null;
@@ -45,10 +84,10 @@ export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
               </nav>
             )}
             <NewsCard
-                event={first}
-                placeSlug={hub.slug}
-                placeLabel={hub.name}
-                variant="hero"
+              event={first}
+              placeSlug={hub.slug}
+              placeLabel={hub.name}
+              variant="hero"
             />
           </section>
         );
