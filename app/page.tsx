@@ -12,10 +12,10 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import type { NavigationItem, PageData, Href } from "types/common";
 import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
+import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { Suspense, JSX } from "react";
 import { HomePageSkeleton, SearchSkeleton } from "@components/ui/common/skeletons";
-import dynamic from "next/dynamic";
 
 const homeSeoLinkSections = [
   {
@@ -169,10 +169,11 @@ async function HomeStructuredData({
       : []),
   ];
 
-  return structuredSchemas.map((schema) => (
-    <JsonLdServer key={schema.id} id={schema.id} data={schema.data} />
-  ));
+  return (
+    <>
+      {structuredSchemas.map((schema) => (
+        <JsonLdServer key={schema.id} id={schema.id} data={schema.data} />
+      ))}
+    </>
+  );
 }
-const Search = dynamic(() => import("@components/ui/search"), {
-  suspense: true,
-});
