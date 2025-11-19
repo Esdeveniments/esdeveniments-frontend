@@ -7,10 +7,16 @@ export default function HomePageSkeleton() {
         <div className="container mt-element-gap">
           {/* SEO Content skeleton */}
           <h1 className="heading-1 mb-2">
-            <div className="h-12 bg-border/40 rounded w-2/3 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-6 bg-border/40 rounded w-2/3 animate-pulse" />
+              <div className="h-6 bg-border/40 rounded w-1/2 animate-pulse" />
+            </div>
           </h1>
           <h2 className="heading-2 text-foreground text-left">
-            <div className="h-8 bg-border/40 rounded w-3/4 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-5 bg-border/40 rounded w-3/4 animate-pulse" />
+              <div className="h-5 bg-border/40 rounded w-2/3 animate-pulse" />
+            </div>
           </h2>
 
           {/* Location Discovery Widget skeleton */}
@@ -22,11 +28,17 @@ export default function HomePageSkeleton() {
           {Array.from({ length: 2 }).map((_, categoryIndex) => (
             <div key={categoryIndex}>
               {/* Category header */}
-              <div className="flex justify-between items-center mb-element-gap-sm">
+              <div className="flex justify-between items-center">
                 <h3 className="heading-3">
-                  <div className="h-8 bg-border/40 rounded w-64 animate-pulse" />
+                  <div className="space-y-2">
+                    <div className="h-5 bg-border/40 rounded w-64 animate-pulse" />
+                    <div className="h-5 bg-border/40 rounded w-40 animate-pulse" />
+                  </div>
                 </h3>
-                <div className="h-6 bg-border/40 rounded w-24 animate-pulse body-small" />
+                <div className="flex items-center gap-1">
+                  <div className="h-5 bg-border/40 rounded w-16 animate-pulse" />
+                  <div className="w-5 h-5 bg-border/40 rounded-full animate-pulse" />
+                </div>
               </div>
 
               {/* Badge navigation skeleton */}
