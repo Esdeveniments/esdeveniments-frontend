@@ -1,4 +1,4 @@
-import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
+import { insertAds, filterPastEvents } from "@lib/api/events";
 import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
@@ -22,7 +22,7 @@ import {
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
@@ -359,99 +359,88 @@ async function buildPlaceByDateEventsPromise({
   paramsForFetch: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
 }): Promise<PlacePageEventsResult> {
-  return (async (): Promise<PlacePageEventsResult> => {
-    let eventsResponse = await fetchEvents(paramsForFetch);
-    let events = eventsResponse?.content || [];
-    let noEventsFound = false;
+  const { events, noEventsFound, serverHasMore } =
+    await fetchEventsWithFallback({
+      place,
+      initialParams: paramsForFetch,
+      onFallbackParams: (params) => {
+        // When falling back, we might want to ensure we have a default date range
+        // if the original request was specific but failed.
+        // However, the original logic had specific fallback behavior:
+        // 1. Region fallback: used same params (implied, but code constructed new params)
+        // 2. Global fallback: used same params (implied)
+        // BUT, there was also a specific "latest events" fallback if everything else failed?
+        // Let's look at the original code again.
 
-    if (!events || events.length === 0) {
-      const regionsWithCities = await fetchRegionsWithCities();
-      const regionWithCities = regionsWithCities.find((r) =>
-        r.cities.some((city) => city.value === place)
-      );
+        // Original logic:
+        // 1. fetchEvents(paramsForFetch)
+        // 2. If empty -> Region fallback (with size 7, page 0, place=region.slug, AND explicit date range from twoWeeksDefault if region found)
+        // 3. If empty -> Global fallback (size 7, page 0, explicit date range from twoWeeksDefault)
 
-      if (regionWithCities) {
-        const regions = await fetchRegions();
-        const regionWithSlug = regions.find(
-          (r) => r.id === regionWithCities.id
-        );
+        // The helper `fetchEventsWithFallback` does:
+        // 1. initialParams
+        // 2. Region fallback: ...initialParams, place: region.slug, size 7, page 0.
+        // 3. Global fallback: ...initialParams, size 7, page 0 (place removed).
 
-        if (regionWithSlug) {
-          const { from, until } = twoWeeksDefault();
-          const fallbackParams: FetchEventsParams = {
-            page: 0,
-            size: 7,
-            place: regionWithSlug.slug,
-            from: toLocalDateString(from),
-            to: toLocalDateString(until),
-          };
+        // So we need to inject the date range into the fallback params if we want to match the original behavior exactly.
+        // The original code used `twoWeeksDefault()` for fallbacks.
 
-          if (finalCategory && finalCategory !== DEFAULT_FILTER_VALUE) {
-            fallbackParams.category = finalCategory;
-          }
+        const { from, until } = twoWeeksDefault();
+        return {
+          ...params,
+          from: toLocalDateString(from),
+          to: toLocalDateString(until),
+        };
+      },
+    });
 
-          eventsResponse = await fetchEvents(fallbackParams);
-          events = eventsResponse?.content || [];
-          noEventsFound = true;
-        }
-      }
-    }
+  const filteredEvents = filterPastEvents(events);
 
-    if (!events || events.length === 0) {
-      const { from, until } = twoWeeksDefault();
-      const latestEventsParams: FetchEventsParams = {
-        page: 0,
-        size: 7,
-        from: toLocalDateString(from),
-        to: toLocalDateString(until),
-      };
+  // Align noEventsFound logic with root page
+  let finalNoEventsFound = noEventsFound;
+  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
+    finalNoEventsFound = true;
+  }
 
-      eventsResponse = await fetchEvents(latestEventsParams);
-      events = eventsResponse?.content || [];
-      noEventsFound = true;
-    }
+  const eventsWithAds = insertAds(filteredEvents);
+  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const pageData = await pageDataPromise;
+  const structuredScripts: JsonLdScript[] = [];
 
-    const filteredEvents = filterPastEvents(events);
-    const eventsWithAds = insertAds(filteredEvents);
-    const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
-    const pageData = await pageDataPromise;
-    const structuredScripts: JsonLdScript[] = [];
+  if (validEvents.length > 0) {
+    const itemListSchema = generateItemListStructuredData(
+      validEvents,
+      finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
+        ? `Esdeveniments ${finalCategory} ${place}`
+        : `Esdeveniments ${actualDate} ${place}`
+    );
 
-    if (validEvents.length > 0) {
-      const itemListSchema = generateItemListStructuredData(
-        validEvents,
-        finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
-          ? `Esdeveniments ${finalCategory} ${place}`
-          : `Esdeveniments ${actualDate} ${place}`
-      );
+    structuredScripts.push({
+      id: `events-${place}-${actualDate}`,
+      data: itemListSchema,
+    });
 
+    const collectionSchema = generateCollectionPageSchema({
+      title: pageData.title,
+      description: pageData.metaDescription,
+      url: pageData.canonical,
+      numberOfItems: validEvents.length,
+    });
+
+    if (collectionSchema) {
       structuredScripts.push({
-        id: `events-${place}-${actualDate}`,
-        data: itemListSchema,
+        id: `collection-${place}-${actualDate}`,
+        data: collectionSchema,
       });
-
-      const collectionSchema = generateCollectionPageSchema({
-        title: pageData.title,
-        description: pageData.metaDescription,
-        url: pageData.canonical,
-        numberOfItems: validEvents.length,
-      });
-
-      if (collectionSchema) {
-        structuredScripts.push({
-          id: `collection-${place}-${actualDate}`,
-          data: collectionSchema,
-        });
-      }
     }
+  }
 
-    return {
-      events: eventsWithAds,
-      noEventsFound,
-      serverHasMore: eventsResponse ? !eventsResponse.last : false,
-      structuredScripts: structuredScripts.length
-        ? structuredScripts
-        : undefined,
-    };
-  })();
+  return {
+    events: eventsWithAds,
+    noEventsFound: finalNoEventsFound,
+    serverHasMore,
+    structuredScripts: structuredScripts.length
+      ? structuredScripts
+      : undefined,
+  };
 }

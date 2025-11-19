@@ -290,3 +290,16 @@ export type UIEvent = EventSummaryResponseDTO & {
   duration: string;
   timeUntilEvent: string;
 };
+
+export interface FetchEventsWithFallbackResult {
+  events: EventSummaryResponseDTO[];
+  noEventsFound: boolean;
+  serverHasMore: boolean;
+}
+
+export interface FetchEventsWithFallbackOptions {
+  place: string;
+  initialParams: FetchEventsParams;
+  // Optional callback to modify params for fallbacks (e.g. to set default date range)
+  onFallbackParams?: (params: FetchEventsParams) => FetchEventsParams;
+}

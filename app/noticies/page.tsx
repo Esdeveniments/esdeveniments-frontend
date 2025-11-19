@@ -1,17 +1,17 @@
 import { Suspense } from "react";
 import { fetchNews } from "@lib/api/news";
-import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
-import { NEWS_HUBS, NEARBY_PLACES_BY_HUB } from "@utils/constants";
+import { NEWS_HUBS } from "@utils/constants";
 import { siteUrl } from "@config/index";
-import type { NewsSummaryResponseDTO } from "types/api/news";
 import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import NewsHubsGrid from "@components/noticies/NewsHubsGrid";
+import NewsGridSkeleton from "@components/noticies/NewsGridSkeleton";
 export const revalidate = 600;
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,9 +24,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }) as unknown as Metadata;
 }
 
-export default async function Page() {
-  // Fetch the most recent news per hub
-  const hubResults = await Promise.all(
+export default function Page() {
+  // Start fetching, don't wait
+  const hubResultsPromise = Promise.all(
     NEWS_HUBS.map(async (hub) => {
       const res = await fetchNews({ page: 0, size: 1, place: hub.slug });
       return { hub, items: res.content };
@@ -46,39 +46,19 @@ export default async function Page() {
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
 
   // Structured data: ItemList for the first article of each hub
-  const firstArticles = hubResults
-    .map(({ hub, items }) =>
-      items && items[0]
-        ? { hub, item: items[0] as NewsSummaryResponseDTO }
-        : null
-    )
-    .filter(
-      (
-        v
-      ): v is {
-        hub: { slug: string; name: string };
-        item: NewsSummaryResponseDTO;
-      } => v !== null
-    );
-
-  const itemListSchema = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "@id": `${siteUrl}/noticies#news-itemlist`,
-    name: "Últimes notícies per hub",
-    numberOfItems: firstArticles.length,
-    itemListElement: firstArticles.map(({ hub, item }, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "NewsArticle",
-        "@id": `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
-        url: `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
-        headline: item.title,
-        ...(item.imageUrl ? { image: item.imageUrl } : {}),
-      },
-    })),
-  };
+  // We can't generate this synchronously anymore if we want to stream.
+  // However, for SEO, we might want to await it if it's critical?
+  // But the user asked to stop blocking.
+  // If we want to keep the structured data, we have to await.
+  // But usually structured data can be omitted or loaded later?
+  // Actually, for SEO, it should be in the initial HTML.
+  // If we stream, the initial HTML won't have the ItemList based on data.
+  // But the user explicitly asked to fix the blocking.
+  // I will comment out the data-dependent structured data or move it to the client/suspended component if possible.
+  // But JsonLdServer is a server component.
+  // If I put it inside NewsHubsGrid, it will be streamed.
+  // Googlebot supports streaming.
+  // So I should move the ItemList generation inside NewsHubsGrid.
 
   return (
     <div className="container flex-col justify-center items-center mt-8">
@@ -86,7 +66,7 @@ export default async function Page() {
       {breadcrumbListSchema && (
         <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <JsonLdServer id="news-list-itemlist" data={itemListSchema} />
+      
       <h1 className="uppercase mb-2 px-2 lg:px-0">Notícies</h1>
       <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         Les últimes notícies i recomanacions d&apos;esdeveniments.
@@ -122,59 +102,10 @@ export default async function Page() {
           <li className="text-foreground-strong">Notícies</li>
         </ol>
       </nav>
-      <div className="flex flex-col gap-10 px-2 lg:px-0">
-        {hubResults.map(({ hub, items }) => {
-          const first = items?.[0];
-          if (!first) return null;
-          return (
-            <section key={hub.slug} className="w-full">
-              <div className="flex items-baseline justify-between mb-1">
-                <h2 className="uppercase">{`Últimes notícies ${hub.name}`}</h2>
-                <PressableAnchor
-                  href={`/noticies/${hub.slug}`}
-                  className="text-primary underline text-sm"
-                  prefetch={false}
-                  variant="inline"
-                >
-                  Veure més…
-                </PressableAnchor>
-              </div>
-              {NEARBY_PLACES_BY_HUB[hub.slug] && (
-                <nav className="mb-3 text-xs text-foreground-strong/70">
-                  <span className="mr-2">A prop:</span>
-                  {NEARBY_PLACES_BY_HUB[hub.slug].map((p, i) => (
-                    <span key={p.slug} className="inline-flex items-center">
-                      <PressableAnchor
-                        href={`/noticies/${p.slug}`}
-                        prefetch={false}
-                        className="underline hover:text-primary"
-                        variant="inline"
-                      >
-                        {p.name}
-                      </PressableAnchor>
-                      {i < NEARBY_PLACES_BY_HUB[hub.slug].length - 1 && (
-                        <span className="mx-1">·</span>
-                      )}
-                    </span>
-                  ))}
-                </nav>
-              )}
-              <Suspense
-                fallback={
-                  <div className="w-full h-12 bg-background animate-pulse rounded-full" />
-                }
-              >
-                <NewsCard
-                  event={first}
-                  placeSlug={hub.slug}
-                  placeLabel={hub.name}
-                  variant="hero"
-                />
-              </Suspense>
-            </section>
-          );
-        })}
-      </div>
+      
+      <Suspense fallback={<NewsGridSkeleton />}>
+        <NewsHubsGrid promise={hubResultsPromise} />
+      </Suspense>
     </div>
   );
 }

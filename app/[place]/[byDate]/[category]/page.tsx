@@ -1,4 +1,4 @@
-import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
+import { insertAds, filterPastEvents } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
@@ -31,7 +31,7 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
@@ -320,94 +320,66 @@ async function buildCategoryEventsPromise({
   pageDataPromise: Promise<PageData>;
   categoryName?: string;
 }): Promise<PlacePageEventsResult> {
-  return (async (): Promise<PlacePageEventsResult> => {
-    let eventsResponse = await fetchEvents(fetchParams);
-    let events = eventsResponse?.content || [];
-    let noEventsFound = false;
+  const { events, noEventsFound, serverHasMore } =
+    await fetchEventsWithFallback({
+      place: filters.place,
+      initialParams: fetchParams,
+      onFallbackParams: (params) => {
+        // Fallback to default 2 weeks range if specific search fails,
+        // matching the "latest events" behavior of the original code.
+        const { from, until } = twoWeeksDefault();
+        return {
+          ...params,
+          from: toLocalDateString(from),
+          to: toLocalDateString(until),
+        };
+      },
+    });
 
-    if (!events || events.length === 0) {
-      const regionsWithCities = await fetchRegionsWithCities();
-      const regionWithCities = regionsWithCities.find((r) =>
-        r.cities.some((city) => city.value === filters.place)
-      );
+  const filteredEvents = filterPastEvents(events);
 
-      if (regionWithCities) {
-        const regions = await fetchRegions();
-        const regionWithSlug = regions.find(
-          (r) => r.id === regionWithCities.id
-        );
+  // Align noEventsFound logic with other pages
+  let finalNoEventsFound = noEventsFound;
+  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
+    finalNoEventsFound = true;
+  }
 
-        if (regionWithSlug) {
-          const fallbackParams: FetchEventsParams = {
-            page: 0,
-            size: 7,
-            place: regionWithSlug.slug,
-          };
-          const fallbackDateRange = getDateRangeFromByDate(filters.byDate);
-          if (fallbackDateRange) {
-            fallbackParams.from = toLocalDateString(fallbackDateRange.from);
-            fallbackParams.to = toLocalDateString(fallbackDateRange.until);
-          }
+  const eventsWithAds = insertAds(filteredEvents);
+  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const pageData = await pageDataPromise;
+  const structuredScripts: JsonLdScript[] = [];
 
-          eventsResponse = await fetchEvents(fallbackParams);
-          events = eventsResponse?.content || [];
-          noEventsFound = true;
-        }
-      }
-    }
+  if (validEvents.length > 0) {
+    const label = categoryName
+      ? `${categoryName} ${filters.place}`
+      : `Esdeveniments ${filters.place}`;
 
-    if (!events || events.length === 0) {
-      const { from, until } = twoWeeksDefault();
-      const latestEventsParams: FetchEventsParams = {
-        page: 0,
-        size: 7,
-        from: toLocalDateString(from),
-        to: toLocalDateString(until),
-      };
+    structuredScripts.push({
+      id: `events-${filters.place}-${filters.byDate}-${filters.category}`,
+      data: generateItemListStructuredData(validEvents, label),
+    });
 
-      eventsResponse = await fetchEvents(latestEventsParams);
-      events = eventsResponse?.content || [];
-      noEventsFound = true;
-    }
+    const collectionSchema = generateCollectionPageSchema({
+      title: pageData.title,
+      description: pageData.metaDescription,
+      url: pageData.canonical,
+      numberOfItems: validEvents.length,
+    });
 
-    const filteredEvents = filterPastEvents(events);
-    const eventsWithAds = insertAds(filteredEvents);
-    const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
-    const pageData = await pageDataPromise;
-    const structuredScripts: JsonLdScript[] = [];
-
-    if (validEvents.length > 0) {
-      const label = categoryName
-        ? `${categoryName} ${filters.place}`
-        : `Esdeveniments ${filters.place}`;
-
+    if (collectionSchema) {
       structuredScripts.push({
-        id: `events-${filters.place}-${filters.byDate}-${filters.category}`,
-        data: generateItemListStructuredData(validEvents, label),
+        id: `collection-${filters.place}-${filters.byDate}-${filters.category}`,
+        data: collectionSchema,
       });
-
-      const collectionSchema = generateCollectionPageSchema({
-        title: pageData.title,
-        description: pageData.metaDescription,
-        url: pageData.canonical,
-        numberOfItems: validEvents.length,
-      });
-
-      if (collectionSchema) {
-        structuredScripts.push({
-          id: `collection-${filters.place}-${filters.byDate}-${filters.category}`,
-          data: collectionSchema,
-        });
-      }
     }
+  }
 
-    return {
-      events: eventsWithAds,
-      noEventsFound,
-      serverHasMore: eventsResponse ? !eventsResponse.last : false,
-      structuredScripts: structuredScripts.length
-        ? structuredScripts
-        : undefined,
-    };
-  })();
+  return {
+    events: eventsWithAds,
+    noEventsFound: finalNoEventsFound,
+    serverHasMore,
+    structuredScripts: structuredScripts.length
+      ? structuredScripts
+      : undefined,
+  };
 }

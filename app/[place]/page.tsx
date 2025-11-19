@@ -1,7 +1,7 @@
-import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
+import { insertAds, filterPastEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { hasNewsForPlace } from "@lib/api/news";
 import {
@@ -137,85 +137,55 @@ async function buildPlaceEventsPromise({
 }: {
   place: string;
 }): Promise<PlacePageEventsResult> {
-  return (async (): Promise<PlacePageEventsResult> => {
-    const fetchParams: FetchEventsParams = {
-      page: 0,
-      size: 10,
-    };
+  const fetchParams: FetchEventsParams = {
+    page: 0,
+    size: 10,
+  };
 
-    if (place !== "catalunya") {
-      fetchParams.place = place;
-    }
+  if (place !== "catalunya") {
+    fetchParams.place = place;
+  }
 
-    let eventsResponse = await fetchEvents(fetchParams);
-    let noEventsFound = false;
+  const { events, noEventsFound, serverHasMore } =
+    await fetchEventsWithFallback({
+      place,
+      initialParams: fetchParams,
+    });
 
-    if (
-      !eventsResponse ||
-      !eventsResponse.content ||
-      eventsResponse.content.length === 0
-    ) {
-      const regionsWithCities = await fetchRegionsWithCities();
-      const regionWithCities = regionsWithCities.find((r) =>
-        r.cities.some((city) => city.value === place)
-      );
+  const filteredEvents = filterPastEvents(events);
 
-      if (regionWithCities) {
-        const regions = await fetchRegions();
-        const regionWithSlug = regions.find(
-          (r) => r.id === regionWithCities.id
-        );
+  // Re-check noEventsFound after filtering past events
+  // Note: The helper handles the fallback logic which sets noEventsFound=true when falling back.
+  // But if we have events (from initial or fallback) and filterPastEvents removes them all,
+  // we should set noEventsFound=true if it wasn't already.
+  // However, the original code had a specific condition:
+  // if (events.length > 0 && filteredEvents.length === 0 && !noEventsFound) { noEventsFound = true; }
+  // We need to preserve this.
 
-        if (regionWithSlug) {
-          eventsResponse = await fetchEvents({
-            page: 0,
-            size: 7,
-            place: regionWithSlug.slug,
-          });
-          noEventsFound = true;
-        }
-      }
-    }
+  let finalNoEventsFound = noEventsFound;
+  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
+    finalNoEventsFound = true;
+  }
 
-    if (
-      !eventsResponse ||
-      !eventsResponse.content ||
-      eventsResponse.content.length === 0
-    ) {
-      eventsResponse = await fetchEvents({
-        page: 0,
-        size: 7,
-      });
-      noEventsFound = true;
-    }
+  const eventsWithAds = insertAds(filteredEvents);
+  const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
+  const structuredScripts =
+    validEvents.length > 0
+      ? [
+          {
+            id: `events-${place}`,
+            data: generateItemListStructuredData(
+              validEvents,
+              `Esdeveniments ${place}`
+            ),
+          },
+        ]
+      : undefined;
 
-    const events = eventsResponse?.content || [];
-    const filteredEvents = filterPastEvents(events);
-
-    if (events.length > 0 && filteredEvents.length === 0 && !noEventsFound) {
-      noEventsFound = true;
-    }
-
-    const eventsWithAds = insertAds(filteredEvents);
-    const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
-    const structuredScripts =
-      validEvents.length > 0
-        ? [
-            {
-              id: `events-${place}`,
-              data: generateItemListStructuredData(
-                validEvents,
-                `Esdeveniments ${place}`
-              ),
-            },
-          ]
-        : undefined;
-
-    return {
-      events: eventsWithAds,
-      noEventsFound,
-      serverHasMore: eventsResponse ? !eventsResponse.last : false,
-      structuredScripts,
-    };
-  })();
+  return {
+    events: eventsWithAds,
+    noEventsFound: finalNoEventsFound,
+    serverHasMore,
+    structuredScripts,
+  };
 }

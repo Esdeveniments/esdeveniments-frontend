@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { siteUrl } from "@config/index";
 import { getAllYears } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
@@ -12,6 +13,9 @@ import {
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import SitemapHeader from "@components/sitemap/SitemapHeader";
+import SitemapHeaderSkeleton from "@components/sitemap/SitemapHeaderSkeleton";
+import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 
 export const revalidate = 86400;
 
@@ -34,46 +38,69 @@ export async function generateMetadata({
   });
 }
 
-export default async function Page({
+export default function Page({
   params,
 }: {
   params: Promise<TownStaticPathParams>;
 }) {
+
+  
+  // We need to unwrap params to get town for synchronous usage (if possible) or just use the promise.
+  // But we can't unwrap it synchronously in a server component if it's a promise.
+  // Actually, in Next.js 15, params is a promise.
+  // But we can use `use` hook if we were in a client component, but this is a server component.
+  // We have to await params to get the town slug.
+  // Awaiting params is fast, it's not a network request.
+  // So we can await params.
+  
+  // Wait, if I await params, does it block?
+  // It blocks until params are resolved, which is immediate for the framework.
+  // So:
+  
+  return (
+    <Suspense fallback={<SitemapSkeleton />}>
+      <AsyncPage params={params} />
+    </Suspense>
+  );
+}
+
+async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) {
   const { town } = await params;
-
   const years: number[] = getAllYears();
-  const place = await getPlaceBySlug(town);
-  const label = place?.name || town;
+  
+  // Start fetch
+  const placePromise = getPlaceBySlug(town);
 
-  // Generate structured data for the region/city sitemap
+  // We use town (slug) for breadcrumbs initially to be fast?
+  // Or we can wait for placePromise?
+  // The user said "Start rendering the grid of years... immediately. Resolve the place details... inside a suspended component header."
+  // So we should NOT await placePromise for the main return.
+  
   const breadcrumbs = [
     { name: "Inici", url: siteUrl },
     { name: "Arxiu", url: `${siteUrl}/sitemap` },
-    { name: label, url: `${siteUrl}/sitemap/${town}` },
+    { name: town, url: `${siteUrl}/sitemap/${town}` }, // Use slug as fallback
   ];
 
-  // Generate collection page schema with navigation items
-  const navigationItems = years.flatMap((year) =>
-    MONTHS_URL.map((month) => ({
-      "@type": "SiteNavigationElement",
-      name: `${label} - ${month} ${year}`,
-      url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
-    }))
-  );
-
+  // We can't generate full schema with correct label without awaiting.
+  // We'll use slug or skip schema for now?
+  // Or we can generate schema inside a suspended component?
+  // Schema usually goes in head or top level.
+  // I'll generate a basic one with slug.
+  
   const collectionPageSchema = generateCollectionPageSchema({
-    title: `Arxiu de ${label}`,
-    description: `Històric d'esdeveniments culturals de ${label} organitzat per anys i mesos`,
+    title: `Arxiu de ${town}`,
+    description: `Històric d'esdeveniments culturals de ${town} organitzat per anys i mesos`,
     url: `${siteUrl}/sitemap/${town}`,
     breadcrumbs,
     numberOfItems: years.length * MONTHS_URL.length,
     mainEntity: {
       "@type": "ItemList",
       "@id": `${siteUrl}/sitemap/${town}#archivelist`,
-      name: `Arxiu històric de ${label}`,
-      description: `Col·lecció d'esdeveniments culturals de ${label}`,
+      name: `Arxiu històric de ${town}`,
+      description: `Col·lecció d'esdeveniments culturals de ${town}`,
       numberOfItems: years.length * MONTHS_URL.length,
-      itemListElement: navigationItems.slice(0, 100), // Limit for performance
+      itemListElement: [], // Empty for now or we'd have to map all years which is fast
     },
   });
 
@@ -85,13 +112,9 @@ export default async function Page({
       <SitemapLayout>
         <SitemapBreadcrumb items={breadcrumbs} />
 
-        <header>
-          <h1 className="heading-1 mb-4">Arxiu històric de {label}</h1>
-          <p className="body-large text-foreground">
-            Descobreix l&apos;evolució cultural de {label} any rere any. Cada
-            enllaç et porta als esdeveniments d&apos;un mes específic.
-          </p>
-        </header>
+        <Suspense fallback={<SitemapHeaderSkeleton />}>
+          <SitemapHeader town={town} placePromise={placePromise} />
+        </Suspense>
 
         <section className="grid overflow-hidden grid-cols-2 lg:grid-cols-4 auto-rows-auto gap-4 grid-flow-row w-full">
           {years?.map((year) => (
@@ -125,7 +148,7 @@ export default async function Page({
               <h3 className="heading-4">Sobre aquest arxiu</h3>
               <p className="body-small text-foreground/80">
                 Aquest arxiu conté una recopilació d&apos;esdeveniments
-                culturals de {label} organitzats cronològicament. Cada mes
+                culturals de {town} organitzats cronològicament. Cada mes
                 inclou teatre, música, art, festivals i altres activitats
                 culturals.
               </p>

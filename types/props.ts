@@ -346,6 +346,30 @@ export interface NewsCardProps {
   variant?: "default" | "hero";
 }
 
+export interface NewsArticleDetailProps {
+  detailPromise: Promise<import("./api/news").NewsDetailResponseDTO | null>;
+  placeTypePromise: Promise<{ label: string }>;
+  place: string;
+  article: string;
+}
+
+export interface HubResult {
+  hub: { slug: string; name: string };
+  items: NewsSummaryResponseDTO[];
+}
+
+export interface NewsHubsGridProps {
+  promise: Promise<HubResult[]>;
+}
+
+export interface NewsListProps {
+  newsPromise: Promise<import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>>;
+  placeTypePromise: Promise<{ label: string }>;
+  place: string;
+  currentPage: number;
+  pageSize: number;
+}
+
 // Mobile share island component props
 export interface MobileShareProps {
   title: string;

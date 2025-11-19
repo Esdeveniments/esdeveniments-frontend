@@ -14,6 +14,7 @@ import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { computeTemporalStatus } from "@utils/event-status";
 import { Suspense, JSX } from "react";
 import { HomePageSkeleton, SearchSkeleton } from "@components/ui/common/skeletons";
 
@@ -76,10 +77,7 @@ export async function generateMetadata() {
 
 export default async function Page(): Promise<JSX.Element> {
   const categorizedEventsPromise = getCategorizedEvents(5);
-  const categoriesPromise = fetchCategories().catch((error) => {
-    console.error("Error fetching categories:", error);
-    return [];
-  });
+  const categoriesPromise = fetchCategories();
 
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
@@ -126,11 +124,22 @@ async function HomeStructuredData({
 }: {
   categorizedEventsPromise: Promise<CategorizedEvents>;
   pageData: PageData;
-}) {
+}): Promise<JSX.Element> {
   const categorizedEvents = await categorizedEventsPromise;
   const homepageEvents = Object.values(categorizedEvents)
     .flat()
-    .filter(isEventSummaryResponseDTO);
+    .filter(isEventSummaryResponseDTO)
+    .filter((event) => {
+      // Filter out past events to match UI
+      const status = computeTemporalStatus(
+        event.startDate,
+        event.endDate,
+        undefined,
+        event.startTime,
+        event.endTime
+      );
+      return status.state !== "past";
+    });
 
   const itemListSchema =
     homepageEvents.length > 0

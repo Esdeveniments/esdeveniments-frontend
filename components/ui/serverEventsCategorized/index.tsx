@@ -1,4 +1,4 @@
-import { memo, Suspense } from "react";
+import { memo } from "react";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import Badge from "@components/ui/common/badge";
@@ -14,7 +14,7 @@ import { ServerEventsCategorizedProps } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { computeTemporalStatus } from "@utils/event-status";
-import { HomePageSkeleton } from "@components/ui/common/skeletons";
+
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 const resolveCategoryDetails = (
@@ -91,11 +91,7 @@ const resolveCategoryDetails = (
 };
 
 function ServerEventsCategorized(props: ServerEventsCategorizedProps) {
-  return (
-    <Suspense fallback={<ServerEventsCategorizedFallback />}>
-      <ServerEventsCategorizedContent {...props} />
-    </Suspense>
-  );
+  return <ServerEventsCategorizedContent {...props} />;
 }
 
 async function ServerEventsCategorizedContent({
@@ -105,12 +101,7 @@ async function ServerEventsCategorizedContent({
 }: ServerEventsCategorizedProps) {
   const [categorizedEvents, categories] = await Promise.all([
     categorizedEventsPromise,
-    categoriesPromise
-      ? categoriesPromise.catch((error) => {
-          console.error("Error fetching categories:", error);
-          return [];
-        })
-      : Promise.resolve<CategorySummaryResponseDTO[]>([]),
+    categoriesPromise || Promise.resolve<CategorySummaryResponseDTO[]>([]),
   ]);
 
   // Filter out ads and past events before processing
@@ -293,8 +284,6 @@ async function ServerEventsCategorizedContent({
   );
 }
 
-function ServerEventsCategorizedFallback() {
-  return <HomePageSkeleton />;
-}
+
 
 export default memo(ServerEventsCategorized);

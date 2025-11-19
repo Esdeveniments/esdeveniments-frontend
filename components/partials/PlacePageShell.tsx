@@ -51,7 +51,7 @@ async function PlaceEventsSection({
   category,
   date,
   hasNews,
-  categories = [],
+  categories,
 }: Pick<
   PlacePageShellProps,
   | "eventsPromise"
