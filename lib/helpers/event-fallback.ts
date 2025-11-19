@@ -6,9 +6,6 @@ import {
   FetchEventsWithFallbackOptions,
 } from "types/event";
 
-
-
-
 export async function fetchEventsWithFallback({
   place,
   initialParams,

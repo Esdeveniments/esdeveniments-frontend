@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import ServerEventsCategorized from "../components/ui/serverEventsCategorized";
+import { ServerEventsCategorizedContent } from "../components/ui/serverEventsCategorized";
 import type { CategorySummaryResponseDTO } from "../types/api/category";
 import type {
   EventSummaryResponseDTO,
@@ -106,16 +106,14 @@ describe("ServerEventsCategorized", () => {
   const renderComponent = async (
     categorizedEvents: Record<string, ListEvent[]>,
     categories?: CategorySummaryResponseDTO[]
-  ) =>
-    act(async () => {
-      render(
-        <ServerEventsCategorized
-          categorizedEventsPromise={Promise.resolve(categorizedEvents)}
-          pageData={pageData}
-          categoriesPromise={Promise.resolve(categories ?? [])}
-        />
-      );
+  ) => {
+    const jsx = await ServerEventsCategorizedContent({
+      categorizedEventsPromise: Promise.resolve(categorizedEvents),
+      pageData: pageData,
+      categoriesPromise: Promise.resolve(categories ?? []),
     });
+    render(jsx);
+  };
 
   it("uses the matching event category slug when the category key differs from the first event category", async () => {
     const categorizedEvents: Record<string, ListEvent[]> = {

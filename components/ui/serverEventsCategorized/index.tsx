@@ -94,7 +94,7 @@ function ServerEventsCategorized(props: ServerEventsCategorizedProps) {
   return <ServerEventsCategorizedContent {...props} />;
 }
 
-async function ServerEventsCategorizedContent({
+export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
   pageData,
   categoriesPromise,
