@@ -9,9 +9,13 @@ test.describe("News article pages", () => {
     if (await article.isVisible()) {
       const href = await article.getAttribute("href");
       await article.click();
-      await expect(page).toHaveURL(
-        new RegExp(`^${href?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`)
-      );
+      if (href) {
+        const currentOrigin = new URL(page.url()).origin;
+        const expectedUrl = href.startsWith("http")
+          ? href
+          : `${currentOrigin}${href}`;
+        await expect(page).toHaveURL(expectedUrl);
+      }
       // Basic SEO tags
       await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
       await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
