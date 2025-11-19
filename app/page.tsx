@@ -15,7 +15,7 @@ import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { Suspense, JSX } from "react";
-import { HomePageSkeleton } from "@components/ui/common/skeletons";
+import { HomePageSkeleton, SearchSkeleton } from "@components/ui/common/skeletons";
 
 const homeSeoLinkSections = [
   {
@@ -103,8 +103,10 @@ export default async function Page(): Promise<JSX.Element> {
         />
       </Suspense>
 
-      <div className="container flex justify-center items-center mt-element-gap">
-        <Search />
+      <div className="container flex justify-center items-center">
+        <Suspense fallback={<SearchSkeleton />}>
+          <Search />
+        </Suspense>
       </div>
 
       <Suspense fallback={<HomePageSkeleton />}>
