@@ -1,6 +1,7 @@
 import { fetchEvents } from "@lib/api/events";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { toLocalDateString } from "@utils/helpers";
+import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import type {
   EventFallbackStageOptions,
   FetchEventsParams,
@@ -125,9 +126,10 @@ async function resolveRegionSlugForPlace(
 
     return regionWithSlug?.slug ?? null;
   } catch (error) {
+    const errorMessage = getSanitizedErrorMessage(error);
     console.error(
       "fetchEventsWithFallback: unable to resolve region slug for place",
-      error
+      errorMessage
     );
     return null;
   }
