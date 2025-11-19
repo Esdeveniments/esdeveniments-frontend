@@ -3,10 +3,11 @@ import type {
   RegionSummaryResponseDTO,
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
+  PagedResponseDTO,
 } from "./api/event";
 import type { CitySummaryResponseDTO } from "./api/city";
 import type { CategorySummaryResponseDTO } from "./api/category";
-import type { DeleteReason, Option } from "./common";
+import type { DateRange, DeleteReason, Option } from "./common";
 
 // Helper schemas for form validation
 const OptionSchema = z.object({ value: z.string(), label: z.string() });
@@ -123,6 +124,28 @@ export interface FetchEventsParams {
   to?: string; // End date
   isToday?: boolean;
   // Note: API expects 'term' for search queries
+}
+
+export interface EventFallbackStageOptions {
+  enabled?: boolean;
+  size?: number;
+  includeCategory?: boolean;
+  includeDateRange?: boolean;
+  dateRangeFactory?: () => DateRange;
+  place?: string;
+}
+
+export interface FetchEventsWithFallbackOptions {
+  place: string;
+  initialParams: FetchEventsParams;
+  regionFallback?: EventFallbackStageOptions;
+  finalFallback?: EventFallbackStageOptions;
+}
+
+export interface FetchEventsWithFallbackResult {
+  eventsResponse: PagedResponseDTO<EventSummaryResponseDTO> | null;
+  events: EventSummaryResponseDTO[];
+  noEventsFound: boolean;
 }
 
 /**
@@ -290,16 +313,3 @@ export type UIEvent = EventSummaryResponseDTO & {
   duration: string;
   timeUntilEvent: string;
 };
-
-export interface FetchEventsWithFallbackResult {
-  events: EventSummaryResponseDTO[];
-  noEventsFound: boolean;
-  serverHasMore: boolean;
-}
-
-export interface FetchEventsWithFallbackOptions {
-  place: string;
-  initialParams: FetchEventsParams;
-  // Optional callback to modify params for fallbacks (e.g. to set default date range)
-  onFallbackParams?: (params: FetchEventsParams) => FetchEventsParams;
-}

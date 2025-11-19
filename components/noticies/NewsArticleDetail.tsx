@@ -13,6 +13,8 @@ import { getFormattedDate } from "@utils/date-helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { notFound } from "next/navigation";
+import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import { captureException } from "@sentry/nextjs";
 
 export default async function NewsArticleDetail({
   detailPromise,
@@ -20,10 +22,43 @@ export default async function NewsArticleDetail({
   place,
   article,
 }: NewsArticleDetailProps) {
-  const [detail, placeType] = await Promise.all([
+  const [detailResult, placeTypeResult] = await Promise.allSettled([
     detailPromise,
     placeTypePromise,
   ]);
+
+  const detail =
+    detailResult.status === "fulfilled" ? detailResult.value : null;
+  if (detailResult.status === "rejected") {
+    console.error(
+      "NewsArticleDetail: Error fetching article detail",
+      detailResult.reason
+    );
+    captureException(detailResult.reason);
+  }
+
+  let placeType =
+    placeTypeResult.status === "fulfilled" ? placeTypeResult.value : null;
+  if (placeTypeResult.status === "rejected") {
+    console.error(
+      "NewsArticleDetail: Error fetching place label",
+      placeTypeResult.reason
+    );
+    captureException(placeTypeResult.reason);
+  }
+
+  if (!placeType) {
+    try {
+      placeType = await getPlaceTypeAndLabelCached(place);
+    } catch (error) {
+      console.error(
+        "NewsArticleDetail: Unable to resolve place label fallback",
+        error
+      );
+      captureException(error);
+      placeType = { label: place };
+    }
+  }
 
   if (!detail) {
     return notFound();

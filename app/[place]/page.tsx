@@ -26,6 +26,7 @@ import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect } from "next/navigation";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 import type { PlacePageEventsResult } from "types/props";
+import { twoWeeksDefault } from "@lib/dates";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -146,11 +147,24 @@ async function buildPlaceEventsPromise({
     fetchParams.place = place;
   }
 
-  const { events, noEventsFound, serverHasMore } =
+  const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
       place,
       initialParams: fetchParams,
+      regionFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: false,
+      },
+      finalFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+        place: undefined,
+      },
     });
+  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
   const filteredEvents = filterPastEvents(events);
 

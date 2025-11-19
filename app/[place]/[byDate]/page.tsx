@@ -359,20 +359,24 @@ async function buildPlaceByDateEventsPromise({
   paramsForFetch: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
 }): Promise<PlacePageEventsResult> {
-  const { events, noEventsFound, serverHasMore } =
+  const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
       place,
       initialParams: paramsForFetch,
-      onFallbackParams: (params) => {
-        // Apply default date range for fallbacks to match legacy behavior
-        const { from, until } = twoWeeksDefault();
-        return {
-          ...params,
-          from: toLocalDateString(from),
-          to: toLocalDateString(until),
-        };
+      regionFallback: {
+        size: 7,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+      },
+      finalFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+        place: undefined,
       },
     });
+  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
   const filteredEvents = filterPastEvents(events);
 

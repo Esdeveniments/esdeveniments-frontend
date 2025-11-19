@@ -1,74 +1,164 @@
 import { fetchEvents } from "@lib/api/events";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { toLocalDateString } from "@utils/helpers";
 import type {
+  EventFallbackStageOptions,
   FetchEventsParams,
-  FetchEventsWithFallbackResult,
   FetchEventsWithFallbackOptions,
+  FetchEventsWithFallbackResult,
 } from "types/event";
+import type {
+  EventSummaryResponseDTO,
+  PagedResponseDTO,
+} from "types/api/event";
 
-export async function fetchEventsWithFallback({
-  place,
-  initialParams,
-  onFallbackParams,
-}: FetchEventsWithFallbackOptions): Promise<FetchEventsWithFallbackResult> {
-  let eventsResponse = await fetchEvents(initialParams);
-  let noEventsFound = false;
+const DEFAULT_STAGE_SIZE = 7;
 
-  if (
-    !eventsResponse ||
-    !eventsResponse.content ||
-    eventsResponse.content.length === 0
-  ) {
-    const regionsWithCities = await fetchRegionsWithCities();
-    const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === place)
-    );
+export async function fetchEventsWithFallback(
+  options: FetchEventsWithFallbackOptions
+): Promise<FetchEventsWithFallbackResult> {
+  const { initialParams, place } = options;
+  const initialResponse = await fetchEvents(initialParams);
 
-    if (regionWithCities) {
-      const regions = await fetchRegions();
-      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
+  if (hasEvents(initialResponse)) {
+    return {
+      eventsResponse: initialResponse,
+      events: initialResponse.content,
+      noEventsFound: false,
+    };
+  }
 
-      if (regionWithSlug) {
-        let fallbackParams: FetchEventsParams = {
-          ...initialParams,
-          place: regionWithSlug.slug,
-          size: 7,
+  let latestResponse: PagedResponseDTO<EventSummaryResponseDTO> | null =
+    initialResponse;
+  let noEventsFound = true;
+
+  if (shouldAttemptRegionFallback(place, options.regionFallback)) {
+    const regionSlug = await resolveRegionSlugForPlace(place);
+
+    if (regionSlug) {
+      const regionParams = buildStageParams(
+        initialParams,
+        {
           page: 0,
+          size: options.regionFallback?.size ?? DEFAULT_STAGE_SIZE,
+          place: regionSlug,
+        },
+        options.regionFallback
+      );
+
+      latestResponse = await fetchEvents(regionParams);
+
+      if (hasEvents(latestResponse)) {
+        return {
+          eventsResponse: latestResponse,
+          events: latestResponse.content,
+          noEventsFound,
         };
-
-        if (onFallbackParams) {
-          fallbackParams = onFallbackParams(fallbackParams);
-        }
-
-        eventsResponse = await fetchEvents(fallbackParams);
-        noEventsFound = true;
       }
     }
   }
 
-  if (
-    !eventsResponse ||
-    !eventsResponse.content ||
-    eventsResponse.content.length === 0
-  ) {
-    let globalParams: FetchEventsParams = {
-      ...initialParams,
-      size: 7,
-      page: 0,
+  if (options.finalFallback?.enabled === false) {
+    return {
+      eventsResponse: latestResponse,
+      events: latestResponse?.content ?? [],
+      noEventsFound,
     };
-    delete globalParams.place;
-
-    if (onFallbackParams) {
-      globalParams = onFallbackParams(globalParams);
-    }
-
-    eventsResponse = await fetchEvents(globalParams);
-    noEventsFound = true;
   }
 
+  const finalOptions = options.finalFallback ?? {};
+  const finalParams = buildStageParams(
+    initialParams,
+    {
+      page: 0,
+      size: finalOptions.size ?? DEFAULT_STAGE_SIZE,
+      place: finalOptions.place,
+    },
+    finalOptions
+  );
+
+  latestResponse = await fetchEvents(finalParams);
+
   return {
-    events: eventsResponse?.content || [],
+    eventsResponse: latestResponse,
+    events: latestResponse?.content ?? [],
     noEventsFound,
-    serverHasMore: eventsResponse ? !eventsResponse.last : false,
   };
+}
+
+function hasEvents(
+  response: PagedResponseDTO<EventSummaryResponseDTO> | null
+): boolean {
+  return !!response?.content && response.content.length > 0;
+}
+
+function shouldAttemptRegionFallback(
+  place: string,
+  options?: EventFallbackStageOptions
+): boolean {
+  if (place === "catalunya") {
+    return false;
+  }
+  if (options?.enabled === false) {
+    return false;
+  }
+  return true;
+}
+
+async function resolveRegionSlugForPlace(
+  place: string
+): Promise<string | null> {
+  try {
+    const regionsWithCities = await fetchRegionsWithCities();
+    const regionWithCities = regionsWithCities.find((region) =>
+      region.cities.some((city) => city.value === place)
+    );
+
+    if (!regionWithCities) {
+      return null;
+    }
+
+    const regions = await fetchRegions();
+    const regionWithSlug = regions.find(
+      (region) => region.id === regionWithCities.id
+    );
+
+    return regionWithSlug?.slug ?? null;
+  } catch (error) {
+    console.error(
+      "fetchEventsWithFallback: unable to resolve region slug for place",
+      error
+    );
+    return null;
+  }
+}
+
+function buildStageParams(
+  initialParams: FetchEventsParams,
+  overrides: Partial<FetchEventsParams>,
+  stageOptions?: EventFallbackStageOptions
+): FetchEventsParams {
+  const params: FetchEventsParams = {
+    ...initialParams,
+    ...overrides,
+  };
+
+  if (stageOptions?.includeCategory === false) {
+    delete params.category;
+  }
+
+  if (stageOptions?.includeDateRange === false) {
+    delete params.from;
+    delete params.to;
+  } else if ((!params.from || !params.to) && stageOptions?.dateRangeFactory) {
+    const range = stageOptions.dateRangeFactory();
+    params.from = toLocalDateString(range.from);
+    params.to = toLocalDateString(range.until);
+  }
+
+  if ("place" in overrides && overrides.place === undefined) {
+    delete params.place;
+  }
+
+  return params;
 }

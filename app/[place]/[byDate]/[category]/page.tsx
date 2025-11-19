@@ -320,21 +320,24 @@ async function buildCategoryEventsPromise({
   pageDataPromise: Promise<PageData>;
   categoryName?: string;
 }): Promise<PlacePageEventsResult> {
-  const { events, noEventsFound, serverHasMore } =
+  const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
       place: filters.place,
       initialParams: fetchParams,
-      onFallbackParams: (params) => {
-        // Fallback to default 2 weeks range if specific search fails,
-        // matching the "latest events" behavior of the original code.
-        const { from, until } = twoWeeksDefault();
-        return {
-          ...params,
-          from: toLocalDateString(from),
-          to: toLocalDateString(until),
-        };
+      regionFallback: {
+        size: 7,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+      },
+      finalFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+        place: undefined,
       },
     });
+  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
   const filteredEvents = filterPastEvents(events);
 

@@ -6,6 +6,7 @@ import type { NewsDetailResponseDTO } from "types/api/news";
 import { siteUrl } from "@config/index";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
 
@@ -15,7 +16,13 @@ export async function generateMetadata({
   params: Promise<{ place: string; article: string }>;
 }): Promise<Metadata> {
   const { place, article } = await params;
-  const detail: NewsDetailResponseDTO | null = await getNewsBySlug(article);
+  let detail: NewsDetailResponseDTO | null = null;
+  try {
+    detail = await getNewsBySlug(article);
+  } catch (error) {
+    console.error("generateMetadata: Error fetching news detail", error);
+    captureException(error);
+  }
   const placeType = await getPlaceTypeAndLabelCached(place);
   if (detail) {
     const base = buildPageMeta({
