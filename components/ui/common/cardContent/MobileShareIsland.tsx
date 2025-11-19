@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { ShareIcon } from "@heroicons/react/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
+import { useHydration } from "@components/hooks/useHydration";
 import { memo } from "react";
 import type { MobileShareProps } from "types/props";
 
@@ -20,12 +21,13 @@ function MobileShareIsland({
   eventDate,
   location,
 }: MobileShareProps) {
+  const isHydrated = useHydration();
   const isMobile = useCheckMobileScreen();
   const canNativeShare =
     typeof window !== "undefined" &&
     typeof navigator !== "undefined" &&
     !!navigator.share;
-  if (!isMobile || !canNativeShare) return null;
+  if (!isHydrated || !isMobile || !canNativeShare) return null;
   return (
     <NativeShareButton
       title={title}

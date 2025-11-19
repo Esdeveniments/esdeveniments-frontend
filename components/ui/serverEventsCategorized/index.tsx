@@ -1,4 +1,4 @@
-import { memo, ReactElement } from "react";
+import { memo, Suspense } from "react";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import Badge from "@components/ui/common/badge";
@@ -14,11 +14,12 @@ import { ServerEventsCategorizedProps } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { computeTemporalStatus } from "@utils/event-status";
+import type { CategorySummaryResponseDTO } from "types/api/category";
 
 const resolveCategoryDetails = (
   categoryKey: string,
   firstEvent: EventSummaryResponseDTO | undefined,
-  allCategories: ServerEventsCategorizedProps["categories"]
+  allCategories: CategorySummaryResponseDTO[] | undefined
 ): { categoryName: string; categorySlug: string } => {
   const safeToLowerCase = (value: unknown): string => {
     if (typeof value !== "string" || !value) return "";
@@ -88,11 +89,29 @@ const resolveCategoryDetails = (
   };
 };
 
-function ServerEventsCategorized({
-  categorizedEvents,
+function ServerEventsCategorized(props: ServerEventsCategorizedProps) {
+  return (
+    <Suspense fallback={<ServerEventsCategorizedFallback />}>
+      <ServerEventsCategorizedContent {...props} />
+    </Suspense>
+  );
+}
+
+async function ServerEventsCategorizedContent({
+  categorizedEventsPromise,
   pageData,
-  categories,
-}: ServerEventsCategorizedProps): ReactElement {
+  categoriesPromise,
+}: ServerEventsCategorizedProps) {
+  const [categorizedEvents, categories] = await Promise.all([
+    categorizedEventsPromise,
+    categoriesPromise
+      ? categoriesPromise.catch((error) => {
+          console.error("Error fetching categories:", error);
+          return [];
+        })
+      : Promise.resolve<CategorySummaryResponseDTO[]>([]),
+  ]);
+
   // Filter out ads and past events before processing
   const filteredCategorizedEvents = Object.entries(categorizedEvents).reduce(
     (acc, [category, events]) => {
@@ -270,6 +289,23 @@ function ServerEventsCategorized({
         </div>
       </div>
     </>
+  );
+}
+
+function ServerEventsCategorizedFallback() {
+  return (
+    <div className="container mt-element-gap space-y-4">
+      <div className="h-8 w-1/2 rounded-lg bg-muted animate-pulse" />
+      <div className="h-6 w-1/3 rounded-lg bg-muted animate-pulse" />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {[0, 1, 2].map((index) => (
+          <div
+            key={index}
+            className="h-64 w-full rounded-2xl bg-muted animate-pulse"
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ServerEventsCategorized from "../components/ui/serverEventsCategorized";
 import type { CategorySummaryResponseDTO } from "../types/api/category";
@@ -103,19 +103,21 @@ describe("ServerEventsCategorized", () => {
     vi.clearAllMocks();
   });
 
-  const renderComponent = (
+  const renderComponent = async (
     categorizedEvents: Record<string, ListEvent[]>,
     categories?: CategorySummaryResponseDTO[]
   ) =>
-    render(
-      <ServerEventsCategorized
-        categorizedEvents={categorizedEvents}
-        pageData={pageData}
-        categories={categories}
-      />
-    );
+    act(async () => {
+      render(
+        <ServerEventsCategorized
+          categorizedEventsPromise={Promise.resolve(categorizedEvents)}
+          pageData={pageData}
+          categoriesPromise={Promise.resolve(categories ?? [])}
+        />
+      );
+    });
 
-  it("uses the matching event category slug when the category key differs from the first event category", () => {
+  it("uses the matching event category slug when the category key differs from the first event category", async () => {
     const categorizedEvents: Record<string, ListEvent[]> = {
       "Patrimoni Cultural": [
         {
@@ -136,19 +138,19 @@ describe("ServerEventsCategorized", () => {
       ],
     };
 
-    renderComponent(categorizedEvents);
+    await renderComponent(categorizedEvents);
 
-    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    const seeMoreLink = await screen.findByRole("link", { name: /Veure més/i });
     expect(seeMoreLink).toHaveAttribute("href", "/catalunya/patrimoni-cultural");
 
-    const avuiLink = screen.getByRole("link", { name: "Avui" });
+    const avuiLink = await screen.findByRole("link", { name: "Avui" });
     expect(avuiLink).toHaveAttribute(
       "href",
       "/catalunya/avui/patrimoni-cultural"
     );
   });
 
-  it("falls back to dynamic categories when event has no categories", () => {
+  it("falls back to dynamic categories when event has no categories", async () => {
     const categorizedEvents: Record<string, ListEvent[]> = {
       Literatura: [
         {
@@ -164,13 +166,13 @@ describe("ServerEventsCategorized", () => {
       { id: 1, name: "Literatura", slug: "literatura" },
     ];
 
-    renderComponent(categorizedEvents, categories);
+    await renderComponent(categorizedEvents, categories);
 
-    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    const seeMoreLink = await screen.findByRole("link", { name: /Veure més/i });
     expect(seeMoreLink).toHaveAttribute("href", "/catalunya/literatura");
   });
 
-  it("matches category by name (case-insensitive) when slug doesn't match", () => {
+  it("matches category by name (case-insensitive) when slug doesn't match", async () => {
     const categorizedEvents: Record<string, ListEvent[]> = {
       "CONCERTS": [
         {
@@ -186,13 +188,13 @@ describe("ServerEventsCategorized", () => {
       ],
     };
 
-    renderComponent(categorizedEvents);
+    await renderComponent(categorizedEvents);
 
-    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    const seeMoreLink = await screen.findByRole("link", { name: /Veure més/i });
     expect(seeMoreLink).toHaveAttribute("href", "/catalunya/concerts");
   });
 
-  it("matches category by slug (case-insensitive) when name doesn't match", () => {
+  it("matches category by slug (case-insensitive) when name doesn't match", async () => {
     const categorizedEvents: Record<string, ListEvent[]> = {
       "festivals": [
         {
@@ -208,13 +210,13 @@ describe("ServerEventsCategorized", () => {
       ],
     };
 
-    renderComponent(categorizedEvents);
+    await renderComponent(categorizedEvents);
 
-    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    const seeMoreLink = await screen.findByRole("link", { name: /Veure més/i });
     expect(seeMoreLink).toHaveAttribute("href", "/catalunya/festivals");
   });
 
-  it("falls back to first valid category when no match is found", () => {
+  it("falls back to first valid category when no match is found", async () => {
     const categorizedEvents: Record<string, ListEvent[]> = {
       "Unknown Category": [
         {
@@ -230,13 +232,13 @@ describe("ServerEventsCategorized", () => {
       ],
     };
 
-    renderComponent(categorizedEvents);
+    await renderComponent(categorizedEvents);
 
-    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    const seeMoreLink = await screen.findByRole("link", { name: /Veure més/i });
     expect(seeMoreLink).toHaveAttribute("href", "/catalunya/concerts");
   });
 
-  it("falls back to categoryKey when no categories are available", () => {
+  it("falls back to categoryKey when no categories are available", async () => {
     const categorizedEvents: Record<string, ListEvent[]> = {
       "custom-category": [
         {
@@ -246,10 +248,9 @@ describe("ServerEventsCategorized", () => {
       ],
     };
 
-    renderComponent(categorizedEvents);
+    await renderComponent(categorizedEvents);
 
-    const seeMoreLink = screen.getByRole("link", { name: /Veure més/i });
+    const seeMoreLink = await screen.findByRole("link", { name: /Veure més/i });
     expect(seeMoreLink).toHaveAttribute("href", "/catalunya/custom-category");
   });
 });
-

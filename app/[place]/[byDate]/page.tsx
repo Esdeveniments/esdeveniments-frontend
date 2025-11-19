@@ -14,7 +14,7 @@ import {
   getDateRangeFromByDate,
   isValidDateSlug,
 } from "@lib/dates";
-import { PlaceTypeAndLabel, ByDateOptions } from "types/common";
+import { PlaceTypeAndLabel, ByDateOptions, PageData, JsonLdScript } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
@@ -36,6 +36,7 @@ import { VALID_DATES } from "@lib/dates";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import type { PlacePageEventsResult } from "types/props";
 
 // page-level ISR not set here; fetch-level caching applies
 export const revalidate = 300;
@@ -264,111 +265,49 @@ export default async function ByDatePage({
   // Intentionally do NOT apply querystring filters (search/distance/lat/lon) on the server.
   // These are handled client-side to keep ISR query-agnostic.
 
-  let noEventsFound = false;
-  // Fetch events and place label in parallel when possible
-  let [eventsResponse] = await Promise.all([fetchEvents(paramsForFetch)]);
-  let events = eventsResponse?.content || [];
-
-  if (!events || events.length === 0) {
-    const regionsWithCities = await fetchRegionsWithCities();
-    const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === place)
-    );
-
-    if (regionWithCities) {
-      const regions = await fetchRegions();
-      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
-
-      if (regionWithSlug) {
-        const { from, until } = twoWeeksDefault();
-        const fallbackParams: FetchEventsParams = {
-          page: 0,
-          size: 7,
-          place: regionWithSlug.slug,
-          from: toLocalDateString(from),
-          to: toLocalDateString(until),
-        };
-
-        if (finalCategory && finalCategory !== DEFAULT_FILTER_VALUE) {
-          fallbackParams.category = finalCategory;
-        }
-
-        eventsResponse = await fetchEvents(fallbackParams);
-        events = eventsResponse?.content || [];
-        noEventsFound = true;
-      }
-    }
-  }
-
-  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
-  if (!events || events.length === 0) {
-    const { from, until } = twoWeeksDefault();
-    const latestEventsParams: FetchEventsParams = {
-      page: 0,
-      size: 7,
-      from: toLocalDateString(from),
-      to: toLocalDateString(until),
-      // No place, category, or other filters - just get latest events
-    };
-
-    eventsResponse = await fetchEvents(latestEventsParams);
-    events = eventsResponse?.content || [];
-    noEventsFound = true;
-  }
-
-  const filteredEvents = filterPastEvents(events);
-  const eventsWithAds = insertAds(filteredEvents);
-
-  // Fetch place type and check news in parallel for better performance
-  const [placeTypeLabel, hasNews] = await Promise.all([
-    getPlaceTypeAndLabelCached(place),
-    hasNewsForPlace(place),
-  ]);
-
   const categoryData = categories.find((cat) => cat.slug === finalCategory);
 
-  const pageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
+  const placeShellDataPromise = getPlaceTypeAndLabelCached(place).then(
+    async (placeTypeLabel) => ({
+      placeTypeLabel,
+      pageData: await generatePagesData({
+        currentYear: new Date().getFullYear(),
+        place,
+        byDate: actualDate as ByDateOptions,
+        placeTypeLabel,
+        category:
+          finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
+            ? finalCategory
+            : undefined,
+        categoryName: categoryData?.name,
+        search: parsed.queryParams.search,
+      }),
+    })
+  );
+
+  const eventsPromise = buildPlaceByDateEventsPromise({
     place,
-    byDate: actualDate as ByDateOptions,
-    placeTypeLabel,
-    category:
-      finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
-        ? finalCategory
-        : undefined,
-    categoryName: categoryData?.name,
-    search: parsed.queryParams.search,
+    finalCategory,
+    actualDate,
+    paramsForFetch,
+    pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
   });
 
-  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
+  const hasNewsPromise = hasNewsForPlace(place).catch((error) => {
+    console.error("Error checking news availability:", error);
+    return false;
+  });
 
-  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
-  const structuredData =
-    validEvents.length > 0
-      ? generateItemListStructuredData(
-          validEvents,
-          finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
-            ? `Esdeveniments ${finalCategory} ${place}`
-            : `Esdeveniments ${actualDate} ${place}`
-        )
-      : null;
+  const [{ placeTypeLabel, pageData }, hasNews] = await Promise.all([
+    placeShellDataPromise,
+    hasNewsPromise,
+  ]);
 
-  // Generate WebPage and CollectionPage schemas
   const webPageSchema = generateWebPageSchema({
     title: pageData.title,
     description: pageData.metaDescription,
     url: pageData.canonical,
   });
-
-  const collectionSchema =
-    validEvents.length > 0
-      ? generateCollectionPageSchema({
-          title: pageData.title,
-          description: pageData.metaDescription,
-          url: pageData.canonical,
-          numberOfItems: validEvents.length,
-        })
-      : null;
 
   // Late existence check to preserve UX without creating an early oracle
   if (place !== "catalunya") {
@@ -389,25 +328,123 @@ export default async function ByDatePage({
 
   return (
     <PlacePageShell
-      scripts={[
-        { id: "webpage-schema", data: webPageSchema },
-        ...(collectionSchema
-          ? [{ id: "collection-schema", data: collectionSchema }]
-          : []),
-        ...(structuredData
-          ? [{ id: `events-${place}-${actualDate}`, data: structuredData }]
-          : []),
-      ]}
-      initialEvents={eventsWithAds}
+      scripts={[{ id: "webpage-schema", data: webPageSchema }]}
+      eventsPromise={eventsPromise}
       placeTypeLabel={placeTypeLabel}
       pageData={pageData}
-      noEventsFound={noEventsFound}
       place={place}
       category={finalCategory}
       date={actualDate}
-      serverHasMore={serverHasMore}
       categories={categories}
       hasNews={hasNews}
     />
   );
+}
+
+function buildPlaceByDateEventsPromise({
+  place,
+  finalCategory,
+  actualDate,
+  paramsForFetch,
+  pageDataPromise,
+}: {
+  place: string;
+  finalCategory?: string;
+  actualDate: string;
+  paramsForFetch: FetchEventsParams;
+  pageDataPromise: Promise<PageData>;
+}): Promise<PlacePageEventsResult> {
+  return (async (): Promise<PlacePageEventsResult> => {
+    let eventsResponse = await fetchEvents(paramsForFetch);
+    let events = eventsResponse?.content || [];
+    let noEventsFound = false;
+
+    if (!events || events.length === 0) {
+      const regionsWithCities = await fetchRegionsWithCities();
+      const regionWithCities = regionsWithCities.find((r) =>
+        r.cities.some((city) => city.value === place)
+      );
+
+      if (regionWithCities) {
+        const regions = await fetchRegions();
+        const regionWithSlug = regions.find(
+          (r) => r.id === regionWithCities.id
+        );
+
+        if (regionWithSlug) {
+          const { from, until } = twoWeeksDefault();
+          const fallbackParams: FetchEventsParams = {
+            page: 0,
+            size: 7,
+            place: regionWithSlug.slug,
+            from: toLocalDateString(from),
+            to: toLocalDateString(until),
+          };
+
+          if (finalCategory && finalCategory !== DEFAULT_FILTER_VALUE) {
+            fallbackParams.category = finalCategory;
+          }
+
+          eventsResponse = await fetchEvents(fallbackParams);
+          events = eventsResponse?.content || [];
+          noEventsFound = true;
+        }
+      }
+    }
+
+    if (!events || events.length === 0) {
+      const { from, until } = twoWeeksDefault();
+      const latestEventsParams: FetchEventsParams = {
+        page: 0,
+        size: 7,
+        from: toLocalDateString(from),
+        to: toLocalDateString(until),
+      };
+
+      eventsResponse = await fetchEvents(latestEventsParams);
+      events = eventsResponse?.content || [];
+      noEventsFound = true;
+    }
+
+    const filteredEvents = filterPastEvents(events);
+    const eventsWithAds = insertAds(filteredEvents);
+    const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+    const pageData = await pageDataPromise;
+    const structuredScripts: JsonLdScript[] = [];
+
+    if (validEvents.length > 0) {
+      const itemListSchema = generateItemListStructuredData(
+        validEvents,
+        finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
+          ? `Esdeveniments ${finalCategory} ${place}`
+          : `Esdeveniments ${actualDate} ${place}`
+      );
+
+      structuredScripts.push({
+        id: `events-${place}-${actualDate}`,
+        data: itemListSchema,
+      });
+
+      const collectionSchema = generateCollectionPageSchema({
+        title: pageData.title,
+        description: pageData.metaDescription,
+        url: pageData.canonical,
+        numberOfItems: validEvents.length,
+      });
+
+      if (collectionSchema) {
+        structuredScripts.push({
+          id: `collection-${place}-${actualDate}`,
+          data: collectionSchema,
+        });
+      }
+    }
+
+    return {
+      events: eventsWithAds,
+      noEventsFound,
+      serverHasMore: eventsResponse ? !eventsResponse.last : false,
+      structuredScripts: structuredScripts.length ? structuredScripts : undefined,
+    };
+  })();
 }

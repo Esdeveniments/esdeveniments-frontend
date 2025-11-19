@@ -8,13 +8,10 @@ export default function GoogleScripts() {
       {/* Google Analytics */}
       <Script
         id="google-analytics-gtag"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
       />
-      <Script
-        id="google-analytics-lazy-load"
-        strategy="afterInteractive"
-      >
+      <Script id="google-analytics-lazy-load" strategy="lazyOnload">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
@@ -56,10 +53,7 @@ export default function GoogleScripts() {
         strategy="afterInteractive"
       />
       {/* AI Referrer Analytics */}
-      <Script
-        id="ai-referrer-analytics"
-        strategy="afterInteractive"
-      >
+      <Script id="ai-referrer-analytics" strategy="afterInteractive">
         {`
           (function() {
             try {

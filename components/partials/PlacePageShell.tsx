@@ -1,45 +1,78 @@
+import { Suspense } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
-import type { PageData, PlaceTypeAndLabel, JsonLdScript } from "types/common";
 import JsonLdServer from "./JsonLdServer";
-import type { CategorySummaryResponseDTO } from "types/api/category";
-import type { ListEvent } from "types/api/event";
+import type { PlacePageShellProps } from "types/props";
 
 export default function PlacePageShell({
   scripts = [],
-  // HybridEventsList props
-  initialEvents,
+  eventsPromise,
   placeTypeLabel,
   pageData,
-  noEventsFound = false,
   place,
   category,
   date,
-  serverHasMore = false,
   hasNews = false,
-  // ClientInteractiveLayer props
-  categories,
-}: {
-  scripts?: JsonLdScript[];
-  initialEvents: ListEvent[];
-  placeTypeLabel: PlaceTypeAndLabel;
-  pageData: PageData;
-  noEventsFound?: boolean;
-  place: string;
-  category?: string;
-  date?: string;
-  serverHasMore?: boolean;
-  hasNews?: boolean;
-  categories: CategorySummaryResponseDTO[];
-}) {
+  categories = [],
+}: PlacePageShellProps) {
   return (
     <>
       {scripts.map((s) => (
         <JsonLdServer key={s.id} id={s.id} data={s.data} />
       ))}
 
+      <Suspense fallback={<EventsSectionFallback />}>
+        <PlaceEventsSection
+          eventsPromise={eventsPromise}
+          placeTypeLabel={placeTypeLabel}
+          pageData={pageData}
+          place={place}
+          category={category}
+          date={date}
+          hasNews={hasNews}
+          categories={categories}
+        />
+      </Suspense>
+
+      <ClientInteractiveLayer
+        categories={categories}
+        placeTypeLabel={placeTypeLabel}
+      />
+    </>
+  );
+}
+
+async function PlaceEventsSection({
+  eventsPromise,
+  placeTypeLabel,
+  pageData,
+  place,
+  category,
+  date,
+  hasNews,
+  categories = [],
+}: Pick<
+  PlacePageShellProps,
+  | "eventsPromise"
+  | "placeTypeLabel"
+  | "pageData"
+  | "place"
+  | "category"
+  | "date"
+  | "hasNews"
+  | "categories"
+>) {
+  const { events, noEventsFound, serverHasMore, structuredScripts } =
+    await eventsPromise;
+
+  return (
+    <>
+      {structuredScripts?.map((script) => (
+        <JsonLdServer key={script.id} id={script.id} data={script.data} />
+      ))}
+
       <HybridEventsList
-        initialEvents={initialEvents}
+        initialEvents={events}
         placeTypeLabel={placeTypeLabel}
         pageData={pageData}
         noEventsFound={noEventsFound}
@@ -50,11 +83,23 @@ export default function PlacePageShell({
         hasNews={hasNews}
         categories={categories}
       />
-
-      <ClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={placeTypeLabel}
-      />
     </>
+  );
+}
+
+function EventsSectionFallback() {
+  return (
+    <div className="container flex flex-col gap-4 mt-sticky-offset" data-testid="events-list-fallback">
+      <div className="h-8 w-2/3 rounded-lg bg-muted animate-pulse" />
+      <div className="h-5 w-1/2 rounded-lg bg-muted animate-pulse" />
+      <div className="flex flex-col gap-3">
+        {[0, 1, 2].map((index) => (
+          <div
+            key={index}
+            className="h-28 w-full rounded-2xl bg-muted animate-pulse"
+          />
+        ))}
+      </div>
+    </div>
   );
 }

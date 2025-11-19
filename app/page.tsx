@@ -11,7 +11,6 @@ import {
 import JsonLdServer from "@components/partials/JsonLdServer";
 import type { NavigationItem, PageData, Href } from "types/common";
 import { CategorizedEvents } from "types/api/event";
-import type { CategorySummaryResponseDTO } from "types/api/category";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
@@ -75,18 +74,11 @@ export async function generateMetadata() {
 }
 
 export default async function Page(): Promise<JSX.Element> {
-  // Always fetch categorized events (no URL filters support)
-  const categorizedEvents: CategorizedEvents = await getCategorizedEvents(5);
-
-  // Fetch dynamic categories for enhanced category support
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await fetchCategories();
-  } catch (error) {
-    // Continue without categories - components will use static fallbacks
+  const categorizedEventsPromise = getCategorizedEvents(5);
+  const categoriesPromise = fetchCategories().catch((error) => {
     console.error("Error fetching categories:", error);
-    categories = [];
-  }
+    return [];
+  });
 
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
@@ -94,6 +86,55 @@ export default async function Page(): Promise<JSX.Element> {
     byDate: "",
   });
 
+  const siteNavigationSchema =
+    generateSiteNavigationElementSchema(homeNavigationItems);
+
+  return (
+    <>
+      {siteNavigationSchema && (
+        <JsonLdServer id="site-navigation" data={siteNavigationSchema} />
+      )}
+
+      <Suspense fallback={null}>
+        <HomeStructuredData
+          categorizedEventsPromise={categorizedEventsPromise}
+          pageData={pageData}
+        />
+      </Suspense>
+
+      <div className="container flex justify-center items-center">
+        <Suspense
+          fallback={
+            <div className="w-full h-12 bg-background animate-pulse rounded-full" />
+          }
+        >
+          <Search />
+        </Suspense>
+      </div>
+
+      <Suspense
+        fallback={
+          <div className="container mt-element-gap h-[480px] rounded-2xl bg-background animate-pulse" />
+        }
+      >
+        <ServerEventsCategorized
+          categorizedEventsPromise={categorizedEventsPromise}
+          pageData={pageData}
+          categoriesPromise={categoriesPromise}
+        />
+      </Suspense>
+    </>
+  );
+}
+
+async function HomeStructuredData({
+  categorizedEventsPromise,
+  pageData,
+}: {
+  categorizedEventsPromise: Promise<CategorizedEvents>;
+  pageData: PageData;
+}) {
+  const categorizedEvents = await categorizedEventsPromise;
   const homepageEvents = Object.values(categorizedEvents)
     .flat()
     .filter(isEventSummaryResponseDTO);
@@ -125,9 +166,6 @@ export default async function Page(): Promise<JSX.Element> {
         })
       : null;
 
-  const siteNavigationSchema =
-    generateSiteNavigationElementSchema(homeNavigationItems);
-
   const structuredSchemas = [
     { id: "webpage-schema", data: webPageSchema },
     ...(collectionSchema
@@ -136,32 +174,9 @@ export default async function Page(): Promise<JSX.Element> {
     ...(itemListSchema
       ? [{ id: "homepage-events", data: itemListSchema }]
       : []),
-    ...(siteNavigationSchema
-      ? [{ id: "site-navigation", data: siteNavigationSchema }]
-      : []),
   ];
 
-  return (
-    <>
-      {structuredSchemas.map((schema) => (
-        <JsonLdServer key={schema.id} id={schema.id} data={schema.data} />
-      ))}
-
-      <div className="container flex justify-center items-center">
-        <Suspense
-          fallback={
-            <div className="w-full h-12 bg-background animate-pulse rounded-full" />
-          }
-        >
-          <Search />
-        </Suspense>
-      </div>
-
-      <ServerEventsCategorized
-        categorizedEvents={categorizedEvents}
-        pageData={pageData}
-        categories={categories}
-      />
-    </>
-  );
+  return structuredSchemas.map((schema) => (
+    <JsonLdServer key={schema.id} id={schema.id} data={schema.data} />
+  ));
 }

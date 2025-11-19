@@ -25,6 +25,7 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect } from "next/navigation";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
+import type { PlacePageEventsResult } from "types/props";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -77,101 +78,33 @@ export default async function Page({
 
   validatePlaceOrThrow(place);
 
-  // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
-  // Invalid places will naturally result in empty event lists, which the page handles gracefully.
-
-  // Fetch dynamic categories for metadata and client-side filtering
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await fetchCategories();
-  } catch (error) {
-    // Continue without categories - will use static fallbacks
+  const categoriesPromise = fetchCategories().catch((error) => {
     console.error("Error fetching categories:", error);
-    categories = []; // Fallback to empty array if fetch fails
-  }
-
-  // Server-side fetch: canonical, query-agnostic (no search, distance, lat, lon)
-  // All query filters are handled client-side via HybridEventsListClient
-  const fetchParams: FetchEventsParams = {
-    page: 0,
-    size: 10,
-  };
-
-  if (place !== "catalunya") {
-    fetchParams.place = place;
-  }
-
-  // Note: category, search, distance, lat, lon filters are NOT applied server-side
-  // to keep this route ISR-compatible. They are handled client-side.
-
-  // Fetch events and categories in parallel when safe to do so later
-  let eventsResponse = await fetchEvents(fetchParams);
-  let noEventsFound = false;
-
-  if (
-    !eventsResponse ||
-    !eventsResponse.content ||
-    eventsResponse.content.length === 0
-  ) {
-    const regionsWithCities = await fetchRegionsWithCities();
-    const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === place)
-    );
-
-    if (regionWithCities) {
-      const regions = await fetchRegions();
-      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
-
-      if (regionWithSlug) {
-        eventsResponse = await fetchEvents({
-          page: 0,
-          size: 7,
-          place: regionWithSlug.slug,
-        });
-        noEventsFound = true;
-      }
-    }
-  }
-
-  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
-  if (
-    !eventsResponse ||
-    !eventsResponse.content ||
-    eventsResponse.content.length === 0
-  ) {
-    eventsResponse = await fetchEvents({
-      page: 0,
-      size: 7,
-      // No place, category, or other filters - just get latest events
-    });
-    noEventsFound = true;
-  }
-
-  const events = eventsResponse?.content || [];
-  const filteredEvents = filterPastEvents(events);
-  const eventsWithAds = insertAds(filteredEvents);
-
-  // Check news (categories already fetched above)
-  const hasNews = await hasNewsForPlace(place);
-
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
-    place
+    return [] as CategorySummaryResponseDTO[];
+  });
+  const hasNewsPromise = hasNewsForPlace(place).catch((error) => {
+    console.error("Error checking news availability:", error);
+    return false;
+  });
+  const placeShellDataPromise = getPlaceTypeAndLabelCached(place).then(
+    async (placeTypeLabel) => ({
+      placeTypeLabel,
+      pageData: await generatePagesData({
+        currentYear: new Date().getFullYear(),
+        place,
+        byDate: "",
+        placeTypeLabel,
+      }),
+    })
   );
 
-  const pageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
-    place,
-    byDate: "",
-    placeTypeLabel,
-  });
+  const eventsPromise = buildPlaceEventsPromise({ place });
 
-  const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
-  const structuredData =
-    validEvents.length > 0
-      ? generateItemListStructuredData(validEvents, `Esdeveniments ${place}`)
-      : null;
+  const [{ placeTypeLabel, pageData }, categories, hasNews] = await Promise.all(
+    [placeShellDataPromise, categoriesPromise, hasNewsPromise]
+  );
 
-  // Late existence check to preserve UX without creating an early oracle
+  // Late existence check to preserve UX without creating an enumeration oracle
   if (place !== "catalunya") {
     let placeExists: boolean | undefined;
     try {
@@ -189,17 +122,93 @@ export default async function Page({
 
   return (
     <PlacePageShell
-      scripts={
-        structuredData ? [{ id: `events-${place}`, data: structuredData }] : []
-      }
-      initialEvents={eventsWithAds}
+      eventsPromise={eventsPromise}
       placeTypeLabel={placeTypeLabel}
       pageData={pageData}
-      noEventsFound={noEventsFound}
       place={place}
-      serverHasMore={!eventsResponse?.last}
-      categories={categories}
       hasNews={hasNews}
+      categories={categories}
     />
   );
+}
+
+function buildPlaceEventsPromise({
+  place,
+}: {
+  place: string;
+}): Promise<PlacePageEventsResult> {
+  return (async (): Promise<PlacePageEventsResult> => {
+    const fetchParams: FetchEventsParams = {
+      page: 0,
+      size: 10,
+    };
+
+    if (place !== "catalunya") {
+      fetchParams.place = place;
+    }
+
+    let eventsResponse = await fetchEvents(fetchParams);
+    let noEventsFound = false;
+
+    if (
+      !eventsResponse ||
+      !eventsResponse.content ||
+      eventsResponse.content.length === 0
+    ) {
+      const regionsWithCities = await fetchRegionsWithCities();
+      const regionWithCities = regionsWithCities.find((r) =>
+        r.cities.some((city) => city.value === place)
+      );
+
+      if (regionWithCities) {
+        const regions = await fetchRegions();
+        const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
+
+        if (regionWithSlug) {
+          eventsResponse = await fetchEvents({
+            page: 0,
+            size: 7,
+            place: regionWithSlug.slug,
+          });
+          noEventsFound = true;
+        }
+      }
+    }
+
+    if (
+      !eventsResponse ||
+      !eventsResponse.content ||
+      eventsResponse.content.length === 0
+    ) {
+      eventsResponse = await fetchEvents({
+        page: 0,
+        size: 7,
+      });
+      noEventsFound = true;
+    }
+
+    const events = eventsResponse?.content || [];
+    const filteredEvents = filterPastEvents(events);
+    const eventsWithAds = insertAds(filteredEvents);
+    const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
+    const structuredScripts =
+      validEvents.length > 0
+        ? [
+            {
+              id: `events-${place}`,
+              data: generateItemListStructuredData(
+                validEvents,
+                `Esdeveniments ${place}`
+              ),
+            },
+          ]
+        : undefined;
+
+    return {
+      events: eventsWithAds,
+      noEventsFound,
+      serverHasMore: eventsResponse ? !eventsResponse.last : false,
+      structuredScripts,
+    };
+  })();
 }
