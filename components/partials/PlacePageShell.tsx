@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
+import { PlacePageSkeleton } from "@components/ui/common/skeletons";
 import type { PlacePageShellProps } from "types/props";
 
 export default function PlacePageShell({
@@ -88,18 +89,5 @@ async function PlaceEventsSection({
 }
 
 function EventsSectionFallback() {
-  return (
-    <div className="container flex flex-col gap-4 mt-sticky-offset" data-testid="events-list-fallback">
-      <div className="h-8 w-2/3 rounded-lg bg-muted animate-pulse" />
-      <div className="h-5 w-1/2 rounded-lg bg-muted animate-pulse" />
-      <div className="flex flex-col gap-3">
-        {[0, 1, 2].map((index) => (
-          <div
-            key={index}
-            className="h-28 w-full rounded-2xl bg-muted animate-pulse"
-          />
-        ))}
-      </div>
-    </div>
-  );
+  return <PlacePageSkeleton />;
 }

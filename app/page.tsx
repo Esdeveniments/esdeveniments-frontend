@@ -15,6 +15,7 @@ import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { Suspense, JSX } from "react";
+import { HomePageSkeleton, SearchSkeleton } from "@components/ui/common/skeletons";
 
 const homeSeoLinkSections = [
   {
@@ -103,20 +104,12 @@ export default async function Page(): Promise<JSX.Element> {
       </Suspense>
 
       <div className="container flex justify-center items-center">
-        <Suspense
-          fallback={
-            <div className="w-full h-12 bg-background animate-pulse rounded-full" />
-          }
-        >
+        <Suspense fallback={<SearchSkeleton />}>
           <Search />
         </Suspense>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="container mt-element-gap h-[480px] rounded-2xl bg-background animate-pulse" />
-        }
-      >
+      <Suspense fallback={<HomePageSkeleton />}>
         <ServerEventsCategorized
           categorizedEventsPromise={categorizedEventsPromise}
           pageData={pageData}

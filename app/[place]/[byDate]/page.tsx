@@ -14,7 +14,12 @@ import {
   getDateRangeFromByDate,
   isValidDateSlug,
 } from "@lib/dates";
-import { PlaceTypeAndLabel, ByDateOptions, PageData, JsonLdScript } from "types/common";
+import {
+  PlaceTypeAndLabel,
+  ByDateOptions,
+  PageData,
+  JsonLdScript,
+} from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
@@ -341,7 +346,7 @@ export default async function ByDatePage({
   );
 }
 
-function buildPlaceByDateEventsPromise({
+async function buildPlaceByDateEventsPromise({
   place,
   finalCategory,
   actualDate,
@@ -444,7 +449,9 @@ function buildPlaceByDateEventsPromise({
       events: eventsWithAds,
       noEventsFound,
       serverHasMore: eventsResponse ? !eventsResponse.last : false,
-      structuredScripts: structuredScripts.length ? structuredScripts : undefined,
+      structuredScripts: structuredScripts.length
+        ? structuredScripts
+        : undefined,
     };
   })();
 }

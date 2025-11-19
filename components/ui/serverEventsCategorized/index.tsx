@@ -14,6 +14,7 @@ import { ServerEventsCategorizedProps } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { computeTemporalStatus } from "@utils/event-status";
+import { HomePageSkeleton } from "@components/ui/common/skeletons";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 const resolveCategoryDetails = (
@@ -293,20 +294,7 @@ async function ServerEventsCategorizedContent({
 }
 
 function ServerEventsCategorizedFallback() {
-  return (
-    <div className="container mt-element-gap space-y-4">
-      <div className="h-8 w-1/2 rounded-lg bg-muted animate-pulse" />
-      <div className="h-6 w-1/3 rounded-lg bg-muted animate-pulse" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {[0, 1, 2].map((index) => (
-          <div
-            key={index}
-            className="h-64 w-full rounded-2xl bg-muted animate-pulse"
-          />
-        ))}
-      </div>
-    </div>
-  );
+  return <HomePageSkeleton />;
 }
 
 export default memo(ServerEventsCategorized);

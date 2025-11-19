@@ -132,7 +132,7 @@ export default async function Page({
   );
 }
 
-function buildPlaceEventsPromise({
+async function buildPlaceEventsPromise({
   place,
 }: {
   place: string;
