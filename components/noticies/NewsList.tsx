@@ -2,7 +2,6 @@ import NewsCard from "@components/ui/newsCard";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsListProps } from "types/props";
-import { notFound } from "next/navigation";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 
@@ -20,7 +19,26 @@ export default async function NewsList({
   const list = response.content;
 
   if (!list || list.length === 0) {
-    return notFound();
+    return (
+      <div className="flex flex-col items-center gap-4 px-2 lg:px-0 text-center">
+        <h2 className="heading-3" data-testid="not-found-title">
+          No hem trobat notícies recents
+        </h2>
+        <p className="text-foreground-strong/70 max-w-2xl">
+          Encara no tenim novetats per {placeType.label}, però continuem afegint-ne
+          cada setmana. Mentrestant, pots explorar les últimes notícies d&apos;altres
+          zones.
+        </p>
+        <PressableAnchor
+          href="/noticies"
+          className="text-primary underline"
+          variant="inline"
+          prefetch={false}
+        >
+          Veure totes les notícies →
+        </PressableAnchor>
+      </div>
+    );
   }
 
   const newsItemList = {
