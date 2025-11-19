@@ -162,7 +162,9 @@ function buildPlaceEventsPromise({
 
       if (regionWithCities) {
         const regions = await fetchRegions();
-        const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
+        const regionWithSlug = regions.find(
+          (r) => r.id === regionWithCities.id
+        );
 
         if (regionWithSlug) {
           eventsResponse = await fetchEvents({
@@ -189,6 +191,11 @@ function buildPlaceEventsPromise({
 
     const events = eventsResponse?.content || [];
     const filteredEvents = filterPastEvents(events);
+
+    if (events.length > 0 && filteredEvents.length === 0 && !noEventsFound) {
+      noEventsFound = true;
+    }
+
     const eventsWithAds = insertAds(filteredEvents);
     const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
     const structuredScripts =

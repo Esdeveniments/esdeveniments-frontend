@@ -5,7 +5,7 @@ import Script from "next/script";
 export default function GoogleScripts() {
   return (
     <>
-      {/* Google Analytics */}
+      {/* Google Analytics - Moved to lazyOnload for performance */}
       <Script
         id="google-analytics-gtag"
         strategy="lazyOnload"
@@ -21,13 +21,16 @@ export default function GoogleScripts() {
           });
         `}
       </Script>
-      {/* Google Ads */}
+
+      {/* Google Ads - Moved to lazyOnload to unblock main thread */}
       <Script
         id="google-ads"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         crossOrigin="anonymous"
         src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADS}`}
       />
+
+      {/* AdBlock Detection - Keep afterInteractive (Critical UI logic) */}
       <Script id="google-adblock" strategy="afterInteractive">
         {`
           (function() {
@@ -48,12 +51,15 @@ export default function GoogleScripts() {
           })();
         `}
       </Script>
+
+      {/* Funding Choices (CMP) - Keep afterInteractive (Legal/GDPR Requirement) */}
       <Script
         src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
         strategy="afterInteractive"
       />
-      {/* AI Referrer Analytics */}
-      <Script id="ai-referrer-analytics" strategy="afterInteractive">
+
+      {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
+      <Script id="ai-referrer-analytics" strategy="lazyOnload">
         {`
           (function() {
             try {
@@ -76,13 +82,15 @@ export default function GoogleScripts() {
               
               if (sessionStorage.getItem(sessionKey)) return;
               
-              if (typeof gtag !== 'undefined') {
-                gtag('event', 'ai_referrer', {
-                  referrer_domain: domain,
-                  referrer_url: referrer
-                });
-                sessionStorage.setItem(sessionKey, 'true');
-              }
+              // Robustness fix: Push directly to dataLayer instead of relying on global gtag function
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({
+                event: 'ai_referrer',
+                referrer_domain: domain,
+                referrer_url: referrer
+              });
+              
+              sessionStorage.setItem(sessionKey, 'true');
             } catch (error) {
               console.warn('AI referrer analytics error:', error);
             }

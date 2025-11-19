@@ -309,7 +309,7 @@ export default async function FilteredPage({
   );
 }
 
-function buildCategoryEventsPromise({
+async function buildCategoryEventsPromise({
   filters,
   fetchParams,
   pageDataPromise,
@@ -405,7 +405,9 @@ function buildCategoryEventsPromise({
       events: eventsWithAds,
       noEventsFound,
       serverHasMore: eventsResponse ? !eventsResponse.last : false,
-      structuredScripts: structuredScripts.length ? structuredScripts : undefined,
+      structuredScripts: structuredScripts.length
+        ? structuredScripts
+        : undefined,
     };
   })();
 }
