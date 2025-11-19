@@ -42,6 +42,7 @@ import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
+import { siteUrl } from "@config/index";
 
 // page-level ISR not set here; fetch-level caching applies
 export const revalidate = 300;
@@ -272,10 +273,11 @@ export default async function ByDatePage({
 
   const categoryData = categories.find((cat) => cat.slug === finalCategory);
 
-  const placeShellDataPromise = getPlaceTypeAndLabelCached(place).then(
-    async (placeTypeLabel) => ({
-      placeTypeLabel,
-      pageData: await generatePagesData({
+  const placeShellDataPromise = (async () => {
+    try {
+      const placeTypeLabel: PlaceTypeAndLabel =
+        await getPlaceTypeAndLabelCached(place);
+      const pageData: PageData = await generatePagesData({
         currentYear: new Date().getFullYear(),
         place,
         byDate: actualDate as ByDateOptions,
@@ -286,9 +288,21 @@ export default async function ByDatePage({
             : undefined,
         categoryName: categoryData?.name,
         search: parsed.queryParams.search,
-      }),
-    })
-  );
+      });
+      return { placeTypeLabel, pageData };
+    } catch (error) {
+      console.error(
+        "Place by date page: unable to build shell data",
+        error
+      );
+      return buildFallbackPlaceByDateShellData({
+        place,
+        actualDate,
+        finalCategory,
+        categoryName: categoryData?.name,
+      });
+    }
+  })();
 
   const eventsPromise = buildPlaceByDateEventsPromise({
     place,
@@ -344,6 +358,58 @@ export default async function ByDatePage({
       hasNews={hasNews}
     />
   );
+}
+
+function buildFallbackPlaceByDateShellData({
+  place,
+  actualDate,
+  finalCategory,
+  categoryName,
+}: {
+  place: string;
+  actualDate: string;
+  finalCategory?: string;
+  categoryName?: string;
+}): { placeTypeLabel: PlaceTypeAndLabel; pageData: PageData } {
+  const placeTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const hasSpecificDate =
+    actualDate && actualDate !== DEFAULT_FILTER_VALUE && actualDate !== "";
+  const dateLabel = hasSpecificDate ? actualDate : "els propers dies";
+  const categoryLabel =
+    finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
+      ? categoryName || finalCategory
+      : "";
+  const canonicalSegments = [place];
+  if (hasSpecificDate) {
+    canonicalSegments.push(actualDate);
+  }
+  const canonicalPath = `/${canonicalSegments.join("/")}`;
+  const canonical = `${siteUrl}${canonicalPath}`;
+  const title = `Esdeveniments ${dateLabel} a ${place}${
+    categoryLabel ? ` · ${categoryLabel}` : ""
+  }`;
+  const subTitle = `Descobreix plans ${
+    hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
+  } a ${place}${categoryLabel ? ` (${categoryLabel})` : ""}.`;
+
+  return {
+    placeTypeLabel,
+    pageData: {
+      title,
+      subTitle,
+      metaTitle: `${title} | Esdeveniments.cat`,
+      metaDescription: `Explora activitats i plans ${
+        hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
+      } a ${place}${
+        categoryLabel ? ` en la categoria ${categoryLabel}` : ""
+      }.`,
+      canonical,
+      notFoundTitle: "Sense esdeveniments disponibles",
+      notFoundDescription: `No hem trobat esdeveniments ${
+        hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
+      } a ${place}. Torna-ho a intentar més tard.`,
+    },
+  };
 }
 
 async function buildPlaceByDateEventsPromise({

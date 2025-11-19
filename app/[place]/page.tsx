@@ -27,6 +27,7 @@ import { redirect } from "next/navigation";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 import type { PlacePageEventsResult } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
+import { siteUrl } from "@config/index";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -87,17 +88,22 @@ export default async function Page({
     console.error("Error checking news availability:", error);
     return false;
   });
-  const placeShellDataPromise = getPlaceTypeAndLabelCached(place).then(
-    async (placeTypeLabel) => ({
-      placeTypeLabel,
-      pageData: await generatePagesData({
+  const placeShellDataPromise = (async () => {
+    try {
+      const placeTypeLabel: PlaceTypeAndLabel =
+        await getPlaceTypeAndLabelCached(place);
+      const pageData: PageData = await generatePagesData({
         currentYear: new Date().getFullYear(),
         place,
         byDate: "",
         placeTypeLabel,
-      }),
-    })
-  );
+      });
+      return { placeTypeLabel, pageData };
+    } catch (error) {
+      console.error("Place page: unable to build shell data", error);
+      return buildFallbackPlaceShellData(place);
+    }
+  })();
 
   const eventsPromise = buildPlaceEventsPromise({ place });
 
@@ -131,6 +137,31 @@ export default async function Page({
       categories={categories}
     />
   );
+}
+
+function buildFallbackPlaceShellData(place: string): {
+  placeTypeLabel: PlaceTypeAndLabel;
+  pageData: PageData;
+} {
+  const fallbackPlaceTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const pathSegment = place === "catalunya" ? "" : `/${place}`;
+  const canonical = `${siteUrl}${pathSegment}`;
+  const title = place === "catalunya" ? "Esdeveniments a Catalunya" : `Esdeveniments a ${place}`;
+  return {
+    placeTypeLabel: fallbackPlaceTypeLabel,
+    pageData: {
+      title,
+      subTitle: `Descobreix plans i activitats${place === "catalunya" ? "" : ` a ${place}`}.`,
+      metaTitle: `${title} | Esdeveniments.cat`,
+      metaDescription: `Explora els millors plans i activitats${
+        place === "catalunya" ? "" : ` a ${place}`
+      }.`,
+      canonical,
+      notFoundTitle: "Sense esdeveniments disponibles",
+      notFoundDescription:
+        "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a intentar més tard.",
+    },
+  };
 }
 
 async function buildPlaceEventsPromise({

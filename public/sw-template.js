@@ -102,7 +102,9 @@ workbox.routing.registerRoute(
 // Strategy for Event API Requests - Stale-While-Revalidate with 5-minute TTL
 // Events need fresher data, so we use a shorter cache duration
 workbox.routing.registerRoute(
-  ({ url }) => url.pathname === "/api/events" || url.pathname === "/api/events/categorized",
+  ({ url }) =>
+    url.pathname === "/api/events" ||
+    url.pathname === "/api/events/categorized",
   new workbox.strategies.StaleWhileRevalidate({
     cacheName: "esdeveniments-events-api-cache",
     plugins: [
@@ -131,11 +133,11 @@ workbox.routing.registerRoute(
   })
 );
 
-// Strategy for External API Requests - Cache First for better performance
-// External API requests are slower, so we prioritize cached responses
+// Strategy for External API Requests - Stale-While-Revalidate
+// Changed from CacheFirst to ensure users get fresh data updates in the background
 workbox.routing.registerRoute(
   ({ url }) => url.origin === "{{API_ORIGIN}}",
-  new workbox.strategies.CacheFirst({
+  new workbox.strategies.StaleWhileRevalidate({
     cacheName: "esdeveniments-external-api-cache",
     plugins: [
       new workbox.expiration.ExpirationPlugin({

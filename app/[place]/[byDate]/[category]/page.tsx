@@ -32,6 +32,7 @@ import {
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
+import { siteUrl } from "@config/index";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
@@ -235,10 +236,11 @@ export default async function FilteredPage({
   const categoryData = categories.find((cat) => cat.slug === filters.category);
 
   // Fetch shell data parallel to events/news
-  const placeShellDataPromise = getPlaceTypeAndLabelCached(filters.place).then(
-    async (placeTypeLabel) => ({
-      placeTypeAndLabel: placeTypeLabel,
-      pageData: await generatePagesData({
+  const placeShellDataPromise = (async () => {
+    try {
+      const placeTypeLabel: PlaceTypeAndLabel =
+        await getPlaceTypeAndLabelCached(filters.place);
+      const pageData: PageData = await generatePagesData({
         currentYear: new Date().getFullYear(),
         place: filters.place,
         byDate: filters.byDate as ByDateOptions,
@@ -249,9 +251,21 @@ export default async function FilteredPage({
             : undefined,
         categoryName: categoryData?.name,
         search: parsed.queryParams.search,
-      }),
-    })
-  );
+      });
+      return { placeTypeAndLabel: placeTypeLabel, pageData };
+    } catch (error) {
+      console.error(
+        "Place by date/category page: unable to build shell data",
+        error
+      );
+      return buildFallbackCategoryShellData({
+        place: filters.place,
+        byDate: filters.byDate,
+        category: filters.category,
+        categoryName: categoryData?.name,
+      });
+    }
+  })();
 
   const eventsPromise = buildCategoryEventsPromise({
     filters,
@@ -307,6 +321,61 @@ export default async function FilteredPage({
       hasNews={hasNews}
     />
   );
+}
+
+function buildFallbackCategoryShellData({
+  place,
+  byDate,
+  category,
+  categoryName,
+}: {
+  place: string;
+  byDate: string;
+  category: string;
+  categoryName?: string;
+}): { placeTypeAndLabel: PlaceTypeAndLabel; pageData: PageData } {
+  const placeTypeAndLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const hasSpecificDate =
+    byDate && byDate !== DEFAULT_FILTER_VALUE && byDate !== "";
+  const dateLabel = hasSpecificDate ? byDate : "els propers dies";
+  const categoryLabel =
+    category && category !== DEFAULT_FILTER_VALUE
+      ? categoryName || category
+      : "";
+  const canonicalSegments = [place];
+  if (hasSpecificDate) {
+    canonicalSegments.push(byDate);
+  }
+  if (category && category !== DEFAULT_FILTER_VALUE) {
+    canonicalSegments.push(category);
+  }
+  const canonicalPath = `/${canonicalSegments.join("/")}`;
+  const canonical = `${siteUrl}${canonicalPath}`;
+  const title = `${
+    categoryLabel || "Esdeveniments"
+  } ${dateLabel} a ${place}`;
+  const subTitle = `Descobreix ${
+    categoryLabel ? `plans de ${categoryLabel}` : "plans"
+  } ${hasSpecificDate ? `per ${byDate}` : "per als propers dies"} a ${place}.`;
+
+  return {
+    placeTypeAndLabel,
+    pageData: {
+      title,
+      subTitle,
+      metaTitle: `${title} | Esdeveniments.cat`,
+      metaDescription: `Explora ${
+        categoryLabel ? `propostes de ${categoryLabel}` : "plans"
+      } ${hasSpecificDate ? `per ${byDate}` : "per als propers dies"} a ${place}.`,
+      canonical,
+      notFoundTitle: "Sense esdeveniments disponibles",
+      notFoundDescription: `No hem trobat ${
+        categoryLabel ? `activitats de ${categoryLabel}` : "activitats"
+      } ${
+        hasSpecificDate ? `per ${byDate}` : "per als propers dies"
+      } a ${place}.`,
+    },
+  };
 }
 
 async function buildCategoryEventsPromise({
