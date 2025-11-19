@@ -1,4 +1,4 @@
-import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
+import { insertAds, filterPastEvents } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
@@ -9,7 +9,12 @@ import {
   generateWebPageSchema,
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
-import type { PlaceTypeAndLabel, PageData, ByDateOptions } from "types/common";
+import type {
+  PlaceTypeAndLabel,
+  PageData,
+  ByDateOptions,
+  JsonLdScript,
+} from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
@@ -26,13 +31,15 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
+import { siteUrl } from "@config/index";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { redirect } from "next/navigation";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import type { PlacePageEventsResult } from "types/props";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -226,115 +233,62 @@ export default async function FilteredPage({
   // Intentionally do NOT apply querystring filters (search/distance/lat/lon) on the server.
   // These are handled client-side to keep ISR query-agnostic.
 
-  // Fetch events, place label, and news check in parallel
-  const [placeTypeAndLabel, initialEventsResponse, hasNews] = await Promise.all(
-    [
-      getPlaceTypeAndLabelCached(filters.place),
-      fetchEvents(fetchParams),
-      hasNewsForPlace(filters.place),
-    ]
-  );
-  let eventsResponse = initialEventsResponse;
-  let events = eventsResponse?.content || [];
-  let noEventsFound = false;
-
-  // Check if we need to fetch fallback events from the region
-  if (!events || events.length === 0) {
-    const regionsWithCities = await fetchRegionsWithCities();
-    const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === filters.place)
-    );
-
-    if (regionWithCities) {
-      const regions = await fetchRegions();
-      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
-
-      if (regionWithSlug) {
-        // Fetch events from the parent region (use explicit date range)
-        const fallbackParams: FetchEventsParams = {
-          page: 0,
-          size: 7,
-          place: regionWithSlug.slug,
-        };
-        const fallbackDateRange = getDateRangeFromByDate(filters.byDate);
-        if (fallbackDateRange) {
-          fallbackParams.from = toLocalDateString(fallbackDateRange.from);
-          fallbackParams.to = toLocalDateString(fallbackDateRange.until);
-        }
-        // Intentionally DO NOT include category filter here.
-        // Rationale: if a city has no events for a given category, the
-        // regional fallback should surface any relevant events to help users
-        // discover what's on nearby, rather than returning zero results again.
-
-        eventsResponse = await fetchEvents(fallbackParams);
-        events = eventsResponse?.content || [];
-        noEventsFound = true;
-      }
-    }
-  }
-
-  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
-  if (!events || events.length === 0) {
-    const { from, until } = twoWeeksDefault();
-    const latestEventsParams: FetchEventsParams = {
-      page: 0,
-      size: 7,
-      from: toLocalDateString(from),
-      to: toLocalDateString(until),
-      // No place, category, or other filters - just get latest events
-    };
-
-    eventsResponse = await fetchEvents(latestEventsParams);
-    events = eventsResponse?.content || [];
-    noEventsFound = true;
-  }
-
-  const filteredEvents = filterPastEvents(events);
-  const eventsWithAds = insertAds(filteredEvents);
-
-  // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === filters.category);
 
-  // Generate page data for SEO
-  const pageData: PageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
-    place: filters.place,
-    byDate: filters.byDate as ByDateOptions,
-    placeTypeLabel: placeTypeAndLabel,
-    category:
-      filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
+  // Fetch shell data parallel to events/news
+  const placeShellDataPromise = (async () => {
+    try {
+      const placeTypeLabel: PlaceTypeAndLabel =
+        await getPlaceTypeAndLabelCached(filters.place);
+      const pageData: PageData = await generatePagesData({
+        currentYear: new Date().getFullYear(),
+        place: filters.place,
+        byDate: filters.byDate as ByDateOptions,
+        placeTypeLabel,
+        category:
+          filters.category !== DEFAULT_FILTER_VALUE
+            ? filters.category
+            : undefined,
+        categoryName: categoryData?.name,
+        search: parsed.queryParams.search,
+      });
+      return { placeTypeAndLabel: placeTypeLabel, pageData };
+    } catch (error) {
+      console.error(
+        "Place by date/category page: unable to build shell data",
+        error
+      );
+      return buildFallbackCategoryShellData({
+        place: filters.place,
+        byDate: filters.byDate,
+        category: filters.category,
+        categoryName: categoryData?.name,
+      });
+    }
+  })();
+
+  const eventsPromise = buildCategoryEventsPromise({
+    filters,
+    fetchParams,
+    pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
     categoryName: categoryData?.name,
-    search: parsed.queryParams.search,
   });
 
-  // Generate JSON-LD structured data for events
-  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
-  const structuredData =
-    validEvents.length > 0
-      ? generateItemListStructuredData(
-          validEvents,
-          categoryData
-            ? `${categoryData.name} ${filters.place}`
-            : `Esdeveniments ${filters.place}`
-        )
-      : null;
+  const hasNewsPromise = hasNewsForPlace(filters.place).catch((error) => {
+    console.error("Error checking news availability:", error);
+    return false;
+  });
 
-  // Generate WebPage and CollectionPage schemas
+  const [{ placeTypeAndLabel, pageData }, hasNews] = await Promise.all([
+    placeShellDataPromise,
+    hasNewsPromise,
+  ]);
+
   const webPageSchema = generateWebPageSchema({
     title: pageData.title,
     description: pageData.metaDescription,
     url: pageData.canonical,
   });
-
-  const collectionSchema =
-    validEvents.length > 0
-      ? generateCollectionPageSchema({
-          title: pageData.title,
-          description: pageData.metaDescription,
-          url: pageData.canonical,
-          numberOfItems: validEvents.length,
-        })
-      : null;
 
   // Late existence check to preserve UX without creating an early oracle
   if (place !== "catalunya") {
@@ -356,30 +310,148 @@ export default async function FilteredPage({
 
   return (
     <PlacePageShell
-      scripts={[
-        { id: "webpage-schema", data: webPageSchema },
-        ...(collectionSchema
-          ? [{ id: "collection-schema", data: collectionSchema }]
-          : []),
-        ...(structuredData
-          ? [
-              {
-                id: `events-${filters.place}-${filters.byDate}-${filters.category}`,
-                data: structuredData,
-              },
-            ]
-          : []),
-      ]}
-      initialEvents={eventsWithAds}
+      scripts={[{ id: "webpage-schema", data: webPageSchema }]}
+      eventsPromise={eventsPromise}
       pageData={pageData}
       placeTypeLabel={placeTypeAndLabel}
       place={filters.place}
       category={filters.category}
       date={filters.byDate}
-      serverHasMore={!eventsResponse?.last}
-      noEventsFound={noEventsFound}
       categories={categories}
       hasNews={hasNews}
     />
   );
+}
+
+function buildFallbackCategoryShellData({
+  place,
+  byDate,
+  category,
+  categoryName,
+}: {
+  place: string;
+  byDate: string;
+  category: string;
+  categoryName?: string;
+}): { placeTypeAndLabel: PlaceTypeAndLabel; pageData: PageData } {
+  const placeTypeAndLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const hasSpecificDate =
+    byDate && byDate !== DEFAULT_FILTER_VALUE && byDate !== "";
+  const dateLabel = hasSpecificDate ? byDate : "els propers dies";
+  const categoryLabel =
+    category && category !== DEFAULT_FILTER_VALUE
+      ? categoryName || category
+      : "";
+  const canonicalSegments = [place];
+  if (hasSpecificDate) {
+    canonicalSegments.push(byDate);
+  }
+  if (category && category !== DEFAULT_FILTER_VALUE) {
+    canonicalSegments.push(category);
+  }
+  const canonicalPath = `/${canonicalSegments.join("/")}`;
+  const canonical = `${siteUrl}${canonicalPath}`;
+  const title = `${
+    categoryLabel || "Esdeveniments"
+  } ${dateLabel} a ${place}`;
+  const subTitle = `Descobreix ${
+    categoryLabel ? `plans de ${categoryLabel}` : "plans"
+  } ${hasSpecificDate ? `per ${byDate}` : "per als propers dies"} a ${place}.`;
+
+  return {
+    placeTypeAndLabel,
+    pageData: {
+      title,
+      subTitle,
+      metaTitle: `${title} | Esdeveniments.cat`,
+      metaDescription: `Explora ${
+        categoryLabel ? `propostes de ${categoryLabel}` : "plans"
+      } ${hasSpecificDate ? `per ${byDate}` : "per als propers dies"} a ${place}.`,
+      canonical,
+      notFoundTitle: "Sense esdeveniments disponibles",
+      notFoundDescription: `No hem trobat ${
+        categoryLabel ? `activitats de ${categoryLabel}` : "activitats"
+      } ${
+        hasSpecificDate ? `per ${byDate}` : "per als propers dies"
+      } a ${place}.`,
+    },
+  };
+}
+
+async function buildCategoryEventsPromise({
+  filters,
+  fetchParams,
+  pageDataPromise,
+  categoryName,
+}: {
+  filters: { place: string; byDate: string; category: string };
+  fetchParams: FetchEventsParams;
+  pageDataPromise: Promise<PageData>;
+  categoryName?: string;
+}): Promise<PlacePageEventsResult> {
+  const { eventsResponse, events, noEventsFound } =
+    await fetchEventsWithFallback({
+      place: filters.place,
+      initialParams: fetchParams,
+      regionFallback: {
+        size: 7,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+      },
+      finalFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+        place: undefined,
+      },
+    });
+  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
+
+  const filteredEvents = filterPastEvents(events);
+
+  // Align noEventsFound logic with other pages
+  let finalNoEventsFound = noEventsFound;
+  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
+    finalNoEventsFound = true;
+  }
+
+  const eventsWithAds = insertAds(filteredEvents);
+  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const pageData = await pageDataPromise;
+  const structuredScripts: JsonLdScript[] = [];
+
+  if (validEvents.length > 0) {
+    const label = categoryName
+      ? `${categoryName} ${filters.place}`
+      : `Esdeveniments ${filters.place}`;
+
+    structuredScripts.push({
+      id: `events-${filters.place}-${filters.byDate}-${filters.category}`,
+      data: generateItemListStructuredData(validEvents, label),
+    });
+
+    const collectionSchema = generateCollectionPageSchema({
+      title: pageData.title,
+      description: pageData.metaDescription,
+      url: pageData.canonical,
+      numberOfItems: validEvents.length,
+    });
+
+    if (collectionSchema) {
+      structuredScripts.push({
+        id: `collection-${filters.place}-${filters.byDate}-${filters.category}`,
+        data: collectionSchema,
+      });
+    }
+  }
+
+  return {
+    events: eventsWithAds,
+    noEventsFound: finalNoEventsFound,
+    serverHasMore,
+    structuredScripts: structuredScripts.length
+      ? structuredScripts
+      : undefined,
+  };
 }

@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { fetchNews } from "@lib/api/news";
-import NewsCard from "@components/ui/newsCard";
 import type { Metadata } from "next";
 import {
   buildPageMeta,
@@ -9,9 +8,10 @@ import {
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
-import Head from "next/head";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import NewsList from "@components/noticies/NewsList";
+import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
 export const revalidate = 600;
 
 export async function generateMetadata({
@@ -66,79 +66,57 @@ export default async function Page({
       : Array.isArray(query.size)
       ? query.size[0]
       : undefined;
-  const currentPage = Number.isFinite(Number(pageParam))
+  const parsedPage = Number.isFinite(Number(pageParam))
     ? Number(pageParam)
     : 0;
-  const pageSize = Number.isFinite(Number(sizeParam)) ? Number(sizeParam) : 10;
+  const currentPage = parsedPage >= 0 ? parsedPage : 0;
 
-  const [response, placeType] = await Promise.all([
-    fetchNews({ page: currentPage, size: pageSize, place }),
-    getPlaceTypeAndLabelCached(place),
-  ]);
-  const items = response.content;
+  const parsedSize = Number.isFinite(Number(sizeParam))
+    ? Number(sizeParam)
+    : 10;
+  const pageSize = parsedSize > 0 ? parsedSize : 10;
 
-  if (!items || items.length === 0) {
-    return notFound();
-  }
+  // Start fetches immediately
+  const newsPromise = fetchNews({ page: currentPage, size: pageSize, place });
+  const placeTypePromise = getPlaceTypeAndLabelCached(place);
 
-  const list = items;
-
+  // We can await placeTypePromise if we want the title to be perfect immediately, 
+  // but to be strictly non-blocking as requested, we use the slug for the shell 
+  // and let the component handle the label.
+  // However, the user asked to render Breadcrumbs and Title immediately.
+  // Using the slug for the title is a good compromise.
+  
   const breadcrumbs = [
     { name: "Inici", url: siteUrl },
     { name: "Notícies", url: `${siteUrl}/noticies` },
-    { name: placeType.label, url: `${siteUrl}/noticies/${place}` },
+    { name: place, url: `${siteUrl}/noticies/${place}` }, // Use slug initially or maybe we can't know the label yet
   ];
+  
+  // We can't generate the full WebPageSchema with the correct label without awaiting placeType.
+  // But we can generate a basic one or wait for it inside a suspended component?
+  // SEO components usually need to be in the head or early.
+  // If we want non-blocking, we might have to sacrifice immediate perfect schema or use slug.
+  // I'll use slug for now in the shell schema.
+  
   const webPageSchema = generateWebPageSchema({
-    title: `Notícies de ${placeType.label}`,
-    description: `Arxiu i recomanacions d'esdeveniments a ${placeType.label}`,
+    title: `Notícies de ${place}`, 
+    description: `Arxiu i recomanacions d'esdeveniments a ${place}`,
     url: `${siteUrl}/noticies/${place}`,
     breadcrumbs,
   });
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
-  const newsItemList = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "@id": `${siteUrl}/noticies/${place}#news-itemlist`,
-    name: `Notícies de ${placeType.label}`,
-    numberOfItems: list.length,
-    itemListElement: list.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "NewsArticle",
-        "@id": `${siteUrl}/noticies/${place}/${item.slug}`,
-        url: `${siteUrl}/noticies/${place}/${item.slug}`,
-        headline: item.title,
-        ...(item.imageUrl ? { image: item.imageUrl } : {}),
-      },
-    })),
-  };
 
   return (
     <div className="container flex-col justify-center items-center mt-8">
-      <Head>
-        {currentPage > 0 && (
-          <link
-            rel="prev"
-            href={`${siteUrl}/noticies/${place}?page=${
-              currentPage - 1
-            }&size=${pageSize}`}
-          />
-        )}
-        {!response.last && (
-          <link
-            rel="next"
-            href={`${siteUrl}/noticies/${place}?page=${
-              currentPage + 1
-            }&size=${pageSize}`}
-          />
-        )}
-      </Head>
+      {/* Head links for prev/next are removed as they require data. 
+          If critical, they should be in generateMetadata or we accept they load later? 
+          Actually we can't inject into head from here easily if streaming. */}
+      
       <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
         <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
       )}
-      <JsonLdServer id="news-place-itemlist" data={newsItemList} />
+      
       <nav
         aria-label="Breadcrumb"
         className="mb-3 w-full px-2 lg:px-0 text-sm text-foreground-strong/70"
@@ -174,7 +152,7 @@ export default async function Page({
         </ol>
       </nav>
       <h1 className="uppercase mb-2 px-2 lg:px-0">
-        Notícies de {placeType.label}
+        Notícies de <span className="capitalize">{place}</span>
       </h1>
       <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
         <PressableAnchor
@@ -195,47 +173,16 @@ export default async function Page({
           RSS
         </PressableAnchor>
       </div>
-      <section className="flex flex-col gap-6 px-2 lg:px-0">
-        {list.map((event, index) => (
-          <NewsCard
-            key={`${event.id}-${index}`}
-            event={event}
-            placeSlug={place}
-            placeLabel={placeType.label}
-            variant={index === 0 ? "hero" : "default"}
-          />
-        ))}
-      </section>
-      <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
-        {currentPage > 0 ? (
-          <PressableAnchor
-            href={{
-              pathname: `/noticies/${place}`,
-              query: { page: String(currentPage - 1), size: String(pageSize) },
-            }}
-            prefetch={false}
-            className="text-primary underline"
-            variant="inline"
-          >
-            ← Anterior
-          </PressableAnchor>
-        ) : (
-          <span />
-        )}
-        {!response.last && (
-          <PressableAnchor
-            href={{
-              pathname: `/noticies/${place}`,
-              query: { page: String(currentPage + 1), size: String(pageSize) },
-            }}
-            prefetch={false}
-            className="text-primary underline"
-            variant="inline"
-          >
-            Més notícies →
-          </PressableAnchor>
-        )}
-      </div>
+      
+      <Suspense fallback={<NewsListSkeleton />}>
+        <NewsList 
+          newsPromise={newsPromise} 
+          placeTypePromise={placeTypePromise} 
+          place={place}
+          currentPage={currentPage}
+          pageSize={pageSize}
+        />
+      </Suspense>
     </div>
   );
 }

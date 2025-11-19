@@ -1,4 +1,4 @@
-import { memo, ReactElement } from "react";
+import { memo } from "react";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import Badge from "@components/ui/common/badge";
@@ -15,10 +15,12 @@ import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { computeTemporalStatus } from "@utils/event-status";
 
+import type { CategorySummaryResponseDTO } from "types/api/category";
+
 const resolveCategoryDetails = (
   categoryKey: string,
   firstEvent: EventSummaryResponseDTO | undefined,
-  allCategories: ServerEventsCategorizedProps["categories"]
+  allCategories: CategorySummaryResponseDTO[] | undefined
 ): { categoryName: string; categorySlug: string } => {
   const safeToLowerCase = (value: unknown): string => {
     if (typeof value !== "string" || !value) return "";
@@ -88,11 +90,20 @@ const resolveCategoryDetails = (
   };
 };
 
-function ServerEventsCategorized({
-  categorizedEvents,
+function ServerEventsCategorized(props: ServerEventsCategorizedProps) {
+  return <ServerEventsCategorizedContent {...props} />;
+}
+
+export async function ServerEventsCategorizedContent({
+  categorizedEventsPromise,
   pageData,
-  categories,
-}: ServerEventsCategorizedProps): ReactElement {
+  categoriesPromise,
+}: ServerEventsCategorizedProps) {
+  const [categorizedEvents, categories] = await Promise.all([
+    categorizedEventsPromise,
+    categoriesPromise || Promise.resolve<CategorySummaryResponseDTO[]>([]),
+  ]);
+
   // Filter out ads and past events before processing
   const filteredCategorizedEvents = Object.entries(categorizedEvents).reduce(
     (acc, [category, events]) => {
@@ -272,5 +283,7 @@ function ServerEventsCategorized({
     </>
   );
 }
+
+
 
 export default memo(ServerEventsCategorized);

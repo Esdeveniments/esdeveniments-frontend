@@ -11,6 +11,7 @@ import {
   GroupedOption,
   PageData,
   PlaceTypeAndLabel,
+  JsonLdScript,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
@@ -262,10 +263,29 @@ export interface SsrListWrapperProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
-export interface ServerEventsCategorizedProps {
-  categorizedEvents: Record<string, ListEvent[]>;
-  pageData?: PageData;
+export interface PlacePageEventsResult {
+  events: ListEvent[];
+  noEventsFound: boolean;
+  serverHasMore: boolean;
+  structuredScripts?: JsonLdScript[];
+}
+
+export interface PlacePageShellProps {
+  scripts?: JsonLdScript[];
+  eventsPromise: Promise<PlacePageEventsResult>;
+  placeTypeLabel: PlaceTypeAndLabel;
+  pageData: PageData;
+  place: string;
+  category?: string;
+  date?: string;
+  hasNews?: boolean;
   categories?: CategorySummaryResponseDTO[];
+}
+
+export interface ServerEventsCategorizedProps {
+  categorizedEventsPromise: Promise<Record<string, ListEvent[]>>;
+  pageData?: PageData;
+  categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
 }
 
 // Location Discovery Widget Props
@@ -324,6 +344,30 @@ export interface NewsCardProps {
   placeSlug: string;
   placeLabel?: string;
   variant?: "default" | "hero";
+}
+
+export interface NewsArticleDetailProps {
+  detailPromise: Promise<import("./api/news").NewsDetailResponseDTO | null>;
+  placeTypePromise: Promise<{ label: string }>;
+  place: string;
+  article: string;
+}
+
+export interface HubResult {
+  hub: { slug: string; name: string };
+  items: NewsSummaryResponseDTO[];
+}
+
+export interface NewsHubsGridProps {
+  promise: Promise<HubResult[]>;
+}
+
+export interface NewsListProps {
+  newsPromise: Promise<import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>>;
+  placeTypePromise: Promise<{ label: string }>;
+  place: string;
+  currentPage: number;
+  pageSize: number;
 }
 
 // Mobile share island component props

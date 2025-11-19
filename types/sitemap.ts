@@ -25,3 +25,15 @@ export interface BuildSitemapOptions {
 }
 
 export type UrlField = Omit<SitemapField, "image">;
+
+export interface SitemapContentProps {
+  dataPromise: Promise<{
+    regions: import("./api/event").RegionSummaryResponseDTO[];
+    cities: import("./api/city").CitySummaryResponseDTO[];
+  }>;
+}
+
+export interface SitemapHeaderProps {
+  town: string;
+  placePromise: Promise<import("./api/place").PlaceResponseDTO | null>;
+}

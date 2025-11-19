@@ -11,11 +11,12 @@ import {
 import JsonLdServer from "@components/partials/JsonLdServer";
 import type { NavigationItem, PageData, Href } from "types/common";
 import { CategorizedEvents } from "types/api/event";
-import type { CategorySummaryResponseDTO } from "types/api/category";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { computeTemporalStatus } from "@utils/event-status";
 import { Suspense, JSX } from "react";
+import { HomePageSkeleton, SearchSkeleton } from "@components/ui/common/skeletons";
 
 const homeSeoLinkSections = [
   {
@@ -75,18 +76,8 @@ export async function generateMetadata() {
 }
 
 export default async function Page(): Promise<JSX.Element> {
-  // Always fetch categorized events (no URL filters support)
-  const categorizedEvents: CategorizedEvents = await getCategorizedEvents(5);
-
-  // Fetch dynamic categories for enhanced category support
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await fetchCategories();
-  } catch (error) {
-    // Continue without categories - components will use static fallbacks
-    console.error("Error fetching categories:", error);
-    categories = [];
-  }
+  const categorizedEventsPromise = getCategorizedEvents(5);
+  const categoriesPromise = fetchCategories();
 
   const pageData: PageData = await generatePagesData({
     currentYear: new Date().getFullYear(),
@@ -94,9 +85,61 @@ export default async function Page(): Promise<JSX.Element> {
     byDate: "",
   });
 
+  const siteNavigationSchema =
+    generateSiteNavigationElementSchema(homeNavigationItems);
+
+  return (
+    <>
+      {siteNavigationSchema && (
+        <JsonLdServer id="site-navigation" data={siteNavigationSchema} />
+      )}
+
+      <Suspense fallback={null}>
+        <HomeStructuredData
+          categorizedEventsPromise={categorizedEventsPromise}
+          pageData={pageData}
+        />
+      </Suspense>
+
+      <div className="container flex justify-center items-center">
+        <Suspense fallback={<SearchSkeleton />}>
+          <Search />
+        </Suspense>
+      </div>
+
+      <Suspense fallback={<HomePageSkeleton />}>
+        <ServerEventsCategorized
+          categorizedEventsPromise={categorizedEventsPromise}
+          pageData={pageData}
+          categoriesPromise={categoriesPromise}
+        />
+      </Suspense>
+    </>
+  );
+}
+
+async function HomeStructuredData({
+  categorizedEventsPromise,
+  pageData,
+}: {
+  categorizedEventsPromise: Promise<CategorizedEvents>;
+  pageData: PageData;
+}): Promise<JSX.Element> {
+  const categorizedEvents = await categorizedEventsPromise;
   const homepageEvents = Object.values(categorizedEvents)
     .flat()
-    .filter(isEventSummaryResponseDTO);
+    .filter(isEventSummaryResponseDTO)
+    .filter((event) => {
+      // Filter out past events to match UI
+      const status = computeTemporalStatus(
+        event.startDate,
+        event.endDate,
+        undefined,
+        event.startTime,
+        event.endTime
+      );
+      return status.state !== "past";
+    });
 
   const itemListSchema =
     homepageEvents.length > 0
@@ -125,9 +168,6 @@ export default async function Page(): Promise<JSX.Element> {
         })
       : null;
 
-  const siteNavigationSchema =
-    generateSiteNavigationElementSchema(homeNavigationItems);
-
   const structuredSchemas = [
     { id: "webpage-schema", data: webPageSchema },
     ...(collectionSchema
@@ -136,9 +176,6 @@ export default async function Page(): Promise<JSX.Element> {
     ...(itemListSchema
       ? [{ id: "homepage-events", data: itemListSchema }]
       : []),
-    ...(siteNavigationSchema
-      ? [{ id: "site-navigation", data: siteNavigationSchema }]
-      : []),
   ];
 
   return (
@@ -146,22 +183,6 @@ export default async function Page(): Promise<JSX.Element> {
       {structuredSchemas.map((schema) => (
         <JsonLdServer key={schema.id} id={schema.id} data={schema.data} />
       ))}
-
-      <div className="container flex justify-center items-center">
-        <Suspense
-          fallback={
-            <div className="w-full h-12 bg-background animate-pulse rounded-full" />
-          }
-        >
-          <Search />
-        </Suspense>
-      </div>
-
-      <ServerEventsCategorized
-        categorizedEvents={categorizedEvents}
-        pageData={pageData}
-        categories={categories}
-      />
     </>
   );
 }

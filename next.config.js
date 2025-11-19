@@ -17,6 +17,7 @@ const nextConfig = {
   // --- Experimental Features ---
   experimental: {
     scrollRestoration: true,
+    inlineCss: true,
   },
 
   // --- Optimizations ---

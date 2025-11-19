@@ -1,7 +1,7 @@
-import { fetchEvents, insertAds, filterPastEvents } from "@lib/api/events";
+import { insertAds, filterPastEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
+import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import { hasNewsForPlace } from "@lib/api/news";
 import {
@@ -14,7 +14,7 @@ import type {
   PageData,
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import { FetchEventsParams } from "types/event";
+import type { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
@@ -25,6 +25,9 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect } from "next/navigation";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
+import type { PlacePageEventsResult } from "types/props";
+import { twoWeeksDefault } from "@lib/dates";
+import { siteUrl } from "@config/index";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -77,101 +80,38 @@ export default async function Page({
 
   validatePlaceOrThrow(place);
 
-  // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
-  // Invalid places will naturally result in empty event lists, which the page handles gracefully.
-
-  // Fetch dynamic categories for metadata and client-side filtering
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await fetchCategories();
-  } catch (error) {
-    // Continue without categories - will use static fallbacks
+  const categoriesPromise = fetchCategories().catch((error) => {
     console.error("Error fetching categories:", error);
-    categories = []; // Fallback to empty array if fetch fails
-  }
-
-  // Server-side fetch: canonical, query-agnostic (no search, distance, lat, lon)
-  // All query filters are handled client-side via HybridEventsListClient
-  const fetchParams: FetchEventsParams = {
-    page: 0,
-    size: 10,
-  };
-
-  if (place !== "catalunya") {
-    fetchParams.place = place;
-  }
-
-  // Note: category, search, distance, lat, lon filters are NOT applied server-side
-  // to keep this route ISR-compatible. They are handled client-side.
-
-  // Fetch events and categories in parallel when safe to do so later
-  let eventsResponse = await fetchEvents(fetchParams);
-  let noEventsFound = false;
-
-  if (
-    !eventsResponse ||
-    !eventsResponse.content ||
-    eventsResponse.content.length === 0
-  ) {
-    const regionsWithCities = await fetchRegionsWithCities();
-    const regionWithCities = regionsWithCities.find((r) =>
-      r.cities.some((city) => city.value === place)
-    );
-
-    if (regionWithCities) {
-      const regions = await fetchRegions();
-      const regionWithSlug = regions.find((r) => r.id === regionWithCities.id);
-
-      if (regionWithSlug) {
-        eventsResponse = await fetchEvents({
-          page: 0,
-          size: 7,
-          place: regionWithSlug.slug,
-        });
-        noEventsFound = true;
-      }
+    return [] as CategorySummaryResponseDTO[];
+  });
+  const hasNewsPromise = hasNewsForPlace(place).catch((error) => {
+    console.error("Error checking news availability:", error);
+    return false;
+  });
+  const placeShellDataPromise = (async () => {
+    try {
+      const placeTypeLabel: PlaceTypeAndLabel =
+        await getPlaceTypeAndLabelCached(place);
+      const pageData: PageData = await generatePagesData({
+        currentYear: new Date().getFullYear(),
+        place,
+        byDate: "",
+        placeTypeLabel,
+      });
+      return { placeTypeLabel, pageData };
+    } catch (error) {
+      console.error("Place page: unable to build shell data", error);
+      return buildFallbackPlaceShellData(place);
     }
-  }
+  })();
 
-  // Final fallback: if still no events, fetch latest events with no filters (like Catalunya homepage)
-  if (
-    !eventsResponse ||
-    !eventsResponse.content ||
-    eventsResponse.content.length === 0
-  ) {
-    eventsResponse = await fetchEvents({
-      page: 0,
-      size: 7,
-      // No place, category, or other filters - just get latest events
-    });
-    noEventsFound = true;
-  }
+  const eventsPromise = buildPlaceEventsPromise({ place });
 
-  const events = eventsResponse?.content || [];
-  const filteredEvents = filterPastEvents(events);
-  const eventsWithAds = insertAds(filteredEvents);
-
-  // Check news (categories already fetched above)
-  const hasNews = await hasNewsForPlace(place);
-
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
-    place
+  const [{ placeTypeLabel, pageData }, categories, hasNews] = await Promise.all(
+    [placeShellDataPromise, categoriesPromise, hasNewsPromise]
   );
 
-  const pageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
-    place,
-    byDate: "",
-    placeTypeLabel,
-  });
-
-  const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
-  const structuredData =
-    validEvents.length > 0
-      ? generateItemListStructuredData(validEvents, `Esdeveniments ${place}`)
-      : null;
-
-  // Late existence check to preserve UX without creating an early oracle
+  // Late existence check to preserve UX without creating an enumeration oracle
   if (place !== "catalunya") {
     let placeExists: boolean | undefined;
     try {
@@ -189,17 +129,108 @@ export default async function Page({
 
   return (
     <PlacePageShell
-      scripts={
-        structuredData ? [{ id: `events-${place}`, data: structuredData }] : []
-      }
-      initialEvents={eventsWithAds}
+      eventsPromise={eventsPromise}
       placeTypeLabel={placeTypeLabel}
       pageData={pageData}
-      noEventsFound={noEventsFound}
       place={place}
-      serverHasMore={!eventsResponse?.last}
-      categories={categories}
       hasNews={hasNews}
+      categories={categories}
     />
   );
+}
+
+function buildFallbackPlaceShellData(place: string): {
+  placeTypeLabel: PlaceTypeAndLabel;
+  pageData: PageData;
+} {
+  const fallbackPlaceTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const pathSegment = place === "catalunya" ? "" : `/${place}`;
+  const canonical = `${siteUrl}${pathSegment}`;
+  const title = place === "catalunya" ? "Esdeveniments a Catalunya" : `Esdeveniments a ${place}`;
+  return {
+    placeTypeLabel: fallbackPlaceTypeLabel,
+    pageData: {
+      title,
+      subTitle: `Descobreix plans i activitats${place === "catalunya" ? "" : ` a ${place}`}.`,
+      metaTitle: `${title} | Esdeveniments.cat`,
+      metaDescription: `Explora els millors plans i activitats${
+        place === "catalunya" ? "" : ` a ${place}`
+      }.`,
+      canonical,
+      notFoundTitle: "Sense esdeveniments disponibles",
+      notFoundDescription:
+        "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a intentar més tard.",
+    },
+  };
+}
+
+async function buildPlaceEventsPromise({
+  place,
+}: {
+  place: string;
+}): Promise<PlacePageEventsResult> {
+  const fetchParams: FetchEventsParams = {
+    page: 0,
+    size: 10,
+  };
+
+  if (place !== "catalunya") {
+    fetchParams.place = place;
+  }
+
+  const { eventsResponse, events, noEventsFound } =
+    await fetchEventsWithFallback({
+      place,
+      initialParams: fetchParams,
+      regionFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: false,
+      },
+      finalFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+        place: undefined,
+      },
+    });
+  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
+
+  const filteredEvents = filterPastEvents(events);
+
+  // Re-check noEventsFound after filtering past events
+  // Note: The helper handles the fallback logic which sets noEventsFound=true when falling back.
+  // But if we have events (from initial or fallback) and filterPastEvents removes them all,
+  // we should set noEventsFound=true if it wasn't already.
+  // However, the original code had a specific condition:
+  // if (events.length > 0 && filteredEvents.length === 0 && !noEventsFound) { noEventsFound = true; }
+  // We need to preserve this.
+
+  let finalNoEventsFound = noEventsFound;
+  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
+    finalNoEventsFound = true;
+  }
+
+  const eventsWithAds = insertAds(filteredEvents);
+  const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
+  const structuredScripts =
+    validEvents.length > 0
+      ? [
+          {
+            id: `events-${place}`,
+            data: generateItemListStructuredData(
+              validEvents,
+              `Esdeveniments ${place}`
+            ),
+          },
+        ]
+      : undefined;
+
+  return {
+    events: eventsWithAds,
+    noEventsFound: finalNoEventsFound,
+    serverHasMore,
+    structuredScripts,
+  };
 }
