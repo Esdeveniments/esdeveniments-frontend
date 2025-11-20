@@ -57,6 +57,7 @@ vi.mock("@heroicons/react/outline", () => ({
   EmojiHappyIcon: () => <svg data-testid="emojihappy-icon" />,
   MusicNoteIcon: () => <svg data-testid="musicnote-icon" />,
   TicketIcon: () => <svg data-testid="ticket-icon" />,
+  PhotographIcon: () => <svg data-testid="photograph-icon" />,
 }));
 
 vi.mock("next/link", () => ({

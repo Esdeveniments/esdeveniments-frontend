@@ -335,10 +335,10 @@ export async function ServerEventsCategorizedContent({
       (PRIORITY_CATEGORY_ORDER.get(b.normalizedSlug) ?? Number.MAX_SAFE_INTEGER)
   );
 
-  const categorySectionsToRender = [...prioritizedSections, ...otherSections].slice(
-    0,
-    MAX_CATEGORY_SECTIONS
-  );
+  const categorySectionsToRender = [
+    ...prioritizedSections,
+    ...otherSections,
+  ].slice(0, MAX_CATEGORY_SECTIONS);
 
   const hasEvents = categorySectionsToRender.length > 0;
 
