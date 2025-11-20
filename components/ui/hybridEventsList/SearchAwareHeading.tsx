@@ -1,11 +1,9 @@
 "use client";
 
-import { ReactElement, useMemo } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { ReactElement } from "react";
 import type { SearchAwareHeadingProps } from "types/props";
-import { extractURLSegments } from "@utils/url-parsing";
-import { parseFiltersFromUrl } from "@utils/url-filters";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
+import { useUrlFilters } from "@components/hooks/useUrlFilters";
 
 export default function SearchAwareHeading({
   pageData,
@@ -14,16 +12,8 @@ export default function SearchAwareHeading({
   subtitleClass,
   cta,
 }: SearchAwareHeadingProps): ReactElement {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-
-  const searchTerm = useMemo(() => {
-    const paramsString = searchParams?.toString() || "";
-    const urlSearchParams = new URLSearchParams(paramsString);
-    const segments = extractURLSegments(pathname || "/");
-    const parsed = parseFiltersFromUrl(segments, urlSearchParams, categories);
-    return parsed.queryParams.search;
-  }, [searchParams, pathname, categories]);
+  const { queryParams } = useUrlFilters(categories);
+  const searchTerm = queryParams.search;
 
   const enhancedTitle = appendSearchQuery(pageData.title, searchTerm);
   const enhancedSubtitle = appendSearchQuery(pageData.subTitle, searchTerm);

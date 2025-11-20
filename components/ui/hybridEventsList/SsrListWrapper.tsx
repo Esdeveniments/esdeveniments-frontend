@@ -1,10 +1,8 @@
 "use client";
 
-import { useMemo, JSX } from "react";
-import { useSearchParams, usePathname } from "next/navigation";
-import { parseFiltersFromUrl } from "@utils/url-filters";
-import { extractURLSegments } from "@utils/url-parsing";
+import { JSX } from "react";
 import type { SsrListWrapperProps } from "types/props";
+import { useUrlFilters } from "@components/hooks/useUrlFilters";
 
 // Declaratively controls visibility of the SSR list based on client-only filters.
 // Keeps SSR content in the initial HTML for SEO, then hides it after hydration
@@ -13,16 +11,9 @@ export default function SsrListWrapper({
   children,
   categories = [],
 }: SsrListWrapperProps): JSX.Element {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const hasClientFilters = useMemo(() => {
-    const urlSegments = extractURLSegments(pathname || "/");
-    const urlSearchParams = new URLSearchParams(searchParams?.toString() || "");
-    const parsed = parseFiltersFromUrl(urlSegments, urlSearchParams, categories);
-    const { search, distance, lat, lon } = parsed.queryParams;
-    return !!(search || distance || lat || lon);
-  }, [pathname, searchParams, categories]);
+  const { queryParams } = useUrlFilters(categories);
+  const { search, distance, lat, lon } = queryParams;
+  const hasClientFilters = !!(search || distance || lat || lon);
 
   return (
     <div
@@ -34,5 +25,4 @@ export default function SsrListWrapper({
     </div>
   );
 }
-
 

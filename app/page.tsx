@@ -16,13 +16,9 @@ import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { computeTemporalStatus } from "@utils/event-status";
-import type { FeaturedPlaceConfig, SeoLinkItem } from "types/props";
+import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 
-const homeSeoLinkSections: {
-  id: string;
-  title: string;
-  links: SeoLinkItem[];
-}[] = [
+const homeSeoLinkSections: SeoLinkSection[] = [
   {
     id: "today",
     title: "Què fer avui",

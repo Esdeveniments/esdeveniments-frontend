@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
-import Link from "next/link";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import {
   SpeakerphoneIcon,
@@ -186,10 +185,11 @@ function ServerEventsCategorized({
         />
         <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:pb-2">
           {QUICK_CATEGORY_LINKS.map(({ label, url, Icon }) => (
-            <Link
+            <PressableAnchor
               key={url}
               href={url}
               prefetch={false}
+              variant="plain"
               className="btn-category h-full w-full text-sm sm:w-auto whitespace-nowrap"
             >
               <span className="flex items-center gap-2 whitespace-nowrap">
@@ -199,7 +199,7 @@ function ServerEventsCategorized({
                 />
                 <span className="truncate">{label}</span>
               </span>
-            </Link>
+            </PressableAnchor>
           ))}
         </div>
       </section>
@@ -285,7 +285,7 @@ export async function ServerEventsCategorizedContent({
     ]);
 
   // 4. Processing
-  const featuredSections = (rawFeaturedSections ?? []).filter(
+  const featuredSections = rawFeaturedSections.filter(
     (
       s
     ): s is FeaturedPlaceConfig & {
@@ -561,14 +561,15 @@ export async function ServerEventsCategorizedContent({
           />
           <div className="grid grid-cols-3 gap-element-gap mt-element-gap">
             {seoTopTownLinks.map((link) => (
-              <Link
+              <PressableAnchor
                 key={link.href}
                 href={link.href}
                 prefetch={false}
+                variant="plain"
                 className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive"
               >
                 {link.label}
-              </Link>
+              </PressableAnchor>
             ))}
           </div>
         </section>
@@ -579,13 +580,14 @@ export async function ServerEventsCategorizedContent({
         <p className="body-large text-foreground/70 font-medium mb-element-gap">
           No trobes el que busques?
         </p>
-        <Link
+        <PressableAnchor
           href="/catalunya"
           prefetch={false}
+          variant="plain"
           className="btn-primary w-full sm:w-auto"
         >
           Veure tota l&apos;agenda
-        </Link>
+        </PressableAnchor>
       </section>
     </>
   );

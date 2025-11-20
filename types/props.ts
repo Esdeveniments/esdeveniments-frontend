@@ -299,6 +299,12 @@ export interface SeoLinkItem {
   label: string;
 }
 
+export interface SeoLinkSection {
+  id: string;
+  title: string;
+  links: SeoLinkItem[];
+}
+
 export interface ServerEventsCategorizedProps {
   categorizedEventsPromise: Promise<Record<string, ListEvent[]>>;
   pageData?: PageData;
