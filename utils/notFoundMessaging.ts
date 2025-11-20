@@ -9,7 +9,11 @@ export function appendSearchQuery(
     return normalizedBase;
   }
 
-  const sanitizedSearch = normalizedSearch.replace(/"/g, "'");
+  function escapeForHtml(s: string) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  // Replace double quotes to avoid breaking the surrounding literal, then escape HTML chars
+  const sanitizedSearch = escapeForHtml(normalizedSearch.replace(/"/g, "'"));
   const snippet = ` per a la cerca "${sanitizedSearch}"`;
 
   if (normalizedBase.includes(snippet)) {
