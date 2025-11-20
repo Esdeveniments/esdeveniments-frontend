@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { captureException } from "@sentry/nextjs";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
@@ -99,7 +100,20 @@ export async function fetchEvents(
     return validated;
   } catch (e) {
     console.error("Error fetching events via internal API:", e);
+    captureException(e, {
+      tags: { section: "events-fetch", fallback: "internal-api-failed" },
+      extra: {
+        params,
+        fallbackTriggered: true,
+      },
+    });
     const externalResult = await fetchExternalWithValidation();
+    if (!externalResult) {
+      captureException(new Error("Both internal and external API failed"), {
+        tags: { section: "events-fetch", fallback: "external-also-failed" },
+        extra: { params },
+      });
+    }
     return externalResult ?? fallbackResponse;
   }
 }

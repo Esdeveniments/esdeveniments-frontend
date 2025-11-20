@@ -20,8 +20,11 @@ export function appendSearchQuery(
     return normalizedBase;
   }
 
-  // Escape HTML entities in user-provided search query to prevent XSS
-  const escapedSearch = escapeXml(normalizedSearch);
+  // Replace double quotes with single quotes to avoid conflicts with outer quotes,
+  // then escape all HTML entities in user-provided search query to prevent XSS
+  // Using full escapeXml for defense-in-depth (escapes <, >, &, ", and ')
+  const searchWithSingleQuotes = normalizedSearch.replace(/"/g, "'");
+  const escapedSearch = escapeXml(searchWithSingleQuotes);
   const snippet = ` per a la cerca "${escapedSearch}"`;
 
   if (normalizedBase.includes(snippet)) {
