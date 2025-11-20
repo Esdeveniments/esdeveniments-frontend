@@ -156,7 +156,7 @@ function ServerEventsCategorized({
   return (
     <div className="w-full bg-background">
       {/* 1. INSTANT RENDER: SEARCH & HEADER */}
-      <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap px-section-x">
+      <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap">
         <div className="container">
           <Suspense fallback={<SearchSkeleton />}>
             <Search />
