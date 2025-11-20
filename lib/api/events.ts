@@ -52,6 +52,8 @@ export async function fetchEvents(
     last: true,
   };
 
+  const sanitizedParams = (({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }) => ({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }))(params || {});
+
   const fetchExternalWithValidation = async () => {
     try {
       const data = await fetchEventsExternal(params);
@@ -100,10 +102,16 @@ export async function fetchEvents(
     return validated;
   } catch (e) {
     console.error("Error fetching events via internal API:", e);
+    // Sanitize params before sending to Sentry to avoid leaking user-supplied PII
+    const sanitizedParams = (({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }) => ({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }))(params || {});
+    // Sanitize params before sending to Sentry to avoid leaking user-supplied PII
+    const sanitizedParams = (({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }) => ({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }))(params || {});
+    const sanitizedParams = (({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }) => ({ page, size, place, category, lat, lon, radius, term, byDate, from, to, isToday }))(params || {});
+    const sanitizedParams = (({ page, size, category, radius, byDate, from, to, isToday }) => ({ page, size, category, radius, byDate, from, to, isToday }))(params || {});
     captureException(e, {
       tags: { section: "events-fetch", fallback: "internal-api-failed" },
       extra: {
-        params,
+        sanitizedParams,
         fallbackTriggered: true,
       },
     });
@@ -111,7 +119,7 @@ export async function fetchEvents(
     if (!externalResult) {
       captureException(new Error("Both internal and external API failed"), {
         tags: { section: "events-fetch", fallback: "external-also-failed" },
-        extra: { params },
+        extra: { sanitizedParams },
       });
     }
     return externalResult ?? fallbackResponse;
