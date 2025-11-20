@@ -307,6 +307,14 @@ export interface ServerEventsCategorizedProps {
   seoTopTownLinks?: SeoLinkItem[];
 }
 
+export interface SearchAwareHeadingProps {
+  pageData: PageData;
+  categories?: CategorySummaryResponseDTO[];
+  titleClass: string;
+  subtitleClass: string;
+  cta?: ReactNode;
+}
+
 // Location Discovery Widget Props
 export interface LocationDiscoveryWidgetProps {
   className?: string;

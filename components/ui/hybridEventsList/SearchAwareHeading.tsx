@@ -1,20 +1,11 @@
 "use client";
 
-import { ReactElement, ReactNode, useMemo } from "react";
+import { ReactElement, useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import type { PageData } from "types/common";
-import type { CategorySummaryResponseDTO } from "types/api/category";
+import type { SearchAwareHeadingProps } from "types/props";
 import { extractURLSegments } from "@utils/url-parsing";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
-
-interface SearchAwareHeadingProps {
-  pageData: PageData;
-  categories?: CategorySummaryResponseDTO[];
-  titleClass: string;
-  subtitleClass: string;
-  cta?: ReactNode;
-}
 
 export default function SearchAwareHeading({
   pageData,

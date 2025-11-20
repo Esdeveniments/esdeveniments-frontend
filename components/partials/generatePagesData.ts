@@ -7,10 +7,7 @@ import {
   PlaceTypeAndLabel,
 } from "types/common";
 import { formatCatalanA } from "@utils/helpers";
-import {
-  appendSearchQuery,
-  splitNotFoundText,
-} from "@utils/notFoundMessaging";
+import { splitNotFoundText } from "@utils/notFoundMessaging";
 
 const month = monthsName[new Date().getMonth()];
 

@@ -48,6 +48,8 @@ const PRIORITY_CATEGORY_ORDER = new Map<string, number>(
   PRIORITY_CATEGORY_ORDER_ENTRIES
 );
 
+const MAX_CATEGORY_SECTIONS = 5;
+
 const QUICK_CATEGORY_LINKS = [
   {
     label: "Festes Majors",
@@ -148,9 +150,6 @@ function ServerEventsCategorized({
       {/* 1. HERO SEARCH */}
       <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap px-section-x">
         <div className="container">
-          <h1 className="sr-only">
-            Agenda d&apos;activitats i esdeveniments a Catalunya
-          </h1>
           <Suspense fallback={<SearchSkeleton />}>
             <Search />
           </Suspense>
@@ -201,7 +200,6 @@ function ServerEventsCategorized({
       {/* 3. MAIN LIST + FEATURED PLACES */}
       <ServerEventsCategorizedContent
         {...contentProps}
-        pageData={pageData}
         seoTopTownLinks={seoTopTownLinks}
       />
     </div>
@@ -298,8 +296,7 @@ export async function ServerEventsCategorizedContent({
 
   const categorySections = Object.entries(filteredCategorizedEvents).map(
     ([category, events]) => {
-      const typedEvents = events;
-      const firstEvent = typedEvents.find(isEventSummaryResponseDTO);
+      const firstEvent = events.find(isEventSummaryResponseDTO);
       const { categoryName, categorySlug } = resolveCategoryDetails(
         category,
         firstEvent,
@@ -308,7 +305,7 @@ export async function ServerEventsCategorizedContent({
       const normalizedSlug = categorySlug?.toLowerCase() ?? "";
       return {
         key: category,
-        events: typedEvents,
+        events,
         categoryName,
         categorySlug,
         normalizedSlug,
@@ -317,24 +314,31 @@ export async function ServerEventsCategorizedContent({
     }
   );
 
-  const prioritizedCategorySections = categorySections
-    .filter(
-      (section) =>
-        section.normalizedSlug &&
-        PRIORITY_CATEGORY_ORDER.has(section.normalizedSlug)
-    )
-    .sort(
-      (a, b) =>
-        (PRIORITY_CATEGORY_ORDER.get(a.normalizedSlug) ??
-          Number.MAX_SAFE_INTEGER) -
-        (PRIORITY_CATEGORY_ORDER.get(b.normalizedSlug) ??
-          Number.MAX_SAFE_INTEGER)
-    );
+  const prioritizedSections: typeof categorySections = [];
+  const otherSections: typeof categorySections = [];
 
-  const categorySectionsToRender =
-    prioritizedCategorySections.length > 0
-      ? prioritizedCategorySections
-      : categorySections;
+  for (const section of categorySections) {
+    if (
+      section.normalizedSlug &&
+      PRIORITY_CATEGORY_ORDER.has(section.normalizedSlug)
+    ) {
+      prioritizedSections.push(section);
+    } else {
+      otherSections.push(section);
+    }
+  }
+
+  prioritizedSections.sort(
+    (a, b) =>
+      (PRIORITY_CATEGORY_ORDER.get(a.normalizedSlug) ??
+        Number.MAX_SAFE_INTEGER) -
+      (PRIORITY_CATEGORY_ORDER.get(b.normalizedSlug) ?? Number.MAX_SAFE_INTEGER)
+  );
+
+  const categorySectionsToRender = [...prioritizedSections, ...otherSections].slice(
+    0,
+    MAX_CATEGORY_SECTIONS
+  );
 
   const hasEvents = categorySectionsToRender.length > 0;
 
@@ -417,7 +421,7 @@ export async function ServerEventsCategorizedContent({
               <EventsAroundServer
                 events={section.events}
                 layout="horizontal"
-                usePriority={Boolean(section.usePriority)}
+                usePriority={section.usePriority}
                 showJsonLd
                 title={section.title}
                 jsonLdId={`featured-events-${section.slug}`}
