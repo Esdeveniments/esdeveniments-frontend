@@ -1,10 +1,18 @@
 import { memo, Suspense } from "react";
 import Link from "next/link";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
-import { SpeakerphoneIcon } from "@heroicons/react/outline";
+import {
+  SpeakerphoneIcon,
+  SparklesIcon,
+  ShoppingBagIcon,
+  EmojiHappyIcon,
+  MusicNoteIcon,
+  TicketIcon,
+  PhotographIcon,
+} from "@heroicons/react/outline";
 import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
-import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
+// import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
 import AdArticle from "@components/ui/adArticle";
 import Search from "@components/ui/search";
 import Button from "@components/ui/common/button";
@@ -14,7 +22,7 @@ import { fetchEvents } from "@lib/api/events";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
+import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import type {
   FeaturedPlaceConfig,
@@ -41,11 +49,20 @@ const PRIORITY_CATEGORY_ORDER = new Map<string, number>(
 );
 
 const QUICK_CATEGORY_LINKS = [
-  { label: "🎉 Festes Majors", url: "/festes-majors" },
-  { label: "🎪 Fires i Mercats", url: "/fires-i-mercats" },
-  { label: "👶 Amb Nens", url: "/amb-nens" },
-  { label: "🎵 Concerts", url: "/concerts" },
-  { label: "🎭 Teatre", url: "/teatre" },
+  {
+    label: "Festes Majors",
+    url: "/catalunya/festes-majors",
+    Icon: SparklesIcon,
+  },
+  {
+    label: "Fires i Mercats",
+    url: "/catalunya/fires-i-mercats",
+    Icon: ShoppingBagIcon,
+  },
+  { label: "Amb Nens", url: "/catalunya/amb-nens", Icon: EmojiHappyIcon },
+  { label: "Concerts", url: "/catalunya/concerts", Icon: MusicNoteIcon },
+  { label: "Teatre", url: "/catalunya/teatre", Icon: TicketIcon },
+  { label: "Exposicions", url: "/catalunya/exposicions", Icon: PhotographIcon },
 ] as const;
 
 const resolveCategoryDetails = (
@@ -145,34 +162,36 @@ function ServerEventsCategorized({
         {pageData && (
           <>
             <h1 className="heading-1 mb-2">{pageData.title}</h1>
-            <h2 className="heading-2 text-foreground text-left">
+            <p className="body-large text-foreground/70 text-left">
               {pageData.subTitle}
-            </h2>
+            </p>
           </>
         )}
 
         {/* Location Discovery Widget */}
-        <LocationDiscoveryWidget />
+        {/* <LocationDiscoveryWidget /> */}
       </div>
 
       {/* 2. QUICK CATEGORIES */}
-      <section className="py-section-y container border-b border-border">
-        <h3 className="heading-3 mb-element-gap text-foreground">
-          Explora per interessos
-        </h3>
-        <div className="flex flex-col gap-element-gap sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:pb-2">
-          {QUICK_CATEGORY_LINKS.map((cat) => (
-            <Link
-              key={cat.url}
-              href={cat.url}
-              prefetch={false}
-              className="w-full sm:w-auto flex-shrink-0"
-            >
+      <section className="py-section-y container border-b">
+        <SectionHeading
+          title="Explora per interessos"
+          titleClassName="heading-2 text-foreground mb-element-gap"
+        />
+        <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:pb-2">
+          {QUICK_CATEGORY_LINKS.map(({ label, url, Icon }) => (
+            <Link key={url} href={url} prefetch={false} className="h-full">
               <Button
-                variant="outline"
-                className="w-full rounded-badge bg-background border border-border/80 text-primary font-semibold tracking-wide uppercase justify-center py-3 text-base hover:border-primary hover:text-primary transition-interactive sm:w-auto sm:px-6 sm:justify-center"
+                variant="category"
+                className="w-full h-full text-sm sm:w-auto whitespace-nowrap"
               >
-                {cat.label}
+                <span className="flex items-center gap-2 whitespace-nowrap">
+                  <Icon
+                    className="w-5 h-5 text-primary flex-shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{label}</span>
+                </span>
               </Button>
             </Link>
           ))}
@@ -187,15 +206,15 @@ function ServerEventsCategorized({
         <section className="py-section-y px-section-x container bg-muted">
           <SectionHeading
             title="Agendes locals més visitades"
-            titleClassName="heading-3 text-foreground"
+            titleClassName="heading-2 text-foreground mb-element-gap"
           />
-          <div className="flex flex-wrap gap-x-element-gap gap-y-element-gap-sm mt-element-gap">
+          <div className="grid grid-cols-3 gap-x-element-gap gap-y-element-gap-sm mt-element-gap">
             {seoTopTownLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 prefetch={false}
-                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive block w-full sm:w-1/2 lg:w-1/3"
+                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive"
               >
                 {link.label}
               </Link>
@@ -303,12 +322,12 @@ export async function ServerEventsCategorizedContent({
       }
       return acc;
     },
-    {} as Record<string, ListEvent[]>
+    {} as Record<string, EventSummaryResponseDTO[]>
   );
 
   const categorySections = Object.entries(filteredCategorizedEvents).map(
     ([category, events]) => {
-      const typedEvents = events as EventSummaryResponseDTO[];
+      const typedEvents = events;
       const firstEvent = typedEvents.find(isEventSummaryResponseDTO);
       const { categoryName, categorySlug } = resolveCategoryDetails(
         category,
@@ -373,11 +392,11 @@ export async function ServerEventsCategorizedContent({
           {featuredSections.map((section) => (
             <section
               key={section.slug}
-              className="py-section-y border-b border-border first:pt-section-y"
+              className="py-section-y border-b border-border"
             >
               <div className="flex-between gap-element-gap">
                 <div className="stack gap-1">
-                  <h3 className="heading-3">{section.title}</h3>
+                  <h2 className="heading-2">{section.title}</h2>
                   {section.subtitle ? (
                     <p className="body-small text-foreground/70">
                       {section.subtitle}
@@ -450,13 +469,13 @@ export async function ServerEventsCategorizedContent({
           return (
             <section
               key={section.key}
-              className="py-section-y border-b border-border first:pt-section-y"
+              className="py-section-y border-b border-border"
             >
               {/* Category Header */}
               <div className="flex justify-between items-center">
-                <h3 className="heading-3">
+                <h2 className="heading-2">
                   L&apos;agenda {section.categoryPhrase} a Catalunya
-                </h3>
+                </h2>
                 <PressableAnchor
                   href={buildCanonicalUrl(
                     {
@@ -527,11 +546,9 @@ export async function ServerEventsCategorizedContent({
               {/* Ad placement between category sections */}
               {adPositions.has(index) && (
                 <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-element-gap mt-element-gap mb-element-gap-sm">
-                  <div className="w-full flex">
-                    <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
-                    <div className="stack w-11/12">
-                      <h3 className="heading-3">Contingut patrocinat</h3>
-                    </div>
+                  <div className="w-full flex items-center gap-element-gap">
+                    <SpeakerphoneIcon className="w-5 h-5 text-foreground-strong flex-shrink-0" />
+                    <h2 className="heading-2">Contingut patrocinat</h2>
                   </div>
                   <div className="w-full">
                     <AdArticle slot="8139041285" />

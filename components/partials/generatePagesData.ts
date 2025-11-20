@@ -7,6 +7,10 @@ import {
   PlaceTypeAndLabel,
 } from "types/common";
 import { formatCatalanA } from "@utils/helpers";
+import {
+  appendSearchQuery,
+  splitNotFoundText,
+} from "@utils/notFoundMessaging";
 
 const month = monthsName[new Date().getMonth()];
 
@@ -179,47 +183,6 @@ const CATEGORY_SEO_TEMPLATES = {
     noEventsText: "activitats en aquesta categoria",
   },
 };
-
-function appendSearchQuery(baseText: string, searchQuery?: string): string {
-  const normalizedSearch = searchQuery?.trim();
-  if (!normalizedSearch) {
-    return baseText;
-  }
-
-  const sanitizedSearch = normalizedSearch.replace(/"/g, "'");
-  const snippet = ` per a la cerca "${sanitizedSearch}"`;
-  const firstPeriodIndex = baseText.indexOf(".");
-
-  if (firstPeriodIndex === -1) {
-    return `${baseText}${snippet}.`;
-  }
-
-  return `${baseText.slice(0, firstPeriodIndex)}${snippet}${baseText.slice(
-    firstPeriodIndex
-  )}`;
-}
-
-// Helper function to split notFound text into title and description
-function splitNotFoundText(
-  fullText: string,
-  searchQuery?: string
-): { title: string; description: string } {
-  const firstPeriodIndex = fullText.indexOf(".");
-  if (firstPeriodIndex === -1) {
-    return {
-      title: appendSearchQuery(fullText, searchQuery),
-      description: "",
-    };
-  }
-
-  const title = fullText.slice(0, firstPeriodIndex + 1);
-  const description = fullText.slice(firstPeriodIndex + 1).trim();
-
-  return {
-    title: appendSearchQuery(title, searchQuery),
-    description,
-  };
-}
 
 const baseCreatePageData = (
   title: string,

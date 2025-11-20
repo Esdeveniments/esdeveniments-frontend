@@ -9,6 +9,7 @@ import { getNewsCta } from "@utils/helpers";
 import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
+import SearchAwareHeading from "./SearchAwareHeading";
 
 function HybridEventsList({
   initialEvents = [],
@@ -36,6 +37,12 @@ function HybridEventsList({
   );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
+  const newsCta =
+    place && hasNews && newsHref && newsText ? (
+      <div className="mb-4 md:mb-0 md:mt-0 shrink-0 px-element-gap">
+        <NewsCta href={newsHref} label={newsText} data-cta="news-inline" />
+      </div>
+    ) : null;
 
   if (noEventsFound || initialEvents.length === 0) {
     return (
@@ -66,25 +73,29 @@ function HybridEventsList({
       data-testid="events-list"
     >
       {pageData && (
-        <>
-          <div className="px-section-x mt-element-gap md:flex md:items-start md:justify-between gap-element-gap">
-            <h1 className={`${titleClass} flex-1`}>{pageData.title}</h1>
-            {place && hasNews && (
-              <div className="mb-4 md:mb-0 md:mt-0 shrink-0">
-                <NewsCta
-                  href={newsHref}
-                  label={newsText}
-                  data-cta="news-inline"
-                />
+        <Suspense
+          fallback={
+            <>
+              <div className="px-section-x mt-element-gap mb-element-gap md:flex md:items-start md:justify-between gap-element-gap">
+                <h1 className={`${titleClass} flex-1`}>{pageData.title}</h1>
+                {newsCta}
               </div>
-            )}
-          </div>
-          <p
-            className={`${subtitleClass} text-left mb-element-gap px-section-x`}
-          >
-            {pageData.subTitle}
-          </p>
-        </>
+              <p
+                className={`${subtitleClass} text-left mb-element-gap px-section-x`}
+              >
+                {pageData.subTitle}
+              </p>
+            </>
+          }
+        >
+          <SearchAwareHeading
+            pageData={pageData}
+            categories={categories}
+            titleClass={titleClass}
+            subtitleClass={subtitleClass}
+            cta={newsCta}
+          />
+        </Suspense>
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}

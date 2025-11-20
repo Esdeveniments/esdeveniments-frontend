@@ -52,6 +52,11 @@ vi.mock("@heroicons/react/solid/ChevronRightIcon", () => ({
 
 vi.mock("@heroicons/react/outline", () => ({
   SpeakerphoneIcon: () => <svg data-testid="speakerphone-icon" />,
+  SparklesIcon: () => <svg data-testid="sparkles-icon" />,
+  ShoppingBagIcon: () => <svg data-testid="shoppingbag-icon" />,
+  EmojiHappyIcon: () => <svg data-testid="emojihappy-icon" />,
+  MusicNoteIcon: () => <svg data-testid="musicnote-icon" />,
+  TicketIcon: () => <svg data-testid="ticket-icon" />,
 }));
 
 vi.mock("next/link", () => ({

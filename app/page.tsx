@@ -1,4 +1,5 @@
-import { Suspense, JSX } from "react";
+import { Suspense } from "react";
+import type { JSX } from "react";
 import { getCategorizedEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -114,6 +115,10 @@ export default async function Page(): Promise<JSX.Element> {
   const siteNavigationSchema =
     generateSiteNavigationElementSchema(homeNavigationItems);
 
+  const localAgendasSection = homeSeoLinkSections.find(
+    (section) => section.title === "Agendes locals més visitades"
+  );
+
   return (
     <>
       {siteNavigationSchema && (
@@ -132,7 +137,7 @@ export default async function Page(): Promise<JSX.Element> {
         pageData={pageData}
         categoriesPromise={categoriesPromise}
         featuredPlaces={featuredPlaceSections}
-        seoTopTownLinks={homeSeoLinkSections[2].links}
+        seoTopTownLinks={localAgendasSection?.links}
       />
     </>
   );

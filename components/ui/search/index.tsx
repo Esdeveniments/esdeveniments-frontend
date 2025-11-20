@@ -13,6 +13,7 @@ import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { sendGoogleEvent } from "@utils/analytics";
+import { startNavigationFeedback } from "@lib/navigation-feedback";
 
 const sendSearchTermGA = (searchTerm: string): void => {
   if (searchTerm && searchTerm.length > 0) {
@@ -55,6 +56,7 @@ export default function Search(): JSX.Element {
         ? "/catalunya/"
         : pathname || "/";
 
+      startNavigationFeedback();
       router.push(newUrl);
     },
     [searchParams, router, pathname, isHomePage]
@@ -96,16 +98,22 @@ export default function Search(): JSX.Element {
     updateSearchUrl("");
   }, [updateSearchUrl]);
 
+  const isSearchActive = Boolean(urlSearchTerm);
+
   return (
     <div
-      className="w-full flex justify-center border border-border rounded-input pl-input-x mt-element-gap"
+      className={`w-full flex justify-center border rounded-input pl-input-x mt-element-gap transition-interactive ${
+        isSearchActive ? "border-primary border-2" : "border-border"
+      }`}
       data-testid="search-bar"
     >
       <div className="w-full flex justify-start items-center gap-element-gap rounded-input">
         {/* Decorative search icon on the left */}
         <div className="h-10 flex justify-center items-center px-button-x">
           <SearchIcon
-            className="h-5 w-5 text-foreground-strong"
+            className={`h-5 w-5 transition-interactive ${
+              isSearchActive ? "text-primary" : "text-foreground-strong"
+            }`}
             aria-hidden="true"
           />
         </div>

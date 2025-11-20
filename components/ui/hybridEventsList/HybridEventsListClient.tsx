@@ -14,6 +14,7 @@ import { HybridEventsListProps } from "types/props";
 import { parseFiltersFromUrl } from "@utils/url-filters";
 import { extractURLSegments } from "@utils/url-parsing";
 import { computeTemporalStatus } from "@utils/event-status";
+import { appendSearchQuery } from "@utils/notFoundMessaging";
 
 // Client side enhancer: handles pagination & de-duplication.
 // Expects initialEvents to be the SSR list (may include ad markers). We pass only
@@ -128,6 +129,13 @@ function HybridEventsListClientContent({
   // (initialEvents may contain region or latest events as fallback from server)
   const showFallbackEvents = showNoEventsFound && realInitialEvents.length > 0;
 
+  const notFoundTitle = useMemo(() => {
+    if (!pageData?.notFoundTitle) {
+      return undefined;
+    }
+    return appendSearchQuery(pageData.notFoundTitle, search);
+  }, [pageData, search]);
+
   return (
     <>
       {showErrorState ? (
@@ -153,7 +161,7 @@ function HybridEventsListClientContent({
         // Show no events found message when filters return no results
         <>
           <NoEventsFound
-            title={pageData?.notFoundTitle}
+            title={notFoundTitle}
             description={pageData?.notFoundDescription}
           />
           {showFallbackEvents && (

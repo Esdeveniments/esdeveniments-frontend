@@ -4,6 +4,7 @@ const VARIANTS: Record<string, string> = {
   outline: "btn-outline",
   muted: "btn-muted",
   solid: "btn-primary",
+  category: "btn-category",
 };
 
 export default function Button({
@@ -13,7 +14,13 @@ export default function Button({
   hasIcon = false,
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "neutral" | "primary" | "muted" | "outline" | "solid";
+  variant?:
+    | "neutral"
+    | "primary"
+    | "muted"
+    | "outline"
+    | "solid"
+    | "category";
   hasIcon?: boolean;
 }) {
   const variantClass = VARIANTS[variant] ?? VARIANTS.neutral;
