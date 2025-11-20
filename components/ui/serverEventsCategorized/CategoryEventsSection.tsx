@@ -1,11 +1,11 @@
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
-import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import AdArticle from "@components/ui/adArticle";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { DateFilterBadges } from "./DateFilterBadges";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
@@ -49,55 +49,12 @@ export function CategoryEventsSection({
         </PressableAnchor>
       </div>
 
-      <nav aria-label="Vegeu també" className="mt-element-gap-sm mb-element-gap-sm">
-        <ul className="flex gap-element-gap">
-          <li>
-            <Badge
-              href={buildCanonicalUrl(
-                {
-                  place: "catalunya",
-                  byDate: "avui",
-                  category: categorySlug,
-                },
-                categories
-              )}
-              ariaLabel={`Veure activitats d'avui per la categoria ${categoryName}`}
-            >
-              Avui
-            </Badge>
-          </li>
-          <li>
-            <Badge
-              href={buildCanonicalUrl(
-                {
-                  place: "catalunya",
-                  byDate: "dema",
-                  category: categorySlug,
-                },
-                categories
-              )}
-              ariaLabel={`Veure activitats de demà per la categoria ${categoryName}`}
-            >
-              Demà
-            </Badge>
-          </li>
-          <li>
-            <Badge
-              href={buildCanonicalUrl(
-                {
-                  place: "catalunya",
-                  byDate: "cap-de-setmana",
-                  category: categorySlug,
-                },
-                categories
-              )}
-              ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${categoryName}`}
-            >
-              Cap de setmana
-            </Badge>
-          </li>
-        </ul>
-      </nav>
+      <DateFilterBadges
+        placeSlug="catalunya"
+        categorySlug={categorySlug}
+        categories={categories}
+        contextName={categoryName}
+      />
 
       <EventsAroundServer
         events={events}

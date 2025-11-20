@@ -1,8 +1,8 @@
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
-import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";
+import { DateFilterBadges } from "./DateFilterBadges";
 import type { FeaturedPlaceConfig } from "types/props";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
@@ -35,40 +35,11 @@ export function FeaturedPlaceSection({
         </PressableAnchor>
       </div>
 
-      <nav
-        aria-label={`Explora ${section.title} per data`}
-        className="mt-element-gap-sm mb-element-gap-sm"
-      >
-        <ul className="flex gap-element-gap">
-          <li>
-            <Badge
-              href={buildCanonicalUrl({ place: section.placeSlug, byDate: "avui" })}
-              ariaLabel={`Veure activitats d'avui a ${section.title}`}
-            >
-              Avui
-            </Badge>
-          </li>
-          <li>
-            <Badge
-              href={buildCanonicalUrl({ place: section.placeSlug, byDate: "dema" })}
-              ariaLabel={`Veure activitats de demà a ${section.title}`}
-            >
-              Demà
-            </Badge>
-          </li>
-          <li>
-            <Badge
-              href={buildCanonicalUrl({
-                place: section.placeSlug,
-                byDate: "cap-de-setmana",
-              })}
-              ariaLabel={`Veure activitats aquest cap de setmana a ${section.title}`}
-            >
-              Cap de setmana
-            </Badge>
-          </li>
-        </ul>
-      </nav>
+      <DateFilterBadges
+        placeSlug={section.placeSlug}
+        contextName={section.title}
+        ariaLabel={`Explora ${section.title} per data`}
+      />
 
       <EventsAroundServer
         events={section.events}
