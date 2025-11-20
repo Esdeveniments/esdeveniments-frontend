@@ -9,7 +9,7 @@ export function appendSearchQuery(
     return normalizedBase;
   }
 
-  const sanitizedSearch = normalizedSearch.replace(/"/g, "'");
+  const sanitizedSearch = normalizedSearch.replace(/"/g, "'").replace(/<[^>]*>/g, "");
   const snippet = ` per a la cerca "${sanitizedSearch}"`;
 
   if (normalizedBase.includes(snippet)) {
