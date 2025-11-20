@@ -55,7 +55,7 @@ const homeSeoLinkSections: SeoLinkSection[] = [
       { href: "/granollers", label: "Agenda Granollers" },
       { href: "/canet-de-mar", label: "Agenda Canet de Mar" },
       { href: "/castellbisbal", label: "Agenda Castellbisbal" },
-      { href: "/llissa-de-vall", label: "Agenda Lliçà de Vall" },
+      { href: "/llica-de-vall", label: "Agenda Lliçà de Vall" },
       { href: "/arenys-de-munt", label: "Agenda Arenys de Munt" },
       { href: "/calella", label: "Agenda Calella" },
       { href: "/mataro", label: "Agenda Mataró" },

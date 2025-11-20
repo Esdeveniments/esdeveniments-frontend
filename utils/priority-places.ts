@@ -56,7 +56,7 @@ export const highPrioritySlugs = [
   "igualada",
   "la-garriga",
   "llinars",
-  "llissa-de-vall",
+  "llica-de-vall",
   "malgrat-de-mar",
   "maresme",
   "matadepera",

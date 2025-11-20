@@ -11,8 +11,8 @@ import {
   fetchCategorizedEventsExternal,
   fetchEventsExternal,
 } from "./events-external";
-import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+import { isBuildPhase } from "@utils/constants";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -66,10 +66,6 @@ export async function fetchEvents(
       return null;
     }
   };
-
-  const isBuildPhase =
-    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
 
   if (isBuildPhase) {
     const externalResult = await fetchExternalWithValidation();
@@ -282,11 +278,6 @@ export async function fetchCategorizedEvents(
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (homepage) can fetch data during next build
-  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
-  const isBuildPhase =
-    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
-
   if (isBuildPhase) {
     try {
       const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);

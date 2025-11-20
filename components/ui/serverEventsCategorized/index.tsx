@@ -30,41 +30,44 @@ import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { computeTemporalStatus } from "@utils/event-status";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import {
+  CATEGORY_CONFIG,
+  PRIORITY_CATEGORY_SLUGS,
+  MAX_CATEGORY_SECTIONS,
+} from "@config/categories";
 
-const PRIORITY_CATEGORY_SLUGS = [
-  "festes-populars",
-  "fires-i-mercats",
-  "familia-i-infants",
-  "musica",
-  "teatre",
-] as const;
+/**
+ * Icon mapping for categories.
+ * Icons are kept in the component to avoid React component dependencies in config files.
+ */
+const CATEGORY_ICONS: Record<string, typeof SparklesIcon> = {
+  "festes-populars": SparklesIcon,
+  "fires-i-mercats": ShoppingBagIcon,
+  "familia-i-infants": EmojiHappyIcon,
+  musica: MusicNoteIcon,
+  teatre: TicketIcon,
+  exposicions: PhotographIcon,
+} as const;
 
+/**
+ * Map for efficient priority ordering lookup.
+ * Maps priority category slugs to their display index.
+ */
 const PRIORITY_CATEGORY_ORDER = new Map(
   PRIORITY_CATEGORY_SLUGS.map((slug, index) => [slug, index])
 );
 
-const MAX_CATEGORY_SECTIONS = 5;
-
-const QUICK_CATEGORY_LINKS = [
-  {
-    label: "Festes Majors",
-    url: "/catalunya/festes-populars",
-    Icon: SparklesIcon,
-  },
-  {
-    label: "Fires i Mercats",
-    url: "/catalunya/fires-i-mercats",
-    Icon: ShoppingBagIcon,
-  },
-  {
-    label: "Amb Nens",
-    url: "/catalunya/familia-i-infants",
-    Icon: EmojiHappyIcon,
-  },
-  { label: "Concerts", url: "/catalunya/musica", Icon: MusicNoteIcon },
-  { label: "Teatre", url: "/catalunya/teatre", Icon: TicketIcon },
-  { label: "Exposicions", url: "/catalunya/exposicions", Icon: PhotographIcon },
-] as const;
+/**
+ * Quick category links for the homepage navigation.
+ * Combines category config (from shared config) with icons (component-specific).
+ */
+const QUICK_CATEGORY_LINKS = Object.entries(CATEGORY_CONFIG).map(
+  ([slug, config]) => ({
+    label: config.label,
+    url: `/catalunya/${slug}`,
+    Icon: CATEGORY_ICONS[slug] || SparklesIcon, // Fallback icon
+  })
+);
 
 // --- HELPER: Extracting the filtering logic to avoid duplication ---
 const filterActiveEvents = (events: ListEvent[]): EventSummaryResponseDTO[] => {
