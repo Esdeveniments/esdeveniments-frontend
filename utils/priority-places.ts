@@ -6,7 +6,7 @@
 export const topStaticGenerationPlaces = [
   // Top 3 major cities (highest traffic)
   "barcelona",
-  "girona",
+  // "girona",
   "tarragona",
   // Top regions (high traffic)
   "maresme",
@@ -16,13 +16,13 @@ export const topStaticGenerationPlaces = [
   // Top cities near Barcelona (high traffic)
   "badalona",
   "mataro",
-  "sabadell",
-  "terrassa",
+  // "sabadell",
+  // "terrassa",
   "granollers",
-  "l-hospitalet-de-llobregat",
-  "santa-coloma-de-gramenet",
-  "castelldefels",
-  "viladecans",
+  // "l-hospitalet-de-llobregat",
+  // "santa-coloma-de-gramenet",
+  // "castelldefels",
+  // "viladecans",
 ];
 
 /**

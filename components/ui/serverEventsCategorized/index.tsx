@@ -395,7 +395,7 @@ export async function ServerEventsCategorizedContent({
                   )}
                 </div>
                 <PressableAnchor
-                  href={`/${section.slug}`}
+                  href={`/${section.placeSlug}`}
                   className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
                   prefetch={false}
                   variant="inline"
@@ -412,7 +412,7 @@ export async function ServerEventsCategorizedContent({
                 <ul className="flex gap-element-gap">
                   <li>
                     <Badge
-                      href={`/${section.slug}/avui`}
+                      href={`/${section.placeSlug}/avui`}
                       ariaLabel={`Veure activitats d'avui a ${section.title}`}
                     >
                       Avui
@@ -420,7 +420,7 @@ export async function ServerEventsCategorizedContent({
                   </li>
                   <li>
                     <Badge
-                      href={`/${section.slug}/dema`}
+                      href={`/${section.placeSlug}/dema`}
                       ariaLabel={`Veure activitats de demà a ${section.title}`}
                     >
                       Demà
@@ -428,7 +428,7 @@ export async function ServerEventsCategorizedContent({
                   </li>
                   <li>
                     <Badge
-                      href={`/${section.slug}/cap-de-setmana`}
+                      href={`/${section.placeSlug}/cap-de-setmana`}
                       ariaLabel={`Veure activitats aquest cap de setmana a ${section.title}`}
                     >
                       Cap de setmana
