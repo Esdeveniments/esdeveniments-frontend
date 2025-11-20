@@ -1,14 +1,6 @@
 import Badge from "@components/ui/common/badge";
 import { buildCanonicalUrl } from "@utils/url-filters";
-import type { CategorySummaryResponseDTO } from "types/api/category";
-
-interface DateFilterBadgesProps {
-  placeSlug: string;
-  categorySlug?: string;
-  categories?: CategorySummaryResponseDTO[];
-  contextName: string;
-  ariaLabel?: string;
-}
+import type { DateFilterBadgesProps } from "types/props";
 
 export function DateFilterBadges({
   placeSlug,

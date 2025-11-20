@@ -412,3 +412,12 @@ export interface MobileShareProps {
   eventDate: string; // ISO or human readable date string used in share payload
   location: string; // Main location label
 }
+
+// Date filter badges component props
+export interface DateFilterBadgesProps {
+  placeSlug: string;
+  categorySlug?: string;
+  categories?: CategorySummaryResponseDTO[];
+  contextName: string;
+  ariaLabel?: string;
+}
