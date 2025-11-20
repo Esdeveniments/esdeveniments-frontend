@@ -40,7 +40,7 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
   : null;
 
-export async function fetchEvents(
+async function fetchEventsInternal(
   params: FetchEventsParams
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
@@ -117,6 +117,8 @@ export async function fetchEvents(
     return externalResult ?? fallbackResponse;
   }
 }
+
+export const fetchEvents = cache(fetchEventsInternal);
 
 export async function fetchEventBySlug(
   fullSlug: string
