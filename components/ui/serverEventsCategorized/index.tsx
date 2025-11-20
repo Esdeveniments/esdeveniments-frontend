@@ -199,41 +199,11 @@ function ServerEventsCategorized({
       </section>
 
       {/* 3. MAIN LIST + FEATURED PLACES */}
-      <ServerEventsCategorizedContent {...contentProps} pageData={pageData} />
-
-      {/* 4. SEO LINKS - DATA DRIVEN */}
-      {seoTopTownLinks.length > 0 && (
-        <section className="py-section-y px-section-x container bg-muted">
-          <SectionHeading
-            title="Agendes locals més visitades"
-            titleClassName="heading-2 text-foreground mb-element-gap"
-          />
-          <div className="grid grid-cols-3 gap-x-element-gap gap-y-element-gap-sm mt-element-gap">
-            {seoTopTownLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                prefetch={false}
-                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 5. CTA FINAL */}
-      <section className="py-section-y px-section-x container text-center">
-        <p className="body-large text-foreground/70 mb-element-gap">
-          No trobes el que busques?
-        </p>
-        <Link href="/catalunya" prefetch={false}>
-          <Button variant="primary" className="w-full sm:w-auto">
-            Veure tota l&apos;agenda
-          </Button>
-        </Link>
-      </section>
+      <ServerEventsCategorizedContent
+        {...contentProps}
+        pageData={pageData}
+        seoTopTownLinks={seoTopTownLinks}
+      />
     </div>
   );
 }
@@ -242,6 +212,7 @@ export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
   categoriesPromise,
   featuredPlaces,
+  seoTopTownLinks = [],
 }: ServerEventsCategorizedProps) {
   const [categorizedEvents, categories] = await Promise.all([
     categorizedEventsPromise,
@@ -390,10 +361,7 @@ export async function ServerEventsCategorizedContent({
       {featuredSections.length > 0 && (
         <div className="container">
           {featuredSections.map((section) => (
-            <section
-              key={section.slug}
-              className="py-section-y border-b border-border"
-            >
+            <section key={section.slug} className="py-section-y border-b">
               <div className="flex-between gap-element-gap">
                 <div className="stack gap-1">
                   <h2 className="heading-2">{section.title}</h2>
@@ -467,10 +435,7 @@ export async function ServerEventsCategorizedContent({
           const shouldUsePriority = index < 2;
 
           return (
-            <section
-              key={section.key}
-              className="py-section-y border-b border-border"
-            >
+            <section key={section.key} className="py-section-y border-b">
               {/* Category Header */}
               <div className="flex justify-between items-center">
                 <h2 className="heading-2">
@@ -520,6 +485,21 @@ export async function ServerEventsCategorizedContent({
                       href={buildCanonicalUrl(
                         {
                           place: "catalunya",
+                          byDate: "dema",
+                          category: section.categorySlug,
+                        },
+                        categories
+                      )}
+                      ariaLabel={`Veure activitats de demà per la categoria ${section.categoryName}`}
+                    >
+                      Demà
+                    </Badge>
+                  </li>
+                  <li>
+                    <Badge
+                      href={buildCanonicalUrl(
+                        {
+                          place: "catalunya",
                           byDate: "cap-de-setmana",
                           category: section.categorySlug,
                         },
@@ -559,6 +539,40 @@ export async function ServerEventsCategorizedContent({
           );
         })}
       </div>
+
+      {/* 4. SEO LINKS - DATA DRIVEN */}
+      {seoTopTownLinks.length > 0 && (
+        <section className="py-section-y container">
+          <SectionHeading
+            title="Agendes locals més visitades"
+            titleClassName="heading-2 text-foreground mb-element-gap"
+          />
+          <div className="grid grid-cols-3 gap-element-gap mt-element-gap">
+            {seoTopTownLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                prefetch={false}
+                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 5. CTA FINAL */}
+      <section className="py-section-y container text-center">
+        <p className="body-large text-foreground/70 font-medium mb-element-gap">
+          No trobes el que busques?
+        </p>
+        <Link href="/catalunya" prefetch={false}>
+          <Button variant="primary" className="w-full sm:w-auto">
+            Veure tota l&apos;agenda
+          </Button>
+        </Link>
+      </section>
     </>
   );
 }
