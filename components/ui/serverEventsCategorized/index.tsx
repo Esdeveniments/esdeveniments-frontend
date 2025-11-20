@@ -181,7 +181,7 @@ function ServerEventsCategorized({
           title="Explora per interessos"
           titleClassName="heading-2 text-foreground mb-element-gap"
         />
-        <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:pb-2">
+        <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:py-2 sm:px-2 sm:-mx-2">
           {QUICK_CATEGORY_LINKS.map(({ label, url, Icon }) => (
             <PressableAnchor
               key={url}
@@ -195,7 +195,7 @@ function ServerEventsCategorized({
                   className="w-5 h-5 text-primary flex-shrink-0"
                   aria-hidden="true"
                 />
-                <span className="truncate">{label}</span>
+                <span>{label}</span>
               </span>
             </PressableAnchor>
           ))}

@@ -2,6 +2,7 @@ import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { buildCanonicalUrl } from "@utils/url-filters";
 import type { FeaturedPlaceConfig } from "types/props";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
@@ -24,7 +25,7 @@ export function FeaturedPlaceSection({
           )}
         </div>
         <PressableAnchor
-          href={`/${section.placeSlug}`}
+          href={buildCanonicalUrl({ place: section.placeSlug })}
           className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
           prefetch={false}
           variant="inline"
@@ -41,7 +42,7 @@ export function FeaturedPlaceSection({
         <ul className="flex gap-element-gap">
           <li>
             <Badge
-              href={`/${section.placeSlug}/avui`}
+              href={buildCanonicalUrl({ place: section.placeSlug, byDate: "avui" })}
               ariaLabel={`Veure activitats d'avui a ${section.title}`}
             >
               Avui
@@ -49,7 +50,7 @@ export function FeaturedPlaceSection({
           </li>
           <li>
             <Badge
-              href={`/${section.placeSlug}/dema`}
+              href={buildCanonicalUrl({ place: section.placeSlug, byDate: "dema" })}
               ariaLabel={`Veure activitats de demà a ${section.title}`}
             >
               Demà
@@ -57,7 +58,10 @@ export function FeaturedPlaceSection({
           </li>
           <li>
             <Badge
-              href={`/${section.placeSlug}/cap-de-setmana`}
+              href={buildCanonicalUrl({
+                place: section.placeSlug,
+                byDate: "cap-de-setmana",
+              })}
               ariaLabel={`Veure activitats aquest cap de setmana a ${section.title}`}
             >
               Cap de setmana
