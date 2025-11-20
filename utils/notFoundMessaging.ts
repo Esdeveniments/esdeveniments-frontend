@@ -1,3 +1,14 @@
+import { escapeXml } from "@utils/xml-escape";
+
+/**
+ * Appends a search query to base text, properly escaping HTML entities
+ * to prevent XSS attacks. The search query is escaped before being
+ * inserted into the text.
+ *
+ * @param baseText - Base text to append to
+ * @param searchQuery - User-provided search query (will be escaped)
+ * @returns Text with escaped search query appended
+ */
 export function appendSearchQuery(
   baseText: string,
   searchQuery?: string
@@ -9,8 +20,9 @@ export function appendSearchQuery(
     return normalizedBase;
   }
 
-  const sanitizedSearch = normalizedSearch.replace(/"/g, "'");
-  const snippet = ` per a la cerca "${sanitizedSearch}"`;
+  // Escape HTML entities in user-provided search query to prevent XSS
+  const escapedSearch = escapeXml(normalizedSearch);
+  const snippet = ` per a la cerca "${escapedSearch}"`;
 
   if (normalizedBase.includes(snippet)) {
     return normalizedBase;
