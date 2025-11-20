@@ -1,3 +1,4 @@
+import { Suspense, JSX } from "react";
 import { getCategorizedEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -15,8 +16,11 @@ import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { computeTemporalStatus } from "@utils/event-status";
-import { Suspense, JSX } from "react";
-import { HomePageSkeleton, SearchSkeleton } from "@components/ui/common/skeletons";
+import {
+  HomePageSkeleton,
+  SearchSkeleton,
+} from "@components/ui/common/skeletons";
+import type { FeaturedPlaceConfig } from "types/props";
 
 const homeSeoLinkSections = [
   {
@@ -25,13 +29,10 @@ const homeSeoLinkSections = [
       { href: "/barcelona/avui", label: "Què fer avui a Barcelona" },
       { href: "/maresme/avui", label: "Què fer avui al Maresme" },
       {
-        href: "/valles-occidental/avui",
-        label: "Què fer avui al Vallès Occidental",
-      },
-      {
         href: "/valles-oriental/avui",
         label: "Què fer avui al Vallès Oriental",
       },
+      { href: "/girona/avui", label: "Què fer avui a Girona" },
     ],
   },
   {
@@ -39,17 +40,27 @@ const homeSeoLinkSections = [
     links: [
       { href: "/barcelona/dema", label: "Què fer demà a Barcelona" },
       { href: "/maresme/dema", label: "Què fer demà al Maresme" },
+      {
+        href: "/valles-occidental/dema",
+        label: "Què fer demà al Vallès Occ.",
+      },
     ],
   },
   {
-    title: "Agendes locals",
+    title: "Agendes locals més visitades",
     links: [
-      { href: "/maresme", label: "Agenda Maresme" },
-      { href: "/barcelona", label: "Agenda Barcelona" },
-      { href: "/vilassar-de-mar", label: "Agenda Vilassar de Mar" },
-      { href: "/arenys-de-munt", label: "Agenda Arenys de Munt" },
+      { href: "/cardedeu", label: "Agenda Cardedeu" },
+      { href: "/llinars", label: "Agenda Llinars" },
+      { href: "/la-garriga", label: "Agenda La Garriga" },
+      { href: "/el-masnou", label: "Agenda El Masnou" },
+      { href: "/granollers", label: "Agenda Granollers" },
       { href: "/canet-de-mar", label: "Agenda Canet de Mar" },
-      { href: "/altafulla", label: "Agenda Altafulla" },
+      { href: "/castellbisbal", label: "Agenda Castellbisbal" },
+      { href: "/llissa-de-vall", label: "Agenda Lliçà de Vall" },
+      { href: "/arenys-de-munt", label: "Agenda Arenys de Munt" },
+      { href: "/calella", label: "Agenda Calella" },
+      { href: "/mataro", label: "Agenda Mataró" },
+      { href: "/malgrat-de-mar", label: "Agenda Malgrat de Mar" },
     ],
   },
 ] as const;
@@ -61,6 +72,26 @@ const homeNavigationItems: NavigationItem[] = homeSeoLinkSections.flatMap(
       href: link.href as Href,
     }))
 );
+
+const featuredPlaceSections: FeaturedPlaceConfig[] = [
+  {
+    title: "Què fer a Barcelona",
+    subtitle: "Plans destacats a la ciutat",
+    slug: "barcelona",
+    filter: { city: "barcelona" },
+  },
+  {
+    title: "Agenda al Maresme",
+    subtitle: "El millor de la comarca",
+    slug: "maresme",
+    filter: { region: "maresme" },
+  },
+  {
+    title: "Plans al Vallès Occidental",
+    slug: "valles-occidental",
+    filter: { region: "valles-occidental" },
+  },
+];
 
 export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
@@ -112,6 +143,7 @@ export default async function Page(): Promise<JSX.Element> {
           categorizedEventsPromise={categorizedEventsPromise}
           pageData={pageData}
           categoriesPromise={categoriesPromise}
+          featuredPlaces={featuredPlaceSections}
         />
       </Suspense>
     </>
@@ -130,7 +162,6 @@ async function HomeStructuredData({
     .flat()
     .filter(isEventSummaryResponseDTO)
     .filter((event) => {
-      // Filter out past events to match UI
       const status = computeTemporalStatus(
         event.startDate,
         event.endDate,

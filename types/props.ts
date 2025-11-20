@@ -282,10 +282,22 @@ export interface PlacePageShellProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
+export interface FeaturedPlaceConfig {
+  title: string;
+  subtitle?: string;
+  slug: string;
+  filter: {
+    city?: string;
+    region?: string;
+    place?: string;
+  };
+}
+
 export interface ServerEventsCategorizedProps {
   categorizedEventsPromise: Promise<Record<string, ListEvent[]>>;
   pageData?: PageData;
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
+  featuredPlaces?: FeaturedPlaceConfig[];
 }
 
 // Location Discovery Widget Props
@@ -363,7 +375,9 @@ export interface NewsHubsGridProps {
 }
 
 export interface NewsListProps {
-  newsPromise: Promise<import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>>;
+  newsPromise: Promise<
+    import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>
+  >;
   placeTypePromise: Promise<{ label: string }>;
   place: string;
   currentPage: number;

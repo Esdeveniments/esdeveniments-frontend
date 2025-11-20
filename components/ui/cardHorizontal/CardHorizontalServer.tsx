@@ -63,7 +63,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             {/* Date */}
             <div className="flex items-center body-small text-foreground mb-2">
               <svg
-                className="w-4 h-4 mr-2 text-primary flex-shrink-0"
+                className="w-4 h-4 mr-2 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -81,7 +81,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             {/* Location */}
             <div className="flex items-center body-small text-foreground">
               <svg
-                className="w-4 h-4 mr-2 text-primary flex-shrink-0"
+                className="w-4 h-4 mr-2 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

@@ -139,7 +139,7 @@ export default function LocationDiscoveryWidget({
 
   return (
     <div
-      className={`w-full bg-background flex justify-center items-center pt-element-gap ${className}`}
+      className={`w-full bg-background flex justify-center items-center pt-section-y ${className}`}
     >
       <div className="flex flex-col justify-center items-center w-full">
         <div className="relative w-full">
@@ -209,7 +209,7 @@ export default function LocationDiscoveryWidget({
                   {/* Options list */}
                   <div className="max-h-48 overflow-y-auto">
                     {loadingRegions ? (
-                      <div 
+                      <div
                         className="px-4 py-3 body-small text-foreground-strong/70 flex items-center gap-2"
                         data-testid="location-loading"
                       >
