@@ -1,4 +1,5 @@
-import { memo, Suspense } from "react";
+import { Suspense } from "react";
+import { captureException } from "@sentry/nextjs";
 import Link from "next/link";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import {
@@ -12,7 +13,6 @@ import {
 } from "@heroicons/react/outline";
 import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
-// import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
 import AdArticle from "@components/ui/adArticle";
 import Search from "@components/ui/search";
 import Button from "@components/ui/common/button";
@@ -20,7 +20,7 @@ import SectionHeading from "@components/ui/common/SectionHeading";
 import { SearchSkeleton } from "@components/ui/common/skeletons";
 import { fetchEvents } from "@lib/api/events";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
+import { buildCanonicalUrl } from "@utils/url-filters";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
@@ -41,11 +41,8 @@ const PRIORITY_CATEGORY_SLUGS = [
   "teatre",
 ] as const;
 
-const PRIORITY_CATEGORY_ORDER_ENTRIES: [string, number][] =
-  PRIORITY_CATEGORY_SLUGS.map((slug, index) => [slug, index]);
-
-const PRIORITY_CATEGORY_ORDER = new Map<string, number>(
-  PRIORITY_CATEGORY_ORDER_ENTRIES
+const PRIORITY_CATEGORY_ORDER = new Map(
+  PRIORITY_CATEGORY_SLUGS.map((slug, index) => [slug, index])
 );
 
 const MAX_CATEGORY_SECTIONS = 5;
@@ -66,6 +63,20 @@ const QUICK_CATEGORY_LINKS = [
   { label: "Teatre", url: "/catalunya/teatre", Icon: TicketIcon },
   { label: "Exposicions", url: "/catalunya/exposicions", Icon: PhotographIcon },
 ] as const;
+
+// --- HELPER: Extracting the filtering logic to avoid duplication ---
+const filterActiveEvents = (events: any[]): EventSummaryResponseDTO[] => {
+  return events.filter(isEventSummaryResponseDTO).filter((event) => {
+    const status = computeTemporalStatus(
+      event.startDate,
+      event.endDate,
+      undefined,
+      event.startTime,
+      event.endTime
+    );
+    return status.state !== "past";
+  });
+};
 
 const resolveCategoryDetails = (
   categoryKey: string,
@@ -89,7 +100,6 @@ const resolveCategoryDetails = (
       const catSlug = safeToLowerCase(cat.slug);
       return catName === normalizedKey || catSlug === normalizedKey;
     });
-    // Type guard: we know name and slug exist because of the check above
     if (found?.name && found.slug) {
       return { name: found.name, slug: found.slug };
     }
@@ -98,14 +108,12 @@ const resolveCategoryDetails = (
 
   if (firstEvent?.categories?.length) {
     const matchingCategory = findMatchingCategory(firstEvent.categories);
-
     if (matchingCategory) {
       return {
         categoryName: matchingCategory.name,
         categorySlug: matchingCategory.slug,
       };
     }
-
     const firstValid = firstEvent.categories.find(
       (cat) => cat?.name && cat.slug
     );
@@ -119,7 +127,6 @@ const resolveCategoryDetails = (
 
   if (allCategories?.length) {
     const matchingCategory = findMatchingCategory(allCategories);
-
     if (matchingCategory) {
       return {
         categoryName: matchingCategory.name,
@@ -140,6 +147,7 @@ const resolveCategoryDetails = (
   };
 };
 
+// --- MAIN COMPONENT ---
 function ServerEventsCategorized({
   pageData,
   seoTopTownLinks = [],
@@ -147,7 +155,7 @@ function ServerEventsCategorized({
 }: ServerEventsCategorizedProps) {
   return (
     <div className="w-full bg-background">
-      {/* 1. HERO SEARCH */}
+      {/* 1. INSTANT RENDER: SEARCH & HEADER */}
       <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap px-section-x">
         <div className="container">
           <Suspense fallback={<SearchSkeleton />}>
@@ -157,7 +165,6 @@ function ServerEventsCategorized({
       </div>
 
       <div className="container pt-section-y">
-        {/* SEO Content */}
         {pageData && (
           <>
             <h1 className="heading-1 mb-2">{pageData.title}</h1>
@@ -166,12 +173,9 @@ function ServerEventsCategorized({
             </p>
           </>
         )}
-
-        {/* Location Discovery Widget */}
-        {/* <LocationDiscoveryWidget /> */}
       </div>
 
-      {/* 2. QUICK CATEGORIES */}
+      {/* 2. INSTANT RENDER: QUICK CATEGORIES */}
       <section className="py-section-y container border-b">
         <SectionHeading
           title="Explora per interessos"
@@ -197,11 +201,13 @@ function ServerEventsCategorized({
         </div>
       </section>
 
-      {/* 3. MAIN LIST + FEATURED PLACES */}
-      <ServerEventsCategorizedContent
-        {...contentProps}
-        seoTopTownLinks={seoTopTownLinks}
-      />
+      {/* 3. STREAMED CONTENT: HEAVY FETCHING */}
+      <Suspense fallback={<ServerEventsCategorizedFallback />}>
+        <ServerEventsCategorizedContent
+          {...contentProps}
+          seoTopTownLinks={seoTopTownLinks}
+        />
+      </Suspense>
     </div>
   );
 }
@@ -212,45 +218,41 @@ export async function ServerEventsCategorizedContent({
   featuredPlaces,
   seoTopTownLinks = [],
 }: ServerEventsCategorizedProps) {
-  const [categorizedEvents, categories] = await Promise.all([
-    categorizedEventsPromise,
-    categoriesPromise || Promise.resolve<CategorySummaryResponseDTO[]>([]),
-  ]);
+  // 1. Prepare Safe Promises
+  const safeCategoriesPromise = (
+    categoriesPromise || Promise.resolve([])
+  ).catch((err) => {
+    captureException(err, { tags: { section: "categories-fetch" } });
+    return [] as CategorySummaryResponseDTO[];
+  });
 
-  const featuredSections = featuredPlaces
-    ? (
-        await Promise.all(
-          featuredPlaces.map(async (placeConfig, index) => {
-            const placeSlug =
-              placeConfig.filter.city ||
-              placeConfig.filter.region ||
-              placeConfig.filter.place ||
-              placeConfig.slug;
+  const safeCategorizedEventsPromise = categorizedEventsPromise.catch((err) => {
+    captureException(err, { tags: { section: "categorized-events-fetch" } });
+    return {};
+  });
 
-            if (!placeSlug) return null;
+  // 2. Prepare Featured Places Promises
+  const featuredSectionsPromise = featuredPlaces
+    ? Promise.all(
+        featuredPlaces.map(async (placeConfig, index) => {
+          const placeSlug =
+            placeConfig.filter.city ||
+            placeConfig.filter.region ||
+            placeConfig.filter.place ||
+            placeConfig.slug;
 
+          if (!placeSlug) return null;
+
+          try {
             const response = await fetchEvents({
               place: placeSlug,
               page: 0,
               size: 6,
             });
 
-            const events = response.content
-              .filter(isEventSummaryResponseDTO)
-              .filter((event) => {
-                const status = computeTemporalStatus(
-                  event.startDate,
-                  event.endDate,
-                  undefined,
-                  event.startTime,
-                  event.endTime
-                );
-                return status.state !== "past";
-              });
+            const events = filterActiveEvents(response.content);
 
-            if (events.length === 0) {
-              return null;
-            }
+            if (events.length === 0) return null;
 
             return {
               ...placeConfig,
@@ -258,34 +260,41 @@ export async function ServerEventsCategorizedContent({
               placeSlug,
               usePriority: index < 2,
             };
-          })
-        )
-      ).filter(
-        (
-          section
-        ): section is FeaturedPlaceConfig & {
-          events: EventSummaryResponseDTO[];
-          placeSlug: string;
-          usePriority: boolean;
-        } => section !== null
+          } catch (error) {
+            captureException(error, {
+              extra: {
+                placeSlug,
+                section: "featuredPlaces",
+              },
+            });
+            return null;
+          }
+        })
       )
-    : [];
+    : Promise.resolve<(FeaturedPlaceConfig | null)[]>([]);
 
-  // Filter out ads and past events before processing
+  // 3. Parallel Execution
+  const [categorizedEvents, categories, rawFeaturedSections] =
+    await Promise.all([
+      safeCategorizedEventsPromise,
+      safeCategoriesPromise,
+      featuredSectionsPromise,
+    ]);
+
+  // 4. Processing
+  const featuredSections = (rawFeaturedSections ?? []).filter(
+    (
+      s
+    ): s is FeaturedPlaceConfig & {
+      events: EventSummaryResponseDTO[];
+      placeSlug: string;
+      usePriority: boolean;
+    } => s !== null
+  );
+
   const filteredCategorizedEvents = Object.entries(categorizedEvents).reduce(
     (acc, [category, events]) => {
-      const realEvents = events.filter(isEventSummaryResponseDTO);
-      // Filter out past events
-      const activeEvents = realEvents.filter((event) => {
-        const status = computeTemporalStatus(
-          event.startDate,
-          event.endDate,
-          undefined,
-          event.startTime,
-          event.endTime
-        );
-        return status.state !== "past";
-      });
+      const activeEvents = filterActiveEvents(events);
       if (activeEvents.length > 0) {
         acc[category] = activeEvents;
       }
@@ -296,13 +305,14 @@ export async function ServerEventsCategorizedContent({
 
   const categorySections = Object.entries(filteredCategorizedEvents).map(
     ([category, events]) => {
-      const firstEvent = events.find(isEventSummaryResponseDTO);
+      const firstEvent = events[0]; // Safe because we checked length > 0
       const { categoryName, categorySlug } = resolveCategoryDetails(
         category,
         firstEvent,
         categories
       );
       const normalizedSlug = categorySlug?.toLowerCase() ?? "";
+
       return {
         key: category,
         events,
@@ -314,13 +324,16 @@ export async function ServerEventsCategorizedContent({
     }
   );
 
+  // Sort by priority
   const prioritizedSections: typeof categorySections = [];
   const otherSections: typeof categorySections = [];
 
   for (const section of categorySections) {
     if (
       section.normalizedSlug &&
-      PRIORITY_CATEGORY_ORDER.has(section.normalizedSlug)
+      PRIORITY_CATEGORY_ORDER.has(
+        section.normalizedSlug as (typeof PRIORITY_CATEGORY_SLUGS)[number]
+      )
     ) {
       prioritizedSections.push(section);
     } else {
@@ -330,9 +343,12 @@ export async function ServerEventsCategorizedContent({
 
   prioritizedSections.sort(
     (a, b) =>
-      (PRIORITY_CATEGORY_ORDER.get(a.normalizedSlug) ??
-        Number.MAX_SAFE_INTEGER) -
-      (PRIORITY_CATEGORY_ORDER.get(b.normalizedSlug) ?? Number.MAX_SAFE_INTEGER)
+      PRIORITY_CATEGORY_ORDER.get(
+        a.normalizedSlug as (typeof PRIORITY_CATEGORY_SLUGS)[number]
+      )! -
+      PRIORITY_CATEGORY_ORDER.get(
+        b.normalizedSlug as (typeof PRIORITY_CATEGORY_SLUGS)[number]
+      )!
   );
 
   const categorySectionsToRender = [
@@ -340,28 +356,25 @@ export async function ServerEventsCategorizedContent({
     ...otherSections,
   ].slice(0, MAX_CATEGORY_SECTIONS);
 
-  const hasEvents = categorySectionsToRender.length > 0;
-
-  // Pre-calculate ad placement positions for better performance
-  const totalCategories = categorySectionsToRender.length;
-  const adPositions = new Set<number>();
-
-  // Add ads starting from index 1 (after 2nd category) and then every 3rd category
-  for (let i = 1; i < totalCategories; i += 3) {
-    adPositions.add(i);
-  }
-
-  // Always show ad after the last category if we have more than 3 categories
-  if (totalCategories > 3) {
-    adPositions.add(totalCategories - 1);
-  }
+  const hasEvents =
+    categorySectionsToRender.length > 0 || featuredSections.length > 0;
 
   if (!hasEvents) {
     return <NoEventsFound />;
   }
 
+  // Ad Logic
+  const adPositions = new Set<number>();
+  for (let i = 1; i < categorySectionsToRender.length; i += 3) {
+    adPositions.add(i);
+  }
+  if (categorySectionsToRender.length > 3) {
+    adPositions.add(categorySectionsToRender.length - 1);
+  }
+
   return (
     <>
+      {/* Featured Places Render */}
       {featuredSections.length > 0 && (
         <div className="container">
           {featuredSections.map((section) => (
@@ -369,11 +382,11 @@ export async function ServerEventsCategorizedContent({
               <div className="flex-between gap-element-gap">
                 <div className="stack gap-1">
                   <h2 className="heading-2">{section.title}</h2>
-                  {section.subtitle ? (
+                  {section.subtitle && (
                     <p className="body-small text-foreground/70">
                       {section.subtitle}
                     </p>
-                  ) : null}
+                  )}
                 </div>
                 <PressableAnchor
                   href={`/${section.slug}`}
@@ -431,16 +444,12 @@ export async function ServerEventsCategorizedContent({
         </div>
       )}
 
+      {/* Categories Render */}
       <div className="container">
         {categorySectionsToRender.map((section, index) => {
-          // Conservative priority logic for homepage main content:
-          // Only first 2 categories get priority to balance performance
-          // This gives priority to ~6 images (2 categories × 3 images each)
           const shouldUsePriority = index < 2;
-
           return (
             <section key={section.key} className="py-section-y border-b">
-              {/* Category Header */}
               <div className="flex justify-between items-center">
                 <h2 className="heading-2">
                   L&apos;agenda {section.categoryPhrase} a Catalunya
@@ -458,12 +467,10 @@ export async function ServerEventsCategorizedContent({
                   prefetch={false}
                   variant="inline"
                 >
-                  Veure més
-                  <ChevronRightIcon className="w-5 h-5" />
+                  Veure més <ChevronRightIcon className="w-5 h-5" />
                 </PressableAnchor>
               </div>
 
-              {/* Related canonical links for this category */}
               <nav
                 aria-label="Vegeu també"
                 className="mt-element-gap-sm mb-element-gap-sm"
@@ -517,7 +524,6 @@ export async function ServerEventsCategorizedContent({
                 </ul>
               </nav>
 
-              {/* Events Horizontal Scroll */}
               <EventsAroundServer
                 events={section.events}
                 layout="horizontal"
@@ -527,10 +533,9 @@ export async function ServerEventsCategorizedContent({
                 jsonLdId={`category-events-${section.categorySlug}`}
               />
 
-              {/* Ad placement between category sections */}
               {adPositions.has(index) && (
-                <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-element-gap mt-element-gap mb-element-gap-sm">
-                  <div className="w-full flex items-center gap-element-gap">
+                <div className="w-full flex flex-col items-start mt-element-gap mb-element-gap-sm max-w-lg">
+                  <div className="flex items-center gap-2 mb-element-gap">
                     <SpeakerphoneIcon className="w-5 h-5 text-foreground-strong flex-shrink-0" />
                     <h2 className="heading-2">Contingut patrocinat</h2>
                   </div>
@@ -544,7 +549,7 @@ export async function ServerEventsCategorizedContent({
         })}
       </div>
 
-      {/* 4. SEO LINKS - DATA DRIVEN */}
+      {/* SEO Links */}
       {seoTopTownLinks.length > 0 && (
         <section className="py-section-y container">
           <SectionHeading
@@ -566,7 +571,7 @@ export async function ServerEventsCategorizedContent({
         </section>
       )}
 
-      {/* 5. CTA FINAL */}
+      {/* CTA */}
       <section className="py-section-y container text-center">
         <p className="body-large text-foreground/70 font-medium mb-element-gap">
           No trobes el que busques?
@@ -581,4 +586,25 @@ export async function ServerEventsCategorizedContent({
   );
 }
 
-export default memo(ServerEventsCategorized);
+export default ServerEventsCategorized;
+
+function ServerEventsCategorizedFallback() {
+  return (
+    <div className="container py-section-y animate-pulse">
+      <div className="space-y-6">
+        <div className="h-7 w-56 rounded bg-foreground/10" />
+        <div className="h-5 w-2/3 rounded bg-foreground/10" />
+        <div className="grid gap-element-gap md:grid-cols-2">
+          {[0, 1, 2, 3].map((index) => (
+            <div key={index} className="space-y-4 rounded-lg border p-6">
+              <div className="h-6 w-40 rounded bg-foreground/10" />
+              <div className="h-4 w-full rounded bg-foreground/10" />
+              <div className="h-4 w-3/4 rounded bg-foreground/10" />
+              <div className="h-32 rounded bg-foreground/10" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
