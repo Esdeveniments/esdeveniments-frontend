@@ -103,7 +103,6 @@ async function fetchEventsInternal(
     captureException(e, {
       tags: { section: "events-fetch", fallback: "internal-api-failed" },
       extra: {
-        params,
         fallbackTriggered: true,
       },
     });
@@ -111,7 +110,7 @@ async function fetchEventsInternal(
     if (!externalResult) {
       captureException(new Error("Both internal and external API failed"), {
         tags: { section: "events-fetch", fallback: "external-also-failed" },
-        extra: { params },
+        extra: {},
       });
     }
     return externalResult ?? fallbackResponse;
