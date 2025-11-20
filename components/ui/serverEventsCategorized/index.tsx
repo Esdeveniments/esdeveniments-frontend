@@ -15,14 +15,13 @@ import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import AdArticle from "@components/ui/adArticle";
 import Search from "@components/ui/search";
-import Button from "@components/ui/common/button";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { SearchSkeleton } from "@components/ui/common/skeletons";
 import { fetchEvents } from "@lib/api/events";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { EventSummaryResponseDTO } from "types/api/event";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import type {
   FeaturedPlaceConfig,
@@ -50,7 +49,7 @@ const MAX_CATEGORY_SECTIONS = 5;
 const QUICK_CATEGORY_LINKS = [
   {
     label: "Festes Majors",
-    url: "/catalunya/festes-majors",
+    url: "/catalunya/festes-populars",
     Icon: SparklesIcon,
   },
   {
@@ -58,14 +57,18 @@ const QUICK_CATEGORY_LINKS = [
     url: "/catalunya/fires-i-mercats",
     Icon: ShoppingBagIcon,
   },
-  { label: "Amb Nens", url: "/catalunya/amb-nens", Icon: EmojiHappyIcon },
-  { label: "Concerts", url: "/catalunya/concerts", Icon: MusicNoteIcon },
+  {
+    label: "Amb Nens",
+    url: "/catalunya/familia-i-infants",
+    Icon: EmojiHappyIcon,
+  },
+  { label: "Concerts", url: "/catalunya/musica", Icon: MusicNoteIcon },
   { label: "Teatre", url: "/catalunya/teatre", Icon: TicketIcon },
   { label: "Exposicions", url: "/catalunya/exposicions", Icon: PhotographIcon },
 ] as const;
 
 // --- HELPER: Extracting the filtering logic to avoid duplication ---
-const filterActiveEvents = (events: any[]): EventSummaryResponseDTO[] => {
+const filterActiveEvents = (events: ListEvent[]): EventSummaryResponseDTO[] => {
   return events.filter(isEventSummaryResponseDTO).filter((event) => {
     const status = computeTemporalStatus(
       event.startDate,
@@ -183,19 +186,19 @@ function ServerEventsCategorized({
         />
         <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:pb-2">
           {QUICK_CATEGORY_LINKS.map(({ label, url, Icon }) => (
-            <Link key={url} href={url} prefetch={false} className="h-full">
-              <Button
-                variant="category"
-                className="w-full h-full text-sm sm:w-auto whitespace-nowrap"
-              >
-                <span className="flex items-center gap-2 whitespace-nowrap">
-                  <Icon
-                    className="w-5 h-5 text-primary flex-shrink-0"
-                    aria-hidden="true"
-                  />
-                  <span className="truncate">{label}</span>
-                </span>
-              </Button>
+            <Link
+              key={url}
+              href={url}
+              prefetch={false}
+              className="btn-category h-full w-full text-sm sm:w-auto whitespace-nowrap"
+            >
+              <span className="flex items-center gap-2 whitespace-nowrap">
+                <Icon
+                  className="w-5 h-5 text-primary flex-shrink-0"
+                  aria-hidden="true"
+                />
+                <span className="truncate">{label}</span>
+              </span>
             </Link>
           ))}
         </div>
@@ -576,10 +579,12 @@ export async function ServerEventsCategorizedContent({
         <p className="body-large text-foreground/70 font-medium mb-element-gap">
           No trobes el que busques?
         </p>
-        <Link href="/catalunya" prefetch={false}>
-          <Button variant="primary" className="w-full sm:w-auto">
-            Veure tota l&apos;agenda
-          </Button>
+        <Link
+          href="/catalunya"
+          prefetch={false}
+          className="btn-primary w-full sm:w-auto"
+        >
+          Veure tota l&apos;agenda
         </Link>
       </section>
     </>

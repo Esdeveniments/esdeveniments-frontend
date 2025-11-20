@@ -7,7 +7,10 @@ import {
   parsePagedEvents,
   parseCategorizedEvents,
 } from "@lib/validation/event";
-import { fetchCategorizedEventsExternal } from "./events-external";
+import {
+  fetchCategorizedEventsExternal,
+  fetchEventsExternal,
+} from "./events-external";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
@@ -39,6 +42,40 @@ const e2eEventsStore = isE2ETestMode
 export async function fetchEvents(
   params: FetchEventsParams
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
+    content: [],
+    currentPage: 0,
+    pageSize: 10,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  };
+
+  const fetchExternalWithValidation = async () => {
+    try {
+      const data = await fetchEventsExternal(params);
+      const validated = parsePagedEvents(data);
+      if (!validated) {
+        console.error("fetchEvents: external validation failed");
+        return null;
+      }
+      return validated;
+    } catch (error) {
+      const errorMessage = getSanitizedErrorMessage(error);
+      console.error("fetchEvents: external fetch failed", errorMessage);
+      return null;
+    }
+  };
+
+  const isBuildPhase =
+    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
+    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
+
+  if (isBuildPhase) {
+    const externalResult = await fetchExternalWithValidation();
+    return externalResult ?? fallbackResponse;
+  }
+
   try {
     const queryString = buildEventsQuery(params);
     const finalUrl = getInternalApiUrl(`/api/events?${queryString}`);
@@ -61,26 +98,13 @@ export async function fetchEvents(
     const validated = parsePagedEvents(data);
     if (!validated) {
       console.error("fetchEvents: validation failed, returning fallback");
-      return {
-        content: [],
-        currentPage: 0,
-        pageSize: 10,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      };
+      return fallbackResponse;
     }
     return validated;
   } catch (e) {
-    console.error("Error fetching events:", e);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    console.error("Error fetching events via internal API:", e);
+    const externalResult = await fetchExternalWithValidation();
+    return externalResult ?? fallbackResponse;
   }
 }
 
