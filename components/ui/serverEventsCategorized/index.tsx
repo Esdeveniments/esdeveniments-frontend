@@ -1,10 +1,15 @@
-import { memo } from "react";
+import { memo, Suspense } from "react";
+import Link from "next/link";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { SpeakerphoneIcon } from "@heroicons/react/outline";
 import Badge from "@components/ui/common/badge";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
 import AdArticle from "@components/ui/adArticle";
+import Search from "@components/ui/search";
+import Button from "@components/ui/common/button";
+import SectionHeading from "@components/ui/common/SectionHeading";
+import { SearchSkeleton } from "@components/ui/common/skeletons";
 import { fetchEvents } from "@lib/api/events";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
@@ -18,7 +23,6 @@ import type {
 import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { computeTemporalStatus } from "@utils/event-status";
-
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 const PRIORITY_CATEGORY_SLUGS = [
@@ -35,6 +39,14 @@ const PRIORITY_CATEGORY_ORDER_ENTRIES: [string, number][] =
 const PRIORITY_CATEGORY_ORDER = new Map<string, number>(
   PRIORITY_CATEGORY_ORDER_ENTRIES
 );
+
+const QUICK_CATEGORY_LINKS = [
+  { label: "🎉 Festes Majors", url: "/festes-majors" },
+  { label: "🎪 Fires i Mercats", url: "/fires-i-mercats" },
+  { label: "👶 Amb Nens", url: "/amb-nens" },
+  { label: "🎵 Concerts", url: "/concerts" },
+  { label: "🎭 Teatre", url: "/teatre" },
+] as const;
 
 const resolveCategoryDetails = (
   categoryKey: string,
@@ -109,13 +121,106 @@ const resolveCategoryDetails = (
   };
 };
 
-function ServerEventsCategorized(props: ServerEventsCategorizedProps) {
-  return <ServerEventsCategorizedContent {...props} />;
+function ServerEventsCategorized({
+  pageData,
+  seoTopTownLinks = [],
+  ...contentProps
+}: ServerEventsCategorizedProps) {
+  return (
+    <div className="w-full bg-background">
+      {/* 1. HERO SEARCH */}
+      <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap px-section-x">
+        <div className="container">
+          <h1 className="sr-only">
+            Agenda d&apos;activitats i esdeveniments a Catalunya
+          </h1>
+          <Suspense fallback={<SearchSkeleton />}>
+            <Search />
+          </Suspense>
+        </div>
+      </div>
+
+      <div className="container pt-section-y">
+        {/* SEO Content */}
+        {pageData && (
+          <>
+            <h1 className="heading-1 mb-2">{pageData.title}</h1>
+            <h2 className="heading-2 text-foreground text-left">
+              {pageData.subTitle}
+            </h2>
+          </>
+        )}
+
+        {/* Location Discovery Widget */}
+        <LocationDiscoveryWidget />
+      </div>
+
+      {/* 2. QUICK CATEGORIES */}
+      <section className="py-section-y container border-b border-border">
+        <h3 className="heading-3 mb-element-gap text-foreground">
+          Explora per interessos
+        </h3>
+        <div className="flex flex-col gap-element-gap sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:pb-2">
+          {QUICK_CATEGORY_LINKS.map((cat) => (
+            <Link
+              key={cat.url}
+              href={cat.url}
+              prefetch={false}
+              className="w-full sm:w-auto flex-shrink-0"
+            >
+              <Button
+                variant="outline"
+                className="w-full rounded-badge bg-background border border-border/80 text-primary font-semibold tracking-wide uppercase justify-center py-3 text-base hover:border-primary hover:text-primary transition-interactive sm:w-auto sm:px-6 sm:justify-center"
+              >
+                {cat.label}
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. MAIN LIST + FEATURED PLACES */}
+      <ServerEventsCategorizedContent {...contentProps} pageData={pageData} />
+
+      {/* 4. SEO LINKS - DATA DRIVEN */}
+      {seoTopTownLinks.length > 0 && (
+        <section className="py-section-y px-section-x container bg-muted">
+          <SectionHeading
+            title="Agendes locals més visitades"
+            titleClassName="heading-3 text-foreground"
+          />
+          <div className="flex flex-wrap gap-x-element-gap gap-y-element-gap-sm mt-element-gap">
+            {seoTopTownLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                prefetch={false}
+                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive block w-full sm:w-1/2 lg:w-1/3"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 5. CTA FINAL */}
+      <section className="py-section-y px-section-x container text-center">
+        <p className="body-large text-foreground/70 mb-element-gap">
+          No trobes el que busques?
+        </p>
+        <Link href="/catalunya" prefetch={false}>
+          <Button variant="primary" className="w-full sm:w-auto">
+            Veure tota l&apos;agenda
+          </Button>
+        </Link>
+      </section>
+    </div>
+  );
 }
 
 export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
-  pageData,
   categoriesPromise,
   featuredPlaces,
 }: ServerEventsCategorizedProps) {
@@ -263,196 +368,179 @@ export async function ServerEventsCategorizedContent({
 
   return (
     <>
-      <div className="w-full bg-background overflow-hidden">
-        <div className="container pt-section-y">
-          {/* SEO Content */}
-          {pageData && (
-            <>
-              <h1 className="heading-1 mb-2">{pageData.title}</h1>
-              <h2 className="heading-2 text-foreground text-left">
-                {pageData.subTitle}
-              </h2>
-            </>
-          )}
-
-          {/* Location Discovery Widget */}
-          <LocationDiscoveryWidget />
-        </div>
-
-        {featuredSections.length > 0 && (
-          <div className="container">
-            {featuredSections.map((section) => (
-              <section
-                key={section.slug}
-                className="py-section-y border-b border-border first:pt-section-y"
-              >
-                <div className="flex-between gap-element-gap">
-                  <div className="stack gap-1">
-                    <h3 className="heading-3">{section.title}</h3>
-                    {section.subtitle ? (
-                      <p className="body-small text-foreground/70">
-                        {section.subtitle}
-                      </p>
-                    ) : null}
-                  </div>
-                  <PressableAnchor
-                    href={`/${section.slug}`}
-                    className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
-                    prefetch={false}
-                    variant="inline"
-                  >
-                    Veure més
-                    <ChevronRightIcon className="w-5 h-5" />
-                  </PressableAnchor>
-                </div>
-
-                <nav
-                  aria-label={`Explora ${section.title} per data`}
-                  className="mt-element-gap-sm mb-element-gap-sm"
-                >
-                  <ul className="flex gap-element-gap">
-                    <li>
-                      <Badge
-                        href={`/${section.slug}/avui`}
-                        ariaLabel={`Veure activitats d'avui a ${section.title}`}
-                      >
-                        Avui
-                      </Badge>
-                    </li>
-                    <li>
-                      <Badge
-                        href={`/${section.slug}/dema`}
-                        ariaLabel={`Veure activitats de demà a ${section.title}`}
-                      >
-                        Demà
-                      </Badge>
-                    </li>
-                    <li>
-                      <Badge
-                        href={`/${section.slug}/cap-de-setmana`}
-                        ariaLabel={`Veure activitats aquest cap de setmana a ${section.title}`}
-                      >
-                        Cap de setmana
-                      </Badge>
-                    </li>
-                  </ul>
-                </nav>
-
-                <EventsAroundServer
-                  events={section.events}
-                  layout="horizontal"
-                  usePriority={Boolean(section.usePriority)}
-                  showJsonLd
-                  title={section.title}
-                  jsonLdId={`featured-events-${section.slug}`}
-                />
-              </section>
-            ))}
-          </div>
-        )}
-
+      {featuredSections.length > 0 && (
         <div className="container">
-          {categorySectionsToRender.map((section, index) => {
-            // Conservative priority logic for homepage main content:
-            // Only first 2 categories get priority to balance performance
-            // This gives priority to ~6 images (2 categories × 3 images each)
-            const shouldUsePriority = index < 2;
-
-            return (
-              <section
-                key={section.key}
-                className="py-section-y border-b border-border first:pt-section-y"
-              >
-                {/* Category Header */}
-                <div className="flex justify-between items-center">
-                  <h3 className="heading-3">
-                    L&apos;agenda {section.categoryPhrase} a Catalunya
-                  </h3>
-                  <PressableAnchor
-                    href={buildCanonicalUrl(
-                      {
-                        place: "catalunya",
-                        byDate: DEFAULT_FILTER_VALUE,
-                        category: section.categorySlug,
-                      },
-                      categories
-                    )}
-                    className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
-                    prefetch={false}
-                    variant="inline"
-                  >
-                    Veure més
-                    <ChevronRightIcon className="w-5 h-5" />
-                  </PressableAnchor>
+          {featuredSections.map((section) => (
+            <section
+              key={section.slug}
+              className="py-section-y border-b border-border first:pt-section-y"
+            >
+              <div className="flex-between gap-element-gap">
+                <div className="stack gap-1">
+                  <h3 className="heading-3">{section.title}</h3>
+                  {section.subtitle ? (
+                    <p className="body-small text-foreground/70">
+                      {section.subtitle}
+                    </p>
+                  ) : null}
                 </div>
-
-                {/* Related canonical links for this category */}
-                <nav
-                  aria-label="Vegeu també"
-                  className="mt-element-gap-sm mb-element-gap-sm"
+                <PressableAnchor
+                  href={`/${section.slug}`}
+                  className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
+                  prefetch={false}
+                  variant="inline"
                 >
-                  <ul className="flex gap-element-gap">
-                    <li>
-                      <Badge
-                        href={buildCanonicalUrl(
-                          {
-                            place: "catalunya",
-                            byDate: "avui",
-                            category: section.categorySlug,
-                          },
-                          categories
-                        )}
-                        ariaLabel={`Veure activitats d'avui per la categoria ${section.categoryName}`}
-                      >
-                        Avui
-                      </Badge>
-                    </li>
-                    <li>
-                      <Badge
-                        href={buildCanonicalUrl(
-                          {
-                            place: "catalunya",
-                            byDate: "cap-de-setmana",
-                            category: section.categorySlug,
-                          },
-                          categories
-                        )}
-                        ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${section.categoryName}`}
-                      >
-                        Cap de setmana
-                      </Badge>
-                    </li>
-                  </ul>
-                </nav>
+                  Veure més
+                  <ChevronRightIcon className="w-5 h-5" />
+                </PressableAnchor>
+              </div>
 
-                {/* Events Horizontal Scroll */}
-                <EventsAroundServer
-                  events={section.events}
-                  layout="horizontal"
-                  usePriority={shouldUsePriority}
-                  showJsonLd={true}
-                  title={section.categoryName}
-                  jsonLdId={`category-events-${section.categorySlug}`}
-                />
+              <nav
+                aria-label={`Explora ${section.title} per data`}
+                className="mt-element-gap-sm mb-element-gap-sm"
+              >
+                <ul className="flex gap-element-gap">
+                  <li>
+                    <Badge
+                      href={`/${section.slug}/avui`}
+                      ariaLabel={`Veure activitats d'avui a ${section.title}`}
+                    >
+                      Avui
+                    </Badge>
+                  </li>
+                  <li>
+                    <Badge
+                      href={`/${section.slug}/dema`}
+                      ariaLabel={`Veure activitats de demà a ${section.title}`}
+                    >
+                      Demà
+                    </Badge>
+                  </li>
+                  <li>
+                    <Badge
+                      href={`/${section.slug}/cap-de-setmana`}
+                      ariaLabel={`Veure activitats aquest cap de setmana a ${section.title}`}
+                    >
+                      Cap de setmana
+                    </Badge>
+                  </li>
+                </ul>
+              </nav>
 
-                {/* Ad placement between category sections */}
-                {adPositions.has(index) && (
-                  <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-element-gap mt-element-gap mb-element-gap-sm">
-                    <div className="w-full flex">
-                      <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
-                      <div className="stack w-11/12">
-                        <h3 className="heading-3">Contingut patrocinat</h3>
-                      </div>
-                    </div>
-                    <div className="w-full">
-                      <AdArticle slot="8139041285" />
+              <EventsAroundServer
+                events={section.events}
+                layout="horizontal"
+                usePriority={Boolean(section.usePriority)}
+                showJsonLd
+                title={section.title}
+                jsonLdId={`featured-events-${section.slug}`}
+              />
+            </section>
+          ))}
+        </div>
+      )}
+
+      <div className="container">
+        {categorySectionsToRender.map((section, index) => {
+          // Conservative priority logic for homepage main content:
+          // Only first 2 categories get priority to balance performance
+          // This gives priority to ~6 images (2 categories × 3 images each)
+          const shouldUsePriority = index < 2;
+
+          return (
+            <section
+              key={section.key}
+              className="py-section-y border-b border-border first:pt-section-y"
+            >
+              {/* Category Header */}
+              <div className="flex justify-between items-center">
+                <h3 className="heading-3">
+                  L&apos;agenda {section.categoryPhrase} a Catalunya
+                </h3>
+                <PressableAnchor
+                  href={buildCanonicalUrl(
+                    {
+                      place: "catalunya",
+                      byDate: DEFAULT_FILTER_VALUE,
+                      category: section.categorySlug,
+                    },
+                    categories
+                  )}
+                  className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
+                  prefetch={false}
+                  variant="inline"
+                >
+                  Veure més
+                  <ChevronRightIcon className="w-5 h-5" />
+                </PressableAnchor>
+              </div>
+
+              {/* Related canonical links for this category */}
+              <nav
+                aria-label="Vegeu també"
+                className="mt-element-gap-sm mb-element-gap-sm"
+              >
+                <ul className="flex gap-element-gap">
+                  <li>
+                    <Badge
+                      href={buildCanonicalUrl(
+                        {
+                          place: "catalunya",
+                          byDate: "avui",
+                          category: section.categorySlug,
+                        },
+                        categories
+                      )}
+                      ariaLabel={`Veure activitats d'avui per la categoria ${section.categoryName}`}
+                    >
+                      Avui
+                    </Badge>
+                  </li>
+                  <li>
+                    <Badge
+                      href={buildCanonicalUrl(
+                        {
+                          place: "catalunya",
+                          byDate: "cap-de-setmana",
+                          category: section.categorySlug,
+                        },
+                        categories
+                      )}
+                      ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${section.categoryName}`}
+                    >
+                      Cap de setmana
+                    </Badge>
+                  </li>
+                </ul>
+              </nav>
+
+              {/* Events Horizontal Scroll */}
+              <EventsAroundServer
+                events={section.events}
+                layout="horizontal"
+                usePriority={shouldUsePriority}
+                showJsonLd={true}
+                title={section.categoryName}
+                jsonLdId={`category-events-${section.categorySlug}`}
+              />
+
+              {/* Ad placement between category sections */}
+              {adPositions.has(index) && (
+                <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-element-gap mt-element-gap mb-element-gap-sm">
+                  <div className="w-full flex">
+                    <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
+                    <div className="stack w-11/12">
+                      <h3 className="heading-3">Contingut patrocinat</h3>
                     </div>
                   </div>
-                )}
-              </section>
-            );
-          })}
-        </div>
+                  <div className="w-full">
+                    <AdArticle slot="8139041285" />
+                  </div>
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
     </>
   );

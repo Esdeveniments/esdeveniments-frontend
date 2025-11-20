@@ -10,19 +10,14 @@ import {
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import type { NavigationItem, PageData, Href } from "types/common";
+import type { NavigationItem, PageData } from "types/common";
 import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
-import Search from "@components/ui/search";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { computeTemporalStatus } from "@utils/event-status";
-import {
-  HomePageSkeleton,
-  SearchSkeleton,
-} from "@components/ui/common/skeletons";
-import type { FeaturedPlaceConfig } from "types/props";
+import type { FeaturedPlaceConfig, SeoLinkItem } from "types/props";
 
-const homeSeoLinkSections = [
+const homeSeoLinkSections: { title: string; links: SeoLinkItem[] }[] = [
   {
     title: "Què fer avui",
     links: [
@@ -63,13 +58,13 @@ const homeSeoLinkSections = [
       { href: "/malgrat-de-mar", label: "Agenda Malgrat de Mar" },
     ],
   },
-] as const;
+];
 
 const homeNavigationItems: NavigationItem[] = homeSeoLinkSections.flatMap(
   (section) =>
     section.links.map((link) => ({
       name: link.label,
-      href: link.href as Href,
+      href: link.href,
     }))
 );
 
@@ -132,20 +127,13 @@ export default async function Page(): Promise<JSX.Element> {
         />
       </Suspense>
 
-      <div className="container flex justify-center items-center">
-        <Suspense fallback={<SearchSkeleton />}>
-          <Search />
-        </Suspense>
-      </div>
-
-      <Suspense fallback={<HomePageSkeleton />}>
-        <ServerEventsCategorized
-          categorizedEventsPromise={categorizedEventsPromise}
-          pageData={pageData}
-          categoriesPromise={categoriesPromise}
-          featuredPlaces={featuredPlaceSections}
-        />
-      </Suspense>
+      <ServerEventsCategorized
+        categorizedEventsPromise={categorizedEventsPromise}
+        pageData={pageData}
+        categoriesPromise={categoriesPromise}
+        featuredPlaces={featuredPlaceSections}
+        seoTopTownLinks={homeSeoLinkSections[2].links}
+      />
     </>
   );
 }

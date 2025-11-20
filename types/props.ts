@@ -12,6 +12,7 @@ import {
   PageData,
   PlaceTypeAndLabel,
   JsonLdScript,
+  Href,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
@@ -293,11 +294,17 @@ export interface FeaturedPlaceConfig {
   };
 }
 
+export interface SeoLinkItem {
+  href: Href;
+  label: string;
+}
+
 export interface ServerEventsCategorizedProps {
   categorizedEventsPromise: Promise<Record<string, ListEvent[]>>;
   pageData?: PageData;
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
   featuredPlaces?: FeaturedPlaceConfig[];
+  seoTopTownLinks?: SeoLinkItem[];
 }
 
 // Location Discovery Widget Props

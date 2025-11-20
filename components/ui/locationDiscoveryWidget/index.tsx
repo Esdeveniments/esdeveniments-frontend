@@ -146,9 +146,9 @@ export default function LocationDiscoveryWidget({
           {/* Main Location Selector */}
           <div className="flex items-center gap-element-gap mb-element-gap flex-wrap md:flex-nowrap">
             <GlobeIcon className="w-4 h-4" />
-            <h2 className="body-small text-foreground">
+            <h3 className="heading-3 text-foreground">
               Mirant esdeveniments a
-            </h2>
+            </h3>
             <div className="relative w-full md:w-auto flex-shrink-0">
               <button
                 type="button"

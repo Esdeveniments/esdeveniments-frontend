@@ -14,6 +14,10 @@ vi.mock("@components/ui/locationDiscoveryWidget", () => ({
   default: () => <div data-testid="location-discovery-widget" />,
 }));
 
+vi.mock("@components/ui/search", () => ({
+  default: () => <div data-testid="search-component" />,
+}));
+
 vi.mock("@components/ui/eventsAround/EventsAroundServer", () => ({
   default: ({ events }: { events: ListEvent[] }) => (
     <div data-testid="events-around" data-count={events.length}>
@@ -54,10 +58,12 @@ vi.mock("next/link", () => ({
   default: ({
     href,
     children,
+    prefetch, // eslint-disable-line @typescript-eslint/no-unused-vars
     ...rest
   }: {
     href: string;
     children: React.ReactNode;
+    prefetch?: boolean;
   }) => (
     <a href={href} {...rest}>
       {children}
