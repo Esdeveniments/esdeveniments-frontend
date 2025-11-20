@@ -18,8 +18,13 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { computeTemporalStatus } from "@utils/event-status";
 import type { FeaturedPlaceConfig, SeoLinkItem } from "types/props";
 
-const homeSeoLinkSections: { title: string; links: SeoLinkItem[] }[] = [
+const homeSeoLinkSections: {
+  id: string;
+  title: string;
+  links: SeoLinkItem[];
+}[] = [
   {
+    id: "today",
     title: "Què fer avui",
     links: [
       { href: "/barcelona/avui", label: "Què fer avui a Barcelona" },
@@ -32,6 +37,7 @@ const homeSeoLinkSections: { title: string; links: SeoLinkItem[] }[] = [
     ],
   },
   {
+    id: "tomorrow",
     title: "Què fer demà",
     links: [
       { href: "/barcelona/dema", label: "Què fer demà a Barcelona" },
@@ -43,6 +49,7 @@ const homeSeoLinkSections: { title: string; links: SeoLinkItem[] }[] = [
     ],
   },
   {
+    id: "local-agendas",
     title: "Agendes locals més visitades",
     links: [
       { href: "/cardedeu", label: "Agenda Cardedeu" },
@@ -116,7 +123,7 @@ export default async function Page(): Promise<JSX.Element> {
     generateSiteNavigationElementSchema(homeNavigationItems);
 
   const localAgendasSection = homeSeoLinkSections.find(
-    (section) => section.title === "Agendes locals més visitades"
+    (section) => section.id === "local-agendas"
   );
 
   return (
