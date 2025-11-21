@@ -205,11 +205,7 @@ export const useEvents = ({
     // Always request one more page (if activating, we want page 0 + page 1)
     pendingSizeRef.current = (pages?.length ?? 0) + 1;
     setIsLoadingMore(true);
-    try {
-      await setSize((prev) => prev + 1);
-    } finally {
-      // Keep isLoadingMore true until the new page renders
-    }
+    await setSize((prev) => prev + 1);
   };
 
   useEffect(() => {

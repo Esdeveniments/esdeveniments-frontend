@@ -5,7 +5,7 @@ export default function LoadMoreButton({
   onLoadMore,
   hasMore = true,
   isLoading = false,
-}: LoadMoreButtonProps) {
+}: Pick<LoadMoreButtonProps, "onLoadMore" | "hasMore" | "isLoading">) {
   const [isPending, startTransition] = useTransition();
   const handleLoadMore = () => {
     if (isLoading || isPending || !hasMore) return;
