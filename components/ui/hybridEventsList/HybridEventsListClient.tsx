@@ -43,7 +43,7 @@ function HybridEventsListClientContent({
   // Check if client-side filters are active
   const hasClientFilters = !!(search || distance || lat || lon);
 
-  const { events, hasMore, loadMore, isLoading, isValidating, error } =
+  const { events, hasMore, loadMore, error } =
     useEvents({
       place,
       category,
@@ -99,21 +99,11 @@ function HybridEventsListClientContent({
   }
 
   // Show error state when there's an error and filters are active
-  const showErrorState =
-    error && hasClientFilters && !isLoading && !isValidating;
-
-  // Show loading state when filters are active and events are being fetched
-  const showLoadingState =
-    hasClientFilters &&
-    (isLoading || isValidating) &&
-    displayedEvents.length === 0 &&
-    !error;
+  const showErrorState = error && hasClientFilters;
 
   // Show no events found when filters are active, fetch completed, and no results
   const showNoEventsFound =
     hasClientFilters &&
-    !isLoading &&
-    !isValidating &&
     displayedEvents.length === 0 &&
     !error;
 
@@ -141,13 +131,6 @@ function HybridEventsListClientContent({
               Si us plau, torna-ho a intentar més tard.
             </p>
           </div>
-        </div>
-      ) : showLoadingState ? (
-        // Show skeleton loading cards matching the event card layout
-        <div className="w-full">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <CardLoading key={`loading-${index}`} />
-          ))}
         </div>
       ) : showNoEventsFound ? (
         // Show no events found message when filters return no results
@@ -183,8 +166,6 @@ function HybridEventsListClientContent({
           </List>
           <LoadMoreButton
             onLoadMore={loadMore}
-            isLoading={isLoading}
-            isValidating={isValidating}
             hasMore={hasMore}
           />
         </>
@@ -197,7 +178,15 @@ function HybridEventsListClient(
   props: HybridEventsListProps
 ): ReactElement | null {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className="w-full">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <CardLoading key={`loading-${index}`} />
+          ))}
+        </div>
+      }
+    >
       <HybridEventsListClientContent {...props} />
     </Suspense>
   );

@@ -1,17 +1,17 @@
+import { useTransition } from "react";
 import { LoadMoreButtonProps } from "types/props";
 
 export default function LoadMoreButton({
   onLoadMore,
-  isLoading = false,
-  isValidating = false,
   hasMore = true,
-}: LoadMoreButtonProps) {
-  const isButtonDisabled = isLoading || !hasMore;
-  const showSpinner = isLoading || isValidating;
+}: Omit<LoadMoreButtonProps, "isLoading" | "isValidating">) {
+  const [isPending, startTransition] = useTransition();
 
   const handleLoadMore = () => {
-    if (isButtonDisabled || !onLoadMore) return;
-    onLoadMore();
+    if (isPending || !hasMore || !onLoadMore) return;
+    startTransition(async () => {
+      await onLoadMore();
+    });
   };
 
   if (!hasMore) {
@@ -23,14 +23,14 @@ export default function LoadMoreButton({
       <button
         type="button"
         onClick={handleLoadMore}
-        disabled={isButtonDisabled}
+        disabled={isPending}
         data-testid="load-more-button"
-        className="btn-neutral transition-interactive"
+        className="btn-neutral transition-interactive cursor-pointer"
         aria-label={
-          showSpinner ? "Carregant esdeveniments" : "Carregar més esdeveniments"
+          isPending ? "Carregant esdeveniments" : "Carregar més esdeveniments"
         }
       >
-        {showSpinner ? (
+        {isPending ? (
           <>
             {/* Modern 3-dot spinner like Linear/Vercel */}
             <span

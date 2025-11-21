@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { SWRConfig } from "swr";
 import { useEvents } from "@components/hooks/useEvents";
@@ -39,11 +40,10 @@ function createMockEvent(id: string, title: string, slug: string): EventSummaryR
 }
 
 function Harness(props: UseEventsOptions) {
-  const { events, isLoading } = useEvents(props);
+  const { events } = useEvents(props);
   return (
     <div>
       <div data-testid="count">{events.length}</div>
-      <div data-testid="loading">{String(isLoading)}</div>
     </div>
   );
 }
@@ -84,21 +84,22 @@ describe("useEvents filtered behaviour", () => {
     }) as unknown as typeof fetch;
     globalThis.fetch = fetchSpy;
 
-    render(
-      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-        <Harness
-          place="catalunya"
-          date="tots"
-          search="cardedeu"
-          initialSize={10}
-          fallbackData={[]}
-        />
-      </SWRConfig>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("count").textContent).toBe("2");
+    await React.act(async () => {
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Harness
+            place="catalunya"
+            date="tots"
+            search="cardedeu"
+            initialSize={10}
+            fallbackData={[]}
+          />
+        </React.Suspense>
+      );
     });
+
+    const count = await screen.findByTestId("count", {}, { timeout: 3000 });
+    expect(count.textContent).toBe("2");
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -119,21 +120,25 @@ describe("useEvents filtered behaviour", () => {
       );
     }) as unknown as typeof fetch;
 
-    render(
-      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-        <Harness
-          place="catalunya"
-          date="tots"
-          search="foo"
-          initialSize={10}
-          // Even if we pass fallbackData, it must be ignored for filtered queries
-          fallbackData={[createMockEvent("f", "F", "f")]}
-        />
-      </SWRConfig>
-    );
+    await React.act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="catalunya"
+              date="tots"
+              search="foo"
+              initialSize={10}
+              // Even if we pass fallbackData, it must be ignored for filtered queries
+              fallbackData={[createMockEvent("f", "F", "f")]}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
 
-    // Immediately after render, no fallback should be shown
-    expect(screen.getByTestId("count").textContent).toBe("0");
+    // Immediately after render, it should suspend (show loading) instead of showing fallback data
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByTestId("count").textContent).toBe("1");
@@ -160,19 +165,23 @@ describe("useEvents filtered behaviour", () => {
     }) as unknown as typeof fetch;
     globalThis.fetch = fetchSpy;
 
-    render(
-      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-        <Harness
-          place="catalunya"
-          date="tots"
-          search="abc"
-          distance="28"
-          lat="41.6"
-          lon="2.35"
-          initialSize={10}
-        />
-      </SWRConfig>
-    );
+    await React.act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="catalunya"
+              date="tots"
+              search="abc"
+              distance="28"
+              lat="41.6"
+              lon="2.35"
+              initialSize={10}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("count").textContent).toBe("1");

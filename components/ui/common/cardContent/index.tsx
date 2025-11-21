@@ -66,7 +66,10 @@ export default function CardContentServer({
           <div className="p-card-padding-sm flex justify-center items-center">
             <div
               className="w-full relative"
-              style={{ height: isHorizontal ? "16rem" : "auto" }}
+              style={{
+                height: isHorizontal ? "16rem" : "auto",
+                viewTransitionName: `event-image-${event.id}`,
+              }}
             >
               <Image
                 className={`w-full flex justify-center ${

@@ -243,6 +243,7 @@ export interface EventWeatherProps {
 export interface EventImageProps {
   image: string | undefined;
   title: string;
+  eventId: string;
 }
 
 export interface EventLocationProps {
