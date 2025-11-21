@@ -27,15 +27,7 @@ const pageFetcher = async (
   const res = await fetch(`/api/events?${qs.toString()}`);
   if (!res.ok) {
     console.error(`Failed to fetch events: ${res.status}`);
-    captureException(new Error(`Failed to fetch events: ${res.status}`));
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: params.size ?? 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    throw new Error(`Failed to fetch events: ${res.status}`);
   }
   return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
