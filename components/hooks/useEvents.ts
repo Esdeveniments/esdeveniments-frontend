@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
@@ -45,8 +45,7 @@ export const useEvents = ({
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {
   const [activationKey, setActivationKey] = useState<string | null>(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const pendingSizeRef = useRef<number | null>(null);
+  const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
 
   const currentKey = useMemo(
@@ -194,6 +193,9 @@ export const useEvents = ({
       ? !lastPage.last
       : false
     : serverHasMore;
+  const currentPageCount = pages?.length ?? 0;
+  const isLoadingMore =
+    targetPageCount !== null && currentPageCount < targetPageCount && !error;
 
   const loadMore = async () => {
     if (isActivated && (!hasMore || isLoadingMore)) return;
@@ -203,28 +205,9 @@ export const useEvents = ({
     }
 
     // Always request one more page (if activating, we want page 0 + page 1)
-    pendingSizeRef.current = (pages?.length ?? 0) + 1;
-    setIsLoadingMore(true);
+    setTargetPageCount(currentPageCount + 1);
     await setSize((prev) => prev + 1);
   };
-
-  useEffect(() => {
-    if (!isLoadingMore) return;
-    const targetSize = pendingSizeRef.current;
-    if (targetSize === null) return;
-    const currentSize = pages?.length ?? 0;
-    if (currentSize >= targetSize) {
-      pendingSizeRef.current = null;
-      setIsLoadingMore(false);
-    }
-  }, [isLoadingMore, pages?.length]);
-
-  useEffect(() => {
-    if (error && isLoadingMore) {
-      pendingSizeRef.current = null;
-      setIsLoadingMore(false);
-    }
-  }, [error, isLoadingMore]);
 
 
 
