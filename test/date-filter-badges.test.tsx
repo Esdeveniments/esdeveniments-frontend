@@ -3,19 +3,29 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { DateFilterBadges } from "../components/ui/serverEventsCategorized/DateFilterBadges";
 import type { CategorySummaryResponseDTO } from "../types/api/category";
+import type { URLFilterState } from "../types/url-filters";
 
 // Mock buildCanonicalUrl to verify it's called with correct params
-const mockBuildCanonicalUrl = vi.fn((params) => {
-  const { place, byDate, category } = params;
-  if (category) {
-    return `/${place}/${byDate}/${category}`;
+const mockBuildCanonicalUrl = vi.fn(
+  (
+    params: Partial<URLFilterState>,
+    _categories?: CategorySummaryResponseDTO[]
+  ) => {
+    const { place, byDate, category } = params;
+    if (category) {
+      return `/${place}/${byDate}/${category}`;
+    }
+    return `/${place}/${byDate}`;
   }
-  return `/${place}/${byDate}`;
-});
+);
 
 vi.mock("@utils/url-filters", () => ({
-  buildCanonicalUrl: (params: unknown, categories?: unknown) =>
-    mockBuildCanonicalUrl(params, categories),
+  buildCanonicalUrl: (
+    params: Partial<URLFilterState>,
+    categories?: CategorySummaryResponseDTO[]
+  ) => {
+    return mockBuildCanonicalUrl(params, categories);
+  },
 }));
 
 // Mock Badge component to verify props
