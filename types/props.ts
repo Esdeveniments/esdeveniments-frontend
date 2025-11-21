@@ -329,6 +329,14 @@ export interface SearchAwareHeadingProps {
   cta?: ReactNode;
 }
 
+export interface HybridEventsHeadingLayoutProps {
+  title: string;
+  subtitle: string;
+  titleClass: string;
+  subtitleClass: string;
+  cta?: ReactNode;
+}
+
 // Location Discovery Widget Props
 export interface LocationDiscoveryWidgetProps {
   className?: string;

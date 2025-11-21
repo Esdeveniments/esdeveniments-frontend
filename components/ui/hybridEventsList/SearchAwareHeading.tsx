@@ -4,6 +4,7 @@ import { ReactElement } from "react";
 import type { SearchAwareHeadingProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
+import HeadingLayout from "./HeadingLayout";
 
 export default function SearchAwareHeading({
   pageData,
@@ -19,14 +20,12 @@ export default function SearchAwareHeading({
   const enhancedSubtitle = appendSearchQuery(pageData.subTitle, searchTerm);
 
   return (
-    <>
-      <div className="px-section-x mt-element-gap mb-element-gap md:flex md:items-start md:justify-between gap-element-gap">
-        <h1 className={`${titleClass} flex-1`}>{enhancedTitle}</h1>
-        {cta}
-      </div>
-      <p className={`${subtitleClass} text-left mb-element-gap px-section-x`}>
-        {enhancedSubtitle}
-      </p>
-    </>
+    <HeadingLayout
+      title={enhancedTitle}
+      subtitle={enhancedSubtitle}
+      titleClass={titleClass}
+      subtitleClass={subtitleClass}
+      cta={cta}
+    />
   );
 }

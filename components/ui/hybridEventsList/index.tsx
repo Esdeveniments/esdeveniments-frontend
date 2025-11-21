@@ -10,6 +10,7 @@ import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
+import HeadingLayout from "./HeadingLayout";
 
 function HybridEventsList({
   initialEvents = [],
@@ -75,17 +76,13 @@ function HybridEventsList({
       {pageData && (
         <Suspense
           fallback={
-            <>
-              <div className="px-section-x mt-element-gap mb-element-gap md:flex md:items-start md:justify-between gap-element-gap">
-                <h1 className={`${titleClass} flex-1`}>{pageData.title}</h1>
-                {newsCta}
-              </div>
-              <p
-                className={`${subtitleClass} text-left mb-element-gap px-section-x`}
-              >
-                {pageData.subTitle}
-              </p>
-            </>
+            <HeadingLayout
+              title={pageData.title}
+              subtitle={pageData.subTitle}
+              titleClass={titleClass}
+              subtitleClass={subtitleClass}
+              cta={newsCta}
+            />
           }
         >
           <SearchAwareHeading
