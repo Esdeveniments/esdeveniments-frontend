@@ -4,7 +4,11 @@ import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
-import { FetchEventsParams, UseEventsOptions, UseEventsReturn } from "types/event";
+import {
+  FetchEventsParams,
+  UseEventsOptions,
+  UseEventsReturn,
+} from "types/event";
 import { captureException } from "@sentry/nextjs";
 
 // SWR fetcher function for events API (single page) via internal proxy
@@ -26,7 +30,6 @@ const pageFetcher = async (
 
   const res = await fetch(`/api/events?${qs.toString()}`);
   if (!res.ok) {
-    console.error(`Failed to fetch events: ${res.status}`);
     throw new Error(`Failed to fetch events: ${res.status}`);
   }
   return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
@@ -47,19 +50,15 @@ export const useEvents = ({
   const [activationKey, setActivationKey] = useState<string | null>(null);
   const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
-
   const currentKey = useMemo(
     () =>
       `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${initialSize}`,
     [place, category, date, search, distance, lat, lon, initialSize]
   );
 
-
   const hasClientFilters = !!(search || distance || lat || lon);
 
-
   const isActivated = hasClientFilters || activationKey === currentKey;
-
 
   const dateRange = getDateRangeFromByDate(date || DEFAULT_FILTER_VALUE);
   const range = dateRange
@@ -83,7 +82,6 @@ export const useEvents = ({
     lat: lat ? parseFloat(lat) : undefined,
     lon: lon ? parseFloat(lon) : undefined,
   };
-
 
   const getKey = (
     pageIndex: number,
@@ -140,7 +138,6 @@ export const useEvents = ({
         lon: lonParam as number | undefined,
       }),
     {
-
       fallbackData:
         !hasClientFilters && fallbackData.length > 0
           ? [
@@ -176,7 +173,6 @@ export const useEvents = ({
     }
   );
 
-
   const clientEvents = isActivated
     ? pages?.flatMap((p) => p.content) ?? []
     : fallbackData;
@@ -208,8 +204,6 @@ export const useEvents = ({
     setTargetPageCount(currentPageCount + 1);
     await setSize((prev) => prev + 1);
   };
-
-
 
   return {
     events: clientEvents,
