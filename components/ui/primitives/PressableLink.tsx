@@ -34,7 +34,7 @@ export default function PressableLink({
   const isTestEnv = process.env.NODE_ENV === "test";
   const resolvedPrefetch = isTestEnv ? undefined : prefetch;
 
-  const classes = clsx(className, VARIANT_CLASSES[variant]);
+  const classes = clsx("cursor-pointer", className, VARIANT_CLASSES[variant]);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);

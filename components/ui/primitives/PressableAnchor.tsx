@@ -17,7 +17,7 @@ export default function PressableAnchor({
   disableNavigationSignal = false,
   ...props
 }: PressableAnchorProps) {
-  const classes = clsx(className, VARIANT_CLASSES[variant]);
+  const classes = clsx("cursor-pointer", className, VARIANT_CLASSES[variant]);
   const resolvedPrefetch =
     process.env.NODE_ENV === "test" ? undefined : prefetch;
 
