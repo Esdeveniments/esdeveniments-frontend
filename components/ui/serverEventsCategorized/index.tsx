@@ -30,6 +30,7 @@ import {
 import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
+import NewsletterForm from "@components/ui/newsletter/NewsletterForm";
 
 /**
  * Icon mapping for categories.
@@ -158,6 +159,10 @@ function ServerEventsCategorized({
             </p>
           </>
         )}
+      </div>
+
+      <div className="container mt-element-gap">
+        <NewsletterForm place="catalunya" placeLabel="Catalunya" />
       </div>
 
       {/* 2. INSTANT RENDER: QUICK CATEGORIES */}

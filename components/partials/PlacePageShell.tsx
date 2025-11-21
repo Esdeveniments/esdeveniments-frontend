@@ -5,6 +5,7 @@ import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
 import { PlacePageSkeleton } from "@components/ui/common/skeletons";
 import type { PlacePageShellProps } from "types/props";
+import { buildNewsletterPropsFromContext } from "@utils/newsletter-helpers";
 
 export async function ClientLayerWithPlaceLabel({
   shellDataPromise,
@@ -86,6 +87,14 @@ async function PlacePageContent({
     ? webPageSchemaFactory(pageData)
     : null;
 
+  const newsletterProps = buildNewsletterPropsFromContext({
+    place,
+    placeTypeLabel,
+    category,
+    date,
+    categories,
+  });
+
   return (
     <>
       {webPageSchema && (
@@ -107,6 +116,7 @@ async function PlacePageContent({
         serverHasMore={serverHasMore}
         hasNews={hasNews}
         categories={categories}
+        newsletterProps={newsletterProps}
       />
     </>
   );

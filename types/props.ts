@@ -187,6 +187,16 @@ export interface LoadMoreButtonProps {
   totalEvents?: number;
 }
 
+export interface NewsletterFormProps {
+  place?: string;
+  placeLabel?: string;
+  placeType?: "region" | "town";
+  category?: string;
+  categoryLabel?: string;
+  byDate?: string;
+  byDateLabel?: string;
+}
+
 // Next.js App Router page props interfaces
 export interface FilteredPageProps {
   params: Promise<{
@@ -255,6 +265,7 @@ export interface HybridEventsListProps {
   serverHasMore?: boolean; // Add server pagination info
   hasNews: boolean; // Whether the place has news articles
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
+  newsletterProps?: NewsletterFormProps;
   // totalServerEvents removed - SWR hook manages this via API response
 }
 

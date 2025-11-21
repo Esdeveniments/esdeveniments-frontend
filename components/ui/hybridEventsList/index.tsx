@@ -11,6 +11,7 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
+import NewsletterForm from "@components/ui/newsletter/NewsletterForm";
 
 function HybridEventsList({
   initialEvents = [],
@@ -23,6 +24,7 @@ function HybridEventsList({
   serverHasMore = false,
   hasNews,
   categories,
+  newsletterProps,
 }: HybridEventsListProps): ReactElement {
   const placeLabel = placeTypeLabel?.label;
   const placeType =
@@ -51,6 +53,11 @@ function HybridEventsList({
         className="container flex-col justify-center items-center mt-sticky-offset"
         data-testid="events-list"
       >
+        {newsletterProps && (
+          <div className="w-full px-element-gap mb-element-gap">
+            <NewsletterForm {...newsletterProps} />
+          </div>
+        )}
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
@@ -93,6 +100,12 @@ function HybridEventsList({
             cta={newsCta}
           />
         </Suspense>
+      )}
+
+      {newsletterProps && (
+        <div className="w-full px-element-gap mb-element-gap">
+          <NewsletterForm {...newsletterProps} />
+        </div>
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}

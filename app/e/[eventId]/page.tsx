@@ -36,6 +36,7 @@ import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
 import AdArticleIsland from "./components/AdArticleIsland";
+import NewsletterForm from "@components/ui/newsletter/NewsletterForm";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
@@ -342,6 +343,19 @@ export default async function EventPage({
           newsHref={newsHref}
         />
       </Suspense>
+
+      {/* Newsletter CTA - contextualized to primary place/category/date */}
+      <div className="container mt-section-y mb-section-y">
+        <NewsletterForm
+          place={placeSlug}
+          placeLabel={placeLabel}
+          placeType={placeType}
+          category={primaryCategorySlug}
+          categoryLabel={event.categories?.[0]?.name}
+          byDate={undefined}
+          byDateLabel={undefined}
+        />
+      </div>
 
       {/* FAQ JSON-LD (only when we have 2+ items) */}
       {faqJsonLd && <JsonLdServer id={`faq-${event.id}`} data={faqJsonLd} />}

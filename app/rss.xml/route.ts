@@ -12,6 +12,8 @@ const SITE_NAME = "Esdeveniments.cat";
 const getAllArticles = async (
   region: string,
   town: string,
+  category: string,
+  byDate: string,
   maxEventsPerDay: string | undefined = undefined,
   untilProp: number = 7
 ): Promise<RssEvent[]> => {
@@ -19,6 +21,7 @@ const getAllArticles = async (
   const { label: townLabel } = await getPlaceTypeAndLabel(town);
 
   try {
+    // Calculate fallback dates (used if byDate is not provided)
     const now = new Date();
     const from = new Date();
     const until = new Date();
@@ -33,8 +36,11 @@ const getAllArticles = async (
       page: 0,
       size: 1000,
       place: town || regionLabel,
-      from: from.toISOString().split("T")[0],
-      to: until.toISOString().split("T")[0],
+      category,
+      byDate,
+      // Only pass absolute dates if byDate is missing to avoid conflicts
+      from: byDate ? undefined : from.toISOString().split("T")[0],
+      to: byDate ? undefined : until.toISOString().split("T")[0],
     });
 
     const events: EventSummaryResponseDTO[] = response.content;
@@ -77,19 +83,29 @@ const getAllArticles = async (
 const buildFeed = async (
   items: RssEvent[],
   region: string,
-  town: string
+  town: string,
+  category: string,
+  byDate: string
 ): Promise<Feed> => {
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
   const { label: regionLabel } = await getPlaceTypeAndLabel(region);
   const { label: townLabel } = await getPlaceTypeAndLabel(town);
 
+  // Build a descriptive title like: "Esdeveniments - Barcelona - Avui - Teatre"
+  const parts = [
+    SITE_NAME,
+    townLabel || regionLabel || "Catalunya",
+    byDate ? byDate.charAt(0).toUpperCase() + byDate.slice(1) : null,
+    category ? category.charAt(0).toUpperCase() + category.slice(1) : null,
+  ].filter(Boolean);
+
+  const title = `Rss ${parts.join(" - ")}`;
+
   const feed = new Feed({
     id: siteUrl,
     link: siteUrl,
-    title: `Rss ${SITE_NAME} - ${townLabel || regionLabel || "Catalunya"}`,
-    description: `Rss ${SITE_NAME} de ${
-      townLabel || regionLabel || "Catalunya"
-    }`,
+    title: title,
+    description: `Subscripció a: ${title}`,
     copyright: SITE_NAME,
     updated: new Date(),
     author: {
@@ -124,12 +140,21 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const region = searchParams.get("region") || "";
   const town = searchParams.get("town") || "";
+  const category = searchParams.get("category") || "";
+  const byDate = searchParams.get("byDate") || "";
   const maxEventsPerDay = searchParams.get("maxEventsPerDay") || undefined;
   const untilParam = searchParams.get("until");
   const until = untilParam ? Number(untilParam) : 7;
 
-  const articles = await getAllArticles(region, town, maxEventsPerDay, until);
-  const feed = await buildFeed(articles, region, town);
+  const articles = await getAllArticles(
+    region,
+    town,
+    category,
+    byDate,
+    maxEventsPerDay,
+    until
+  );
+  const feed = await buildFeed(articles, region, town, category, byDate);
 
   return new Response(feed.rss2(), {
     headers: {
