@@ -9,8 +9,8 @@ export default function LoadMoreButton({
 
   const handleLoadMore = () => {
     if (isPending || !hasMore) return;
-    startTransition(async () => {
-      await onLoadMore();
+    startTransition(() => {
+      void onLoadMore();
     });
   };
 

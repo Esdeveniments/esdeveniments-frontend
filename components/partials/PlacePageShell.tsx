@@ -6,6 +6,17 @@ import JsonLdServer from "./JsonLdServer";
 import { PlacePageSkeleton } from "@components/ui/common/skeletons";
 import type { PlacePageShellProps } from "types/props";
 
+export async function ClientLayerWithPlaceLabel({
+  shellDataPromise,
+  categories,
+}: Pick<PlacePageShellProps, "shellDataPromise" | "categories">) {
+  const { placeTypeLabel } = await shellDataPromise;
+
+  return (
+    <ClientInteractiveLayer categories={categories} placeTypeLabel={placeTypeLabel} />
+  );
+}
+
 export default function PlacePageShell({
   eventsPromise,
   shellDataPromise,
@@ -32,10 +43,12 @@ export default function PlacePageShell({
         />
       </Suspense>
 
-      <ClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={undefined} // Will be available after shell streams
-      />
+      <Suspense fallback={null}>
+        <ClientLayerWithPlaceLabel
+          shellDataPromise={shellDataPromise}
+          categories={categories}
+        />
+      </Suspense>
     </>
   );
 }
@@ -98,4 +111,3 @@ async function PlacePageContent({
     </>
   );
 }
-

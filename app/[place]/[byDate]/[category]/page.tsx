@@ -345,9 +345,7 @@ function buildFallbackCategoryShellData({
   }
   const canonicalPath = `/${canonicalSegments.join("/")}`;
   const canonical = `${siteUrl}${canonicalPath}`;
-  const title = `${
-    categoryLabel || "Esdeveniments"
-  } ${dateLabel} a ${place}`;
+  const title = `${categoryLabel || "Esdeveniments"} ${dateLabel} a ${place}`;
   const subTitle = `Descobreix ${
     categoryLabel ? `plans de ${categoryLabel}` : "plans"
   } ${hasSpecificDate ? `per ${byDate}` : "per als propers dies"} a ${place}.`;
@@ -360,7 +358,9 @@ function buildFallbackCategoryShellData({
       metaTitle: `${title} | Esdeveniments.cat`,
       metaDescription: `Explora ${
         categoryLabel ? `propostes de ${categoryLabel}` : "plans"
-      } ${hasSpecificDate ? `per ${byDate}` : "per als propers dins"} a ${place}.`,
+      } ${
+        hasSpecificDate ? `per ${byDate}` : "per als propers dies"
+      } a ${place}.`,
       canonical,
       notFoundTitle: "Sense esdeveniments disponibles",
       notFoundDescription: `No hem trobat ${
@@ -444,8 +444,6 @@ async function buildCategoryEventsPromise({
     events: eventsWithAds,
     noEventsFound: finalNoEventsFound,
     serverHasMore,
-    structuredScripts: structuredScripts.length
-      ? structuredScripts
-      : undefined,
+    structuredScripts: structuredScripts.length ? structuredScripts : undefined,
   };
 }

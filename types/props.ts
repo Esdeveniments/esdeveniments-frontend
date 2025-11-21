@@ -201,7 +201,7 @@ export interface FilteredPageProps {
 // Component props interfaces
 export interface ClientInteractiveLayerProps {
   categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel?: PlaceTypeAndLabel;
+  placeTypeLabel: PlaceTypeAndLabel;
 }
 
 export interface ClientInteractiveLayerContentProps
@@ -254,7 +254,7 @@ export interface HybridEventsListProps {
   category?: string;
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
-  hasNews?: boolean; // Whether the place has news articles
+  hasNews: boolean; // Whether the place has news articles
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
