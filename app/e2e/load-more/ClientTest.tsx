@@ -13,7 +13,7 @@ export default function ClientTest({
 }: ClientTestProps) {
   const realInitial = useMemo(() => initialEvents, [initialEvents]);
 
-  const { events, hasMore, loadMore } = useEvents({
+  const { events, hasMore, loadMore, isLoadingMore } = useEvents({
     place,
     category,
     date,
@@ -38,6 +38,7 @@ export default function ClientTest({
       <div data-testid="hasMore">{String(hasMore)}</div>
       <LoadMoreButton
         onLoadMore={loadMore}
+        isLoading={isLoadingMore}
         hasMore={hasMore}
       />
     </div>
