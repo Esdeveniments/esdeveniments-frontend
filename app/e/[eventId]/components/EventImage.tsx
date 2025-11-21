@@ -25,7 +25,7 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   return (
     <div
       className="relative w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card bg-muted"
-      style={{ viewTransitionName: `event-image-${eventId}` } as React.CSSProperties}
+      style={{ viewTransitionName: `event-image-${eventId}` }}
     >
       <a
         href={image}

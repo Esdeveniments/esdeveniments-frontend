@@ -8,7 +8,7 @@ export default function LoadMoreButton({
   const [isPending, startTransition] = useTransition();
 
   const handleLoadMore = () => {
-    if (isPending || !hasMore || !onLoadMore) return;
+    if (isPending || !hasMore) return;
     startTransition(async () => {
       await onLoadMore();
     });
@@ -25,7 +25,7 @@ export default function LoadMoreButton({
         onClick={handleLoadMore}
         disabled={isPending}
         data-testid="load-more-button"
-        className="btn-neutral transition-interactive cursor-pointer"
+        className="btn-neutral transition-interactive cursor-pointer disabled:cursor-not-allowed"
         aria-label={
           isPending ? "Carregant esdeveniments" : "Carregar més esdeveniments"
         }

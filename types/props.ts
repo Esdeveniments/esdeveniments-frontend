@@ -180,7 +180,7 @@ export interface VideoDisplayProps {
 }
 
 export interface LoadMoreButtonProps {
-  onLoadMore: () => void;
+  onLoadMore: () => void | Promise<void>;
   isLoading?: boolean;
   isValidating?: boolean;
   hasMore?: boolean;

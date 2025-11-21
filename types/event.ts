@@ -289,15 +289,7 @@ export interface UseEventsOptions {
   serverHasMore?: boolean; // Add server pagination info
 }
 
-export interface UseEventsReturn {
-  events: EventSummaryResponseDTO[];
-  hasMore: boolean;
-  totalEvents: number;
-  loadMore: () => void;
-  isLoading: boolean;
-  isValidating: boolean;
-  error: Error | undefined;
-}
+
 
 export interface EventCategoriesProps {
   categories: CategorySummaryResponseDTO[];

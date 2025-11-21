@@ -9,6 +9,12 @@ declare global {
   }
 }
 
+declare module 'react' {
+  interface CSSProperties {
+    viewTransitionName?: string;
+  }
+}
+
 export {};
 
 declare module "*.css";

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { SWRConfig } from "swr";
 import { useEvents } from "@components/hooks/useEvents";
 import type { UseEventsOptions } from "types/event";
@@ -84,7 +84,7 @@ describe("useEvents filtered behaviour", () => {
     }) as unknown as typeof fetch;
     globalThis.fetch = fetchSpy;
 
-    await React.act(async () => {
+    await act(async () => {
       render(
         <React.Suspense fallback={<div>Loading...</div>}>
           <Harness
@@ -120,7 +120,7 @@ describe("useEvents filtered behaviour", () => {
       );
     }) as unknown as typeof fetch;
 
-    await React.act(async () => {
+    await act(async () => {
       render(
         <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
           <React.Suspense fallback={<div>Loading...</div>}>
@@ -165,7 +165,7 @@ describe("useEvents filtered behaviour", () => {
     }) as unknown as typeof fetch;
     globalThis.fetch = fetchSpy;
 
-    await React.act(async () => {
+    await act(async () => {
       render(
         <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
           <React.Suspense fallback={<div>Loading...</div>}>
