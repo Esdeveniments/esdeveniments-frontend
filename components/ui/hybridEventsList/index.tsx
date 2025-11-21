@@ -136,7 +136,6 @@ function HybridEventsList({
         category={category}
         date={date}
         serverHasMore={serverHasMore}
-        hasNews={hasNews}
         categories={categories}
         pageData={pageData}
       />

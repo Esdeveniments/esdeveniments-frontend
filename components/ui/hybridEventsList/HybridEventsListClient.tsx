@@ -9,7 +9,7 @@ import NoEventsFound from "@components/ui/common/noEventsFound";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
-import { HybridEventsListProps } from "types/props";
+import { HybridEventsListClientProps } from "types/props";
 import { computeTemporalStatus } from "@utils/event-status";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
@@ -43,7 +43,7 @@ function HybridEventsListClientContent({
   // Check if client-side filters are active
   const hasClientFilters = !!(search || distance || lat || lon);
 
-  const { events, hasMore, loadMore, error } =
+  const { events, hasMore, loadMore, isLoadingMore, error } =
     useEvents({
       place,
       category,
@@ -166,6 +166,7 @@ function HybridEventsListClientContent({
           </List>
           <LoadMoreButton
             onLoadMore={loadMore}
+            isLoading={isLoadingMore}
             hasMore={hasMore}
           />
         </>
@@ -175,7 +176,7 @@ function HybridEventsListClientContent({
 }
 
 function HybridEventsListClient(
-  props: HybridEventsListProps
+  props: HybridEventsListClientProps
 ): ReactElement | null {
   return (
     <Suspense

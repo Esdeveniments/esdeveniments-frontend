@@ -259,6 +259,11 @@ export interface HybridEventsListProps {
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
+export type HybridEventsListClientProps = Omit<
+  HybridEventsListProps,
+  "hasNews" | "placeTypeLabel" | "noEventsFound"
+>;
+
 export interface SsrListWrapperProps {
   children: ReactNode;
   categories?: CategorySummaryResponseDTO[];

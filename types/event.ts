@@ -293,6 +293,7 @@ export interface UseEventsReturn {
   events: EventSummaryResponseDTO[];
   hasMore: boolean;
   totalEvents: number;
+  isLoadingMore: boolean;
   loadMore: () => void | Promise<void>;
   error: Error | undefined;
 }
