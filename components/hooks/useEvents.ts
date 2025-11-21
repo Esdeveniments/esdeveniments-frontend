@@ -200,7 +200,7 @@ export const useEvents = ({
       setActivationKey(currentKey);
     }
 
-    // Always request one more page (if activating, we want page 0 + page 1)
+    // Request one more page. If activating, this will fetch the first page of client-side data (page 0 or 1).
     setTargetPageCount(currentPageCount + 1);
     await setSize((prev) => prev + 1);
   };
