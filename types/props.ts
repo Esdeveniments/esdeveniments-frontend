@@ -272,15 +272,17 @@ export interface PlacePageEventsResult {
 }
 
 export interface PlacePageShellProps {
-  scripts?: JsonLdScript[];
   eventsPromise: Promise<PlacePageEventsResult>;
-  placeTypeLabel: PlaceTypeAndLabel;
-  pageData: PageData;
+  shellDataPromise: Promise<{
+    placeTypeLabel: PlaceTypeAndLabel;
+    pageData: PageData;
+  }>;
   place: string;
   category?: string;
   date?: string;
-  hasNews?: boolean;
+  hasNewsPromise?: Promise<boolean>;
   categories?: CategorySummaryResponseDTO[];
+  webPageSchemaFactory?: (pageData: PageData) => Record<string, unknown>;
 }
 
 export interface FeaturedPlaceConfig {

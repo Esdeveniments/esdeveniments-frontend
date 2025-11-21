@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { JSX } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
@@ -6,68 +7,78 @@ import { PlacePageSkeleton } from "@components/ui/common/skeletons";
 import type { PlacePageShellProps } from "types/props";
 
 export default function PlacePageShell({
-  scripts = [],
   eventsPromise,
-  placeTypeLabel,
-  pageData,
+  shellDataPromise,
   place,
   category,
   date,
-  hasNews = false,
+  hasNewsPromise,
   categories = [],
+  webPageSchemaFactory,
 }: PlacePageShellProps) {
   return (
     <>
-      {scripts.map((s) => (
-        <JsonLdServer key={s.id} id={s.id} data={s.data} />
-      ))}
-
-      <Suspense fallback={<EventsSectionFallback />}>
-        <PlaceEventsSection
+      {/* Suspense boundary for shell + events - streams together */}
+      <Suspense fallback={<PlacePageSkeleton />}>
+        <PlacePageContent
+          shellDataPromise={shellDataPromise}
           eventsPromise={eventsPromise}
-          placeTypeLabel={placeTypeLabel}
-          pageData={pageData}
           place={place}
           category={category}
           date={date}
-          hasNews={hasNews}
+          hasNewsPromise={hasNewsPromise}
           categories={categories}
+          webPageSchemaFactory={webPageSchemaFactory}
         />
       </Suspense>
 
       <ClientInteractiveLayer
         categories={categories}
-        placeTypeLabel={placeTypeLabel}
+        placeTypeLabel={undefined} // Will be available after shell streams
       />
     </>
   );
 }
 
-async function PlaceEventsSection({
+async function PlacePageContent({
+  shellDataPromise,
   eventsPromise,
-  placeTypeLabel,
-  pageData,
   place,
   category,
   date,
-  hasNews,
+  hasNewsPromise,
   categories,
+  webPageSchemaFactory,
 }: Pick<
   PlacePageShellProps,
+  | "shellDataPromise"
   | "eventsPromise"
-  | "placeTypeLabel"
-  | "pageData"
   | "place"
   | "category"
   | "date"
-  | "hasNews"
+  | "hasNewsPromise"
   | "categories"
->) {
-  const { events, noEventsFound, serverHasMore, structuredScripts } =
-    await eventsPromise;
+  | "webPageSchemaFactory"
+>): Promise<JSX.Element> {
+  // Await shell data and events in parallel
+  const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, structuredScripts }, hasNews] =
+    await Promise.all([
+      shellDataPromise,
+      eventsPromise,
+      hasNewsPromise || Promise.resolve(false),
+    ]);
+
+  // Generate webPageSchema after shell data is available
+  const webPageSchema = webPageSchemaFactory
+    ? webPageSchemaFactory(pageData)
+    : null;
 
   return (
     <>
+      {webPageSchema && (
+        <JsonLdServer id="webpage-schema" data={webPageSchema} />
+      )}
+
       {structuredScripts?.map((script) => (
         <JsonLdServer key={script.id} id={script.id} data={script.data} />
       ))}
@@ -88,6 +99,3 @@ async function PlaceEventsSection({
   );
 }
 
-function EventsSectionFallback() {
-  return <PlacePageSkeleton />;
-}
