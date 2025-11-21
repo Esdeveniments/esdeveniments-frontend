@@ -7,7 +7,6 @@ import type {
   EventSummaryResponseDTO,
   ListEvent,
 } from "../types/api/event";
-import type { PageData } from "../types/common";
 
 // Mock modules that aren't relevant for these tests
 vi.mock("@components/ui/locationDiscoveryWidget", () => ({
@@ -100,16 +99,6 @@ const baseEvent: EventSummaryResponseDTO = {
   categories: [],
 };
 
-const pageData: PageData = {
-  metaTitle: "meta",
-  metaDescription: "desc",
-  title: "Title",
-  subTitle: "Subtitle",
-  canonical: "/",
-  notFoundTitle: "No events",
-  notFoundDescription: "",
-};
-
 describe("ServerEventsCategorized", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -121,7 +110,6 @@ describe("ServerEventsCategorized", () => {
   ) => {
     const jsx = await ServerEventsCategorizedContent({
       categorizedEventsPromise: Promise.resolve(categorizedEvents),
-      pageData: pageData,
       categoriesPromise: Promise.resolve(categories ?? []),
     });
     render(jsx);

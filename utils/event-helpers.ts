@@ -22,7 +22,8 @@ export const isEventActive = (
 export function filterActiveEvents(
   events: ListEvent[] | EventSummaryResponseDTO[]
 ): EventSummaryResponseDTO[] {
-  return events
-    .filter(isEventSummaryResponseDTO)
-    .filter(isEventActive);
+  const realEvents = events.filter(
+    isEventSummaryResponseDTO
+  ) as EventSummaryResponseDTO[];
+  return realEvents.filter(isEventActive);
 }

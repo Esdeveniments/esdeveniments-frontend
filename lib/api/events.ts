@@ -58,6 +58,16 @@ async function fetchEventsInternal(
       const validated = parsePagedEvents(data);
       if (!validated) {
         console.error("fetchEvents: external validation failed");
+        captureException(
+          new Error("fetchEvents: external validation failed"),
+          {
+            tags: {
+              section: "events-fetch",
+              fallback: "external-validation-failed",
+            },
+            extra: { params },
+          }
+        );
         return null;
       }
       return validated;

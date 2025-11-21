@@ -16,6 +16,7 @@ import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import type {
   FeaturedPlaceConfig,
+  ServerEventsCategorizedContentProps,
   ServerEventsCategorizedProps,
 } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
@@ -132,7 +133,6 @@ const resolveCategoryDetails = (
   };
 };
 
-// --- MAIN COMPONENT ---
 function ServerEventsCategorized({
   pageData,
   seoTopTownLinks = [],
@@ -203,7 +203,7 @@ export async function ServerEventsCategorizedContent({
   categoriesPromise,
   featuredPlaces,
   seoTopTownLinks = [],
-}: ServerEventsCategorizedProps) {
+}: ServerEventsCategorizedContentProps) {
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
     categoriesPromise || Promise.resolve([])

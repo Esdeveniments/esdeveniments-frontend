@@ -313,6 +313,14 @@ export interface ServerEventsCategorizedProps {
   seoTopTownLinks?: SeoLinkItem[];
 }
 
+export type ServerEventsCategorizedContentProps = Pick<
+  ServerEventsCategorizedProps,
+  | "categorizedEventsPromise"
+  | "categoriesPromise"
+  | "featuredPlaces"
+  | "seoTopTownLinks"
+>;
+
 export interface SearchAwareHeadingProps {
   pageData: PageData;
   categories?: CategorySummaryResponseDTO[];
