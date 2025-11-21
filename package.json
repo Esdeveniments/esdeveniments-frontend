@@ -70,7 +70,7 @@
     "@vitejs/plugin-react": "^4.3.0",
     "babel-plugin-react-compiler": "^19.1.0-rc.1",
     "cross-env": "^7.0.3",
-    "env-cmd": "^10.1.0",
+    "env-cmd": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "eslint-plugin-react-hooks": "^6.0.0-rc.1",
