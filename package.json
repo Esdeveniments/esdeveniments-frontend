@@ -35,7 +35,7 @@
     "@tailwindcss/typography": "^0.5.9",
     "autoprefixer": "^10.4.20",
     "cloudinary": "^2.7.0",
-    "cssnano": "^7.0.6",
+    "cssnano": "^7.1.2",
     "date-fns": "^2.29.3",
     "fast-xml-parser": "^4.4.0",
     "feed": "^4.2.2",
