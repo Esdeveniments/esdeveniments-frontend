@@ -4,17 +4,17 @@ import { memo, useEffect, useState, Suspense, useCallback } from "react";
 import NextImage from "next/image";
 import { useNavbarVisible } from "@components/hooks/useNavbarVisible";
 import { useHydration } from "@components/hooks/useHydration";
-import { useSearchParams, usePathname } from "next/navigation"; // Added usePathname
+import { usePathname } from "next/navigation";
 import Search from "@components/ui/search";
 import ServerFilters from "@components/ui/filters/ServerFilters";
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
-import { parseFiltersFromUrl } from "@utils/url-filters";
-import { extractURLSegments, debugURLParsing } from "@utils/url-parsing";
+import { debugURLParsing } from "@utils/url-parsing";
 import {
   ClientInteractiveLayerProps,
   ClientInteractiveLayerContentProps,
 } from "types/props";
 import Imago from "@public/static/images/imago-esdeveniments.png";
+import { useUrlFilters } from "@components/hooks/useUrlFilters";
 
 function debounce(func: () => void, wait: number): () => void {
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -35,22 +35,12 @@ function ClientInteractiveLayerContent({
   handleOpenModal,
   handleCloseModal,
 }: ClientInteractiveLayerContentProps) {
-  const searchParams = useSearchParams();
   const pathname = usePathname();
+  const parsed = useUrlFilters(categories);
 
   // Determine if it's the home page
   const isHomePage = pathname === "/";
 
-  // Parse current URL segments from pathname - this is the key fix!
-  const urlSegments = extractURLSegments(pathname || "/");
-
-  // Parse current URL state for filters and modal
-  const urlSearchParams = new URLSearchParams(searchParams?.toString() || "");
-  const parsed = parseFiltersFromUrl(
-    urlSegments,
-    urlSearchParams,
-    categories // Pass dynamic categories for proper validation
-  );
   const lat = parsed.queryParams.lat;
   const lon = parsed.queryParams.lon;
   const latitude = lat ? parseFloat(lat) : NaN;
@@ -61,7 +51,7 @@ function ClientInteractiveLayerContent({
       : undefined;
 
   // Debug URL parsing in development
-  debugURLParsing(pathname || "/", urlSegments, parsed);
+  debugURLParsing(pathname || "/", parsed.segments, parsed);
 
   // Prevent hydration mismatch by using consistent initial state
   // Use navbar visibility for robust positioning (works with mobile browser UI hide)

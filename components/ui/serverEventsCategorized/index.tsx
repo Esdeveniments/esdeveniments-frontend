@@ -1,21 +1,68 @@
-import { memo } from "react";
-import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
-import { SpeakerphoneIcon } from "@heroicons/react/outline";
-import Badge from "@components/ui/common/badge";
-import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
-import LocationDiscoveryWidget from "@components/ui/locationDiscoveryWidget";
-import AdArticle from "@components/ui/adArticle";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import { buildCanonicalUrl } from "@utils/url-filters"; // Added import
-import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
+import { Suspense } from "react";
+import { captureException } from "@sentry/nextjs";
+import {
+  SparklesIcon,
+  ShoppingBagIcon,
+  EmojiHappyIcon,
+  MusicNoteIcon,
+  TicketIcon,
+  PhotographIcon,
+} from "@heroicons/react/outline";
+import Search from "@components/ui/search";
+import SectionHeading from "@components/ui/common/SectionHeading";
+import { SearchSkeleton } from "@components/ui/common/skeletons";
+import { fetchEvents } from "@lib/api/events";
+import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
-import { ServerEventsCategorizedProps } from "types/props";
+import type {
+  FeaturedPlaceConfig,
+  ServerEventsCategorizedContentProps,
+  ServerEventsCategorizedProps,
+} from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { computeTemporalStatus } from "@utils/event-status";
-
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import {
+  CATEGORY_CONFIG,
+  PRIORITY_CATEGORY_SLUGS,
+  MAX_CATEGORY_SECTIONS,
+} from "@config/categories";
+import { filterActiveEvents } from "@utils/event-helpers";
+import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
+import { CategoryEventsSection } from "./CategoryEventsSection";
+
+/**
+ * Icon mapping for categories.
+ * Icons are kept in the component to avoid React component dependencies in config files.
+ */
+const CATEGORY_ICONS: Record<string, typeof SparklesIcon> = {
+  "festes-populars": SparklesIcon,
+  "fires-i-mercats": ShoppingBagIcon,
+  "familia-i-infants": EmojiHappyIcon,
+  musica: MusicNoteIcon,
+  teatre: TicketIcon,
+  exposicions: PhotographIcon,
+} as const;
+
+/**
+ * Map for efficient priority ordering lookup.
+ * Maps priority category slugs to their display index.
+ */
+const PRIORITY_CATEGORY_ORDER = new Map(
+  PRIORITY_CATEGORY_SLUGS.map((slug, index) => [slug, index])
+);
+
+/**
+ * Quick category links for the homepage navigation.
+ * Combines category config (from shared config) with icons (component-specific).
+ */
+const QUICK_CATEGORY_LINKS = Object.entries(CATEGORY_CONFIG).map(
+  ([slug, config]) => ({
+    label: config.label,
+    url: `/catalunya/${slug}`,
+    Icon: CATEGORY_ICONS[slug] || SparklesIcon, // Fallback icon
+  })
+);
 
 const resolveCategoryDetails = (
   categoryKey: string,
@@ -39,7 +86,6 @@ const resolveCategoryDetails = (
       const catSlug = safeToLowerCase(cat.slug);
       return catName === normalizedKey || catSlug === normalizedKey;
     });
-    // Type guard: we know name and slug exist because of the check above
     if (found?.name && found.slug) {
       return { name: found.name, slug: found.slug };
     }
@@ -48,14 +94,12 @@ const resolveCategoryDetails = (
 
   if (firstEvent?.categories?.length) {
     const matchingCategory = findMatchingCategory(firstEvent.categories);
-
     if (matchingCategory) {
       return {
         categoryName: matchingCategory.name,
         categorySlug: matchingCategory.slug,
       };
     }
-
     const firstValid = firstEvent.categories.find(
       (cat) => cat?.name && cat.slug
     );
@@ -69,7 +113,6 @@ const resolveCategoryDetails = (
 
   if (allCategories?.length) {
     const matchingCategory = findMatchingCategory(allCategories);
-
     if (matchingCategory) {
       return {
         categoryName: matchingCategory.name,
@@ -90,200 +133,318 @@ const resolveCategoryDetails = (
   };
 };
 
-function ServerEventsCategorized(props: ServerEventsCategorizedProps) {
-  return <ServerEventsCategorizedContent {...props} />;
+function ServerEventsCategorized({
+  pageData,
+  seoTopTownLinks = [],
+  ...contentProps
+}: ServerEventsCategorizedProps) {
+  return (
+    <div className="w-full bg-background">
+      {/* 1. INSTANT RENDER: SEARCH & HEADER */}
+      <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap">
+        <div className="container">
+          <Suspense fallback={<SearchSkeleton />}>
+            <Search />
+          </Suspense>
+        </div>
+      </div>
+
+      <div className="container pt-section-y">
+        {pageData && (
+          <>
+            <h1 className="heading-1 mb-2">{pageData.title}</h1>
+            <p className="body-large text-foreground/70 text-left">
+              {pageData.subTitle}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* 2. INSTANT RENDER: QUICK CATEGORIES */}
+      <section className="py-section-y container border-b">
+        <SectionHeading
+          title="Explora per interessos"
+          titleClassName="heading-2 text-foreground mb-element-gap"
+        />
+        <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:py-2 sm:px-2 sm:-mx-2">
+          {QUICK_CATEGORY_LINKS.map(({ label, url, Icon }) => (
+            <PressableAnchor
+              key={url}
+              href={url}
+              prefetch={false}
+              variant="plain"
+              className="btn-category h-full w-full text-xs sm:w-auto whitespace-nowrap"
+            >
+              <span className="flex items-center gap-2 whitespace-nowrap">
+                <Icon
+                  className="w-5 h-5 text-primary flex-shrink-0"
+                  aria-hidden="true"
+                />
+                <span>{label}</span>
+              </span>
+            </PressableAnchor>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. STREAMED CONTENT: HEAVY FETCHING */}
+      <Suspense fallback={<ServerEventsCategorizedFallback />}>
+        <ServerEventsCategorizedContent
+          {...contentProps}
+          seoTopTownLinks={seoTopTownLinks}
+        />
+      </Suspense>
+    </div>
+  );
 }
 
 export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
-  pageData,
   categoriesPromise,
-}: ServerEventsCategorizedProps) {
-  const [categorizedEvents, categories] = await Promise.all([
-    categorizedEventsPromise,
-    categoriesPromise || Promise.resolve<CategorySummaryResponseDTO[]>([]),
-  ]);
+  featuredPlaces,
+  seoTopTownLinks = [],
+}: ServerEventsCategorizedContentProps) {
+  // 1. Prepare Safe Promises
+  const safeCategoriesPromise = (
+    categoriesPromise || Promise.resolve([])
+  ).catch((err) => {
+    captureException(err, { tags: { section: "categories-fetch" } });
+    return [] as CategorySummaryResponseDTO[];
+  });
 
-  // Filter out ads and past events before processing
+  const safeCategorizedEventsPromise = categorizedEventsPromise.catch((err) => {
+    captureException(err, { tags: { section: "categorized-events-fetch" } });
+    return {};
+  });
+
+  // 2. Prepare Featured Places Promises
+  const featuredSectionsPromise = featuredPlaces
+    ? Promise.all(
+        featuredPlaces.map(async (placeConfig, index) => {
+          const placeSlug =
+            placeConfig.filter.city ||
+            placeConfig.filter.region ||
+            placeConfig.filter.place ||
+            placeConfig.slug;
+
+          if (!placeSlug) return null;
+
+          try {
+            const response = await fetchEvents({
+              place: placeSlug,
+              page: 0,
+              size: 6,
+            });
+
+            const events = filterActiveEvents(response.content);
+
+            if (events.length === 0) return null;
+
+            return {
+              ...placeConfig,
+              events,
+              placeSlug,
+              usePriority: index < 2,
+            };
+          } catch (error) {
+            captureException(error, {
+              extra: {
+                placeSlug,
+                section: "featuredPlaces",
+              },
+            });
+            return null;
+          }
+        })
+      )
+    : Promise.resolve<(FeaturedPlaceConfig | null)[]>([]);
+
+  // 3. Parallel Execution
+  const [categorizedEvents, categories, rawFeaturedSections] =
+    await Promise.all([
+      safeCategorizedEventsPromise,
+      safeCategoriesPromise,
+      featuredSectionsPromise,
+    ]);
+
+  // 4. Processing
+  const featuredSections = rawFeaturedSections.filter(
+    (
+      s
+    ): s is FeaturedPlaceConfig & {
+      events: EventSummaryResponseDTO[];
+      placeSlug: string;
+      usePriority: boolean;
+    } => s !== null
+  );
+
   const filteredCategorizedEvents = Object.entries(categorizedEvents).reduce(
     (acc, [category, events]) => {
-      const realEvents = events.filter(isEventSummaryResponseDTO);
-      // Filter out past events
-      const activeEvents = realEvents.filter((event) => {
-        const status = computeTemporalStatus(
-          event.startDate,
-          event.endDate,
-          undefined,
-          event.startTime,
-          event.endTime
-        );
-        return status.state !== "past";
-      });
+      const activeEvents = filterActiveEvents(events);
       if (activeEvents.length > 0) {
         acc[category] = activeEvents;
       }
       return acc;
     },
-    {} as Record<string, ListEvent[]>
+    {} as Record<string, EventSummaryResponseDTO[]>
   );
 
-  const allEvents = Object.values(filteredCategorizedEvents).flat();
-  const hasEvents = allEvents.length > 0;
+  const categorySections = Object.entries(filteredCategorizedEvents).map(
+    ([category, events]) => {
+      const firstEvent = events[0]; // Safe because we checked length > 0
+      const { categoryName, categorySlug } = resolveCategoryDetails(
+        category,
+        firstEvent,
+        categories
+      );
+      const normalizedSlug = categorySlug?.toLowerCase() ?? "";
 
-  // Pre-calculate ad placement positions for better performance
-  const totalCategories = Object.keys(filteredCategorizedEvents).length;
-  const adPositions = new Set<number>();
+      return {
+        key: category,
+        events,
+        categoryName,
+        categorySlug,
+        normalizedSlug,
+        categoryPhrase: formatCatalanDe(categoryName, true, true),
+      };
+    }
+  );
 
-  // Add ads starting from index 1 (after 2nd category) and then every 3rd category
-  for (let i = 1; i < totalCategories; i += 3) {
-    adPositions.add(i);
+  // Sort by priority
+  const prioritizedSections: typeof categorySections = [];
+  const otherSections: typeof categorySections = [];
+
+  for (const section of categorySections) {
+    if (
+      section.normalizedSlug &&
+      PRIORITY_CATEGORY_ORDER.has(
+        section.normalizedSlug as (typeof PRIORITY_CATEGORY_SLUGS)[number]
+      )
+    ) {
+      prioritizedSections.push(section);
+    } else {
+      otherSections.push(section);
+    }
   }
 
-  // Always show ad after the last category if we have more than 3 categories
-  if (totalCategories > 3) {
-    adPositions.add(totalCategories - 1);
-  }
+  prioritizedSections.sort(
+    (a, b) =>
+      PRIORITY_CATEGORY_ORDER.get(
+        a.normalizedSlug as (typeof PRIORITY_CATEGORY_SLUGS)[number]
+      )! -
+      PRIORITY_CATEGORY_ORDER.get(
+        b.normalizedSlug as (typeof PRIORITY_CATEGORY_SLUGS)[number]
+      )!
+  );
+
+  const categorySectionsToRender = [
+    ...prioritizedSections,
+    ...otherSections,
+  ].slice(0, MAX_CATEGORY_SECTIONS);
+
+  const hasEvents =
+    categorySectionsToRender.length > 0 || featuredSections.length > 0;
 
   if (!hasEvents) {
     return <NoEventsFound />;
   }
 
+  // Ad Logic
+  const adPositions = new Set<number>();
+  for (let i = 1; i < categorySectionsToRender.length; i += 3) {
+    adPositions.add(i);
+  }
+  if (categorySectionsToRender.length > 3) {
+    adPositions.add(categorySectionsToRender.length - 1);
+  }
+
   return (
     <>
-      <div className="w-full bg-background overflow-hidden">
-        <div className="container mt-element-gap">
-          {/* SEO Content */}
-          {pageData && (
-            <>
-              <h1 className="heading-1 mb-2">{pageData.title}</h1>
-              <h2 className="heading-2 text-foreground text-left">
-                {pageData.subTitle}
-              </h2>
-            </>
-          )}
-
-          {/* Location Discovery Widget */}
-          <LocationDiscoveryWidget />
-        </div>
-
+      {/* Featured Places Render */}
+      {featuredSections.length > 0 && (
         <div className="container">
-          {Object.entries(filteredCategorizedEvents).map(
-            ([category, events], index) => {
-              // Conservative priority logic for homepage main content:
-              // Only first 2 categories get priority to balance performance
-              // This gives priority to ~6 images (2 categories × 3 images each)
-              const shouldUsePriority = index < 2;
-
-              const firstEvent = events.find(isEventSummaryResponseDTO);
-              const { categoryName, categorySlug } = resolveCategoryDetails(
-                category,
-                firstEvent,
-                categories
-              );
-
-              // Build natural Catalan phrasing: "L'agenda de/del/d'/de la [category]"
-              const categoryPhrase = formatCatalanDe(categoryName, true, true);
-
-              // Use the original category key (from API) as React key to ensure uniqueness
-              // Multiple category names might resolve to the same slug, so we need the original key
-              return (
-                <div key={category}>
-                  {/* Category Header */}
-                  <div className="flex justify-between items-center">
-                    <h3 className="heading-3">
-                      L&apos;agenda {categoryPhrase} a Catalunya
-                    </h3>
-                    <PressableAnchor
-                      href={buildCanonicalUrl(
-                        {
-                          place: "catalunya",
-                          byDate: DEFAULT_FILTER_VALUE,
-                          category: categorySlug,
-                        },
-                        categories
-                      )}
-                      className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
-                      prefetch={false}
-                      variant="inline"
-                    >
-                      Veure més
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </PressableAnchor>
-                  </div>
-
-                  {/* Related canonical links for this category */}
-                  <nav
-                    aria-label="Vegeu també"
-                    className="mt-element-gap-sm mb-element-gap-sm"
-                  >
-                    <ul className="flex gap-element-gap">
-                      <li>
-                        <Badge
-                          href={buildCanonicalUrl(
-                            {
-                              place: "catalunya",
-                              byDate: "avui",
-                              category: categorySlug,
-                            },
-                            categories
-                          )}
-                          ariaLabel={`Veure activitats d'avui per la categoria ${categoryName}`}
-                        >
-                          Avui
-                        </Badge>
-                      </li>
-                      <li>
-                        <Badge
-                          href={buildCanonicalUrl(
-                            {
-                              place: "catalunya",
-                              byDate: "cap-de-setmana",
-                              category: categorySlug,
-                            },
-                            categories
-                          )}
-                          ariaLabel={`Veure activitats aquest cap de setmana per la categoria ${categoryName}`}
-                        >
-                          Cap de setmana
-                        </Badge>
-                      </li>
-                    </ul>
-                  </nav>
-
-                  {/* Events Horizontal Scroll */}
-                  <EventsAroundServer
-                    events={events as EventSummaryResponseDTO[]}
-                    layout="horizontal"
-                    usePriority={shouldUsePriority}
-                    showJsonLd={true}
-                    title={categoryName}
-                    jsonLdId={`category-events-${categorySlug}`}
-                  />
-
-                  {/* Ad placement between category sections */}
-                  {adPositions.has(index) && (
-                    <div className="w-full h-full flex flex-col items-start min-h-[250px] max-w-lg gap-element-gap mt-element-gap mb-element-gap-sm">
-                      <div className="w-full flex">
-                        <SpeakerphoneIcon className="w-5 h-5 mt-1 mr-2" />
-                        <div className="stack w-11/12">
-                          <h3 className="heading-3">Contingut patrocinat</h3>
-                        </div>
-                      </div>
-                      <div className="w-full">
-                        <AdArticle slot="8139041285" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }
-          )}
+          {featuredSections.map((section) => (
+            <FeaturedPlaceSection key={section.slug} section={section} />
+          ))}
         </div>
+      )}
+
+      {/* Categories Render */}
+      <div className="container">
+        {categorySectionsToRender.map((section, index) => (
+          <CategoryEventsSection
+            key={section.key}
+            events={section.events}
+            categoryName={section.categoryName}
+            categorySlug={section.categorySlug}
+            categoryPhrase={section.categoryPhrase}
+            categories={categories}
+            shouldUsePriority={index < 2}
+            showAd={adPositions.has(index)}
+          />
+        ))}
       </div>
+
+      {/* SEO Links */}
+      {seoTopTownLinks.length > 0 && (
+        <section className="py-section-y container">
+          <SectionHeading
+            title="Agendes locals més visitades"
+            titleClassName="heading-2 text-foreground mb-element-gap"
+          />
+          <div className="grid grid-cols-3 gap-element-gap mt-element-gap">
+            {seoTopTownLinks.map((link) => (
+              <PressableAnchor
+                key={link.href}
+                href={link.href}
+                prefetch={false}
+                variant="plain"
+                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive"
+              >
+                {link.label}
+              </PressableAnchor>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* CTA */}
+      <section className="py-section-y container text-center">
+        <p className="body-large text-foreground/70 font-medium mb-element-gap">
+          No trobes el que busques?
+        </p>
+        <PressableAnchor
+          href="/catalunya"
+          prefetch={false}
+          variant="plain"
+          className="btn-primary w-full sm:w-auto"
+        >
+          Veure tota l&apos;agenda
+        </PressableAnchor>
+      </section>
     </>
   );
 }
 
+export default ServerEventsCategorized;
 
-
-export default memo(ServerEventsCategorized);
+function ServerEventsCategorizedFallback() {
+  return (
+    <div className="container py-section-y animate-pulse">
+      <div className="space-y-6">
+        <div className="h-7 w-56 rounded bg-foreground/10" />
+        <div className="h-5 w-2/3 rounded bg-foreground/10" />
+        <div className="grid gap-element-gap md:grid-cols-2">
+          {[0, 1, 2, 3].map((index) => (
+            <div key={index} className="space-y-4 rounded-lg border p-6">
+              <div className="h-6 w-40 rounded bg-foreground/10" />
+              <div className="h-4 w-full rounded bg-foreground/10" />
+              <div className="h-4 w-3/4 rounded bg-foreground/10" />
+              <div className="h-32 rounded bg-foreground/10" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

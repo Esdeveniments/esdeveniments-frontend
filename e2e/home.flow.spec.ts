@@ -39,7 +39,8 @@ test.describe("Home flow", () => {
     const noEventsFound = page.getByTestId("no-events-found");
     await expect(noEventsFound).not.toBeVisible();
 
-    // Verify that each category "Veure més" link points to a canonical slug path
+    // Verify that each "Veure més" link points to a valid canonical path
+    // Category links are under /catalunya/, featured place links are direct /place
     const seeMoreLinks = page.getByRole("link", { name: /Veure més/i });
     const seeMoreCount = await seeMoreLinks.count();
     expect(seeMoreCount).toBeGreaterThan(0);
@@ -48,7 +49,8 @@ test.describe("Home flow", () => {
       const href = await seeMoreLinks.nth(index).getAttribute("href");
       expect(href).toBeTruthy();
       expect(href).not.toContain("%20");
-      expect(href).toMatch(/^\/catalunya\/[a-z0-9-]+$/);
+      // Allow both patterns: /catalunya/... for categories and /place for featured places
+      expect(href).toMatch(/^\/(catalunya\/[a-z0-9-]+|[a-z0-9-]+)$/);
     }
   });
 });

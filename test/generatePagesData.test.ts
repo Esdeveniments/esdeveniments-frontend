@@ -34,7 +34,7 @@ describe("generatePagesData search-aware notFound copy", () => {
     });
 
     expect(result.notFoundTitle).toBe(
-      `Ho sentim, però no hi ha esdeveniments disponibles a Catalunya en aquest moment per a la cerca "castellers 'nit'".`
+      `Ho sentim, però no hi ha esdeveniments disponibles a Catalunya en aquest moment per a la cerca "castellers &#39;nit&#39;".`
     );
     expect(result.notFoundDescription).toBe(
       `Mira altres dates o localitats properes a la nostra agenda cultural, on segur que hi trobaràs plans que t’agradaran.`

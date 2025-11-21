@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, ReactElement, useMemo, Suspense } from "react";
-import { useSearchParams, usePathname } from "next/navigation";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import LoadMoreButton from "@components/ui/loadMoreButton";
@@ -11,9 +10,9 @@ import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListProps } from "types/props";
-import { parseFiltersFromUrl } from "@utils/url-filters";
-import { extractURLSegments } from "@utils/url-parsing";
 import { computeTemporalStatus } from "@utils/event-status";
+import { appendSearchQuery } from "@utils/notFoundMessaging";
+import { useUrlFilters } from "@components/hooks/useUrlFilters";
 
 // Client side enhancer: handles pagination & de-duplication.
 // Expects initialEvents to be the SSR list (may include ad markers). We pass only
@@ -30,13 +29,7 @@ function HybridEventsListClientContent({
   categories = [],
   pageData,
 }: HybridEventsListProps): ReactElement | null {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-
-  // Parse URL to extract client-side filters (search, distance, lat, lon)
-  const urlSegments = extractURLSegments(pathname || "/");
-  const urlSearchParams = new URLSearchParams(searchParams?.toString() || "");
-  const parsed = parseFiltersFromUrl(urlSegments, urlSearchParams, categories);
+  const parsed = useUrlFilters(categories);
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
@@ -128,6 +121,13 @@ function HybridEventsListClientContent({
   // (initialEvents may contain region or latest events as fallback from server)
   const showFallbackEvents = showNoEventsFound && realInitialEvents.length > 0;
 
+  const notFoundTitle = useMemo(() => {
+    if (!pageData?.notFoundTitle) {
+      return undefined;
+    }
+    return appendSearchQuery(pageData.notFoundTitle, search);
+  }, [pageData, search]);
+
   return (
     <>
       {showErrorState ? (
@@ -153,7 +153,7 @@ function HybridEventsListClientContent({
         // Show no events found message when filters return no results
         <>
           <NoEventsFound
-            title={pageData?.notFoundTitle}
+            title={notFoundTitle}
             description={pageData?.notFoundDescription}
           />
           {showFallbackEvents && (

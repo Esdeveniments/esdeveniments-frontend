@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import type { JSX } from "react";
 import { getCategorizedEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -9,58 +11,85 @@ import {
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import type { NavigationItem, PageData, Href } from "types/common";
+import type { NavigationItem, PageData } from "types/common";
 import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
-import Search from "@components/ui/search";
-import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { computeTemporalStatus } from "@utils/event-status";
-import { Suspense, JSX } from "react";
-import { HomePageSkeleton, SearchSkeleton } from "@components/ui/common/skeletons";
+import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
+import { filterActiveEvents } from "@utils/event-helpers";
 
-const homeSeoLinkSections = [
+const homeSeoLinkSections: SeoLinkSection[] = [
   {
+    id: "today",
     title: "Què fer avui",
     links: [
       { href: "/barcelona/avui", label: "Què fer avui a Barcelona" },
       { href: "/maresme/avui", label: "Què fer avui al Maresme" },
       {
-        href: "/valles-occidental/avui",
-        label: "Què fer avui al Vallès Occidental",
-      },
-      {
         href: "/valles-oriental/avui",
         label: "Què fer avui al Vallès Oriental",
       },
+      { href: "/girona/avui", label: "Què fer avui a Girona" },
     ],
   },
   {
+    id: "tomorrow",
     title: "Què fer demà",
     links: [
       { href: "/barcelona/dema", label: "Què fer demà a Barcelona" },
       { href: "/maresme/dema", label: "Què fer demà al Maresme" },
+      {
+        href: "/valles-occidental/dema",
+        label: "Què fer demà al Vallès Occ.",
+      },
     ],
   },
   {
-    title: "Agendes locals",
+    id: "local-agendas",
+    title: "Agendes locals més visitades",
     links: [
-      { href: "/maresme", label: "Agenda Maresme" },
-      { href: "/barcelona", label: "Agenda Barcelona" },
-      { href: "/vilassar-de-mar", label: "Agenda Vilassar de Mar" },
-      { href: "/arenys-de-munt", label: "Agenda Arenys de Munt" },
+      { href: "/cardedeu", label: "Agenda Cardedeu" },
+      { href: "/llinars", label: "Agenda Llinars" },
+      { href: "/la-garriga", label: "Agenda La Garriga" },
+      { href: "/el-masnou", label: "Agenda El Masnou" },
+      { href: "/granollers", label: "Agenda Granollers" },
       { href: "/canet-de-mar", label: "Agenda Canet de Mar" },
-      { href: "/altafulla", label: "Agenda Altafulla" },
+      { href: "/castellbisbal", label: "Agenda Castellbisbal" },
+      { href: "/llica-de-vall", label: "Agenda Lliçà de Vall" },
+      { href: "/arenys-de-munt", label: "Agenda Arenys de Munt" },
+      { href: "/calella", label: "Agenda Calella" },
+      { href: "/mataro", label: "Agenda Mataró" },
+      { href: "/malgrat-de-mar", label: "Agenda Malgrat de Mar" },
     ],
   },
-] as const;
+];
 
 const homeNavigationItems: NavigationItem[] = homeSeoLinkSections.flatMap(
   (section) =>
     section.links.map((link) => ({
       name: link.label,
-      href: link.href as Href,
+      href: link.href,
     }))
 );
+
+const featuredPlaceSections: FeaturedPlaceConfig[] = [
+  {
+    title: "Què fer a Barcelona",
+    subtitle: "Plans destacats a la ciutat",
+    slug: "barcelona",
+    filter: { city: "barcelona" },
+  },
+  {
+    title: "Agenda al Maresme",
+    subtitle: "El millor de la comarca",
+    slug: "maresme",
+    filter: { region: "maresme" },
+  },
+  {
+    title: "Plans al Vallès Occidental",
+    slug: "valles-occidental",
+    filter: { region: "valles-occidental" },
+  },
+];
 
 export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
@@ -88,6 +117,10 @@ export default async function Page(): Promise<JSX.Element> {
   const siteNavigationSchema =
     generateSiteNavigationElementSchema(homeNavigationItems);
 
+  const localAgendasSection = homeSeoLinkSections.find(
+    (section) => section.id === "local-agendas"
+  );
+
   return (
     <>
       {siteNavigationSchema && (
@@ -101,19 +134,13 @@ export default async function Page(): Promise<JSX.Element> {
         />
       </Suspense>
 
-      <div className="container flex justify-center items-center">
-        <Suspense fallback={<SearchSkeleton />}>
-          <Search />
-        </Suspense>
-      </div>
-
-      <Suspense fallback={<HomePageSkeleton />}>
-        <ServerEventsCategorized
-          categorizedEventsPromise={categorizedEventsPromise}
-          pageData={pageData}
-          categoriesPromise={categoriesPromise}
-        />
-      </Suspense>
+      <ServerEventsCategorized
+        categorizedEventsPromise={categorizedEventsPromise}
+        pageData={pageData}
+        categoriesPromise={categoriesPromise}
+        featuredPlaces={featuredPlaceSections}
+        seoTopTownLinks={localAgendasSection?.links}
+      />
     </>
   );
 }
@@ -126,20 +153,7 @@ async function HomeStructuredData({
   pageData: PageData;
 }): Promise<JSX.Element> {
   const categorizedEvents = await categorizedEventsPromise;
-  const homepageEvents = Object.values(categorizedEvents)
-    .flat()
-    .filter(isEventSummaryResponseDTO)
-    .filter((event) => {
-      // Filter out past events to match UI
-      const status = computeTemporalStatus(
-        event.startDate,
-        event.endDate,
-        undefined,
-        event.startTime,
-        event.endTime
-      );
-      return status.state !== "past";
-    });
+  const homepageEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
 
   const itemListSchema =
     homepageEvents.length > 0

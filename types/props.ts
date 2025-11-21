@@ -12,6 +12,7 @@ import {
   PageData,
   PlaceTypeAndLabel,
   JsonLdScript,
+  Href,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
@@ -282,10 +283,58 @@ export interface PlacePageShellProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
+export interface FeaturedPlaceConfig {
+  title: string;
+  subtitle?: string;
+  slug: string;
+  filter: {
+    city?: string;
+    region?: string;
+    place?: string;
+  };
+}
+
+export interface SeoLinkItem {
+  href: Href;
+  label: string;
+}
+
+export interface SeoLinkSection {
+  id: string;
+  title: string;
+  links: SeoLinkItem[];
+}
+
 export interface ServerEventsCategorizedProps {
   categorizedEventsPromise: Promise<Record<string, ListEvent[]>>;
   pageData?: PageData;
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
+  featuredPlaces?: FeaturedPlaceConfig[];
+  seoTopTownLinks?: SeoLinkItem[];
+}
+
+export type ServerEventsCategorizedContentProps = Pick<
+  ServerEventsCategorizedProps,
+  | "categorizedEventsPromise"
+  | "categoriesPromise"
+  | "featuredPlaces"
+  | "seoTopTownLinks"
+>;
+
+export interface SearchAwareHeadingProps {
+  pageData: PageData;
+  categories?: CategorySummaryResponseDTO[];
+  titleClass: string;
+  subtitleClass: string;
+  cta?: ReactNode;
+}
+
+export interface HybridEventsHeadingLayoutProps {
+  title: string;
+  subtitle: string;
+  titleClass: string;
+  subtitleClass: string;
+  cta?: ReactNode;
 }
 
 // Location Discovery Widget Props
@@ -363,7 +412,9 @@ export interface NewsHubsGridProps {
 }
 
 export interface NewsListProps {
-  newsPromise: Promise<import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>>;
+  newsPromise: Promise<
+    import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>
+  >;
   placeTypePromise: Promise<{ label: string }>;
   place: string;
   currentPage: number;
@@ -376,4 +427,13 @@ export interface MobileShareProps {
   slug: string;
   eventDate: string; // ISO or human readable date string used in share payload
   location: string; // Main location label
+}
+
+// Date filter badges component props
+export interface DateFilterBadgesProps {
+  placeSlug: string;
+  categorySlug?: string;
+  categories?: CategorySummaryResponseDTO[];
+  contextName: string;
+  ariaLabel?: string;
 }

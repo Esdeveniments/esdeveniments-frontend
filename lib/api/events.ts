@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { captureException } from "@sentry/nextjs";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
@@ -7,9 +8,13 @@ import {
   parsePagedEvents,
   parseCategorizedEvents,
 } from "@lib/validation/event";
-import { fetchCategorizedEventsExternal } from "./events-external";
-import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import {
+  fetchCategorizedEventsExternal,
+  fetchEventsExternal,
+} from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+import { isBuildPhase } from "@utils/constants";
+import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -23,7 +28,6 @@ import {
   GlobalWithE2EStore,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
-import { computeTemporalStatus } from "@utils/event-status";
 
 const isE2ETestMode =
   process.env.E2E_TEST_MODE === "1" ||
@@ -36,9 +40,53 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
   : null;
 
-export async function fetchEvents(
+async function fetchEventsInternal(
   params: FetchEventsParams
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
+    content: [],
+    currentPage: params.page ?? 0,
+    pageSize: params.size ?? 10,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  };
+
+  const fetchExternalWithValidation = async () => {
+    try {
+      const data = await fetchEventsExternal(params);
+      const validated = parsePagedEvents(data);
+      if (!validated) {
+        console.error("fetchEvents: external validation failed");
+        captureException(
+          new Error("fetchEvents: external validation failed"),
+          {
+            tags: {
+              section: "events-fetch",
+              fallback: "external-validation-failed",
+            },
+            extra: { params },
+          }
+        );
+        return null;
+      }
+      return validated;
+    } catch (error) {
+      const errorMessage = getSanitizedErrorMessage(error);
+      console.error("fetchEvents: external fetch failed", errorMessage);
+      captureException(error, {
+        tags: { section: "events-fetch", fallback: "external-fetch-failed" },
+        extra: { params },
+      });
+      return null;
+    }
+  };
+
+  if (isBuildPhase) {
+    const externalResult = await fetchExternalWithValidation();
+    return externalResult ?? fallbackResponse;
+  }
+
   try {
     const queryString = buildEventsQuery(params);
     const finalUrl = getInternalApiUrl(`/api/events?${queryString}`);
@@ -61,28 +109,30 @@ export async function fetchEvents(
     const validated = parsePagedEvents(data);
     if (!validated) {
       console.error("fetchEvents: validation failed, returning fallback");
-      return {
-        content: [],
-        currentPage: 0,
-        pageSize: 10,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      };
+      return fallbackResponse;
     }
     return validated;
   } catch (e) {
-    console.error("Error fetching events:", e);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    console.error("Error fetching events via internal API:", e);
+    captureException(e, {
+      tags: { section: "events-fetch", fallback: "internal-api-failed" },
+      extra: {
+        params,
+        fallbackTriggered: true,
+      },
+    });
+    const externalResult = await fetchExternalWithValidation();
+    if (!externalResult) {
+      captureException(new Error("Both internal and external API failed"), {
+        tags: { section: "events-fetch", fallback: "external-also-failed" },
+        extra: { params },
+      });
+    }
+    return externalResult ?? fallbackResponse;
   }
 }
+
+export const fetchEvents = cache(fetchEventsInternal);
 
 export async function fetchEventBySlug(
   fullSlug: string
@@ -258,11 +308,6 @@ export async function fetchCategorizedEvents(
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (homepage) can fetch data during next build
-  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
-  const isBuildPhase =
-    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
-
   if (isBuildPhase) {
     try {
       const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
@@ -336,22 +381,13 @@ export async function fetchCategorizedEvents(
 export const getCategorizedEvents = cache(fetchCategorizedEvents);
 
 /**
- * Filter out past events from an array of events
- * Uses computeTemporalStatus to determine if an event is past
+ * Filter out past events from an array of events.
+ * Delegates to the shared filterActiveEvents helper to keep logic aligned.
  */
 export function filterPastEvents(
   events: EventSummaryResponseDTO[]
 ): EventSummaryResponseDTO[] {
-  return events.filter((event) => {
-    const status = computeTemporalStatus(
-      event.startDate,
-      event.endDate,
-      undefined,
-      event.startTime,
-      event.endTime
-    );
-    return status.state !== "past";
-  });
+  return filterActiveEvents(events);
 }
 
 function insertAdsRandomly(

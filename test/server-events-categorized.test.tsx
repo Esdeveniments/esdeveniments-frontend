@@ -7,11 +7,14 @@ import type {
   EventSummaryResponseDTO,
   ListEvent,
 } from "../types/api/event";
-import type { PageData } from "../types/common";
 
 // Mock modules that aren't relevant for these tests
 vi.mock("@components/ui/locationDiscoveryWidget", () => ({
   default: () => <div data-testid="location-discovery-widget" />,
+}));
+
+vi.mock("@components/ui/search", () => ({
+  default: () => <div data-testid="search-component" />,
 }));
 
 vi.mock("@components/ui/eventsAround/EventsAroundServer", () => ({
@@ -48,16 +51,24 @@ vi.mock("@heroicons/react/solid/ChevronRightIcon", () => ({
 
 vi.mock("@heroicons/react/outline", () => ({
   SpeakerphoneIcon: () => <svg data-testid="speakerphone-icon" />,
+  SparklesIcon: () => <svg data-testid="sparkles-icon" />,
+  ShoppingBagIcon: () => <svg data-testid="shoppingbag-icon" />,
+  EmojiHappyIcon: () => <svg data-testid="emojihappy-icon" />,
+  MusicNoteIcon: () => <svg data-testid="musicnote-icon" />,
+  TicketIcon: () => <svg data-testid="ticket-icon" />,
+  PhotographIcon: () => <svg data-testid="photograph-icon" />,
 }));
 
 vi.mock("next/link", () => ({
   default: ({
     href,
     children,
+    prefetch, // eslint-disable-line @typescript-eslint/no-unused-vars
     ...rest
   }: {
     href: string;
     children: React.ReactNode;
+    prefetch?: boolean;
   }) => (
     <a href={href} {...rest}>
       {children}
@@ -88,16 +99,6 @@ const baseEvent: EventSummaryResponseDTO = {
   categories: [],
 };
 
-const pageData: PageData = {
-  metaTitle: "meta",
-  metaDescription: "desc",
-  title: "Title",
-  subTitle: "Subtitle",
-  canonical: "/",
-  notFoundTitle: "No events",
-  notFoundDescription: "",
-};
-
 describe("ServerEventsCategorized", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -109,7 +110,6 @@ describe("ServerEventsCategorized", () => {
   ) => {
     const jsx = await ServerEventsCategorizedContent({
       categorizedEventsPromise: Promise.resolve(categorizedEvents),
-      pageData: pageData,
       categoriesPromise: Promise.resolve(categories ?? []),
     });
     render(jsx);

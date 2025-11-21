@@ -139,16 +139,16 @@ export default function LocationDiscoveryWidget({
 
   return (
     <div
-      className={`w-full bg-background flex justify-center items-center pt-element-gap ${className}`}
+      className={`w-full bg-background flex justify-center items-center pt-section-y ${className}`}
     >
       <div className="flex flex-col justify-center items-center w-full">
         <div className="relative w-full">
           {/* Main Location Selector */}
           <div className="flex items-center gap-element-gap mb-element-gap flex-wrap md:flex-nowrap">
             <GlobeIcon className="w-4 h-4" />
-            <h2 className="body-small text-foreground">
+            <h3 className="heading-3 text-foreground">
               Mirant esdeveniments a
-            </h2>
+            </h3>
             <div className="relative w-full md:w-auto flex-shrink-0">
               <button
                 type="button"
@@ -209,7 +209,7 @@ export default function LocationDiscoveryWidget({
                   {/* Options list */}
                   <div className="max-h-48 overflow-y-auto">
                     {loadingRegions ? (
-                      <div 
+                      <div
                         className="px-4 py-3 body-small text-foreground-strong/70 flex items-center gap-2"
                         data-testid="location-loading"
                       >

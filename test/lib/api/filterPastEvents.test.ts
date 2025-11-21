@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { filterPastEvents } from "@lib/api/events";
-import type { EventSummaryResponseDTO } from "types/api/event";
+import { filterActiveEvents } from "@utils/event-helpers";
+import type { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 
 const baseCity = {
   id: 1,
@@ -51,16 +52,16 @@ const buildEvent = (
   categories: overrides.categories ?? [],
 });
 
+beforeAll(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2025-03-01T12:00:00Z"));
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
+
 describe("filterPastEvents", () => {
-  beforeAll(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2025-03-01T12:00:00Z"));
-  });
-
-  afterAll(() => {
-    vi.useRealTimers();
-  });
-
   it("removes timed events older than 24h while preserving live/upcoming ones", () => {
     const timedPast = buildEvent({
       id: "past-timed",
@@ -121,3 +122,49 @@ describe("filterPastEvents", () => {
   });
 });
 
+describe("filterActiveEvents", () => {
+  it("filters out ads and past events from mixed list responses", () => {
+    const adItem: ListEvent = {
+      isAd: true,
+      id: "ad-1",
+    };
+
+    const pastEvent = buildEvent({
+      id: "list-past",
+      slug: "list-past",
+      startDate: "2025-02-15",
+      endDate: "2025-02-15",
+      startTime: "08:00",
+      endTime: "10:00",
+    });
+
+    const activeEvent = buildEvent({
+      id: "list-active",
+      slug: "list-active",
+      startDate: "2025-03-01",
+      startTime: "09:00",
+      endDate: "2025-03-01",
+      endTime: "18:00",
+    });
+
+    const upcomingEvent = buildEvent({
+      id: "list-upcoming",
+      slug: "list-upcoming",
+      startDate: "2025-03-03",
+      endDate: "2025-03-03",
+      startTime: "10:00",
+    });
+
+    const result = filterActiveEvents([
+      adItem,
+      pastEvent,
+      activeEvent,
+      upcomingEvent,
+    ]);
+
+    expect(result.map((event) => event.slug)).toEqual([
+      "list-active",
+      "list-upcoming",
+    ]);
+  });
+});
