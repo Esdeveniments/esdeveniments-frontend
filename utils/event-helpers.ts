@@ -20,12 +20,6 @@ export const isEventActive = (
 };
 
 export function filterActiveEvents(
-  events: ListEvent[]
-): EventSummaryResponseDTO[];
-export function filterActiveEvents(
-  events: EventSummaryResponseDTO[]
-): EventSummaryResponseDTO[];
-export function filterActiveEvents(
   events: ListEvent[] | EventSummaryResponseDTO[]
 ): EventSummaryResponseDTO[] {
   return events
