@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
+import reactHooks from "eslint-plugin-react-hooks";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,11 +30,16 @@ export default [
         ...globals.jest,
       },
     },
-
+    plugins: {
+      "react-hooks": reactHooks,
+    },
     rules: {
       "no-undef": "error",
       "no-debugger": "error",
       "react/react-in-jsx-scope": "off",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/set-state-in-effect": "error",
     },
   },
   {

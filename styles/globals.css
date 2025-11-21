@@ -589,3 +589,32 @@ video {
 .animate-appear {
   animation: appear 0.3s ease-out;
 }
+
+/* View Transitions */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
+::view-transition-old(root) {
+  animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fadeOut;
+}
+
+/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
+::view-transition-new(root) {
+  animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fadeIn;
+}

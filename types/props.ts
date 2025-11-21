@@ -180,9 +180,8 @@ export interface VideoDisplayProps {
 }
 
 export interface LoadMoreButtonProps {
-  onLoadMore: () => void;
+  onLoadMore: () => void | Promise<void>;
   isLoading?: boolean;
-  isValidating?: boolean;
   hasMore?: boolean;
   currentCount?: number;
   totalEvents?: number;
@@ -201,7 +200,7 @@ export interface FilteredPageProps {
 // Component props interfaces
 export interface ClientInteractiveLayerProps {
   categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel?: PlaceTypeAndLabel;
+  placeTypeLabel: PlaceTypeAndLabel;
 }
 
 export interface ClientInteractiveLayerContentProps
@@ -254,10 +253,15 @@ export interface HybridEventsListProps {
   category?: string;
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
-  hasNews?: boolean; // Whether the place has news articles
+  hasNews: boolean; // Whether the place has news articles
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
+
+export type HybridEventsListClientProps = Omit<
+  HybridEventsListProps,
+  "hasNews" | "placeTypeLabel" | "noEventsFound"
+>;
 
 export interface SsrListWrapperProps {
   children: ReactNode;
@@ -271,16 +275,20 @@ export interface PlacePageEventsResult {
   structuredScripts?: JsonLdScript[];
 }
 
-export interface PlacePageShellProps {
-  scripts?: JsonLdScript[];
-  eventsPromise: Promise<PlacePageEventsResult>;
+export interface PlaceShellData {
   placeTypeLabel: PlaceTypeAndLabel;
   pageData: PageData;
+}
+
+export interface PlacePageShellProps {
+  eventsPromise: Promise<PlacePageEventsResult>;
+  shellDataPromise: Promise<PlaceShellData>;
   place: string;
   category?: string;
   date?: string;
-  hasNews?: boolean;
+  hasNewsPromise?: Promise<boolean>;
   categories?: CategorySummaryResponseDTO[];
+  webPageSchemaFactory?: (pageData: PageData) => Record<string, unknown>;
 }
 
 export interface FeaturedPlaceConfig {

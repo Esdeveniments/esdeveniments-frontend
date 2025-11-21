@@ -21,7 +21,7 @@ function HybridEventsList({
   category,
   date,
   serverHasMore = false,
-  hasNews = false,
+  hasNews,
   categories,
 }: HybridEventsListProps): ReactElement {
   const placeLabel = placeTypeLabel?.label;

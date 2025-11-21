@@ -243,6 +243,7 @@ export interface EventWeatherProps {
 export interface EventImageProps {
   image: string | undefined;
   title: string;
+  eventId: string;
 }
 
 export interface EventLocationProps {
@@ -292,9 +293,8 @@ export interface UseEventsReturn {
   events: EventSummaryResponseDTO[];
   hasMore: boolean;
   totalEvents: number;
-  loadMore: () => void;
-  isLoading: boolean;
-  isValidating: boolean;
+  isLoadingMore: boolean;
+  loadMore: () => void | Promise<void>;
   error: Error | undefined;
 }
 

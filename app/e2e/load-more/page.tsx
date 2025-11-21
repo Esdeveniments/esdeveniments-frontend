@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ListEvent, EventSummaryResponseDTO } from "types/api/event";
 import ClientTest from "./ClientTest";
 
@@ -9,7 +10,11 @@ export const metadata: Metadata = {
   robots: "noindex, nofollow",
 };
 
-function makeEvent(id: string, title: string, slug: string): EventSummaryResponseDTO {
+function makeEvent(
+  id: string,
+  title: string,
+  slug: string
+): EventSummaryResponseDTO {
   return {
     id,
     hash: `hash-${id}`,
@@ -59,9 +64,11 @@ export default function Page() {
   ];
 
   return (
-    <ClientTest
-      initialEvents={initialEvents as EventSummaryResponseDTO[]}
-      place="catalunya"
-    />
+    <Suspense fallback={<div data-testid="loading">Loading...</div>}>
+      <ClientTest
+        initialEvents={initialEvents as EventSummaryResponseDTO[]}
+        place="catalunya"
+      />
+    </Suspense>
   );
 }

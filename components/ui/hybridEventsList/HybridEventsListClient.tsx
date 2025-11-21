@@ -9,7 +9,7 @@ import NoEventsFound from "@components/ui/common/noEventsFound";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
-import { HybridEventsListProps } from "types/props";
+import { HybridEventsListClientProps } from "types/props";
 import { computeTemporalStatus } from "@utils/event-status";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
@@ -28,7 +28,7 @@ function HybridEventsListClientContent({
   serverHasMore = false,
   categories = [],
   pageData,
-}: HybridEventsListProps): ReactElement | null {
+}: HybridEventsListClientProps): ReactElement | null {
   const parsed = useUrlFilters(categories);
 
   const search = parsed.queryParams.search;
@@ -43,7 +43,7 @@ function HybridEventsListClientContent({
   // Check if client-side filters are active
   const hasClientFilters = !!(search || distance || lat || lon);
 
-  const { events, hasMore, loadMore, isLoading, isValidating, error } =
+  const { events, hasMore, loadMore, isLoadingMore, error } =
     useEvents({
       place,
       category,
@@ -84,11 +84,11 @@ function HybridEventsListClientContent({
     // No filters: only show appended events beyond SSR list
     const seen = new Set<string>(realInitialEvents.map((e) => e.id));
     const uniqueAppended: EventSummaryResponseDTO[] = [];
-    for (const e of activeEvents) {
-      if (!isEventSummaryResponseDTO(e)) continue; // Skip ads in appended list
-      if (seen.has(e.id)) continue;
-      seen.add(e.id);
-      uniqueAppended.push(e);
+    for (const event of activeEvents) {
+      if (!isEventSummaryResponseDTO(event)) continue; // Skip ads in appended list
+      if (seen.has(event.id)) continue;
+      seen.add(event.id);
+      uniqueAppended.push(event);
     }
     return uniqueAppended;
   }, [events, realInitialEvents, hasClientFilters]);
@@ -99,21 +99,11 @@ function HybridEventsListClientContent({
   }
 
   // Show error state when there's an error and filters are active
-  const showErrorState =
-    error && hasClientFilters && !isLoading && !isValidating;
-
-  // Show loading state when filters are active and events are being fetched
-  const showLoadingState =
-    hasClientFilters &&
-    (isLoading || isValidating) &&
-    displayedEvents.length === 0 &&
-    !error;
+  const showErrorState = error && hasClientFilters;
 
   // Show no events found when filters are active, fetch completed, and no results
   const showNoEventsFound =
     hasClientFilters &&
-    !isLoading &&
-    !isValidating &&
     displayedEvents.length === 0 &&
     !error;
 
@@ -141,13 +131,6 @@ function HybridEventsListClientContent({
               Si us plau, torna-ho a intentar més tard.
             </p>
           </div>
-        </div>
-      ) : showLoadingState ? (
-        // Show skeleton loading cards matching the event card layout
-        <div className="w-full">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <CardLoading key={`loading-${index}`} />
-          ))}
         </div>
       ) : showNoEventsFound ? (
         // Show no events found message when filters return no results
@@ -183,8 +166,7 @@ function HybridEventsListClientContent({
           </List>
           <LoadMoreButton
             onLoadMore={loadMore}
-            isLoading={isLoading}
-            isValidating={isValidating}
+            isLoading={isLoadingMore}
             hasMore={hasMore}
           />
         </>
@@ -194,10 +176,18 @@ function HybridEventsListClientContent({
 }
 
 function HybridEventsListClient(
-  props: HybridEventsListProps
+  props: HybridEventsListClientProps
 ): ReactElement | null {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className="w-full">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <CardLoading key={`loading-${index}`} />
+          ))}
+        </div>
+      }
+    >
       <HybridEventsListClientContent {...props} />
     </Suspense>
   );

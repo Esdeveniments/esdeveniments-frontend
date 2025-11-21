@@ -107,9 +107,8 @@ export default async function Page({
 
   const eventsPromise = buildPlaceEventsPromise({ place });
 
-  const [{ placeTypeLabel, pageData }, categories, hasNews] = await Promise.all(
-    [placeShellDataPromise, categoriesPromise, hasNewsPromise]
-  );
+  // Await categories for late existence check only
+  const categories = await categoriesPromise;
 
   // Late existence check to preserve UX without creating an enumeration oracle
   if (place !== "catalunya") {
@@ -130,10 +129,9 @@ export default async function Page({
   return (
     <PlacePageShell
       eventsPromise={eventsPromise}
-      placeTypeLabel={placeTypeLabel}
-      pageData={pageData}
+      shellDataPromise={placeShellDataPromise}
       place={place}
-      hasNews={hasNews}
+      hasNewsPromise={hasNewsPromise}
       categories={categories}
     />
   );

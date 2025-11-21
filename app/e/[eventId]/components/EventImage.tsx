@@ -5,7 +5,7 @@ import ImageDefault from "components/ui/imgDefault";
 import { getOptimalImageQuality } from "@utils/image-quality";
 import { escapeXml } from "@utils/xml-escape";
 
-const EventImage: FC<EventImageProps> = ({ image, title }) => {
+const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   // Escape title for safe use in HTML attributes (React also escapes, but this is defensive)
   const safeTitle = escapeXml(title || "");
 
@@ -23,7 +23,10 @@ const EventImage: FC<EventImageProps> = ({ image, title }) => {
   });
 
   return (
-    <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card bg-muted">
+    <div
+      className="relative w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card bg-muted"
+      style={{ viewTransitionName: `event-image-${eventId}` }}
+    >
       <a
         href={image}
         target="_blank"

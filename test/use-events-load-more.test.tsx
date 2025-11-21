@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { useEvents } from "@components/hooks/useEvents";
 import type { UseEventsOptions } from "types/event";
@@ -52,12 +53,11 @@ function createMockEvent(
 
 // Simple harness to exercise the hook without rendering app UI
 function EventsHarness(props: UseEventsOptions) {
-  const { events, hasMore, loadMore, isLoading } = useEvents(props);
+  const { events, hasMore, loadMore } = useEvents(props);
   return (
     <div>
       <div data-testid="count">{events.length}</div>
       <div data-testid="hasMore">{String(hasMore)}</div>
-      <div data-testid="loading">{String(isLoading)}</div>
       <button onClick={loadMore}>Load</button>
     </div>
   );
@@ -154,14 +154,16 @@ describe("useEvents load more (integration)", () => {
 
     render(
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-        <EventsHarness
-          place="barcelona"
-          category="music"
-          date="avui"
-          initialSize={10}
-          fallbackData={fallback}
-          serverHasMore={true}
-        />
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <EventsHarness
+            place="barcelona"
+            category="music"
+            date="avui"
+            initialSize={10}
+            fallbackData={fallback}
+            serverHasMore={true}
+          />
+        </React.Suspense>
       </SWRConfig>
     );
 

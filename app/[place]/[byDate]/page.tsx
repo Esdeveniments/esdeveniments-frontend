@@ -317,17 +317,6 @@ export default async function ByDatePage({
     return false;
   });
 
-  const [{ placeTypeLabel, pageData }, hasNews] = await Promise.all([
-    placeShellDataPromise,
-    hasNewsPromise,
-  ]);
-
-  const webPageSchema = generateWebPageSchema({
-    title: pageData.title,
-    description: pageData.metaDescription,
-    url: pageData.canonical,
-  });
-
   // Late existence check to preserve UX without creating an early oracle
   if (place !== "catalunya") {
     let placeExists: boolean | undefined;
@@ -347,15 +336,20 @@ export default async function ByDatePage({
 
   return (
     <PlacePageShell
-      scripts={[{ id: "webpage-schema", data: webPageSchema }]}
       eventsPromise={eventsPromise}
-      placeTypeLabel={placeTypeLabel}
-      pageData={pageData}
+      shellDataPromise={placeShellDataPromise}
       place={place}
       category={finalCategory}
       date={actualDate}
       categories={categories}
-      hasNews={hasNews}
+      hasNewsPromise={hasNewsPromise}
+      webPageSchemaFactory={(pageData) =>
+        generateWebPageSchema({
+          title: pageData.title,
+          description: pageData.metaDescription,
+          url: pageData.canonical,
+        })
+      }
     />
   );
 }

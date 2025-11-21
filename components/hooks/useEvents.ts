@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
@@ -30,16 +30,7 @@ const pageFetcher = async (
 
   const res = await fetch(`/api/events?${qs.toString()}`);
   if (!res.ok) {
-    console.error(`Failed to fetch events: ${res.status}`);
-    captureException(new Error(`Failed to fetch events: ${res.status}`));
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: params.size ?? 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    throw new Error(`Failed to fetch events: ${res.status}`);
   }
   return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
@@ -57,17 +48,7 @@ export const useEvents = ({
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {
   const [activationKey, setActivationKey] = useState<string | null>(null);
-  // When the user clicks loadMore the first time we need to both activate and
-  // fetch the *next* page beyond the SSR list. Previously we called setSize
-  // during the same tick while the key was still null (because isActivated was
-  // still false). SWR Infinite discards that size increase when the key moves
-  // from null -> real key, so only page 0 was fetched and the user had to
-  // click a second time. We capture that intent here and apply it *after*
-  // activation so the first click yields new events immediately.
-  const fetchNextAfterActivateRef = useRef(false);
-  // Track which key requested the post-activation next-page fetch to avoid
-  // applying a stale intent after filters change.
-  const pendingActivationKeyRef = useRef<string | null>(null);
+  const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
   const currentKey = useMemo(
     () =>
@@ -75,16 +56,10 @@ export const useEvents = ({
     [place, category, date, search, distance, lat, lon, initialSize]
   );
 
-  // Auto-activate when filters (search, distance, lat, lon) are present
-  // This ensures filtered queries fetch immediately without requiring "loadMore"
   const hasClientFilters = !!(search || distance || lat || lon);
 
-  // Auto-activate when filters are present, or when manually activated via loadMore
-  // When filters change, currentKey changes, which triggers SWR to fetch with new key
   const isActivated = hasClientFilters || activationKey === currentKey;
 
-  // Build base params for the key/fetcher
-  // Derive explicit date range for known slugs to align with SSR behavior
   const dateRange = getDateRangeFromByDate(date || DEFAULT_FILTER_VALUE);
   const range = dateRange
     ? {
@@ -99,7 +74,7 @@ export const useEvents = ({
     size: initialSize,
     place: place !== "catalunya" ? place : undefined,
     category,
-    byDate: date, // keep for key clarity
+    byDate: date,
     from: range.from,
     to: range.to,
     term: search,
@@ -108,12 +83,10 @@ export const useEvents = ({
     lon: lon ? parseFloat(lon) : undefined,
   };
 
-  // Key generator for SWR Infinite (page-by-page)
   const getKey = (
     pageIndex: number,
     previousPageData: PagedResponseDTO<EventSummaryResponseDTO> | null
   ) => {
-    // Always provide a key; SWR will skip fetch on mount when revalidateOnMount=false
     if (previousPageData && previousPageData.last) return null; // reached the end
     return [
       "events",
@@ -134,8 +107,6 @@ export const useEvents = ({
   const {
     data: pages,
     error,
-    isLoading,
-    isValidating,
     setSize,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
@@ -167,8 +138,6 @@ export const useEvents = ({
         lon: lonParam as number | undefined,
       }),
     {
-      // Provide SSR fallback as the first page when available
-      // BUT: Don't use SSR fallback when client filters are active (different query)
       fallbackData:
         !hasClientFilters && fallbackData.length > 0
           ? [
@@ -182,11 +151,11 @@ export const useEvents = ({
               },
             ]
           : undefined,
-      // Don't keep previous data when filters change (different query)
+
       keepPreviousData: !hasClientFilters,
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      // For filtered queries, allow revalidation for freshness
+
       revalidateIfStale: hasClientFilters,
       refreshWhenOffline: false,
       refreshInterval: 0,
@@ -194,40 +163,16 @@ export const useEvents = ({
       focusThrottleInterval: 8000,
       errorRetryInterval: 7000,
       errorRetryCount: 3,
-      suspense: false,
+      suspense: true,
       onError: (e) => {
         console.error("Error fetching events:", e);
         captureException(e);
       },
-      // Avoid revalidating the first page (SSR) on every size change
       revalidateFirstPage: false,
-      // Revalidate immediately on mount when filters are active (no SSR fallback)
       revalidateOnMount: hasClientFilters,
     }
   );
 
-  // After activation, if the first click intended to also fetch the next page,
-  // perform the size increment now (when keys are established) so both page 0
-  // (SSR/fallback) and page 1 are available right after the first click.
-  useEffect(() => {
-    if (!isActivated) return;
-    if (
-      fetchNextAfterActivateRef.current &&
-      pendingActivationKeyRef.current === currentKey
-    ) {
-      fetchNextAfterActivateRef.current = false;
-      pendingActivationKeyRef.current = null;
-      setSize((prev) => prev + 1);
-      return;
-    }
-    // Clear any stale intent that does not match the current key
-    if (fetchNextAfterActivateRef.current) {
-      fetchNextAfterActivateRef.current = false;
-      pendingActivationKeyRef.current = null;
-    }
-  }, [isActivated, currentKey, setSize]);
-
-  // Use fallback data when not activated, SWR data when activated
   const clientEvents = isActivated
     ? pages?.flatMap((p) => p.content) ?? []
     : fallbackData;
@@ -244,32 +189,28 @@ export const useEvents = ({
       ? !lastPage.last
       : false
     : serverHasMore;
+  const currentPageCount = pages?.length ?? 0;
+  const isLoadingMore =
+    targetPageCount !== null && currentPageCount < targetPageCount && !error;
 
-  const loadMore = () => {
-    if (isLoading || isValidating || (isActivated && !hasMore)) return;
+  const loadMore = async () => {
+    if (isActivated && (!hasMore || isLoadingMore)) return;
 
     if (!isActivated) {
-      // Mark that once activation completes we should fetch the next page.
-      pendingActivationKeyRef.current = currentKey;
-      fetchNextAfterActivateRef.current = true;
       setActivationKey(currentKey);
-      return; // size bump will occur in the activation effect
     }
 
-    // Already active: directly request one more page.
-    setSize((prev) => prev + 1);
+    // Request one more page. If activating, this will fetch the first page of client-side data (page 0 or 1).
+    setTargetPageCount(currentPageCount + 1);
+    await setSize((prev) => prev + 1);
   };
-
-  // Note: activationKey is only used for the base route to enable loadMore.
-  // For filtered queries, fetching is controlled by revalidateOnMount and keys.
 
   return {
     events: clientEvents,
     hasMore,
     totalEvents,
+    isLoadingMore,
     loadMore,
-    isLoading,
-    isValidating,
     error: error as Error | undefined,
   };
 };
