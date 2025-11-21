@@ -4,19 +4,8 @@ import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
-import {
-  FetchEventsParams,
-  UseEventsOptions,
-} from "types/event";
+import { FetchEventsParams, UseEventsOptions, UseEventsReturn } from "types/event";
 import { captureException } from "@sentry/nextjs";
-
-export interface UseEventsReturn {
-  events: EventSummaryResponseDTO[];
-  hasMore: boolean;
-  totalEvents: number;
-  loadMore: () => Promise<void> | void;
-  error: Error | undefined;
-}
 
 // SWR fetcher function for events API (single page) via internal proxy
 const pageFetcher = async (
