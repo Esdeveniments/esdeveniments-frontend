@@ -14,9 +14,8 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import type { NavigationItem, PageData } from "types/common";
 import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
-import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { computeTemporalStatus } from "@utils/event-status";
 import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
+import { filterActiveEvents } from "@utils/event-helpers";
 
 const homeSeoLinkSections: SeoLinkSection[] = [
   {
@@ -154,19 +153,7 @@ async function HomeStructuredData({
   pageData: PageData;
 }): Promise<JSX.Element> {
   const categorizedEvents = await categorizedEventsPromise;
-  const homepageEvents = Object.values(categorizedEvents)
-    .flat()
-    .filter(isEventSummaryResponseDTO)
-    .filter((event) => {
-      const status = computeTemporalStatus(
-        event.startDate,
-        event.endDate,
-        undefined,
-        event.startTime,
-        event.endTime
-      );
-      return status.state !== "past";
-    });
+  const homepageEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
 
   const itemListSchema =
     homepageEvents.length > 0

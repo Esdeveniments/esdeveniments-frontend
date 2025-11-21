@@ -14,6 +14,7 @@ import {
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import { isBuildPhase } from "@utils/constants";
+import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,
   EventSummaryResponseDTO,
@@ -27,7 +28,6 @@ import {
   GlobalWithE2EStore,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
-import { computeTemporalStatus } from "@utils/event-status";
 
 const isE2ETestMode =
   process.env.E2E_TEST_MODE === "1" ||
@@ -64,6 +64,10 @@ async function fetchEventsInternal(
     } catch (error) {
       const errorMessage = getSanitizedErrorMessage(error);
       console.error("fetchEvents: external fetch failed", errorMessage);
+      captureException(error, {
+        tags: { section: "events-fetch", fallback: "external-fetch-failed" },
+        extra: { params },
+      });
       return null;
     }
   };
@@ -367,22 +371,13 @@ export async function fetchCategorizedEvents(
 export const getCategorizedEvents = cache(fetchCategorizedEvents);
 
 /**
- * Filter out past events from an array of events
- * Uses computeTemporalStatus to determine if an event is past
+ * Filter out past events from an array of events.
+ * Delegates to the shared filterActiveEvents helper to keep logic aligned.
  */
 export function filterPastEvents(
   events: EventSummaryResponseDTO[]
 ): EventSummaryResponseDTO[] {
-  return events.filter((event) => {
-    const status = computeTemporalStatus(
-      event.startDate,
-      event.endDate,
-      undefined,
-      event.startTime,
-      event.endTime
-    );
-    return status.state !== "past";
-  });
+  return filterActiveEvents(events);
 }
 
 function insertAdsRandomly(

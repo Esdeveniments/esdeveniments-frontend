@@ -12,8 +12,7 @@ import Search from "@components/ui/search";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { SearchSkeleton } from "@components/ui/common/skeletons";
 import { fetchEvents } from "@lib/api/events";
-import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import type {
   FeaturedPlaceConfig,
@@ -21,13 +20,13 @@ import type {
 } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { computeTemporalStatus } from "@utils/event-status";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import {
   CATEGORY_CONFIG,
   PRIORITY_CATEGORY_SLUGS,
   MAX_CATEGORY_SECTIONS,
 } from "@config/categories";
+import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 
@@ -63,20 +62,6 @@ const QUICK_CATEGORY_LINKS = Object.entries(CATEGORY_CONFIG).map(
     Icon: CATEGORY_ICONS[slug] || SparklesIcon, // Fallback icon
   })
 );
-
-// --- HELPER: Extracting the filtering logic to avoid duplication ---
-const filterActiveEvents = (events: ListEvent[]): EventSummaryResponseDTO[] => {
-  return events.filter(isEventSummaryResponseDTO).filter((event) => {
-    const status = computeTemporalStatus(
-      event.startDate,
-      event.endDate,
-      undefined,
-      event.startTime,
-      event.endTime
-    );
-    return status.state !== "past";
-  });
-};
 
 const resolveCategoryDetails = (
   categoryKey: string,
