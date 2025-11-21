@@ -28,7 +28,7 @@ function HybridEventsListClientContent({
   serverHasMore = false,
   categories = [],
   pageData,
-}: HybridEventsListProps): ReactElement | null {
+}: HybridEventsListClientProps): ReactElement | null {
   const parsed = useUrlFilters(categories);
 
   const search = parsed.queryParams.search;
@@ -84,11 +84,11 @@ function HybridEventsListClientContent({
     // No filters: only show appended events beyond SSR list
     const seen = new Set<string>(realInitialEvents.map((e) => e.id));
     const uniqueAppended: EventSummaryResponseDTO[] = [];
-    for (const e of activeEvents) {
-      if (!isEventSummaryResponseDTO(e)) continue; // Skip ads in appended list
-      if (seen.has(e.id)) continue;
-      seen.add(e.id);
-      uniqueAppended.push(e);
+    for (const event of activeEvents) {
+      if (!isEventSummaryResponseDTO(event)) continue; // Skip ads in appended list
+      if (seen.has(event.id)) continue;
+      seen.add(event.id);
+      uniqueAppended.push(event);
     }
     return uniqueAppended;
   }, [events, realInitialEvents, hasClientFilters]);

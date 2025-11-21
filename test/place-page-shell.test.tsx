@@ -29,4 +29,21 @@ describe("PlacePageShell client layer", () => {
 
     expect(element.props.placeTypeLabel).toEqual(placeTypeLabel);
   });
+
+  it("passes categories through to ClientInteractiveLayer", async () => {
+    const placeTypeLabel: PlaceTypeAndLabel = { type: "region", label: "Catalunya" };
+    const categories = [{ id: 1, name: "Music", slug: "music" }];
+
+    const shellDataPromise: PlacePageShellProps["shellDataPromise"] = Promise.resolve({
+      placeTypeLabel,
+      pageData: mockPageData,
+    });
+
+    const element = await ClientLayerWithPlaceLabel({
+      shellDataPromise,
+      categories,
+    });
+
+    expect(element.props.categories).toEqual(categories);
+  });
 });

@@ -182,7 +182,6 @@ export interface VideoDisplayProps {
 export interface LoadMoreButtonProps {
   onLoadMore: () => void | Promise<void>;
   isLoading?: boolean;
-  isValidating?: boolean;
   hasMore?: boolean;
   currentCount?: number;
   totalEvents?: number;
@@ -276,12 +275,14 @@ export interface PlacePageEventsResult {
   structuredScripts?: JsonLdScript[];
 }
 
+export interface PlaceShellData {
+  placeTypeLabel: PlaceTypeAndLabel;
+  pageData: PageData;
+}
+
 export interface PlacePageShellProps {
   eventsPromise: Promise<PlacePageEventsResult>;
-  shellDataPromise: Promise<{
-    placeTypeLabel: PlaceTypeAndLabel;
-    pageData: PageData;
-  }>;
+  shellDataPromise: Promise<PlaceShellData>;
   place: string;
   category?: string;
   date?: string;
