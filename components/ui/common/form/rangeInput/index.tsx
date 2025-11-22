@@ -10,9 +10,20 @@ const RangeInput: FC<RangeInputProps> = ({
   onChange,
   label,
   disabled,
+  onMouseDown,
+  onMouseUp,
+  onTouchStart,
+  onTouchEnd,
 }) => {
   return (
-    <div id={id} className="stack w-full">
+    <div 
+      id={id} 
+      className="stack w-full"
+      onMouseDownCapture={onMouseDown}
+      onMouseUpCapture={onMouseUp}
+      onTouchStartCapture={onTouchStart}
+      onTouchEndCapture={onTouchEnd}
+    >
       <div className="w-full flex justify-start items-center gap-2">
         <label htmlFor={id}>{label}</label>
         <div className="flex justify-start items-center text-primary gap-2 font-semibold font-barlow text-lg pb-1">

@@ -36,6 +36,7 @@ import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
 import AdArticleIsland from "./components/AdArticleIsland";
+import EventLocation from "./components/EventLocation";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
@@ -277,6 +278,14 @@ export default async function EventPage({
               formattedStart={formattedStart}
               formattedEnd={formattedEnd}
               nameDay={nameDay}
+            />
+            {/* Location (SSR for SEO) with client map toggle */}
+            <EventLocation
+              location={event.location}
+              cityName={cityName}
+              regionName={regionName}
+              citySlug={event.city?.slug}
+              regionSlug={event.region?.slug}
             />
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (

@@ -56,11 +56,15 @@ export default async function NewsArticleDetail({
         error
       );
       captureException(error);
-      placeType = { label: place };
+      placeType = { label: place, type: "" };
     }
   }
 
   if (!detail) {
+    return notFound();
+  }
+
+  if (!placeType) {
     return notFound();
   }
 

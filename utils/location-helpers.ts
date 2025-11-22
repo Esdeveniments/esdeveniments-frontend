@@ -1,8 +1,73 @@
+import { cache } from "react";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { fetchPlaceBySlug } from "@lib/api/places";
-import { sanitize, sanitizeLegacyApostrophe, formatCatalanDe } from "./string-helpers";
+import {
+  sanitize,
+  sanitizeLegacyApostrophe,
+  formatCatalanDe,
+} from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
-import { cache } from "react";
+import type { BuildDisplayLocationOptions } from "types/location";
+
+const normalize = (value: string) => value.trim().toLowerCase();
+
+/**
+ * Build a clean location string:
+ * - Deduplicate comma-separated segments
+ * - Append city/region if missing
+ * - Optionally hide city/region when separate links are displayed
+ */
+export const buildDisplayLocation = ({
+  location,
+  cityName,
+  regionName,
+  hidePlaceSegments,
+}: BuildDisplayLocationOptions): string => {
+  const baseSegments = location
+    .split(",")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  const uniqueSegments = baseSegments.reduce<string[]>((acc, segment) => {
+    const key = normalize(segment);
+    if (!acc.some((existing) => normalize(existing) === key)) {
+      acc.push(segment);
+    }
+    return acc;
+  }, []);
+
+  if (
+    cityName &&
+    !uniqueSegments.some((segment) => normalize(segment) === normalize(cityName))
+  ) {
+    uniqueSegments.push(cityName);
+  }
+
+  if (
+    regionName &&
+    !uniqueSegments.some(
+      (segment) => normalize(segment) === normalize(regionName)
+    )
+  ) {
+    uniqueSegments.push(regionName);
+  }
+
+  const displaySegments = hidePlaceSegments
+    ? uniqueSegments.filter((segment) => {
+        const normalized = normalize(segment);
+        return (
+          normalized !== normalize(cityName || "") &&
+          normalized !== normalize(regionName || "")
+        );
+      })
+    : uniqueSegments;
+
+  if (displaySegments.length > 0) {
+    return displaySegments.join(", ");
+  }
+
+  return uniqueSegments[0] ?? location;
+};
 
 export const getPlaceTypeAndLabel = async (
   place: string

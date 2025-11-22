@@ -7,12 +7,14 @@ const EventStatusGroup: React.FC<{
   formattedStart?: string | null;
   formattedEnd?: string | null;
   nameDay?: string | null;
+  timeDisplay?: string;
   className?: string;
 }> = ({
   temporalStatus,
   formattedStart,
   formattedEnd,
   nameDay,
+  timeDisplay,
   className = "",
 }) => {
   if (!temporalStatus) return null;
@@ -25,6 +27,7 @@ const EventStatusGroup: React.FC<{
         formattedStart={formattedStart}
         formattedEnd={formattedEnd}
         nameDay={nameDay}
+        timeDisplay={timeDisplay}
       />
     </div>
   );

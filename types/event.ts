@@ -250,6 +250,8 @@ export interface EventLocationProps {
   location: string;
   cityName: string;
   regionName: string;
+  citySlug?: string;
+  regionSlug?: string;
 }
 
 export interface EventFormProps {
