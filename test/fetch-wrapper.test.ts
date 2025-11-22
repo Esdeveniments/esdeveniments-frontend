@@ -187,7 +187,8 @@ describe("lib/api/fetch-wrapper", () => {
 
       expect(options.method).toBe("PUT");
       expect(options.mode).toBe("cors");
-      expect(options.cache).toBe("no-cache");
+      // cache is always enforced to "no-store" for security
+      expect(options.cache).toBe("no-store");
       expect(options.credentials).toBe("same-origin");
       expect(options.redirect).toBe("follow");
       expect(options.referrer).toBe("client");

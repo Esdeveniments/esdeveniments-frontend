@@ -202,6 +202,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     [handleUserLocation]
   );
 
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    // Trigger geolocation if needed
+    if (!localUserLocation && !userLocationLoading && localDistance) {
+      handleUserLocation(localDistance);
+    }
+  }, [localUserLocation, userLocationLoading, localDistance, handleUserLocation]);
+
   const applyFilters = () => {
     const hasDistance = localDistance && localDistance !== "";
     const hasUserLocation = Boolean(localUserLocation);
@@ -375,23 +383,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 onMouseDown={() => {
                   setIsDragging(true);
                 }}
-                onMouseUp={() => {
-                  setIsDragging(false);
-                  // Trigger geolocation if needed
-                  if (!localUserLocation && !userLocationLoading && localDistance) {
-                    handleUserLocation(localDistance);
-                  }
-                }}
+                onMouseUp={handleDragEnd}
                 onTouchStart={() => {
                   setIsDragging(true);
                 }}
-                onTouchEnd={() => {
-                  setIsDragging(false);
-                  // Trigger geolocation if needed
-                  if (!localUserLocation && !userLocationLoading && localDistance) {
-                    handleUserLocation(localDistance);
-                  }
-                }}
+                onTouchEnd={handleDragEnd}
               />
             </div>
           </fieldset>
