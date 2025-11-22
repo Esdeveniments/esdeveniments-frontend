@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   XIcon,
   ChevronDownIcon,
@@ -21,9 +21,22 @@ export default function EventLocationClient({
   const mapsDivRef = useRef<HTMLDivElement | null>(null);
 
   const handleShowMap = () => {
-    setShowMap((prev) => !prev);
-    setTimeout(() => setIsMapsVisible(true), 100); // Optional: delay for smoothness
+    setShowMap((prev) => {
+      const next = !prev;
+      if (!next) {
+        setIsMapsVisible(false);
+      }
+      return next;
+    });
   };
+
+  useEffect(() => {
+    if (showMap) {
+      const timeoutId = window.setTimeout(() => setIsMapsVisible(true), 100);
+      return () => clearTimeout(timeoutId);
+    }
+    return undefined;
+  }, [showMap]);
 
   const handleDirectionsClick = () => {
     const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);

@@ -42,7 +42,7 @@ export default function PastEventBanner({
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-start md:justify-center">
             <PressableAnchor
               href={explorePlaceHref}
-              className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-primary/90 text-primary-foreground text-sm font-semibold hover:bg-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
+              className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-primary-dark text-primary-foreground text-sm font-semibold hover:bg-primary-dark/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
               variant="inline"
             >
               Consulta l&apos;agenda

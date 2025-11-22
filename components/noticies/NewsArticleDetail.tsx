@@ -64,10 +64,6 @@ export default async function NewsArticleDetail({
     return notFound();
   }
 
-  if (!placeType) {
-    return notFound();
-  }
-
   const plainDescription = DOMPurify.sanitize(detail.description || "", {
     ALLOWED_TAGS: [],
   });

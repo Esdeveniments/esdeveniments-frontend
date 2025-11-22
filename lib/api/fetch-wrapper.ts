@@ -62,8 +62,8 @@ export async function fetchWithHmac(
   // the server middleware reads the exact same string we signed.
   // Default to no-store to prevent accidental caching of authenticated requests
   return fetch(url, {
-    cache: "no-store",
     ...options,
+    cache: "no-store",
     method,
     body: normalizedBody,
     headers,
