@@ -16,10 +16,7 @@ export async function fetchEventBySlug(slug: string): Promise<EventDetailRespons
     return null;
   }
   try {
-    const response = await fetchWithHmac(`${apiUrl}/events/${slug}`, {
-      cache: "no-store",
-      // Edge cache controlled by caller (internal route)
-    });
+    const response = await fetchWithHmac(`${apiUrl}/events/${slug}`);
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const json = await response.json();
@@ -46,9 +43,7 @@ export async function fetchEventsExternal(
   }
   try {
     const qs = buildEventsQuery(params);
-    const res = await fetchWithHmac(`${api}/events?${qs.toString()}`, {
-      cache: "no-store",
-    });
+    const res = await fetchWithHmac(`${api}/events?${qs.toString()}`);
     if (!res.ok) {
       console.error(`fetchEventsExternal: HTTP ${res.status}`);
       return {
@@ -85,7 +80,7 @@ export async function fetchCategorizedEventsExternal(
       params.append("maxEventsPerCategory", String(maxEventsPerCategory));
     }
     const url = `${api}/events/categorized${params.toString() ? `?${params}` : ""}`;
-    const res = await fetchWithHmac(url, { cache: "no-store" });
+    const res = await fetchWithHmac(url);
     if (!res.ok) {
       console.error(`fetchCategorizedEventsExternal: HTTP ${res.status}`);
       return {};

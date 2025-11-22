@@ -25,9 +25,7 @@ export async function fetchNewsExternal(
     // Use buildNewsQuery with setDefaults=false to match original behavior
     // (only add params if they're defined)
     const query = buildNewsQuery(params, false);
-    const res = await fetchWithHmac(`${api}/news?${query.toString()}`, {
-      cache: "no-store",
-    });
+    const res = await fetchWithHmac(`${api}/news?${query.toString()}`);
     if (!res.ok) {
       console.error(`fetchNewsExternal: HTTP ${res.status}`);
       return {
@@ -59,9 +57,7 @@ export async function fetchNewsBySlugExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/news/${slug}`, {
-      cache: "no-store",
-    });
+    const res = await fetchWithHmac(`${api}/news/${slug}`);
     if (res.status === 404) return null;
     if (!res.ok) {
       console.error("fetchNewsBySlugExternal:", slug, "HTTP", res.status);

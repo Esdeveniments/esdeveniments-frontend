@@ -6,7 +6,7 @@ export async function fetchCitiesExternal(): Promise<CitySummaryResponseDTO[]> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/places/cities`, { cache: "no-store" });
+    const res = await fetchWithHmac(`${api}/places/cities`);
     if (!res.ok) {
       console.error(`fetchCitiesExternal: HTTP ${res.status}`);
       return [];
@@ -25,9 +25,7 @@ export async function fetchCityByIdExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/places/cities/${id}`, {
-      cache: "no-store",
-    });
+    const res = await fetchWithHmac(`${api}/places/cities/${id}`);
     if (!res.ok) {
       console.error("fetchCityByIdExternal:", id, "HTTP", res.status);
       return null;

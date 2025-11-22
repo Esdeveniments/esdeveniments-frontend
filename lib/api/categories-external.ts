@@ -9,7 +9,7 @@ export async function fetchCategoriesExternal(): Promise<CategorySummaryResponse
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/categories`, { cache: "no-store" });
+    const res = await fetchWithHmac(`${api}/categories`);
     if (!res.ok) {
       console.error(`Failed to fetch categories: HTTP ${res.status}`);
       return [];
@@ -28,9 +28,7 @@ export async function fetchCategoryByIdExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/categories/${id}`, {
-      cache: "no-store",
-    });
+    const res = await fetchWithHmac(`${api}/categories/${id}`);
     if (!res.ok) {
       console.error("fetchCategoryByIdExternal:", id, "HTTP", res.status);
       return null;

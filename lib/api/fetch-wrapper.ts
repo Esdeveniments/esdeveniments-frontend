@@ -60,5 +60,12 @@ export async function fetchWithHmac(
 
   // Use the normalized body (URLSearchParams converted to string) to ensure
   // the server middleware reads the exact same string we signed.
-  return fetch(url, { ...options, method, body: normalizedBody, headers });
+  // Default to no-store to prevent accidental caching of authenticated requests
+  const finalOptions: RequestInit = { cache: "no-store", ...options };
+  return fetch(url, {
+    ...finalOptions,
+    method,
+    body: normalizedBody,
+    headers,
+  });
 }
