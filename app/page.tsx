@@ -17,6 +17,8 @@ import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
 
+export const revalidate = 300;
+
 const homeSeoLinkSections: SeoLinkSection[] = [
   {
     id: "today",

@@ -16,9 +16,7 @@ export async function fetchEventBySlug(slug: string): Promise<EventDetailRespons
     return null;
   }
   try {
-    const response = await fetchWithHmac(`${apiUrl}/events/${slug}`, {
-      // Edge cache controlled by caller (internal route)
-    });
+    const response = await fetchWithHmac(`${apiUrl}/events/${slug}`);
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const json = await response.json();
