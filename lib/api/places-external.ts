@@ -14,7 +14,9 @@ export async function fetchPlaceBySlugExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/places/${slug}`);
+    const res = await fetchWithHmac(`${api}/places/${slug}`, {
+      cache: "no-store",
+    });
     if (res.status === 404) {
       // Place definitively doesn't exist - return null to signal not found
       return null;
@@ -50,7 +52,7 @@ export async function fetchPlacesAggregatedExternal(): Promise<
     endpoints.map(async ({ path, type }) => {
       const endpoint = `${api}${path}`;
       try {
-        const response = await fetchWithHmac(endpoint);
+        const response = await fetchWithHmac(endpoint, { cache: "no-store" });
         if (!response.ok) {
           console.error(
             "fetchPlacesAggregatedExternal:",

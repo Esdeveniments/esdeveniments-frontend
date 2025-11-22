@@ -6,7 +6,9 @@ export async function fetchRegionsExternal(): Promise<RegionSummaryResponseDTO[]
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/places/regions`);
+    const res = await fetchWithHmac(`${api}/places/regions`, {
+      cache: "no-store",
+    });
     if (!res.ok) {
       console.error(`fetchRegionsExternal: HTTP ${res.status}`);
       return [];
@@ -24,7 +26,9 @@ export async function fetchRegionsOptionsExternal(): Promise<
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/places/regions/options`);
+    const res = await fetchWithHmac(`${api}/places/regions/options`, {
+      cache: "no-store",
+    });
     if (!res.ok) {
       console.error(`fetchRegionsOptionsExternal: HTTP ${res.status}`);
       return [];
@@ -42,7 +46,9 @@ export async function fetchRegionByIdExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/places/regions/${id}`);
+    const res = await fetchWithHmac(`${api}/places/regions/${id}`, {
+      cache: "no-store",
+    });
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
