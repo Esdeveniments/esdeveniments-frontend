@@ -49,7 +49,9 @@ export async function getOrCreateGroup(
     const groupsResponse = await fetchMR(
       `/groups?name=${encodeURIComponent(name)}`
     ).catch(() => null);
-    const groups = groupsResponse ? extractList(groupsResponse) : [];
+    const groups = groupsResponse
+      ? extractList<{ id?: number; name?: string }>(groupsResponse)
+      : [];
     const existing = groups.find(
       (group: { name?: string }) =>
         typeof group?.name === "string" &&

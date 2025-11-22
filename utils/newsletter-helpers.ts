@@ -1,4 +1,4 @@
-import { formatCatalanDe } from "@utils/helpers";
+import { formatCatalanA } from "@utils/helpers";
 import { BYDATES, DEFAULT_FILTER_VALUE, getCategoryDisplayName } from "@utils/constants";
 import type { NewsletterFormProps } from "types/props";
 import type { CategorySummaryResponseDTO } from "types/api/category";
@@ -10,29 +10,38 @@ export function buildNewsletterContextMessage({
   placeType,
   byDateLabel,
 }: NewsletterFormProps): string {
-  const parts: string[] = [];
+  const phraseParts: string[] = [];
 
-  if (categoryLabel) {
-    parts.push(categoryLabel);
-  } else {
-    parts.push("els millors plans");
+  const base =
+    categoryLabel && categoryLabel.trim().length > 0
+      ? `esdeveniments de ${categoryLabel.toLowerCase()}`
+      : "els millors plans";
+  phraseParts.push(base);
+
+  const normalizedByDate = byDateLabel?.toLowerCase();
+  if (normalizedByDate) {
+    const timePhrase =
+      normalizedByDate === "cap de setmana"
+        ? "aquest cap de setmana"
+        : normalizedByDate === "avui"
+        ? "avui"
+        : normalizedByDate === "demà" || normalizedByDate === "dema"
+        ? "demà"
+        : normalizedByDate;
+    phraseParts.push(timePhrase);
   }
 
-  if (placeLabel && placeLabel !== "Catalunya") {
-    const preposition = formatCatalanDe(
+  if (placeLabel) {
+    // Use "a" preposition for location
+    const locationPhrase = formatCatalanA(
       placeLabel,
-      false,
-      false,
-      placeType || "general"
+      placeType || "general",
+      false
     );
-    parts.push(preposition);
+    phraseParts.push(locationPhrase);
   }
 
-  if (byDateLabel) {
-    parts.push(`(${byDateLabel.toLowerCase()})`);
-  }
-
-  return parts.join(" ");
+  return phraseParts.join(" ");
 }
 
 export function buildNewsletterPropsFromContext({

@@ -7,54 +7,61 @@ import type { PlaceTypeAndLabel } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 describe("buildNewsletterContextMessage", () => {
-  it("falls back to generic plans when no category or place", () => {
-    const result = buildNewsletterContextMessage({});
-    expect(result).toBe("els millors plans");
+  it("falls back to generic plans when no category/place/date", () => {
+    expect(buildNewsletterContextMessage({})).toBe("els millors plans");
   });
 
-  it("uses category when provided", () => {
-    const result = buildNewsletterContextMessage({ categoryLabel: "Teatre" });
-    expect(result).toBe("Teatre");
+  it("uses category in lower case when provided", () => {
+    expect(
+      buildNewsletterContextMessage({ categoryLabel: "Teatre" })
+    ).toBe("esdeveniments de teatre");
   });
 
   it("adds place with correct preposition for consonant towns", () => {
-    const result = buildNewsletterContextMessage({
-      placeLabel: "Barcelona",
-      placeType: "town",
-    });
-    expect(result).toBe("els millors plans de Barcelona");
+    expect(
+      buildNewsletterContextMessage({
+        placeLabel: "Barcelona",
+        placeType: "town",
+      })
+    ).toBe("els millors plans a Barcelona");
   });
 
-  it("adds place with apostrophe for vowel towns", () => {
-    const result = buildNewsletterContextMessage({
-      placeLabel: "Esplugues",
-      placeType: "town",
-    });
-    expect(result).toBe("els millors plans d'Esplugues");
+  it("adds place with correct preposition for vowel towns", () => {
+    expect(
+      buildNewsletterContextMessage({
+        placeLabel: "Esplugues",
+        placeType: "town",
+      })
+    ).toBe("els millors plans a Esplugues");
   });
 
-  it("includes byDate label in parentheses", () => {
-    const result = buildNewsletterContextMessage({
-      byDateLabel: "Avui",
-    });
-    expect(result).toBe("els millors plans (avui)");
+  it("includes date phrasing for weekend", () => {
+    expect(
+      buildNewsletterContextMessage({
+        byDateLabel: "Cap de setmana",
+      })
+    ).toBe("els millors plans aquest cap de setmana");
   });
 
-  it("combines category, place, and date", () => {
-    const result = buildNewsletterContextMessage({
-      categoryLabel: "Concerts",
-      placeLabel: "Girona",
-      placeType: "town",
-      byDateLabel: "Cap de setmana",
-    });
-    expect(result).toBe("Concerts de Girona (cap de setmana)");
+  it("combines category, date, and place naturally", () => {
+    expect(
+      buildNewsletterContextMessage({
+        categoryLabel: "Literatura",
+        byDateLabel: "Cap de setmana",
+        placeLabel: "Barcelona",
+        placeType: "town",
+      })
+    ).toBe("esdeveniments de literatura aquest cap de setmana a Barcelona");
   });
 
-  it("skips Catalunya place label", () => {
-    const result = buildNewsletterContextMessage({
-      placeLabel: "Catalunya",
-    });
-    expect(result).toBe("els millors plans");
+  it("handles today phrasing", () => {
+    expect(
+      buildNewsletterContextMessage({
+        byDateLabel: "Avui",
+        placeLabel: "Girona",
+        placeType: "town",
+      })
+    ).toBe("els millors plans avui a Girona");
   });
 });
 
