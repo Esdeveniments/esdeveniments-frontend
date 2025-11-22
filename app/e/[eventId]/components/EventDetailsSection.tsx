@@ -5,6 +5,7 @@ import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
 import { ClockIcon } from "@heroicons/react/outline";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { formatEventTimeDisplay } from "@utils/date-helpers";
 
 const EventDetailsSection: React.FC<{
   event: EventDetailResponseDTO;
@@ -14,6 +15,8 @@ const EventDetailsSection: React.FC<{
   nameDay?: string | null;
 }> = ({ event, temporalStatus, formattedStart, formattedEnd, nameDay }) => {
   if (!event) return null;
+
+  const timeDisplay = formatEventTimeDisplay(event.startTime, event.endTime);
 
   return (
     <div className="w-full">
@@ -30,6 +33,7 @@ const EventDetailsSection: React.FC<{
             formattedStart={formattedStart}
             formattedEnd={formattedEnd}
             nameDay={nameDay}
+            timeDisplay={timeDisplay}
           />
 
           {event.duration && (

@@ -168,6 +168,10 @@ export interface RangeInputProps {
   ) => void;
   label: string;
   disabled?: boolean;
+  onMouseDown?: () => void;
+  onMouseUp?: () => void;
+  onTouchStart?: () => void;
+  onTouchEnd?: () => void;
 }
 
 export interface NoEventsFoundProps {
@@ -405,7 +409,7 @@ export interface NewsCardProps {
 
 export interface NewsArticleDetailProps {
   detailPromise: Promise<import("./api/news").NewsDetailResponseDTO | null>;
-  placeTypePromise: Promise<{ label: string }>;
+  placeTypePromise: Promise<PlaceTypeAndLabel>;
   place: string;
   article: string;
 }
@@ -423,7 +427,7 @@ export interface NewsListProps {
   newsPromise: Promise<
     import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>
   >;
-  placeTypePromise: Promise<{ label: string }>;
+  placeTypePromise: Promise<PlaceTypeAndLabel>;
   place: string;
   currentPage: number;
   pageSize: number;

@@ -90,6 +90,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [userLocationLoading, setUserLocationLoading] =
     useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
+  const [isDragging, setIsDragging] = useState(false);
 
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
@@ -121,8 +122,16 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const handleUserLocation = useCallback(
     (value: string) => {
-      if (localUserLocation) {
-        setLocalDistance(value);
+      // Always update the visual value immediately
+      setLocalDistance(value);
+
+      // If dragging, don't trigger geolocation yet
+      if (isDragging) {
+        return;
+      }
+
+      // Not dragging, proceed with geolocation if needed
+      if (localUserLocation || userLocationLoading) {
         return;
       }
 
@@ -139,7 +148,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
             setLocalUserLocation(location);
             setUserLocationLoading(false);
-            setLocalDistance(value);
           },
           (error: GeolocationError) => {
             setUserLocationLoading(false);
@@ -180,7 +188,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         setUserLocationLoading(false);
       }
     },
-    [localUserLocation]
+    [localUserLocation, userLocationLoading, isDragging]
   );
 
   const handleDistanceChange = useCallback(
@@ -193,6 +201,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     },
     [handleUserLocation]
   );
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    // Trigger geolocation if needed
+    if (!localUserLocation && !userLocationLoading && localDistance) {
+      handleUserLocation(localDistance);
+    }
+  }, [localUserLocation, userLocationLoading, localDistance, handleUserLocation]);
 
   const applyFilters = () => {
     const hasDistance = localDistance && localDistance !== "";
@@ -242,6 +258,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   }, []);
 
   const disablePlace: boolean =
+    !isDragging &&
     localDistance !== undefined &&
     localDistance !== "" &&
     !Number.isNaN(Number(localDistance));
@@ -251,9 +268,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     currentQueryParams.lat && currentQueryParams.lon
   );
   const disableDistance: boolean =
-    (Boolean(localPlace) && !hasCoordinatesInUrl) ||
-    userLocationLoading ||
-    Boolean(userLocationError);
+    (Boolean(localPlace) && !hasCoordinatesInUrl) || Boolean(userLocationError);
 
   const selectedOption = useMemo<Option | null>(() => {
     if (!localPlace) return null;
@@ -365,6 +380,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 onChange={handleDistanceChange}
                 label="Esdeveniments a"
                 disabled={disableDistance}
+                onMouseDown={() => {
+                  setIsDragging(true);
+                }}
+                onMouseUp={handleDragEnd}
+                onTouchStart={() => {
+                  setIsDragging(true);
+                }}
+                onTouchEnd={handleDragEnd}
               />
             </div>
           </fieldset>

@@ -54,6 +54,8 @@ input[type="range"] {
   opacity: 0.7;
   -webkit-transition: 0.2s;
   transition: opacity 0.2s;
+  touch-action: none;
+  cursor: pointer;
 }
 
 input[type="range"]:hover {
@@ -63,18 +65,19 @@ input[type="range"]:hover {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 10px;
-  height: 10px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #ff0037;
   cursor: pointer;
+  margin-top: -10.5px; /* (3px track - 24px thumb) / 2 */
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: #4caf50;
+  background: #ff0037;
   cursor: pointer;
 }
 

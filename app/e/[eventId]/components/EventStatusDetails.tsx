@@ -9,27 +9,36 @@ const EventStatusDetails: React.FC<{
   formattedStart?: string | null;
   formattedEnd?: string | null;
   nameDay?: string | null;
+  timeDisplay?: string;
   className?: string;
 }> = ({
   temporalStatus,
   formattedStart,
   formattedEnd,
   nameDay,
+  timeDisplay,
   className = "",
 }) => {
   if (!temporalStatus) return null;
+
+  const liveContent =
+    temporalStatus.state === "live"
+      ? temporalStatus.endsIn || timeDisplay
+      : null;
+  const upcomingContent =
+    temporalStatus.state === "upcoming"
+      ? temporalStatus.startsIn || timeDisplay
+      : null;
 
   return (
     <div
       className={`flex items-center gap-element-gap-sm py-element-gap-sm ${className}`}
     >
       <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
-      {temporalStatus.state === "live" && temporalStatus.endsIn && (
-        <div className={contentClassName}>{temporalStatus.endsIn}</div>
-      )}
+      {liveContent && <div className={contentClassName}>{liveContent}</div>}
 
-      {temporalStatus.state === "upcoming" && temporalStatus.startsIn && (
-        <div className={contentClassName}>{temporalStatus.startsIn}</div>
+      {upcomingContent && (
+        <div className={contentClassName}>{upcomingContent}</div>
       )}
 
       {temporalStatus.state === "past" && (

@@ -8,7 +8,6 @@ import { sendGoogleEvent } from "@utils/analytics";
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
 import EventWeather from "./components/EventWeather";
-import EventLocation from "./components/EventLocation";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
 import {
@@ -84,8 +83,6 @@ export default function EventClient({
 
   const slug = event.slug ?? "";
   const title = event.title ?? "";
-  const cityName = event.city?.name || "";
-  const regionName = event.region?.name || "";
 
   return (
     <>
@@ -95,13 +92,6 @@ export default function EventClient({
         slug={slug}
         showThankYouBanner={!!showThankYouBanner}
         setShowThankYouBanner={setShowThankYouBanner}
-      />
-
-      {/* Location with Map Toggle */}
-      <EventLocation
-        location={event.location}
-        cityName={cityName}
-        regionName={regionName}
       />
 
       {/* Ad Section */}
