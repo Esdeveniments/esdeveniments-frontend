@@ -621,21 +621,21 @@ describe("buildEventIntroText", () => {
       // Should convert "L'XIX" to "La XIX" (edició is feminine)
       expect(result).toContain("La XIX edició");
       expect(result).not.toContain("L' XIX");
-    expect(result).toContain("se celebra");
-  });
-
-  it("should use feminine article for feminine ordinal numbers", () => {
-    const event = createTestEvent({
-      title: "10ª fira de la Col",
-      city: MOCK_CITIES.barcelona,
+      expect(result).toContain("se celebra");
     });
 
-    const result = buildEventIntroText(event);
+    it("should use feminine article for feminine ordinal numbers", () => {
+      const event = createTestEvent({
+        title: "10ª fira de la Col",
+        city: MOCK_CITIES.barcelona,
+      });
 
-    expect(result).toContain("La 10ª fira");
-    expect(result).toContain("se celebra");
+      const result = buildEventIntroText(event);
+
+      expect(result).toContain("La 10ª fira");
+      expect(result).toContain("se celebra");
+    });
   });
-});
 
   describe("plural detection logic (conservative stem checking)", () => {
     it("should check stem first before adding 'a' for words ending in 'es'", () => {
