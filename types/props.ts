@@ -199,6 +199,15 @@ export interface LoadMoreButtonProps {
   totalEvents?: number;
 }
 
+export interface FilterLoadingContextValue {
+  isLoading: boolean;
+  setLoading: (loading: boolean) => void;
+}
+
+export interface FilterLoadingGateProps {
+  children: ReactNode;
+}
+
 // Next.js App Router page props interfaces
 export interface FilteredPageProps {
   params: Promise<{

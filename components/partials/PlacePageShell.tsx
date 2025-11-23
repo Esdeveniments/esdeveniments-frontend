@@ -4,6 +4,8 @@ import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
 import { PlacePageSkeleton } from "@components/ui/common/skeletons";
+import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
+import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
 import type { PlacePageShellProps } from "types/props";
 
 export async function ClientLayerWithPlaceLabel({
@@ -28,19 +30,21 @@ export default function PlacePageShell({
   webPageSchemaFactory,
 }: PlacePageShellProps) {
   return (
-    <>
+    <FilterLoadingProvider>
       {/* Suspense boundary for shell + events - streams together */}
       <Suspense fallback={<PlacePageSkeleton />}>
-        <PlacePageContent
-          shellDataPromise={shellDataPromise}
-          eventsPromise={eventsPromise}
-          place={place}
-          category={category}
-          date={date}
-          hasNewsPromise={hasNewsPromise}
-          categories={categories}
-          webPageSchemaFactory={webPageSchemaFactory}
-        />
+        <FilterLoadingGate>
+          <PlacePageContent
+            shellDataPromise={shellDataPromise}
+            eventsPromise={eventsPromise}
+            place={place}
+            category={category}
+            date={date}
+            hasNewsPromise={hasNewsPromise}
+            categories={categories}
+            webPageSchemaFactory={webPageSchemaFactory}
+          />
+        </FilterLoadingGate>
       </Suspense>
 
       <Suspense fallback={null}>
@@ -49,7 +53,7 @@ export default function PlacePageShell({
           categories={categories}
         />
       </Suspense>
-    </>
+    </FilterLoadingProvider>
   );
 }
 

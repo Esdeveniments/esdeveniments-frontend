@@ -138,19 +138,16 @@ export const useEvents = ({
         lon: lonParam as number | undefined,
       }),
     {
-      fallbackData:
-        !hasClientFilters && fallbackData.length > 0
-          ? [
-              {
-                content: fallbackData,
-                currentPage: 0,
-                pageSize: initialSize,
-                totalElements: fallbackData.length,
-                totalPages: 1,
-                last: !serverHasMore,
-              },
-            ]
-          : undefined,
+      fallbackData: [
+        {
+          content: fallbackData,
+          currentPage: 0,
+          pageSize: initialSize,
+          totalElements: fallbackData.length,
+          totalPages: 1,
+          last: !serverHasMore,
+        },
+      ],
 
       keepPreviousData: !hasClientFilters,
       revalidateOnFocus: false,

@@ -84,22 +84,21 @@ describe("useEvents filtered behaviour", () => {
     }) as unknown as typeof fetch;
     globalThis.fetch = fetchSpy;
 
-    await act(async () => {
-      render(
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Harness
-            place="catalunya"
-            date="tots"
-            search="cardedeu"
-            initialSize={10}
-            fallbackData={[]}
-          />
-        </React.Suspense>
-      );
-    });
+    render(
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <Harness
+          place="catalunya"
+          date="tots"
+          search="cardedeu"
+          initialSize={10}
+          fallbackData={[]}
+        />
+      </React.Suspense>
+    );
 
-    const count = await screen.findByTestId("count", {}, { timeout: 3000 });
-    expect(count.textContent).toBe("2");
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("2");
+    });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -120,28 +119,26 @@ describe("useEvents filtered behaviour", () => {
       );
     }) as unknown as typeof fetch;
 
-    await act(async () => {
-      render(
-        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-          <React.Suspense fallback={<div>Loading...</div>}>
-            <Harness
-              place="catalunya"
-              date="tots"
-              search="foo"
-              initialSize={10}
-              // Even if we pass fallbackData, it must be ignored for filtered queries
-              fallbackData={[createMockEvent("f", "F", "f")]}
-            />
-          </React.Suspense>
-        </SWRConfig>
-      );
-    });
+    render(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Harness
+            place="catalunya"
+            date="tots"
+            search="foo"
+            initialSize={10}
+            // Filtered queries still start from fallbackData but revalidate immediately
+            fallbackData={[createMockEvent("f", "F", "f")]}
+          />
+        </React.Suspense>
+      </SWRConfig>
+    );
 
-    // Immediately after render, it should suspend (show loading) instead of showing fallback data
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    // Starts with fallback length then revalidates to fetched data
+    expect(screen.getByTestId("count").textContent).toBe("1");
 
     await waitFor(() => {
-      expect(screen.getByTestId("count").textContent).toBe("1");
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
   });
 

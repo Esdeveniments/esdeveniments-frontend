@@ -129,6 +129,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   ]);
 
   const router = useRouter();
+  const { setLoading } = useFilterLoading();
 
   const handlePlaceChange = useCallback((option: Option | null) => {
     setLocalPlace(option?.value || "");
@@ -287,6 +288,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendEventToGA("Distance", changes.distance.toString());
 
     startNavigationFeedback();
+    setLoading(true);
     router.push(newUrl);
     onClose();
   };
