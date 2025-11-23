@@ -258,26 +258,17 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     }
 
     const hasUserLocation = Boolean(location);
+    const isDistanceFilterActive = hasDistance && hasUserLocation && location;
 
     const changes = {
       // Clear place when using distance filter with user location
-      place:
-        hasDistance && hasUserLocation
-          ? "catalunya"
-          : localPlace || "catalunya",
+      place: isDistanceFilterActive ? "catalunya" : localPlace || "catalunya",
       byDate: localByDate || "avui",
       category: localCategory || DEFAULT_FILTER_VALUE,
       searchTerm: currentQueryParams.search || "",
-      distance: hasDistance && hasUserLocation ? parseInt(localDistance) : undefined,
-      // Only include lat/lon if we have both distance and user location
-      lat:
-        hasDistance && hasUserLocation && location
-          ? location.latitude
-          : undefined,
-      lon:
-        hasDistance && hasUserLocation && location
-          ? location.longitude
-          : undefined,
+      distance: isDistanceFilterActive ? parseInt(localDistance) : undefined,
+      lat: isDistanceFilterActive ? location!.latitude : undefined,
+      lon: isDistanceFilterActive ? location!.longitude : undefined,
     };
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
