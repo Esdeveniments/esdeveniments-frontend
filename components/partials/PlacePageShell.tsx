@@ -30,32 +30,29 @@ export default function PlacePageShell({
   webPageSchemaFactory,
 }: PlacePageShellProps) {
   return (
-    <Suspense fallback={<PlacePageSkeleton />}>
-      <FilterLoadingProvider>
-        {/* Suspense boundary for shell + events - streams together */}
-        <Suspense fallback={<PlacePageSkeleton />}>
-          <FilterLoadingGate>
-            <PlacePageContent
-              shellDataPromise={shellDataPromise}
-              eventsPromise={eventsPromise}
-              place={place}
-              category={category}
-              date={date}
-              hasNewsPromise={hasNewsPromise}
-              categories={categories}
-              webPageSchemaFactory={webPageSchemaFactory}
-            />
-          </FilterLoadingGate>
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <ClientLayerWithPlaceLabel
+    <FilterLoadingProvider>
+      <Suspense fallback={<PlacePageSkeleton />}>
+        <FilterLoadingGate>
+          <PlacePageContent
             shellDataPromise={shellDataPromise}
+            eventsPromise={eventsPromise}
+            place={place}
+            category={category}
+            date={date}
+            hasNewsPromise={hasNewsPromise}
             categories={categories}
+            webPageSchemaFactory={webPageSchemaFactory}
           />
-        </Suspense>
-      </FilterLoadingProvider>
-    </Suspense>
+        </FilterLoadingGate>
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <ClientLayerWithPlaceLabel
+          shellDataPromise={shellDataPromise}
+          categories={categories}
+        />
+      </Suspense>
+    </FilterLoadingProvider>
   );
 }
 
