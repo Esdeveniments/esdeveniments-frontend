@@ -72,11 +72,12 @@ export default function RestaurantPromotionSection({
     const now = new Date();
     const daysAhead = differenceInCalendarDays(startDateTime, now);
 
+    // Event should render if it hasn't finished yet
+    const eventIsInFuture = !eventHasFinished;
+
     // For fetch window, only fetch for events that start today or in the future (within 15 days)
     // This prevents fetching for events that started in the past, even if still ongoing
     // (we still show them if they haven't finished, but won't fetch restaurant data)
-    const eventIsInFuture = !eventHasFinished;
-
     const eventIsWithinFetchWindow =
       daysAhead >= 0 && daysAhead <= MAX_DAYS && !eventHasFinished;
     return { eventIsWithinFetchWindow, eventIsInFuture };

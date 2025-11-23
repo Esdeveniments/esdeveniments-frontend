@@ -76,9 +76,9 @@ export default function Modal({
                   {actionButton && (
                     <div className="flex-shrink-0 w-full flex justify-center items-end pt-4 px-4 border-t border-border bg-background pb-[calc(env(safe-area-inset-bottom)+1rem)]">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (onActionButtonClick) {
-                            onActionButtonClick();
+                            await onActionButtonClick();
                           }
                           setOpen(false);
                         }}
