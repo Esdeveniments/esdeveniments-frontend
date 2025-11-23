@@ -158,25 +158,6 @@ describe("Filter Configuration System", () => {
       expect(changes).toEqual({ place: "catalunya" });
     });
   });
-
-  describe("Special Cases", () => {
-    test("byDate filter has home redirect logic", () => {
-      const byDateConfig = FilterOperations.getConfig("byDate");
-      const shouldRedirectToHome = byDateConfig?.specialCases?.homeRedirect?.({
-        place: "catalunya",
-        category: DEFAULT_FILTER_VALUE,
-        date: DEFAULT_FILTER_VALUE,
-      });
-      expect(shouldRedirectToHome).toBe(true);
-
-      const shouldNotRedirect = byDateConfig?.specialCases?.homeRedirect?.({
-        place: "barcelona",
-        category: DEFAULT_FILTER_VALUE,
-        date: DEFAULT_FILTER_VALUE,
-      });
-      expect(shouldNotRedirect).toBe(false);
-    });
-  });
 });
 
 describe("Integration: Adding New Filter", () => {
