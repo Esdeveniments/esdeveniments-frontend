@@ -1,6 +1,63 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Filters Distance + Geolocation URL Tests", () => {
+  test("should add geolocation coords when distance is present without coords", async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(["geolocation"]);
+    await context.addInitScript(() => {
+      (window as unknown as { __mockGeoCalls?: number }).__mockGeoCalls = 0;
+      navigator.geolocation.getCurrentPosition = (success) => {
+        (window as unknown as { __mockGeoCalls?: number }).__mockGeoCalls =
+          ((window as unknown as { __mockGeoCalls?: number }).__mockGeoCalls ||
+            0) + 1;
+        setTimeout(() => {
+          success({
+            coords: {
+              latitude: 41.45,
+              longitude: 2.18,
+            },
+          } as GeolocationPosition);
+        }, 150);
+      };
+    });
+
+    await page.goto("/catalunya?distance=5", {
+      waitUntil: "domcontentloaded",
+    });
+
+    const filterButton = page.getByTestId("filters-open");
+    await expect(filterButton).toBeVisible();
+    await filterButton.click({ force: true });
+
+    const modal = page.getByTestId("filters-modal");
+    await expect(modal).toBeVisible({ timeout: 10000 });
+
+    const applyButton = page.getByTestId("filters-modal-action-button");
+    await expect(applyButton).toBeVisible();
+    await applyButton.click();
+
+    await page.waitForURL(
+      (url) =>
+        url.searchParams.has("lat") &&
+        url.searchParams.has("lon") &&
+        url.searchParams.get("distance") === "5",
+      { timeout: 10000 }
+    );
+
+    const url = new URL(page.url());
+    expect(url.searchParams.get("lat")).toBe("41.45");
+    expect(url.searchParams.get("lon")).toBe("2.18");
+    expect(url.searchParams.get("distance")).toBe("5");
+
+    const geolocationCalls = await page.evaluate(
+      () =>
+        (window as unknown as { __mockGeoCalls?: number }).__mockGeoCalls || 0
+    );
+    expect(geolocationCalls).toBeGreaterThan(0);
+  });
+
   test("should load page with distance+geolocation params in URL", async ({
     page,
   }) => {

@@ -199,7 +199,7 @@ function formatPlaceToken(token: string, isFirst: boolean): string {
 export function formatPlaceName(name: string): string {
   if (!name) return name;
 
-  const normalized = name.replace(/-/g, " ").trim();
+  const normalized = name.trim();
   if (!normalized) return normalized;
 
   return normalized

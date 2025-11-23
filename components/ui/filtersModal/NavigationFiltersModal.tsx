@@ -6,6 +6,7 @@ import {
   ChangeEvent,
   FC,
   useEffect,
+  useRef,
 } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -25,6 +26,7 @@ import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
+import { useFilterLoading } from "@components/context/FilterLoadingContext";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
@@ -99,6 +101,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
+  const geolocationPromiseRef =
+    useRef<Promise<{ latitude: number; longitude: number } | undefined> | null>(
+      null
+    );
 
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
@@ -122,69 +128,92 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.userLocation,
   ]);
 
+    defaults.userLocation,
+  ]);
+
   const router = useRouter();
+  const { setLoading } = useFilterLoading();
 
   const handlePlaceChange = useCallback((option: Option | null) => {
     setLocalPlace(option?.value || "");
   }, []);
 
-  const triggerGeolocation = useCallback(() => {
-    if (localUserLocation || userLocationLoading) {
-      return;
+  const triggerGeolocation = useCallback(async () => {
+    if (localUserLocation) {
+      return localUserLocation;
+    }
+
+    if (geolocationPromiseRef.current) {
+      return geolocationPromiseRef.current;
+    }
+
+    if (userLocationLoading) {
+      return undefined;
     }
 
     setUserLocationLoading(true);
     setUserLocationError("");
 
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position: GeolocationPosition) => {
-          const location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
+    geolocationPromiseRef.current = new Promise((resolve) => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position: GeolocationPosition) => {
+            const location = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
 
-          setLocalUserLocation(location);
-          setUserLocationLoading(false);
-        },
-        (error: GeolocationError) => {
-          setUserLocationLoading(false);
+            setLocalUserLocation(location);
+            setUserLocationLoading(false);
+            geolocationPromiseRef.current = null;
+            resolve(location);
+          },
+          (error: GeolocationError) => {
+            setUserLocationLoading(false);
 
-          switch (error.code) {
-            case 1: // PERMISSION_DENIED
-              setUserLocationError(
-                "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció."
-              );
-              break;
-            case 2: // POSITION_UNAVAILABLE
-              setUserLocationError(
-                "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància."
-              );
-              break;
-            case 3: // TIMEOUT
-              setUserLocationError(
-                "Temps d'espera esgotat. Prova de nou o selecciona una població."
-              );
-              break;
-            default:
-              setUserLocationError(
-                "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
-              );
+            switch (error.code) {
+              case 1: // PERMISSION_DENIED
+                setUserLocationError(
+                  "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció."
+                );
+                break;
+              case 2: // POSITION_UNAVAILABLE
+                setUserLocationError(
+                  "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància."
+                );
+                break;
+              case 3: // TIMEOUT
+                setUserLocationError(
+                  "Temps d'espera esgotat. Prova de nou o selecciona una població."
+                );
+                break;
+              default:
+                setUserLocationError(
+                  "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+                );
+            }
+
+            geolocationPromiseRef.current = null;
+            resolve(undefined);
+          },
+          {
+            enableHighAccuracy: false, // Don't require GPS, allow network location
+            timeout: 10000, // 10 second timeout
+            maximumAge: 300000, // Accept cached location up to 5 minutes old
           }
-        },
-        {
-          enableHighAccuracy: false, // Don't require GPS, allow network location
-          timeout: 10000, // 10 second timeout
-          maximumAge: 300000, // Accept cached location up to 5 minutes old
-        }
-      );
-    } else {
-      console.log("Geolocation is not supported by this browser.");
-      setUserLocationError(
-        "La geolocalització no està disponible en aquest navegador."
-      );
-      setUserLocationLoading(false);
-    }
+        );
+      } else {
+        console.log("Geolocation is not supported by this browser.");
+        setUserLocationError(
+          "La geolocalització no està disponible en aquest navegador."
+        );
+        setUserLocationLoading(false);
+        geolocationPromiseRef.current = null;
+        resolve(undefined);
+      }
+    });
+
+    return geolocationPromiseRef.current;
   }, [localUserLocation, userLocationLoading]);
 
   const handleUserLocation = useCallback(
@@ -198,7 +227,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       }
 
       // Not dragging, proceed with geolocation if needed
-      triggerGeolocation();
+      void triggerGeolocation();
     },
     [isDragging, triggerGeolocation]
   );
@@ -218,13 +247,20 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     setIsDragging(false);
     // Trigger geolocation directly (bypassing state check since we just set isDragging to false)
     if (!localUserLocation && !userLocationLoading && localDistance) {
-      triggerGeolocation();
+      void triggerGeolocation();
     }
   }, [localUserLocation, userLocationLoading, localDistance, triggerGeolocation]);
 
-  const applyFilters = () => {
+  const applyFilters = async () => {
     const hasDistance = localDistance && localDistance !== "";
-    const hasUserLocation = Boolean(localUserLocation);
+    let location = localUserLocation;
+
+    // If distance is set but we don't yet have a location, request it before applying
+    if (hasDistance && !location && !userLocationError) {
+      location = await triggerGeolocation();
+    }
+
+    const hasUserLocation = Boolean(location);
 
     const changes = {
       // Clear place when using distance filter with user location
@@ -238,12 +274,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       distance: hasDistance ? parseInt(localDistance) : 50,
       // Only include lat/lon if we have both distance and user location
       lat:
-        hasDistance && hasUserLocation && localUserLocation
-          ? localUserLocation.latitude
+        hasDistance && hasUserLocation && location
+          ? location.latitude
           : undefined,
       lon:
-        hasDistance && hasUserLocation && localUserLocation
-          ? localUserLocation.longitude
+        hasDistance && hasUserLocation && location
+          ? location.longitude
           : undefined,
     };
 
@@ -255,6 +291,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendEventToGA("Distance", changes.distance.toString());
 
     startNavigationFeedback();
+    setLoading(true);
     router.push(newUrl);
     onClose();
   };
