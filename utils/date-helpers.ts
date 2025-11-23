@@ -253,10 +253,7 @@ export const formatEventTimeDisplay = (
     return "Consultar horaris";
   }
 
-  // If end time matches start time, treat it as a single time
-  if (hasEndTime && startTime === normalizedEndTime) {
-    return startTime;
-  }
+
 
   // Has start time but no end time -> show just start time
   if (!hasEndTime) {

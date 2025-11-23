@@ -239,8 +239,7 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     event.endDate
   );
 
-  const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
-  const endTimeLabel = isValidTime(event.endTime) ? event.endTime : "";
+
 
   const placeSummary = cityName
     ? `${cityName}${regionName ? ` (${regionName})` : ""}`
@@ -388,12 +387,12 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     }
   }
 
-  const sameTime =
-    Boolean(startTimeLabel) &&
-    Boolean(endTimeLabel) &&
-    endTimeLabel === startTimeLabel;
+  const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
+  const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
+  const endTimeLabel = isValidTime(normalizedEndTime) ? normalizedEndTime : "";
+
   const timePart = startTimeLabel
-    ? `${startTimeLabel}${endTimeLabel && !sameTime ? `–${endTimeLabel}` : ""}`
+    ? `${startTimeLabel}${endTimeLabel ? `–${endTimeLabel}` : ""}`
     : "";
 
   // Verb agreement: plural/singular
@@ -435,8 +434,7 @@ export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
   const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
   const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
   const endTimeLabel = isValidTime(normalizedEndTime) ? normalizedEndTime : "";
-  const hasDistinctEndTime =
-    Boolean(startTimeLabel) && Boolean(endTimeLabel) && startTimeLabel !== endTimeLabel;
+  const hasDistinctEndTime = Boolean(startTimeLabel) && Boolean(endTimeLabel);
   const timeLabel = startTimeLabel
     ? `${startTimeLabel}${hasDistinctEndTime ? ` - ${endTimeLabel}` : ""}`
     : "";

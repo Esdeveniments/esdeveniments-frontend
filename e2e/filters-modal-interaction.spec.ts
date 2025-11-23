@@ -1,4 +1,15 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Locator } from "@playwright/test";
+
+async function setDistance(rangeInput: Locator, targetValue: number) {
+  const currentValue = parseInt(await rangeInput.inputValue(), 10);
+  const steps = Math.abs(targetValue - currentValue);
+  const directionKey = targetValue > currentValue ? "ArrowRight" : "ArrowLeft";
+
+  await rangeInput.focus();
+  for (let i = 0; i < steps; i += 1) {
+    await rangeInput.press(directionKey);
+  }
+}
 
 test.describe("Filters Modal Interaction", () => {
   test.beforeEach(async ({ context }) => {
@@ -34,12 +45,8 @@ test.describe("Filters Modal Interaction", () => {
     // Initial value should be 50 (default)
     await expect(rangeInput).toHaveValue("50");
 
-    // Change the value to 30
-    await rangeInput.evaluate((el, value) => {
-      (el as HTMLInputElement).value = value;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }, "30");
+    // Change the value to 30 using keyboard events (triggers React onChange)
+    await setDistance(rangeInput, 30);
 
     // Verify the visual feedback updated (e.g., "30 km")
     await expect(page.getByText("30 km")).toBeVisible();
@@ -78,11 +85,8 @@ test.describe("Filters Modal Interaction", () => {
     await expect(modal).toBeVisible({ timeout: 10000 });
     
     const rangeInput = page.locator('[data-testid="distance-range"] input[type="range"]');
-    await rangeInput.evaluate((el, value) => {
-      (el as HTMLInputElement).value = value;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }, "25");
+    // Use keyboard to set distance to 25 to ensure onChange handlers fire
+    await setDistance(rangeInput, 25);
     
     await expect(page.getByText("25 km")).toBeVisible();
     

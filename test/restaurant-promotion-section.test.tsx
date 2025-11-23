@@ -174,11 +174,12 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           {...defaultProps}
           eventStartDate={startDate}
           eventEndDate={endDate}
+          eventStartTime={null}
         />
       );
       // Component should render (event is still ongoing)
       // Note: It won't fetch restaurants (that's tested separately)
-      expect(container.firstChild).toBeNull();
+      expect(container.firstChild).not.toBeNull();
     });
 
     it("handles all-day events (no time) happening today", async () => {
