@@ -79,6 +79,7 @@ export default async function Page({
   // Start fetches immediately
   const newsPromise = fetchNews({ page: currentPage, size: pageSize, place });
   const placeTypePromise = getPlaceTypeAndLabelCached(place);
+  const placeLabelPromise = placeTypePromise.then((value) => value.label).catch(() => place);
 
   // We can await placeTypePromise if we want the title to be perfect immediately, 
   // but to be strictly non-blocking as requested, we use the slug for the shell 
@@ -105,6 +106,8 @@ export default async function Page({
     breadcrumbs,
   });
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
+  const placeLabel = await placeLabelPromise;
+  const agendaHref = place === "catalunya" ? "/catalunya" : `/${place}`;
 
   return (
     <div className="container flex-col justify-center items-center mt-8">
@@ -154,7 +157,16 @@ export default async function Page({
       <h1 className="uppercase mb-2 px-2 lg:px-0">
         Notícies de <span className="capitalize">{place}</span>
       </h1>
-      <div className="w-full flex justify-end px-2 lg:px-0 mb-2 text-sm">
+      <div className="w-full flex flex-wrap items-center justify-end gap-2 px-2 lg:px-0 mb-2 text-sm">
+        <PressableAnchor
+          href={agendaHref}
+          className="text-primary underline text-sm"
+          prefetch={false}
+          variant="inline"
+        >
+          Veure agenda de <span className="capitalize">{placeLabel}</span>
+        </PressableAnchor>
+        <span className="mx-2 hidden sm:inline">·</span>
         <PressableAnchor
           href={`/noticies`}
           className="text-primary underline text-sm"

@@ -16,9 +16,11 @@ import PressableLink from "@components/ui/primitives/PressableLink";
 import { NavigationItem } from "types/common";
 
 const navigation: NavigationItem[] = [
-  { name: "Agenda", href: "/", current: true },
+  { name: "Inici", href: "/", current: true },
+  { name: "Agenda", href: "/catalunya", current: false },
   { name: "Publicar", href: "/publica", current: false },
   { name: "Notícies", href: "/noticies", current: false },
+  { name: "Arxiu", href: "/sitemap", current: false },
 ];
 
 export default function Navbar() {

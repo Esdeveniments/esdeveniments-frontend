@@ -30,8 +30,8 @@ export default function PlacePageShell({
   webPageSchemaFactory,
 }: PlacePageShellProps) {
   return (
-    <Suspense fallback={null}>
-      <FilterLoadingProvider>
+    <FilterLoadingProvider>
+      <FilterLoadingGate>
         <Suspense fallback={<EventsListSkeleton />}>
           <PlacePageContent
             shellDataPromise={shellDataPromise}
@@ -51,8 +51,8 @@ export default function PlacePageShell({
             categories={categories}
           />
         </Suspense>
-      </FilterLoadingProvider>
-    </Suspense>
+      </FilterLoadingGate>
+    </FilterLoadingProvider>
   );
 }
 
@@ -99,20 +99,18 @@ async function PlacePageContent({
       <JsonLdServer key={script.id} id={script.id} data={script.data} />
     ))}
 
-    <FilterLoadingGate>
-      <HybridEventsList
-        initialEvents={events}
-        placeTypeLabel={placeTypeLabel}
-        pageData={pageData}
-        noEventsFound={noEventsFound}
-        place={place}
-        category={category}
-        date={date}
-        serverHasMore={serverHasMore}
-        hasNews={hasNews}
-        categories={categories}
-      />
-    </FilterLoadingGate>
+    <HybridEventsList
+      initialEvents={events}
+      placeTypeLabel={placeTypeLabel}
+      pageData={pageData}
+      noEventsFound={noEventsFound}
+      place={place}
+      category={category}
+      date={date}
+      serverHasMore={serverHasMore}
+      hasNews={hasNews}
+      categories={categories}
+    />
   </>
 );
 }

@@ -390,7 +390,7 @@ export async function ServerEventsCategorizedContent({
 
       {/* SEO Links */}
       {seoTopTownLinks.length > 0 && (
-        <section className="py-section-y container">
+        <section className="py-section-y container" id="agendes-locals">
           <SectionHeading
             title="Agendes locals més visitades"
             titleClassName="heading-2 text-foreground mb-element-gap"
