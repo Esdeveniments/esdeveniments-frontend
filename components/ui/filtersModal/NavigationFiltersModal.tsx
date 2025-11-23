@@ -55,9 +55,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
 
-  const isLoadingRegions = isLoadingRegionsWithCities
-    ? true
-    : !regionsWithCities && !isErrorRegionsWithCities;
+  const isLoadingRegions =
+    isLoadingRegionsWithCities ||
+    (!regionsWithCities && !isErrorRegionsWithCities);
 
   const defaults = useMemo(() => {
     const place =
@@ -271,6 +271,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const disablePlace: boolean =
     !isDragging &&
+    !userLocationError &&
     localDistance !== undefined &&
     localDistance !== "" &&
     !Number.isNaN(Number(localDistance));

@@ -29,7 +29,7 @@ export const buildDisplayLocation = ({
 
   const baseSegments = location
     .split(",")
-    .map((segment) => formatPlaceName(segment.trim()))
+    .map((segment) => segment.trim())
     .filter(Boolean);
 
   const uniqueSegments = baseSegments.reduce<string[]>((acc, segment) => {

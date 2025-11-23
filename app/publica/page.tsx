@@ -86,9 +86,9 @@ const Publica = () => {
     isError: isErrorRegionsWithCities,
   } = useGetRegionsWithCities();
 
-  const isLoadingRegions = isLoadingRegionsWithCities
-    ? true
-    : !regionsWithCities && !isErrorRegionsWithCities;
+  const isLoadingRegions =
+    isLoadingRegionsWithCities ||
+    (!regionsWithCities && !isErrorRegionsWithCities);
 
   const { categories } = useCategories();
 

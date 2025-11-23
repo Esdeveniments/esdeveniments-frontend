@@ -35,7 +35,11 @@ test.describe("Filters Modal Interaction", () => {
     await expect(rangeInput).toHaveValue("50");
 
     // Change the value to 30
-    await rangeInput.fill("30");
+    await rangeInput.evaluate((el, value) => {
+      (el as HTMLInputElement).value = value;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }, "30");
 
     // Verify the visual feedback updated (e.g., "30 km")
     await expect(page.getByText("30 km")).toBeVisible();
@@ -74,11 +78,14 @@ test.describe("Filters Modal Interaction", () => {
     await expect(modal).toBeVisible({ timeout: 10000 });
     
     const rangeInput = page.locator('[data-testid="distance-range"] input[type="range"]');
-    await rangeInput.fill("25");
+    await rangeInput.evaluate((el, value) => {
+      (el as HTMLInputElement).value = value;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }, "25");
     
     await expect(page.getByText("25 km")).toBeVisible();
     
-    // Check disabled state
     // Check disabled state
     const placeInput = page.locator('input#options-input');
     await expect(placeInput).toBeDisabled();
