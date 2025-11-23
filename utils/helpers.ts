@@ -20,6 +20,7 @@ export {
   formatCatalanDe,
   formatCatalanA,
   capitalizeFirstLetter,
+  formatPlaceName,
 } from "./string-helpers";
 export {
   buildEventIntroText,

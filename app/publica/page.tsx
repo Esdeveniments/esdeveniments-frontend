@@ -80,8 +80,15 @@ const Publica = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
-    useGetRegionsWithCities();
+  const {
+    regionsWithCities,
+    isLoading: isLoadingRegionsWithCities,
+    isError: isErrorRegionsWithCities,
+  } = useGetRegionsWithCities();
+
+  const isLoadingRegions = isLoadingRegionsWithCities
+    ? true
+    : !regionsWithCities && !isErrorRegionsWithCities;
 
   const { categories } = useCategories();
 
@@ -308,7 +315,7 @@ const Publica = () => {
             cityOptions={cityOptions}
             categoryOptions={categoryOptions}
             progress={0}
-            isLoadingRegionsWithCities={isLoadingRegionsWithCities}
+            isLoadingRegionsWithCities={isLoadingRegions}
             handleFormChange={handleFormChange}
             handleImageChange={handleImageChange}
             handleRegionChange={handleRegionChange}

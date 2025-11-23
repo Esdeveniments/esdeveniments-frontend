@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { CulturalMessageProps } from "types/props";
-import { formatCatalanA, capitalizeFirstLetter } from "@utils/helpers";
+import { formatCatalanA, formatPlaceName } from "@utils/helpers";
 import Badge from "../badge";
 
 const CulturalMessage: FC<CulturalMessageProps> = ({
@@ -12,7 +12,7 @@ const CulturalMessage: FC<CulturalMessageProps> = ({
     return null;
   }
 
-  const capitalizedLocation = capitalizeFirstLetter(location);
+  const capitalizedLocation = formatPlaceName(location);
 
   return (
     <div className="leading-relaxed">

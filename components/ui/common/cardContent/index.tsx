@@ -4,7 +4,11 @@ import {
   LocationMarkerIcon,
   CalendarIcon,
 } from "@heroicons/react/outline";
-import { truncateString, getFormattedDate } from "@utils/helpers";
+import {
+  truncateString,
+  getFormattedDate,
+  formatPlaceName,
+} from "@utils/helpers";
 import { formatEventTimeDisplay } from "@utils/date-helpers";
 import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
@@ -24,7 +28,8 @@ export default function CardContentServer({
     event.endDate
   );
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
-  const location = truncateString(event.location || "", 45);
+  const formattedLocation = formatPlaceName(event.location || "");
+  const location = truncateString(formattedLocation, 45);
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
     ? `Del ${formattedStart} al ${formattedEnd}`

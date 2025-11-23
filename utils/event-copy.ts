@@ -1,7 +1,11 @@
 import type { EventDetailResponseDTO } from "types/api/event";
 import { getFormattedDate } from "@utils/date-helpers";
 import type { FaqItem } from "types/faq";
-import { formatCatalanA, capitalizeFirstLetter } from "./string-helpers";
+import {
+  formatCatalanA,
+  capitalizeFirstLetter,
+  formatPlaceName,
+} from "./string-helpers";
 
 function isValidTime(t: string | null): t is string {
   return !!t && t !== "00:00";
@@ -72,6 +76,11 @@ function detectCatalanGender(word: string): "m" | "f" {
   if (!raw) return "m";
 
   const norm = normalize(raw);
+
+  // Ordinal feminine indicator (e.g., 10ª, 3a) -> feminine
+  if (/[0-9]+(a|ª)$/i.test(raw)) return "f";
+  // Ordinal masculine indicator (e.g., 10º) -> masculine
+  if (/[0-9]+º$/i.test(raw)) return "m";
 
   // Check explicit masculine patterns first
   if (isExplicitlyMasculine(word)) return "m";
@@ -188,9 +197,23 @@ function extractLeadingArticle(title: string): {
 function capitalizePlaces(text: string): string {
   // 1) capitalize first word after common prepositions
   text = text.replace(
-    /\b(al|a|del|dels|de la|de les|de l’|de l'|pel|pels)\s+([a-zà-ÿ][\w'’\-\s]*)/gi,
+    /\b(al|a|del|dels|de la|de les|de l’|de l'|pel|pels)\s+([a-zà-ÿ][\w'’\-]*(?:\s+[a-zà-ÿ][\w'’\-]*)*)(?=[,.;)]|$)/gi,
     (_match, prep, place) => {
-      return `${prep} ${capitalizeFirstLetter(place)}`;
+      const trimmedPlace = place.trim();
+      const seIndex = trimmedPlace.toLowerCase().indexOf(" se ");
+      const placePortion =
+        seIndex >= 0 ? trimmedPlace.slice(0, seIndex).trim() : trimmedPlace;
+      const remainder = seIndex >= 0 ? trimmedPlace.slice(seIndex) : "";
+      const articleMatch = placePortion.match(/^(l['’]|el|la|els|les)\s+(.*)$/i);
+      if (articleMatch) {
+        const article = articleMatch[1].toLowerCase();
+        const rest = articleMatch[2];
+        const formattedRest = formatPlaceName(rest);
+        const spacer = article.endsWith("'") ? "" : " ";
+        return `${prep} ${article}${spacer}${formattedRest}${remainder}`;
+      }
+
+      return `${prep} ${formatPlaceName(placePortion)}${remainder}`;
     }
   );
 
@@ -207,8 +230,9 @@ function capitalizePlaces(text: string): string {
 }
 
 export function buildEventIntroText(event: EventDetailResponseDTO): string {
-  const cityName = event.city?.name || "";
-  const regionName = event.region?.name || "";
+  const cityName = formatPlaceName(event.city?.name || "");
+  const regionName = formatPlaceName(event.region?.name || "");
+  const formattedLocation = formatPlaceName(event.location || "");
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
@@ -220,7 +244,7 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
 
   const placeSummary = cityName
     ? `${cityName}${regionName ? ` (${regionName})` : ""}`
-    : regionName || event.location || "";
+    : regionName || formattedLocation || "";
 
   // Determine location type: prioritize city over region
   // If event has a city, it's a "town" even if it also has a region (e.g., "Tona (Osona)")
@@ -230,7 +254,7 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     ? "region"
     : "general";
   // formatCatalanA will handle "a", "al", "a la", etc.; we'll capitalize names afterwards
-  const preposition = formatCatalanA(placeSummary, locationType);
+  const preposition = formatCatalanA(placeSummary, locationType, false);
 
   // Title and article handling
   const rawTitle = (event.title || "").trim();
@@ -392,8 +416,9 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
 export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
   const items: FaqItem[] = [];
 
-  const cityName = event.city?.name || "";
-  const regionName = event.region?.name || "";
+  const cityName = formatPlaceName(event.city?.name || "");
+  const regionName = formatPlaceName(event.region?.name || "");
+  const formattedLocation = formatPlaceName(event.location || "");
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
@@ -415,8 +440,8 @@ export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
   });
 
   // Build clean location string: split location by commas, drop tokens equal to city/region, de-duplicate
-  const partsFromLocation = event.location
-    ? event.location
+  const partsFromLocation = formattedLocation
+    ? formattedLocation
         .split(",")
         .map((p) => p.trim())
         .filter((p) => p.length > 0)
@@ -446,7 +471,7 @@ export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
     // Capitalize first word of each place (city / region) for the FAQ too
     const places = finalWhereParts.map((p) => {
       const trimmed = p.trim();
-      return capitalizeFirstLetter(trimmed);
+      return formatPlaceName(trimmed);
     });
     items.push({ q: "On se celebra?", a: places.join(", ") });
   }

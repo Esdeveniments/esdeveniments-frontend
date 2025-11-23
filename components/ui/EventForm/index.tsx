@@ -9,6 +9,7 @@ import {
   ImageUpload,
   MultiSelect,
 } from "@components/ui/common/form";
+import { SelectSkeleton } from "@components/ui/common/skeletons";
 import type { EventFormProps } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
@@ -93,34 +94,35 @@ export const EventForm: React.FC<EventFormProps> = ({
         progress={progress}
       />
 
-      <Select
-        id="region"
-        title="Comarca *"
-        options={regionOptions}
-        value={isOption(form.region) ? form.region : null}
-        onChange={handleRegionChange}
-        isClearable
-        placeholder={
-          isLoadingRegionsWithCities
-            ? "Carregant comarques..."
-            : "Selecciona una comarca"
-        }
-      />
+      {isLoadingRegionsWithCities ? (
+        <>
+          <SelectSkeleton label="Comarca *" />
+          <SelectSkeleton label="Població *" />
+        </>
+      ) : (
+        <>
+          <Select
+            id="region"
+            title="Comarca *"
+            options={regionOptions}
+            value={isOption(form.region) ? form.region : null}
+            onChange={handleRegionChange}
+            isClearable
+            placeholder="Selecciona una comarca"
+          />
 
-      <Select
-        id="town"
-        title="Població *"
-        options={cityOptions}
-        value={isOption(form.town) ? form.town : null}
-        onChange={handleTownChange}
-        isDisabled={!form.region || isLoadingRegionsWithCities}
-        isClearable
-        placeholder={
-          isLoadingRegionsWithCities
-            ? "Carregant pobles..."
-            : "Selecciona un poble"
-        }
-      />
+          <Select
+            id="town"
+            title="Població *"
+            options={cityOptions}
+            value={isOption(form.town) ? form.town : null}
+            onChange={handleTownChange}
+            isDisabled={!form.region}
+            isClearable
+            placeholder="Selecciona un poble"
+          />
+        </>
+      )}
 
       <Input
         id="location"

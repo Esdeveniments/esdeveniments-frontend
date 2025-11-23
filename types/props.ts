@@ -32,6 +32,12 @@ export interface SelectComponentProps {
   isValidNewOption?: boolean;
   isClearable?: boolean;
   placeholder?: string;
+  testId?: string;
+}
+
+export interface SelectSkeletonProps {
+  label?: string;
+  className?: string;
 }
 
 export interface MultiSelectProps {
@@ -73,6 +79,7 @@ export interface ModalProps {
   children: ReactNode;
   actionButton?: ReactNode;
   onActionButtonClick?: () => void;
+  testId?: string;
 }
 
 export interface TextAreaProps {
@@ -172,6 +179,7 @@ export interface RangeInputProps {
   onMouseUp?: () => void;
   onTouchStart?: () => void;
   onTouchEnd?: () => void;
+  testId?: string;
 }
 
 export interface NoEventsFoundProps {

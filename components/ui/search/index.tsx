@@ -102,7 +102,7 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className={`w-full flex justify-center border rounded-input pl-input-x mt-element-gap transition-interactive ${
+      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${
         isSearchActive ? "border-primary border-2" : "border-border"
       }`}
       data-testid="search-bar"

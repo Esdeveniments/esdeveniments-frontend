@@ -17,6 +17,7 @@ export default function Modal({
   children,
   actionButton,
   onActionButtonClick,
+  testId,
 }: ModalProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -27,6 +28,7 @@ export default function Modal({
       onClose={() => setOpen(false)}
       className="fixed inset-0 z-modal overflow-y-auto"
       initialFocus={cancelButtonRef}
+      data-testid={testId}
     >
       <div
         className="w-full bg-border opacity-60 fixed inset-0 z-0"
@@ -80,6 +82,7 @@ export default function Modal({
                           }
                           setOpen(false);
                         }}
+                        data-testid={testId ? `${testId}-action-button` : undefined}
                         className="flex justify-center items-center gap-2 text-foreground-strong bg-background rounded-xl py-2 px-3 ease-in-out duration-300 border border-foreground-strong font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-background hover:text-background"
                       >
                         {actionButton}

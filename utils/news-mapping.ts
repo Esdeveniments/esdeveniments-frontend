@@ -1,11 +1,14 @@
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { EventSummaryResponseDTO } from "types/api/event";
+import { formatPlaceName } from "./string-helpers";
 
 // Minimal, explicit mapper to reuse existing Event card/list components
 export function mapNewsSummaryToEventSummary(
   news: NewsSummaryResponseDTO,
   place: string
 ): EventSummaryResponseDTO {
+  const locationLabel = formatPlaceName(place.replace(/-/g, " "));
+
   return {
     id: news.id,
     hash: news.id,
@@ -19,7 +22,7 @@ export function mapNewsSummaryToEventSummary(
     startTime: null,
     endDate: news.endDate,
     endTime: null,
-    location: place,
+    location: locationLabel,
     visits: news.visits || 0,
     origin: "MANUAL",
     city: {

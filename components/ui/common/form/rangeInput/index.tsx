@@ -14,10 +14,12 @@ const RangeInput: FC<RangeInputProps> = ({
   onMouseUp,
   onTouchStart,
   onTouchEnd,
+  testId,
 }) => {
   return (
     <div 
       id={id} 
+      data-testid={testId}
       className="stack w-full"
       onMouseDownCapture={onMouseDown}
       onMouseUpCapture={onMouseUp}

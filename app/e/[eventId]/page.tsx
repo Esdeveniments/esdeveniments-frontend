@@ -31,6 +31,7 @@ import {
   buildEventIntroText,
   buildFaqItems,
   buildFaqJsonLd,
+  formatPlaceName,
 } from "@utils/helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
@@ -89,8 +90,10 @@ export default async function EventPage({
 
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
-  const cityName = event.city?.name || "";
-  const regionName = event.region?.name || "";
+  const rawCityName = event.city?.name || "";
+  const rawRegionName = event.region?.name || "";
+  const cityName = formatPlaceName(rawCityName);
+  const regionName = formatPlaceName(rawRegionName);
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
@@ -128,7 +131,7 @@ export default async function EventPage({
 
   // Prepare place data for LatestNewsSection (streamed separately)
   const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
-  const placeLabel = event.city?.name || event.region?.name || "Catalunya";
+  const placeLabel = cityName || regionName || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref =
     placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`;

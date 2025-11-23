@@ -24,6 +24,7 @@ import {
 import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
+import { SelectSkeleton } from "@components/ui/common/skeletons";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
@@ -31,7 +32,7 @@ const Modal = dynamic(() => import("@components/ui/common/modal"), {
 });
 
 const Select = dynamic(() => import("@components/ui/common/form/select"), {
-  loading: () => <></>,
+  loading: () => <SelectSkeleton />,
   ssr: false,
 });
 
@@ -43,13 +44,20 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
-  const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
-    useGetRegionsWithCities();
+  const {
+    regionsWithCities,
+    isLoading: isLoadingRegionsWithCities,
+    isError: isErrorRegionsWithCities,
+  } = useGetRegionsWithCities();
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
     return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
+
+  const isLoadingRegions = isLoadingRegionsWithCities
+    ? true
+    : !regionsWithCities && !isErrorRegionsWithCities;
 
   const defaults = useMemo(() => {
     const place =
@@ -120,6 +128,65 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     setLocalPlace(option?.value || "");
   }, []);
 
+  const triggerGeolocation = useCallback(() => {
+    if (localUserLocation || userLocationLoading) {
+      return;
+    }
+
+    setUserLocationLoading(true);
+    setUserLocationError("");
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position: GeolocationPosition) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+
+          setLocalUserLocation(location);
+          setUserLocationLoading(false);
+        },
+        (error: GeolocationError) => {
+          setUserLocationLoading(false);
+
+          switch (error.code) {
+            case 1: // PERMISSION_DENIED
+              setUserLocationError(
+                "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció."
+              );
+              break;
+            case 2: // POSITION_UNAVAILABLE
+              setUserLocationError(
+                "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància."
+              );
+              break;
+            case 3: // TIMEOUT
+              setUserLocationError(
+                "Temps d'espera esgotat. Prova de nou o selecciona una població."
+              );
+              break;
+            default:
+              setUserLocationError(
+                "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+              );
+          }
+        },
+        {
+          enableHighAccuracy: false, // Don't require GPS, allow network location
+          timeout: 10000, // 10 second timeout
+          maximumAge: 300000, // Accept cached location up to 5 minutes old
+        }
+      );
+    } else {
+      console.log("Geolocation is not supported by this browser.");
+      setUserLocationError(
+        "La geolocalització no està disponible en aquest navegador."
+      );
+      setUserLocationLoading(false);
+    }
+  }, [localUserLocation, userLocationLoading]);
+
   const handleUserLocation = useCallback(
     (value: string) => {
       // Always update the visual value immediately
@@ -131,64 +198,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       }
 
       // Not dragging, proceed with geolocation if needed
-      if (localUserLocation || userLocationLoading) {
-        return;
-      }
-
-      setUserLocationLoading(true);
-      setUserLocationError("");
-
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position: GeolocationPosition) => {
-            const location = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            };
-
-            setLocalUserLocation(location);
-            setUserLocationLoading(false);
-          },
-          (error: GeolocationError) => {
-            setUserLocationLoading(false);
-
-            switch (error.code) {
-              case 1: // PERMISSION_DENIED
-                setUserLocationError(
-                  "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció."
-                );
-                break;
-              case 2: // POSITION_UNAVAILABLE
-                setUserLocationError(
-                  "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància."
-                );
-                break;
-              case 3: // TIMEOUT
-                setUserLocationError(
-                  "Temps d'espera esgotat. Prova de nou o selecciona una població."
-                );
-                break;
-              default:
-                setUserLocationError(
-                  "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
-                );
-            }
-          },
-          {
-            enableHighAccuracy: false, // Don't require GPS, allow network location
-            timeout: 10000, // 10 second timeout
-            maximumAge: 300000, // Accept cached location up to 5 minutes old
-          }
-        );
-      } else {
-        console.log("Geolocation is not supported by this browser.");
-        setUserLocationError(
-          "La geolocalització no està disponible en aquest navegador."
-        );
-        setUserLocationLoading(false);
-      }
+      triggerGeolocation();
     },
-    [localUserLocation, userLocationLoading, isDragging]
+    [isDragging, triggerGeolocation]
   );
 
   const handleDistanceChange = useCallback(
@@ -204,11 +216,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const handleDragEnd = useCallback(() => {
     setIsDragging(false);
-    // Trigger geolocation if needed
+    // Trigger geolocation directly (bypassing state check since we just set isDragging to false)
     if (!localUserLocation && !userLocationLoading && localDistance) {
-      handleUserLocation(localDistance);
+      triggerGeolocation();
     }
-  }, [localUserLocation, userLocationLoading, localDistance, handleUserLocation]);
+  }, [localUserLocation, userLocationLoading, localDistance, triggerGeolocation]);
 
   const applyFilters = () => {
     const hasDistance = localDistance && localDistance !== "";
@@ -287,6 +299,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         title="Filtres"
         actionButton="Aplicar filtres"
         onActionButtonClick={applyFilters}
+        testId="filters-modal"
       >
         <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
           <div className="w-full flex flex-col justify-start items-start gap-4">
@@ -294,20 +307,21 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               Poblacions
             </p>
             <div className="w-full flex flex-col px-0">
-              <Select
-                id="options"
-                title=""
-                options={regionsAndCitiesArray}
-                value={selectedOption}
-                onChange={handlePlaceChange}
-                isClearable
-                placeholder={
-                  isLoadingRegionsWithCities
-                    ? "Carregant poblacions..."
-                    : "Selecciona població"
-                }
-                isDisabled={isLoadingRegionsWithCities || disablePlace}
-              />
+              {isLoadingRegions ? (
+                <SelectSkeleton />
+              ) : (
+                <Select
+                  id="options"
+                  title=""
+                  options={regionsAndCitiesArray}
+                  value={selectedOption}
+                  onChange={handlePlaceChange}
+                  isClearable
+                  placeholder="Selecciona població"
+                  isDisabled={disablePlace}
+                  testId="place-select"
+                />
+              )}
             </div>
           </div>
           <fieldset className="w-full flex flex-col justify-start items-start gap-4">
@@ -388,6 +402,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   setIsDragging(true);
                 }}
                 onTouchEnd={handleDragEnd}
+                testId="distance-range"
               />
             </div>
           </fieldset>

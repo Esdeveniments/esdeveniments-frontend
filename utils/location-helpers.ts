@@ -5,6 +5,7 @@ import {
   sanitize,
   sanitizeLegacyApostrophe,
   formatCatalanDe,
+  formatPlaceName,
 } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
 import type { BuildDisplayLocationOptions } from "types/location";
@@ -23,9 +24,12 @@ export const buildDisplayLocation = ({
   regionName,
   hidePlaceSegments,
 }: BuildDisplayLocationOptions): string => {
+  const formattedCityName = cityName ? formatPlaceName(cityName) : "";
+  const formattedRegionName = regionName ? formatPlaceName(regionName) : "";
+
   const baseSegments = location
     .split(",")
-    .map((segment) => segment.trim())
+    .map((segment) => formatPlaceName(segment.trim()))
     .filter(Boolean);
 
   const uniqueSegments = baseSegments.reduce<string[]>((acc, segment) => {
@@ -37,27 +41,29 @@ export const buildDisplayLocation = ({
   }, []);
 
   if (
-    cityName &&
-    !uniqueSegments.some((segment) => normalize(segment) === normalize(cityName))
+    formattedCityName &&
+    !uniqueSegments.some(
+      (segment) => normalize(segment) === normalize(formattedCityName)
+    )
   ) {
-    uniqueSegments.push(cityName);
+    uniqueSegments.push(formattedCityName);
   }
 
   if (
-    regionName &&
+    formattedRegionName &&
     !uniqueSegments.some(
-      (segment) => normalize(segment) === normalize(regionName)
+      (segment) => normalize(segment) === normalize(formattedRegionName)
     )
   ) {
-    uniqueSegments.push(regionName);
+    uniqueSegments.push(formattedRegionName);
   }
 
   const displaySegments = hidePlaceSegments
     ? uniqueSegments.filter((segment) => {
         const normalized = normalize(segment);
         return (
-          normalized !== normalize(cityName || "") &&
-          normalized !== normalize(regionName || "")
+          normalized !== normalize(formattedCityName || "") &&
+          normalized !== normalize(formattedRegionName || "")
         );
       })
     : uniqueSegments;
@@ -81,6 +87,7 @@ export const getPlaceTypeAndLabel = async (
   try {
     const placeInfo = await fetchPlaceBySlug(place);
     if (placeInfo) {
+      const formattedLabel = formatPlaceName(placeInfo.name);
       const type =
         placeInfo.type === "CITY"
           ? "town"
@@ -89,7 +96,7 @@ export const getPlaceTypeAndLabel = async (
           : placeInfo.type === "PROVINCE"
           ? "region"
           : "town";
-      return { type, label: placeInfo.name };
+      return { type, label: formattedLabel };
     }
   } catch (error) {
     console.error("Error fetching place by slug:", error);
@@ -103,20 +110,20 @@ export const getPlaceTypeAndLabel = async (
         sanitize(r.name) === place || sanitizeLegacyApostrophe(r.name) === place
     );
     if (region) {
-      return { type: "region", label: region.name };
+      return { type: "region", label: formatPlaceName(region.name) };
     }
 
     for (const region of regionsWithCities) {
       const city = region.cities.find((c) => c.value === place);
       if (city) {
-        return { type: "town", label: city.label };
+        return { type: "town", label: formatPlaceName(city.label) };
       }
     }
   } catch (error) {
     console.error("Error fetching regions for place lookup:", error);
   }
 
-  return { type: "town", label: place };
+  return { type: "town", label: formatPlaceName(place.replace(/-/g, " ")) };
 };
 
 // Per-request memoized wrapper for server routes

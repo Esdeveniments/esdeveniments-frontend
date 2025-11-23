@@ -155,7 +155,7 @@ describe("buildEventIntroText", () => {
       const result = buildEventIntroText(event);
 
       // Masculine region should use "al"
-      expect(result).toContain("al Vallès oriental");
+      expect(result).toContain("al Vallès Oriental");
     });
 
     it("should use 'a la' for feminine regions", () => {
@@ -168,7 +168,7 @@ describe("buildEventIntroText", () => {
       const result = buildEventIntroText(event);
 
       // Feminine region should use "a la"
-      expect(result).toContain("a La selva");
+      expect(result).toContain("a la Selva");
     });
 
     it("should use 'a' for towns even when region is also present", () => {
@@ -385,11 +385,11 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("L'ii");
       expect(result).not.toContain("L'II");
       expect(result).toContain("se celebra");
-    });
+  });
 
-    it("should handle lowercase Roman numeral and capitalize it", () => {
-      const event = createTestEvent({
-        title: "iii edició del festival",
+  it("should handle lowercase Roman numeral and capitalize it", () => {
+    const event = createTestEvent({
+      title: "iii edició del festival",
         startDate: "2025-08-15",
         endDate: undefined,
         city: MOCK_CITIES.barcelona,
@@ -621,9 +621,21 @@ describe("buildEventIntroText", () => {
       // Should convert "L'XIX" to "La XIX" (edició is feminine)
       expect(result).toContain("La XIX edició");
       expect(result).not.toContain("L' XIX");
-      expect(result).toContain("se celebra");
-    });
+    expect(result).toContain("se celebra");
   });
+
+  it("should use feminine article for feminine ordinal numbers", () => {
+    const event = createTestEvent({
+      title: "10ª fira de la Col",
+      city: MOCK_CITIES.barcelona,
+    });
+
+    const result = buildEventIntroText(event);
+
+    expect(result).toContain("La 10ª fira");
+    expect(result).toContain("se celebra");
+  });
+});
 
   describe("plural detection logic (conservative stem checking)", () => {
     it("should check stem first before adding 'a' for words ending in 'es'", () => {
