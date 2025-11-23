@@ -159,6 +159,20 @@ describe("computeTemporalStatus", () => {
     expect(status.label).toBe("En curs");
   });
 
+  it("treats identical start and end times as a single start time", () => {
+    const eventDate = "2025-11-08";
+    const time = "10:00";
+    const currentTime = new Date("2025-11-08T12:00");
+    const status = computeTemporalStatus(
+      eventDate,
+      eventDate,
+      currentTime,
+      time,
+      time
+    );
+    expect(status.state).toBe("live");
+  });
+
   it("timed event on same day with current time before startTime is upcoming", () => {
     // Event: Nov 8, 2025, 10:00 - 14:00
     // Current time: Nov 8, 2025, 08:00 (before start, using local time to avoid timezone issues)

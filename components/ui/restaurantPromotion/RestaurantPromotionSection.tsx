@@ -72,13 +72,6 @@ export default function RestaurantPromotionSection({
     const now = new Date();
     const daysAhead = differenceInCalendarDays(startDateTime, now);
 
-    // Event should show if it hasn't finished yet
-    // This includes:
-    // - Events in the future (daysAhead > 0)
-    // - Events happening today that haven't finished (daysAhead === 0 && !eventHasFinished)
-    // - Events that started earlier but are still ongoing (daysAhead < 0 && !eventHasFinished)
-    const eventIsInFuture = !eventHasFinished;
-
     // For fetch window, only fetch for events that start today or in the future (within 15 days)
     // This prevents fetching for events that started in the past, even if still ongoing
     // (we still show them if they haven't finished, but won't fetch restaurant data)

@@ -1,5 +1,5 @@
 import type { EventDetailResponseDTO } from "types/api/event";
-import { getFormattedDate } from "@utils/date-helpers";
+import { getFormattedDate, normalizeEndTime } from "@utils/date-helpers";
 import type { FaqItem } from "types/faq";
 import {
   formatCatalanA,
@@ -197,7 +197,7 @@ function extractLeadingArticle(title: string): {
 function capitalizePlaces(text: string): string {
   // 1) capitalize first word after common prepositions
   text = text.replace(
-    /\b(al|a|del|dels|de la|de les|de l’|de l'|pel|pels)\s+([a-zà-ÿ][\w'’\-]*(?:\s+[a-zà-ÿ][\w'’\-]*)*)(?=[,.;)]|$)/gi,
+    /\b(al|a|del|dels|de la|de les|de l’|de l'|pel|pels)\s+([a-zà-ÿ][\w'’-]*(?:\s+[a-zà-ÿ][\w'’-]*)*)(?=[,.;)]|$)/gi,
     (_match, prep, place) => {
       const trimmedPlace = place.trim();
       const seIndex = trimmedPlace.toLowerCase().indexOf(" se ");
@@ -388,8 +388,12 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     }
   }
 
+  const sameTime =
+    Boolean(startTimeLabel) &&
+    Boolean(endTimeLabel) &&
+    endTimeLabel === startTimeLabel;
   const timePart = startTimeLabel
-    ? `${startTimeLabel}${endTimeLabel ? `–${endTimeLabel}` : ""}`
+    ? `${startTimeLabel}${endTimeLabel && !sameTime ? `–${endTimeLabel}` : ""}`
     : "";
 
   // Verb agreement: plural/singular
@@ -428,10 +432,13 @@ export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
     ? `del ${formattedStart} al ${formattedEnd}`
     : `${nameDay}, ${formattedStart}`;
 
+  const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
   const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
-  const endTimeLabel = isValidTime(event.endTime) ? event.endTime : "";
+  const endTimeLabel = isValidTime(normalizedEndTime) ? normalizedEndTime : "";
+  const hasDistinctEndTime =
+    Boolean(startTimeLabel) && Boolean(endTimeLabel) && startTimeLabel !== endTimeLabel;
   const timeLabel = startTimeLabel
-    ? `${startTimeLabel}${endTimeLabel ? ` - ${endTimeLabel}` : ""}`
+    ? `${startTimeLabel}${hasDistinctEndTime ? ` - ${endTimeLabel}` : ""}`
     : "";
 
   items.push({

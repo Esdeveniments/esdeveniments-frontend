@@ -47,6 +47,10 @@ describe("formatEventTimeDisplay", () => {
   });
 
   describe("when both start and end times exist", () => {
+    it("returns just the start time when both times are identical", () => {
+      expect(formatEventTimeDisplay("10:00", "10:00")).toBe("10:00");
+    });
+
     it("returns time range in format 'HH:mm - HH:mm'", () => {
       expect(formatEventTimeDisplay("19:00", "21:00")).toBe("19:00 - 21:00");
     });
@@ -86,5 +90,4 @@ describe("formatEventTimeDisplay", () => {
     });
   });
 });
-
 
