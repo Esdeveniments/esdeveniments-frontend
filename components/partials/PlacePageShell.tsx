@@ -31,27 +31,25 @@ export default function PlacePageShell({
 }: PlacePageShellProps) {
   return (
     <FilterLoadingProvider>
-      <FilterLoadingGate>
-        <Suspense fallback={<EventsListSkeleton />}>
-          <PlacePageContent
-            shellDataPromise={shellDataPromise}
-            eventsPromise={eventsPromise}
-            place={place}
-            category={category}
-            date={date}
-            hasNewsPromise={hasNewsPromise}
-            categories={categories}
-            webPageSchemaFactory={webPageSchemaFactory}
-          />
-        </Suspense>
+      <Suspense fallback={<EventsListSkeleton />}>
+        <PlacePageContent
+          shellDataPromise={shellDataPromise}
+          eventsPromise={eventsPromise}
+          place={place}
+          category={category}
+          date={date}
+          hasNewsPromise={hasNewsPromise}
+          categories={categories}
+          webPageSchemaFactory={webPageSchemaFactory}
+        />
+      </Suspense>
 
-        <Suspense fallback={null}>
-          <ClientLayerWithPlaceLabel
-            shellDataPromise={shellDataPromise}
-            categories={categories}
-          />
-        </Suspense>
-      </FilterLoadingGate>
+      <Suspense fallback={null}>
+        <ClientLayerWithPlaceLabel
+          shellDataPromise={shellDataPromise}
+          categories={categories}
+        />
+      </Suspense>
     </FilterLoadingProvider>
   );
 }
@@ -96,21 +94,23 @@ async function PlacePageContent({
       )}
 
       {structuredScripts?.map((script) => (
-      <JsonLdServer key={script.id} id={script.id} data={script.data} />
-    ))}
+        <JsonLdServer key={script.id} id={script.id} data={script.data} />
+      ))}
 
-    <HybridEventsList
-      initialEvents={events}
-      placeTypeLabel={placeTypeLabel}
-      pageData={pageData}
-      noEventsFound={noEventsFound}
-      place={place}
-      category={category}
-      date={date}
-      serverHasMore={serverHasMore}
-      hasNews={hasNews}
-      categories={categories}
-    />
-  </>
-);
+      <FilterLoadingGate>
+        <HybridEventsList
+          initialEvents={events}
+          placeTypeLabel={placeTypeLabel}
+          pageData={pageData}
+          noEventsFound={noEventsFound}
+          place={place}
+          category={category}
+          date={date}
+          serverHasMore={serverHasMore}
+          hasNews={hasNews}
+          categories={categories}
+        />
+      </FilterLoadingGate>
+    </>
+  );
 }

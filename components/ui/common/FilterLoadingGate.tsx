@@ -1,7 +1,7 @@
 "use client";
 
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
-import { PlacePageSkeleton } from "@components/ui/common/skeletons";
+import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import type { FilterLoadingGateProps } from "types/props";
 
 export default function FilterLoadingGate({
@@ -10,7 +10,7 @@ export default function FilterLoadingGate({
   const { isLoading } = useFilterLoading();
 
   if (isLoading) {
-    return <PlacePageSkeleton />;
+    return <EventsListSkeleton />;
   }
 
   return <>{children}</>;

@@ -58,7 +58,7 @@ export default function Footer(): JSX.Element {
             {topAgendaLinks.map((item) => (
               <PressableAnchor
                 key={item.href}
-                href={item.href}
+                href={item.href!}
                 prefetch={false}
                 className="body-small text-foreground/80 hover:text-primary hover:underline transition-interactive whitespace-nowrap"
                 variant="inline"
