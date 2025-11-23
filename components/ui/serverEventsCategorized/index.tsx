@@ -14,6 +14,7 @@ import { SearchSkeleton } from "@components/ui/common/skeletons";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
+import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
 import type {
   FeaturedPlaceConfig,
   ServerEventsCategorizedContentProps,
@@ -144,7 +145,9 @@ function ServerEventsCategorized({
       <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap">
         <div className="container">
           <Suspense fallback={<SearchSkeleton />}>
-            <Search />
+            <FilterLoadingProvider>
+              <Search />
+            </FilterLoadingProvider>
           </Suspense>
         </div>
       </div>
