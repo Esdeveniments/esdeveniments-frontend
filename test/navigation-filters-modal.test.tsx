@@ -218,24 +218,24 @@ describe("NavigationFiltersModal - Geolocation Regression Tests", () => {
   describe("URL Building with Geolocation", () => {
     it("should build URL with distance and lat/lon parameters when location exists", () => {
       const localDistance = "12";
-      const localUserLocation: { latitude: number; longitude: number } | null = {
+      const location: { latitude: number; longitude: number } | undefined = {
         latitude: 41.643119809884865,
         longitude: 2.3563432607664034,
       };
 
       // Simulate applyFilters logic
       const hasDistance = Boolean(localDistance);
-      const hasUserLocation = Boolean(localUserLocation);
+      const hasUserLocation = Boolean(location);
 
       const changes = {
-        distance: hasDistance ? parseInt(localDistance) : 50,
+        distance: hasDistance && hasUserLocation ? parseInt(localDistance) : undefined,
         lat:
-          hasDistance && hasUserLocation && localUserLocation
-            ? localUserLocation.latitude
+          hasDistance && hasUserLocation && location
+            ? location.latitude
             : undefined,
         lon:
-          hasDistance && hasUserLocation && localUserLocation
-            ? localUserLocation.longitude
+          hasDistance && hasUserLocation && location
+            ? location.longitude
             : undefined,
       };
 
@@ -245,19 +245,62 @@ describe("NavigationFiltersModal - Geolocation Regression Tests", () => {
       expect(changes.lon).toBe(2.3563432607664034);
     });
 
-    it("should NOT include lat/lon in URL if no user location", () => {
+    it("should NOT include distance, lat, or lon if no user location (FIX: Logic Inconsistency Bug)", () => {
       const localDistance = "12";
-      const localUserLocation: { latitude: number; longitude: number } | null = null;
+      const location: { latitude: number; longitude: number } | undefined = undefined;
 
       const hasDistance = Boolean(localDistance);
+      const hasUserLocation = Boolean(location);
 
+      // When location is undefined, all values should be undefined
       const changes = {
-        distance: hasDistance ? parseInt(localDistance) : 50,
-        lat: (localUserLocation as  { latitude: number; longitude: number } | null)?.latitude,
-        lon: (localUserLocation as { latitude: number; longitude: number } | null)?.longitude,
+        distance: hasDistance && hasUserLocation ? parseInt(localDistance) : undefined,
+        lat: undefined,
+        lon: undefined,
       };
 
-      expect(changes.distance).toBe(12);
+      // This is the critical fix: distance should NOT be set without location
+      expect(changes.distance).toBeUndefined();
+      expect(changes.lat).toBeUndefined();
+      expect(changes.lon).toBeUndefined();
+    });
+
+    it("should NOT apply default distance of 50 when user hasn't interacted with slider", () => {
+      const localDistance = ""; // User hasn't set a distance
+      const location: { latitude: number; longitude: number } | undefined = undefined;
+
+      const hasDistance = Boolean(localDistance);
+      const hasUserLocation = Boolean(location);
+
+      // When both distance and location are not set, all values should be undefined
+      const changes = {
+        distance: hasDistance && hasUserLocation ? parseInt(localDistance) : undefined,
+        lat: undefined,
+        lon: undefined,
+      };
+
+      // No defaults should be applied
+      expect(changes.distance).toBeUndefined();
+      expect(changes.lat).toBeUndefined();
+      expect(changes.lon).toBeUndefined();
+    });
+
+    it("should NOT set distance if geolocation fails even when user sets distance", () => {
+      const localDistance = "25"; // User set a distance
+      const location: { latitude: number; longitude: number } | undefined = undefined; // But geolocation failed
+
+      const hasDistance = Boolean(localDistance);
+      const hasUserLocation = Boolean(location);
+
+      // Distance set but location undefined means all values should be undefined
+      const changes = {
+        distance: hasDistance && hasUserLocation ? parseInt(localDistance) : undefined,
+        lat: undefined,
+        lon: undefined,
+      };
+
+      // Distance should not be applied without coordinates
+      expect(changes.distance).toBeUndefined();
       expect(changes.lat).toBeUndefined();
       expect(changes.lon).toBeUndefined();
     });

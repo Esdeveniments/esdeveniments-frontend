@@ -14,6 +14,7 @@ import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { sendGoogleEvent } from "@utils/analytics";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
+import { useFilterLoading } from "@components/context/FilterLoadingContext";
 
 const sendSearchTermGA = (searchTerm: string): void => {
   if (searchTerm && searchTerm.length > 0) {
@@ -31,6 +32,7 @@ export default function Search(): JSX.Element {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const { setLoading } = useFilterLoading();
 
   // Get current search term from URL
   const urlSearchTerm = searchParams?.get("search") || "";
@@ -57,9 +59,10 @@ export default function Search(): JSX.Element {
         : pathname || "/";
 
       startNavigationFeedback();
+      setLoading(true);
       router.push(newUrl);
     },
-    [searchParams, router, pathname, isHomePage]
+    [searchParams, router, pathname, isHomePage, setLoading]
   );
 
   // Function to trigger search (called by button click or Enter key)

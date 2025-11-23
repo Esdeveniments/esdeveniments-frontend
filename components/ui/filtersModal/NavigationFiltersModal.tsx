@@ -268,7 +268,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       byDate: localByDate || "avui",
       category: localCategory || DEFAULT_FILTER_VALUE,
       searchTerm: currentQueryParams.search || "",
-      distance: hasDistance ? parseInt(localDistance) : 50,
+      distance: hasDistance && hasUserLocation ? parseInt(localDistance) : undefined,
       // Only include lat/lon if we have both distance and user location
       lat:
         hasDistance && hasUserLocation && location
@@ -285,7 +285,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendEventToGA("Place", changes.place);
     sendEventToGA("ByDate", changes.byDate);
     sendEventToGA("Category", changes.category);
-    sendEventToGA("Distance", changes.distance.toString());
+    if (changes.distance !== undefined) {
+      sendEventToGA("Distance", changes.distance.toString());
+    }
 
     startNavigationFeedback();
     setLoading(true);

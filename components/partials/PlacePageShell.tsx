@@ -3,7 +3,7 @@ import type { JSX } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
-import { PlacePageSkeleton } from "@components/ui/common/skeletons";
+import { EventsListSkeleton, PlacePageSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
 import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
 import type { PlacePageShellProps } from "types/props";
@@ -30,9 +30,9 @@ export default function PlacePageShell({
   webPageSchemaFactory,
 }: PlacePageShellProps) {
   return (
-    <FilterLoadingProvider>
-      <Suspense fallback={<PlacePageSkeleton />}>
-        <FilterLoadingGate>
+    <Suspense fallback={null}>
+      <FilterLoadingProvider>
+        <Suspense fallback={<EventsListSkeleton />}>
           <PlacePageContent
             shellDataPromise={shellDataPromise}
             eventsPromise={eventsPromise}
@@ -43,16 +43,16 @@ export default function PlacePageShell({
             categories={categories}
             webPageSchemaFactory={webPageSchemaFactory}
           />
-        </FilterLoadingGate>
-      </Suspense>
+        </Suspense>
 
-      <Suspense fallback={null}>
-        <ClientLayerWithPlaceLabel
-          shellDataPromise={shellDataPromise}
-          categories={categories}
-        />
-      </Suspense>
-    </FilterLoadingProvider>
+        <Suspense fallback={null}>
+          <ClientLayerWithPlaceLabel
+            shellDataPromise={shellDataPromise}
+            categories={categories}
+          />
+        </Suspense>
+      </FilterLoadingProvider>
+    </Suspense>
   );
 }
 
@@ -96,9 +96,10 @@ async function PlacePageContent({
       )}
 
       {structuredScripts?.map((script) => (
-        <JsonLdServer key={script.id} id={script.id} data={script.data} />
-      ))}
+      <JsonLdServer key={script.id} id={script.id} data={script.data} />
+    ))}
 
+    <FilterLoadingGate>
       <HybridEventsList
         initialEvents={events}
         placeTypeLabel={placeTypeLabel}
@@ -111,6 +112,7 @@ async function PlacePageContent({
         hasNews={hasNews}
         categories={categories}
       />
-    </>
-  );
+    </FilterLoadingGate>
+  </>
+);
 }

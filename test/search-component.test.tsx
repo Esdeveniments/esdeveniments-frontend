@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Search from "../components/ui/search";
+import { FilterLoadingProvider } from "../components/context/FilterLoadingContext";
 
 vi.mock("next/navigation", () => {
   const push = vi.fn();
@@ -17,7 +18,11 @@ vi.mock("../utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
 
 describe("Search component", () => {
   it("renders search input and accepts typing (black-box via testid)", () => {
-    render(<Search />);
+    render(
+      <FilterLoadingProvider>
+        <Search />
+      </FilterLoadingProvider>
+    );
     const input = screen.getByTestId("search-input") as HTMLInputElement;
     expect(input).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "fira" } });
