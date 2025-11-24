@@ -31,11 +31,11 @@ import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 
-// Enable streaming with Suspense; typing doesn’t yet expose the option.
-// @ts-expect-error suspense is supported at runtime for next/dynamic
-const HeroSection = dynamic(() => import("../hero/HeroSection"), {
-  suspense: true,
-});
+// Enable streaming with Suspense; cast keeps TS quiet until types expose `suspense`.
+const HeroSection = dynamic(
+  () => import("../hero/HeroSection"),
+  { suspense: true } as unknown
+);
 
 /**
  * Icon mapping for categories.
