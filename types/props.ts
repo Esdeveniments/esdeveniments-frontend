@@ -33,6 +33,7 @@ export interface SelectComponentProps {
   isClearable?: boolean;
   placeholder?: string;
   testId?: string;
+  autoFocus?: boolean;
 }
 
 export interface SelectSkeletonProps {

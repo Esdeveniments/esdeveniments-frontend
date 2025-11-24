@@ -137,20 +137,20 @@ export const EventForm: React.FC<EventFormProps> = ({
         value={
           Array.isArray(form.categories)
             ? form.categories
-                .map((cat) => {
-                  if (
-                    typeof cat === "object" &&
-                    "value" in cat &&
-                    "label" in cat
-                  ) {
-                    return cat as Option;
-                  }
-                  if (typeof cat === "object" && "id" in cat && "name" in cat) {
-                    return { value: cat.id.toString(), label: cat.name };
-                  }
-                  return null;
-                })
-                .filter((cat): cat is Option => cat !== null)
+              .map((cat) => {
+                if (
+                  typeof cat === "object" &&
+                  "value" in cat &&
+                  "label" in cat
+                ) {
+                  return cat as Option;
+                }
+                if (typeof cat === "object" && "id" in cat && "name" in cat) {
+                  return { value: cat.id.toString(), label: cat.name };
+                }
+                return null;
+              })
+              .filter((cat): cat is Option => cat !== null)
             : []
         }
         onChange={handleCategoriesChange}
@@ -189,11 +189,10 @@ export const EventForm: React.FC<EventFormProps> = ({
         <button
           type="submit"
           disabled={currentFormState.isDisabled || isLoading}
-          className={`text-foreground-strong bg-background hover:bg-primary hover:border-background hover:text-background border-foreground-strong rounded-xl py-3 px-6 ease-in-out duration-300 border focus:outline-none font-barlow italic uppercase font-semibold tracking-wide ${
-            currentFormState.isDisabled || isLoading
+          className={`text-foreground-strong bg-background hover:bg-primary hover:border-background hover:text-background border-foreground-strong rounded-xl py-3 px-6 ease-in-out duration-300 border focus:outline-none font-barlow uppercase font-semibold tracking-wide ${currentFormState.isDisabled || isLoading
               ? "opacity-50 cursor-not-allowed"
               : "opacity-100"
-          }`}
+            }`}
           data-testid="publish-button"
         >
           {isLoading ? (

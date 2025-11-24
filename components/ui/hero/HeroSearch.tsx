@@ -2,19 +2,30 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { sendGoogleEvent } from "@utils/analytics";
 import {
   SearchIcon,
-  LocationMarkerIcon,
   ChevronDownIcon,
   XIcon,
 } from "@heroicons/react/solid";
-import { normalizeForSearch } from "@utils/string-helpers";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
-import { transformRegionsToOptions } from "@components/ui/locationDiscoveryWidget/utils";
+import { generateRegionsAndTownsOptions } from "@utils/helpers";
+import { SelectSkeleton } from "@components/ui/common/skeletons";
+import { Option } from "types/common";
 import { useHero } from "./HeroContext";
 import { buildHeroUrl } from "./utils";
+
+const Modal = dynamic(() => import("@components/ui/common/modal"), {
+  loading: () => <></>,
+  ssr: false,
+});
+
+const Select = dynamic(() => import("@components/ui/common/form/select"), {
+  loading: () => <SelectSkeleton />,
+  ssr: false,
+});
 
 export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const router = useRouter();
@@ -26,29 +37,25 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const {
     regionsWithCities,
     isLoading: loadingRegions,
+    isError: regionsError,
   } = useGetRegionsWithCities();
 
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [locationSearchTerm, setLocationSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [localPlace, setLocalPlace] = useState<Option | null>(null);
 
-  const allLocations = useMemo(() => {
-    return regionsWithCities
-      ? transformRegionsToOptions(regionsWithCities)
-      : [];
+  const regionsAndCitiesArray = useMemo(() => {
+    if (!regionsWithCities) return [];
+    return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
 
-  const filteredLocations = useMemo(() => {
-    if (!locationSearchTerm) return allLocations;
-    const normalizedSearch = normalizeForSearch(locationSearchTerm);
-    return allLocations.filter((location) =>
-      normalizeForSearch(location.label).includes(normalizedSearch)
-    );
-  }, [allLocations, locationSearchTerm]);
+  const isLoadingRegions =
+    loadingRegions ||
+    (!regionsWithCities && !regionsError);
 
-  // Sync initial location from URL if not already set (or if we want to keep it in sync)
-  // But for "Draft Mode", we only want to sync ONCE on mount or path change,
-  // and then let the user modify it locally.
-  // Actually, if the user navigates back/forward, we want to update.
+  const allLocations = useMemo(() => {
+    return regionsAndCitiesArray.flatMap((group) => group.options);
+  }, [regionsAndCitiesArray]);
+
   useEffect(() => {
     const segment = pathname?.split("/")[1];
     if (segment && segment !== "catalunya") {
@@ -60,7 +67,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     }
     // If we are at root, ensure it's catalunya
     if (pathname === "/" || pathname === "/catalunya") {
-        setPlace("catalunya", "Catalunya");
+      setPlace("catalunya", "Catalunya");
     }
   }, [pathname, allLocations, setPlace]);
 
@@ -72,23 +79,27 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     }
   }, [urlSearchTerm, setSearchTerm]);
 
-  const handleLocationSelect = useCallback(
-    (locationName: string, locationValue: string) => {
-      setPlace(locationValue, locationName);
-      setIsLocationOpen(false);
-      setLocationSearchTerm("");
+  const handleApplyLocation = useCallback(() => {
+    if (localPlace) {
+      setPlace(localPlace.value, localPlace.label);
 
       sendGoogleEvent("location_selected", {
         category: "hero_search",
-        label: locationName,
-        value: locationValue,
+        label: localPlace.label,
+        value: localPlace.value,
       });
-      
-      // DO NOT Navigate immediately. 
-      // User is "constructing" the query.
-    },
-    [setPlace]
-  );
+    } else {
+      // If cleared or null, maybe default to Catalunya? 
+      // The original logic didn't seem to have a clear "clear" action other than selecting something else.
+      // But let's assume if they clear it, it goes to Catalunya.
+      setPlace("catalunya", "Catalunya");
+    }
+    setIsModalOpen(false);
+  }, [localPlace, setPlace]);
+
+  const handlePlaceChange = useCallback((option: Option | null) => {
+    setLocalPlace(option);
+  }, []);
 
   // --- Search Logic ---
 
@@ -124,74 +135,51 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           <div className="relative inline-block">
             <button
               type="button"
-              onClick={() => setIsLocationOpen(!isLocationOpen)}
+              onClick={() => {
+                const currentOption = regionsAndCitiesArray
+                  .flatMap((group) => group.options)
+                  .find((option) => option.value === place);
+                setLocalPlace(currentOption || null);
+                setIsModalOpen(true);
+              }}
               className="flex items-center gap-1 text-primary hover:underline decoration-2 underline-offset-4 transition-all"
-              aria-expanded={isLocationOpen}
+              aria-expanded={isModalOpen}
             >
               {label}
               <ChevronDownIcon
-                className={`h-8 w-8 transition-transform duration-200 ${
-                  isLocationOpen ? "rotate-180" : ""
-                }`}
+                className={`h-8 w-8 transition-transform duration-200 ${isModalOpen ? "rotate-180" : ""
+                  }`}
               />
             </button>
 
-            {/* Location Dropdown */}
-            {isLocationOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-                  onClick={() => setIsLocationOpen(false)}
-                />
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[300px] sm:w-[400px] bg-background border border-border rounded-lg shadow-xl z-50 overflow-hidden text-left">
-                  <div className="p-3 border-b border-border">
-                    <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50 w-4 h-4" />
-                      <input
-                        type="text"
-                        value={locationSearchTerm}
-                        onChange={(e) => setLocationSearchTerm(e.target.value)}
-                        placeholder="Cercar població o comarca..."
-                        className="w-full pl-9 pr-4 py-2 bg-muted/50 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto">
-                    {loadingRegions ? (
-                      <div className="p-4 text-center text-sm text-foreground/60">
-                        Carregant...
-                      </div>
-                    ) : filteredLocations.length > 0 ? (
-                      <ul className="py-1">
-                        {filteredLocations.map((loc) => (
-                          <li key={loc.value}>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleLocationSelect(loc.label, loc.value)
-                              }
-                              className={`w-full px-4 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 ${
-                                label === loc.label
-                                  ? "text-primary font-medium bg-primary/5"
-                                  : "text-foreground"
-                              }`}
-                            >
-                              <LocationMarkerIcon className="w-4 h-4 opacity-50" />
-                              {loc.label}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="p-4 text-center text-sm text-foreground/60">
-                        No s&apos;han trobat resultats
-                      </div>
-                    )}
-                  </div>
+            <Modal
+              open={isModalOpen}
+              setOpen={setIsModalOpen}
+              title="Selecciona població"
+              actionButton="Seleccionar"
+              onActionButtonClick={async () => handleApplyLocation()}
+              testId="location-modal"
+            >
+              <div className="w-full flex flex-col justify-start items-start gap-4 py-4">
+                <div className="w-full flex flex-col px-0">
+                  {isLoadingRegions ? (
+                    <SelectSkeleton />
+                  ) : (
+                    <Select
+                      id="hero-location-select"
+                      title=""
+                      options={regionsAndCitiesArray}
+                      value={localPlace}
+                      onChange={handlePlaceChange}
+                      isClearable
+                      placeholder="Cercar població o comarca..."
+                      testId="hero-location-select"
+                      autoFocus
+                    />
+                  )}
                 </div>
-              </>
-            )}
+              </div>
+            </Modal>
           </div>
         </h1>
         <p className="body-large text-foreground/70 max-w-xl mx-auto">

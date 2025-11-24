@@ -58,9 +58,9 @@ const isCategoryNamePair = (
 ): category is { id: number; name: string } =>
   Boolean(
     category &&
-      typeof category === "object" &&
-      "id" in category &&
-      "name" in category
+    typeof category === "object" &&
+    "id" in category &&
+    "name" in category
   );
 
 const isCategoryOption = (
@@ -68,9 +68,9 @@ const isCategoryOption = (
 ): category is { value: string; label: string } =>
   Boolean(
     category &&
-      typeof category === "object" &&
-      "value" in category &&
-      "label" in category
+    typeof category === "object" &&
+    "value" in category &&
+    "label" in category
   );
 
 const Publica = () => {
@@ -96,9 +96,9 @@ const Publica = () => {
     () =>
       regionsWithCities
         ? regionsWithCities.map((region) => ({
-            label: region.name,
-            value: region.id.toString(),
-          }))
+          label: region.name,
+          value: region.id.toString(),
+        }))
         : [],
     [regionsWithCities]
   );
@@ -112,10 +112,10 @@ const Publica = () => {
     const region = regionsWithCities.find((r) => r.id.toString() === regionId);
     return region
       ? region.cities.map((city) => ({
-          id: city.id,
-          label: city.label,
-          value: city.id.toString(),
-        }))
+        id: city.id,
+        label: city.label,
+        value: city.id.toString(),
+      }))
       : [];
   }, [regionsWithCities, form.region]);
 
@@ -196,44 +196,44 @@ const Publica = () => {
     const categoriesMeta =
       Array.isArray(form.categories) && form.categories.length > 0
         ? form.categories
-            .map((category, index) => {
-              if (isCategoryNamePair(category)) {
-                const slug =
-                  slugifySegment(category.name) || `categoria-${category.id}`;
-                return {
-                  id: category.id,
-                  name: category.name,
-                  slug,
-                };
-              }
-              if (isCategoryOption(category)) {
-                const numericId = Number(category.value) || index + 1;
-                const slug =
-                  slugifySegment(category.label) || `categoria-${numericId}`;
-                return {
-                  id: numericId,
-                  name: category.label,
-                  slug,
-                };
-              }
-              if (typeof category === "number") {
-                return {
-                  id: category,
-                  name: `Categoria ${category}`,
-                  slug: `categoria-${category}`,
-                };
-              }
-              return null;
-            })
-            .filter(
-              (
-                category
-              ): category is {
-                id: number;
-                name: string;
-                slug: string;
-              } => Boolean(category)
-            )
+          .map((category, index) => {
+            if (isCategoryNamePair(category)) {
+              const slug =
+                slugifySegment(category.name) || `categoria-${category.id}`;
+              return {
+                id: category.id,
+                name: category.name,
+                slug,
+              };
+            }
+            if (isCategoryOption(category)) {
+              const numericId = Number(category.value) || index + 1;
+              const slug =
+                slugifySegment(category.label) || `categoria-${numericId}`;
+              return {
+                id: numericId,
+                name: category.label,
+                slug,
+              };
+            }
+            if (typeof category === "number") {
+              return {
+                id: category,
+                name: `Categoria ${category}`,
+                slug: `categoria-${category}`,
+              };
+            }
+            return null;
+          })
+          .filter(
+            (
+              category
+            ): category is {
+              id: number;
+              name: string;
+              slug: string;
+            } => Boolean(category)
+          )
         : undefined;
 
     if (!regionMeta && !cityMeta && !categoriesMeta) {
@@ -245,10 +245,10 @@ const Publica = () => {
       city: cityMeta,
       province: regionMeta
         ? {
-            id: regionMeta.id,
-            name: regionMeta.name,
-            slug: regionMeta.slug,
-          }
+          id: regionMeta.id,
+          name: regionMeta.name,
+          slug: regionMeta.slug,
+        }
         : undefined,
       categories: categoriesMeta as CategorySummaryResponseDTO[] | undefined,
     };
@@ -300,7 +300,7 @@ const Publica = () => {
     <div className="container flex flex-col justify-center pt-2 pb-14">
       <div className="flex flex-col gap-4 px-2 lg:px-0">
         <div className="flex flex-col gap-2">
-          <h1 className="italic uppercase font-semibold">
+          <h1 className="uppercase font-semibold">
             Publica un esdeveniment
           </h1>
           <p className="text-sm text-center">* camps obligatoris</p>

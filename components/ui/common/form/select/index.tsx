@@ -65,6 +65,7 @@ export default function SelectComponent({
   isClearable = false,
   placeholder = "una opció",
   testId,
+  autoFocus = false,
 }: SelectComponentProps) {
   const inputId = `${id}-input`;
 
@@ -119,6 +120,7 @@ export default function SelectComponent({
             isDisabled={isDisabled}
             isValidNewOption={() => isValidNewOption}
             noOptionsMessage={() => "No s'ha trobat cap opció"}
+            autoFocus={autoFocus}
             components={{
               Input,
             }}

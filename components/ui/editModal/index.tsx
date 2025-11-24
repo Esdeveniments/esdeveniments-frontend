@@ -164,7 +164,7 @@ const EditModal: FC<EditModalProps> = ({
                   onSendDeleteReason();
                 }
               }}
-              className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-background bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-background focus:outline-none font-barlow italic uppercase font-semibold tracking-wide"
+              className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-background bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-background focus:outline-none font-barlow uppercase font-semibold tracking-wide"
             >
               Enviar
             </button>

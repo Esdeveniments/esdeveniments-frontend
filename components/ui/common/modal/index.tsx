@@ -61,7 +61,7 @@ export default function Modal({
                       </button>
                       <DialogTitle
                         as="h3"
-                        className="flex-1 text-center font-barlow uppercase italic font-semibold px-10 break-words"
+                        className="flex-1 text-center font-barlow uppercase font-semibold px-10 break-words"
                       >
                         {title}
                       </DialogTitle>
