@@ -31,10 +31,10 @@ import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 
-// Enable streaming with Suspense; cast keeps TS quiet until types expose `suspense`.
-const HeroSection = dynamic(
+// Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
+const HeroSection = (dynamic as any)(
   () => import("../hero/HeroSection"),
-  { suspense: true } as unknown
+  { suspense: true }
 );
 
 /**
