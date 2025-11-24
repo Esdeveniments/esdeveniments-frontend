@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { captureException } from "@sentry/nextjs";
 import {
   SparklesIcon,
@@ -28,7 +29,11 @@ import {
 import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
-import HeroSection from "../hero/HeroSection";
+import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
+
+const HeroSection = dynamic(() => import("../hero/HeroSection"), {
+  suspense: true,
+});
 
 /**
  * Icon mapping for categories.
@@ -143,7 +148,7 @@ function ServerEventsCategorized({
       {/* 1. HERO SECTION: Search + Location + Dates */}
       <div className="bg-background border-b border-border/40 pb-8 pt-4">
         <div className="container">
-          <Suspense fallback={<div className="h-[200px] animate-pulse bg-muted/20 rounded-lg" />}>
+          <Suspense fallback={<HeroSectionSkeleton />}>
             <HeroSection subTitle={pageData?.subTitle} />
           </Suspense>
         </div>

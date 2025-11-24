@@ -10,6 +10,7 @@ import {
   MultiSelect,
 } from "@components/ui/common/form";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
+import Button from "@components/ui/common/button";
 import type { EventFormProps } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
@@ -186,10 +187,11 @@ export const EventForm: React.FC<EventFormProps> = ({
       )}
 
       <div className="flex justify-center pt-10">
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={currentFormState.isDisabled || isLoading}
-          className={`text-foreground-strong bg-background hover:bg-primary hover:border-background hover:text-background border-foreground-strong rounded-xl py-3 px-6 ease-in-out duration-300 border focus:outline-none font-barlow uppercase font-semibold tracking-wide ${currentFormState.isDisabled || isLoading
+          className={`${currentFormState.isDisabled || isLoading
               ? "opacity-50 cursor-not-allowed"
               : "opacity-100"
             }`}
@@ -218,7 +220,7 @@ export const EventForm: React.FC<EventFormProps> = ({
           ) : (
             submitLabel
           )}
-        </button>
+        </Button>
       </div>
     </form>
   );
