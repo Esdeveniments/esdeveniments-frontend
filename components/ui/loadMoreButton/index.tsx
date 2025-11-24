@@ -1,5 +1,6 @@
 import { useTransition } from "react";
 import { LoadMoreButtonProps } from "types/props";
+import Button from "@components/ui/common/button";
 
 export default function LoadMoreButton({
   onLoadMore,
@@ -20,12 +21,12 @@ export default function LoadMoreButton({
 
   return (
     <div className="flex-center w-full py-section-y">
-      <button
-        type="button"
+      <Button
+        variant="neutral"
         onClick={handleLoadMore}
         disabled={isLoading || isPending}
         data-testid="load-more-button"
-        className="btn-neutral transition-interactive cursor-pointer disabled:cursor-not-allowed"
+        className="cursor-pointer disabled:cursor-not-allowed"
         aria-label={
           isLoading || isPending
             ? "Carregant esdeveniments"
@@ -48,7 +49,7 @@ export default function LoadMoreButton({
         ) : (
           "Carregar més"
         )}
-      </button>
+      </Button>
     </div>
   );
 }

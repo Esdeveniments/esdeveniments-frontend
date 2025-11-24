@@ -16,6 +16,7 @@ import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
 import { useHero } from "./HeroContext";
 import { buildHeroUrl } from "./utils";
+import Button from "@components/ui/common/button";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
@@ -152,14 +153,14 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         <h1 className="heading-1 flex flex-wrap items-center justify-center gap-2">
           <span>Què fer a</span>
           <div className="relative inline-block">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               onClick={() => {
                 setLocalPlaceValue(place === "catalunya" ? "" : place);
                 setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
-              className="flex items-center gap-1 text-primary hover:underline decoration-2 underline-offset-4 transition-all"
+              className="flex items-center gap-1 text-primary hover:underline decoration-2 underline-offset-4 transition-all hover:bg-transparent px-0 py-0"
               aria-expanded={isModalOpen}
             >
               {label}
@@ -167,7 +168,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                 className={`h-8 w-8 transition-transform duration-200 ${isModalOpen ? "rotate-180" : ""
                   }`}
               />
-            </button>
+            </Button>
 
             <Modal
               open={isModalOpen}
@@ -221,25 +222,25 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             data-testid="search-input"
           />
           {searchTerm && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               onClick={() => {
                 setSearchTerm("");
               }}
-              className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors"
+              className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
               aria-label="Clear search"
             >
               <XIcon className="h-4 w-4" />
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="primary"
             onClick={handleSearchSubmit}
-            className="absolute inset-y-1 right-1 px-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors flex items-center justify-center"
+            className="absolute inset-y-1 right-1 px-4 flex items-center justify-center rounded-full"
             data-testid="search-button"
           >
             <SearchIcon className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>

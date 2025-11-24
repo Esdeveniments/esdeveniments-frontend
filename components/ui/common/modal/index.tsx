@@ -52,14 +52,15 @@ export default function Modal({
                 <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-lg shadow-xl relative">
                   <div className="sticky top-0 bg-background px-4 z-10 flex-shrink-0">
                     <div className="relative min-h-12 flex items-center py-2">
-                      <button
+                      <Button
                         ref={cancelButtonRef}
+                        variant="ghost"
                         onClick={() => setOpen(false)}
-                        className="absolute left-2 p-3 focus:outline-none z-20"
+                        className="absolute left-2 p-3 z-20 hover:bg-transparent"
                         aria-label="Tanca"
                       >
                         <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
-                      </button>
+                      </Button>
                       <DialogTitle
                         as="h3"
                         className="flex-1 text-center font-barlow uppercase font-semibold px-10 break-words"
@@ -77,7 +78,7 @@ export default function Modal({
                   {actionButton && (
                     <div className="flex-shrink-0 w-full flex justify-center items-end pt-4 px-4 border-t border-border bg-background pb-[calc(env(safe-area-inset-bottom)+1rem)]">
                       <Button
-                        variant="outline"
+                        variant="primary"
                         onClick={async () => {
                           if (onActionButtonClick) {
                             const result = await onActionButtonClick();

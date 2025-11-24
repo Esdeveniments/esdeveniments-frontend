@@ -121,7 +121,7 @@ module.exports = {
 
       // === BORDER RADIUS === //
       borderRadius: {
-        button: "0.5rem", // 8px - Buttons, small elements
+        button: "9999px", // Full - Buttons, small elements
         card: "0.75rem", // 12px - Cards, containers
         input: "0.5rem", // 8px - Form inputs
         badge: "9999px", // Full - Pills, badges
