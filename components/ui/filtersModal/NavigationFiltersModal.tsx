@@ -252,7 +252,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     triggerGeolocation,
   ]);
 
-  const applyFilters = async () => {
+  const applyFilters = async (): Promise<boolean> => {
     const hasDistance = localDistance && localDistance !== "";
     let location = localUserLocation;
 
@@ -261,7 +261,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       location = await triggerGeolocation();
       // If geolocation failed, location will be undefined. Stop here to let user see the error.
       if (!location) {
-        return;
+        return false;
       }
     }
 
@@ -293,9 +293,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     try {
       router.push(newUrl);
       onClose();
+      return true;
     } catch (error) {
       console.error("Navigation failed:", error);
       setLoading(false);
+      return false;
     }
   };
 
@@ -422,7 +424,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               </div>
             )}
             <div
-              className={`w-full flex flex-col justify-start items-start gap-3px-0 ${disableDistance ? "opacity-30" : ""
+              className={`w-full flex flex-col justify-start items-start gap-3 px-0 ${disableDistance ? "opacity-30" : ""
                 }`}
             >
               <RangeInput

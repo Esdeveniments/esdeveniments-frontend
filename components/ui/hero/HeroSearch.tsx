@@ -74,9 +74,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   // Sync initial search term from URL
   const urlSearchTerm = searchParams?.get("search") || "";
   useEffect(() => {
-    if (urlSearchTerm) {
-      setSearchTerm(urlSearchTerm);
-    }
+    setSearchTerm(urlSearchTerm);
   }, [urlSearchTerm, setSearchTerm]);
 
   const handleApplyLocation = useCallback(() => {
@@ -157,7 +155,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
               setOpen={setIsModalOpen}
               title="Selecciona població"
               actionButton="Seleccionar"
-              onActionButtonClick={async () => handleApplyLocation()}
+              onActionButtonClick={handleApplyLocation}
               testId="location-modal"
             >
               <div className="w-full flex flex-col justify-start items-start gap-4 py-4">

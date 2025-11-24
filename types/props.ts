@@ -79,7 +79,7 @@ export interface ModalProps {
   title: string;
   children: ReactNode;
   actionButton?: ReactNode;
-  onActionButtonClick?: () => void | Promise<void>;
+  onActionButtonClick?: () => boolean | void | Promise<boolean | void>;
   testId?: string;
 }
 

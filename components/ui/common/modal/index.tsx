@@ -78,7 +78,12 @@ export default function Modal({
                       <button
                         onClick={async () => {
                           if (onActionButtonClick) {
-                            await onActionButtonClick();
+                            const result = await onActionButtonClick();
+                            // Do not close modal if the action returns false,
+                            // allowing the modal to display an error state.
+                            if (result === false) {
+                              return;
+                            }
                           }
                           setOpen(false);
                         }}
