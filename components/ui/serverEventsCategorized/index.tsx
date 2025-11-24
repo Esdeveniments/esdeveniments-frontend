@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
 import { captureException } from "@sentry/nextjs";
+import dynamic from "next/dynamic";
 import {
   SparklesIcon,
   ShoppingBagIcon,
@@ -31,6 +31,8 @@ import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 
+// Enable streaming with Suspense; typing doesn’t yet expose the option.
+// @ts-expect-error suspense is supported at runtime for next/dynamic
 const HeroSection = dynamic(() => import("../hero/HeroSection"), {
   suspense: true,
 });
