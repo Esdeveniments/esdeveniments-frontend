@@ -19,12 +19,12 @@ test.describe("Navigation and SEO basics", () => {
     // Wait for navigation to be ready again after navigation (auto-waiting assertion)
     await expect(nav).toBeVisible({ timeout: 30000 });
     
-    // Navigate back to Agenda (home)
+    // Navigate back to Agenda (catalunya page)
     const agendaLink = nav.getByRole("link", { name: "Agenda" });
     await expect(agendaLink).toBeVisible({ timeout: 30000 });
     // waitForURL in Promise.all is recommended pattern for navigation
     await Promise.all([
-      page.waitForURL(/\/$/, { timeout: 90000 }),
+      page.waitForURL(/\/catalunya$/, { timeout: 90000 }),
       agendaLink.click(),
     ]);
     
