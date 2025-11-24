@@ -34,6 +34,7 @@ export interface SelectComponentProps {
   placeholder?: string;
   testId?: string;
   autoFocus?: boolean;
+  menuPosition?: "fixed" | "absolute";
 }
 
 export interface SelectSkeletonProps {

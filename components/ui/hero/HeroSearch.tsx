@@ -33,15 +33,17 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const pathname = usePathname();
   const { place, label, setPlace, searchTerm, setSearchTerm, date } = useHero();
 
+  // State for modal and location selection
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [localPlaceValue, setLocalPlaceValue] = useState<string>("");
+  const [hasOpenedModal, setHasOpenedModal] = useState(false);
+
   // --- Location Logic ---
   const {
     regionsWithCities,
     isLoading: loadingRegions,
     isError: regionsError,
-  } = useGetRegionsWithCities();
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [localPlace, setLocalPlace] = useState<Option | null>(null);
+  } = useGetRegionsWithCities(hasOpenedModal);
 
   const regionsAndCitiesArray = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -78,31 +80,50 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   }, [urlSearchTerm, setSearchTerm]);
 
   const handleApplyLocation = useCallback(() => {
-    if (localPlace) {
-      setPlace(localPlace.value, localPlace.label);
+    if (localPlaceValue) {
+      const selectedOption = allLocations.find(
+        (loc) => loc.value === localPlaceValue
+      );
+      if (selectedOption) {
+        setPlace(selectedOption.value, selectedOption.label);
 
-      sendGoogleEvent("location_selected", {
-        category: "hero_search",
-        label: localPlace.label,
-        value: localPlace.value,
-      });
+        sendGoogleEvent("location_selected", {
+          category: "hero_search",
+          label: selectedOption.label,
+          value: selectedOption.value,
+        });
+      }
     } else {
-      // If cleared or null, maybe default to Catalunya? 
-      // The original logic didn't seem to have a clear "clear" action other than selecting something else.
-      // But let's assume if they clear it, it goes to Catalunya.
+      // If cleared or null, default to Catalunya
       setPlace("catalunya", "Catalunya");
     }
     setIsModalOpen(false);
-  }, [localPlace, setPlace]);
+  }, [localPlaceValue, allLocations, setPlace]);
 
   const handlePlaceChange = useCallback((option: Option | null) => {
-    setLocalPlace(option);
+    setLocalPlaceValue(option?.value || "");
   }, []);
+
+  // Compute selected option from string value - use actual object from regionsAndCitiesArray
+  const selectedOption = useMemo<Option | null>(() => {
+    if (!localPlaceValue) return null;
+    // Find the actual option object from the grouped array to preserve object reference
+    for (const group of regionsAndCitiesArray) {
+      const found = group.options.find((option) => option.value === localPlaceValue);
+      if (found) return found;
+    }
+    return null;
+  }, [localPlaceValue, regionsAndCitiesArray]);
 
   // --- Search Logic ---
 
   const handleSearchSubmit = useCallback(() => {
     const value = searchTerm.trim();
+
+    // Skip analytics and navigation for empty searches
+    if (!value) {
+      return;
+    }
 
     sendGoogleEvent("search", {
       category: "hero_search",
@@ -134,10 +155,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <button
               type="button"
               onClick={() => {
-                const currentOption = regionsAndCitiesArray
-                  .flatMap((group) => group.options)
-                  .find((option) => option.value === place);
-                setLocalPlace(currentOption || null);
+                setLocalPlaceValue(place === "catalunya" ? "" : place);
+                setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
               className="flex items-center gap-1 text-primary hover:underline decoration-2 underline-offset-4 transition-all"
@@ -152,7 +171,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
             <Modal
               open={isModalOpen}
-              setOpen={setIsModalOpen}
+              setOpen={() => setIsModalOpen(false)}
               title="Selecciona població"
               actionButton="Seleccionar"
               onActionButtonClick={handleApplyLocation}
@@ -167,12 +186,13 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                       id="hero-location-select"
                       title=""
                       options={regionsAndCitiesArray}
-                      value={localPlace}
+                      value={selectedOption}
                       onChange={handlePlaceChange}
                       isClearable
                       placeholder="Cercar població o comarca..."
                       testId="hero-location-select"
                       autoFocus
+                      menuPosition="fixed"
                     />
                   )}
                 </div>

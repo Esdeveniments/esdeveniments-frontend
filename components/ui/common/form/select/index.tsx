@@ -66,6 +66,7 @@ export default function SelectComponent({
   placeholder = "una opció",
   testId,
   autoFocus = false,
+  menuPosition = "absolute",
 }: SelectComponentProps) {
   const inputId = `${id}-input`;
 
@@ -121,6 +122,7 @@ export default function SelectComponent({
             isValidNewOption={() => isValidNewOption}
             noOptionsMessage={() => "No s'ha trobat cap opció"}
             autoFocus={autoFocus}
+            menuPosition={menuPosition}
             components={{
               Input,
             }}

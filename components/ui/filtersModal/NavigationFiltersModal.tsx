@@ -46,11 +46,17 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
+  const [hasOpened, setHasOpened] = useState(isOpen);
+
+  if (isOpen && !hasOpened) {
+    setHasOpened(true);
+  }
+
   const {
     regionsWithCities,
     isLoading: isLoadingRegionsWithCities,
     isError: isErrorRegionsWithCities,
-  } = useGetRegionsWithCities();
+  } = useGetRegionsWithCities(hasOpened);
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];

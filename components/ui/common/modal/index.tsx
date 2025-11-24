@@ -7,8 +7,9 @@ import {
   DialogTitle,
   Transition,
 } from "@headlessui/react";
-import ArrowLeftIcon from "@heroicons/react/outline/ArrowLeftIcon";
+import { ArrowLeftIcon } from "@heroicons/react/outline";
 import { ModalProps } from "types/props";
+import Button from "@components/ui/common/button";
 
 export default function Modal({
   open,
@@ -75,7 +76,8 @@ export default function Modal({
                   </div>
                   {actionButton && (
                     <div className="flex-shrink-0 w-full flex justify-center items-end pt-4 px-4 border-t border-border bg-background pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-                      <button
+                      <Button
+                        variant="outline"
                         onClick={async () => {
                           if (onActionButtonClick) {
                             const result = await onActionButtonClick();
@@ -88,10 +90,10 @@ export default function Modal({
                           setOpen(false);
                         }}
                         data-testid={testId ? `${testId}-action-button` : undefined}
-                        className="flex justify-center items-center gap-2 text-foreground-strong bg-background rounded-xl py-2 px-3 ease-in-out duration-300 border border-foreground-strong font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-background hover:text-background"
+                        className="w-full"
                       >
                         {actionButton}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
