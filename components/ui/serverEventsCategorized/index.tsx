@@ -8,13 +8,10 @@ import {
   TicketIcon,
   PhotographIcon,
 } from "@heroicons/react/outline";
-import Search from "@components/ui/search";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { SearchSkeleton } from "@components/ui/common/skeletons";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
-import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
 import type {
   FeaturedPlaceConfig,
   ServerEventsCategorizedContentProps,
@@ -31,6 +28,7 @@ import {
 import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
+import HeroSection from "../hero/HeroSection";
 
 /**
  * Icon mapping for categories.
@@ -134,6 +132,7 @@ const resolveCategoryDetails = (
   };
 };
 
+// --- MAIN COMPONENT ---
 function ServerEventsCategorized({
   pageData,
   seoTopTownLinks = [],
@@ -141,29 +140,41 @@ function ServerEventsCategorized({
 }: ServerEventsCategorizedProps) {
   return (
     <div className="w-full bg-background">
-      {/* 1. INSTANT RENDER: SEARCH & HEADER */}
-      <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap">
+      {/* 1. HERO SECTION: Search + Location + Dates */}
+      <div className="bg-background border-b border-border/40 pb-8 pt-4">
         <div className="container">
-          <Suspense fallback={<SearchSkeleton />}>
-            <FilterLoadingProvider>
-              <Search />
-            </FilterLoadingProvider>
+          <Suspense fallback={<div className="h-[200px] animate-pulse bg-muted/20 rounded-lg" />}>
+            <HeroSection subTitle={pageData?.subTitle} />
           </Suspense>
         </div>
       </div>
 
-      <div className="container pt-section-y">
-        {pageData && (
-          <>
-            <h1 className="heading-1 mb-2">{pageData.title}</h1>
-            <p className="body-large text-foreground/70 text-left">
-              {pageData.subTitle}
-            </p>
-          </>
-        )}
-      </div>
+      {/* 2. TOP LOCATIONS (Moved from bottom) */}
+      {seoTopTownLinks.length > 0 && (
+        <div className="container py-8 border-b border-border/40">
+          <div className="flex flex-col gap-4">
+            <SectionHeading
+              title="Poblacions més buscades"
+              titleClassName="heading-2 text-foreground mb-element-gap"
+            />
+            <div className="flex flex-wrap gap-2">
+              {seoTopTownLinks.map((link) => (
+                <PressableAnchor
+                  key={link.href}
+                  href={link.href}
+                  prefetch={false}
+                  variant="plain"
+                  className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
+                >
+                  {link.label.replace("Agenda ", "")}
+                </PressableAnchor>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* 2. INSTANT RENDER: QUICK CATEGORIES */}
+      {/* 3. QUICK CATEGORIES */}
       <section className="py-section-y container border-b">
         <SectionHeading
           title="Explora per interessos"
@@ -190,7 +201,7 @@ function ServerEventsCategorized({
         </div>
       </section>
 
-      {/* 3. STREAMED CONTENT: HEAVY FETCHING */}
+      {/* 4. STREAMED CONTENT: HEAVY FETCHING */}
       <Suspense fallback={<ServerEventsCategorizedFallback />}>
         <ServerEventsCategorizedContent
           {...contentProps}
@@ -205,7 +216,6 @@ export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
   categoriesPromise,
   featuredPlaces,
-  seoTopTownLinks = [],
 }: ServerEventsCategorizedContentProps) {
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
@@ -388,28 +398,7 @@ export async function ServerEventsCategorizedContent({
         ))}
       </div>
 
-      {/* SEO Links */}
-      {seoTopTownLinks.length > 0 && (
-        <section className="py-section-y container" id="agendes-locals">
-          <SectionHeading
-            title="Agendes locals més visitades"
-            titleClassName="heading-2 text-foreground mb-element-gap"
-          />
-          <div className="grid grid-cols-3 gap-element-gap mt-element-gap">
-            {seoTopTownLinks.map((link) => (
-              <PressableAnchor
-                key={link.href}
-                href={link.href}
-                prefetch={false}
-                variant="plain"
-                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive"
-              >
-                {link.label}
-              </PressableAnchor>
-            ))}
-          </div>
-        </section>
-      )}
+
 
       {/* CTA */}
       <section className="py-section-y container text-center">

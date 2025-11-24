@@ -3,8 +3,8 @@ import { test, expect } from "@playwright/test";
 test.describe("Search end-to-end", () => {
   test("typing updates results list and URL", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
-    // Match by explicit aria-label used in component
-    const input = page.getByLabel("Search input").first();
+    // Match by explicit data-testid used in component
+    const input = page.getByTestId("search-input");
     await expect(input).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
     await input.click();
     await input.fill("castellers");

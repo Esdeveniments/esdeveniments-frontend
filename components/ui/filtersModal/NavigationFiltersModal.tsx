@@ -330,6 +330,24 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         testId="filters-modal"
       >
         <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
+          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+              Data
+            </p>
+            <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+              {BYDATES.map(({ value, label }) => (
+                <RadioInput
+                  key={value}
+                  id={value}
+                  name="byDate"
+                  value={value}
+                  checkedValue={localByDate}
+                  onChange={handleByDateChange}
+                  label={label}
+                />
+              ))}
+            </div>
+          </fieldset>
           <div className="w-full flex flex-col justify-start items-start gap-4">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Poblacions
@@ -366,24 +384,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   checkedValue={localCategory}
                   onChange={handleCategoryChange}
                   label={category.name}
-                />
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Data
-            </p>
-            <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-              {BYDATES.map(({ value, label }) => (
-                <RadioInput
-                  key={value}
-                  id={value}
-                  name="byDate"
-                  value={value}
-                  checkedValue={localByDate}
-                  onChange={handleByDateChange}
-                  label={label}
                 />
               ))}
             </div>

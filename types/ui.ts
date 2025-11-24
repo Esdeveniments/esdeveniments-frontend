@@ -74,3 +74,13 @@ export interface PressableLinkBaseProps
 export interface PressableLinkProps extends PressableLinkBaseProps {}
 
 export interface PressableAnchorProps extends PressableLinkBaseProps {}
+
+export interface HeroContextType {
+  place: string;
+  label: string;
+  searchTerm: string;
+  date: string | null;
+  setPlace: (place: string, label: string) => void;
+  setSearchTerm: (term: string) => void;
+  setDate: (date: string | null) => void;
+}
