@@ -101,10 +101,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
-  const geolocationPromiseRef =
-    useRef<Promise<{ latitude: number; longitude: number } | undefined> | null>(
-      null
-    );
+  const geolocationPromiseRef = useRef<Promise<
+    { latitude: number; longitude: number } | undefined
+  > | null>(null);
 
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
@@ -246,7 +245,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     if (!localUserLocation && !userLocationLoading && localDistance) {
       void triggerGeolocation();
     }
-  }, [localUserLocation, userLocationLoading, localDistance, triggerGeolocation]);
+  }, [
+    localUserLocation,
+    userLocationLoading,
+    localDistance,
+    triggerGeolocation,
+  ]);
 
   const applyFilters = async () => {
     const hasDistance = localDistance && localDistance !== "";
@@ -255,6 +259,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     // If distance is set but we don't yet have a location, request it before applying
     if (hasDistance && !location && !userLocationError) {
       location = await triggerGeolocation();
+      // If geolocation failed, location will be undefined. Stop here to let user see the error.
+      if (!location) {
+        return;
+      }
     }
 
     const hasUserLocation = Boolean(location);
@@ -282,8 +290,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
     startNavigationFeedback();
     setLoading(true);
-    router.push(newUrl);
-    onClose();
+    try {
+      router.push(newUrl);
+      onClose();
+    } catch (error) {
+      console.error("Navigation failed:", error);
+      setLoading(false);
+    }
   };
 
   const handleByDateChange = useCallback((value: string | number) => {
@@ -409,9 +422,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               </div>
             )}
             <div
-              className={`w-full flex flex-col justify-start items-start gap-3px-0 ${
-                disableDistance ? "opacity-30" : ""
-              }`}
+              className={`w-full flex flex-col justify-start items-start gap-3px-0 ${disableDistance ? "opacity-30" : ""
+                }`}
             >
               <RangeInput
                 key="distance"

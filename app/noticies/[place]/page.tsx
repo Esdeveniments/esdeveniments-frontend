@@ -87,26 +87,24 @@ export default async function Page({
   // However, the user asked to render Breadcrumbs and Title immediately.
   // Using the slug for the title is a good compromise.
   
+  // We await placeLabelPromise here to ensure consistency across Breadcrumbs, Title, and Links.
+  // Since generateMetadata already fetches this data (cached), this await is effectively instant
+  // and does not introduce new blocking or negate the streaming benefits for the NewsList below.
+  const placeLabel = await placeLabelPromise;
+
   const breadcrumbs = [
     { name: "Inici", url: siteUrl },
     { name: "Notícies", url: `${siteUrl}/noticies` },
-    { name: place, url: `${siteUrl}/noticies/${place}` }, // Use slug initially or maybe we can't know the label yet
+    { name: placeLabel, url: `${siteUrl}/noticies/${place}` },
   ];
   
-  // We can't generate the full WebPageSchema with the correct label without awaiting placeType.
-  // But we can generate a basic one or wait for it inside a suspended component?
-  // SEO components usually need to be in the head or early.
-  // If we want non-blocking, we might have to sacrifice immediate perfect schema or use slug.
-  // I'll use slug for now in the shell schema.
-  
   const webPageSchema = generateWebPageSchema({
-    title: `Notícies de ${place}`, 
-    description: `Arxiu i recomanacions d'esdeveniments a ${place}`,
+    title: `Notícies de ${placeLabel}`, 
+    description: `Arxiu i recomanacions d'esdeveniments a ${placeLabel}`,
     url: `${siteUrl}/noticies/${place}`,
     breadcrumbs,
   });
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
-  const placeLabel = await placeLabelPromise;
   const agendaHref = place === "catalunya" ? "/catalunya" : `/${place}`;
 
   return (
@@ -151,11 +149,11 @@ export default async function Page({
           <li>
             <span className="mx-1">/</span>
           </li>
-          <li className="text-foreground-strong capitalize">{place}</li>
+          <li className="text-foreground-strong">{placeLabel}</li>
         </ol>
       </nav>
       <h1 className="uppercase mb-2 px-2 lg:px-0">
-        Notícies de <span className="capitalize">{place}</span>
+        Notícies de {placeLabel}
       </h1>
       <div className="w-full flex flex-wrap items-center justify-end gap-2 px-2 lg:px-0 mb-2 text-sm">
         <PressableAnchor

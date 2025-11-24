@@ -124,7 +124,7 @@ const resolveCategoryDetails = (
   const categoryName =
     safeCategory.length > 0
       ? safeCategory.charAt(0).toUpperCase() +
-        safeCategory.slice(1).replace(/-/g, " ")
+      safeCategory.slice(1).replace(/-/g, " ")
       : "";
   return {
     categoryName,
@@ -205,7 +205,6 @@ function ServerEventsCategorized({
       <Suspense fallback={<ServerEventsCategorizedFallback />}>
         <ServerEventsCategorizedContent
           {...contentProps}
-          seoTopTownLinks={seoTopTownLinks}
         />
       </Suspense>
     </div>
@@ -233,43 +232,43 @@ export async function ServerEventsCategorizedContent({
   // 2. Prepare Featured Places Promises
   const featuredSectionsPromise = featuredPlaces
     ? Promise.all(
-        featuredPlaces.map(async (placeConfig, index) => {
-          const placeSlug =
-            placeConfig.filter.city ||
-            placeConfig.filter.region ||
-            placeConfig.filter.place ||
-            placeConfig.slug;
+      featuredPlaces.map(async (placeConfig, index) => {
+        const placeSlug =
+          placeConfig.filter.city ||
+          placeConfig.filter.region ||
+          placeConfig.filter.place ||
+          placeConfig.slug;
 
-          if (!placeSlug) return null;
+        if (!placeSlug) return null;
 
-          try {
-            const response = await fetchEvents({
-              place: placeSlug,
-              page: 0,
-              size: 6,
-            });
+        try {
+          const response = await fetchEvents({
+            place: placeSlug,
+            page: 0,
+            size: 6,
+          });
 
-            const events = filterActiveEvents(response.content);
+          const events = filterActiveEvents(response.content);
 
-            if (events.length === 0) return null;
+          if (events.length === 0) return null;
 
-            return {
-              ...placeConfig,
-              events,
+          return {
+            ...placeConfig,
+            events,
+            placeSlug,
+            usePriority: index < 2,
+          };
+        } catch (error) {
+          captureException(error, {
+            extra: {
               placeSlug,
-              usePriority: index < 2,
-            };
-          } catch (error) {
-            captureException(error, {
-              extra: {
-                placeSlug,
-                section: "featuredPlaces",
-              },
-            });
-            return null;
-          }
-        })
-      )
+              section: "featuredPlaces",
+            },
+          });
+          return null;
+        }
+      })
+    )
     : Promise.resolve<(FeaturedPlaceConfig | null)[]>([]);
 
   // 3. Parallel Execution
