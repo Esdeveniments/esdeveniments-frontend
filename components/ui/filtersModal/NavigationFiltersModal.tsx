@@ -260,7 +260,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   ]);
 
   const applyFilters = async (): Promise<boolean> => {
-    const hasDistance = localDistance && localDistance !== "";
+    const hasDistance = Boolean(localDistance && localDistance !== "");
     let location = localUserLocation;
 
     // If distance is set but we don't yet have a location, request it before applying
@@ -273,7 +273,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     }
 
     const hasUserLocation = Boolean(location);
-    const isDistanceFilterActive = hasDistance && hasUserLocation && location;
+    const isDistanceFilterActive = Boolean(
+      hasDistance && hasUserLocation && location
+    );
 
     const changes = {
       // Clear place when using distance filter with user location
@@ -294,7 +296,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
     // If nothing changed, avoid triggering loading state that won't auto-reset
     if (currentUrl === newUrl) {
-      setLoading(false);
       return true;
     }
 

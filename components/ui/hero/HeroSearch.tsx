@@ -74,6 +74,13 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         setPlace(match.value, match.label, match.placeType);
         return;
       }
+      // Fallback: keep hero state aligned with URL even if regions data is missing
+      const fallbackLabel = segment
+        .split("-")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+      setPlace(segment, fallbackLabel, "general");
+      return;
     }
     // If we are at root, ensure it's catalunya
     if (pathname === "/" || pathname === "/catalunya") {
@@ -158,6 +165,13 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     }
   };
 
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm("");
+    const url = buildHeroUrl(place, date, "");
+    startNavigationFeedback();
+    router.push(url);
+  }, [place, date, router, setSearchTerm]);
+
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Title Section */}
@@ -184,7 +198,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
             <Modal
               open={isModalOpen}
-              setOpen={() => setIsModalOpen(false)}
+              setOpen={setIsModalOpen}
               title="Selecciona població"
               actionButton="Seleccionar"
               onActionButtonClick={handleApplyLocation}
@@ -245,9 +259,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           {searchTerm && (
             <Button
               variant="ghost"
-              onClick={() => {
-                setSearchTerm("");
-              }}
+              onClick={handleClearSearch}
               className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
               aria-label="Clear search"
             >

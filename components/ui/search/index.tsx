@@ -50,13 +50,10 @@ export default function Search(): JSX.Element {
         params.delete("search");
       }
 
-      // Build new URL preserving current path structure
+      // Build new URL preserving current path structure (no trailing slash)
       const queryString = params.toString();
-      const newUrl = queryString
-        ? `${isHomePage ? "/catalunya/" : pathname}?${queryString}`
-        : isHomePage
-        ? "/catalunya/"
-        : pathname || "/";
+      const basePath = isHomePage ? "/catalunya" : pathname || "/";
+      const newUrl = queryString ? `${basePath}?${queryString}` : basePath;
 
       startNavigationFeedback();
       setLoading(true);
