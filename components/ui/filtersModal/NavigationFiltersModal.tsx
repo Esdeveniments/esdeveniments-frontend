@@ -392,24 +392,26 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               ))}
             </div>
           </fieldset>
-          <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-            <p className="w-full font-semibold font-barlow uppercase">
-              Categories
-            </p>
-            <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
-              {categories.map((category: CategorySummaryResponseDTO) => (
-                <RadioInput
-                  key={category.id}
-                  id={category.slug}
-                  name="category"
-                  value={category.slug}
-                  checkedValue={localCategory}
-                  onChange={handleCategoryChange}
-                  label={category.name}
-                />
-              ))}
-            </div>
-          </fieldset>
+          {categories.length > 0 && (
+            <fieldset className="w-full flex flex-col justify-start items-start gap-4">
+              <p className="w-full font-semibold font-barlow uppercase">
+                Categories
+              </p>
+              <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
+                {categories.map((category: CategorySummaryResponseDTO) => (
+                  <RadioInput
+                    key={category.id}
+                    id={category.slug}
+                    name="category"
+                    value={category.slug}
+                    checkedValue={localCategory}
+                    onChange={handleCategoryChange}
+                    label={category.name}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          )}
           <fieldset className="w-full flex flex-col justify-start items-start gap-6">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Distància
@@ -439,7 +441,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 id="distance"
                 min={Number(DISTANCES[0])}
                 max={Number(DISTANCES[DISTANCES.length - 1])}
-                value={Number(localDistance) || 50}
+                value={localDistance === "" ? 50 : Number(localDistance)}
                 onChange={handleDistanceChange}
                 label="Esdeveniments a"
                 disabled={disableDistance}

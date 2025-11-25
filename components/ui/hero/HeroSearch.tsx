@@ -124,7 +124,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
   const displayLabel = useMemo(() => {
     if (place === "catalunya") return label;
-    const withArticle = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general" | "", false);
+    const withArticle = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general", false);
     return withArticle.replace(/^a\s+/, "");
   }, [label, place, placeType]);
 
