@@ -56,7 +56,7 @@ export default function Modal({
                         ref={cancelButtonRef}
                         variant="ghost"
                         onClick={() => setOpen(false)}
-                        className="absolute left-2 p-3 z-20 hover:bg-transparent"
+                        className="absolute left-2 p-3 z-20 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                         aria-label="Tanca"
                       >
                         <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
