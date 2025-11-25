@@ -84,17 +84,19 @@ describe("useEvents filtered behaviour", () => {
     }) as unknown as typeof fetch;
     globalThis.fetch = fetchSpy;
 
-    render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Harness
-          place="catalunya"
-          date="tots"
-          search="cardedeu"
-          initialSize={10}
-          fallbackData={[]}
-        />
-      </React.Suspense>
-    );
+    await act(async () => {
+      render(
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Harness
+            place="catalunya"
+            date="tots"
+            search="cardedeu"
+            initialSize={10}
+            fallbackData={[]}
+          />
+        </React.Suspense>
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("count").textContent).toBe("2");
@@ -119,27 +121,29 @@ describe("useEvents filtered behaviour", () => {
       );
     }) as unknown as typeof fetch;
 
-    render(
-      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Harness
-            place="catalunya"
-            date="tots"
-            search="foo"
-            initialSize={10}
-            // Filtered queries still start from fallbackData but revalidate immediately
-            fallbackData={[createMockEvent("f", "F", "f")]}
-          />
-        </React.Suspense>
-      </SWRConfig>
-    );
-
-    // Starts with fallback length then revalidates to fetched data
-    expect(screen.getByTestId("count").textContent).toBe("1");
-
-    await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="catalunya"
+              date="tots"
+              search="foo"
+              initialSize={10}
+              // Filtered queries should ignore SSR fallback and show loading
+              fallbackData={[createMockEvent("f", "F", "f")]}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
     });
+
+    // Suspends instead of showing stale fallback
+    expect(screen.queryByTestId("count")).toBeNull();
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("1"));
   });
 
   it("includes distance/lat/lon in the request when provided", async () => {
