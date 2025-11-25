@@ -68,7 +68,7 @@ export default function Footer(): JSX.Element {
                   key={item.href}
                   href={item.href}
                   prefetch={false}
-                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal whitespace-nowrap py-1"
+                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1"
                   variant="inline"
                 >
                   {item.label}

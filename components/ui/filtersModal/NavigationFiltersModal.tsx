@@ -348,6 +348,32 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         testId="filters-modal"
       >
         <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
+          <div className="w-full flex flex-col justify-start items-start gap-4">
+            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+              Poblacions
+            </p>
+            <div className="w-full flex flex-col px-0">
+              {isLoadingRegions ? (
+                <SelectSkeleton />
+              ) : isErrorRegionsWithCities ? (
+                <div className="text-destructive text-sm py-2">
+                  Error carregant les poblacions. Torna-ho a provar més tard.
+                </div>
+              ) : (
+                <Select
+                  id="options"
+                  title=""
+                  options={regionsAndCitiesArray}
+                  value={selectedOption}
+                  onChange={handlePlaceChange}
+                  isClearable
+                  placeholder="Selecciona població"
+                  isDisabled={disablePlace}
+                  testId="place-select"
+                />
+              )}
+            </div>
+          </div>
           <fieldset className="w-full flex flex-col justify-start items-start gap-6">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Data
@@ -366,32 +392,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               ))}
             </div>
           </fieldset>
-          <div className="w-full flex flex-col justify-start items-start gap-4">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Poblacions
-            </p>
-            <div className="w-full flex flex-col px-0">
-              {isLoadingRegions ? (
-                <SelectSkeleton />
-              ) : isErrorRegionsWithCities ? (
-                <div className="text-primary text-sm py-2">
-                  Error carregant les poblacions. Torna-ho a provar més tard.
-                </div>
-              ) : (
-                <Select
-                  id="options"
-                  title=""
-                  options={regionsAndCitiesArray}
-                  value={selectedOption}
-                  onChange={handlePlaceChange}
-                  isClearable
-                  placeholder="Selecciona població"
-                  isDisabled={disablePlace}
-                  testId="place-select"
-                />
-              )}
-            </div>
-          </div>
           <fieldset className="w-full flex flex-col justify-start items-start gap-4">
             <p className="w-full font-semibold font-barlow uppercase">
               Categories

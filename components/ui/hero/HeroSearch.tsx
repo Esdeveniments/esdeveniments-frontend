@@ -194,7 +194,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                   {isLoadingRegions ? (
                     <SelectSkeleton />
                   ) : regionsError ? (
-                    <div className="text-primary text-center py-4">
+                    <div className="text-destructive text-center py-4">
                       Error carregant les poblacions. Torna-ho a provar més
                       tard.
                     </div>
