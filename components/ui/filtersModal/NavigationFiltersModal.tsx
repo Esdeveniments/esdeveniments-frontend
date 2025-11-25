@@ -147,10 +147,16 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       return undefined;
     }
 
-    setUserLocationLoading(true);
-    setUserLocationError("");
+    const pendingPromise = new Promise<
+      { latitude: number; longitude: number } | undefined
+    >((resolve) => {
+      const resolveAndClear = (
+        value: { latitude: number; longitude: number } | undefined
+      ) => {
+        geolocationPromiseRef.current = null;
+        resolve(value);
+      };
 
-    geolocationPromiseRef.current = new Promise((resolve) => {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position: GeolocationPosition) => {
@@ -161,8 +167,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
             setLocalUserLocation(location);
             setUserLocationLoading(false);
-            geolocationPromiseRef.current = null;
-            resolve(location);
+            resolveAndClear(location);
           },
           (error: GeolocationError) => {
             setUserLocationLoading(false);
@@ -189,8 +194,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 );
             }
 
-            geolocationPromiseRef.current = null;
-            resolve(undefined);
+            resolveAndClear(undefined);
           },
           {
             enableHighAccuracy: false, // Don't require GPS, allow network location
@@ -204,12 +208,15 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           "La geolocalització no està disponible en aquest navegador."
         );
         setUserLocationLoading(false);
-        geolocationPromiseRef.current = null;
-        resolve(undefined);
+        resolveAndClear(undefined);
       }
     });
 
-    return geolocationPromiseRef.current;
+    geolocationPromiseRef.current = pendingPromise;
+    setUserLocationLoading(true);
+    setUserLocationError("");
+
+    return pendingPromise;
   }, [localUserLocation, userLocationLoading]);
 
   const handleUserLocation = useCallback(
@@ -257,7 +264,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     let location = localUserLocation;
 
     // If distance is set but we don't yet have a location, request it before applying
-    if (hasDistance && !location && !userLocationError) {
+    if (hasDistance && !location) {
       location = await triggerGeolocation();
       // If geolocation failed, location will be undefined. Stop here to let user see the error.
       if (!location) {
@@ -425,7 +432,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     </div>
                   )}
                   {userLocationError && (
-                    <div className="text-sm text-primary">
+                    <div className="text-sm text-destructive">
                       {userLocationError}
                     </div>
                   )}

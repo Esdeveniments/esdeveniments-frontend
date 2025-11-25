@@ -50,6 +50,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     regionsWithCities,
     isLoading: loadingRegions,
     isError: regionsError,
+    mutate,
   } = useGetRegionsWithCities(hasOpenedModal || isPlacePage);
 
   const regionsAndCitiesArray = useMemo(() => {
@@ -194,9 +195,13 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                   {isLoadingRegions ? (
                     <SelectSkeleton />
                   ) : regionsError ? (
-                    <div className="text-destructive text-center py-4">
-                      Error carregant les poblacions. Torna-ho a provar més
-                      tard.
+                    <div className="flex flex-col items-center gap-2 text-center py-4">
+                      <p className="text-destructive">
+                        Error carregant les poblacions.
+                      </p>
+                      <Button onClick={() => mutate()} variant="outline" className="text-sm">
+                        Torna-ho a provar
+                      </Button>
                     </div>
                   ) : (
                     <Select
