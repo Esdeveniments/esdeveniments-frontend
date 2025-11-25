@@ -11,7 +11,7 @@ import {
   XIcon,
 } from "@heroicons/react/solid";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
-import { generateRegionsAndTownsOptions } from "@utils/helpers";
+import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
 import { useHero } from "./HeroContext";
@@ -32,7 +32,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { place, label, setPlace, searchTerm, setSearchTerm, date } = useHero();
+  const { place, label, placeType, setPlace, searchTerm, setSearchTerm, date } = useHero();
 
   // State for modal and location selection
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,13 +64,13 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     if (segment && segment !== "catalunya") {
       const match = allLocations.find((loc) => loc.value === segment);
       if (match) {
-        setPlace(match.value, match.label);
+        setPlace(match.value, match.label, match.placeType);
         return;
       }
     }
     // If we are at root, ensure it's catalunya
     if (pathname === "/" || pathname === "/catalunya") {
-      setPlace("catalunya", "Catalunya");
+      setPlace("catalunya", "Catalunya", "region");
     }
   }, [pathname, allLocations, setPlace]);
 
@@ -86,7 +86,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         (loc) => loc.value === localPlaceValue
       );
       if (selectedOption) {
-        setPlace(selectedOption.value, selectedOption.label);
+        setPlace(selectedOption.value, selectedOption.label, selectedOption.placeType);
 
         sendGoogleEvent("location_selected", {
           category: "hero_search",
@@ -96,7 +96,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       }
     } else {
       // If cleared or null, default to Catalunya
-      setPlace("catalunya", "Catalunya");
+      setPlace("catalunya", "Catalunya", "region");
     }
     setIsModalOpen(false);
   }, [localPlaceValue, allLocations, setPlace]);
@@ -116,23 +116,28 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     return null;
   }, [localPlaceValue, regionsAndCitiesArray]);
 
+  const displayLabel = useMemo(() => {
+    if (place === "catalunya") return label;
+    const withArticle = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general" | "", false);
+    return withArticle.replace(/^a\s+/, "");
+  }, [label, place, placeType]);
+
   // --- Search Logic ---
 
   const handleSearchSubmit = useCallback(() => {
     const value = searchTerm.trim();
 
-    // Skip analytics and navigation for empty searches
-    if (!value) {
-      return;
+    // Send analytics only for non-empty searches
+    if (value) {
+      sendGoogleEvent("search", {
+        category: "hero_search",
+        label: value,
+        search_term: value,
+        value: value,
+      });
     }
 
-    sendGoogleEvent("search", {
-      category: "hero_search",
-      label: value,
-      search_term: value,
-      value: value,
-    });
-
+    // Always navigate (even with empty search to clear the param)
     const url = buildHeroUrl(place, date, value);
 
     startNavigationFeedback();
@@ -160,10 +165,10 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                 setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
-              className="flex items-center gap-1 text-primary hover:underline decoration-2 underline-offset-4 transition-all hover:bg-transparent px-0 py-0"
+              className="flex flex-wrap items-center justify-center gap-2 text-primary text-center hover:underline decoration-2 underline-offset-4 transition-all hover:bg-transparent px-0 py-0"
               aria-expanded={isModalOpen}
             >
-              {label}
+              {displayLabel}
               <ChevronDownIcon
                 className={`h-8 w-8 transition-transform duration-200 ${isModalOpen ? "rotate-180" : ""
                   }`}

@@ -404,8 +404,6 @@ export async function ServerEventsCategorizedContent({
         ))}
       </div>
 
-
-
       {/* CTA */}
       <section className="py-section-y container text-center">
         <p className="body-large text-foreground/70 font-medium mb-element-gap">

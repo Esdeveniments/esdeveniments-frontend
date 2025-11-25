@@ -139,12 +139,8 @@ export const EventForm: React.FC<EventFormProps> = ({
           Array.isArray(form.categories)
             ? form.categories
               .map((cat) => {
-                if (
-                  typeof cat === "object" &&
-                  "value" in cat &&
-                  "label" in cat
-                ) {
-                  return cat as Option;
+                if (isOption(cat)) {
+                  return cat;
                 }
                 if (typeof cat === "object" && "id" in cat && "name" in cat) {
                   return { value: cat.id.toString(), label: cat.name };
@@ -192,8 +188,8 @@ export const EventForm: React.FC<EventFormProps> = ({
           variant="primary"
           disabled={currentFormState.isDisabled || isLoading}
           className={`${currentFormState.isDisabled || isLoading
-              ? "opacity-50 cursor-not-allowed"
-              : "opacity-100"
+            ? "opacity-50 cursor-not-allowed"
+            : "opacity-100"
             }`}
           data-testid="publish-button"
         >

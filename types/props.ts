@@ -349,7 +349,6 @@ export type ServerEventsCategorizedContentProps = Pick<
   | "categorizedEventsPromise"
   | "categoriesPromise"
   | "featuredPlaces"
-  | "seoTopTownLinks"
 >;
 
 export interface SearchAwareHeadingProps {

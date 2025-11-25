@@ -7,9 +7,10 @@ import { SearchIcon } from "@heroicons/react/solid";
 import Button from "@components/ui/common/button";
 import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";
+import { formatCatalanA } from "@utils/helpers";
 
 export default function HeroCTA() {
-  const { place, label, date, searchTerm } = useHero();
+  const { place, label, placeType, date, searchTerm } = useHero();
   const router = useRouter();
 
   const handleSearch = () => {
@@ -22,7 +23,8 @@ export default function HeroCTA() {
     let text = "Veure esdeveniments";
 
     if (place !== "catalunya") {
-      text += ` a ${label}`;
+      const locationCopy = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general" | "", false);
+      text += ` ${locationCopy}`;
     }
 
     if (date) {
@@ -37,15 +39,17 @@ export default function HeroCTA() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center mt-8">
+    <div className="flex flex-col items-center justify-center mt-8 w-full px-4">
       <Button
         type="button"
         variant="primary"
         onClick={handleSearch}
-        className="text-lg px-8 py-3 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 max-w-full"
+        className="text-base sm:text-lg leading-tight sm:leading-snug px-6 py-3 sm:px-8 sm:py-4 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 w-full max-w-[20rem] sm:max-w-xl text-center gap-2 sm:gap-3"
       >
         <SearchIcon className="w-5 h-5 flex-shrink-0" />
-        <span className="truncate max-w-[300px] sm:max-w-none">{getButtonText()}</span>
+        <span className="whitespace-normal break-words leading-snug sm:leading-normal">
+          {getButtonText()}
+        </span>
       </Button>
       <p className="text-xs text-foreground/50 mt-3 text-center">
         Selecciona la població i les dates, i prem &apos;Veure esdeveniments&apos;

@@ -1,6 +1,7 @@
 // UI specific component prop types
 import type React from "react";
 import type { LinkProps } from "next/link";
+import type { PlaceType } from "types/common";
 
 export interface PressFeedbackOptions {
   disabled?: boolean;
@@ -78,9 +79,10 @@ export interface PressableAnchorProps extends PressableLinkBaseProps {}
 export interface HeroContextType {
   place: string;
   label: string;
+  placeType: PlaceType;
   searchTerm: string;
   date: string | null;
-  setPlace: (place: string, label: string) => void;
+  setPlace: (place: string, label: string, placeType?: PlaceType) => void;
   setSearchTerm: (term: string) => void;
   setDate: (date: string | null) => void;
 }

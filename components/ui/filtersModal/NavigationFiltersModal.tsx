@@ -296,15 +296,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
     startNavigationFeedback();
     setLoading(true);
-    try {
-      router.push(newUrl);
-      onClose();
-      return true;
-    } catch (error) {
-      console.error("Navigation failed:", error);
-      setLoading(false);
-      return false;
-    }
+    router.push(newUrl);
+    onClose();
+    return true;
   };
 
   const handleByDateChange = useCallback((value: string | number) => {

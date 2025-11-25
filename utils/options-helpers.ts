@@ -14,6 +14,7 @@ export function generateRegionsOptions(
     .map((region) => ({
       value: sanitize(region.name),
       label: region.name,
+      placeType: "region",
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
@@ -36,6 +37,7 @@ export function generateTownsOptions(
         .map((city) => ({
           value: city.value, // Use URL-friendly value instead of ID
           label: city.label,
+          placeType: "town",
         }))
         .sort((a, b) => a.label.localeCompare(b.label))
     : [];
@@ -64,6 +66,7 @@ export function generateRegionsAndTownsOptions(
         .map((city) => ({
           label: city.label,
           value: city.value, // Use URL-friendly value instead of ID
+          placeType: "town",
         }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     }))

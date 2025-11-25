@@ -8,6 +8,7 @@ import type { CalendarUrls } from "types/calendar";
 export interface Option {
   label: string;
   value: string;
+  placeType?: PlaceType;
 }
 
 // Type guard for Option (centralized for reuse in forms)
