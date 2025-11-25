@@ -92,14 +92,10 @@ export default function Navbar() {
                   <ActiveLink
                     href="/"
                     activeLinkClass="text-primary bg-primary/10"
+                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                    aria-label="Home"
                   >
-                    <button
-                      type="button"
-                      className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                      aria-label="Home"
-                    >
-                      <HomeIcon className="h-6 w-6" />
-                    </button>
+                    <HomeIcon className="h-6 w-6" />
                   </ActiveLink>
                 </div>
 
@@ -108,15 +104,11 @@ export default function Navbar() {
                   <ActiveLink
                     href="/publica"
                     activeLinkClass="text-primary bg-primary/10"
+                    className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
+                    aria-label="Publish"
                   >
-                    <button
-                      type="button"
-                      className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
-                      aria-label="Publish"
-                    >
-                      <PlusSmIcon className="h-6 w-6" />
-                      <span className="hidden sm:block label font-semibold">Publica</span>
-                    </button>
+                    <PlusSmIcon className="h-6 w-6" />
+                    <span className="hidden sm:block label font-semibold">Publica</span>
                   </ActiveLink>
                 </div>
 
@@ -125,14 +117,10 @@ export default function Navbar() {
                   <ActiveLink
                     href="/noticies"
                     activeLinkClass="text-primary bg-primary/10"
+                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                    aria-label="Notícies"
                   >
-                    <button
-                      type="button"
-                      className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                      aria-label="Notícies"
-                    >
-                      <NewspaperIcon className="h-6 w-6" />
-                    </button>
+                    <NewspaperIcon className="h-6 w-6" />
                   </ActiveLink>
                 </div>
               </div>

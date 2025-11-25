@@ -144,10 +144,19 @@ jobs:
         if: ${{ env.PREVIEW_URL != '' }}
         run: |
           echo "Verifying deployment at ${{ env.PREVIEW_URL }}"
-          # Wait a moment for deployment to be fully ready
-          sleep 5
-          # Test that the API endpoint responds (this will fail if HMAC_SECRET is missing)
-          curl -f "${{ env.PREVIEW_URL }}/api/events?size=1" || echo "Warning: API endpoint test failed - this may indicate HMAC_SECRET is not set"
+          MAX_RETRIES=5
+          RETRY=0
+          while [ $RETRY -lt $MAX_RETRIES ]; do
+            if curl -f "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null; then
+              echo "Preview is ready"
+              exit 0
+            fi
+            RETRY=$((RETRY + 1))
+            if [ $RETRY -lt $MAX_RETRIES ]; then
+              sleep $((2 ** RETRY))
+            fi
+          done
+          echo "Warning: API endpoint test failed after $MAX_RETRIES attempts - this may indicate HMAC_SECRET is not set or deployment is slow"
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' }}
         env:

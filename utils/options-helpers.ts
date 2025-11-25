@@ -5,7 +5,7 @@ import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 /**
  * Generate regions options sorted alphabetically
  * @param regionsWithCities - Array of regions with cities from API
- * @returns Array of Option objects for regions
+ * @returns Array of Option objects for regions with placeType: "region"
  */
 export function generateRegionsOptions(
   regionsWithCities: RegionsGroupedByCitiesResponseDTO[]
@@ -23,7 +23,7 @@ export function generateRegionsOptions(
  * Generate towns options for a specific region
  * @param regionsWithCities - Array of regions with cities from API
  * @param regionId - ID of the region to get towns for
- * @returns Array of Option objects for towns in the specified region
+ * @returns Array of Option objects for towns in the specified region with placeType: "town"
  */
 export function generateTownsOptions(
   regionsWithCities: RegionsGroupedByCitiesResponseDTO[],
@@ -48,7 +48,7 @@ export function generateTownsOptions(
  * Returns "Comarques" group first, followed by towns grouped by regions
  * This matches the structure from the old codebase
  * @param regionsWithCities - Array of regions with cities from API
- * @returns Array of GroupedOption objects
+ * @returns Array of GroupedOption objects that include placeType for regions and towns
  */
 export function generateRegionsAndTownsOptions(
   regionsWithCities: RegionsGroupedByCitiesResponseDTO[]

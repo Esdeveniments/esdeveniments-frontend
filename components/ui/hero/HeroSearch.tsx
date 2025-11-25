@@ -41,11 +41,16 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
 
   // --- Location Logic ---
+  const isPlacePage = useMemo(() => {
+    const segment = pathname?.split("/")[1];
+    return !!segment && segment !== "catalunya" && pathname !== "/";
+  }, [pathname]);
+
   const {
     regionsWithCities,
     isLoading: loadingRegions,
     isError: regionsError,
-  } = useGetRegionsWithCities(hasOpenedModal);
+  } = useGetRegionsWithCities(hasOpenedModal || isPlacePage);
 
   const regionsAndCitiesArray = useMemo(() => {
     if (!regionsWithCities) return [];

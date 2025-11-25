@@ -1,6 +1,9 @@
 import { JSX } from "react";
 import Link from "next/link";
-import { SocialProps } from '../../../../types/props';
+import { SocialProps } from "types/props";
+
+const SOCIAL_BUTTON_CLASS =
+  "px-3 py-3 bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
 const renderFacebook = (link: string | undefined): JSX.Element | null =>
   link ? (
@@ -12,7 +15,7 @@ const renderFacebook = (link: string | undefined): JSX.Element | null =>
       aria-label="Facebook"
     >
       <button
-        className="px-3 py-3 bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Facebook"
       >
         <svg
@@ -37,7 +40,7 @@ const renderTwitter = (link: string | undefined): JSX.Element | null =>
       aria-label="Twitter"
     >
       <button
-        className="px-3 py-3 bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Twitter"
       >
         <svg
@@ -62,7 +65,7 @@ const renderInstagram = (link: string | undefined): JSX.Element | null =>
       aria-label="Instagram"
     >
       <button
-        className="px-3 py-3 bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Instagram"
       >
         <svg
@@ -87,7 +90,7 @@ const renderTelegram = (link: string | undefined): JSX.Element | null =>
       aria-label="Telegram"
     >
       <button
-        className="px-3 py-3 bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Telegram"
       >
         <svg

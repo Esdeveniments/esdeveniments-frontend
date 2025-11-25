@@ -2,8 +2,8 @@ import { JSX } from "react";
 import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { NavigationItem, SocialLinks } from "types/common";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
+import { NavigationItem, SocialLinks } from "types/common";
 
 const navigation: NavigationItem[] = [
   { name: "Inici", href: "/", current: false },
@@ -13,12 +13,6 @@ const navigation: NavigationItem[] = [
   { name: "Qui som", href: "/qui-som", current: false },
   { name: "Arxiu", href: "/sitemap", current: false },
 ];
-
-const topAgendaLinks: NavigationItem[] = TOP_AGENDA_LINKS.map((link) => ({
-  name: link.label,
-  href: link.href,
-  current: false,
-}));
 
 export default function Footer(): JSX.Element {
   const links: SocialLinks = {
@@ -69,15 +63,15 @@ export default function Footer(): JSX.Element {
           </h2>
           <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-sm border border-border/40">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
-              {topAgendaLinks.map((item) => (
+              {TOP_AGENDA_LINKS.map((item) => (
                 <PressableAnchor
                   key={item.href}
-                  href={item.href!}
+                  href={item.href}
                   prefetch={false}
                   className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal whitespace-nowrap py-1"
                   variant="inline"
                 >
-                  {item.name}
+                  {item.label}
                 </PressableAnchor>
               ))}
             </div>
