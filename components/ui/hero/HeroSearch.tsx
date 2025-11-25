@@ -79,7 +79,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         .split("-")
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(" ");
-      setPlace(segment, fallbackLabel, "general");
+      setPlace(segment, fallbackLabel, "");
       return;
     }
     // If we are at root, ensure it's catalunya
