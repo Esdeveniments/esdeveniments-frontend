@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import type { KeyboardEvent } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
@@ -144,7 +145,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     router.push(url);
   }, [searchTerm, place, date, router]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleSearchSubmit();

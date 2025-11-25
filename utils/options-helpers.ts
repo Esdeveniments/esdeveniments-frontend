@@ -1,5 +1,5 @@
 import { sanitize } from "./string-helpers";
-import type { Option, GroupedOption, PlaceType } from "types/common";
+import type { Option, GroupedOption } from "types/common";
 import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
 /**
@@ -14,7 +14,7 @@ export function generateRegionsOptions(
     .map((region) => ({
       value: sanitize(region.name),
       label: region.name,
-      placeType: "region" as PlaceType,
+      placeType: "region" as const,
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
@@ -37,7 +37,7 @@ export function generateTownsOptions(
         .map((city) => ({
           value: city.value, // Use URL-friendly value instead of ID
           label: city.label,
-          placeType: "town" as PlaceType,
+          placeType: "town" as const,
         }))
         .sort((a, b) => a.label.localeCompare(b.label))
     : [];
@@ -66,7 +66,7 @@ export function generateRegionsAndTownsOptions(
         .map((city) => ({
           label: city.label,
           value: city.value, // Use URL-friendly value instead of ID
-          placeType: "town" as PlaceType,
+          placeType: "town" as const,
         }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     }))

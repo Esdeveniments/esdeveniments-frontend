@@ -46,17 +46,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
-  const [hasOpened, setHasOpened] = useState(isOpen);
-
-  if (isOpen && !hasOpened) {
-    setHasOpened(true);
-  }
-
   const {
     regionsWithCities,
     isLoading: isLoadingRegionsWithCities,
     isError: isErrorRegionsWithCities,
-  } = useGetRegionsWithCities(hasOpened);
+  } = useGetRegionsWithCities(isOpen);
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -286,6 +280,16 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     };
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
+    const currentUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "";
+
+    // If nothing changed, avoid triggering loading state that won't auto-reset
+    if (currentUrl === newUrl) {
+      setLoading(false);
+      return true;
+    }
 
     sendEventToGA("Place", changes.place);
     sendEventToGA("ByDate", changes.byDate);
@@ -297,7 +301,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     startNavigationFeedback();
     setLoading(true);
     router.push(newUrl);
-    onClose();
     return true;
   };
 

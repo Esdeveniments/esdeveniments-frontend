@@ -63,6 +63,32 @@ jobs:
           NODE_ENV: production
         run: yarn build
 
+  e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
         with:
@@ -114,7 +140,7 @@ jobs:
           fi
           echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
           echo "preview-url=$URL" >> $GITHUB_OUTPUT
-      - name: Verify deployment environment variables
+      - name: Verify preview readiness
         if: ${{ env.PREVIEW_URL != '' }}
         run: |
           echo "Verifying deployment at ${{ env.PREVIEW_URL }}"
