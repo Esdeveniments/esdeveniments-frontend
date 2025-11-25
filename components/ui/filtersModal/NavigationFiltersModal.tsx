@@ -373,6 +373,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             <div className="w-full flex flex-col px-0">
               {isLoadingRegions ? (
                 <SelectSkeleton />
+              ) : isErrorRegionsWithCities ? (
+                <div className="text-primary text-sm py-2">
+                  Error carregant les poblacions. Torna-ho a provar més tard.
+                </div>
               ) : (
                 <Select
                   id="options"
