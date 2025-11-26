@@ -16,21 +16,33 @@ vi.stubGlobal("crypto", {
 });
 
 vi.mock("next/server", () => {
-  const MockNextResponse = vi.fn().mockImplementation((body, options) => {
+  // Use a function constructor wrapped with vi.fn() for Vitest 4 compatibility
+  const MockNextResponse = vi.fn(function (body: unknown, options?: { status?: number }) {
     return {
       status: options?.status || 200,
       headers: new Headers(),
+      cookies: {
+        set: vi.fn(),
+      },
       text: () => Promise.resolve(body || ""),
     };
   });
 
-  Object.assign(MockNextResponse, {
-    next: vi.fn(() => MockNextResponse()),
-    redirect: vi.fn((_, status) => MockNextResponse("redirect", { status })),
-    json: vi.fn((data, options) =>
-      MockNextResponse(JSON.stringify(data), options)
-    ),
+  // Mock NextResponse.next to accept and store the request parameter
+  MockNextResponse.next = vi.fn((options?: { request?: { headers?: Headers } }) => {
+    const response = MockNextResponse();
+    // Store the request for test assertions
+    if (options?.request) {
+      (response as any).request = options.request;
+    }
+    return response;
   });
+  MockNextResponse.redirect = vi.fn((_, status) =>
+    MockNextResponse("redirect", { status })
+  );
+  MockNextResponse.json = vi.fn((data, options) =>
+    MockNextResponse(JSON.stringify(data), options)
+  );
 
   return {
     NextRequest: vi.fn(),
@@ -526,7 +538,14 @@ describe("proxy", () => {
         },
         text: () => Promise.resolve(""),
       } as unknown as NextResponse;
-      (NextResponse.next as unknown as any).mockReturnValue(mockResponse);
+      // Use mockImplementation instead of mockReturnValue to capture the request parameter
+      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
+        // Store the request for test assertions
+        if (options?.request) {
+          (mockResponse as any).request = options.request;
+        }
+        return mockResponse;
+      });
 
       // No visitor cookie present
       const mockRequest = {
@@ -539,8 +558,8 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       // Ensure x-visitor-id was injected into the forwarded request headers
-      const nextArgs = (NextResponse.next as unknown as any).mock.calls[0][0];
-      const forwardedVisitorId = nextArgs.request.headers.get("x-visitor-id");
+      // The request is stored on the mockResponse object
+      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
       expect(forwardedVisitorId).toBeDefined();
       // crypto.randomUUID() is mocked to 'test-uuid' => header should be without dashes
       expect(forwardedVisitorId).toBe("testuuid");
@@ -566,7 +585,14 @@ describe("proxy", () => {
         },
         text: () => Promise.resolve(""),
       } as unknown as NextResponse;
-      (NextResponse.next as unknown as any).mockReturnValue(mockResponse);
+      // Use mockImplementation instead of mockReturnValue to capture the request parameter
+      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
+        // Store the request for test assertions
+        if (options?.request) {
+          (mockResponse as any).request = options.request;
+        }
+        return mockResponse;
+      });
 
       // Existing visitor cookie present
       const existingVisitorId = "existing-visitor-123";
@@ -582,8 +608,8 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       // Ensure x-visitor-id header uses the existing cookie value
-      const nextArgs = (NextResponse.next as unknown as any).mock.calls[0][0];
-      const forwardedVisitorId = nextArgs.request.headers.get("x-visitor-id");
+      // The request is stored on the mockResponse object
+      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
       expect(forwardedVisitorId).toBe(existingVisitorId);
 
       // Cookie should NOT be set when it already exists

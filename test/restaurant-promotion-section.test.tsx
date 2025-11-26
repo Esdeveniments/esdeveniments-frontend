@@ -57,39 +57,67 @@ describe("RestaurantPromotionSection - Date Logic", () => {
   const addDays = (d: number) =>
     new Date(baseNow.getTime() + d * 24 * 60 * 60 * 1000);
 
+  let OriginalDate: typeof Date;
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Use real timers for async operations (fetch, useEffect, waitFor)
     vi.useRealTimers();
 
-    // Mock Date constructor to return baseNow when called without arguments
-    // This ensures both computeTemporalStatus and component's direct Date usage work
-    // Note: We use manual mocking instead of vi.useFakeTimers() because fake timers
-    // don't work well with async operations like waitFor and fetch
-    const OriginalDate = global.Date;
+    // Store original Date before mocking
+    OriginalDate = global.Date;
 
-    const DateSpy = vi.spyOn(global, "Date").mockImplementation(((
-      ...args: unknown[]
-    ) => {
-      // When called without arguments (new Date()), return mocked time
+    // Mock Date constructor: when called without args, return baseNow; otherwise use original
+    // This is needed because the component uses `new Date()` on line 72
+    const MockDate = function (this: Date, ...args: unknown[]) {
       if (args.length === 0) {
-        return new OriginalDate(baseNow.getTime());
+        // Called as constructor: new Date()
+        const date = new OriginalDate(baseNow.getTime());
+        Object.setPrototypeOf(date, OriginalDate.prototype);
+        return date;
       }
-      // Otherwise, use original Date constructor for date parsing
-
+      // Called with args: new Date(...args) - use original
       return new (OriginalDate as any)(...args);
-    }) as any);
+    } as any;
 
-    // Preserve Date static methods (now, parse, UTC, etc.)
-    Object.setPrototypeOf(DateSpy, OriginalDate);
-    Object.defineProperty(DateSpy, "now", {
+    // Copy static methods and properties
+    Object.setPrototypeOf(MockDate, OriginalDate);
+    Object.getOwnPropertyNames(OriginalDate).forEach((name) => {
+      if (name !== "prototype" && name !== "length" && name !== "name") {
+        try {
+          const descriptor = Object.getOwnPropertyDescriptor(OriginalDate, name);
+          if (descriptor) {
+            Object.defineProperty(MockDate, name, descriptor);
+          }
+        } catch {
+          // Ignore errors for non-configurable properties
+        }
+      }
+    });
+
+    // Override Date.now() as well
+    Object.defineProperty(MockDate, "now", {
       value: () => baseNow.getTime(),
       writable: true,
       configurable: true,
     });
 
-    // Set up default fetch mock
-    global.fetch = vi.fn();
+    vi.stubGlobal("Date", MockDate);
+
+    // Set up default fetch mock that returns a proper Response-like object
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        results: [],
+        status: "OK",
+        attribution: "Powered by Google",
+      }),
+    } as Response);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   const defaultProps = {
