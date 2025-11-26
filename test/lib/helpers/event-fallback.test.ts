@@ -89,7 +89,15 @@ describe("fetchEventsWithFallback", () => {
       {
         id: 10,
         name: "Region",
-        cities: [{ id: 1, value: "barcelona", label: "Barcelona" }],
+        cities: [
+          {
+            id: 1,
+            value: "barcelona",
+            label: "Barcelona",
+            latitude: 1,
+            longitude: 1,
+          },
+        ],
       },
     ]);
     mockFetchRegions.mockResolvedValue([
@@ -125,7 +133,15 @@ describe("fetchEventsWithFallback", () => {
       {
         id: 10,
         name: "Region",
-        cities: [{ id: 1, value: "barcelona", label: "Barcelona" }],
+        cities: [
+          {
+            id: 1,
+            value: "barcelona",
+            label: "Barcelona",
+            latitude: 1,
+            longitude: 1,
+          },
+        ],
       },
     ]);
     mockFetchRegions.mockResolvedValue([
