@@ -421,10 +421,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       searchTerm: currentQueryParams.search || "",
       distance: isDistanceFilterActive ? parseInt(localDistance) : undefined,
       lat: isDistanceFilterActive
-        ? localPlaceCoords?.latitude ?? location!.latitude
+        ? localPlaceCoords?.latitude ?? location?.latitude
         : undefined,
       lon: isDistanceFilterActive
-        ? localPlaceCoords?.longitude ?? location!.longitude
+        ? localPlaceCoords?.longitude ?? location?.longitude
         : undefined,
     };
 
@@ -514,7 +514,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const useLocationLabel = useMemo(
     () =>
       useCurrentLocationMode
-        ? "Utilitzant la meva ubicació"
+        ? "Estàs utilitzant la teva ubicació"
         : "Utilitzar la meva ubicació",
     [useCurrentLocationMode]
   );
@@ -566,12 +566,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               </button>
               {useCurrentLocationMode && (
                 <div className="text-xs text-border flex items-center gap-2">
-                  Estàs utilitzant la teva ubicació actual.
+                  Ubicació actual activada.
                   <button
                     onClick={() => setUseCurrentLocationMode(false)}
                     className="text-primary underline hover:text-primary/80 transition-colors"
                   >
-                    Canviar població
+                    Canvia a una població
                   </button>
                 </div>
               )}
@@ -630,7 +630,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   Filtrar per radi
                 </label>
               </div>
-              <p className={`text-sm -mt-2 ${isRegionSelected ? "text-amber-600" : "text-border"}`}>
+              <p className={`text-sm -mt-2 ${isRegionSelected ? "text-destructive" : "text-border"}`}>
                 {distanceHelperText}
                 {isRegionSelected && (
                   <>
@@ -669,7 +669,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   id="distance"
                   min={Number(DISTANCES[0])}
                   max={Number(DISTANCES[DISTANCES.length - 1])}
-                  value={Number(localDistance || defaultDistanceValue)}
+                  value={
+                    isDistanceActive
+                      ? Number(localDistance || defaultDistanceValue)
+                      : Number(DISTANCES[0])
+                  }
                   onChange={handleDistanceChange}
                   label="Esdeveniments a"
                   disabled={distanceControlDisabled}

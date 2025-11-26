@@ -45,9 +45,17 @@ const RangeInput: FC<RangeInputProps> = ({
         </div>
         {showClear && (
           <XIcon
-            className="w-5 h-5 text-primary"
-            aria-hidden="true"
+            className="w-5 h-5 text-primary cursor-pointer"
+            role="button"
+            tabIndex={0}
+            aria-label="Clear"
             onClick={handleClear}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleClear();
+              }
+            }}
           />
         )}
       </div>

@@ -38,7 +38,6 @@ export function findNearestCity(
   _coordinates: GeolocationCoordinates,
   _regions: RegionsGroupedByCitiesResponseDTO[]
 ): Option | null {
-  console.log(_coordinates, _regions);
   // TODO: Implement actual coordinate-to-city mapping logic
   // For now, return Catalunya as fallback
   return { value: "catalunya", label: "Catalunya" };
