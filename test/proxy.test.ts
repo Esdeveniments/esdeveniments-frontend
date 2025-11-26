@@ -17,7 +17,7 @@ vi.stubGlobal("crypto", {
 
 vi.mock("next/server", () => {
   // Use a function constructor wrapped with vi.fn() for Vitest 4 compatibility
-  const MockNextResponse = vi.fn(function (body: unknown, options?: { status?: number }) {
+  const MockNextResponseFn = vi.fn(function (body?: unknown, options?: { status?: number }) {
     return {
       status: options?.status || 200,
       headers: new Headers(),
@@ -28,21 +28,23 @@ vi.mock("next/server", () => {
     };
   });
 
-  // Mock NextResponse.next to accept and store the request parameter
-  MockNextResponse.next = vi.fn((options?: { request?: { headers?: Headers } }) => {
-    const response = MockNextResponse();
-    // Store the request for test assertions
-    if (options?.request) {
-      (response as any).request = options.request;
-    }
-    return response;
-  });
-  MockNextResponse.redirect = vi.fn((_, status) =>
-    MockNextResponse("redirect", { status })
-  );
-  MockNextResponse.json = vi.fn((data, options) =>
-    MockNextResponse(JSON.stringify(data), options)
-  );
+  // Create a properly typed mock object with static methods
+  const MockNextResponse = Object.assign(MockNextResponseFn, {
+    next: vi.fn((options?: { request?: { headers?: Headers } }) => {
+      const response = MockNextResponseFn("", {});
+      // Store the request for test assertions
+      if (options?.request) {
+        (response as any).request = options.request;
+      }
+      return response;
+    }),
+    redirect: vi.fn((_: unknown, status?: number) =>
+      MockNextResponseFn("redirect", { status })
+    ),
+    json: vi.fn((data: unknown, options?: { status?: number }) =>
+      MockNextResponseFn(JSON.stringify(data), options)
+    ),
+  }) as any;
 
   return {
     NextRequest: vi.fn(),
@@ -73,16 +75,9 @@ describe("proxy", () => {
       randomUUID: vi.fn().mockReturnValue("test-uuid"),
     });
 
-    vi.mocked(NextResponse).next.mockReturnValue({
-      status: 200,
-      headers: new Headers(),
-      text: () => Promise.resolve(""),
-    } as unknown as NextResponse);
-    vi.mocked(NextResponse).redirect.mockReturnValue({
-      status: 301,
-      headers: new Headers(),
-      text: () => Promise.resolve("redirect"),
-    } as unknown as NextResponse);
+    // Reset NextResponse.next and redirect mocks
+    (NextResponse.next as any).mockReset();
+    (NextResponse.redirect as any).mockReset();
   });
 
   afterEach(() => {
