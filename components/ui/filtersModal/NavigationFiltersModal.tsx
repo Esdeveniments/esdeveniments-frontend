@@ -100,10 +100,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     () =>
       Boolean(
         defaults.distance &&
-          !defaults.place &&
-          !defaults.placeCoords &&
-          (defaults.userLocation ||
-            (currentQueryParams.lat && currentQueryParams.lon))
+        !defaults.place &&
+        !defaults.placeCoords &&
+        (defaults.userLocation ||
+          (currentQueryParams.lat && currentQueryParams.lon))
       ),
     [
       currentQueryParams.lat,
@@ -461,8 +461,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       (prevValue) => (prevValue === value ? "" : value) as string
     );
   }, []);
-
-  const disablePlace: boolean = false; // Allow combining place and distance; geolocation is only required when no place coords are present
 
   // Determine if the selected place is a region (comarca) - regions don't have coordinates
   const isRegionSelected = localPlaceType === "region";
