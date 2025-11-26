@@ -68,19 +68,30 @@ export const useEvents = ({
       }
     : {};
 
+  const radius = distance ? parseFloat(distance) : undefined;
+  const latNumber = lat !== undefined ? parseFloat(lat) : undefined;
+  const lonNumber = lon !== undefined ? parseFloat(lon) : undefined;
+  const hasCoords =
+    Number.isFinite(latNumber) && Number.isFinite(lonNumber);
+
+  const normalizedPlace =
+    place === "catalunya" ? undefined : place;
+  const placeForRequest =
+    hasCoords && radius !== undefined ? undefined : normalizedPlace;
+
   const baseParams: Omit<FetchEventsParams, "page" | "size"> & {
     size: number;
   } = {
     size: initialSize,
-    place: place !== "catalunya" ? place : undefined,
+    place: placeForRequest,
     category,
     byDate: date,
     from: range.from,
     to: range.to,
     term: search,
-    radius: distance ? parseFloat(distance) : undefined,
-    lat: lat ? parseFloat(lat) : undefined,
-    lon: lon ? parseFloat(lon) : undefined,
+    radius: hasCoords ? radius : undefined,
+    lat: hasCoords ? latNumber : undefined,
+    lon: hasCoords ? lonNumber : undefined,
   };
 
   const getKey = (

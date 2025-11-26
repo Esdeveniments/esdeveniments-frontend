@@ -32,12 +32,17 @@ export function generateTownsOptions(
   const region = regionsWithCities.find(
     (r) => r.id.toString() === regionId.toString()
   );
+
   return region
     ? region.cities
         .map((city) => ({
           value: city.value, // Use URL-friendly value instead of ID
           label: city.label,
           placeType: "town" as const,
+          // Canonical city fields are latitude/longitude; keep a defensive read
+          // of legacy lat/lng inputs but expose only latitude/longitude to the UI.
+          latitude: city.latitude ?? (city as { lat?: number }).lat,
+          longitude: city.longitude ?? (city as { lng?: number }).lng,
         }))
         .sort((a, b) => a.label.localeCompare(b.label))
     : [];
@@ -67,6 +72,8 @@ export function generateRegionsAndTownsOptions(
           label: city.label,
           value: city.value, // Use URL-friendly value instead of ID
           placeType: "town" as const,
+          latitude: city.latitude ?? (city as { lat?: number }).lat,
+          longitude: city.longitude ?? (city as { lng?: number }).lng,
         }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     }))
