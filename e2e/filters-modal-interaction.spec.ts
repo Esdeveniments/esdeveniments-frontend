@@ -46,7 +46,7 @@ test.describe("Filters Modal Interaction", () => {
     await expect(rangeInput).toHaveValue("5");
 
     // Activate distance filter
-    const distanceToggle = page.getByLabel("Filtrar per radi");
+    const distanceToggle = page.getByTestId("distance-toggle");
     await distanceToggle.check();
 
     // After activation, default should jump to 10 (DISTANCES[1])
@@ -92,7 +92,7 @@ test.describe("Filters Modal Interaction", () => {
     await expect(modal).toBeVisible({ timeout: 10000 });
     
     const rangeInput = page.locator('[data-testid="distance-range"] input[type="range"]');
-    const distanceToggle = page.getByLabel("Filtrar per radi");
+    const distanceToggle = page.getByTestId("distance-toggle");
     await distanceToggle.check();
     // Use keyboard to set distance to 25 to ensure onChange handlers fire
     await setDistance(rangeInput, 25);
