@@ -1,3 +1,5 @@
+import { forwardRef } from "react";
+
 const VARIANTS: Record<string, string> = {
   neutral: "btn-neutral",
   primary: "btn-primary",
@@ -5,33 +7,37 @@ const VARIANTS: Record<string, string> = {
   muted: "btn-muted",
   solid: "btn-primary",
   category: "btn-category",
+  ghost: "btn-ghost",
 };
 
-export default function Button({
-  children,
-  className = "",
-  variant = "neutral",
-  hasIcon = false,
-  ...rest
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?:
+const Button = forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant?:
     | "neutral"
     | "primary"
     | "muted"
     | "outline"
     | "solid"
-    | "category";
-  hasIcon?: boolean;
-}) {
+    | "category"
+    | "ghost";
+    hasIcon?: boolean;
+  }
+>(({ children, className = "", variant = "neutral", hasIcon = false, ...rest }, ref) => {
   const variantClass = VARIANTS[variant] ?? VARIANTS.neutral;
   const iconPadding = hasIcon ? "pl-3" : "";
 
   return (
     <button
+      ref={ref}
       className={`${variantClass} ${iconPadding} ${className}`.trim()}
       {...rest}
     >
       {children}
     </button>
   );
-}
+});
+
+Button.displayName = "Button";
+
+export default Button;

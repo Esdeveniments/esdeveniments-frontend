@@ -98,8 +98,9 @@ describe("useEvents filtered behaviour", () => {
       );
     });
 
-    const count = await screen.findByTestId("count", {}, { timeout: 3000 });
-    expect(count.textContent).toBe("2");
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("2");
+    });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -129,7 +130,7 @@ describe("useEvents filtered behaviour", () => {
               date="tots"
               search="foo"
               initialSize={10}
-              // Even if we pass fallbackData, it must be ignored for filtered queries
+              // Filtered queries should ignore SSR fallback and show loading
               fallbackData={[createMockEvent("f", "F", "f")]}
             />
           </React.Suspense>
@@ -137,12 +138,12 @@ describe("useEvents filtered behaviour", () => {
       );
     });
 
-    // Immediately after render, it should suspend (show loading) instead of showing fallback data
+    // Suspends instead of showing stale fallback
+    expect(screen.queryByTestId("count")).toBeNull();
     expect(screen.getByText("Loading...")).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByTestId("count").textContent).toBe("1");
-    });
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("1"));
   });
 
   it("includes distance/lat/lon in the request when provided", async () => {

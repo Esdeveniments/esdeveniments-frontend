@@ -16,6 +16,7 @@ import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
+import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 
 export const revalidate = 300;
 
@@ -48,20 +49,7 @@ const homeSeoLinkSections: SeoLinkSection[] = [
   {
     id: "local-agendas",
     title: "Agendes locals més visitades",
-    links: [
-      { href: "/cardedeu", label: "Agenda Cardedeu" },
-      { href: "/llinars", label: "Agenda Llinars" },
-      { href: "/la-garriga", label: "Agenda La Garriga" },
-      { href: "/el-masnou", label: "Agenda El Masnou" },
-      { href: "/granollers", label: "Agenda Granollers" },
-      { href: "/canet-de-mar", label: "Agenda Canet de Mar" },
-      { href: "/castellbisbal", label: "Agenda Castellbisbal" },
-      { href: "/llica-de-vall", label: "Agenda Lliçà de Vall" },
-      { href: "/arenys-de-munt", label: "Agenda Arenys de Munt" },
-      { href: "/calella", label: "Agenda Calella" },
-      { href: "/mataro", label: "Agenda Mataró" },
-      { href: "/malgrat-de-mar", label: "Agenda Malgrat de Mar" },
-    ],
+    links: TOP_AGENDA_LINKS,
   },
 ];
 
@@ -160,10 +148,10 @@ async function HomeStructuredData({
   const itemListSchema =
     homepageEvents.length > 0
       ? generateItemListStructuredData(
-          homepageEvents,
-          pageData.title,
-          pageData.subTitle
-        )
+        homepageEvents,
+        pageData.title,
+        pageData.subTitle
+      )
       : null;
 
   const webPageSchema = generateWebPageSchema({
@@ -176,12 +164,12 @@ async function HomeStructuredData({
   const collectionSchema =
     homepageEvents.length > 0
       ? generateCollectionPageSchema({
-          title: pageData.title,
-          description: pageData.metaDescription,
-          url: pageData.canonical,
-          numberOfItems: homepageEvents.length,
-          mainEntity: itemListSchema || undefined,
-        })
+        title: pageData.title,
+        description: pageData.metaDescription,
+        url: pageData.canonical,
+        numberOfItems: homepageEvents.length,
+        mainEntity: itemListSchema || undefined,
+      })
       : null;
 
   const structuredSchemas = [

@@ -259,7 +259,7 @@ export async function generatePagesData({
   if (!place && !byDate) {
     return createPageData(
       `Què fer a Catalunya. Agenda ${currentYear}`,
-      `Agenda cultural de Catalunya aquest ${month}, amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.`,
+      `Agenda cultural aquest ${month}, amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.`,
       `Descobreix esdeveniments a Catalunya aquest ${currentYear}`,
       `Explora la millor agenda cultural de Catalunya aquest ${month}. Troba concerts, exposicions, teatre, activitats familiars i plans gratuïts a prop teu.`,
       siteUrl,

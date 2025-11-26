@@ -16,9 +16,11 @@ import PressableLink from "@components/ui/primitives/PressableLink";
 import { NavigationItem } from "types/common";
 
 const navigation: NavigationItem[] = [
-  { name: "Agenda", href: "/", current: true },
+  { name: "Inici", href: "/", current: true },
+  { name: "Agenda", href: "/catalunya", current: false },
   { name: "Publicar", href: "/publica", current: false },
   { name: "Notícies", href: "/noticies", current: false },
+  { name: "Arxiu", href: "/sitemap", current: false },
 ];
 
 export default function Navbar() {
@@ -29,7 +31,7 @@ export default function Navbar() {
       key={pathname}
       as="nav"
       id="site-navbar"
-      className="w-full bg-background md:sticky md:top-0 z-50 border-b border-border/50"
+      className="w-full bg-background md:sticky md:top-0 z-50 border-b border-border/50 md:shadow-sm md:backdrop-blur-sm"
     >
       {({ open }) => (
         <>
@@ -38,8 +40,13 @@ export default function Navbar() {
               {/* FirstBar - Logo&LaptopMenu&MenuIcon */}
               <div className="flex justify-between items-center">
                 {/* Logo */}
-                <div className="flex flex-1 md:w-1/2 justify-start items-center py-2 px-3 cursor-pointer">
-                  <PressableLink href="/" prefetch={false} variant="inline">
+                <div className="flex flex-1 md:w-1/2 justify-start items-center py-2 px-3">
+                  <PressableLink
+                    href="/"
+                    prefetch={false}
+                    variant="inline"
+                    className="transition-transform duration-normal hover:scale-105"
+                  >
                     <Image
                       src={logo}
                       className="bg-background flex justify-center items-center cursor-pointer"
@@ -53,7 +60,7 @@ export default function Navbar() {
                 {/* MenuIcon */}
                 <div className="flex justify-center items-center md:hidden">
                   <Disclosure.Button
-                    className="inline-flex items-center justify-center py-2 px-3 focus:outline-none"
+                    className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus:outline-none"
                     aria-label={open ? "Close menu" : "Open menu"}
                   >
                     {open ? (
@@ -65,12 +72,12 @@ export default function Navbar() {
                 </div>
                 {/* LaptopMenu */}
                 <div className="hidden md:flex md:w-1/2 justify-end items-center">
-                  <div className="flex-center gap-element-gap">
+                  <div className="flex-center gap-1">
                     {navigation.map((item) => (
                       <ActiveLink
                         href={item.href}
                         key={item.name}
-                        className="label px-button-x py-button-y border-b-2 border-b-background"
+                        className="label font-semibold px-button-x py-button-y border-b-2 border-b-background hover:bg-muted/50 rounded-t-lg transition-all"
                       >
                         {item.name}
                       </ActiveLink>
@@ -78,58 +85,55 @@ export default function Navbar() {
                   </div>
                 </div>
               </div>
-              {/* SecondBar - Search&Share&MenuIcon */}
-              <div className="fixed bottom-0 left-0 right-0 h-14 border-t-2 border-border bg-background flex justify-evenly items-center gap-element-gap md:hidden px-section-x z-50 shadow-sm">
+              {/* SecondBar - Mobile Bottom Navigation */}
+              <div className="fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-background/95 backdrop-blur-md flex justify-evenly items-center gap-2 md:hidden px-section-x z-50 shadow-lg">
                 {/* Home */}
-                <div className="flex-center cursor-pointer">
-                  <ActiveLink href="/">
-                    <button
-                      type="button"
-                      className="flex-center p-2 focus:outline-none cursor-pointer"
-                      aria-label="Home"
-                    >
-                      <HomeIcon className="h-6 w-6" />
-                    </button>
+                <div className="flex-center">
+                  <ActiveLink
+                    href="/"
+                    activeLinkClass="text-primary bg-primary/10"
+                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                    aria-label="Home"
+                  >
+                    <HomeIcon className="h-6 w-6" />
                   </ActiveLink>
                 </div>
 
-                {/* Share */}
-                <div className="flex-center cursor-pointer">
-                  <ActiveLink href="/publica">
-                    <button
-                      type="button"
-                      className="flex-center gap-element-gap-sm p-2 focus:outline-none cursor-pointer"
-                      aria-label="Publish"
-                    >
-                      <PlusSmIcon className="h-6 w-6" />
-                      <span className="hidden sm:block label">Publica</span>
-                    </button>
+                {/* Publicar */}
+                <div className="flex-center">
+                  <ActiveLink
+                    href="/publica"
+                    activeLinkClass="text-primary bg-primary/10"
+                    className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
+                    aria-label="Publish"
+                  >
+                    <PlusSmIcon className="h-6 w-6" />
+                    <span className="hidden sm:block label font-semibold">Publica</span>
                   </ActiveLink>
                 </div>
 
                 {/* Notícies */}
-                <div className="flex-center cursor-pointer">
-                  <ActiveLink href="/noticies">
-                    <button
-                      type="button"
-                      className="flex-center p-2 focus:outline-none cursor-pointer"
-                      aria-label="Notícies"
-                    >
-                      <NewspaperIcon className="h-6 w-6" />
-                    </button>
+                <div className="flex-center">
+                  <ActiveLink
+                    href="/noticies"
+                    activeLinkClass="text-primary bg-primary/10"
+                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                    aria-label="Notícies"
+                  >
+                    <NewspaperIcon className="h-6 w-6" />
                   </ActiveLink>
                 </div>
               </div>
             </div>
           </div>
           {/* MenuPanel (md:hidden) */}
-          <Disclosure.Panel className="md:hidden relative z-50">
-            <div className="w-full relative flex justify-evenly items-center bg-background transition-transform">
+          <Disclosure.Panel className="md:hidden relative z-50 bg-background border-b border-border shadow-md">
+            <div className="w-full flex flex-col items-stretch bg-background py-3 px-section-x gap-2">
               {navigation.map((item) => (
                 <ActiveLink
                   href={item.href}
                   key={item.name}
-                  className="label px-button-x py-button-y border-b-2 border-b-background"
+                  className="label font-semibold px-button-x py-3 border-b-2 border-b-background hover:bg-muted/50 rounded-lg transition-all text-center"
                 >
                   {item.name}
                 </ActiveLink>

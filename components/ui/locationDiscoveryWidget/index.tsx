@@ -21,20 +21,16 @@ export default function LocationDiscoveryWidget({
   onLocationChange,
 }: LocationDiscoveryWidgetProps) {
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [hasOpened, setHasOpened] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentLocation, setCurrentLocation] = useState("Catalunya");
+
   const {
     regionsWithCities,
     isLoading: loadingRegions,
     isError,
-  } = useGetRegionsWithCities();
-  // const {
-  //   isLoading: isGettingLocation,
-  //   error: locationError,
-  //   requestLocation,
-  // } = useGeolocation();
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentLocation, setCurrentLocation] = useState("Catalunya");
+  } = useGetRegionsWithCities(hasOpened);
 
   // Transform regions to options with memoization
   const allLocations = useMemo(() => {
@@ -152,7 +148,10 @@ export default function LocationDiscoveryWidget({
             <div className="relative w-full md:w-auto flex-shrink-0">
               <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                  setIsOpen(!isOpen);
+                  if (!isOpen) setHasOpened(true);
+                }}
                 className="w-full flex justify-between items-center border border-border rounded-input px-button-x py-button-y bg-background hover:border-primary transition-colors duration-200 focus-ring"
                 aria-expanded={isOpen}
                 aria-haspopup="listbox"
@@ -165,9 +164,8 @@ export default function LocationDiscoveryWidget({
                   </span>
                 </div>
                 <ChevronDownIcon
-                  className={`h-5 w-5 text-foreground-strong transition-transform duration-200 ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-5 w-5 text-foreground-strong transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 

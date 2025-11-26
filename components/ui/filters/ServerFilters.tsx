@@ -46,6 +46,13 @@ const ServerFilters = ({
     (config) => config.key !== "searchTerm"
   );
 
+  const sortedConfigurations = visibleConfigurations
+    .map((config) => ({
+      config,
+      enabled: FilterOperations.isEnabled(config.key, displayState),
+    }))
+    .sort((a, b) => Number(b.enabled) - Number(a.enabled));
+
   return (
     <div className="w-full bg-background flex justify-center items-center mt-element-gap">
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
@@ -71,14 +78,14 @@ const ServerFilters = ({
             scrollbarColor: "#cccccc transparent",
           }}
         >
-          {visibleConfigurations.map((config) => (
+          {sortedConfigurations.map(({ config, enabled }) => (
             <FilterButton
               key={config.key}
               text={getText(
                 FilterOperations.getDisplayText(config.key, displayState),
                 config.displayName
               )}
-              enabled={FilterOperations.isEnabled(config.key, displayState)}
+              enabled={enabled}
               removeUrl={FilterOperations.getRemovalUrl(
                 config.key,
                 segments,

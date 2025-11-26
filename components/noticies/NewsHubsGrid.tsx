@@ -63,6 +63,16 @@ export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
                 Veure més…
               </PressableAnchor>
             </div>
+            <div className="flex items-center gap-2 mb-2 text-xs text-foreground-strong/80">
+              <PressableAnchor
+                href={`/${hub.slug}`}
+                prefetch={false}
+                className="underline hover:text-primary"
+                variant="inline"
+              >
+                Veure agenda {hub.name}
+              </PressableAnchor>
+            </div>
             {NEARBY_PLACES_BY_HUB[hub.slug] && (
               <nav className="mb-3 text-xs text-foreground-strong/70">
                 <span className="mr-2">A prop:</span>

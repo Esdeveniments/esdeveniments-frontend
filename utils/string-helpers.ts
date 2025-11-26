@@ -129,6 +129,84 @@ export function normalizeUrl(url: string): string {
  * ======================================================= */
 
 const VOWEL_OR_H = /^[aeiouàáèéíïòóúüh]/i;
+const PLACE_PARTICLES = new Set([
+  "de",
+  "del",
+  "dels",
+  "la",
+  "les",
+  "el",
+  "els",
+  "al",
+  "als",
+  "i",
+  "d'",
+  "d’",
+  "l'",
+  "l’",
+]);
+
+function capitalizeWord(word: string): string {
+  return word ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+}
+
+function formatPlaceToken(token: string, isFirst: boolean): string {
+  if (!token) return token;
+
+  // Preserve tokens that intentionally use multiple uppercase letters (acronyms, abbreviations)
+  if (/[A-ZÀ-Ý]{2}/.test(token)) {
+    return token;
+  }
+
+  const lower = token.toLowerCase();
+
+  // Handle apostrophe-prefixed particles (d', l', …)
+  const apostropheMatch = lower.match(/^([a-zà-ÿ]['’])(.*)$/);
+  if (apostropheMatch) {
+    const prefix = apostropheMatch[1];
+    const rest = apostropheMatch[2];
+    const prefixShouldStayLower = !isFirst && PLACE_PARTICLES.has(prefix);
+    const formattedPrefix = prefixShouldStayLower
+      ? prefix
+      : capitalizeWord(prefix);
+    const formattedRest = formatPlaceToken(rest, true);
+    return `${formattedPrefix}${formattedRest}`;
+  }
+
+  // Handle hyphenated compounds by formatting each segment
+  if (lower.includes("-")) {
+    return lower
+      .split("-")
+      .map((part, idx) => formatPlaceToken(part, isFirst && idx === 0))
+      .join(" ");
+  }
+
+  // Lowercase particles (except when first word), otherwise capitalize
+  if (!isFirst && PLACE_PARTICLES.has(lower)) {
+    return lower;
+  }
+
+  return capitalizeWord(lower);
+}
+
+/**
+ * Format Catalan place names with proper capitalization:
+ * - Capitalize significant words
+ * - Keep particles/articles (de, del, d', la, etc.) lowercase unless first word
+ * - Normalize hyphens to spaces and handle apostrophes (l', d', …)
+ * Leaves acronyms (2+ consecutive uppercase letters) untouched.
+ */
+export function formatPlaceName(name: string): string {
+  if (!name) return name;
+
+  const normalized = name.trim();
+  if (!normalized) return normalized;
+
+  return normalized
+    .split(/\s+/)
+    .map((word, idx) => formatPlaceToken(word, idx === 0))
+    .join(" ");
+}
 
 function startsWithVowelOrH(s: string): boolean {
   return VOWEL_OR_H.test((s || "").trim());
@@ -300,7 +378,7 @@ export function formatCatalanA(
         lowercase && phrase.split(/\s+/).length === 1
           ? phrase.toLowerCase()
           : phrase;
-      return `a La ${finalPhrase}`;
+      return `a la ${finalPhrase}`;
     }
     return `al ${phrase}`;
   }

@@ -6,6 +6,7 @@ import {
   ChangeEvent,
   FC,
   useEffect,
+  useRef,
 } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -24,6 +25,8 @@ import {
 import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
+import { SelectSkeleton } from "@components/ui/common/skeletons";
+import { useFilterLoading } from "@components/context/FilterLoadingContext";
 
 const Modal = dynamic(() => import("@components/ui/common/modal"), {
   loading: () => <></>,
@@ -31,7 +34,7 @@ const Modal = dynamic(() => import("@components/ui/common/modal"), {
 });
 
 const Select = dynamic(() => import("@components/ui/common/form/select"), {
-  loading: () => <></>,
+  loading: () => <SelectSkeleton />,
   ssr: false,
 });
 
@@ -43,13 +46,20 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
-  const { regionsWithCities, isLoading: isLoadingRegionsWithCities } =
-    useGetRegionsWithCities();
+  const {
+    regionsWithCities,
+    isLoading: isLoadingRegionsWithCities,
+    isError: isErrorRegionsWithCities,
+  } = useGetRegionsWithCities(isOpen);
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
     return generateRegionsAndTownsOptions(regionsWithCities);
   }, [regionsWithCities]);
+
+  const isLoadingRegions =
+    isLoadingRegionsWithCities ||
+    (!regionsWithCities && !isErrorRegionsWithCities);
 
   const defaults = useMemo(() => {
     const place =
@@ -91,6 +101,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
+  const geolocationPromiseRef = useRef<Promise<
+    { latitude: number; longitude: number } | undefined
+  > | null>(null);
 
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
@@ -115,28 +128,34 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   ]);
 
   const router = useRouter();
+  const { setLoading } = useFilterLoading();
 
   const handlePlaceChange = useCallback((option: Option | null) => {
     setLocalPlace(option?.value || "");
   }, []);
 
-  const handleUserLocation = useCallback(
-    (value: string) => {
-      // Always update the visual value immediately
-      setLocalDistance(value);
+  const triggerGeolocation = useCallback(async () => {
+    if (localUserLocation) {
+      return localUserLocation;
+    }
 
-      // If dragging, don't trigger geolocation yet
-      if (isDragging) {
-        return;
-      }
+    if (geolocationPromiseRef.current) {
+      return geolocationPromiseRef.current;
+    }
 
-      // Not dragging, proceed with geolocation if needed
-      if (localUserLocation || userLocationLoading) {
-        return;
-      }
+    if (userLocationLoading) {
+      return undefined;
+    }
 
-      setUserLocationLoading(true);
-      setUserLocationError("");
+    const pendingPromise = new Promise<
+      { latitude: number; longitude: number } | undefined
+    >((resolve) => {
+      const resolveAndClear = (
+        value: { latitude: number; longitude: number } | undefined
+      ) => {
+        geolocationPromiseRef.current = null;
+        resolve(value);
+      };
 
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -148,6 +167,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
             setLocalUserLocation(location);
             setUserLocationLoading(false);
+            resolveAndClear(location);
           },
           (error: GeolocationError) => {
             setUserLocationLoading(false);
@@ -173,6 +193,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
                 );
             }
+
+            resolveAndClear(undefined);
           },
           {
             enableHighAccuracy: false, // Don't require GPS, allow network location
@@ -186,9 +208,31 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           "La geolocalització no està disponible en aquest navegador."
         );
         setUserLocationLoading(false);
+        resolveAndClear(undefined);
       }
+    });
+
+    geolocationPromiseRef.current = pendingPromise;
+    setUserLocationLoading(true);
+    setUserLocationError("");
+
+    return pendingPromise;
+  }, [localUserLocation, userLocationLoading]);
+
+  const handleUserLocation = useCallback(
+    (value: string) => {
+      // Always update the visual value immediately
+      setLocalDistance(value);
+
+      // If dragging, don't trigger geolocation yet
+      if (isDragging) {
+        return;
+      }
+
+      // Not dragging, proceed with geolocation if needed
+      void triggerGeolocation();
     },
-    [localUserLocation, userLocationLoading, isDragging]
+    [isDragging, triggerGeolocation]
   );
 
   const handleDistanceChange = useCallback(
@@ -204,47 +248,68 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const handleDragEnd = useCallback(() => {
     setIsDragging(false);
-    // Trigger geolocation if needed
+    // Trigger geolocation directly (bypassing state check since we just set isDragging to false)
     if (!localUserLocation && !userLocationLoading && localDistance) {
-      handleUserLocation(localDistance);
+      void triggerGeolocation();
     }
-  }, [localUserLocation, userLocationLoading, localDistance, handleUserLocation]);
+  }, [
+    localUserLocation,
+    userLocationLoading,
+    localDistance,
+    triggerGeolocation,
+  ]);
 
-  const applyFilters = () => {
-    const hasDistance = localDistance && localDistance !== "";
-    const hasUserLocation = Boolean(localUserLocation);
+  const applyFilters = async (): Promise<boolean> => {
+    const hasDistance = Boolean(localDistance && localDistance !== "");
+    let location = localUserLocation;
+
+    // If distance is set but we don't yet have a location, request it before applying
+    if (hasDistance && !location) {
+      location = await triggerGeolocation();
+      // If geolocation failed, location will be undefined. Stop here to let user see the error.
+      if (!location) {
+        return false;
+      }
+    }
+
+    const hasUserLocation = Boolean(location);
+    const isDistanceFilterActive = Boolean(
+      hasDistance && hasUserLocation && location
+    );
 
     const changes = {
       // Clear place when using distance filter with user location
-      place:
-        hasDistance && hasUserLocation
-          ? "catalunya"
-          : localPlace || "catalunya",
+      place: isDistanceFilterActive ? "catalunya" : localPlace || "catalunya",
       byDate: localByDate || "avui",
       category: localCategory || DEFAULT_FILTER_VALUE,
       searchTerm: currentQueryParams.search || "",
-      distance: hasDistance ? parseInt(localDistance) : 50,
-      // Only include lat/lon if we have both distance and user location
-      lat:
-        hasDistance && hasUserLocation && localUserLocation
-          ? localUserLocation.latitude
-          : undefined,
-      lon:
-        hasDistance && hasUserLocation && localUserLocation
-          ? localUserLocation.longitude
-          : undefined,
+      distance: isDistanceFilterActive ? parseInt(localDistance) : undefined,
+      lat: isDistanceFilterActive ? location!.latitude : undefined,
+      lon: isDistanceFilterActive ? location!.longitude : undefined,
     };
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
+    const currentUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "";
+
+    // If nothing changed, avoid triggering loading state that won't auto-reset
+    if (currentUrl === newUrl) {
+      return true;
+    }
 
     sendEventToGA("Place", changes.place);
     sendEventToGA("ByDate", changes.byDate);
     sendEventToGA("Category", changes.category);
-    sendEventToGA("Distance", changes.distance.toString());
+    if (changes.distance !== undefined) {
+      sendEventToGA("Distance", changes.distance.toString());
+    }
 
     startNavigationFeedback();
+    setLoading(true);
     router.push(newUrl);
-    onClose();
+    return true;
   };
 
   const handleByDateChange = useCallback((value: string | number) => {
@@ -259,6 +324,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const disablePlace: boolean =
     !isDragging &&
+    !userLocationError &&
     localDistance !== undefined &&
     localDistance !== "" &&
     !Number.isNaN(Number(localDistance));
@@ -287,6 +353,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         title="Filtres"
         actionButton="Aplicar filtres"
         onActionButtonClick={applyFilters}
+        testId="filters-modal"
       >
         <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
           <div className="w-full flex flex-col justify-start items-start gap-4">
@@ -294,40 +361,27 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               Poblacions
             </p>
             <div className="w-full flex flex-col px-0">
-              <Select
-                id="options"
-                title=""
-                options={regionsAndCitiesArray}
-                value={selectedOption}
-                onChange={handlePlaceChange}
-                isClearable
-                placeholder={
-                  isLoadingRegionsWithCities
-                    ? "Carregant poblacions..."
-                    : "Selecciona població"
-                }
-                isDisabled={isLoadingRegionsWithCities || disablePlace}
-              />
+              {isLoadingRegions ? (
+                <SelectSkeleton />
+              ) : isErrorRegionsWithCities ? (
+                <div className="text-destructive text-sm py-2">
+                  Error carregant les poblacions. Torna-ho a provar més tard.
+                </div>
+              ) : (
+                <Select
+                  id="options"
+                  title=""
+                  options={regionsAndCitiesArray}
+                  value={selectedOption}
+                  onChange={handlePlaceChange}
+                  isClearable
+                  placeholder="Selecciona població"
+                  isDisabled={disablePlace}
+                  testId="place-select"
+                />
+              )}
             </div>
           </div>
-          <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-            <p className="w-full font-semibold font-barlow uppercase">
-              Categories
-            </p>
-            <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
-              {categories.map((category: CategorySummaryResponseDTO) => (
-                <RadioInput
-                  key={category.id}
-                  id={category.slug}
-                  name="category"
-                  value={category.slug}
-                  checkedValue={localCategory}
-                  onChange={handleCategoryChange}
-                  label={category.name}
-                />
-              ))}
-            </div>
-          </fieldset>
           <fieldset className="w-full flex flex-col justify-start items-start gap-6">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Data
@@ -346,6 +400,26 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               ))}
             </div>
           </fieldset>
+          {categories.length > 0 && (
+            <fieldset className="w-full flex flex-col justify-start items-start gap-4">
+              <p className="w-full font-semibold font-barlow uppercase">
+                Categories
+              </p>
+              <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
+                {categories.map((category: CategorySummaryResponseDTO) => (
+                  <RadioInput
+                    key={category.id}
+                    id={category.slug}
+                    name="category"
+                    value={category.slug}
+                    checkedValue={localCategory}
+                    onChange={handleCategoryChange}
+                    label={category.name}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          )}
           <fieldset className="w-full flex flex-col justify-start items-start gap-6">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Distància
@@ -359,7 +433,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     </div>
                   )}
                   {userLocationError && (
-                    <div className="text-sm text-primary">
+                    <div className="text-sm text-destructive">
                       {userLocationError}
                     </div>
                   )}
@@ -367,16 +441,15 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               </div>
             )}
             <div
-              className={`w-full flex flex-col justify-start items-start gap-3px-0 ${
-                disableDistance ? "opacity-30" : ""
-              }`}
+              className={`w-full flex flex-col justify-start items-start gap-3 px-0 ${disableDistance ? "opacity-30" : ""
+                }`}
             >
               <RangeInput
                 key="distance"
                 id="distance"
                 min={Number(DISTANCES[0])}
                 max={Number(DISTANCES[DISTANCES.length - 1])}
-                value={Number(localDistance) || 50}
+                value={localDistance === "" ? 50 : Number(localDistance)}
                 onChange={handleDistanceChange}
                 label="Esdeveniments a"
                 disabled={disableDistance}
@@ -388,6 +461,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   setIsDragging(true);
                 }}
                 onTouchEnd={handleDragEnd}
+                testId="distance-range"
               />
             </div>
           </fieldset>

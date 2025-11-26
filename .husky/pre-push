@@ -1,0 +1,2 @@
+yarn typecheck
+yarn test --run

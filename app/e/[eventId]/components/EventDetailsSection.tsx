@@ -48,7 +48,7 @@ const EventDetailsSection: React.FC<{
               Enllaç a l&apos;esdeveniment:{" "}
               <PressableAnchor
                 href={event.url}
-                className="body-normal inline-block text-foreground-strong hover:text-primary transition-colors duration-200 hover:border-primary pb-0"
+                className="body-normal inline-block text-primary hover:underline transition-colors duration-200 ease-in-out pb-0"
                 target="_blank"
                 rel="noreferrer"
                 variant="inline"

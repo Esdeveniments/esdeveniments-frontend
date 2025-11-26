@@ -38,12 +38,14 @@ test.describe("Search behavior", () => {
     await input.fill("test");
     const clearButton = page.getByLabel("Clear search");
     await expect(clearButton).toBeVisible();
-    // Click clear button - should reset immediately
+    // Click clear button - should reset input immediately (but not URL until submit)
     await clearButton.click();
+    await expect(input).toHaveValue("");
+    
+    // Submit to verify URL clears
+    await searchButton.click();
     await expect
       .poll(async () => page.url(), { timeout: 20000 })
       .not.toContain("search=");
-    // Verify input is also cleared
-    await expect(input).toHaveValue("");
   });
 });

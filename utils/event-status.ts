@@ -1,4 +1,5 @@
 import type { EventTemporalStatus } from "types/event-status";
+import { normalizeEndTime } from "@utils/date-helpers";
 
 /**
  * Compute temporal status of an event given start & optional end date.
@@ -19,6 +20,9 @@ export function computeTemporalStatus(
   startTime?: string | null,
   endTime?: string | null
 ): EventTemporalStatus {
+  // Treat identical start/end times as "no end time" to avoid zero-length windows
+  const normalizedEndTime = normalizeEndTime(startTime, endTime);
+
   const now = nowOverride ? new Date(nowOverride) : new Date();
 
   // Helper to construct a Date from date and time strings
@@ -35,13 +39,22 @@ export function computeTemporalStatus(
     return new Date(date);
   };
 
-  const start = buildDateTime(startDate, startTime);
-  const end = endDate ? buildDateTime(endDate, endTime) : undefined;
-
   // Check if this is an all-day event (no specific time, i.e., "Consultar horaris")
   // Only treat as all-day if startTime is explicitly provided and is "00:00" or null
   const isAllDayEvent =
     startTime !== undefined && (!startTime || startTime === "00:00");
+
+  const start = buildDateTime(startDate, startTime);
+  const endDateHasTime = typeof endDate === "string" && endDate.includes("T");
+  const shouldBuildEnd =
+    Boolean(endDate) &&
+    (isAllDayEvent ||
+      endDateHasTime ||
+      (normalizedEndTime && normalizedEndTime.trim().length > 0));
+  const end =
+    shouldBuildEnd && endDate
+      ? buildDateTime(endDate, normalizedEndTime)
+      : undefined;
 
   // Helper to compare dates at day-level (ignoring time)
   const isSameDay = (date1: Date, date2: Date) => {

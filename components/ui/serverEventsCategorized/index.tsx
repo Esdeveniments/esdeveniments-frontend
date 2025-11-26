@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
+import dynamic from "next/dynamic";
 import {
   SparklesIcon,
   ShoppingBagIcon,
@@ -8,9 +9,7 @@ import {
   TicketIcon,
   PhotographIcon,
 } from "@heroicons/react/outline";
-import Search from "@components/ui/search";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { SearchSkeleton } from "@components/ui/common/skeletons";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
@@ -30,6 +29,13 @@ import {
 import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
+import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
+
+// Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
+const HeroSection = (dynamic as any)(
+  () => import("../hero/HeroSection"),
+  { suspense: true }
+);
 
 /**
  * Icon mapping for categories.
@@ -125,7 +131,7 @@ const resolveCategoryDetails = (
   const categoryName =
     safeCategory.length > 0
       ? safeCategory.charAt(0).toUpperCase() +
-        safeCategory.slice(1).replace(/-/g, " ")
+      safeCategory.slice(1).replace(/-/g, " ")
       : "";
   return {
     categoryName,
@@ -133,6 +139,7 @@ const resolveCategoryDetails = (
   };
 };
 
+// --- MAIN COMPONENT ---
 function ServerEventsCategorized({
   pageData,
   seoTopTownLinks = [],
@@ -140,27 +147,41 @@ function ServerEventsCategorized({
 }: ServerEventsCategorizedProps) {
   return (
     <div className="w-full bg-background">
-      {/* 1. INSTANT RENDER: SEARCH & HEADER */}
-      <div className="bg-background sticky top-0 z-30 shadow-sm py-element-gap">
+      {/* 1. HERO SECTION: Search + Location + Dates */}
+      <div className="bg-background border-b border-border/40 pb-8 pt-4">
         <div className="container">
-          <Suspense fallback={<SearchSkeleton />}>
-            <Search />
+          <Suspense fallback={<HeroSectionSkeleton />}>
+            <HeroSection subTitle={pageData?.subTitle} />
           </Suspense>
         </div>
       </div>
 
-      <div className="container pt-section-y">
-        {pageData && (
-          <>
-            <h1 className="heading-1 mb-2">{pageData.title}</h1>
-            <p className="body-large text-foreground/70 text-left">
-              {pageData.subTitle}
-            </p>
-          </>
-        )}
-      </div>
+      {/* 2. TOP LOCATIONS (Moved from bottom) */}
+      {seoTopTownLinks.length > 0 && (
+        <div className="container py-8 border-b border-border/40">
+          <div className="flex flex-col gap-4">
+            <SectionHeading
+              title="Poblacions més buscades"
+              titleClassName="heading-2 text-foreground mb-element-gap"
+            />
+            <div className="flex flex-wrap gap-2">
+              {seoTopTownLinks.map((link) => (
+                <PressableAnchor
+                  key={link.href}
+                  href={link.href}
+                  prefetch={false}
+                  variant="plain"
+                  className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
+                >
+                  {link.label.replace("Agenda ", "")}
+                </PressableAnchor>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* 2. INSTANT RENDER: QUICK CATEGORIES */}
+      {/* 3. QUICK CATEGORIES */}
       <section className="py-section-y container border-b">
         <SectionHeading
           title="Explora per interessos"
@@ -187,11 +208,10 @@ function ServerEventsCategorized({
         </div>
       </section>
 
-      {/* 3. STREAMED CONTENT: HEAVY FETCHING */}
+      {/* 4. STREAMED CONTENT: HEAVY FETCHING */}
       <Suspense fallback={<ServerEventsCategorizedFallback />}>
         <ServerEventsCategorizedContent
           {...contentProps}
-          seoTopTownLinks={seoTopTownLinks}
         />
       </Suspense>
     </div>
@@ -202,7 +222,6 @@ export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
   categoriesPromise,
   featuredPlaces,
-  seoTopTownLinks = [],
 }: ServerEventsCategorizedContentProps) {
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
@@ -220,43 +239,43 @@ export async function ServerEventsCategorizedContent({
   // 2. Prepare Featured Places Promises
   const featuredSectionsPromise = featuredPlaces
     ? Promise.all(
-        featuredPlaces.map(async (placeConfig, index) => {
-          const placeSlug =
-            placeConfig.filter.city ||
-            placeConfig.filter.region ||
-            placeConfig.filter.place ||
-            placeConfig.slug;
+      featuredPlaces.map(async (placeConfig, index) => {
+        const placeSlug =
+          placeConfig.filter.city ||
+          placeConfig.filter.region ||
+          placeConfig.filter.place ||
+          placeConfig.slug;
 
-          if (!placeSlug) return null;
+        if (!placeSlug) return null;
 
-          try {
-            const response = await fetchEvents({
-              place: placeSlug,
-              page: 0,
-              size: 6,
-            });
+        try {
+          const response = await fetchEvents({
+            place: placeSlug,
+            page: 0,
+            size: 6,
+          });
 
-            const events = filterActiveEvents(response.content);
+          const events = filterActiveEvents(response.content);
 
-            if (events.length === 0) return null;
+          if (events.length === 0) return null;
 
-            return {
-              ...placeConfig,
-              events,
+          return {
+            ...placeConfig,
+            events,
+            placeSlug,
+            usePriority: index < 2,
+          };
+        } catch (error) {
+          captureException(error, {
+            extra: {
               placeSlug,
-              usePriority: index < 2,
-            };
-          } catch (error) {
-            captureException(error, {
-              extra: {
-                placeSlug,
-                section: "featuredPlaces",
-              },
-            });
-            return null;
-          }
-        })
-      )
+              section: "featuredPlaces",
+            },
+          });
+          return null;
+        }
+      })
+    )
     : Promise.resolve<(FeaturedPlaceConfig | null)[]>([]);
 
   // 3. Parallel Execution
@@ -384,29 +403,6 @@ export async function ServerEventsCategorizedContent({
           />
         ))}
       </div>
-
-      {/* SEO Links */}
-      {seoTopTownLinks.length > 0 && (
-        <section className="py-section-y container">
-          <SectionHeading
-            title="Agendes locals més visitades"
-            titleClassName="heading-2 text-foreground mb-element-gap"
-          />
-          <div className="grid grid-cols-3 gap-element-gap mt-element-gap">
-            {seoTopTownLinks.map((link) => (
-              <PressableAnchor
-                key={link.href}
-                href={link.href}
-                prefetch={false}
-                variant="plain"
-                className="body-small text-foreground/80 hover:text-primary hover:underline font-medium transition-interactive"
-              >
-                {link.label}
-              </PressableAnchor>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* CTA */}
       <section className="py-section-y container text-center">
