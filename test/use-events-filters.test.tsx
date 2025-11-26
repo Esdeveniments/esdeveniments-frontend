@@ -104,8 +104,9 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("does not use SSR fallback when filters are present (initially empty then fetch)", async () => {
-    // Slow fetch to observe initial state
+  it("does not use SSR fallback when filters are present (fetches fresh data)", async () => {
+    // When client filters are present, suspense is disabled to avoid SSR errors.
+    // The component renders immediately with empty data, then fetches fresh data.
     globalThis.fetch = vi.fn(async () => {
       await new Promise((r) => setTimeout(r, 50));
       return new Response(
@@ -130,7 +131,7 @@ describe("useEvents filtered behaviour", () => {
               date="tots"
               search="foo"
               initialSize={10}
-              // Filtered queries should ignore SSR fallback and show loading
+              // Filtered queries should ignore SSR fallback and fetch fresh data
               fallbackData={[createMockEvent("f", "F", "f")]}
             />
           </React.Suspense>
@@ -138,11 +139,15 @@ describe("useEvents filtered behaviour", () => {
       );
     });
 
-    // Suspends instead of showing stale fallback
-    expect(screen.queryByTestId("count")).toBeNull();
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    // With suspense disabled for client filters, component renders immediately
+    // (starts empty since SSR fallback is ignored when filters are present)
+    expect(screen.getByTestId("count")).toBeInTheDocument();
+    // Should NOT show the stale SSR fallback count of 1
+    expect(screen.getByTestId("count").textContent).not.toBe("1");
 
+    // Fetches fresh data
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    // After fetch completes, shows the actual filtered result
     await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("1"));
   });
 
