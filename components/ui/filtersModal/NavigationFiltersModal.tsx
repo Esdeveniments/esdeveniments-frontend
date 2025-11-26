@@ -651,7 +651,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                       </div>
                     )}
                     {userLocationError && (
-                      <div className="text-sm text-primary">
+                      <div className="text-sm text-destructive">
                         {userLocationError}
                       </div>
                     )}
