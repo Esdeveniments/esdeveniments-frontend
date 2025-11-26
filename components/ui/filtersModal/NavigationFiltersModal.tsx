@@ -573,6 +573,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   </button>
                 </div>
               )}
+              {isRegionSelected && (
+                <div className="text-xs text-border bg-background border border-border rounded-md p-2">
+                  Has seleccionat una comarca. Les comarques no tenen un punt geogràfic concret, per això no es pot utilitzar el filtre de distància. Per utilitzar el filtre de distància, selecciona una població específica o utilitza la teva ubicació. Pots continuar filtrant per data i categories per afinar els resultats.
+                </div>
+              )}
             </div>
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
               <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
