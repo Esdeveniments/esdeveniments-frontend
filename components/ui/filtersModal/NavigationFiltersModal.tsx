@@ -15,7 +15,7 @@ import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, DISTANCES, DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { sendEventToGA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import type { Option } from "types/common";
+import type { Option, PlaceType } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import {
   GeolocationPosition,
@@ -82,6 +82,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       distance,
       userLocation: initialUserLocation,
       selectOption: regionOption || null,
+      placeType: (regionOption?.placeType || "") as PlaceType,
+      placeCoords:
+        regionOption?.latitude && regionOption?.longitude
+          ? { latitude: regionOption.latitude, longitude: regionOption.longitude }
+          : undefined,
     };
   }, [
     currentSegments,
@@ -90,6 +95,25 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     regionsAndCitiesArray,
   ]);
 
+  const defaultDistanceValue = defaults.distance || DISTANCES[1].toString();
+  const initialUseCurrentLocation = useMemo(
+    () =>
+      Boolean(
+        defaults.distance &&
+        !defaults.place &&
+        !defaults.placeCoords &&
+        (defaults.userLocation ||
+          (currentQueryParams.lat && currentQueryParams.lon))
+      ),
+    [
+      currentQueryParams.lat,
+      currentQueryParams.lon,
+      defaults.distance,
+      defaults.place,
+      defaults.placeCoords,
+      defaults.userLocation,
+    ]
+  );
   const [localPlace, setLocalPlace] = useState<string>(defaults.place);
   const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
   const [localCategory, setLocalCategory] = useState<string>(defaults.category);
@@ -97,6 +121,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [localUserLocation, setLocalUserLocation] = useState(
     defaults.userLocation
   );
+  const [localPlaceType, setLocalPlaceType] = useState<PlaceType>(
+    defaults.placeType
+  );
+  const [localPlaceCoords, setLocalPlaceCoords] = useState<{
+    latitude: number;
+    longitude: number;
+  } | undefined>(defaults.placeCoords);
   const [userLocationLoading, setUserLocationLoading] =
     useState<boolean>(false);
   const [userLocationError, setUserLocationError] = useState<string>("");
@@ -104,6 +135,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const geolocationPromiseRef = useRef<Promise<
     { latitude: number; longitude: number } | undefined
   > | null>(null);
+  const [isDistanceActive, setIsDistanceActive] = useState<boolean>(
+    Boolean(defaults.distance)
+  );
+  const [useCurrentLocationMode, setUseCurrentLocationMode] =
+    useState<boolean>(initialUseCurrentLocation);
 
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
@@ -114,8 +150,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalCategory(defaults.category);
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
+      setLocalPlaceType(defaults.placeType);
+      setLocalPlaceCoords(defaults.placeCoords);
       setUserLocationLoading(false);
       setUserLocationError("");
+      setIsDistanceActive(Boolean(defaults.distance));
+      setUseCurrentLocationMode(initialUseCurrentLocation);
     }, 0);
     return () => window.clearTimeout(id);
   }, [
@@ -125,14 +165,42 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.category,
     defaults.distance,
     defaults.userLocation,
+    defaults.placeType,
+    defaults.placeCoords,
+    initialUseCurrentLocation,
   ]);
 
   const router = useRouter();
   const { setLoading } = useFilterLoading();
 
-  const handlePlaceChange = useCallback((option: Option | null) => {
-    setLocalPlace(option?.value || "");
-  }, []);
+  const handlePlaceChange = useCallback(
+    (option: Option | null) => {
+      setLocalPlace(option?.value || "");
+      setLocalPlaceType(option?.placeType || "");
+      setUseCurrentLocationMode(false);
+
+      if (option?.latitude && option?.longitude) {
+        setLocalPlaceCoords({
+          latitude: option.latitude,
+          longitude: option.longitude,
+        });
+        setUserLocationError("");
+
+        // If the user already enabled distance but had it cleared, prefill a sensible default
+        if (isDistanceActive && !localDistance) {
+          setLocalDistance(defaultDistanceValue);
+        }
+      } else {
+        setLocalPlaceCoords(undefined);
+        // If selecting a region (no coords), clear distance since it can't be used
+        if (option?.placeType === "region") {
+          setLocalDistance("");
+          setIsDistanceActive(false);
+        }
+      }
+    },
+    [defaultDistanceValue, isDistanceActive, localDistance]
+  );
 
   const triggerGeolocation = useCallback(async () => {
     if (localUserLocation) {
@@ -222,6 +290,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const handleUserLocation = useCallback(
     (value: string) => {
       // Always update the visual value immediately
+      setIsDistanceActive(true);
       setLocalDistance(value);
 
       // If dragging, don't trigger geolocation yet
@@ -229,10 +298,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         return;
       }
 
-      // Not dragging, proceed with geolocation if needed
-      void triggerGeolocation();
+      // Not dragging, proceed with geolocation only when we don't have place coordinates
+      if (!localPlaceCoords) {
+        void triggerGeolocation();
+      }
     },
-    [isDragging, triggerGeolocation]
+    [isDragging, triggerGeolocation, localPlaceCoords]
   );
 
   const handleDistanceChange = useCallback(
@@ -246,25 +317,87 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     [handleUserLocation]
   );
 
+  const handleClearDistance = useCallback(() => {
+    setLocalDistance("");
+    setIsDistanceActive(false);
+    setUserLocationError("");
+  }, []);
+
+  const handleUseMyLocation = useCallback(() => {
+    setLocalPlace("");
+    setLocalPlaceType("");
+    setLocalPlaceCoords(undefined);
+    setIsDistanceActive(true);
+    setUseCurrentLocationMode(true);
+    if (!localDistance) {
+      setLocalDistance(defaultDistanceValue);
+    }
+    void triggerGeolocation();
+  }, [triggerGeolocation, localDistance, defaultDistanceValue]);
+
   const handleDragEnd = useCallback(() => {
     setIsDragging(false);
     // Trigger geolocation directly (bypassing state check since we just set isDragging to false)
-    if (!localUserLocation && !userLocationLoading && localDistance) {
+    if (
+      !localPlaceCoords &&
+      !localUserLocation &&
+      !userLocationLoading &&
+      localDistance
+    ) {
       void triggerGeolocation();
     }
   }, [
     localUserLocation,
     userLocationLoading,
     localDistance,
+    localPlaceCoords,
     triggerGeolocation,
   ]);
 
+  const toggleDistanceActive = useCallback(() => {
+    const distanceUnavailable =
+      localPlaceType === "region" ||
+      (!localPlaceCoords && Boolean(userLocationError));
+
+    if (distanceUnavailable) {
+      return;
+    }
+
+    setIsDistanceActive((prev) => {
+      const next = !prev;
+
+      if (next && !localDistance) {
+        setLocalDistance(defaultDistanceValue);
+        if (!localPlaceCoords) {
+          void triggerGeolocation();
+        }
+      }
+
+      if (!next) {
+        setLocalDistance("");
+        setUseCurrentLocationMode(false);
+      }
+
+      return next;
+    });
+  }, [
+    defaultDistanceValue,
+    localDistance,
+    localPlaceCoords,
+    localPlaceType,
+    triggerGeolocation,
+    userLocationError,
+    setUseCurrentLocationMode,
+  ]);
+
   const applyFilters = async (): Promise<boolean> => {
-    const hasDistance = Boolean(localDistance && localDistance !== "");
+    const hasDistance =
+      isDistanceActive && Boolean(localDistance && localDistance !== "");
     let location = localUserLocation;
 
     // If distance is set but we don't yet have a location, request it before applying
-    if (hasDistance && !location) {
+    // Only if we are NOT using a specific place's coordinates
+    if (hasDistance && !location && !userLocationError && !localPlaceCoords) {
       location = await triggerGeolocation();
       // If geolocation failed, location will be undefined. Stop here to let user see the error.
       if (!location) {
@@ -273,19 +406,26 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     }
 
     const hasUserLocation = Boolean(location);
-    const isDistanceFilterActive = Boolean(
-      hasDistance && hasUserLocation && location
-    );
+    const hasPlaceCoords = Boolean(localPlaceCoords);
+    const isDistanceFilterActive =
+      hasDistance && (hasUserLocation || hasPlaceCoords);
 
     const changes = {
-      // Clear place when using distance filter with user location
-      place: isDistanceFilterActive ? "catalunya" : localPlace || "catalunya",
+      // Clear place when using distance filter with user location, but KEEP it if using place coords
+      place:
+        isDistanceFilterActive && !localPlaceCoords
+          ? "catalunya"
+          : localPlace || "catalunya",
       byDate: localByDate || "avui",
       category: localCategory || DEFAULT_FILTER_VALUE,
       searchTerm: currentQueryParams.search || "",
       distance: isDistanceFilterActive ? parseInt(localDistance) : undefined,
-      lat: isDistanceFilterActive ? location!.latitude : undefined,
-      lon: isDistanceFilterActive ? location!.longitude : undefined,
+      lat: isDistanceFilterActive
+        ? localPlaceCoords?.latitude ?? location?.latitude
+        : undefined,
+      lon: isDistanceFilterActive
+        ? localPlaceCoords?.longitude ?? location?.longitude
+        : undefined,
     };
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
@@ -322,19 +462,19 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     );
   }, []);
 
-  const disablePlace: boolean =
-    !isDragging &&
-    !userLocationError &&
-    localDistance !== undefined &&
-    localDistance !== "" &&
-    !Number.isNaN(Number(localDistance));
+  // Determine if the selected place is a region (comarca) - regions don't have coordinates
+  const isRegionSelected = localPlaceType === "region";
 
-  // Allow distance interaction if coords exist in URL (for clearing) or if no place is selected
-  const hasCoordinatesInUrl = Boolean(
-    currentQueryParams.lat && currentQueryParams.lon
-  );
+  const isPlaceSelectDisabled =
+    useCurrentLocationMode && isDistanceActive && !isRegionSelected;
+
+  // Distance is disabled when:
+  // 1. A region is selected (regions don't have a single point for radius search)
+  // 2. Geolocation failed and no place with coords is selected
   const disableDistance: boolean =
-    (Boolean(localPlace) && !hasCoordinatesInUrl) || Boolean(userLocationError);
+    isRegionSelected ||
+    (!localPlaceCoords && Boolean(userLocationError));
+  const distanceControlDisabled = disableDistance || !isDistanceActive;
 
   const selectedOption = useMemo<Option | null>(() => {
     if (!localPlace) return null;
@@ -344,6 +484,38 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     }
     return null;
   }, [localPlace, regionsAndCitiesArray]);
+
+  const distanceLabel = useMemo(() => {
+    if (isRegionSelected) {
+      return "Distància";
+    }
+    if (selectedOption && localPlaceCoords) {
+      return `Distància des de ${selectedOption.label}`;
+    }
+    return "Distància des de la teva ubicació";
+  }, [selectedOption, localPlaceCoords, isRegionSelected]);
+
+  // Helper text explaining the distance filter behavior
+  const distanceHelperText = useMemo(() => {
+    if (isRegionSelected) {
+      return "Per utilitzar el filtre de distància, selecciona una població específica o la teva ubicació actual.";
+    }
+    return "Si tries una població, calcularem el radi des d'aquell punt. Si no n'hi ha cap, utilitzarem la teva ubicació actual. Activa el filtre per limitar els resultats a un radi concret.";
+  }, [isRegionSelected]);
+
+  const shouldShowGeolocationFeedback =
+    isDistanceActive &&
+    (userLocationLoading || userLocationError) &&
+    !localPlaceCoords &&
+    !isRegionSelected;
+
+  const useLocationLabel = useMemo(
+    () =>
+      useCurrentLocationMode
+        ? "Estàs utilitzant la teva ubicació"
+        : "Utilitzar la meva ubicació",
+    [useCurrentLocationMode]
+  );
 
   return (
     <>
@@ -360,111 +532,171 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
               Poblacions
             </p>
-            <div className="w-full flex flex-col px-0">
-              {isLoadingRegions ? (
-                <SelectSkeleton />
-              ) : isErrorRegionsWithCities ? (
-                <div className="text-destructive text-sm py-2">
-                  Error carregant les poblacions. Torna-ho a provar més tard.
+            <div className="w-full flex flex-col gap-2">
+              <div className="w-full flex flex-col px-0">
+                {isLoadingRegions ? (
+                  <SelectSkeleton />
+                ) : isErrorRegionsWithCities ? (
+                  <div className="text-destructive text-sm py-2">
+                    Error carregant les poblacions. Torna-ho a provar més tard.
+                  </div>
+                ) : (
+                  <Select
+                    id="options"
+                    title=""
+                    options={regionsAndCitiesArray}
+                    value={selectedOption}
+                    onChange={handlePlaceChange}
+                    isClearable
+                    placeholder="Selecciona població o comarca"
+                    isDisabled={isPlaceSelectDisabled}
+                    testId="place-select"
+                  />
+                )}
+              </div>
+              {/* Show "Use my location" when a place is selected - either region or town with coords */}
+              <button
+                onClick={handleUseMyLocation}
+                className="text-xs text-primary underline self-start hover:text-primary/80 transition-colors"
+                data-testid="use-my-location-btn"
+              >
+                {useLocationLabel}
+              </button>
+              {useCurrentLocationMode && (
+                <div className="text-xs text-border flex items-center gap-2">
+                  Ubicació actual activada.
+                  <button
+                    onClick={() => setUseCurrentLocationMode(false)}
+                    className="text-primary underline hover:text-primary/80 transition-colors"
+                  >
+                    Canvia a una població
+                  </button>
                 </div>
-              ) : (
-                <Select
-                  id="options"
-                  title=""
-                  options={regionsAndCitiesArray}
-                  value={selectedOption}
-                  onChange={handlePlaceChange}
-                  isClearable
-                  placeholder="Selecciona població"
-                  isDisabled={disablePlace}
-                  testId="place-select"
-                />
+              )}
+              {isRegionSelected && (
+                <div className="text-xs text-border bg-background border border-border rounded-md p-2">
+                  Has seleccionat una comarca. Les comarques no tenen un punt geogràfic concret, per això no es pot utilitzar el filtre de distància. Per utilitzar el filtre de distància, selecciona una població específica o utilitza la teva ubicació. Pots continuar filtrant per data i categories per afinar els resultats.
+                </div>
               )}
             </div>
-          </div>
-          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Data
-            </p>
-            <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-              {BYDATES.map(({ value, label }) => (
-                <RadioInput
-                  key={value}
-                  id={value}
-                  name="byDate"
-                  value={value}
-                  checkedValue={localByDate}
-                  onChange={handleByDateChange}
-                  label={label}
-                />
-              ))}
-            </div>
-          </fieldset>
-          {categories.length > 0 && (
-            <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-              <p className="w-full font-semibold font-barlow uppercase">
-                Categories
+            <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+                Data
               </p>
-              <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
-                {categories.map((category: CategorySummaryResponseDTO) => (
+              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+                {BYDATES.map(({ value, label }) => (
                   <RadioInput
-                    key={category.id}
-                    id={category.slug}
-                    name="category"
-                    value={category.slug}
-                    checkedValue={localCategory}
-                    onChange={handleCategoryChange}
-                    label={category.name}
+                    key={value}
+                    id={value}
+                    name="byDate"
+                    value={value}
+                    checkedValue={localByDate}
+                    onChange={handleByDateChange}
+                    label={label}
                   />
                 ))}
               </div>
             </fieldset>
-          )}
-          <fieldset className="w-full flex flex-col justify-start items-start gap-6">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Distància
-            </p>
-            {(userLocationLoading || userLocationError) && (
-              <div className="border-t border-border py-2">
-                <div className="flex flex-col">
-                  {userLocationLoading && (
-                    <div className="text-sm text-border">
-                      Carregant localització...
-                    </div>
-                  )}
-                  {userLocationError && (
-                    <div className="text-sm text-destructive">
-                      {userLocationError}
-                    </div>
-                  )}
+            {categories.length > 0 && (
+              <fieldset className="w-full flex flex-col justify-start items-start gap-4">
+                <p className="w-full font-semibold font-barlow uppercase">
+                  Categories
+                </p>
+                <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
+                  {categories.map((category: CategorySummaryResponseDTO) => (
+                    <RadioInput
+                      key={category.id}
+                      id={category.slug}
+                      name="category"
+                      value={category.slug}
+                      checkedValue={localCategory}
+                      onChange={handleCategoryChange}
+                      label={category.name}
+                    />
+                  ))}
                 </div>
-              </div>
+              </fieldset>
             )}
-            <div
-              className={`w-full flex flex-col justify-start items-start gap-3 px-0 ${disableDistance ? "opacity-30" : ""
-                }`}
-            >
-              <RangeInput
-                key="distance"
-                id="distance"
-                min={Number(DISTANCES[0])}
-                max={Number(DISTANCES[DISTANCES.length - 1])}
-                value={localDistance === "" ? 50 : Number(localDistance)}
-                onChange={handleDistanceChange}
-                label="Esdeveniments a"
-                disabled={disableDistance}
-                onMouseDown={() => {
-                  setIsDragging(true);
-                }}
-                onMouseUp={handleDragEnd}
-                onTouchStart={() => {
-                  setIsDragging(true);
-                }}
-                onTouchEnd={handleDragEnd}
-                testId="distance-range"
-              />
-            </div>
-          </fieldset>
+            <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+              <div className="w-full flex items-center justify-between gap-3">
+                <p className="font-semibold font-barlow uppercase pt-[5px]">
+                  {distanceLabel}
+                </p>
+                <label
+                  className={`flex items-center gap-2 text-xs font-semibold ${disableDistance ? "text-border" : "text-primary"}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isDistanceActive && !disableDistance}
+                    onChange={toggleDistanceActive}
+                    disabled={disableDistance}
+                    className="h-4 w-4 accent-primary rounded border-border"
+                    data-testid="distance-toggle"
+                  />
+                  Filtrar per radi
+                </label>
+              </div>
+              <p className={`text-sm -mt-2 ${isRegionSelected ? "text-destructive" : "text-border"}`}>
+                {distanceHelperText}
+                {isRegionSelected && (
+                  <>
+                    {" "}
+                    <button
+                      onClick={handleUseMyLocation}
+                      className="text-primary underline hover:text-primary/80 transition-colors"
+                    >
+                      Utilitzar la meva ubicació
+                    </button>
+                  </>
+                )}
+              </p>
+              {shouldShowGeolocationFeedback && (
+                <div className="border-t border-border py-2">
+                  <div className="flex flex-col">
+                    {userLocationLoading && (
+                      <div className="text-sm text-border">
+                        Carregant localització...
+                      </div>
+                    )}
+                    {userLocationError && (
+                      <div className="text-sm text-destructive">
+                        {userLocationError}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div
+                className={`w-full flex flex-col justify-start items-start gap-3 px-0 transition-opacity ${distanceControlDisabled ? "opacity-30 pointer-events-none" : ""
+                  }`}
+              >
+                <RangeInput
+                  key="distance"
+                  id="distance"
+                  min={Number(DISTANCES[0])}
+                  max={Number(DISTANCES[DISTANCES.length - 1])}
+                  value={
+                    isDistanceActive
+                      ? Number(localDistance || defaultDistanceValue)
+                      : Number(DISTANCES[0])
+                  }
+                  onChange={handleDistanceChange}
+                  label="Esdeveniments a"
+                  disabled={distanceControlDisabled}
+                  onMouseDown={() => {
+                    setIsDragging(true);
+                  }}
+                  onMouseUp={handleDragEnd}
+                  onTouchStart={() => {
+                    setIsDragging(true);
+                  }}
+                  onTouchEnd={handleDragEnd}
+                  onClear={handleClearDistance}
+                  testId="distance-range"
+                />
+              </div>
+            </fieldset>
+          </div>
         </div>
       </Modal>
     </>

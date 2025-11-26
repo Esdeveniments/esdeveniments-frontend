@@ -68,19 +68,32 @@ export const useEvents = ({
       }
     : {};
 
+  const radius = distance ? parseFloat(distance) : undefined;
+  const latNumber = lat !== undefined ? parseFloat(lat) : undefined;
+  const lonNumber = lon !== undefined ? parseFloat(lon) : undefined;
+  const hasCoords =
+    Number.isFinite(latNumber) && Number.isFinite(lonNumber);
+  const hasValidRadius =
+    radius !== undefined && Number.isFinite(radius);
+
+  const normalizedPlace =
+    place === "catalunya" ? undefined : place;
+  const placeForRequest =
+    hasCoords && hasValidRadius ? undefined : normalizedPlace;
+
   const baseParams: Omit<FetchEventsParams, "page" | "size"> & {
     size: number;
   } = {
     size: initialSize,
-    place: place !== "catalunya" ? place : undefined,
+    place: placeForRequest,
     category,
     byDate: date,
     from: range.from,
     to: range.to,
     term: search,
-    radius: distance ? parseFloat(distance) : undefined,
-    lat: lat ? parseFloat(lat) : undefined,
-    lon: lon ? parseFloat(lon) : undefined,
+    radius: hasCoords && hasValidRadius ? radius : undefined,
+    lat: hasCoords && hasValidRadius ? latNumber : undefined,
+    lon: hasCoords && hasValidRadius ? lonNumber : undefined,
   };
 
   const getKey = (
@@ -139,7 +152,7 @@ export const useEvents = ({
       }),
     {
       fallbackData:
-        !hasClientFilters && fallbackData.length > 0
+        fallbackData && fallbackData.length > 0
           ? [
               {
                 content: fallbackData,
@@ -163,7 +176,11 @@ export const useEvents = ({
       focusThrottleInterval: 8000,
       errorRetryInterval: 7000,
       errorRetryCount: 3,
-      suspense: true,
+      // Disable suspense when client filters are present to avoid SSR errors.
+      // When hasClientFilters is true, fallbackData is undefined, and SWR suspense
+      // requires fallback data during SSR. By disabling suspense, we allow client-side
+      // fetching without SSR errors while still suspending for SSR-cached content.
+      suspense: !hasClientFilters,
       onError: (e) => {
         console.error("Error fetching events:", e);
         captureException(e);

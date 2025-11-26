@@ -8,27 +8,17 @@ const getIsMobile = (): boolean =>
   typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT;
 
 const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    // On the client, always prioritize the actual window size.
-    if (typeof window !== "undefined") {
-      return getIsMobile();
-    }
-    // On the server, use the provided hint.
-    if (typeof initialIsMobile === "boolean") {
-      return initialIsMobile;
-    }
-    // Fallback for server-side rendering without a hint.
-    return false;
-  });
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof initialIsMobile === "boolean" ? initialIsMobile : false
+  );
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleWindowSizeChange = useCallback((): void => {
+  const updateIsMobile = useCallback((): void => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
     timeoutRef.current = setTimeout(() => {
-      // React automatically skips updates when the value is the same (Object.is comparison)
       setIsMobile(getIsMobile());
     }, 100);
   }, []);
@@ -36,17 +26,19 @@ const useCheckMobileScreen = (initialIsMobile?: boolean): boolean => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Set up resize listener - state is already initialized correctly
-    // via the lazy initializer, so no need to setState here
-    window.addEventListener("resize", handleWindowSizeChange);
+    // Align with the actual viewport once the client hydrates to avoid SSR/client mismatches.
+    updateIsMobile();
+
+    // Update after hydration and on resize to stay in sync with the viewport.
+    window.addEventListener("resize", updateIsMobile);
 
     return () => {
-      window.removeEventListener("resize", handleWindowSizeChange);
+      window.removeEventListener("resize", updateIsMobile);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [handleWindowSizeChange]);
+  }, [updateIsMobile]);
 
   return isMobile;
 };

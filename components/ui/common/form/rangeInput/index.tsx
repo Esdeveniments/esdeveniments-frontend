@@ -15,10 +15,22 @@ const RangeInput: FC<RangeInputProps> = ({
   onTouchStart,
   onTouchEnd,
   testId,
+  onClear,
 }) => {
+  const handleClear = () => {
+    if (onClear) {
+      onClear();
+      return;
+    }
+
+    onChange({ target: { value: "" } });
+  };
+
+  const showClear = Boolean(value) && !disabled;
+
   return (
-    <div 
-      id={id} 
+    <div
+      id={id}
       data-testid={testId}
       className="stack w-full"
       onMouseDownCapture={onMouseDown}
@@ -31,11 +43,19 @@ const RangeInput: FC<RangeInputProps> = ({
         <div className="flex justify-start items-center text-primary gap-2 font-semibold font-barlow text-lg pb-1">
           {value} km
         </div>
-        {value && (
+        {showClear && (
           <XIcon
-            className="w-5 h-5 text-primary"
-            aria-hidden="true"
-            onClick={() => onChange({ target: { value: "" } })}
+            className="w-5 h-5 text-primary cursor-pointer"
+            role="button"
+            tabIndex={0}
+            aria-label="Clear"
+            onClick={handleClear}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleClear();
+              }
+            }}
           />
         )}
       </div>

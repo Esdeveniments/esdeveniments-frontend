@@ -244,8 +244,12 @@ export const formatEventTimeDisplay = (
   startTime?: string | null,
   endTime?: string | null
 ): string => {
-  const normalizedEndTime = normalizeEndTime(startTime, endTime);
-  const hasStartTime = !!startTime && startTime !== "00:00";
+  // Ensure we only work with HH:mm
+  const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
+  const cleanEnd = endTime ? formatTimeForAPI(endTime) : null;
+
+  const normalizedEndTime = normalizeEndTime(cleanStart, cleanEnd);
+  const hasStartTime = !!cleanStart && cleanStart !== "00:00";
   const hasEndTime = !!normalizedEndTime && normalizedEndTime !== "00:00";
 
   // No start time or all-day event (00:00) -> show "Consultar horaris"
@@ -253,13 +257,11 @@ export const formatEventTimeDisplay = (
     return "Consultar horaris";
   }
 
-
-
   // Has start time but no end time -> show just start time
   if (!hasEndTime) {
-    return startTime;
+    return cleanStart;
   }
 
   // Both times available -> show range
-  return `${startTime} - ${normalizedEndTime}`;
+  return `${cleanStart} - ${normalizedEndTime}`;
 };
