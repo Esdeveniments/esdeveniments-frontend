@@ -3,7 +3,9 @@ import type { JSX } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
-import { PlacePageSkeleton } from "@components/ui/common/skeletons";
+import { EventsListSkeleton } from "@components/ui/common/skeletons";
+import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
+import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
 import type { PlacePageShellProps } from "types/props";
 
 export async function ClientLayerWithPlaceLabel({
@@ -28,9 +30,8 @@ export default function PlacePageShell({
   webPageSchemaFactory,
 }: PlacePageShellProps) {
   return (
-    <>
-      {/* Suspense boundary for shell + events - streams together */}
-      <Suspense fallback={<PlacePageSkeleton />}>
+    <FilterLoadingProvider>
+      <Suspense fallback={<EventsListSkeleton />}>
         <PlacePageContent
           shellDataPromise={shellDataPromise}
           eventsPromise={eventsPromise}
@@ -49,7 +50,7 @@ export default function PlacePageShell({
           categories={categories}
         />
       </Suspense>
-    </>
+    </FilterLoadingProvider>
   );
 }
 
@@ -96,18 +97,20 @@ async function PlacePageContent({
         <JsonLdServer key={script.id} id={script.id} data={script.data} />
       ))}
 
-      <HybridEventsList
-        initialEvents={events}
-        placeTypeLabel={placeTypeLabel}
-        pageData={pageData}
-        noEventsFound={noEventsFound}
-        place={place}
-        category={category}
-        date={date}
-        serverHasMore={serverHasMore}
-        hasNews={hasNews}
-        categories={categories}
-      />
+      <FilterLoadingGate>
+        <HybridEventsList
+          initialEvents={events}
+          placeTypeLabel={placeTypeLabel}
+          pageData={pageData}
+          noEventsFound={noEventsFound}
+          place={place}
+          category={category}
+          date={date}
+          serverHasMore={serverHasMore}
+          hasNews={hasNews}
+          categories={categories}
+        />
+      </FilterLoadingGate>
     </>
   );
 }

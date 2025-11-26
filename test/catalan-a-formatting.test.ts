@@ -41,10 +41,10 @@ describe("formatCatalanA", () => {
       expect(formatCatalanA("Gironès", "region", false)).toBe("al Gironès");
     });
 
-    it("should use 'a La' for feminine singular regions (capitalized La)", () => {
-      expect(formatCatalanA("Selva", "region", false)).toBe("a La Selva");
-      expect(formatCatalanA("Garrotxa", "region", false)).toBe("a La Garrotxa");
-      expect(formatCatalanA("Noguera", "region", false)).toBe("a La Noguera");
+    it("should use 'a la' for feminine singular regions", () => {
+      expect(formatCatalanA("Selva", "region", false)).toBe("a la Selva");
+      expect(formatCatalanA("Garrotxa", "region", false)).toBe("a la Garrotxa");
+      expect(formatCatalanA("Noguera", "region", false)).toBe("a la Noguera");
     });
 
     it("should use 'a l'' for vowel-starting singular regions", () => {
@@ -71,7 +71,7 @@ describe("formatCatalanA", () => {
       expect(formatCatalanA("Barcelona", "town", false)).toBe("a Barcelona");
       
       // For regions, preserve casing but still add proper articles
-      expect(formatCatalanA("Selva", "region", false)).toBe("a La Selva");
+      expect(formatCatalanA("Selva", "region", false)).toBe("a la Selva");
       expect(formatCatalanA("Alt Empordà", "region", false)).toBe(
         "a l'Alt Empordà"
       );
@@ -87,7 +87,7 @@ describe("formatCatalanA", () => {
       expect(formatCatalanA("Alt Empordà", "region", true)).toBe(
         "a l'Alt empordà"
       );
-      expect(formatCatalanA("Selva", "region", true)).toBe("a La selva");
+      expect(formatCatalanA("Selva", "region", true)).toBe("a la selva");
     });
   });
 
@@ -110,7 +110,7 @@ describe("formatCatalanA", () => {
 
     it("should handle whitespace", () => {
       expect(formatCatalanA("  Barcelona  ", "town", false)).toBe("a Barcelona");
-      expect(formatCatalanA("  Selva  ", "region", false)).toBe("a La Selva");
+      expect(formatCatalanA("  Selva  ", "region", false)).toBe("a la Selva");
     });
 
     it("should handle multi-word place names", () => {
@@ -133,7 +133,7 @@ describe("formatCatalanA", () => {
   describe("backward compatibility", () => {
     it("should maintain default lowercase=true behavior", () => {
       expect(formatCatalanA("Barcelona", "town")).toBe("a barcelona");
-      expect(formatCatalanA("Selva", "region")).toBe("a La selva");
+      expect(formatCatalanA("Selva", "region")).toBe("a la selva");
     });
 
     it("should work with existing usage in generatePagesData", () => {
@@ -146,8 +146,7 @@ describe("formatCatalanA", () => {
       const regionLabel = "Selva";
       const regionType = "region";
       const regionResult = formatCatalanA(regionLabel, regionType, false);
-      expect(regionResult).toBe("a La Selva");
+      expect(regionResult).toBe("a la Selva");
     });
   });
 });
-

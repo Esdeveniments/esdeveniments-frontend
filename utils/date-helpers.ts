@@ -221,6 +221,17 @@ export const formatTimeFromAPI = (timeObj: EventTimeDTO): string => {
 };
 
 /**
+ * Normalize an end time so identical start/end times are treated as "no end time".
+ */
+export const normalizeEndTime = (
+  startTime?: string | null,
+  endTime?: string | null
+): string | null => {
+  if (!endTime) return null;
+  return startTime && startTime === endTime ? null : endTime;
+};
+
+/**
  * Format event time for display in UI
  * Returns "Consultar horaris" if no start time or start time is "00:00" (all-day event)
  * Returns just the start time if no end time is provided
@@ -233,16 +244,24 @@ export const formatEventTimeDisplay = (
   startTime?: string | null,
   endTime?: string | null
 ): string => {
+  // Ensure we only work with HH:mm
+  const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
+  const cleanEnd = endTime ? formatTimeForAPI(endTime) : null;
+
+  const normalizedEndTime = normalizeEndTime(cleanStart, cleanEnd);
+  const hasStartTime = !!cleanStart && cleanStart !== "00:00";
+  const hasEndTime = !!normalizedEndTime && normalizedEndTime !== "00:00";
+
   // No start time or all-day event (00:00) -> show "Consultar horaris"
-  if (!startTime || startTime === "00:00") {
+  if (!hasStartTime) {
     return "Consultar horaris";
   }
 
   // Has start time but no end time -> show just start time
-  if (!endTime) {
-    return startTime;
+  if (!hasEndTime) {
+    return cleanStart;
   }
 
   // Both times available -> show range
-  return `${startTime} - ${endTime}`;
+  return `${cleanStart} - ${normalizedEndTime}`;
 };

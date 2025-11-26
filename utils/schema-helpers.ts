@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { normalizeEndTime } from "@utils/date-helpers";
 import type {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -25,6 +26,7 @@ export const generateJsonData = (
   const videoUrl = "videoUrl" in event ? event.videoUrl : undefined;
   const startTime = "startTime" in event ? event.startTime : null;
   const endTime = "endTime" in event ? event.endTime : null;
+  const normalizedEndTime = normalizeEndTime(startTime, endTime);
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
 
@@ -150,7 +152,7 @@ export const generateJsonData = (
     return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   };
   const startDateTime = parseDateTime(startDate, startTime);
-  const endDateTime = parseDateTime(endDate, endTime, true);
+  const endDateTime = parseDateTime(endDate, normalizedEndTime, true);
   let eventStatusValue = "https://schema.org/EventScheduled";
   if (endDateTime && now > endDateTime) {
     eventStatusValue = "https://schema.org/EventCompleted"; // Completed
@@ -172,7 +174,7 @@ export const generateJsonData = (
     name: title,
     url: `${siteUrl}/e/${slug}`,
     startDate: getEnhancedDateTime(startDate, startTime),
-    endDate: getEnhancedDateTime(endDate, endTime),
+    endDate: getEnhancedDateTime(endDate, normalizedEndTime),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: eventStatusValue,
     location: {

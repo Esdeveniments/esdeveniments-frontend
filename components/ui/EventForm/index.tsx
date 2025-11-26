@@ -9,6 +9,8 @@ import {
   ImageUpload,
   MultiSelect,
 } from "@components/ui/common/form";
+import { SelectSkeleton } from "@components/ui/common/skeletons";
+import Button from "@components/ui/common/button";
 import type { EventFormProps } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
@@ -93,34 +95,35 @@ export const EventForm: React.FC<EventFormProps> = ({
         progress={progress}
       />
 
-      <Select
-        id="region"
-        title="Comarca *"
-        options={regionOptions}
-        value={isOption(form.region) ? form.region : null}
-        onChange={handleRegionChange}
-        isClearable
-        placeholder={
-          isLoadingRegionsWithCities
-            ? "Carregant comarques..."
-            : "Selecciona una comarca"
-        }
-      />
+      {isLoadingRegionsWithCities ? (
+        <>
+          <SelectSkeleton label="Comarca *" />
+          <SelectSkeleton label="Població *" />
+        </>
+      ) : (
+        <>
+          <Select
+            id="region"
+            title="Comarca *"
+            options={regionOptions}
+            value={isOption(form.region) ? form.region : null}
+            onChange={handleRegionChange}
+            isClearable
+            placeholder="Selecciona una comarca"
+          />
 
-      <Select
-        id="town"
-        title="Població *"
-        options={cityOptions}
-        value={isOption(form.town) ? form.town : null}
-        onChange={handleTownChange}
-        isDisabled={!form.region || isLoadingRegionsWithCities}
-        isClearable
-        placeholder={
-          isLoadingRegionsWithCities
-            ? "Carregant pobles..."
-            : "Selecciona un poble"
-        }
-      />
+          <Select
+            id="town"
+            title="Població *"
+            options={cityOptions}
+            value={isOption(form.town) ? form.town : null}
+            onChange={handleTownChange}
+            isDisabled={!form.region}
+            isClearable
+            placeholder="Selecciona un poble"
+          />
+        </>
+      )}
 
       <Input
         id="location"
@@ -135,20 +138,16 @@ export const EventForm: React.FC<EventFormProps> = ({
         value={
           Array.isArray(form.categories)
             ? form.categories
-                .map((cat) => {
-                  if (
-                    typeof cat === "object" &&
-                    "value" in cat &&
-                    "label" in cat
-                  ) {
-                    return cat as Option;
-                  }
-                  if (typeof cat === "object" && "id" in cat && "name" in cat) {
-                    return { value: cat.id.toString(), label: cat.name };
-                  }
-                  return null;
-                })
-                .filter((cat): cat is Option => cat !== null)
+              .map((cat) => {
+                if (isOption(cat)) {
+                  return cat;
+                }
+                if (typeof cat === "object" && "id" in cat && "name" in cat) {
+                  return { value: cat.id.toString(), label: cat.name };
+                }
+                return null;
+              })
+              .filter((cat): cat is Option => cat !== null)
             : []
         }
         onChange={handleCategoriesChange}
@@ -184,14 +183,14 @@ export const EventForm: React.FC<EventFormProps> = ({
       )}
 
       <div className="flex justify-center pt-10">
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={currentFormState.isDisabled || isLoading}
-          className={`text-foreground-strong bg-background hover:bg-primary hover:border-background hover:text-background border-foreground-strong rounded-xl py-3 px-6 ease-in-out duration-300 border focus:outline-none font-barlow italic uppercase font-semibold tracking-wide ${
-            currentFormState.isDisabled || isLoading
-              ? "opacity-50 cursor-not-allowed"
-              : "opacity-100"
-          }`}
+          className={`${currentFormState.isDisabled || isLoading
+            ? "opacity-50 cursor-not-allowed"
+            : "opacity-100"
+            }`}
           data-testid="publish-button"
         >
           {isLoading ? (
@@ -217,7 +216,7 @@ export const EventForm: React.FC<EventFormProps> = ({
           ) : (
             submitLabel
           )}
-        </button>
+        </Button>
       </div>
     </form>
   );

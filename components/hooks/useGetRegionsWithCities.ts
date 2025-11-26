@@ -8,10 +8,15 @@ async function fetcher(): Promise<RegionsGroupedByCitiesResponseDTO[]> {
   return res.json();
 }
 
-export function useGetRegionsWithCities() {
+export function useGetRegionsWithCities(enabled = true) {
   const { data, error, isLoading, mutate } = useSWR<
     RegionsGroupedByCitiesResponseDTO[]
-  >("regions-with-cities", fetcher);
+  >(enabled ? "regions-with-cities" : null, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    revalidateIfStale: true,
+    dedupingInterval: 86_400_000, // 24h: data changes rarely, avoid frequent refetches
+  });
 
   return {
     regionsWithCities: data,

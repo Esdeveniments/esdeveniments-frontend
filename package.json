@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "prepare": "husky",
     "analyze": "cross-env ANALYZE=true next build",
     "analyze:server": "cross-env BUNDLE_ANALYZE=server next build",
     "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build",
@@ -25,6 +26,15 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "scan": "npx react-scan@latest localhost:3000"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "git add"
+    ]
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -74,7 +84,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
+    "lint-staged": "^16.2.7",
     "next-sitemap": "^4.2.3",
     "typescript": "^5.6.3",
     "vite": "^5.4.0",

@@ -48,7 +48,7 @@ function HybridEventsList({
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
-        className="container flex-col justify-center items-center mt-sticky-offset"
+        className="container flex-col justify-center items-center pt-[6rem]"
         data-testid="events-list"
       >
         <NoEventsFound
@@ -70,7 +70,7 @@ function HybridEventsList({
 
   return (
     <div
-      className="container flex-col justify-center items-center mt-sticky-offset"
+      className="container flex-col justify-center items-center pt-[6rem]"
       data-testid="events-list"
     >
       {pageData && (

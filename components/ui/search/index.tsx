@@ -14,6 +14,7 @@ import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import { sendGoogleEvent } from "@utils/analytics";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
+import { useFilterLoading } from "@components/context/FilterLoadingContext";
 
 const sendSearchTermGA = (searchTerm: string): void => {
   if (searchTerm && searchTerm.length > 0) {
@@ -31,6 +32,7 @@ export default function Search(): JSX.Element {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const { setLoading } = useFilterLoading();
 
   // Get current search term from URL
   const urlSearchTerm = searchParams?.get("search") || "";
@@ -48,18 +50,16 @@ export default function Search(): JSX.Element {
         params.delete("search");
       }
 
-      // Build new URL preserving current path structure
+      // Build new URL preserving current path structure (no trailing slash)
       const queryString = params.toString();
-      const newUrl = queryString
-        ? `${isHomePage ? "/catalunya/" : pathname}?${queryString}`
-        : isHomePage
-        ? "/catalunya/"
-        : pathname || "/";
+      const basePath = isHomePage ? "/catalunya" : pathname || "/";
+      const newUrl = queryString ? `${basePath}?${queryString}` : basePath;
 
       startNavigationFeedback();
+      setLoading(true);
       router.push(newUrl);
     },
-    [searchParams, router, pathname, isHomePage]
+    [searchParams, router, pathname, isHomePage, setLoading]
   );
 
   // Function to trigger search (called by button click or Enter key)
@@ -102,7 +102,7 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className={`w-full flex justify-center border rounded-input pl-input-x mt-element-gap transition-interactive ${
+      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${
         isSearchActive ? "border-primary border-2" : "border-border"
       }`}
       data-testid="search-bar"

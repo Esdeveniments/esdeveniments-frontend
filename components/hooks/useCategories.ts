@@ -14,7 +14,8 @@ export function useCategories() {
   >("categories", fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: true,
-    dedupingInterval: 300000, // 5 minutes
+    revalidateIfStale: true,
+    dedupingInterval: 86_400_000, // 24h: categories rarely change, avoid frequent refetches
   });
 
   return {

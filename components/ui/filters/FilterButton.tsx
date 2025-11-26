@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import { usePressFeedback } from "@components/hooks/usePressFeedback";
+import { useFilterLoading } from "@components/context/FilterLoadingContext";
 import {
   isPlainLeftClick,
   startNavigationFeedback,
@@ -19,12 +20,14 @@ const FilterButton = ({
 }: FilterButtonProps): JSX.Element => {
   const router = useRouter();
   const { handlers, isPressed } = usePressFeedback();
+  const { setLoading } = useFilterLoading();
 
   const handleRemove = (e: MouseEvent) => {
     e.stopPropagation();
     if (isPlainLeftClick(e)) {
       startNavigationFeedback();
     }
+    setLoading(true);
     router.push(removeUrl);
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });

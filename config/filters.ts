@@ -50,10 +50,6 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
       return byDate?.label;
     },
     getRemovalChanges: () => ({ byDate: DEFAULT_FILTER_VALUE }),
-    specialCases: {
-      homeRedirect: (segments) =>
-        segments.place === "catalunya" && segments.category === DEFAULT_FILTER_VALUE,
-    },
   },
 
   {

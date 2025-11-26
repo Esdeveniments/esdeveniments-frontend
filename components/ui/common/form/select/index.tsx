@@ -22,6 +22,8 @@ const customStyles: StylesConfig<Option, false, GroupBase<Option>> = {
     borderColor: state.isFocused ? borderColor : borderColor,
     boxShadow: state.isFocused ? "#000 !important" : "#CCC !important",
     borderRadius: "8px",
+    minHeight: "42px",
+    height: "42px",
   }),
   placeholder: (provided) => ({
     ...provided,
@@ -62,7 +64,12 @@ export default function SelectComponent({
   isValidNewOption = false,
   isClearable = false,
   placeholder = "una opció",
+  testId,
+  autoFocus = false,
+  menuPosition = "absolute",
 }: SelectComponentProps) {
+  const inputId = `${id}-input`;
+
   // Removed setState - no longer needed for page/scroll reset
   const [selectedOption, setSelectedOption] = useState<Option | null>(
     initialValue
@@ -85,11 +92,13 @@ export default function SelectComponent({
   };
 
   return (
-    <div className="w-full">
-      <label htmlFor={id} className="text-foreground-strong font-bold">
-        {title}
-      </label>
-      <div className="mt-2">
+    <div className="w-full" data-testid={testId}>
+      {title ? (
+        <label htmlFor={inputId} className="text-foreground-strong font-bold">
+          {title}
+        </label>
+      ) : null}
+      <div className={title ? "mt-2" : undefined}>
         {!isMounted ? (
           <div className="h-[42px] bg-muted border border-border rounded-lg animate-pulse" />
         ) : (
@@ -97,6 +106,7 @@ export default function SelectComponent({
             key={`select-${id}-${isMounted}`}
             id={id}
             instanceId={id}
+            inputId={inputId}
             isSearchable
             isClearable={isClearable}
             formatCreateLabel={(inputValue: string) =>
@@ -111,6 +121,8 @@ export default function SelectComponent({
             isDisabled={isDisabled}
             isValidNewOption={() => isValidNewOption}
             noOptionsMessage={() => "No s'ha trobat cap opció"}
+            autoFocus={autoFocus}
+            menuPosition={menuPosition}
             components={{
               Input,
             }}

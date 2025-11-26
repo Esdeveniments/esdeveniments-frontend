@@ -46,7 +46,7 @@ export default function RestaurantPromotionSection({
   // We keep two booleans:
   // - eventIsInFuture: whether the event is today (and not finished) or in the future (used to decide render)
   // - eventIsWithinFetchWindow: whether the event is within the next MAX_DAYS days
-  const { eventIsInFuture, eventIsWithinFetchWindow } = useMemo(() => {
+  const { eventIsWithinFetchWindow, eventIsInFuture } = useMemo(() => {
     const MAX_DAYS = 15;
     if (!eventStartDate)
       return { eventIsInFuture: false, eventIsWithinFetchWindow: false };
@@ -72,11 +72,7 @@ export default function RestaurantPromotionSection({
     const now = new Date();
     const daysAhead = differenceInCalendarDays(startDateTime, now);
 
-    // Event should show if it hasn't finished yet
-    // This includes:
-    // - Events in the future (daysAhead > 0)
-    // - Events happening today that haven't finished (daysAhead === 0 && !eventHasFinished)
-    // - Events that started earlier but are still ongoing (daysAhead < 0 && !eventHasFinished)
+    // Event should render if it hasn't finished yet
     const eventIsInFuture = !eventHasFinished;
 
     // For fetch window, only fetch for events that start today or in the future (within 15 days)
@@ -84,7 +80,7 @@ export default function RestaurantPromotionSection({
     // (we still show them if they haven't finished, but won't fetch restaurant data)
     const eventIsWithinFetchWindow =
       daysAhead >= 0 && daysAhead <= MAX_DAYS && !eventHasFinished;
-    return { eventIsInFuture, eventIsWithinFetchWindow };
+    return { eventIsWithinFetchWindow, eventIsInFuture };
   }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime]);
 
   // Fetch places when section becomes visible and event is in future and within the fetch window

@@ -1,6 +1,9 @@
 import { JSX } from "react";
 import Link from "next/link";
-import { SocialProps } from '../../../../types/props';
+import { SocialProps } from "types/props";
+
+const SOCIAL_BUTTON_CLASS =
+  "px-3 py-3 bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
 const renderFacebook = (link: string | undefined): JSX.Element | null =>
   link ? (
@@ -12,11 +15,11 @@ const renderFacebook = (link: string | undefined): JSX.Element | null =>
       aria-label="Facebook"
     >
       <button
-        className="px-2 py-2 bg-background rounded-full"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Facebook"
       >
         <svg
-          className="w-4 h-4 fill-primary"
+          className="w-5 h-5 fill-primary transition-colors"
           role="img"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -37,11 +40,11 @@ const renderTwitter = (link: string | undefined): JSX.Element | null =>
       aria-label="Twitter"
     >
       <button
-        className="px-2 py-2 bg-background rounded-full"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Twitter"
       >
         <svg
-          className="w-4 h-4 fill-primary"
+          className="w-5 h-5 fill-primary transition-colors"
           role="img"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"
@@ -62,12 +65,12 @@ const renderInstagram = (link: string | undefined): JSX.Element | null =>
       aria-label="Instagram"
     >
       <button
-        className="px-2 py-2 bg-background rounded-full"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Instagram"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="w-4 h-4 fill-primary"
+          className="w-5 h-5 fill-primary transition-colors"
           role="img"
           viewBox="0 0 24 24"
         >
@@ -87,12 +90,12 @@ const renderTelegram = (link: string | undefined): JSX.Element | null =>
       aria-label="Telegram"
     >
       <button
-        className="px-2 py-2 bg-background rounded-full"
+        className={SOCIAL_BUTTON_CLASS}
         aria-label="Telegram"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="w-4 h-4 fill-primary"
+          className="w-5 h-5 fill-primary transition-colors"
           role="img"
           viewBox="0 0 24 24"
         >
@@ -104,8 +107,11 @@ const renderTelegram = (link: string | undefined): JSX.Element | null =>
 
 export default function Social({ links }: SocialProps): JSX.Element {
   return (
-    <div className="mt-2">
-      <div className="flex justify-center items-center gap-4">
+    <div className="flex flex-col items-center gap-element-gap-sm">
+      <h3 className="body-small font-semibold text-foreground/70 uppercase tracking-wider">
+        Segueix-nos
+      </h3>
+      <div className="flex justify-center items-center gap-3">
         {renderTwitter(links.twitter)}
         {renderInstagram(links.instagram)}
         {renderTelegram(links.telegram)}

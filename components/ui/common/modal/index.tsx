@@ -7,8 +7,9 @@ import {
   DialogTitle,
   Transition,
 } from "@headlessui/react";
-import ArrowLeftIcon from "@heroicons/react/outline/ArrowLeftIcon";
+import { ArrowLeftIcon } from "@heroicons/react/outline";
 import { ModalProps } from "types/props";
+import Button from "@components/ui/common/button";
 
 export default function Modal({
   open,
@@ -17,6 +18,7 @@ export default function Modal({
   children,
   actionButton,
   onActionButtonClick,
+  testId,
 }: ModalProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -27,6 +29,7 @@ export default function Modal({
       onClose={() => setOpen(false)}
       className="fixed inset-0 z-modal overflow-y-auto"
       initialFocus={cancelButtonRef}
+      data-testid={testId}
     >
       <div
         className="w-full bg-border opacity-60 fixed inset-0 z-0"
@@ -49,17 +52,18 @@ export default function Modal({
                 <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-lg shadow-xl relative">
                   <div className="sticky top-0 bg-background px-4 z-10 flex-shrink-0">
                     <div className="relative min-h-12 flex items-center py-2">
-                      <button
+                      <Button
                         ref={cancelButtonRef}
+                        variant="ghost"
                         onClick={() => setOpen(false)}
-                        className="absolute left-2 p-3 focus:outline-none z-20"
+                        className="absolute left-2 p-3 z-20 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                         aria-label="Tanca"
                       >
                         <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
-                      </button>
+                      </Button>
                       <DialogTitle
                         as="h3"
-                        className="flex-1 text-center font-barlow uppercase italic font-semibold px-10 break-words"
+                        className="flex-1 text-center font-barlow uppercase font-semibold px-10 break-words"
                       >
                         {title}
                       </DialogTitle>
@@ -73,17 +77,24 @@ export default function Modal({
                   </div>
                   {actionButton && (
                     <div className="flex-shrink-0 w-full flex justify-center items-end pt-4 px-4 border-t border-border bg-background pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-                      <button
-                        onClick={() => {
+                      <Button
+                        variant="primary"
+                        onClick={async () => {
                           if (onActionButtonClick) {
-                            onActionButtonClick();
+                            const result = await onActionButtonClick();
+                            // Do not close modal if the action returns false,
+                            // allowing the modal to display an error state.
+                            if (result === false) {
+                              return;
+                            }
                           }
                           setOpen(false);
                         }}
-                        className="flex justify-center items-center gap-2 text-foreground-strong bg-background rounded-xl py-2 px-3 ease-in-out duration-300 border border-foreground-strong font-barlow uppercase font-semibold tracking-wide focus:outline-none hover:bg-primary hover:border-background hover:text-background"
+                        data-testid={testId ? `${testId}-action-button` : undefined}
+                        className="w-full"
                       >
                         {actionButton}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

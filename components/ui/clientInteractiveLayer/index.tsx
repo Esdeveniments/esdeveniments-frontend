@@ -60,15 +60,15 @@ function ClientInteractiveLayerContent({
   const stickyClasses =
     isHydrated && isNavbarVisible
       ? "top-14 z-sticky"
-      : "!top-0 z-sticky border-border md:border-b-0 shadow-sm md:shadow-none";
+      : "!top-0 z-sticky border-border md:border-b-0 shadow-sm md:shadow-none pt-element-gap-sm";
 
   return (
     <>
       {/* Fixed Search and Filters Bar */}
       <div
-        className={`w-full bg-background fixed inset-x-0 transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center pt-element-gap-sm`}
+        className={`w-full bg-background fixed inset-x-0 transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
       >
-        <div className="container flex flex-col justify-center items-center md:items-start px-section-x pt-element-gap-sm pb-element-gap-sm">
+        <div className="container flex flex-col justify-center items-center md:items-start">
           <Suspense
             fallback={
               <div className="w-full h-12 bg-background animate-pulse rounded-full" />

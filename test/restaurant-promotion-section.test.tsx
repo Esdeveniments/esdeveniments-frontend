@@ -174,6 +174,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           {...defaultProps}
           eventStartDate={startDate}
           eventEndDate={endDate}
+          eventStartTime={null}
         />
       );
       // Component should render (event is still ongoing)

@@ -32,6 +32,14 @@ export interface SelectComponentProps {
   isValidNewOption?: boolean;
   isClearable?: boolean;
   placeholder?: string;
+  testId?: string;
+  autoFocus?: boolean;
+  menuPosition?: "fixed" | "absolute";
+}
+
+export interface SelectSkeletonProps {
+  label?: string;
+  className?: string;
 }
 
 export interface MultiSelectProps {
@@ -72,7 +80,8 @@ export interface ModalProps {
   title: string;
   children: ReactNode;
   actionButton?: ReactNode;
-  onActionButtonClick?: () => void;
+  onActionButtonClick?: () => boolean | void | Promise<boolean | void>;
+  testId?: string;
 }
 
 export interface TextAreaProps {
@@ -172,6 +181,8 @@ export interface RangeInputProps {
   onMouseUp?: () => void;
   onTouchStart?: () => void;
   onTouchEnd?: () => void;
+  onClear?: () => void;
+  testId?: string;
 }
 
 export interface NoEventsFoundProps {
@@ -189,6 +200,15 @@ export interface LoadMoreButtonProps {
   hasMore?: boolean;
   currentCount?: number;
   totalEvents?: number;
+}
+
+export interface FilterLoadingContextValue {
+  isLoading: boolean;
+  setLoading: (loading: boolean) => void;
+}
+
+export interface FilterLoadingGateProps {
+  children: ReactNode;
 }
 
 // Next.js App Router page props interfaces
@@ -330,7 +350,6 @@ export type ServerEventsCategorizedContentProps = Pick<
   | "categorizedEventsPromise"
   | "categoriesPromise"
   | "featuredPlaces"
-  | "seoTopTownLinks"
 >;
 
 export interface SearchAwareHeadingProps {

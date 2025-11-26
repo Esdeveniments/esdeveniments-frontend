@@ -1,16 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import FilterButton from "../components/ui/filters/FilterButton";
+import { renderWithProviders } from "./utils/renderWithProviders";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 describe("FilterButton (black-box)", () => {
   it("renders remove icon when enabled and chevron when disabled", () => {
     const onOpenModal = vi.fn();
-    const { rerender } = render(
+    const { rerender } = renderWithProviders(
       <FilterButton
         text="Categoria"
         enabled={true}
@@ -38,7 +40,7 @@ describe("FilterButton (black-box)", () => {
 
   it("calls onOpenModal when text is clicked", () => {
     const onOpenModal = vi.fn();
-    render(
+    renderWithProviders(
       <FilterButton
         text="Categoria"
         enabled={false}
