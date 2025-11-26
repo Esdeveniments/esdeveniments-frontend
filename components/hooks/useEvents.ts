@@ -150,7 +150,7 @@ export const useEvents = ({
       }),
     {
       fallbackData:
-        !hasClientFilters && fallbackData.length > 0
+        fallbackData && fallbackData.length > 0
           ? [
               {
                 content: fallbackData,

@@ -104,11 +104,9 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("does not use SSR fallback when filters are present (fetches fresh data)", async () => {
-    // When client filters are present, suspense is disabled to avoid SSR errors.
-    // The component renders immediately with empty data, then fetches fresh data.
-    globalThis.fetch = vi.fn(async () => {
-      await new Promise((r) => setTimeout(r, 50));
+  it("uses fallback data immediately but revalidates when filters are present", async () => {
+    const fetchSpy = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 20));
       return new Response(
         JSON.stringify({
           content: [createMockEvent("x", "X", "x")],
@@ -121,6 +119,7 @@ describe("useEvents filtered behaviour", () => {
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
 
     await act(async () => {
       render(
@@ -131,7 +130,7 @@ describe("useEvents filtered behaviour", () => {
               date="tots"
               search="foo"
               initialSize={10}
-              // Filtered queries should ignore SSR fallback and fetch fresh data
+              // Filtered queries should still show SSR fallback while revalidating
               fallbackData={[createMockEvent("f", "F", "f")]}
             />
           </React.Suspense>
@@ -139,15 +138,12 @@ describe("useEvents filtered behaviour", () => {
       );
     });
 
-    // With suspense disabled for client filters, component renders immediately
-    // (starts empty since SSR fallback is ignored when filters are present)
-    expect(screen.getByTestId("count")).toBeInTheDocument();
-    // Should NOT show the stale SSR fallback count of 1
-    expect(screen.getByTestId("count").textContent).not.toBe("1");
+    // Should render immediately with fallback count
+    expect(screen.getByTestId("count").textContent).toBe("1");
 
     // Fetches fresh data
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
-    // After fetch completes, shows the actual filtered result
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    // After fetch completes, shows the revalidated result
     await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("1"));
   });
 

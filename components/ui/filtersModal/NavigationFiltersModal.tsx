@@ -96,6 +96,24 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   ]);
 
   const defaultDistanceValue = defaults.distance || DISTANCES[1].toString();
+  const initialUseCurrentLocation = useMemo(
+    () =>
+      Boolean(
+        defaults.distance &&
+          !defaults.place &&
+          !defaults.placeCoords &&
+          (defaults.userLocation ||
+            (currentQueryParams.lat && currentQueryParams.lon))
+      ),
+    [
+      currentQueryParams.lat,
+      currentQueryParams.lon,
+      defaults.distance,
+      defaults.place,
+      defaults.placeCoords,
+      defaults.userLocation,
+    ]
+  );
   const [localPlace, setLocalPlace] = useState<string>(defaults.place);
   const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
   const [localCategory, setLocalCategory] = useState<string>(defaults.category);
@@ -120,6 +138,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [isDistanceActive, setIsDistanceActive] = useState<boolean>(
     Boolean(defaults.distance)
   );
+  const [useCurrentLocationMode, setUseCurrentLocationMode] =
+    useState<boolean>(initialUseCurrentLocation);
 
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
@@ -135,6 +155,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setUserLocationLoading(false);
       setUserLocationError("");
       setIsDistanceActive(Boolean(defaults.distance));
+      setUseCurrentLocationMode(initialUseCurrentLocation);
     }, 0);
     return () => window.clearTimeout(id);
   }, [
@@ -146,6 +167,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.userLocation,
     defaults.placeType,
     defaults.placeCoords,
+    initialUseCurrentLocation,
   ]);
 
   const router = useRouter();
@@ -155,6 +177,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     (option: Option | null) => {
       setLocalPlace(option?.value || "");
       setLocalPlaceType(option?.placeType || "");
+      setUseCurrentLocationMode(false);
 
       if (option?.latitude && option?.longitude) {
         setLocalPlaceCoords({
@@ -305,6 +328,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     setLocalPlaceType("");
     setLocalPlaceCoords(undefined);
     setIsDistanceActive(true);
+    setUseCurrentLocationMode(true);
     if (!localDistance) {
       setLocalDistance(defaultDistanceValue);
     }
@@ -351,6 +375,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
       if (!next) {
         setLocalDistance("");
+        setUseCurrentLocationMode(false);
       }
 
       return next;
@@ -362,6 +387,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     localPlaceType,
     triggerGeolocation,
     userLocationError,
+    setUseCurrentLocationMode,
   ]);
 
   const applyFilters = async (): Promise<boolean> => {
@@ -440,7 +466,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   // Determine if the selected place is a region (comarca) - regions don't have coordinates
   const isRegionSelected = localPlaceType === "region";
-  
+
+  const isPlaceSelectDisabled =
+    useCurrentLocationMode && isDistanceActive && !isRegionSelected;
+
   // Distance is disabled when:
   // 1. A region is selected (regions don't have a single point for radius search)
   // 2. Geolocation failed and no place with coords is selected
@@ -482,6 +511,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     !localPlaceCoords &&
     !isRegionSelected;
 
+  const useLocationLabel = useMemo(
+    () =>
+      useCurrentLocationMode
+        ? "Utilitzant la meva ubicació"
+        : "Utilitzar la meva ubicació",
+    [useCurrentLocationMode]
+  );
+
   return (
     <>
       <Modal
@@ -514,20 +551,29 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     onChange={handlePlaceChange}
                     isClearable
                     placeholder="Selecciona població o comarca"
-                    isDisabled={disablePlace}
+                    isDisabled={isPlaceSelectDisabled}
                     testId="place-select"
                   />
                 )}
               </div>
               {/* Show "Use my location" when a place is selected - either region or town with coords */}
-              {localPlace && (
-                <button
-                  onClick={handleUseMyLocation}
-                  className="text-xs text-primary underline self-start hover:text-primary/80 transition-colors"
-                  data-testid="use-my-location-btn"
-                >
-                  Utilitzar la meva ubicació
-                </button>
+              <button
+                onClick={handleUseMyLocation}
+                className="text-xs text-primary underline self-start hover:text-primary/80 transition-colors"
+                data-testid="use-my-location-btn"
+              >
+                {useLocationLabel}
+              </button>
+              {useCurrentLocationMode && (
+                <div className="text-xs text-border flex items-center gap-2">
+                  Estàs utilitzant la teva ubicació actual.
+                  <button
+                    onClick={() => setUseCurrentLocationMode(false)}
+                    className="text-primary underline hover:text-primary/80 transition-colors"
+                  >
+                    Canviar població
+                  </button>
+                </div>
               )}
             </div>
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
