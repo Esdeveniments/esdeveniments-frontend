@@ -138,6 +138,9 @@ export const useEvents = ({
         lon: lonParam as number | undefined,
       }),
     {
+      // When using Suspense in SSR, fallbackData is required.
+      // For client-only filters (search, distance, lat, lon), provide an empty page
+      // so SWR can fetch fresh data client-side without SSR errors.
       fallbackData:
         !hasClientFilters && fallbackData.length > 0
           ? [
@@ -150,7 +153,16 @@ export const useEvents = ({
                 last: !serverHasMore,
               },
             ]
-          : undefined,
+          : [
+              {
+                content: [],
+                currentPage: 0,
+                pageSize: initialSize,
+                totalElements: 0,
+                totalPages: 0,
+                last: true,
+              },
+            ],
 
       keepPreviousData: !hasClientFilters,
       revalidateOnFocus: false,
