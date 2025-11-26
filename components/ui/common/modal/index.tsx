@@ -35,8 +35,13 @@ export default function Modal({
         className="w-full bg-border opacity-60 fixed inset-0 z-0"
         aria-hidden="true"
         onClick={() => setOpen(false)}
+        onTouchStart={(e) => {
+          // Prevent event from bubbling to DialogPanel
+          e.stopPropagation();
+          setOpen(false);
+        }}
       />
-      <div className="w-full fixed inset-0 overflow-y-auto z-10">
+      <div className="w-full fixed inset-0 overflow-y-auto z-10 pointer-events-none">
         <div className="w-full min-h-screen flex items-start sm:items-center justify-center pt-0">
           <Transition show={open} as={Fragment}>
             <Transition.Child
@@ -48,7 +53,11 @@ export default function Modal({
               leaveFrom="opacity-70"
               leaveTo="opacity-0"
             >
-              <DialogPanel className="w-full flex justify-center items-center relative z-10">
+              <DialogPanel 
+                className="flex justify-center items-center relative z-10 pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+              >
                 <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-lg shadow-xl relative">
                   <div className="sticky top-0 bg-background px-4 z-10 flex-shrink-0">
                     <div className="relative min-h-12 flex items-center py-2">

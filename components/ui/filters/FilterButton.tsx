@@ -39,18 +39,16 @@ const FilterButton = ({
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive ${
+        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${
           enabled
             ? "border-primary bg-primary/5 text-foreground-strong"
             : "border-border text-foreground-strong hover:bg-muted"
         }`}
         data-pressed={isPressed ? "true" : undefined}
+        onClick={onOpenModal}
         {...handlers}
       >
-        <span
-          onClick={onOpenModal}
-          className="text-center body-small cursor-pointer"
-        >
+        <span className="text-center body-small">
           {text}
         </span>
         {enabled ? (
@@ -62,12 +60,8 @@ const FilterButton = ({
           />
         ) : (
           <ChevronDownIcon
-            className="h-4 w-4 cursor-pointer"
+            className="h-4 w-4"
             aria-hidden="true"
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              onOpenModal();
-            }}
           />
         )}
       </div>
