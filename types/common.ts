@@ -9,6 +9,8 @@ export interface Option {
   label: string;
   value: string;
   placeType?: PlaceType;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Type guard for Option (centralized for reuse in forms)

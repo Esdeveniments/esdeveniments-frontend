@@ -181,6 +181,7 @@ export interface RangeInputProps {
   onMouseUp?: () => void;
   onTouchStart?: () => void;
   onTouchEnd?: () => void;
+  onClear?: () => void;
   testId?: string;
 }
 
