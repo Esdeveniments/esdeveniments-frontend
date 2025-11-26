@@ -89,5 +89,29 @@ describe("formatEventTimeDisplay", () => {
       expect(formatEventTimeDisplay("19:00", "")).toBe("19:00");
     });
   });
+
+  describe("when times include seconds", () => {
+    it("strips seconds from start time", () => {
+      expect(formatEventTimeDisplay("07:30:00", "09:00")).toBe("07:30 - 09:00");
+    });
+
+    it("strips seconds from end time", () => {
+      expect(formatEventTimeDisplay("07:30", "09:00:00")).toBe("07:30 - 09:00");
+    });
+
+    it("strips seconds from both times", () => {
+      expect(formatEventTimeDisplay("07:30:00", "09:00:00")).toBe(
+        "07:30 - 09:00"
+      );
+    });
+
+    it("handles start time with seconds and no end time", () => {
+      expect(formatEventTimeDisplay("07:30:00", null)).toBe("07:30");
+    });
+
+    it("handles identical times with seconds as single time", () => {
+      expect(formatEventTimeDisplay("07:30:00", "07:30:00")).toBe("07:30");
+    });
+  });
 });
 
