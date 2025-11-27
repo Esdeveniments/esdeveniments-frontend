@@ -1,11 +1,88 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Script from "next/script";
+import type { TcfCallback } from "types/ads";
+
+const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
+const ADS_SRC = ADS_CLIENT
+  ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
+  : "";
 
 export default function GoogleScripts() {
+  const [adsAllowed, setAdsAllowed] = useState(false);
+
+  // Listen for TCF v2 consent (FundingChoices) and only allow ads when granted.
+  useEffect(() => {
+    let isMounted = true;
+    let listenerId: number | undefined;
+
+    const setConsent = (allowed: boolean) => {
+      if (!isMounted) return;
+      window.__adsConsentGranted = allowed;
+      window.dispatchEvent(
+        new CustomEvent("ads-consent-changed", { detail: { allowed } })
+      );
+      setAdsAllowed(allowed);
+    };
+
+    const hasAdConsent = (tcData: {
+      purpose?: { consents?: Record<string, boolean> };
+      vendor?: { consents?: Record<string, boolean> };
+    }) => {
+      const purposeConsent = tcData.purpose?.consents ?? {};
+      const vendorConsent = tcData.vendor?.consents ?? {};
+      // Purpose 1 (storage) + Google vendor 755 are the minimum signals we respect
+      return Boolean(purposeConsent["1"] && vendorConsent["755"]);
+    };
+
+    const maybeHandleTcData: TcfCallback = (tcData, success) => {
+      if (!success || !tcData) return;
+      if (
+        tcData.eventStatus === "useractioncomplete" ||
+        tcData.eventStatus === "tcloaded"
+      ) {
+        setConsent(hasAdConsent(tcData));
+      }
+      if (typeof tcData.listenerId === "number") {
+        listenerId = tcData.listenerId;
+      }
+    };
+
+    if (typeof window.__tcfapi === "function") {
+      window.__tcfapi("getTCData", 2, maybeHandleTcData);
+      window.__tcfapi("addEventListener", 2, maybeHandleTcData);
+    } else {
+      // Fallback: behave like previous behavior (ads allowed) if CMP is missing
+      setConsent(true);
+    }
+
+    return () => {
+      isMounted = false;
+      if (listenerId && typeof window.__tcfapi === "function") {
+        window.__tcfapi("removeEventListener", 2, () => {}, listenerId);
+      }
+    };
+  }, []);
+
+  // Manually inject the Ads script once consent is granted to avoid Next.js data-nscript
+  useEffect(() => {
+    if (!adsAllowed || !ADS_SRC) return;
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${ADS_SRC}"]`
+    );
+    if (existing) return;
+
+    const script = document.createElement("script");
+    script.src = ADS_SRC;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    document.head.appendChild(script);
+  }, [adsAllowed]);
+
   return (
     <>
-      {/* Google Analytics - Moved to lazyOnload for performance */}
+      {/* Google Analytics - keep lazyOnload for perf */}
       <Script
         id="google-analytics-gtag"
         strategy="lazyOnload"
@@ -22,15 +99,7 @@ export default function GoogleScripts() {
         `}
       </Script>
 
-      {/* Google Ads - Moved to lazyOnload to unblock main thread */}
-      <Script
-        id="google-ads"
-        strategy="lazyOnload"
-        crossOrigin="anonymous"
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADS}`}
-      />
-
-      {/* AdBlock Detection - Keep afterInteractive (Critical UI logic) */}
+      {/* AdBlock Detection - keep afterInteractive (UI logic) */}
       <Script id="google-adblock" strategy="afterInteractive">
         {`
           (function() {
@@ -52,7 +121,7 @@ export default function GoogleScripts() {
         `}
       </Script>
 
-      {/* Funding Choices (CMP) - Keep afterInteractive (Legal/GDPR Requirement) */}
+      {/* Funding Choices (CMP) - keep afterInteractive */}
       <Script
         src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
         strategy="afterInteractive"

@@ -6,6 +6,13 @@ declare global {
   interface Window {
     gtag?: (command: string, event: string, params?: unknown) => void;
     __LAST_E2E_PUBLISH_SLUG__?: string;
+    __adsConsentGranted?: boolean;
+    __tcfapi?: (
+      command: "addEventListener" | "removeEventListener" | "getTCData",
+      version: number,
+      callback: import("./ads").TcfCallback,
+      listenerId?: number
+    ) => void;
   }
 }
 

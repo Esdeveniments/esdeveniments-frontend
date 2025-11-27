@@ -1,4 +1,4 @@
-import { useEffect, useRef, CSSProperties, JSX } from "react";
+import { useEffect, useRef, useState, CSSProperties, JSX } from "react";
 import { AdStatus, GoogleAdsenseContainerProps } from "types/common";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
@@ -14,13 +14,77 @@ const GoogleAdsenseContainer = ({
 }: GoogleAdsenseContainerProps): JSX.Element => {
   const adRef = useRef<HTMLModElement>(null);
   const observer = useRef<MutationObserver | null>(null);
+  const viewObserver = useRef<IntersectionObserver | null>(null);
   const callbackRef = useRef(setDisplayAd);
+  const [hasConsent, setHasConsent] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    if (typeof window.__tcfapi !== "function") return true;
+    return Boolean(window.__adsConsentGranted);
+  });
+  const [shouldRenderSlot, setShouldRenderSlot] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return typeof IntersectionObserver === "undefined";
+  });
+  const slotPushed = useRef(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     callbackRef.current = setDisplayAd;
   }, [setDisplayAd]);
 
   useEffect(() => {
+    const handleConsent = (event: Event) => {
+      const allowed = (event as CustomEvent<{ allowed?: boolean }>).detail
+        ?.allowed;
+      setHasConsent(Boolean(allowed));
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "ads-consent-changed",
+        handleConsent as EventListener
+      );
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "ads-consent-changed",
+          handleConsent as EventListener
+        );
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasConsent) {
+      callbackRef.current?.(false);
+    }
+  }, [hasConsent]);
+
+  useEffect(() => {
+    if (!hasConsent || shouldRenderSlot) return;
+    const target = wrapperRef.current;
+    if (!target) return;
+
+    viewObserver.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setShouldRenderSlot(true);
+          }
+        });
+      },
+      { rootMargin: "0px 0px 320px 0px" }
+    );
+
+    viewObserver.current.observe(target);
+
+    return () => viewObserver.current?.disconnect();
+  }, [hasConsent, shouldRenderSlot]);
+
+  useEffect(() => {
+    if (!shouldRenderSlot || !hasConsent) return;
     if (
       adRef.current &&
       adRef.current.children &&
@@ -30,13 +94,16 @@ const GoogleAdsenseContainer = ({
     }
 
     try {
+      if (slotPushed.current) return;
       (window.adsbygoogle = window.adsbygoogle || []).push({});
+      slotPushed.current = true;
     } catch (err) {
       console.error("adsense error", getSanitizedErrorMessage(err));
     }
-  }, []);
+  }, [hasConsent, shouldRenderSlot]);
 
   useEffect(() => {
+    if (!shouldRenderSlot || !hasConsent) return;
     const callback = (mutationsList: MutationRecord[]): void => {
       mutationsList.forEach((element) => {
         const target = element.target as HTMLElement;
@@ -59,27 +126,31 @@ const GoogleAdsenseContainer = ({
     }
 
     return () => observer.current?.disconnect();
-  }, []);
+  }, [hasConsent, shouldRenderSlot]);
 
   return (
-    <ins
-      id={id}
-      ref={adRef}
-      className="adsbygoogle w-full"
-      style={
-        {
-          display: "block",
-          position: "relative",
-          zIndex: 0,
-          ...style,
-        } as CSSProperties
-      }
-      data-ad-client={adClient || process.env.NEXT_PUBLIC_GOOGLE_ADS}
-      data-ad-slot={slot}
-      data-ad-format={format}
-      data-full-width-responsive={responsive}
-      data-ad-layout={layout}
-    />
+    <div ref={wrapperRef} className="w-full">
+      {hasConsent && shouldRenderSlot && (
+        <ins
+          id={id}
+          ref={adRef}
+          className="adsbygoogle w-full"
+          style={
+            {
+              display: "block",
+              position: "relative",
+              zIndex: 0,
+              ...style,
+            } as CSSProperties
+          }
+          data-ad-client={adClient || process.env.NEXT_PUBLIC_GOOGLE_ADS}
+          data-ad-slot={slot}
+          data-ad-format={format}
+          data-full-width-responsive={responsive}
+          data-ad-layout={layout}
+        />
+      )}
+    </div>
   );
 };
 
