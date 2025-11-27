@@ -7,6 +7,7 @@ declare global {
     gtag?: (command: string, event: string, params?: unknown) => void;
     __LAST_E2E_PUBLISH_SLUG__?: string;
     __adsConsentGranted?: boolean;
+    __autoAdsInitialized?: boolean;
     __tcfapi?: (
       command: "addEventListener" | "removeEventListener" | "getTCData",
       version: number,
