@@ -18,7 +18,7 @@ export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
             alt={event.title}
             fill
             priority
-            sizes="(max-width: 768px) 100vw, 1024px"
+            sizes="(max-width: 768px) 82vw, (max-width: 1280px) 75vw, 1200px"
             className="object-cover"
           />
         </div>

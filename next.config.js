@@ -38,8 +38,8 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
     // Next.js 16: Explicitly configure allowed quality values
-    // Values used by getOptimalImageQuality: 35, 40, 45, 50, 60, 70, 75, 80, 85
-    qualities: [35, 40, 45, 50, 60, 70, 75, 80, 85],
+    // Values used by getOptimalImageQuality: 35, 40, 45, 50, 55, 60, 70, 75, 80, 85
+    qualities: [35, 40, 45, 50, 55, 60, 70, 75, 80, 85],
     // Next.js 16: Configure local patterns for API routes with query strings
     // Allow any query string on our internal image proxy route
     localPatterns: [

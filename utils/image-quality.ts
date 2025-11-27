@@ -21,24 +21,28 @@ export function getOptimalImageQuality({
   networkQuality = 70,
   customQuality,
 }: QualityOptions): number {
+  const clampQuality = (value: number) => Math.max(0, Math.min(value, 100));
+  const normalizedNetworkQuality = clampQuality(networkQuality);
+
   // Use custom quality if explicitly provided
   if (customQuality !== undefined) {
-    return customQuality;
+    return clampQuality(customQuality);
   }
 
   // For external images, use optimized quality settings for performance
   if (isExternal) {
     if (isPriority) {
-      // LCP external images: 60-65 quality for critical loading (reduced from 70)
-      return 60;
+      // LCP external images: 55-60 quality for critical loading (lowered to trim mobile payloads)
+      return 55;
     } else {
       // For regular external images, use network-based quality, capped for performance.
-      return Math.min(networkQuality, 50);
+      // Lowered cap to 45 to reduce payload on listing cards (Lighthouse flagged oversized downloads).
+      return Math.min(normalizedNetworkQuality, 45);
     }
   }
 
   // For internal images (rare in this app), use network-based quality
-  return networkQuality;
+  return normalizedNetworkQuality;
 }
 
 // Network-aware quality mapping
@@ -50,14 +54,15 @@ const QUALITY_MAP: Record<NetworkQuality, number> = {
 };
 
 export function getServerImageQuality(networkQuality?: NetworkQuality): number {
-  return QUALITY_MAP[networkQuality || "unknown"];
+  const clampQuality = (value: number) => Math.max(0, Math.min(value, 100));
+  return clampQuality(QUALITY_MAP[networkQuality || "unknown"]);
 }
 
 /**
  * Quality presets for common scenarios
  * Optimized based on Lighthouse performance analysis
  */
-export const QUALITY_PRESETS = {
+export const QUALITY_PRESETS = Object.freeze({
   LCP_EXTERNAL: 60, // LCP external images (reduced from 70)
   EXTERNAL_HIGH: 50, // High-quality external images (reduced from 65)
   EXTERNAL_STANDARD: 45, // Regular external images (reduced from 60)
@@ -65,7 +70,7 @@ export const QUALITY_PRESETS = {
   INTERNAL_HIGH: 80, // Internal high-quality images (unchanged)
   INTERNAL_STANDARD: 75, // Internal standard images (unchanged)
   EMERGENCY: 35, // Emergency/breaking news - maximum speed (reduced from 50)
-} as const;
+}) as const;
 
 /**
  * Get quality preset by name
@@ -94,11 +99,11 @@ export const getOptimalImageSizes = (
 ): string => {
   const sizesMap = {
     // Event cards in listings (most common usage)
-    card: "(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
+    card: "(max-width: 540px) 92vw, (max-width: 768px) 45vw, (max-width: 1024px) 33vw, 25vw",
     // Hero/featured images
     hero: "(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw",
-    // List view images (smaller)
-    list: "(max-width: 480px) 100vw, (max-width: 768px) 30vw, 20vw",
+    // List view / horizontal cards: tighter sizes to avoid over-downloading on desktop
+    list: "(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 22vw",
     // Detail page images
     detail: "(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 40vw",
   };

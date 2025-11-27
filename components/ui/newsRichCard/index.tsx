@@ -111,7 +111,7 @@ export default function NewsRichCard({
             alt={event.title}
             width={1200}
             height={675}
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 800px"
+            sizes="(max-width: 768px) 88vw, (max-width: 1280px) 70vw, 800px"
             className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (

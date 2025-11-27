@@ -22,6 +22,8 @@ export default function HorizontalScroll({
 }: HorizontalScrollProps) {
   const uniqueId = useId();
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const measuredStepRef = useRef<number>(scrollStepPx ?? 320);
+  const lastMeasuredWidthRef = useRef<number>(0);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -30,6 +32,35 @@ export default function HorizontalScroll({
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
+
+    const measureStep = () => {
+      if (typeof scrollStepPx === "number") {
+        measuredStepRef.current = scrollStepPx;
+        return;
+      }
+      const width = el.clientWidth;
+      if (
+        width === lastMeasuredWidthRef.current &&
+        typeof measuredStepRef.current === "number"
+      ) {
+        return;
+      }
+      const firstItem = el.querySelector(
+        '[role="listitem"]'
+      ) as HTMLElement | null;
+      const track = el.firstElementChild as HTMLElement | null;
+      const style = track ? getComputedStyle(track) : null;
+      const gapPx =
+        style ? parseFloat(style.columnGap || style.gap || "0") || 0 : 0;
+      lastMeasuredWidthRef.current = width;
+      if (firstItem) {
+        measuredStepRef.current = Math.round(
+          firstItem.getBoundingClientRect().width + gapPx
+        );
+        return;
+      }
+      measuredStepRef.current = Math.round(el.clientWidth * 0.9);
+    };
 
     const updateFlags = () => {
       const { scrollLeft, scrollWidth, clientWidth } = el;
@@ -51,10 +82,17 @@ export default function HorizontalScroll({
         window.matchMedia("(pointer: fine)").matches;
       setIsFinePointer(prefersFine);
       setShowHint(hasOverflow && prefersCoarse);
+      measureStep();
       updateFlags();
     };
 
-    updateOverflowAndHint();
+    let measureRaf: number | undefined;
+    const scheduleOverflowAndHint = () => {
+      if (measureRaf) window.cancelAnimationFrame(measureRaf);
+      measureRaf = window.requestAnimationFrame(updateOverflowAndHint);
+    };
+
+    scheduleOverflowAndHint();
 
     // Optional one-time nudge to hint scroll on touch devices
     let forward: number | undefined;
@@ -98,47 +136,42 @@ export default function HorizontalScroll({
     } catch {
       // noop: sessionStorage or matchMedia may be unavailable
     }
+    let scrollRaf: number | undefined;
     const onScroll = () => {
-      updateFlags();
-      if (el.scrollLeft > 8) setShowHint(false);
+      if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
+      scrollRaf = window.requestAnimationFrame(() => {
+        updateFlags();
+        if (el.scrollLeft > 8) setShowHint(false);
+      });
     };
     el.addEventListener("scroll", onScroll, { passive: true });
 
     // Hide hint after a short time if the user doesn't interact
     const t = window.setTimeout(() => setShowHint(false), 2500);
 
-    const onResize = () => updateOverflowAndHint();
+    const onResize = () => scheduleOverflowAndHint();
     window.addEventListener("resize", onResize);
+    const ro =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(scheduleOverflowAndHint)
+        : null;
+    ro?.observe(el);
 
     return () => {
       window.clearTimeout(t);
       if (forward) window.clearTimeout(forward);
       if (backward) window.clearTimeout(backward);
+      if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
+      if (measureRaf) window.cancelAnimationFrame(measureRaf);
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      ro?.disconnect();
     };
-  }, [ariaLabel, hintStorageKey, nudgeOnFirstLoad, uniqueId]);
+  }, [ariaLabel, hintStorageKey, nudgeOnFirstLoad, scrollStepPx, uniqueId]);
 
   const computeStep = () => {
     if (typeof scrollStepPx === "number") return scrollStepPx;
-    const el = scrollerRef.current;
-    if (!el) return 320;
-    // try to measure a listitem width + gap
-    const firstItem = el.querySelector(
-      '[role="listitem"]'
-    ) as HTMLElement | null;
-    const track = el.firstElementChild as HTMLElement | null;
-    const gapPx = track
-      ? parseFloat(
-          getComputedStyle(track).columnGap ||
-            getComputedStyle(track).gap ||
-            "0"
-        )
-      : 0;
-    if (firstItem) {
-      return Math.round(firstItem.getBoundingClientRect().width + gapPx);
-    }
-    return Math.round(el.clientWidth * 0.9);
+    return measuredStepRef.current;
   };
 
   const scrollByStep = (dir: 1 | -1) => {
