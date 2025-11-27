@@ -68,7 +68,12 @@ function getCsp() {
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
     ],
-    "style-src": ["'self'", "'unsafe-inline'"],
+    "style-src": [
+      "'self'",
+      "'unsafe-inline'",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com",
+    ],
     "connect-src": [
       "'self'",
       apiOrigin,
@@ -81,7 +86,12 @@ function getCsp() {
     // Images: allow self, data URIs, HTTPS everywhere; add blob for previews
     // In development, also allow HTTP to ease testing against non-TLS sources
     "img-src": ["'self'", "data:", "https:", "blob:", isDev ? "http:" : ""],
-    "font-src": ["'self'"],
+    "font-src": [
+      "'self'",
+      "https://fonts.gstatic.com",
+      "https://fonts.googleapis.com",
+      "data:",
+    ],
     "frame-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],
     "object-src": ["'none'"],

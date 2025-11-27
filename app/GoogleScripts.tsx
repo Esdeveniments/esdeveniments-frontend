@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import type { TcfCallback } from "types/ads";
+import { useRef } from "react";
 
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
 const ADS_SRC = ADS_CLIENT
@@ -11,6 +12,7 @@ const ADS_SRC = ADS_CLIENT
 
 export default function GoogleScripts() {
   const [adsAllowed, setAdsAllowed] = useState(false);
+  const autoAdsInitRef = useRef(false);
 
   // Listen for TCF v2 consent (FundingChoices) and only allow ads when granted.
   useEffect(() => {
@@ -78,6 +80,46 @@ export default function GoogleScripts() {
     script.async = true;
     script.crossOrigin = "anonymous";
     document.head.appendChild(script);
+  }, [adsAllowed]);
+
+  // Trigger Google Auto Ads once consented and loader is (or becomes) available.
+  useEffect(() => {
+    if (!adsAllowed || autoAdsInitRef.current || !ADS_CLIENT) return;
+
+    const pushAutoAds = () => {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({
+          google_ad_client: ADS_CLIENT,
+          enable_page_level_ads: true,
+        });
+        autoAdsInitRef.current = true;
+      } catch {
+        // Retry once after a short delay if loader isn't ready yet
+        setTimeout(() => {
+          try {
+            (window.adsbygoogle = window.adsbygoogle || []).push({
+              google_ad_client: ADS_CLIENT,
+              enable_page_level_ads: true,
+            });
+            autoAdsInitRef.current = true;
+          } catch {
+            // swallow; individual slots will still render with manual pushes
+          }
+        }, 600);
+      }
+    };
+
+    // If the loader isn't on the page yet, wait briefly
+    const hasLoader =
+      typeof window !== "undefined" &&
+      document.querySelector(`script[src="${ADS_SRC}"]`);
+    if (hasLoader) {
+      pushAutoAds();
+      return;
+    }
+
+    const timer = setTimeout(pushAutoAds, 800);
+    return () => clearTimeout(timer);
   }, [adsAllowed]);
 
   return (

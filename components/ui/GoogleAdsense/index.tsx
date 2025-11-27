@@ -84,6 +84,13 @@ const GoogleAdsenseContainer = ({
     return () => viewObserver.current?.disconnect();
   }, [hasConsent, shouldRenderSlot]);
 
+  // Safety: if the observer never fires (e.g., zero-height target), render anyway after a short delay.
+  useEffect(() => {
+    if (!hasConsent || shouldRenderSlot) return;
+    const timer = setTimeout(() => setShouldRenderSlot(true), 1200);
+    return () => clearTimeout(timer);
+  }, [hasConsent, shouldRenderSlot]);
+
   useEffect(() => {
     if (!shouldRenderSlot || !hasConsent) return;
     if (fallbackTimer.current) {
@@ -151,7 +158,7 @@ const GoogleAdsenseContainer = ({
   }, [hasConsent, shouldRenderSlot]);
 
   return (
-    <div ref={wrapperRef} className="w-full">
+    <div ref={wrapperRef} className="w-full min-h-[1px]">
       {hasConsent && shouldRenderSlot && (
         <ins
           id={id}
