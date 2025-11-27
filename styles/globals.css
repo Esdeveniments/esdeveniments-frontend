@@ -2,34 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Barlow Condensed";
-  src: url("/static/fonts/BarlowCondensed-Regular.ttf") format("woff2");
-  font-display: swap;
+html {
+  font-synthesis-weight: none;
 }
 
-@font-face {
-  font-family: "Roboto Flex";
-  src: url("/static/fonts/RobotoFlex-Regular.ttf") format("woff2");
-  font-display: swap;
+body {
+  @apply font-sans antialiased text-base leading-relaxed;
 }
 
 html,
 body {
+  font-size: 100%; /* keep 1rem = 16px */
   height: 100vh;
   margin: 0;
   padding: 0;
+  overflow-x: hidden; /* prevent stray horizontal gap/scroll on mobile */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-font-smoothing: antialiased;
   -o-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: "Roboto Flex", sans-serif;
-  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   color: #454545;
-  font-weight: 300;
-  letter-spacing: 0.034rem;
-  line-height: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 ::-webkit-scrollbar {
@@ -57,6 +54,8 @@ input[type="range"] {
   opacity: 0.7;
   -webkit-transition: 0.2s;
   transition: opacity 0.2s;
+  touch-action: none;
+  cursor: pointer;
 }
 
 input[type="range"]:hover {
@@ -66,49 +65,364 @@ input[type="range"]:hover {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 10px;
-  height: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ff0037;
+  cursor: pointer;
+  margin-top: -10.5px; /* (3px track - 24px thumb) / 2 */
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #ff0037;
   cursor: pointer;
 }
 
-input[type="range"]::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: #4caf50;
-  cursor: pointer;
-}
-
-h1 {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 1.62rem;
-  letter-spacing: 0.001rem;
-  line-height: 2.1rem;
-  font-weight: 600;
-}
-
-h2 {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 1.38rem;
-  letter-spacing: 0.001rem;
-  line-height: 1.6rem;
-  font-weight: 600;
-}
-h3 {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 1.2rem;
-  letter-spacing: 0.02rem;
-  line-height: 1.65rem;
-  font-weight: 600;
-}
-
 p {
-  font-family: "Roboto Flex", sans-serif;
-  font-size: 1rem;
-  letter-spacing: 0.038rem;
-  line-height: 1.2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0;
+  font-size: 1rem; /* 16px */
+  line-height: 1.6;
+  margin: 0;
+}
+
+@layer components {
+  /* ===================================== */
+  /* TYPOGRAPHY - 4-LEVEL SYSTEM */
+  /* System font stack (GitHub, Facebook, Instagram, Twitter standard) */
+  /* Optimized weights for system fonts - stronger than custom fonts */
+  /* ===================================== */
+
+  /* LEVEL 1: Hero/Brand - Main page title only */
+  .heading-1 {
+    @apply text-2xl md:text-4xl font-bold tracking-tight leading-tight;
+  }
+
+  /* LEVEL 2: Major Sections - Page subtitle, major section dividers */
+  .heading-2 {
+    @apply text-xl md:text-2xl font-semibold tracking-normal leading-relaxed;
+  }
+
+  /* LEVEL 3: Section Headers - Category sections, subsections */
+  .heading-3 {
+    @apply text-lg md:text-xl font-semibold tracking-normal leading-snug;
+  }
+
+  /* LEVEL 4: Card Titles - Event titles in cards */
+  .heading-4 {
+    @apply text-base md:text-lg font-medium tracking-normal leading-snug;
+  }
+
+  /* BODY: Main content text - Descriptions, paragraphs */
+  .body-large {
+    @apply text-lg font-normal leading-relaxed tracking-normal;
+  }
+
+  .body-normal {
+    @apply text-base font-normal leading-relaxed tracking-normal;
+  }
+
+  /* SMALL: Metadata - Dates, locations, captions, badges */
+  .body-small {
+    @apply text-sm font-normal leading-relaxed tracking-normal;
+  }
+
+  /* LABEL: UI elements - Small badges, uppercase labels */
+  .label {
+    @apply text-xs uppercase tracking-wider font-medium;
+  }
+
+  /* ===================================== */
+  /* BUTTONS */
+  /* ===================================== */
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .btn-neutral {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .btn-muted {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
+  }
+
+  .btn-category {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+  }
+
+  /* ===================================== */
+  /* CARDS */
+  /* ===================================== */
+
+  .card-bordered {
+    @apply bg-background border border-border rounded-card;
+  }
+
+  .card-elevated {
+    @apply bg-background shadow-lg rounded-card;
+  }
+
+  .card-body {
+    @apply p-card-padding-sm md:p-card-padding;
+  }
+
+  .card-footer {
+    @apply border-t border-border p-card-padding-sm md:p-card-padding;
+  }
+
+  /* ===================================== */
+  /* BADGES */
+  /* ===================================== */
+
+  .badge-default {
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-muted text-foreground;
+  }
+
+  .badge-primary {
+    @apply inline-flex items-center px-badge-x py-badge-y rounded-badge text-xs font-medium bg-primary text-primary-foreground;
+  }
+
+  /* ===================================== */
+  /* LAYOUT UTILITIES */
+  /* ===================================== */
+
+  .flex-center {
+    @apply flex justify-center items-center;
+  }
+
+  .flex-between {
+    @apply flex justify-between items-center;
+  }
+
+  .flex-start {
+    @apply flex justify-start items-center;
+  }
+
+  .stack {
+    @apply flex flex-col gap-element-gap;
+  }
+
+  /* Column-based horizontal centering (not vertical centering) */
+  .flex-center-col {
+    @apply flex flex-col items-center;
+  }
+
+  /* Horizontal centering wrapper for constrained children (row) */
+  .center-content {
+    @apply w-full flex justify-center;
+  }
+
+  /* Narrow constrained content container */
+  .container-narrow {
+    @apply w-full max-w-[580px] md:max-w-[768px] lg:max-w-[1024px];
+  }
+
+  /* Detail container matching event detail pattern */
+  .container-detail {
+    @apply w-full sm:w-[520px] md:w-[520px] lg:w-[520px] mx-auto px-4 lg:px-0;
+  }
+
+  /* Containers (Semantic) */
+  .container-page {
+    @apply max-w-7xl mx-auto px-section-x;
+  }
+  .container-article {
+    @apply max-w-4xl mx-auto px-section-x;
+  }
+  .container-form {
+    @apply max-w-2xl mx-auto px-section-x;
+  }
+
+  /* ===================================== */
+  /* SHADOWS (SEMANTIC) */
+  /* ===================================== */
+
+  .shadow-card {
+    @apply shadow-sm;
+  }
+
+  .shadow-card-hover {
+    @apply shadow-md;
+  }
+
+  .shadow-modal {
+    @apply shadow-lg;
+  }
+
+  .shadow-dropdown {
+    @apply shadow-lg;
+  }
+
+  .shadow-hero {
+    @apply shadow-xl;
+  }
+
+  /* ===================================== */
+  /* SPACING (SEMANTIC TOKENS USAGE) */
+  /* ===================================== */
+
+  /* Use spacing tokens directly in components:
+     - Sections: py-section-y px-section-x
+     - Cards: p-card-padding-sm md:p-card-padding
+     - Inline small gaps: gap-element-gap-sm
+  */
+
+  /* ===================================== */
+  /* TRANSITIONS (SEMANTIC) */
+  /* ===================================== */
+
+  .transition-interactive {
+    @apply transition-all duration-fast ease-smooth;
+  }
+
+  .transition-card {
+    @apply transition-[shadow,transform,border-color] duration-normal ease-smooth;
+  }
+
+  .transition-modal {
+    @apply transition-[opacity,transform] duration-slow ease-smooth;
+  }
+
+  .pressable-inline,
+  .pressable-chip,
+  .pressable-card {
+    @apply transition-[transform,opacity] duration-fast ease-smooth;
+    transform-origin: center;
+  }
+
+  .pressable-chip {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2;
+  }
+
+  .pressable-card {
+    @apply transition-[transform,box-shadow] duration-normal ease-smooth;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .pressable-inline[data-pressed="true"],
+    .pressable-inline:active {
+      @apply opacity-80;
+      transform: translateY(1px);
+    }
+
+    .pressable-chip[data-pressed="true"],
+    .pressable-chip:active {
+      transform: translateY(1px);
+      @apply shadow-card;
+    }
+
+    .pressable-card[data-pressed="true"],
+    .pressable-card:active {
+      transform: translateY(1px) scale(0.995);
+      @apply shadow-card-hover;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pressable-inline,
+    .pressable-chip,
+    .pressable-card {
+      @apply transition-none;
+    }
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  .hover-scale {
+    @apply hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .hover-glow {
+    @apply hover:shadow-focus;
+  }
+
+  /* ===================================== */
+  /* FORMS */
+  /* ===================================== */
+
+  .input {
+    /* Enforce 16px to avoid iOS Safari auto-zoom on focus */
+    @apply w-full rounded-input border border-border bg-background text-foreground text-base px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+  }
+
+  .input-lg {
+    @apply h-12;
+  }
+
+  .input-error {
+    @apply border-error focus-visible:ring-error focus-visible:border-error;
+  }
+
+  .input-disabled {
+    @apply opacity-60 cursor-not-allowed bg-muted pointer-events-none;
+  }
+
+  .input-readonly {
+    @apply bg-muted;
+  }
+
+  .helper-text {
+    @apply body-small text-foreground/70 mt-1;
+  }
+
+  .helper-text-error {
+    @apply body-small text-error mt-1;
+  }
+
+  /* ===================================== */
+  /* FOCUS UTILITIES */
+  /* ===================================== */
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  .focus-ring-error {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2;
+  }
+
+  /* ===================================== */
+  /* Z-INDEX (SEMANTIC) */
+  /* ===================================== */
+
+  .z-sticky {
+    @apply z-10;
+  }
+  .z-dropdown {
+    @apply z-100;
+  }
+  .z-modal {
+    @apply z-900;
+  }
+  .z-tooltip {
+    @apply z-1000;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .slider {
@@ -265,4 +579,49 @@ img,
 video {
   max-width: 100%;
   height: 100%;
+}
+
+/* Custom animations */
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-appear {
+  animation: appear 0.3s ease-out;
+}
+
+/* View Transitions */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
+::view-transition-old(root) {
+  animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fadeOut;
+}
+
+/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
+::view-transition-new(root) {
+  animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fadeIn;
 }

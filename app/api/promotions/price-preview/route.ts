@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getPricingConfig } from "@config/pricing";
+import {
+  PricePreviewRequest,
+  PricePreviewResponse,
+} from "types/api/restaurant";
+import { handleApiError } from "@utils/api-error-handler";
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body: PricePreviewRequest = await req.json();
+    const { durationDays, geoScopeType } = body;
+
+    if (!durationDays || !geoScopeType) {
+      return NextResponse.json({ error: "Missing params" }, { status: 400 });
+    }
+
+    const pricing = getPricingConfig(durationDays, geoScopeType);
+    if (!pricing) {
+      return NextResponse.json(
+        { error: "Invalid combination" },
+        { status: 400 }
+      );
+    }
+
+    const resp: PricePreviewResponse = {
+      currency: pricing.currency,
+      unitAmount: pricing.unitAmount,
+    };
+    return NextResponse.json(resp, { status: 200 });
+  } catch (e) {
+    return handleApiError(e, "/api/promotions/price-preview", {
+      status: 400,
+      errorMessage: "Bad request",
+    });
+  }
+}

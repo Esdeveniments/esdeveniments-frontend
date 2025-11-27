@@ -1,0 +1,150 @@
+import { describe, it, expect } from "vitest";
+import { formatCatalanDe } from "@utils/string-helpers";
+
+describe("formatCatalanDe with article support", () => {
+  describe("without article (original behavior)", () => {
+    it("should use d' before vowels", () => {
+      expect(formatCatalanDe("esport")).toBe("d'esport");
+      expect(formatCatalanDe("exposicions")).toBe("d'exposicions");
+    });
+
+    it("should use de before consonants", () => {
+      expect(formatCatalanDe("teatre")).toBe("de teatre");
+      expect(formatCatalanDe("música")).toBe("de música");
+    });
+
+    it("should respect lowercase parameter", () => {
+      expect(formatCatalanDe("Barcelona", false)).toBe("de Barcelona");
+      expect(formatCatalanDe("Esport", false)).toBe("d'Esport");
+    });
+  });
+
+  describe("with article (new behavior)", () => {
+    it("should use 'de l'' before vowels for singular nouns", () => {
+      expect(formatCatalanDe("esport", true, true)).toBe("de l'esport");
+      expect(formatCatalanDe("art", true, true)).toBe("de l'art");
+      expect(formatCatalanDe("humor", true, true)).toBe("de l'humor");
+    });
+
+    it("should use proper plural articles before vowels (CRITICAL FIX)", () => {
+      // Feminine plural + vowel = "de les"
+      expect(formatCatalanDe("activitats", true, true)).toBe(
+        "de les activitats"
+      );
+      expect(formatCatalanDe("exposicions", true, true)).toBe(
+        "de les exposicions"
+      );
+
+      // Masculine plural + vowel = "dels"
+      expect(formatCatalanDe("espectacles", true, true)).toBe(
+        "dels espectacles"
+      );
+      expect(formatCatalanDe("events", true, true)).toBe("dels events");
+
+      // Should NOT produce "de l'activitats" or "de l'espectacles"
+      expect(formatCatalanDe("activitats", true, true)).not.toBe(
+        "de l'activitats"
+      );
+      expect(formatCatalanDe("espectacles", true, true)).not.toBe(
+        "de l'espectacles"
+      );
+    });
+
+    it("should use 'de la' before feminine consonants", () => {
+      expect(formatCatalanDe("música", true, true)).toBe("de la música");
+      expect(formatCatalanDe("dansa", true, true)).toBe("de la dansa");
+    });
+
+    it("should use 'del' before masculine consonants", () => {
+      expect(formatCatalanDe("teatre", true, true)).toBe("del teatre");
+      expect(formatCatalanDe("cinema", true, true)).toBe("del cinema");
+    });
+
+    it("should handle edge cases correctly", () => {
+      expect(formatCatalanDe("gent gran", true, true)).toBe("de la gent gran");
+      expect(formatCatalanDe("festivals", true, true)).toBe("dels festivals");
+      expect(formatCatalanDe("tallers i formació", true, true)).toBe(
+        "dels tallers i formació"
+      );
+    });
+
+    it("should handle multi-word phrases by analyzing first word", () => {
+      expect(formatCatalanDe("música clàssica", true, true)).toBe(
+        "de la música clàssica"
+      );
+      expect(formatCatalanDe("concerts a l'aire lliure", true, true)).toBe(
+        "dels concerts a l'aire lliure"
+      );
+      expect(formatCatalanDe("art contemporani", true, true)).toBe(
+        "de l'art contemporani"
+      );
+    });
+
+    it("should handle regions with proper articles", () => {
+      // Singular masculine regions
+      expect(formatCatalanDe("Vallès Oriental", false, true, "region")).toBe(
+        "del Vallès Oriental"
+      );
+      expect(formatCatalanDe("Penedès", false, true, "region")).toBe(
+        "del Penedès"
+      ); // masculine exception
+
+      // Singular feminine regions
+      expect(formatCatalanDe("Selva", false, true, "region")).toBe(
+        "de la Selva"
+      );
+      expect(formatCatalanDe("Garrotxa", false, true, "region")).toBe(
+        "de la Garrotxa"
+      );
+
+      // Singular vowel-starting regions
+      expect(formatCatalanDe("Alt Empordà", false, true, "region")).toBe(
+        "de l'Alt Empordà"
+      );
+
+      // Plural feminine regions (CRITICAL FIX)
+      expect(formatCatalanDe("Terres de l'Ebre", false, true, "region")).toBe(
+        "de les Terres de l'Ebre"
+      );
+      expect(formatCatalanDe("Garrigues", false, true, "region")).toBe(
+        "de les Garrigues"
+      );
+    });
+
+    it("should handle towns without articles", () => {
+      expect(formatCatalanDe("Barcelona", false, true, "town")).toBe(
+        "de Barcelona"
+      );
+      expect(formatCatalanDe("Hospitalet", false, true, "town")).toBe(
+        "d'Hospitalet"
+      );
+      expect(formatCatalanDe("Girona", false, true, "town")).toBe("de Girona");
+    });
+
+    it("should handle towns with embedded article L' (EDGE CASE FIX)", () => {
+      // Towns that already have "L'" should use "de" not "d'" to avoid double contraction
+      expect(
+        formatCatalanDe("L'Hospitalet de Llobregat", false, true, "town")
+      ).toBe("de L'Hospitalet de Llobregat");
+      expect(formatCatalanDe("L'Escala", false, true, "town")).toBe(
+        "de L'Escala"
+      );
+      expect(formatCatalanDe("l'escala", true, false, "town")).toBe(
+        "de l'escala"
+      );
+
+      // Should NOT produce "d'L'Hospitalet" or "d'l'escala"
+      expect(
+        formatCatalanDe("L'Hospitalet de Llobregat", false, true, "town")
+      ).not.toBe("d'L'Hospitalet de Llobregat");
+    });
+  });
+
+  describe("backward compatibility", () => {
+    it("should not break existing usage in location-helpers", () => {
+      // This is how it's used in location-helpers.ts
+      expect(formatCatalanDe("Barcelona", false)).toBe("de Barcelona");
+      expect(formatCatalanDe("Andorra", false)).toBe("d'Andorra");
+    });
+  });
+});

@@ -1,0 +1,16 @@
+---
+globs: components/partials/seo-meta.ts, components/partials/JsonLdServer.tsx, lib/meta.ts, app/**/route.ts,rss.xml,server-sitemap.xml,sitemap/**
+alwaysApply: false
+---
+
+### SEO and structured data (JSON-LD)
+
+- **Meta**: Use `components/partials/seo-meta.ts` helpers (`buildPageMeta`) and `lib/meta.ts` for event detail.
+- **generateMetadata**: Build per route using `generatePagesData` and `buildPageMeta`; ensure canonical with `siteUrl` and URL helpers.
+- **JSON-LD**: Server-rendered via `JsonLdServer` component (`components/partials/JsonLdServer.tsx`). Escapes `</script>` and `<` to prevent XSS. Data comes from server-side API responses, not user input. **No nonce required** due to relaxed CSP. Usage:
+  ```tsx
+  <JsonLdServer id="event-123" data={jsonLdData} />
+  ```
+- **Lists**: Use `generateItemListStructuredData` for event collections; limit to ≤20 items.
+- **Event detail**: Use `generateEventMetadata` to generate full Metadata including OG/Twitter and keywords.
+- **Sitemaps/RSS**: Managed by `next-sitemap` and app routes in `app/server-*.xml/` and `app/rss.xml/`.

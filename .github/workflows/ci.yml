@@ -1,0 +1,175 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  NEXT_PUBLIC_API_URL: "https://api-pre.esdeveniments.cat/api"
+
+jobs:
+  quality:
+    name: Code quality, tests, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.[jt]s', '**/*.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Type check
+        run: yarn typecheck
+
+      - name: Run unit tests (Vitest)
+        env:
+          CI: true
+        run: yarn test
+
+      - name: Build application
+        env:
+          NODE_ENV: production
+        run: yarn build
+
+  e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Vercel pull (preview)
+        if: github.event_name == 'pull_request'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npx vercel@25 pull --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Preview to Vercel (CLI)
+        if: github.event_name == 'pull_request'
+        id: deploy_preview
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
+          # Provide server-only secret to the preview deployment so server HMAC signing works
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+        run: |
+          # Deploy and capture logs
+          LOG=$(mktemp)
+          # --env sets runtime env vars for this deployment only
+          # --build-env sets build-time env vars for this deployment only
+          # These flags apply env vars to the specific deployment, not the project
+          # Quotes ensure proper handling of values with special characters
+          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
+            --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
+            --env HMAC_SECRET="$HMAC_SECRET" \
+            --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
+            --build-env HMAC_SECRET="$HMAC_SECRET" \
+            --confirm | tee "$LOG"
+          # Extract the last vercel.app URL (alias line usually printed last)
+          URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)
+          if [ -z "$URL" ]; then
+            echo "Failed to extract preview URL from Vercel output" >&2
+            echo "===== Vercel Output ====="
+            cat "$LOG"
+            echo "========================="
+            exit 1
+          fi
+          echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
+          echo "preview-url=$URL" >> $GITHUB_OUTPUT
+      - name: Verify preview readiness
+        if: ${{ env.PREVIEW_URL != '' }}
+        run: |
+          echo "Verifying deployment at ${{ env.PREVIEW_URL }}"
+          MAX_RETRIES=5
+          RETRY=0
+          while [ $RETRY -lt $MAX_RETRIES ]; do
+            if curl -f "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null; then
+              echo "Preview is ready"
+              exit 0
+            fi
+            RETRY=$((RETRY + 1))
+            if [ $RETRY -lt $MAX_RETRIES ]; then
+              sleep $((2 ** RETRY))
+            fi
+          done
+          echo "Warning: API endpoint test failed after $MAX_RETRIES attempts - this may indicate HMAC_SECRET is not set or deployment is slow"
+      - name: Run E2E tests (Playwright) against Vercel Preview
+        if: ${{ env.PREVIEW_URL != '' }}
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
+          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
+        run: yarn test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore

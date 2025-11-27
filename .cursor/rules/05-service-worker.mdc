@@ -1,0 +1,12 @@
+---
+globs: public/sw-template.js, public/sw.js, scripts/generate-sw.mjs, middleware.ts
+alwaysApply: false
+---
+
+### Service Worker workflow
+
+- **Template only**: Edit `public/sw-template.js`; never hand-edit generated `public/sw.js`.
+- **Generation**: `scripts/generate-sw.mjs` replaces `{{API_ORIGIN}}` with origin from env and writes `public/sw.js`.
+- **Build hooks**: `prebuild` runs the generation step; do not bypass it.
+- **Caching updates**: Modify logic via template, regenerate; keep Workbox 7 patterns.
+- **Middleware**: Special handling of `/sw.js` headers is in `middleware.ts`.

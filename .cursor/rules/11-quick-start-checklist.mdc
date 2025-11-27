@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+### Quick start checklist (project-specific)
+
+- Read `.github/copilot-instructions.md` and `00-repository-overview.mdc`.
+- For new routes: implement `generateMetadata` using `generatePagesData` and `buildPageMeta`.
+- For list pages: fetch via `lib/api/*` and use `insertAds` on SSR only; append client items without ads.
+- For filters/URLs: use `utils/url-filters.ts` helpers; never craft strings manually.
+- For scripts/JSON-LD: read `nonce` from `headers()` and pass to `<Script>`.
+- For images: use the image wrapper in `components/ui/common/image` and quality/size helpers.
+- Before PR: `yarn typecheck && yarn lint && yarn test`.

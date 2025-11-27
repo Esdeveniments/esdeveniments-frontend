@@ -1,0 +1,128 @@
+# Custom HTTP headers configuration for AWS Amplify
+# This file replaces the deprecated customHeaders section in amplify.yml
+# See: https://docs.aws.amazon.com/amplify/latest/userguide/custom-headers.html
+
+customHeaders:
+  # Service worker: avoid caching and allow root scope
+  - pattern: "/sw.js"
+    headers:
+      - key: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      - key: Service-Worker-Allowed
+        value: "/"
+
+  # Next.js built assets - these are automatically hashed, safe for long cache
+  - pattern: "/_next/static/**"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000, immutable"
+
+  # Next.js optimized images - 1 year cache (CRITICAL for performance)
+  - pattern: "/_next/image*"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000, immutable"
+
+  # CSS files - safe for long cache; cache-busting handled by deployment
+  - pattern: "/styles/**"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      - key: Content-Type
+        value: "text/css; charset=utf-8"
+
+  # Font files - longer cache with CORS headers for cross-origin loading
+  - pattern: "/static/fonts/**"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      - key: Access-Control-Allow-Origin
+        value: "*"
+      - key: Cross-Origin-Resource-Policy
+        value: "cross-origin"
+
+  # Static assets - be more conservative since not all may use getVersionedUrl
+  - pattern: "/static/**"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  # Static images only (not user uploads) - conservative approach
+  # Separate patterns for common image extensions (brace expansion not supported)
+  - pattern: "/static/**/*.png"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  - pattern: "/static/**/*.jpg"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  - pattern: "/static/**/*.jpeg"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  - pattern: "/static/**/*.gif"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  - pattern: "/static/**/*.webp"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  - pattern: "/static/**/*.svg"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  - pattern: "/static/**/*.ico"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=2592000" # 30 days
+
+  # Fonts - longer cache since they rarely change (avoid brace expansion)
+  - pattern: "/**/*.woff"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000" # 1 year
+
+  - pattern: "/**/*.woff2"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000" # 1 year
+
+  - pattern: "/**/*.ttf"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000" # 1 year
+
+  - pattern: "/**/*.eot"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=31536000" # 1 year
+
+  # Next.js pages - enable back/forward cache for better performance
+  # This pattern matches all HTML pages and routes without file extensions
+  - pattern: "/*"
+    headers:
+      - key: Cache-Control
+        value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+
+  # API routes - CORS headers for functionality (middleware excludes these)
+  - pattern: "/api/**"
+    headers:
+      - key: Access-Control-Allow-Origin
+        value: "https://esdeveniments.cat"
+      - key: Access-Control-Allow-Methods
+        value: "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+      - key: Access-Control-Allow-Headers
+        value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+      - key: Vary
+        value: "Origin"
+      - key: Cache-Control
+        value: "public, max-age=3600" # 1 hour - conservative for API responses
+

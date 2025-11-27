@@ -1,0 +1,17 @@
+---
+alwaysApply: false
+---
+
+### Coding conventions and structure
+
+- Centralize constants in `utils/constants.ts`; do not duplicate literals.
+- Types/interfaces live under `types/`; do not declare types outside.
+- Configuration over conditionals: Prefer adding capabilities via configuration files (filters, categories) over branching code.
+- Edge/server env: Follow safe fallbacks consistent with `middleware.getApiOrigin`.
+- No manual query strings: Use `URLSearchParams` and helpers.
+- SSR/CSR balance: Keep SSR pages minimal, use client enhancement components as designed.
+- Error handling: For reads, return safe fallbacks; for writes, surface backend error text before throwing.
+- Path aliases: Use `@app/*`, `@components/*`, `@utils/*`, `@lib/*`, `@config/*`, `@types/*`.
+- Date formatting: Use `@utils/date-helpers.ts` (and `@lib/dates.ts` where applicable) instead of ad-hoc formatting.
+- ESLint overrides: Do not fight rules—no `no-undef` in TS files, no inline type/interface declarations.
+- Formatting: Preserve existing indentation and className patterns; avoid reformatting unrelated code.

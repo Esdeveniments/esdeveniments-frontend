@@ -1,34 +1,17 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "@store": [
-        "store.js"
-      ],
-      "@pages/*": [
-        "pages/*"
-      ],
-      "@components/*": [
-        "components/*"
-      ],
-      "@styles/*": [
-        "styles/*"
-      ],
-      "@content/*": [
-        "content/*"
-      ],
-      "@utils/*": [
-        "utils/*"
-      ],
-      "@lib/*": [
-        "lib/*"
-      ],
-      "@config/*": [
-        "config/*"
-      ],
-      "@public/*": [
-        "public/*"
-      ]
-    }
+      "@store": ["./store.js"],
+      "@app/*": ["./app/*"],
+      "@components/*": ["./components/*"],
+      "@styles/*": ["./styles/*"],
+      "@content/*": ["./content/*"],
+      "@utils/*": ["./utils/*"],
+      "@lib/*": ["./lib/*"],
+      "@config/*": ["./config/*"],
+      "@public/*": ["./public/*"],
+      "@types/*": ["./types/*"]
+    },
+    "types": ["./types/react-datepicker.d.ts", "./types/navigator.d.ts"]
   }
 }

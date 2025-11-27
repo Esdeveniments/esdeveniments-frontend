@@ -1,0 +1,12 @@
+# UI, accessibility, and styling
+
+- Semantic-classes-first: Use design system classes (`.heading-*`, `.body-*`, `.btn-*`, `.card-*`, `.badge-*`, `.container-*`). Utilities allowed only for micro-spacing inside leaf components (e.g., `gap-1–2`, `mt-1–2`) and must not override typography or colors.
+- Semantics: Prefer semantic elements (button, nav, header, section) over generic div.
+- Keyboard: Ensure focus states and keyboard navigation for interactive components.
+- Images: Provide meaningful `alt`; use Next Image with sizes/quality helpers from `utils/image-quality.ts`.
+- Forms: Label controls and associate `htmlFor` properly; validate before submit.
+- Headless UI: Use `@headlessui/react` for accessible patterns where needed.
+- Colors: Never use Tailwind `gray-*`; use semantic tokens (`foreground`, `foreground-strong`, `muted`, `border`, `primary`). Use opacity suffixes like `/80` for hierarchy (Tailwind v3+ syntax).
+- Focus: Prefer `:focus-visible`; use `.focus-ring` / `.focus-ring-error` utilities from globals. Ensure keyboard-only users see clear focus outlines.
+- Reduced motion: Honor `prefers-reduced-motion` (animations/transitions dampened globally via globals.css snippet).
+- Layout: Use semantic containers: `.container-page` (wide/listing), `.container-article` (reading/detail), `.container-form` (narrow forms). Keep horizontal padding via `px-section-x`.

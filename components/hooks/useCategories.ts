@@ -1,0 +1,32 @@
+import useSWR from "swr";
+import { CategorySummaryResponseDTO } from "../../types/api/category";
+
+async function fetcher(): Promise<CategorySummaryResponseDTO[]> {
+  // Allow browser/proxy caching based on API response headers
+  const res = await fetch("/api/categories");
+  if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+}
+
+export function useCategories() {
+  const { data, error, isLoading, mutate } = useSWR<
+    CategorySummaryResponseDTO[]
+  >("categories", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    revalidateIfStale: true,
+    dedupingInterval: 86_400_000, // 24h: categories rarely change, avoid frequent refetches
+  });
+
+  return {
+    categories: data || [],
+    isLoading,
+    isError: !!error,
+    error,
+    getCategoryById: (id: number) =>
+      data?.find((category) => category.id === id) || null,
+    getCategoryBySlug: (slug: string) =>
+      data?.find((category) => category.slug === slug) || null,
+    refetch: mutate,
+  };
+}

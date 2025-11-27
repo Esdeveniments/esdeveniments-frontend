@@ -1,0 +1,62 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # Ensure correct Node and Yarn (Berry) versions
+        - nvm install 20 && nvm use 20
+        - corepack enable
+        - corepack prepare yarn@4.9.1 --activate
+        - yarn --version
+        # Use Yarn 4 immutable installs for fast, deterministic builds in CI
+        - yarn install --immutable
+        # Remove any existing keys, then write a single, up-to-date copy
+        - sed -i '/^NEXT_PUBLIC_BUILD_ID=/d' .env.production 2>/dev/null || true
+        - sed -i '/^NEXT_TELEMETRY_DISABLED=/d' .env.production 2>/dev/null || true
+        - |
+          {
+            echo "NEXT_PUBLIC_BUILD_ID=${AWS_COMMIT_ID:-$(date +%s)}"
+            echo "NEXT_TELEMETRY_DISABLED=1"
+          } >> .env.production
+    build:
+      commands:
+        - echo "Building Next.js application..."
+        - test -f scripts/generate-sw.mjs || { echo "generate-sw.mjs missing"; exit 1; }
+        - node scripts/generate-sw.mjs
+        - yarn build
+        # Clean up unnecessary files to reduce build output size
+        # This must happen AFTER build but BEFORE artifacts are collected
+        - echo "Cleaning up build artifacts to reduce size..."
+        # Remove unnecessary directories
+        - rm -rf .next/cache
+        - rm -rf .next/types
+        - rm -rf .next/trace
+        - rm -rf .next/standalone
+        # Remove source maps and other unnecessary files
+        - find .next -name "*.map" -type f -delete || true
+        - find .next -name "*.d.ts" -type f -delete || true
+        # Remove SWC binaries (build-time only, not needed at runtime)
+        - rm -f node_modules/@swc/core-linux-x64-gnu/swc.linux-x64-gnu.node 2>/dev/null || true
+        - rm -f node_modules/@swc/core-linux-x64-musl/swc.linux-x64-musl.node 2>/dev/null || true
+        - echo "Build cleanup complete"
+        # Note: For build size diagnostics, run scripts/diagnose-build-size.sh on-demand
+  artifacts:
+    # AWS Amplify standard pattern: baseDirectory should be .next for Next.js
+    # After cleanup, all remaining files in .next are needed
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
+      - .yarn/cache/**/*
+
+  # Custom HTTP headers have been moved to customHttp.yml
+  # See: https://docs.aws.amazon.com/amplify/latest/userguide/custom-headers.html
+  # Static asset caching and security headers are configured in customHttp.yml
+# Environment variables should be set in the Amplify Console for better security.
+# Go to: App settings > Environment variables
+# Recommended variables:
+# NODE_ENV: production
+# NEXT_TELEMETRY_DISABLED: 1
