@@ -1,4 +1,4 @@
-import { insertAds, filterPastEvents } from "@lib/api/events";
+import { insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { hasNewsForPlace } from "@lib/api/news";
@@ -402,15 +402,7 @@ async function buildCategoryEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const filteredEvents = filterPastEvents(events);
-
-  // Align noEventsFound logic with other pages
-  let finalNoEventsFound = noEventsFound;
-  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
-    finalNoEventsFound = true;
-  }
-
-  const eventsWithAds = insertAds(filteredEvents);
+  const eventsWithAds = insertAds(events);
   const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
   const pageData = await pageDataPromise;
   const structuredScripts: JsonLdScript[] = [];
@@ -442,7 +434,7 @@ async function buildCategoryEventsPromise({
 
   return {
     events: eventsWithAds,
-    noEventsFound: finalNoEventsFound,
+    noEventsFound,
     serverHasMore,
     structuredScripts: structuredScripts.length ? structuredScripts : undefined,
   };

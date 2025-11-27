@@ -10,7 +10,6 @@ import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
-import { computeTemporalStatus } from "@utils/event-status";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
 
@@ -57,34 +56,20 @@ function HybridEventsListClientContent({
       serverHasMore,
     });
 
-  // When filters are active, show ALL filtered events (replace SSR list)
+  // When filters are active, show ALL fetched events (replace SSR list)
   // When no filters, show only appended events (SSR list remains visible)
-  // Filter out past events in both cases
   const displayedEvents: ListEvent[] = useMemo(() => {
     if (!events || events.length === 0) return [];
 
-    // Filter out past events
-    const activeEvents = events.filter((event) => {
-      if (!isEventSummaryResponseDTO(event)) return true; // Keep ads
-      const status = computeTemporalStatus(
-        event.startDate,
-        event.endDate,
-        undefined,
-        event.startTime,
-        event.endTime
-      );
-      return status.state !== "past";
-    });
-
     if (hasClientFilters) {
       // Filters active: show all filtered events (replace SSR list)
-      return activeEvents;
+      return events;
     }
 
     // No filters: only show appended events beyond SSR list
     const seen = new Set<string>(realInitialEvents.map((e) => e.id));
     const uniqueAppended: EventSummaryResponseDTO[] = [];
-    for (const event of activeEvents) {
+    for (const event of events) {
       if (!isEventSummaryResponseDTO(event)) continue; // Skip ads in appended list
       if (seen.has(event.id)) continue;
       seen.add(event.id);

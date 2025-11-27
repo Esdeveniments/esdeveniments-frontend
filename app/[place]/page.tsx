@@ -1,4 +1,4 @@
-import { insertAds, filterPastEvents } from "@lib/api/events";
+import { insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
@@ -162,7 +162,7 @@ function buildFallbackPlaceShellData(place: string): {
   };
 }
 
-async function buildPlaceEventsPromise({
+export async function buildPlaceEventsPromise({
   place,
 }: {
   place: string;
@@ -183,7 +183,7 @@ async function buildPlaceEventsPromise({
       regionFallback: {
         size: 7,
         includeCategory: false,
-        includeDateRange: false,
+        includeDateRange: true,
       },
       finalFallback: {
         size: 7,
@@ -195,23 +195,8 @@ async function buildPlaceEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const filteredEvents = filterPastEvents(events);
-
-  // Re-check noEventsFound after filtering past events
-  // Note: The helper handles the fallback logic which sets noEventsFound=true when falling back.
-  // But if we have events (from initial or fallback) and filterPastEvents removes them all,
-  // we should set noEventsFound=true if it wasn't already.
-  // However, the original code had a specific condition:
-  // if (events.length > 0 && filteredEvents.length === 0 && !noEventsFound) { noEventsFound = true; }
-  // We need to preserve this.
-
-  let finalNoEventsFound = noEventsFound;
-  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
-    finalNoEventsFound = true;
-  }
-
-  const eventsWithAds = insertAds(filteredEvents);
-  const validEvents = filteredEvents.filter(isEventSummaryResponseDTO);
+  const eventsWithAds = insertAds(events);
+  const validEvents = events.filter(isEventSummaryResponseDTO);
   const structuredScripts =
     validEvents.length > 0
       ? [
@@ -227,7 +212,7 @@ async function buildPlaceEventsPromise({
 
   return {
     events: eventsWithAds,
-    noEventsFound: finalNoEventsFound,
+    noEventsFound,
     serverHasMore,
     structuredScripts,
   };
