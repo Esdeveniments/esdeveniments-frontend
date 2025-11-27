@@ -27,6 +27,7 @@ const GoogleAdsenseContainer = ({
   });
   const slotPushed = useRef(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     callbackRef.current = setDisplayAd;
@@ -85,6 +86,11 @@ const GoogleAdsenseContainer = ({
 
   useEffect(() => {
     if (!shouldRenderSlot || !hasConsent) return;
+    if (fallbackTimer.current) {
+      clearTimeout(fallbackTimer.current);
+      fallbackTimer.current = null;
+    }
+
     if (
       adRef.current &&
       adRef.current.children &&
@@ -99,7 +105,13 @@ const GoogleAdsenseContainer = ({
       slotPushed.current = true;
     } catch (err) {
       console.error("adsense error", getSanitizedErrorMessage(err));
+      callbackRef.current?.(false);
     }
+
+    // Fallback: if no status arrives within 3s, show fallback content
+    fallbackTimer.current = setTimeout(() => {
+      callbackRef.current?.(false);
+    }, 3000);
   }, [hasConsent, shouldRenderSlot]);
 
   useEffect(() => {
@@ -110,6 +122,10 @@ const GoogleAdsenseContainer = ({
         const adStatus = target.getAttribute("data-ad-status") as AdStatus;
         if (adStatus === "unfilled") {
           callbackRef.current?.(false);
+          if (fallbackTimer.current) {
+            clearTimeout(fallbackTimer.current);
+            fallbackTimer.current = null;
+          }
         }
       });
     };
@@ -125,7 +141,13 @@ const GoogleAdsenseContainer = ({
       });
     }
 
-    return () => observer.current?.disconnect();
+    return () => {
+      observer.current?.disconnect();
+      if (fallbackTimer.current) {
+        clearTimeout(fallbackTimer.current);
+        fallbackTimer.current = null;
+      }
+    };
   }, [hasConsent, shouldRenderSlot]);
 
   return (
