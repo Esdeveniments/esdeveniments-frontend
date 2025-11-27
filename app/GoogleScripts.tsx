@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 import type { TcfCallback } from "types/ads";
-import { useRef } from "react";
 
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
 const ADS_SRC = ADS_CLIENT
@@ -87,21 +86,25 @@ export default function GoogleScripts() {
     if (!adsAllowed || autoAdsInitRef.current || !ADS_CLIENT) return;
 
     const pushAutoAds = () => {
+      if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({
           google_ad_client: ADS_CLIENT,
           enable_page_level_ads: true,
         });
         autoAdsInitRef.current = true;
+        window.__autoAdsInitialized = true;
       } catch {
         // Retry once after a short delay if loader isn't ready yet
         setTimeout(() => {
+          if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
           try {
             (window.adsbygoogle = window.adsbygoogle || []).push({
               google_ad_client: ADS_CLIENT,
               enable_page_level_ads: true,
             });
             autoAdsInitRef.current = true;
+            window.__autoAdsInitialized = true;
           } catch {
             // swallow; individual slots will still render with manual pushes
           }

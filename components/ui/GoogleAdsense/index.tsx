@@ -115,10 +115,14 @@ const GoogleAdsenseContainer = ({
       callbackRef.current?.(false);
     }
 
-    // Fallback: if no status arrives within 3s, show fallback content
+    // Fallback: if no status arrives within a few seconds, show fallback content
     fallbackTimer.current = setTimeout(() => {
+      const status = adRef.current?.getAttribute("data-ad-status");
+      const hasChildren =
+        !!adRef.current?.children && adRef.current.children.length > 0;
+      if (status === "filled" || hasChildren) return;
       callbackRef.current?.(false);
-    }, 3000);
+    }, 6000);
   }, [hasConsent, shouldRenderSlot]);
 
   useEffect(() => {
@@ -127,7 +131,13 @@ const GoogleAdsenseContainer = ({
       mutationsList.forEach((element) => {
         const target = element.target as HTMLElement;
         const adStatus = target.getAttribute("data-ad-status") as AdStatus;
-        if (adStatus === "unfilled") {
+        if (adStatus === "filled") {
+          callbackRef.current?.(true);
+          if (fallbackTimer.current) {
+            clearTimeout(fallbackTimer.current);
+            fallbackTimer.current = null;
+          }
+        } else if (adStatus === "unfilled") {
           callbackRef.current?.(false);
           if (fallbackTimer.current) {
             clearTimeout(fallbackTimer.current);
