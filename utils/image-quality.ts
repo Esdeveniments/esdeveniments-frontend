@@ -62,7 +62,7 @@ export function getServerImageQuality(networkQuality?: NetworkQuality): number {
  * Quality presets for common scenarios
  * Optimized based on Lighthouse performance analysis
  */
-export const QUALITY_PRESETS = Object.freeze({
+export const QUALITY_PRESETS = {
   LCP_EXTERNAL: 60, // LCP external images (reduced from 70)
   EXTERNAL_HIGH: 50, // High-quality external images (reduced from 65)
   EXTERNAL_STANDARD: 45, // Regular external images (reduced from 60)
@@ -70,7 +70,7 @@ export const QUALITY_PRESETS = Object.freeze({
   INTERNAL_HIGH: 80, // Internal high-quality images (unchanged)
   INTERNAL_STANDARD: 75, // Internal standard images (unchanged)
   EMERGENCY: 35, // Emergency/breaking news - maximum speed (reduced from 50)
-}) as const;
+} as const;
 
 /**
  * Get quality preset by name
