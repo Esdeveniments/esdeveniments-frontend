@@ -11,7 +11,7 @@ const sentryClientConfig = {
 
 if (process.env.NODE_ENV === 'production') {
   const config: BrowserOptions = {
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DNS,
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
     environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
     tracesSampleRate: 1.0,
     replaysOnErrorSampleRate: 1.0,
