@@ -68,6 +68,18 @@ export async function GET() {
     }
   }
 
+  // Google News sitemaps must contain at least one URL
+  // Return 404 when there are no candidates to avoid invalid XML
+  // This is semantically correct: the sitemap doesn't exist when there's no content
+  if (candidates.length === 0) {
+    return new Response(null, {
+      status: 404,
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=86400",
+      },
+    });
+  }
+
   const xml = buildNewsSitemap(candidates);
   return new Response(xml, {
     headers: {
