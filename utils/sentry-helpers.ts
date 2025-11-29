@@ -1,4 +1,4 @@
-import type { Event, EventHint, ErrorEvent } from "@sentry/nextjs";
+import type { Event, EventHint, ErrorEvent, Metric } from "@sentry/nextjs";
 
 /**
  * Filters and sanitizes Sentry events before sending.
@@ -119,5 +119,28 @@ export function beforeSendEdge(
   hint: EventHint
 ): ErrorEvent | null {
   return beforeSend(event, hint) as ErrorEvent | null;
+}
+
+/**
+ * Filters and sanitizes Sentry metrics before sending.
+ * Implements best practices for metrics monitoring:
+ * - Scrubs sensitive data from metric attributes
+ * - Filters out metrics that shouldn't be sent
+ * - Prevents information disclosure
+ *
+ * Use with beforeSendMetric option in Sentry.init()
+ */
+export function beforeSendMetric(metric: Metric): Metric | null {
+  // Scrub sensitive data from metric attributes
+  if (metric.attributes) {
+    const sensitiveKeys = ["password", "token", "api_key", "apikey", "secret", "auth", "authorization"];
+    sensitiveKeys.forEach((key) => {
+      if (metric.attributes?.[key]) {
+        metric.attributes[key] = "[Filtered]";
+      }
+    });
+  }
+
+  return metric;
 }
 

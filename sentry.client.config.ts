@@ -4,7 +4,7 @@
 
 import { init, consoleLoggingIntegration, replayIntegration, captureRouterTransitionStart } from "@sentry/nextjs";
 import type { BrowserOptions } from "@sentry/nextjs";
-import { beforeSendClient } from "@utils/sentry-helpers";
+import { beforeSendClient, beforeSendMetric } from "@utils/sentry-helpers";
 
 const sentryClientConfig = {
   // Add your Sentry client config here
@@ -37,6 +37,10 @@ if (process.env.NODE_ENV === "production") {
     ],
     // Enable logs to be sent to Sentry
     enableLogs: true,
+    // Metrics: automatically enabled in v10.25.0+ (no explicit enableMetrics needed)
+    // Use Sentry.metrics.count(), Sentry.metrics.gauge(), Sentry.metrics.distribution()
+    // Filter and sanitize metrics before sending (removes sensitive data from attributes)
+    beforeSendMetric,
     // Filter and sanitize events before sending (removes sensitive data, filters non-critical errors)
     beforeSend: beforeSendClient,
   };
