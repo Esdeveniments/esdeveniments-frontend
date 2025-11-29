@@ -25,11 +25,11 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
     isPriority: true,
   },
   "familia-i-infants": {
-    label: "Família i Infants",
+    label: "Activitats en Família",
     isPriority: true,
   },
   musica: {
-    label: "Música",
+    label: "Concerts i Música",
     isPriority: true,
   },
   teatre: {

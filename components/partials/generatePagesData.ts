@@ -60,7 +60,7 @@ const CATEGORY_SEO_TEMPLATES = {
     noEventsText: "activitats literàries o presentacions de llibres",
   },
   "fires-i-mercats": {
-    titleSuffix: "Fires i mercats",
+    titleSuffix: "Fires",
     description:
       "fires, mercats, esdeveniments comercials, artesania, productes locals",
     culturalContext:
@@ -132,7 +132,7 @@ const CATEGORY_SEO_TEMPLATES = {
     noEventsText: "activitats destinades a la gent gran",
   },
   "familia-i-infants": {
-    titleSuffix: "Família i infants",
+    titleSuffix: "Activitats en Família",
     description:
       "activitats familiars, infants, nens, diversió familiar, plans amb nens",
     culturalContext:
@@ -156,20 +156,20 @@ const CATEGORY_SEO_TEMPLATES = {
     noEventsText: "projeccions de cinema o activitats audiovisuals",
   },
   musica: {
-    titleSuffix: "Música i concerts",
+    titleSuffix: "Concerts",
     description:
-      "música, concerts, espectacles musicals, festivals musicals, música en directe",
+      "concerts, música, espectacles musicals, festivals musicals, música en directe",
     culturalContext:
       "Descobreix la millor música en viu amb concerts, festivals i actuacions a prop teu",
     noEventsText: "concerts, festivals o espectacles musicals",
   },
   teatre: {
-    titleSuffix: "Teatre i arts escèniques",
+    titleSuffix: "Teatre",
     description:
       "teatre, òpera, arts escèniques, espectacles teatrals, monòlegs",
     culturalContext:
-      "Viu les millors obres teatrals, monòlegs i espectacles d’arts escèniques",
-    noEventsText: "obres de teatre o espectacles d’arts escèniques",
+      "Viu les millors obres teatrals, monòlegs i espectacles d'arts escèniques",
+    noEventsText: "obres de teatre o espectacles d'arts escèniques",
   },
   altres: {
     titleSuffix: "Altres activitats",
@@ -258,10 +258,10 @@ export async function generatePagesData({
 
   if (!place && !byDate) {
     return createPageData(
-      `Què fer a Catalunya. Agenda ${currentYear}`,
-      `Agenda cultural aquest ${month}, amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.`,
-      `Descobreix esdeveniments a Catalunya aquest ${currentYear}`,
-      `Explora la millor agenda cultural de Catalunya aquest ${month}. Troba concerts, exposicions, teatre, activitats familiars i plans gratuïts a prop teu.`,
+      `Agenda avui a Catalunya i plans ${currentYear}`,
+      `Agenda avui a Catalunya aquest ${month}, amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.`,
+      `Agenda avui a Catalunya - Què fer aquest ${month}`,
+      `Explora l'agenda avui a Catalunya: concerts, exposicions, teatre, activitats familiars i plans gratuïts per inspirar-te aquest ${month}.`,
       siteUrl,
       `Ho sentim, però no hi ha esdeveniments disponibles a Catalunya en aquest moment. Mira altres dates o localitats properes a la nostra agenda cultural, on segur que hi trobaràs plans que t’agradaran.`
     );
@@ -345,13 +345,25 @@ export async function generatePagesData({
   }
 
   if (type === "town" && !byDate) {
+    // Special handling for Barcelona: include "Esdeveniments" with natural phrasing
+    const isBarcelona = place === "barcelona";
+    const title = isBarcelona
+      ? `Esdeveniments a Barcelona i plans per fer. Agenda ${currentYear}`
+      : `Agenda avui ${labelWithArticle}. Què fer ${currentYear}`;
+    const metaTitle = isBarcelona
+      ? `Esdeveniments a Barcelona i plans per fer avui - Agenda ${currentYear}`
+      : `Agenda avui ${labelWithArticle} - Què fer aquest ${month}`;
+    const metaDescription = isBarcelona
+      ? `Esdeveniments a Barcelona i plans per fer aquest ${month}. Consulta l'agenda amb concerts, festes, activitats familiars, tallers, exposicions i altres propostes per gaudir de la ciutat.`
+      : `Descobreix l'agenda avui ${labelWithArticle} aquest ${month}. Consulta concerts, festes, activitats familiars, tallers, exposicions i altres plans per gaudir del municipi.`;
+
     return createPageData(
-      `Què fer ${labelWithArticle}. Agenda ${currentYear}`,
+      title,
       `Agenda cultural ${labelWithArticle} aquest ${month}, amb activitats de proximitat, plans en família, concerts, exposicions i festes populars.`,
-      `Guia d'activitats ${labelWithArticle} - ${month} ${currentYear}`,
-      `Descobreix què fer ${labelWithArticle} aquest ${month}. Consulta la guia amb concerts, festes, activitats familiars, tallers, exposicions i altres plans per gaudir del municipi.`,
+      metaTitle,
+      metaDescription,
       `${siteUrl}/${place}`,
-      `Ho sentim, però no hi ha esdeveniments ${labelWithArticle} per a aquesta data. Prova de canviar la data, explorar altres categories o mirar municipis propers per trobar activitats que t’interessin.`
+      `Ho sentim, però no hi ha esdeveniments ${labelWithArticle} per a aquesta data. Prova de canviar la data, explorar altres categories o mirar municipis propers per trobar activitats que t'interessin.`
     );
   }
 

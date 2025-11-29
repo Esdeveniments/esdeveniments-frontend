@@ -22,6 +22,17 @@ export const revalidate = 300;
 
 const homeSeoLinkSections: SeoLinkSection[] = [
   {
+    id: "weekend",
+    title: "Plans per aquest cap de setmana",
+    links: [
+      { href: "/catalunya/cap-de-setmana", label: "Agenda cap de setmana Catalunya" },
+      { href: "/barcelona/cap-de-setmana", label: "Què fer aquest cap de setmana a Barcelona" },
+      { href: "/girona/cap-de-setmana", label: "Plans cap de setmana a Girona" },
+      { href: "/catalunya/cap-de-setmana/familia-i-infants", label: "Activitats familiars cap de setmana" },
+      { href: "/arenys-de-mar/teatre", label: "Teatre a Arenys de Mar" },
+    ],
+  },
+  {
     id: "today",
     title: "Què fer avui",
     links: [
@@ -69,7 +80,7 @@ const featuredPlaceSections: FeaturedPlaceConfig[] = [
     filter: { city: "barcelona" },
   },
   {
-    title: "Agenda al Maresme",
+    title: "Agenda del Maresme",
     subtitle: "El millor de la comarca",
     slug: "maresme",
     filter: { region: "maresme" },
