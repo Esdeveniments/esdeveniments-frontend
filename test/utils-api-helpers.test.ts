@@ -118,7 +118,7 @@ describe("utils/api-helpers:buildEventsQuery", () => {
     const params: FetchEventsParams = {
       page: 3,
       size: 15,
-      place: "girona",
+      place: "mataro",
       category: "teatre",
       lat: 41.9794,
       lon: 2.8214,
@@ -131,7 +131,7 @@ describe("utils/api-helpers:buildEventsQuery", () => {
     const query = buildEventsQuery(params);
     expect(query.get("page")).toBe("3");
     expect(query.get("size")).toBe("15");
-    expect(query.get("place")).toBe("girona");
+    expect(query.get("place")).toBe("mataro");
     expect(query.get("category")).toBe("teatre");
     expect(query.get("lat")).toBe("41.9794");
     expect(query.get("lon")).toBe("2.8214");
@@ -204,24 +204,24 @@ describe("utils/api-helpers:buildNewsQuery", () => {
     const params: FetchNewsParams = {
       page: 1,
       size: 20,
-      place: "girona",
+      place: "mataro",
     };
     const query = buildNewsQuery(params, true);
     expect(query.get("page")).toBe("1");
     expect(query.get("size")).toBe("20");
-    expect(query.get("place")).toBe("girona");
+    expect(query.get("place")).toBe("mataro");
   });
 
   it("handles all parameters together without defaults", () => {
     const params: FetchNewsParams = {
       page: 1,
       size: 20,
-      place: "girona",
+      place: "mataro",
     };
     const query = buildNewsQuery(params, false);
     expect(query.get("page")).toBe("1");
     expect(query.get("size")).toBe("20");
-    expect(query.get("place")).toBe("girona");
+    expect(query.get("place")).toBe("mataro");
   });
 
   it("converts all values to strings", () => {

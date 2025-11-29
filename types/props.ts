@@ -19,6 +19,7 @@ import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
+import type { FaqItem } from "types/faq";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -342,7 +343,7 @@ export interface ServerEventsCategorizedProps {
   pageData?: PageData;
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
   featuredPlaces?: FeaturedPlaceConfig[];
-  seoTopTownLinks?: SeoLinkItem[];
+  seoLinkSections?: SeoLinkSection[];
 }
 
 export type ServerEventsCategorizedContentProps = Pick<
@@ -390,6 +391,24 @@ export interface GeolocationButtonProps {
   error?: string | null;
   className?: string;
 }
+
+export interface ListPageFaqProps {
+  items: FaqItem[];
+  title?: string;
+}
+
+export interface ListPageFaqParams {
+  place: string;
+  date?: string;
+  category?: string;
+  placeTypeLabel?: PlaceTypeAndLabel;
+  categories?: CategorySummaryResponseDTO[];
+}
+
+export type DateContext = {
+  inline: string;
+  capitalized: string;
+};
 
 export interface UseGeolocationReturn {
   location: GeolocationCoordinates | null;

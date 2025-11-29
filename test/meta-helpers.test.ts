@@ -42,8 +42,8 @@ describe("meta helpers (black-box)", () => {
   it("getCanonicalUrl builds absolute URL with siteUrl base", () => {
     // In tests, siteUrl may resolve to localhost depending on env.
     expect(getCanonicalUrl("/barcelona")).toContain("/barcelona");
-    expect(getCanonicalUrl("https://www.esdeveniments.cat/girona")).toBe(
-      "https://www.esdeveniments.cat/girona"
+    expect(getCanonicalUrl("https://www.esdeveniments.cat/mataro")).toBe(
+      "https://www.esdeveniments.cat/mataro"
     );
   });
 });

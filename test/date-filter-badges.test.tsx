@@ -117,15 +117,15 @@ describe("DateFilterBadges", () => {
     it("generates correct hrefs for badges", () => {
       render(
         <DateFilterBadges
-          placeSlug="girona"
-          contextName="Girona"
+          placeSlug="mataro"
+          contextName="Mataró"
         />
       );
 
       const badges = screen.getAllByTestId("date-filter-badge");
-      expect(badges[0]).toHaveAttribute("href", "/girona/avui");
-      expect(badges[1]).toHaveAttribute("href", "/girona/dema");
-      expect(badges[2]).toHaveAttribute("href", "/girona/cap-de-setmana");
+      expect(badges[0]).toHaveAttribute("href", "/mataro/avui");
+      expect(badges[1]).toHaveAttribute("href", "/mataro/dema");
+      expect(badges[2]).toHaveAttribute("href", "/mataro/cap-de-setmana");
     });
   });
 

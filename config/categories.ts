@@ -29,7 +29,7 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
     isPriority: true,
   },
   musica: {
-    label: "Concerts i Música",
+    label: "Concerts",
     isPriority: true,
   },
   teatre: {

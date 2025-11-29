@@ -6,6 +6,9 @@ import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
 import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
+import ListPageFaq from "@components/ui/common/faq/ListPageFaq";
+import { buildFaqJsonLd } from "@utils/helpers";
+import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
 
 export async function ClientLayerWithPlaceLabel({
@@ -87,6 +90,16 @@ async function PlacePageContent({
     ? webPageSchemaFactory(pageData)
     : null;
 
+  const faqItems = buildListPageFaqItems({
+    place,
+    date,
+    category,
+    placeTypeLabel,
+    categories,
+  });
+  const faqJsonLd =
+    faqItems.length > 1 ? buildFaqJsonLd(faqItems) : null;
+
   return (
     <>
       {webPageSchema && (
@@ -96,6 +109,13 @@ async function PlacePageContent({
       {structuredScripts?.map((script) => (
         <JsonLdServer key={script.id} id={script.id} data={script.data} />
       ))}
+
+      {faqJsonLd && (
+        <JsonLdServer
+          id={`faq-${place}-${date ?? "general"}`}
+          data={faqJsonLd}
+        />
+      )}
 
       <FilterLoadingGate>
         <HybridEventsList
@@ -111,6 +131,8 @@ async function PlacePageContent({
           categories={categories}
         />
       </FilterLoadingGate>
+
+      <ListPageFaq items={faqItems} />
     </>
   );
 }

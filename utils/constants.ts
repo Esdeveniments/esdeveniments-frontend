@@ -8,7 +8,7 @@ export const MAX_RESULTS = 15;
  * Detects if the application is in build phase (SSG/static generation).
  * During build phase, we bypass internal API proxy and call external API directly
  * to avoid issues when the Next.js server isn't running.
- * 
+ *
  * This is used to determine whether to use internal API routes (runtime) or
  * external API calls (build time) for data fetching.
  */
@@ -150,13 +150,16 @@ export function getCategoryDisplayName(
   }
 
   // Return slug as fallback (capitalize first letter for readability)
-  return categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, " ");
+  return (
+    categorySlug.charAt(0).toUpperCase() +
+    categorySlug.slice(1).replace(/-/g, " ")
+  );
 }
 
 // --- News UI constants ---
 export const NEWS_HUBS: { slug: string; name: string }[] = [
   { slug: "barcelona", name: "Barcelona" },
-  { slug: "girona", name: "Girona" },
+  // { slug: "girona", name: "Girona" }, // Not yet in database
   { slug: "tarragona", name: "Tarragona" },
   { slug: "lleida", name: "Lleida" },
 ];
@@ -173,11 +176,11 @@ export const NEARBY_PLACES_BY_HUB: Record<
     { slug: "granollers", name: "Granollers" },
     { slug: "castelldefels", name: "Castelldefels" },
   ],
-  girona: [
-    { slug: "figueres", name: "Figueres" },
-    { slug: "blanes", name: "Blanes" },
-    { slug: "olot", name: "Olot" },
-  ],
+  // girona: [ // Not yet in database
+  //   { slug: "figueres", name: "Figueres" },
+  //   { slug: "blanes", name: "Blanes" },
+  //   { slug: "olot", name: "Olot" },
+  // ],
   tarragona: [
     { slug: "reus", name: "Reus" },
     { slug: "cambrils", name: "Cambrils" },
@@ -205,7 +208,7 @@ export const ONE_MINUTE_IN_MS = parseInt(
  * DOS protection: limits on query parameters
  * These constants are used consistently across middleware and URL utilities
  * to prevent denial-of-service attacks via malicious query parameters.
- * 
+ *
  * Since middleware runs first and validates/rejects requests, these limits
  * should be enforced at the edge. Internal utilities can use the same limits
  * for defensive validation and truncation.

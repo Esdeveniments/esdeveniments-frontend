@@ -15,6 +15,7 @@ import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import type {
   FeaturedPlaceConfig,
+  SeoLinkSection,
   ServerEventsCategorizedContentProps,
   ServerEventsCategorizedProps,
 } from "types/props";
@@ -142,9 +143,21 @@ const resolveCategoryDetails = (
 // --- MAIN COMPONENT ---
 function ServerEventsCategorized({
   pageData,
-  seoTopTownLinks = [],
+  seoLinkSections = [],
   ...contentProps
 }: ServerEventsCategorizedProps) {
+  const renderedLinkSections = seoLinkSections.filter(
+    (section): section is SeoLinkSection =>
+      Boolean(section?.links && section.links.length > 0)
+  );
+
+  const formatLinkLabel = (sectionId: string, label: string) => {
+    if (sectionId === "local-agendas") {
+      return label.replace(/^Agenda\s+/i, "");
+    }
+    return label;
+  };
+
   return (
     <div className="w-full bg-background">
       {/* 1. HERO SECTION: Search + Location + Dates */}
@@ -156,28 +169,30 @@ function ServerEventsCategorized({
         </div>
       </div>
 
-      {/* 2. TOP LOCATIONS (Moved from bottom) */}
-      {seoTopTownLinks.length > 0 && (
-        <div className="container py-8 border-b border-border/40">
-          <div className="flex flex-col gap-4">
-            <SectionHeading
-              title="Poblacions més buscades"
-              titleClassName="heading-2 text-foreground mb-element-gap"
-            />
-            <div className="flex flex-wrap gap-2">
-              {seoTopTownLinks.map((link) => (
-                <PressableAnchor
-                  key={link.href}
-                  href={link.href}
-                  prefetch={false}
-                  variant="plain"
-                  className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
-                >
-                  {link.label.replace("Agenda ", "")}
-                </PressableAnchor>
-              ))}
+      {/* 2. SEO LINK SECTIONS (weekend, today, tomorrow, agendas) */}
+      {renderedLinkSections.length > 0 && (
+        <div className="container py-8 border-b border-border/40 space-y-8">
+          {renderedLinkSections.map((section) => (
+            <div key={section.id} className="flex flex-col gap-4">
+              <SectionHeading
+                title={section.title}
+                titleClassName="heading-2 text-foreground mb-element-gap"
+              />
+              <div className="flex flex-wrap gap-2">
+                {section.links.map((link) => (
+                  <PressableAnchor
+                    key={`${section.id}-${link.href}`}
+                    href={link.href}
+                    prefetch={false}
+                    variant="plain"
+                    className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
+                  >
+                    {formatLinkLabel(section.id, link.label)}
+                  </PressableAnchor>
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
 

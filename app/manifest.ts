@@ -57,19 +57,19 @@ export default function manifest(): MetadataRoute.Manifest {
           },
         ],
       },
-      {
-        name: "Esdeveniments de Girona",
-        short_name: "Girona",
-        description: "Veure esdeveniments de Girona",
-        url: "/girona",
-        icons: [
-          {
-            src: "/static/icons/today-icon.png",
-            sizes: "96x96",
-            type: "image/png",
-          },
-        ],
-      },
+      // {
+      //   name: "Esdeveniments de Girona",
+      //   short_name: "Girona",
+      //   description: "Veure esdeveniments de Girona",
+      //   url: "/girona",
+      //   icons: [
+      //     {
+      //       src: "/static/icons/today-icon.png",
+      //       sizes: "96x96",
+      //       type: "image/png",
+      //     },
+      //   ],
+      // }, // Not yet in database
       {
         name: "Esdeveniments de Catalunya",
         short_name: "Catalunya",

@@ -82,7 +82,7 @@ export const highPrioritySlugs = [
   // Major cities in Catalonia
   "tarragona",
   "lleida",
-  "girona",
+  // "girona", // Not yet in database
   "sabadell",
   "terrassa",
   "l-hospitalet-de-llobregat",

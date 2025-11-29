@@ -59,9 +59,9 @@ describe("getNewsCta", () => {
     });
 
     it("should handle place with label but no type", () => {
-      const result = getNewsCta("girona", "Girona");
-      expect(result.href).toBe("/noticies/girona");
-      expect(result.text).toBe("Notícies de Girona");
+      const result = getNewsCta("mataro", "Mataró");
+      expect(result.href).toBe("/noticies/mataro");
+      expect(result.text).toBe("Notícies de Mataró");
     });
   });
 

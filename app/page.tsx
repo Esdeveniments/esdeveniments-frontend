@@ -23,13 +23,21 @@ export const revalidate = 300;
 const homeSeoLinkSections: SeoLinkSection[] = [
   {
     id: "weekend",
-    title: "Plans per aquest cap de setmana",
+    title: "Què fer aquest cap de setmana",
     links: [
-      { href: "/catalunya/cap-de-setmana", label: "Agenda cap de setmana Catalunya" },
-      { href: "/barcelona/cap-de-setmana", label: "Què fer aquest cap de setmana a Barcelona" },
-      { href: "/girona/cap-de-setmana", label: "Plans cap de setmana a Girona" },
-      { href: "/catalunya/cap-de-setmana/familia-i-infants", label: "Activitats familiars cap de setmana" },
-      { href: "/arenys-de-mar/teatre", label: "Teatre a Arenys de Mar" },
+      { href: "/catalunya/cap-de-setmana", label: "10 plans per al cap de setmana" },
+      {
+        href: "/catalunya/cap-de-setmana/festes-populars",
+        label: "Festes populars cap de setmana",
+      },
+      {
+        href: "/catalunya/cap-de-setmana/familia-i-infants",
+        label: "Activitats amb nens cap de setmana",
+      },
+      {
+        href: "/catalunya/cap-de-setmana/musica",
+        label: "Concerts cap de setmana",
+      },
     ],
   },
   {
@@ -42,7 +50,7 @@ const homeSeoLinkSections: SeoLinkSection[] = [
         href: "/valles-oriental/avui",
         label: "Què fer avui al Vallès Oriental",
       },
-      { href: "/girona/avui", label: "Què fer avui a Girona" },
+      { href: "/mataro/avui", label: "Què fer avui a Mataró" },
     ],
   },
   {
@@ -53,7 +61,7 @@ const homeSeoLinkSections: SeoLinkSection[] = [
       { href: "/maresme/dema", label: "Què fer demà al Maresme" },
       {
         href: "/valles-occidental/dema",
-        label: "Què fer demà al Vallès Occ.",
+        label: "Què fer demà al Vallès Occidental",
       },
     ],
   },
@@ -118,10 +126,6 @@ export default async function Page(): Promise<JSX.Element> {
   const siteNavigationSchema =
     generateSiteNavigationElementSchema(homeNavigationItems);
 
-  const localAgendasSection = homeSeoLinkSections.find(
-    (section) => section.id === "local-agendas"
-  );
-
   return (
     <>
       {siteNavigationSchema && (
@@ -140,7 +144,7 @@ export default async function Page(): Promise<JSX.Element> {
         pageData={pageData}
         categoriesPromise={categoriesPromise}
         featuredPlaces={featuredPlaceSections}
-        seoTopTownLinks={localAgendasSection?.links}
+        seoLinkSections={homeSeoLinkSections}
       />
     </>
   );
