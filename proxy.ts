@@ -193,15 +193,21 @@ export default async function proxy(request: NextRequest) {
     }
 
     if (!hmac || !timestamp) {
-      return new NextResponse("Unauthorized", {
-        status: 401,
-      });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        {
+          status: 401,
+        }
+      );
     }
 
     if (!validateTimestamp(timestamp)) {
-      return new NextResponse("Unauthorized", {
-        status: 401,
-      });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        {
+          status: 401,
+        }
+      );
     }
 
     const stringToSign = buildStringToSign(
@@ -213,9 +219,12 @@ export default async function proxy(request: NextRequest) {
     const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
 
     if (!signatureIsValid) {
-      return new NextResponse(`Unauthorized`, {
-        status: 401,
-      });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        {
+          status: 401,
+        }
+      );
     }
 
     return NextResponse.next();

@@ -249,9 +249,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 401 when x-timestamp header is missing", async () => {
@@ -265,9 +266,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 408 for invalid timestamp format", async () => {
@@ -284,9 +286,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 408 for future timestamp", async () => {
@@ -304,9 +307,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 401 for expired timestamp", async () => {
@@ -324,9 +328,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 401 for invalid HMAC", async () => {
@@ -347,9 +352,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("passes through valid requests", async () => {

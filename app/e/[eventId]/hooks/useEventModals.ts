@@ -5,7 +5,8 @@ import type { DeleteReason } from "types/event";
 
 export function useEventModals() {
   const [openModal, setOpenModal] = useState(false);
-  const [openDeleteReasonModal, setOpenModalDeleteReasonModal] = useState(false);
+  const [openDeleteReasonModal, setOpenModalDeleteReasonModal] =
+    useState(false);
   const [reasonToDelete, setReasonToDelete] = useState<DeleteReason>(null);
   const [showThankYouBanner, setShowThankYouBanner] = useState(false);
 
@@ -25,6 +26,11 @@ export function useEventModals() {
         isProduction: process.env.NODE_ENV === "production",
       }),
     });
+
+    if (!rawResponse.ok) {
+      console.error("Failed to delete event:", rawResponse.status);
+      return;
+    }
 
     const { success } = await rawResponse.json();
 
