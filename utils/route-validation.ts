@@ -45,6 +45,12 @@ export function isValidPlace(place: string): boolean {
     return false;
   }
 
+  // Block special characters - place slugs should only contain lowercase letters, numbers, and hyphens
+  // This prevents issues like $ being URL-encoded to %24 in metadata titles
+  if (!/^[a-z0-9-]+$/.test(place)) {
+    return false;
+  }
+
   return true;
 }
 
