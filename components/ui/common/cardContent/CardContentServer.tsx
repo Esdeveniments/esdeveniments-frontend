@@ -5,7 +5,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/outline";
 import { truncateString, getFormattedDate } from "@utils/helpers";
-import { formatEventTimeDisplay } from "@utils/date-helpers";
+import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
@@ -95,7 +95,7 @@ function CardContentServer({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="px-2">
-            {formatEventTimeDisplay(event.startTime, event.endTime)}
+            {formatEventTimeDisplayDetail(event.startTime, event.endTime)}
           </p>
         </div>
         {!isHorizontal && <div className="mb-8" />}

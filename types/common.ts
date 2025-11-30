@@ -240,6 +240,7 @@ export interface CardHorizontalProps {
 export interface CardHorizontalServerProps {
   event: EventSummaryResponseDTO;
   isPriority?: boolean;
+  useDetailTimeFormat?: boolean; // Use phrase format for times (e.g., "De 9.00 a 11.30") instead of numeric format
 }
 
 export interface CardShareButtonProps {
@@ -268,6 +269,7 @@ export interface EventsAroundServerProps extends EventsAroundProps {
   showJsonLd?: boolean;
   jsonLdId?: string;
   analyticsCategory?: string;
+  useDetailTimeFormat?: boolean; // Use phrase format for times in detail pages
 }
 
 export interface BaseLayoutProps {

@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { formatEventTimeDisplay } from "../utils/date-helpers";
+import {
+  formatEventTimeDisplay,
+  formatEventTimeDisplayDetail,
+} from "../utils/date-helpers";
 
 describe("formatEventTimeDisplay", () => {
   describe("when no start time or start time is '00:00'", () => {
@@ -111,6 +114,340 @@ describe("formatEventTimeDisplay", () => {
 
     it("handles identical times with seconds as single time", () => {
       expect(formatEventTimeDisplay("07:30:00", "07:30:00")).toBe("07:30");
+    });
+  });
+});
+
+describe("formatEventTimeDisplayDetail", () => {
+  describe("when no start time or start time is '00:00'", () => {
+    it("returns 'Consultar horaris' when startTime is undefined", () => {
+      expect(formatEventTimeDisplayDetail(undefined, "21:00")).toBe(
+        "Consultar horaris"
+      );
+    });
+
+    it("returns 'Consultar horaris' when startTime is null", () => {
+      expect(formatEventTimeDisplayDetail(null, "21:00")).toBe(
+        "Consultar horaris"
+      );
+    });
+
+    it("returns 'Consultar horaris' when startTime is '00:00'", () => {
+      expect(formatEventTimeDisplayDetail("00:00", "21:00")).toBe(
+        "Consultar horaris"
+      );
+    });
+
+    it("returns 'Consultar horaris' when startTime is '00:00' and endTime is undefined", () => {
+      expect(formatEventTimeDisplayDetail("00:00", undefined)).toBe(
+        "Consultar horaris"
+      );
+    });
+
+    it("returns 'Consultar horaris' when both times are undefined", () => {
+      expect(formatEventTimeDisplayDetail(undefined, undefined)).toBe(
+        "Consultar horaris"
+      );
+    });
+  });
+
+  describe("when start time exists but no end time", () => {
+    it("returns 'Comença a les HH:mm' when endTime is undefined", () => {
+      expect(formatEventTimeDisplayDetail("19:00", undefined)).toBe(
+        "Comença a les 19:00"
+      );
+    });
+
+    it("returns 'Comença a les HH:mm' when endTime is null", () => {
+      expect(formatEventTimeDisplayDetail("19:00", null)).toBe(
+        "Comença a les 19:00"
+      );
+    });
+
+    it("returns 'Comença a les HH:mm' when endTime is empty string", () => {
+      expect(formatEventTimeDisplayDetail("19:00", "")).toBe(
+        "Comença a les 19:00"
+      );
+    });
+
+    it("handles single digit hours correctly", () => {
+      expect(formatEventTimeDisplayDetail("09:00", null)).toBe(
+        "Comença a les 09:00"
+      );
+    });
+
+    it("handles times with minutes correctly", () => {
+      expect(formatEventTimeDisplayDetail("10:30", null)).toBe(
+        "Comença a les 10:30"
+      );
+    });
+  });
+
+  describe("when both start and end times exist", () => {
+    it("returns 'De HH:mm a HH:mm' format", () => {
+      expect(formatEventTimeDisplayDetail("19:00", "21:00")).toBe(
+        "De 19:00 a 21:00"
+      );
+    });
+
+    it("handles morning times correctly", () => {
+      expect(formatEventTimeDisplayDetail("09:30", "12:00")).toBe(
+        "De 09:30 a 12:00"
+      );
+    });
+
+    it("handles afternoon times correctly", () => {
+      expect(formatEventTimeDisplayDetail("14:15", "17:45")).toBe(
+        "De 14:15 a 17:45"
+      );
+    });
+
+    it("handles evening times correctly", () => {
+      expect(formatEventTimeDisplayDetail("20:00", "23:30")).toBe(
+        "De 20:00 a 23:30"
+      );
+    });
+
+    it("handles midnight times correctly", () => {
+      expect(formatEventTimeDisplayDetail("23:00", "01:00")).toBe(
+        "De 23:00 a 01:00"
+      );
+    });
+
+    it("handles single digit hours correctly", () => {
+      expect(formatEventTimeDisplayDetail("09:00", "10:00")).toBe(
+        "De 09:00 a 10:00"
+      );
+    });
+
+    it("handles times with leading zeros correctly", () => {
+      expect(formatEventTimeDisplayDetail("08:05", "09:05")).toBe(
+        "De 08:05 a 09:05"
+      );
+    });
+  });
+
+  describe("edge cases", () => {
+    it("returns 'Consultar horaris' for empty string startTime", () => {
+      expect(formatEventTimeDisplayDetail("", "21:00")).toBe(
+        "Consultar horaris"
+      );
+    });
+
+    it("returns 'Comença a les HH:mm' for empty string endTime when startTime is valid", () => {
+      expect(formatEventTimeDisplayDetail("19:00", "")).toBe(
+        "Comença a les 19:00"
+      );
+    });
+  });
+
+  describe("when times include seconds", () => {
+    it("strips seconds from start time", () => {
+      expect(formatEventTimeDisplayDetail("07:30:00", "09:00")).toBe(
+        "De 07:30 a 09:00"
+      );
+    });
+
+    it("strips seconds from end time", () => {
+      expect(formatEventTimeDisplayDetail("07:30", "09:00:00")).toBe(
+        "De 07:30 a 09:00"
+      );
+    });
+
+    it("strips seconds from both times", () => {
+      expect(formatEventTimeDisplayDetail("07:30:00", "09:00:00")).toBe(
+        "De 07:30 a 09:00"
+      );
+    });
+
+    it("handles start time with seconds and no end time", () => {
+      expect(formatEventTimeDisplayDetail("07:30:00", null)).toBe(
+        "Comença a les 07:30"
+      );
+    });
+
+    it("handles identical times with seconds as single time (no end time)", () => {
+      expect(formatEventTimeDisplayDetail("07:30:00", "07:30:00")).toBe(
+        "Comença a les 07:30"
+      );
+    });
+  });
+
+  describe("additional edge cases and validation", () => {
+    it("handles times at midnight (00:00) correctly as all-day event", () => {
+      expect(formatEventTimeDisplayDetail("00:00", "00:00")).toBe(
+        "Consultar horaris"
+      );
+    });
+
+    it("handles times at midnight start with valid end time", () => {
+      expect(formatEventTimeDisplayDetail("00:00", "23:59")).toBe(
+        "Consultar horaris"
+      );
+    });
+
+    it("handles very early morning times", () => {
+      expect(formatEventTimeDisplayDetail("00:30", null)).toBe(
+        "Comença a les 00:30"
+      );
+    });
+
+    it("handles very early morning time ranges", () => {
+      expect(formatEventTimeDisplayDetail("00:30", "01:00")).toBe(
+        "De 00:30 a 01:00"
+      );
+    });
+
+    it("handles times that cross midnight", () => {
+      expect(formatEventTimeDisplayDetail("23:30", "01:00")).toBe(
+        "De 23:30 a 01:00"
+      );
+    });
+
+    it("handles times very close together (1 minute difference)", () => {
+      expect(formatEventTimeDisplayDetail("19:00", "19:01")).toBe(
+        "De 19:00 a 19:01"
+      );
+    });
+
+    it("handles times with same hour but different minutes", () => {
+      expect(formatEventTimeDisplayDetail("19:00", "19:59")).toBe(
+        "De 19:00 a 19:59"
+      );
+    });
+
+    it("handles noon times correctly", () => {
+      expect(formatEventTimeDisplayDetail("12:00", null)).toBe(
+        "Comença a les 12:00"
+      );
+    });
+
+    it("handles noon to afternoon range", () => {
+      expect(formatEventTimeDisplayDetail("12:00", "14:00")).toBe(
+        "De 12:00 a 14:00"
+      );
+    });
+
+    it("handles times with single digit minutes", () => {
+      expect(formatEventTimeDisplayDetail("09:05", "10:05")).toBe(
+        "De 09:05 a 10:05"
+      );
+    });
+
+    it("handles times with zero minutes", () => {
+      expect(formatEventTimeDisplayDetail("09:00", "10:00")).toBe(
+        "De 09:00 a 10:00"
+      );
+    });
+
+    it("handles times with 59 minutes", () => {
+      expect(formatEventTimeDisplayDetail("09:59", "10:59")).toBe(
+        "De 09:59 a 10:59"
+      );
+    });
+
+    it("handles late night times", () => {
+      expect(formatEventTimeDisplayDetail("22:45", null)).toBe(
+        "Comença a les 22:45"
+      );
+    });
+
+    it("handles late night to early morning range", () => {
+      expect(formatEventTimeDisplayDetail("22:00", "02:00")).toBe(
+        "De 22:00 a 02:00"
+      );
+    });
+
+    it("handles times with various minute values", () => {
+      expect(formatEventTimeDisplayDetail("15:15", "16:45")).toBe(
+        "De 15:15 a 16:45"
+      );
+    });
+
+    it("handles times with 30 minutes (half hour)", () => {
+      expect(formatEventTimeDisplayDetail("10:30", "11:30")).toBe(
+        "De 10:30 a 11:30"
+      );
+    });
+
+    it("handles times with 45 minutes (three quarters)", () => {
+      expect(formatEventTimeDisplayDetail("14:45", "16:15")).toBe(
+        "De 14:45 a 16:15"
+      );
+    });
+
+    it("handles identical start and end times (normalized)", () => {
+      expect(formatEventTimeDisplayDetail("19:00", "19:00")).toBe(
+        "Comença a les 19:00"
+      );
+    });
+
+    it("handles times with extra colons (invalid format that gets cleaned)", () => {
+      expect(formatEventTimeDisplayDetail("19:00:00", "21:00:00")).toBe(
+        "De 19:00 a 21:00"
+      );
+    });
+
+    it("handles times without leading zeros in input (preserves format)", () => {
+      // formatTimeForAPI preserves the input format, so single digit hours stay as-is
+      expect(formatEventTimeDisplayDetail("9:00", "10:00")).toBe(
+        "De 9:00 a 10:00"
+      );
+    });
+
+    it("handles times with single digit hours and minutes (preserves format)", () => {
+      // formatTimeForAPI preserves the input format
+      expect(formatEventTimeDisplayDetail("9:5", "10:5")).toBe(
+        "De 9:5 a 10:5"
+      );
+    });
+
+    it("handles very short time ranges (same hour)", () => {
+      expect(formatEventTimeDisplayDetail("19:00", "19:30")).toBe(
+        "De 19:00 a 19:30"
+      );
+    });
+
+    it("handles long time ranges (multiple hours)", () => {
+      expect(formatEventTimeDisplayDetail("09:00", "17:00")).toBe(
+        "De 09:00 a 17:00"
+      );
+    });
+
+    it("handles times at exact hour boundaries", () => {
+      expect(formatEventTimeDisplayDetail("08:00", "09:00")).toBe(
+        "De 08:00 a 09:00"
+      );
+    });
+
+    it("handles times with all zeros except start hour", () => {
+      expect(formatEventTimeDisplayDetail("01:00", null)).toBe(
+        "Comença a les 01:00"
+      );
+    });
+
+    it("handles times with all zeros except end hour", () => {
+      expect(formatEventTimeDisplayDetail("01:00", "02:00")).toBe(
+        "De 01:00 a 02:00"
+      );
+    });
+
+    it("handles times with maximum valid hour (23)", () => {
+      expect(formatEventTimeDisplayDetail("23:00", null)).toBe(
+        "Comença a les 23:00"
+      );
+    });
+
+    it("handles times with maximum valid hour and minutes (23:59)", () => {
+      expect(formatEventTimeDisplayDetail("23:59", null)).toBe(
+        "Comença a les 23:59"
+      );
+    });
+
+    it("handles range from maximum hour to next day", () => {
+      expect(formatEventTimeDisplayDetail("23:30", "00:30")).toBe(
+        "De 23:30 a 00:30"
+      );
     });
   });
 });

@@ -51,6 +51,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   showJsonLd = false,
   jsonLdId,
   title,
+  useDetailTimeFormat = false,
 }) => {
   // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
   // Keep first occurrence order-stable. Key used: id fallback to slug.
@@ -156,6 +157,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                 <CardHorizontalServer
                   event={event}
                   isPriority={usePriority && index <= 2}
+                  useDetailTimeFormat={useDetailTimeFormat}
                 />
               </div>
             ))}

@@ -9,7 +9,7 @@ import {
   getFormattedDate,
   formatPlaceName,
 } from "@utils/helpers";
-import { formatEventTimeDisplay } from "@utils/date-helpers";
+import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import MobileShareIsland from "./MobileShareIsland";
@@ -113,7 +113,7 @@ export default function CardContentServer({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="body-small px-element-gap-sm">
-            {formatEventTimeDisplay(event.startTime, event.endTime)}
+            {formatEventTimeDisplayDetail(event.startTime, event.endTime)}
           </p>
         </div>
         {!isHorizontal && <div className="mb-element-gap" />}

@@ -1,13 +1,17 @@
 import ImageServer from "@components/ui/common/image/ImageServer";
 import ViewCounter from "@components/ui/viewCounter";
 import { truncateString, getFormattedDate } from "@utils/helpers";
-import { formatEventTimeDisplay } from "@utils/date-helpers";
+import {
+  formatEventTimeDisplay,
+  formatEventTimeDisplayDetail,
+} from "@utils/date-helpers";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 
 const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
   event,
   isPriority = false,
+  useDetailTimeFormat = false,
 }) => {
   const title = truncateString(event.title || "", 60);
   // const description = truncateString(event.description || "", 60);
@@ -94,7 +98,11 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span>{formatEventTimeDisplay(event.startTime, event.endTime)}</span>
+              <span>
+                {useDetailTimeFormat
+                  ? formatEventTimeDisplayDetail(event.startTime, event.endTime)
+                  : formatEventTimeDisplay(event.startTime, event.endTime)}
+              </span>
             </div>
 
             {/* Location */}
