@@ -45,6 +45,8 @@ const EventSummaryBaseSchema = z
     id: z.string(),
     hash: z.string(),
     slug: z.string(),
+    // Note: title is allowed to be empty string (backend may return empty titles)
+    // Frontend code should handle empty titles defensively (see app/e/[eventId]/page.tsx)
     title: z.string(),
     type: EventTypeEnum,
     url: z.string(),
@@ -156,7 +158,16 @@ export function parseEventDetail(
     return null;
   }
 
-  return result.data as EventDetailResponseDTO;
+  const event = result.data as EventDetailResponseDTO;
+  
+  // Log warning if title is empty (helps identify data quality issues)
+  if (!event.title || event.title.trim() === "") {
+    console.warn(
+      `Event with empty title detected: id=${event.id}, slug=${event.slug}`
+    );
+  }
+
+  return event;
 }
 
 // Paged response schema for events

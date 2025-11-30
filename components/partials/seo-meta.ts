@@ -171,7 +171,8 @@ export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
     itemListElement: breadcrumbs.map((breadcrumb, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      name: breadcrumb.name,
+      // Ensure name is never empty (required by Google structured data)
+      name: breadcrumb.name || "Pàgina",
       item: breadcrumb.url,
     })),
   };

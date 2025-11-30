@@ -140,36 +140,40 @@ export default async function EventPage({
   const relatedEventsJsonData =
     event.relatedEvents && event.relatedEvents.length > 0
       ? {
-          "@id": `${siteUrl}#itemlist-${title
-            ?.toLowerCase()
-            .replace(/\s+/g, "-")}`,
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: "Related Events",
-          numberOfItems: event.relatedEvents.length,
-          itemListElement: event.relatedEvents
-            .slice(0, 10) // Limit for performance
-            .map((relatedEvent, index) => {
-              try {
-                return {
-                  "@type": "ListItem",
-                  position: index + 1,
-                  item: generateJsonData(relatedEvent),
-                };
-              } catch (err) {
-                console.error(
-                  "Error generating JSON-LD for related event:",
-                  relatedEvent.id,
-                  err
-                );
-                return null;
-              }
-            })
-            .filter(Boolean),
-        }
+        "@id": `${siteUrl}#itemlist-${title
+          ?.toLowerCase()
+          .replace(/\s+/g, "-")}`,
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Related Events",
+        numberOfItems: event.relatedEvents.length,
+        itemListElement: event.relatedEvents
+          .slice(0, 10) // Limit for performance
+          .map((relatedEvent, index) => {
+            try {
+              return {
+                "@type": "ListItem",
+                position: index + 1,
+                item: generateJsonData(relatedEvent),
+              };
+            } catch (err) {
+              console.error(
+                "Error generating JSON-LD for related event:",
+                relatedEvent.id,
+                err
+              );
+              return null;
+            }
+          })
+          .filter(Boolean),
+      }
       : null;
 
   // Generate BreadcrumbList JSON-LD
+  // Ensure breadcrumb name is never empty (required by Google structured data)
+  const breadcrumbName = title ||
+    (placeLabel ? `Esdeveniment a ${placeLabel}` : "Esdeveniment");
+
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -182,18 +186,18 @@ export default async function EventPage({
       },
       ...(placeSlug
         ? [
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: placeLabel,
-              item: `${siteUrl}/${placeSlug}`,
-            },
-          ]
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: placeLabel,
+            item: `${siteUrl}/${placeSlug}`,
+          },
+        ]
         : []),
       {
         "@type": "ListItem",
         position: placeSlug ? 3 : 2,
-        name: title,
+        name: breadcrumbName,
         item: `${siteUrl}/e/${event.slug}`,
       },
     ],
