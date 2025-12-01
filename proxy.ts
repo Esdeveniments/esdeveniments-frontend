@@ -68,12 +68,7 @@ function getCsp() {
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
     ],
-    "style-src": [
-      "'self'",
-      "'unsafe-inline'",
-      "https://fonts.googleapis.com",
-      "https://fonts.gstatic.com",
-    ],
+    "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     "connect-src": [
       "'self'",
       apiOrigin,
@@ -86,12 +81,7 @@ function getCsp() {
     // Images: allow self, data URIs, HTTPS everywhere; add blob for previews
     // In development, also allow HTTP to ease testing against non-TLS sources
     "img-src": ["'self'", "data:", "https:", "blob:", isDev ? "http:" : ""],
-    "font-src": [
-      "'self'",
-      "https://fonts.gstatic.com",
-      "https://fonts.googleapis.com",
-      "data:",
-    ],
+    "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
     "frame-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],
     "object-src": ["'none'"],
@@ -105,46 +95,52 @@ function getCsp() {
     .join("; ");
 }
 
+// Cache CSP string at module load to avoid recomputing on every request
+const CACHED_CSP = getCsp();
+
+// Cache API route patterns at module load to avoid recreating on every request
+// Allowlist public API routes that don't require HMAC from the browser
+// Use regex patterns for precise matching to prevent accidental exposure of
+// deep nested private routes (e.g., /api/regions/admin/users would be blocked).
+// Note: Single-segment routes like /api/regions/admin are still allowed to
+// support dynamic routes like [id] and [slug], but routes must be explicitly
+// created as files in the codebase.
+const PUBLIC_API_PATTERNS = [
+  // Regions: base, [id], or /options
+  /^\/api\/regions(\/(options|[\w-]+))?$/,
+  // Categories: base or [id]
+  /^\/api\/categories(\/[\w-]+)?$/,
+  // Cities: base or [id]
+  /^\/api\/cities(\/[\w-]+)?$/,
+  // News: base or [slug]
+  /^\/api\/news(\/[\w-]+)?$/,
+  // Places: base, [slug], /nearby, or /photo
+  /^\/api\/places(\/(nearby|photo|[\w-]+))?$/,
+];
+
+// Routes that require exact match
+const PUBLIC_API_EXACT_PATHS = [
+  "/api/promotions/config",
+  "/api/promotions/price-preview",
+  "/api/promotions/active",
+  "/api/leads/restaurant",
+  "/api/cloudinary/sign",
+];
+
+// Event routes pattern (GET only): base, [slug], or /categorized
+const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[\w-]+))?$/;
+
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
-    // Allowlist public API routes that don't require HMAC from the browser
-    // Use regex patterns for precise matching to prevent accidental exposure of
-    // deep nested private routes (e.g., /api/regions/admin/users would be blocked).
-    // Note: Single-segment routes like /api/regions/admin are still allowed to
-    // support dynamic routes like [id] and [slug], but routes must be explicitly
-    // created as files in the codebase.
-    const publicApiPatterns = [
-      // Regions: base, [id], or /options
-      /^\/api\/regions(\/(options|[\w-]+))?$/,
-      // Categories: base or [id]
-      /^\/api\/categories(\/[\w-]+)?$/,
-      // Cities: base or [id]
-      /^\/api\/cities(\/[\w-]+)?$/,
-      // News: base or [slug]
-      /^\/api\/news(\/[\w-]+)?$/,
-      // Places: base, [slug], /nearby, or /photo
-      /^\/api\/places(\/(nearby|photo|[\w-]+))?$/,
-    ];
-
-    // Routes that require exact match
-    const publicApiExactPaths = [
-      "/api/promotions/config",
-      "/api/promotions/price-preview",
-      "/api/promotions/active",
-      "/api/leads/restaurant",
-      "/api/cloudinary/sign",
-    ];
-
     const isPublicApiRequest =
       // Pattern-based routes (base path, dynamic segments, or specific sub-paths)
-      publicApiPatterns.some((pattern) => pattern.test(pathname)) ||
+      PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname)) ||
       // Exact match routes
-      publicApiExactPaths.includes(pathname) ||
+      PUBLIC_API_EXACT_PATHS.includes(pathname) ||
       // Event routes (GET only): base, [slug], or /categorized
-      (request.method === "GET" &&
-        /^\/api\/events(\/(categorized|[\w-]+))?$/.test(pathname)) ||
+      (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
       // Visit counter endpoint (POST only)
       (pathname === "/api/visits" && request.method === "POST");
 
@@ -247,7 +243,6 @@ export default async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
-  const csp = getCsp();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
 
@@ -267,9 +262,9 @@ export default async function proxy(request: NextRequest) {
     process.env.VERCEL_ENV === "preview" ||
     process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
   if (reportOnly) {
-    response.headers.set("Content-Security-Policy-Report-Only", csp);
+    response.headers.set("Content-Security-Policy-Report-Only", CACHED_CSP);
   } else {
-    response.headers.set("Content-Security-Policy", csp);
+    response.headers.set("Content-Security-Policy", CACHED_CSP);
   }
   response.headers.set(
     "Strict-Transport-Security",

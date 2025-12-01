@@ -1,0 +1,88 @@
+name: Deploy to AWS (SST)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger
+
+concurrency:
+  group: deploy-sst-${{ github.ref }}
+  cancel-in-progress: false # Don't cancel - let deployments complete
+
+env:
+  NODE_VERSION: "20"
+  AWS_REGION: "eu-west-3"
+
+jobs:
+  deploy:
+    name: Deploy to AWS with SST
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create .env file for SST deployment
+        run: |
+          # SST requires a .env file in the root during deployment
+          # Copy from .env.production if it exists, otherwise create from secrets
+          if [ -f .env.production ]; then
+            cp .env.production .env
+          else
+            touch .env
+          fi
+
+          # Ensure required environment variables are set
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.esdeveniments.cat' }}" >> .env
+          echo "HMAC_SECRET=${{ secrets.HMAC_SECRET }}" >> .env
+
+          # Optional: Add other environment variables if needed
+          if [ -n "${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}" >> .env
+          fi
+
+          if [ -n "${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ADS=${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}" >> .env
+          fi
+
+          if [ -n "${{ secrets.SENTRY_DSN }}" ]; then
+            echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
+          fi
+
+      - name: Deploy to AWS with SST
+        env:
+          # SST will read from .env file and SSM Parameter Store
+          AWS_REGION: ${{ env.AWS_REGION }}
+        run: |
+          npx sst deploy --stage production
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌍 Site URL: https://esdeveniments.cat"
+          echo "📊 Check AWS Console: https://console.aws.amazon.com/cloudfront/home?region=${{ env.AWS_REGION }}"

@@ -69,4 +69,3 @@ describe("route-validation: validatePlaceForMetadata", () => {
     expect(result).toEqual({ isValid: true });
   });
 });
-

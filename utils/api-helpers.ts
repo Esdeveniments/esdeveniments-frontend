@@ -26,7 +26,7 @@ export function getApiOrigin(): string {
   // Strategy 2: Fallback based on NODE_ENV
   const nodeEnv = process.env.NODE_ENV;
   if (nodeEnv === "production") {
-    return "https://api.esdeveniments.cat"; // Production API
+    return "https://api-pre.esdeveniments.cat"; // Production API
   }
 
   // Strategy 3: Default fallback (development/staging)
@@ -62,9 +62,7 @@ export function getInternalApiUrl(path: string): string {
  * Centralizes query string construction to eliminate duplication between
  * internal and external API calls.
  */
-export function buildEventsQuery(
-  params: FetchEventsParams
-): URLSearchParams {
+export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   const query: Partial<FetchEventsParams> = {};
   query.page = typeof params.page === "number" ? params.page : 0;
   query.size = typeof params.size === "number" ? params.size : 10;

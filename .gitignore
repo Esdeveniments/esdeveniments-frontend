@@ -105,3 +105,10 @@ node_modules/
 # Task files
 tasks.json
 tasks/ 
+
+# sst
+.sst
+
+
+# open-next
+.open-next

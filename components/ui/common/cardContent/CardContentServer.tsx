@@ -64,9 +64,8 @@ function CardContentServer({
               style={{ height: isHorizontal ? "16rem" : "auto" }}
             >
               <ImageServer
-                className={`w-full flex justify-center ${
-                  isHorizontal ? "h-64 object-cover" : "object-contain"
-                }`}
+                className={`w-full flex justify-center ${isHorizontal ? "h-64 object-cover" : "object-contain"
+                  }`}
                 title={event.title}
                 image={image}
                 priority={isPriority}

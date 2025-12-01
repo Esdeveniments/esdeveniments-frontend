@@ -81,4 +81,3 @@ describe("generateJsonData", () => {
     expect(schema.startDate).toBe("2025-01-10T10:00");
   });
 });
-

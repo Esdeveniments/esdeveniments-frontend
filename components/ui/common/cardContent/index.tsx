@@ -77,9 +77,8 @@ export default function CardContentServer({
               }}
             >
               <Image
-                className={`w-full flex justify-center ${
-                  isHorizontal ? "h-64 object-cover" : "object-contain"
-                }`}
+                className={`w-full flex justify-center ${isHorizontal ? "h-64 object-cover" : "object-contain"
+                  }`}
                 title={event.title}
                 image={image}
                 priority={isPriority}

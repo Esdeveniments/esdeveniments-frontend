@@ -97,7 +97,8 @@ export const generateJsonData = (
   const sanitizedLocation = sanitizeText(location);
   const cityName = sanitizeText(city?.name);
   const regionName = sanitizeText(region?.name);
-  const fallbackPlace = cityName || regionName || sanitizedLocation || "Catalunya";
+  const fallbackPlace =
+    cityName || regionName || sanitizedLocation || "Catalunya";
 
   if (!cityName && !regionName && !sanitizedLocation) {
     logSchemaWarning(slug, "address", "missing location context");
@@ -118,10 +119,7 @@ export const generateJsonData = (
   };
 
   // Enhanced image handling with validation, de-duplication and fallback
-  const imageCandidates = [
-    imageUrl,
-    defaultImage,
-  ];
+  const imageCandidates = [imageUrl, defaultImage];
   const images = Array.from(
     new Set(imageCandidates.filter((src): src is string => isValidHttpUrl(src)))
   );
@@ -142,15 +140,17 @@ export const generateJsonData = (
 
   const startDateWithTime = buildDateTime(startDate, startTime);
   const resolvedStartDate =
-    startDateWithTime ??
-    ensureIsoDate(startDate) ??
-    new Date().toISOString();
+    startDateWithTime ?? ensureIsoDate(startDate) ?? new Date().toISOString();
   if (!startDateWithTime && !ensureIsoDate(startDate)) {
     logSchemaWarning(slug, "startDate");
   }
 
   const startDateOnly = resolvedStartDate.split("T")[0];
-  const endDateWithTime = buildDateTime(endDate, normalizedEndTime, startDateOnly);
+  const endDateWithTime = buildDateTime(
+    endDate,
+    normalizedEndTime,
+    startDateOnly
+  );
   const resolvedEndDate = endDateWithTime ?? startDateOnly ?? resolvedStartDate;
   if (!endDateWithTime && !ensureIsoDate(endDate)) {
     logSchemaWarning(slug, "endDate");
@@ -241,8 +241,7 @@ export const generateJsonData = (
     eventStatusValue = "https://schema.org/EventInProgress";
   }
 
-  const schemaName =
-    trimmedTitle || `Esdeveniment a ${fallbackPlace}`.trim();
+  const schemaName = trimmedTitle || `Esdeveniment a ${fallbackPlace}`.trim();
   const placeName = sanitizedLocation || addressLocality || fallbackPlace;
 
   return {
