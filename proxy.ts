@@ -68,7 +68,12 @@ function getCsp() {
       isDev ? "localhost:*" : "",
       isDev ? "127.0.0.1:*" : "",
     ],
-    "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    "style-src": [
+      "'self'",
+      "'unsafe-inline'",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com", // Defensive: some edge cases may require this
+    ],
     "connect-src": [
       "'self'",
       apiOrigin,

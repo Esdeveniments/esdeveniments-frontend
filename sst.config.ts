@@ -56,7 +56,7 @@ export default $config({
       domain: {
         name: "esdeveniments.cat",
         aliases: ["www.esdeveniments.cat"],
-        dns: false, // Correct: disables SST managing Route53
+        dns: false, // DNS managed externally via Cloudflare instead of Route53
         cert: certArn,
       },
       environment: {
