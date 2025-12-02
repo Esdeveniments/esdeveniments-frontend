@@ -4,12 +4,9 @@ import {
   LocationMarkerIcon,
   CalendarIcon,
 } from "@heroicons/react/outline";
-import {
-  truncateString,
-  getFormattedDate,
-  formatPlaceName,
-} from "@utils/helpers";
+import { truncateString, getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
+import { buildEventLocationLabels } from "@utils/location-helpers";
 import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import MobileShareIsland from "./MobileShareIsland";
@@ -28,8 +25,15 @@ export default function CardContentServer({
     event.endDate
   );
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
-  const formattedLocation = formatPlaceName(event.location || "");
-  const location = truncateString(formattedLocation, 45);
+  const { primaryLabel, secondaryLabel } = buildEventLocationLabels({
+    cityName: event.city?.name,
+    regionName: event.region?.name,
+    location: event.location,
+  });
+  const primaryLocation = truncateString(primaryLabel, 45);
+  const secondaryLocation = secondaryLabel
+    ? truncateString(secondaryLabel, 45)
+    : "";
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
     ? `Del ${formattedStart} al ${formattedEnd}`
@@ -64,7 +68,7 @@ export default function CardContentServer({
                 title={event.title}
                 slug={event.slug}
                 eventDate={eventDate}
-                location={location}
+                location={primaryLocation}
               />
             </div>
           </div>
@@ -106,7 +110,14 @@ export default function CardContentServer({
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-element-gap-sm">
-            <span className="body-small max-w-full capitalize">{location}</span>
+            <span className="body-small max-w-full font-semibold capitalize">
+              {primaryLocation}
+            </span>
+            {secondaryLocation && (
+              <span className="body-small max-w-full text-foreground/70 capitalize">
+                {secondaryLocation}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex justify-start items-center">

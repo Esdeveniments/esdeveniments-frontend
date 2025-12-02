@@ -547,13 +547,13 @@ iframe {
 }
 
 #ad-card-slot {
-  min-height: 240px;
-  min-width: 280px;
+  min-height: 250px;
+  min-width: 300px;
 }
 
 #ad-article-slot {
   min-height: 280px;
-  min-width: 280px;
+  min-width: 300px;
 }
 
 .ql-editor > p {

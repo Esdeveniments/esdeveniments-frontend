@@ -78,7 +78,7 @@ export default $config({
           return url;
         })(),
       },
-      warm: 2,
+      warm: 5,
       transform: {
         server: {
           memory: "2048 MB",
@@ -93,7 +93,7 @@ export default $config({
       },
       imageOptimization: {
         memory: "2048 MB", // more CPU for resizing
-        // staticEtag: true,    // optional: stronger caching behaviour
+        staticEtag: true, // Enable stronger caching for optimized images
       },
     });
 

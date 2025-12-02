@@ -1,5 +1,8 @@
 import { LocationMarkerIcon as LocationIcon } from "@heroicons/react/outline";
-import { buildDisplayLocation } from "@utils/location-helpers";
+import {
+  buildDisplayLocation,
+  buildEventLocationLabels,
+} from "@utils/location-helpers";
 import { EventLocationProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
@@ -15,10 +18,21 @@ export default function EventLocation({
   const cityHref = citySlug ? `/${citySlug}` : null;
   const regionHref = regionSlug ? `/${regionSlug}` : null;
   const showPlaceLinks = Boolean(cityHref || regionHref);
-  const displayLocation = buildDisplayLocation({
-    location,
+  const {
+    cityLabel,
+    regionLabel,
+    primaryLabel,
+    secondaryLabel,
+  } = buildEventLocationLabels({
     cityName,
     regionName,
+    location,
+    secondaryPreference: "region",
+  });
+  const displayLocation = buildDisplayLocation({
+    location,
+    cityName: cityLabel,
+    regionName: regionLabel,
     hidePlaceSegments: showPlaceLinks,
   });
 
@@ -33,6 +47,18 @@ export default function EventLocation({
         />
         <div className="w-full flex flex-col justify-center items-center gap-element-gap px-section-x">
           <div className="w-full flex flex-col justify-center items-start gap-element-gap">
+            {primaryLabel && (
+              <div className="w-full flex flex-col justify-start items-start gap-0.5">
+                <p className="heading-4 text-foreground-strong">
+                  {primaryLabel}
+                </p>
+                {secondaryLabel && (
+                  <p className="body-normal text-foreground/70">
+                    {secondaryLabel}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="w-full flex flex-col justify-start items-start gap-1">
               <p className="body-normal text-foreground-strong">
                 {displayLocation}
@@ -45,7 +71,7 @@ export default function EventLocation({
                       className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
                       variant="inline"
                     >
-                      {cityName}
+                      {cityLabel}
                     </PressableAnchor>
                   )}
                   {cityHref && regionHref && (
@@ -57,7 +83,7 @@ export default function EventLocation({
                       className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
                       variant="inline"
                     >
-                      {regionName}
+                      {regionLabel}
                     </PressableAnchor>
                   )}
                 </div>
@@ -65,8 +91,8 @@ export default function EventLocation({
             </div>
             <EventLocationClient
               location={location}
-              cityName={cityName}
-              regionName={regionName}
+              cityName={cityLabel}
+              regionName={regionLabel}
             />
           </div>
         </div>

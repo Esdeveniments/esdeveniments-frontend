@@ -8,9 +8,22 @@ import {
   formatPlaceName,
 } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
-import type { BuildDisplayLocationOptions } from "types/location";
+import type {
+  BuildDisplayLocationOptions,
+  EventLocationLabelOptions,
+  EventLocationLabels,
+} from "types/location";
 
 const normalize = (value: string) => value.trim().toLowerCase();
+const formatOptionalPlace = (value?: string | null) =>
+  value && value.trim().length > 0 ? formatPlaceName(value) : "";
+const isDistinctLabel = (candidate: string, ...others: string[]): boolean => {
+  if (!candidate) return false;
+  const normalizedCandidate = normalize(candidate);
+  return !others.some(
+    (other) => other && normalize(other) === normalizedCandidate
+  );
+};
 
 /**
  * Build a clean location string:
@@ -24,8 +37,8 @@ export const buildDisplayLocation = ({
   regionName,
   hidePlaceSegments,
 }: BuildDisplayLocationOptions): string => {
-  const formattedCityName = cityName ? formatPlaceName(cityName) : "";
-  const formattedRegionName = regionName ? formatPlaceName(regionName) : "";
+  const formattedCityName = formatOptionalPlace(cityName);
+  const formattedRegionName = formatOptionalPlace(regionName);
 
   const baseSegments = location
     .split(",")
@@ -73,6 +86,39 @@ export const buildDisplayLocation = ({
   }
 
   return uniqueSegments[0] ?? location;
+};
+
+export const buildEventLocationLabels = ({
+  cityName,
+  regionName,
+  location,
+  secondaryPreference = "venue",
+}: EventLocationLabelOptions): EventLocationLabels => {
+  const cityLabel = formatOptionalPlace(cityName);
+  const regionLabel = formatOptionalPlace(regionName);
+  const venueLabel = formatOptionalPlace(location);
+
+  const primaryLabel = cityLabel || regionLabel || venueLabel || "";
+  const preferRegion = secondaryPreference === "region";
+  const preferredSecondary = preferRegion ? regionLabel : venueLabel;
+  const fallbackSecondary = preferRegion ? venueLabel : regionLabel;
+
+  let secondaryLabel = "";
+  if (isDistinctLabel(preferredSecondary, primaryLabel)) {
+    secondaryLabel = preferredSecondary;
+  } else if (
+    isDistinctLabel(fallbackSecondary, primaryLabel, preferredSecondary)
+  ) {
+    secondaryLabel = fallbackSecondary;
+  }
+
+  return {
+    cityLabel,
+    regionLabel,
+    venueLabel,
+    primaryLabel,
+    secondaryLabel,
+  };
 };
 
 export const getPlaceTypeAndLabel = async (

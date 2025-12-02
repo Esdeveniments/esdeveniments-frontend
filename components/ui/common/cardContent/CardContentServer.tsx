@@ -5,6 +5,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/outline";
 import { truncateString, getFormattedDate } from "@utils/helpers";
+import { buildEventLocationLabels } from "@utils/location-helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
@@ -23,7 +24,15 @@ function CardContentServer({
   );
 
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
-  const location = truncateString(event.location || "", 45);
+  const { primaryLabel, secondaryLabel } = buildEventLocationLabels({
+    cityName: event.city?.name,
+    regionName: event.region?.name,
+    location: event.location,
+  });
+  const primaryLocation = truncateString(primaryLabel, 45);
+  const secondaryLocation = secondaryLabel
+    ? truncateString(secondaryLabel, 45)
+    : "";
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
     ? `Del ${formattedStart} al ${formattedEnd}`
@@ -87,7 +96,12 @@ function CardContentServer({
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-2">
-            <span className="max-w-full">{location}</span>
+            <span className="max-w-full font-semibold">{primaryLocation}</span>
+            {secondaryLocation && (
+              <span className="max-w-full text-foreground/70">
+                {secondaryLocation}
+              </span>
+            )}
           </div>
         </div>
         {/* Date time */}

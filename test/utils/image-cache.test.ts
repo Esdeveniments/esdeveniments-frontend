@@ -23,11 +23,33 @@ describe("withImageCacheKey", () => {
     expect(result).toContain("rel-key");
   });
 
+  describe("protocol-relative URLs", () => {
+    it("normalizes protocol-relative URLs to HTTPS with cache key", () => {
+      const url = "//cdn.appculturamataro.cat/medias/image.jpeg";
+      const result = withImageCacheKey(url, "hash-abc");
+      expect(result).toMatch(/^https:\/\//);
+      expect(result).toContain("cdn.appculturamataro.cat");
+      expect(result).toContain("v=hash-abc");
+    });
+
+    it("normalizes protocol-relative URLs to HTTPS without cache key", () => {
+      const url = "//cdn.example.com/image.jpg";
+      const result = withImageCacheKey(url, null);
+      expect(result).toBe("https://cdn.example.com/image.jpg");
+    });
+
+    it("handles protocol-relative URLs with existing query params", () => {
+      const url = "//cdn.example.com/image.jpg?size=large";
+      const result = withImageCacheKey(url, "v123");
+      expect(result).toMatch(/^https:\/\//);
+      expect(result).toContain("size=large");
+      expect(result).toContain("v=v123");
+    });
+  });
+
   it("returns original URL when cache key is missing", () => {
     const url = "https://cdn.example.com/image.jpg";
     expect(withImageCacheKey(url, null)).toBe(url);
     expect(withImageCacheKey(url, undefined)).toBe(url);
   });
 });
-
-

@@ -61,25 +61,10 @@ export default function GoogleScripts() {
     return () => {
       isMounted = false;
       if (listenerId && typeof window.__tcfapi === "function") {
-        window.__tcfapi("removeEventListener", 2, () => {}, listenerId);
+        window.__tcfapi("removeEventListener", 2, () => { }, listenerId);
       }
     };
   }, []);
-
-  // Manually inject the Ads script once consent is granted to avoid Next.js data-nscript
-  useEffect(() => {
-    if (!adsAllowed || !ADS_SRC) return;
-    const existing = document.querySelector<HTMLScriptElement>(
-      `script[src="${ADS_SRC}"]`
-    );
-    if (existing) return;
-
-    const script = document.createElement("script");
-    script.src = ADS_SRC;
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    document.head.appendChild(script);
-  }, [adsAllowed]);
 
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
@@ -127,6 +112,15 @@ export default function GoogleScripts() {
 
   return (
     <>
+      {/* Google Ads - Optimized loading */}
+      {adsAllowed && ADS_SRC && (
+        <Script
+          id="google-ads"
+          src={ADS_SRC}
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
+      )}
       {/* Google Analytics - keep lazyOnload for perf */}
       <Script
         id="google-analytics-gtag"

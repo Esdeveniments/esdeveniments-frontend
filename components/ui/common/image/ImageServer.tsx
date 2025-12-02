@@ -44,7 +44,13 @@ function ImageServer({
   const finalImageSrc = cacheKey ? withImageCacheKey(image, cacheKey) : image;
 
   return (
-    <div className={className} style={{ position: "relative" }}>
+    <div
+      className={className}
+      style={{
+        position: "relative",
+        aspectRatio: "500 / 260", // Prevent CLS by reserving space
+      }}
+    >
       <NextImage
         className="object-cover"
         src={finalImageSrc}
