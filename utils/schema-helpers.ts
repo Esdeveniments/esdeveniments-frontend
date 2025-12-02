@@ -152,7 +152,10 @@ export const generateJsonData = (
     startDateOnly
   );
   const resolvedEndDate = endDateWithTime ?? startDateOnly ?? resolvedStartDate;
-  if (!endDateWithTime && !ensureIsoDate(endDate)) {
+  // Warn when the original data had no explicit end date or time.
+  // Note: endDateWithTime will always have a value due to fallback to startDateOnly,
+  // so we check the original input values instead.
+  if (!ensureIsoDate(endDate) && !ensureTime(normalizedEndTime)) {
     logSchemaWarning(slug, "endDate");
   }
 

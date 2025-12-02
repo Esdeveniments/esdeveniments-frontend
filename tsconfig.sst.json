@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["sst.config.ts", "sst-env.d.ts"],
+  "exclude": ["node_modules", ".next", ".open-next", ".sst"]
+}

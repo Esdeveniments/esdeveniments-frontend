@@ -48,7 +48,9 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/avif", "image/webp"],
     // Aggressive caching for CloudFront: 1 year (31536000 seconds)
-    // This prevents Lambda Image Optimizer from being invoked repeatedly for the same image
+    // This prevents Lambda Image Optimizer from being invoked repeatedly for the same image.
+    // Cache-busting is handled explicitly in utils/image-cache.ts using event.hash/updatedAt,
+    // so updating an image changes its URL (e.g., ?v=<hash>) and forces CloudFront to fetch it again.
     minimumCacheTTL: 31536000,
     // Next.js 16: Explicitly configure allowed quality values
     // Values used by getOptimalImageQuality: 35, 40, 45, 50, 55, 60, 70, 75, 80, 85

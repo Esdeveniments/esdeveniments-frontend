@@ -13,6 +13,7 @@ import {
   getOptimalImageSizes,
   getServerImageQuality,
 } from "@utils/image-quality";
+import { withImageCacheKey } from "@utils/image-cache";
 
 /**
  * ClientImage
@@ -27,6 +28,7 @@ function ClientImage({
   alt = title,
   quality: customQuality,
   context = "card",
+  cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,11 @@ function ClientImage({
     customQuality,
   });
 
-  const imageKey = getImageKey(image);
+  const finalImageSrc = cacheKey
+    ? withImageCacheKey(image, cacheKey)
+    : image;
+
+  const imageKey = getImageKey(finalImageSrc);
 
   // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
   if (hasError) {
@@ -83,7 +89,7 @@ function ClientImage({
       <NextImage
         key={imageKey}
         className="object-cover"
-        src={image}
+        src={finalImageSrc}
         alt={alt}
         width={500}
         height={260}

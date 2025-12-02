@@ -1,0 +1,30 @@
+name: Uptime Monitor
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-uptime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check site availability
+        run: |
+          # Fetch the homepage
+          response=$(curl -s -o /tmp/response.html -w "%{http_code}" https://www.esdeveniments.cat)
+          
+          # Check HTTP status code
+          if [ "$response" != "200" ]; then
+            echo "❌ Site returned HTTP $response instead of 200"
+            exit 1
+          fi
+          
+          # Check for keyword to ensure page rendered correctly
+          if ! grep -q "esdeveniments.cat" /tmp/response.html; then
+            echo "❌ Keyword 'esdeveniments.cat' not found in page content"
+            exit 1
+          fi
+          
+          echo "✅ Site is up and content is valid"

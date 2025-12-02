@@ -5,6 +5,10 @@
 
 declare module "sst" {
   export interface Resource {
+    "SiteAlarms": {
+      "arn": string
+      "type": "sst.aws.SnsTopic"
+    }
     "site": {
       "type": "sst.aws.Nextjs"
       "url": string

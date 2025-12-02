@@ -14,11 +14,20 @@ frontend:
         # --- FIX STARTS HERE ---
         # 1. Start with a clean slate or ensure the file exists
         - touch .env.production
-        # 2. Dump ALL environment variables (including NEXT_PUBLIC_*) into .env.production
-        # This makes them available to 'yarn build' later
-        - env >> .env.production
+        # 2. Explicitly write only required environment variables to .env.production
+        # This prevents leaking sensitive variables that shouldn't be in the build
+        # Only NEXT_PUBLIC_* vars are safe to include (they're exposed to client anyway)
+        - |
+          if [ -n "$NEXT_PUBLIC_API_URL" ]; then
+            echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" >> .env.production
+          fi
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ANALYTICS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=${NEXT_PUBLIC_GOOGLE_ANALYTICS}" >> .env.production
+          fi
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ADS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ADS=${NEXT_PUBLIC_GOOGLE_ADS}" >> .env.production
+          fi
         # --- FIX ENDS HERE ---
-
         # Remove any existing keys, then write a single, up-to-date copy
         - sed -i '/^NEXT_PUBLIC_BUILD_ID=/d' .env.production 2>/dev/null || true
         - sed -i '/^NEXT_TELEMETRY_DISABLED=/d' .env.production 2>/dev/null || true

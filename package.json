@@ -25,7 +25,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "vercel-build": "yarn run prebuild && next build && yarn run postbuild"
+    "typecheck:sst": "tsc --noEmit --project tsconfig.sst.json"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

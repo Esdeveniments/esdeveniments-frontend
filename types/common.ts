@@ -367,6 +367,7 @@ export interface ImageComponentProps {
   region?: string;
   date?: string;
   quality?: number;
+  cacheKey?: string;
 }
 
 export interface ActiveLinkProps extends Omit<LinkProps, "href"> {

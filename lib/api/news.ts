@@ -9,6 +9,7 @@ import { createKeyedCache } from "./cache";
 import { getInternalApiUrl, buildNewsQuery } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
+import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cache";
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
@@ -35,8 +36,12 @@ export async function fetchNews(
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-    return data;
+    const data: PagedNewsResponseDTO<NewsSummaryResponseDTO> =
+      await response.json();
+    return {
+      ...data,
+      content: addCacheKeyToNewsList(data.content),
+    };
   } catch (e) {
     console.error("Error fetching news:", e);
     return {
@@ -82,7 +87,7 @@ export async function hasNewsForPlace(place: string): Promise<boolean> {
       }
       const data: PagedNewsResponseDTO<NewsSummaryResponseDTO> =
         await response.json();
-      return data.content.length > 0;
+      return addCacheKeyToNewsList(data.content).length > 0;
     } catch (e) {
       console.error("Error checking news for place:", place, e);
       return false;
@@ -100,7 +105,8 @@ export async function fetchNewsBySlug(
     });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return response.json();
+    const data: NewsDetailResponseDTO = await response.json();
+    return addCacheKeyToNewsDetail(data);
   } catch (e) {
     console.error("Error fetching news by slug:", e);
     return null;

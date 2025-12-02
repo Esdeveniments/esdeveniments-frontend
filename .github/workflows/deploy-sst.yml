@@ -58,7 +58,14 @@ jobs:
 
           # Ensure required environment variables are set
           echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.esdeveniments.cat' }}" >> .env
-          echo "HMAC_SECRET=${{ secrets.HMAC_SECRET }}" >> .env
+
+          # Validate required HMAC_SECRET
+          HMAC_SECRET_VALUE="${{ secrets.HMAC_SECRET }}"
+          if [ -z "$HMAC_SECRET_VALUE" ]; then
+            echo "::error::HMAC_SECRET secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "HMAC_SECRET=$HMAC_SECRET_VALUE" >> .env
 
           # Optional: Add other environment variables if needed
           if [ -n "${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}" ]; then

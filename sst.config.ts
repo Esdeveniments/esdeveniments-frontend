@@ -52,6 +52,14 @@ export default $config({
       );
     }
 
+    const alarmsTopic = new sst.aws.SnsTopic("SiteAlarms");
+
+    new aws.sns.TopicSubscription("SiteAlarmsEmail", {
+      topic: alarmsTopic.arn,
+      protocol: "email",
+      endpoint: "esdeveniments.catalunya.cat@gmail.com",
+    });
+
     const site = new sst.aws.Nextjs("site", {
       domain: {
         name: "esdeveniments.cat",
@@ -60,7 +68,15 @@ export default $config({
         cert: certArn,
       },
       environment: {
-        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL!,
+        NEXT_PUBLIC_API_URL: (() => {
+          const url = process.env.NEXT_PUBLIC_API_URL;
+          if (!url) {
+            throw new Error(
+              "NEXT_PUBLIC_API_URL environment variable must be set for SST deployment"
+            );
+          }
+          return url;
+        })(),
       },
       warm: 2,
       transform: {
@@ -68,12 +84,47 @@ export default $config({
           memory: "2048 MB",
           timeout: "20 seconds",
           architecture: "arm64",
+          layers: ["arn:aws:lambda:eu-west-3:943013980633:layer:SentryNodeServerlessSDK:283"],
+          environment: {
+            SENTRY_DSN: process.env.SENTRY_DSN!,
+            SENTRY_TRACES_SAMPLE_RATE: "1.0",
+          },
         },
       },
       imageOptimization: {
         memory: "2048 MB", // more CPU for resizing
         // staticEtag: true,    // optional: stronger caching behaviour
       },
+    });
+
+    // Create an alarm for 5xx Errors (Server Faults)
+    new aws.cloudwatch.MetricAlarm("ServerErrorAlarm", {
+      comparisonOperator: "GreaterThanThreshold",
+      evaluationPeriods: 1,
+      metricName: "Errors",
+      namespace: "AWS/Lambda",
+      period: 60,
+      statistic: "Sum",
+      threshold: 10,
+      dimensions: {
+        FunctionName: site.nodes.server!.name,
+      },
+      alarmActions: [alarmsTopic.arn],
+    });
+
+    // Create an alarm for Throttling (Too many requests or concurrency limit)
+    new aws.cloudwatch.MetricAlarm("ThrottlingAlarm", {
+      comparisonOperator: "GreaterThanThreshold",
+      evaluationPeriods: 1,
+      metricName: "Throttles",
+      namespace: "AWS/Lambda",
+      period: 60,
+      statistic: "Sum",
+      threshold: 5,
+      dimensions: {
+        FunctionName: site.nodes.server!.name,
+      },
+      alarmActions: [alarmsTopic.arn],
     });
 
     return {

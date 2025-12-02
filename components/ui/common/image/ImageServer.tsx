@@ -6,6 +6,7 @@ import {
   getOptimalImageQuality,
   getOptimalImageSizes,
 } from "@utils/image-quality";
+import { withImageCacheKey } from "@utils/image-cache";
 
 // Server-side compatible Image component
 function ImageServer({
@@ -19,6 +20,7 @@ function ImageServer({
   date,
   quality,
   context = "card", // Add context prop for size optimization
+  cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
   if (!image) {
     return (
@@ -39,11 +41,13 @@ function ImageServer({
     customQuality: quality,
   });
 
+  const finalImageSrc = cacheKey ? withImageCacheKey(image, cacheKey) : image;
+
   return (
     <div className={className} style={{ position: "relative" }}>
       <NextImage
         className="object-cover"
-        src={image}
+        src={finalImageSrc}
         alt={alt}
         width={500}
         height={260}
