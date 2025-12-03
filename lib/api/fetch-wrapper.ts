@@ -60,9 +60,10 @@ export async function fetchWithHmac(
 
   // Use the normalized body (URLSearchParams converted to string) to ensure
   // the server middleware reads the exact same string we signed.
-  
-  // Default to no-store for security if no caching strategy is explicitly provided
-  const cacheOption = options.cache || (options.next ? undefined : "no-store");
+
+  // Always enforce no-store for security when no Next.js cache options are provided
+  // This prevents caching of sensitive HMAC-signed requests
+  const cacheOption = options.next ? undefined : "no-store";
 
   return fetch(url, {
     ...options,
