@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { memo } from "react";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
-const AdCard = dynamic(() => import("@components/ui/adCard"), {
+const AdCard = dynamic(() => retryDynamicImport(() => import("@components/ui/adCard")), {
   loading: () => (
     <div className="flex justify-center items-center w-full">
       <div className="w-full h-60 bg-muted animate-fast-pulse"></div>

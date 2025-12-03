@@ -3,8 +3,9 @@
 import dynamic from "next/dynamic";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
-const EventClientDynamic = dynamic(() => import("../EventClient"), {
+const EventClientDynamic = dynamic(() => retryDynamicImport(() => import("../EventClient")), {
   ssr: false,
   loading: () => null,
 });

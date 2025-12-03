@@ -4,11 +4,12 @@ import dynamic from "next/dynamic";
 import { memo } from "react";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import type { CardShareButtonProps } from "types/common";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 import ShareIslandSkeleton from "@components/ui/common/shareIslandSkeleton";
 
 const ShareButton = dynamic(
-  () => import("@components/ui/common/cardShareButton"),
+  () => retryDynamicImport(() => import("@components/ui/common/cardShareButton")),
   {
     ssr: false,
     loading: () => <ShareIslandSkeleton />,

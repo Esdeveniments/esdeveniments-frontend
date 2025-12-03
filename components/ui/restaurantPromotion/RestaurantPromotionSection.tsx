@@ -12,9 +12,10 @@ import WhereToEatSection from "./WhereToEatSection";
 import WhereToEatSkeleton from "./WhereToEatSkeleton";
 import useOnScreen from "components/hooks/useOnScreen";
 import dynamic from "next/dynamic";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 // Lazy load info modal only when needed
-const PromotionInfoModal = dynamic(() => import("./PromotionInfoModal"), {
+const PromotionInfoModal = dynamic(() => retryDynamicImport(() => import("./PromotionInfoModal")), {
   ssr: false,
 });
 // import RestaurantPromotionForm from "./RestaurantPromotionForm";
