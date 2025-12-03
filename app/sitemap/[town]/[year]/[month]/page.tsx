@@ -19,11 +19,12 @@ import {
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 export const revalidate = 86400;
 
 const NoEventsFound = dynamic(
-  () => import("@components/ui/common/noEventsFound")
+  () => retryDynamicImport(() => import("@components/ui/common/noEventsFound"))
 );
 
 export async function generateMetadata({

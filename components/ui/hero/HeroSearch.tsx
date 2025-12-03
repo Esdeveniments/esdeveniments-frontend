@@ -18,13 +18,14 @@ import { Option } from "types/common";
 import { useHero } from "./HeroContext";
 import { buildHeroUrl } from "./utils";
 import Button from "@components/ui/common/button";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
-const Modal = dynamic(() => import("@components/ui/common/modal"), {
+const Modal = dynamic(() => retryDynamicImport(() => import("@components/ui/common/modal")), {
   loading: () => <></>,
   ssr: false,
 });
 
-const Select = dynamic(() => import("@components/ui/common/form/select"), {
+const Select = dynamic(() => retryDynamicImport(() => import("@components/ui/common/form/select")), {
   loading: () => <SelectSkeleton />,
   ssr: false,
 });

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, memo, lazy, Suspense, FC } from "react";
+import { useState, memo, Suspense, FC } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 import { AdArticleProps } from "types/common";
+import { lazyWithRetry } from "@utils/dynamic-import-retry";
 
-const AdBoard = lazy(() => import("../adBoard"));
+const AdBoard = lazyWithRetry(() => import("../adBoard"));
 
 const AdArticle: FC<AdArticleProps> = memo(({ isDisplay = true, slot }) => {
   const [displayAd, setDisplayAd] = useState<boolean>(true);

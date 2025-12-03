@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
 import dynamic from "next/dynamic";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 import {
   SparklesIcon,
   ShoppingBagIcon,
@@ -34,7 +35,7 @@ import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
-  () => import("../hero/HeroSection"),
+  () => retryDynamicImport(() => import("../hero/HeroSection")),
   { suspense: true }
 );
 

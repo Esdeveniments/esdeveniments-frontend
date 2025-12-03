@@ -25,8 +25,6 @@ export function beforeSend(
       errorMessage.includes("safari-extension://") ||
       errorMessage.includes("extension://") ||
       errorMessage.includes("__webpack_require__") ||
-      errorType.includes("chunkloaderror") ||
-      errorMessage.includes("loading chunk") ||
       errorMessage.includes("non-json") ||
       // Ad blocker related errors
       errorMessage.includes("adblock") ||
@@ -36,6 +34,9 @@ export function beforeSend(
     ) {
       return null; // Don't send these errors
     }
+    
+    // Note: ChunkLoadError filtering removed - now handled with retry mechanism
+    // We want to track these errors to monitor if retries are working effectively
   }
 
   // Scrub sensitive data from event
