@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false # Don't cancel - let deployments complete
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "22"
   AWS_REGION: "eu-west-3"
 
 jobs:
@@ -47,6 +47,11 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Create .env file for SST deployment
+        env:
+          # Optional secrets - will be empty string if not set (safe in GitHub Actions)
+          NEXT_PUBLIC_GOOGLE_ANALYTICS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}
+          NEXT_PUBLIC_GOOGLE_ADS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           # SST requires a .env file in the root during deployment
           # Copy from .env.production if it exists, otherwise create from secrets
@@ -57,7 +62,7 @@ jobs:
           fi
 
           # Ensure required environment variables are set
-          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.esdeveniments.cat' }}" >> .env
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.pre.esdeveniments.cat' }}" >> .env
 
           # Validate required HMAC_SECRET
           HMAC_SECRET_VALUE="${{ secrets.HMAC_SECRET }}"
@@ -68,16 +73,16 @@ jobs:
           echo "HMAC_SECRET=$HMAC_SECRET_VALUE" >> .env
 
           # Optional: Add other environment variables if needed
-          if [ -n "${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}" ]; then
-            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}" >> .env
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ANALYTICS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env
           fi
 
-          if [ -n "${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}" ]; then
-            echo "NEXT_PUBLIC_GOOGLE_ADS=${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}" >> .env
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ADS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env
           fi
 
-          if [ -n "${{ secrets.SENTRY_DSN }}" ]; then
-            echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
+          if [ -n "$SENTRY_DSN" ]; then
+            echo "SENTRY_DSN=$SENTRY_DSN" >> .env
           fi
 
       - name: Deploy to AWS with SST

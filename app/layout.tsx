@@ -2,6 +2,7 @@ import "../styles/globals.css";
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import GoogleScripts from "./GoogleScripts";
+import { AdProvider } from "../lib/context/AdContext";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 // Removed custom fonts - now using system font stack
@@ -42,21 +43,16 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
-        {/* Google Fonts preconnect - may be loaded by Google Ads or other scripts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
         {apiOrigin && (
           <link rel="preconnect" href={apiOrigin} crossOrigin="anonymous" />
         )}
       </head>
       <body>
-        <WebsiteSchema />
-        <GoogleScripts />
-        <BaseLayout>{children}</BaseLayout>
+        <AdProvider>
+          <WebsiteSchema />
+          <GoogleScripts />
+          <BaseLayout>{children}</BaseLayout>
+        </AdProvider>
       </body>
     </html>
   );

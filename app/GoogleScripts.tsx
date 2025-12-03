@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import Script from "next/script";
-import type { TcfCallback } from "types/ads";
+import { useAdContext } from "../lib/context/AdContext";
 
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
 const ADS_SRC = ADS_CLIENT
@@ -10,117 +10,79 @@ const ADS_SRC = ADS_CLIENT
   : "";
 
 export default function GoogleScripts() {
-  const [adsAllowed, setAdsAllowed] = useState(false);
+  const { adsAllowed } = useAdContext();
   const autoAdsInitRef = useRef(false);
-
-  // Listen for TCF v2 consent (FundingChoices) and only allow ads when granted.
-  useEffect(() => {
-    let isMounted = true;
-    let listenerId: number | undefined;
-
-    const setConsent = (allowed: boolean) => {
-      if (!isMounted) return;
-      window.__adsConsentGranted = allowed;
-      window.dispatchEvent(
-        new CustomEvent("ads-consent-changed", { detail: { allowed } })
-      );
-      setAdsAllowed(allowed);
-    };
-
-    const hasAdConsent = (tcData: {
-      purpose?: { consents?: Record<string, boolean> };
-      vendor?: { consents?: Record<string, boolean> };
-    }) => {
-      const purposeConsent = tcData.purpose?.consents ?? {};
-      const vendorConsent = tcData.vendor?.consents ?? {};
-      // Purpose 1 (storage) + Google vendor 755 are the minimum signals we respect
-      return Boolean(purposeConsent["1"] && vendorConsent["755"]);
-    };
-
-    const maybeHandleTcData: TcfCallback = (tcData, success) => {
-      if (!success || !tcData) return;
-      if (
-        tcData.eventStatus === "useractioncomplete" ||
-        tcData.eventStatus === "tcloaded"
-      ) {
-        setConsent(hasAdConsent(tcData));
-      }
-      if (typeof tcData.listenerId === "number") {
-        listenerId = tcData.listenerId;
-      }
-    };
-
-    if (typeof window.__tcfapi === "function") {
-      window.__tcfapi("getTCData", 2, maybeHandleTcData);
-      window.__tcfapi("addEventListener", 2, maybeHandleTcData);
-    } else {
-      // Fallback: behave like previous behavior (ads allowed) if CMP is missing
-      setConsent(true);
-    }
-
-    return () => {
-      isMounted = false;
-      if (listenerId && typeof window.__tcfapi === "function") {
-        window.__tcfapi("removeEventListener", 2, () => { }, listenerId);
-      }
-    };
-  }, []);
 
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
-    if (!adsAllowed || autoAdsInitRef.current || !ADS_CLIENT) return;
+    if (!adsAllowed || !ADS_CLIENT) return;
+
+    // Manually inject script to avoid data-nscript warning from AdSense
+    // Defer injection to reduce main thread blocking during hydration
+    const injectAdsScript = () => {
+      if (ADS_SRC && !document.querySelector(`script[src="${ADS_SRC}"]`)) {
+        const script = document.createElement("script");
+        script.src = ADS_SRC;
+        script.async = true;
+        script.crossOrigin = "anonymous";
+        document.head.appendChild(script);
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(() => injectAdsScript(), { timeout: 4000 });
+    } else {
+      setTimeout(injectAdsScript, 2000);
+    }
 
     const pushAutoAds = () => {
       if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({
-          google_ad_client: ADS_CLIENT,
-          enable_page_level_ads: true,
-        });
-        autoAdsInitRef.current = true;
-        window.__autoAdsInitialized = true;
-      } catch {
-        // Retry once after a short delay if loader isn't ready yet
-        setTimeout(() => {
-          if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
-          try {
-            (window.adsbygoogle = window.adsbygoogle || []).push({
-              google_ad_client: ADS_CLIENT,
-              enable_page_level_ads: true,
-            });
-            autoAdsInitRef.current = true;
-            window.__autoAdsInitialized = true;
-          } catch {
-            // swallow; individual slots will still render with manual pushes
-          }
-        }, 600);
+
+      const initAds = () => {
+        // Double-check inside the callback to prevent race conditions
+        if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
+
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({
+            google_ad_client: ADS_CLIENT,
+            enable_page_level_ads: true,
+          });
+          autoAdsInitRef.current = true;
+          window.__autoAdsInitialized = true;
+        } catch {
+          // Retry once after a short delay if loader isn't ready yet
+          setTimeout(() => {
+            if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
+            try {
+              (window.adsbygoogle = window.adsbygoogle || []).push({
+                google_ad_client: ADS_CLIENT,
+                enable_page_level_ads: true,
+              });
+              autoAdsInitRef.current = true;
+              window.__autoAdsInitialized = true;
+            } catch {
+              // swallow; individual slots will still render with manual pushes
+            }
+          }, 1000); // Increased delay to reduce CPU pressure
+        }
+      };
+
+      // Use requestIdleCallback if available to avoid blocking main thread
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => initAds(), { timeout: 2000 });
+      } else {
+        setTimeout(initAds, 500);
       }
     };
 
     // If the loader isn't on the page yet, wait briefly
-    const hasLoader =
-      typeof window !== "undefined" &&
-      document.querySelector(`script[src="${ADS_SRC}"]`);
-    if (hasLoader) {
-      pushAutoAds();
-      return;
-    }
-
-    const timer = setTimeout(pushAutoAds, 800);
+    // The script is now manually injected, but we still need to wait for it to load and parse.
+    const timer = setTimeout(pushAutoAds, 1000); // Increased delay
     return () => clearTimeout(timer);
   }, [adsAllowed]);
 
   return (
     <>
-      {/* Google Ads - Optimized loading */}
-      {adsAllowed && ADS_SRC && (
-        <Script
-          id="google-ads"
-          src={ADS_SRC}
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-        />
-      )}
       {/* Google Analytics - keep lazyOnload for perf */}
       <Script
         id="google-analytics-gtag"

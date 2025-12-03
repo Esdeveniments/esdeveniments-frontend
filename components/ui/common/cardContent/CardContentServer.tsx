@@ -5,7 +5,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/outline";
 import { truncateString, getFormattedDate } from "@utils/helpers";
-import { buildEventLocationLabels } from "@utils/location-helpers";
+import { buildDisplayLocation } from "@utils/location-helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
@@ -24,15 +24,17 @@ function CardContentServer({
   );
 
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
-  const { primaryLabel, secondaryLabel } = buildEventLocationLabels({
-    cityName: event.city?.name,
-    regionName: event.region?.name,
-    location: event.location,
+  // Show full location: location, city, region combined
+  // Note: List API responses may not include city/region, so we check if they exist
+  const cityName = event.city?.name;
+  const regionName = event.region?.name;
+  const fullLocation = buildDisplayLocation({
+    location: event.location || "",
+    cityName: cityName || "",
+    regionName: regionName || "",
+    hidePlaceSegments: false,
   });
-  const primaryLocation = truncateString(primaryLabel, 45);
-  const secondaryLocation = secondaryLabel
-    ? truncateString(secondaryLabel, 45)
-    : "";
+  const primaryLocation = truncateString(fullLocation, 80);
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
     ? `Del ${formattedStart} al ${formattedEnd}`
@@ -96,12 +98,7 @@ function CardContentServer({
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-2">
-            <span className="max-w-full font-semibold">{primaryLocation}</span>
-            {secondaryLocation && (
-              <span className="max-w-full text-foreground/70">
-                {secondaryLocation}
-              </span>
-            )}
+            <span className="max-w-full">{primaryLocation}</span>
           </div>
         </div>
         {/* Date time */}

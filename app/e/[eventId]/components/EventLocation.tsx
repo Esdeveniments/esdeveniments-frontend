@@ -1,7 +1,7 @@
 import { LocationMarkerIcon as LocationIcon } from "@heroicons/react/outline";
 import {
-  buildDisplayLocation,
   buildEventLocationLabels,
+  buildDisplayLocation,
 } from "@utils/location-helpers";
 import { EventLocationProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
@@ -21,19 +21,19 @@ export default function EventLocation({
   const {
     cityLabel,
     regionLabel,
-    primaryLabel,
-    secondaryLabel,
   } = buildEventLocationLabels({
     cityName,
     regionName,
     location,
     secondaryPreference: "region",
   });
-  const displayLocation = buildDisplayLocation({
+
+  // Build full location string: location, city, region
+  const fullLocation = buildDisplayLocation({
     location,
     cityName: cityLabel,
     regionName: regionLabel,
-    hidePlaceSegments: showPlaceLinks,
+    hidePlaceSegments: showPlaceLinks, // Hide city/region from the string if we show them as links below
   });
 
   return (
@@ -47,48 +47,40 @@ export default function EventLocation({
         />
         <div className="w-full flex flex-col justify-center items-center gap-element-gap px-section-x">
           <div className="w-full flex flex-col justify-center items-start gap-element-gap">
-            {primaryLabel && (
+            {/* Show full location: location, city, region */}
+            {fullLocation && (
               <div className="w-full flex flex-col justify-start items-start gap-0.5">
-                <p className="heading-4 text-foreground-strong">
-                  {primaryLabel}
+                <p className="body-normal text-foreground">
+                  {fullLocation}
                 </p>
-                {secondaryLabel && (
-                  <p className="body-normal text-foreground/70">
-                    {secondaryLabel}
-                  </p>
+              </div>
+            )}
+            {/* Clickable city and region links */}
+            {showPlaceLinks && (
+              <div className="flex flex-wrap items-center gap-element-gap-sm">
+                {cityHref && cityLabel && (
+                  <PressableAnchor
+                    href={cityHref}
+                    className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+                    variant="inline"
+                  >
+                    {cityLabel}
+                  </PressableAnchor>
+                )}
+                {cityHref && regionHref && cityLabel && regionLabel && (
+                  <span className="text-foreground/40">|</span>
+                )}
+                {regionHref && regionLabel && (
+                  <PressableAnchor
+                    href={regionHref}
+                    className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+                    variant="inline"
+                  >
+                    {regionLabel}
+                  </PressableAnchor>
                 )}
               </div>
             )}
-            <div className="w-full flex flex-col justify-start items-start gap-1">
-              <p className="body-normal text-foreground-strong">
-                {displayLocation}
-              </p>
-              {showPlaceLinks && (
-                <div className="flex flex-wrap items-center gap-element-gap-sm pt-1">
-                  {cityHref && (
-                    <PressableAnchor
-                      href={cityHref}
-                      className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
-                      variant="inline"
-                    >
-                      {cityLabel}
-                    </PressableAnchor>
-                  )}
-                  {cityHref && regionHref && (
-                    <span className="text-foreground/40">|</span>
-                  )}
-                  {regionHref && (
-                    <PressableAnchor
-                      href={regionHref}
-                      className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
-                      variant="inline"
-                    >
-                      {regionLabel}
-                    </PressableAnchor>
-                  )}
-                </div>
-              )}
-            </div>
             <EventLocationClient
               location={location}
               cityName={cityLabel}

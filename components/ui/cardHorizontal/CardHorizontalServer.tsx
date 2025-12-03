@@ -1,7 +1,7 @@
 import ImageServer from "@components/ui/common/image/ImageServer";
 import ViewCounter from "@components/ui/viewCounter";
 import { truncateString, getFormattedDate } from "@utils/helpers";
-import { buildEventLocationLabels } from "@utils/location-helpers";
+import { buildEventPlaceLabels } from "@utils/location-helpers";
 import {
   formatEventTimeDisplay,
   formatEventTimeDisplayDetail,
@@ -17,11 +17,12 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
   const title = truncateString(event.title || "", 60);
   // const description = truncateString(event.description || "", 60);
 
-  const { primaryLabel, secondaryLabel } = buildEventLocationLabels({
+  // For categorized events: prefer city and region, but fall back to location if they're missing
+  // This handles cases where the API doesn't include city/region in the response
+  const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
     cityName: event.city?.name,
     regionName: event.region?.name,
     location: event.location,
-    secondaryPreference: "venue",
   });
 
   // Format the date
@@ -114,7 +115,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             </div>
 
             {/* Location - City as primary, venue optional as secondary */}
-            <div className="flex items-start body-small text-foreground">
+            <div className="flex items-center body-small text-foreground mb-2">
               <svg
                 className="w-4 h-4 mr-2 flex-shrink-0"
                 fill="none"
@@ -135,7 +136,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
                 />
               </svg>
               <div className="flex flex-col flex-1 min-w-0">
-                <span className="truncate font-semibold">{primaryLabel}</span>
+                <span className="truncate">{primaryLabel}</span>
                 {secondaryLabel && (
                   <span className="truncate text-foreground/70">
                     {secondaryLabel}

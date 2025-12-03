@@ -3,7 +3,7 @@ import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { truncateString, getFormattedDate } from "@utils/helpers";
-import { buildEventLocationLabels } from "@utils/location-helpers";
+import { buildEventPlaceLabels } from "@utils/location-helpers";
 import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
@@ -195,7 +195,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           const eventDate = formattedEnd
             ? `Del ${formattedStart} al ${formattedEnd}`
             : `${nameDay}, ${formattedStart}`;
-          const { primaryLabel, secondaryLabel } = buildEventLocationLabels({
+          const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
             cityName: event.city?.name,
             regionName: event.region?.name,
             location: event.location,

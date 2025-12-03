@@ -12,6 +12,10 @@ import type {
   BuildDisplayLocationOptions,
   EventLocationLabelOptions,
   EventLocationLabels,
+  EventPlaceLabelOptions,
+  EventPlaceLabels,
+  EventListLocationLabelOptions,
+  EventListLocationLabels,
 } from "types/location";
 
 const normalize = (value: string) => value.trim().toLowerCase();
@@ -116,6 +120,89 @@ export const buildEventLocationLabels = ({
     cityLabel,
     regionLabel,
     venueLabel,
+    primaryLabel,
+    secondaryLabel,
+  };
+};
+
+/**
+ * Build place and region labels for list views (events list, categorized events, related events).
+ * Prioritizes city and region, excluding the venue/location field which may be generic
+ * (e.g., "Biblioteca Municipal" with no additional context).
+ * Falls back to location if city and region are both missing.
+ */
+export const buildEventPlaceLabels = ({
+  cityName,
+  regionName,
+  location,
+}: EventPlaceLabelOptions): EventPlaceLabels => {
+  const cityLabel = formatOptionalPlace(cityName);
+  const regionLabel = formatOptionalPlace(regionName);
+  const venueLabel = formatOptionalPlace(location);
+
+  // Prioritize city and region, but fall back to location if both are missing
+  const primaryLabel = cityLabel || regionLabel || venueLabel || "";
+  const secondaryLabel =
+    cityLabel && regionLabel && isDistinctLabel(regionLabel, cityLabel)
+      ? regionLabel
+      : "";
+
+  return {
+    cityLabel,
+    regionLabel,
+    primaryLabel,
+    secondaryLabel,
+  };
+};
+
+/**
+ * Build location labels for event list cards.
+ * Shows location first, then city and region combined, since list cards have more space.
+ * Always shows all available and distinct values.
+ */
+export const buildEventListLocationLabels = ({
+  cityName,
+  regionName,
+  location,
+}: EventListLocationLabelOptions): EventListLocationLabels => {
+  const cityLabel = formatOptionalPlace(cityName);
+  const regionLabel = formatOptionalPlace(regionName);
+  const locationLabel = formatOptionalPlace(location);
+
+  // Primary: location (if available), otherwise city, otherwise region
+  // Secondary: city and region combined (if distinct from primary)
+  let primaryLabel = "";
+  const secondaryParts: string[] = [];
+
+  if (locationLabel) {
+    // Location exists - use it as primary
+    primaryLabel = locationLabel;
+    // Add city and region to secondary if they're distinct from location
+    if (cityLabel && isDistinctLabel(cityLabel, locationLabel)) {
+      secondaryParts.push(cityLabel);
+    }
+    if (regionLabel && isDistinctLabel(regionLabel, locationLabel)) {
+      secondaryParts.push(regionLabel);
+    }
+  } else if (cityLabel) {
+    // No location, but city exists - use city as primary
+    primaryLabel = cityLabel;
+    // Add region to secondary if distinct from city
+    if (regionLabel && isDistinctLabel(regionLabel, cityLabel)) {
+      secondaryParts.push(regionLabel);
+    }
+  } else if (regionLabel) {
+    // Only region exists
+    primaryLabel = regionLabel;
+  }
+
+  // Combine secondary parts with comma
+  const secondaryLabel =
+    secondaryParts.length > 0 ? secondaryParts.join(", ") : "";
+
+  return {
+    cityLabel,
+    locationLabel,
     primaryLabel,
     secondaryLabel,
   };

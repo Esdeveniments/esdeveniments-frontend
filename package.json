@@ -1,5 +1,9 @@
 {
   "private": true,
+  "engines": {
+    "node": ">=22.0.0",
+    "yarn": ">=4.0.0"
+  },
   "scripts": {
     "analyze": "cross-env ANALYZE=true next build",
     "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build",

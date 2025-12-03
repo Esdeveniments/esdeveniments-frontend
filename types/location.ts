@@ -25,3 +25,29 @@ export type EventLocationLabels = {
   primaryLabel: string;
   secondaryLabel: string;
 };
+
+export type EventPlaceLabelOptions = {
+  cityName?: string | null;
+  regionName?: string | null;
+  location?: string | null;
+};
+
+export type EventPlaceLabels = {
+  cityLabel: string;
+  regionLabel: string;
+  primaryLabel: string;
+  secondaryLabel: string;
+};
+
+export type EventListLocationLabelOptions = {
+  cityName?: string | null;
+  regionName?: string | null;
+  location?: string | null;
+};
+
+export type EventListLocationLabels = {
+  cityLabel: string;
+  locationLabel: string;
+  primaryLabel: string;
+  secondaryLabel: string;
+};

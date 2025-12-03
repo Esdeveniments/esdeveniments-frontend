@@ -283,6 +283,15 @@ export default async function proxy(request: NextRequest) {
     "camera=(), microphone=(), geolocation=(self)"
   );
 
+  // Add Cache-Control for public pages (excluding API and internal paths handled above)
+  // public, max-age=3600 (1h browser), s-maxage=86400 (24h CDN), stale-while-revalidate=86400 (24h)
+  if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
+     response.headers.set(
+      "Cache-Control",
+      "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+    );
+  }
+
   return response;
 }
 

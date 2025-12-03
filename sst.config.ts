@@ -77,14 +77,32 @@ export default $config({
           }
           return url;
         })(),
+        // Public site URL for SEO, metadata, canonical URLs
+        // This should always be the production domain for proper SEO
+        NEXT_PUBLIC_SITE_URL: "https://www.esdeveniments.cat",
+        // Note: INTERNAL_SITE_URL cannot be set here as it references site.url
+        // which isn't available during resource creation. The code will fall back
+        // to NEXT_PUBLIC_SITE_URL if INTERNAL_SITE_URL is not set.
+        HMAC_SECRET: (() => {
+          const secret = process.env.HMAC_SECRET;
+          if (!secret) {
+            throw new Error(
+              "HMAC_SECRET environment variable must be set for SST deployment"
+            );
+          }
+          return secret;
+        })(),
       },
       warm: 5,
       transform: {
         server: {
+          runtime: "nodejs22.x", // Upgraded from nodejs20.x (deprecated April 2026)
           memory: "2048 MB",
           timeout: "20 seconds",
           architecture: "arm64",
-          layers: ["arn:aws:lambda:eu-west-3:943013980633:layer:SentryNodeServerlessSDK:283"],
+          layers: [
+            "arn:aws:lambda:eu-west-3:943013980633:layer:SentryNodeServerlessSDK:283",
+          ],
           environment: {
             SENTRY_DSN: process.env.SENTRY_DSN!,
             SENTRY_TRACES_SAMPLE_RATE: "1.0",

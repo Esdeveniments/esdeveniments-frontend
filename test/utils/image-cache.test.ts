@@ -53,3 +53,4 @@ describe("withImageCacheKey", () => {
     expect(withImageCacheKey(url, undefined)).toBe(url);
   });
 });
+

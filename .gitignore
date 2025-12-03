@@ -112,3 +112,4 @@ tasks/
 
 # open-next
 .open-next
+.env*.local
