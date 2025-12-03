@@ -52,6 +52,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             region={event.region?.name}
             date={eventDate}
             context="list"
+            cacheKey={event.hash || event.updatedAt}
           />
         </div>
 

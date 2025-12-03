@@ -219,6 +219,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     image={image}
                     priority={false}
                     context="card"
+                    cacheKey={event.hash || event.updatedAt}
                   />
                 </div>
                 {/* Title */}

@@ -84,6 +84,7 @@ function CardContentServer({
                 location={event.city?.name || event.location}
                 region={event.region?.name || event.city?.name}
                 date={eventDate}
+                cacheKey={event.hash || event.updatedAt}
               />
             </div>
           </div>

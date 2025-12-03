@@ -36,8 +36,8 @@ We use a **single AWS account** but separate resources.
 Our infrastructure is defined in code. Key optimizations we applied:
 
 - **Warm Instances (`warm: 5`):** Keeps 5 server instances awake 24/7 to prevent "Cold Starts."
-- **Memory (`2048 MB`):** We over-provision memory to get **2 vCPUs**, making rendering 2x faster.
-- **Architecture (`arm64`):** Uses AWS Graviton processors (cheaper & faster).
+- **Memory (`3008 MB`):** 3 GB memory = **3 vCPUs** (AWS Lambda maximum for arm64 architecture in eu-west-3).
+- **Architecture (`arm64`):** Uses AWS Graviton processors (cheaper & faster than x86).
 
 ---
 

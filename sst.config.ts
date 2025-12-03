@@ -104,7 +104,7 @@ export default $config({
       transform: {
         server: {
           runtime: "nodejs22.x", // Upgraded from nodejs20.x (deprecated April 2026)
-          memory: "2048 MB",
+          memory: "3008 MB", // Maximum allowed: 3 GB = 3 vCPUs (AWS Lambda limit for arm64/eu-west-3)
           timeout: "20 seconds",
           architecture: "arm64",
           // Sentry layer ARN - configurable per environment/region
@@ -130,7 +130,7 @@ export default $config({
         },
       },
       imageOptimization: {
-        memory: "2048 MB", // more CPU for resizing
+        memory: "3008 MB", // Maximum allowed for image optimizer Lambda (3 vCPUs)
         staticEtag: true, // Enable stronger caching for optimized images
       },
     });

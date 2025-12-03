@@ -9,6 +9,7 @@ const siteUrl =
 module.exports = {
   siteUrl,
   generateSitemap: true,
+  generateIndexSitemap: false, // Use dynamic route instead
   exclude: [
     "/api/*", // APIs are not pages
     "/server-sitemap.xml",
@@ -25,6 +26,7 @@ module.exports = {
       { userAgent: "*", allow: "/" },
     ],
     additionalSitemaps: [
+      `${siteUrl}/sitemap.xml`, // Dynamic route
       `${siteUrl}/server-sitemap.xml`,
       `${siteUrl}/server-news-sitemap.xml`,
       `${siteUrl}/server-place-sitemap.xml`,
