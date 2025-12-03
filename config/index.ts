@@ -62,7 +62,12 @@ export function getSiteUrlFromRequest(request?: {
       !host.includes(".cloudfront.net") && // Avoid CloudFront distribution domains
       !host.includes(".lambda-url.") // Avoid Lambda function URLs
     ) {
-      return `${protocol}//${host}`;
+      // Normalize 127.0.0.1 to localhost in development for consistency
+      const normalizedHost =
+        process.env.NODE_ENV === "development" && host.includes("127.0.0.1")
+          ? host.replace("127.0.0.1", "localhost")
+          : host;
+      return `${protocol}//${normalizedHost}`;
     }
   }
 

@@ -19,9 +19,9 @@ export async function GET(request: NextRequest) {
   const xml = buildSitemapIndex(sitemapUrls);
 
   // Check for cache-busting query parameter (e.g., ?v=2 or ?nocache=1)
-  const hasCacheBust =
-    request.nextUrl.searchParams.has("v") ||
-    request.nextUrl.searchParams.has("nocache");
+  // Safely handle cases where searchParams might be undefined (e.g., in tests)
+  const searchParams = request.nextUrl.searchParams;
+  const hasCacheBust = searchParams?.has("v") || searchParams?.has("nocache");
 
   // Reduced cache TTL: 5 minutes at edge, no stale-while-revalidate to prevent serving old content
   // If cache-busting is requested, disable caching entirely

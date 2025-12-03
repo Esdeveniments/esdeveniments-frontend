@@ -35,6 +35,7 @@ describe("app/sitemap.xml/route", () => {
       nextUrl: {
         protocol: "https:",
         host: "www.esdeveniments.cat",
+        searchParams: new URLSearchParams(),
       },
       headers: new Headers(),
     } as unknown as NextRequest;
@@ -60,6 +61,7 @@ describe("app/sitemap.xml/route", () => {
       nextUrl: {
         protocol: "https:",
         host: "www.esdeveniments.cat",
+        searchParams: new URLSearchParams(),
       },
       headers: new Headers(),
     } as unknown as NextRequest;
@@ -67,7 +69,7 @@ describe("app/sitemap.xml/route", () => {
     const response = await GET(mockRequest);
     const text = await response.text();
 
-    expect(text).toContain("/sitemap-0.xml");
+    expect(text).toContain("/server-static-sitemap.xml");
     expect(text).toContain("/server-sitemap.xml");
     expect(text).toContain("/server-news-sitemap.xml");
     expect(text).toContain("/server-place-sitemap.xml");
@@ -84,6 +86,7 @@ describe("app/sitemap.xml/route", () => {
       nextUrl: {
         protocol: "https:",
         host: "www.esdeveniments.cat",
+        searchParams: new URLSearchParams(),
       },
       headers: new Headers(),
     } as unknown as NextRequest;
@@ -137,6 +140,7 @@ describe("app/sitemap.xml/route", () => {
       nextUrl: {
         protocol: "https:",
         host: "www.esdeveniments.cat",
+        searchParams: new URLSearchParams(),
       },
       headers: new Headers(),
     } as unknown as NextRequest;
@@ -144,7 +148,7 @@ describe("app/sitemap.xml/route", () => {
     const response = await GET(mockRequest);
 
     expect(response.headers.get("Cache-Control")).toBe(
-      "public, s-maxage=600, stale-while-revalidate=86400"
+      "public, s-maxage=300, stale-while-revalidate=0"
     );
   });
 
@@ -156,6 +160,7 @@ describe("app/sitemap.xml/route", () => {
       nextUrl: {
         protocol: "http:",
         host: "localhost:3000",
+        searchParams: new URLSearchParams(),
       },
       headers: new Headers(),
     } as unknown as NextRequest;
@@ -176,6 +181,7 @@ describe("app/sitemap.xml/route", () => {
       nextUrl: {
         protocol: "https:",
         host: "www.esdeveniments.cat",
+        searchParams: new URLSearchParams(),
       },
       headers: new Headers(),
     } as unknown as NextRequest;
@@ -193,6 +199,50 @@ describe("app/sitemap.xml/route", () => {
     const xmlObj = parser.parse(text);
     expect(xmlObj.sitemapindex).toBeDefined();
     expect(xmlObj.sitemapindex.sitemap).toBeDefined();
+  });
+
+  it("disables caching when cache-busting query parameter is present", async () => {
+    const { getSiteUrlFromRequest } = await import("../../config/index");
+    vi.mocked(getSiteUrlFromRequest).mockReturnValue(
+      "https://www.esdeveniments.cat"
+    );
+
+    const mockRequest = {
+      nextUrl: {
+        protocol: "https:",
+        host: "www.esdeveniments.cat",
+        searchParams: new URLSearchParams("v=2"),
+      },
+      headers: new Headers(),
+    } as unknown as NextRequest;
+
+    const response = await GET(mockRequest);
+
+    expect(response.headers.get("Cache-Control")).toBe(
+      "no-cache, no-store, must-revalidate"
+    );
+  });
+
+  it("disables caching when nocache query parameter is present", async () => {
+    const { getSiteUrlFromRequest } = await import("../../config/index");
+    vi.mocked(getSiteUrlFromRequest).mockReturnValue(
+      "https://www.esdeveniments.cat"
+    );
+
+    const mockRequest = {
+      nextUrl: {
+        protocol: "https:",
+        host: "www.esdeveniments.cat",
+        searchParams: new URLSearchParams("nocache=1"),
+      },
+      headers: new Headers(),
+    } as unknown as NextRequest;
+
+    const response = await GET(mockRequest);
+
+    expect(response.headers.get("Cache-Control")).toBe(
+      "no-cache, no-store, must-revalidate"
+    );
   });
 });
 
