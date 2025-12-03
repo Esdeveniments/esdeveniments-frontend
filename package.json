@@ -51,7 +51,7 @@
     "fast-xml-parser": "^4.4.0",
     "feed": "^5.1.0",
     "isomorphic-dompurify": "^2.25.0",
-    "next": "16.0.1",
+    "next": "16.0.7",
     "postcss": "^8.5.1",
     "react": "19.2.0",
     "react-datepicker": "^8.8.0",
