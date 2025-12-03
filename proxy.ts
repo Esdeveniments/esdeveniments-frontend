@@ -125,7 +125,8 @@ export default async function proxy(request: NextRequest) {
       // News: base or [slug]
       /^\/api\/news(\/[\w-]+)?$/,
       // Places: base, [slug], /nearby, or /photo
-      /^\/api\/places(\/(nearby|photo|[\w-]+))?$/,
+      // Note: [slug] can contain URL-encoded characters (e.g., lli%C3%A7%C3%A0%20de%20vall)
+      /^\/api\/places(\/(nearby|photo|[^/]+))?$/,
     ];
 
     // Routes that require exact match
