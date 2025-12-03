@@ -30,14 +30,14 @@ describe("config/index:getSiteUrl", () => {
   it("returns localhost for non-production environments", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-    process.env.NODE_ENV = "development";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrl()).toBe("http://localhost:3000");
   });
 
   it("returns production URL as fallback", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-    process.env.NODE_ENV = "production";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
     expect(getSiteUrl()).toBe("https://www.esdeveniments.cat");
   });
 });
@@ -104,7 +104,7 @@ describe("config/index:getSiteUrlFromRequest", () => {
     // Should fall back to environment-based detection
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-    process.env.NODE_ENV = "development";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(mockRequest)).toBe("http://localhost:3000");
   });
 
@@ -119,14 +119,14 @@ describe("config/index:getSiteUrlFromRequest", () => {
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-    process.env.NODE_ENV = "development";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(mockRequest)).toBe("http://localhost:3000");
   });
 
   it("falls back to getSiteUrl() when request is undefined", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-    process.env.NODE_ENV = "development";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(undefined)).toBe("http://localhost:3000");
   });
 
@@ -138,7 +138,7 @@ describe("config/index:getSiteUrlFromRequest", () => {
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-    process.env.NODE_ENV = "development";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(mockRequest)).toBe("http://localhost:3000");
   });
 
@@ -169,7 +169,7 @@ describe("config/index:getSiteUrlFromRequest", () => {
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-    process.env.NODE_ENV = "production";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
 
     // Should use request host, not fallback
     expect(getSiteUrlFromRequest(mockRequest)).toBe(
