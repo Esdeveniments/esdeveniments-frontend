@@ -171,8 +171,11 @@ export default async function EventPage({
 
   // Generate BreadcrumbList JSON-LD
   // Ensure breadcrumb name is never empty (required by Google structured data)
-  const breadcrumbName = title ||
-    (placeLabel ? `Esdeveniment a ${placeLabel}` : "Esdeveniment");
+  const breadcrumbName = (() => {
+    if (title) return title;
+    if (placeLabel) return `Esdeveniment a ${placeLabel}`;
+    return "Esdeveniment";
+  })();
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",

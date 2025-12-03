@@ -31,7 +31,10 @@ export default $config({
           WithDecryption: true, // For SecureString parameters
         });
         const response = await client.send(command);
-        return response.Parameter?.Value || "";
+        if (!response.Parameter?.Value) {
+          throw new Error(`SSM parameter ${parameterName} has no value`);
+        }
+        return response.Parameter.Value;
       } catch (error) {
         console.error(`Failed to fetch SSM parameter ${parameterName}:`, error);
         throw error;
@@ -54,10 +57,14 @@ export default $config({
 
     const alarmsTopic = new sst.aws.SnsTopic("SiteAlarms");
 
+    // Alarm email endpoint - configurable per environment
+    const alarmEmail =
+      process.env.ALARM_EMAIL || "esdeveniments.catalunya.cat@gmail.com";
+
     new aws.sns.TopicSubscription("SiteAlarmsEmail", {
       topic: alarmsTopic.arn,
       protocol: "email",
-      endpoint: "esdeveniments.catalunya.cat@gmail.com",
+      endpoint: alarmEmail,
     });
 
     const site = new sst.aws.Nextjs("site", {
@@ -100,12 +107,25 @@ export default $config({
           memory: "2048 MB",
           timeout: "20 seconds",
           architecture: "arm64",
-          layers: [
-            "arn:aws:lambda:eu-west-3:943013980633:layer:SentryNodeServerlessSDK:283",
-          ],
+          // Sentry layer ARN - configurable per environment/region
+          // Defaults to eu-west-3 version 283 if not specified
+          layers: process.env.SENTRY_LAYER_ARN
+            ? [process.env.SENTRY_LAYER_ARN]
+            : [
+                "arn:aws:lambda:eu-west-3:943013980633:layer:SentryNodeServerlessSDK:283",
+              ],
           environment: {
-            SENTRY_DSN: process.env.SENTRY_DSN!,
-            SENTRY_TRACES_SAMPLE_RATE: "1.0",
+            SENTRY_DSN: (() => {
+              const dsn = process.env.SENTRY_DSN;
+              if (!dsn) {
+                throw new Error(
+                  "SENTRY_DSN environment variable must be set for SST deployment"
+                );
+              }
+              return dsn;
+            })(),
+            SENTRY_TRACES_SAMPLE_RATE:
+              process.env.SENTRY_TRACES_SAMPLE_RATE || "0.1",
           },
         },
       },
@@ -114,6 +134,11 @@ export default $config({
         staticEtag: true, // Enable stronger caching for optimized images
       },
     });
+
+    // Validate that server node exists before creating alarms
+    if (!site.nodes.server) {
+      throw new Error("Server node is not available for alarm configuration");
+    }
 
     // Create an alarm for 5xx Errors (Server Faults)
     new aws.cloudwatch.MetricAlarm("ServerErrorAlarm", {
@@ -125,7 +150,7 @@ export default $config({
       statistic: "Sum",
       threshold: 10,
       dimensions: {
-        FunctionName: site.nodes.server!.name,
+        FunctionName: site.nodes.server.name,
       },
       alarmActions: [alarmsTopic.arn],
     });
@@ -140,7 +165,7 @@ export default $config({
       statistic: "Sum",
       threshold: 5,
       dimensions: {
-        FunctionName: site.nodes.server!.name,
+        FunctionName: site.nodes.server.name,
       },
       alarmActions: [alarmsTopic.arn],
     });

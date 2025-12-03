@@ -113,12 +113,8 @@ const CACHED_CSP = getCsp();
 const PUBLIC_API_PATTERNS = [
   // Regions: base, [id], or /options
   /^\/api\/regions(\/(options|[\w-]+))?$/,
-  // Categories: base or [id]
-  /^\/api\/categories(\/[\w-]+)?$/,
-  // Cities: base or [id]
-  /^\/api\/cities(\/[\w-]+)?$/,
-  // News: base or [slug]
-  /^\/api\/news(\/[\w-]+)?$/,
+  // Categories, Cities, News: base or [id/slug]
+  /^\/api\/(categories|cities|news)(\/[\w-]+)?$/,
   // Places: base, [slug], /nearby, or /photo
   /^\/api\/places(\/(nearby|photo|[\w-]+))?$/,
 ];

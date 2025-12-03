@@ -87,6 +87,7 @@ export interface SchemaOrgEvent {
     priceSpecification?: {
       "@type": "PriceSpecification";
       priceCurrency: string;
+      description?: string;
     };
   };
   isAccessibleForFree: boolean;

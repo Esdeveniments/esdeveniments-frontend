@@ -31,12 +31,13 @@ const logSchemaWarning = (
   console.warn(parts.join(" "));
 };
 
-const sanitizeText = (value?: string | null): string => {
+// Exported for testing
+export const sanitizeText = (value?: string | null): string => {
   if (!value || typeof value !== "string") return "";
   return value.trim().replace(/\s+/g, " ");
 };
 
-const ensureIsoDate = (value?: string | null): string | undefined => {
+export const ensureIsoDate = (value?: string | null): string | undefined => {
   const trimmed = sanitizeText(value);
   if (!trimmed) return undefined;
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
@@ -46,13 +47,13 @@ const ensureIsoDate = (value?: string | null): string | undefined => {
   return undefined;
 };
 
-const ensureTime = (value?: string | null): string | undefined => {
+export const ensureTime = (value?: string | null): string | undefined => {
   const trimmed = sanitizeText(value);
   if (!trimmed) return undefined;
   return /^\d{2}:\d{2}(:\d{2})?$/.test(trimmed) ? trimmed : undefined;
 };
 
-const buildDateTime = (
+export const buildDateTime = (
   date?: string | null,
   time?: string | null,
   fallbackDate?: string
@@ -63,7 +64,7 @@ const buildDateTime = (
   return cleanTime ? `${baseDate}T${cleanTime}` : baseDate;
 };
 
-const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefined => {
+export const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefined => {
   if (!iso) return undefined;
   const hasTime = iso.includes("T");
   const candidate = hasTime ? iso : `${iso}T${isEnd ? "23:59:59" : "00:00:00"}`;
@@ -219,10 +220,11 @@ export const generateJsonData = (
     logSchemaWarning(slug, "offers", "missing price for paid event");
     return {
       ...baseOffer,
-      price: "Consultar",
+      price: 0,
       priceSpecification: {
         "@type": "PriceSpecification" as const,
         priceCurrency: "EUR",
+        description: "Consult price", // Indicates price is not known, consult for details
       },
     };
   };

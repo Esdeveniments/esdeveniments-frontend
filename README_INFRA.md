@@ -35,7 +35,7 @@ We use a **single AWS account** but separate resources.
 
 Our infrastructure is defined in code. Key optimizations we applied:
 
-- **Warm Instances (`warm: 2`):** Keeps 2 server instances awake 24/7 to prevent "Cold Starts."
+- **Warm Instances (`warm: 5`):** Keeps 5 server instances awake 24/7 to prevent "Cold Starts."
 - **Memory (`2048 MB`):** We over-provision memory to get **2 vCPUs**, making rendering 2x faster.
 - **Architecture (`arm64`):** Uses AWS Graviton processors (cheaper & faster).
 
@@ -91,6 +91,35 @@ We use a dedicated Lambda for `next/image`.
 
 - **Fixing 403 Errors:** If images break, check the `siteImageOptimizerFunction` in AWS Lambda Console. It must have **Function URL** enabled with `Auth: NONE` and a permission policy allowing `*` to `InvokeFunctionUrl`.
 
+#### Image Caching Strategy
+
+We use an **aggressive 1-year CloudFront TTL** (`minimumCacheTTL: 31536000` in `next.config.js`) to minimize Lambda invocations and reduce costs. Cache-busting is handled via URL query parameters (`?v=<key>`) rather than relying on short TTLs.
+
+**How it works:**
+
+1. **Cache Key Generation:** Images receive cache-busting query parameters based on their content:
+
+   - **News images:** `updatedAt || slug || id` (see `utils/news-cache.ts`)
+   - **Event images:** `hash || updatedAt` (see `lib/validation/event.ts`)
+   - **Cloudinary uploads:** `public_id` (see `components/ui/restaurantPromotion/CloudinaryUploadWidget.tsx`)
+
+2. **URL Transformation:** The `withImageCacheKey()` function in `utils/image-cache.ts` appends `?v=<key>` to image URLs. When an image is updated:
+
+   - The cache key changes (e.g., `updatedAt` timestamp updates)
+   - The URL changes (e.g., `image.jpg?v=old-key` → `image.jpg?v=new-key`)
+   - CloudFront treats it as a new resource and fetches the updated image
+
+3. **Benefits:**
+   - **Performance:** Long TTL means images are served from CloudFront edge locations globally
+   - **Cost:** Fewer Lambda invocations for image optimization
+   - **Reliability:** Updates are immediate (no waiting for cache expiration)
+
+**For Maintainers:**
+
+- When updating images, ensure the source data (event `hash`, news `updatedAt`, Cloudinary `public_id`) changes
+- The cache-busting happens automatically via normalization functions in `lib/api/*` and `utils/news-cache.ts`
+- If images don't update after changes, verify the cache key source field is being updated in the API response
+
 ### 2. The "6MB Trap"
 
 AWS Lambda has a hard limit of **6MB** for request/response bodies.
@@ -110,6 +139,28 @@ Some settings are managed manually in the AWS Console (because SST doesn't expos
 
 - **HTTP/3:** Enabled manually in CloudFront Distribution settings -> "Supported HTTP versions" -> "HTTP/2 and HTTP/3".
 
+### 5. Uptime Monitoring
+
+We have an automated uptime monitor that runs every 15 minutes via GitHub Actions (`.github/workflows/uptime.yml`).
+
+- **What it checks:** HTTP status code (must be 200) and page content (must contain "esdeveniments.cat")
+- **Email alerts:** Configured to send email notifications when the site is down
+- **Required GitHub Secrets:**
+  - `SMTP_SERVER`: SMTP server address (e.g., `smtp.gmail.com` or `email-smtp.eu-west-3.amazonaws.com` for AWS SES)
+  - `SMTP_PORT`: SMTP port (typically `587` for TLS or `465` for SSL)
+  - `SMTP_USERNAME`: SMTP username/access key
+  - `SMTP_PASSWORD`: SMTP password/secret key
+  - `SMTP_FROM`: Email address to send from (e.g., `alerts@esdeveniments.cat`)
+  - `UPTIME_ALERT_EMAIL`: Email address(es) to receive alerts (comma-separated for multiple recipients)
+
+**Setting up email notifications:**
+
+1. Choose an SMTP provider (Gmail, AWS SES, SendGrid, etc.)
+2. Configure the secrets in GitHub: **Settings** → **Secrets and variables** → **Actions**
+3. Test by manually triggering the workflow: **Actions** → **Uptime Monitor** → **Run workflow**
+
+**Note:** For AWS SES, you'll need to verify both the sender and recipient email addresses in the SES console before emails can be sent.
+
 ---
 
 ## 🚑 Troubleshooting
@@ -118,7 +169,7 @@ Some settings are managed manually in the AWS Console (because SST doesn't expos
 | :----------------------- | :----------------- | :------------------------------------------------------------------------------------------------ |
 | **Images 403 Forbidden** | Lambda Permissions | Go to AWS Lambda -> `ImageOptimizer` -> Add Permission `InvokeFunctionUrl` for Principal `*`.     |
 | **Site "Looping"**       | CloudFront Origin  | Ensure Cloudflare points to the **CloudFront URL** (`d123...cloudfront.net`), NOT the Lambda URL. |
-| **Slow Initial Load**    | Cold Start         | Check `sst.config.ts` has `warm: 2`. Check AWS Lambda "Provisioned Concurrency" metrics.          |
+| **Slow Initial Load**    | Cold Start         | Check `sst.config.ts` has `warm: 5`. Check AWS Lambda "Provisioned Concurrency" metrics.          |
 | **Env Vars Missing**     | Build Process      | Did you deploy without `.env`? Re-run `npx sst deploy`.                                           |
 
 ---
