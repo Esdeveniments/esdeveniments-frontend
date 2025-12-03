@@ -90,6 +90,7 @@ export default function CardContentServer({
                 priority={isPriority}
                 alt={event.title}
                 context={isHorizontal ? "list" : "card"}
+                cacheKey={event.hash || event.updatedAt}
               />
             </div>
           </div>

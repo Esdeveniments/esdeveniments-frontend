@@ -1,10 +1,14 @@
+// Get site URL - prioritize NEXT_PUBLIC_SITE_URL (set in SST/Vercel)
+// This matches the logic in config/index.ts for consistency
 const siteUrl =
-  process.env.NODE_ENV !== "production"
-    ? "http://localhost:3000"
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  // For production NODE_ENV, always use production domain (never localhost)
+  (process.env.NODE_ENV === "production"
+    ? "https://www.esdeveniments.cat"
     : process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
       process.env.NEXT_PUBLIC_VERCEL_ENV === "development"
     ? "https://esdeveniments.vercel.app"
-    : "https://www.esdeveniments.cat";
+    : "http://localhost:3000");
 
 module.exports = {
   siteUrl,
@@ -18,6 +22,10 @@ module.exports = {
     "/server-google-news-sitemap.xml",
     "/rss.xml",
     "/e/*", // event detail URLs listed via dynamic server sitemap
+    "/e2e/*", // E2E test pages - should not be indexed
+    "/manifest.webmanifest", // Static manifest file, not a page
+    "/offline", // Offline page with noindex
+    "/e/*/edita", // Edit pages with noindex
   ],
   generateRobotsTxt: true,
   robotsTxtOptions: {

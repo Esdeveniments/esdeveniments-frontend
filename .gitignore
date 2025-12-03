@@ -113,3 +113,6 @@ tasks/
 # open-next
 .open-next
 .env*.local
+
+# Sentry Config File
+.env.sentry-build-plugin

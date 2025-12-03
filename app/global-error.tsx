@@ -1,6 +1,7 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
+import { captureException } from "@sentry/nextjs";
+import { useEffect } from "react";
 
 export default function GlobalError({
   error,
@@ -9,14 +10,17 @@ export default function GlobalError({
   error: Error;
   reset: () => void;
 }) {
-  Sentry.captureException(error);
+  useEffect(() => {
+    captureException(error);
+  }, [error]);
 
   return (
-    <html>
-      <body>
-        <h2 className="heading-3">Alguna cosa ha anat malament (global)</h2>
-        <button onClick={() => reset()}>Torna a carregar</button>
-      </body>
-    </html>
+    <div style={{ padding: 32, textAlign: "center" }}>
+      <h1 className="heading-2">Alguna cosa ha anat malament</h1>
+      <p>{error?.message || "Si us plau, torna-ho a intentar."}</p>
+      <button onClick={reset} style={{ marginTop: 16 }}>
+        Torna a carregar
+      </button>
+    </div>
   );
 }
