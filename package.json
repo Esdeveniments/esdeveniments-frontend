@@ -14,7 +14,6 @@
     "build:staging": "NODE_ENV=staging env-cmd -f .env.staging yarn run prebuild && env-cmd -f .env.staging next build",
     "dev": "yarn run prebuild && next dev",
     "lint": "eslint .",
-    "postbuild": "next-sitemap",
     "prebuild": "node scripts/generate-sw.mjs",
     "prepare": "husky",
     "scan": "npx react-scan@latest localhost:3000",

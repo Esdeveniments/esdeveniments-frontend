@@ -51,11 +51,14 @@ export function getSiteUrlFromRequest(request?: {
       headers?.get("x-forwarded-host") ||
       headers?.get("host");
 
-    // Use request host if available and not localhost/internal
+    // Use request host if available
+    // Allow localhost ONLY in development mode
+    const isLocalhost =
+      host?.includes("localhost") || host?.includes("127.0.0.1");
+
     if (
       host &&
-      !host.includes("localhost") &&
-      !host.includes("127.0.0.1") &&
+      (!isLocalhost || process.env.NODE_ENV === "development") &&
       !host.includes(".cloudfront.net") && // Avoid CloudFront distribution domains
       !host.includes(".lambda-url.") // Avoid Lambda function URLs
     ) {

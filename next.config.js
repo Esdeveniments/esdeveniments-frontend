@@ -31,6 +31,11 @@ const nextConfig = {
     ],
   },
 
+  // --- Server Actions Configuration ---
+  serverActions: {
+    bodySizeLimit: "10mb",
+  },
+
   // --- Optimizations ---
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
