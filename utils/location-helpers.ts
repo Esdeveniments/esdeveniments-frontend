@@ -202,6 +202,7 @@ export const buildEventListLocationLabels = ({
 
   return {
     cityLabel,
+    regionLabel,
     locationLabel,
     primaryLabel,
     secondaryLabel,

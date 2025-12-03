@@ -47,6 +47,7 @@ export type EventListLocationLabelOptions = {
 
 export type EventListLocationLabels = {
   cityLabel: string;
+  regionLabel: string;
   locationLabel: string;
   primaryLabel: string;
   secondaryLabel: string;

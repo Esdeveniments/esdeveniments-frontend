@@ -112,9 +112,9 @@ export default function CardContentServer({
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-element-gap-sm">
-            <span className="body-small max-w-full capitalize">
+            <p className="body-small max-w-full capitalize">
               {primaryLocation}
-            </span>
+            </p>
           </div>
         </div>
         <div className="flex justify-start items-center">

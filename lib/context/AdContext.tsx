@@ -139,13 +139,19 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
 
       mutations.forEach((mutation) => {
         const target = mutation.target as Element;
-        // We assume we are observing the element directly.
-        // If we are observing a subtree, we might need to traverse up, but for ads we observe the container.
-        if (mutationCallbacks.current.has(target)) {
-          affectedElements.add(target);
-          const current = mutationsByElement.get(target) || [];
-          current.push(mutation);
-          mutationsByElement.set(target, current);
+        // Find the registered ancestor for subtree mutations
+        // When subtree: true, mutations on descendants have mutation.target set to the descendant,
+        // not the observed element, so we need to traverse up to find the registered element.
+        let current: Element | null = target;
+        while (current) {
+          if (mutationCallbacks.current.has(current)) {
+            affectedElements.add(current);
+            const mutations = mutationsByElement.get(current) || [];
+            mutations.push(mutation);
+            mutationsByElement.set(current, mutations);
+            break;
+          }
+          current = current.parentElement;
         }
       });
 

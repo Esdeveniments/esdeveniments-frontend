@@ -293,6 +293,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap\\.xml|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
   ],
 };
