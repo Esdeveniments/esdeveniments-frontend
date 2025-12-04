@@ -98,15 +98,24 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Vercel pull (preview)
+      - name: Setup Vercel project configuration
         if: github.event_name == 'pull_request'
-        continue-on-error: true
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npx vercel@25 pull --environment=preview --token=${{ secrets.VERCEL_TOKEN }} || echo "Warning: vercel pull failed (project may need to be re-linked or IDs updated)"
+          # Create .vercel directory with project configuration
+          # This is required because .vercel is gitignored and won't exist on new branches
+          # The Vercel CLI reads this file to know which project to deploy to
+          mkdir -p .vercel
+          cat > .vercel/project.json << EOF
+          {
+            "projectId": "$VERCEL_PROJECT_ID",
+            "orgId": "$VERCEL_ORG_ID"
+          }
+          EOF
+          echo "Created .vercel/project.json with project configuration"
       - name: Deploy Preview to Vercel (CLI)
         if: github.event_name == 'pull_request'
         id: deploy_preview
@@ -120,11 +129,21 @@ jobs:
         run: |
           # Deploy and capture logs
           LOG=$(mktemp)
+          # Verify token is set (without exposing it)
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "Error: VERCEL_TOKEN is not set!" >&2
+            exit 1
+          fi
+          echo "Token is set (length: ${#VERCEL_TOKEN} chars)"
           # --env sets runtime env vars for this deployment only
           # --build-env sets build-time env vars for this deployment only
           # These flags apply env vars to the specific deployment, not the project
           # Quotes ensure proper handling of values with special characters
-          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
+          # Pass token explicitly via --token flag (required by Vercel CLI in CI)
+          # VERCEL_ORG_ID and VERCEL_PROJECT_ID env vars should be automatically used by Vercel CLI
+          # along with the .vercel/project.json file
+          # --confirm avoids interactive prompts
+          npx vercel@25 --token="$VERCEL_TOKEN" \
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
