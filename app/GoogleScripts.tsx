@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, Suspense } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "../lib/context/AdContext";
-import type { GtagWindow } from "types/common";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -12,51 +11,28 @@ const ADS_SRC = ADS_CLIENT
   ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
   : "";
 
-const ensureGtag = (): GtagWindow | null => {
+const ensureGtag = (): Window | null => {
   if (typeof window === "undefined") return null;
-  const win = window as GtagWindow;
+  const win = window;
   win.dataLayer = win.dataLayer || [];
 
   if (typeof win.gtag !== "function") {
     win.gtag = function gtag() {
        
-      win.dataLayer.push(arguments);
+      win.dataLayer?.push(arguments);
     };
   }
 
   return win;
 };
 
-export default function GoogleScripts() {
-  const { adsAllowed } = useAdContext();
-  const autoAdsInitRef = useRef(false);
+// Separate component for pageview tracking that uses useSearchParams (requires Suspense)
+function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   const lastTrackedPathRef = useRef<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchParamsString = searchParams?.toString() ?? "";
 
-  // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
-  useEffect(() => {
-    if (!GA_MEASUREMENT_ID) return;
-    const win = ensureGtag();
-    if (!win) return;
-
-    const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
-    win.gtag("consent", "update", {
-      ad_user_data: consentState,
-      ad_personalization: consentState,
-      ad_storage: consentState,
-      analytics_storage: consentState,
-    });
-
-    win.dataLayer.push({
-      event: "consent_state_change",
-      consent_state: consentState,
-      consent_timestamp: Date.now(),
-    });
-  }, [adsAllowed]);
-
-  // Emit page_view events on client navigations once consent is granted.
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
     const win = ensureGtag();
@@ -78,6 +54,34 @@ export default function GoogleScripts() {
 
     lastTrackedPathRef.current = pagePath;
   }, [adsAllowed, pathname, searchParamsString]);
+
+  return null;
+}
+
+export default function GoogleScripts() {
+  const { adsAllowed } = useAdContext();
+  const autoAdsInitRef = useRef(false);
+
+  // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
+  useEffect(() => {
+    if (!GA_MEASUREMENT_ID) return;
+    const win = ensureGtag();
+    if (!win) return;
+
+    const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
+    win.gtag("consent", "update", {
+      ad_user_data: consentState,
+      ad_personalization: consentState,
+      ad_storage: consentState,
+      analytics_storage: consentState,
+    });
+
+    win.dataLayer.push({
+      event: "consent_state_change",
+      consent_state: consentState,
+      consent_timestamp: Date.now(),
+    });
+  }, [adsAllowed]);
 
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
@@ -177,8 +181,7 @@ export default function GoogleScripts() {
               gtag('config', '${GA_MEASUREMENT_ID}', {
                 page_path: window.location.pathname,
                 cookie_domain: 'auto',
-                anonymize_ip: true,
-                send_page_view: false
+                send_pageview: false
               });
             `}
           </Script>
@@ -252,6 +255,13 @@ export default function GoogleScripts() {
           })();
         `}
       </Script>
+
+      {/* Pageview tracking - wrapped in Suspense for useSearchParams */}
+      {GA_MEASUREMENT_ID && (
+        <Suspense fallback={null}>
+          <GoogleAnalyticsPageview adsAllowed={adsAllowed} />
+        </Suspense>
+      )}
     </>
   );
 }
