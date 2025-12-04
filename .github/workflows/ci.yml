@@ -98,16 +98,23 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Vercel pull (preview)
+      - name: Setup Vercel project configuration
         if: github.event_name == 'pull_request'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          # Pull project configuration to create .vercel directory
-          # This links the project and ensures proper configuration
-          npx vercel@25 pull --environment=preview --token=${{ secrets.VERCEL_TOKEN }} --yes
+          # Create .vercel directory with project configuration
+          # This is needed for Vercel CLI to know which project to deploy to
+          mkdir -p .vercel
+          cat > .vercel/project.json << EOF
+          {
+            "projectId": "$VERCEL_PROJECT_ID",
+            "orgId": "$VERCEL_ORG_ID"
+          }
+          EOF
+          echo "Created .vercel/project.json with project configuration"
       - name: Deploy Preview to Vercel (CLI)
         if: github.event_name == 'pull_request'
         id: deploy_preview
