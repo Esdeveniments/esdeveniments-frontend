@@ -61,6 +61,8 @@ jobs:
           NEXT_PUBLIC_GOOGLE_ADS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}
           NEXT_PUBLIC_GOOGLE_MAPS: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS }}
           NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+          # Server-side runtime secrets
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           # Required secrets (validated below)
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
@@ -122,6 +124,11 @@ jobs:
             echo "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" >> .env.production
           fi
 
+          # Server-side runtime secrets
+          if [ -n "$GOOGLE_PLACES_API_KEY" ]; then
+            echo "GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY" >> .env.production
+          fi
+
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
@@ -133,9 +140,9 @@ jobs:
 
       - name: Start Next.js server (background)
         run: |
-          node .next/standalone/server.js &
+          yarn start &
           echo $! > .next-server.pid
-          echo "Started Next.js standalone server with PID $(cat .next-server.pid)"
+          echo "Started Next.js server with PID $(cat .next-server.pid)"
         env:
           NODE_ENV: production
           PORT: 3000
@@ -157,7 +164,7 @@ jobs:
             kill $(cat .next-server.pid) || true
             rm .next-server.pid
           fi
-          pkill -f "standalone/server.js" || true
+          pkill -f "yarn start" || true
 
       - name: Upload Playwright report (on failure)
         if: failure()
