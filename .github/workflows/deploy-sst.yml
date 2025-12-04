@@ -133,11 +133,12 @@ jobs:
 
       - name: Start Next.js server (background)
         run: |
-          yarn start &
+          node .next/standalone/server.js &
           echo $! > .next-server.pid
-          echo "Started Next.js server with PID $(cat .next-server.pid)"
+          echo "Started Next.js standalone server with PID $(cat .next-server.pid)"
         env:
           NODE_ENV: production
+          PORT: 3000
           # Server will load environment from .env.production
 
       - name: Wait for server to be ready
@@ -156,7 +157,7 @@ jobs:
             kill $(cat .next-server.pid) || true
             rm .next-server.pid
           fi
-          pkill -f "next start" || true
+          pkill -f "standalone/server.js" || true
 
       - name: Upload Playwright report (on failure)
         if: failure()
