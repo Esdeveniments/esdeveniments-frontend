@@ -29,11 +29,10 @@ const nextConfig = {
       "react-datepicker",
       "react-select",
     ],
-  },
-
-  // --- Server Actions Configuration ---
-  serverActions: {
-    bodySizeLimit: "10mb",
+    // --- Server Actions Configuration ---
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 
   // --- Optimizations ---
