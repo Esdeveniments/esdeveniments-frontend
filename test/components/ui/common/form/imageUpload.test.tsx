@@ -28,14 +28,20 @@ class MockFileReader {
     setTimeout(() => {
       this.result = "data:image/jpeg;base64,test";
       if (this.onload) {
-        this.onload({} as ProgressEvent<FileReader>);
+        // Call with proper context - cast to avoid TypeScript error
+        const event = {} as ProgressEvent<FileReader>;
+        (this.onload as any).call(this, event);
       }
     }, 0);
   }
   
-  addEventListener(event: string, callback: () => void) {
-    if (event === "load") {
-      this.onload = callback as any;
+  addEventListener(
+    event: string,
+    callback: EventListenerOrEventListenerObject | null,
+    _options?: boolean | AddEventListenerOptions
+  ) {
+    if (event === "load" && typeof callback === "function") {
+      this.onload = callback as (this: FileReader, ev: ProgressEvent<FileReader>) => void;
     }
   }
   
