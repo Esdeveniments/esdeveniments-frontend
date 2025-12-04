@@ -4,6 +4,7 @@ import { useEffect, useRef, Suspense, useMemo } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "../lib/context/AdContext";
+import type { WindowWithGtag } from "types/common";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -17,15 +18,15 @@ const GTAG_SHIM = `
   function gtag(){dataLayer.push(arguments);}
 `;
 
-const ensureGtag = (): Window | null => {
+const ensureGtag = (): WindowWithGtag | null => {
   if (typeof window === "undefined") return null;
-  const win = window;
+  const win = window as WindowWithGtag;
   win.dataLayer = win.dataLayer || [];
 
   if (typeof win.gtag !== "function") {
     win.gtag = function gtag() {
 
-      win.dataLayer?.push(arguments);
+      win.dataLayer.push(arguments);
     };
   }
 
@@ -50,7 +51,7 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
     const win = ensureGtag();
-    if (!win || !win.gtag || !win.dataLayer) return;
+    if (!win) return;
 
     if (!adsAllowed) {
       // Don't reset the ref when consent is revoked - prevents duplicate pageviews
@@ -85,7 +86,7 @@ export default function GoogleScripts() {
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
     const win = ensureGtag();
-    if (!win || !win.gtag || !win.dataLayer) return;
+    if (!win) return;
 
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
     win.gtag("consent", "update", {
