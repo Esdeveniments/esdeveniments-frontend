@@ -41,15 +41,9 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   // spurious pageview events from parameter order/encoding variations
   const searchParamsString = useMemo(() => {
     if (!searchParams) return "";
-    const params = new URLSearchParams();
-    // Sort keys alphabetically for consistent ordering
-    const sortedKeys = Array.from(searchParams.keys()).sort();
-    sortedKeys.forEach((key) => {
-      const values = searchParams.getAll(key);
-      values.forEach((value) => {
-        params.append(key, value);
-      });
-    });
+    // Create a mutable copy from the read-only searchParams and sort it
+    const params = new URLSearchParams(searchParams.toString());
+    params.sort();
     return params.toString();
   }, [searchParams]);
 
@@ -199,6 +193,7 @@ export default function GoogleScripts() {
           />
           <Script id="google-analytics-lazy-load" strategy="lazyOnload">
             {`
+              ${GTAG_SHIM}
               gtag('js', new Date());
               gtag('config', '${GA_MEASUREMENT_ID}', {
                 cookie_domain: 'auto',
