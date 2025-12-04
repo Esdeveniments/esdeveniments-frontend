@@ -48,45 +48,59 @@ jobs:
 
       - name: Create .env file for SST deployment
         env:
-          # Optional secrets - will be empty string if not set (safe in GitHub Actions)
+          # Optional secrets
           NEXT_PUBLIC_GOOGLE_ANALYTICS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}
           NEXT_PUBLIC_GOOGLE_ADS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}
+          # Required secrets (validated below)
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           # SST requires a .env file in the root during deployment
-          # Copy from .env.production if it exists, otherwise create from secrets
-          if [ -f .env.production ]; then
-            cp .env.production .env
-          else
-            touch .env
+          touch .env
+
+          # --- Validate and Set Required Secrets ---
+
+          # 1. NEXT_PUBLIC_API_URL
+          if [ -z "$NEXT_PUBLIC_API_URL" ]; then
+            echo "::error::NEXT_PUBLIC_API_URL secret is required but not set in GitHub Secrets"
+            exit 1
           fi
+          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env
 
-          # Ensure required environment variables are set
-          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.pre.esdeveniments.cat' }}" >> .env
-
-          # Set NEXT_PUBLIC_SITE_URL for build-time sitemap generation
-          # This ensures next-sitemap generates correct URLs during postbuild
-          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env
-
-          # Validate required HMAC_SECRET
-          HMAC_SECRET_VALUE="${{ secrets.HMAC_SECRET }}"
-          if [ -z "$HMAC_SECRET_VALUE" ]; then
+          # 2. HMAC_SECRET
+          if [ -z "$HMAC_SECRET" ]; then
             echo "::error::HMAC_SECRET secret is required but not set in GitHub Secrets"
             exit 1
           fi
-          echo "HMAC_SECRET=$HMAC_SECRET_VALUE" >> .env
+          echo "HMAC_SECRET=$HMAC_SECRET" >> .env
 
-          # Optional: Add other environment variables if needed
+          # 3. SENTRY_DSN
+          if [ -z "$SENTRY_DSN" ]; then
+            echo "::error::SENTRY_DSN secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "SENTRY_DSN=$SENTRY_DSN" >> .env
+
+          # --- Set Optional/Static Variables ---
+
+          # Set NEXT_PUBLIC_SITE_URL for build-time sitemap generation
+          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env
+
+          # SENTRY_AUTH_TOKEN (Required for source map uploads, but we don't fail deployment if missing, just warn/skip in config)
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env
+          else
+             echo "::warning::SENTRY_AUTH_TOKEN is not set. Source maps will not be uploaded."
+          fi
+
           if [ -n "$NEXT_PUBLIC_GOOGLE_ANALYTICS" ]; then
             echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env
           fi
 
           if [ -n "$NEXT_PUBLIC_GOOGLE_ADS" ]; then
             echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env
-          fi
-
-          if [ -n "$SENTRY_DSN" ]; then
-            echo "SENTRY_DSN=$SENTRY_DSN" >> .env
           fi
 
       - name: Deploy to AWS with SST
