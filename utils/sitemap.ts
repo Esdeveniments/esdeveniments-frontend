@@ -45,3 +45,21 @@ export function buildSitemap(
     `\n</urlset>`
   );
 }
+
+export function buildSitemapIndex(sitemapUrls: string[]): string {
+  const lastmod = new Date().toISOString();
+  return (
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    sitemapUrls
+      .map(
+        (url) =>
+          `  <sitemap>\n` +
+          `    <loc>${escapeXml(url)}</loc>\n` +
+          `    <lastmod>${lastmod}</lastmod>\n` +
+          `  </sitemap>`
+      )
+      .join("\n") +
+    `\n</sitemapindex>`
+  );
+}

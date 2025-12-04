@@ -16,6 +16,21 @@ const compat = new FlatCompat({
 });
 
 export default [
+  {
+    ignores: [
+      ".sst/**",
+      ".sst/**/*",
+      ".sst",
+      ".sst.*",
+      "*.sst",
+      "**/.sst/**",
+      ".open-next/**",
+      ".open-next/**/*",
+      ".next/**",
+      ".next/**/*",
+      "sst-env.d.ts",
+    ],
+  },
   // Spread converted ESLintRC configs from FlatCompat
   ...compat.extends("eslint:recommended"),
   // Spread Next.js configs (they're already flat config compatible)

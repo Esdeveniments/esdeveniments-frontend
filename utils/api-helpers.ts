@@ -26,7 +26,7 @@ export function getApiOrigin(): string {
   // Strategy 2: Fallback based on NODE_ENV
   const nodeEnv = process.env.NODE_ENV;
   if (nodeEnv === "production") {
-    return "https://api.esdeveniments.cat"; // Production API
+    return "https://api-pre.esdeveniments.cat"; // Production API
   }
 
   // Strategy 3: Default fallback (development/staging)
@@ -40,7 +40,33 @@ export function getApiOrigin(): string {
  */
 export function getInternalApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  // Prefer the current deployment's origin when available (Vercel previews/production)
+
+  // Priority 1: Explicit internal hostname (bypasses public CDN/Cloudflare)
+  const internalSiteUrl = process.env.INTERNAL_SITE_URL;
+  if (internalSiteUrl) {
+    try {
+      return new URL(normalized, internalSiteUrl).toString();
+    } catch (error) {
+      console.warn(
+        `[getInternalApiUrl] Invalid INTERNAL_SITE_URL "${internalSiteUrl}":`,
+        error
+      );
+    }
+  }
+
+  // Priority 2: Explicit canonical hostname (used when internal isn't provided)
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    try {
+      return new URL(normalized, process.env.NEXT_PUBLIC_SITE_URL).toString();
+    } catch (error) {
+      console.warn(
+        `[getInternalApiUrl] Invalid NEXT_PUBLIC_SITE_URL "${process.env.NEXT_PUBLIC_SITE_URL}":`,
+        error
+      );
+    }
+  }
+
+  // Priority 3: Vercel deployments
   // VERCEL_URL is provided at runtime and points to the exact deployment host.
   // It does not include the protocol.
   const vercelUrl =
@@ -51,7 +77,8 @@ export function getInternalApiUrl(path: string): string {
       : `https://${vercelUrl}`;
     return new URL(normalized, origin).toString();
   }
-  // Fallback to runtime-computed siteUrl (ensures correct env vars are used)
+  
+  // Priority 4: Fallback to runtime-computed siteUrl (ensures correct env vars are used)
   // Call getSiteUrl() at runtime instead of using module-level constant
   const siteUrl = getSiteUrl();
   return new URL(normalized, siteUrl).toString();
@@ -62,9 +89,7 @@ export function getInternalApiUrl(path: string): string {
  * Centralizes query string construction to eliminate duplication between
  * internal and external API calls.
  */
-export function buildEventsQuery(
-  params: FetchEventsParams
-): URLSearchParams {
+export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   const query: Partial<FetchEventsParams> = {};
   query.page = typeof params.page === "number" ? params.page : 0;
   query.size = typeof params.size === "number" ? params.size : 10;

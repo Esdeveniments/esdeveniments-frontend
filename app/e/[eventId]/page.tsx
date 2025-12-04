@@ -140,36 +140,43 @@ export default async function EventPage({
   const relatedEventsJsonData =
     event.relatedEvents && event.relatedEvents.length > 0
       ? {
-          "@id": `${siteUrl}#itemlist-${title
-            ?.toLowerCase()
-            .replace(/\s+/g, "-")}`,
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: "Related Events",
-          numberOfItems: event.relatedEvents.length,
-          itemListElement: event.relatedEvents
-            .slice(0, 10) // Limit for performance
-            .map((relatedEvent, index) => {
-              try {
-                return {
-                  "@type": "ListItem",
-                  position: index + 1,
-                  item: generateJsonData(relatedEvent),
-                };
-              } catch (err) {
-                console.error(
-                  "Error generating JSON-LD for related event:",
-                  relatedEvent.id,
-                  err
-                );
-                return null;
-              }
-            })
-            .filter(Boolean),
-        }
+        "@id": `${siteUrl}#itemlist-${title
+          ?.toLowerCase()
+          .replace(/\s+/g, "-")}`,
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Related Events",
+        numberOfItems: event.relatedEvents.length,
+        itemListElement: event.relatedEvents
+          .slice(0, 10) // Limit for performance
+          .map((relatedEvent, index) => {
+            try {
+              return {
+                "@type": "ListItem",
+                position: index + 1,
+                item: generateJsonData(relatedEvent),
+              };
+            } catch (err) {
+              console.error(
+                "Error generating JSON-LD for related event:",
+                relatedEvent.id,
+                err
+              );
+              return null;
+            }
+          })
+          .filter(Boolean),
+      }
       : null;
 
   // Generate BreadcrumbList JSON-LD
+  // Ensure breadcrumb name is never empty (required by Google structured data)
+  const breadcrumbName = (() => {
+    if (title) return title;
+    if (placeLabel) return `Esdeveniment a ${placeLabel}`;
+    return "Esdeveniment";
+  })();
+
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -182,18 +189,18 @@ export default async function EventPage({
       },
       ...(placeSlug
         ? [
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: placeLabel,
-              item: `${siteUrl}/${placeSlug}`,
-            },
-          ]
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: placeLabel,
+            item: `${siteUrl}/${placeSlug}`,
+          },
+        ]
         : []),
       {
         "@type": "ListItem",
         position: placeSlug ? 3 : 2,
-        name: title,
+        name: breadcrumbName,
         item: `${siteUrl}/e/${event.slug}`,
       },
     ],
@@ -245,14 +252,7 @@ export default async function EventPage({
             <EventHeader title={title} statusMeta={statusMeta} />
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
-            {/* Related Events - Server-side rendered for SEO */}
-            {event.relatedEvents && event.relatedEvents.length > 0 && (
-              <EventsAroundSection
-                events={event.relatedEvents}
-                title="Esdeveniments relacionats"
-              />
-            )}
-            {/* Event Description - Server-side rendered for SEO */}
+            {/* Event Description - bring core info immediately */}
             <EventDescription
               description={event.description}
               locationValue={event.city?.slug || event.region?.slug || ""}
@@ -260,8 +260,31 @@ export default async function EventPage({
               introText={introText}
               locationType="town"
             />
+            {/* Location (SSR for SEO) with client map toggle */}
+            <EventLocation
+              location={event.location}
+              cityName={cityName}
+              regionName={regionName}
+              citySlug={event.city?.slug}
+              regionSlug={event.region?.slug}
+            />
+            {/* Related Events - Server-side rendered for SEO */}
+            {event.relatedEvents && event.relatedEvents.length > 0 && (
+              <EventsAroundSection
+                events={event.relatedEvents}
+                title="Esdeveniments relacionats"
+              />
+            )}
             {/* Event Categories - Server-side rendered for SEO */}
             <EventCategories categories={event.categories} place={placeSlug} />
+            {/* Event details (status, duration, external url) - server-rendered */}
+            <EventDetailsSection
+              event={event}
+              temporalStatus={temporalStatus}
+              formattedStart={formattedStart}
+              formattedEnd={formattedEnd}
+              nameDay={nameDay}
+            />
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner
@@ -274,22 +297,6 @@ export default async function EventPage({
               />
             )}
             <ClientEventClient event={event} temporalStatus={temporalStatus} />
-            {/* Event details (status, duration, external url) - server-rendered */}
-            <EventDetailsSection
-              event={event}
-              temporalStatus={temporalStatus}
-              formattedStart={formattedStart}
-              formattedEnd={formattedEnd}
-              nameDay={nameDay}
-            />
-            {/* Location (SSR for SEO) with client map toggle */}
-            <EventLocation
-              location={event.location}
-              cityName={cityName}
-              regionName={regionName}
-              citySlug={event.city?.slug}
-              regionSlug={event.region?.slug}
-            />
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
               <section className="w-full" aria-labelledby="event-faq">

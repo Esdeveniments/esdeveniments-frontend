@@ -1,0 +1,61 @@
+name: Uptime Monitor
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-uptime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check site availability
+        id: check
+        run: |
+          # Fetch the homepage
+          response=$(curl -s -o /tmp/response.html -w "%{http_code}" https://www.esdeveniments.cat)
+          
+          # Check HTTP status code
+          if [ "$response" != "200" ]; then
+            echo "❌ Site returned HTTP $response instead of 200"
+            echo "error_message=Site returned HTTP $response instead of 200" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Check for keyword to ensure page rendered correctly
+          if ! grep -q "esdeveniments.cat" /tmp/response.html; then
+            echo "❌ Keyword 'esdeveniments.cat' not found in page content"
+            echo "error_message=Keyword 'esdeveniments.cat' not found in page content" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✅ Site is up and content is valid"
+
+      - name: Send email notification on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "🚨 Site Down Alert: esdeveniments.cat"
+          to: ${{ secrets.UPTIME_ALERT_EMAIL }}
+          from: ${{ secrets.SMTP_FROM }}
+          body: |
+            <h2>🚨 Site Down Alert</h2>
+            <p>The uptime monitor detected that <strong>esdeveniments.cat</strong> is down or not responding correctly.</p>
+            
+            <h3>Details</h3>
+            <ul>
+              <li><strong>Error:</strong> ${{ steps.check.outputs.error_message || 'Unknown error - check workflow logs' }}</li>
+              <li><strong>Time:</strong> ${{ github.run_started_at }}</li>
+              <li><strong>Workflow Run:</strong> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View in GitHub</a></li>
+            </ul>
+            
+            <h3>Action Required</h3>
+            <p>Please check the site immediately: <a href="https://www.esdeveniments.cat">https://www.esdeveniments.cat</a></p>
+            
+            <p><small>This is an automated alert from the GitHub Actions uptime monitor.</small></p>
+          content_type: text/html

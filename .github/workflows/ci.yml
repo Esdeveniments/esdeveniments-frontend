@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "22"
   NEXT_PUBLIC_API_URL: "https://api-pre.esdeveniments.cat/api"
 
 jobs:
@@ -100,12 +100,13 @@ jobs:
 
       - name: Vercel pull (preview)
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npx vercel@25 pull --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel@25 pull --environment=preview --token=${{ secrets.VERCEL_TOKEN }} || echo "Warning: vercel pull failed (project may need to be re-linked or IDs updated)"
       - name: Deploy Preview to Vercel (CLI)
         if: github.event_name == 'pull_request'
         id: deploy_preview

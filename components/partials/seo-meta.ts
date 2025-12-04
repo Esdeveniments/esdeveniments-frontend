@@ -160,6 +160,56 @@ export function buildPageMeta({
   return baseMeta;
 }
 
+// Helper to derive a meaningful name from URL when breadcrumb name is missing
+// Exported for testing
+export const deriveNameFromUrl = (url: string): string | null => {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    // Extract the last meaningful segment from the path
+    const segments = pathname.split("/").filter((s) => s.length > 0);
+    if (segments.length === 0) return null;
+    
+    const lastSegment = segments[segments.length - 1];
+    // If it's a slug-like segment (e.g., "barcelona", "esdeveniment-123"), 
+    // try to make it more readable by replacing hyphens with spaces and capitalizing
+    if (lastSegment.includes("-")) {
+      return lastSegment
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+    // Otherwise, capitalize first letter
+    return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+  } catch {
+    return null;
+  }
+};
+
+const BREADCRUMB_WARNING_LIMIT = 5;
+const breadcrumbWarningCounts: Record<string, number> = {};
+
+const shouldLogBreadcrumbWarnings =
+  typeof process !== "undefined" &&
+  (process.env.NODE_ENV !== "production" ||
+    process.env.SCHEMA_WARNINGS === "1");
+
+const logBreadcrumbWarning = (
+  url: string | undefined,
+  detail?: string
+) => {
+  if (!shouldLogBreadcrumbWarnings) return;
+  breadcrumbWarningCounts["empty-name"] =
+    (breadcrumbWarningCounts["empty-name"] || 0) + 1;
+  if (breadcrumbWarningCounts["empty-name"] > BREADCRUMB_WARNING_LIMIT) return;
+  const parts = [
+    "[breadcrumb-warning]",
+    `url=${url ?? "unknown"}`,
+  ];
+  if (detail) parts.push(detail);
+  console.warn(parts.join(" "));
+};
+
 // Sitemap-specific structured data helpers
 export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
   if (!breadcrumbs || breadcrumbs.length === 0) return null;
@@ -168,12 +218,27 @@ export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "@id": `${siteUrl}#breadcrumblist`,
-    itemListElement: breadcrumbs.map((breadcrumb, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: breadcrumb.name,
-      item: breadcrumb.url,
-    })),
+    itemListElement: breadcrumbs.map((breadcrumb, index) => {
+      // Ensure name is never empty (required by Google structured data)
+      let name = breadcrumb.name;
+      if (!name || name.trim() === "") {
+        // Try to derive a meaningful name from the URL
+        const derivedName = deriveNameFromUrl(breadcrumb.url);
+        name = derivedName || "Pàgina";
+        logBreadcrumbWarning(
+          breadcrumb.url,
+          derivedName
+            ? `derived name from URL: "${derivedName}"`
+            : "using generic fallback 'Pàgina'"
+        );
+      }
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        name,
+        item: breadcrumb.url,
+      };
+    }),
   };
 }
 

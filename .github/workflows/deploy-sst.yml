@@ -1,0 +1,106 @@
+name: Deploy to AWS (SST)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger
+
+concurrency:
+  group: deploy-sst-${{ github.ref }}
+  cancel-in-progress: false # Don't cancel - let deployments complete
+
+env:
+  NODE_VERSION: "22"
+  AWS_REGION: "eu-west-3"
+
+jobs:
+  deploy:
+    name: Deploy to AWS with SST
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create .env file for SST deployment
+        env:
+          # Optional secrets - will be empty string if not set (safe in GitHub Actions)
+          NEXT_PUBLIC_GOOGLE_ANALYTICS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}
+          NEXT_PUBLIC_GOOGLE_ADS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: |
+          # SST requires a .env file in the root during deployment
+          # Copy from .env.production if it exists, otherwise create from secrets
+          if [ -f .env.production ]; then
+            cp .env.production .env
+          else
+            touch .env
+          fi
+
+          # Ensure required environment variables are set
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.pre.esdeveniments.cat' }}" >> .env
+
+          # Set NEXT_PUBLIC_SITE_URL for build-time sitemap generation
+          # This ensures next-sitemap generates correct URLs during postbuild
+          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env
+
+          # Validate required HMAC_SECRET
+          HMAC_SECRET_VALUE="${{ secrets.HMAC_SECRET }}"
+          if [ -z "$HMAC_SECRET_VALUE" ]; then
+            echo "::error::HMAC_SECRET secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "HMAC_SECRET=$HMAC_SECRET_VALUE" >> .env
+
+          # Optional: Add other environment variables if needed
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ANALYTICS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ADS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env
+          fi
+
+          if [ -n "$SENTRY_DSN" ]; then
+            echo "SENTRY_DSN=$SENTRY_DSN" >> .env
+          fi
+
+      - name: Deploy to AWS with SST
+        env:
+          # SST will read from .env file and SSM Parameter Store
+          AWS_REGION: ${{ env.AWS_REGION }}
+          # Set NODE_ENV to production for proper sitemap URL generation
+          NODE_ENV: production
+        run: |
+          npx sst deploy --stage production
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌍 Site URL: https://esdeveniments.cat"
+          echo "📊 Check AWS Console: https://console.aws.amazon.com/cloudfront/home?region=${{ env.AWS_REGION }}"

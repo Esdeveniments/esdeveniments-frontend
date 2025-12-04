@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { withImageCacheKey } from "@utils/image-cache";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
@@ -45,6 +46,8 @@ const EventSummaryBaseSchema = z
     id: z.string(),
     hash: z.string(),
     slug: z.string(),
+    // Note: title is allowed to be empty string (backend may return empty titles)
+    // Frontend code should handle empty titles defensively (see app/e/[eventId]/page.tsx)
     title: z.string(),
     type: EventTypeEnum,
     url: z.string(),
@@ -156,7 +159,16 @@ export function parseEventDetail(
     return null;
   }
 
-  return result.data as EventDetailResponseDTO;
+  const event = result.data as EventDetailResponseDTO;
+
+  // Log warning if title is empty (helps identify data quality issues)
+  if (!event.title || event.title.trim() === "") {
+    console.warn(
+      `Event with empty title detected: id=${event.id}, slug=${event.slug}`
+    );
+  }
+
+  return enhanceEventDetail(event);
 }
 
 // Paged response schema for events
@@ -181,7 +193,11 @@ export function parsePagedEvents(
     return null;
   }
 
-  return result.data as PagedResponseDTO<EventSummaryResponseDTO>;
+  const payload = result.data as PagedResponseDTO<EventSummaryResponseDTO>;
+  return {
+    ...payload,
+    content: payload.content.map(enhanceEventImage),
+  };
 }
 
 // Categorized events schema
@@ -202,5 +218,48 @@ export function parseCategorizedEvents(
     return null;
   }
 
-  return result.data as CategorizedEvents;
+  const categorized = result.data as CategorizedEvents;
+  const normalizedEntries = Object.entries(categorized).map(
+    ([category, events]) => [category, events.map(enhanceEventImage)]
+  );
+  return Object.fromEntries(normalizedEntries) as CategorizedEvents;
+}
+
+function enhanceEventImage<
+  T extends { imageUrl?: string | null; hash?: string | null; updatedAt?: string }
+>(event: T): T {
+  const cacheKey = event.hash || event.updatedAt;
+  if (
+    !cacheKey ||
+    typeof event.imageUrl !== "string" ||
+    event.imageUrl.length === 0
+  ) {
+    return event;
+  }
+
+  const nextImageUrl = withImageCacheKey(event.imageUrl, cacheKey);
+  if (nextImageUrl === event.imageUrl) {
+    return event;
+  }
+
+  return {
+    ...event,
+    imageUrl: nextImageUrl,
+  };
+}
+
+function enhanceEventDetail(
+  event: EventDetailResponseDTO
+): EventDetailResponseDTO {
+  const normalizedEvent = enhanceEventImage(event) as EventDetailResponseDTO;
+  if (!event.relatedEvents || event.relatedEvents.length === 0) {
+    return normalizedEvent;
+  }
+
+  return {
+    ...normalizedEvent,
+    relatedEvents: event.relatedEvents.map((relatedEvent) =>
+      enhanceEventImage(relatedEvent)
+    ) as EventDetailResponseDTO["relatedEvents"],
+  };
 }

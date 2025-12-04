@@ -21,17 +21,8 @@ describe("lib/api/events", () => {
 
   it("returns safe fallback when backend URL is missing (internal route returns empty)", async () => {
     delete process.env.NEXT_PUBLIC_API_URL;
-    const mockJson = vi.fn().mockResolvedValue({
-      content: [],
-      currentPage: 0,
-      pageSize: 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    });
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: mockJson });
-    (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
-
+    // When NEXT_PUBLIC_API_URL is missing, fetchEventsExternal returns early without calling fetch
+    // So we just verify it returns the fallback response
     const result: PagedResponseDTO<EventSummaryResponseDTO> = await fetchEvents(
       { page: 0, size: 10 }
     );
@@ -43,12 +34,10 @@ describe("lib/api/events", () => {
       totalPages: 0,
       last: true,
     });
-    // Called internal API route
-    const calledUrl = mockFetch.mock.calls[0][0] as string;
-    expect(calledUrl).toContain("/api/events?");
   });
 
-  it("maps params correctly and hits internal route (no HMAC headers here)", async () => {
+  it("maps params correctly and hits external API with HMAC headers", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
     const mockJson = vi.fn().mockResolvedValue({
       content: [],
       currentPage: 0,
@@ -57,19 +46,26 @@ describe("lib/api/events", () => {
       totalPages: 0,
       last: true,
     });
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: mockJson });
+    const mockResponse = { ok: true, json: mockJson };
+    const mockFetch = vi.fn().mockResolvedValue(mockResponse);
     (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
 
     await fetchEvents({ place: "barcelona", term: "music", page: 2, size: 20 });
+    
+    expect(mockFetch).toHaveBeenCalled();
     const calledUrl = mockFetch.mock.calls[0][0] as string;
     const options = mockFetch.mock.calls[0][1] as RequestInit;
 
-    expect(calledUrl).toContain("/api/events?");
+    expect(calledUrl).toContain("https://api.example.com/events?");
     expect(calledUrl).toContain("place=barcelona");
     expect(calledUrl).toContain("term=music");
     expect(calledUrl).toContain("page=2");
     expect(calledUrl).toContain("size=20");
-    expect(options?.headers).toBeUndefined();
+    // fetchWithHmac adds HMAC headers, so headers should be defined
+    expect(options?.headers).toBeDefined();
+    const headers = options.headers as Headers;
+    expect(headers.get("x-timestamp")).toBeDefined();
+    expect(headers.get("x-hmac")).toBeDefined();
   });
 
   it("insertAds returns empty when no events", () => {

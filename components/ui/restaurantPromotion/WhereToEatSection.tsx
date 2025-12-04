@@ -8,12 +8,17 @@ import {
   formatAddressLines,
 } from "@utils/place-format";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { withImageCacheKey } from "@utils/image-cache";
+import { siteUrl } from "@config/index";
 
 // Helper: derive photo proxy URL (Places API v1 only)
 function getPhotoUrl(place: GooglePlace): string | null {
   const photo = place.photos?.[0];
   if (!photo) return null;
-  return `/api/places/photo?name=${encodeURIComponent(photo.name)}&w=160`;
+  const basePath = `/api/places/photo?name=${encodeURIComponent(
+    photo.name
+  )}&w=160`;
+  return `${siteUrl}${basePath}`;
 }
 
 export default function WhereToEatSection({
@@ -85,10 +90,14 @@ export default function WhereToEatSection({
                       </div>
                     );
                   }
+                  const normalizedPhotoUrl = withImageCacheKey(
+                    photoUrl,
+                    place.place_id || place.name
+                  );
                   return (
                     <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted ml-4">
                       <NextImage
-                        src={photoUrl}
+                        src={normalizedPhotoUrl}
                         alt={`Foto de ${place.name}`}
                         fill
                         priority={false}

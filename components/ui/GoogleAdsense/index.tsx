@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, CSSProperties, JSX } from "react";
 import { AdStatus, GoogleAdsenseContainerProps } from "types/common";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+import { useAdContext } from "../../../lib/context/AdContext";
 
 const GoogleAdsenseContainer = ({
   id,
@@ -12,19 +13,24 @@ const GoogleAdsenseContainer = ({
   setDisplayAd,
   adClient,
 }: GoogleAdsenseContainerProps): JSX.Element => {
+  const {
+    adsAllowed,
+    observeVisibility,
+    unobserveVisibility,
+    observeMutations,
+    unobserveMutations,
+  } = useAdContext();
+
   const adRef = useRef<HTMLModElement>(null);
-  const observer = useRef<MutationObserver | null>(null);
-  const viewObserver = useRef<IntersectionObserver | null>(null);
   const callbackRef = useRef(setDisplayAd);
-  const [hasConsent, setHasConsent] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    if (typeof window.__tcfapi !== "function") return true;
-    return Boolean(window.__adsConsentGranted);
-  });
+
+  // Initialize shouldRenderSlot based on environment
   const [shouldRenderSlot, setShouldRenderSlot] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
+    // If IntersectionObserver is not supported, render immediately
     return typeof IntersectionObserver === "undefined";
   });
+
   const slotPushed = useRef(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -33,66 +39,38 @@ const GoogleAdsenseContainer = ({
     callbackRef.current = setDisplayAd;
   }, [setDisplayAd]);
 
+  // If consent is revoked, hide ad
   useEffect(() => {
-    const handleConsent = (event: Event) => {
-      const allowed = (event as CustomEvent<{ allowed?: boolean }>).detail
-        ?.allowed;
-      setHasConsent(Boolean(allowed));
-    };
-
-    if (typeof window !== "undefined") {
-      window.addEventListener(
-        "ads-consent-changed",
-        handleConsent as EventListener
-      );
-    }
-
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "ads-consent-changed",
-          handleConsent as EventListener
-        );
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!hasConsent) {
+    if (!adsAllowed) {
       callbackRef.current?.(false);
     }
-  }, [hasConsent]);
+  }, [adsAllowed]);
 
+  // Visibility Observer
   useEffect(() => {
-    if (!hasConsent || shouldRenderSlot) return;
+    if (!adsAllowed || shouldRenderSlot) return;
     const target = wrapperRef.current;
     if (!target) return;
 
-    viewObserver.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setShouldRenderSlot(true);
-          }
-        });
-      },
-      { rootMargin: "0px 0px 320px 0px" }
-    );
+    observeVisibility(target, () => {
+      setShouldRenderSlot(true);
+    });
 
-    viewObserver.current.observe(target);
+    return () => {
+      unobserveVisibility(target);
+    };
+  }, [adsAllowed, shouldRenderSlot, observeVisibility, unobserveVisibility]);
 
-    return () => viewObserver.current?.disconnect();
-  }, [hasConsent, shouldRenderSlot]);
-
-  // Safety: if the observer never fires (e.g., zero-height target), render anyway after a short delay.
+  // Safety fallback if observer never fires
   useEffect(() => {
-    if (!hasConsent || shouldRenderSlot) return;
+    if (!adsAllowed || shouldRenderSlot) return;
     const timer = setTimeout(() => setShouldRenderSlot(true), 1200);
     return () => clearTimeout(timer);
-  }, [hasConsent, shouldRenderSlot]);
+  }, [adsAllowed, shouldRenderSlot]);
 
+  // Push Ad
   useEffect(() => {
-    if (!shouldRenderSlot || !hasConsent) return;
+    if (!shouldRenderSlot || !adsAllowed) return;
     if (fallbackTimer.current) {
       clearTimeout(fallbackTimer.current);
       fallbackTimer.current = null;
@@ -103,7 +81,7 @@ const GoogleAdsenseContainer = ({
       adRef.current.children &&
       adRef.current.children.length > 0
     ) {
-      return; // Ad already loaded in this element, return early
+      return; // Ad already loaded
     }
 
     try {
@@ -123,14 +101,18 @@ const GoogleAdsenseContainer = ({
       if (status === "filled" || hasChildren) return;
       callbackRef.current?.(false);
     }, 6000);
-  }, [hasConsent, shouldRenderSlot]);
+  }, [adsAllowed, shouldRenderSlot]);
 
+  // Mutation Observer (Ad Status)
   useEffect(() => {
-    if (!shouldRenderSlot || !hasConsent) return;
-    const callback = (mutationsList: MutationRecord[]): void => {
+    if (!shouldRenderSlot || !adsAllowed || !adRef.current) return;
+
+    const target = adRef.current;
+
+    const handleMutations = (mutationsList: MutationRecord[]) => {
       mutationsList.forEach((element) => {
-        const target = element.target as HTMLElement;
-        const adStatus = target.getAttribute("data-ad-status") as AdStatus;
+        const targetEl = element.target as HTMLElement;
+        const adStatus = targetEl.getAttribute("data-ad-status") as AdStatus;
         if (adStatus === "filled") {
           callbackRef.current?.(true);
           if (fallbackTimer.current) {
@@ -147,29 +129,20 @@ const GoogleAdsenseContainer = ({
       });
     };
 
-    if (!observer.current) {
-      observer.current = new MutationObserver(callback);
-    }
-
-    if (adRef.current) {
-      observer.current.observe(adRef.current, {
-        attributeFilter: ["data-ad-status"],
-        attributes: true,
-      });
-    }
+    observeMutations(target, handleMutations);
 
     return () => {
-      observer.current?.disconnect();
+      unobserveMutations(target);
       if (fallbackTimer.current) {
         clearTimeout(fallbackTimer.current);
         fallbackTimer.current = null;
       }
     };
-  }, [hasConsent, shouldRenderSlot]);
+  }, [adsAllowed, shouldRenderSlot, observeMutations, unobserveMutations]);
 
   return (
     <div ref={wrapperRef} className="w-full min-h-[1px]">
-      {hasConsent && shouldRenderSlot && (
+      {adsAllowed && shouldRenderSlot && (
         <ins
           id={id}
           ref={adRef}
