@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "../lib/context/AdContext";
+import type { GtagWindow } from "types/common";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -11,15 +12,15 @@ const ADS_SRC = ADS_CLIENT
   ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
   : "";
 
-const ensureGtag = () => {
+const ensureGtag = (): GtagWindow | null => {
   if (typeof window === "undefined") return null;
-  const win = window;
+  const win = window as GtagWindow;
   win.dataLayer = win.dataLayer || [];
 
   if (typeof win.gtag !== "function") {
     win.gtag = function gtag() {
        
-      win.dataLayer?.push(arguments);
+      win.dataLayer.push(arguments);
     };
   }
 
