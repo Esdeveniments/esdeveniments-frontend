@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, Suspense } from "react";
+import { useEffect, useRef, Suspense, useMemo } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "../lib/context/AdContext";
@@ -10,6 +10,12 @@ const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
 const ADS_SRC = ADS_CLIENT
   ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
   : "";
+
+// Google Analytics gtag shim - reused across multiple Script components
+const GTAG_SHIM = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+`;
 
 const ensureGtag = (): Window | null => {
   if (typeof window === "undefined") return null;
@@ -31,7 +37,11 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   const lastTrackedPathRef = useRef<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const searchParamsString = searchParams?.toString() ?? "";
+  // Memoize search params string to prevent unnecessary re-renders from parameter order/encoding changes
+  const searchParamsString = useMemo(
+    () => searchParams?.toString() ?? "",
+    [searchParams]
+  );
 
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
@@ -39,13 +49,15 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
     if (!win || !win.gtag || !win.dataLayer) return;
 
     if (!adsAllowed) {
-      lastTrackedPathRef.current = null;
+      // Don't reset the ref when consent is revoked - prevents duplicate pageviews
+      // if consent is re-granted on the same page
       return;
     }
 
     const query = searchParamsString ? `?${searchParamsString}` : "";
     const pagePath = `${pathname || "/"}` + query;
 
+    // Only send page_view if we haven't tracked this path yet
     if (lastTrackedPathRef.current === pagePath) return;
 
     win.gtag("event", "page_view", {
@@ -63,6 +75,9 @@ export default function GoogleScripts() {
   const autoAdsInitRef = useRef(false);
 
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
+  // Note: We use the same consent signal (adsAllowed) for both ads and analytics
+  // because our TCF implementation (AdContext) provides a unified consent model.
+  // This is intentional and aligns with our CMP's consent structure.
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
     const win = ensureGtag();
@@ -158,8 +173,7 @@ export default function GoogleScripts() {
         <>
           <Script id="google-analytics-consent" strategy="afterInteractive">
             {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
+              ${GTAG_SHIM}
               gtag('consent', 'default', {
                 ad_user_data: 'denied',
                 ad_personalization: 'denied',
@@ -175,11 +189,9 @@ export default function GoogleScripts() {
           />
           <Script id="google-analytics-lazy-load" strategy="lazyOnload">
             {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
+              ${GTAG_SHIM}
               gtag('js', new Date());
               gtag('config', '${GA_MEASUREMENT_ID}', {
-                page_path: window.location.pathname,
                 cookie_domain: 'auto',
                 send_pageview: false
               });
