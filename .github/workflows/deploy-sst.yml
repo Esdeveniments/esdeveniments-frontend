@@ -39,6 +39,14 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Clean build artifacts
+        run: |
+          # Remove Next.js cache to prevent stale/malformed cached responses
+          rm -rf .next
+          # Remove SST artifacts from previous builds
+          rm -rf .sst .open-next
+          echo "✅ Cleaned build artifacts"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -46,19 +54,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Create .env file for SST deployment
+      - name: Create .env.production file for SST deployment
         env:
           # Optional secrets
           NEXT_PUBLIC_GOOGLE_ANALYTICS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}
           NEXT_PUBLIC_GOOGLE_ADS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}
+          NEXT_PUBLIC_GOOGLE_MAPS: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS }}
+          NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
           # Required secrets (validated below)
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          # SST requires a .env file in the root during deployment
-          touch .env
+          # Create .env.production for Next.js build (NODE_ENV=production)
+          # Next.js loads .env.production when NODE_ENV=production
+          touch .env.production
 
           # --- Validate and Set Required Secrets ---
 
@@ -67,40 +78,48 @@ jobs:
             echo "::error::NEXT_PUBLIC_API_URL secret is required but not set in GitHub Secrets"
             exit 1
           fi
-          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env
+          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
 
           # 2. HMAC_SECRET
           if [ -z "$HMAC_SECRET" ]; then
             echo "::error::HMAC_SECRET secret is required but not set in GitHub Secrets"
             exit 1
           fi
-          echo "HMAC_SECRET=$HMAC_SECRET" >> .env
+          echo "HMAC_SECRET=$HMAC_SECRET" >> .env.production
 
           # 3. SENTRY_DSN
           if [ -z "$SENTRY_DSN" ]; then
             echo "::error::SENTRY_DSN secret is required but not set in GitHub Secrets"
             exit 1
           fi
-          echo "SENTRY_DSN=$SENTRY_DSN" >> .env
+          echo "SENTRY_DSN=$SENTRY_DSN" >> .env.production
 
           # --- Set Optional/Static Variables ---
 
           # Set NEXT_PUBLIC_SITE_URL for build-time sitemap generation
-          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env
+          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env.production
 
           # SENTRY_AUTH_TOKEN (Required for source map uploads, but we don't fail deployment if missing, just warn/skip in config)
           if [ -n "$SENTRY_AUTH_TOKEN" ]; then
-            echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env
+            echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env.production
           else
              echo "::warning::SENTRY_AUTH_TOKEN is not set. Source maps will not be uploaded."
           fi
 
           if [ -n "$NEXT_PUBLIC_GOOGLE_ANALYTICS" ]; then
-            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env
+            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env.production
           fi
 
           if [ -n "$NEXT_PUBLIC_GOOGLE_ADS" ]; then
-            echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env
+            echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env.production
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_MAPS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_MAPS=$NEXT_PUBLIC_GOOGLE_MAPS" >> .env.production
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" >> .env.production
           fi
 
       - name: Deploy to AWS with SST

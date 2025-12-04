@@ -15,6 +15,13 @@ export default $config({
     };
   },
   async run() {
+    // Set Node.js 22.x runtime for ALL Lambda functions globally
+    // This applies to server, image optimizer, warmer, and revalidation functions
+    // Upgraded from nodejs20.x (deprecated April 2026)
+    $transform(sst.aws.Function, (args) => {
+      args.runtime = "nodejs22.x";
+    });
+
     // Helper function to get parameter from SSM Parameter Store
     async function getSsmParameter(parameterName: string): Promise<string> {
       // Dynamic import to avoid top-level imports
@@ -101,9 +108,11 @@ export default $config({
           return secret;
         })(),
       },
-      warm: 5,
+       warm: 5,
       transform: {
         server: {
+          // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x
+          // OpenNext applies this runtime to all Lambda functions it creates
           runtime: "nodejs22.x", // Upgraded from nodejs20.x (deprecated April 2026)
           memory: "3008 MB", // Maximum allowed: 3 GB = 3 vCPUs (AWS Lambda limit for arm64/eu-west-3)
           timeout: "20 seconds",
