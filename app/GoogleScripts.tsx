@@ -18,7 +18,7 @@ const ensureGtag = (): Window | null => {
 
   if (typeof win.gtag !== "function") {
     win.gtag = function gtag() {
-       
+
       win.dataLayer?.push(arguments);
     };
   }
@@ -36,7 +36,7 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
     const win = ensureGtag();
-    if (!win) return;
+    if (!win || !win.gtag || !win.dataLayer) return;
 
     if (!adsAllowed) {
       lastTrackedPathRef.current = null;
@@ -66,7 +66,7 @@ export default function GoogleScripts() {
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
     const win = ensureGtag();
-    if (!win) return;
+    if (!win || !win.gtag || !win.dataLayer) return;
 
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
     win.gtag("consent", "update", {
