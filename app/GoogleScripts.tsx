@@ -195,6 +195,9 @@ export default function GoogleScripts() {
           <Script id="google-analytics-lazy-load" strategy="lazyOnload">
             {`
               ${GTAG_SHIM}
+              // Note: GTAG_SHIM is included here defensively, even though it's already in
+              // google-analytics-consent script. This ensures gtag is available if script
+              // loading order varies or the consent script fails to load.
               gtag('js', new Date());
               gtag('config', '${GA_MEASUREMENT_ID}', {
                 cookie_domain: 'auto',
