@@ -10,6 +10,15 @@ frontend:
         - yarn --version
         # Use Yarn 4 immutable installs for fast, deterministic builds in CI
         - yarn install --immutable
+
+        # --- FIX STARTS HERE ---
+        # 1. Start with a clean slate or ensure the file exists
+        - touch .env.production
+        # 2. Dump ALL environment variables (including NEXT_PUBLIC_*) into .env.production
+        # This makes them available to 'yarn build' later
+        - env >> .env.production
+        # --- FIX ENDS HERE ---
+
         # Remove any existing keys, then write a single, up-to-date copy
         - sed -i '/^NEXT_PUBLIC_BUILD_ID=/d' .env.production 2>/dev/null || true
         - sed -i '/^NEXT_TELEMETRY_DISABLED=/d' .env.production 2>/dev/null || true
@@ -51,12 +60,3 @@ frontend:
       - node_modules/**/*
       - .next/cache/**/*
       - .yarn/cache/**/*
-
-  # Custom HTTP headers have been moved to customHttp.yml
-  # See: https://docs.aws.amazon.com/amplify/latest/userguide/custom-headers.html
-  # Static asset caching and security headers are configured in customHttp.yml
-# Environment variables should be set in the Amplify Console for better security.
-# Go to: App settings > Environment variables
-# Recommended variables:
-# NODE_ENV: production
-# NEXT_TELEMETRY_DISABLED: 1

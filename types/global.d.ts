@@ -14,6 +14,11 @@ declare global {
       callback: import("./ads").TcfCallback,
       listenerId?: number
     ) => void;
+    requestIdleCallback?: (
+      callback: () => void,
+      options?: { timeout: number }
+    ) => number;
+    cancelIdleCallback?: (handle: number) => void;
   }
 }
 

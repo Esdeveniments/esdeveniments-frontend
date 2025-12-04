@@ -1,0 +1,139 @@
+name: Deploy to AWS (SST)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger
+
+concurrency:
+  group: deploy-sst-${{ github.ref }}
+  cancel-in-progress: false # Don't cancel - let deployments complete
+
+env:
+  NODE_VERSION: "22"
+  AWS_REGION: "eu-west-3"
+
+jobs:
+  deploy:
+    name: Deploy to AWS with SST
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Clean build artifacts
+        run: |
+          # Remove Next.js cache to prevent stale/malformed cached responses
+          rm -rf .next
+          # Remove SST artifacts from previous builds
+          rm -rf .sst .open-next
+          echo "✅ Cleaned build artifacts"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create .env.production file for SST deployment
+        env:
+          # Optional secrets
+          NEXT_PUBLIC_GOOGLE_ANALYTICS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}
+          NEXT_PUBLIC_GOOGLE_ADS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}
+          NEXT_PUBLIC_GOOGLE_MAPS: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS }}
+          NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+          # Required secrets (validated below)
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          # Create .env.production for Next.js build (NODE_ENV=production)
+          # Next.js loads .env.production when NODE_ENV=production
+          touch .env.production
+
+          # --- Validate and Set Required Secrets ---
+
+          # 1. NEXT_PUBLIC_API_URL
+          if [ -z "$NEXT_PUBLIC_API_URL" ]; then
+            echo "::error::NEXT_PUBLIC_API_URL secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
+
+          # 2. HMAC_SECRET
+          if [ -z "$HMAC_SECRET" ]; then
+            echo "::error::HMAC_SECRET secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "HMAC_SECRET=$HMAC_SECRET" >> .env.production
+
+          # 3. SENTRY_DSN
+          if [ -z "$SENTRY_DSN" ]; then
+            echo "::error::SENTRY_DSN secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "SENTRY_DSN=$SENTRY_DSN" >> .env.production
+
+          # --- Set Optional/Static Variables ---
+
+          # Set NEXT_PUBLIC_SITE_URL for build-time sitemap generation
+          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env.production
+
+          # SENTRY_AUTH_TOKEN (Required for source map uploads, but we don't fail deployment if missing, just warn/skip in config)
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env.production
+          else
+             echo "::warning::SENTRY_AUTH_TOKEN is not set. Source maps will not be uploaded."
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ANALYTICS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env.production
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_ADS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env.production
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_MAPS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_MAPS=$NEXT_PUBLIC_GOOGLE_MAPS" >> .env.production
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" >> .env.production
+          fi
+
+      - name: Deploy to AWS with SST
+        env:
+          # SST will read from .env file and SSM Parameter Store
+          AWS_REGION: ${{ env.AWS_REGION }}
+          # Set NODE_ENV to production for proper sitemap URL generation
+          NODE_ENV: production
+        run: |
+          npx sst deploy --stage production
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌍 Site URL: https://esdeveniments.cat"
+          echo "📊 Check AWS Console: https://console.aws.amazon.com/cloudfront/home?region=${{ env.AWS_REGION }}"

@@ -27,6 +27,21 @@ describe("utils/api-helpers:getInternalApiUrl", () => {
     expect(getInternalApiUrl("api/bar")).toBe("http://localhost:3000/api/bar");
   });
 
+  it("prefers INTERNAL_SITE_URL when available", () => {
+    process.env.INTERNAL_SITE_URL = "https://internal.esdeveniments.cat";
+    expect(getInternalApiUrl("/api/test")).toBe(
+      "https://internal.esdeveniments.cat/api/test"
+    );
+  });
+
+  it("falls back to NEXT_PUBLIC_SITE_URL when internal is not set", () => {
+    delete process.env.INTERNAL_SITE_URL;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    expect(getInternalApiUrl("/api/test")).toBe(
+      "https://www.esdeveniments.cat/api/test"
+    );
+  });
+
   it("prefers VERCEL_URL origin when available", () => {
     process.env.VERCEL_URL = "preview-abc.vercel.app";
     expect(getInternalApiUrl("/api/test")).toBe(

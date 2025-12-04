@@ -20,10 +20,11 @@ import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
+  isValidPlace,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
 import type { PlacePageEventsResult } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
@@ -77,6 +78,11 @@ export default async function Page({
   params: Promise<PlaceStaticPathParams>;
 }) {
   const { place } = await params;
+
+  // Return 404 for invalid places (e.g., sitemap files) instead of throwing
+  if (!isValidPlace(place)) {
+    notFound();
+  }
 
   validatePlaceOrThrow(place);
 

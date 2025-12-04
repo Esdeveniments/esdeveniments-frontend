@@ -265,3 +265,38 @@ export const formatEventTimeDisplay = (
   // Both times available -> show range
   return `${cleanStart} - ${normalizedEndTime}`;
 };
+
+/**
+ * Format event time for display in event detail page with natural Catalan phrases
+ * Returns "Consultar horaris" if no start time or start time is "00:00" (all-day event)
+ * Returns "Comença a les HH:mm" if only start time is provided
+ * Returns "De HH:mm a HH:mm" if both times are available
+ * @param startTime - Start time in HH:mm format or null/undefined
+ * @param endTime - End time in HH:mm format or null/undefined
+ * @returns Formatted time string for display in detail page
+ */
+export const formatEventTimeDisplayDetail = (
+  startTime?: string | null,
+  endTime?: string | null
+): string => {
+  // Ensure we only work with HH:mm
+  const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
+  const cleanEnd = endTime ? formatTimeForAPI(endTime) : null;
+
+  const normalizedEndTime = normalizeEndTime(cleanStart, cleanEnd);
+  const hasStartTime = !!cleanStart && cleanStart !== "00:00";
+  const hasEndTime = !!normalizedEndTime && normalizedEndTime !== "00:00";
+
+  // No start time or all-day event (00:00) -> show "Consultar horaris"
+  if (!hasStartTime) {
+    return "Consultar horaris";
+  }
+
+  // Has start time but no end time -> show "Comença a les HH:mm"
+  if (!hasEndTime) {
+    return `Comença a les ${cleanStart}`;
+  }
+
+  // Both times available -> show "De HH:mm a HH:mm"
+  return `De ${cleanStart} a ${normalizedEndTime}`;
+};

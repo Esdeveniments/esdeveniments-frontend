@@ -1,7 +1,7 @@
 import { CalendarIcon, ClockIcon } from "@heroicons/react/outline";
 import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
-import { formatEventTimeDisplay } from "@utils/date-helpers";
+import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
 import SectionHeading from "@components/ui/common/SectionHeading";
@@ -43,18 +43,16 @@ export default function EventCalendar({ event }: EventCalendarProps) {
           <p className="body-normal font-semibold text-foreground-strong">
             {eventDate}
           </p>
-          <p className="body-normal capitalize flex items-center gap-element-gap text-foreground-strong/80">
+          <p className="body-normal flex items-center gap-element-gap text-foreground-strong/80">
             <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
-            {formatEventTimeDisplay(startTime, endTime)}
+            {formatEventTimeDisplayDetail(startTime, endTime)}
           </p>
         </div>
         <div className="px-section-x">
           <AddToCalendar
             title={title}
             description={description}
-            location={`${location}, ${city?.name || ""}, ${
-              region?.name || ""
-            }, ${city?.postalCode || ""}`}
+            location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${city?.postalCode || ""}`}
             startDate={startDate}
             endDate={endDate}
             canonical={`${siteUrl}/e/${slug}`}

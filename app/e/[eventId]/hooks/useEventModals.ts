@@ -13,7 +13,14 @@ export function useEventModals() {
   const onSendDeleteReason = async (eventId: string, eventTitle: string) => {
     setOpenModalDeleteReasonModal(false);
 
-    const rawResponse = await fetch(process.env.NEXT_PUBLIC_DELETE_EVENT!, {
+    const deleteEventUrl = process.env.NEXT_PUBLIC_DELETE_EVENT;
+    if (!deleteEventUrl) {
+      throw new Error(
+        "NEXT_PUBLIC_DELETE_EVENT environment variable must be set"
+      );
+    }
+
+    const rawResponse = await fetch(deleteEventUrl, {
       method: "DELETE",
       headers: {
         Accept: "application/json",

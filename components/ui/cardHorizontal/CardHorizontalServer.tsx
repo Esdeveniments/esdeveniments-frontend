@@ -1,16 +1,29 @@
 import ImageServer from "@components/ui/common/image/ImageServer";
 import ViewCounter from "@components/ui/viewCounter";
 import { truncateString, getFormattedDate } from "@utils/helpers";
-import { formatEventTimeDisplay } from "@utils/date-helpers";
+import { buildEventPlaceLabels } from "@utils/location-helpers";
+import {
+  formatEventTimeDisplay,
+  formatEventTimeDisplayDetail,
+} from "@utils/date-helpers";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 
 const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
   event,
   isPriority = false,
+  useDetailTimeFormat = false,
 }) => {
   const title = truncateString(event.title || "", 60);
   // const description = truncateString(event.description || "", 60);
+
+  // For categorized events: prefer city and region, but fall back to location if they're missing
+  // This handles cases where the API doesn't include city/region in the response
+  const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
+    cityName: event.city?.name,
+    regionName: event.region?.name,
+    location: event.location,
+  });
 
   // Format the date
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
@@ -39,6 +52,7 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
             region={event.region?.name}
             date={eventDate}
             context="list"
+            cacheKey={event.hash || event.updatedAt}
           />
         </div>
 
@@ -94,11 +108,15 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span>{formatEventTimeDisplay(event.startTime, event.endTime)}</span>
+              <span>
+                {useDetailTimeFormat
+                  ? formatEventTimeDisplayDetail(event.startTime, event.endTime)
+                  : formatEventTimeDisplay(event.startTime, event.endTime)}
+              </span>
             </div>
 
-            {/* Location */}
-            <div className="flex items-center body-small text-foreground">
+            {/* Location - City as primary, venue optional as secondary */}
+            <div className="flex items-center body-small text-foreground mb-2">
               <svg
                 className="w-4 h-4 mr-2 flex-shrink-0"
                 fill="none"
@@ -118,7 +136,14 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
                   d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span className="truncate">{event.location}</span>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="truncate">{primaryLabel}</span>
+                {secondaryLabel && (
+                  <span className="truncate text-foreground/70">
+                    {secondaryLabel}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

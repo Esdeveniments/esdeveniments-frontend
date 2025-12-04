@@ -7,3 +7,14 @@ export type TcfCallback = (
   },
   success: boolean
 ) => void;
+
+export interface AdContextType {
+  adsAllowed: boolean;
+  observeVisibility: (element: Element, callback: () => void) => void;
+  unobserveVisibility: (element: Element) => void;
+  observeMutations: (
+    element: Element,
+    callback: (mutations: MutationRecord[]) => void
+  ) => void;
+  unobserveMutations: (element: Element) => void;
+}
