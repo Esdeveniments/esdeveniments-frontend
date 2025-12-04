@@ -37,11 +37,21 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   const lastTrackedPathRef = useRef<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // Memoize search params string to prevent unnecessary re-renders from parameter order/encoding changes
-  const searchParamsString = useMemo(
-    () => searchParams?.toString() ?? "",
-    [searchParams]
-  );
+  // Normalize search params: sort by key and use consistent encoding to prevent
+  // spurious pageview events from parameter order/encoding variations
+  const searchParamsString = useMemo(() => {
+    if (!searchParams) return "";
+    const params = new URLSearchParams();
+    // Sort keys alphabetically for consistent ordering
+    const sortedKeys = Array.from(searchParams.keys()).sort();
+    sortedKeys.forEach((key) => {
+      const values = searchParams.getAll(key);
+      values.forEach((value) => {
+        params.append(key, value);
+      });
+    });
+    return params.toString();
+  }, [searchParams]);
 
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
@@ -189,7 +199,6 @@ export default function GoogleScripts() {
           />
           <Script id="google-analytics-lazy-load" strategy="lazyOnload">
             {`
-              ${GTAG_SHIM}
               gtag('js', new Date());
               gtag('config', '${GA_MEASUREMENT_ID}', {
                 cookie_domain: 'auto',
