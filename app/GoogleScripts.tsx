@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Script from "next/script";
 import { useAdContext } from "../lib/context/AdContext";
 
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
 const ADS_SRC = ADS_CLIENT
   ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
@@ -12,6 +13,51 @@ const ADS_SRC = ADS_CLIENT
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
   const autoAdsInitRef = useRef(false);
+
+  // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
+  useEffect(() => {
+    if (!GA_MEASUREMENT_ID) return;
+    if (typeof window === "undefined") return;
+
+    const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
+    const win = window as Window & {
+      dataLayer?: unknown[];
+      __gaInitialPageviewSent?: boolean;
+    };
+
+    win.dataLayer = win.dataLayer || [];
+    if (typeof win.gtag !== "function") {
+      win.gtag = function gtag(...args: unknown[]) {
+        win.dataLayer?.push(args);
+      };
+    }
+
+    win.gtag("consent", "update", {
+      ad_user_data: consentState,
+      ad_personalization: consentState,
+      ad_storage: consentState,
+      analytics_storage: consentState,
+    });
+
+    win.dataLayer.push({
+      event: "consent_state_change",
+      consent_state: consentState,
+      consent_timestamp: Date.now(),
+    });
+
+    if (!adsAllowed) {
+      win.__gaInitialPageviewSent = false;
+      return;
+    }
+
+    if (!win.__gaInitialPageviewSent) {
+      const pagePath = `${window.location.pathname}${window.location.search}`;
+      win.gtag("event", "page_view", {
+        page_path: pagePath,
+      });
+      win.__gaInitialPageviewSent = true;
+    }
+  }, [adsAllowed]);
 
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
@@ -83,22 +129,41 @@ export default function GoogleScripts() {
 
   return (
     <>
-      {/* Google Analytics - keep lazyOnload for perf */}
-      <Script
-        id="google-analytics-gtag"
-        strategy="lazyOnload"
-        src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
-      />
-      <Script id="google-analytics-lazy-load" strategy="lazyOnload">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
-            page_path: window.location.pathname,
-          });
-        `}
-      </Script>
+      {/* Google Analytics - Consent Mode v2 */}
+      {GA_MEASUREMENT_ID && (
+        <>
+          <Script id="google-analytics-consent" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('consent', 'default', {
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                ad_storage: 'denied',
+                analytics_storage: 'denied'
+              });
+            `}
+          </Script>
+          <Script
+            id="google-analytics-gtag"
+            strategy="lazyOnload"
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          />
+          <Script id="google-analytics-lazy-load" strategy="lazyOnload">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_MEASUREMENT_ID}', {
+                page_path: window.location.pathname,
+                cookie_domain: 'auto',
+                anonymize_ip: true,
+                send_page_view: false
+              });
+            `}
+          </Script>
+        </>
+      )}
 
       {/* AdBlock Detection - keep afterInteractive (UI logic) */}
       <Script id="google-adblock" strategy="afterInteractive">

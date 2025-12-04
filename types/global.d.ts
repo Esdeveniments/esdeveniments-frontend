@@ -4,10 +4,12 @@ declare global {
   }
 
   interface Window {
-    gtag?: (command: string, event: string, params?: unknown) => void;
+    gtag?: (...args: unknown[]) => void;
     __LAST_E2E_PUBLISH_SLUG__?: string;
     __adsConsentGranted?: boolean;
     __autoAdsInitialized?: boolean;
+    __gaInitialPageviewSent?: boolean;
+    dataLayer?: unknown[];
     __tcfapi?: (
       command: "addEventListener" | "removeEventListener" | "getTCData",
       version: number,
@@ -22,7 +24,7 @@ declare global {
   }
 }
 
-declare module 'react' {
+declare module "react" {
   interface CSSProperties {
     viewTransitionName?: string;
   }
