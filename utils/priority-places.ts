@@ -4,10 +4,11 @@
  * Each place generates ~4.6MB, so 15 places = ~69MB (within limit with other routes)
  */
 export const topStaticGenerationPlaces = [
-  // Top 3 major cities (highest traffic)
+  // Top major cities (highest traffic)
   "barcelona",
   // "girona",
   "tarragona",
+  "mataro",
   // Top regions (high traffic)
   "maresme",
   "valles-oriental",
@@ -15,7 +16,6 @@ export const topStaticGenerationPlaces = [
   "baix-llobregat",
   // Top cities near Barcelona (high traffic)
   "badalona",
-  "mataro",
   // "sabadell",
   // "terrassa",
   "granollers",
@@ -60,7 +60,6 @@ export const highPrioritySlugs = [
   "malgrat-de-mar",
   "maresme",
   "matadepera",
-  "mataro",
   "montgat",
   "montmelo",
   "montseny",
@@ -80,8 +79,10 @@ export const highPrioritySlugs = [
   "valles-oriental",
   "vilassar-de-mar",
   // Major cities in Catalonia
+  "barcelona",
   "tarragona",
   "lleida",
+  "mataro",
   // "girona", // Not yet in database
   "sabadell",
   "terrassa",
