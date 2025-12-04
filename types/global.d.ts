@@ -8,7 +8,6 @@ declare global {
     __LAST_E2E_PUBLISH_SLUG__?: string;
     __adsConsentGranted?: boolean;
     __autoAdsInitialized?: boolean;
-    __gaInitialPageviewSent?: boolean;
     dataLayer?: unknown[];
     __tcfapi?: (
       command: "addEventListener" | "removeEventListener" | "getTCData",

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Script from "next/script";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "../lib/context/AdContext";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
@@ -10,28 +11,36 @@ const ADS_SRC = ADS_CLIENT
   ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
   : "";
 
+const ensureGtag = () => {
+  if (typeof window === "undefined") return null;
+  const win = window;
+  win.dataLayer = win.dataLayer || [];
+
+  if (typeof win.gtag !== "function") {
+    win.gtag = function gtag() {
+       
+      win.dataLayer?.push(arguments);
+    };
+  }
+
+  return win;
+};
+
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
   const autoAdsInitRef = useRef(false);
+  const lastTrackedPathRef = useRef<string | null>(null);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchParamsString = searchParams?.toString() ?? "";
 
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
-    if (typeof window === "undefined") return;
+    const win = ensureGtag();
+    if (!win) return;
 
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
-    const win = window as Window & {
-      dataLayer?: unknown[];
-      __gaInitialPageviewSent?: boolean;
-    };
-
-    win.dataLayer = win.dataLayer || [];
-    if (typeof win.gtag !== "function") {
-      win.gtag = function gtag(...args: unknown[]) {
-        win.dataLayer?.push(args);
-      };
-    }
-
     win.gtag("consent", "update", {
       ad_user_data: consentState,
       ad_personalization: consentState,
@@ -44,20 +53,30 @@ export default function GoogleScripts() {
       consent_state: consentState,
       consent_timestamp: Date.now(),
     });
+  }, [adsAllowed]);
+
+  // Emit page_view events on client navigations once consent is granted.
+  useEffect(() => {
+    if (!GA_MEASUREMENT_ID) return;
+    const win = ensureGtag();
+    if (!win) return;
 
     if (!adsAllowed) {
-      win.__gaInitialPageviewSent = false;
+      lastTrackedPathRef.current = null;
       return;
     }
 
-    if (!win.__gaInitialPageviewSent) {
-      const pagePath = `${window.location.pathname}${window.location.search}`;
-      win.gtag("event", "page_view", {
-        page_path: pagePath,
-      });
-      win.__gaInitialPageviewSent = true;
-    }
-  }, [adsAllowed]);
+    const query = searchParamsString ? `?${searchParamsString}` : "";
+    const pagePath = `${pathname || "/"}` + query;
+
+    if (lastTrackedPathRef.current === pagePath) return;
+
+    win.gtag("event", "page_view", {
+      page_path: pagePath,
+    });
+
+    lastTrackedPathRef.current = pagePath;
+  }, [adsAllowed, pathname, searchParamsString]);
 
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
