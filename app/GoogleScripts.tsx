@@ -13,9 +13,11 @@ const ADS_SRC = ADS_CLIENT
   : "";
 
 // Google Analytics gtag shim - reused across multiple Script components
+// Conditionally defines gtag only if it doesn't already exist to avoid overwriting
+// the real gtag.js implementation if it has already loaded
 const GTAG_SHIM = `
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
+  window.gtag = window.gtag || function(){dataLayer.push(arguments);};
 `;
 
 const ensureGtag = (): WindowWithGtag | null => {
