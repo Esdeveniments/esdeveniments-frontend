@@ -31,6 +31,7 @@ const nextConfig = {
     ],
     // --- Server Actions Configuration ---
     serverActions: {
+      // 10mb to support image uploads in event creation (see app/publica/page.tsx)
       bodySizeLimit: "10mb",
     },
   },

@@ -297,12 +297,14 @@ const Publica = () => {
         console.error("Submission error:", error);
         
         // Check if it's a body size limit error
+        // Note: Next.js server actions throw Error objects without structured error codes,
+        // so we check error messages. The configured limit is 10 MB (see next.config.js).
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (
           errorMessage.includes("body size limit") ||
           errorMessage.includes("Body exceeded") ||
-          errorMessage.includes("1 MB limit") ||
-          errorMessage.includes("10 MB limit")
+          errorMessage.includes("10 MB limit") ||
+          errorMessage.includes("10mb")
         ) {
           setError(
             "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries."

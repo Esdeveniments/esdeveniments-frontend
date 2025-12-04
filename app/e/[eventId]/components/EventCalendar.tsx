@@ -52,8 +52,7 @@ export default function EventCalendar({ event }: EventCalendarProps) {
           <AddToCalendar
             title={title}
             description={description}
-            location={`${location}, ${city?.name || ""}, ${region?.name || ""
-              }, ${city?.postalCode || ""}`}
+            location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${city?.postalCode || ""}`}
             startDate={startDate}
             endDate={endDate}
             canonical={`${siteUrl}/e/${slug}`}
