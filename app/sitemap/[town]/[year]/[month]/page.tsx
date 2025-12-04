@@ -32,14 +32,15 @@ export async function generateMetadata({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
+  const decodedMonth = decodeURIComponent(month);
   const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
   const locationPhrase = formatCatalanA(townLabel, placeType, false);
 
-  let textMonth = month;
-  if (month === "marc") textMonth = month.replace("c", "ç");
+  let textMonth = decodedMonth;
+  if (decodedMonth === "marc") textMonth = decodedMonth.replace("c", "ç");
   return buildPageMeta({
     title: `Arxiu de ${townLabel} del ${textMonth} del ${year} - Esdeveniments.cat`,
     description: `Descobreix què va passar ${locationPhrase} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
@@ -55,7 +56,8 @@ export default async function Page({
   const { town, year, month } = await params;
   if (!town || !year || !month) return null;
 
-  const { from, until } = getHistoricDates(month, Number(year));
+  const decodedMonth = decodeURIComponent(month);
+  const { from, until } = getHistoricDates(decodedMonth, Number(year));
 
   const [events, place] = await Promise.all([
     fetchEvents({
@@ -71,8 +73,8 @@ export default async function Page({
     place?.type === "CITY" ? "town" : "region";
   const locationPhrase = formatCatalanA(townLabel, placeType, false);
 
-  let textMonth = month;
-  if (month === "marc") textMonth = month.replace("c", "ç");
+  let textMonth = decodedMonth;
+  if (decodedMonth === "marc") textMonth = decodedMonth.replace("c", "ç");
 
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(
