@@ -142,8 +142,8 @@ jobs:
           # Pass token explicitly via --token flag (required by Vercel CLI in CI)
           # VERCEL_ORG_ID and VERCEL_PROJECT_ID env vars should be automatically used by Vercel CLI
           # along with the .vercel/project.json file
-          # Use --yes to avoid interactive prompts
-          npx vercel@25 --token="$VERCEL_TOKEN" --yes \
+          # --confirm avoids interactive prompts
+          npx vercel@25 --token="$VERCEL_TOKEN" \
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
