@@ -122,6 +122,51 @@ jobs:
             echo "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" >> .env.production
           fi
 
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build Next.js application
+        run: yarn build
+        env:
+          NODE_ENV: production
+          # Next.js automatically loads .env.production when NODE_ENV=production
+
+      - name: Start Next.js server (background)
+        run: |
+          yarn start &
+          echo $! > .next-server.pid
+          echo "Started Next.js server with PID $(cat .next-server.pid)"
+        env:
+          NODE_ENV: production
+          # Server will load environment from .env.production
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run E2E tests
+        run: yarn test:e2e
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+
+      - name: Stop Next.js server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill $(cat .next-server.pid) || true
+            rm .next-server.pid
+          fi
+          pkill -f "next start" || true
+
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-deploy
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Deploy to AWS with SST
         env:
           # SST will read from .env file and SSM Parameter Store
