@@ -3,6 +3,7 @@ import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { truncateString, getFormattedDate } from "@utils/helpers";
+import { buildEventPlaceLabels } from "@utils/location-helpers";
 import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
@@ -194,6 +195,11 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           const eventDate = formattedEnd
             ? `Del ${formattedStart} al ${formattedEnd}`
             : `${nameDay}, ${formattedStart}`;
+          const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
+            cityName: event.city?.name,
+            regionName: event.region?.name,
+            location: event.location,
+          });
 
           return (
             <div
@@ -213,6 +219,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     image={image}
                     priority={false}
                     context="card"
+                    cacheKey={event.hash || event.updatedAt}
                   />
                 </div>
                 {/* Title */}
@@ -224,10 +231,17 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     {eventTitle}
                   </h3>
                 </div>
-                {/* Location */}
+                {/* Location - city primary, venue optional */}
                 <div className="pt-1">
-                  <div className="body-small font-normal text-ellipsis overflow-hidden whitespace-nowrap">
-                    <span>{event.location || ""}</span>
+                  <div className="body-small font-normal text-ellipsis overflow-hidden whitespace-nowrap flex flex-col text-foreground">
+                    <span className="truncate font-semibold">
+                      {primaryLabel}
+                    </span>
+                    {secondaryLabel && (
+                      <span className="truncate text-foreground/70">
+                        {secondaryLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
                 {/* Date */}

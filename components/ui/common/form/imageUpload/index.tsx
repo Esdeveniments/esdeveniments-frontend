@@ -33,9 +33,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       );
       return false;
     }
-    if (file.size > 5000000) {
+    // Client-side limit: 8MB (leaves buffer for form data in total 10MB server limit)
+    if (file.size > 8 * 1024 * 1024) {
       setError(
-        "La mida de l'imatge supera el límit permès de 5 MB. Si us plau, trieu una imatge més petita."
+        "La mida de l'imatge supera el límit permès de 8 MB. Si us plau, trieu una imatge més petita."
       );
       return false;
     }

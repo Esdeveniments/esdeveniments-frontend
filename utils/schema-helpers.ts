@@ -31,12 +31,13 @@ const logSchemaWarning = (
   console.warn(parts.join(" "));
 };
 
-const sanitizeText = (value?: string | null): string => {
+// Exported for testing
+export const sanitizeText = (value?: string | null): string => {
   if (!value || typeof value !== "string") return "";
   return value.trim().replace(/\s+/g, " ");
 };
 
-const ensureIsoDate = (value?: string | null): string | undefined => {
+export const ensureIsoDate = (value?: string | null): string | undefined => {
   const trimmed = sanitizeText(value);
   if (!trimmed) return undefined;
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
@@ -46,13 +47,13 @@ const ensureIsoDate = (value?: string | null): string | undefined => {
   return undefined;
 };
 
-const ensureTime = (value?: string | null): string | undefined => {
+export const ensureTime = (value?: string | null): string | undefined => {
   const trimmed = sanitizeText(value);
   if (!trimmed) return undefined;
   return /^\d{2}:\d{2}(:\d{2})?$/.test(trimmed) ? trimmed : undefined;
 };
 
-const buildDateTime = (
+export const buildDateTime = (
   date?: string | null,
   time?: string | null,
   fallbackDate?: string
@@ -63,7 +64,7 @@ const buildDateTime = (
   return cleanTime ? `${baseDate}T${cleanTime}` : baseDate;
 };
 
-const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefined => {
+export const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefined => {
   if (!iso) return undefined;
   const hasTime = iso.includes("T");
   const candidate = hasTime ? iso : `${iso}T${isEnd ? "23:59:59" : "00:00:00"}`;
@@ -97,7 +98,8 @@ export const generateJsonData = (
   const sanitizedLocation = sanitizeText(location);
   const cityName = sanitizeText(city?.name);
   const regionName = sanitizeText(region?.name);
-  const fallbackPlace = cityName || regionName || sanitizedLocation || "Catalunya";
+  const fallbackPlace =
+    cityName || regionName || sanitizedLocation || "Catalunya";
 
   if (!cityName && !regionName && !sanitizedLocation) {
     logSchemaWarning(slug, "address", "missing location context");
@@ -118,10 +120,7 @@ export const generateJsonData = (
   };
 
   // Enhanced image handling with validation, de-duplication and fallback
-  const imageCandidates = [
-    imageUrl,
-    defaultImage,
-  ];
+  const imageCandidates = [imageUrl, defaultImage];
   const images = Array.from(
     new Set(imageCandidates.filter((src): src is string => isValidHttpUrl(src)))
   );
@@ -142,17 +141,22 @@ export const generateJsonData = (
 
   const startDateWithTime = buildDateTime(startDate, startTime);
   const resolvedStartDate =
-    startDateWithTime ??
-    ensureIsoDate(startDate) ??
-    new Date().toISOString();
+    startDateWithTime ?? ensureIsoDate(startDate) ?? new Date().toISOString();
   if (!startDateWithTime && !ensureIsoDate(startDate)) {
     logSchemaWarning(slug, "startDate");
   }
 
   const startDateOnly = resolvedStartDate.split("T")[0];
-  const endDateWithTime = buildDateTime(endDate, normalizedEndTime, startDateOnly);
+  const endDateWithTime = buildDateTime(
+    endDate,
+    normalizedEndTime,
+    startDateOnly
+  );
   const resolvedEndDate = endDateWithTime ?? startDateOnly ?? resolvedStartDate;
-  if (!endDateWithTime && !ensureIsoDate(endDate)) {
+  // Warn when the original data had no explicit end date or time.
+  // Note: endDateWithTime will always have a value due to fallback to startDateOnly,
+  // so we check the original input values instead.
+  if (!ensureIsoDate(endDate) && !ensureTime(normalizedEndTime)) {
     logSchemaWarning(slug, "endDate");
   }
 
@@ -216,10 +220,11 @@ export const generateJsonData = (
     logSchemaWarning(slug, "offers", "missing price for paid event");
     return {
       ...baseOffer,
-      price: "Consultar",
+      price: 0,
       priceSpecification: {
         "@type": "PriceSpecification" as const,
         priceCurrency: "EUR",
+        description: "Consult price", // Indicates price is not known, consult for details
       },
     };
   };
@@ -241,8 +246,7 @@ export const generateJsonData = (
     eventStatusValue = "https://schema.org/EventInProgress";
   }
 
-  const schemaName =
-    trimmedTitle || `Esdeveniment a ${fallbackPlace}`.trim();
+  const schemaName = trimmedTitle || `Esdeveniment a ${fallbackPlace}`.trim();
   const placeName = sanitizedLocation || addressLocality || fallbackPlace;
 
   return {

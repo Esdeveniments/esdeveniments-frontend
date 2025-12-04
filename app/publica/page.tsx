@@ -79,6 +79,7 @@ const Publica = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const {
     regionsWithCities,
@@ -255,6 +256,7 @@ const Publica = () => {
   };
 
   const onSubmit = async () => {
+    setError(null); // Clear any previous errors
     startTransition(async () => {
       try {
         const regionLabel =
@@ -288,10 +290,31 @@ const Publica = () => {
 
           router.push(`/e/${slug}`);
         } else {
+          setError("Error al crear l'esdeveniment. Si us plau, torna-ho a intentar.");
           captureException("Error creating event");
         }
       } catch (error) {
         console.error("Submission error:", error);
+        
+        // Check if it's a body size limit error
+        // Note: Next.js server actions throw Error objects without structured error codes,
+        // so we check error messages. The configured limit is 10 MB (see next.config.js).
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (
+          errorMessage.includes("body size limit") ||
+          errorMessage.includes("Body exceeded") ||
+          errorMessage.includes("10 MB limit") ||
+          errorMessage.includes("10mb")
+        ) {
+          setError(
+            "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries."
+          );
+        } else {
+          setError(
+            "Hi ha hagut un error en publicar l'esdeveniment. Si us plau, torna-ho a intentar."
+          );
+        }
+        
         captureException(error);
       }
     });
@@ -305,6 +328,11 @@ const Publica = () => {
           </h1>
           <p className="text-sm text-center">* camps obligatoris</p>
         </div>
+        {error && (
+          <div className="w-full px-4 py-3 bg-destructive/10 border border-destructive rounded-lg">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
         <div className="w-full flex flex-col gap-y-4 pt-4">
           <EventForm
             form={form}

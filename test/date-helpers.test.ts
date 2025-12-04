@@ -397,9 +397,7 @@ describe("formatEventTimeDisplayDetail", () => {
 
     it("handles times with single digit hours and minutes (preserves format)", () => {
       // formatTimeForAPI preserves the input format
-      expect(formatEventTimeDisplayDetail("9:5", "10:5")).toBe(
-        "De 9:5 a 10:5"
-      );
+      expect(formatEventTimeDisplayDetail("9:5", "10:5")).toBe("De 9:5 a 10:5");
     });
 
     it("handles very short time ranges (same hour)", () => {
@@ -451,4 +449,3 @@ describe("formatEventTimeDisplayDetail", () => {
     });
   });
 });
-

@@ -89,10 +89,19 @@ async function fetchEventsInternal(
 
   try {
     const queryString = buildEventsQuery(params);
-    const finalUrl = getInternalApiUrl(`/api/events?${queryString}`);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    if (!apiUrl) {
+      throw new Error("NEXT_PUBLIC_API_URL is not defined");
+    }
 
-    const response = await fetch(finalUrl, {
+    const finalUrl = `${apiUrl}/events?${queryString}`;
+
+    const response = await fetchWithHmac(finalUrl, {
       next: { revalidate: 300, tags: ["events"] },
+      headers: {
+        "Accept": "application/json",
+      }
     });
 
     if (!response.ok) {
@@ -113,17 +122,19 @@ async function fetchEventsInternal(
     }
     return validated;
   } catch (e) {
-    console.error("Error fetching events via internal API:", e);
+    console.error("Error fetching events via external API (direct):", e);
     captureException(e, {
-      tags: { section: "events-fetch", fallback: "internal-api-failed" },
+      tags: { section: "events-fetch", fallback: "direct-api-failed" },
       extra: {
         params,
         fallbackTriggered: true,
       },
     });
+    // Fallback to the original external fetch function (which uses fetchWithHmac but no-store)
+    // This is just a safety net
     const externalResult = await fetchExternalWithValidation();
     if (!externalResult) {
-      captureException(new Error("Both internal and external API failed"), {
+      captureException(new Error("Both direct and fallback external API failed"), {
         tags: { section: "events-fetch", fallback: "external-also-failed" },
         extra: { params },
       });
@@ -142,14 +153,23 @@ export async function fetchEventBySlug(
   }
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
+    // Use getInternalApiUrl which now properly resolves to CloudFront in SST
     const res = await fetch(getInternalApiUrl(`/api/events/${fullSlug}`), {
       next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
     });
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+    if (res.status === 404) {
+      console.warn(`fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`);
+      return null;
+    }
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "No error text");
+      console.error(`fetchEventBySlug: HTTP error! status: ${res.status}, body: ${errorText}`);
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
     return parseEventDetail(await res.json());
   } catch (error) {
-    console.error("Error fetching event by slug (internal):", error);
+    console.error(`Error fetching event by slug (internal) for ${fullSlug}:`, error);
     return null;
   }
 }
@@ -326,20 +346,22 @@ export async function fetchCategorizedEvents(
     }
   }
 
-  // Runtime: use internal API proxy
-  // If internal API fails (e.g., during build when server isn't running), fallback to external
+  // Runtime: use direct external API call with caching
+  // This avoids internal API proxy issues
   try {
     const params = new URLSearchParams();
     if (maxEventsPerCategory !== undefined) {
       params.append("maxEventsPerCategory", String(maxEventsPerCategory));
     }
-    const finalUrl = getInternalApiUrl(
-      `/api/events/categorized${
-        params.toString() ? `?${params.toString()}` : ""
-      }`
-    );
-    const response = await fetch(finalUrl, {
+    
+    const queryString = params.toString() ? `?${params.toString()}` : "";
+    const finalUrl = `${apiUrl}/events/categorized${queryString}`;
+
+    const response = await fetchWithHmac(finalUrl, {
       next: { revalidate: 300, tags: ["events", "events:categorized"] },
+      headers: {
+        "Accept": "application/json",
+      }
     });
 
     if (!response.ok) {
@@ -359,7 +381,7 @@ export async function fetchCategorizedEvents(
     }
     return validated;
   } catch {
-    // If internal API fails, try external API as fallback (handles edge cases)
+    // If direct fetch fails, try external API helper as fallback (handles edge cases)
     try {
       const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
       const validated = parseCategorizedEvents(data);
@@ -368,7 +390,7 @@ export async function fetchCategorizedEvents(
       // Sanitize error logging to prevent information disclosure
       const errorMessage = getSanitizedErrorMessage(fallbackError);
       console.error(
-        "fetchCategorizedEvents: Both internal and external API failed:",
+        "fetchCategorizedEvents: Both direct and external API failed:",
         errorMessage
       );
       return {};

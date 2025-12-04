@@ -44,6 +44,7 @@ export default function PromotedRestaurantCard({
                 alt={promotion.restaurantName}
                 className="w-16 h-16"
                 context="card"
+                cacheKey={promotion.image.public_id || promotion.id}
               />
             </div>
 

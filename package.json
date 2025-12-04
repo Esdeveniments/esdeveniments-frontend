@@ -1,31 +1,34 @@
 {
   "private": true,
+  "engines": {
+    "node": ">=22.0.0",
+    "yarn": ">=4.0.0"
+  },
   "scripts": {
-    "prepare": "husky",
     "analyze": "cross-env ANALYZE=true next build",
-    "analyze:server": "cross-env BUNDLE_ANALYZE=server next build",
     "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build",
-    "vercel-build": "yarn run prebuild && next build && yarn run postbuild",
-    "dev": "yarn run prebuild && next dev",
+    "analyze:server": "cross-env BUNDLE_ANALYZE=server next build",
     "build": "yarn run prebuild && next build",
-    "prebuild": "node scripts/generate-sw.mjs",
     "build:development": "NODE_ENV=development env-cmd -f .env.development yarn run prebuild && env-cmd -f .env.development next build",
-    "start:development": "env-cmd -f .env.development next start",
-    "build:staging": "NODE_ENV=staging env-cmd -f .env.staging yarn run prebuild && env-cmd -f .env.staging next build",
-    "start:staging": "env-cmd -f .env.staging next start",
     "build:production": "NODE_ENV=production env-cmd -f .env.production yarn run prebuild && env-cmd -f .env.production next build",
-    "start:production": "NODE_ENV=production env-cmd -f .env.production next start",
-    "postbuild": "next-sitemap",
-    "start": "next start",
+    "build:staging": "NODE_ENV=staging env-cmd -f .env.staging yarn run prebuild && env-cmd -f .env.staging next build",
+    "dev": "yarn run prebuild && next dev",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "prebuild": "node scripts/generate-sw.mjs",
+    "prepare": "husky",
+    "scan": "npx react-scan@latest localhost:3000",
+    "start": "next start",
+    "start:development": "env-cmd -f .env.development next start",
+    "start:production": "NODE_ENV=production env-cmd -f .env.production next start",
+    "start:staging": "env-cmd -f .env.staging next start",
     "test": "vitest run",
-    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "scan": "npx react-scan@latest localhost:3000"
+    "test:e2e:ui": "playwright test --ui",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "typecheck:sst": "tsc --noEmit --project tsconfig.sst.json"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -43,7 +46,6 @@
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.9",
-    "@vercel/speed-insights": "^1.2.0",
     "autoprefixer": "^10.4.20",
     "cloudinary": "^2.7.0",
     "cssnano": "^7.0.6",
@@ -51,21 +53,27 @@
     "fast-xml-parser": "^4.4.0",
     "feed": "^5.1.0",
     "isomorphic-dompurify": "^2.25.0",
-    "next": "16.0.1",
+    "next": "^16.0.7",
     "postcss": "^8.5.1",
-    "react": "19.2.0",
+    "react": "^19.2.1",
     "react-datepicker": "^8.8.0",
-    "react-dom": "19.2.0",
+    "react-dom": "^19.2.1",
     "react-select": "^5.7.0",
     "react-share": "^5.0.3",
     "react-tooltip": "^5.26.0",
+    "sst": "3.17.24",
     "swr": "^2.2.5",
     "tailwindcss": "^3.3.6",
     "zod": "3.24.3",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "16.0.1",
+    "@aws-sdk/client-ssm": "^3.940.0",
+    "@next/bundle-analyzer": "^16.0.7",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/context-async-hooks": "^2.2.0",
+    "@opentelemetry/core": "^2.2.0",
+    "@opentelemetry/sdk-trace-base": "^2.2.0",
     "@playwright/test": "^1.48.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -84,7 +92,7 @@
     "cross-env": "^10.1.0",
     "env-cmd": "^10.1.0",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1",
+    "eslint-config-next": "^16.0.7",
     "eslint-plugin-react-hooks": "^7.0.1",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
@@ -97,17 +105,17 @@
   },
   "packageManager": "yarn@4.12.0",
   "browserslist": {
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ],
     "production": [
       "chrome >= 110",
       "edge >= 110",
       "firefox >= 115",
       "safari >= 16",
       "ios_saf >= 16.4"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
     ]
   },
   "resolutions": {

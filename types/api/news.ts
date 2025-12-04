@@ -12,6 +12,7 @@ export interface NewsSummaryResponseDTO {
   readingTime: number;
   visits: number;
   slug: string;
+  updatedAt?: string;
 }
 
 export interface NewsEventCategoryDTO {
@@ -50,6 +51,7 @@ export interface NewsDetailResponseDTO {
   visits: number;
   events: NewsEventItemDTO[];
   createdAt: string; // ISO datetime
+  updatedAt?: string;
 }
 
 export type PagedResponseDTO<T> = EventPagedResponseDTO<T>;

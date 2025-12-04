@@ -7,6 +7,7 @@ import {
   CloudinaryUploadWidgetProps,
 } from "types/api/restaurant";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+import { withImageCacheKey } from "@utils/image-cache";
 
 export function CloudinaryUploadWidget({
   onUpload,
@@ -154,7 +155,7 @@ export function CloudinaryUploadWidget({
       {image && (
         <div className="relative">
           <Image
-            src={image.secure_url}
+            src={withImageCacheKey(image.secure_url, image.public_id)}
             alt="Restaurant preview"
             width={400}
             height={192}

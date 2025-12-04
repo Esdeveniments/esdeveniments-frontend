@@ -171,8 +171,11 @@ export default async function EventPage({
 
   // Generate BreadcrumbList JSON-LD
   // Ensure breadcrumb name is never empty (required by Google structured data)
-  const breadcrumbName = title ||
-    (placeLabel ? `Esdeveniment a ${placeLabel}` : "Esdeveniment");
+  const breadcrumbName = (() => {
+    if (title) return title;
+    if (placeLabel) return `Esdeveniment a ${placeLabel}`;
+    return "Esdeveniment";
+  })();
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -249,14 +252,7 @@ export default async function EventPage({
             <EventHeader title={title} statusMeta={statusMeta} />
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
-            {/* Related Events - Server-side rendered for SEO */}
-            {event.relatedEvents && event.relatedEvents.length > 0 && (
-              <EventsAroundSection
-                events={event.relatedEvents}
-                title="Esdeveniments relacionats"
-              />
-            )}
-            {/* Event Description - Server-side rendered for SEO */}
+            {/* Event Description - bring core info immediately */}
             <EventDescription
               description={event.description}
               locationValue={event.city?.slug || event.region?.slug || ""}
@@ -264,8 +260,31 @@ export default async function EventPage({
               introText={introText}
               locationType="town"
             />
+            {/* Location (SSR for SEO) with client map toggle */}
+            <EventLocation
+              location={event.location}
+              cityName={cityName}
+              regionName={regionName}
+              citySlug={event.city?.slug}
+              regionSlug={event.region?.slug}
+            />
+            {/* Related Events - Server-side rendered for SEO */}
+            {event.relatedEvents && event.relatedEvents.length > 0 && (
+              <EventsAroundSection
+                events={event.relatedEvents}
+                title="Esdeveniments relacionats"
+              />
+            )}
             {/* Event Categories - Server-side rendered for SEO */}
             <EventCategories categories={event.categories} place={placeSlug} />
+            {/* Event details (status, duration, external url) - server-rendered */}
+            <EventDetailsSection
+              event={event}
+              temporalStatus={temporalStatus}
+              formattedStart={formattedStart}
+              formattedEnd={formattedEnd}
+              nameDay={nameDay}
+            />
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner
@@ -278,22 +297,6 @@ export default async function EventPage({
               />
             )}
             <ClientEventClient event={event} temporalStatus={temporalStatus} />
-            {/* Event details (status, duration, external url) - server-rendered */}
-            <EventDetailsSection
-              event={event}
-              temporalStatus={temporalStatus}
-              formattedStart={formattedStart}
-              formattedEnd={formattedEnd}
-              nameDay={nameDay}
-            />
-            {/* Location (SSR for SEO) with client map toggle */}
-            <EventLocation
-              location={event.location}
-              cityName={cityName}
-              regionName={regionName}
-              citySlug={event.city?.slug}
-              regionSlug={event.region?.slug}
-            />
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
               <section className="w-full" aria-labelledby="event-faq">

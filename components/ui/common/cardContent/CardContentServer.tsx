@@ -5,6 +5,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/outline";
 import { truncateString, getFormattedDate } from "@utils/helpers";
+import { buildDisplayLocation } from "@utils/location-helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
@@ -23,7 +24,17 @@ function CardContentServer({
   );
 
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
-  const location = truncateString(event.location || "", 45);
+  // Show full location: location, city, region combined
+  // Note: List API responses may not include city/region, so we check if they exist
+  const cityName = event.city?.name;
+  const regionName = event.region?.name;
+  const fullLocation = buildDisplayLocation({
+    location: event.location || "",
+    cityName: cityName || "",
+    regionName: regionName || "",
+    hidePlaceSegments: false,
+  });
+  const primaryLocation = truncateString(fullLocation, 80);
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
     ? `Del ${formattedStart} al ${formattedEnd}`
@@ -64,9 +75,8 @@ function CardContentServer({
               style={{ height: isHorizontal ? "16rem" : "auto" }}
             >
               <ImageServer
-                className={`w-full flex justify-center ${
-                  isHorizontal ? "h-64 object-cover" : "object-contain"
-                }`}
+                className={`w-full flex justify-center ${isHorizontal ? "h-64 object-cover" : "object-contain"
+                  }`}
                 title={event.title}
                 image={image}
                 priority={isPriority}
@@ -74,6 +84,7 @@ function CardContentServer({
                 location={event.city?.name || event.location}
                 region={event.region?.name || event.city?.name}
                 date={eventDate}
+                cacheKey={event.hash || event.updatedAt}
               />
             </div>
           </div>
@@ -88,7 +99,7 @@ function CardContentServer({
         <div className="flex justify-start items-start">
           <LocationMarkerIcon className="h-5 w-5" />
           <div className="h-full flex flex-col justify-start items-start px-2">
-            <span className="max-w-full">{location}</span>
+            <span className="max-w-full">{primaryLocation}</span>
           </div>
         </div>
         {/* Date time */}
