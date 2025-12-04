@@ -7,8 +7,9 @@ export default $config({
       home: "aws",
       providers: {
         aws: {
-          region: "eu-west-3", // Explicitly set your region here
-          profile: "default", // Use the default AWS profile
+          region: "eu-west-3",
+          // Don't specify profile - use environment variables in CI
+          // Local development will use default AWS credentials
         },
       },
     };
