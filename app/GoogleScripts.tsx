@@ -43,7 +43,7 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   const searchParamsString = useMemo(() => {
     if (!searchParams) return "";
     // Create a mutable copy from the read-only searchParams and sort it
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams);
     params.sort();
     return params.toString();
   }, [searchParams]);
