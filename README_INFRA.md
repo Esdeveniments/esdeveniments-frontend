@@ -265,6 +265,7 @@ Only these tags can be revalidated (security whitelist):
 | **Site "Looping"**       | CloudFront Origin  | Ensure Cloudflare points to the **CloudFront URL** (`d123...cloudfront.net`), NOT the Lambda URL. |
 | **Slow Initial Load**    | Cold Start         | Check `sst.config.ts` has `warm: 5`. Check AWS Lambda "Provisioned Concurrency" metrics.          |
 | **Env Vars Missing**     | Build Process      | Did you deploy without `.env`? Re-run `npx sst deploy`.                                           |
+| **API returns "Unauthorized"** | Secret not deployed | Add secret to GitHub Secrets AND `deploy-sst.yml`. See checklist below. |
 
 ---
 
@@ -272,9 +273,12 @@ Only these tags can be revalidated (security whitelist):
 
 For automatic deployment to work, configure these secrets in GitHub:
 
-**Steps:**
-1. Go to **Settings** → **Secrets and variables** → **Actions**
-2. Add the following secrets:
+> [!IMPORTANT]
+> **When adding new runtime environment variables**, you must do **BOTH**:
+> 1. Add the secret in GitHub: **Settings → Secrets → Actions → New secret**
+> 2. Update `.github/workflows/deploy-sst.yml` to include the secret in the env block AND write it to `.env.production`
+>
+> Missing either step will cause the variable to be undefined at runtime!
 
 ### Required Secrets
 

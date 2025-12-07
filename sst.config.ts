@@ -107,8 +107,17 @@ export default $config({
           }
           return secret;
         })(),
+        REVALIDATE_SECRET: (() => {
+          const secret = process.env.REVALIDATE_SECRET;
+          if (!secret) {
+            throw new Error(
+              "REVALIDATE_SECRET environment variable must be set for SST deployment"
+            );
+          }
+          return secret;
+        })(),
       },
-       warm: 5,
+      warm: 5,
       transform: {
         server: {
           // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x

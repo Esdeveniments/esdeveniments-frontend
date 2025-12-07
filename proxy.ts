@@ -128,6 +128,8 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/active",
   "/api/leads/restaurant",
   "/api/cloudinary/sign",
+  // Revalidation endpoint handles its own secret, so bypass HMAC middleware
+  "/api/revalidate",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
