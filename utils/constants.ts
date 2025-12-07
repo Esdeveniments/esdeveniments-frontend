@@ -158,6 +158,7 @@ export function getCategoryDisplayName(
 
 // --- News UI constants ---
 export const NEWS_HUBS: { slug: string; name: string }[] = [
+  { slug: "mataro", name: "Mataró" },
   { slug: "barcelona", name: "Barcelona" },
   // { slug: "girona", name: "Girona" }, // Not yet in database
   { slug: "tarragona", name: "Tarragona" },
@@ -168,6 +169,13 @@ export const NEARBY_PLACES_BY_HUB: Record<
   string,
   { slug: string; name: string }[]
 > = {
+  mataro: [
+    { slug: "vilassar-de-mar", name: "Vilassar de Mar" },
+    { slug: "premia-de-dalt", name: "Premià de Dalt" },
+    { slug: "argentona", name: "Argentona" },
+    { slug: "calella", name: "Calella" },
+    { slug: "canet-de-mar", name: "Canet de Mar" },
+  ],
   barcelona: [
     { slug: "l-hospitalet-de-llobregat", name: "L'Hospitalet de Llobregat" },
     { slug: "badalona", name: "Badalona" },

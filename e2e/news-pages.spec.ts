@@ -6,7 +6,9 @@ test.describe("News pages", () => {
     request,
   }) => {
     await page.goto("/noticies", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Notícies" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Notícies", level: 1 })
+    ).toBeVisible();
 
     // Global news RSS
     const rss = await request.get("/noticies/rss.xml");
