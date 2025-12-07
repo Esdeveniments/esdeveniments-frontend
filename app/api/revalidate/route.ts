@@ -197,7 +197,7 @@ export async function POST(request: Request) {
     }
 
     // 4. Revalidate each tag (Next.js data cache)
-    // Use "max" profile to force full invalidation
+    // Next 16 requires a profile; use "max" to force full invalidation
     const revalidatedTags: string[] = [];
     for (const tag of tags) {
       revalidateTag(tag, "max");

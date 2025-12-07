@@ -110,13 +110,15 @@ const CACHED_CSP = getCsp();
 // Note: Single-segment routes like /api/regions/admin are still allowed to
 // support dynamic routes like [id] and [slug], but routes must be explicitly
 // created as files in the codebase.
-const PUBLIC_API_PATTERNS = [
+// Allow percent-encoded slugs (accents, spaces, etc.) by matching any non-slash
+// segment for dynamic route parts.
+export const PUBLIC_API_PATTERNS = [
   // Regions: base, [id], or /options
-  /^\/api\/regions(\/(options|[\w-]+))?$/,
+  /^\/api\/regions(\/(options|[^/]+))?$/,
   // Categories, Cities, News: base or [id/slug]
-  /^\/api\/(categories|cities|news)(\/[\w-]+)?$/,
+  /^\/api\/(categories|cities|news)(\/[^/]+)?$/,
   // Places: base, [slug], /nearby, or /photo
-  /^\/api\/places(\/(nearby|photo|[\w-]+))?$/,
+  /^\/api\/places(\/(nearby|photo|[^/]+))?$/,
 ];
 
 // Routes that require exact match
@@ -129,7 +131,7 @@ const PUBLIC_API_EXACT_PATHS = [
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
-const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[\w-]+))?$/;
+export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

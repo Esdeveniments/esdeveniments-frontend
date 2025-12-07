@@ -32,13 +32,6 @@ export async function generateMetadata({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
-  if (!month) {
-    return buildPageMeta({
-      title: `Arxiu de ${town} del ${year} - Esdeveniments.cat`,
-      description: `Descobreix què va passar a ${town} el ${year}.`,
-      canonical: `${siteUrl}/sitemap/${town}/${year}`,
-    });
-  }
   const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
   const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
@@ -59,7 +52,6 @@ export default async function Page({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
-  if (!town || !year || !month) return null;
 
   const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
 

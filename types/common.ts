@@ -324,8 +324,8 @@ export interface RssEvent {
 
 export interface MonthStaticPathParams {
   town: string;
-  year?: string;
-  month?: string;
+  year: string;
+  month: string;
   [key: string]: string | undefined;
 }
 
