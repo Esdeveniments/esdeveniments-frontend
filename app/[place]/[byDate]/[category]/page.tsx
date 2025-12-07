@@ -29,6 +29,7 @@ import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
+  isValidPlace,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
@@ -36,7 +37,7 @@ import { siteUrl } from "@config/index";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
@@ -159,6 +160,10 @@ export default async function FilteredPage({
     params,
     searchParams,
   ]);
+
+  if (!isValidPlace(place)) {
+    notFound();
+  }
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);

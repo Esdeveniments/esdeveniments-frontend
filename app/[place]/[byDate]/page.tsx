@@ -30,10 +30,11 @@ import {
   toUrlSearchParams,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
+  isValidPlace,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
@@ -193,6 +194,10 @@ export default async function ByDatePage({
 }) {
   const { place, byDate } = await params;
   const search = await searchParams;
+
+  if (!isValidPlace(place)) {
+    notFound();
+  }
 
   validatePlaceOrThrow(place);
 
