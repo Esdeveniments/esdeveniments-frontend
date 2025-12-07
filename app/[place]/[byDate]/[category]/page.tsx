@@ -36,7 +36,7 @@ import { siteUrl } from "@config/index";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
@@ -160,8 +160,11 @@ export default async function FilteredPage({
     searchParams,
   ]);
 
-  // 🛡️ SECURITY: Validate place parameter
-  validatePlaceOrThrow(place);
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.

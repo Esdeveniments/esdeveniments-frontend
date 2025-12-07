@@ -14,7 +14,8 @@ export async function fetchPlaceBySlugExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/places/${slug}`);
+    const encodedSlug = encodeURIComponent(slug);
+    const res = await fetchWithHmac(`${api}/places/${encodedSlug}`);
     if (res.status === 404) {
       // Place definitively doesn't exist - return null to signal not found
       return null;

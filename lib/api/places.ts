@@ -21,7 +21,8 @@ async function fetchPlaceBySlugApi(
   key: string | number
 ): Promise<PlaceResponseDTO | null> {
   const slug = String(key);
-  const response = await fetch(getInternalApiUrl(`/api/places/${slug}`), {
+  const encodedSlug = encodeURIComponent(slug);
+  const response = await fetch(getInternalApiUrl(`/api/places/${encodedSlug}`), {
     next: { revalidate: 86400, tags: ["places", `place:${slug}`] },
   });
   if (response.status === 404) {

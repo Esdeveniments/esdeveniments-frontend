@@ -10,6 +10,8 @@ import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
 import { getHistoricDates, normalizeMonthParam } from "@lib/dates";
 import dynamic from "next/dynamic";
+import { isValidPlace } from "@utils/route-validation";
+import { notFound } from "next/navigation";
 import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import {
@@ -32,6 +34,14 @@ export async function generateMetadata({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
+
+  if (!isValidPlace(town)) {
+    return {
+      title: "Not Found",
+      description: "Page not found",
+    };
+  }
+
   const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
   const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
@@ -52,6 +62,10 @@ export default async function Page({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
+
+  if (!isValidPlace(town)) {
+    notFound();
+  }
 
   const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
 
