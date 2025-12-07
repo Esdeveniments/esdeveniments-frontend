@@ -49,9 +49,9 @@ describe("retryDynamicImport", () => {
       backoffMultiplier: 1,
     });
 
+    const expectation = expect(promise).rejects.toThrow("still failing");
     await vi.runAllTimersAsync();
-
-    await expect(promise).rejects.toThrow("still failing");
+    await expectation;
     expect(importer).toHaveBeenCalledTimes(2);
   });
 });
