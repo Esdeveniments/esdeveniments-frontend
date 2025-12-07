@@ -47,6 +47,12 @@ export interface NetworkInformation {
   saveData?: boolean;
 }
 
+// Google Analytics types
+export interface WindowWithGtag extends Window {
+  gtag: (...args: unknown[]) => void;
+  dataLayer: unknown[];
+}
+
 // Image optimization types
 export type NetworkQuality = "high" | "medium" | "low" | "unknown";
 

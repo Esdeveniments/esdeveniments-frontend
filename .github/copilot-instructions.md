@@ -124,7 +124,7 @@ Adding a new filter:
 ## 11. Security & Analytics
 
 - CSP: Relaxed policy with host allowlisting (configured in `proxy.ts`). Allows `'unsafe-inline'` for inline scripts and JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains (googletagmanager.com, google-analytics.com, googlesyndication.com, etc.) are allowlisted in `script-src` and `script-src-elem`. No nonce required—scripts work without nonce props.
-- External tracking (GA, Ads, Sentry) loaded via Next.js `<Script>` component with `strategy="afterInteractive"`. No nonce props needed.
+- External tracking (GA, Ads, Sentry) loaded via Next.js `<Script>` component. Use `strategy="afterInteractive"` by default, but `strategy="lazyOnload"` is acceptable for non-critical analytics scripts (e.g., GA loader/config) to optimize Core Web Vitals. Critical scripts (consent initialization, CMP) should use `afterInteractive`. No nonce props needed.
 - JSON-LD: Server-rendered via `JsonLdServer` component (`components/partials/JsonLdServer.tsx`). Escapes `</script>` and `<` to prevent XSS. Data comes from server-side API responses, not user input. No nonce required due to relaxed CSP.
 - Rationale: For a cultural events site with HMAC-protected backend, relaxed CSP enables better performance (ISR/PPR) while maintaining security through host allowlisting.
 
