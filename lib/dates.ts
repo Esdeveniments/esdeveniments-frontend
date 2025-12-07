@@ -3,6 +3,21 @@ import { nextDay, isWeekend } from "@utils/helpers";
 import { DateRange } from "types/common";
 import type { ValidDateSlug } from "types/dates";
 
+/**
+ * Normalize a month parameter coming from URLs.
+ * - Decodes URI components
+ * - Lowercases
+ * - Maps display label (març) while keeping slug-safe value (marc)
+ */
+export const normalizeMonthParam = (
+  rawMonth: string
+): { slug: string; label: string } => {
+  const decoded = decodeURIComponent(rawMonth).toLowerCase();
+  const slug = decoded === "març" ? "marc" : decoded;
+  const label = slug === "marc" ? "març" : decoded;
+  return { slug, label };
+};
+
 // Valid date formats - this becomes the source of truth
 export const VALID_DATES = [
   DEFAULT_FILTER_VALUE,
