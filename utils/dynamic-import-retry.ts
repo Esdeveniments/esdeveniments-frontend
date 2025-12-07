@@ -35,6 +35,9 @@ export async function retryDynamicImport<T>(
       await wait(backoffMs);
     }
   }
+
+  // Should be unreachable because we either return or throw inside the loop.
+  throw new Error("retryDynamicImport failed");
 }
 
 export function lazyWithRetry<T extends React.ComponentType<any>>(
