@@ -63,6 +63,10 @@ jobs:
           NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
           # Server-side runtime secrets
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          # Cache revalidation secrets (optional but recommended)
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           # Required secrets (validated below)
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
@@ -127,6 +131,22 @@ jobs:
           # Server-side runtime secrets
           if [ -n "$GOOGLE_PLACES_API_KEY" ]; then
             echo "GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY" >> .env.production
+          fi
+
+          # Cache revalidation secrets (optional)
+          if [ -n "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET=$REVALIDATE_SECRET" >> .env.production
+            echo "✅ REVALIDATE_SECRET configured"
+          else
+            echo "::warning::REVALIDATE_SECRET not set. /api/revalidate endpoint will reject all requests."
+          fi
+
+          if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "CLOUDFLARE_ZONE_ID=$CLOUDFLARE_ZONE_ID" >> .env.production
+          fi
+
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN" >> .env.production
           fi
 
       - name: Install Playwright browsers
