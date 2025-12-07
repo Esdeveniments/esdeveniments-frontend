@@ -200,7 +200,7 @@ describe("/api/revalidate", () => {
       expect(data.revalidated).toBe(true);
       expect(data.tags).toEqual(["places"]);
       expect(data.timestamp).toBeDefined();
-      expect(revalidateTag).toHaveBeenCalledWith("places", "max");
+      expect(revalidateTag).toHaveBeenCalledWith("places");
     });
 
     it("revalidates multiple valid tags", async () => {
@@ -219,9 +219,9 @@ describe("/api/revalidate", () => {
       expect(data.revalidated).toBe(true);
       expect(data.tags).toEqual(["places", "regions", "cities"]);
       expect(revalidateTag).toHaveBeenCalledTimes(3);
-      expect(revalidateTag).toHaveBeenCalledWith("places", "max");
-      expect(revalidateTag).toHaveBeenCalledWith("regions", "max");
-      expect(revalidateTag).toHaveBeenCalledWith("cities", "max");
+      expect(revalidateTag).toHaveBeenCalledWith("places");
+      expect(revalidateTag).toHaveBeenCalledWith("regions");
+      expect(revalidateTag).toHaveBeenCalledWith("cities");
     });
 
     it("accepts all allowed tags", async () => {
@@ -316,9 +316,10 @@ describe("/api/revalidate", () => {
 
       expect(response.status).toBe(200);
       expect(data.cloudflare).toBeDefined();
-      // When CF is not configured, purged should be true (success - just skipped)
-      // but prefixes should be present from the mapping
+      // When CF is not configured, purge is skipped but prefixes are still returned
       expect(data.cloudflare.prefixes).toContain("/api/places");
+      expect(data.cloudflare.purged).toBe(false);
+      expect(data.cloudflare.skipped).toBe(true);
       // The Cloudflare API should NOT have been called
       expect(mockFetch).not.toHaveBeenCalledWith(
         expect.stringContaining("api.cloudflare.com"),

@@ -1,8 +1,9 @@
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { handleApiError } from "@utils/api-error-handler";
 import * as Sentry from "@sentry/nextjs";
-import type { CacheTag } from "types/cache";
+import type { RevalidatableTag } from "@types/cache";
 import { clearPlacesCaches } from "@lib/api/places";
 import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
@@ -15,19 +16,19 @@ export const runtime = "nodejs";
  * Only includes tags related to places/regions data (infrequently changing).
  * Does NOT include events/news tags to prevent abuse.
  */
-const ALLOWED_TAGS: readonly CacheTag[] = [
+const ALLOWED_TAGS = [
   "places",
   "regions",
   "regions:options",
   "cities",
   "categories",
-] as const;
+] as const satisfies readonly RevalidatableTag[];
 
 /**
  * Maps cache tags to Cloudflare URL prefixes for cache purging.
  * These are the API route paths that should be purged when a tag is revalidated.
  */
-const TAG_TO_CF_PREFIXES: Record<string, string[]> = {
+const TAG_TO_CF_PREFIXES: Record<RevalidatableTag, string[]> = {
   places: ["/api/places"],
   regions: ["/api/regions"],
   "regions:options": ["/api/regions/options"],
@@ -39,7 +40,7 @@ const TAG_TO_CF_PREFIXES: Record<string, string[]> = {
  * Maps cache tags to in-memory cache clear functions.
  * Used to clear warm Lambda instance caches during revalidation.
  */
-const TAG_TO_CLEAR_FN: Record<string, () => void> = {
+const TAG_TO_CLEAR_FN: Record<RevalidatableTag, () => void> = {
   places: clearPlacesCaches,
   regions: clearRegionsCaches,
   "regions:options": clearRegionsCaches,
@@ -58,27 +59,28 @@ function isValidSecret(providedSecret: string | null): boolean {
     return false;
   }
 
-  // Timing-safe comparison to prevent timing attacks
-  if (providedSecret.length !== expectedSecret.length) {
+  try {
+    return timingSafeEqual(
+      Buffer.from(providedSecret),
+      Buffer.from(expectedSecret)
+    );
+  } catch {
+    // timingSafeEqual throws if lengths differ
     return false;
   }
-
-  let result = 0;
-  for (let i = 0; i < providedSecret.length; i++) {
-    result |= providedSecret.charCodeAt(i) ^ expectedSecret.charCodeAt(i);
-  }
-  return result === 0;
 }
 
 /**
  * Validate that all provided tags are in the allowed whitelist.
  */
-function validateTags(tags: unknown): tags is CacheTag[] {
+function validateTags(tags: unknown): tags is RevalidatableTag[] {
   if (!Array.isArray(tags) || tags.length === 0) {
     return false;
   }
   return tags.every(
-    (tag) => typeof tag === "string" && ALLOWED_TAGS.includes(tag as CacheTag)
+    (tag): tag is RevalidatableTag =>
+      typeof tag === "string" &&
+      (ALLOWED_TAGS as readonly string[]).includes(tag)
   );
 }
 
@@ -88,27 +90,36 @@ function validateTags(tags: unknown): tags is CacheTag[] {
  */
 async function purgeCloudflareCache(
   prefixes: string[]
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; skipped?: boolean }> {
   const zoneId = process.env.CLOUDFLARE_ZONE_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
   // Skip if Cloudflare is not configured
   if (!zoneId || !apiToken) {
-    return { success: true }; // Not an error, just not configured
+    return { success: true, skipped: true }; // Not an error, just not configured
   }
 
   try {
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prefixes }),
-      }
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prefixes }),
+          signal: controller.signal,
+        }
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -186,10 +197,9 @@ export async function POST(request: Request) {
     }
 
     // 4. Revalidate each tag (Next.js data cache)
-    // Use "max" argument to ensure full revalidation (project convention)
     const revalidatedTags: string[] = [];
     for (const tag of tags) {
-      revalidateTag(tag, "max");
+      revalidateTag(tag);
       revalidatedTags.push(tag);
     }
 
@@ -213,22 +223,34 @@ export async function POST(request: Request) {
       }
     }
 
-    let cloudflareResult: { purged: boolean; prefixes?: string[]; error?: string };
+    let cloudflareResult: {
+      purged: boolean;
+      prefixes?: string[];
+      error?: string;
+      skipped?: boolean;
+    };
     if (cfPrefixes.size > 0) {
       const prefixArray = Array.from(cfPrefixes);
       const cfResult = await purgeCloudflareCache(prefixArray);
       cloudflareResult = {
-        purged: cfResult.success,
+        purged: cfResult.success && !cfResult.skipped,
         prefixes: prefixArray,
+        ...(cfResult.skipped ? { skipped: true } : {}),
         ...(cfResult.error ? { error: cfResult.error } : {}),
       };
     } else {
-      cloudflareResult = { purged: false };
+      cloudflareResult = { purged: false, skipped: true };
     }
 
     // 6. Log successful revalidation
     console.log(
-      `[revalidate] Tags: ${revalidatedTags.join(", ")} | Cloudflare: ${cloudflareResult.purged ? "purged" : "skipped"}`
+      `[revalidate] Tags: ${revalidatedTags.join(", ")} | Cloudflare: ${
+        cloudflareResult.purged
+          ? "purged"
+          : cloudflareResult.skipped
+            ? "skipped"
+            : "failed"
+      }`
     );
 
     if (process.env.NODE_ENV === "production") {
