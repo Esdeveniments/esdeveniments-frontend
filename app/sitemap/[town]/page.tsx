@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { siteUrl } from "@config/index";
-import { getAllYears } from "@lib/dates";
+import { getAllYears, normalizeMonthParam } from "@lib/dates";
 import { MONTHS_URL } from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
@@ -104,17 +104,16 @@ async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) 
               <h2 className="heading-3">{year}</h2>
               <nav role="list" className="stack gap-1">
                 {MONTHS_URL.map((month) => {
-                  let textMonth: string = month;
-                  if (month === "marc") textMonth = month.replace("c", "ç");
+                  const { slug, label } = normalizeMonthParam(month);
                   return (
                     <div key={`${year}-${month}`} role="listitem">
                       <PressableAnchor
-                        href={`/sitemap/${town}/${year}/${month.toLocaleLowerCase()}`}
+                        href={`/sitemap/${town}/${year}/${slug}`}
                         className="text-foreground-strong hover:text-primary hover:underline transition-colors capitalize"
                         variant="inline"
                         prefetch={false}
                       >
-                        {textMonth}
+                        {label}
                       </PressableAnchor>
                     </div>
                   );

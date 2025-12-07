@@ -8,7 +8,7 @@ import {
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
-import { getHistoricDates } from "@lib/dates";
+import { getHistoricDates, normalizeMonthParam } from "@lib/dates";
 import dynamic from "next/dynamic";
 import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
@@ -32,18 +32,17 @@ export async function generateMetadata({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
+  const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
   const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
   const locationPhrase = formatCatalanA(townLabel, placeType, false);
 
-  let textMonth = month;
-  if (month === "marc") textMonth = month.replace("c", "ç");
   return buildPageMeta({
-    title: `Arxiu de ${townLabel} del ${textMonth} del ${year} - Esdeveniments.cat`,
-    description: `Descobreix què va passar ${locationPhrase} el ${textMonth} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
-    canonical: `${siteUrl}/sitemap/${town}/${year}/${month}`,
+    title: `Arxiu de ${townLabel} del ${monthLabel} del ${year} - Esdeveniments.cat`,
+    description: `Descobreix què va passar ${locationPhrase} el ${monthLabel} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
+    canonical: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
   });
 }
 
@@ -53,9 +52,10 @@ export default async function Page({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
-  if (!town || !year || !month) return null;
 
-  const { from, until } = getHistoricDates(month, Number(year));
+  const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
+
+  const { from, until } = getHistoricDates(monthSlug, Number(year));
 
   const [events, place] = await Promise.all([
     fetchEvents({
@@ -70,9 +70,6 @@ export default async function Page({
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
   const locationPhrase = formatCatalanA(townLabel, placeType, false);
-
-  let textMonth = month;
-  if (month === "marc") textMonth = month.replace("c", "ç");
 
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(
@@ -93,8 +90,8 @@ export default async function Page({
     { name: "Arxiu", url: `${siteUrl}/sitemap` },
     { name: townLabel, url: `${siteUrl}/sitemap/${town}` },
     {
-      name: `${textMonth} ${year}`,
-      url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
+      name: `${monthLabel} ${year}`,
+      url: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
     },
   ];
 
@@ -103,21 +100,21 @@ export default async function Page({
     filteredEvents.length > 0
       ? generateItemListStructuredData(
           filteredEvents,
-          `Esdeveniments de ${townLabel} - ${textMonth} ${year}`,
-          `Col·lecció d'esdeveniments culturals de ${townLabel} del ${textMonth} del ${year}`
+          `Esdeveniments de ${townLabel} - ${monthLabel} ${year}`,
+          `Col·lecció d'esdeveniments culturals de ${townLabel} del ${monthLabel} del ${year}`
         )
       : null;
 
   // Generate collection page schema
   const collectionPageSchema = generateCollectionPageSchema({
-    title: `Arxiu de ${townLabel} - ${textMonth} ${year}`,
-    description: `Esdeveniments culturals que van tenir lloc ${locationPhrase} durant el ${textMonth} del ${year}`,
-    url: `${siteUrl}/sitemap/${town}/${year}/${month}`,
+    title: `Arxiu de ${townLabel} - ${monthLabel} ${year}`,
+    description: `Esdeveniments culturals que van tenir lloc ${locationPhrase} durant el ${monthLabel} del ${year}`,
+    url: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
     breadcrumbs,
     numberOfItems: filteredEvents.length,
     mainEntity: eventsItemList || {
       "@type": "Thing",
-      name: `Esdeveniments de ${townLabel} - ${textMonth} ${year}`,
+      name: `Esdeveniments de ${townLabel} - ${monthLabel} ${year}`,
       description: "Col·lecció d'esdeveniments culturals",
     },
   });
@@ -148,7 +145,7 @@ export default async function Page({
 
         <header className="text-center">
           <h1 className="heading-2 mb-2">
-            Arxiu {townLabel} - {textMonth} del {year}
+            Arxiu {townLabel} - {monthLabel} del {year}
           </h1>
           <p className="body-normal text-foreground/80">
             {filteredEvents.length > 0

@@ -3,8 +3,19 @@ import { createKeyedCache, createCache } from "@lib/api/cache";
 import { getInternalApiUrl } from "@utils/api-helpers";
 import { cache } from "react";
 
-const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
-const placesCache = createCache<PlaceResponseDTO[]>(86400000);
+const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
+  createKeyedCache<PlaceResponseDTO | null>(86400000);
+const { cache: placesCache, clear: clearPlacesListCache } =
+  createCache<PlaceResponseDTO[]>(86400000);
+
+/**
+ * Clear all in-memory place caches.
+ * Called by the revalidation API to ensure fresh data.
+ */
+export function clearPlacesCaches(): void {
+  clearPlaceBySlugCache();
+  clearPlacesListCache();
+}
 
 async function fetchPlaceBySlugApi(
   key: string | number
