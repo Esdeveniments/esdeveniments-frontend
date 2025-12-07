@@ -18,6 +18,8 @@ export function beforeSend(
     const errorMessage =
       event.exception.values?.[0]?.value?.toLowerCase() || "";
 
+    // Chunk/dynamic import errors are intentionally reported to track failed loads;
+    // retry logic handles transient cases, but we still want visibility.
     // Common browser extension errors
     if (
       errorMessage.includes("chrome-extension://") ||

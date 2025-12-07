@@ -7,10 +7,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 const Weather = dynamic(
   () =>
-    retryDynamicImport(() => import("components/ui/weather"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("components/ui/weather")),
   { ssr: false }
 );
 

@@ -36,10 +36,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
   () =>
-    retryDynamicImport(() => import("../hero/HeroSection"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("../hero/HeroSection")),
   { suspense: true }
 );
 

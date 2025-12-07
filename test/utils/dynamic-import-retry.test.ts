@@ -41,16 +41,17 @@ describe("retryDynamicImport", () => {
   });
 
   it("throws after exhausting all retries", async () => {
-    vi.useRealTimers();
     const importer = vi.fn().mockRejectedValue(new Error("still failing"));
 
-    await expect(
-      retryDynamicImport(importer, {
-        retries: 2,
-        retryDelayMs: 1,
-        backoffMultiplier: 1,
-      })
-    ).rejects.toThrow("still failing");
+    const promise = retryDynamicImport(importer, {
+      retries: 2,
+      retryDelayMs: 1,
+      backoffMultiplier: 1,
+    });
+
+    await vi.runAllTimersAsync();
+
+    await expect(promise).rejects.toThrow("still failing");
     expect(importer).toHaveBeenCalledTimes(2);
   });
 });

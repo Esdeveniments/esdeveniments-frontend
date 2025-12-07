@@ -6,10 +6,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 const AdCard = dynamic(
   () =>
-    retryDynamicImport(() => import("@components/ui/adCard"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("@components/ui/adCard")),
   {
     loading: () => (
       <div className="flex justify-center items-center w-full">

@@ -25,10 +25,7 @@ export const revalidate = 86400;
 
 const NoEventsFound = dynamic(
   () =>
-    retryDynamicImport(() => import("@components/ui/common/noEventsFound"), {
-      retries: 3,
-      retryDelayMs: 200,
-    })
+    retryDynamicImport(() => import("@components/ui/common/noEventsFound"))
 );
 
 export async function generateMetadata({

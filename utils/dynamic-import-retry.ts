@@ -35,8 +35,6 @@ export async function retryDynamicImport<T>(
       await wait(backoffMs);
     }
   }
-
-  throw new Error("retryDynamicImport exhausted unexpectedly");
 }
 
 export function lazyWithRetry<T extends React.ComponentType<any>>(

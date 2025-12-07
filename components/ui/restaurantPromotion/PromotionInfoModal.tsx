@@ -7,10 +7,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 // Lazy load generic modal to keep initial bundle light
 const Modal = dynamic(() =>
-  retryDynamicImport(() => import("@components/ui/common/modal"), {
-    retries: 3,
-    retryDelayMs: 200,
-  })
+  retryDynamicImport(() => import("@components/ui/common/modal"))
 );
 
 const PromotionInfoModal: FC<PromotionInfoModalProps> = ({ open, setOpen }) => {

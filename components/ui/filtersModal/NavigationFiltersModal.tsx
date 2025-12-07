@@ -31,10 +31,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 const Modal = dynamic(
   () =>
-    retryDynamicImport(() => import("@components/ui/common/modal"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("@components/ui/common/modal")),
   {
     loading: () => <></>,
     ssr: false,
@@ -43,10 +40,7 @@ const Modal = dynamic(
 
 const Select = dynamic(
   () =>
-    retryDynamicImport(() => import("@components/ui/common/form/select"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("@components/ui/common/form/select")),
   {
     loading: () => <SelectSkeleton />,
     ssr: false,

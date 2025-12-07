@@ -7,10 +7,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 const EventClientDynamic = dynamic(
   () =>
-    retryDynamicImport(() => import("../EventClient"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("../EventClient")),
   {
     ssr: false,
     loading: () => null,

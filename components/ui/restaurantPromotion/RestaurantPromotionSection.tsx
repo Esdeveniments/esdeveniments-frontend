@@ -17,10 +17,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 // Lazy load info modal only when needed
 const PromotionInfoModal = dynamic(
   () =>
-    retryDynamicImport(() => import("./PromotionInfoModal"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("./PromotionInfoModal")),
   {
     ssr: false,
   }

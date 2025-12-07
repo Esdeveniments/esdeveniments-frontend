@@ -12,10 +12,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 const Maps = dynamic(
   () =>
-    retryDynamicImport(() => import("components/ui/maps"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("components/ui/maps")),
   { ssr: false }
 );
 

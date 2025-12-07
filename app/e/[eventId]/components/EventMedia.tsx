@@ -7,10 +7,7 @@ import { retryDynamicImport } from "@utils/dynamic-import-retry";
 // VideoDisplay is just an iframe, can be server-rendered
 const VideoDisplay = dynamic(
   () =>
-    retryDynamicImport(() => import("components/ui/common/videoDisplay"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("components/ui/common/videoDisplay")),
   {
     loading: () => (
       <div className="w-full aspect-[16/9] bg-muted animate-pulse rounded-card"></div>
@@ -21,10 +18,7 @@ const VideoDisplay = dynamic(
 // ImageDefault for fallback cases
 const ImageDefault = dynamic(
   () =>
-    retryDynamicImport(() => import("components/ui/imgDefault"), {
-      retries: 3,
-      retryDelayMs: 200,
-    }),
+    retryDynamicImport(() => import("components/ui/imgDefault")),
   {
     loading: () => (
       <div className="w-full aspect-[16/9] sm:aspect-[21/9] bg-muted animate-pulse rounded-card"></div>
