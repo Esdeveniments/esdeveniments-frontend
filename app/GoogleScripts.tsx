@@ -77,6 +77,7 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
   const autoAdsInitRef = useRef(false);
+  const autoAdsPendingToken = useRef<symbol | null>(null);
 
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
   // Note: We use the same consent signal (adsAllowed) for both ads and analytics
@@ -106,6 +107,33 @@ export default function GoogleScripts() {
   useEffect(() => {
     if (!adsAllowed || !ADS_CLIENT) return;
 
+    const setPendingToken = () => {
+      const token = Symbol("auto-ads-init");
+      autoAdsPendingToken.current = token;
+      window.__autoAdsInitPending = token;
+      return token;
+    };
+
+    const clearPendingToken = (token: symbol) => {
+      if (window.__autoAdsInitPending === token) {
+        window.__autoAdsInitPending = undefined;
+      }
+      if (autoAdsPendingToken.current === token) {
+        autoAdsPendingToken.current = null;
+      }
+    };
+
+    if (
+      autoAdsInitRef.current ||
+      window.__autoAdsInitialized ||
+      autoAdsPendingToken.current ||
+      window.__autoAdsInitPending
+    ) {
+      return;
+    }
+
+    const pendingToken = setPendingToken();
+
     // Manually inject script to avoid data-nscript warning from AdSense
     // Defer injection to reduce main thread blocking during hydration
     const injectAdsScript = () => {
@@ -118,18 +146,24 @@ export default function GoogleScripts() {
       }
     };
 
-    if ('requestIdleCallback' in window) {
+    if ("requestIdleCallback" in window) {
       window.requestIdleCallback(() => injectAdsScript(), { timeout: 4000 });
     } else {
       setTimeout(injectAdsScript, 2000);
     }
 
     const pushAutoAds = () => {
-      if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
+      if (autoAdsInitRef.current || window.__autoAdsInitialized) {
+        clearPendingToken(pendingToken);
+        return;
+      }
 
       const initAds = () => {
         // Double-check inside the callback to prevent race conditions
-        if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
+        if (autoAdsInitRef.current || window.__autoAdsInitialized) {
+          clearPendingToken(pendingToken);
+          return;
+        }
 
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({
@@ -138,10 +172,14 @@ export default function GoogleScripts() {
           });
           autoAdsInitRef.current = true;
           window.__autoAdsInitialized = true;
+          clearPendingToken(pendingToken);
         } catch {
           // Retry once after a short delay if loader isn't ready yet
           setTimeout(() => {
-            if (autoAdsInitRef.current || window.__autoAdsInitialized) return;
+            if (autoAdsInitRef.current || window.__autoAdsInitialized) {
+              clearPendingToken(pendingToken);
+              return;
+            }
             try {
               (window.adsbygoogle = window.adsbygoogle || []).push({
                 google_ad_client: ADS_CLIENT,
@@ -151,13 +189,15 @@ export default function GoogleScripts() {
               window.__autoAdsInitialized = true;
             } catch {
               // swallow; individual slots will still render with manual pushes
+            } finally {
+              clearPendingToken(pendingToken);
             }
           }, 1000); // Increased delay to reduce CPU pressure
         }
       };
 
       // Use requestIdleCallback if available to avoid blocking main thread
-      if ('requestIdleCallback' in window) {
+      if ("requestIdleCallback" in window) {
         window.requestIdleCallback(() => initAds(), { timeout: 2000 });
       } else {
         setTimeout(initAds, 500);
@@ -167,8 +207,32 @@ export default function GoogleScripts() {
     // If the loader isn't on the page yet, wait briefly
     // The script is now manually injected, but we still need to wait for it to load and parse.
     const timer = setTimeout(pushAutoAds, 1000); // Increased delay
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (autoAdsPendingToken.current === pendingToken) {
+        autoAdsPendingToken.current = null;
+      }
+      if (window.__autoAdsInitPending === pendingToken) {
+        window.__autoAdsInitPending = undefined;
+      }
+    };
   }, [adsAllowed]);
+
+  useEffect(() => {
+    const handleTagErrors = (event: ErrorEvent) => {
+      if (
+        typeof event.message === "string" &&
+        event.message.includes("adsbygoogle.push() error:")
+      ) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("error", handleTagErrors);
+    return () => {
+      window.removeEventListener("error", handleTagErrors);
+    };
+  }, []);
 
   return (
     <>

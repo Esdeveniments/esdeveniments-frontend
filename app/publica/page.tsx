@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
 import {
@@ -20,21 +20,15 @@ import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
+const MAX_TOTAL_UPLOAD_BYTES = 9.5 * 1024 * 1024; // Leave buffer for metadata under 10 MB limit
+
 const defaultForm: FormData = {
   title: "",
   description: "",
   type: "FREE",
-  startDate: (() => {
-    const now = new Date();
-    now.setHours(9, 0, 0, 0);
-    return now.toISOString().slice(0, 16);
-  })(),
+  startDate: "",
   startTime: "",
-  endDate: (() => {
-    const now = new Date();
-    now.setHours(10, 0, 0, 0);
-    return now.toISOString().slice(0, 16);
-  })(),
+  endDate: "",
   endTime: "",
   region: null,
   town: null,
@@ -80,6 +74,7 @@ const Publica = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const {
     regionsWithCities,
@@ -141,6 +136,7 @@ const Publica = () => {
   };
 
   const handleImageChange = (file: File) => {
+    setError(null);
     setImageFile(file);
     const reader = new FileReader();
     reader.addEventListener("load", () => {
@@ -255,8 +251,37 @@ const Publica = () => {
     };
   };
 
+  useEffect(() => {
+    setForm((current) => {
+      if (current.startDate && current.endDate) {
+        return current;
+      }
+      const now = new Date();
+      now.setMinutes(0, 0, 0);
+      const startDate = new Date(now);
+      startDate.setHours(9, 0, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setHours(10, 0, 0, 0);
+
+      return {
+        ...current,
+        startDate: startDate.toISOString().slice(0, 16),
+        endDate: endDate.toISOString().slice(0, 16),
+      };
+    });
+    setIsHydrated(true);
+  }, []);
+
   const onSubmit = async () => {
     setError(null); // Clear any previous errors
+
+    if (imageFile && imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+      setError(
+        "La imatge supera el límit permès de 9,5 MB. Si us plau, tria una imatge més petita."
+      );
+      return;
+    }
+
     startTransition(async () => {
       try {
         const regionLabel =
@@ -291,34 +316,62 @@ const Publica = () => {
           router.push(`/e/${slug}`);
         } else {
           setError("Error al crear l'esdeveniment. Si us plau, torna-ho a intentar.");
-          captureException("Error creating event");
+          captureException(new Error("createEventAction returned unsuccessful response"));
         }
       } catch (error) {
         console.error("Submission error:", error);
-        
-        // Check if it's a body size limit error
-        // Note: Next.js server actions throw Error objects without structured error codes,
-        // so we check error messages. The configured limit is 10 MB (see next.config.js).
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (
-          errorMessage.includes("body size limit") ||
-          errorMessage.includes("Body exceeded") ||
-          errorMessage.includes("10 MB limit") ||
-          errorMessage.includes("10mb")
-        ) {
+
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const normalizedMessage = errorMessage.toLowerCase();
+        const isBodyLimit =
+          normalizedMessage.includes("body size limit") ||
+          normalizedMessage.includes("body exceeded") ||
+          normalizedMessage.includes("10 mb limit") ||
+          normalizedMessage.includes("10mb");
+        const isRequestTooLarge =
+          normalizedMessage.includes("status: 413") ||
+          normalizedMessage.includes("request entity too large");
+        const isFormParsingError =
+          normalizedMessage.includes("unexpected end of form") ||
+          normalizedMessage.includes("failed to parse body as formdata");
+
+        if (isBodyLimit || isRequestTooLarge) {
           setError(
             "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries."
+          );
+        } else if (isFormParsingError) {
+          setError(
+            "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar."
           );
         } else {
           setError(
             "Hi ha hagut un error en publicar l'esdeveniment. Si us plau, torna-ho a intentar."
           );
         }
-        
-        captureException(error);
+
+        if (!(isBodyLimit || isRequestTooLarge || isFormParsingError)) {
+          captureException(error);
+        }
       }
     });
   };
+
+  if (!isHydrated) {
+    return (
+      <div className="container flex flex-col justify-center pt-2 pb-14">
+        <div className="flex flex-col gap-4 px-2 lg:px-0">
+          <div className="flex flex-col gap-2">
+            <h1 className="uppercase font-semibold">
+              Publica un esdeveniment
+            </h1>
+            <p className="text-sm text-center">Carregant formulari…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container flex flex-col justify-center pt-2 pb-14">
       <div className="flex flex-col gap-4 px-2 lg:px-0">
