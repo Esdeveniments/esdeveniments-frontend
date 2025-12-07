@@ -15,7 +15,7 @@ import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cach
 export type { FetchNewsParams } from "types/api/news";
 
 // Cache for checking if place has news (24h TTL)
-const placeHasNewsCache = createKeyedCache<boolean>(86400000);
+const { cache: placeHasNewsCache } = createKeyedCache<boolean>(86400000);
 
 export async function fetchNews(
   params: FetchNewsParams

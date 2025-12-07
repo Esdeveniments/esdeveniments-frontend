@@ -161,6 +161,100 @@ We have an automated uptime monitor that runs every 15 minutes via GitHub Action
 
 **Note:** For AWS SES, you'll need to verify both the sender and recipient email addresses in the SES console before emails can be sent.
 
+#### AWS CloudWatch Alarms (Native AWS Monitoring)
+
+In addition to the GitHub Actions uptime monitor, you can set up AWS-native alarms for faster detection:
+
+**Existing Alarms (configured in `sst.config.ts`):**
+- ✅ **Lambda Errors Alarm**: Alerts when Lambda function errors exceed 10 in 1 minute
+- ✅ **Lambda Throttling Alarm**: Alerts when Lambda throttles exceed 5 in 1 minute
+- 📧 **SNS Topic**: All alarms send email to `ALARM_EMAIL` (defaults to `esdeveniments.catalunya.cat@gmail.com`)
+
+**To add CloudFront 5xx Error Alarm (Website Down Detection):**
+
+1. **Get CloudFront Distribution ID:**
+   - AWS Console → CloudFront → Distributions
+   - Find distribution for `esdeveniments.cat`
+   - Copy the Distribution ID (starts with `E...`)
+
+2. **Create CloudWatch Alarm:**
+   - AWS Console → CloudWatch → Alarms → Create alarm
+   - **Metric:** `AWS/CloudFront` → `5xxErrorRate`
+   - **Dimensions:** Select your CloudFront Distribution ID
+   - **Statistic:** `Average`
+   - **Period:** `5 minutes`
+   - **Threshold:** `Greater than 0` (alert on any 5xx errors)
+   - **SNS Topic:** Select `SiteAlarms` topic (created by SST)
+   - **Alarm name:** `CloudFront-5xx-Errors`
+
+3. **Optional: CloudWatch Synthetics Canary (Comprehensive Uptime Check):**
+   - AWS Console → CloudWatch → Synthetics → Create canary
+   - **Template:** `Heartbeat monitoring`
+   - **URL:** `https://www.esdeveniments.cat`
+   - **Frequency:** `Every 5 minutes`
+   - **Alarm:** Create alarm when canary fails → Select `SiteAlarms` SNS topic
+
+**Benefits of AWS Alarms:**
+- ⚡ **Faster detection**: Alarms trigger immediately (vs 15-minute GitHub Actions)
+- 🔔 **Multiple channels**: Can add SMS, Slack, PagerDuty integrations to SNS topic
+- 📊 **Better visibility**: CloudWatch dashboards show historical uptime trends
+- 💰 **Cost**: CloudWatch alarms are free; Synthetics Canary costs ~$0.0012 per run (~$0.10/month)
+
+---
+
+## 🔄 On-Demand Cache Revalidation
+
+When adding new towns/places to the backend, use the `/api/revalidate` endpoint to immediately clear all caches.
+
+### What Gets Cleared
+
+| Cache Layer | Mechanism |
+|-------------|-----------|
+| **Next.js Data Cache** | `revalidateTag()` |
+| **Lambda In-Memory Cache** | `clearPlacesCaches()`, etc. |
+| **Cloudflare CDN** | API prefix purge (if configured) |
+
+### Usage
+
+```bash
+curl -X POST https://www.esdeveniments.cat/api/revalidate \
+  -H "Content-Type: application/json" \
+  -H "x-revalidate-secret: YOUR_REVALIDATE_SECRET" \
+  -d '{"tags": ["places", "regions", "regions:options", "cities"]}'
+```
+
+### Response
+
+```json
+{
+  "revalidated": true,
+  "tags": ["places", "regions", "regions:options", "cities"],
+  "cloudflare": {
+    "purged": true,
+    "prefixes": ["/api/places", "/api/regions", "/api/regions/options", "/api/cities"]
+  },
+  "timestamp": "2025-12-07T08:00:00.000Z"
+}
+```
+
+### Allowed Tags
+
+Only these tags can be revalidated (security whitelist):
+- `places` - All place data
+- `regions` - Region list
+- `regions:options` - Region/city dropdown data
+- `cities` - City list
+- `categories` - Category list
+
+### Setting Up Cloudflare Token
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → **My Profile** → **API Tokens**
+2. Click **Create Token**
+3. Use template: **Custom token**
+4. Permissions: **Zone** → **Cache Purge** → **Purge**
+5. Zone Resources: **Include** → **Specific zone** → `esdeveniments.cat`
+6. Click **Create Token** and copy it
+
 ---
 
 ## 🚑 Troubleshooting
@@ -189,6 +283,7 @@ For automatic deployment to work, configure these secrets in GitHub:
 | `AWS_ACCESS_KEY_ID`      | AWS IAM user access key for deployment           | `AKIA...`                               |
 | `AWS_SECRET_ACCESS_KEY`  | AWS IAM user secret key                          | `wJal...`                               |
 | `HMAC_SECRET`            | Server-side HMAC secret for API request signing  | (random secure string)                  |
+| `REVALIDATE_SECRET`      | Secret for on-demand cache revalidation API      | (random secure string, 32+ chars)       |
 | `SENTRY_DSN`             | Sentry DSN for server-side error tracking        | `https://...@sentry.io/...`             |
 | `NEXT_PUBLIC_API_URL`    | Production API backend URL                       | `https://api-pre.esdeveniments.cat/api` |
 
@@ -196,6 +291,8 @@ For automatic deployment to work, configure these secrets in GitHub:
 
 | Secret Name                          | Description                                | Used For            |
 | ------------------------------------ | ------------------------------------------ | ------------------- |
+| `CLOUDFLARE_ZONE_ID`                 | Cloudflare Zone ID for cache purging       | Cache invalidation  |
+| `CLOUDFLARE_API_TOKEN`               | Cloudflare API token (Zone.Cache Purge)    | Cache invalidation  |
 | `SENTRY_AUTH_TOKEN`                  | Sentry auth token for source map uploads   | Better error traces |
 | `NEXT_PUBLIC_GOOGLE_ANALYTICS`       | Google Analytics measurement ID            | Analytics           |
 | `NEXT_PUBLIC_GOOGLE_ADS`             | Google Ads conversion tracking ID          | Ads tracking        |
