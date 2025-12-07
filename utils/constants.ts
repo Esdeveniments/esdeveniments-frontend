@@ -3,6 +3,7 @@ import type { Option } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
 export const MAX_RESULTS = 15;
+export const MAX_TOTAL_UPLOAD_BYTES = 9.5 * 1024 * 1024; // Keep ~0.5 MB headroom under 10 MB server limit
 
 /**
  * Detects if the application is in build phase (SSG/static generation).

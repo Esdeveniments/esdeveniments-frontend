@@ -29,7 +29,6 @@ import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
-  isValidPlace,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
@@ -161,12 +160,11 @@ export default async function FilteredPage({
     searchParams,
   ]);
 
-  if (!isValidPlace(place)) {
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
     notFound();
   }
-
-  // 🛡️ SECURITY: Validate place parameter
-  validatePlaceOrThrow(place);
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.

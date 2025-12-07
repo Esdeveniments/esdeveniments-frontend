@@ -69,7 +69,7 @@ export default async function Page({
 
   const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
 
-  const { from, until } = getHistoricDates(monthLabel, Number(year));
+  const { from, until } = getHistoricDates(monthSlug, Number(year));
 
   const [events, place] = await Promise.all([
     fetchEvents({

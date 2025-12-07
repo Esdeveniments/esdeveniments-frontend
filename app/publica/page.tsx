@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition, useEffect } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
 import {
@@ -19,16 +19,31 @@ import type { E2EEventExtras } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import { MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
 
-const MAX_TOTAL_UPLOAD_BYTES = 9.5 * 1024 * 1024; // Leave buffer for metadata under 10 MB limit
+const getDefaultEventDates = () => {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  const startDate = new Date(now);
+  startDate.setHours(9, 0, 0, 0);
+  const endDate = new Date(startDate);
+  endDate.setHours(10, 0, 0, 0);
+
+  return {
+    startDate: startDate.toISOString().slice(0, 16),
+    endDate: endDate.toISOString().slice(0, 16),
+  };
+};
+
+const defaultEventDates = getDefaultEventDates();
 
 const defaultForm: FormData = {
   title: "",
   description: "",
   type: "FREE",
-  startDate: "",
+  startDate: defaultEventDates.startDate,
   startTime: "",
-  endDate: "",
+  endDate: defaultEventDates.endDate,
   endTime: "",
   region: null,
   town: null,
@@ -74,7 +89,6 @@ const Publica = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
 
   const {
     regionsWithCities,
@@ -251,27 +265,6 @@ const Publica = () => {
     };
   };
 
-  useEffect(() => {
-    setForm((current) => {
-      if (current.startDate && current.endDate) {
-        return current;
-      }
-      const now = new Date();
-      now.setMinutes(0, 0, 0);
-      const startDate = new Date(now);
-      startDate.setHours(9, 0, 0, 0);
-      const endDate = new Date(startDate);
-      endDate.setHours(10, 0, 0, 0);
-
-      return {
-        ...current,
-        startDate: startDate.toISOString().slice(0, 16),
-        endDate: endDate.toISOString().slice(0, 16),
-      };
-    });
-    setIsHydrated(true);
-  }, []);
-
   const onSubmit = async () => {
     setError(null); // Clear any previous errors
 
@@ -298,26 +291,21 @@ const Publica = () => {
         });
 
         const e2eExtras = buildE2EExtras();
-        const result = await createEventAction(
+        const { event } = await createEventAction(
           eventData,
           imageFile || undefined,
           e2eExtras
         );
 
-        if (result && result.success && result.event) {
-          const { slug } = result.event;
-          if (typeof document !== "undefined") {
-            document.body.dataset.lastE2eSlug = slug;
-          }
-          if (typeof window !== "undefined") {
-            window.__LAST_E2E_PUBLISH_SLUG__ = slug;
-          }
-
-          router.push(`/e/${slug}`);
-        } else {
-          setError("Error al crear l'esdeveniment. Si us plau, torna-ho a intentar.");
-          captureException(new Error("createEventAction returned unsuccessful response"));
+        const { slug } = event;
+        if (typeof document !== "undefined") {
+          document.body.dataset.lastE2eSlug = slug;
         }
+        if (typeof window !== "undefined") {
+          window.__LAST_E2E_PUBLISH_SLUG__ = slug;
+        }
+
+        router.push(`/e/${slug}`);
       } catch (error) {
         console.error("Submission error:", error);
 
@@ -356,21 +344,6 @@ const Publica = () => {
       }
     });
   };
-
-  if (!isHydrated) {
-    return (
-      <div className="container flex flex-col justify-center pt-2 pb-14">
-        <div className="flex flex-col gap-4 px-2 lg:px-0">
-          <div className="flex flex-col gap-2">
-            <h1 className="uppercase font-semibold">
-              Publica un esdeveniment
-            </h1>
-            <p className="text-sm text-center">Carregant formulari…</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container flex flex-col justify-center pt-2 pb-14">

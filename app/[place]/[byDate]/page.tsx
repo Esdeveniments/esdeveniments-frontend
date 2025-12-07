@@ -34,7 +34,6 @@ import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
-  isValidPlace,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { topStaticGenerationPlaces } from "@utils/priority-places";
@@ -195,11 +194,11 @@ export default async function ByDatePage({
   const { place, byDate } = await params;
   const search = await searchParams;
 
-  if (!isValidPlace(place)) {
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
     notFound();
   }
-
-  validatePlaceOrThrow(place);
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
