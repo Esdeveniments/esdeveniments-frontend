@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { handleApiError } from "@utils/api-error-handler";
 import * as Sentry from "@sentry/nextjs";
-import type { RevalidatableTag } from "@types/cache";
+import type { RevalidatableTag } from "types/cache";
 import { clearPlacesCaches } from "@lib/api/places";
 import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
@@ -197,9 +197,10 @@ export async function POST(request: Request) {
     }
 
     // 4. Revalidate each tag (Next.js data cache)
+    // Use "max" profile to force full invalidation
     const revalidatedTags: string[] = [];
     for (const tag of tags) {
-      revalidateTag(tag);
+      revalidateTag(tag, "max");
       revalidatedTags.push(tag);
     }
 

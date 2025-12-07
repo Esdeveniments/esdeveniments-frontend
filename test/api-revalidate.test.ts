@@ -44,9 +44,7 @@ describe("/api/revalidate", () => {
 
   describe("Authentication", () => {
     it("returns 401 when x-revalidate-secret header is missing", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         body: { tags: ["places"] },
       });
@@ -59,9 +57,7 @@ describe("/api/revalidate", () => {
     });
 
     it("returns 401 when x-revalidate-secret header is invalid", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "wrong-secret" },
         body: { tags: ["places"] },
@@ -79,9 +75,7 @@ describe("/api/revalidate", () => {
 
       // Re-import to pick up env change
       vi.resetModules();
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
 
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "any-secret" },
@@ -98,9 +92,7 @@ describe("/api/revalidate", () => {
 
   describe("Request Validation", () => {
     it("returns 400 when body is invalid JSON", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = new Request("http://localhost/api/revalidate", {
         method: "POST",
         headers: {
@@ -118,9 +110,7 @@ describe("/api/revalidate", () => {
     });
 
     it("returns 400 when tags field is missing", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: {},
@@ -134,9 +124,7 @@ describe("/api/revalidate", () => {
     });
 
     it("returns 400 when tags is empty array", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: [] },
@@ -150,9 +138,7 @@ describe("/api/revalidate", () => {
     });
 
     it("returns 400 when tags contains non-whitelisted tag", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: ["places", "events"] }, // events is not allowed
@@ -167,9 +153,7 @@ describe("/api/revalidate", () => {
     });
 
     it("returns 400 when tags contains unknown tag", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: ["unknown-tag"] },
@@ -185,9 +169,7 @@ describe("/api/revalidate", () => {
 
   describe("Successful Revalidation", () => {
     it("revalidates a single valid tag", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: ["places"] },
@@ -200,13 +182,11 @@ describe("/api/revalidate", () => {
       expect(data.revalidated).toBe(true);
       expect(data.tags).toEqual(["places"]);
       expect(data.timestamp).toBeDefined();
-      expect(revalidateTag).toHaveBeenCalledWith("places");
+      expect(revalidateTag).toHaveBeenCalledWith("places", "max");
     });
 
     it("revalidates multiple valid tags", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: ["places", "regions", "cities"] },
@@ -219,15 +199,13 @@ describe("/api/revalidate", () => {
       expect(data.revalidated).toBe(true);
       expect(data.tags).toEqual(["places", "regions", "cities"]);
       expect(revalidateTag).toHaveBeenCalledTimes(3);
-      expect(revalidateTag).toHaveBeenCalledWith("places");
-      expect(revalidateTag).toHaveBeenCalledWith("regions");
-      expect(revalidateTag).toHaveBeenCalledWith("cities");
+      expect(revalidateTag).toHaveBeenCalledWith("places", "max");
+      expect(revalidateTag).toHaveBeenCalledWith("regions", "max");
+      expect(revalidateTag).toHaveBeenCalledWith("cities", "max");
     });
 
     it("accepts all allowed tags", async () => {
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const allowedTags = [
         "places",
         "regions",
@@ -252,9 +230,7 @@ describe("/api/revalidate", () => {
 
   describe("HTTP Method Restrictions", () => {
     it("returns 405 for GET requests", async () => {
-      const { GET } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { GET } = await import("../app/api/revalidate/route");
 
       const response = await GET();
       const data = await response.json();
@@ -264,9 +240,7 @@ describe("/api/revalidate", () => {
     });
 
     it("returns 405 for PUT requests", async () => {
-      const { PUT } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { PUT } = await import("../app/api/revalidate/route");
 
       const response = await PUT();
       const data = await response.json();
@@ -276,9 +250,7 @@ describe("/api/revalidate", () => {
     });
 
     it("returns 405 for DELETE requests", async () => {
-      const { DELETE } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { DELETE } = await import("../app/api/revalidate/route");
 
       const response = await DELETE();
       const data = await response.json();
@@ -303,9 +275,7 @@ describe("/api/revalidate", () => {
       global.fetch = mockFetch;
 
       vi.resetModules();
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: ["places"] },
@@ -342,9 +312,7 @@ describe("/api/revalidate", () => {
       global.fetch = mockFetch;
 
       vi.resetModules();
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: ["places", "regions"] },
@@ -385,9 +353,7 @@ describe("/api/revalidate", () => {
       global.fetch = mockFetch;
 
       vi.resetModules();
-      const { POST } = await import(
-        "../app/api/revalidate/route"
-      );
+      const { POST } = await import("../app/api/revalidate/route");
       const request = createMockRequest({
         headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
         body: { tags: ["places"] },
@@ -407,4 +373,3 @@ describe("/api/revalidate", () => {
     });
   });
 });
-
