@@ -6,9 +6,11 @@ import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { useHydration } from "@components/hooks/useHydration";
 import { memo } from "react";
 import type { MobileShareProps } from "types/props";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 const NativeShareButton = dynamic(
-  () => import("@components/ui/common/nativeShareButton"),
+  () =>
+    retryDynamicImport(() => import("@components/ui/common/nativeShareButton")),
   {
     loading: () => <ShareIcon className="h-6 w-6 text-primary" />,
     ssr: false,

@@ -27,16 +27,31 @@ import { NavigationFiltersModalProps } from "types/props";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
-const Modal = dynamic(() => import("@components/ui/common/modal"), {
-  loading: () => <></>,
-  ssr: false,
-});
+const Modal = dynamic(
+  () =>
+    retryDynamicImport(() => import("@components/ui/common/modal"), {
+      retries: 3,
+      retryDelayMs: 200,
+    }),
+  {
+    loading: () => <></>,
+    ssr: false,
+  }
+);
 
-const Select = dynamic(() => import("@components/ui/common/form/select"), {
-  loading: () => <SelectSkeleton />,
-  ssr: false,
-});
+const Select = dynamic(
+  () =>
+    retryDynamicImport(() => import("@components/ui/common/form/select"), {
+      retries: 3,
+      retryDelayMs: 200,
+    }),
+  {
+    loading: () => <SelectSkeleton />,
+    ssr: false,
+  }
+);
 
 const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   isOpen,

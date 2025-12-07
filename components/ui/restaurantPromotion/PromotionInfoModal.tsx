@@ -3,9 +3,15 @@
 import { FC } from "react";
 import dynamic from "next/dynamic";
 import type { PromotionInfoModalProps } from "types/common";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 // Lazy load generic modal to keep initial bundle light
-const Modal = dynamic(() => import("@components/ui/common/modal"));
+const Modal = dynamic(() =>
+  retryDynamicImport(() => import("@components/ui/common/modal"), {
+    retries: 3,
+    retryDelayMs: 200,
+  })
+);
 
 const PromotionInfoModal: FC<PromotionInfoModalProps> = ({ open, setOpen }) => {
   return (

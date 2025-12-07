@@ -3,8 +3,16 @@ import dynamic from "next/dynamic";
 import { CloudIcon } from "@heroicons/react/outline";
 import type { EventWeatherProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
-const Weather = dynamic(() => import("components/ui/weather"), { ssr: false });
+const Weather = dynamic(
+  () =>
+    retryDynamicImport(() => import("components/ui/weather"), {
+      retries: 3,
+      retryDelayMs: 200,
+    }),
+  { ssr: false }
+);
 
 const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
   if (!weather) return null;

@@ -8,8 +8,16 @@ import {
 } from "@heroicons/react/outline";
 import dynamic from "next/dynamic";
 import type { EventLocationProps } from "types/event";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
-const Maps = dynamic(() => import("components/ui/maps"), { ssr: false });
+const Maps = dynamic(
+  () =>
+    retryDynamicImport(() => import("components/ui/maps"), {
+      retries: 3,
+      retryDelayMs: 200,
+    }),
+  { ssr: false }
+);
 
 export default function EventLocationClient({
   location,
