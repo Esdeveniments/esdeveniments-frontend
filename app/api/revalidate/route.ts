@@ -236,8 +236,8 @@ export async function POST(request: Request) {
       cloudflareResult = {
         purged: cfResult.success && !cfResult.skipped,
         prefixes: prefixArray,
-        ...(cfResult.skipped ? { skipped: true } : {}),
-        ...(cfResult.error ? { error: cfResult.error } : {}),
+        skipped: cfResult.skipped,
+        error: cfResult.error,
       };
     } else {
       cloudflareResult = { purged: false, skipped: true };
