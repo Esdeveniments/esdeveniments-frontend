@@ -6,6 +6,18 @@ export const MAX_RESULTS = 15;
 export const MAX_TOTAL_UPLOAD_BYTES = 8 * 1024 * 1024; // Keep >2 MB headroom under 10 MB server limit
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR = "event_image_upload_too_large";
 
+export const formatMegabytesLabel = (bytes: number): string => {
+  const value = bytes / (1024 * 1024);
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+};
+
+export const formatMegabytes = (bytes: number): string =>
+  (bytes / (1024 * 1024)).toFixed(2);
+
+export const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(
+  MAX_TOTAL_UPLOAD_BYTES
+);
+
 /**
  * Detects if the application is in build phase (SSG/static generation).
  * During build phase, we bypass internal API proxy and call external API directly

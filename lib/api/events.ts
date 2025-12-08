@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { captureException, captureMessage } from "@sentry/nextjs";
+import { formatMegabytes } from "@utils/constants";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
@@ -45,9 +46,6 @@ const e2eEventsStore = isE2ETestMode
   : null;
 
 const IMAGE_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
-
-const formatMegabytes = (bytes: number): string =>
-  (bytes / (1024 * 1024)).toFixed(2);
 
 const recordImageSizeTelemetry = (imageBytes: number) => {
   if (imageBytes < IMAGE_WARNING_THRESHOLD) {
@@ -316,16 +314,20 @@ export async function uploadEventImage(imageFile: File): Promise<string> {
     throw new Error("uploadEventImage: empty response body");
   }
 
+  // The backend may return the URL in several formats:
+  // 1. JSON object: { "url": "..." }
+  // 2. JSON-encoded string: "https://..."
+  // 3. Plain string (optional quotes): https://... or "https://..."
   try {
     const parsed = JSON.parse(rawBody);
-    if (typeof parsed === "string") {
-      return parsed;
-    }
     if (parsed?.url && typeof parsed.url === "string") {
       return parsed.url;
     }
+    if (typeof parsed === "string") {
+      return parsed;
+    }
   } catch {
-    // Not JSON, fall back to raw string
+    // Not JSON, fall back to raw string handling.
   }
 
   return rawBody.replace(/^"|"$/g, "");

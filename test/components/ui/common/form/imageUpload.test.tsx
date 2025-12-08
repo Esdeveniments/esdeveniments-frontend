@@ -3,7 +3,10 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ImageUploader from "@components/ui/common/form/imageUpload";
 import { renderWithProviders } from "../../../../utils/renderWithProviders";
-import { MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
+import {
+  MAX_TOTAL_UPLOAD_BYTES,
+  formatMegabytesLabel,
+} from "@utils/constants";
 
 const mockCompress = vi.fn();
 
@@ -57,12 +60,7 @@ class MockFileReader {
 
 global.FileReader = MockFileReader as unknown as typeof FileReader;
 
-const formatLimitLabel = (bytes: number) => {
-  const value = bytes / (1024 * 1024);
-  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
-};
-
-const MAX_LIMIT_LABEL = formatLimitLabel(MAX_TOTAL_UPLOAD_BYTES);
+const MAX_LIMIT_LABEL = formatMegabytesLabel(MAX_TOTAL_UPLOAD_BYTES);
 
 describe("ImageUploader file validation", () => {
   beforeEach(() => {
@@ -84,7 +82,7 @@ describe("ImageUploader file validation", () => {
     return file;
   };
 
-  it("accepts valid image files under 8MB", async () => {
+  it(`accepts valid image files under ${MAX_LIMIT_LABEL}MB`, async () => {
     const onUpload = vi.fn();
     const validFile = createMockFile("test.jpg", "image/jpeg", 5 * 1024 * 1024); // 5MB
 
@@ -115,7 +113,7 @@ describe("ImageUploader file validation", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("rejects files over 8MB with correct error message", async () => {
+  it(`rejects files over ${MAX_LIMIT_LABEL}MB with correct error message`, async () => {
     const onUpload = vi.fn();
     const largeFile = createMockFile(
       "large.jpg",
@@ -152,10 +150,9 @@ describe("ImageUploader file validation", () => {
     expect(onUpload).not.toHaveBeenCalled();
   });
 
-  it("accepts files exactly at 8MB boundary", async () => {
+  it(`accepts files exactly at ${MAX_LIMIT_LABEL}MB boundary`, async () => {
     const onUpload = vi.fn();
-    // 8MB exactly (should pass as validation uses > not >=)
-    // Note: 8 * 1024 * 1024 = 8388608 bytes, which is exactly 8MB
+    // Exactly at the configured limit (should pass as validation uses > not >=)
     const boundaryFile = createMockFile(
       "boundary.jpg",
       "image/jpeg",
@@ -188,7 +185,7 @@ describe("ImageUploader file validation", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("accepts files just under 8MB", async () => {
+  it(`accepts files just under ${MAX_LIMIT_LABEL}MB`, async () => {
     const onUpload = vi.fn();
     // 7.9MB (should pass)
     const validFile = createMockFile(

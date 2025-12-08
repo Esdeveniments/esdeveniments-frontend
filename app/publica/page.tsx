@@ -22,6 +22,8 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
+  MAX_UPLOAD_LIMIT_LABEL,
+  formatMegabytesLabel,
 } from "@utils/constants";
 import { uploadImageWithProgress } from "@utils/upload-event-image-client";
 
@@ -41,10 +43,7 @@ const getDefaultEventDates = () => {
 
 const defaultEventDates = getDefaultEventDates();
 
-const MAX_UPLOAD_LIMIT_LABEL = (() => {
-  const value = MAX_TOTAL_UPLOAD_BYTES / (1024 * 1024);
-  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
-})();
+const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(MAX_TOTAL_UPLOAD_BYTES);
 
 const defaultForm: FormData = {
   title: "",
@@ -384,6 +383,9 @@ const Publica = () => {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         const normalizedMessage = errorMessage.toLowerCase();
+        const isImageUploadLimit = normalizedMessage.includes(
+          EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
+        );
         const isBodyLimit =
           normalizedMessage.includes("body size limit") ||
           normalizedMessage.includes("body exceeded") ||
@@ -392,16 +394,17 @@ const Publica = () => {
         const isRequestTooLarge =
           normalizedMessage.includes("status: 413") ||
           normalizedMessage.includes("request entity too large");
-        const isImageUploadLimit = normalizedMessage.includes(
-          EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
-        );
         const isFormParsingError =
           normalizedMessage.includes("unexpected end of form") ||
           normalizedMessage.includes("failed to parse body as formdata");
 
-        if (isBodyLimit || isRequestTooLarge || isImageUploadLimit) {
+        if (isImageUploadLimit) {
           setError(
             `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
+          );
+        } else if (isBodyLimit || isRequestTooLarge) {
+          setError(
+            "La mida total de la sol·licitud (imatge + dades) supera el límit permès pel servidor. Redueix la mida de la imatge abans de tornar-ho a intentar."
           );
         } else if (isFormParsingError) {
           setError(

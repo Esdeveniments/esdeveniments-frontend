@@ -2,6 +2,7 @@ const DEFAULT_MAX_DIMENSION = 2560;
 const DEFAULT_INITIAL_QUALITY = 0.85;
 const DEFAULT_MIN_QUALITY = 0.5;
 const DEFAULT_QUALITY_STEP = 0.05;
+const DEFAULT_MAX_ITERATIONS = 20;
 
 const readFileAsDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -61,7 +62,12 @@ const canvasToBlob = (
 
 const createCompressedFilename = (name: string, mime: string): string => {
   const baseName = name.replace(/\.[^.]+$/, "");
-  const extension = mime === "image/webp" ? "webp" : "jpg";
+  const extension =
+    mime === "image/webp"
+      ? "webp"
+      : mime === "image/png"
+        ? "png"
+        : "jpg";
   return `${baseName}-compressed.${extension}`;
 };
 
@@ -108,15 +114,27 @@ export async function compressImageIfNeeded(
     ctx.drawImage(image, 0, 0, width, height);
 
     const targetType =
-      file.type === "image/webp" ? "image/webp" : "image/jpeg";
+      file.type === "image/webp"
+        ? "image/webp"
+        : file.type === "image/png"
+          ? "image/png"
+          : "image/jpeg";
     let quality = options.initialQuality ?? DEFAULT_INITIAL_QUALITY;
     const minQuality = options.minQuality ?? DEFAULT_MIN_QUALITY;
     const step = options.qualityStep ?? DEFAULT_QUALITY_STEP;
+    const maxIterations = DEFAULT_MAX_ITERATIONS;
+    let iterations = 0;
     let blob = await canvasToBlob(canvas, targetType, quality);
 
-    while (blob && blob.size > maxBytes && quality > minQuality) {
+    while (
+      blob &&
+      blob.size > maxBytes &&
+      quality > minQuality &&
+      iterations < maxIterations
+    ) {
       quality = Math.max(minQuality, quality - step);
       blob = await canvasToBlob(canvas, targetType, quality);
+      iterations += 1;
     }
 
     if (!blob || blob.size >= file.size || blob.size > maxBytes) {

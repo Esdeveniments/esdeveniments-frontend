@@ -2,20 +2,16 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import UploadIcon from "@heroicons/react/outline/UploadIcon";
 import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
-import { MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
+import {
+  MAX_TOTAL_UPLOAD_BYTES,
+  MAX_UPLOAD_LIMIT_LABEL,
+  formatMegabytes,
+  formatMegabytesLabel,
+} from "@utils/constants";
 import { compressImageIfNeeded } from "@utils/image-optimizer";
 
 const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // 25 MB guardrail
 
-const formatMegabytesLabel = (bytes: number): string => {
-  const value = bytes / (1024 * 1024);
-  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
-};
-
-const formatMegabytes = (bytes: number): string =>
-  (bytes / (1024 * 1024)).toFixed(2);
-
-const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(MAX_TOTAL_UPLOAD_BYTES);
 const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(MAX_ORIGINAL_FILE_BYTES);
 
 interface Props extends ImageUploaderProps {
