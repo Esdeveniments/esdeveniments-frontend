@@ -5,14 +5,11 @@ import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
+  MAX_ORIGINAL_FILE_BYTES,
+  MAX_ORIGINAL_LIMIT_LABEL,
   formatMegabytes,
-  formatMegabytesLabel,
 } from "@utils/constants";
 import { compressImageIfNeeded } from "@utils/image-optimizer";
-
-const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // 25 MB guardrail
-
-const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(MAX_ORIGINAL_FILE_BYTES);
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   value,

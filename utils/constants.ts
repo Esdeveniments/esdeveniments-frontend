@@ -5,6 +5,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 export const MAX_RESULTS = 15;
 export const MAX_TOTAL_UPLOAD_BYTES = 8 * 1024 * 1024; // Keep >2 MB headroom under 10 MB server limit
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR = "event_image_upload_too_large";
+export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads
 
 export const formatMegabytesLabel = (bytes: number): string => {
   const value = bytes / (1024 * 1024);
@@ -16,6 +17,10 @@ export const formatMegabytes = (bytes: number): string =>
 
 export const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(
   MAX_TOTAL_UPLOAD_BYTES
+);
+
+export const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(
+  MAX_ORIGINAL_FILE_BYTES
 );
 
 /**

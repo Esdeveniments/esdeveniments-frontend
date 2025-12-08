@@ -33,14 +33,19 @@ export function uploadImageWithProgress(
     xhr.onload = () => {
       const responseText = typeof xhr.response === "string" ? xhr.response : "";
       if (xhr.status >= 200 && xhr.status < 300) {
+        // Backend may respond with { url: "..." } or a plain string URL
         try {
           const parsed = responseText ? JSON.parse(responseText) : null;
           if (parsed && typeof parsed.url === "string") {
             resolve(parsed.url);
             return;
           }
+          if (typeof parsed === "string") {
+            resolve(parsed);
+            return;
+          }
         } catch {
-          // Not JSON, fall back to raw value
+          // Not JSON, continue with raw string
         }
 
         const trimmed = responseText.trim().replace(/^"|"$/g, "");
