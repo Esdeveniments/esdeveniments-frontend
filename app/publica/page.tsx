@@ -19,7 +19,10 @@ import type { E2EEventExtras } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import { MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
+import {
+  EVENT_PAYLOAD_TOO_LARGE_ERROR,
+  MAX_TOTAL_UPLOAD_BYTES,
+} from "@utils/constants";
 
 const getDefaultEventDates = () => {
   const now = new Date();
@@ -36,6 +39,11 @@ const getDefaultEventDates = () => {
 };
 
 const defaultEventDates = getDefaultEventDates();
+
+const MAX_UPLOAD_LIMIT_LABEL = (() => {
+  const value = MAX_TOTAL_UPLOAD_BYTES / (1024 * 1024);
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+})();
 
 const defaultForm: FormData = {
   title: "",
@@ -270,7 +278,7 @@ const Publica = () => {
 
     if (imageFile && imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
       setError(
-        "La imatge supera el límit permès de 9,5 MB. Si us plau, tria una imatge més petita."
+        `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, tria una imatge més petita.`
       );
       return;
     }
@@ -320,13 +328,16 @@ const Publica = () => {
         const isRequestTooLarge =
           normalizedMessage.includes("status: 413") ||
           normalizedMessage.includes("request entity too large");
+        const isCustomPayloadLimit = normalizedMessage.includes(
+          EVENT_PAYLOAD_TOO_LARGE_ERROR
+        );
         const isFormParsingError =
           normalizedMessage.includes("unexpected end of form") ||
           normalizedMessage.includes("failed to parse body as formdata");
 
-        if (isBodyLimit || isRequestTooLarge) {
+        if (isBodyLimit || isRequestTooLarge || isCustomPayloadLimit) {
           setError(
-            "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries."
+            `La mida total de la sol·licitud (imatge + dades) supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries.`
           );
         } else if (isFormParsingError) {
           setError(
@@ -338,7 +349,14 @@ const Publica = () => {
           );
         }
 
-        if (!(isBodyLimit || isRequestTooLarge || isFormParsingError)) {
+        if (
+          !(
+            isBodyLimit ||
+            isRequestTooLarge ||
+            isCustomPayloadLimit ||
+            isFormParsingError
+          )
+        ) {
           captureException(error);
         }
       }

@@ -13,7 +13,11 @@ import {
   fetchEventsExternal,
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
-import { isBuildPhase } from "@utils/constants";
+import {
+  EVENT_PAYLOAD_TOO_LARGE_ERROR,
+  MAX_TOTAL_UPLOAD_BYTES,
+  isBuildPhase,
+} from "@utils/constants";
 import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,
@@ -39,6 +43,32 @@ const e2eEventsStore = isE2ETestMode
   ? getE2EGlobal().__E2E_EVENTS__ ??
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
   : null;
+
+const MULTIPART_OVERHEAD_BYTES = 256 * 1024; // ~250 KB to cover multipart boundaries and headers
+
+const formatMegabytes = (bytes: number): string =>
+  (bytes / (1024 * 1024)).toFixed(2);
+
+function ensureCreateEventPayloadWithinLimit(
+  requestJson: string,
+  imageFile?: File | null
+) {
+  const requestBytes = Buffer.byteLength(requestJson, "utf-8");
+  const imageBytes = imageFile?.size ?? 0;
+  const estimatedBytes =
+    requestBytes +
+    imageBytes +
+    (imageBytes > 0 ? MULTIPART_OVERHEAD_BYTES : 0);
+
+  if (estimatedBytes > MAX_TOTAL_UPLOAD_BYTES) {
+    console.warn(
+      `createEvent: payload ${formatMegabytes(
+        estimatedBytes
+      )}MB exceeds limit ${formatMegabytes(MAX_TOTAL_UPLOAD_BYTES)}MB`
+    );
+    throw new Error(EVENT_PAYLOAD_TOO_LARGE_ERROR);
+  }
+}
 
 async function fetchEventsInternal(
   params: FetchEventsParams
@@ -212,9 +242,12 @@ export async function createEvent(
     return createE2EEvent(data, e2eExtras);
   }
 
+  const requestPayload = JSON.stringify(data);
+  ensureCreateEventPayloadWithinLimit(requestPayload, imageFile);
+
   const formData = new FormData();
 
-  formData.append("request", JSON.stringify(data));
+  formData.append("request", requestPayload);
 
   if (imageFile) {
     formData.append("imageFile", imageFile);

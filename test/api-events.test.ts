@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchEvents, insertAds } from "../lib/api/events";
+import { createEvent, fetchEvents, insertAds } from "../lib/api/events";
+import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
+  EventCreateRequestDTO,
   PagedResponseDTO,
   EventSummaryResponseDTO,
   ListEvent,
 } from "types/api/event";
+import {
+  EVENT_PAYLOAD_TOO_LARGE_ERROR,
+  MAX_TOTAL_UPLOAD_BYTES,
+} from "@utils/constants";
 
 const originalEnv = { ...process.env };
 
@@ -82,5 +88,32 @@ describe("lib/api/events", () => {
     // Allow broader tolerance to avoid coupling to exact implementation
     expect(adCount).toBeGreaterThanOrEqual(3);
     expect(adCount).toBeLessThanOrEqual(7);
+  });
+
+  it("throws a descriptive error when createEvent payloads exceed the upload budget", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const payload: EventCreateRequestDTO = {
+      title: "Test event",
+      type: "FREE",
+      url: "https://example.com/event",
+      description: "Desc",
+      imageUrl: null,
+      regionId: 1,
+      cityId: 1,
+      startDate: "2025-01-01",
+      startTime: "10:00",
+      endDate: "2025-01-01",
+      endTime: "12:00",
+      location: "Test",
+      categories: [1],
+    };
+
+    const oversizedFile = { size: MAX_TOTAL_UPLOAD_BYTES + 1024 } as File;
+    const fetchSpy = vi.spyOn(fetchWrapper, "fetchWithHmac");
+
+    await expect(createEvent(payload, oversizedFile)).rejects.toThrow(
+      EVENT_PAYLOAD_TOO_LARGE_ERROR
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
