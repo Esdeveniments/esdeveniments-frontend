@@ -1,11 +1,8 @@
-import {
-  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
-  MAX_TOTAL_UPLOAD_BYTES,
-} from "@utils/constants";
+import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
 
-interface UploadOptions {
+type UploadOptions = {
   onProgress?: (percent: number) => void;
-}
+};
 
 const UPLOAD_ENDPOINT = "/api/publica/image-upload";
 
@@ -72,7 +69,6 @@ export function uploadImageWithProgress(
 
     const formData = new FormData();
     formData.append("imageFile", file, file.name || "event-image");
-    formData.append("maxBytes", String(MAX_TOTAL_UPLOAD_BYTES));
 
     xhr.send(formData);
   });

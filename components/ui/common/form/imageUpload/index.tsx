@@ -14,12 +14,7 @@ const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // 25 MB guardrail
 
 const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(MAX_ORIGINAL_FILE_BYTES);
 
-interface Props extends ImageUploaderProps {
-  isUploading?: boolean;
-  uploadMessage?: string | null;
-}
-
-const ImageUploader: React.FC<Props> = ({
+const ImageUploader: React.FC<ImageUploaderProps> = ({
   value,
   onUpload,
   progress,
@@ -155,6 +150,15 @@ const ImageUploader: React.FC<Props> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleRemoveImage = () => {
+    setImgData(null);
+    resetMessages();
+    if (fileSelect.current) {
+      fileSelect.current.value = "";
+    }
+    onUpload(null);
+  };
+
   const isRemoteUploading = progress > 0 && progress < 100;
   const isInteractionDisabled = isOptimizing || isUploading || isRemoteUploading;
 
@@ -238,7 +242,7 @@ const ImageUploader: React.FC<Props> = ({
       {imgData && (
         <div className="flex justify-center items-start p-4">
           <button
-            onClick={() => setImgData(null)}
+            onClick={handleRemoveImage}
             className="bg-background rounded-full p-1 hover:bg-primary"
             type="button"
           >

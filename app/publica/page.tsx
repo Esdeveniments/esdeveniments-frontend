@@ -169,8 +169,19 @@ const Publica = () => {
     handleFormChange("region", region);
   };
 
-  const handleImageChange = (file: File) => {
+  const handleImageChange = (file: File | null) => {
     setError(null);
+    setImageUploadMessage(null);
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(null);
+      setUploadedImageUrl(null);
+      setUploadedImageSignature(null);
+      setUploadProgress(0);
+      return;
+    }
+
     setImageFile(file);
     const reader = new FileReader();
     reader.addEventListener("load", () => {
@@ -180,7 +191,6 @@ const Publica = () => {
     setUploadedImageUrl(null);
     setUploadedImageSignature(null);
     setUploadProgress(0);
-    setImageUploadMessage(null);
   };
 
   const handleTownChange = (town: Option | null) =>
@@ -291,6 +301,7 @@ const Publica = () => {
 
   const onSubmit = async () => {
     setError(null); // Clear any previous errors
+    setImageUploadMessage(null);
 
     if (imageFile && imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
       setError(
