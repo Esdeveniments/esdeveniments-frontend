@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { captureException } from "@sentry/nextjs";
+import { captureException, captureMessage } from "@sentry/nextjs";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
@@ -45,9 +45,33 @@ const e2eEventsStore = isE2ETestMode
   : null;
 
 const MULTIPART_OVERHEAD_BYTES = 256 * 1024; // ~250 KB to cover multipart boundaries and headers
+const PAYLOAD_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
 
 const formatMegabytes = (bytes: number): string =>
   (bytes / (1024 * 1024)).toFixed(2);
+
+const recordPayloadSizeTelemetry = (
+  estimatedBytes: number,
+  requestBytes: number,
+  imageBytes: number
+) => {
+  if (estimatedBytes < PAYLOAD_WARNING_THRESHOLD) {
+    return;
+  }
+  const level = estimatedBytes > MAX_TOTAL_UPLOAD_BYTES ? "error" : "warning";
+  captureMessage("createEvent payload near limit", {
+    level,
+    extra: {
+      estimatedBytes,
+      requestBytes,
+      imageBytes,
+      limitBytes: MAX_TOTAL_UPLOAD_BYTES,
+      estimatedMb: formatMegabytes(estimatedBytes),
+      requestMb: formatMegabytes(requestBytes),
+      imageMb: formatMegabytes(imageBytes),
+    },
+  });
+};
 
 function ensureCreateEventPayloadWithinLimit(
   requestJson: string,
@@ -59,6 +83,8 @@ function ensureCreateEventPayloadWithinLimit(
     requestBytes +
     imageBytes +
     (imageBytes > 0 ? MULTIPART_OVERHEAD_BYTES : 0);
+
+  recordPayloadSizeTelemetry(estimatedBytes, requestBytes, imageBytes);
 
   if (estimatedBytes > MAX_TOTAL_UPLOAD_BYTES) {
     console.warn(

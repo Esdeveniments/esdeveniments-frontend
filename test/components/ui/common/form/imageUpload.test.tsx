@@ -3,6 +3,13 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ImageUploader from "@components/ui/common/form/imageUpload";
 import { renderWithProviders } from "../../../../utils/renderWithProviders";
+import { MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
+
+const mockCompress = vi.fn();
+
+vi.mock("@utils/image-optimizer", () => ({
+  compressImageIfNeeded: (...args: unknown[]) => mockCompress(...args),
+}));
 
 // Mock Next.js navigation hooks
 vi.mock("next/navigation", () => ({
@@ -50,9 +57,18 @@ class MockFileReader {
 
 global.FileReader = MockFileReader as unknown as typeof FileReader;
 
+const formatLimitLabel = (bytes: number) => {
+  const value = bytes / (1024 * 1024);
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+};
+
+const MAX_LIMIT_LABEL = formatLimitLabel(MAX_TOTAL_UPLOAD_BYTES);
+
 describe("ImageUploader file validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCompress.mockReset();
+    mockCompress.mockResolvedValue(null);
   });
 
   const createMockFile = (
@@ -93,7 +109,9 @@ describe("ImageUploader file validation", () => {
 
     // Should not show error message
     expect(
-      screen.queryByText(/supera el límit permès de 8 MB/i)
+      screen.queryByText(
+        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i")
+      )
     ).not.toBeInTheDocument();
   });
 
@@ -122,7 +140,10 @@ describe("ImageUploader file validation", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          /La mida de l'imatge supera el límit permès de 8 MB/i
+          new RegExp(
+            `La mida de la imatge supera el límit permès de ${MAX_LIMIT_LABEL} MB`,
+            "i"
+          )
         )
       ).toBeInTheDocument();
     });
@@ -161,7 +182,9 @@ describe("ImageUploader file validation", () => {
 
     // Should not show error message
     expect(
-      screen.queryByText(/supera el límit permès de 8 MB/i)
+      screen.queryByText(
+        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i")
+      )
     ).not.toBeInTheDocument();
   });
 
@@ -193,8 +216,75 @@ describe("ImageUploader file validation", () => {
     }, { timeout: 2000 });
 
     expect(
-      screen.queryByText(/supera el límit permès de 8 MB/i)
+      screen.queryByText(
+        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i")
+      )
     ).not.toBeInTheDocument();
+  });
+
+  it("compresses files over the limit when optimizer succeeds", async () => {
+    const onUpload = vi.fn();
+    const largeFile = createMockFile(
+      "large.jpg",
+      "image/jpeg",
+      9 * 1024 * 1024
+    );
+    const compressedFile = createMockFile(
+      "large-compressed.jpg",
+      "image/jpeg",
+      6 * 1024 * 1024
+    );
+    mockCompress.mockResolvedValueOnce(compressedFile);
+
+    renderWithProviders(
+      <ImageUploader value={null} onUpload={onUpload} progress={0} />
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [largeFile],
+      writable: false,
+    });
+
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(onUpload).toHaveBeenCalledWith(compressedFile);
+    });
+
+    expect(
+      screen.getByTestId("image-upload-status")
+    ).toHaveTextContent(/Hem reduït la imatge de/i);
+  });
+
+  it("shows a descriptive error if compression throws", async () => {
+    const onUpload = vi.fn();
+    const largeFile = createMockFile(
+      "large.jpg",
+      "image/jpeg",
+      9 * 1024 * 1024
+    );
+    mockCompress.mockRejectedValueOnce(new Error("failed"));
+
+    renderWithProviders(
+      <ImageUploader value={null} onUpload={onUpload} progress={0} />
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [largeFile],
+      writable: false,
+    });
+
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/No hem pogut reduir la imatge/i)
+      ).toBeInTheDocument();
+    });
+
+    expect(onUpload).not.toHaveBeenCalled();
   });
 
   it("rejects unsupported file types", async () => {
