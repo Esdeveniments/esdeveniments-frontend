@@ -23,7 +23,6 @@ import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
-  formatMegabytesLabel,
 } from "@utils/constants";
 import { uploadImageWithProgress } from "@utils/upload-event-image-client";
 
@@ -42,8 +41,6 @@ const getDefaultEventDates = () => {
 };
 
 const defaultEventDates = getDefaultEventDates();
-
-const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(MAX_TOTAL_UPLOAD_BYTES);
 
 const defaultForm: FormData = {
   title: "",

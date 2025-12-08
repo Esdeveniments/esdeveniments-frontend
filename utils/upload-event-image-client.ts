@@ -1,14 +1,11 @@
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
-
-type UploadOptions = {
-  onProgress?: (percent: number) => void;
-};
+import type { UploadImageOptions } from "types/upload";
 
 const UPLOAD_ENDPOINT = "/api/publica/image-upload";
 
 export function uploadImageWithProgress(
   file: File,
-  options: UploadOptions = {}
+  options: UploadImageOptions = {}
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!(file instanceof File)) {
