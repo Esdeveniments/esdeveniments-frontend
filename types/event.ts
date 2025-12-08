@@ -276,6 +276,8 @@ export interface EventFormProps {
   progress: number;
   imageToUpload: string | null;
   imageFile?: File | null;
+  isUploadingImage?: boolean;
+  uploadMessage?: string | null;
 }
 
 export interface UseEventsOptions {

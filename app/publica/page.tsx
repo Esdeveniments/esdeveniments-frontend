@@ -23,6 +23,7 @@ import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
 } from "@utils/constants";
+import { uploadImageWithProgress } from "@utils/upload-event-image-client";
 
 const getDefaultEventDates = () => {
   const now = new Date();
@@ -90,6 +91,9 @@ const isCategoryOption = (
     "label" in category
   );
 
+const buildFileSignature = (file: File) =>
+  `${file.name}-${file.size}-${file.lastModified}`;
+
 const Publica = () => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
@@ -97,6 +101,15 @@ const Publica = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [uploadedImageSignature, setUploadedImageSignature] = useState<
+    string | null
+  >(null);
+  const [imageUploadMessage, setImageUploadMessage] = useState<string | null>(
+    null
+  );
 
   const {
     regionsWithCities,
@@ -165,6 +178,10 @@ const Publica = () => {
       setImagePreview(reader.result as string);
     });
     reader.readAsDataURL(file);
+    setUploadedImageUrl(null);
+    setUploadedImageSignature(null);
+    setUploadProgress(0);
+    setImageUploadMessage(null);
   };
 
   const handleTownChange = (town: Option | null) =>
@@ -283,8 +300,58 @@ const Publica = () => {
       return;
     }
 
+    if (isUploadingImage) {
+      return;
+    }
+
     startTransition(async () => {
       try {
+        let resolvedImageUrl = uploadedImageUrl;
+
+        if (imageFile) {
+          const signature = buildFileSignature(imageFile);
+          if (signature !== uploadedImageSignature) {
+            setIsUploadingImage(true);
+            setUploadProgress(0);
+            try {
+              const uploadedUrl = await uploadImageWithProgress(imageFile, {
+                onProgress: (percent) => setUploadProgress(percent),
+              });
+              resolvedImageUrl = uploadedUrl;
+              setUploadedImageUrl(uploadedUrl);
+              setUploadedImageSignature(signature);
+              setImageUploadMessage("Imatge pujada correctament.");
+              setUploadProgress(100);
+              setTimeout(() => setUploadProgress(0), 800);
+            } catch (uploadError) {
+              const uploadMessage =
+                uploadError instanceof Error
+                  ? uploadError.message
+                  : String(uploadError);
+              if (uploadMessage === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
+                setError(
+                  `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
+                );
+              } else {
+                setError(
+                  "No hem pogut pujar la imatge. Revisa la connexió i torna-ho a intentar."
+                );
+              }
+              setImageUploadMessage(null);
+              setIsUploadingImage(false);
+              setUploadProgress(0);
+              return;
+            } finally {
+              setIsUploadingImage(false);
+            }
+          }
+        }
+
+        if (!resolvedImageUrl) {
+          setError("La imatge és obligatòria.");
+          return;
+        }
+
         const regionLabel =
           form.region && "label" in form.region ? form.region.label : "";
         const townLabel =
@@ -296,14 +363,11 @@ const Publica = () => {
           ...form,
           url: normalizeUrl(form.url),
           location,
+          imageUrl: resolvedImageUrl,
         });
 
         const e2eExtras = buildE2EExtras();
-        const { event } = await createEventAction(
-          eventData,
-          imageFile || undefined,
-          e2eExtras
-        );
+        const { event } = await createEventAction(eventData, e2eExtras);
 
         const { slug } = event;
         if (typeof document !== "undefined") {
@@ -386,7 +450,7 @@ const Publica = () => {
             regionOptions={regionOptions}
             cityOptions={cityOptions}
             categoryOptions={categoryOptions}
-            progress={0}
+          progress={uploadProgress}
             isLoadingRegionsWithCities={isLoadingRegions}
             handleFormChange={handleFormChange}
             handleImageChange={handleImageChange}
@@ -395,6 +459,8 @@ const Publica = () => {
             handleCategoriesChange={handleCategoriesChange}
             imageToUpload={imagePreview}
             imageFile={imageFile}
+          isUploadingImage={isUploadingImage}
+          uploadMessage={imageUploadMessage}
           />
         </div>
       </div>

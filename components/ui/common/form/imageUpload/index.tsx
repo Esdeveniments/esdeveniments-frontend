@@ -18,10 +18,17 @@ const formatMegabytes = (bytes: number): string =>
 const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(MAX_TOTAL_UPLOAD_BYTES);
 const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(MAX_ORIGINAL_FILE_BYTES);
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({
+interface Props extends ImageUploaderProps {
+  isUploading?: boolean;
+  uploadMessage?: string | null;
+}
+
+const ImageUploader: React.FC<Props> = ({
   value,
   onUpload,
   progress,
+  isUploading = false,
+  uploadMessage,
 }) => {
   const fileSelect = useRef<HTMLInputElement>(null);
   const [imgData, setImgData] = useState<string | null>(value);
@@ -152,6 +159,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const isRemoteUploading = progress > 0 && progress < 100;
+  const isInteractionDisabled = isOptimizing || isUploading || isRemoteUploading;
+
   return (
     <div className="w-full text-foreground-strong">
       <label htmlFor="image" className="text-foreground-strong font-bold">
@@ -176,10 +186,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           {progress === 0 ? (
             <div className="text-center">
               <button
-                className="bg-background hover:bg-primary font-bold px-2 py-2 rounded-xl"
+                className="bg-background hover:bg-primary font-bold px-2 py-2 rounded-xl disabled:opacity-60"
                 onClick={handleImageUpload}
                 type="button"
-                disabled={isOptimizing}
+                disabled={isInteractionDisabled}
               >
                 <UploadIcon className="w-6 h-6 text-foreground-strong hover:text-background" />
               </button>
@@ -196,7 +206,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             onChange={(event) => {
               void onChangeImage(event);
             }}
-            disabled={isOptimizing}
+            disabled={isInteractionDisabled}
           />
         </div>
       </div>
@@ -205,10 +215,28 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           Optimitzant la imatge per complir el límit de {MAX_UPLOAD_LIMIT_LABEL} MB...
         </p>
       )}
+      {progress > 0 && (
+        <div className="w-full mt-3">
+          <div className="h-2 rounded-full bg-border overflow-hidden">
+            <div
+              className="h-full bg-primary transition-[width] duration-200"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-foreground/70 mt-1">
+            {progress >= 100
+              ? "Imatge pujada correctament."
+              : `Pujant la imatge (${progress}%)...`}
+          </p>
+        </div>
+      )}
       {status && (
         <p className="text-sm text-foreground/80 mt-2" data-testid="image-upload-status">
           {status}
         </p>
+      )}
+      {uploadMessage && (
+        <p className="text-sm text-foreground/80 mt-2">{uploadMessage}</p>
       )}
       {error && <p className="text-primary text-sm mt-2">{error}</p>}
       {imgData && (
