@@ -14,7 +14,7 @@ import {
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
-  EVENT_PAYLOAD_TOO_LARGE_ERROR,
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
   isBuildPhase,
 } from "@utils/constants";
@@ -44,57 +44,38 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
   : null;
 
-const MULTIPART_OVERHEAD_BYTES = 256 * 1024; // ~250 KB to cover multipart boundaries and headers
-const PAYLOAD_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
+const IMAGE_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
 
 const formatMegabytes = (bytes: number): string =>
   (bytes / (1024 * 1024)).toFixed(2);
 
-const recordPayloadSizeTelemetry = (
-  estimatedBytes: number,
-  requestBytes: number,
-  imageBytes: number
-) => {
-  if (estimatedBytes < PAYLOAD_WARNING_THRESHOLD) {
+const recordImageSizeTelemetry = (imageBytes: number) => {
+  if (imageBytes < IMAGE_WARNING_THRESHOLD) {
     return;
   }
-  const level = estimatedBytes > MAX_TOTAL_UPLOAD_BYTES ? "error" : "warning";
-  captureMessage("createEvent payload near limit", {
+  const level = imageBytes > MAX_TOTAL_UPLOAD_BYTES ? "error" : "warning";
+  captureMessage("uploadEventImage size near limit", {
     level,
     extra: {
-      estimatedBytes,
-      requestBytes,
       imageBytes,
       limitBytes: MAX_TOTAL_UPLOAD_BYTES,
-      estimatedMb: formatMegabytes(estimatedBytes),
-      requestMb: formatMegabytes(requestBytes),
       imageMb: formatMegabytes(imageBytes),
+      limitMb: formatMegabytes(MAX_TOTAL_UPLOAD_BYTES),
     },
   });
 };
 
-function ensureCreateEventPayloadWithinLimit(
-  requestJson: string,
-  imageFile?: File | null
-) {
-  const requestBytes = Buffer.byteLength(requestJson, "utf-8");
-  const imageBytes = imageFile?.size ?? 0;
-  const estimatedBytes =
-    requestBytes +
-    imageBytes +
-    (imageBytes > 0 ? MULTIPART_OVERHEAD_BYTES : 0);
-
-  recordPayloadSizeTelemetry(estimatedBytes, requestBytes, imageBytes);
-
-  if (estimatedBytes > MAX_TOTAL_UPLOAD_BYTES) {
+const ensureImageWithinLimit = (imageFile: File) => {
+  recordImageSizeTelemetry(imageFile.size);
+  if (imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
     console.warn(
-      `createEvent: payload ${formatMegabytes(
-        estimatedBytes
+      `uploadEventImage: image ${formatMegabytes(
+        imageFile.size
       )}MB exceeds limit ${formatMegabytes(MAX_TOTAL_UPLOAD_BYTES)}MB`
     );
-    throw new Error(EVENT_PAYLOAD_TOO_LARGE_ERROR);
+    throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
   }
-}
+};
 
 async function fetchEventsInternal(
   params: FetchEventsParams
@@ -261,34 +242,25 @@ export async function updateEventById(
 
 export async function createEvent(
   data: EventCreateRequestDTO,
-  imageFile?: File,
   e2eExtras?: E2EEventExtras
 ): Promise<EventDetailResponseDTO> {
   if (isE2ETestMode && e2eEventsStore) {
     return createE2EEvent(data, e2eExtras);
   }
 
-  const requestPayload = JSON.stringify(data);
-  ensureCreateEventPayloadWithinLimit(requestPayload, imageFile);
-
-  const formData = new FormData();
-
-  formData.append("request", requestPayload);
-
-  if (imageFile) {
-    formData.append("imageFile", imageFile);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL is not defined");
   }
 
-  const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/events`,
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-      },
-      body: formData,
-    }
-  );
+  const response = await fetchWithHmac(`${apiUrl}/events`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -298,6 +270,65 @@ export async function createEvent(
     );
   }
   return response.json();
+}
+
+export async function uploadEventImage(imageFile: File): Promise<string> {
+  if (!imageFile) {
+    throw new Error("uploadEventImage: imageFile is required");
+  }
+  ensureImageWithinLimit(imageFile);
+
+  if (isE2ETestMode) {
+    return `https://example.com/${imageFile.name || "e2e-image"}.jpg`;
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  }
+
+  const formData = new FormData();
+  formData.append("imageFile", imageFile);
+
+  const response = await fetchWithHmac(`${apiUrl}/events/images`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json, text/plain;q=0.9",
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unable to read error response");
+    console.error(
+      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`
+    );
+    if (response.status === 413) {
+      throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
+    }
+    throw new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`
+    );
+  }
+
+  const rawBody = (await response.text()).trim();
+  if (!rawBody) {
+    throw new Error("uploadEventImage: empty response body");
+  }
+
+  try {
+    const parsed = JSON.parse(rawBody);
+    if (typeof parsed === "string") {
+      return parsed;
+    }
+    if (parsed?.url && typeof parsed.url === "string") {
+      return parsed.url;
+    }
+  } catch {
+    // Not JSON, fall back to raw string
+  }
+
+  return rawBody.replace(/^"|"$/g, "");
 }
 
 function createE2EEvent(

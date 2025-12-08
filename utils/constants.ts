@@ -4,7 +4,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 
 export const MAX_RESULTS = 15;
 export const MAX_TOTAL_UPLOAD_BYTES = 8 * 1024 * 1024; // Keep >2 MB headroom under 10 MB server limit
-export const EVENT_PAYLOAD_TOO_LARGE_ERROR = "event_payload_too_large";
+export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR = "event_image_upload_too_large";
 
 /**
  * Detects if the application is in build phase (SSG/static generation).

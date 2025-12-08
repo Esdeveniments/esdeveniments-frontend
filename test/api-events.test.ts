@@ -1,14 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createEvent, fetchEvents, insertAds } from "../lib/api/events";
+import { fetchEvents, insertAds, uploadEventImage } from "../lib/api/events";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
-  EventCreateRequestDTO,
   PagedResponseDTO,
   EventSummaryResponseDTO,
   ListEvent,
 } from "types/api/event";
 import {
-  EVENT_PAYLOAD_TOO_LARGE_ERROR,
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
 } from "@utils/constants";
 
@@ -90,30 +89,54 @@ describe("lib/api/events", () => {
     expect(adCount).toBeLessThanOrEqual(7);
   });
 
-  it("throws a descriptive error when createEvent payloads exceed the upload budget", async () => {
-    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
-    const payload: EventCreateRequestDTO = {
-      title: "Test event",
-      type: "FREE",
-      url: "https://example.com/event",
-      description: "Desc",
-      imageUrl: null,
-      regionId: 1,
-      cityId: 1,
-      startDate: "2025-01-01",
-      startTime: "10:00",
-      endDate: "2025-01-01",
-      endTime: "12:00",
-      location: "Test",
-      categories: [1],
-    };
+  it("rejects oversized images before calling the API", async () => {
+    const oversizedFile = new File(["a".repeat(10)], "large.jpg", {
+      type: "image/jpeg",
+    });
+    Object.defineProperty(oversizedFile, "size", {
+      value: MAX_TOTAL_UPLOAD_BYTES + 1024,
+    });
 
-    const oversizedFile = { size: MAX_TOTAL_UPLOAD_BYTES + 1024 } as File;
-    const fetchSpy = vi.spyOn(fetchWrapper, "fetchWithHmac");
-
-    await expect(createEvent(payload, oversizedFile)).rejects.toThrow(
-      EVENT_PAYLOAD_TOO_LARGE_ERROR
+    await expect(uploadEventImage(oversizedFile)).rejects.toThrow(
+      EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
     );
-    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("uploads images via multipart endpoint and returns url", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response("https://cdn.example.com/photo.jpg", {
+      status: 200,
+      headers: { "content-type": "text/plain" },
+    });
+
+    const fetchSpy = vi
+      .spyOn(fetchWrapper, "fetchWithHmac")
+      .mockResolvedValue(mockResponse as unknown as Response);
+
+    const url = await uploadEventImage(imageFile);
+    expect(url).toBe("https://cdn.example.com/photo.jpg");
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const [, options] = fetchSpy.mock.calls[0];
+    const body = options?.body as FormData;
+    expect(body.get("imageFile")).toBe(imageFile);
+  });
+
+  it("maps 413 responses from the image endpoint to descriptive errors", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response("413 Request Entity Too Large", {
+      status: 413,
+    });
+
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    await expect(uploadEventImage(imageFile)).rejects.toThrow(
+      EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
+    );
   });
 });

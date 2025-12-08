@@ -20,7 +20,7 @@ import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import {
-  EVENT_PAYLOAD_TOO_LARGE_ERROR,
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
 } from "@utils/constants";
 
@@ -328,16 +328,16 @@ const Publica = () => {
         const isRequestTooLarge =
           normalizedMessage.includes("status: 413") ||
           normalizedMessage.includes("request entity too large");
-        const isCustomPayloadLimit = normalizedMessage.includes(
-          EVENT_PAYLOAD_TOO_LARGE_ERROR
+        const isImageUploadLimit = normalizedMessage.includes(
+          EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
         );
         const isFormParsingError =
           normalizedMessage.includes("unexpected end of form") ||
           normalizedMessage.includes("failed to parse body as formdata");
 
-        if (isBodyLimit || isRequestTooLarge || isCustomPayloadLimit) {
+        if (isBodyLimit || isRequestTooLarge || isImageUploadLimit) {
           setError(
-            `La mida total de la sol·licitud (imatge + dades) supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries.`
+            `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
           );
         } else if (isFormParsingError) {
           setError(
@@ -353,7 +353,7 @@ const Publica = () => {
           !(
             isBodyLimit ||
             isRequestTooLarge ||
-            isCustomPayloadLimit ||
+            isImageUploadLimit ||
             isFormParsingError
           )
         ) {
