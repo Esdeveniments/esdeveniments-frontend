@@ -1,10 +1,8 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import { CloudIcon } from "@heroicons/react/outline";
 import type { EventWeatherProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
-
-const Weather = dynamic(() => import("components/ui/weather"), { ssr: false });
+import Weather from "components/ui/weather";
 
 const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
   if (!weather) return null;

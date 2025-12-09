@@ -12,7 +12,7 @@ import {
   buildPageMeta,
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { resolveLocaleFromHeaders, toLocalizedUrl } from "@utils/i18n-seo";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import SitemapContent from "@components/sitemap/SitemapContent";
 import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
@@ -44,24 +44,25 @@ export default async function Page() {
   const tContentPromise = getTranslations("Components.SitemapContent");
   const dataPromise = getData();
   const pageMetaPromise = Promise.all([tAppPromise, tContentPromise]);
+  const locale = resolveLocaleFromHeaders(await headers());
 
   // Generate structured data for the sitemap (localized)
   const data = await pageMetaPromise;
   const tApp = data[0];
   const tContent = data[1];
   const breadcrumbs = [
-    { name: tApp("breadcrumbHome"), url: siteUrl },
-    { name: tApp("breadcrumbCurrent"), url: `${siteUrl}/sitemap` },
+    { name: tApp("breadcrumbHome"), url: toLocalizedUrl("/", locale) },
+    { name: tApp("breadcrumbCurrent"), url: toLocalizedUrl("/sitemap", locale) },
   ];
 
   const webPageSchema = generateWebPageSchema({
     title: tApp("metaTitle"),
     description: tApp("metaDescription"),
-    url: `${siteUrl}/sitemap`,
+    url: toLocalizedUrl("/sitemap", locale),
     breadcrumbs,
     mainContentOfPage: {
       "@type": "WebPageElement",
-      "@id": `${siteUrl}/sitemap#maincontent`,
+      "@id": `${toLocalizedUrl("/sitemap", locale)}#maincontent`,
       name: tContent("title"),
       about: {
         "@type": "Thing",
@@ -80,7 +81,7 @@ export default async function Page() {
         <SitemapBreadcrumb items={breadcrumbs} />
 
         <Suspense fallback={<SitemapSkeleton />}>
-          <SitemapContent dataPromise={dataPromise} />
+          <SitemapContent dataPromise={dataPromise} locale={locale} />
         </Suspense>
 
         <footer className="pt-8 border-t border-border">

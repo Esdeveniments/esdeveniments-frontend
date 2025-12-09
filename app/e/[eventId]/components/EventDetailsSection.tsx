@@ -19,9 +19,9 @@ const EventDetailsSection: React.FC<{
   const tTime = useTranslations("Utils.EventTime");
   const timeLabels = {
     consult: tTime("consult"),
-    startsAt: tTime("startsAt"),
-    range: tTime("range"),
-    simpleRange: tTime("simpleRange"),
+    startsAt: tTime("startsAt", { time: "{time}" }),
+    range: tTime("range", { start: "{start}", end: "{end}" }),
+    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
   };
 
   const timeDisplay = formatEventTimeDisplayDetail(

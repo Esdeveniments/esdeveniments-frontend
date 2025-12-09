@@ -16,7 +16,6 @@ import {
 import {
   buildLocalizedUrls,
   getSafePathname,
-  resolveLocaleFromHeaders,
   stripLocaleFromPathname,
   toLocalizedUrl,
 } from "@utils/i18n-seo";

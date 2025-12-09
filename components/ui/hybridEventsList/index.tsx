@@ -59,13 +59,6 @@ async function HybridEventsList({
   const locale = (resolveLocaleFromHeaders(headersList) ||
     DEFAULT_LOCALE) as AppLocale;
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
 
   if (noEventsFound || initialEvents.length === 0) {
     return (

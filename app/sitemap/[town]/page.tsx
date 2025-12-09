@@ -2,18 +2,23 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { getAllYears, normalizeMonthParam } from "@lib/dates";
-import { MONTHS_URL } from "@utils/constants";
+import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getPlaceBySlug } from "@lib/api/places";
 import { getTranslations } from "next-intl/server";
 import type { TownStaticPathParams } from "types/common";
+import type { AppLocale } from "types/i18n";
 import { formatCatalanA } from "@utils/helpers";
 import {
   buildPageMeta,
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import {
+  resolveLocaleFromHeaders,
+  toLocalizedUrl,
+  withLocalePath,
+} from "@utils/i18n-seo";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import SitemapHeader from "@components/sitemap/SitemapHeader";
@@ -50,7 +55,13 @@ export default function Page({
   params: Promise<TownStaticPathParams>;
 }) {
   return (
-    <Suspense fallback={<SitemapSkeleton />}>
+    <Suspense
+      fallback={
+        <SitemapLayout>
+          <SitemapSkeleton />
+        </SitemapLayout>
+      }
+    >
       <AsyncPage params={params} />
     </Suspense>
   );
@@ -59,36 +70,45 @@ export default function Page({
 async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) {
   const { town } = await params;
   const t = await getTranslations("Pages.SitemapTown");
+  const tConstants = await getTranslations("Components.Constants");
   const years: number[] = getAllYears();
-  
+  const headersList = await headers();
+  const locale: AppLocale = resolveLocaleFromHeaders(headersList);
+  const withLocale = (path: string) => withLocalePath(path, locale);
+  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthSlugs =
+    (tConstants.raw("monthsUrl") as string[]) || DEFAULT_MONTHS_URL;
+  const months = monthSlugs.map((slug, index) => {
+    const fallback = normalizeMonthParam(slug);
+    return {
+      slug,
+      label: monthLabels[index] || fallback.label,
+    };
+  });
+
   // Start fetch
   const placePromise = getPlaceBySlug(town);
+  const place = await placePromise;
+  const townLabel = place?.name || town;
 
-  // We use town (slug) for breadcrumbs initially to be fast?
-  // Or we can wait for placePromise?
-  // The user said "Start rendering the grid of years... immediately. Resolve the place details... inside a suspended component header."
-  // So we should NOT await placePromise for the main return.
-  
   const breadcrumbs = [
-    { name: t("breadcrumbs.home"), url: siteUrl },
-    { name: t("breadcrumbs.archive"), url: `${siteUrl}/sitemap` },
-    { name: town, url: `${siteUrl}/sitemap/${town}` }, // Use slug as fallback
+    { name: t("breadcrumbs.home"), url: toLocalizedUrl("/", locale) },
+    { name: t("breadcrumbs.archive"), url: toLocalizedUrl("/sitemap", locale) },
+    { name: townLabel, url: toLocalizedUrl(`/sitemap/${town}`, locale) },
   ];
 
-
-  // Use slug for schema to avoid blocking on place fetch
   const collectionPageSchema = generateCollectionPageSchema({
-    title: t("collectionTitle", { town }),
-    description: t("collectionDescription", { town }),
-    url: `${siteUrl}/sitemap/${town}`,
+    title: t("collectionTitle", { town: townLabel }),
+    description: t("collectionDescription", { town: townLabel }),
+    url: toLocalizedUrl(`/sitemap/${town}`, locale),
     breadcrumbs,
-    numberOfItems: years.length * MONTHS_URL.length,
+    numberOfItems: years.length * months.length,
     mainEntity: {
       "@type": "ItemList",
-      "@id": `${siteUrl}/sitemap/${town}#archivelist`,
-      name: t("mainEntityName", { town }),
-      description: t("mainEntityDescription", { town }),
-      numberOfItems: years.length * MONTHS_URL.length,
+      "@id": `${toLocalizedUrl(`/sitemap/${town}`, locale)}#archivelist`,
+      name: t("mainEntityName", { town: townLabel }),
+      description: t("mainEntityDescription", { town: townLabel }),
+      numberOfItems: years.length * months.length,
       itemListElement: [], // Empty for now or we'd have to map all years which is fast
     },
   });
@@ -110,12 +130,11 @@ async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) 
             <article key={year} className="stack gap-4">
               <h2 className="heading-3">{year}</h2>
               <nav role="list" className="stack gap-1">
-                {MONTHS_URL.map((month) => {
-                  const { slug, label } = normalizeMonthParam(month);
+                {[...months].reverse().map(({ slug, label }) => {
                   return (
-                    <div key={`${year}-${month}`} role="listitem">
+                    <div key={`${year}-${slug}`} role="listitem">
                       <PressableAnchor
-                        href={`/sitemap/${town}/${year}/${slug}`}
+                        href={withLocale(`/sitemap/${town}/${year}/${slug}`)}
                         className="text-foreground-strong hover:text-primary hover:underline transition-colors capitalize"
                         variant="inline"
                         prefetch={false}

@@ -17,6 +17,7 @@ export function CategoryEventsSection({
   shouldUsePriority,
   showAd,
   labels,
+  badgeLabels,
 }: CategoryEventsSectionProps) {
   return (
     <section className="py-section-y border-b">
@@ -44,6 +45,7 @@ export function CategoryEventsSection({
         categorySlug={categorySlug}
         categories={categories}
         contextName={categoryName}
+        labels={badgeLabels}
       />
 
       <EventsAroundServer

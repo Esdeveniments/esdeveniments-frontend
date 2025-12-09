@@ -1,15 +1,17 @@
 import { getTranslations } from "next-intl/server";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { generateSiteNavigationElementSchema } from "@components/partials/seo-meta";
 import type { SitemapContentProps } from "types/sitemap";
+import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
 
 export default async function SitemapContent({
   dataPromise,
+  locale,
 }: SitemapContentProps) {
   const t = await getTranslations("Components.SitemapContent");
   const { regions, cities } = await dataPromise;
+  const withLocale = (path: string) => withLocalePath(path, locale);
 
   // Sort regions and cities by name
   const sortedRegions = [...regions].sort((a, b) =>
@@ -22,12 +24,12 @@ export default async function SitemapContent({
   // Generate navigation schema for regions and cities
   const regionNavigation = sortedRegions.map((region) => ({
     name: region.name,
-    url: `${siteUrl}/sitemap/${region.slug}`,
+    url: toLocalizedUrl(`/sitemap/${region.slug}`, locale),
   }));
 
   const cityNavigation = sortedCities.slice(0, 50).map((city) => ({
     name: city.name,
-    url: `${siteUrl}/sitemap/${city.slug}`,
+    url: toLocalizedUrl(`/sitemap/${city.slug}`, locale),
   }));
 
   const siteNavigationSchema = generateSiteNavigationElementSchema([
@@ -60,7 +62,7 @@ export default async function SitemapContent({
             {sortedRegions.map((region) => (
               <div key={region.slug} role="listitem">
                 <PressableAnchor
-                  href={`/sitemap/${region.slug}`}
+                  href={withLocale(`/sitemap/${region.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                   data-testid="sitemap-region-link"
                   variant="inline"
@@ -78,7 +80,7 @@ export default async function SitemapContent({
             {sortedCities.map((city) => (
               <div key={city.slug} role="listitem">
                 <PressableAnchor
-                  href={`/sitemap/${city.slug}`}
+                  href={withLocale(`/sitemap/${city.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                   data-testid="sitemap-city-link"
                   variant="inline"

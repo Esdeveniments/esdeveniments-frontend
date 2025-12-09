@@ -8,17 +8,22 @@ import caMessages from "../messages/ca.json";
 const defaultLabels: EventStatusLabels = (caMessages as any).Utils
   .EventStatus as EventStatusLabels;
 
+const COUNT_PLACEHOLDER = "{count}";
+
 export const buildEventStatusLabels = (
-  translate: (key: keyof EventStatusLabels) => string
+  translate: (
+    key: keyof EventStatusLabels,
+    values?: Record<string, string | number | Date>
+  ) => string
 ): EventStatusLabels => ({
   past: translate("past"),
   live: translate("live"),
   upcoming: translate("upcoming"),
-  endsInDays: translate("endsInDays"),
-  endsInHours: translate("endsInHours"),
+  endsInDays: translate("endsInDays", { count: COUNT_PLACEHOLDER }),
+  endsInHours: translate("endsInHours", { count: COUNT_PLACEHOLDER }),
   endsSoon: translate("endsSoon"),
-  startsInDays: translate("startsInDays"),
-  startsInHours: translate("startsInHours"),
+  startsInDays: translate("startsInDays", { count: COUNT_PLACEHOLDER }),
+  startsInHours: translate("startsInHours", { count: COUNT_PLACEHOLDER }),
   startsToday: translate("startsToday"),
   today: translate("today"),
 });

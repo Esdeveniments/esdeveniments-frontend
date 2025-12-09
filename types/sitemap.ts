@@ -32,6 +32,7 @@ export interface SitemapContentProps {
     regions: import("./api/event").RegionSummaryResponseDTO[];
     cities: import("./api/city").CitySummaryResponseDTO[];
   }>;
+  locale: import("./i18n").AppLocale;
 }
 
 export interface SitemapHeaderProps {

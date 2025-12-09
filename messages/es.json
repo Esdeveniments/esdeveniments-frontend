@@ -646,9 +646,13 @@
       "more": "Más noticias →"
     },
     "NewsHubsGrid": {
+      "itemListTitle": "Últimas noticias por hub",
+      "titleWithPlace": "Últimas noticias {place}",
+      "seeMore": "Ver más…",
+      "seeAgenda": "Ver agenda de {place}",
+      "nearbyLabel": "Cerca:",
       "title": "Últimas noticias por hub",
-      "hubTitle": "Últimas noticias {hubName}",
-      "seeMore": "Ver más…"
+      "hubTitle": "Últimas noticias {hubName}"
     },
     "NewsArticleDetail": {
       "breadcrumbNews": "Noticias",
@@ -1056,15 +1060,10 @@
         "de los",
         "de la",
         "de las",
-        "del",
-        "del",
-        "pel",
-        "pels"
+        "por el",
+        "por los"
       ],
-      "feminineExceptions": [
-        "gent gran",
-        "dansa"
-      ],
+      "feminineExceptions": ["gent gran", "dansa"],
       "masculineExceptions": [
         "penedès",
         "alt penedès",

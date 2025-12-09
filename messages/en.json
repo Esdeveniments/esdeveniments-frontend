@@ -361,6 +361,9 @@
     "Social": {
       "followUs": "Follow us"
     },
+    "ListPageFaq": {
+      "title": "Frequently asked questions"
+    },
     "RestaurantPromotionForm": {
       "heading": "Promote your restaurant",
       "intro": "Get your restaurant featured on this event page and reach more customers.",
@@ -1027,13 +1030,9 @@
         "to the",
         "to",
         "of the",
-        "of the",
-        "of the",
-        "of the",
-        "of the",
-        "of the",
-        "pel",
-        "pels"
+        "of",
+        "for the",
+        "by the"
       ],
       "feminineExceptions": ["gent gran", "dansa"],
       "masculineExceptions": [

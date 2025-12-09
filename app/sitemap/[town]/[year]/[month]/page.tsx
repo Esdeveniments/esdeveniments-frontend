@@ -21,7 +21,11 @@ import {
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import {
+  resolveLocaleFromHeaders,
+  toLocalizedUrl,
+  withLocalePath,
+} from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 
 export const revalidate = 86400;
@@ -36,8 +40,23 @@ export async function generateMetadata({
   params: Promise<MonthStaticPathParams>;
 }) {
   const t = await getTranslations("Pages.SitemapMonth");
+  const tConstants = await getTranslations("Components.Constants");
   const { town, year, month } = await params;
-  const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
+  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];
+  const { slug: normalizedMonthSlug, label: fallbackMonthLabel } =
+    normalizeMonthParam(month);
+  const monthIndex = monthSlugs.findIndex(
+    (slug) => normalizeMonthParam(slug).slug === normalizedMonthSlug
+  );
+  const monthSlug =
+    monthSlugs[monthIndex] && monthIndex >= 0
+      ? monthSlugs[monthIndex]
+      : normalizedMonthSlug;
+  const monthLabel =
+    (monthLabels[monthIndex] && monthIndex >= 0
+      ? monthLabels[monthIndex]
+      : undefined) || fallbackMonthLabel;
   const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
@@ -65,11 +84,31 @@ export default async function Page({
 }) {
   const { town, year, month } = await params;
   const t = await getTranslations("Pages.SitemapMonth");
+  const tConstants = await getTranslations("Components.Constants");
   const locale: AppLocale = resolveLocaleFromHeaders(await headers());
+  const withLocale = (path: string) => withLocalePath(path, locale);
 
-  const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
+  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];
+  const { slug: normalizedMonthSlug, label: fallbackMonthLabel } =
+    normalizeMonthParam(month);
+  const monthIndex = monthSlugs.findIndex(
+    (slug) => normalizeMonthParam(slug).slug === normalizedMonthSlug
+  );
+  const monthSlug =
+    monthSlugs[monthIndex] && monthIndex >= 0
+      ? monthSlugs[monthIndex]
+      : normalizedMonthSlug;
+  const monthLabel =
+    (monthLabels[monthIndex] && monthIndex >= 0
+      ? monthLabels[monthIndex]
+      : undefined) || fallbackMonthLabel;
 
-  const { from, until } = getHistoricDates(monthSlug, Number(year));
+  const { from, until } = getHistoricDates(
+    monthSlug,
+    Number(year),
+    monthSlugs.length > 0 ? monthSlugs : undefined
+  );
 
   const [events, place] = await Promise.all([
     fetchEvents({
@@ -100,12 +139,12 @@ export default async function Page({
 
   // Generate structured data for the month archive
   const breadcrumbs = [
-    { name: t("breadcrumbs.home"), url: siteUrl },
-    { name: t("breadcrumbs.archive"), url: `${siteUrl}/sitemap` },
-    { name: townLabel, url: `${siteUrl}/sitemap/${town}` },
+    { name: t("breadcrumbs.home"), url: toLocalizedUrl("/", locale) },
+    { name: t("breadcrumbs.archive"), url: toLocalizedUrl("/sitemap", locale) },
+    { name: townLabel, url: toLocalizedUrl(`/sitemap/${town}`, locale) },
     {
       name: `${monthLabel} ${year}`,
-      url: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
+      url: toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale),
     },
   ];
 
@@ -128,7 +167,7 @@ export default async function Page({
       month: monthLabel,
       year,
     }),
-    url: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
+    url: toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale),
     breadcrumbs,
     numberOfItems: filteredEvents.length,
     mainEntity: eventsItemList || {
@@ -188,7 +227,7 @@ export default async function Page({
                     className="border-b border-border/30 pb-4 w-full"
                   >
                     <PressableAnchor
-                      href={`/e/${event.slug}`}
+                      href={withLocale(`/e/${event.slug}`)}
                       className="hover:text-primary block group"
                       variant="inline"
                       prefetch={false}
@@ -239,7 +278,7 @@ export default async function Page({
             </p>
             <div className="flex-center gap-4">
               <PressableAnchor
-                href={`/sitemap/${town}`}
+                href={withLocale(`/sitemap/${town}`)}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
                 variant="inline"
                 prefetch={false}
@@ -247,7 +286,7 @@ export default async function Page({
                 {t("footerViewArchives")}
               </PressableAnchor>
               <PressableAnchor
-                href={`/${town}`}
+                href={withLocale(`/${town}`)}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
                 variant="inline"
                 prefetch={false}

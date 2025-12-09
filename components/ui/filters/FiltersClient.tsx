@@ -9,21 +9,11 @@ import type {
 } from "types/api/category";
 import type {
   PlaceTypeAndLabel,
-  RouteSegments,
-  URLQueryParams,
 } from "types/common";
+import type { RouteSegments, URLQueryParams } from "types/url-filters";
 import FilterButton from "./FilterButton";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import type { FilterLabels } from "types/props";
-
-export interface FiltersClientProps {
-  segments: RouteSegments;
-  queryParams: URLQueryParams;
-  categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel?: PlaceTypeAndLabel;
-  onOpenModal: () => void;
-  labels: FilterLabels;
-}
+import type { FilterLabels, FiltersClientProps } from "types/props";
 
 const FiltersClient = ({
   segments,

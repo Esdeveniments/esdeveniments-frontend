@@ -21,6 +21,24 @@ describe("normalizeMonthParam", () => {
     const { slug } = normalizeMonthParam("mar%C3%A7");
     expect(() => getHistoricDates(slug, 2024)).not.toThrow();
   });
+
+  it("supports localized month slugs", () => {
+    const monthsEn = [
+      "january",
+      "february",
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october",
+      "november",
+      "december",
+    ];
+    expect(() => getHistoricDates("january", 2024, monthsEn)).not.toThrow();
+  });
 });
 
 

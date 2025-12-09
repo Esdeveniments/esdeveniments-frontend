@@ -3,7 +3,10 @@ import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";
-import { DateFilterBadges } from "./DateFilterBadges";
+import {
+  createDateFilterBadgeLabels,
+  DateFilterBadges,
+} from "./DateFilterBadges";
 import type { FeaturedPlaceConfig } from "types/props";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
@@ -17,6 +20,8 @@ export async function FeaturedPlaceSection({
   };
 }) {
   const t = await getTranslations("Components.FeaturedPlaceSection");
+  const tDateFilters = await getTranslations("Components.DateFilterBadges");
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
   return (
     <section className="py-section-y border-b">
       <div className="flex-between gap-element-gap">
@@ -41,6 +46,7 @@ export async function FeaturedPlaceSection({
         placeSlug={section.placeSlug}
         contextName={section.title}
         ariaLabel={t("aria", { title: section.title })}
+        labels={badgeLabels}
       />
 
       <EventsAroundServer

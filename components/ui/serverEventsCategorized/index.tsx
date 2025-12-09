@@ -32,6 +32,7 @@ import {
 import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
+import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
@@ -403,6 +404,8 @@ export async function ServerEventsCategorizedContent({
 
   const tCategory = await getTranslations("Components.CategoryEventsSection");
   const tCta = await getTranslations("Components.ServerEventsCategorized");
+  const tDateFilters = await getTranslations("Components.DateFilterBadges");
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;
     if (!localePrefix) return path;
@@ -450,6 +453,7 @@ export async function ServerEventsCategorizedContent({
               seeMore: tCategory("seeMore"),
               sponsored: tCategory("sponsored"),
             }}
+            badgeLabels={badgeLabels}
           />
         ))}
       </div>

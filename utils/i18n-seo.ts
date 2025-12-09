@@ -78,11 +78,34 @@ export function resolveLocaleFromHeaders(
   return DEFAULT_LOCALE;
 }
 
+/**
+ * Prefixes a relative path with the locale segment when needed.
+ * - Leaves absolute URLs (http, mailto, tel, protocol-relative) untouched.
+ * - Leaves non-root relative paths (e.g., "#section", "mailto:") untouched.
+ * - For default locale, returns the original path.
+ * - Avoids double-prefixing when the path is already localized for the same locale.
+ */
+export function withLocalePath(path: string, locale: AppLocale): string {
+  if (!path) return path;
+  // Skip absolute or protocol-relative URLs (e.g., http:, https:, mailto:, tel:, //cdn)
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path) || path.startsWith("//")) {
+    return path;
+  }
+  if (!path.startsWith("/")) return path;
+
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  if (!prefix) return path;
+  if (path === "/") return prefix || "/";
+  if (path.startsWith(prefix)) return path;
+  return `${prefix}${path}`;
+}
+
 export function toLocalizedUrl(path: string, locale: AppLocale): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   const urls = buildLocalizedUrls(stripLocaleFromPathname(normalized));
   return urls[locale] ?? `${siteUrl}${normalized === "/" ? "" : normalized}`;
 }
+
 
 
 

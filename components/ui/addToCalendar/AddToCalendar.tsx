@@ -48,21 +48,23 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
   hideText = false,
 }) => {
   const t = useTranslations("Utils.Calendar");
+  const moreInfoText = t("moreInfoText", { url: "{url}" });
   const calendarLabels = React.useMemo(
     () => ({
-      moreInfoHtml: t("moreInfoHtml"),
-      moreInfoText: t("moreInfoText"),
-      dateRange: t("dateRange"),
-      dateSingle: t("dateSingle"),
+      // Avoid invalid HTML tags in ICU messages by reusing plain text
+      moreInfoHtml: moreInfoText,
+      moreInfoText,
+      dateRange: t("dateRange", { start: "{start}", end: "{end}" }),
+      dateSingle: t("dateSingle", { start: "{start}" }),
     }),
-    [t]
+    [t, moreInfoText]
   );
   const providerLabels = React.useMemo(
     () => ({
       google: t("providers.google"),
       outlook: t("providers.outlook"),
       other: t("providers.other"),
-      ariaAdd: t("ariaAdd"),
+      ariaAdd: t("ariaAdd", { name: "{name}" }),
     }),
     [t]
   );

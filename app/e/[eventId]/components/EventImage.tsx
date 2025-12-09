@@ -31,7 +31,7 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
         href={image}
         target="_blank"
         rel="noopener noreferrer"
-        className="block w-full h-full cursor-pointer hover:opacity-95 transition-opacity"
+        className="block w-full h-full cursor-pointer hover:opacity-95 transition-opacity relative"
         aria-label={`Veure imatge completa de ${safeTitle}`}
       >
         <NextImage

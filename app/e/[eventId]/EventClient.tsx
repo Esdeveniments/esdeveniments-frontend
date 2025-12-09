@@ -1,13 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import type { EventTemporalStatus } from "types/event-status";
 import { useSearchParams } from "next/navigation";
 // import useOnScreen from "components/hooks/useOnScreen";
 import { sendGoogleEvent } from "@utils/analytics";
 
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
-import EventWeather from "./components/EventWeather";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
 import {
@@ -26,10 +24,8 @@ import SectionHeading from "@components/ui/common/SectionHeading";
 
 export default function EventClient({
   event,
-  temporalStatus,
 }: {
   event: EventDetailResponseDTO;
-  temporalStatus: EventTemporalStatus;
 }) {
   // const editModalRef = useRef<HTMLDivElement>(null);
 
@@ -74,7 +70,7 @@ export default function EventClient({
           headers: { "Content-Type": "application/json" },
           body: json,
           keepalive: true,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     } catch {
       // no-op
@@ -109,12 +105,6 @@ export default function EventClient({
         </div>
       </div>
 
-      {/* Weather (hidden for past events to reduce noise) */}
-      {temporalStatus.state !== "past" && (
-        <div className="w-full">
-          <EventWeather weather={event.weather} />
-        </div>
-      )}
       {/* Edit Button Section */}
 
       {/* <div className="w-full flex justify-center items-start gap-2 px-4">

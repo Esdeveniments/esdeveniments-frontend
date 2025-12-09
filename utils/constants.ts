@@ -160,7 +160,7 @@ export async function getNewsHubs(): Promise<{ slug: string; name: string }[]> {
   const t = await getTranslations("Components.Constants.newsHubs");
   return NEWS_HUBS.map((hub) => ({
     slug: hub.slug,
-    name: t(hub.slug as keyof typeof constantsLabels.newsHubs),
+    name: t(hub.slug),
   }));
 }
 

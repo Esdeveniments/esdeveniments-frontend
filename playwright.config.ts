@@ -1,4 +1,3 @@
-import path from "path";
 import { defineConfig, devices } from "@playwright/test";
 
 const host = process.env.HOST || "127.0.0.1";
@@ -15,10 +14,6 @@ const webServerEnv: Record<string, string> = {
   PORT: port,
 };
 
-// Ensure next-intl can locate the config file when running under Playwright
-// webServerEnv.NEXT_INTL_CONFIG_PATH =
-//   process.env.NEXT_INTL_CONFIG_PATH ||
-//   path.join(__dirname, "next-intl.config.ts");
 if (process.env.NEXT_PUBLIC_API_URL) {
   webServerEnv.NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 }

@@ -145,17 +145,31 @@ export const getDateRangeFromByDate = (byDate: string): DateRange | null => {
 
 /**
  * Returns date range for a specific month and year
- * @param {string} month - Month name in Catalan
+ * @param {string} month - Month slug (locale-aware)
  * @param {number} year - Year
+ * @param {string[]} monthsList - Optional month slug list in chronological order
  */
-export const getHistoricDates = (month: string, year: number): DateRange => {
-  const getMonth = MONTHS.indexOf(month);
-  if (getMonth === -1) {
+export const getHistoricDates = (
+  month: string,
+  year: number,
+  monthsList: string[] = MONTHS
+): DateRange => {
+  const targetSlug = normalizeMonthParam(month).slug;
+  const resolveIndex = (list: string[]) =>
+    list.findIndex(
+      (candidate) => normalizeMonthParam(candidate).slug === targetSlug
+    );
+
+  const primaryIndex = resolveIndex(monthsList);
+  const fallbackIndex = primaryIndex === -1 ? resolveIndex(MONTHS) : primaryIndex;
+  const monthIndex = fallbackIndex;
+
+  if (monthIndex === -1) {
     throw new Error(`Invalid month: ${month}`);
   }
 
-  const from = new Date(year, getMonth, 1, 2, 0, 0);
-  const until = new Date(year, getMonth + 1, 0, 24, 59, 59);
+  const from = new Date(year, monthIndex, 1, 2, 0, 0);
+  const until = new Date(year, monthIndex + 1, 0, 24, 59, 59);
 
   return { from, until };
 };

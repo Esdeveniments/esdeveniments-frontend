@@ -12,22 +12,12 @@ import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
 import { getTranslations } from "next-intl/server";
 
-export default async function PlacePageShell({
-  eventsPromise,
-  shellDataPromise,
-  place,
-  category,
-  date,
-  hasNewsPromise,
-  categories = [],
-  webPageSchemaFactory,
-}: PlacePageShellProps) {
-  const { placeTypeLabel } = await shellDataPromise;
+const buildFilterLabels = async () => {
   const tFilters = await getTranslations("Config.Filters");
   const tFiltersUi = await getTranslations("Components.Filters");
   const tByDates = await getTranslations("Config.ByDates");
 
-  const filterLabels = {
+  return {
     triggerLabel: tFiltersUi("triggerLabel"),
     displayNameMap: {
       place: tFilters("place"),
@@ -43,6 +33,20 @@ export default async function PlacePageShell({
       "cap-de-setmana": tByDates("weekend"),
     },
   };
+};
+
+export default async function PlacePageShell({
+  eventsPromise,
+  shellDataPromise,
+  place,
+  category,
+  date,
+  hasNewsPromise,
+  categories = [],
+  webPageSchemaFactory,
+}: PlacePageShellProps) {
+  const { placeTypeLabel } = await shellDataPromise;
+  const filterLabels = await buildFilterLabels();
 
   return (
     <FilterLoadingProvider>
@@ -67,6 +71,37 @@ export default async function PlacePageShell({
         />
       </Suspense>
     </FilterLoadingProvider>
+  );
+}
+
+export async function ClientLayerWithPlaceLabel({
+  shellDataPromise,
+  categories = [],
+  filterLabels: filterLabelsOverride,
+}: Pick<PlacePageShellProps, "shellDataPromise" | "categories"> & {
+  filterLabels?: Awaited<ReturnType<typeof buildFilterLabels>>;
+}) {
+  const filterLabels =
+    filterLabelsOverride ??
+    (await buildFilterLabels().catch(() => ({
+      triggerLabel: "",
+      displayNameMap: {
+        place: "place",
+        category: "category",
+        byDate: "date",
+        distance: "distance",
+        searchTerm: "search",
+      },
+      byDates: {},
+    })));
+  const { placeTypeLabel } = await shellDataPromise;
+
+  return (
+    <ClientInteractiveLayer
+      categories={categories}
+      placeTypeLabel={placeTypeLabel}
+      filterLabels={filterLabels}
+    />
   );
 }
 

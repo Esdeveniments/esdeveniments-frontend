@@ -12,7 +12,7 @@ import EventShareBar from "./components/EventShareBar";
 import ViewCounter from "@components/ui/viewCounter";
 import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
-import { computeTemporalStatus } from "@utils/event-status";
+import { buildEventStatusLabels, computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
 import { getFormattedDate } from "@utils/helpers";
@@ -39,6 +39,7 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
 import AdArticleIsland from "./components/AdArticleIsland";
 import EventLocation from "./components/EventLocation";
+import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata(props: {
@@ -111,38 +112,39 @@ export default async function EventPage({
   const tStatus = await getTranslations("Utils.EventStatus");
   const tEvent = await getTranslations("Components.EventPage");
   const tCopy = await getTranslations("Utils.EventCopy");
-  const statusLabels = {
-    past: tStatus("past"),
-    live: tStatus("live"),
-    upcoming: tStatus("upcoming"),
-    endsInDays: tStatus("endsInDays"),
-    endsInHours: tStatus("endsInHours"),
-    endsSoon: tStatus("endsSoon"),
-    startsInDays: tStatus("startsInDays"),
-    startsInHours: tStatus("startsInHours"),
-    startsToday: tStatus("startsToday"),
-    today: tStatus("today"),
-  };
+  const statusLabels = buildEventStatusLabels(tStatus);
   const eventCopyLabels: EventCopyLabels = {
     sentence: {
       verbSingular: tCopy("sentence.verbSingular"),
       verbPlural: tCopy("sentence.verbPlural"),
-      dateRange: tCopy("sentence.dateRange"),
-      dateSingle: tCopy("sentence.dateSingle"),
-      sentence: tCopy("sentence.sentence"),
-      timeSuffix: tCopy("sentence.timeSuffix"),
-      placeSuffix: tCopy("sentence.placeSuffix"),
+      dateRange: tCopy("sentence.dateRange", {
+        start: "{start}",
+        end: "{end}",
+      }),
+      dateSingle: tCopy("sentence.dateSingle", {
+        nameDay: "{nameDay}",
+        start: "{start}",
+      }),
+      sentence: tCopy("sentence.sentence", {
+        title: "{title}",
+        verb: "{verb}",
+        date: "{date}",
+        time: "{time}",
+        place: "{place}",
+      }),
+      timeSuffix: tCopy("sentence.timeSuffix", { time: "{time}" }),
+      placeSuffix: tCopy("sentence.placeSuffix", { place: "{place}" }),
     },
     faq: {
       whenQ: tCopy("faq.whenQ"),
-      whenA: tCopy("faq.whenA"),
+      whenA: tCopy("faq.whenA", { date: "{date}", time: "{time}" }),
       whereQ: tCopy("faq.whereQ"),
-      whereA: tCopy("faq.whereA"),
+      whereA: tCopy("faq.whereA", { place: "{place}" }),
       isFreeQ: tCopy("faq.isFreeQ"),
       isFreeYes: tCopy("faq.isFreeYes"),
       isFreeNo: tCopy("faq.isFreeNo"),
       durationQ: tCopy("faq.durationQ"),
-      durationA: tCopy("faq.durationA"),
+      durationA: tCopy("faq.durationA", { duration: "{duration}" }),
     },
   };
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
@@ -325,6 +327,10 @@ export default async function EventPage({
               formattedEnd={formattedEnd}
               nameDay={nameDay}
             />
+            {/* Weather (SSR; hidden for past events) */}
+            {temporalStatus.state !== "past" && (
+              <EventWeather weather={event.weather} />
+            )}
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner
@@ -336,7 +342,7 @@ export default async function EventPage({
                 primaryCategorySlug={primaryCategorySlug}
               />
             )}
-            <ClientEventClient event={event} temporalStatus={temporalStatus} />
+            <ClientEventClient event={event} />
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
               <section className="w-full" aria-labelledby="event-faq">

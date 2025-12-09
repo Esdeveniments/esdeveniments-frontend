@@ -1,37 +1,87 @@
 import Badge from "@components/ui/common/badge";
-import { getTranslations } from "next-intl/server";
 import { buildCanonicalUrl } from "@utils/url-filters";
-import type { DateFilterBadgesProps } from "types/props";
-import type { JSX } from "react";
+import type {
+  DateFilterBadgeLabels,
+  DateFilterBadgesProps,
+  TranslationFn,
+} from "types/props";
 
-export async function DateFilterBadges({
+const FALLBACK_DATE_FILTER_BADGE_LABELS: DateFilterBadgeLabels = {
+  navAriaLabel: "Vegeu també",
+  today: { label: "Avui", ariaLabelText: "Veure activitats d'avui" },
+  tomorrow: {
+    label: "Demà",
+    ariaLabelText: "Veure activitats de demà",
+  },
+  weekend: {
+    label: "Cap de setmana",
+    ariaLabelText: "Veure activitats aquest cap de setmana",
+  },
+  ariaPlace: ({ ariaLabelText, contextName }) =>
+    `${ariaLabelText} a ${contextName}`,
+  ariaCategory: ({ ariaLabelText, contextName }) =>
+    `${ariaLabelText} per la categoria ${contextName}`,
+};
+
+export const createDateFilterBadgeLabels = (
+  t: TranslationFn
+): DateFilterBadgeLabels => ({
+  navAriaLabel: t("ariaLabel"),
+  today: {
+    label: t("today.label"),
+    ariaLabelText: t("today.aria"),
+  },
+  tomorrow: {
+    label: t("tomorrow.label"),
+    ariaLabelText: t("tomorrow.aria"),
+  },
+  weekend: {
+    label: t("weekend.label"),
+    ariaLabelText: t("weekend.aria"),
+  },
+  ariaPlace: ({ ariaLabelText, contextName }) =>
+    t("ariaPlace", { ariaLabelText, contextName }),
+  ariaCategory: ({ ariaLabelText, contextName }) =>
+    t("ariaCategory", { ariaLabelText, contextName }),
+});
+
+export function DateFilterBadges({
   placeSlug,
   categorySlug,
   categories,
   contextName,
   ariaLabel,
-}: DateFilterBadgesProps): Promise<JSX.Element> {
-  const t = await getTranslations("Components.DateFilterBadges");
-  const resolvedAriaLabel = ariaLabel || t("ariaLabel");
+  labels,
+}: DateFilterBadgesProps) {
+  const resolvedLabels = labels ?? FALLBACK_DATE_FILTER_BADGE_LABELS;
+  const resolvedAriaLabel = ariaLabel || resolvedLabels.navAriaLabel;
   const dateFilters = [
-    { slug: "avui", label: t("today.label"), ariaLabelText: t("today.aria") },
-    { slug: "dema", label: t("tomorrow.label"), ariaLabelText: t("tomorrow.aria") },
+    {
+      slug: "avui",
+      label: resolvedLabels.today.label,
+      ariaLabelText: resolvedLabels.today.ariaLabelText,
+    },
+    {
+      slug: "dema",
+      label: resolvedLabels.tomorrow.label,
+      ariaLabelText: resolvedLabels.tomorrow.ariaLabelText,
+    },
     {
       slug: "cap-de-setmana",
-      label: t("weekend.label"),
-      ariaLabelText: t("weekend.aria"),
+      label: resolvedLabels.weekend.label,
+      ariaLabelText: resolvedLabels.weekend.ariaLabelText,
     },
   ];
 
   // Determine the aria label pattern based on whether we have a category
   const getAriaLabel = (dateFilter: typeof dateFilters[0]) => {
     if (categorySlug) {
-      return t("ariaCategory", {
+      return resolvedLabels.ariaCategory({
         ariaLabelText: dateFilter.ariaLabelText,
         contextName,
       });
     }
-    return t("ariaPlace", {
+    return resolvedLabels.ariaPlace({
       ariaLabelText: dateFilter.ariaLabelText,
       contextName,
     });

@@ -17,7 +17,11 @@ import {
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
-import { RouteSegments, URLQueryParams } from "types/url-filters";
+import {
+  RouteSegments,
+  URLQueryParams,
+  URLFilterState,
+} from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
 import type { FaqItem } from "types/faq";
 
@@ -210,6 +214,7 @@ export interface CategoryEventsSectionProps {
   shouldUsePriority: boolean;
   showAd: boolean;
   labels: CategorySectionLabels;
+  badgeLabels: DateFilterBadgeLabels;
 }
 
 export interface LoadMoreButtonProps {
@@ -248,13 +253,7 @@ export interface FilteredPageProps {
 // Component props interfaces
 export interface FilterLabels {
   triggerLabel: string;
-  displayNameMap: {
-    place: string;
-    category: string;
-    byDate: string;
-    distance: string;
-    searchTerm: string;
-  };
+  displayNameMap: Partial<Record<keyof URLFilterState, string>>;
   byDates: Record<string, string>;
 }
 
@@ -286,6 +285,15 @@ export interface FilterButtonProps {
   removeUrl: string;
   onOpenModal: () => void;
   testId?: string;
+}
+
+export interface FiltersClientProps {
+  segments: RouteSegments;
+  queryParams: URLQueryParams;
+  categories?: CategorySummaryResponseDTO[];
+  placeTypeLabel?: PlaceTypeAndLabel;
+  onOpenModal: () => void;
+  labels: FilterLabels;
 }
 
 export interface ServerFiltersProps {
@@ -522,4 +530,22 @@ export interface DateFilterBadgesProps {
   categories?: CategorySummaryResponseDTO[];
   contextName: string;
   ariaLabel?: string;
+  labels?: DateFilterBadgeLabels;
 }
+
+export interface DateFilterBadgeLabels {
+  navAriaLabel: string;
+  today: { label: string; ariaLabelText: string };
+  tomorrow: { label: string; ariaLabelText: string };
+  weekend: { label: string; ariaLabelText: string };
+  ariaPlace: (options: { ariaLabelText: string; contextName: string }) => string;
+  ariaCategory: (options: {
+    ariaLabelText: string;
+    contextName: string;
+  }) => string;
+}
+
+export type TranslationFn = (
+  key: string,
+  options?: Record<string, string>
+) => string;
