@@ -10,7 +10,7 @@ import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import NewsHubsGrid from "@components/noticies/NewsHubsGrid";
@@ -34,14 +34,7 @@ export default async function Page() {
   const headersList = await headers();
   const locale = (resolveLocaleFromHeaders(headersList) ||
     DEFAULT_LOCALE) as AppLocale;
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
   // Start fetching, don't wait
@@ -75,7 +68,7 @@ export default async function Page() {
       <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
         {t("intro")}
       </p>
-      <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
+      {/* <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
         <PressableAnchor
           href={withLocale(`/noticies/rss.xml`)}
           className="text-primary underline text-sm"
@@ -84,7 +77,7 @@ export default async function Page() {
         >
           RSS
         </PressableAnchor>
-      </div>
+      </div> */}
       <nav
         aria-label="Breadcrumb"
         className="mb-6 px-2 lg:px-0 text-sm text-foreground-strong/70"

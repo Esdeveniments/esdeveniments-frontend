@@ -8,6 +8,7 @@ alwaysApply: true
 - For new routes: implement `generateMetadata` using `generatePagesData` and `buildPageMeta`.
 - For list pages: fetch via `lib/api/*` and use `insertAds` on SSR only; append client items without ads.
 - For filters/URLs: use `utils/url-filters.ts` helpers; never craft strings manually.
-- For scripts/JSON-LD: read `nonce` from `headers()` and pass to `<Script>`.
+- Scripts/JSON-LD: relaxed CSP allows inline; nonce not required. If you already read `nonce` from `headers()`, you may pass it to `<Script>`, but it’s optional.
 - For images: use the image wrapper in `components/ui/common/image` and quality/size helpers.
+- For i18n: use `getTranslations`/`useTranslations` from `next-intl`; routing in `i18n/routing.ts`; messages in `messages/*.json`; default locale `ca`, locales `ca|es|en`.
 - Before PR: `yarn typecheck && yarn lint && yarn test`.

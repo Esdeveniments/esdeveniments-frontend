@@ -6,7 +6,10 @@ import type { NewsListProps } from "types/props";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { headers } from "next/headers";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import {
+  resolveLocaleFromHeaders,
+  withLocalePath,
+} from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export default async function NewsList({
@@ -20,14 +23,7 @@ export default async function NewsList({
   const headersList = await headers();
   const locale = (resolveLocaleFromHeaders(headersList) ||
     DEFAULT_LOCALE) as AppLocale;
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const withLocale = (path: string) => withLocalePath(path, locale);
   const [response, placeType] = await Promise.all([
     newsPromise,
     placeTypePromise,
@@ -58,7 +54,7 @@ export default async function NewsList({
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": `${siteUrl}/noticies/${place}#news-itemlist`,
+    "@id": `${siteUrl}${withLocale(`/noticies/${place}`)}#news-itemlist`,
     name: t("itemListName", { place: placeType.label }),
     numberOfItems: list.length,
     itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => ({
@@ -66,8 +62,8 @@ export default async function NewsList({
       position: index + 1,
       item: {
         "@type": "NewsArticle",
-        "@id": `${siteUrl}/noticies/${place}/${item.slug}`,
-        url: `${siteUrl}/noticies/${place}/${item.slug}`,
+        "@id": `${siteUrl}${withLocale(`/noticies/${place}/${item.slug}`)}`,
+        url: `${siteUrl}${withLocale(`/noticies/${place}/${item.slug}`)}`,
         headline: item.title,
         ...(item.imageUrl ? { image: item.imageUrl } : {}),
       },

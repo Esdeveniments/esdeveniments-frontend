@@ -1,8 +1,8 @@
 ### Project structure and module boundaries
 
-- app/: Next.js App Router routes, layouts, and special files. Keep server-only logic in server components or route handlers. Read nonce via headers() in layouts/pages.
+- app/: Next.js App Router routes, layouts, and special files. Keep server-only logic in server components or route handlers. CSP is relaxed; if you already read a nonce from `headers()`, you may forward it, but it’s optional.
 - components/ui/: Presentational and interactive components. No direct API calls; accept props derived from server data or use client-only hooks.
-- components/partials/: Cross-cutting page fragments (SEO, schemas, CriticalCSS, data builders). Use nonce for any inline <script> or JSON-LD.
+- components/partials/: Cross-cutting page fragments (SEO, schemas, CriticalCSS, data builders). CSP allows inline scripts/JSON-LD without nonce; pass nonce only if you already have it.
 - components/hooks/: Client hooks only; avoid environment-dependent logic.
 - lib/api/: API client layer and cache utilities. All backend communication goes here. Respect env guards and caching tags/TTL.
 - lib/: Cross-domain helpers (meta, fonts, dates) that are framework-aware.

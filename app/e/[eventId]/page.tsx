@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { generateJsonData } from "@utils/helpers";
 import { getEventBySlug } from "@lib/api/events";
 import { EventDetailResponseDTO } from "types/api/event";
@@ -41,6 +42,7 @@ import AdArticleIsland from "./components/AdArticleIsland";
 import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
+import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
@@ -99,6 +101,8 @@ export default async function EventPage({
   const regionName = formatPlaceName(rawRegionName);
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList);
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const explorePlaceHref = `/${primaryPlaceSlug}`;
@@ -175,8 +179,10 @@ export default async function EventPage({
   const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
   const placeLabel = cityName || regionName || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
-  const newsHref =
-    placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`;
+  const newsHref = withLocalePath(
+    placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`,
+    locale
+  );
 
   // Generate JSON-LD for related events (server-side for SEO)
   const relatedEventsJsonData =

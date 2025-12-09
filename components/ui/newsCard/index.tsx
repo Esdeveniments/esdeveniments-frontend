@@ -1,9 +1,11 @@
 import Image from "next/image";
+import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
 
 export default async function NewsCard({
   event,
@@ -12,12 +14,14 @@ export default async function NewsCard({
   variant = "default",
 }: NewsCardProps) {
   const t = await getTranslations("Components.News");
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList);
   const image = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;
-  const href = `/noticies/${placeSlug}/${event.slug}`;
+  const href = withLocalePath(`/noticies/${placeSlug}/${event.slug}`, locale);
   const plainDescription = DOMPurify.sanitize(event.description || "", {
     ALLOWED_TAGS: [],
   });

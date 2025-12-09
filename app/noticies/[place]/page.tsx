@@ -7,7 +7,7 @@ import {
   buildPageMeta,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
@@ -62,14 +62,7 @@ export default async function Page({
   const headersList = await headers();
   const locale = (resolveLocaleFromHeaders(headersList) ||
     DEFAULT_LOCALE) as AppLocale;
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const withLocale = (path: string) => withLocalePath(path, locale);
   const query = (await (searchParams || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };

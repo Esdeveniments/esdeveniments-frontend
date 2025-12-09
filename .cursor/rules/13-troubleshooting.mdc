@@ -5,7 +5,7 @@ alwaysApply: false
 ### Troubleshooting and common pitfalls
 
 - Forgot to regenerate SW after template change → Run `yarn prebuild` (or any build script).
-- Inline script failing under CSP → Ensure you pass `nonce` from `headers()` to all `<Script>` and inline JSON-LD.
+- Inline script failing under CSP → Check host allowlist in `proxy.ts`; CSP is relaxed, so inline scripts/JSON-LD should work without nonce. If still failing and you already read `nonce` from `headers()`, you may pass it.
 - URL includes default `tots` segments → Use canonical builders and `getRedirectUrl`.
 - API read fails in preview env → Env guard must return safe fallback instead of throwing.
 - Categories mismatch with URL → Pass fetched categories to `parseFiltersFromUrl`; validate slugs.
