@@ -1,10 +1,13 @@
+"use client";
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Option } from "types/common";
 import { UseGeolocationReturn } from "types/props";
 import { findNearestCity } from "../../components/ui/locationDiscoveryWidget/utils";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
 export function useGeolocation(): UseGeolocationReturn {
+  const t = useTranslations("Components.FiltersModal.geo");
   const [location, setLocation] = useState<GeolocationCoordinates | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +17,7 @@ export function useGeolocation(): UseGeolocationReturn {
       regions: RegionsGroupedByCitiesResponseDTO[]
     ): Promise<Option | null> => {
       if (!("geolocation" in navigator)) {
-        setError("La geolocalització no està disponible en aquest navegador.");
+        setError(t("unsupported"));
         return null;
       }
 
@@ -36,20 +39,16 @@ export function useGeolocation(): UseGeolocationReturn {
             let errorMessage: string;
             switch (error.code) {
               case error.PERMISSION_DENIED:
-                errorMessage =
-                  "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció.";
+                errorMessage = t("permissionDenied");
                 break;
               case error.POSITION_UNAVAILABLE:
-                errorMessage =
-                  "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.";
+                errorMessage = t("positionUnavailable");
                 break;
               case error.TIMEOUT:
-                errorMessage =
-                  "Temps d'espera esgotat. Prova de nou o selecciona una població.";
+                errorMessage = t("timeout");
                 break;
               default:
-                errorMessage =
-                  "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància.";
+                errorMessage = t("genericError");
             }
 
             setError(errorMessage);
@@ -59,7 +58,7 @@ export function useGeolocation(): UseGeolocationReturn {
         );
       });
     },
-    []
+    [t]
   );
 
   const clearLocation = useCallback(() => {

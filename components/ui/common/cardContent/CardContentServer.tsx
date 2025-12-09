@@ -10,12 +10,21 @@ import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
+import { getTranslations } from "next-intl/server";
 
-function CardContentServer({
+async function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
 }: CardContentProps) {
+  const tCard = await getTranslations("Components.CardContent");
+  const tTime = await getTranslations("Utils.EventTime");
+  const timeLabels = {
+    consult: tTime("consult"),
+    startsAt: tTime("startsAt"),
+    range: tTime("range"),
+    simpleRange: tTime("simpleRange"),
+  };
   const { description, icon } = event.weather || {};
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
@@ -37,8 +46,8 @@ function CardContentServer({
   const primaryLocation = truncateString(fullLocation, 80);
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+    : tCard("dateSingle", { nameDay, start: formattedStart });
 
   return (
     <>
@@ -106,7 +115,11 @@ function CardContentServer({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="px-2">
-            {formatEventTimeDisplayDetail(event.startTime, event.endTime)}
+            {formatEventTimeDisplayDetail(
+              event.startTime,
+              event.endTime,
+              timeLabels
+            )}
           </p>
         </div>
         {!isHorizontal && <div className="mb-8" />}

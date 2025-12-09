@@ -1,0 +1,1161 @@
+{
+  "App": {
+    "Home": {
+      "seoSections": {
+        "weekend": {
+          "title": "Qué hacer este fin de semana",
+          "links": {
+            "topPlans": "10 planes para el fin de semana",
+            "popularFestes": "Fiestas populares fin de semana",
+            "family": "Actividades con niños fin de semana",
+            "music": "Conciertos fin de semana"
+          }
+        },
+        "today": {
+          "title": "Qué hacer hoy",
+          "links": {
+            "barcelona": "Qué hacer hoy en Barcelona",
+            "maresme": "Qué hacer hoy en el Maresme",
+            "vallesOriental": "Qué hacer hoy en el Vallès Oriental",
+            "mataro": "Qué hacer hoy en Mataró"
+          }
+        },
+        "tomorrow": {
+          "title": "Qué hacer mañana",
+          "links": {
+            "barcelona": "Qué hacer mañana en Barcelona",
+            "maresme": "Qué hacer mañana en el Maresme",
+            "vallesOccidental": "Qué hacer mañana en el Vallès Occidental"
+          }
+        },
+        "localAgendas": {
+          "title": "Agendas locales más visitadas"
+        }
+      },
+      "featuredPlaces": {
+        "barcelona": {
+          "title": "Qué hacer en Barcelona",
+          "subtitle": "Planes destacados en la ciudad"
+        },
+        "maresme": {
+          "title": "Agenda del Maresme",
+          "subtitle": "Lo mejor de la comarca"
+        },
+        "vallesOccidental": {
+          "title": "Planes en el Vallès Occidental"
+        }
+      }
+    },
+    "NotFound": {
+      "title": "Página no encontrada",
+      "description": "No se ha podido encontrar la página que buscas.",
+      "homeLink": "Volver al inicio"
+    },
+    "Error": {
+      "title": "Algo ha salido mal",
+      "retry": "Por favor, inténtalo de nuevo.",
+      "reload": "Recargar"
+    },
+    "GlobalError": {
+      "title": "Algo ha salido mal",
+      "retry": "Por favor, inténtalo de nuevo.",
+      "reload": "Recargar"
+    },
+    "Offline": {
+      "title": "Sin conexión - Esdeveniments.cat",
+      "heading": "🌐 Sin conexión",
+      "description": "No puedes conectarte a internet. Algunos contenidos almacenados podrían estar disponibles.",
+      "homeLink": "Volver al inicio",
+      "barcelona": "Barcelona",
+      "catalunya": "Cataluña",
+      "schemaName": "Página offline de Esdeveniments.cat",
+      "schemaDescription": "Página en modo offline de Esdeveniments.cat para seguir navegando mientras vuelve la conexión."
+    },
+    "About": {
+      "metaTitle": "Quiénes somos - Esdeveniments.cat",
+      "metaDescription": "Quiénes somos? - Esdeveniments.cat es una iniciativa ciudadana para ver de un vistazo todos los actos culturales que se hacen en Cataluña.",
+      "schemaName": "Quiénes somos - Esdeveniments.cat",
+      "schemaDescription": "Conoce el equipo de Esdeveniments.cat y la misión detrás de la agenda cultural colaborativa de Cataluña.",
+      "heading": "Quiénes somos?",
+      "subheading": "esdeveniments.cat",
+      "paragraph1": "Esdeveniments.cat es una iniciativa ciudadana para ver de forma fácil y rápida todos los actos culturales que se hacen en Cataluña.",
+      "paragraph2": "La agenda es colaborativa, y cada persona que organice un acto cultural podrá publicarlo <publish>aquí</publish> por su cuenta.",
+      "paragraph3": "Podrás seguir la agenda cultural en esta página web o seguirnos en las redes sociales:",
+      "teamHeading": "Nuestro equipo",
+      "linkedin": "LinkedIn"
+    },
+    "News": {
+      "metaTitle": "Noticias | Esdeveniments.cat",
+      "metaDescription": "Las últimas noticias, recomendaciones y planes culturales de Cataluña.",
+      "heading": "Noticias",
+      "intro": "Las últimas noticias y recomendaciones de eventos.",
+      "breadcrumbHome": "Inicio",
+      "breadcrumbCurrent": "Noticias"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbHome": "Inicio",
+      "breadcrumbNews": "Noticias",
+      "sectionWeekend": "Fin de semana",
+      "sectionWeek": "Semana",
+      "readingTime": "{minutes} min de lectura",
+      "mustSee": "IMPRESCINDIBLES",
+      "moreProposals": "MÁS PROPUESTAS"
+    },
+    "NewsHubsGrid": {
+      "itemListTitle": "Últimas noticias por hub",
+      "titleWithPlace": "Últimas noticias {place}",
+      "seeMore": "Ver más…",
+      "seeAgenda": "Ver agenda de {place}",
+      "nearbyLabel": "Cerca:"
+    },
+    "NewsList": {
+      "emptyTitle": "No hemos encontrado noticias recientes",
+      "emptyBody": "Todavía no tenemos novedades para {place}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras zonas.",
+      "viewAll": "Ver todas las noticias →",
+      "itemListName": "Noticias de {place}",
+      "prev": "← Anterior",
+      "next": "Más noticias →"
+    },
+    "EventEdit": {
+      "title": "Editar evento",
+      "description": "Panel seguro para editar eventos de Esdeveniments.cat."
+    },
+    "PublishPage": {
+      "metaTitle": "Publicar - Esdeveniments.cat",
+      "metaDescription": "Publica un acto cultural - Esdeveniments.cat",
+      "schemaName": "Publicar un acto cultural",
+      "schemaDescription": "Formulario oficial para añadir nuevos actos culturales a la agenda colaborativa de Esdeveniments.cat.",
+      "schemaAction": "Publicar evento cultural"
+    },
+    "PlacesNearby": {
+      "invalidNumber": "Coordenadas no válidas: lat,lng deben ser números",
+      "invalidRange": "Coordenadas no válidas: lat ∈ [-90,90], lng ∈ [-180,180]",
+      "notConfigured": "Places API no configurada",
+      "locationUnavailable": "Localización no disponible"
+    },
+    "NewsPlace": {
+      "metaTitle": "Noticias de {place} | Esdeveniments.cat",
+      "metaDescription": "Archivo y recomendaciones de eventos en {place}",
+      "breadcrumbHome": "Inicio",
+      "breadcrumbNews": "Noticias",
+      "heading": "Noticias de {place}",
+      "seeAgenda": "Ver agenda de {place}",
+      "seeAll": "Ver todas las noticias",
+      "rssLabel": "RSS",
+      "rssTitle": "RSS Noticias {place}"
+    },
+    "NewsArticleFallback": {
+      "title": "Noticia | {place}",
+      "description": "Detalle de la noticia"
+    },
+    "NewsPlaceRss": {
+      "title": "Noticias {place} - Esdeveniments.cat",
+      "description": "Las últimas noticias y recomendaciones culturales de {place}"
+    },
+    "NewsRss": {
+      "title": "Noticias - Esdeveniments.cat",
+      "description": "Las últimas noticias y recomendaciones culturales de Cataluña"
+    },
+    "Publish": {
+      "heading": "Publica un evento",
+      "requiredNote": "* campos obligatorios",
+      "errorCreate": "Error al crear el evento. Por favor, inténtalo de nuevo.",
+      "errorBodyLimit": "El tamaño total de la solicitud (imagen + datos) supera el límite permitido de 10 MB. Por favor, reduce el tamaño de la imagen o elimina datos innecesarios.",
+      "errorGeneric": "Ha habido un error al publicar el evento. Por favor, inténtalo de nuevo.",
+      "submitLabel": "Publicar",
+      "fallbackRegion": "Región {id}",
+      "fallbackCity": "Ciudad {id}",
+      "noEventsFound": "No hemos encontrado eventos recientes para esta zona. Inténtalo más tarde."
+    },
+    "Sitemap": {
+      "metaTitle": "Archivo - Esdeveniments.cat",
+      "metaDescription": "Descubre todo lo que ha pasado en Cataluña cada año. Las mejores propuestas culturales para exprimir al máximo Cataluña - Archivo - Esdeveniments.cat",
+      "breadcrumbHome": "Inicio",
+      "breadcrumbCurrent": "Archivo"
+    },
+    "PlaceByDate": {
+      "dateFallback": "los próximos días",
+      "title": "Eventos {dateLabel} en {place}{categoryLabel}",
+      "subtitleWithDate": "Descubre planes para {date} en {place}{categoryLabel}.",
+      "subtitleFallback": "Descubre planes para los próximos días en {place}{categoryLabel}.",
+      "categoryDescriptionSuffix": " en la categoría {categoryLabel}",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explora actividades y planes para {date} en {place}{categoryDescriptionSuffix}.",
+      "metaDescriptionFallback": "Explora actividades y planes para los próximos días en {place}{categoryDescriptionSuffix}.",
+      "notFoundTitle": "Sin eventos disponibles",
+      "notFoundDescriptionWithDate": "No hemos encontrado eventos para {date} en {place}. Inténtalo más tarde.",
+      "notFoundDescriptionFallback": "No hemos encontrado eventos para los próximos días en {place}. Inténtalo más tarde."
+    }
+  },
+  "Components": {
+    "Footer": {
+      "navigation": {
+        "home": "Inicio",
+        "agenda": "Agenda",
+        "publish": "Publicar",
+        "news": "Noticias",
+        "about": "Quiénes somos",
+        "archive": "Archivo"
+      },
+      "featuredAgendas": "Agendas destacadas",
+      "copyright": "© {year} Esdeveniments.cat",
+      "tagline": "Descubre los mejores eventos en Cataluña"
+    },
+    "Navbar": {
+      "navigation": {
+        "home": "Inicio",
+        "agenda": "Agenda",
+        "publish": "Publicar",
+        "news": "Noticias",
+        "archive": "Archivo"
+      },
+      "logoAlt": "Logo Esdeveniments.cat",
+      "aria": {
+        "openMenu": "Abrir menú",
+        "closeMenu": "Cerrar menú",
+        "home": "Inicio",
+        "publish": "Publicar",
+        "news": "Noticias"
+      },
+      "languageLabel": "Idioma",
+      "languages": {
+        "ca": "Catalán",
+        "es": "Castellano",
+        "en": "Inglés"
+      },
+      "mobilePublishLabel": "Publicar"
+    },
+    "NoEventsFound": {
+      "cta": "Añade un evento",
+      "helper": "Es gratis y solo tarda un minuto"
+    },
+    "NoEventFound": {
+      "imageTitle": "Evento no encontrado - Esdeveniments.cat",
+      "imageAlt": "Evento no encontrado - Esdeveniments.cat",
+      "title": "¡Vaya! El evento no existe o ha sido cancelado por los organizadores",
+      "description": "Puedes probar suerte con el <search>buscador</search>, ver <today>qué pasa hoy en Cataluña</today>, o bien, <publish>publicar el evento</publish>. Si crees que hay un error, ponte en contacto con nosotros en: <email>hola@esdeveniments.cat</email>."
+    },
+    "Notification": {
+      "createdSuccess": "¡Fantástico! El evento {title} se ha creado correctamente y ya lo puede ver todo el mundo.",
+      "close": "Cerrar",
+      "viewEvent": "Ver evento"
+    },
+    "EventNotifications": {
+      "thankYou": "¡Gracias por ayudar a mejorar el contenido de Esdeveniments.cat! En menos de 24 horas el cambio estará disponible."
+    },
+    "LatestNewsSection": {
+      "title": "Últimas noticias",
+      "titleWithPlace": "Últimas noticias {place}",
+      "viewAll": "Ver todas"
+    },
+    "CulturalMessage": {
+      "explorePrefix": "Explora más planes {location}:",
+      "today": "Qué hacer hoy",
+      "tomorrow": "Qué hacer mañana",
+      "week": "Qué hacer esta semana",
+      "weekend": "Qué hacer este fin de semana"
+    },
+    "HeroSearch": {
+      "titlePrefix": "Qué hacer en",
+      "modalTitle": "Selecciona población",
+      "modalAction": "Seleccionar",
+      "errorLoadingLocations": "Error cargando las poblaciones.",
+      "retry": "Volver a intentar",
+      "selectPlaceholder": "Buscar población o comarca...",
+      "subtitleDefault": "Agenda cultural, fiestas mayores y actividades",
+      "searchPlaceholder": "Busca eventos en {location}...",
+      "clearSearch": "Limpiar búsqueda"
+    },
+    "HeroFilters": {
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "weekend": "Fin de semana",
+      "active": "activo"
+    },
+    "Constants": {
+      "days": [
+        "Domingo",
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes",
+        "Sábado"
+      ],
+      "months": [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre"
+      ],
+      "monthsUrl": [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre"
+      ],
+      "newsHubs": {
+        "mataro": "Mataró",
+        "barcelona": "Barcelona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida"
+      },
+      "nearbyHubs": {
+        "mataro": {
+          "vilassar-de-mar": "Vilassar de Mar",
+          "premia-de-dalt": "Premià de Dalt",
+          "argentona": "Argentona",
+          "calella": "Calella",
+          "canet-de-mar": "Canet de Mar"
+        },
+        "barcelona": {
+          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
+          "badalona": "Badalona",
+          "sant-just-desvern": "Sant Just Desvern",
+          "cardedeu": "Cardedeu",
+          "granollers": "Granollers",
+          "castelldefels": "Castelldefels"
+        },
+        "tarragona": {
+          "reus": "Reus",
+          "cambrils": "Cambrils",
+          "salou": "Salou"
+        },
+        "lleida": {
+          "balaguer": "Balaguer",
+          "tremp": "Tremp",
+          "tarrega": "Tàrrega"
+        }
+      }
+    },
+    "HomePageSkeleton": {
+      "seeAlso": "Ver también"
+    },
+    "EventsAround": {
+      "carouselSuffix": "carrusel de eventos"
+    },
+    "ServerEventsCategorized": {
+      "cta": "¿No encuentras lo que buscas?",
+      "ctaButton": "Ver toda la agenda",
+      "quickCategoriesTitle": "Explora por intereses"
+    },
+    "Filters": {
+      "triggerLabel": "Filtros"
+    },
+    "Social": {
+      "followUs": "Síguenos"
+    },
+    "ListPageFaq": {
+      "title": "Preguntas frecuentes"
+    },
+    "RestaurantPromotionForm": {
+      "heading": "Promociona tu restaurante",
+      "intro": "Haz que tu restaurante aparezca en esta página de eventos y llega a más clientes.",
+      "restaurantNameLabel": "Nombre del restaurante *",
+      "restaurantNamePlaceholder": "Introduce el nombre del restaurante",
+      "locationLabel": "Ubicación *",
+      "locationPlaceholder": "Introduce la ubicación del restaurante",
+      "durationLabel": "Duración de la promoción *",
+      "durationOption": "{days} día{days, plural, one {} other {s}}",
+      "geoScopeTypeLabel": "Ámbito geográfico *",
+      "geoScopeTown": "Población/ciudad",
+      "geoScopeRegion": "Región",
+      "geoScopeTownPlaceholder": "Introduce el nombre de la población o ciudad",
+      "geoScopeRegionPlaceholder": "Introduce el nombre de la región",
+      "placeIdLabel": "Google Place ID (Opcional)",
+      "placeIdPlaceholder": "Introduce el Google Place ID si lo tienes",
+      "placeIdHelp": "Si tu restaurante está en Google Maps, encontrarás el Place ID en la URL",
+      "imageLabel": "Imagen del restaurante *",
+      "priceLabel": "Precio total:",
+      "loading": "Cargando...",
+      "priceNote": "El pago se procesará de forma segura vía Stripe",
+      "processing": "Procesando...",
+      "submit": "Ir al pago"
+    },
+    "AdBoard": {
+      "title": "El anuncio no se ha podido cargar.",
+      "body": "Por favor, ayúdanos a mantener esta página desactivando cualquier bloqueador de anuncios. ¡Gracias por tu comprensión y apoyo!",
+      "contactPrefix": "Si estás interesado en anunciarte aquí,",
+      "contactCta": "contáctanos",
+      "contactSuffix": "para obtener más información."
+    },
+    "EditModalLegacy": {
+      "title": "Sugerir una edición",
+      "editTitle": "Cambia el título u otros detalles",
+      "editDescription": "Edita el título, la ubicación, el horario, etc.",
+      "removeTitle": "Eliminar",
+      "removeDescription": "El evento no existe, está duplicado, etc.",
+      "deleteTitle": "Sugerir una eliminación",
+      "deleteReasonPrompt": "Motivo de la eliminación sugerida",
+      "deleteLegend": "Solicitud de eliminación",
+      "reason": {
+        "notExist": "No existe",
+        "duplicated": "Duplicado",
+        "offensive": "Ofensivo, dañino o engañoso",
+        "others": "Otros",
+        "othersDescription": "Envía un correo con el motivo a:",
+        "othersEmail": "hola@esdeveniments.cat"
+      },
+      "submit": "Enviar"
+    },
+    "FiltersModal": {
+      "geo": {
+        "permissionDenied": "Permisos de localización denegados. Activa la localización en el navegador para usar esta función.",
+        "positionUnavailable": "Localización no disponible. Prueba a seleccionar una población en lugar de usar la distancia.",
+        "timeout": "Tiempo de espera agotado. Prueba de nuevo o selecciona una población.",
+        "genericError": "Error obteniendo la localización. Prueba a seleccionar una población en lugar de usar la distancia.",
+        "unsupported": "La geolocalización no está disponible en este navegador.",
+        "loading": "Cargando localización..."
+      },
+      "distance": {
+        "label": "Distancia",
+        "labelFromPlace": "Distancia desde {place}",
+        "labelFromLocation": "Distancia desde tu ubicación",
+        "helperRegion": "Para utilizar el filtro de distancia, selecciona una población específica o tu ubicación actual.",
+        "helperPlace": "Si eliges una población, calcularemos el radio desde ese punto. Si no hay ninguna, usaremos tu ubicación actual. Activa el filtro para limitar los resultados a un radio concreto.",
+        "toggle": "Filtrar por radio",
+        "rangeLabel": "Eventos a"
+      },
+      "useLocation": {
+        "using": "Estás utilizando tu ubicación",
+        "cta": "Usar mi ubicación",
+        "active": "Ubicación actual activada.",
+        "switchToPlace": "Cambiar a una población",
+        "regionNotice": "Has seleccionado una comarca. Las comarcas no tienen un punto geográfico concreto, por eso no se puede utilizar el filtro de distancia. Para usar el filtro de distancia, selecciona una población específica o usa tu ubicación. Puedes seguir filtrando por fecha y categorías para afinar los resultados."
+      },
+      "modal": {
+        "title": "Filtros",
+        "action": "Aplicar filtros",
+        "locations": "Poblaciones",
+        "loadError": "Error cargando las poblaciones. Vuelve a intentarlo más tarde.",
+        "selectPlaceholder": "Selecciona población o comarca",
+        "tagline": "Filtros activos",
+        "dateHeading": "Fecha",
+        "categoriesHeading": "Categorías"
+      }
+    },
+    "ImageUploader": {
+      "label": "Imagen *",
+      "unsupported": "El archivo seleccionado no es una imagen soportada. Por favor, sube un archivo en formato JPEG, PNG, JPG o WEBP.",
+      "tooLarge": "El tamaño de la imagen supera el límite permitido de 8 MB. Por favor, elige una imagen más pequeña.",
+      "progress": "{progress}%",
+      "remove": "Eliminar imagen",
+      "altPreview": "Imagen"
+    },
+    "HeroCTA": {
+      "buttonBase": "Ver eventos",
+      "dateWeekend": "este fin de semana",
+      "helper": "Selecciona la población y las fechas, y pulsa 'Ver eventos'"
+    },
+    "PromotionInfoModal": {
+      "title": "Promociona tu restaurante",
+      "intro1": "¿Quieres que tu restaurante aparezca destacado aquí cuando la gente mire un evento cercano? Estamos preparando el sistema de promociones.",
+      "intro2": "De momento, envíanos un correo a <email>{contactEmail}</email> con:",
+      "itemName": "Nombre del restaurante",
+      "itemPlace": "Población / Región",
+      "itemLink": "Enlace (Google Maps o web / redes sociales)",
+      "footer": "Te informaremos tan pronto como las promociones automatizadas estén disponibles.",
+      "contactSubject": "Promocionar restaurante"
+    },
+    "PromotedRestaurantCard": {
+      "title": "Restaurante promocionado",
+      "badge": "Patrocinado",
+      "activeUntil": "Promoción activa hasta el {date}"
+    },
+    "FeaturedPlaceSection": {
+      "seeMore": "Ver más",
+      "aria": "Explora {title} por fecha"
+    },
+    "CategoryEventsSection": {
+      "heading": "La agenda {categoryPhrase} en Cataluña",
+      "seeMore": "Ver más",
+      "sponsored": "Contenido patrocinado"
+    },
+    "Weather": {
+      "noData": "No hay datos meteorológicos disponibles."
+    },
+    "DateFilterBadges": {
+      "ariaLabel": "Ver también",
+      "today": {
+        "label": "Hoy",
+        "aria": "Ver actividades de hoy"
+      },
+      "tomorrow": {
+        "label": "Mañana",
+        "aria": "Ver actividades de mañana"
+      },
+      "weekend": {
+        "label": "Fin de semana",
+        "aria": "Ver actividades este fin de semana"
+      },
+      "ariaCategory": "{ariaLabelText} para la categoría {contextName}",
+      "ariaPlace": "{ariaLabelText} en {contextName}"
+    },
+    "SearchBar": {
+      "placeholder": "¿Qué estás buscando?",
+      "clear": "Limpiar la búsqueda",
+      "search": "Buscar"
+    },
+    "News": {
+      "readMore": "Leer más",
+      "readMoreAria": "Leer más sobre {title}",
+      "viewCategory": "Ver categoría {name}"
+    },
+    "LocationDiscovery": {
+      "heading": "Viendo eventos en",
+      "selectLocation": "Selecciona ubicación",
+      "searchPlaceholder": "Buscar ubicación...",
+      "discover": "Descubrir otros eventos",
+      "loading": "Cargando ubicaciones...",
+      "noResults": "No hay resultados"
+    },
+    "PastEventBanner": {
+      "title": "Este evento ya ha finalizado",
+      "subtitle": "No te pierdas qué pasa {timeWindow} en {placeLabel}",
+      "primaryCta": "Consulta la agenda",
+      "secondaryCta": "o explora esta categoría",
+      "srStatus": "Estado: {label}.",
+      "timeWindow": "esta semana"
+    },
+    "EventPage": {
+      "faqTitle": "Preguntas frecuentes",
+      "sponsored": "Contenido patrocinado"
+    },
+    "CardContent": {
+      "dateRange": "Del {start} al {end}",
+      "dateSingle": "{nameDay}, {start}"
+    },
+    "EventForm": {
+      "title": "Título *",
+      "url": "Enlace del evento",
+      "region": "Comarca *",
+      "town": "Población *",
+      "regionPlaceholder": "Selecciona una comarca",
+      "townPlaceholder": "Selecciona un pueblo",
+      "categoriesPlaceholder": "Selecciona categorías (opcional)",
+      "location": "Lugar *",
+      "email": "Correo electrónico",
+      "emailSubtitle": "¿Quieres que te avisemos cuando el evento se haya actualizado? (no guardamos los datos)",
+      "publishing": "Publicando...",
+      "regionSkeleton": "Comarca *",
+      "townSkeleton": "Población *"
+    },
+    "Layout": {
+      "rss": "RSS",
+      "rssNews": "RSS Noticias"
+    },
+    "EventDetailsSection": {
+      "title": "Detalles del evento",
+      "eventLink": "Enlace al evento:",
+      "duration": "Duración aproximada: {duration}"
+    },
+    "EventLocation": {
+      "title": "Ubicación"
+    },
+    "Select": {
+      "placeholder": "una opción",
+      "create": "Añadir nuevo lugar: \"{value}\"",
+      "noOptions": "No se ha encontrado ninguna opción"
+    },
+    "MultiSelect": {
+      "placeholder": "Selecciona categorías",
+      "loading": "Cargando categorías...",
+      "noOptions": "No se ha encontrado ninguna categoría",
+      "loadingShort": "Cargando..."
+    },
+    "TextArea": {
+      "label": "Descripción *",
+      "edit": "✏️ Editar",
+      "preview": "👁️ Previsualizar",
+      "emptyPreview": "Escribe algo para ver la previsualización...",
+      "placeholder": "Describe tu evento... Puedes escribir enlaces directamente y se convertirán automáticamente.",
+      "helperPreview": "Así es como verán la descripción los visitantes",
+      "helperEdit": "Los enlaces se convertirán automáticamente. Pulsa Enter para hacer saltos de línea."
+    },
+    "DatePicker": {
+      "start": "Inicio *",
+      "end": "Final *",
+      "dateFormat": "d MMMM, yyyy HH:mm aa",
+      "monthYearFormat": "MMMM yyyy"
+    },
+    "LoadMoreButton": {
+      "loading": "Cargando más eventos",
+      "label": "Cargar más"
+    },
+    "HybridEventsListClient": {
+      "errorTitle": "Error al cargar eventos",
+      "error": "Por favor, inténtalo más tarde."
+    },
+    "Hero": {
+      "options": {
+        "tomorrow": "Mañana"
+      }
+    },
+    "EditModal": {
+      "editTitle": "Sugerir una edición",
+      "editIntro": "Cambia el título u otros detalles",
+      "editHelper": "Edita el título, la ubicación, el horario, etc.",
+      "dupHelper": "El evento no existe, está duplicado, etc.",
+      "deleteTitle": "Sugerir una eliminación",
+      "deleteReasonLabel": "Motivo de la eliminación sugerida",
+      "deleteLegend": "Solicitud de eliminación",
+      "deleteOption": "Ofensivo, dañino o engañoso"
+    },
+    "HomePageSkeletonLegacy": {
+      "ariaAlso": "Ver también"
+    },
+    "Description": {
+      "title": "Descripción"
+    },
+    "HorizontalScroll": {
+      "next": "Siguiente",
+      "previous": "Anterior"
+    },
+    "SitemapHeader": {
+      "title": "Archivo histórico de {label}",
+      "subtitle": "Descubre la evolución cultural de {label} año tras año. Cada enlace te lleva a los eventos de un mes específico."
+    },
+    "SitemapContent": {
+      "title": "Archivo de eventos culturales",
+      "description": "Descubre todo lo que ha pasado en Cataluña cada año. Navega por comarcas y poblaciones para encontrar la historia cultural del territorio.",
+      "regionsTitle": "Comarcas de Cataluña",
+      "citiesTitle": "Poblaciones principales",
+      "footer": "El archivo contiene eventos culturales de todas las comarcas de Cataluña. Cada enlace te lleva a un histórico detallado organizado por años y meses."
+    },
+    "NewsList": {
+      "emptyTitle": "No hemos encontrado noticias recientes",
+      "emptyBody": "Aún no tenemos novedades para {placeLabel}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras",
+      "viewAll": "Ver todas las noticias →",
+      "name": "Noticias de {placeLabel}",
+      "more": "Más noticias →"
+    },
+    "NewsHubsGrid": {
+      "title": "Últimas noticias por hub",
+      "hubTitle": "Últimas noticias {hubName}",
+      "seeMore": "Ver más…"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbNews": "Noticias",
+      "moreProposals": "MÁS PROPUESTAS"
+    },
+    "UseGeolocation": {
+      "notAvailable": "La geolocalización no está disponible en este navegador.",
+      "denied": "Permisos de localización denegados. Activa la localización en el navegador para utilizar esta función.",
+      "unavailable": "Localización no disponible. Prueba a seleccionar una población en lugar de usar la distancia.",
+      "timeout": "Tiempo de espera agotado. Prueba de nuevo o selecciona una población.",
+      "genericError": "Error obteniendo la localización. Prueba a seleccionar una población en lugar de usar la distancia."
+    }
+  },
+  "Partials": {
+    "GeneratePagesData": {
+      "categories": {
+        "literatura": {
+          "titleSuffix": "Literatura y libros",
+          "description": "literatura, libros, presentaciones literarias, clubes de lectura, encuentros con autores",
+          "context": "Descubre el mundo de la literatura catalana con presentaciones, clubes de lectura y encuentros con autores",
+          "noEvents": "actividades literarias o presentaciones de libros"
+        },
+        "fires-i-mercats": {
+          "titleSuffix": "Ferias",
+          "description": "ferias, mercados, eventos comerciales, artesanía, productos locales",
+          "context": "Descubre ferias y mercados tradicionales con productos locales, artesanía y ambiente festivo",
+          "noEvents": "ferias ni mercados en la zona"
+        },
+        "festes-populars": {
+          "titleSuffix": "Fiestas populares",
+          "description": "fiestas populares, celebraciones tradicionales, cultura popular, correfocs, castells",
+          "context": "Participa en las mejores fiestas populares catalanas con correfocs, castellers y tradiciones únicas",
+          "noEvents": "fiestas populares o celebraciones tradicionales"
+        },
+        "tallers-i-formacio": {
+          "titleSuffix": "Talleres y formación",
+          "description": "talleres, formación, cursos, aprendizaje, actividades prácticas",
+          "context": "Aprende y fórmate con talleres prácticos, cursos especializados y actividades formativas",
+          "noEvents": "talleres, cursos ni actividades de formación"
+        },
+        "dansa": {
+          "titleSuffix": "Danza y baile",
+          "description": "danza, baile, espectáculos de danza, clases de baile, danza contemporánea",
+          "context": "Vive la pasión de la danza con espectáculos, talleres y clases de baile para todos los niveles",
+          "noEvents": "actividades de danza o baile"
+        },
+        "salut-i-benestar": {
+          "titleSuffix": "Salud y bienestar",
+          "description": "salud, bienestar, actividades saludables, yoga, meditación, wellness",
+          "context": "Cuídate con actividades de salud y bienestar, sesiones de yoga, meditación y hábitos saludables",
+          "noEvents": "actividades de salud, bienestar o yoga"
+        },
+        "esport": {
+          "titleSuffix": "Deporte y actividad física",
+          "description": "deporte, actividad física, competiciones deportivas, carreras populares",
+          "context": "Mantente activo con actividades deportivas, competiciones, carreras populares y planes al aire libre",
+          "noEvents": "actividades o eventos deportivos"
+        },
+        "patrimoni-cultural": {
+          "titleSuffix": "Patrimonio cultural",
+          "description": "patrimonio cultural, historia, monumentos, tradiciones, visitas guiadas",
+          "context": "Descubre el rico patrimonio cultural catalán con visitas guiadas, rutas históricas y monumentos",
+          "noEvents": "actividades relacionadas con el patrimonio cultural"
+        },
+        "serveis-municipals": {
+          "titleSuffix": "Servicios municipales",
+          "description": "servicios municipales, administración, trámites, información ciudadana, participación",
+          "context": "Infórmate sobre los servicios municipales disponibles, trámites, oficinas e información para la ciudadanía",
+          "noEvents": "actividades o informaciones de servicios municipales"
+        },
+        "gent-gran": {
+          "titleSuffix": "Actividades para personas mayores",
+          "description": "actividades para gente mayor, seniors, tercera edad, casal de gent gran",
+          "context": "Descubre actividades especialmente pensadas para la gente mayor: talleres, charlas, deporte suave y encuentros sociales",
+          "noEvents": "actividades destinadas a la gente mayor"
+        },
+        "familia-i-infants": {
+          "titleSuffix": "Actividades en familia",
+          "description": "actividades familiares, niños, diversión familiar, planes con niños",
+          "context": "Diversión para toda la familia con actividades para niños, espectáculos familiares y planes con peques",
+          "noEvents": "actividades familiares o para niños"
+        },
+        "exposicions": {
+          "titleSuffix": "Exposiciones y arte",
+          "description": "exposiciones, galerías de arte, museos, arte visual, rutas culturales",
+          "context": "Explora el arte y la cultura visual con exposiciones, museos y rutas culturales",
+          "noEvents": "exposiciones o actividades de arte"
+        },
+        "cinema": {
+          "titleSuffix": "Cine y audiovisual",
+          "description": "cine, proyecciones, festivales de cine, audiovisual, cinefórum",
+          "context": "Disfruta del mejor cine con proyecciones, festivales y cinefórums",
+          "noEvents": "proyecciones de cine o actividades audiovisuales"
+        },
+        "musica": {
+          "titleSuffix": "Conciertos",
+          "description": "conciertos, música, espectáculos musicales, festivales musicales, música en directo",
+          "context": "Descubre la mejor música en vivo con conciertos, festivales y actuaciones cerca de ti",
+          "noEvents": "conciertos, festivales o espectáculos musicales"
+        },
+        "teatre": {
+          "titleSuffix": "Teatro",
+          "description": "teatro, ópera, artes escénicas, espectáculos teatrales, monólogos",
+          "context": "Vive las mejores obras teatrales, monólogos y espectáculos de artes escénicas",
+          "noEvents": "obras de teatro o espectáculos de artes escénicas"
+        },
+        "altres": {
+          "titleSuffix": "Otras actividades",
+          "description": "otras actividades, eventos diversos, miscelánea, planes originales",
+          "context": "Descubre otras actividades interesantes y planes originales para tu tiempo libre",
+          "noEvents": "actividades en esta categoría"
+        }
+      },
+      "root": {
+        "title": "Agenda hoy en Cataluña y planes {year}",
+        "subTitle": "Agenda hoy en Cataluña este {month}, con conciertos, exposiciones, teatro, actividades familiares y planes para todas las edades.",
+        "metaTitle": "Agenda hoy en Cataluña - Qué hacer este {month}",
+        "metaDescription": "Explora la agenda hoy en Cataluña: conciertos, exposiciones, teatro, actividades familiares y planes gratuitos para inspirarte este {month}.",
+        "notFound": "Lo sentimos, pero no hay eventos disponibles en Cataluña en este momento. Mira otras fechas o localidades cercanas en nuestra agenda cultural, donde seguro encontrarás planes que te gustarán."
+      },
+      "categoryWithDate": {
+        "avui": {
+          "title": "{titleSuffix} hoy {label}",
+          "subTitle": "{titleSuffix} hoy {label}, con propuestas culturales actualizadas, planes de última hora y actividades para todos los gustos.",
+          "metaTitle": "{categoryTitle} hoy {label} - Agenda cultural y planes",
+          "metaDescription": "{context} hoy {label}. Consulta la agenda para descubrir planes para hoy: horarios, espacios, actividades para familias y opciones gratuitas.",
+          "notFound": "Lo sentimos, pero no hay {noEventsText} hoy {label}. Mira las propuestas para mañana, este fin de semana u otras localidades cercanas para encontrar planes que te puedan interesar."
+        },
+        "dema": {
+          "title": "{titleSuffix} mañana {label}",
+          "subTitle": "{titleSuffix} mañana {label}, con actividades destacadas, planes para salir y propuestas para disfrutar de la cultura.",
+          "metaTitle": "{categoryTitle} mañana {label} - Ideas y planes culturales",
+          "metaDescription": "{context} mañana {label}. Anticípate y encuentra los mejores planes para mañana: actividades familiares, propuestas nocturnas y eventos culturales cerca de ti.",
+          "notFound": "Lo sentimos, pero no hay {noEventsText} mañana {label}. Consulta la agenda para hoy, esta semana u otros destinos cercanos para encontrar nuevas propuestas."
+        },
+        "setmana": {
+          "title": "{titleSuffix} esta semana {label}",
+          "subTitle": "{titleSuffix} esta semana {label}, con conciertos, talleres, exposiciones y actividades familiares para llenar tu agenda.",
+          "metaTitle": "{categoryTitle} esta semana {label} - Agenda completa",
+          "metaDescription": "{context} esta semana {label}. Descubre una selección de actividades destacadas, planes para el fin de semana y propuestas gratuitas para todas las edades.",
+          "notFound": "Lo sentimos, pero no hay {noEventsText} esta semana {label}. Prueba a cambiar la fecha o explora otros municipios y comarcas cercanas para encontrar nuevos planes."
+        },
+        "capDeSetmana": {
+          "title": "{titleSuffix} este fin de semana {label}",
+          "subTitle": "{titleSuffix} este fin de semana {label}, con planes para salir, actividades en familia y propuestas para descubrir la cultura local.",
+          "metaTitle": "{categoryTitle} este fin de semana {label} - Planes y agenda",
+          "metaDescription": "{context} este fin de semana {label}. Encuentra conciertos, fiestas, actividades con niños y otros planes para aprovechar al máximo el fin de semana.",
+          "notFound": "Lo sentimos, pero no hay {noEventsText} este fin de semana {label}. Consulta otras fechas, explora actividades en el resto de Cataluña o ajusta los filtros de la búsqueda para descubrir más opciones."
+        }
+      },
+      "categoryNoDate": {
+        "title": "{titleSuffix} {label}",
+        "subTitle": "{titleSuffix} {label}, con una selección de actividades culturales, planes familiares, propuestas gratuitas y eventos destacados.",
+        "metaTitle": "{categoryTitle} {label} - Agenda cultural Cataluña",
+        "metaDescription": "{context} {label}. Consulta la agenda cultural actualizada y encuentra conciertos, talleres, exposiciones, actividades familiares y otros planes para tu tiempo libre.",
+        "notFound": "Lo sentimos, pero no hay {noEventsText} {label} en este momento. Prueba con otras fechas, categorías o localidades cercanas para descubrir nuevas propuestas culturales."
+      },
+      "regionNoDate": {
+        "title": "Qué hacer {label}. Agenda {year}",
+        "subTitle": "Agenda cultural {label} este {month}, con conciertos, exposiciones, rutas culturales, actividades familiares y planes para el fin de semana.",
+        "metaTitle": "Eventos destacados {label}. Agenda {year}",
+        "metaDescription": "Explora la mejor agenda cultural {label} este {month}. Encuentra conciertos, festivales, teatro, actividades para niños y planes gratuitos para disfrutar de la región.",
+        "canonical": "{siteUrl}/{place}",
+        "notFound": "Lo sentimos, pero no hay eventos {label} en esta fecha. Mira otros días, ajusta los filtros o consulta localidades cercanas para encontrar nuevos planes y actividades."
+      },
+      "townNoDate": {
+        "barcelona": {
+          "title": "Eventos en Barcelona y planes para hacer. Agenda {year}",
+          "metaTitle": "Eventos en Barcelona y planes para hacer hoy - Agenda {year}",
+          "metaDescription": "Eventos en Barcelona y planes para hacer este {month}. Consulta la agenda con conciertos, fiestas, actividades familiares, talleres, exposiciones y otras propuestas para disfrutar de la ciudad."
+        },
+        "default": {
+          "title": "Agenda hoy {label}. Qué hacer {year}",
+          "metaTitle": "Agenda hoy {label} - Qué hacer este {month}",
+          "metaDescription": "Descubre la agenda hoy {label} este {month}. Consulta conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes para disfrutar del municipio."
+        },
+        "subTitle": "Agenda cultural {label} este {month}, con actividades de proximidad, planes en familia, conciertos, exposiciones y fiestas populares.",
+        "notFound": "Lo sentimos, pero no hay eventos {label} para esta fecha. Prueba a cambiar la fecha, explorar otras categorías o mirar municipios cercanos para encontrar actividades que te interesen.",
+        "canonical": "{siteUrl}/{place}"
+      },
+      "byDatePlace": {
+        "avui": {
+          "title": "Qué hacer hoy {label}",
+          "subTitle": "Agenda de hoy {label}, con conciertos, exposiciones, actividades familiares, rutas y otros planes de última hora.",
+          "metaTitle": "Eventos hoy {label} - Planes y agenda",
+          "metaDescription": "Descubre qué hacer hoy {label}. Consulta la agenda cultural actualizada con conciertos, fiestas, actividades con niños, propuestas gratuitas y otros planes cerca de ti.",
+          "notFound": "Lo sentimos, pero no hay eventos hoy {label}. Mira las propuestas para mañana, esta semana u otras localidades cercanas para encontrar planes que encajen contigo."
+        },
+        "dema": {
+          "title": "Qué hacer mañana {label}",
+          "subTitle": "Agenda de mañana {label}, con actividades culturales, planes familiares, música, teatro y eventos especiales.",
+          "metaTitle": "Eventos mañana {label} - Ideas y planes",
+          "metaDescription": "Descubre qué hacer mañana {label}. Encuentra conciertos, actividades para niños, exposiciones, rutas y otros planes para organizar tu día con antelación.",
+          "notFound": "Lo sentimos, pero no hay eventos mañana {label}. Consulta la agenda para hoy, esta semana u otros destinos cercanos para descubrir nuevas opciones."
+        },
+        "setmana": {
+          "title": "Agenda semanal {label}",
+          "subTitle": "Agenda esta semana {label}, con una selección de actividades culturales, conciertos, talleres, planes familiares y propuestas gratuitas.",
+          "metaTitle": "Eventos esta semana {label} - Agenda completa",
+          "metaDescription": "Explora la agenda cultural esta semana {label}. Encuentra conciertos, exposiciones, teatro, actividades en familia, rutas y otros planes para llenar tu semana.",
+          "notFound": "Lo sentimos, pero no hay eventos esta semana {label}. Prueba otras semanas, cambia de categoría o explora localidades cercanas para encontrar más actividades."
+        },
+        "capDeSetmana": {
+          "title": "Qué hacer este fin de semana {label}",
+          "subTitle": "Agenda de este fin de semana {label}, con planes para salir, actividades familiares, fiestas, música en directo y propuestas al aire libre.",
+          "metaTitle": "Planes para este fin de semana {label} - Agenda",
+          "metaDescription": "Descubre los mejores planes para este fin de semana {label}. Consulta conciertos, fiestas populares, actividades con niños, rutas y otras propuestas culturales para aprovechar al máximo el fin de semana.",
+          "notFound": "Lo sentimos, pero no hay eventos este fin de semana {label}. Consulta otras fechas, explora categorías diferentes o mira qué se hace en el resto de Cataluña para encontrar nuevos planes."
+        }
+      },
+      "byDateNoPlace": {
+        "avui": {
+          "title": "Qué hacer hoy en Cataluña",
+          "subTitle": "Agenda de hoy en Cataluña, con conciertos, exposiciones, actividades familiares, fiestas populares y otros planes para todas las edades.",
+          "metaTitle": "Eventos hoy en Cataluña - Planes y agenda",
+          "metaDescription": "Descubre qué hacer hoy en Cataluña. Consulta la agenda cultural actualizada con conciertos, festivales, actividades con niños, propuestas gratuitas y planes de última hora en todo el territorio.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Lo sentimos, pero no hay eventos hoy en Cataluña. Mira las propuestas para mañana, esta semana o filtra por localidad y categoría para encontrar otros planes interesantes."
+        },
+        "dema": {
+          "title": "Qué hacer mañana en Cataluña",
+          "subTitle": "Agenda de mañana en Cataluña, con actividades culturales, música, teatro, exposiciones y planes familiares por todo el país.",
+          "metaTitle": "Eventos mañana en Cataluña - Ideas y planes",
+          "metaDescription": "Descubre qué hacer mañana en Cataluña. Encuentra conciertos, actividades familiares, rutas, fiestas y otros planes para organizar tu tiempo libre con antelación.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Lo sentimos, pero no hay eventos mañana en Cataluña. Consulta la agenda para hoy, esta semana o explora diferentes categorías y localidades para descubrir nuevas opciones."
+        },
+        "setmana": {
+          "title": "Agenda semanal en Cataluña",
+          "subTitle": "Agenda esta semana en Cataluña, con una selección de conciertos, exposiciones, teatro, fiestas, actividades familiares y propuestas gratuitas.",
+          "metaTitle": "Eventos esta semana en Cataluña - Agenda completa",
+          "metaDescription": "Explora la agenda cultural esta semana en Cataluña. Encuentra conciertos, festivales, rutas, talleres, actividades para niños y otros planes para llenar tu semana de cultura y ocio.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Lo sentimos, pero no hay eventos esta semana en Cataluña. Prueba a cambiar la semana, ajustar los filtros o explorar diferentes zonas del territorio para encontrar más actividades."
+        },
+        "capDeSetmana": {
+          "title": "Qué hacer este fin de semana en Cataluña",
+          "subTitle": "Agenda de este fin de semana en Cataluña, con planes para salir, escapadas, fiestas, conciertos, actividades en familia y rutas por todo el territorio.",
+          "metaTitle": "Eventos este fin de semana en Cataluña - Planes y agenda",
+          "metaDescription": "Descubre los mejores planes para este fin de semana en Cataluña. Consulta conciertos, fiestas populares, actividades para niños, rutas y otras propuestas culturales y de ocio por todo el país.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Lo sentimos, pero no hay eventos este fin de semana en Cataluña. Mira otros fines de semana, explora diferentes categorías o céntrate en una zona concreta para encontrar nuevas ideas."
+        }
+      },
+      "fallback": {
+        "title": "Qué hacer en Cataluña. Agenda {year}",
+        "subTitle": "Agenda cultural de Cataluña este {month}, con conciertos, exposiciones, teatro, actividades familiares, fiestas populares y muchos otros planes para tu tiempo libre.",
+        "metaTitle": "Descubre eventos en Cataluña este {year}",
+        "metaDescription": "Explora la mejor agenda cultural de Cataluña. Encuentra conciertos, rutas, festivales, actividades con niños, propuestas gratuitas y otros planes para disfrutar de {year}.",
+        "notFound": "Lo sentimos, pero no hay eventos disponibles en Cataluña en este momento. Prueba otras fechas, categorías o localidades para descubrir nuevas propuestas culturales y de ocio."
+      }
+    }
+  },
+  "Pages": {
+    "SitemapMonth": {
+      "metaTitle": "Archivo de {town} de {month} de {year} - Esdeveniments.cat",
+      "metaDescription": "Descubre qué pasó {locationPhrase} el {month} de {year}. Teatro, cine, música, arte y otras excusas para seguir descubriendo {town} - Archivo - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Inicio",
+        "archive": "Archivo"
+      },
+      "itemListTitle": "Eventos de {town} - {month} {year}",
+      "itemListDescription": "Colección de eventos culturales de {town} de {month} de {year}",
+      "collectionTitle": "Archivo de {town} - {month} {year}",
+      "collectionDescription": "Eventos culturales que tuvieron lugar {locationPhrase} durante {month} de {year}",
+      "collectionFallbackDescription": "Colección de eventos culturales",
+      "headerTitle": "Archivo {town} - {month} de {year}",
+      "headerCount": "{count} eventos culturales documentados",
+      "headerEmpty": "No se han encontrado eventos para este periodo",
+      "srList": "Lista de eventos",
+      "footerExplore": "¿Quieres explorar más eventos de {town}?",
+      "footerViewArchives": "Ver todos los archivos",
+      "footerCurrentEvents": "Eventos actuales"
+    },
+    "SitemapTown": {
+      "metaTitle": "Archivo. Descubre todo lo que ha pasado {locationPhrase} - Esdeveniments.cat",
+      "metaDescription": "Descubre todo lo que ha pasado {locationPhrase} cada año. Las mejores propuestas culturales para exprimir al máximo {town} - Archivo - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Inicio",
+        "archive": "Archivo"
+      },
+      "collectionTitle": "Archivo de {town}",
+      "collectionDescription": "Histórico de eventos culturales de {town} organizado por años y meses",
+      "mainEntityName": "Archivo histórico de {town}",
+      "mainEntityDescription": "Colección de eventos culturales de {town}",
+      "aboutTitle": "Sobre este archivo",
+      "aboutBody": "Este archivo contiene una recopilación de eventos culturales de {town} organizados cronológicamente. Cada mes incluye teatro, música, arte, festivales y otras actividades culturales.",
+      "quickNavTitle": "Navegación rápida",
+      "quickNavBody": "Utiliza los enlaces para navegar directamente a un mes específico. Los años más recientes aparecen primero para facilitar la búsqueda."
+    }
+  },
+  "Utils": {
+    "Validation": {
+      "genericError": "Hay errores de validación",
+      "imageRequired": "La imagen es obligatoria",
+      "titleRequired": "El título es obligatorio",
+      "descriptionRequired": "La descripción es obligatoria",
+      "locationRequired": "La ubicación es obligatoria",
+      "invalidUrl": "URL inválida",
+      "invalidEmail": "Email inválido"
+    },
+    "EventStatus": {
+      "past": "Evento finalizado",
+      "live": "En curso",
+      "upcoming": "Próximamente",
+      "endsInDays": "Termina en {count} días",
+      "endsInHours": "Termina en {count} horas",
+      "endsSoon": "Termina pronto",
+      "startsInDays": "Empieza en {count} días",
+      "startsInHours": "Empieza en {count} horas",
+      "startsToday": "Empieza hoy",
+      "today": "Hoy"
+    },
+    "EventTime": {
+      "consult": "Consultar horarios",
+      "startsAt": "Empieza a las {time}",
+      "range": "De {start} a {end}",
+      "simpleRange": "{start} - {end}"
+    },
+    "ListPageFaq": {
+      "title": "Preguntas frecuentes",
+      "dateInline": {
+        "today": "hoy",
+        "tomorrow": "mañana",
+        "weekend": "este fin de semana",
+        "week": "esta semana",
+        "fallback": "los próximos días"
+      },
+      "dateCapitalized": {
+        "today": "Hoy",
+        "tomorrow": "Mañana",
+        "weekend": "Este fin de semana",
+        "week": "Esta semana",
+        "fallback": "Los próximos días"
+      },
+      "q1": "¿Qué puedo hacer {contextInline}?",
+      "a1": "{capitalizedContext} encontrarás conciertos, ferias, actividades familiares y planes culturales actualizados cada día.",
+      "q2": "¿Hay actividades gratuitas {contextInline}?",
+      "a2": "Sí. Usa la búsqueda, los filtros de categoría y la distancia para descubrir actividades gratuitas {contextInline}.",
+      "q3": "¿Dónde puedo ver {categoryName} {contextInline}?",
+      "a3": "Selecciona la categoría \"{categoryName}\" para destacar estos eventos {contextInline} y guarda la agenda para consultarla a menudo."
+    },
+    "OpeningHours": {
+      "openNow": "Abierto ahora",
+      "closesAt": "Cierra a las {time}",
+      "closedNow": "Cerrado ahora",
+      "opensAt": "Abre a las {time}",
+      "unknown": "Horario no disponible",
+      "overnight": "(noche)",
+      "inferred": "(probable)",
+      "confirmed": "(confirmado)",
+      "openConfirmed": "Abierto (confirmado)",
+      "openProbable": "Abierto (probable)",
+      "closed": "Cerrado",
+      "unconfirmed": "Horario no confirmado"
+    },
+    "EventCopy": {
+      "sentence": {
+        "verbSingular": "se celebra",
+        "verbPlural": "se celebran",
+        "dateRange": "del {start} al {end}",
+        "dateSingle": "el {nameDay}, {start}",
+        "sentence": "{title} {verb} {date}{time}{place}.",
+        "timeSuffix": ", {time}",
+        "placeSuffix": ", {place}"
+      },
+      "faq": {
+        "whenQ": "¿Cuándo es el evento?",
+        "whenA": "{date}{time}",
+        "whereQ": "¿Dónde se celebra?",
+        "whereA": "{place}",
+        "isFreeQ": "¿Es gratuito?",
+        "isFreeYes": "Sí, el evento es gratuito.",
+        "isFreeNo": "No, el evento es de pago.",
+        "durationQ": "¿Cuál es la duración aproximada?",
+        "durationA": "{duration}"
+      }
+    },
+    "StringHelpers": {
+      "articles": {
+        "el": "El",
+        "la": "La",
+        "l": "El",
+        "els": "Los",
+        "les": "Las"
+      },
+      "prepositions": {
+        "a": "a",
+        "al": "al",
+        "als": "a los",
+        "aLa": "a la",
+        "aLes": "a las",
+        "aL": "al",
+        "de": "de",
+        "del": "del",
+        "dels": "de los",
+        "deLa": "de la",
+        "deLes": "de las",
+        "deL": "del"
+      },
+      "capitalizePrepositions": [
+        "al",
+        "a",
+        "del",
+        "de los",
+        "de la",
+        "de las",
+        "del",
+        "del",
+        "pel",
+        "pels"
+      ],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
+      "masculineExceptions": [
+        "penedès",
+        "alt penedès",
+        "baix penedès",
+        "rosselló",
+        "urgell",
+        "alt urgell",
+        "pla d'urgell",
+        "vallès",
+        "vallès oriental",
+        "vallès occidental",
+        "gironès",
+        "barcelonès",
+        "tarragonès",
+        "montsià",
+        "baix ebre",
+        "maresme",
+        "bages"
+      ]
+    },
+    "Calendar": {
+      "moreInfoHtml": "Más información: <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Esdeveniments.cat</a>",
+      "moreInfoText": "Más información: {url}",
+      "dateRange": "Del {start} al {end}",
+      "dateSingle": "Del {start}",
+      "loading": "Cargando...",
+      "button": "Añadir al calendario",
+      "providers": {
+        "google": "Google Calendar",
+        "outlook": "Outlook",
+        "other": "Otros"
+      },
+      "ariaAdd": "Add to {name}"
+    },
+    "ListPageFaq": {
+      "title": "Preguntas frecuentes",
+      "dateInline": {
+        "today": "hoy",
+        "tomorrow": "mañana",
+        "weekend": "este fin de semana",
+        "week": "esta semana",
+        "fallback": "los próximos días"
+      },
+      "dateCapitalized": {
+        "today": "Hoy",
+        "tomorrow": "Mañana",
+        "weekend": "Este fin de semana",
+        "week": "Esta semana",
+        "fallback": "Los próximos días"
+      },
+      "q1": "¿Qué puedo hacer {contextInline}?",
+      "a1": "{capitalizedContext} encontrarás conciertos, ferias, actividades familiares y propuestas culturales actualizadas cada día.",
+      "q2": "¿Hay actividades gratuitas {contextInline}?",
+      "a2": "Sí. Usa la búsqueda, los filtros de categoría y la distancia para descubrir actividades gratuitas {contextInline}.",
+      "q3": "¿Dónde puedo ver {categoryName} {contextInline}?",
+      "a3": "Selecciona la categoría \"{categoryName}\" para destacar estos eventos {contextInline} y guarda la agenda para consultarla a menudo."
+    },
+    "LocationHelpers": {
+      "newsAll": "Noticias de Cataluña",
+      "newsWithPlace": "Noticias {deLabel}"
+    },
+    "Rss": {
+      "feedTitle": "Rss {site} - {place}",
+      "feedDescription": "Rss {site} de {place}",
+      "itemDescription": "{title}\n\n🗓️ {nameDay} {formattedStart}\n\n🏡 {location}, {town}, {region} \n\nℹ️ ¡Más información disponible en nuestra página web!"
+    }
+  },
+  "Config": {
+    "TopAgenda": {
+      "agenda": "Agenda"
+    },
+    "Filters": {
+      "place": "Población",
+      "category": "Categoría",
+      "date": "Fecha",
+      "distance": "Distancia",
+      "search": "Buscar"
+    },
+    "Categories": {
+      "festesPopulars": "Fiestas populares",
+      "firesIMercats": "Ferias y mercados",
+      "familiaIInfants": "Actividades en familia",
+      "musica": "Conciertos",
+      "teatre": "Teatro",
+      "exposicions": "Exposiciones"
+    },
+    "ByDates": {
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "weekend": "Fin de semana",
+      "week": "Esta semana"
+    }
+  }
+}

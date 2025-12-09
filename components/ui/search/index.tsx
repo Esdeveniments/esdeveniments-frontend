@@ -9,6 +9,7 @@ import {
   JSX,
 } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
@@ -28,6 +29,7 @@ const sendSearchTermGA = (searchTerm: string): void => {
 };
 
 export default function Search(): JSX.Element {
+  const t = useTranslations("Components.SearchBar");
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -121,12 +123,12 @@ export default function Search(): JSX.Element {
         <input
           type="text"
           className="w-full border-0 placeholder:text-foreground/60 body-normal focus:outline-none"
-          placeholder="Què estàs buscant?"
+          placeholder={t("placeholder")}
           value={inputValue}
           onKeyDown={handleKeyPress}
           onChange={handleChange}
           autoComplete="off"
-          aria-label="Search input"
+          aria-label={t("search")}
           data-testid="search-input"
         />
         {/* Clear button (X) when there's text */}
@@ -135,7 +137,7 @@ export default function Search(): JSX.Element {
             <XIcon
               className="h-4 w-4 text-foreground-strong"
               onClick={clearSearchTerm}
-              aria-label="Clear search"
+              aria-label={t("clear")}
             />
           </div>
         )}
@@ -144,7 +146,7 @@ export default function Search(): JSX.Element {
           type="button"
           onClick={triggerSearch}
           className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
-          aria-label="Search"
+          aria-label={t("search")}
           data-testid="search-button"
         >
           <ChevronRightIcon className="h-5 w-5 text-foreground-strong" />

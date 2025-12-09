@@ -191,8 +191,25 @@ export interface NoEventsFoundProps {
   description?: string;
 }
 
+export interface NoEventsFoundContentProps extends NoEventsFoundProps {
+  prefix?: string;
+  ctaLabel: string;
+  helperText: string;
+}
+
 export interface VideoDisplayProps {
   videoUrl: string | null | undefined;
+}
+
+export interface CategoryEventsSectionProps {
+  events: EventSummaryResponseDTO[];
+  categoryName: string;
+  categorySlug: string;
+  categoryPhrase: string;
+  categories: CategorySummaryResponseDTO[];
+  shouldUsePriority: boolean;
+  showAd: boolean;
+  labels: CategorySectionLabels;
 }
 
 export interface LoadMoreButtonProps {
@@ -201,6 +218,12 @@ export interface LoadMoreButtonProps {
   hasMore?: boolean;
   currentCount?: number;
   totalEvents?: number;
+}
+
+export interface CategorySectionLabels {
+  heading: string;
+  seeMore: string;
+  sponsored: string;
 }
 
 export interface FilterLoadingContextValue {
@@ -223,9 +246,22 @@ export interface FilteredPageProps {
 }
 
 // Component props interfaces
+export interface FilterLabels {
+  triggerLabel: string;
+  displayNameMap: {
+    place: string;
+    category: string;
+    byDate: string;
+    distance: string;
+    searchTerm: string;
+  };
+  byDates: Record<string, string>;
+}
+
 export interface ClientInteractiveLayerProps {
   categories?: CategorySummaryResponseDTO[];
   placeTypeLabel: PlaceTypeAndLabel;
+  filterLabels: FilterLabels;
 }
 
 export interface ClientInteractiveLayerContentProps

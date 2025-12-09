@@ -1,35 +1,57 @@
 import { describe, it, expect } from "vitest";
 import {
-  formatEventTimeDisplay,
-  formatEventTimeDisplayDetail,
+  formatEventTimeDisplay as baseFormatEventTimeDisplay,
+  formatEventTimeDisplayDetail as baseFormatEventTimeDisplayDetail,
+  type EventTimeLabels,
 } from "../utils/date-helpers";
+
+const labels: EventTimeLabels = {
+  consult: "Consultar horaris",
+  startsAt: "Comença a les {time}",
+  range: "De {start} a {end}",
+  simpleRange: "{start} - {end}",
+};
+
+const formatEventTimeDisplay = (
+  start?: string | null,
+  end?: string | null
+): string => baseFormatEventTimeDisplay(start, end, labels);
+
+const formatEventTimeDisplayDetail = (
+  start?: string | null,
+  end?: string | null
+): string => baseFormatEventTimeDisplayDetail(start, end, labels);
+
+// convenience aliases used in a few tests below
+const formatDisplay = formatEventTimeDisplay;
+const formatDetail = formatEventTimeDisplayDetail;
 
 describe("formatEventTimeDisplay", () => {
   describe("when no start time or start time is '00:00'", () => {
     it("returns 'Consultar horaris' when startTime is undefined", () => {
-      expect(formatEventTimeDisplay(undefined, "21:00")).toBe(
+      expect(formatDisplay(undefined, "21:00")).toBe(
         "Consultar horaris"
       );
     });
 
     it("returns 'Consultar horaris' when startTime is null", () => {
-      expect(formatEventTimeDisplay(null, "21:00")).toBe("Consultar horaris");
+      expect(formatDisplay(null, "21:00")).toBe("Consultar horaris");
     });
 
     it("returns 'Consultar horaris' when startTime is '00:00'", () => {
-      expect(formatEventTimeDisplay("00:00", "21:00")).toBe(
+      expect(formatDisplay("00:00", "21:00")).toBe(
         "Consultar horaris"
       );
     });
 
     it("returns 'Consultar horaris' when startTime is '00:00' and endTime is undefined", () => {
-      expect(formatEventTimeDisplay("00:00", undefined)).toBe(
+      expect(formatDisplay("00:00", undefined)).toBe(
         "Consultar horaris"
       );
     });
 
     it("returns 'Consultar horaris' when both times are undefined", () => {
-      expect(formatEventTimeDisplay(undefined, undefined)).toBe(
+      expect(formatDisplay(undefined, undefined)).toBe(
         "Consultar horaris"
       );
     });
@@ -37,83 +59,83 @@ describe("formatEventTimeDisplay", () => {
 
   describe("when start time exists but no end time", () => {
     it("returns just the start time when endTime is undefined", () => {
-      expect(formatEventTimeDisplay("19:00", undefined)).toBe("19:00");
+      expect(formatDisplay("19:00", undefined)).toBe("19:00");
     });
 
     it("returns just the start time when endTime is null", () => {
-      expect(formatEventTimeDisplay("19:00", null)).toBe("19:00");
+      expect(formatDisplay("19:00", null)).toBe("19:00");
     });
 
     it("returns just the start time when endTime is empty string", () => {
-      expect(formatEventTimeDisplay("19:00", "")).toBe("19:00");
+      expect(formatDisplay("19:00", "")).toBe("19:00");
     });
   });
 
   describe("when both start and end times exist", () => {
     it("returns just the start time when both times are identical", () => {
-      expect(formatEventTimeDisplay("10:00", "10:00")).toBe("10:00");
+      expect(formatDisplay("10:00", "10:00")).toBe("10:00");
     });
 
     it("returns time range in format 'HH:mm - HH:mm'", () => {
-      expect(formatEventTimeDisplay("19:00", "21:00")).toBe("19:00 - 21:00");
+      expect(formatDisplay("19:00", "21:00")).toBe("19:00 - 21:00");
     });
 
     it("handles morning times correctly", () => {
-      expect(formatEventTimeDisplay("09:30", "12:00")).toBe("09:30 - 12:00");
+      expect(formatDisplay("09:30", "12:00")).toBe("09:30 - 12:00");
     });
 
     it("handles afternoon times correctly", () => {
-      expect(formatEventTimeDisplay("14:15", "17:45")).toBe("14:15 - 17:45");
+      expect(formatDisplay("14:15", "17:45")).toBe("14:15 - 17:45");
     });
 
     it("handles evening times correctly", () => {
-      expect(formatEventTimeDisplay("20:00", "23:30")).toBe("20:00 - 23:30");
+      expect(formatDisplay("20:00", "23:30")).toBe("20:00 - 23:30");
     });
 
     it("handles midnight times correctly", () => {
-      expect(formatEventTimeDisplay("23:00", "01:00")).toBe("23:00 - 01:00");
+      expect(formatDisplay("23:00", "01:00")).toBe("23:00 - 01:00");
     });
   });
 
   describe("edge cases", () => {
     it("handles single digit hours correctly", () => {
-      expect(formatEventTimeDisplay("09:00", "10:00")).toBe("09:00 - 10:00");
+      expect(formatDisplay("09:00", "10:00")).toBe("09:00 - 10:00");
     });
 
     it("handles times with leading zeros correctly", () => {
-      expect(formatEventTimeDisplay("08:05", "09:05")).toBe("08:05 - 09:05");
+      expect(formatDisplay("08:05", "09:05")).toBe("08:05 - 09:05");
     });
 
     it("returns 'Consultar horaris' for empty string startTime", () => {
-      expect(formatEventTimeDisplay("", "21:00")).toBe("Consultar horaris");
+      expect(formatDisplay("", "21:00")).toBe("Consultar horaris");
     });
 
     it("returns start time for empty string endTime when startTime is valid", () => {
-      expect(formatEventTimeDisplay("19:00", "")).toBe("19:00");
+      expect(formatDisplay("19:00", "")).toBe("19:00");
     });
   });
 
   describe("when times include seconds", () => {
     it("strips seconds from start time", () => {
-      expect(formatEventTimeDisplay("07:30:00", "09:00")).toBe("07:30 - 09:00");
+      expect(formatDisplay("07:30:00", "09:00")).toBe("07:30 - 09:00");
     });
 
     it("strips seconds from end time", () => {
-      expect(formatEventTimeDisplay("07:30", "09:00:00")).toBe("07:30 - 09:00");
+      expect(formatDisplay("07:30", "09:00:00")).toBe("07:30 - 09:00");
     });
 
     it("strips seconds from both times", () => {
-      expect(formatEventTimeDisplay("07:30:00", "09:00:00")).toBe(
+      expect(formatDisplay("07:30:00", "09:00:00")).toBe(
         "07:30 - 09:00"
       );
     });
 
     it("handles start time with seconds and no end time", () => {
-      expect(formatEventTimeDisplay("07:30:00", null)).toBe("07:30");
+      expect(formatDisplay("07:30:00", null)).toBe("07:30");
     });
 
     it("handles identical times with seconds as single time", () => {
-      expect(formatEventTimeDisplay("07:30:00", "07:30:00")).toBe("07:30");
+      expect(formatDisplay("07:30:00", "07:30:00")).toBe("07:30");
     });
   });
 });
@@ -121,31 +143,31 @@ describe("formatEventTimeDisplay", () => {
 describe("formatEventTimeDisplayDetail", () => {
   describe("when no start time or start time is '00:00'", () => {
     it("returns 'Consultar horaris' when startTime is undefined", () => {
-      expect(formatEventTimeDisplayDetail(undefined, "21:00")).toBe(
+      expect(formatDetail(undefined, "21:00")).toBe(
         "Consultar horaris"
       );
     });
 
     it("returns 'Consultar horaris' when startTime is null", () => {
-      expect(formatEventTimeDisplayDetail(null, "21:00")).toBe(
+      expect(formatDetail(null, "21:00")).toBe(
         "Consultar horaris"
       );
     });
 
     it("returns 'Consultar horaris' when startTime is '00:00'", () => {
-      expect(formatEventTimeDisplayDetail("00:00", "21:00")).toBe(
+      expect(formatDetail("00:00", "21:00")).toBe(
         "Consultar horaris"
       );
     });
 
     it("returns 'Consultar horaris' when startTime is '00:00' and endTime is undefined", () => {
-      expect(formatEventTimeDisplayDetail("00:00", undefined)).toBe(
+      expect(formatDetail("00:00", undefined)).toBe(
         "Consultar horaris"
       );
     });
 
     it("returns 'Consultar horaris' when both times are undefined", () => {
-      expect(formatEventTimeDisplayDetail(undefined, undefined)).toBe(
+      expect(formatDetail(undefined, undefined)).toBe(
         "Consultar horaris"
       );
     });
@@ -153,31 +175,31 @@ describe("formatEventTimeDisplayDetail", () => {
 
   describe("when start time exists but no end time", () => {
     it("returns 'Comença a les HH:mm' when endTime is undefined", () => {
-      expect(formatEventTimeDisplayDetail("19:00", undefined)).toBe(
+      expect(formatDetail("19:00", undefined)).toBe(
         "Comença a les 19:00"
       );
     });
 
     it("returns 'Comença a les HH:mm' when endTime is null", () => {
-      expect(formatEventTimeDisplayDetail("19:00", null)).toBe(
+      expect(formatDetail("19:00", null)).toBe(
         "Comença a les 19:00"
       );
     });
 
     it("returns 'Comença a les HH:mm' when endTime is empty string", () => {
-      expect(formatEventTimeDisplayDetail("19:00", "")).toBe(
+      expect(formatDetail("19:00", "")).toBe(
         "Comença a les 19:00"
       );
     });
 
     it("handles single digit hours correctly", () => {
-      expect(formatEventTimeDisplayDetail("09:00", null)).toBe(
+      expect(formatDetail("09:00", null)).toBe(
         "Comença a les 09:00"
       );
     });
 
     it("handles times with minutes correctly", () => {
-      expect(formatEventTimeDisplayDetail("10:30", null)).toBe(
+      expect(formatDetail("10:30", null)).toBe(
         "Comença a les 10:30"
       );
     });
@@ -185,43 +207,43 @@ describe("formatEventTimeDisplayDetail", () => {
 
   describe("when both start and end times exist", () => {
     it("returns 'De HH:mm a HH:mm' format", () => {
-      expect(formatEventTimeDisplayDetail("19:00", "21:00")).toBe(
+      expect(formatDetail("19:00", "21:00")).toBe(
         "De 19:00 a 21:00"
       );
     });
 
     it("handles morning times correctly", () => {
-      expect(formatEventTimeDisplayDetail("09:30", "12:00")).toBe(
+      expect(formatDetail("09:30", "12:00")).toBe(
         "De 09:30 a 12:00"
       );
     });
 
     it("handles afternoon times correctly", () => {
-      expect(formatEventTimeDisplayDetail("14:15", "17:45")).toBe(
+      expect(formatDetail("14:15", "17:45")).toBe(
         "De 14:15 a 17:45"
       );
     });
 
     it("handles evening times correctly", () => {
-      expect(formatEventTimeDisplayDetail("20:00", "23:30")).toBe(
+      expect(formatDetail("20:00", "23:30")).toBe(
         "De 20:00 a 23:30"
       );
     });
 
     it("handles midnight times correctly", () => {
-      expect(formatEventTimeDisplayDetail("23:00", "01:00")).toBe(
+      expect(formatDetail("23:00", "01:00")).toBe(
         "De 23:00 a 01:00"
       );
     });
 
     it("handles single digit hours correctly", () => {
-      expect(formatEventTimeDisplayDetail("09:00", "10:00")).toBe(
+      expect(formatDetail("09:00", "10:00")).toBe(
         "De 09:00 a 10:00"
       );
     });
 
     it("handles times with leading zeros correctly", () => {
-      expect(formatEventTimeDisplayDetail("08:05", "09:05")).toBe(
+      expect(formatDetail("08:05", "09:05")).toBe(
         "De 08:05 a 09:05"
       );
     });

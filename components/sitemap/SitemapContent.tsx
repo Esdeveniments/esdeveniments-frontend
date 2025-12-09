@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
@@ -7,6 +8,7 @@ import type { SitemapContentProps } from "types/sitemap";
 export default async function SitemapContent({
   dataPromise,
 }: SitemapContentProps) {
+  const t = await getTranslations("Components.SitemapContent");
   const { regions, cities } = await dataPromise;
 
   // Sort regions and cities by name
@@ -45,17 +47,15 @@ export default async function SitemapContent({
       <section className="stack gap-8">
         <header>
           <h1 className="heading-1 mb-4" data-testid="sitemap-title">
-            Arxiu d&apos;esdeveniments culturals
+            {t("title")}
           </h1>
           <p className="body-large text-foreground">
-            Descobreix tot el què ha passat a Catalunya cada any. Navega per
-            comarques i poblacions per trobar l&apos;història cultural del
-            territori.
+            {t("description")}
           </p>
         </header>
 
         <div className="stack gap-6">
-          <h2 className="heading-2">Comarques de Catalunya</h2>
+          <h2 className="heading-2">{t("regionsTitle")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4" role="list">
             {sortedRegions.map((region) => (
               <div key={region.slug} role="listitem">
@@ -73,7 +73,7 @@ export default async function SitemapContent({
         </div>
 
         <div className="stack gap-6">
-          <h2 className="heading-2">Poblacions principals</h2>
+          <h2 className="heading-2">{t("citiesTitle")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
             {sortedCities.map((city) => (
               <div key={city.slug} role="listitem">

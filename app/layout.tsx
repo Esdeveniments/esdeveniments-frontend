@@ -1,5 +1,7 @@
 import "../styles/globals.css";
 import type { ReactNode } from "react";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import type { Metadata, Viewport } from "next";
 import GoogleScripts from "./GoogleScripts";
 import { AdProvider } from "../lib/context/AdContext";
@@ -8,6 +10,7 @@ import WebsiteSchema from "@components/partials/WebsiteSchema";
 // Removed custom fonts - now using system font stack
 // import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";
+import caMessages from "../messages/ca.json";
 
 export const metadata: Metadata = {
   other: {
@@ -17,8 +20,8 @@ export const metadata: Metadata = {
   alternates: {
     types: {
       "application/rss+xml": [
-        { url: "/rss.xml", title: "RSS" },
-        { url: "/noticies/rss.xml", title: "RSS Notícies" },
+        { url: "/rss.xml", title: caMessages.Components.Layout.rss },
+        { url: "/noticies/rss.xml", title: caMessages.Components.Layout.rssNews },
       ],
     },
   },
@@ -36,9 +39,11 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   const apiOrigin = getApiOrigin();
+  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
-    <html lang="ca">
+    <html lang={locale}>
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
@@ -48,11 +53,13 @@ export default async function RootLayout({
         )}
       </head>
       <body>
-        <AdProvider>
-          <WebsiteSchema />
-          <GoogleScripts />
-          <BaseLayout>{children}</BaseLayout>
-        </AdProvider>
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          <AdProvider>
+            <WebsiteSchema />
+            <GoogleScripts />
+            <BaseLayout>{children}</BaseLayout>
+          </AdProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

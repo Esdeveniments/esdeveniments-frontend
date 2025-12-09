@@ -10,21 +10,30 @@ import {
   NewspaperIcon,
 } from "@heroicons/react/outline";
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import ActiveLink from "@components/ui/common/link";
 import logo from "@public/static/images/logo-esdeveniments.webp";
 import PressableLink from "@components/ui/primitives/PressableLink";
-import { NavigationItem } from "types/common";
-
-const navigation: NavigationItem[] = [
-  { name: "Inici", href: "/", current: true },
-  { name: "Agenda", href: "/catalunya", current: false },
-  { name: "Publicar", href: "/publica", current: false },
-  { name: "Notícies", href: "/noticies", current: false },
-  { name: "Arxiu", href: "/sitemap", current: false },
-];
+import { Href, NavigationItem } from "types/common";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const t = useTranslations("Components.Navbar");
+  const locale = useLocale();
+  const withLocale = (path: Href): Href => {
+    if (locale === DEFAULT_LOCALE) return path;
+    if (path.startsWith(`/${locale}`)) return path as Href;
+    return `/${locale}${path}` as Href;
+  };
+  const navigation: NavigationItem[] = [
+    { name: t("navigation.home"), href: withLocale("/"), current: true },
+    { name: t("navigation.agenda"), href: withLocale("/catalunya"), current: false },
+    { name: t("navigation.publish"), href: withLocale("/publica"), current: false },
+    { name: t("navigation.news"), href: withLocale("/noticies"), current: false },
+    { name: t("navigation.archive"), href: withLocale("/sitemap"), current: false },
+  ];
 
   return (
     <Disclosure
@@ -42,7 +51,7 @@ export default function Navbar() {
                 {/* Logo */}
                 <div className="flex flex-1 md:w-1/2 justify-start items-center py-2 px-3">
                   <PressableLink
-                    href="/"
+                    href={withLocale("/")}
                     prefetch={false}
                     variant="inline"
                     className="transition-transform duration-normal hover:scale-105"
@@ -50,7 +59,7 @@ export default function Navbar() {
                     <Image
                       src={logo}
                       className="bg-background flex justify-center items-center cursor-pointer"
-                      alt="Logo Esdeveniments.cat"
+                      alt={t("logoAlt")}
                       width={190}
                       height={18}
                       priority={true}
@@ -61,7 +70,7 @@ export default function Navbar() {
                 <div className="flex justify-center items-center md:hidden">
                   <Disclosure.Button
                     className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus:outline-none"
-                    aria-label={open ? "Close menu" : "Open menu"}
+                    aria-label={open ? t("aria.closeMenu") : t("aria.openMenu")}
                   >
                     {open ? (
                       <XIcon className="h-5 w-5" />
@@ -71,7 +80,7 @@ export default function Navbar() {
                   </Disclosure.Button>
                 </div>
                 {/* LaptopMenu */}
-                <div className="hidden md:flex md:w-1/2 justify-end items-center">
+                <div className="hidden md:flex md:w-1/2 justify-end items-center gap-3">
                   <div className="flex-center gap-1">
                     {navigation.map((item) => (
                       <ActiveLink
@@ -83,6 +92,7 @@ export default function Navbar() {
                       </ActiveLink>
                     ))}
                   </div>
+                  <LanguageSwitcher />
                 </div>
               </div>
               {/* SecondBar - Mobile Bottom Navigation */}
@@ -90,10 +100,10 @@ export default function Navbar() {
                 {/* Home */}
                 <div className="flex-center">
                   <ActiveLink
-                    href="/"
+                    href={withLocale("/")}
                     activeLinkClass="text-primary bg-primary/10"
                     className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                    aria-label="Home"
+                    aria-label={t("aria.home")}
                   >
                     <HomeIcon className="h-6 w-6" />
                   </ActiveLink>
@@ -102,23 +112,25 @@ export default function Navbar() {
                 {/* Publicar */}
                 <div className="flex-center">
                   <ActiveLink
-                    href="/publica"
+                    href={withLocale("/publica")}
                     activeLinkClass="text-primary bg-primary/10"
                     className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
-                    aria-label="Publish"
+                    aria-label={t("aria.publish")}
                   >
                     <PlusSmIcon className="h-6 w-6" />
-                    <span className="hidden sm:block label font-semibold">Publica</span>
+                    <span className="hidden sm:block label font-semibold">
+                      {t("mobilePublishLabel")}
+                    </span>
                   </ActiveLink>
                 </div>
 
                 {/* Notícies */}
                 <div className="flex-center">
                   <ActiveLink
-                    href="/noticies"
+                    href={withLocale("/noticies")}
                     activeLinkClass="text-primary bg-primary/10"
                     className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                    aria-label="Notícies"
+                    aria-label={t("aria.news")}
                   >
                     <NewspaperIcon className="h-6 w-6" />
                   </ActiveLink>
@@ -138,6 +150,9 @@ export default function Navbar() {
                   {item.name}
                 </ActiveLink>
               ))}
+              <div className="pt-2 border-t border-border flex justify-end">
+                <LanguageSwitcher />
+              </div>
             </div>
           </Disclosure.Panel>
         </>

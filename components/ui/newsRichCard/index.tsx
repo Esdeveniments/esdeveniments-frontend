@@ -1,14 +1,16 @@
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import type { NewsRichCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
-export default function NewsRichCard({
+export default async function NewsRichCard({
   event,
   variant = "default",
   numbered,
 }: NewsRichCardProps) {
+  const t = await getTranslations("Components.News");
   const image = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate);
   const dateLabel = formatted.formattedEnd
@@ -55,7 +57,7 @@ export default function NewsRichCard({
                   href={`/catalunya/${primaryCategory.slug}`}
                   prefetch={false}
                   className="badge-primary"
-                  aria-label={`Veure categoria ${primaryCategory.name}`}
+                  aria-label={t("viewCategory", { name: primaryCategory.name })}
                   variant="inline"
                 >
                   {primaryCategory.name}
@@ -90,10 +92,10 @@ export default function NewsRichCard({
                 href={`/e/${event.slug}`}
                 prefetch={false}
                 className="btn-primary"
-                aria-label={`Llegir-ne més de ${event.title}`}
+                aria-label={t("readMoreAria", { title: event.title })}
                 variant="inline"
               >
-                Llegir més
+                {t("readMore")}
               </PressableAnchor>
             </div>
           </div>
@@ -161,10 +163,10 @@ export default function NewsRichCard({
             href={`/e/${event.slug}`}
             prefetch={false}
             className="btn-primary"
-            aria-label={`Llegir-ne més de ${event.title}`}
+            aria-label={t("readMoreAria", { title: event.title })}
             variant="inline"
           >
-            Llegir més
+            {t("readMore")}
           </PressableAnchor>
         </div>
       </div>

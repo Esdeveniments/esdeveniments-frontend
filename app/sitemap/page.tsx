@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { fetchRegions } from "@lib/api/regions";
 import { fetchCities } from "@lib/api/cities";
@@ -10,18 +12,23 @@ import {
   buildPageMeta,
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import SitemapContent from "@components/sitemap/SitemapContent";
 import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 
 export const revalidate = 86400;
 
-export const metadata = buildPageMeta({
-  title: "Arxiu. Descobreix tot el que passa a Catalunya - Esdeveniments.cat",
-  description:
-    "Descobreix tot el què ha passat a Catalunya cada any. Les millors propostes culturals per esprémer al màxim de Catalunya - Arxiu - Esdeveniments.cat",
-  canonical: `${siteUrl}/sitemap`,
-});
+export async function generateMetadata() {
+  const t = await getTranslations("App.Sitemap");
+  const locale = resolveLocaleFromHeaders(await headers());
+  return buildPageMeta({
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    canonical: `${siteUrl}/sitemap`,
+    locale,
+  });
+}
 
 async function getData(): Promise<{
   regions: RegionSummaryResponseDTO[];
@@ -32,27 +39,34 @@ async function getData(): Promise<{
   return { regions, cities };
 }
 
-export default function Page() {
+export default async function Page() {
+  const tAppPromise = getTranslations("App.Sitemap");
+  const tContentPromise = getTranslations("Components.SitemapContent");
   const dataPromise = getData();
+  const pageMetaPromise = Promise.all([tAppPromise, tContentPromise]);
 
-  // Generate structured data for the sitemap
+  // Generate structured data for the sitemap (localized)
+  const data = await pageMetaPromise;
+  const tApp = data[0];
+  const tContent = data[1];
   const breadcrumbs = [
-    { name: "Inici", url: siteUrl },
-    { name: "Arxiu", url: `${siteUrl}/sitemap` },
+    { name: tApp("breadcrumbHome"), url: siteUrl },
+    { name: tApp("breadcrumbCurrent"), url: `${siteUrl}/sitemap` },
   ];
 
   const webPageSchema = generateWebPageSchema({
-    title: "Arxiu - Esdeveniments.cat",
-    description: "Descobreix tot el què ha passat a Catalunya cada any",
+    title: tApp("metaTitle"),
+    description: tApp("metaDescription"),
     url: `${siteUrl}/sitemap`,
     breadcrumbs,
     mainContentOfPage: {
       "@type": "WebPageElement",
       "@id": `${siteUrl}/sitemap#maincontent`,
-      name: "Sitemap principal",
+      name: tContent("title"),
       about: {
         "@type": "Thing",
-        name: "Arxiu d'esdeveniments culturals de Catalunya",
+        name: tContent("title"),
+        description: tContent("description"),
       },
     },
   });
@@ -71,9 +85,7 @@ export default function Page() {
 
         <footer className="pt-8 border-t border-border">
           <p className="body-small text-foreground/80">
-            L&apos;arxiu conté esdeveniments culturals de totes les comarques de
-            Catalunya. Cada enllaç et porta a un històric detallat organitzat
-            per anys i mesos.
+            {tContent("footer")}
           </p>
         </footer>
       </SitemapLayout>

@@ -78,3 +78,7 @@ export function getSiteUrlFromRequest(request?: {
 
 // Keep the const for backward compatibility
 export const siteUrl = getSiteUrl();
+
+// Central contact email used across UI (defaults to esdeveniments inbox)
+export const contactEmail =
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hola@esdeveniments.cat";

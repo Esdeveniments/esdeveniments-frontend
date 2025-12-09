@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import { formatCatalanA } from "@utils/helpers";
@@ -10,6 +11,7 @@ export default async function LatestNewsSection({
   placeType,
   newsHref,
 }: LatestNewsSectionProps) {
+  const t = await getTranslations("Components.LatestNewsSection");
   const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
   const latestNews = newsResponse.content || [];
 
@@ -17,23 +19,26 @@ export default async function LatestNewsSection({
     return null;
   }
 
+  const placeSuffix =
+    placeLabel && placeSlug !== "catalunya"
+      ? formatCatalanA(placeLabel, placeType, false)
+      : "";
+  const title = placeSuffix
+    ? t("titleWithPlace", { place: placeSuffix })
+    : t("title");
+
   return (
     <div className="w-full bg-background pb-8">
       <section className="container w-full flex flex-col gap-element-gap">
         <div className="w-full flex items-center justify-between">
-          <h2 className="heading-2">
-            Últimes notícies{" "}
-            {placeLabel && placeSlug !== "catalunya"
-              ? formatCatalanA(placeLabel, placeType, false)
-              : ""}
-          </h2>
+          <h2 className="heading-2">{title}</h2>
           <PressableAnchor
             href={newsHref}
             prefetch={false}
             className="body-small text-primary underline hover:no-underline"
             variant="inline"
           >
-            Veure totes
+            {t("viewAll")}
           </PressableAnchor>
         </div>
         <div className="flex flex-col gap-element-gap">

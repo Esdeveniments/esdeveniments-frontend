@@ -1,14 +1,16 @@
+import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 
 export async function GET() {
+  const t = await getTranslations("App.NewsRss");
   const feed = new Feed({
     id: `${siteUrl}/noticies`,
     link: `${siteUrl}/noticies`,
-    title: "Notícies - Esdeveniments.cat",
-    description: "Les últimes notícies i recomanacions culturals de Catalunya",
+    title: t("title"),
+    description: t("description"),
     copyright: "Esdeveniments.cat",
     updated: new Date(),
     author: {

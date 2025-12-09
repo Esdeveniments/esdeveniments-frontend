@@ -6,14 +6,22 @@ import {
   formatEventTimeDisplay,
   formatEventTimeDisplayDetail,
 } from "@utils/date-helpers";
+import { getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 
-const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
+const CardHorizontalServer = async ({
   event,
   isPriority = false,
   useDetailTimeFormat = false,
-}) => {
+}: CardHorizontalServerProps) => {
+  const tTime = await getTranslations("Utils.EventTime");
+  const timeLabels = {
+    consult: tTime("consult"),
+    startsAt: tTime("startsAt", { time: "{time}" }),
+    range: tTime("range", { start: "{start}", end: "{end}" }),
+    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
+  };
   const title = truncateString(event.title || "", 60);
   // const description = truncateString(event.description || "", 60);
 
@@ -110,8 +118,16 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
               </svg>
               <span>
                 {useDetailTimeFormat
-                  ? formatEventTimeDisplayDetail(event.startTime, event.endTime)
-                  : formatEventTimeDisplay(event.startTime, event.endTime)}
+                  ? formatEventTimeDisplayDetail(
+                    event.startTime,
+                    event.endTime,
+                    timeLabels
+                  )
+                  : formatEventTimeDisplay(
+                    event.startTime,
+                    event.endTime,
+                    timeLabels
+                  )}
               </span>
             </div>
 

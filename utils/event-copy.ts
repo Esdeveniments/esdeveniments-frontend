@@ -6,6 +6,23 @@ import {
   capitalizeFirstLetter,
   formatPlaceName,
 } from "./string-helpers";
+import type { EventCopyLabels, StringHelperLabels } from "types/common";
+import caMessages from "../messages/ca.json";
+
+const defaultEventCopyLabels: EventCopyLabels = (caMessages as any).Utils
+  .EventCopy as EventCopyLabels;
+const eventCopyStringLabels: StringHelperLabels = (caMessages as any).Utils
+  .StringHelpers as StringHelperLabels;
+const canonicalArticleMap = Object.values(
+  eventCopyStringLabels.articles
+).reduce((acc, value) => {
+  acc[value.toLowerCase()] = value;
+  return acc;
+}, {} as Record<string, string>);
+const toCanonicalArticle = (token: string) =>
+  canonicalArticleMap[token.toLowerCase()] || capitalizeFirstLetter(token);
+const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function isValidTime(t: string | null): t is string {
   return !!t && t !== "00:00";
@@ -161,22 +178,21 @@ function detectCatalanGenderAndNumber(word: string): {
 }
 
 /** Return the correct article token (capitalized) for a *word* (not whole title) */
-function getCatalanArticleForWord(
-  word: string
-): "El" | "La" | "L'" | "Els" | "Les" {
+function getCatalanArticleForWord(word: string): string {
   // Handle Roman numerals specially - they should use "La" for feminine contexts
+  const { articles } = eventCopyStringLabels;
   const norm = (word || "").trim().toLowerCase();
   if (/^[ivxlcdm]+$/.test(norm)) {
     // Roman numeral - default to "La" (most common for "Fira", "Edició", etc.)
-    return "La";
+    return articles.la;
   }
 
   const { gender, number } = detectCatalanGenderAndNumber(word);
   const startsWithVowelOrH = /^[aeiouàáèéíïòóúüh]/i.test(word);
 
-  if (number === "pl") return gender === "f" ? "Les" : "Els";
-  if (startsWithVowelOrH) return "L'";
-  return gender === "f" ? "La" : "El";
+  if (number === "pl") return gender === "f" ? articles.les : articles.els;
+  if (startsWithVowelOrH) return articles.l;
+  return gender === "f" ? articles.la : articles.el;
 }
 
 /** If title already begins with an article, extract it and the rest. */
@@ -184,7 +200,14 @@ function extractLeadingArticle(title: string): {
   articleToken: string | null;
   rest: string;
 } {
-  const m = title.match(/^(l'|els|les|el|la)\b\s*/i);
+  const articleTokens = Object.values(eventCopyStringLabels.articles);
+  const regex = new RegExp(
+    `^(${articleTokens
+      .map((token) => escapeRegex(token.toLowerCase()))
+      .join("|")})\\b\\s*`,
+    "i"
+  );
+  const m = title.match(regex);
   if (!m) return { articleToken: null, rest: title };
   return { articleToken: m[1].toLowerCase(), rest: title.slice(m[0].length) };
 }
@@ -195,16 +218,24 @@ function extractLeadingArticle(title: string): {
  * - inside parentheses: title-case every word (e.g. "(vallès oriental)" -> "(Vallès Oriental)")
  */
 function capitalizePlaces(text: string): string {
+  const prepsPattern = eventCopyStringLabels.capitalizePrepositions
+    .map((p) => escapeRegex(p))
+    .join("|");
   // 1) capitalize first word after common prepositions
   text = text.replace(
-    /\b(al|a|del|dels|de la|de les|de l’|de l'|pel|pels)\s+([a-zà-ÿ][\w'’-]*(?:\s+[a-zà-ÿ][\w'’-]*)*)(?=[,.;)]|$)/gi,
+    new RegExp(
+      `\\b(${prepsPattern})\\s+([a-zà-ÿ][\\w'’-]*(?:\\s+[a-zà-ÿ][\\w'’-]*)*)(?=[,.;)]|$)`,
+      "gi"
+    ),
     (_match, prep, place) => {
       const trimmedPlace = place.trim();
       const seIndex = trimmedPlace.toLowerCase().indexOf(" se ");
       const placePortion =
         seIndex >= 0 ? trimmedPlace.slice(0, seIndex).trim() : trimmedPlace;
       const remainder = seIndex >= 0 ? trimmedPlace.slice(seIndex) : "";
-      const articleMatch = placePortion.match(/^(l['’]|el|la|els|les)\s+(.*)$/i);
+      const articleMatch = placePortion.match(
+        /^(l['’]|el|la|els|les)\s+(.*)$/i
+      );
       if (articleMatch) {
         const article = articleMatch[1].toLowerCase();
         const rest = articleMatch[2];
@@ -229,17 +260,18 @@ function capitalizePlaces(text: string): string {
   return text;
 }
 
-export function buildEventIntroText(event: EventDetailResponseDTO): string {
+export async function buildEventIntroText(
+  event: EventDetailResponseDTO,
+  labels: EventCopyLabels = defaultEventCopyLabels
+): Promise<string> {
   const cityName = formatPlaceName(event.city?.name || "");
   const regionName = formatPlaceName(event.region?.name || "");
   const formattedLocation = formatPlaceName(event.location || "");
 
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+  const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
     event.startDate,
     event.endDate
   );
-
-
 
   const placeSummary = cityName
     ? `${cityName}${regionName ? ` (${regionName})` : ""}`
@@ -281,21 +313,28 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
 
     // If correct article is L' and we have a Roman numeral, convert to La/El
     let finalCorrectArticle = correctArticle;
-    if (correctArticle === "L'" && isFirstWordRomanNumeral) {
+    if (
+      correctArticle === eventCopyStringLabels.articles.l &&
+      isFirstWordRomanNumeral
+    ) {
       const { gender } = detectCatalanGenderAndNumber(firstWordAfterArticle);
-      finalCorrectArticle = gender === "f" ? "La" : "El";
+      finalCorrectArticle =
+        gender === "f"
+          ? eventCopyStringLabels.articles.la
+          : eventCopyStringLabels.articles.el;
     }
 
     // Check if the provided article matches the correct one
     // Special case: if we have "L'" before a Roman numeral, use the article for the word after the numeral
     const shouldUseArticleForRomanNumeral =
-      articleToken === "l'" && isFirstWordRomanNumeral;
+      articleToken === eventCopyStringLabels.articles.l.toLowerCase() &&
+      isFirstWordRomanNumeral;
 
     // Don't include shouldUseArticleForRomanNumeral in articleMatches - we want to correct it
     const articleMatches =
       articleToken.toLowerCase() === finalCorrectArticle.toLowerCase() ||
-      (articleToken === "l'" &&
-        correctArticle === "L'" &&
+      (articleToken === eventCopyStringLabels.articles.l.toLowerCase() &&
+        correctArticle === eventCopyStringLabels.articles.l &&
         !isFirstWordRomanNumeral);
 
     // Use the correct article if there's a mismatch
@@ -305,8 +344,7 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
       finalArticle = finalCorrectArticle;
     } else if (articleMatches) {
       // Article is correct, keep it (capitalized)
-      finalArticle =
-        articleToken === "l'" ? "L'" : capitalizeFirstLetter(articleToken);
+      finalArticle = toCanonicalArticle(articleToken);
     } else {
       // Article is wrong, use the correct one
       finalArticle = finalCorrectArticle;
@@ -333,7 +371,10 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
 
     displayedTitle =
       finalArticle + (finalArticle.endsWith("'") ? "" : " ") + capitalizedTitle;
-    isPlural = /^(els|les)$/i.test(finalArticle.toLowerCase());
+    isPlural = [
+      eventCopyStringLabels.articles.els,
+      eventCopyStringLabels.articles.les,
+    ].some((token) => token.toLowerCase() === finalArticle.toLowerCase());
   } else {
     // Derive article from first word
     // Skip Roman numerals and get the actual noun
@@ -346,7 +387,10 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
     }
 
     const article = getCatalanArticleForWord(firstWord);
-    isPlural = /^(Els|Les)$/i.test(article);
+    isPlural = [
+      eventCopyStringLabels.articles.els,
+      eventCopyStringLabels.articles.les,
+    ].some((token) => token.toLowerCase() === article.toLowerCase());
 
     // For Roman numerals at the start, determine article from the following word
     const hasLeadingRomanNumeral =
@@ -355,13 +399,16 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
       const romanNumeral = words[0].toUpperCase();
       // Determine article based on the word after the Roman numeral
       const nextWord = words.length > 1 ? words[1] : "";
-      let article = "La"; // default
+      let article = eventCopyStringLabels.articles.la; // default
       if (nextWord) {
         const articleFromWord = getCatalanArticleForWord(nextWord);
         // If we get "L'", convert to "La" or "El" based on gender
-        if (articleFromWord === "L'") {
+        if (articleFromWord === eventCopyStringLabels.articles.l) {
           const { gender } = detectCatalanGenderAndNumber(nextWord);
-          article = gender === "f" ? "La" : "El";
+          article =
+            gender === "f"
+              ? eventCopyStringLabels.articles.la
+              : eventCopyStringLabels.articles.el;
         } else {
           article = articleFromWord;
         }
@@ -398,38 +445,61 @@ export function buildEventIntroText(event: EventDetailResponseDTO): string {
   // Verb agreement: plural/singular
   // In Catalan, "se celebra" is correct (preferred over "es celebra" or "s'celebra")
   // Before verbs starting with voiceless "s" sound (s-, ce-, ci-), "se" is preferred
-  const verb = isPlural ? "se celebren" : "se celebra";
+  const sentenceLabels = labels.sentence;
+  const verb = isPlural
+    ? sentenceLabels.verbPlural
+    : sentenceLabels.verbSingular;
 
   let datePart: string;
   if (formattedEnd) {
-    datePart = `del ${formattedStart} al ${formattedEnd}`;
+    datePart = sentenceLabels.dateRange
+      .replace("{start}", formattedStart)
+      .replace("{end}", formattedEnd);
   } else {
-    datePart = `el ${nameDay.toLowerCase()}, ${formattedStart}`;
+    datePart = sentenceLabels.dateSingle
+      .replace("{nameDay}", nameDay.toLowerCase())
+      .replace("{start}", formattedStart);
   }
 
   // Compose sentence
-  const sentence = `${displayedTitle} ${verb} ${datePart}${
-    timePart ? `, ${timePart}` : ""
-  }, ${preposition}.`;
+  const timeSuffix = timePart
+    ? sentenceLabels.timeSuffix.replace("{time}", timePart)
+    : "";
+  const placeSuffix = preposition
+    ? sentenceLabels.placeSuffix.replace("{place}", preposition)
+    : "";
+  const sentence = sentenceLabels.sentence
+    .replace("{title}", displayedTitle)
+    .replace("{verb}", verb)
+    .replace("{date}", datePart)
+    .replace("{time}", timeSuffix)
+    .replace("{place}", placeSuffix);
 
   // Capitalize place names after prepositions and in parentheses
   return capitalizePlaces(sentence);
 }
 
-export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
+export async function buildFaqItems(
+  event: EventDetailResponseDTO,
+  labels: EventCopyLabels = defaultEventCopyLabels
+): Promise<FaqItem[]> {
   const items: FaqItem[] = [];
 
   const cityName = formatPlaceName(event.city?.name || "");
   const regionName = formatPlaceName(event.region?.name || "");
   const formattedLocation = formatPlaceName(event.location || "");
 
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+  const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
     event.startDate,
     event.endDate
   );
   const formattedEventDate = formattedEnd
-    ? `del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+    ? labels.sentence.dateRange
+        .replace("{start}", formattedStart)
+        .replace("{end}", formattedEnd)
+    : labels.sentence.dateSingle
+        .replace("{nameDay}", nameDay)
+        .replace("{start}", formattedStart);
 
   const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
   const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
@@ -439,9 +509,15 @@ export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
     ? `${startTimeLabel}${hasDistinctEndTime ? ` - ${endTimeLabel}` : ""}`
     : "";
 
+  const whenAnswer = labels.faq.whenA
+    .replace("{date}", formattedEventDate)
+    .replace(
+      "{time}",
+      timeLabel ? labels.sentence.timeSuffix.replace("{time}", timeLabel) : ""
+    );
   items.push({
-    q: "Quan és l'esdeveniment?",
-    a: `${formattedEventDate}${timeLabel ? `, ${timeLabel}` : ""}`,
+    q: labels.faq.whenQ,
+    a: whenAnswer,
   });
 
   // Build clean location string: split location by commas, drop tokens equal to city/region, de-duplicate
@@ -478,19 +554,22 @@ export function buildFaqItems(event: EventDetailResponseDTO): FaqItem[] {
       const trimmed = p.trim();
       return formatPlaceName(trimmed);
     });
-    items.push({ q: "On se celebra?", a: places.join(", ") });
+    items.push({
+      q: labels.faq.whereQ,
+      a: labels.faq.whereA.replace("{place}", places.join(", ")),
+    });
   }
 
   items.push({
-    q: "És gratuït?",
-    a:
-      event.type === "FREE"
-        ? "Sí, l’esdeveniment és gratuït."
-        : "No, l’esdeveniment és de pagament.",
+    q: labels.faq.isFreeQ,
+    a: event.type === "FREE" ? labels.faq.isFreeYes : labels.faq.isFreeNo,
   });
 
   if (event.duration && event.duration.trim().length > 0) {
-    items.push({ q: "Quina és la durada aproximada?", a: event.duration });
+    items.push({
+      q: labels.faq.durationQ,
+      a: labels.faq.durationA.replace("{duration}", event.duration),
+    });
   }
 
   return items;

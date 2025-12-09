@@ -3,16 +3,18 @@ import DocumentIcon from "@heroicons/react/outline/DocumentIcon";
 import CulturalMessage from "../culturalMessage";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { JSX } from "react";
+import { getTranslations } from "next-intl/server";
 import { DescriptionProps } from "types/props";
 import { processDescription } from "utils/text-processing";
 
-export default function Description({
+export default async function Description({
   description,
   location,
   locationValue,
   introText,
   locationType = "general",
-}: DescriptionProps): JSX.Element {
+}: DescriptionProps): Promise<JSX.Element> {
+  const t = await getTranslations("Components.Description");
   // Process and sanitize the description to prevent XSS attacks
   const processedDescription = processDescription(description || "");
   const sanitizedHtml = DOMPurify.sanitize(processedDescription);
@@ -24,7 +26,7 @@ export default function Description({
           headingId="description-section"
           Icon={DocumentIcon}
           iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-          title="Descripció"
+          title={t("title")}
           titleClassName="heading-2"
         />
         <div className="w-full break-words overflow-hidden space-y-4 px-4">

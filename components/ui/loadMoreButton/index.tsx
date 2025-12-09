@@ -1,12 +1,14 @@
 import { useTransition } from "react";
 import { LoadMoreButtonProps } from "types/props";
 import Button from "@components/ui/common/button";
+import { useTranslations } from "next-intl";
 
 export default function LoadMoreButton({
   onLoadMore,
   hasMore = true,
   isLoading = false,
 }: Pick<LoadMoreButtonProps, "onLoadMore" | "hasMore" | "isLoading">) {
+  const t = useTranslations("Components.LoadMoreButton");
   const [isPending, startTransition] = useTransition();
   const handleLoadMore = () => {
     if (isLoading || isPending || !hasMore) return;
@@ -29,8 +31,8 @@ export default function LoadMoreButton({
         className="cursor-pointer disabled:cursor-not-allowed"
         aria-label={
           isLoading || isPending
-            ? "Carregant esdeveniments"
-            : "Carregar més esdeveniments"
+            ? t("loading")
+            : t("label")
         }
       >
         {isLoading || isPending ? (
@@ -44,10 +46,10 @@ export default function LoadMoreButton({
               <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></span>
               <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce"></span>
             </span>
-            <span>Carregant...</span>
+            <span>{t("loading")}</span>
           </>
         ) : (
-          "Carregar més"
+          t("label")
         )}
       </Button>
     </div>

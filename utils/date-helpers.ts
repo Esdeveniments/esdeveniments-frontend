@@ -1,6 +1,14 @@
-import { DAYS, MONTHS } from "./constants";
-import type { DateObject, FormattedDateResult } from "types/event";
+import { getDayNames, getMonthNames } from "./constants";
+import type {
+  DateObject,
+  FormattedDateResult,
+  EventTimeLabels,
+} from "types/event";
+import { getTranslations } from "next-intl/server";
 import type { EventTimeDTO } from "types/api/event";
+import caMessages from "../messages/ca.json";
+
+export type { EventTimeLabels };
 
 export const isLessThanFiveDays = (date: Date): boolean => {
   const currentDate = new Date();
@@ -43,6 +51,9 @@ export const getFormattedDate = (
   start: string | DateObject,
   end?: string | DateObject
 ): FormattedDateResult => {
+  const days = getDayNames();
+  const months = getMonthNames();
+
   const startDate = new Date(
     typeof start === "object" ? start.date || start.dateTime || "" : start
   );
@@ -69,8 +80,8 @@ export const getFormattedDate = (
   const weekDay = startDateConverted.getDay();
   const month = startDateConverted.getMonth();
   const year = startDateConverted.getFullYear();
-  const nameDay = DAYS[weekDay];
-  const nameMonth = MONTHS[month];
+  const nameDay = days[weekDay];
+  const nameMonth = months[month];
 
   const originalFormattedStart = `${startDay} de ${nameMonth} del ${year}`;
   const formattedStart =
@@ -80,7 +91,7 @@ export const getFormattedDate = (
           isMultipleDays && isSameYear ? "" : ` del ${year}`
         }`;
   const formattedEnd = `${endDay} de ${
-    MONTHS[endDateConverted.getMonth()]
+    months[endDateConverted.getMonth()]
   } del ${endDateConverted.getFullYear()}`;
 
   const startTime = `${startDateConverted.getHours()}:${String(
@@ -119,21 +130,6 @@ export const isWeekend = (): boolean => {
   const today = new Date();
   return today.getDay() === 0 || today.getDay() === 5 || today.getDay() === 6;
 };
-
-export const monthsName: string[] = [
-  "gener",
-  "febrer",
-  "març",
-  "abril",
-  "maig",
-  "juny",
-  "juliol",
-  "agost",
-  "setembre",
-  "octubre",
-  "novembre",
-  "desembre",
-];
 
 /**
  * Converts ISO time string or Date to EventTimeDTO shape for backend requests.
@@ -209,6 +205,28 @@ export const formatTimeForAPI = (timeString: string): string => {
   return `${hour}:${minute}`;
 };
 
+const defaultEventTimeLabels: EventTimeLabels = (caMessages as any).Utils
+  .EventTime as EventTimeLabels;
+
+export async function getEventTimeLabels(): Promise<EventTimeLabels> {
+  const t = await getTranslations("Utils.EventTime");
+  return {
+    consult: t("consult"),
+    startsAt: t("startsAt", { time: "{time}" }),
+    range: t("range", { start: "{start}", end: "{end}" }),
+    simpleRange: t("simpleRange", { start: "{start}", end: "{end}" }),
+  };
+}
+
+const fillTemplate = (
+  template: string,
+  replacements: Record<string, string>
+): string =>
+  Object.entries(replacements).reduce(
+    (acc, [key, value]) => acc.replace(`{${key}}`, value),
+    template
+  );
+
 /**
  * Format time from API response (EventTimeDTO) to string format
  * @param timeObj - EventTimeDTO object from API
@@ -242,7 +260,8 @@ export const normalizeEndTime = (
  */
 export const formatEventTimeDisplay = (
   startTime?: string | null,
-  endTime?: string | null
+  endTime?: string | null,
+  labels: EventTimeLabels = defaultEventTimeLabels
 ): string => {
   // Ensure we only work with HH:mm
   const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
@@ -254,7 +273,7 @@ export const formatEventTimeDisplay = (
 
   // No start time or all-day event (00:00) -> show "Consultar horaris"
   if (!hasStartTime) {
-    return "Consultar horaris";
+    return labels.consult;
   }
 
   // Has start time but no end time -> show just start time
@@ -263,7 +282,10 @@ export const formatEventTimeDisplay = (
   }
 
   // Both times available -> show range
-  return `${cleanStart} - ${normalizedEndTime}`;
+  return fillTemplate(labels.simpleRange, {
+    start: cleanStart,
+    end: normalizedEndTime,
+  });
 };
 
 /**
@@ -277,7 +299,8 @@ export const formatEventTimeDisplay = (
  */
 export const formatEventTimeDisplayDetail = (
   startTime?: string | null,
-  endTime?: string | null
+  endTime?: string | null,
+  labels: EventTimeLabels = defaultEventTimeLabels
 ): string => {
   // Ensure we only work with HH:mm
   const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
@@ -289,14 +312,17 @@ export const formatEventTimeDisplayDetail = (
 
   // No start time or all-day event (00:00) -> show "Consultar horaris"
   if (!hasStartTime) {
-    return "Consultar horaris";
+    return labels.consult;
   }
 
   // Has start time but no end time -> show "Comença a les HH:mm"
   if (!hasEndTime) {
-    return `Comença a les ${cleanStart}`;
+    return fillTemplate(labels.startsAt, { time: cleanStart });
   }
 
   // Both times available -> show "De HH:mm a HH:mm"
-  return `De ${cleanStart} a ${normalizedEndTime}`;
+  return fillTemplate(labels.range, {
+    start: cleanStart,
+    end: normalizedEndTime,
+  });
 };

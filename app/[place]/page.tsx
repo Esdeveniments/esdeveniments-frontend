@@ -29,6 +29,9 @@ import { topStaticGenerationPlaces } from "@utils/priority-places";
 import type { PlacePageEventsResult } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
+import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -65,10 +68,12 @@ export async function generateMetadata({
     byDate: "",
     placeTypeLabel,
   });
+  const locale = resolveLocaleFromHeaders(await headers());
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
+    locale,
   });
 }
 
@@ -95,6 +100,7 @@ export default async function Page({
     return false;
   });
   const placeShellDataPromise = (async () => {
+    const t = await getTranslations("App.Publish");
     try {
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);
@@ -107,7 +113,7 @@ export default async function Page({
       return { placeTypeLabel, pageData };
     } catch (error) {
       console.error("Place page: unable to build shell data", error);
-      return buildFallbackPlaceShellData(place);
+      return buildFallbackPlaceShellData(place, t("noEventsFound"));
     }
   })();
 
@@ -143,7 +149,10 @@ export default async function Page({
   );
 }
 
-function buildFallbackPlaceShellData(place: string): {
+function buildFallbackPlaceShellData(
+  place: string,
+  notFoundDescription: string
+): {
   placeTypeLabel: PlaceTypeAndLabel;
   pageData: PageData;
 } {
@@ -162,8 +171,7 @@ function buildFallbackPlaceShellData(place: string): {
       }.`,
       canonical,
       notFoundTitle: "Sense esdeveniments disponibles",
-      notFoundDescription:
-        "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a intentar més tard.",
+      notFoundDescription,
     },
   };
 }

@@ -262,7 +262,7 @@ function createE2EEvent(
 
   const fallbackRegion = extras?.region ?? {
     id: safeRegionId,
-    name: `Regió ${safeRegionId}`,
+    name: `Region ${safeRegionId}`,
     slug: slugifySegment(`regio-${safeRegionId}`),
   };
 

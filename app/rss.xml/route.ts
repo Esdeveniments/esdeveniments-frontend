@@ -7,6 +7,7 @@ import { captureException } from "@sentry/nextjs";
 import { escapeXml } from "@utils/xml-escape";
 import type { RssEvent } from "types/common";
 import { EventSummaryResponseDTO } from "types/api/event";
+import { getTranslations } from "next-intl/server";
 
 const SITE_NAME = "Esdeveniments.cat";
 
@@ -83,6 +84,13 @@ const buildFeed = async (
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
   const { label: regionLabel } = await getPlaceTypeAndLabel(region);
   const { label: townLabel } = await getPlaceTypeAndLabel(town);
+  const t = await getTranslations("Utils.Rss");
+  const placeLabel = townLabel || regionLabel || "Catalunya";
+  const feedTitle = t("feedTitle", { site: SITE_NAME, place: placeLabel });
+  const feedDescription = t("feedDescription", {
+    site: SITE_NAME,
+    place: placeLabel,
+  });
 
   // Escape labels for XML safety
   // The feed library handles escaping for channel title/description and uses CDATA for item fields.
@@ -91,10 +99,8 @@ const buildFeed = async (
   const feed = new Feed({
     id: siteUrl,
     link: siteUrl,
-    title: `Rss ${SITE_NAME} - ${townLabel || regionLabel || "Catalunya"}`,
-    description: `Rss ${SITE_NAME} de ${
-      townLabel || regionLabel || "Catalunya"
-    }`,
+    title: feedTitle,
+    description: feedDescription,
     copyright: SITE_NAME,
     updated: new Date(),
     author: {
@@ -112,7 +118,14 @@ const buildFeed = async (
     // The feed library wraps title, description, content in CDATA, so we should NOT escape them.
     // However, it does NOT escape the enclosure URL (image), so we MUST escape it.
     
-    const description = `${item.title}\n\n🗓️ ${item.nameDay} ${item.formattedStart}\n\n🏡 ${item.location}, ${item.town}, ${item.region} \n\nℹ️ Més informació disponible a la nostra pàgina web!`;
+    const description = t("itemDescription", {
+      title: item.title,
+      nameDay: item.nameDay,
+      formattedStart: item.formattedStart,
+      location: item.location,
+      town: item.town,
+      region: item.region,
+    });
 
     feed.addItem({
       id: item.id,

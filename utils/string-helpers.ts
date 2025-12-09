@@ -2,6 +2,14 @@
  * String helpers (Catalan-aware)
  * ======================================================= */
 
+import type { StringHelperLabels } from "types/common";
+import caMessages from "../messages/ca.json";
+
+const stringHelperLabels: StringHelperLabels = (caMessages as any).Utils
+  .StringHelpers as StringHelperLabels;
+const { articles, prepositions, feminineExceptions, masculineExceptions } =
+  stringHelperLabels;
+
 /** Lowercases, strips diacritics, handles Catalan l·l and apostrophes, collapses to ascii-friendly slugs. */
 export function sanitize(input: string): string {
   if (!input) return "";
@@ -111,7 +119,7 @@ export function normalizeForSearch(input: string): string {
  */
 export function normalizeUrl(url: string): string {
   if (!url || typeof url !== "string") return "";
-  
+
   const trimmed = url.trim();
   if (!trimmed) return "";
 
@@ -129,22 +137,17 @@ export function normalizeUrl(url: string): string {
  * ======================================================= */
 
 const VOWEL_OR_H = /^[aeiouàáèéíïòóúüh]/i;
-const PLACE_PARTICLES = new Set([
-  "de",
-  "del",
-  "dels",
-  "la",
-  "les",
-  "el",
-  "els",
-  "al",
-  "als",
-  "i",
-  "d'",
-  "d’",
-  "l'",
-  "l’",
-]);
+const PLACE_PARTICLES = new Set(
+  [...Object.values(prepositions), ...Object.values(articles), "i"].flatMap(
+    (token) => {
+      const lower = token.toLowerCase();
+      const alt = lower.replace(/'/g, "’");
+      return alt === lower ? [lower] : [lower, alt];
+    }
+  )
+);
+PLACE_PARTICLES.add("d'");
+PLACE_PARTICLES.add("l'");
 
 function capitalizeWord(word: string): string {
   return word ? word.charAt(0).toUpperCase() + word.slice(1) : word;
@@ -227,7 +230,7 @@ function narrativeRegionCase(name: string): string {
 
 /* ---------- Category/general heuristics (used when includeArticle = true) ---------- */
 
-const FEMININE_EXCEPTIONS = ["gent gran", "dansa"];
+const FEMININE_EXCEPTIONS = feminineExceptions.map((e) => e.toLowerCase());
 
 function classifyCategory(
   firstWord: string,
@@ -262,16 +265,17 @@ export function formatCatalanDe(
 ): string {
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
+  const { de, del, dels, deLa, deLes, deL } = prepositions;
 
   // ---- towns: keep simple (your tests expect only "de"/"d'")
   if (type === "town") {
-    return startsWithVowelOrH(text) ? `d'${text}` : `de ${text}`;
+    return startsWithVowelOrH(text) ? `d'${text}` : `${de} ${text}`;
   }
 
   // ---- regions: plural detection + gender heuristic (no external table required)
   if (type === "region") {
     if (!includeArticle) {
-      return startsWithVowelOrH(text) ? `d'${text}` : `de ${text}`;
+      return startsWithVowelOrH(text) ? `d'${text}` : `${de} ${text}`;
     }
 
     const firstWord = text.split(/\s+/)[0];
@@ -287,28 +291,28 @@ export function formatCatalanDe(
       // Feminine plural guess: stems ending in -a/-e or overall feminine pattern
       const stem = firstWord.slice(0, -1);
       const isFemPl = /a$|e$/i.test(stem) || isFemininePlaceName(text);
-      return isFemPl ? `de les ${text}` : `dels ${text}`;
+      return isFemPl ? `${deLes} ${text}` : `${dels} ${text}`;
     }
 
-    if (startsWithVowelOrH(firstWord)) return `de l'${text}`;
-    return isFemininePlaceName(text) ? `de la ${text}` : `del ${text}`;
+    if (startsWithVowelOrH(firstWord)) return `${deL}${text}`;
+    return isFemininePlaceName(text) ? `${deLa} ${text}` : `${del} ${text}`;
   }
 
   // ---- categories / general nouns
   if (!includeArticle) {
-    return startsWithVowelOrH(text) ? `d'${text}` : `de ${text}`;
+    return startsWithVowelOrH(text) ? `d'${text}` : `${de} ${text}`;
   }
 
   const firstWord = text.split(/\s+/)[0];
   const { plural, feminine } = classifyCategory(firstWord, text);
 
   if (startsWithVowelOrH(firstWord)) {
-    if (plural) return feminine ? `de les ${text}` : `dels ${text}`;
-    return `de l'${text}`;
+    if (plural) return feminine ? `${deLes} ${text}` : `${dels} ${text}`;
+    return `${deL}${text}`;
   }
 
-  if (plural) return feminine ? `de les ${text}` : `dels ${text}`;
-  return feminine ? `de la ${text}` : `del ${text}`;
+  if (plural) return feminine ? `${deLes} ${text}` : `${dels} ${text}`;
+  return feminine ? `${deLa} ${text}` : `${del} ${text}`;
 }
 
 /**
@@ -328,21 +332,22 @@ export function formatCatalanA(
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
   const normalizedType = type === "" ? ("general" as const) : type;
+  const { a, al, als, aLa, aLes, aL } = prepositions;
 
   if (normalizedType === "town") {
-    return `a ${text}`;
+    return `${a} ${text}`;
   }
 
   if (normalizedType === "region") {
     // Handle empty string early
     if (!raw) {
-      return "a ";
+      return `${a} `;
     }
 
     // Special-case proper name that does not take an article in Catalan
     // e.g., "Catalunya" → "a Catalunya" (never "a la Catalunya")
     if ((raw || "").trim().toLowerCase() === "catalunya") {
-      return lowercase ? "a catalunya" : "a Catalunya";
+      return lowercase ? `${a} catalunya` : `${a} Catalunya`;
     }
 
     // Respect requested casing:
@@ -362,11 +367,11 @@ export function formatCatalanA(
     if (regionIsPlural) {
       const stem = firstWord.slice(0, -1);
       const femPl = /a$|e$/i.test(stem) || isFemininePlaceName(display);
-      return femPl ? `a les ${phrase}` : `als ${phrase}`;
+      return femPl ? `${aLes} ${phrase}` : `${als} ${phrase}`;
     }
 
     if (startsWithVowelOrH(display)) {
-      return `a l'${phrase}`;
+      return `${aL}${phrase}`;
     }
 
     // singular consonant-start
@@ -378,13 +383,13 @@ export function formatCatalanA(
         lowercase && phrase.split(/\s+/).length === 1
           ? phrase.toLowerCase()
           : phrase;
-      return `a la ${finalPhrase}`;
+      return `${aLa} ${finalPhrase}`;
     }
-    return `al ${phrase}`;
+    return `${al} ${phrase}`;
   }
 
   // general
-  return `a ${text}`;
+  return `${a} ${text}`;
 }
 
 /**
@@ -395,25 +400,7 @@ function isFemininePlaceName(name: string): boolean {
   const lowerName = (name || "").toLowerCase();
 
   // Masculine exceptions that often match feminine-looking patterns
-  const MASCULINE_EXCEPTIONS = [
-    "penedès",
-    "alt penedès",
-    "baix penedès",
-    "rosselló",
-    "urgell",
-    "alt urgell",
-    "pla d'urgell",
-    "vallès",
-    "vallès oriental",
-    "vallès occidental",
-    "gironès",
-    "barcelonès",
-    "tarragonès",
-    "montsià",
-    "baix ebre",
-    "maresme",
-    "bages",
-  ];
+  const MASCULINE_EXCEPTIONS = masculineExceptions.map((e) => e.toLowerCase());
   if (MASCULINE_EXCEPTIONS.includes(lowerName)) return false;
 
   // Feminine-ish endings

@@ -13,6 +13,11 @@ export interface Option {
   longitude?: number;
 }
 
+export interface ByDateOption {
+  value: string;
+  labelKey: string;
+}
+
 // Type guard for Option (centralized for reuse in forms)
 export function isOption(obj: unknown): obj is Option {
   return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;
@@ -223,12 +228,94 @@ export interface CalendarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement>;
   hideText?: boolean;
   open?: boolean;
+  label?: string;
+}
+
+export interface CalendarProviderLabels {
+  google: string;
+  outlook: string;
+  other: string;
+  ariaAdd: string;
+}
+
+export interface ArticleLabels {
+  el: string;
+  la: string;
+  l: string;
+  els: string;
+  les: string;
+}
+
+export interface PrepositionLabels {
+  a: string;
+  al: string;
+  als: string;
+  aLa: string;
+  aLes: string;
+  aL: string;
+  de: string;
+  del: string;
+  dels: string;
+  deLa: string;
+  deLes: string;
+  deL: string;
+}
+
+export interface StringHelperLabels {
+  articles: ArticleLabels;
+  prepositions: PrepositionLabels;
+  capitalizePrepositions: string[];
+  feminineExceptions: string[];
+  masculineExceptions: string[];
+}
+
+export interface EventCopySentenceLabels {
+  verbSingular: string;
+  verbPlural: string;
+  dateRange: string;
+  dateSingle: string;
+  sentence: string;
+  timeSuffix: string;
+  placeSuffix: string;
+}
+
+export interface EventCopyFaqLabels {
+  whenQ: string;
+  whenA: string;
+  whereQ: string;
+  whereA: string;
+  isFreeQ: string;
+  isFreeYes: string;
+  isFreeNo: string;
+  durationQ: string;
+  durationA: string;
+}
+
+export interface EventCopyLabels {
+  sentence: EventCopySentenceLabels;
+  faq: EventCopyFaqLabels;
+}
+
+export interface OpeningHoursLabels {
+  openNow: string;
+  closesAt: string;
+  closedNow: string;
+  opensAt: string;
+  unknown: string;
+  overnight: string;
+  inferred: string;
+  confirmed: string;
+  openConfirmed: string;
+  openProbable: string;
+  closed: string;
+  unconfirmed: string;
 }
 
 export interface CalendarListProps {
   onClick: () => void;
   getUrls: () => CalendarUrls;
   title: string;
+  labels: CalendarProviderLabels;
 }
 
 export interface CardProps {
@@ -471,6 +558,11 @@ export interface CollectionPageOptions {
   breadcrumbs?: BreadcrumbItem[];
   mainEntity?: Record<string, unknown>;
   numberOfItems?: number;
+}
+
+export interface LocationNewsLabels {
+  newsAll: string;
+  newsWithPlace: string;
 }
 
 // E2E test component props

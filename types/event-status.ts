@@ -10,3 +10,16 @@ export interface EventStatusMeta {
   state: "past" | "live" | "upcoming";
   label: string;
 }
+
+export type EventStatusLabels = {
+  past: string;
+  live: string;
+  upcoming: string;
+  endsInDays: string;
+  endsInHours: string;
+  endsSoon: string;
+  startsInDays: string;
+  startsInHours: string;
+  startsToday: string;
+  today: string;
+};

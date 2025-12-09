@@ -1,15 +1,17 @@
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
-export default function NewsCard({
+export default async function NewsCard({
   event,
   placeSlug,
   placeLabel,
   variant = "default",
 }: NewsCardProps) {
+  const t = await getTranslations("Components.News");
   const image = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate);
   const dateLabel = formatted.formattedEnd
@@ -60,7 +62,7 @@ export default function NewsCard({
               className="btn-primary"
               variant="inline"
             >
-              Llegir més
+              {t("readMore")}
             </PressableAnchor>
           </div>
         </div>
@@ -114,10 +116,10 @@ export default function NewsCard({
             href={href}
             prefetch={false}
             className="btn-primary"
-            aria-label={`Llegir-ne més de ${event.title}`}
+            aria-label={t("readMoreAria", { title: event.title })}
             variant="inline"
           >
-            Llegir més
+            {t("readMore")}
           </PressableAnchor>
         </div>
       </div>

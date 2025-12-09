@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
 import dynamic from "next/dynamic";
+import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import {
   SparklesIcon,
   ShoppingBagIcon,
@@ -31,6 +33,8 @@ import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
@@ -57,18 +61,6 @@ const CATEGORY_ICONS: Record<string, typeof SparklesIcon> = {
  */
 const PRIORITY_CATEGORY_ORDER = new Map(
   PRIORITY_CATEGORY_SLUGS.map((slug, index) => [slug, index])
-);
-
-/**
- * Quick category links for the homepage navigation.
- * Combines category config (from shared config) with icons (component-specific).
- */
-const QUICK_CATEGORY_LINKS = Object.entries(CATEGORY_CONFIG).map(
-  ([slug, config]) => ({
-    label: config.label,
-    url: `/catalunya/${slug}`,
-    Icon: CATEGORY_ICONS[slug] || SparklesIcon, // Fallback icon
-  })
 );
 
 const resolveCategoryDetails = (
@@ -141,11 +133,27 @@ const resolveCategoryDetails = (
 };
 
 // --- MAIN COMPONENT ---
-function ServerEventsCategorized({
+async function ServerEventsCategorized({
   pageData,
   seoLinkSections = [],
   ...contentProps
 }: ServerEventsCategorizedProps) {
+  const tCategories = await getTranslations("Config.Categories");
+  const tServerCategories = await getTranslations(
+    "Components.ServerEventsCategorized"
+  );
+  const headersList = await headers();
+  const locale = (resolveLocaleFromHeaders(headersList) ||
+    DEFAULT_LOCALE) as AppLocale;
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!prefix) return path;
+    if (path === "/") return prefix || "/";
+    if (path.startsWith(prefix)) return path;
+    return `${prefix}${path}`;
+  };
+
   const renderedLinkSections = seoLinkSections.filter(
     (section): section is SeoLinkSection =>
       Boolean(section?.links && section.links.length > 0)
@@ -157,6 +165,14 @@ function ServerEventsCategorized({
     }
     return label;
   };
+
+  const quickCategoryLinks = Object.entries(CATEGORY_CONFIG).map(
+    ([slug, config]) => ({
+      label: tCategories(config.labelKey),
+      url: withLocale(`/catalunya/${slug}`),
+      Icon: CATEGORY_ICONS[slug] || SparklesIcon,
+    })
+  );
 
   return (
     <div className="w-full bg-background">
@@ -182,7 +198,7 @@ function ServerEventsCategorized({
                 {section.links.map((link) => (
                   <PressableAnchor
                     key={`${section.id}-${link.href}`}
-                    href={link.href}
+                    href={withLocale(link.href)}
                     prefetch={false}
                     variant="plain"
                     className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
@@ -199,11 +215,11 @@ function ServerEventsCategorized({
       {/* 3. QUICK CATEGORIES */}
       <section className="py-section-y container border-b">
         <SectionHeading
-          title="Explora per interessos"
+          title={tServerCategories("quickCategoriesTitle")}
           titleClassName="heading-2 text-foreground mb-element-gap"
         />
         <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:py-2 sm:px-2 sm:-mx-2">
-          {QUICK_CATEGORY_LINKS.map(({ label, url, Icon }) => (
+          {quickCategoryLinks.map(({ label, url, Icon }) => (
             <PressableAnchor
               key={url}
               href={url}
@@ -226,6 +242,7 @@ function ServerEventsCategorized({
       {/* 4. STREAMED CONTENT: HEAVY FETCHING */}
       <Suspense fallback={<ServerEventsCategorizedFallback />}>
         <ServerEventsCategorizedContent
+          localePrefix={prefix}
           {...contentProps}
         />
       </Suspense>
@@ -237,7 +254,8 @@ export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
   categoriesPromise,
   featuredPlaces,
-}: ServerEventsCategorizedContentProps) {
+  localePrefix = "",
+}: ServerEventsCategorizedContentProps & { localePrefix?: string }) {
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
     categoriesPromise || Promise.resolve([])
@@ -383,6 +401,16 @@ export async function ServerEventsCategorizedContent({
     return <NoEventsFound />;
   }
 
+  const tCategory = await getTranslations("Components.CategoryEventsSection");
+  const tCta = await getTranslations("Components.ServerEventsCategorized");
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!localePrefix) return path;
+    if (path === "/") return localePrefix || "/";
+    if (path.startsWith(localePrefix)) return path;
+    return `${localePrefix}${path}`;
+  };
+
   // Ad Logic
   const adPositions = new Set<number>();
   for (let i = 1; i < categorySectionsToRender.length; i += 3) {
@@ -415,6 +443,13 @@ export async function ServerEventsCategorizedContent({
             categories={categories}
             shouldUsePriority={index < 2}
             showAd={adPositions.has(index)}
+            labels={{
+              heading: tCategory("heading", {
+                categoryPhrase: section.categoryPhrase,
+              }),
+              seeMore: tCategory("seeMore"),
+              sponsored: tCategory("sponsored"),
+            }}
           />
         ))}
       </div>
@@ -422,15 +457,15 @@ export async function ServerEventsCategorizedContent({
       {/* CTA */}
       <section className="py-section-y container text-center">
         <p className="body-large text-foreground/70 font-medium mb-element-gap">
-          No trobes el que busques?
+          {tCta("cta")}
         </p>
         <PressableAnchor
-          href="/catalunya"
+          href={withLocale("/catalunya")}
           prefetch={false}
           variant="plain"
           className="btn-primary w-full sm:w-auto"
         >
-          Veure tota l&apos;agenda
+          {tCta("ctaButton")}
         </PressableAnchor>
       </section>
     </>

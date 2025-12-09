@@ -8,6 +8,7 @@ import setMinutes from "date-fns/setMinutes";
 import setSeconds from "date-fns/setSeconds";
 import ca from "date-fns/locale/ca";
 import { DatePickerComponentProps, CustomHeaderProps } from "types/props";
+import { useTranslations } from "next-intl";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -57,6 +58,9 @@ export default function DatePickerComponent({
   required,
   className,
 }: DatePickerComponentProps) {
+  const t = useTranslations("Components.DatePicker");
+  const dateFormat = t("dateFormat");
+  const monthYearFormat = t("monthYearFormat");
   // Convert incoming strings to Date objects
   const startingDate = toDate(initialStartDate);
   const initialEndCandidate = initialEndDate
@@ -99,7 +103,7 @@ export default function DatePickerComponent({
           htmlFor={`${idPrefix}-start`}
           className="w-full text-foreground-strong font-bold"
         >
-          Inici *
+          {t("start")}
         </label>
         <div className="w-full mt-2">
           <DatePicker
@@ -117,7 +121,7 @@ export default function DatePickerComponent({
             previousMonthButtonLabel="<"
             popperClassName="react-datepicker-left"
             popperPlacement="top-end"
-            dateFormat="d MMMM, yyyy HH:mm aa"
+            dateFormat={dateFormat}
             customInput={<ButtonInput />}
             renderCustomHeader={({
               date,
@@ -128,7 +132,7 @@ export default function DatePickerComponent({
             }: CustomHeaderProps) => (
               <div className="flex justify-center items-center p-2">
                 <span className="w-1/2 text-foreground-strong uppercase">
-                  {format(date, "MMMM yyyy", { locale: ca })}
+                  {format(date, monthYearFormat, { locale: ca })}
                 </span>
                 <div className="w-1/2 flex justify-evenly">
                   <button
@@ -166,7 +170,7 @@ export default function DatePickerComponent({
           htmlFor={`${idPrefix}-end`}
           className="w-full text-foreground-strong font-bold"
         >
-          Final *
+          {t("end")}
         </label>
         <div className="w-full mt-2">
           <DatePicker
@@ -194,7 +198,7 @@ export default function DatePickerComponent({
             previousMonthButtonLabel="<"
             popperClassName="react-datepicker-left"
             popperPlacement="top-end"
-            dateFormat="d MMMM, yyyy HH:mm aa"
+            dateFormat={dateFormat}
             customInput={<ButtonInput />}
             renderCustomHeader={({
               date,
@@ -205,7 +209,7 @@ export default function DatePickerComponent({
             }: CustomHeaderProps) => (
               <div className="flex justify-center items-center p-2">
                 <span className="w-1/2 text-foreground-strong uppercase">
-                  {format(date, "MMMM yyyy", { locale: ca })}
+                  {format(date, monthYearFormat, { locale: ca })}
                 </span>
                 <div className="w-1/2 flex justify-evenly">
                   <button

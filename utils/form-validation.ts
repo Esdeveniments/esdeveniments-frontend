@@ -1,23 +1,37 @@
-import { EventFormSchema, type EventFormSchemaType } from "types/event";
+import {
+  createEventFormSchema,
+  defaultEventFormZodLabels,
+  type EventFormSchemaType,
+  type EventFormZodLabels,
+  type ValidationLabels,
+} from "types/event";
 import { normalizeUrl } from "./string-helpers";
+
+const defaultValidationLabels: ValidationLabels = {
+  genericError: "There are validation errors",
+  imageRequired: "Image is required",
+};
 
 export const getZodValidationState = (
   form: EventFormSchemaType,
   isPristine: boolean,
   imageFile?: File | null,
-  isEditMode?: boolean
+  isEditMode?: boolean,
+  labels: ValidationLabels = defaultValidationLabels,
+  formLabels: EventFormZodLabels = defaultEventFormZodLabels
 ): { isDisabled: boolean; isPristine: boolean; message: string } => {
   // Normalize URL before validation (auto-add https:// if missing)
   const normalizedForm = {
     ...form,
     url: normalizeUrl(form.url),
   };
-  const result = EventFormSchema.safeParse(normalizedForm);
+  const schema = createEventFormSchema(formLabels);
+  const result = schema.safeParse(normalizedForm);
   if (!result.success) {
     // Collect first error message
     const firstError =
       Object.values(result.error.flatten().fieldErrors)[0]?.[0] ||
-      "Hi ha errors de validació";
+      labels.genericError;
     return { isDisabled: true, isPristine, message: firstError };
   }
 
@@ -26,7 +40,7 @@ export const getZodValidationState = (
     return {
       isDisabled: true,
       isPristine,
-      message: "La imatge és obligatòria",
+      message: labels.imageRequired,
     };
   }
 

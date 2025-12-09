@@ -6,7 +6,7 @@ import { useNavbarVisible } from "@components/hooks/useNavbarVisible";
 import { useHydration } from "@components/hooks/useHydration";
 import { usePathname } from "next/navigation";
 import Search from "@components/ui/search";
-import ServerFilters from "@components/ui/filters/ServerFilters";
+import FiltersClient from "@components/ui/filters/FiltersClient";
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
 import { debugURLParsing } from "@utils/url-parsing";
 import {
@@ -29,6 +29,7 @@ function debounce(func: () => void, wait: number): () => void {
 function ClientInteractiveLayerContent({
   categories = [],
   placeTypeLabel,
+  filterLabels,
   isNavbarVisible,
   isHydrated,
   isModalOpen,
@@ -76,13 +77,14 @@ function ClientInteractiveLayerContent({
           >
             <Search />
           </Suspense>
-          {!isHomePage && ( // Conditionally render ServerFilters
-            <ServerFilters
+          {!isHomePage && ( // Conditionally render FiltersClient
+            <FiltersClient
               segments={parsed.segments}
               queryParams={parsed.queryParams}
               categories={categories}
               placeTypeLabel={placeTypeLabel}
               onOpenModal={handleOpenModal}
+              labels={filterLabels}
             />
           )}
         </div>
@@ -104,6 +106,7 @@ function ClientInteractiveLayerContent({
 function ClientInteractiveLayer({
   categories = [],
   placeTypeLabel,
+  filterLabels,
 }: ClientInteractiveLayerProps) {
   const isNavbarVisible = useNavbarVisible();
   const isHydrated = useHydration();
@@ -162,6 +165,7 @@ function ClientInteractiveLayer({
         <ClientInteractiveLayerContent
           categories={categories}
           placeTypeLabel={placeTypeLabel}
+          filterLabels={filterLabels}
           isNavbarVisible={isNavbarVisible}
           isHydrated={isHydrated}
           isModalOpen={isModalOpen}

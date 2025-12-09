@@ -18,6 +18,7 @@ export interface SitemapField {
   changefreq: ChangeFreq;
   priority: number;
   image?: SitemapImage;
+  alternates?: Record<string, string>; // hreflang -> URL (include x-default)
 }
 
 export interface BuildSitemapOptions {

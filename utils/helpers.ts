@@ -7,7 +7,6 @@ export {
   getFormattedDate,
   nextDay,
   isWeekend,
-  monthsName,
   parseTimeToEventTimeDTO,
   toLocalDateString,
 } from "./date-helpers";

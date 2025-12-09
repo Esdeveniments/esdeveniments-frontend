@@ -6,32 +6,22 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { DateFilterBadges } from "./DateFilterBadges";
-import type { CategorySummaryResponseDTO } from "types/api/category";
-import type { EventSummaryResponseDTO } from "types/api/event";
+import type { CategoryEventsSectionProps } from "types/props";
 
 export function CategoryEventsSection({
   events,
   categoryName,
   categorySlug,
-  categoryPhrase,
+  categoryPhrase: _categoryPhrase,
   categories,
   shouldUsePriority,
   showAd,
-}: {
-  events: EventSummaryResponseDTO[];
-  categoryName: string;
-  categorySlug: string;
-  categoryPhrase: string;
-  categories: CategorySummaryResponseDTO[];
-  shouldUsePriority: boolean;
-  showAd: boolean;
-}) {
+  labels,
+}: CategoryEventsSectionProps) {
   return (
     <section className="py-section-y border-b">
       <div className="flex justify-between items-center">
-        <h2 className="heading-2">
-          L&apos;agenda {categoryPhrase} a Catalunya
-        </h2>
+        <h2 className="heading-2">{labels.heading}</h2>
         <PressableAnchor
           href={buildCanonicalUrl(
             {
@@ -45,7 +35,7 @@ export function CategoryEventsSection({
           prefetch={false}
           variant="inline"
         >
-          Veure més <ChevronRightIcon className="w-5 h-5" />
+          {labels.seeMore} <ChevronRightIcon className="w-5 h-5" />
         </PressableAnchor>
       </div>
 
@@ -70,7 +60,7 @@ export function CategoryEventsSection({
         <div className="w-full flex flex-col items-start mt-element-gap mb-element-gap-sm max-w-lg">
           <div className="flex items-center gap-2 mb-element-gap">
             <SpeakerphoneIcon className="w-5 h-5 text-foreground-strong flex-shrink-0" />
-            <h2 className="heading-2">Contingut patrocinat</h2>
+            <h2 className="heading-2">{labels.sponsored}</h2>
           </div>
           <div className="w-full">
             <AdArticle slot="8139041285" />

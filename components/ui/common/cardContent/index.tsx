@@ -13,12 +13,21 @@ import MobileShareIsland from "./MobileShareIsland";
 import DesktopShareIsland from "./DesktopShareIsland";
 import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
+import { getTranslations } from "next-intl/server";
 
-export default function CardContentServer({
+export default async function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
 }: CardContentProps) {
+  const tCard = await getTranslations("Components.CardContent");
+  const tTime = await getTranslations("Utils.EventTime");
+  const timeLabels = {
+    consult: tTime("consult"),
+    startsAt: tTime("startsAt", { time: "{time}" }),
+    range: tTime("range", { start: "{start}", end: "{end}" }),
+    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
+  };
   const { description, icon } = event.weather || {};
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
@@ -38,8 +47,8 @@ export default function CardContentServer({
   const primaryLocation = truncateString(fullLocation, 80);
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+    : tCard("dateSingle", { nameDay, start: formattedStart });
 
   return (
     <>
@@ -121,7 +130,11 @@ export default function CardContentServer({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="body-small px-element-gap-sm">
-            {formatEventTimeDisplayDetail(event.startTime, event.endTime)}
+            {formatEventTimeDisplayDetail(
+              event.startTime,
+              event.endTime,
+              timeLabels
+            )}
           </p>
         </div>
         {!isHorizontal && <div className="mb-element-gap" />}

@@ -1,34 +1,53 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
-const offlineDescription =
-  "Pàgina en mode offline d'Esdeveniments.cat per continuar navegant mentre es recupera la connexió.";
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("App.Offline");
+  const description = t("schemaDescription");
+  const locale = resolveLocaleFromHeaders(await headers());
 
-const offlineBaseMeta = buildPageMeta({
-  title: "Sense connexió - Esdeveniments.cat",
-  description: offlineDescription,
-  canonical: `${siteUrl}/offline`,
-}) as Metadata;
+  return {
+    ...(buildPageMeta({
+      title: t("title"),
+      description,
+      canonical: `${siteUrl}/offline`,
+      locale,
+    }) as Metadata),
+    robots: "noindex, nofollow",
+  };
+}
 
-export const metadata: Metadata = {
-  ...offlineBaseMeta,
-  robots: "noindex, nofollow",
-};
-
-const offlineSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "@id": `${siteUrl}/offline#webpage`,
-  url: `${siteUrl}/offline`,
-  name: "Pàgina offline d'Esdeveniments.cat",
-  description: offlineDescription,
-  isPartOf: { "@id": `${siteUrl}#website` },
-};
-
-export default function OfflinePage() {
+export default async function OfflinePage() {
+  const t = await getTranslations("App.Offline");
+  const headersList = await headers();
+  const locale = (resolveLocaleFromHeaders(headersList) ||
+    DEFAULT_LOCALE) as AppLocale;
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!prefix) return path;
+    if (path === "/") return prefix || "/";
+    if (path.startsWith(prefix)) return path;
+    return `${prefix}${path}`;
+  };
+  const absolute = (path: string) =>
+    path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
+  const offlineSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${absolute("/offline")}#webpage`,
+    url: absolute("/offline"),
+    name: t("schemaName"),
+    description: t("schemaDescription"),
+    isPartOf: { "@id": `${siteUrl}#website` },
+  };
   return (
     <>
       <JsonLdServer id="offline-webpage-schema" data={offlineSchema} />
@@ -41,34 +60,31 @@ export default function OfflinePage() {
             className="text-4xl font-bold text-foreground-strong mb-4"
             data-testid="offline-title"
           >
-            🌐 Sense connexió
+            {t("heading")}
           </h1>
-          <p className="text-lg text-foreground/80 mb-8">
-            No pots connectar-te a internet. Alguns continguts emmagatzemats
-            podrien estar disponibles.
-          </p>
+          <p className="text-lg text-foreground/80 mb-8">{t("description")}</p>
           <PressableAnchor
-            href="/"
+            href={withLocale("/")}
             className="btn-primary"
             data-testid="offline-home-link"
             variant="inline"
           >
-            Torna a l&apos;inici
+            {t("homeLink")}
           </PressableAnchor>
           <br />
           <PressableAnchor
-            href="/barcelona"
+            href={withLocale("/barcelona")}
             className="btn-neutral mt-4 mr-2"
             variant="inline"
           >
-            Barcelona
+            {t("barcelona")}
           </PressableAnchor>
           <PressableAnchor
-            href="/catalunya"
+            href={withLocale("/catalunya")}
             className="btn-neutral mt-4"
             variant="inline"
           >
-            Catalunya
+            {t("catalunya")}
           </PressableAnchor>
         </div>
       </div>

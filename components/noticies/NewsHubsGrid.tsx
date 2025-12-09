@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import NewsCard from "@components/ui/newsCard";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
@@ -7,6 +8,7 @@ import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsHubsGridProps } from "types/props";
 
 export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
+  const t = await getTranslations("Components.NewsHubsGrid");
   const hubResults = await promise;
   const firstArticles = hubResults
     .map(({ hub, items }) =>
@@ -26,7 +28,7 @@ export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
           "@context": "https://schema.org",
           "@type": "ItemList",
           "@id": `${siteUrl}/noticies#news-itemlist`,
-          name: "Últimes notícies per hub",
+          name: t("itemListTitle"),
           numberOfItems: firstArticles.length,
           itemListElement: firstArticles.map(({ hub, item }, index) => ({
             "@type": "ListItem",
@@ -53,14 +55,16 @@ export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
         return (
           <section key={hub.slug} className="w-full">
             <div className="flex items-baseline justify-between mb-1">
-              <h2 className="uppercase">{`Últimes notícies ${hub.name}`}</h2>
+              <h2 className="uppercase">
+                {t("titleWithPlace", { place: hub.name })}
+              </h2>
               <PressableAnchor
                 href={`/noticies/${hub.slug}`}
                 className="text-primary underline text-sm"
                 prefetch={false}
                 variant="inline"
               >
-                Veure més…
+                {t("seeMore")}
               </PressableAnchor>
             </div>
             <div className="flex items-center gap-2 mb-2 text-xs text-foreground-strong/80">
@@ -70,12 +74,12 @@ export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
                 className="underline hover:text-primary"
                 variant="inline"
               >
-                Veure agenda {hub.name}
+                {t("seeAgenda", { place: hub.name })}
               </PressableAnchor>
             </div>
             {NEARBY_PLACES_BY_HUB[hub.slug] && (
               <nav className="mb-3 text-xs text-foreground-strong/70">
-                <span className="mr-2">A prop:</span>
+                <span className="mr-2">{t("nearbyLabel")}</span>
                 {NEARBY_PLACES_BY_HUB[hub.slug].map((p, i) => (
                   <span key={p.slug} className="inline-flex items-center">
                     <PressableAnchor

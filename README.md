@@ -45,6 +45,7 @@ yarn build && yarn start
 - styles/, public/, scripts/ (e.g., `generate-sw.mjs`), docs/
 - test/ (Vitest), e2e/ (Playwright)
 - Path aliases in tsconfig: `@components/*`, `@utils/*`, etc.
+- Next.js 16 note: the old `middleware.ts` is now `proxy.ts`; keep locale detection, canonical redirects, CSP, and cache headers centralized there.
 
 ## Testing
 

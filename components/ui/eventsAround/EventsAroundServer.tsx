@@ -1,4 +1,3 @@
-import { memo, FC } from "react";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
@@ -10,8 +9,9 @@ import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import CardLink from "@components/ui/common/cardContent/CardLink";
+import caMessages from "../../../messages/ca.json";
 
-const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
+function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const cardClass =
     layout === "horizontal"
       ? "flex-none w-96 min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
@@ -42,9 +42,9 @@ const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
       </div>
     </div>
   );
-};
+}
 
-const EventsAroundServer: FC<EventsAroundServerProps> = ({
+function EventsAroundServer({
   events,
   layout = "compact",
   loading = false,
@@ -53,7 +53,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   jsonLdId,
   title,
   useDetailTimeFormat = false,
-}) => {
+}: EventsAroundServerProps) {
   // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
   // Keep first occurrence order-stable. Key used: id fallback to slug.
   const uniqueEvents = (() => {
@@ -125,6 +125,8 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     return null;
   }
 
+  const carouselSuffix =
+    (caMessages as any).Components.EventsAround.carouselSuffix;
   // Render different layouts
   if (layout === "horizontal") {
     return (
@@ -142,7 +144,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
         )}
         <HorizontalScroll
           className="py-element-gap px-section-x"
-          ariaLabel={title ? `${title} - carrusel d'esdeveniments` : undefined}
+            ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
           nudgeOnFirstLoad
           showDesktopArrows
           hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
@@ -261,4 +263,4 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
 
 EventsAroundServer.displayName = "EventsAroundServer";
 
-export default memo(EventsAroundServer);
+export default EventsAroundServer;

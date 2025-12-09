@@ -177,10 +177,7 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON body" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
     const { tags } = body;
@@ -249,8 +246,8 @@ export async function POST(request: Request) {
         cloudflareResult.purged
           ? "purged"
           : cloudflareResult.skipped
-            ? "skipped"
-            : "failed"
+          ? "skipped"
+          : "failed"
       }`
     );
 
@@ -301,4 +298,3 @@ export async function DELETE() {
     { status: 405 }
   );
 }
-

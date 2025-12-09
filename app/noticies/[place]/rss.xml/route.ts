@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { fetchNews } from "@lib/api/news";
@@ -7,11 +8,12 @@ export async function GET(
   { params }: { params: Promise<{ place: string }> }
 ) {
   const { place } = await params;
+  const t = await getTranslations("App.NewsPlaceRss");
   const feed = new Feed({
     id: `${siteUrl}/noticies/${place}`,
     link: `${siteUrl}/noticies/${place}`,
-    title: `Notícies ${place} - Esdeveniments.cat`,
-    description: `Les últimes notícies i recomanacions culturals de ${place}`,
+    title: t("title", { place }),
+    description: t("description", { place }),
     copyright: "Esdeveniments.cat",
     updated: new Date(),
     author: {

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import UploadIcon from "@heroicons/react/outline/UploadIcon";
 import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
 
@@ -8,6 +9,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   onUpload,
   progress,
 }) => {
+  const t = useTranslations("Components.ImageUploader");
   const fileSelect = useRef<HTMLInputElement>(null);
   const [imgData, setImgData] = useState<string | null>(value);
   const [dragOver, setDragOver] = useState<boolean>(false);
@@ -28,16 +30,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     ];
 
     if (!acceptedImageTypes.includes(file.type as AcceptedImageTypes)) {
-      setError(
-        "El fitxer seleccionat no és una imatge suportada. Si us plau, carregueu un fitxer en format JPEG, PNG, JPG, o WEBP."
-      );
+      setError(t("unsupported"));
       return false;
     }
     // Client-side limit: 8MB (leaves buffer for form data in total 10MB server limit)
     if (file.size > 8 * 1024 * 1024) {
-      setError(
-        "La mida de l'imatge supera el límit permès de 8 MB. Si us plau, trieu una imatge més petita."
-      );
+      setError(t("tooLarge"));
       return false;
     }
 
@@ -77,7 +75,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   return (
     <div className="w-full text-foreground-strong">
       <label htmlFor="image" className="text-foreground-strong font-bold">
-        Imatge *
+        {t("label")}
       </label>
 
       <div
@@ -104,7 +102,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               </button>
             </div>
           ) : (
-            <span className="text-foreground-strong">{progress}%</span>
+            <span className="text-foreground-strong">{t("progress", { progress })}</span>
           )}
 
           <input
@@ -139,7 +137,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             </svg>
           </button>
           <Image
-            alt="Imatge"
+            alt={t("altPreview")}
             height={100}
             width={100}
             className="object-contain"

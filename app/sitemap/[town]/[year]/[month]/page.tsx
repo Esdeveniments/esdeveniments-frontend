@@ -5,6 +5,8 @@ import {
   getFormattedDate,
   formatCatalanA,
 } from "@utils/helpers";
+import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
@@ -19,6 +21,8 @@ import {
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import type { AppLocale } from "types/i18n";
 
 export const revalidate = 86400;
 
@@ -31,6 +35,7 @@ export async function generateMetadata({
 }: {
   params: Promise<MonthStaticPathParams>;
 }) {
+  const t = await getTranslations("Pages.SitemapMonth");
   const { town, year, month } = await params;
   const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
   const place = await getPlaceBySlug(town);
@@ -38,11 +43,18 @@ export async function generateMetadata({
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
   const locationPhrase = formatCatalanA(townLabel, placeType, false);
+  const locale = resolveLocaleFromHeaders(await headers());
 
   return buildPageMeta({
-    title: `Arxiu de ${townLabel} del ${monthLabel} del ${year} - Esdeveniments.cat`,
-    description: `Descobreix què va passar ${locationPhrase} el ${monthLabel} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
+    title: t("metaTitle", { town: townLabel, month: monthLabel, year }),
+    description: t("metaDescription", {
+      locationPhrase,
+      month: monthLabel,
+      year,
+      town: townLabel,
+    }),
     canonical: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
+    locale,
   });
 }
 
@@ -52,6 +64,8 @@ export default async function Page({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
+  const t = await getTranslations("Pages.SitemapMonth");
+  const locale: AppLocale = resolveLocaleFromHeaders(await headers());
 
   const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
 
@@ -86,8 +100,8 @@ export default async function Page({
 
   // Generate structured data for the month archive
   const breadcrumbs = [
-    { name: "Inici", url: siteUrl },
-    { name: "Arxiu", url: `${siteUrl}/sitemap` },
+    { name: t("breadcrumbs.home"), url: siteUrl },
+    { name: t("breadcrumbs.archive"), url: `${siteUrl}/sitemap` },
     { name: townLabel, url: `${siteUrl}/sitemap/${town}` },
     {
       name: `${monthLabel} ${year}`,
@@ -100,22 +114,27 @@ export default async function Page({
     filteredEvents.length > 0
       ? generateItemListStructuredData(
           filteredEvents,
-          `Esdeveniments de ${townLabel} - ${monthLabel} ${year}`,
-          `Col·lecció d'esdeveniments culturals de ${townLabel} del ${monthLabel} del ${year}`
+          t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+          t("itemListDescription", { town: townLabel, month: monthLabel, year }),
+          locale
         )
       : null;
 
   // Generate collection page schema
   const collectionPageSchema = generateCollectionPageSchema({
-    title: `Arxiu de ${townLabel} - ${monthLabel} ${year}`,
-    description: `Esdeveniments culturals que van tenir lloc ${locationPhrase} durant el ${monthLabel} del ${year}`,
+    title: t("collectionTitle", { town: townLabel, month: monthLabel, year }),
+    description: t("collectionDescription", {
+      locationPhrase,
+      month: monthLabel,
+      year,
+    }),
     url: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
     breadcrumbs,
     numberOfItems: filteredEvents.length,
     mainEntity: eventsItemList || {
       "@type": "Thing",
-      name: `Esdeveniments de ${townLabel} - ${monthLabel} ${year}`,
-      description: "Col·lecció d'esdeveniments culturals",
+      name: t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+      description: t("collectionFallbackDescription"),
     },
   });
 
@@ -145,19 +164,19 @@ export default async function Page({
 
         <header className="text-center">
           <h1 className="heading-2 mb-2">
-            Arxiu {townLabel} - {monthLabel} del {year}
+            {t("headerTitle", { town: townLabel, month: monthLabel, year })}
           </h1>
           <p className="body-normal text-foreground/80">
             {filteredEvents.length > 0
-              ? `${filteredEvents.length} esdeveniments culturals documentats`
-              : `No s'han trobat esdeveniments per aquest període`}
+              ? t("headerCount", { count: filteredEvents.length })
+              : t("headerEmpty")}
           </p>
         </header>
 
         <section className="w-full">
           {filteredEvents.length > 0 ? (
             <div className="stack gap-4">
-              <h2 className="sr-only">Llista d&apos;esdeveniments</h2>
+              <h2 className="sr-only">{t("srList")}</h2>
               {filteredEvents.map((event: EventSummaryResponseDTO) => {
                 const { formattedStart, formattedEnd } = getFormattedDate(
                   event.startDate,
@@ -216,7 +235,7 @@ export default async function Page({
         {filteredEvents.length > 0 && (
           <footer className="pt-8 border-t border-border text-center">
             <p className="body-small text-foreground/80 mb-4">
-              Vols explorar més esdeveniments de {townLabel}?
+              {t("footerExplore", { town: townLabel })}
             </p>
             <div className="flex-center gap-4">
               <PressableAnchor
@@ -225,7 +244,7 @@ export default async function Page({
                 variant="inline"
                 prefetch={false}
               >
-                Veure tots els arxius
+                {t("footerViewArchives")}
               </PressableAnchor>
               <PressableAnchor
                 href={`/${town}`}
@@ -233,7 +252,7 @@ export default async function Page({
                 variant="inline"
                 prefetch={false}
               >
-                Esdeveniments actuals
+                {t("footerCurrentEvents")}
               </PressableAnchor>
             </div>
           </footer>

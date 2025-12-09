@@ -3,12 +3,15 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getNewsBySlug } from "@lib/api/news";
 import type { NewsDetailResponseDTO } from "types/api/news";
+import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 export async function generateMetadata({
   params,
@@ -16,6 +19,7 @@ export async function generateMetadata({
   params: Promise<{ place: string; article: string }>;
 }): Promise<Metadata> {
   const { place, article } = await params;
+  const t = await getTranslations("App.NewsArticleFallback");
   let detail: NewsDetailResponseDTO | null = null;
   try {
     detail = await getNewsBySlug(article);
@@ -24,12 +28,14 @@ export async function generateMetadata({
     captureException(error);
   }
   const placeType = await getPlaceTypeAndLabelCached(place);
+  const locale = resolveLocaleFromHeaders(await headers());
   if (detail) {
     const base = buildPageMeta({
       title: `${detail.title} | ${placeType.label}`,
       description: detail.description,
       canonical: `${siteUrl}/noticies/${place}/${article}`,
       image: detail.events?.[0]?.imageUrl,
+      locale,
     }) as unknown as Metadata;
     const augmented: Metadata = {
       ...base,
@@ -43,9 +49,10 @@ export async function generateMetadata({
     return augmented;
   }
   return buildPageMeta({
-    title: `Notícia | ${placeType.label}`,
-    description: `Detall de la notícia`,
+    title: t("title", { place: placeType.label }),
+    description: t("description"),
     canonical: `${siteUrl}/noticies/${place}/${article}`,
+    locale,
   }) as unknown as Metadata;
 }
 

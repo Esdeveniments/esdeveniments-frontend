@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
@@ -74,6 +75,7 @@ const isCategoryOption = (
   );
 
 const Publica = () => {
+  const t = useTranslations("App.Publish");
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -165,7 +167,7 @@ const Publica = () => {
         regionMeta = form.region;
       } else if (form.region) {
         const option = form.region as Option;
-        const name = option?.label ?? `Regió ${regionIdValue}`;
+        const name = option?.label ?? t("fallbackRegion", { id: regionIdValue });
         regionMeta = {
           id: Number(regionIdValue),
           name,
@@ -180,7 +182,7 @@ const Publica = () => {
         cityMeta = form.town;
       } else if (form.town) {
         const option = form.town as Option;
-        const name = option?.label ?? `Ciutat ${townIdValue}`;
+        const name = option?.label ?? t("fallbackCity", { id: townIdValue });
         cityMeta = {
           id: Number(townIdValue),
           name,
@@ -290,7 +292,7 @@ const Publica = () => {
 
           router.push(`/e/${slug}`);
         } else {
-          setError("Error al crear l'esdeveniment. Si us plau, torna-ho a intentar.");
+          setError(t("errorCreate"));
           captureException("Error creating event");
         }
       } catch (error) {
@@ -306,13 +308,9 @@ const Publica = () => {
           errorMessage.includes("10 MB limit") ||
           errorMessage.includes("10mb")
         ) {
-          setError(
-            "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries."
-          );
+          setError(t("errorBodyLimit"));
         } else {
-          setError(
-            "Hi ha hagut un error en publicar l'esdeveniment. Si us plau, torna-ho a intentar."
-          );
+          setError(t("errorGeneric"));
         }
         
         captureException(error);
@@ -324,9 +322,9 @@ const Publica = () => {
       <div className="flex flex-col gap-4 px-2 lg:px-0">
         <div className="flex flex-col gap-2">
           <h1 className="uppercase font-semibold">
-            Publica un esdeveniment
+            {t("heading")}
           </h1>
-          <p className="text-sm text-center">* camps obligatoris</p>
+          <p className="text-sm text-center">{t("requiredNote")}</p>
         </div>
         {error && (
           <div className="w-full px-4 py-3 bg-destructive/10 border border-destructive rounded-lg">
@@ -337,7 +335,7 @@ const Publica = () => {
           <EventForm
             form={form}
             onSubmit={onSubmit}
-            submitLabel="Publicar"
+            submitLabel={t("submitLabel")}
             isLoading={isPending}
             regionOptions={regionOptions}
             cityOptions={cityOptions}

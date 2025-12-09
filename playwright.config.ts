@@ -1,11 +1,24 @@
+import path from "path";
 import { defineConfig, devices } from "@playwright/test";
+
+const host = process.env.HOST || "127.0.0.1";
+const port = process.env.PORT || "3000";
+const baseUrl =
+  process.env.PLAYWRIGHT_TEST_BASE_URL || `http://${host}:${port}`;
 
 // Ensure the spawned dev server inherits required env in CI without violating TS types
 const webServerEnv: Record<string, string> = {
   NODE_ENV: process.env.NODE_ENV || "development",
   E2E_TEST_MODE: "1",
   NEXT_PUBLIC_E2E_TEST_MODE: "1",
+  HOST: host,
+  PORT: port,
 };
+
+// Ensure next-intl can locate the config file when running under Playwright
+// webServerEnv.NEXT_INTL_CONFIG_PATH =
+//   process.env.NEXT_INTL_CONFIG_PATH ||
+//   path.join(__dirname, "next-intl.config.ts");
 if (process.env.NEXT_PUBLIC_API_URL) {
   webServerEnv.NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 }
@@ -22,13 +35,10 @@ export default defineConfig({
   maxFailures: process.env.CI ? 10 : undefined, // Fail fast in CI if too many tests fail
   timeout: process.env.CI ? 120000 : 60000, // Global test timeout: 120s in CI (remote URLs), 60s locally
   reporter: process.env.CI
-    ? [
-        ["blob"],
-        ["html", { open: "never", outputFolder: "playwright-report" }],
-      ]
+    ? [["blob"], ["html", { open: "never", outputFolder: "playwright-report" }]]
     : [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
+    baseURL: baseUrl,
     navigationTimeout: process.env.CI ? 120000 : 90000, // Higher timeout in CI for remote URLs
     trace: "on-first-retry",
     screenshot: "only-on-failure",
@@ -42,7 +52,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "E2E_TEST_MODE=1 yarn dev",
-    url: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
+    url: baseUrl,
     reuseExistingServer: true,
     timeout: 120000,
     // Ensure the spawned dev server inherits required env in CI

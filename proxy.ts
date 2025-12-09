@@ -6,8 +6,65 @@ import {
   verifyHmacSignature,
 } from "@utils/hmac";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_MAX_AGE,
+  type AppLocale,
+  SUPPORTED_LOCALES,
+} from "types/i18n";
+import { stripLocalePrefix } from "@utils/i18n-routing";
 
 const isDev = process.env.NODE_ENV !== "production";
+const supportedLocales = new Set<AppLocale>(SUPPORTED_LOCALES);
+function parseAcceptLanguage(header: string | null): AppLocale | null {
+  if (!header) return null;
+
+  const candidates = header
+    .split(",")
+    .map((raw) => {
+      const [langPart, qValue] = raw.trim().split(";q=");
+      const base = langPart.split("-")[0]?.toLowerCase();
+      const quality = qValue ? Number.parseFloat(qValue) : 1;
+      return {
+        base,
+        quality: Number.isFinite(quality) ? quality : 0,
+      };
+    })
+    .filter(
+      (entry): entry is { base: string; quality: number } =>
+        Boolean(entry.base) && entry.quality > 0
+    )
+    .sort((a, b) => b.quality - a.quality);
+
+  for (const { base } of candidates) {
+    if (supportedLocales.has(base as AppLocale)) {
+      return base as AppLocale;
+    }
+  }
+
+  return null;
+}
+
+function getLocaleFromCookie(request: NextRequest): AppLocale | null {
+  const cookieLocale = request.cookies?.get?.(LOCALE_COOKIE)?.value;
+  if (
+    cookieLocale &&
+    stripLocalePrefix(`/${cookieLocale}`).locale === cookieLocale
+  ) {
+    return cookieLocale as AppLocale;
+  }
+  return null;
+}
+
+function persistLocaleCookie(response: NextResponse, locale: AppLocale) {
+  response.cookies.set(LOCALE_COOKIE, locale, {
+    path: "/",
+    maxAge: LOCALE_COOKIE_MAX_AGE,
+    sameSite: "lax",
+    secure: !isDev,
+  });
+}
 
 function getCsp() {
   const apiOrigin = getApiOrigin();
@@ -137,6 +194,7 @@ export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const search = request.nextUrl.search;
 
   if (pathname.startsWith("/api/")) {
     const isPublicApiRequest =
@@ -153,7 +211,7 @@ export default async function proxy(request: NextRequest) {
       // Special case: visits endpoint should receive/stamp visitor id
       if (pathname === "/api/visits" && request.method === "POST") {
         const apiReqHeaders = new Headers(request.headers);
-        const cookieVisitor = request.cookies.get("visitor_id")?.value;
+        const cookieVisitor = request.cookies?.get?.("visitor_id")?.value;
         const visitorId =
           cookieVisitor || crypto.randomUUID().replace(/-/g, "");
         apiReqHeaders.set("x-visitor-id", visitorId);
@@ -242,22 +300,75 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  const { locale: localeFromPath, pathnameWithoutLocale } =
+    stripLocalePrefix(pathname);
+  const localeFromCookie = getLocaleFromCookie(request);
+
+  if (localeFromPath === DEFAULT_LOCALE) {
+    const redirectUrl = new URL(
+      `${pathnameWithoutLocale}${search || ""}`,
+      request.url
+    );
+    const response = NextResponse.redirect(redirectUrl, 308);
+    persistLocaleCookie(response, DEFAULT_LOCALE);
+    return response;
+  }
+
+  if (!localeFromPath && pathname === "/") {
+    const preferredLocale =
+      localeFromCookie ||
+      parseAcceptLanguage(request.headers.get("accept-language"));
+    if (preferredLocale && preferredLocale !== DEFAULT_LOCALE) {
+      const redirectUrl = new URL(
+        `/${preferredLocale}${search || ""}`,
+        request.url
+      );
+      const response = NextResponse.redirect(redirectUrl, 302);
+      persistLocaleCookie(response, preferredLocale);
+      return response;
+    }
+  }
+
+  const resolvedLocale: AppLocale = localeFromPath ?? DEFAULT_LOCALE;
+  const shouldPersistLocaleFromPath =
+    Boolean(localeFromPath) && localeFromPath !== localeFromCookie;
+
   // Handle canonical redirects for place routes
   const redirectResponse = handleCanonicalRedirects(request);
   if (redirectResponse) {
+    if (shouldPersistLocaleFromPath && localeFromPath) {
+      persistLocaleCookie(redirectResponse, localeFromPath);
+    }
     return redirectResponse;
   }
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
+  requestHeaders.set("x-next-intl-locale", resolvedLocale);
 
   // No per-page visitor id injection; handled only for /api/visits.
 
-  const response = NextResponse.next({
+  const baseResponseInit = {
     request: {
       headers: requestHeaders,
     },
-  });
+  };
+
+  // When a locale prefix exists (e.g., /es/...), rewrite to the locale-stripped
+  // pathname for routing while preserving the original URL in the browser.
+  // This keeps locale-prefixed URLs indexable and allows us to reuse the
+  // existing route tree without duplicating files.
+  const response = localeFromPath
+    ? (() => {
+        const rewriteUrl = request.nextUrl.clone();
+        rewriteUrl.pathname = pathnameWithoutLocale || "/";
+        return NextResponse.rewrite(rewriteUrl, baseResponseInit);
+      })()
+    : NextResponse.next(baseResponseInit);
+
+  if (shouldPersistLocaleFromPath && localeFromPath) {
+    persistLocaleCookie(response, localeFromPath);
+  }
 
   // visitor_id cookie is set only when calling /api/visits if missing.
 
@@ -286,7 +397,7 @@ export default async function proxy(request: NextRequest) {
   // Add Cache-Control for public pages (excluding API and internal paths handled above)
   // public, max-age=3600 (1h browser), s-maxage=86400 (24h CDN), stale-while-revalidate=86400 (24h)
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
-     response.headers.set(
+    response.headers.set(
       "Cache-Control",
       "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
     );

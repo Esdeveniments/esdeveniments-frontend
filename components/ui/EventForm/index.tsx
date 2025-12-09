@@ -14,6 +14,7 @@ import Button from "@components/ui/common/button";
 import type { EventFormProps } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
+import { useTranslations } from "next-intl";
 
 export const EventForm: React.FC<EventFormProps> = ({
   form,
@@ -35,9 +36,35 @@ export const EventForm: React.FC<EventFormProps> = ({
   imageToUpload,
   imageFile,
 }) => {
+  const t = useTranslations("Utils.Validation");
+  const tForm = useTranslations("Components.EventForm");
+  const validationLabels = useMemo(
+    () => ({
+      genericError: t("genericError"),
+      imageRequired: t("imageRequired"),
+    }),
+    [t]
+  );
+  const zodLabels = useMemo(
+    () => ({
+      titleRequired: tForm("titleRequired"),
+      descriptionRequired: tForm("descriptionRequired"),
+      locationRequired: tForm("locationRequired"),
+      invalidUrl: tForm("invalidUrl"),
+      invalidEmail: tForm("invalidEmail"),
+    }),
+    [tForm]
+  );
   const formState = useMemo(() => {
-    return getZodValidationState(form, true, imageFile, isEditMode);
-  }, [form, imageFile, isEditMode]);
+    return getZodValidationState(
+      form,
+      true,
+      imageFile,
+      isEditMode,
+      validationLabels,
+      zodLabels
+    );
+  }, [form, imageFile, isEditMode, validationLabels, zodLabels]);
 
   const [submitFormState, setSubmitFormState] = useState<{
     isDisabled: boolean;
@@ -52,7 +79,9 @@ export const EventForm: React.FC<EventFormProps> = ({
       form,
       false,
       imageFile,
-      isEditMode
+      isEditMode,
+      validationLabels,
+      zodLabels
     );
     setSubmitFormState(submitValidation);
 
@@ -71,7 +100,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     >
       <Input
         id="title"
-        title="Títol *"
+        title={tForm("title")}
         value={form.title}
         onChange={(e) => handleFormChange("title", e.target.value)}
       />
@@ -84,7 +113,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 
       <Input
         id="url"
-        title="Enllaç de l'esdeveniment"
+        title={tForm("url")}
         value={form.url}
         onChange={(e) => handleFormChange("url", e.target.value)}
       />
@@ -97,37 +126,37 @@ export const EventForm: React.FC<EventFormProps> = ({
 
       {isLoadingRegionsWithCities ? (
         <>
-          <SelectSkeleton label="Comarca *" />
-          <SelectSkeleton label="Població *" />
+          <SelectSkeleton label={tForm("regionSkeleton")} />
+          <SelectSkeleton label={tForm("townSkeleton")} />
         </>
       ) : (
         <>
           <Select
             id="region"
-            title="Comarca *"
+            title={tForm("region")}
             options={regionOptions}
             value={isOption(form.region) ? form.region : null}
             onChange={handleRegionChange}
             isClearable
-            placeholder="Selecciona una comarca"
+            placeholder={tForm("regionPlaceholder")}
           />
 
           <Select
             id="town"
-            title="Població *"
+            title={tForm("town")}
             options={cityOptions}
             value={isOption(form.town) ? form.town : null}
             onChange={handleTownChange}
             isDisabled={!form.region}
             isClearable
-            placeholder="Selecciona un poble"
+            placeholder={tForm("townPlaceholder")}
           />
         </>
       )}
 
       <Input
         id="location"
-        title="Lloc *"
+        title={tForm("location")}
         value={form.location}
         onChange={(e) => handleFormChange("location", e.target.value)}
       />
@@ -154,14 +183,14 @@ export const EventForm: React.FC<EventFormProps> = ({
         options={categoryOptions}
         isDisabled={isLoadingCategories}
         isLoading={isLoadingCategories}
-        placeholder="Selecciona categories (opcional)"
+        placeholder={tForm("categoriesPlaceholder")}
       />
 
       {isEditMode && (
         <Input
           id="email"
-          title="Correu electrònic"
-          subtitle="Vols que t'avisem quan l'esdeveniment s'hagi actualitzat? (no guardem les dades)"
+          title={tForm("email")}
+          subtitle={tForm("emailSubtitle")}
           value={form.email || ""}
           onChange={(e) => handleFormChange("email", e.target.value)}
         />
@@ -211,7 +240,7 @@ export const EventForm: React.FC<EventFormProps> = ({
                   fill="#FF0037"
                 />
               </svg>
-              Publicant...
+              {tForm("publishing")}
             </>
           ) : (
             submitLabel

@@ -1,9 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import NewsCard from "@components/ui/newsCard";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsListProps } from "types/props";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export default async function NewsList({
   newsPromise,
@@ -12,6 +16,18 @@ export default async function NewsList({
   currentPage,
   pageSize,
 }: NewsListProps) {
+  const t = await getTranslations("Components.NewsList");
+  const headersList = await headers();
+  const locale = (resolveLocaleFromHeaders(headersList) ||
+    DEFAULT_LOCALE) as AppLocale;
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!prefix) return path;
+    if (path === "/") return prefix || "/";
+    if (path.startsWith(prefix)) return path;
+    return `${prefix}${path}`;
+  };
   const [response, placeType] = await Promise.all([
     newsPromise,
     placeTypePromise,
@@ -22,20 +38,18 @@ export default async function NewsList({
     return (
       <div className="flex flex-col items-center gap-4 px-2 lg:px-0 text-center">
         <h2 className="heading-3" data-testid="not-found-title">
-          No hem trobat notícies recents
+          {t("emptyTitle")}
         </h2>
         <p className="text-foreground-strong/70 max-w-2xl">
-          Encara no tenim novetats per {placeType.label}, però continuem afegint-ne
-          cada setmana. Mentrestant, pots explorar les últimes notícies d&apos;altres
-          zones.
+          {t("emptyBody", { place: placeType.label })}
         </p>
         <PressableAnchor
-          href="/noticies"
+          href={withLocale("/noticies")}
           className="text-primary underline"
           variant="inline"
           prefetch={false}
         >
-          Veure totes les notícies →
+          {t("viewAll")}
         </PressableAnchor>
       </div>
     );
@@ -45,7 +59,7 @@ export default async function NewsList({
     "@context": "https://schema.org",
     "@type": "ItemList",
     "@id": `${siteUrl}/noticies/${place}#news-itemlist`,
-    name: `Notícies de ${placeType.label}`,
+    name: t("itemListName", { place: placeType.label }),
     numberOfItems: list.length,
     itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => ({
       "@type": "ListItem",
@@ -65,7 +79,7 @@ export default async function NewsList({
       {/* Note: Head links for prev/next were here but next/head is not supported in App Router server components in the same way. 
           We omit them here or they should be handled via metadata if blocking is acceptable, 
           but since we are streaming, we can't easily inject into head. */}
-      
+
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
 
       <section className="flex flex-col gap-6 px-2 lg:px-0">
@@ -83,14 +97,14 @@ export default async function NewsList({
         {currentPage > 0 ? (
           <PressableAnchor
             href={{
-              pathname: `/noticies/${place}`,
+              pathname: withLocale(`/noticies/${place}`),
               query: { page: String(currentPage - 1), size: String(pageSize) },
             }}
             prefetch={false}
             className="text-primary underline"
             variant="inline"
           >
-            ← Anterior
+            {t("prev")}
           </PressableAnchor>
         ) : (
           <span />
@@ -98,14 +112,14 @@ export default async function NewsList({
         {!response.last && (
           <PressableAnchor
             href={{
-              pathname: `/noticies/${place}`,
+              pathname: withLocale(`/noticies/${place}`),
               query: { page: String(currentPage + 1), size: String(pageSize) },
             }}
             prefetch={false}
             className="text-primary underline"
             variant="inline"
           >
-            Més notícies →
+            {t("next")}
           </PressableAnchor>
         )}
       </div>

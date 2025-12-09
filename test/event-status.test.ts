@@ -1,6 +1,35 @@
 import { describe, it, expect } from "vitest";
 import { computeTemporalStatus } from "@utils/event-status";
 
+const labels = {
+  past: "Esdeveniment finalitzat",
+  live: "En curs",
+  upcoming: "Properament",
+  endsInDays: "Acaba en {count} dies",
+  endsInHours: "Acaba en {count} hores",
+  endsSoon: "Acaba aviat",
+  startsInDays: "Comença en {count} dies",
+  startsInHours: "Comença en {count} hores",
+  startsToday: "Comença avui",
+  today: "Avui",
+};
+
+const compute = (
+  startDate: string,
+  endDate?: string,
+  nowOverride?: Date,
+  startTime?: string | null,
+  endTime?: string | null
+) =>
+  computeTemporalStatus(
+    startDate,
+    endDate,
+    nowOverride,
+    startTime,
+    endTime,
+    labels
+  );
+
 // Helper to build ISO dates relative to a fixed 'now'
 const baseNow = new Date("2025-09-29T12:00:00.000Z");
 const addHours = (h: number) => new Date(baseNow.getTime() + h * 3600 * 1000);
@@ -9,7 +38,7 @@ const addDays = (d: number) => addHours(d * 24);
 describe("computeTemporalStatus", () => {
   it("returns upcoming with days granularity", () => {
     const start = addDays(3).toISOString();
-    const status = computeTemporalStatus(start, undefined, baseNow);
+    const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("upcoming");
     if (status.state === "upcoming") {
       expect(status.startsIn).toContain("3 dies");
@@ -20,7 +49,7 @@ describe("computeTemporalStatus", () => {
 
   it("returns upcoming with hours granularity", () => {
     const start = addHours(5).toISOString();
-    const status = computeTemporalStatus(start, undefined, baseNow);
+    const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("upcoming");
     if (status.state === "upcoming") {
       expect(status.startsIn).toContain("5 hores");
@@ -32,7 +61,7 @@ describe("computeTemporalStatus", () => {
   it("returns live with endsIn days when multi-day ongoing", () => {
     const start = addHours(-2).toISOString();
     const end = addDays(2).toISOString();
-    const status = computeTemporalStatus(start, end, baseNow);
+    const status = compute(start, end, baseNow);
     expect(status.state).toBe("live");
     if (status.state === "live") {
       expect(status.endsIn).toContain("2 dies");
@@ -44,7 +73,7 @@ describe("computeTemporalStatus", () => {
   it("returns live with endsIn hours when ending soon", () => {
     const start = addHours(-1).toISOString();
     const end = addHours(4).toISOString();
-    const status = computeTemporalStatus(start, end, baseNow);
+    const status = compute(start, end, baseNow);
     expect(status.state).toBe("live");
     if (status.state === "live") {
       expect(status.endsIn).toContain("4 hores");
@@ -56,7 +85,7 @@ describe("computeTemporalStatus", () => {
   it("returns past when end date passed", () => {
     const start = addDays(-3).toISOString();
     const end = addDays(-1).toISOString();
-    const status = computeTemporalStatus(start, end, baseNow);
+    const status = compute(start, end, baseNow);
     expect(status.state).toBe("past");
     if (status.state === "past") {
       expect(status.endedOn).toBe(end.split("T")[0]);
@@ -67,26 +96,26 @@ describe("computeTemporalStatus", () => {
 
   it("returns past when no end date and started >24h ago", () => {
     const start = addDays(-3).toISOString();
-    const status = computeTemporalStatus(start, undefined, baseNow);
+    const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("past");
   });
 
   it("date-only start on same day (no times) is considered live", () => {
     // start as bare date (midnight UTC)
     const start = baseNow.toISOString().split("T")[0]; // '2025-09-29'
-    const status = computeTemporalStatus(start, undefined, baseNow);
+    const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("live");
   });
 
   it("date-only start more than 24h ago is past", () => {
     const start = addDays(-2).toISOString().split("T")[0]; // two days before
-    const status = computeTemporalStatus(start, undefined, baseNow);
+    const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("past");
   });
 
   it("datetime start with explicit time in future uses hour granularity", () => {
     const start = "2025-09-29T13:00:00.000Z"; // 1 hour from baseNow
-    const status = computeTemporalStatus(start, undefined, baseNow);
+    const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("upcoming");
     if (status.state === "upcoming") {
       expect(status.startsIn).toContain("1 hores");
@@ -95,34 +124,34 @@ describe("computeTemporalStatus", () => {
 
   it("datetime start earlier today with explicit time is live", () => {
     const start = "2025-09-29T11:00:00.000Z"; // 1 hour before baseNow
-    const status = computeTemporalStatus(start, undefined, baseNow);
+    const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("live");
   });
 
   // Tests for "Consultar horaris" (all-day events with startTime = "00:00" or null)
   it("all-day event today with startTime=00:00 is live", () => {
     const start = "2025-09-29"; // same date as baseNow
-    const status = computeTemporalStatus(start, undefined, baseNow, "00:00");
+    const status = compute(start, undefined, baseNow, "00:00");
     expect(status.state).toBe("live");
     expect(status.label).toBe("En curs");
   });
 
   it("all-day event today with startTime=null is live", () => {
     const start = "2025-09-29"; // same date as baseNow
-    const status = computeTemporalStatus(start, undefined, baseNow, null);
+    const status = compute(start, undefined, baseNow, null);
     expect(status.state).toBe("live");
     expect(status.label).toBe("En curs");
   });
 
   it("all-day event yesterday with startTime=00:00 is past", () => {
     const start = "2025-09-28"; // day before baseNow
-    const status = computeTemporalStatus(start, undefined, baseNow, "00:00");
+    const status = compute(start, undefined, baseNow, "00:00");
     expect(status.state).toBe("past");
   });
 
   it("all-day event tomorrow with startTime=00:00 is upcoming", () => {
     const start = "2025-09-30"; // day after baseNow
-    const status = computeTemporalStatus(start, undefined, baseNow, "00:00");
+    const status = compute(start, undefined, baseNow, "00:00");
     expect(status.state).toBe("upcoming");
     if (status.state === "upcoming") {
       expect(status.startsIn).toContain("1 dies");
@@ -132,7 +161,7 @@ describe("computeTemporalStatus", () => {
   it("multi-day all-day event (startTime=00:00) spanning today is live", () => {
     const start = "2025-09-28"; // started yesterday
     const end = "2025-09-30"; // ends tomorrow
-    const status = computeTemporalStatus(start, end, baseNow, "00:00");
+    const status = compute(start, end, baseNow, "00:00");
     expect(status.state).toBe("live");
     if (status.state === "live" && status.endsIn) {
       expect(status.endsIn).toContain("1 dies");
@@ -148,7 +177,7 @@ describe("computeTemporalStatus", () => {
     const endTime = "14:00";
     // Use local time construction to match how buildDateTime works
     const currentTime = new Date("2025-11-08T12:00");
-    const status = computeTemporalStatus(
+    const status = compute(
       eventDate,
       eventDate, // same day
       currentTime,
@@ -163,13 +192,7 @@ describe("computeTemporalStatus", () => {
     const eventDate = "2025-11-08";
     const time = "10:00";
     const currentTime = new Date("2025-11-08T12:00");
-    const status = computeTemporalStatus(
-      eventDate,
-      eventDate,
-      currentTime,
-      time,
-      time
-    );
+    const status = compute(eventDate, eventDate, currentTime, time, time);
     expect(status.state).toBe("live");
   });
 
@@ -181,7 +204,7 @@ describe("computeTemporalStatus", () => {
     const endTime = "14:00";
     // Use local time construction to match how buildDateTime works
     const currentTime = new Date("2025-11-08T08:00");
-    const status = computeTemporalStatus(
+    const status = compute(
       eventDate,
       eventDate,
       currentTime,
@@ -199,7 +222,7 @@ describe("computeTemporalStatus", () => {
     const endTime = "14:00";
     // Use local time construction to match how buildDateTime works
     const currentTime = new Date("2025-11-08T15:00");
-    const status = computeTemporalStatus(
+    const status = compute(
       eventDate,
       eventDate,
       currentTime,

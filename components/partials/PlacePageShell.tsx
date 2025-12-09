@@ -10,19 +10,9 @@ import ListPageFaq from "@components/ui/common/faq/ListPageFaq";
 import { buildFaqJsonLd } from "@utils/helpers";
 import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
+import { getTranslations } from "next-intl/server";
 
-export async function ClientLayerWithPlaceLabel({
-  shellDataPromise,
-  categories,
-}: Pick<PlacePageShellProps, "shellDataPromise" | "categories">) {
-  const { placeTypeLabel } = await shellDataPromise;
-
-  return (
-    <ClientInteractiveLayer categories={categories} placeTypeLabel={placeTypeLabel} />
-  );
-}
-
-export default function PlacePageShell({
+export default async function PlacePageShell({
   eventsPromise,
   shellDataPromise,
   place,
@@ -32,6 +22,28 @@ export default function PlacePageShell({
   categories = [],
   webPageSchemaFactory,
 }: PlacePageShellProps) {
+  const { placeTypeLabel } = await shellDataPromise;
+  const tFilters = await getTranslations("Config.Filters");
+  const tFiltersUi = await getTranslations("Components.Filters");
+  const tByDates = await getTranslations("Config.ByDates");
+
+  const filterLabels = {
+    triggerLabel: tFiltersUi("triggerLabel"),
+    displayNameMap: {
+      place: tFilters("place"),
+      category: tFilters("category"),
+      byDate: tFilters("date"),
+      distance: tFilters("distance"),
+      searchTerm: tFilters("search"),
+    },
+    byDates: {
+      avui: tByDates("today"),
+      dema: tByDates("tomorrow"),
+      setmana: tByDates("week"),
+      "cap-de-setmana": tByDates("weekend"),
+    },
+  };
+
   return (
     <FilterLoadingProvider>
       <Suspense fallback={<EventsListSkeleton />}>
@@ -48,9 +60,10 @@ export default function PlacePageShell({
       </Suspense>
 
       <Suspense fallback={null}>
-        <ClientLayerWithPlaceLabel
-          shellDataPromise={shellDataPromise}
+        <ClientInteractiveLayer
           categories={categories}
+          placeTypeLabel={placeTypeLabel}
+          filterLabels={filterLabels}
         />
       </Suspense>
     </FilterLoadingProvider>
@@ -85,6 +98,8 @@ async function PlacePageContent({
       hasNewsPromise || Promise.resolve(false),
     ]);
 
+  const tFaq = await getTranslations("Utils.ListPageFaq");
+
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
     ? webPageSchemaFactory(pageData)
@@ -96,6 +111,36 @@ async function PlacePageContent({
     category,
     placeTypeLabel,
     categories,
+    labels: {
+      q1: tFaq("q1", { contextInline: "{contextInline}" }),
+      a1: tFaq("a1", { capitalizedContext: "{capitalizedContext}" }),
+      q2: tFaq("q2", { contextInline: "{contextInline}" }),
+      a2: tFaq("a2", { contextInline: "{contextInline}" }),
+      q3: tFaq("q3", {
+        categoryName: "{categoryName}",
+        contextInline: "{contextInline}",
+      }),
+      a3: tFaq("a3", {
+        categoryName: "{categoryName}",
+        contextInline: "{contextInline}",
+      }),
+    },
+    dateLabels: {
+      inline: {
+        avui: tFaq("dateInline.today"),
+        dema: tFaq("dateInline.tomorrow"),
+        setmana: tFaq("dateInline.week"),
+        "cap-de-setmana": tFaq("dateInline.weekend"),
+      },
+      capitalized: {
+        avui: tFaq("dateCapitalized.today"),
+        dema: tFaq("dateCapitalized.tomorrow"),
+        setmana: tFaq("dateCapitalized.week"),
+        "cap-de-setmana": tFaq("dateCapitalized.weekend"),
+      },
+      fallbackInline: tFaq("dateInline.fallback"),
+      fallbackCapitalized: tFaq("dateCapitalized.fallback"),
+    },
   });
   const faqJsonLd =
     faqItems.length > 1 ? buildFaqJsonLd(faqItems) : null;

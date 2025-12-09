@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { isValidDateSlug } from "@lib/dates";
+import { DEFAULT_LOCALE } from "types/i18n";
+import { stripLocalePrefix } from "./i18n-routing";
 import {
   DEFAULT_FILTER_VALUE,
   MAX_QUERY_STRING_LENGTH,
@@ -56,7 +58,13 @@ export function handleCanonicalRedirects(
   request: NextRequest
 ): NextResponse | null {
   const { pathname } = request.nextUrl;
-  const segments = pathname.split("/").filter(Boolean);
+  const { locale: localePrefix, pathnameWithoutLocale } =
+    stripLocalePrefix(pathname);
+  const segments = pathnameWithoutLocale.split("/").filter(Boolean);
+
+  if (segments.length === 0) {
+    return null;
+  }
 
   // Skip known non-place top-level routes early (performance: avoid query validation)
   const firstSegment = segments[0] || "";
@@ -175,9 +183,13 @@ export function handleCanonicalRedirects(
       }
     }
     const remainingQuery = remainingParams.toString();
+    const localizedCanonicalPath =
+      localePrefix && localePrefix !== DEFAULT_LOCALE
+        ? `/${localePrefix}${canonicalPath}`
+        : canonicalPath;
     const finalUrl = remainingQuery
-      ? `${canonicalPath}?${remainingQuery}`
-      : canonicalPath;
+      ? `${localizedCanonicalPath}?${remainingQuery}`
+      : localizedCanonicalPath;
 
     return NextResponse.redirect(new URL(finalUrl, request.url), 301);
   } else if (segmentCount === 2 && (queryCategory || queryDate)) {
@@ -229,9 +241,13 @@ export function handleCanonicalRedirects(
       }
     }
     const remainingQuery = remainingParams.toString();
+    const localizedCanonicalPath =
+      localePrefix && localePrefix !== DEFAULT_LOCALE
+        ? `/${localePrefix}${canonicalPath}`
+        : canonicalPath;
     const finalUrl = remainingQuery
-      ? `${canonicalPath}?${remainingQuery}`
-      : canonicalPath;
+      ? `${localizedCanonicalPath}?${remainingQuery}`
+      : localizedCanonicalPath;
 
     return NextResponse.redirect(new URL(finalUrl, request.url), 301);
   }

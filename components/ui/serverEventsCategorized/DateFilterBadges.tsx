@@ -1,30 +1,40 @@
 import Badge from "@components/ui/common/badge";
+import { getTranslations } from "next-intl/server";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import type { DateFilterBadgesProps } from "types/props";
+import type { JSX } from "react";
 
-export function DateFilterBadges({
+export async function DateFilterBadges({
   placeSlug,
   categorySlug,
   categories,
   contextName,
-  ariaLabel = "Vegeu també",
-}: DateFilterBadgesProps) {
+  ariaLabel,
+}: DateFilterBadgesProps): Promise<JSX.Element> {
+  const t = await getTranslations("Components.DateFilterBadges");
+  const resolvedAriaLabel = ariaLabel || t("ariaLabel");
   const dateFilters = [
-    { slug: "avui", label: "Avui", ariaLabelText: `Veure activitats d'avui` },
-    { slug: "dema", label: "Demà", ariaLabelText: `Veure activitats de demà` },
+    { slug: "avui", label: t("today.label"), ariaLabelText: t("today.aria") },
+    { slug: "dema", label: t("tomorrow.label"), ariaLabelText: t("tomorrow.aria") },
     {
       slug: "cap-de-setmana",
-      label: "Cap de setmana",
-      ariaLabelText: `Veure activitats aquest cap de setmana`,
+      label: t("weekend.label"),
+      ariaLabelText: t("weekend.aria"),
     },
   ];
 
   // Determine the aria label pattern based on whether we have a category
   const getAriaLabel = (dateFilter: typeof dateFilters[0]) => {
     if (categorySlug) {
-      return `${dateFilter.ariaLabelText} per la categoria ${contextName}`;
+      return t("ariaCategory", {
+        ariaLabelText: dateFilter.ariaLabelText,
+        contextName,
+      });
     }
-    return `${dateFilter.ariaLabelText} a ${contextName}`;
+    return t("ariaPlace", {
+      ariaLabelText: dateFilter.ariaLabelText,
+      contextName,
+    });
   };
 
   // Build URL params - include category if provided
@@ -46,7 +56,7 @@ export function DateFilterBadges({
   };
 
   return (
-    <nav aria-label={ariaLabel} className="mt-element-gap-sm mb-element-gap-sm">
+    <nav aria-label={resolvedAriaLabel} className="mt-element-gap-sm mb-element-gap-sm">
       <ul className="flex gap-element-gap">
         {dateFilters.map((dateFilter) => (
           <li key={dateFilter.slug}>

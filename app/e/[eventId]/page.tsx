@@ -14,6 +14,7 @@ import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
 import { computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
+import type { EventCopyLabels } from "types/common";
 import { getFormattedDate } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
 import EventDescription from "./components/EventDescription";
@@ -38,6 +39,7 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
 import AdArticleIsland from "./components/AdArticleIsland";
 import EventLocation from "./components/EventLocation";
+import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
@@ -106,15 +108,53 @@ export default async function EventPage({
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event });
+  const tStatus = await getTranslations("Utils.EventStatus");
+  const tEvent = await getTranslations("Components.EventPage");
+  const tCopy = await getTranslations("Utils.EventCopy");
+  const statusLabels = {
+    past: tStatus("past"),
+    live: tStatus("live"),
+    upcoming: tStatus("upcoming"),
+    endsInDays: tStatus("endsInDays"),
+    endsInHours: tStatus("endsInHours"),
+    endsSoon: tStatus("endsSoon"),
+    startsInDays: tStatus("startsInDays"),
+    startsInHours: tStatus("startsInHours"),
+    startsToday: tStatus("startsToday"),
+    today: tStatus("today"),
+  };
+  const eventCopyLabels: EventCopyLabels = {
+    sentence: {
+      verbSingular: tCopy("sentence.verbSingular"),
+      verbPlural: tCopy("sentence.verbPlural"),
+      dateRange: tCopy("sentence.dateRange"),
+      dateSingle: tCopy("sentence.dateSingle"),
+      sentence: tCopy("sentence.sentence"),
+      timeSuffix: tCopy("sentence.timeSuffix"),
+      placeSuffix: tCopy("sentence.placeSuffix"),
+    },
+    faq: {
+      whenQ: tCopy("faq.whenQ"),
+      whenA: tCopy("faq.whenA"),
+      whereQ: tCopy("faq.whereQ"),
+      whereA: tCopy("faq.whereA"),
+      isFreeQ: tCopy("faq.isFreeQ"),
+      isFreeYes: tCopy("faq.isFreeYes"),
+      isFreeNo: tCopy("faq.isFreeNo"),
+      durationQ: tCopy("faq.durationQ"),
+      durationA: tCopy("faq.durationA"),
+    },
+  };
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
     event.endDate,
     undefined,
     event.startTime,
-    event.endTime
+    event.endTime,
+    statusLabels
   );
 
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+  const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
     event.startDate,
     event.endDate
   );
@@ -125,8 +165,8 @@ export default async function EventPage({
   };
 
   // Build intro and FAQ via shared utils (no assumptions)
-  const introText = buildEventIntroText(event);
-  const faqItems = buildFaqItems(event);
+  const introText = await buildEventIntroText(event, eventCopyLabels);
+  const faqItems = await buildFaqItems(event, eventCopyLabels);
   const faqJsonLd = buildFaqJsonLd(faqItems);
 
   // Prepare place data for LatestNewsSection (streamed separately)
@@ -305,7 +345,7 @@ export default async function EventPage({
                     headingId="event-faq"
                     Icon={InfoIcon}
                     iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-                    title="Preguntes freqüents"
+                    title={tEvent("faqTitle")}
                     titleClassName="heading-2"
                   />
                   <dl className="space-y-element-gap px-section-x">
@@ -340,7 +380,7 @@ export default async function EventPage({
                 <SectionHeading
                   Icon={SpeakerphoneIcon}
                   iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-                  title="Contingut patrocinat"
+                  title={tEvent("sponsored")}
                   titleClassName="heading-2"
                 />
                 <div className="px-section-x">

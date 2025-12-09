@@ -1,4 +1,6 @@
+"use client";
 import { FC } from "react";
+import { useTranslations } from "next-intl";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import Modal from "@components/ui/common/modal";
 import { PencilIcon, XCircleIcon } from "@heroicons/react/outline";
@@ -15,12 +17,14 @@ const EditModal: FC<EditModalProps> = ({
   onSendDeleteReason,
   onRemove,
 }) => {
+  const t = useTranslations("Components.EditModal");
+
   return (
     <>
       <Modal
         open={openModal}
         setOpen={setOpenModal}
-        title="Suggereix una edició"
+        title={t("title")}
       >
         <ul role="list" className="divide-y divide-foreground-strong text-left">
           <li key="edit" className="p-4 flex">
@@ -35,12 +39,8 @@ const EditModal: FC<EditModalProps> = ({
                   aria-hidden="true"
                 />
                 <div className="flex flex-col">
-                  <p className="font-semibold">
-                    Canvia el títol o altres detalls
-                  </p>
-                  <p className="text-sm">
-                    Edita el títol, la ubicació, l&apos;horari, etc.
-                  </p>
+                  <p className="font-semibold">{t("editTitle")}</p>
+                  <p className="text-sm">{t("editDescription")}</p>
                 </div>
               </div>
             </PressableAnchor>
@@ -53,10 +53,8 @@ const EditModal: FC<EditModalProps> = ({
                   aria-hidden="true"
                 />
                 <div className="flex flex-col">
-                  <p className="font-semibold">Eliminar</p>
-                  <p className="text-sm">
-                    L&apos;esdeveniment no existeix, està duplicat, etc.
-                  </p>
+                  <p className="font-semibold">{t("removeTitle")}</p>
+                  <p className="text-sm">{t("removeDescription")}</p>
                 </div>
               </div>
             </button>
@@ -66,14 +64,14 @@ const EditModal: FC<EditModalProps> = ({
       <Modal
         open={openDeleteReasonModal}
         setOpen={setOpenModalDeleteReasonModal}
-        title="Suggereix una el·liminació"
+        title={t("deleteTitle")}
       >
         <div className="flex flex-col">
           <div className="text-left text-sm px-4">
-            <p>Motiu de l&apos;el·liminació suggerida</p>
+            <p>{t("deleteReasonPrompt")}</p>
           </div>
           <fieldset className="flex flex-col gap-4 py-4">
-            <legend className="sr-only">Sol·licitud d&apos;eliminació</legend>
+            <legend className="sr-only">{t("deleteLegend")}</legend>
             <div className="flex justify-start items-center">
               <div className="p-2">
                 <input
@@ -88,7 +86,7 @@ const EditModal: FC<EditModalProps> = ({
               </div>
               <div className="p-2">
                 <label htmlFor="not-exist" className="text-foreground-strong">
-                  No existeix
+                  {t("reason.notExist")}
                 </label>
               </div>
             </div>
@@ -106,7 +104,7 @@ const EditModal: FC<EditModalProps> = ({
               </div>
               <div className="p-2">
                 <label htmlFor="duplicated" className="text-foreground-strong">
-                  Duplicat
+                  {t("reason.duplicated")}
                 </label>
               </div>
             </div>
@@ -124,7 +122,7 @@ const EditModal: FC<EditModalProps> = ({
               </div>
               <div className="p-2">
                 <label htmlFor="offensive" className="text-foreground-strong">
-                  Ofensiu, nociu o enganyós
+                  {t("reason.offensive")}
                 </label>
               </div>
             </div>
@@ -142,15 +140,15 @@ const EditModal: FC<EditModalProps> = ({
               </div>
               <div className="p-2">
                 <label htmlFor="others" className="text-foreground-strong">
-                  Altres
+                  {t("reason.others")}
                 </label>
                 <p id="offers-description" className="text-sm">
-                  Envieu un correu amb el motiu a:{" "}
+                  {t("reason.othersDescription")}{" "}
                   <a
                     className="hover:text-primary"
                     href="mailto:hola@esdeveniments.cat"
                   >
-                    hola@esdeveniments.cat
+                    {t("reason.othersEmail")}
                   </a>
                 </p>
               </div>
@@ -166,7 +164,7 @@ const EditModal: FC<EditModalProps> = ({
               }}
               className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-background bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-background focus:outline-none font-barlow uppercase font-semibold tracking-wide"
             >
-              Enviar
+              {t("submit")}
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { ReactElement, memo, Suspense } from "react";
+import { ReactElement, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
@@ -11,8 +11,12 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
+import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
-function HybridEventsList({
+async function HybridEventsList({
   initialEvents = [],
   pageData,
   noEventsFound = false,
@@ -23,18 +27,24 @@ function HybridEventsList({
   serverHasMore = false,
   hasNews,
   categories,
-}: HybridEventsListProps): ReactElement {
+}: HybridEventsListProps): Promise<ReactElement> {
+  const tLoc = await getTranslations("Utils.LocationHelpers");
+  const newsLabels = {
+    newsAll: tLoc("newsAll"),
+    newsWithPlace: tLoc("newsWithPlace", { deLabel: "{deLabel}" }),
+  };
   const placeLabel = placeTypeLabel?.label;
   const placeType =
     placeTypeLabel?.type === "town"
       ? "town"
       : placeTypeLabel?.type === "region"
-      ? "region"
-      : undefined;
+        ? "region"
+        : undefined;
   const { href: newsHref, text: newsText } = getNewsCta(
     place,
     placeLabel,
-    placeType
+    placeType,
+    newsLabels
   );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
@@ -45,6 +55,18 @@ function HybridEventsList({
       </div>
     ) : null;
 
+  const headersList = await headers();
+  const locale = (resolveLocaleFromHeaders(headersList) ||
+    DEFAULT_LOCALE) as AppLocale;
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!prefix) return path;
+    if (path === "/") return prefix || "/";
+    if (path.startsWith(prefix)) return path;
+    return `${prefix}${path}`;
+  };
+
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
@@ -54,6 +76,7 @@ function HybridEventsList({
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
+          prefix={prefix}
         />
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
@@ -143,4 +166,4 @@ function HybridEventsList({
   );
 }
 
-export default memo(HybridEventsList);
+export default HybridEventsList;

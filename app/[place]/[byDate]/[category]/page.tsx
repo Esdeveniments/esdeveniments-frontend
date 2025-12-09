@@ -37,6 +37,9 @@ import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import type { AppLocale } from "types/i18n";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
@@ -109,11 +112,13 @@ export async function generateMetadata({
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
   });
+  const locale = resolveLocaleFromHeaders(await headers());
 
   return buildPageMeta({
     title: pageData.title,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
+    locale,
   });
 }
 
@@ -159,6 +164,7 @@ export default async function FilteredPage({
     params,
     searchParams,
   ]);
+  const locale: AppLocale = resolveLocaleFromHeaders(await headers());
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
@@ -272,6 +278,7 @@ export default async function FilteredPage({
     fetchParams,
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
     categoryName: categoryData?.name,
+    locale,
   });
 
   const hasNewsPromise = hasNewsForPlace(filters.place).catch((error) => {
@@ -377,11 +384,13 @@ async function buildCategoryEventsPromise({
   fetchParams,
   pageDataPromise,
   categoryName,
+  locale,
 }: {
   filters: { place: string; byDate: string; category: string };
   fetchParams: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
   categoryName?: string;
+  locale: AppLocale;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -414,7 +423,12 @@ async function buildCategoryEventsPromise({
 
     structuredScripts.push({
       id: `events-${filters.place}-${filters.byDate}-${filters.category}`,
-      data: generateItemListStructuredData(validEvents, label),
+      data: generateItemListStructuredData(
+        validEvents,
+        label,
+        undefined,
+        locale
+      ),
     });
 
     const collectionSchema = generateCollectionPageSchema({

@@ -2,12 +2,14 @@ import { TextAreaProps } from "types/props";
 import { useEffect, useRef, useState, useMemo } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { processDescription } from "utils/text-processing";
+import { useTranslations } from "next-intl";
 
 export default function TextArea({ id, value, onChange }: TextAreaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPreview, setShowPreview] = useState(false);
   const characterCount = value?.length || 0;
   const maxLength = 1000;
+  const t = useTranslations("Components.TextArea");
 
   // Auto-expand textarea height based on content
   useEffect(() => {
@@ -28,14 +30,14 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
     <div className="w-full">
       <div className="flex-between">
         <label htmlFor={id} className="text-foreground-strong font-bold">
-          Descripció *
+          {t("label")}
         </label>
         <button
           type="button"
           onClick={() => setShowPreview(!showPreview)}
           className="text-sm text-primary hover:text-primary-dark focus:outline-none"
         >
-          {showPreview ? "✏️ Editar" : "👁️ Previsualitzar"}
+          {showPreview ? t("edit") : t("preview")}
         </button>
       </div>
       <div className="mt-2">
@@ -47,7 +49,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             />
             {!value && (
               <p className="text-foreground/70 italic">
-                Escriu alguna cosa per veure la previsualització...
+                {t("emptyPreview")}
               </p>
             )}
             <style jsx>{`
@@ -71,15 +73,13 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             value={value}
             onChange={onChange}
             className="w-full min-h-[300px] p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical"
-            placeholder="Descriu el teu esdeveniment... Pots escriure enllaços directament i es convertiran automàticament."
+            placeholder={t("placeholder")}
             maxLength={maxLength}
           />
         )}
         <div className="flex-between mt-1">
           <p className="text-sm text-foreground/80">
-            {showPreview
-              ? "Així és com veuran la descripció els visitants"
-              : "Els enllaços es convertiran automàticament. Prem Enter per fer salts de línia."}
+            {showPreview ? t("helperPreview") : t("helperEdit")}
           </p>
           <span
             className={`text-sm ${

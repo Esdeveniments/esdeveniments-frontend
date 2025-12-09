@@ -3,6 +3,12 @@ import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
+import { buildLocalizedUrls } from "@utils/i18n-seo";
+import {
+  DEFAULT_LOCALE,
+  localeToHrefLang,
+  type AppLocale,
+} from "types/i18n";
 
 export async function GET() {
   // Removed date filtering - new API doesn't support it
@@ -27,6 +33,20 @@ export async function GET() {
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
 
+  const toAlternates = (loc: string): Record<string, string> => {
+    const url = new URL(loc);
+    const localized = buildLocalizedUrls(url.pathname);
+    const alternates: Record<string, string> = {};
+    Object.entries(localized).forEach(([locale, href]) => {
+      const hrefLang = localeToHrefLang[locale as AppLocale] ?? locale;
+      alternates[hrefLang] = href;
+    });
+    if (localized[DEFAULT_LOCALE]) {
+      alternates["x-default"] = localized[DEFAULT_LOCALE];
+    }
+    return alternates;
+  };
+
   const fields: SitemapField[] = normalizedEvents
     .filter((event) => !event.isAd)
     .map((data) => {
@@ -38,12 +58,14 @@ export async function GET() {
       if (isNaN(lastModDate.getTime())) {
         lastModDate = new Date();
       }
+      const loc = `${siteUrl}/e/${data.slug}`;
       return {
-        loc: `${siteUrl}/e/${data.slug}`,
+        loc,
         lastmod: lastModDate.toISOString(),
         changefreq: "daily",
         priority: 0.7,
         image: image ? { loc: image, title: data.title } : undefined,
+        alternates: toAlternates(loc),
       };
     });
 

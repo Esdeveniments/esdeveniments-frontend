@@ -2,6 +2,7 @@
 
 import { useHero } from "./HeroContext";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { SearchIcon } from "@heroicons/react/solid";
 import Button from "@components/ui/common/button";
@@ -10,6 +11,8 @@ import { HERO_DATE_FILTERS } from "./constants";
 import { formatCatalanA } from "@utils/helpers";
 
 export default function HeroCTA() {
+  const t = useTranslations("Components.HeroCTA");
+  const tFilters = useTranslations("Components.HeroFilters");
   const { place, label, placeType, date, searchTerm } = useHero();
   const router = useRouter();
 
@@ -20,7 +23,7 @@ export default function HeroCTA() {
   };
 
   const getButtonText = () => {
-    let text = "Veure esdeveniments";
+    let text = t("buttonBase");
 
     if (place !== "catalunya") {
       const locationCopy = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general" | "", false);
@@ -28,9 +31,11 @@ export default function HeroCTA() {
     }
 
     if (date) {
-      const filter = HERO_DATE_FILTERS.find(f => f.value === date);
-      if (filter) {
-        const dateLabel = date === "cap-de-setmana" ? "aquest cap de setmana" : filter.label.toLowerCase();
+        const filter = HERO_DATE_FILTERS.find((f) => f.value === date);
+        if (filter) {
+          const translated = tFilters(filter.labelKey);
+          const dateLabel =
+            date === "cap-de-setmana" ? t("dateWeekend") : translated.toLowerCase();
         text += ` ${dateLabel}`;
       }
     }
@@ -52,7 +57,7 @@ export default function HeroCTA() {
         </span>
       </Button>
       <p className="text-xs text-foreground/50 mt-3 text-center">
-        Selecciona la població i les dates, i prem &apos;Veure esdeveniments&apos;
+        {t("helper")}
       </p>
     </div>
   );

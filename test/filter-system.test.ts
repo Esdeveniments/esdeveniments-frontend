@@ -65,7 +65,7 @@ describe("Filter Configuration System", () => {
       const placeConfig = FilterOperations.getConfig("place");
       expect(placeConfig).toBeDefined();
       expect(placeConfig?.key).toBe("place");
-      expect(placeConfig?.displayName).toBe("Població");
+      expect(placeConfig?.displayName).toBe("place");
     });
 
     test("getConfig returns undefined for invalid key", () => {

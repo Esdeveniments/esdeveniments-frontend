@@ -1,0 +1,1135 @@
+{
+  "App": {
+    "Home": {
+      "seoSections": {
+        "weekend": {
+          "title": "Què fer aquest cap de setmana",
+          "links": {
+            "topPlans": "10 plans per al cap de setmana",
+            "popularFestes": "Festes populars cap de setmana",
+            "family": "Activitats amb nens cap de setmana",
+            "music": "Concerts cap de setmana"
+          }
+        },
+        "today": {
+          "title": "Què fer avui",
+          "links": {
+            "barcelona": "Què fer avui a Barcelona",
+            "maresme": "Què fer avui al Maresme",
+            "vallesOriental": "Què fer avui al Vallès Oriental",
+            "mataro": "Què fer avui a Mataró"
+          }
+        },
+        "tomorrow": {
+          "title": "Què fer demà",
+          "links": {
+            "barcelona": "Què fer demà a Barcelona",
+            "maresme": "Què fer demà al Maresme",
+            "vallesOccidental": "Què fer demà al Vallès Occidental"
+          }
+        },
+        "localAgendas": {
+          "title": "Agendes locals més visitades"
+        }
+      },
+      "featuredPlaces": {
+        "barcelona": {
+          "title": "Què fer a Barcelona",
+          "subtitle": "Plans destacats a la ciutat"
+        },
+        "maresme": {
+          "title": "Agenda del Maresme",
+          "subtitle": "El millor de la comarca"
+        },
+        "vallesOccidental": {
+          "title": "Plans al Vallès Occidental"
+        }
+      }
+    },
+    "NotFound": {
+      "title": "Pàgina no trobada",
+      "description": "No s'ha pogut trobar la pàgina que busques.",
+      "homeLink": "Torna a l'inici"
+    },
+    "Error": {
+      "title": "Alguna cosa ha anat malament",
+      "retry": "Si us plau, torna-ho a intentar.",
+      "reload": "Torna a carregar"
+    },
+    "GlobalError": {
+      "title": "Alguna cosa ha anat malament",
+      "retry": "Si us plau, torna-ho a intentar.",
+      "reload": "Torna a carregar"
+    },
+    "Offline": {
+      "title": "Sense connexió - Esdeveniments.cat",
+      "heading": "🌐 Sense connexió",
+      "description": "No pots connectar-te a internet. Alguns continguts emmagatzemats podrien estar disponibles.",
+      "homeLink": "Torna a l'inici",
+      "barcelona": "Barcelona",
+      "catalunya": "Catalunya",
+      "schemaName": "Pàgina offline d'Esdeveniments.cat",
+      "schemaDescription": "Pàgina en mode offline d'Esdeveniments.cat per continuar navegant mentre es recupera la connexió."
+    },
+    "About": {
+      "metaTitle": "Qui som - Esdeveniments.cat",
+      "metaDescription": "Qui som? - Esdeveniments.cat és una iniciativa ciutadana per veure en un cop d'ull tots els actes culturals que es fan a Catalunya.",
+      "schemaName": "Qui som - Esdeveniments.cat",
+      "schemaDescription": "Coneix l'equip d'Esdeveniments.cat i la missió darrere l'agenda cultural col·laborativa de Catalunya.",
+      "heading": "Qui som?",
+      "subheading": "esdeveniments.cat",
+      "paragraph1": "Esdeveniments.cat és una iniciativa ciutadana per veure de manera fàcil i ràpida tots els actes culturals que es fan a Catalunya.",
+      "paragraph2": "L'agenda és col·laborativa, i cada persona que organitzi un acte cultural podrà publicar-lo <publish>aquí</publish> pel seu compte.",
+      "paragraph3": "Podreu seguir l'agenda cultural en aquesta pàgina web o seguir-nos a les xarxes socials:",
+      "teamHeading": "El nostre equip",
+      "linkedin": "LinkedIn"
+    },
+    "News": {
+      "metaTitle": "Notícies | Esdeveniments.cat",
+      "metaDescription": "Les últimes notícies, recomanacions i plans culturals de Catalunya.",
+      "heading": "Notícies",
+      "intro": "Les últimes notícies i recomanacions d'esdeveniments.",
+      "breadcrumbHome": "Inici",
+      "breadcrumbCurrent": "Notícies"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbHome": "Inici",
+      "breadcrumbNews": "Notícies",
+      "sectionWeekend": "Cap de setmana",
+      "sectionWeek": "Setmana",
+      "readingTime": "{minutes} min lectura",
+      "mustSee": "ELS IMPRESCINDIBLES",
+      "moreProposals": "MÉS PROPOSTES"
+    },
+    "NewsHubsGrid": {
+      "itemListTitle": "Últimes notícies per hub",
+      "titleWithPlace": "Últimes notícies {place}",
+      "seeMore": "Veure més…",
+      "seeAgenda": "Veure agenda {place}",
+      "nearbyLabel": "A prop:"
+    },
+    "NewsList": {
+      "emptyTitle": "No hem trobat notícies recents",
+      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
+      "viewAll": "Veure totes les notícies →",
+      "itemListName": "Notícies de {place}",
+      "prev": "← Anterior",
+      "next": "Més notícies →"
+    },
+    "EventEdit": {
+      "title": "Editar esdeveniment",
+      "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat."
+    },
+    "PublishPage": {
+      "metaTitle": "Publica - Esdeveniments.cat",
+      "metaDescription": "Publica un acte cultural - Esdeveniments.cat",
+      "schemaName": "Publica un acte cultural",
+      "schemaDescription": "Formulari oficial per afegir nous actes culturals a l'agenda col·laborativa d'Esdeveniments.cat.",
+      "schemaAction": "Publicar esdeveniment cultural"
+    },
+    "PlacesNearby": {
+      "invalidNumber": "Coordenades no vàlides: lat,lng han de ser nombres",
+      "invalidRange": "Coordenades no vàlides: lat ∈ [-90,90], lng ∈ [-180,180]",
+      "notConfigured": "Places API no configurada",
+      "locationUnavailable": "Localització no disponible"
+    },
+    "NewsPlace": {
+      "metaTitle": "Notícies de {place} | Esdeveniments.cat",
+      "metaDescription": "Arxiu i recomanacions d'esdeveniments a {place}",
+      "breadcrumbHome": "Inici",
+      "breadcrumbNews": "Notícies",
+      "heading": "Notícies de {place}",
+      "seeAgenda": "Veure agenda de {place}",
+      "seeAll": "Veure totes les notícies",
+      "rssLabel": "RSS",
+      "rssTitle": "RSS Notícies {place}"
+    },
+    "NewsArticleFallback": {
+      "title": "Notícia | {place}",
+      "description": "Detall de la notícia"
+    },
+    "NewsPlaceRss": {
+      "title": "Notícies {place} - Esdeveniments.cat",
+      "description": "Les últimes notícies i recomanacions culturals de {place}"
+    },
+    "NewsRss": {
+      "title": "Notícies - Esdeveniments.cat",
+      "description": "Les últimes notícies i recomanacions culturals de Catalunya"
+    },
+    "Publish": {
+      "heading": "Publica un esdeveniment",
+      "requiredNote": "* camps obligatoris",
+      "errorCreate": "Error al crear l'esdeveniment. Si us plau, torna-ho a intentar.",
+      "errorBodyLimit": "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries.",
+      "errorGeneric": "Hi ha hagut un error en publicar l'esdeveniment. Si us plau, torna-ho a intentar.",
+      "submitLabel": "Publicar",
+      "fallbackRegion": "Region {id}",
+      "fallbackCity": "City {id}",
+      "noEventsFound": "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a intentar més tard."
+    },
+    "Sitemap": {
+      "metaTitle": "Arxiu - Esdeveniments.cat",
+      "metaDescription": "Descobreix tot el què ha passat a Catalunya cada any. Les millors propostes culturals per esprémer al màxim de Catalunya - Arxiu - Esdeveniments.cat",
+      "breadcrumbHome": "Inici",
+      "breadcrumbCurrent": "Arxiu"
+    },
+    "PlaceByDate": {
+      "dateFallback": "els propers dies",
+      "title": "Esdeveniments {dateLabel} a {place}{categoryLabel}",
+      "subtitleWithDate": "Descobreix plans per {date} a {place}{categoryLabel}.",
+      "subtitleFallback": "Descobreix plans per als propers dies a {place}{categoryLabel}.",
+      "categoryDescriptionSuffix": " en la categoria {categoryLabel}",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explora activitats i plans per {date} a {place}{categoryDescriptionSuffix}.",
+      "metaDescriptionFallback": "Explora activitats i plans per als propers dies a {place}{categoryDescriptionSuffix}.",
+      "notFoundTitle": "Sense esdeveniments disponibles",
+      "notFoundDescriptionWithDate": "No hem trobat esdeveniments per {date} a {place}. Torna-ho a intentar més tard.",
+      "notFoundDescriptionFallback": "No hem trobat esdeveniments per als propers dies a {place}. Torna-ho a intentar més tard."
+    }
+  },
+  "Components": {
+    "Footer": {
+      "navigation": {
+        "home": "Inici",
+        "agenda": "Agenda",
+        "publish": "Publicar",
+        "news": "Notícies",
+        "about": "Qui som",
+        "archive": "Arxiu"
+      },
+      "featuredAgendas": "Agendes destacades",
+      "copyright": "© {year} Esdeveniments.cat",
+      "tagline": "Descobreix els millors esdeveniments a Catalunya"
+    },
+    "Navbar": {
+      "navigation": {
+        "home": "Inici",
+        "agenda": "Agenda",
+        "publish": "Publicar",
+        "news": "Notícies",
+        "archive": "Arxiu"
+      },
+      "logoAlt": "Logo Esdeveniments.cat",
+      "aria": {
+        "openMenu": "Open menu",
+        "closeMenu": "Close menu",
+        "home": "Home",
+        "publish": "Publish",
+        "news": "Notícies"
+      },
+      "languageLabel": "Idioma",
+      "languages": {
+        "ca": "Català",
+        "es": "Castellà",
+        "en": "Anglès"
+      },
+      "mobilePublishLabel": "Publica"
+    },
+    "NoEventsFound": {
+      "cta": "Afegeix un esdeveniment",
+      "helper": "És gratuït i només triga un minut"
+    },
+    "NoEventFound": {
+      "imageTitle": "Esdeveniment no trobat - Esdeveniments.cat",
+      "imageAlt": "Esdeveniment no trobat - Esdeveniments.cat",
+      "title": "Ostres! L'esdeveniment no existeix o ha estat cancel·lat pels organitzadors",
+      "description": "Pots provar sort amb el <search>cercador</search>, veure <today>que passa avui a Catalunya</today>, o bé, <publish>publicar l'esdeveniment</publish>. Si creus que hi ha un error, posa't en contacte amb nosaltres a: <email>hola@esdeveniments.cat</email>."
+    },
+    "Notification": {
+      "createdSuccess": "Fantàstic!! L'esdeveniment {title} s'ha creat correctament i ja el pot veure tothom!",
+      "close": "Close",
+      "viewEvent": "Veure esdeveniment"
+    },
+    "EventNotifications": {
+      "thankYou": "Gràcies per contribuir a millorar el contingut de Esdeveniments.cat! En menys de 24 hores estarà disponible el canvi."
+    },
+    "LatestNewsSection": {
+      "title": "Últimes notícies",
+      "titleWithPlace": "Últimes notícies {place}",
+      "viewAll": "Veure totes"
+    },
+    "CulturalMessage": {
+      "explorePrefix": "Explora més plans {location}:",
+      "today": "Què fer avui",
+      "tomorrow": "Què fer demà",
+      "week": "Què fer aquesta setmana",
+      "weekend": "Què fer aquest cap de setmana"
+    },
+    "HeroSearch": {
+      "titlePrefix": "Què fer a",
+      "modalTitle": "Selecciona població",
+      "modalAction": "Seleccionar",
+      "errorLoadingLocations": "Error carregant les poblacions.",
+      "retry": "Torna-ho a provar",
+      "selectPlaceholder": "Cercar població o comarca...",
+      "subtitleDefault": "Agenda cultural, festes majors i activitats",
+      "searchPlaceholder": "Cerca esdeveniments a {location}...",
+      "clearSearch": "Neteja la cerca"
+    },
+    "HeroFilters": {
+      "today": "Avui",
+      "tomorrow": "Demà",
+      "weekend": "Cap de setmana",
+      "active": "actiu"
+    },
+    "Constants": {
+      "days": [
+        "Diumenge",
+        "Dilluns",
+        "Dimarts",
+        "Dimecres",
+        "Dijous",
+        "Divendres",
+        "Dissabte"
+      ],
+      "months": [
+        "gener",
+        "febrer",
+        "març",
+        "abril",
+        "maig",
+        "juny",
+        "juliol",
+        "agost",
+        "setembre",
+        "octubre",
+        "novembre",
+        "desembre"
+      ],
+      "monthsUrl": [
+        "gener",
+        "febrer",
+        "marc",
+        "abril",
+        "maig",
+        "juny",
+        "juliol",
+        "agost",
+        "setembre",
+        "octubre",
+        "novembre",
+        "desembre"
+      ],
+      "newsHubs": {
+        "mataro": "Mataró",
+        "barcelona": "Barcelona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida"
+      },
+      "nearbyHubs": {
+        "mataro": {
+          "vilassar-de-mar": "Vilassar de Mar",
+          "premia-de-dalt": "Premià de Dalt",
+          "argentona": "Argentona",
+          "calella": "Calella",
+          "canet-de-mar": "Canet de Mar"
+        },
+        "barcelona": {
+          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
+          "badalona": "Badalona",
+          "sant-just-desvern": "Sant Just Desvern",
+          "cardedeu": "Cardedeu",
+          "granollers": "Granollers",
+          "castelldefels": "Castelldefels"
+        },
+        "tarragona": {
+          "reus": "Reus",
+          "cambrils": "Cambrils",
+          "salou": "Salou"
+        },
+        "lleida": {
+          "balaguer": "Balaguer",
+          "tremp": "Tremp",
+          "tarrega": "Tàrrega"
+        }
+      }
+    },
+    "HomePageSkeleton": {
+      "seeAlso": "Vegeu també"
+    },
+    "EventsAround": {
+      "carouselSuffix": "carrusel d'esdeveniments"
+    },
+    "ServerEventsCategorized": {
+      "cta": "No trobes el que busques?",
+      "ctaButton": "Veure tota l'agenda",
+      "quickCategoriesTitle": "Explora per interessos"
+    },
+    "Filters": {
+      "triggerLabel": "Filtres"
+    },
+    "Social": {
+      "followUs": "Segueix-nos"
+    },
+    "ListPageFaq": {
+      "title": "Preguntes freqüents"
+    },
+    "RestaurantPromotionForm": {
+      "heading": "Promociona el teu restaurant",
+      "intro": "Fes que el teu restaurant aparegui en aquesta pàgina d'esdeveniments i arriba a més clients.",
+      "restaurantNameLabel": "Nom del restaurant *",
+      "restaurantNamePlaceholder": "Introdueix el nom del restaurant",
+      "locationLabel": "Localització *",
+      "locationPlaceholder": "Introdueix la localització del restaurant",
+      "durationLabel": "Durada de la promoció *",
+      "durationOption": "{days} dia{days, plural, one {} other {s}}",
+      "geoScopeTypeLabel": "Abast geogràfic *",
+      "geoScopeTown": "Població/ciutat",
+      "geoScopeRegion": "Regió",
+      "geoScopeTownPlaceholder": "Introdueix el nom de la població o ciutat",
+      "geoScopeRegionPlaceholder": "Introdueix el nom de la regió",
+      "placeIdLabel": "Google Place ID (Opcional)",
+      "placeIdPlaceholder": "Introdueix el Google Place ID si en tens",
+      "placeIdHelp": "Si el teu restaurant és a Google Maps, trobaràs el Place ID a l'URL",
+      "imageLabel": "Imatge del restaurant *",
+      "priceLabel": "Preu total:",
+      "loading": "Carregant...",
+      "priceNote": "El pagament es processarà de manera segura via Stripe",
+      "processing": "Processant...",
+      "submit": "Anar al pagament"
+    },
+    "AdBoard": {
+      "title": "L'anunci no s'ha pogut carregar.",
+      "body": "Si us plau, ajuda'ns a mantenir aquesta pàgina desactivant qualsevol bloquejador d'anuncis. Gràcies per la teva comprensió i suport!",
+      "contactPrefix": "Si estàs interessat a anunciar-te aquí,",
+      "contactCta": "contacta'ns",
+      "contactSuffix": "per obtenir més informació."
+    },
+    "EditModalLegacy": {
+      "title": "Suggereix una edició",
+      "editTitle": "Canvia el títol o altres detalls",
+      "editDescription": "Edita el títol, la ubicació, l'horari, etc.",
+      "removeTitle": "Eliminar",
+      "removeDescription": "L'esdeveniment no existeix, està duplicat, etc.",
+      "deleteTitle": "Suggereix una el·liminació",
+      "deleteReasonPrompt": "Motiu de l'el·liminació suggerida",
+      "deleteLegend": "Sol·licitud d'eliminació",
+      "reason": {
+        "notExist": "No existeix",
+        "duplicated": "Duplicat",
+        "offensive": "Ofensiu, nociu o enganyós",
+        "others": "Altres",
+        "othersDescription": "Envieu un correu amb el motiu a:",
+        "othersEmail": "hola@esdeveniments.cat"
+      },
+      "submit": "Enviar"
+    },
+    "FiltersModal": {
+      "geo": {
+        "permissionDenied": "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció.",
+        "positionUnavailable": "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.",
+        "timeout": "Temps d'espera esgotat. Prova de nou o selecciona una població.",
+        "genericError": "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància.",
+        "unsupported": "La geolocalització no està disponible en aquest navegador.",
+        "loading": "Carregant localització..."
+      },
+      "distance": {
+        "label": "Distància",
+        "labelFromPlace": "Distància des de {place}",
+        "labelFromLocation": "Distància des de la teva ubicació",
+        "helperRegion": "Per utilitzar el filtre de distància, selecciona una població específica o la teva ubicació actual.",
+        "helperPlace": "Si tries una població, calcularem el radi des d'aquell punt. Si no n'hi ha cap, utilitzarem la teva ubicació actual. Activa el filtre per limitar els resultats a un radi concret.",
+        "toggle": "Filtrar per radi",
+        "rangeLabel": "Esdeveniments a"
+      },
+      "useLocation": {
+        "using": "Estàs utilitzant la teva ubicació",
+        "cta": "Utilitzar la meva ubicació",
+        "active": "Ubicació actual activada.",
+        "switchToPlace": "Canvia a una població",
+        "regionNotice": "Has seleccionat una comarca. Les comarques no tenen un punt geogràfic concret, per això no es pot utilitzar el filtre de distància. Per utilitzar el filtre de distància, selecciona una població específica o utilitza la teva ubicació. Pots continuar filtrant per data i categories per afinar els resultats."
+      },
+      "modal": {
+        "title": "Filtres",
+        "action": "Aplicar filtres",
+        "locations": "Poblacions",
+        "loadError": "Error carregant les poblacions. Torna-ho a provar més tard.",
+        "selectPlaceholder": "Selecciona població o comarca",
+        "tagline": "Filtres actius",
+        "dateHeading": "Data",
+        "categoriesHeading": "Categories"
+      }
+    },
+    "ImageUploader": {
+      "label": "Imatge *",
+      "unsupported": "El fitxer seleccionat no és una imatge suportada. Si us plau, carregueu un fitxer en format JPEG, PNG, JPG, o WEBP.",
+      "tooLarge": "La mida de l'imatge supera el límit permès de 8 MB. Si us plau, trieu una imatge més petita.",
+      "progress": "{progress}%",
+      "remove": "Eliminar imatge",
+      "altPreview": "Imatge"
+    },
+    "HeroCTA": {
+      "buttonBase": "Veure esdeveniments",
+      "dateWeekend": "aquest cap de setmana",
+      "helper": "Selecciona la població i les dates, i prem 'Veure esdeveniments'"
+    },
+    "PromotionInfoModal": {
+      "title": "Promociona el teu restaurant",
+      "intro1": "Vols que el teu restaurant aparegui destacat aquí quan la gent mira un esdeveniment proper? Estem preparant el sistema de promocions.",
+      "intro2": "De moment, envia'ns un correu a <email>{contactEmail}</email> amb:",
+      "itemName": "Nom del restaurant",
+      "itemPlace": "Població / Regió",
+      "itemLink": "Enllaç (Google Maps o web / xarxes socials)",
+      "footer": "T'informarem tan aviat com les promocions automatitzades estiguin disponibles.",
+      "contactSubject": "Promocionar restaurant"
+    },
+    "PromotedRestaurantCard": {
+      "title": "Restaurant promocionat",
+      "badge": "Patrocinat",
+      "activeUntil": "Promoció activa fins al {date}"
+    },
+    "FeaturedPlaceSection": {
+      "seeMore": "Veure més",
+      "aria": "Explora {title} per data"
+    },
+    "CategoryEventsSection": {
+      "heading": "L'agenda {categoryPhrase} a Catalunya",
+      "seeMore": "Veure més",
+      "sponsored": "Contingut patrocinat"
+    },
+    "Weather": {
+      "noData": "No hi ha dades meteorològiques disponibles."
+    },
+    "DateFilterBadges": {
+      "ariaLabel": "Vegeu també",
+      "today": {
+        "label": "Avui",
+        "aria": "Veure activitats d'avui"
+      },
+      "tomorrow": {
+        "label": "Demà",
+        "aria": "Veure activitats de demà"
+      },
+      "weekend": {
+        "label": "Cap de setmana",
+        "aria": "Veure activitats aquest cap de setmana"
+      },
+      "ariaCategory": "{ariaLabelText} per la categoria {contextName}",
+      "ariaPlace": "{ariaLabelText} a {contextName}"
+    },
+    "SearchBar": {
+      "placeholder": "Què estàs buscant?",
+      "clear": "Neteja la cerca",
+      "search": "Cerca"
+    },
+    "News": {
+      "readMore": "Llegir més",
+      "readMoreAria": "Llegir-ne més de {title}",
+      "viewCategory": "Veure categoria {name}"
+    },
+    "LocationDiscovery": {
+      "heading": "Mirant esdeveniments a",
+      "selectLocation": "Selecciona ubicació",
+      "searchPlaceholder": "Cercar ubicació...",
+      "discover": "Descobrir altres esdeveniments",
+      "loading": "Carregant ubicacions...",
+      "noResults": "No hi ha resultats"
+    },
+    "PastEventBanner": {
+      "title": "Aquest esdeveniment ja ha finalitzat",
+      "subtitle": "No et perdis què passa {timeWindow} a {placeLabel}",
+      "primaryCta": "Consulta l'agenda",
+      "secondaryCta": "o explora aquesta categoria",
+      "srStatus": "Estat: {label}.",
+      "timeWindow": "aquesta setmana"
+    },
+    "EventPage": {
+      "faqTitle": "Preguntes freqüents",
+      "sponsored": "Contingut patrocinat"
+    },
+    "CardContent": {
+      "dateRange": "Del {start} al {end}",
+      "dateSingle": "{nameDay}, {start}"
+    },
+    "EventForm": {
+      "title": "Títol *",
+      "url": "Enllaç de l'esdeveniment",
+      "region": "Comarca *",
+      "town": "Població *",
+      "regionPlaceholder": "Selecciona una comarca",
+      "townPlaceholder": "Selecciona un poble",
+      "categoriesPlaceholder": "Selecciona categories (opcional)",
+      "location": "Lloc *",
+      "email": "Correu electrònic",
+      "emailSubtitle": "Vols que t'avisem quan l'esdeveniment s'hagi actualitzat? (no guardem les dades)",
+      "publishing": "Publicant...",
+      "regionSkeleton": "Comarca *",
+      "townSkeleton": "Població *"
+    },
+    "Layout": {
+      "rss": "RSS",
+      "rssNews": "RSS Notícies"
+    },
+    "EventDetailsSection": {
+      "title": "Detalls de l'esdeveniment",
+      "eventLink": "Enllaç a l'esdeveniment:",
+      "duration": "Durada aproximada: {duration}"
+    },
+    "EventLocation": {
+      "title": "Ubicació"
+    },
+    "Select": {
+      "placeholder": "una opció",
+      "create": "Afegir nou lloc: \"{value}\"",
+      "noOptions": "No s'ha trobat cap opció"
+    },
+    "MultiSelect": {
+      "placeholder": "Selecciona categories",
+      "loading": "Carregant categories...",
+      "noOptions": "No s'ha trobat cap categoria",
+      "loadingShort": "Carregant..."
+    },
+    "TextArea": {
+      "label": "Descripció *",
+      "edit": "✏️ Editar",
+      "preview": "👁️ Previsualitzar",
+      "emptyPreview": "Escriu alguna cosa per veure la previsualització...",
+      "placeholder": "Descriu el teu esdeveniment... Pots escriure enllaços directament i es convertiran automàticament.",
+      "helperPreview": "Així és com veuran la descripció els visitants",
+      "helperEdit": "Els enllaços es convertiran automàticament. Prem Enter per fer salts de línia."
+    },
+    "DatePicker": {
+      "start": "Inici *",
+      "end": "Final *",
+      "dateFormat": "d MMMM, yyyy HH:mm aa",
+      "monthYearFormat": "MMMM yyyy"
+    },
+    "LoadMoreButton": {
+      "loading": "Carregant més esdeveniments",
+      "label": "Carregar més"
+    },
+    "HybridEventsListClient": {
+      "errorTitle": "Error al carregar esdeveniments",
+      "error": "Si us plau, torna-ho a intentar més tard."
+    },
+    "Hero": {
+      "options": {
+        "tomorrow": "Demà"
+      }
+    },
+    "EditModal": {
+      "editTitle": "Suggereix una edició",
+      "editIntro": "Canvia el títol o altres detalls",
+      "editHelper": "Edita el títol, la ubicació, l'horari, etc.",
+      "dupHelper": "L'esdeveniment no existeix, està duplicat, etc.",
+      "deleteTitle": "Suggereix una el·liminació",
+      "deleteReasonLabel": "Motiu de l'el·liminació suggerida",
+      "deleteLegend": "Sol·licitud d'eliminació",
+      "deleteOption": "Ofensiu, nociu o enganyós"
+    },
+    "HomePageSkeletonLegacy": {
+      "ariaAlso": "Vegeu també"
+    },
+    "Description": {
+      "title": "Descripció"
+    },
+    "HorizontalScroll": {
+      "next": "Següent",
+      "previous": "Anterior"
+    },
+    "SitemapHeader": {
+      "title": "Arxiu històric de {label}",
+      "subtitle": "Descobreix l'evolució cultural de {label} any rere any. Cada enllaç et porta als esdeveniments d'un mes específic."
+    },
+    "SitemapContent": {
+      "title": "Arxiu d'esdeveniments culturals",
+      "description": "Descobreix tot el què ha passat a Catalunya cada any. Navega per comarques i poblacions per trobar l'història cultural del territori.",
+      "regionsTitle": "Comarques de Catalunya",
+      "citiesTitle": "Poblacions principals",
+      "footer": "L'arxiu conté esdeveniments culturals de totes les comarques de Catalunya. Cada enllaç et porta a un històric detallat organitzat per anys i mesos."
+    },
+    "NewsList": {
+      "emptyTitle": "No hem trobat notícies recents",
+      "emptyBody": "Encara no tenim novetats per {placeLabel}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres",
+      "viewAll": "Veure totes les notícies →",
+      "name": "Notícies de {placeLabel}",
+      "more": "Més notícies →"
+    },
+    "NewsHubsGrid": {
+      "title": "Últimes notícies per hub",
+      "hubTitle": "Últimes notícies {hubName}",
+      "seeMore": "Veure més…"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbNews": "Notícies",
+      "moreProposals": "MÉS PROPOSTES"
+    },
+    "UseGeolocation": {
+      "notAvailable": "La geolocalització no està disponible en aquest navegador.",
+      "denied": "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció.",
+      "unavailable": "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.",
+      "timeout": "Temps d'espera esgotat. Prova de nou o selecciona una població.",
+      "genericError": "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+    }
+  },
+  "Partials": {
+    "GeneratePagesData": {
+      "categories": {
+        "literatura": {
+          "titleSuffix": "Literatura i llibres",
+          "description": "literatura, llibres, presentacions literàries, clubs de lectura, trobades amb autors",
+          "context": "Descobreix el món de la literatura catalana amb presentacions, clubs de lectura i trobades amb autors",
+          "noEvents": "activitats literàries o presentacions de llibres"
+        },
+        "fires-i-mercats": {
+          "titleSuffix": "Fires",
+          "description": "fires, mercats, esdeveniments comercials, artesania, productes locals",
+          "context": "Descobreix fires i mercats tradicionals amb productes locals, artesania i ambient festiu",
+          "noEvents": "fires ni mercats a la zona"
+        },
+        "festes-populars": {
+          "titleSuffix": "Festes populars",
+          "description": "festes populars, celebracions tradicionals, cultura popular, correfocs, castells",
+          "context": "Participa en les millors festes populars catalanes amb correfocs, castellers i tradicions úniques",
+          "noEvents": "festes populars o celebracions tradicionals"
+        },
+        "tallers-i-formacio": {
+          "titleSuffix": "Tallers i formació",
+          "description": "tallers, formació, cursos, aprenentatge, activitats pràctiques",
+          "context": "Aprèn i forma't amb tallers pràctics, cursos especialitzats i activitats formatives",
+          "noEvents": "tallers, cursos ni activitats de formació"
+        },
+        "dansa": {
+          "titleSuffix": "Dansa i ball",
+          "description": "dansa, ball, espectacles de dansa, classes de ball, dansa contemporània",
+          "context": "Viu la passió de la dansa amb espectacles, tallers i classes de ball per a tots els nivells",
+          "noEvents": "activitats de dansa o ball"
+        },
+        "salut-i-benestar": {
+          "titleSuffix": "Salut i benestar",
+          "description": "salut, benestar, activitats saludables, ioga, meditació, wellness",
+          "context": "Cuida’t amb activitats de salut i benestar, sessions de ioga, meditació i hàbits saludables",
+          "noEvents": "activitats de salut, benestar o ioga"
+        },
+        "esport": {
+          "titleSuffix": "Esport i activitat física",
+          "description": "esport, activitat física, competicions esportives, curses populars",
+          "context": "Mantén-te actiu amb activitats esportives, competicions, curses populars i propostes a l’aire lliure",
+          "noEvents": "activitats o esdeveniments esportius"
+        },
+        "patrimoni-cultural": {
+          "titleSuffix": "Patrimoni cultural",
+          "description": "patrimoni cultural, història, monuments, tradicions, visites guiades",
+          "context": "Descobreix el ric patrimoni cultural català amb visites guiades, rutes històriques i monuments",
+          "noEvents": "activitats relacionades amb el patrimoni cultural"
+        },
+        "serveis-municipals": {
+          "titleSuffix": "Serveis municipals",
+          "description": "serveis municipals, administració, tràmits, informació ciutadana, participació",
+          "context": "Informa’t sobre els serveis municipals disponibles, tràmits, oficines i informació per a la ciutadania",
+          "noEvents": "activitats o informacions de serveis municipals"
+        },
+        "gent-gran": {
+          "titleSuffix": "Activitats per a la gent gran",
+          "description": "activitats per a gent gran, sèniors, tercera edat, casal de gent gran",
+          "context": "Descobreix activitats especialment pensades per a la gent gran: tallers, xerrades, esport suau i trobades socials",
+          "noEvents": "activitats destinades a la gent gran"
+        },
+        "familia-i-infants": {
+          "titleSuffix": "Activitats en Família",
+          "description": "activitats familiars, infants, nens, diversió familiar, plans amb nens",
+          "context": "Diversió per a tota la família amb activitats per a infants, espectacles familiars i plans amb nens",
+          "noEvents": "activitats familiars o per a infants"
+        },
+        "exposicions": {
+          "titleSuffix": "Exposicions i art",
+          "description": "exposicions, galeries d'art, museus, art visual, rutes culturals",
+          "context": "Explora l’art i la cultura visual amb exposicions, museus i rutes culturals",
+          "noEvents": "exposicions o activitats d’art"
+        },
+        "cinema": {
+          "titleSuffix": "Cinema i audiovisual",
+          "description": "cinema, projeccions, festivals de cinema, audiovisual, cinefòrum",
+          "context": "Gaudeix del millor cinema amb projeccions, festivals i cinefòrums",
+          "noEvents": "projeccions de cinema o activitats audiovisuals"
+        },
+        "musica": {
+          "titleSuffix": "Concerts",
+          "description": "concerts, música, espectacles musicals, festivals musicals, música en directe",
+          "context": "Descobreix la millor música en viu amb concerts, festivals i actuacions a prop teu",
+          "noEvents": "concerts, festivals o espectacles musicals"
+        },
+        "teatre": {
+          "titleSuffix": "Teatre",
+          "description": "teatre, òpera, arts escèniques, espectacles teatrals, monòlegs",
+          "context": "Viu les millors obres teatrals, monòlegs i espectacles d'arts escèniques",
+          "noEvents": "obres de teatre o espectacles d'arts escèniques"
+        },
+        "altres": {
+          "titleSuffix": "Altres activitats",
+          "description": "altres activitats, esdeveniments diversos, miscel·lània, plans originals",
+          "context": "Descobreix altres activitats interessants i plans originals per al teu temps lliure",
+          "noEvents": "activitats en aquesta categoria"
+        }
+      },
+      "root": {
+        "title": "Agenda avui a Catalunya i plans {year}",
+        "subTitle": "Agenda avui a Catalunya aquest {month}, amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.",
+        "metaTitle": "Agenda avui a Catalunya - Què fer aquest {month}",
+        "metaDescription": "Explora l'agenda avui a Catalunya: concerts, exposicions, teatre, activitats familiars i plans gratuïts per inspirar-te aquest {month}.",
+        "notFound": "Ho sentim, però no hi ha esdeveniments disponibles a Catalunya en aquest moment. Mira altres dates o localitats properes a la nostra agenda cultural, on segur que hi trobaràs plans que t’agradaran."
+      },
+      "categoryWithDate": {
+        "avui": {
+          "title": "{titleSuffix} avui {label}",
+          "subTitle": "{titleSuffix} avui {label}, amb propostes culturals actualitzades, plans de darrera hora i activitats per a tots els gustos.",
+          "metaTitle": "{categoryTitle} avui {label} - Agenda cultural i plans",
+          "metaDescription": "{context} avui {label}. Consulta l’agenda per descobrir plans per avui: horaris, espais, activitats per a famílies i opcions gratuïtes.",
+          "notFound": "Ho sentim, però no hi ha {noEventsText} avui {label}. Mira les propostes per demà, aquest cap de setmana o altres localitats properes per trobar plans que et puguin interessar."
+        },
+        "dema": {
+          "title": "{titleSuffix} demà {label}",
+          "subTitle": "{titleSuffix} demà {label}, amb activitats destacades, plans per sortir i propostes per gaudir de la cultura.",
+          "metaTitle": "{categoryTitle} demà {label} - Idees i plans culturals",
+          "metaDescription": "{context} demà {label}. Avança’t i troba els millors plans per demà: activitats familiars, propostes de nit i esdeveniments culturals a prop teu.",
+          "notFound": "Ho sentim, però no hi ha {noEventsText} demà {label}. Consulta l’agenda per avui, aquesta setmana o altres destinacions properes per trobar noves propostes."
+        },
+        "setmana": {
+          "title": "{titleSuffix} aquesta setmana {label}",
+          "subTitle": "{titleSuffix} aquesta setmana {label}, amb concerts, tallers, exposicions i activitats familiars per omplir la teva agenda.",
+          "metaTitle": "{categoryTitle} aquesta setmana {label} - Agenda completa",
+          "metaDescription": "{context} aquesta setmana {label}. Descobreix una selecció d’activitats destacades, plans per al cap de setmana i propostes gratuïtes per a totes les edats.",
+          "notFound": "Ho sentim, però no hi ha {noEventsText} aquesta setmana {label}. Prova de canviar la data o explora altres municipis i comarques properes per trobar nous plans."
+        },
+        "capDeSetmana": {
+          "title": "{titleSuffix} aquest cap de setmana {label}",
+          "subTitle": "{titleSuffix} aquest cap de setmana {label}, amb plans per sortir, activitats en família i propostes per descobrir la cultura local.",
+          "metaTitle": "{categoryTitle} aquest cap de setmana {label} - Plans i agenda",
+          "metaDescription": "{context} aquest cap de setmana {label}. Troba concerts, festes, activitats amb nens i altres plans per aprofitar al màxim el cap de setmana.",
+          "notFound": "Ho sentim, però no hi ha {noEventsText} aquest cap de setmana {label}. Consulta altres dates, explora activitats a la resta de Catalunya o ajusta els filtres de la cerca per descobrir més opcions."
+        }
+      },
+      "categoryNoDate": {
+        "title": "{titleSuffix} {label}",
+        "subTitle": "{titleSuffix} {label}, amb una selecció d’activitats culturals, plans familiars, propostes gratuïtes i esdeveniments destacats.",
+        "metaTitle": "{categoryTitle} {label} - Agenda cultural Catalunya",
+        "metaDescription": "{context} {label}. Consulta l’agenda cultural actualitzada i troba concerts, tallers, exposicions, activitats familiars i altres plans per al teu temps lliure.",
+        "notFound": "Ho sentim, però no hi ha {noEventsText} {label} en aquest moment. Prova amb altres dates, categories o localitats properes per descobrir noves propostes culturals."
+      },
+      "regionNoDate": {
+        "title": "Què fer {label}. Agenda {year}",
+        "subTitle": "Agenda cultural {label} aquest {month}, amb concerts, exposicions, rutes culturals, activitats familiars i plans per al cap de setmana.",
+        "metaTitle": "Esdeveniments destacats {label}. Agenda {year}",
+        "metaDescription": "Explora la millor agenda cultural {label} aquest {month}. Troba concerts, festivals, teatre, activitats per a nens i plans gratuïts per gaudir de la regió.",
+        "canonical": "{siteUrl}/{place}",
+        "notFound": "Ho sentim, però no hi ha esdeveniments {label} en aquesta data. Mira altres dies, ajusta els filtres o consulta localitats properes per trobar nous plans i activitats."
+      },
+      "townNoDate": {
+        "barcelona": {
+          "title": "Esdeveniments a Barcelona i plans per fer. Agenda {year}",
+          "metaTitle": "Esdeveniments a Barcelona i plans per fer avui - Agenda {year}",
+          "metaDescription": "Esdeveniments a Barcelona i plans per fer aquest {month}. Consulta l'agenda amb concerts, festes, activitats familiars, tallers, exposicions i altres propostes per gaudir de la ciutat."
+        },
+        "default": {
+          "title": "Agenda avui {label}. Què fer {year}",
+          "metaTitle": "Agenda avui {label} - Què fer aquest {month}",
+          "metaDescription": "Descobreix l'agenda avui {label} aquest {month}. Consulta concerts, festes, activitats familiars, tallers, exposicions i altres plans per gaudir del municipi."
+        },
+        "subTitle": "Agenda cultural {label} aquest {month}, amb activitats de proximitat, plans en família, concerts, exposicions i festes populars.",
+        "notFound": "Ho sentim, però no hi ha esdeveniments {label} per a aquesta data. Prova de canviar la data, explorar altres categories o mirar municipis propers per trobar activitats que t'interessin.",
+        "canonical": "{siteUrl}/{place}"
+      },
+      "byDatePlace": {
+        "avui": {
+          "title": "Què fer avui {label}",
+          "subTitle": "Agenda d’avui {label}, amb concerts, exposicions, activitats familiars, rutes i altres plans d’última hora.",
+          "metaTitle": "Esdeveniments avui {label} - Plans i agenda",
+          "metaDescription": "Descobreix què fer avui {label}. Consulta l’agenda cultural actualitzada amb concerts, festes, activitats amb nens, propostes gratuïtes i altres plans a prop teu.",
+          "notFound": "Ho sentim, però no hi ha esdeveniments avui {label}. Mira les propostes per demà, aquesta setmana o altres localitats properes per trobar plans que t’encaixin."
+        },
+        "dema": {
+          "title": "Què fer demà {label}",
+          "subTitle": "Agenda de demà {label}, amb activitats culturals, plans familiars, música, teatre i esdeveniments especials.",
+          "metaTitle": "Esdeveniments demà {label} - Idees i plans",
+          "metaDescription": "Descobreix què fer demà {label}. Troba concerts, activitats per a nens, exposicions, rutes i altres plans per organitzar el teu dia amb antelació.",
+          "notFound": "Ho sentim, però no hi ha esdeveniments demà {label}. Consulta l’agenda per avui, aquesta setmana o altres destinacions properes per descobrir noves opcions."
+        },
+        "setmana": {
+          "title": "Agenda setmanal {label}",
+          "subTitle": "Agenda aquesta setmana {label}, amb una selecció d’activitats culturals, concerts, tallers, plans familiars i propostes gratuïtes.",
+          "metaTitle": "Esdeveniments aquesta setmana {label} - Agenda completa",
+          "metaDescription": "Explora l’agenda cultural aquesta setmana {label}. Troba concerts, exposicions, teatre, activitats en família, rutes i altres plans per omplir la teva setmana.",
+          "notFound": "Ho sentim, però no hi ha esdeveniments aquesta setmana {label}. Prova altres setmanes, canvia de categoria o explora localitats properes per trobar més activitats."
+        },
+        "capDeSetmana": {
+          "title": "Què fer aquest cap de setmana {label}",
+          "subTitle": "Agenda d’aquest cap de setmana {label}, amb plans per sortir, activitats familiars, festes, música en directe i propostes a l’aire lliure.",
+          "metaTitle": "Plans per aquest cap de setmana {label} - Agenda",
+          "metaDescription": "Descobreix els millors plans per aquest cap de setmana {label}. Consulta concerts, festes populars, activitats amb nens, rutes i altres propostes culturals per aprofitar al màxim el cap de setmana.",
+          "notFound": "Ho sentim, però no hi ha esdeveniments aquest cap de setmana {label}. Consulta altres dates, explora categories diferents o mira què es fa a la resta de Catalunya per trobar nous plans."
+        }
+      },
+      "byDateNoPlace": {
+        "avui": {
+          "title": "Què fer avui a Catalunya",
+          "subTitle": "Agenda d’avui a Catalunya, amb concerts, exposicions, activitats familiars, festes populars i altres plans per a totes les edats.",
+          "metaTitle": "Esdeveniments avui a Catalunya - Plans i agenda",
+          "metaDescription": "Descobreix què fer avui a Catalunya. Consulta l’agenda cultural actualitzada amb concerts, festivals, activitats amb nens, propostes gratuïtes i plans d’última hora a tot el territori.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Ho sentim, però no hi ha esdeveniments avui a Catalunya. Mira les propostes per demà, aquesta setmana o filtra per localitat i categoria per trobar altres plans interessants."
+        },
+        "dema": {
+          "title": "Què fer demà a Catalunya",
+          "subTitle": "Agenda de demà a Catalunya, amb activitats culturals, música, teatre, exposicions i plans familiars arreu del país.",
+          "metaTitle": "Esdeveniments demà a Catalunya - Idees i plans",
+          "metaDescription": "Descobreix què fer demà a Catalunya. Troba concerts, activitats familiars, rutes, festes i altres plans per organitzar el teu temps lliure amb antelació.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Ho sentim, però no hi ha esdeveniments demà a Catalunya. Consulta l’agenda per avui, aquesta setmana o explora diferents categories i localitats per descobrir noves opcions."
+        },
+        "setmana": {
+          "title": "Agenda setmanal a Catalunya",
+          "subTitle": "Agenda aquesta setmana a Catalunya, amb una selecció de concerts, exposicions, teatre, festes, activitats familiars i propostes gratuïtes.",
+          "metaTitle": "Esdeveniments aquesta setmana a Catalunya - Agenda completa",
+          "metaDescription": "Explora l’agenda cultural aquesta setmana a Catalunya. Troba concerts, festivals, rutes, tallers, activitats per a nens i altres plans per omplir la teva setmana de cultura i lleure.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Ho sentim, però no hi ha esdeveniments aquesta setmana a Catalunya. Prova de canviar la setmana, ajustar els filtres o explorar diferents zones del territori per trobar més activitats."
+        },
+        "capDeSetmana": {
+          "title": "Què fer aquest cap de setmana a Catalunya",
+          "subTitle": "Agenda d’aquest cap de setmana a Catalunya, amb plans per sortir, escapades, festes, concerts, activitats en família i rutes per tot el territori.",
+          "metaTitle": "Esdeveniments aquest cap de setmana a Catalunya - Plans i agenda",
+          "metaDescription": "Descobreix els millors plans per aquest cap de setmana a Catalunya. Consulta concerts, festes populars, activitats per a nens, rutes i altres propostes culturals i de lleure arreu del país.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Ho sentim, però no hi ha esdeveniments aquest cap de setmana a Catalunya. Mira altres caps de setmana, explora diferents categories o centra’t en una zona concreta per trobar noves idees."
+        }
+      },
+      "fallback": {
+        "title": "Què fer a Catalunya. Agenda {year}",
+        "subTitle": "Agenda cultural de Catalunya aquest {month}, amb concerts, exposicions, teatre, activitats familiars, festes populars i molts altres plans per al teu temps lliure.",
+        "metaTitle": "Descobreix esdeveniments a Catalunya aquest {year}",
+        "metaDescription": "Explora la millor agenda cultural de Catalunya. Troba concerts, rutes, festivals, activitats amb nens, propostes gratuïtes i altres plans per gaudir de {year}.",
+        "notFound": "Ho sentim, però no hi ha esdeveniments disponibles a Catalunya en aquest moment. Prova altres dates, categories o localitats per descobrir noves propostes culturals i de lleure."
+      }
+    }
+  },
+  "Pages": {
+    "SitemapMonth": {
+      "metaTitle": "Arxiu de {town} del {month} del {year} - Esdeveniments.cat",
+      "metaDescription": "Descobreix què va passar {locationPhrase} el {month} del {year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir {town} - Arxiu - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Inici",
+        "archive": "Arxiu"
+      },
+      "itemListTitle": "Esdeveniments de {town} - {month} {year}",
+      "itemListDescription": "Col·lecció d'esdeveniments culturals de {town} del {month} del {year}",
+      "collectionTitle": "Arxiu de {town} - {month} {year}",
+      "collectionDescription": "Esdeveniments culturals que van tenir lloc {locationPhrase} durant el {month} del {year}",
+      "collectionFallbackDescription": "Col·lecció d'esdeveniments culturals",
+      "headerTitle": "Arxiu {town} - {month} del {year}",
+      "headerCount": "{count} esdeveniments culturals documentats",
+      "headerEmpty": "No s'han trobat esdeveniments per aquest període",
+      "srList": "Llista d'esdeveniments",
+      "footerExplore": "Vols explorar més esdeveniments de {town}?",
+      "footerViewArchives": "Veure tots els arxius",
+      "footerCurrentEvents": "Esdeveniments actuals"
+    },
+    "SitemapTown": {
+      "metaTitle": "Arxiu. Descobreix tot el que ha passat {locationPhrase} - Esdeveniments.cat",
+      "metaDescription": "Descobreix tot el què ha passat {locationPhrase} cada any. Les millors propostes culturals per esprémer al màxim de {town} - Arxiu - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Inici",
+        "archive": "Arxiu"
+      },
+      "collectionTitle": "Arxiu de {town}",
+      "collectionDescription": "Històric d'esdeveniments culturals de {town} organitzat per anys i mesos",
+      "mainEntityName": "Arxiu històric de {town}",
+      "mainEntityDescription": "Col·lecció d'esdeveniments culturals de {town}",
+      "aboutTitle": "Sobre aquest arxiu",
+      "aboutBody": "Aquest arxiu conté una recopilació d'esdeveniments culturals de {town} organitzats cronològicament. Cada mes inclou teatre, música, art, festivals i altres activitats culturals.",
+      "quickNavTitle": "Navegació ràpida",
+      "quickNavBody": "Utilitza els enllaços per navegar directament a un mes específic. Els anys més recents apareixen primer per facilitar la cerca."
+    }
+  },
+  "Utils": {
+    "Validation": {
+      "genericError": "Hi ha errors de validació",
+      "imageRequired": "La imatge és obligatòria",
+      "titleRequired": "El títol és obligatori",
+      "descriptionRequired": "La descripció és obligatòria",
+      "locationRequired": "La localització és obligatòria",
+      "invalidUrl": "URL invàlida",
+      "invalidEmail": "Email invàlid"
+    },
+    "EventStatus": {
+      "past": "Esdeveniment finalitzat",
+      "live": "En curs",
+      "upcoming": "Properament",
+      "endsInDays": "Acaba en {count} dies",
+      "endsInHours": "Acaba en {count} hores",
+      "endsSoon": "Acaba aviat",
+      "startsInDays": "Comença en {count} dies",
+      "startsInHours": "Comença en {count} hores",
+      "startsToday": "Comença avui",
+      "today": "Avui"
+    },
+    "EventTime": {
+      "consult": "Consultar horaris",
+      "startsAt": "Comença a les {time}",
+      "range": "De {start} a {end}",
+      "simpleRange": "{start} - {end}"
+    },
+    "ListPageFaq": {
+      "title": "Preguntes freqüents",
+      "dateInline": {
+        "today": "avui",
+        "tomorrow": "demà",
+        "weekend": "aquest cap de setmana",
+        "week": "aquesta setmana",
+        "fallback": "els propers dies"
+      },
+      "dateCapitalized": {
+        "today": "Avui",
+        "tomorrow": "Demà",
+        "weekend": "Aquest cap de setmana",
+        "week": "Aquesta setmana",
+        "fallback": "Els propers dies"
+      },
+      "q1": "Què puc fer {contextInline}?",
+      "a1": "{capitalizedContext} hi trobaràs concerts, fires, activitats familiars i propostes culturals actualitzades cada dia.",
+      "q2": "Hi ha activitats gratuïtes {contextInline}?",
+      "a2": "Sí. Pots utilitzar la cerca, els filtres de categoria i la distància per descobrir activitats gratuïtes {contextInline}.",
+      "q3": "On puc veure {categoryName} {contextInline}?",
+      "a3": "Selecciona la categoria \"{categoryName}\" per destacar aquests esdeveniments {contextInline} i guarda l'agenda per consultar-la sovint."
+    },
+    "OpeningHours": {
+      "openNow": "Obert ara",
+      "closesAt": "Tanca a les {time}",
+      "closedNow": "Tancat ara",
+      "opensAt": "Obre a les {time}",
+      "unknown": "Horari no disponible",
+      "overnight": "(nit)",
+      "inferred": "(probable)",
+      "confirmed": "(confirmat)",
+      "openConfirmed": "Obert (confirmat)",
+      "openProbable": "Obert (probable)",
+      "closed": "Tancat",
+      "unconfirmed": "Horari no confirmat"
+    },
+    "EventCopy": {
+      "sentence": {
+        "verbSingular": "se celebra",
+        "verbPlural": "se celebren",
+        "dateRange": "del {start} al {end}",
+        "dateSingle": "el {nameDay}, {start}",
+        "sentence": "{title} {verb} {date}{time}{place}.",
+        "timeSuffix": ", {time}",
+        "placeSuffix": ", {place}"
+      },
+      "faq": {
+        "whenQ": "Quan és l'esdeveniment?",
+        "whenA": "{date}{time}",
+        "whereQ": "On se celebra?",
+        "whereA": "{place}",
+        "isFreeQ": "És gratuït?",
+        "isFreeYes": "Sí, l’esdeveniment és gratuït.",
+        "isFreeNo": "No, l’esdeveniment és de pagament.",
+        "durationQ": "Quina és la durada aproximada?",
+        "durationA": "{duration}"
+      }
+    },
+    "StringHelpers": {
+      "articles": {
+        "el": "El",
+        "la": "La",
+        "l": "L'",
+        "els": "Els",
+        "les": "Les"
+      },
+      "prepositions": {
+        "a": "a",
+        "al": "al",
+        "als": "als",
+        "aLa": "a la",
+        "aLes": "a les",
+        "aL": "a l'",
+        "de": "de",
+        "del": "del",
+        "dels": "dels",
+        "deLa": "de la",
+        "deLes": "de les",
+        "deL": "de l'"
+      },
+      "capitalizePrepositions": [
+        "al",
+        "a",
+        "del",
+        "dels",
+        "de la",
+        "de les",
+        "de l’",
+        "de l'",
+        "pel",
+        "pels"
+      ],
+      "feminineExceptions": ["gent gran", "dansa"],
+      "masculineExceptions": [
+        "penedès",
+        "alt penedès",
+        "baix penedès",
+        "rosselló",
+        "urgell",
+        "alt urgell",
+        "pla d'urgell",
+        "vallès",
+        "vallès oriental",
+        "vallès occidental",
+        "gironès",
+        "barcelonès",
+        "tarragonès",
+        "montsià",
+        "baix ebre",
+        "maresme",
+        "bages"
+      ]
+    },
+    "Calendar": {
+      "moreInfoHtml": "Més informació: <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Esdeveniments.cat</a>",
+      "moreInfoText": "Més informació: {url}",
+      "dateRange": "Del {start} al {end}",
+      "dateSingle": "Del {start}",
+      "loading": "Carregant...",
+      "button": "Afegir al calendari",
+      "providers": {
+        "google": "Google Calendar",
+        "outlook": "Outlook",
+        "other": "Altres"
+      },
+      "ariaAdd": "Add to {name}"
+    },
+    "LocationHelpers": {
+      "newsAll": "Notícies de Catalunya",
+      "newsWithPlace": "Notícies {deLabel}"
+    },
+    "Rss": {
+      "feedTitle": "Rss {site} - {place}",
+      "feedDescription": "Rss {site} de {place}",
+      "itemDescription": "{title}\n\n🗓️ {nameDay} {formattedStart}\n\n🏡 {location}, {town}, {region} \n\nℹ️ Més informació disponible a la nostra pàgina web!"
+    }
+  },
+  "Config": {
+    "TopAgenda": {
+      "agenda": "Agenda"
+    },
+    "Filters": {
+      "place": "Població",
+      "category": "Categoria",
+      "date": "Data",
+      "distance": "Distància",
+      "search": "Cerca"
+    },
+    "Categories": {
+      "festesPopulars": "Festes Populars",
+      "firesIMercats": "Fires i Mercats",
+      "familiaIInfants": "Activitats en Família",
+      "musica": "Concerts",
+      "teatre": "Teatre",
+      "exposicions": "Exposicions"
+    },
+    "ByDates": {
+      "today": "Avui",
+      "tomorrow": "Demà",
+      "weekend": "Cap de setmana",
+      "week": "Aquesta setmana"
+    }
+  }
+}

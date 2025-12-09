@@ -1,34 +1,26 @@
 import { OpeningInfo } from "types/api/restaurant";
-import { FormatOpeningHoursOptions } from "types/common";
+import { FormatOpeningHoursOptions, OpeningHoursLabels } from "types/common";
+import caMessages from "../messages/ca.json";
 
-// Basic Catalan dictionary (extendable for future locales)
-// Keep shape implicit to avoid declaring types outside /types (rule enforced by lint)
-const dict = {
-  ca: {
-    open_now: "Obert ara",
-    closes_at: (t: string) => `Tanca a les ${t}`,
-    closed_now: "Tancat ara",
-    opens_at: (t: string) => `Obre a les ${t}`,
-    unknown: "Horari no disponible",
-    inferred: "(probable)",
-    confirmed: "(confirmat)",
-  },
-} as const;
+const defaultOpeningHoursLabels: OpeningHoursLabels = (caMessages as any).Utils
+  .OpeningHours as OpeningHoursLabels;
 
 export function formatOpeningHours(
   info: OpeningInfo | undefined,
-  options: FormatOpeningHoursOptions = {}
+  options: FormatOpeningHoursOptions = {},
+  labels: OpeningHoursLabels = defaultOpeningHoursLabels
 ): string | undefined {
   if (!info) return undefined;
   const locale = options.locale || "ca";
-  const t = (dict as Record<string, typeof dict.ca>)[locale] || dict.ca;
+  const t = labels;
   const now = options.now ? new Date(options.now) : new Date();
   // ensure 'now' is considered used (deterministic clock override for tests)
   void now;
+  void locale;
 
   // Handle closed status
   if (info.open_status === "closed" && !info.segments?.length) {
-    return "Tancat";
+    return t.closed;
   }
 
   // Event-date mode: just list segments
@@ -37,7 +29,7 @@ export function formatOpeningHours(
       return info.segments
         .map((s) => {
           if (s.overnight) {
-            return `${s.start}–${s.end} (nit)`;
+            return `${s.start}–${s.end} ${t.overnight}`;
           }
           return `${s.start}–${s.end}`;
         })
@@ -49,11 +41,11 @@ export function formatOpeningHours(
   // Today mode relative to now
   if (info.open_status === "open" && info.segments?.length) {
     const primary = info.segments[0];
-    return `${t.open_now} · ${t.closes_at(primary.end)}`;
+    return `${t.openNow} · ${t.closesAt.replace("{time}", primary.end)}`;
   }
   if (info.open_status === "closed" && info.segments?.length) {
     const primary = info.segments[0];
-    return `${t.closed_now} · ${t.opens_at(primary.start)}`;
+    return `${t.closedNow} · ${t.opensAt.replace("{time}", primary.start)}`;
   }
   if (info.segments?.length) {
     return info.segments.map((s) => `${s.start}–${s.end}`).join(", ");
@@ -63,12 +55,12 @@ export function formatOpeningHours(
 
 export function formatConfidence(
   conf?: string,
-  locale: string = "ca"
+  _locale: string = "ca",
+  labels: OpeningHoursLabels = defaultOpeningHoursLabels
 ): string | undefined {
   if (!conf) return undefined;
-  if (locale !== "ca") return conf;
-  if (conf === "confirmed") return "Obert (confirmat)";
-  if (conf === "inferred") return "Obert (probable)";
-  if (conf === "none") return "Horari no confirmat";
+  if (conf === "confirmed") return labels.openConfirmed;
+  if (conf === "inferred") return labels.openProbable;
+  if (conf === "none") return labels.unconfirmed;
   return undefined;
 }

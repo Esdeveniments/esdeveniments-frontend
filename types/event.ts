@@ -35,29 +35,55 @@ const CategoryFormItemSchema = z.union([
   z.number(),
 ]);
 
+export type EventFormZodLabels = {
+  titleRequired: string;
+  descriptionRequired: string;
+  locationRequired: string;
+  invalidUrl: string;
+  invalidEmail: string;
+};
+
+export interface ValidationLabels {
+  genericError: string;
+  imageRequired: string;
+}
+
+export const defaultEventFormZodLabels: EventFormZodLabels = {
+  titleRequired: "Title is required",
+  descriptionRequired: "Description is required",
+  locationRequired: "Location is required",
+  invalidUrl: "Invalid URL",
+  invalidEmail: "Invalid email",
+};
+
+export const createEventFormSchema = (
+  labels: EventFormZodLabels = defaultEventFormZodLabels
+) =>
+  z.object({
+    id: z.string().optional(),
+    title: z.string().min(1, labels.titleRequired),
+    description: z.string().min(1, labels.descriptionRequired),
+    type: z.enum(["FREE", "PAID"]),
+    startDate: z.string(), // "YYYY-MM-DD" - consistent with API
+    startTime: z.string().nullable(), // ISO time string or null - consistent with API
+    endDate: z.string(), // "YYYY-MM-DD" - consistent with API
+    endTime: z.string().nullable(), // ISO time string or null - consistent with API
+    region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
+    town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
+    location: z.string().min(1, labels.locationRequired),
+    imageUrl: z.string().nullable(),
+    url: z
+      .string()
+      .refine(
+        (val) => !val || z.string().url().safeParse(val).success,
+        labels.invalidUrl
+      ),
+    categories: z.array(CategoryFormItemSchema),
+    email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
+  });
+
 // --- Zod schema for canonical event form data ---
-export const EventFormSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(1, "Títol obligatori"),
-  description: z.string().min(1, "Descripció obligatòria"),
-  type: z.enum(["FREE", "PAID"]),
-  startDate: z.string(), // "YYYY-MM-DD" - consistent with API
-  startTime: z.string().nullable(), // ISO time string or null - consistent with API
-  endDate: z.string(), // "YYYY-MM-DD" - consistent with API
-  endTime: z.string().nullable(), // ISO time string or null - consistent with API
-  region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
-  town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
-  location: z.string().min(1, "Localització obligatòria"),
-  imageUrl: z.string().nullable(),
-  url: z
-    .string()
-    .refine(
-      (val) => !val || z.string().url().safeParse(val).success,
-      "URL invàlida"
-    ),
-  categories: z.array(CategoryFormItemSchema),
-  email: z.string().email("Email invàlid").or(z.literal("")).optional(),
-});
+export const EventFormSchema = createEventFormSchema();
 
 export type EventFormSchemaType = z.infer<typeof EventFormSchema>;
 
@@ -78,6 +104,13 @@ export interface FormattedDateResult {
   isLessThanFiveDays: boolean;
   isMultipleDays: boolean;
   duration: string;
+}
+
+export interface EventTimeLabels {
+  consult: string;
+  startsAt: string;
+  range: string;
+  simpleRange: string;
 }
 
 // --- Centralized event form types ---

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { fetchEventBySlug } from "lib/api/events";
@@ -11,10 +12,11 @@ export async function generateMetadata({
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const { eventId } = await params;
+  const t = await getTranslations("App.EventEdit");
   const canonical = `${siteUrl}/e/${eventId}/edita`;
   return {
-    title: "Editar esdeveniment",
-    description: "Panell segur per editar esdeveniments d'Esdeveniments.cat.",
+    title: t("title"),
+    description: t("description"),
     robots: "noindex, nofollow",
     alternates: { canonical },
   };
