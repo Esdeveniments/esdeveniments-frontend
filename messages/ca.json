@@ -646,9 +646,13 @@
       "more": "Més notícies →"
     },
     "NewsHubsGrid": {
+      "itemListTitle": "Últimes notícies per hub",
+      "titleWithPlace": "Últimes notícies {place}",
+      "seeMore": "Veure més…",
+      "seeAgenda": "Veure agenda de {place}",
+      "nearbyLabel": "A prop:",
       "title": "Últimes notícies per hub",
-      "hubTitle": "Últimes notícies {hubName}",
-      "seeMore": "Veure més…"
+      "hubTitle": "Últimes notícies {hubName}"
     },
     "NewsArticleDetail": {
       "breadcrumbNews": "Notícies",

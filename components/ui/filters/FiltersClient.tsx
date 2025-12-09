@@ -4,16 +4,9 @@ import { JSX } from "react";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
 import { FilterOperations } from "@utils/filter-operations";
 import type { FilterDisplayState } from "types/filters";
-import type {
-  CategorySummaryResponseDTO,
-} from "types/api/category";
-import type {
-  PlaceTypeAndLabel,
-} from "types/common";
-import type { RouteSegments, URLQueryParams } from "types/url-filters";
 import FilterButton from "./FilterButton";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import type { FilterLabels, FiltersClientProps } from "types/props";
+import type { FiltersClientProps } from "types/props";
 
 const FiltersClient = ({
   segments,

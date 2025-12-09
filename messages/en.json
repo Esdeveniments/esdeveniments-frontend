@@ -646,9 +646,13 @@
       "more": "More news →"
     },
     "NewsHubsGrid": {
+      "itemListTitle": "Latest news by hub",
+      "titleWithPlace": "Latest news {place}",
+      "seeMore": "See more…",
+      "seeAgenda": "See agenda for {place}",
+      "nearbyLabel": "Nearby:",
       "title": "Latest news by hub",
-      "hubTitle": "Latest news {hubName}",
-      "seeMore": "See more…"
+      "hubTitle": "Latest news {hubName}"
     },
     "NewsArticleDetail": {
       "breadcrumbNews": "News",
