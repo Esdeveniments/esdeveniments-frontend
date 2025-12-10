@@ -49,11 +49,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       setError(t("unsupported"));
       return false;
     }
-    // Client-side limit: 8MB (leaves buffer for form data in total 10MB server limit)
-    if (file.size > 8 * 1024 * 1024) {
-      setError(t("tooLarge"));
-      return false;
-    }
 
     if (file.size > MAX_ORIGINAL_FILE_BYTES) {
       setError(
