@@ -4,27 +4,45 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Filters canonical flows", () => {
   test("place only canonical: /barcelona", async ({ page }) => {
-    await page.goto("/barcelona", { waitUntil: "domcontentloaded", timeout: 90000 });
+    await page.goto("/barcelona", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
     // If barcelona doesn't exist, it redirects to /catalunya (fallback behavior)
     // Accept either the original URL or the fallback
     await expect(page).toHaveURL(/\/(barcelona|catalunya)$/);
     // Wait for events list to be visible (may take time after redirect, especially on remote URLs)
-    await expect(page.getByTestId("events-list")).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    const eventsList = page.getByTestId("events-list").first();
+    await expect(eventsList).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
   });
 
   test("place + date canonical: /barcelona/avui", async ({ page }) => {
-    await page.goto("/barcelona/avui", { waitUntil: "domcontentloaded", timeout: 90000 });
+    await page.goto("/barcelona/avui", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
     // If barcelona doesn't exist, it redirects to /catalunya/avui (preserves date)
     await expect(page).toHaveURL(/\/(barcelona|catalunya)\/avui$/);
     // Wait for events list to be visible (may take time after redirect, especially on remote URLs)
-    await expect(page.getByTestId("events-list")).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    const eventsList = page.getByTestId("events-list").first();
+    await expect(eventsList).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
   });
 
   test("place + category canonical: /barcelona/teatre", async ({ page }) => {
-    await page.goto("/barcelona/teatre", { waitUntil: "domcontentloaded", timeout: 90000 });
+    await page.goto("/barcelona/teatre", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
     // If barcelona doesn't exist, it redirects to /catalunya/teatre (preserves category)
     await expect(page).toHaveURL(/\/(barcelona|catalunya)\/teatre$/);
     // Wait for events list to be visible (may take time after redirect, especially on remote URLs)
-    await expect(page.getByTestId("events-list")).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    const eventsList = page.getByTestId("events-list").first();
+    await expect(eventsList).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
   });
 });
