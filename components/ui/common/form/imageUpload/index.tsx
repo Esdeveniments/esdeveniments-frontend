@@ -7,7 +7,6 @@ import {
   MAX_UPLOAD_LIMIT_LABEL,
   MAX_ORIGINAL_FILE_BYTES,
   MAX_ORIGINAL_LIMIT_LABEL,
-  formatMegabytes,
 } from "@utils/constants";
 import { compressImageIfNeeded } from "@utils/image-optimizer";
 
