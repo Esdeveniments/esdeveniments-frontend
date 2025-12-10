@@ -15,9 +15,11 @@ export function beforeSend(
 ): Event | ErrorEvent | null {
   // Filter out errors from browser extensions and ad blockers
   if (event.exception) {
-    const errorMessage = event.exception.values?.[0]?.value?.toLowerCase() || "";
-    const errorType = event.exception.values?.[0]?.type?.toLowerCase() || "";
+    const errorMessage =
+      event.exception.values?.[0]?.value?.toLowerCase() || "";
 
+    // Chunk/dynamic import errors are intentionally reported to track failed loads;
+    // retry logic handles transient cases, but we still want visibility.
     // Common browser extension errors
     if (
       errorMessage.includes("chrome-extension://") ||
@@ -25,14 +27,13 @@ export function beforeSend(
       errorMessage.includes("safari-extension://") ||
       errorMessage.includes("extension://") ||
       errorMessage.includes("__webpack_require__") ||
-      errorType.includes("chunkloaderror") ||
-      errorMessage.includes("loading chunk") ||
       errorMessage.includes("non-json") ||
       // Ad blocker related errors
       errorMessage.includes("adblock") ||
       errorMessage.includes("advertisement") ||
       // Network errors that are often non-critical
-      (errorMessage.includes("networkerror") && errorMessage.includes("failed to fetch"))
+      (errorMessage.includes("networkerror") &&
+        errorMessage.includes("failed to fetch"))
     ) {
       return null; // Don't send these errors
     }
@@ -42,7 +43,15 @@ export function beforeSend(
   const request = event.request;
   if (request?.query_string) {
     // Remove sensitive query parameters
-    const sensitiveParams = ["password", "token", "api_key", "apikey", "secret", "auth", "authorization"];
+    const sensitiveParams = [
+      "password",
+      "token",
+      "api_key",
+      "apikey",
+      "secret",
+      "auth",
+      "authorization",
+    ];
     if (typeof request.query_string === "string") {
       // Parse and filter query string
       const params = new URLSearchParams(request.query_string);
@@ -57,7 +66,12 @@ export function beforeSend(
 
   // Scrub sensitive headers
   if (request?.headers) {
-    const sensitiveHeaders = ["authorization", "cookie", "x-api-key", "x-auth-token"];
+    const sensitiveHeaders = [
+      "authorization",
+      "cookie",
+      "x-api-key",
+      "x-auth-token",
+    ];
     sensitiveHeaders.forEach((header) => {
       const headerKey = Object.keys(request.headers || {}).find(
         (k) => k.toLowerCase() === header.toLowerCase()
@@ -77,7 +91,15 @@ export function beforeSend(
 
   // Scrub sensitive data from extra context
   if (event.extra) {
-    const sensitiveKeys = ["password", "token", "apiKey", "api_key", "secret", "auth", "authorization"];
+    const sensitiveKeys = [
+      "password",
+      "token",
+      "apiKey",
+      "api_key",
+      "secret",
+      "auth",
+      "authorization",
+    ];
     sensitiveKeys.forEach((key) => {
       if (event.extra?.[key]) {
         event.extra[key] = "[Filtered]";
@@ -133,7 +155,15 @@ export function beforeSendEdge(
 export function beforeSendMetric(metric: Metric): Metric | null {
   // Scrub sensitive data from metric attributes
   if (metric.attributes) {
-    const sensitiveKeys = ["password", "token", "api_key", "apikey", "secret", "auth", "authorization"];
+    const sensitiveKeys = [
+      "password",
+      "token",
+      "api_key",
+      "apikey",
+      "secret",
+      "auth",
+      "authorization",
+    ];
     sensitiveKeys.forEach((key) => {
       if (metric.attributes?.[key]) {
         metric.attributes[key] = "[Filtered]";
@@ -143,4 +173,3 @@ export function beforeSendMetric(metric: Metric): Metric | null {
 
   return metric;
 }
-

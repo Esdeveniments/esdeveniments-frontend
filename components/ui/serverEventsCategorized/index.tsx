@@ -31,10 +31,12 @@ import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
-  () => import("../hero/HeroSection"),
+  () =>
+    retryDynamicImport(() => import("../hero/HeroSection")),
   { suspense: true }
 );
 

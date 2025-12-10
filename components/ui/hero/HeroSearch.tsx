@@ -18,16 +18,25 @@ import { Option } from "types/common";
 import { useHero } from "./HeroContext";
 import { buildHeroUrl } from "./utils";
 import Button from "@components/ui/common/button";
+import { retryDynamicImport } from "@utils/dynamic-import-retry";
 
-const Modal = dynamic(() => import("@components/ui/common/modal"), {
-  loading: () => <></>,
-  ssr: false,
-});
+const Modal = dynamic(
+  () =>
+    retryDynamicImport(() => import("@components/ui/common/modal")),
+  {
+    loading: () => <></>,
+    ssr: false,
+  }
+);
 
-const Select = dynamic(() => import("@components/ui/common/form/select"), {
-  loading: () => <SelectSkeleton />,
-  ssr: false,
-});
+const Select = dynamic(
+  () =>
+    retryDynamicImport(() => import("@components/ui/common/form/select")),
+  {
+    loading: () => <SelectSkeleton />,
+    ssr: false,
+  }
+);
 
 export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const router = useRouter();
