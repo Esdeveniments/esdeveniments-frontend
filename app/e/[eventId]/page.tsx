@@ -43,11 +43,14 @@ import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
 import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
+import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList) as AppLocale;
   let event = await getEventBySlug(slug);
   if (!event) {
     // Defensive: try fetching by trailing id (legacy slugs)
@@ -59,7 +62,8 @@ export async function generateMetadata(props: {
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
-  return generateEventMetadata(event);
+  const canonical = `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`;
+  return generateEventMetadata(event, canonical, undefined, locale);
 }
 
 // Main page component

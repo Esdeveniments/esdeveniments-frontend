@@ -403,10 +403,10 @@ function buildFallbackPlaceByDateShellData({
   });
   const subTitle = hasSpecificDate
     ? t("subtitleWithDate", {
-        date: actualDate,
-        place,
-        categoryLabel: categorySubSuffix,
-      })
+      date: actualDate,
+      place,
+      categoryLabel: categorySubSuffix,
+    })
     : t("subtitleFallback", { place, categoryLabel: categorySubSuffix });
 
   return {
@@ -417,14 +417,14 @@ function buildFallbackPlaceByDateShellData({
       metaTitle: t("metaTitle", { title }),
       metaDescription: hasSpecificDate
         ? t("metaDescriptionWithDate", {
-            date: actualDate,
-            place,
-            categoryDescriptionSuffix,
-          })
+          date: actualDate,
+          place,
+          categoryDescriptionSuffix,
+        })
         : t("metaDescriptionFallback", {
-            place,
-            categoryDescriptionSuffix,
-          }),
+          place,
+          categoryDescriptionSuffix,
+        }),
       canonical,
       notFoundTitle: t("notFoundTitle"),
       notFoundDescription: hasSpecificDate
@@ -493,6 +493,7 @@ async function buildPlaceByDateEventsPromise({
       description: pageData.metaDescription,
       url: pageData.canonical,
       numberOfItems: validEvents.length,
+      locale,
     });
 
     if (collectionSchema) {

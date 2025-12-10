@@ -2,6 +2,7 @@ import { siteUrl } from "@config/index";
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
+  localeToHrefLang,
   type AppLocale,
 } from "types/i18n";
 
@@ -26,7 +27,9 @@ export function stripLocaleFromPathname(pathname: string): string {
   return pathname || "/";
 }
 
-export function buildLocalizedUrls(pathname: string): Record<AppLocale, string> {
+export function buildLocalizedUrls(
+  pathname: string
+): Record<AppLocale, string> {
   const normalizedPath = pathname === "/" ? "" : pathname;
   return SUPPORTED_LOCALES.reduce<Record<AppLocale, string>>((acc, locale) => {
     const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
@@ -106,6 +109,23 @@ export function toLocalizedUrl(path: string, locale: AppLocale): string {
   return urls[locale] ?? `${siteUrl}${normalized === "/" ? "" : normalized}`;
 }
 
+export function buildAlternateLinks(loc: string): Record<string, string> {
+  let pathname = loc;
+  try {
+    const parsed = new URL(loc);
+    pathname = parsed.pathname || "/";
+  } catch {
+    pathname = getSafePathname(loc);
+  }
 
-
-
+  const localized = buildLocalizedUrls(pathname);
+  const alternates: Record<string, string> = {};
+  Object.entries(localized).forEach(([locale, href]) => {
+    const hrefLang = localeToHrefLang[locale as AppLocale] ?? locale;
+    alternates[hrefLang] = href;
+  });
+  if (localized[DEFAULT_LOCALE]) {
+    alternates["x-default"] = localized[DEFAULT_LOCALE];
+  }
+  return alternates;
+}

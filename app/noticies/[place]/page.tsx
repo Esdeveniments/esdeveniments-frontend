@@ -115,6 +115,7 @@ export default async function Page({
     description: t("metaDescription", { place: placeLabel }),
     url: `${siteUrl}/noticies/${place}`,
     breadcrumbs,
+    locale,
   });
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
   const agendaHref = place === "catalunya" ? "/catalunya" : `/${place}`;

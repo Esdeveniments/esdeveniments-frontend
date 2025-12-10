@@ -11,6 +11,7 @@ import WebsiteSchema from "@components/partials/WebsiteSchema";
 // import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";
 import caMessages from "../messages/ca.json";
+import type { AppLocale } from "types/i18n";
 
 export const metadata: Metadata = {
   other: {
@@ -39,7 +40,7 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   const apiOrigin = getApiOrigin();
-  const locale = await getLocale();
+  const locale = (await getLocale()) as AppLocale;
   const messages = await getMessages();
 
   return (
@@ -55,7 +56,7 @@ export default async function RootLayout({
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <AdProvider>
-            <WebsiteSchema />
+            <WebsiteSchema locale={locale} />
             <GoogleScripts />
             <BaseLayout>{children}</BaseLayout>
           </AdProvider>

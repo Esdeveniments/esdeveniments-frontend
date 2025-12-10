@@ -2,6 +2,17 @@
 import { siteUrl } from "@config/index";
 import type { Metadata } from "next";
 import type { EventDetailResponseDTO } from "types/api/event";
+import {
+  DEFAULT_LOCALE,
+  localeToHrefLang,
+  localeToOgLocale,
+  type AppLocale,
+} from "types/i18n";
+import {
+  applyLocaleToCanonical,
+  buildLocalizedUrls,
+  getSafePathname,
+} from "@utils/i18n-seo";
 import { getFormattedDate } from "@utils/helpers";
 
 // --- Sanitization/Truncation helpers ---
@@ -76,9 +87,12 @@ export function generateMetaDescription(
 export function generateEventMetadata(
   event: EventDetailResponseDTO,
   url?: string,
-  prefixTitle?: string
+  prefixTitle?: string,
+  locale: AppLocale = DEFAULT_LOCALE
 ): Metadata {
   if (!event) return { title: "No event found" };
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
 
   // Use backend metaTitle if available and non-empty, otherwise generate it
   const enhancedTitle = event.metaTitle?.trim()
@@ -91,9 +105,10 @@ export function generateEventMetadata(
         event.region?.name
       );
 
-  const pageTitle = prefixTitle
-    ? `${prefixTitle}: ${enhancedTitle}`
-    : enhancedTitle;
+  const pageTitle =
+    prefixTitle && prefixTitle.length > 0
+      ? `${prefixTitle}: ${enhancedTitle}`
+      : enhancedTitle;
 
   // Use backend metaDescription if available and non-empty, otherwise generate it
   let finalDescription: string;
@@ -118,7 +133,21 @@ export function generateEventMetadata(
   }
 
   const image = event.imageUrl ? [event.imageUrl] : [];
-  const canonical = url || `${siteUrl}/e/${event.slug}`;
+  const canonicalBase = url || `${siteUrl}/e/${event.slug}`;
+  const canonical = applyLocaleToCanonical(canonicalBase, localeToUse);
+
+  const localizedUrls = buildLocalizedUrls(getSafePathname(canonicalBase));
+  const languageAlternates = Object.entries(localizedUrls).reduce<
+    Record<string, string>
+  >((acc, [currentLocale, href]) => {
+    const hrefLang =
+      localeToHrefLang[currentLocale as AppLocale] ?? currentLocale;
+    acc[hrefLang] = href;
+    return acc;
+  }, {});
+  if (localizedUrls[DEFAULT_LOCALE]) {
+    languageAlternates["x-default"] = localizedUrls[DEFAULT_LOCALE];
+  }
 
   // Generate article tags for categories
   const articleTags = event.categories?.map((category) => category.name) || [];
@@ -144,7 +173,7 @@ export function generateEventMetadata(
       images: image,
       type: "article",
       siteName: "Esdeveniments.cat",
-      locale: "ca-ES",
+      locale: localeToOgLocale[localeToUse] ?? localeToOgLocale[DEFAULT_LOCALE],
     },
     twitter: {
       card: "summary_large_image",
@@ -160,6 +189,7 @@ export function generateEventMetadata(
         : "index, follow",
     alternates: {
       canonical,
+      languages: languageAlternates,
     },
     other: {
       "fb:app_id": "103738478742219",

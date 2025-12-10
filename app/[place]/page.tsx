@@ -32,6 +32,7 @@ import { siteUrl } from "@config/index";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -83,6 +84,9 @@ export default async function Page({
   params: Promise<PlaceStaticPathParams>;
 }) {
   const { place } = await params;
+  const headersList = await headers();
+  const locale = (resolveLocaleFromHeaders(headersList) ||
+    DEFAULT_LOCALE) as AppLocale;
 
   // Return 404 for invalid places (e.g., sitemap files) instead of throwing
   if (!isValidPlace(place)) {
@@ -113,11 +117,11 @@ export default async function Page({
       return { placeTypeLabel, pageData };
     } catch (error) {
       console.error("Place page: unable to build shell data", error);
-      return buildFallbackPlaceShellData(place, t("noEventsFound"));
+      return await buildFallbackPlaceShellData(place, t("noEventsFound"));
     }
   })();
 
-  const eventsPromise = buildPlaceEventsPromise({ place });
+  const eventsPromise = buildPlaceEventsPromise({ place, locale });
 
   // Await categories for late existence check only
   const categories = await categoriesPromise;
@@ -149,28 +153,35 @@ export default async function Page({
   );
 }
 
-function buildFallbackPlaceShellData(
+async function buildFallbackPlaceShellData(
   place: string,
   notFoundDescription: string
-): {
+): Promise<{
   placeTypeLabel: PlaceTypeAndLabel;
   pageData: PageData;
-} {
+}> {
+  const tFallback = await getTranslations("App.PlaceFallback");
   const fallbackPlaceTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
   const pathSegment = place === "catalunya" ? "" : `/${place}`;
   const canonical = `${siteUrl}${pathSegment}`;
-  const title = place === "catalunya" ? "Esdeveniments a Catalunya" : `Esdeveniments a ${place}`;
+  const titleSuffix =
+    place === "catalunya"
+      ? tFallback("catalunyaSuffix")
+      : tFallback("placeSuffix", { place });
+  const descriptionSuffix =
+    place === "catalunya" ? "" : tFallback("placeSuffix", { place });
+
   return {
     placeTypeLabel: fallbackPlaceTypeLabel,
     pageData: {
-      title,
-      subTitle: `Descobreix plans i activitats${place === "catalunya" ? "" : ` a ${place}`}.`,
-      metaTitle: `${title} | Esdeveniments.cat`,
-      metaDescription: `Explora els millors plans i activitats${
-        place === "catalunya" ? "" : ` a ${place}`
-      }.`,
+      title: tFallback("title", { suffix: titleSuffix }),
+      subTitle: tFallback("subTitle", { suffix: descriptionSuffix }),
+      metaTitle: tFallback("metaTitle", { suffix: titleSuffix }),
+      metaDescription: tFallback("metaDescription", {
+        suffix: descriptionSuffix,
+      }),
       canonical,
-      notFoundTitle: "Sense esdeveniments disponibles",
+      notFoundTitle: tFallback("notFoundTitle"),
       notFoundDescription,
     },
   };
@@ -178,8 +189,10 @@ function buildFallbackPlaceShellData(
 
 export async function buildPlaceEventsPromise({
   place,
+  locale = DEFAULT_LOCALE,
 }: {
   place: string;
+  locale?: AppLocale;
 }): Promise<PlacePageEventsResult> {
   const fetchParams: FetchEventsParams = {
     page: 0,
@@ -214,14 +227,16 @@ export async function buildPlaceEventsPromise({
   const structuredScripts =
     validEvents.length > 0
       ? [
-          {
-            id: `events-${place}`,
-            data: generateItemListStructuredData(
-              validEvents,
-              `Esdeveniments ${place}`
-            ),
-          },
-        ]
+        {
+          id: `events-${place}`,
+          data: generateItemListStructuredData(
+            validEvents,
+            `Esdeveniments ${place}`,
+            undefined,
+            locale
+          ),
+        },
+      ]
       : undefined;
 
   return {

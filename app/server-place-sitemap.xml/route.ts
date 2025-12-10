@@ -7,12 +7,7 @@ import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { SitemapField } from "types/sitemap";
-import { buildLocalizedUrls } from "@utils/i18n-seo";
-import {
-  DEFAULT_LOCALE,
-  localeToHrefLang,
-  type AppLocale,
-} from "types/i18n";
+import { buildAlternateLinks } from "@utils/i18n-seo";
 
 export async function GET() {
   const TOP_CATEGORIES_COUNT = 5;
@@ -38,20 +33,6 @@ export async function GET() {
 
   const lastmod = new Date().toISOString();
 
-  const toAlternates = (loc: string): Record<string, string> => {
-    const url = new URL(loc);
-    const localized = buildLocalizedUrls(url.pathname);
-    const alternates: Record<string, string> = {};
-    Object.entries(localized).forEach(([locale, href]) => {
-      const hrefLang = localeToHrefLang[locale as AppLocale] ?? locale;
-      alternates[hrefLang] = href;
-    });
-    if (localized[DEFAULT_LOCALE]) {
-      alternates["x-default"] = localized[DEFAULT_LOCALE];
-    }
-    return alternates;
-  };
-
   // Generate URLs for each place
   for (const place of places) {
     // /[place]
@@ -64,7 +45,7 @@ export async function GET() {
       lastmod: lastmod,
       changefreq: "daily",
       priority: filteredHighPrioritySlugs.includes(place.slug) ? 0.9 : 0.6,
-      alternates: toAlternates(placeLoc),
+      alternates: buildAlternateLinks(placeLoc),
     });
 
     // /[place]/[date]
@@ -78,7 +59,7 @@ export async function GET() {
         lastmod: lastmod,
         changefreq: "daily",
         priority: 0.7,
-        alternates: toAlternates(dateLoc),
+        alternates: buildAlternateLinks(dateLoc),
       });
 
       // /[place]/[date]/[category]
@@ -92,7 +73,7 @@ export async function GET() {
           lastmod: lastmod,
           changefreq: "daily",
           priority: 0.6,
-          alternates: toAlternates(dateCatLoc),
+          alternates: buildAlternateLinks(dateCatLoc),
         });
       }
     }
@@ -109,7 +90,7 @@ export async function GET() {
           lastmod: lastmod,
           changefreq: "daily",
           priority: 0.7,
-          alternates: toAlternates(catLoc),
+          alternates: buildAlternateLinks(catLoc),
         });
       }
     }

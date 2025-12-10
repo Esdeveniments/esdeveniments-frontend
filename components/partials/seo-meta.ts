@@ -272,8 +272,18 @@ export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
 }
 
 export function generateWebPageSchema(options: WebPageOptions) {
-  const { title, description, url, breadcrumbs, isPartOf, mainContentOfPage } =
-    options;
+  const {
+    title,
+    description,
+    url,
+    breadcrumbs,
+    isPartOf,
+    mainContentOfPage,
+    locale,
+  } = options;
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const inLanguage = localeToHrefLang[localeToUse] ?? localeToUse;
 
   return {
     "@context": "https://schema.org",
@@ -282,7 +292,7 @@ export function generateWebPageSchema(options: WebPageOptions) {
     name: title,
     description,
     url,
-    inLanguage: "ca",
+    inLanguage,
     isPartOf: isPartOf || {
       "@type": "WebSite",
       "@id": `${siteUrl}#website`,
@@ -302,8 +312,18 @@ export function generateWebPageSchema(options: WebPageOptions) {
 }
 
 export function generateCollectionPageSchema(options: CollectionPageOptions) {
-  const { title, description, url, breadcrumbs, mainEntity, numberOfItems } =
-    options;
+  const {
+    title,
+    description,
+    url,
+    breadcrumbs,
+    mainEntity,
+    numberOfItems,
+    locale,
+  } = options;
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const inLanguage = localeToHrefLang[localeToUse] ?? localeToUse;
 
   return {
     "@context": "https://schema.org",
@@ -312,7 +332,7 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
     name: title,
     description,
     url,
-    inLanguage: "ca",
+    inLanguage,
     isPartOf: {
       "@type": "WebSite",
       "@id": `${siteUrl}#website`,

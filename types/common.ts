@@ -1,9 +1,10 @@
 import type { CSSProperties } from "react";
-import type { StoreState } from "types/store";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
-import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
+import { CategorySummaryResponseDTO } from "types/api/category";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import type { CalendarUrls } from "types/calendar";
+import type { StoreState } from "types/store";
+import type { AppLocale } from "types/i18n";
 
 export interface Option {
   label: string;
@@ -549,6 +550,7 @@ export interface WebPageOptions {
   breadcrumbs?: BreadcrumbItem[];
   isPartOf?: string;
   mainContentOfPage?: Record<string, unknown>;
+  locale?: AppLocale;
 }
 
 export interface CollectionPageOptions {
@@ -558,6 +560,7 @@ export interface CollectionPageOptions {
   breadcrumbs?: BreadcrumbItem[];
   mainEntity?: Record<string, unknown>;
   numberOfItems?: number;
+  locale?: AppLocale;
 }
 
 export interface LocationNewsLabels {

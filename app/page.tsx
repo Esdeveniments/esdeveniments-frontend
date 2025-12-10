@@ -191,6 +191,7 @@ async function HomeStructuredData({
     description: pageData.metaDescription,
     url: pageData.canonical,
     mainContentOfPage: itemListSchema || undefined,
+    locale,
   });
 
   const collectionSchema =
@@ -201,6 +202,7 @@ async function HomeStructuredData({
         url: pageData.canonical,
         numberOfItems: homepageEvents.length,
         mainEntity: itemListSchema || undefined,
+        locale,
       })
       : null;
 

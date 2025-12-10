@@ -167,6 +167,15 @@
       "fallbackCity": "City {id}",
       "noEventsFound": "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a intentar més tard."
     },
+    "PlaceFallback": {
+      "placeSuffix": " a {place}",
+      "catalunyaSuffix": " a Catalunya",
+      "title": "Esdeveniments{suffix}",
+      "subTitle": "Descobreix plans i activitats{suffix}.",
+      "metaTitle": "Esdeveniments{suffix} | Esdeveniments.cat",
+      "metaDescription": "Explora els millors plans i activitats{suffix}.",
+      "notFoundTitle": "Sense esdeveniments disponibles"
+    },
     "Sitemap": {
       "metaTitle": "Arxiu - Esdeveniments.cat",
       "metaDescription": "Descobreix tot el què ha passat a Catalunya cada any. Les millors propostes culturals per esprémer al màxim de Catalunya - Arxiu - Esdeveniments.cat",
@@ -185,6 +194,25 @@
       "notFoundTitle": "Sense esdeveniments disponibles",
       "notFoundDescriptionWithDate": "No hem trobat esdeveniments per {date} a {place}. Torna-ho a intentar més tard.",
       "notFoundDescriptionFallback": "No hem trobat esdeveniments per als propers dies a {place}. Torna-ho a intentar més tard."
+    },
+    "PlaceByDateCategory": {
+      "dateFallback": "els propers dies",
+      "categoryFallback": "Esdeveniments",
+      "plansWithCategory": "plans de {categoryLabel}",
+      "plansFallback": "plans",
+      "proposalsWithCategory": "propostes de {categoryLabel}",
+      "proposalsFallback": "propostes",
+      "activitiesWithCategory": "activitats de {categoryLabel}",
+      "activitiesFallback": "activitats",
+      "title": "{categoryLabel} {dateLabel} a {place}",
+      "subtitleWithDate": "Descobreix {plansLabel} per {date} a {place}.",
+      "subtitleFallback": "Descobreix {plansLabel} per als propers dies a {place}.",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explora {proposalsLabel} per {date} a {place}.",
+      "metaDescriptionFallback": "Explora {proposalsLabel} per als propers dies a {place}.",
+      "notFoundTitle": "Sense esdeveniments disponibles",
+      "notFoundDescriptionWithDate": "No hem trobat {activitiesLabel} per {date} a {place}.",
+      "notFoundDescriptionFallback": "No hem trobat {activitiesLabel} per als propers dies a {place}."
     }
   },
   "Components": {

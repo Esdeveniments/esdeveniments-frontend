@@ -8,6 +8,8 @@ import { escapeXml } from "@utils/xml-escape";
 import type { RssEvent } from "types/common";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { getTranslations } from "next-intl/server";
+import { resolveLocaleFromHeaders, toLocalizedUrl } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE, localeToHrefLang, type AppLocale } from "types/i18n";
 
 const SITE_NAME = "Esdeveniments.cat";
 
@@ -79,7 +81,8 @@ const getAllArticles = async (
 const buildFeed = async (
   items: RssEvent[],
   region: string,
-  town: string
+  town: string,
+  locale: AppLocale
 ): Promise<Feed> => {
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
   const { label: regionLabel } = await getPlaceTypeAndLabel(region);
@@ -96,13 +99,15 @@ const buildFeed = async (
   // The feed library handles escaping for channel title/description and uses CDATA for item fields.
   // We only need to escape attributes that are not handled by the library (like enclosure url).
 
+  const language = localeToHrefLang[locale] ?? locale;
   const feed = new Feed({
-    id: siteUrl,
-    link: siteUrl,
+    id: toLocalizedUrl("/", locale),
+    link: toLocalizedUrl("/", locale),
     title: feedTitle,
     description: feedDescription,
     copyright: SITE_NAME,
     updated: new Date(),
+    language,
     author: {
       name: SITE_NAME,
       link: siteUrl,
@@ -117,7 +122,7 @@ const buildFeed = async (
   removedDuplicatedItems.forEach((item) => {
     // The feed library wraps title, description, content in CDATA, so we should NOT escape them.
     // However, it does NOT escape the enclosure URL (image), so we MUST escape it.
-    
+
     const description = t("itemDescription", {
       title: item.title,
       nameDay: item.nameDay,
@@ -130,7 +135,7 @@ const buildFeed = async (
     feed.addItem({
       id: item.id,
       title: item.title,
-      link: `${siteUrl}/e/${item.slug}`,
+      link: toLocalizedUrl(`/e/${item.slug}`, locale),
       description,
       content: item.location,
       date: new Date(item.startDate),
@@ -149,8 +154,11 @@ export async function GET(request: NextRequest) {
   const untilParam = searchParams.get("until");
   const until = untilParam ? Number(untilParam) : 7;
 
+  const locale =
+    (resolveLocaleFromHeaders(request.headers) as AppLocale) || DEFAULT_LOCALE;
+
   const articles = await getAllArticles(region, town, maxEventsPerDay, until);
-  const feed = await buildFeed(articles, region, town);
+  const feed = await buildFeed(articles, region, town, locale);
 
   return new Response(feed.rss2(), {
     headers: {

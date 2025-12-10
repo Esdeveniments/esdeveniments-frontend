@@ -36,6 +36,7 @@ import { siteUrl } from "@config/index";
 import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
@@ -165,6 +166,7 @@ export default async function FilteredPage({
     searchParams,
   ]);
   const locale: AppLocale = resolveLocaleFromHeaders(await headers());
+  const tFallback = await getTranslations("App.PlaceByDateCategory");
 
   // 🛡️ SECURITY: Validate place parameter
   validatePlaceOrThrow(place);
@@ -269,6 +271,7 @@ export default async function FilteredPage({
         byDate: filters.byDate,
         category: filters.category,
         categoryName: categoryData?.name,
+        t: tFallback,
       });
     }
   })();
@@ -329,20 +332,32 @@ function buildFallbackCategoryShellData({
   byDate,
   category,
   categoryName,
+  t,
 }: {
   place: string;
   byDate: string;
   category: string;
   categoryName?: string;
+  t: (key: string, values?: Record<string, string>) => string;
 }): { placeTypeLabel: PlaceTypeAndLabel; pageData: PageData } {
   const placeTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
   const hasSpecificDate =
     byDate && byDate !== DEFAULT_FILTER_VALUE && byDate !== "";
-  const dateLabel = hasSpecificDate ? byDate : "els propers dies";
+  const dateLabel = hasSpecificDate ? byDate : t("dateFallback");
   const categoryLabel =
     category && category !== DEFAULT_FILTER_VALUE
       ? categoryName || category
       : "";
+  const titleCategoryLabel = categoryLabel || t("categoryFallback");
+  const plansLabel = categoryLabel
+    ? t("plansWithCategory", { categoryLabel })
+    : t("plansFallback");
+  const proposalsLabel = categoryLabel
+    ? t("proposalsWithCategory", { categoryLabel })
+    : t("proposalsFallback");
+  const activitiesLabel = categoryLabel
+    ? t("activitiesWithCategory", { categoryLabel })
+    : t("activitiesFallback");
   const canonicalSegments = [place];
   if (hasSpecificDate) {
     canonicalSegments.push(byDate);
@@ -352,29 +367,25 @@ function buildFallbackCategoryShellData({
   }
   const canonicalPath = `/${canonicalSegments.join("/")}`;
   const canonical = `${siteUrl}${canonicalPath}`;
-  const title = `${categoryLabel || "Esdeveniments"} ${dateLabel} a ${place}`;
-  const subTitle = `Descobreix ${
-    categoryLabel ? `plans de ${categoryLabel}` : "plans"
-  } ${hasSpecificDate ? `per ${byDate}` : "per als propers dies"} a ${place}.`;
+  const title = t("title", { categoryLabel: titleCategoryLabel, dateLabel, place });
+  const subTitle = hasSpecificDate
+    ? t("subtitleWithDate", { plansLabel, date: byDate, place })
+    : t("subtitleFallback", { plansLabel, place });
 
   return {
     placeTypeLabel,
     pageData: {
       title,
       subTitle,
-      metaTitle: `${title} | Esdeveniments.cat`,
-      metaDescription: `Explora ${
-        categoryLabel ? `propostes de ${categoryLabel}` : "plans"
-      } ${
-        hasSpecificDate ? `per ${byDate}` : "per als propers dies"
-      } a ${place}.`,
+      metaTitle: t("metaTitle", { title }),
+      metaDescription: hasSpecificDate
+        ? t("metaDescriptionWithDate", { proposalsLabel, date: byDate, place })
+        : t("metaDescriptionFallback", { proposalsLabel, place }),
       canonical,
-      notFoundTitle: "Sense esdeveniments disponibles",
-      notFoundDescription: `No hem trobat ${
-        categoryLabel ? `activitats de ${categoryLabel}` : "activitats"
-      } ${
-        hasSpecificDate ? `per ${byDate}` : "per als propers dies"
-      } a ${place}.`,
+      notFoundTitle: t("notFoundTitle"),
+      notFoundDescription: hasSpecificDate
+        ? t("notFoundDescriptionWithDate", { activitiesLabel, date: byDate, place })
+        : t("notFoundDescriptionFallback", { activitiesLabel, place }),
     },
   };
 }
@@ -436,6 +447,7 @@ async function buildCategoryEventsPromise({
       description: pageData.metaDescription,
       url: pageData.canonical,
       numberOfItems: validEvents.length,
+      locale,
     });
 
     if (collectionSchema) {

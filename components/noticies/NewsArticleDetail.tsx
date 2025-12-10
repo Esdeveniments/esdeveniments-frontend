@@ -18,7 +18,11 @@ import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import {
+  DEFAULT_LOCALE,
+  localeToHrefLang,
+  type AppLocale,
+} from "types/i18n";
 
 export default async function NewsArticleDetail({
   detailPromise,
@@ -117,7 +121,7 @@ export default async function NewsArticleDetail({
     datePublished: detail.createdAt,
     dateModified: detail.createdAt,
     image: detail.events?.[0]?.imageUrl,
-    inLanguage: "ca",
+    inLanguage: localeToHrefLang[locale] ?? locale,
     isAccessibleForFree: true,
     articleSection: detail.type,
     ...(keywords.length > 0 ? { keywords } : {}),
@@ -151,6 +155,7 @@ export default async function NewsArticleDetail({
     description: detail.description,
     url: absolute(`/noticies/${place}/${article}`),
     breadcrumbs,
+    locale,
   });
 
   return (

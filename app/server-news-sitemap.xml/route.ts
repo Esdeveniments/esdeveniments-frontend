@@ -3,29 +3,10 @@ import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
-import { buildLocalizedUrls } from "@utils/i18n-seo";
-import {
-  DEFAULT_LOCALE,
-  localeToHrefLang,
-  type AppLocale,
-} from "types/i18n";
+import { buildAlternateLinks } from "@utils/i18n-seo";
 
 export async function GET() {
   // Include news list pages and a rolling window of article detail URLs per hub
-  const toAlternates = (loc: string): Record<string, string> => {
-    const url = new URL(loc);
-    const localized = buildLocalizedUrls(url.pathname);
-    const alternates: Record<string, string> = {};
-    Object.entries(localized).forEach(([locale, href]) => {
-      const hrefLang = localeToHrefLang[locale as AppLocale] ?? locale;
-      alternates[hrefLang] = href;
-    });
-    if (localized[DEFAULT_LOCALE]) {
-      alternates["x-default"] = localized[DEFAULT_LOCALE];
-    }
-    return alternates;
-  };
-
   const listEntries: SitemapField[] = NEWS_HUBS.map((hub) => {
     const loc = `${siteUrl}/noticies/${hub.slug}`;
     return {
@@ -33,7 +14,7 @@ export async function GET() {
       lastmod: new Date().toISOString(),
       changefreq: "daily",
       priority: 0.6,
-      alternates: toAlternates(loc),
+      alternates: buildAlternateLinks(loc),
     };
   });
 
@@ -53,7 +34,7 @@ export async function GET() {
           lastmod: new Date(lastDate).toISOString(),
           changefreq: "daily",
           priority: 0.7,
-          alternates: toAlternates(loc),
+          alternates: buildAlternateLinks(loc),
         });
       }
     } catch (e) {

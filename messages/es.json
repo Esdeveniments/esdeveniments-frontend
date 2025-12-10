@@ -167,6 +167,15 @@
       "fallbackCity": "Ciudad {id}",
       "noEventsFound": "No hemos encontrado eventos recientes para esta zona. Inténtalo más tarde."
     },
+    "PlaceFallback": {
+      "placeSuffix": " en {place}",
+      "catalunyaSuffix": " en Cataluña",
+      "title": "Eventos{suffix}",
+      "subTitle": "Descubre planes y actividades{suffix}.",
+      "metaTitle": "Eventos{suffix} | Esdeveniments.cat",
+      "metaDescription": "Explora los mejores planes y actividades{suffix}.",
+      "notFoundTitle": "Sin eventos disponibles"
+    },
     "Sitemap": {
       "metaTitle": "Archivo - Esdeveniments.cat",
       "metaDescription": "Descubre todo lo que ha pasado en Cataluña cada año. Las mejores propuestas culturales para exprimir al máximo Cataluña - Archivo - Esdeveniments.cat",
@@ -185,6 +194,25 @@
       "notFoundTitle": "Sin eventos disponibles",
       "notFoundDescriptionWithDate": "No hemos encontrado eventos para {date} en {place}. Inténtalo más tarde.",
       "notFoundDescriptionFallback": "No hemos encontrado eventos para los próximos días en {place}. Inténtalo más tarde."
+    },
+    "PlaceByDateCategory": {
+      "dateFallback": "los próximos días",
+      "categoryFallback": "Eventos",
+      "plansWithCategory": "planes de {categoryLabel}",
+      "plansFallback": "planes",
+      "proposalsWithCategory": "propuestas de {categoryLabel}",
+      "proposalsFallback": "propuestas",
+      "activitiesWithCategory": "actividades de {categoryLabel}",
+      "activitiesFallback": "actividades",
+      "title": "{categoryLabel} {dateLabel} en {place}",
+      "subtitleWithDate": "Descubre {plansLabel} para {date} en {place}.",
+      "subtitleFallback": "Descubre {plansLabel} para los próximos días en {place}.",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explora {proposalsLabel} para {date} en {place}.",
+      "metaDescriptionFallback": "Explora {proposalsLabel} para los próximos días en {place}.",
+      "notFoundTitle": "Sin eventos disponibles",
+      "notFoundDescriptionWithDate": "No hemos encontrado {activitiesLabel} para {date} en {place}.",
+      "notFoundDescriptionFallback": "No hemos encontrado {activitiesLabel} para los próximos días en {place}."
     }
   },
   "Components": {

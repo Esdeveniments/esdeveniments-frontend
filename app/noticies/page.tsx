@@ -54,6 +54,7 @@ export default async function Page() {
     description: t("metaDescription"),
     url: absolute("/noticies"),
     breadcrumbs,
+    locale,
   });
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
 
