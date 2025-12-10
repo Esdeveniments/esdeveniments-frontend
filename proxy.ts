@@ -128,6 +128,8 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/active",
   "/api/leads/restaurant",
   "/api/cloudinary/sign",
+  // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)
+  "/api/publica/image-upload",
   // Revalidation endpoint handles its own secret, so bypass HMAC middleware
   "/api/revalidate",
 ];
@@ -286,7 +288,7 @@ export default async function proxy(request: NextRequest) {
   // Add Cache-Control for public pages (excluding API and internal paths handled above)
   // public, max-age=3600 (1h browser), s-maxage=86400 (24h CDN), stale-while-revalidate=86400 (24h)
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
-     response.headers.set(
+    response.headers.set(
       "Cache-Control",
       "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
     );

@@ -14,8 +14,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const url = await uploadEventImage(imageFile);
-    return NextResponse.json({ url });
+    const { url, publicId } = await uploadEventImage(imageFile);
+    return NextResponse.json(
+      { url, publicId },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    );
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Error pujant la imatge.";

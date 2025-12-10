@@ -100,6 +100,8 @@ const Publica = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [uploadAbortController, setUploadAbortController] =
+    useState<AbortController | null>(null);
   const [uploadedImageSignature, setUploadedImageSignature] = useState<
     string | null
   >(null);
@@ -320,17 +322,31 @@ const Publica = () => {
           if (signature !== uploadedImageSignature) {
             setIsUploadingImage(true);
             setUploadProgress(0);
+            uploadAbortController?.abort();
+            const controller = new AbortController();
+            setUploadAbortController(controller);
             try {
-              const uploadedUrl = await uploadImageWithProgress(imageFile, {
+              const uploadResult = await uploadImageWithProgress(imageFile, {
                 onProgress: (percent) => setUploadProgress(percent),
+                signal: controller.signal,
               });
-              resolvedImageUrl = uploadedUrl;
-              setUploadedImageUrl(uploadedUrl);
+              resolvedImageUrl = uploadResult.url;
+              setUploadedImageUrl(uploadResult.url);
               setUploadedImageSignature(signature);
               setImageUploadMessage("Imatge pujada correctament.");
               setUploadProgress(100);
               setTimeout(() => setUploadProgress(0), 800);
             } catch (uploadError) {
+              if (
+                uploadError instanceof DOMException &&
+                uploadError.name === "AbortError"
+              ) {
+                setIsUploadingImage(false);
+                setUploadProgress(0);
+                setImageUploadMessage(null);
+                setUploadAbortController(null);
+                return;
+              }
               const uploadMessage =
                 uploadError instanceof Error
                   ? uploadError.message
@@ -350,6 +366,7 @@ const Publica = () => {
               return;
             } finally {
               setIsUploadingImage(false);
+              setUploadAbortController(null);
             }
           }
         }
@@ -461,7 +478,7 @@ const Publica = () => {
             regionOptions={regionOptions}
             cityOptions={cityOptions}
             categoryOptions={categoryOptions}
-          progress={uploadProgress}
+            progress={uploadProgress}
             isLoadingRegionsWithCities={isLoadingRegions}
             handleFormChange={handleFormChange}
             handleImageChange={handleImageChange}
@@ -470,8 +487,8 @@ const Publica = () => {
             handleCategoriesChange={handleCategoriesChange}
             imageToUpload={imagePreview}
             imageFile={imageFile}
-          isUploadingImage={isUploadingImage}
-          uploadMessage={imageUploadMessage}
+            isUploadingImage={isUploadingImage}
+            uploadMessage={imageUploadMessage}
           />
         </div>
       </div>

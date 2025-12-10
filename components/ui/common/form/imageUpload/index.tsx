@@ -46,14 +46,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     if (!acceptedImageTypes.includes(file.type as AcceptedImageTypes)) {
       setError(
-        "El fitxer seleccionat no és una imatge suportada. Si us plau, carregueu un fitxer en format JPEG, PNG, JPG o WEBP."
+        "El fitxer seleccionat no és una imatge suportada. Carrega un fitxer en format JPEG, PNG, JPG o WEBP."
       );
       return false;
     }
 
     if (file.size > MAX_ORIGINAL_FILE_BYTES) {
       setError(
-        `La imatge supera el límit màxim de ${MAX_ORIGINAL_LIMIT_LABEL} MB. Si us plau, redueix-la abans de pujar-la.`
+        `La imatge supera el límit màxim de ${MAX_ORIGINAL_LIMIT_LABEL} MB. Redueix la mida de la imatge abans de tornar-ho a intentar.`
       );
       return false;
     }
@@ -77,19 +77,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         });
 
         if (optimized) {
-          setStatus(
-            `Hem reduït la imatge de ${formatMegabytes(
-              file.size
-            )} MB a ${formatMegabytes(
-              optimized.size
-            )} MB per complir el límit.`
-          );
           workingFile = optimized;
         }
       } catch (compressionError) {
         console.error("Image optimization failed", compressionError);
         setError(
-          "No hem pogut reduir la imatge per complir el límit. Si us plau, tria una imatge més petita."
+          "No hem pogut reduir la imatge. Revisa la connexió i torna-ho a intentar."
         );
         return null;
       } finally {
@@ -99,7 +92,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     if (workingFile.size > MAX_TOTAL_UPLOAD_BYTES) {
       setError(
-        `La mida de la imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, tria una imatge més petita.`
+        `La mida de la imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Redueix la mida de la imatge abans de tornar-ho a intentar.`
       );
       return null;
     }
@@ -166,9 +159,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       </label>
 
       <div
-        className={`mt-2 border ${
-          dragOver ? "border-primary" : "border-border"
-        } rounded-xl cursor-pointer`}
+        className={`mt-2 border ${dragOver ? "border-primary" : "border-border"
+          } rounded-xl cursor-pointer`}
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();

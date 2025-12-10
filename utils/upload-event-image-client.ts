@@ -1,77 +1,150 @@
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
-import type { UploadImageOptions } from "types/upload";
+import type { UploadImageOptions, UploadImageResponse } from "types/upload";
 
 const UPLOAD_ENDPOINT = "/api/publica/image-upload";
 
 export function uploadImageWithProgress(
   file: File,
   options: UploadImageOptions = {}
-): Promise<string> {
+): Promise<UploadImageResponse> {
   return new Promise((resolve, reject) => {
     if (!(file instanceof File)) {
       reject(new Error("No s'ha trobat cap fitxer per pujar."));
       return;
     }
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", UPLOAD_ENDPOINT);
-    xhr.responseType = "text";
+    const { onProgress, signal } = options;
+    let attempt = 0;
+    const maxAttempts = 2;
+    let aborted = false;
+    let xhr: XMLHttpRequest | null = null;
+    let abortHandler: (() => void) | null = null;
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && typeof options.onProgress === "function") {
-        const percent = Math.min(
-          100,
-          Math.round((event.loaded / event.total) * 100)
-        );
-        options.onProgress(percent);
+    const cleanup = () => {
+      if (signal && abortHandler) {
+        signal.removeEventListener("abort", abortHandler);
       }
+      abortHandler = null;
+      xhr = null;
     };
 
-    xhr.onload = () => {
-      const responseText = typeof xhr.response === "string" ? xhr.response : "";
-      if (xhr.status >= 200 && xhr.status < 300) {
-        // Backend may respond with { url: "..." } or a plain string URL
+    const rejectAbort = () => {
+      aborted = true;
+      cleanup();
+      reject(new DOMException("Upload aborted", "AbortError"));
+    };
+
+    const start = () => {
+      if (aborted) return;
+      if (signal?.aborted) {
+        rejectAbort();
+        return;
+      }
+
+      xhr = new XMLHttpRequest();
+      xhr.open("POST", UPLOAD_ENDPOINT);
+      xhr.responseType = "text";
+
+      abortHandler = () => {
+        if (xhr) {
+          xhr.abort();
+        }
+        rejectAbort();
+      };
+      if (signal) {
+        signal.addEventListener("abort", abortHandler, { once: true });
+      }
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && typeof onProgress === "function") {
+          const percent = Math.min(
+            100,
+            Math.round((event.loaded / event.total) * 100)
+          );
+          onProgress(percent);
+        }
+      };
+
+      const handleParsedResponse = (responseText: string) => {
         try {
           const parsed = responseText ? JSON.parse(responseText) : null;
-          if (parsed && typeof parsed.url === "string") {
-            resolve(parsed.url);
-            return;
-          }
-          if (typeof parsed === "string") {
-            resolve(parsed);
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            typeof parsed.url === "string" &&
+            typeof parsed.publicId === "string"
+          ) {
+            cleanup();
+            resolve({
+              url: parsed.url,
+              publicId: parsed.publicId,
+            });
             return;
           }
         } catch {
-          // Not JSON, continue with raw string
+          // fall through
+        }
+        cleanup();
+        reject(
+          new Error(
+            "No s'ha rebut una resposta vàlida (url + publicId) de la imatge."
+          )
+        );
+      };
+
+      const maybeRetry = (message: string) => {
+        if (aborted) return;
+        if (attempt + 1 < maxAttempts) {
+          attempt += 1;
+          setTimeout(start, 200); // small backoff
+          return;
+        }
+        cleanup();
+        reject(new Error(message));
+      };
+
+      xhr.onload = () => {
+        const responseText =
+          typeof xhr?.response === "string" ? xhr.response : "";
+        if (xhr!.status >= 200 && xhr!.status < 300) {
+          handleParsedResponse(responseText);
+          return;
         }
 
-        const trimmed = responseText.trim().replace(/^"|"$/g, "");
-        if (trimmed) {
-          resolve(trimmed);
-        } else {
-          reject(new Error("No s'ha rebut la URL de la imatge."));
+        if (xhr!.status === 413) {
+          cleanup();
+          reject(new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR));
+          return;
         }
-        return;
-      }
 
-      if (xhr.status === 413) {
-        reject(new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR));
-        return;
-      }
+        if (xhr!.status >= 500 && xhr!.status < 600) {
+          maybeRetry(
+            "No s'ha pogut pujar la imatge. Torna-ho a intentar més tard."
+          );
+          return;
+        }
 
-      const errorMessage =
-        responseText ||
-        "No s'ha pogut pujar la imatge. Torna-ho a intentar més tard.";
-      reject(new Error(errorMessage));
+        const errorMessage =
+          responseText ||
+          "No s'ha pogut pujar la imatge. Torna-ho a intentar més tard.";
+        cleanup();
+        reject(new Error(errorMessage));
+      };
+
+      xhr.onerror = () => {
+        maybeRetry("No s'ha pogut connectar amb el servidor de pujades.");
+      };
+
+      xhr.ontimeout = () => {
+        maybeRetry("La connexió ha expirat en pujar la imatge.");
+      };
+
+      const formData = new FormData();
+      formData.append("imageFile", file, file.name || "event-image");
+
+      xhr.send(formData);
     };
 
-    xhr.onerror = () => {
-      reject(new Error("No s'ha pogut connectar amb el servidor de pujades."));
-    };
-
-    const formData = new FormData();
-    formData.append("imageFile", file, file.name || "event-image");
-
-    xhr.send(formData);
+    start();
   });
 }

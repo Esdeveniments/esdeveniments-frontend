@@ -33,7 +33,7 @@ vi.mock("next/image", () => ({
 class MockFileReader {
   result: string | null = null;
   onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null = null;
-  
+
   readAsDataURL() {
     // Simulate async behavior
     setTimeout(() => {
@@ -45,7 +45,7 @@ class MockFileReader {
       }
     }, 0);
   }
-  
+
   addEventListener(
     event: string,
     callback: EventListenerOrEventListenerObject | null,
@@ -55,8 +55,8 @@ class MockFileReader {
       this.onload = callback as (this: FileReader, ev: ProgressEvent<FileReader>) => void;
     }
   }
-  
-  removeEventListener() {}
+
+  removeEventListener() { }
 }
 
 global.FileReader = MockFileReader as unknown as typeof FileReader;
@@ -85,7 +85,11 @@ describe("ImageUploader file validation", () => {
 
   it(`accepts valid image files under ${MAX_LIMIT_LABEL}MB`, async () => {
     const onUpload = vi.fn();
-    const validFile = createMockFile("test.jpg", "image/jpeg", 5 * 1024 * 1024); // 5MB
+    const validFile = createMockFile(
+      "test.jpg",
+      "image/jpeg",
+      1.5 * 1024 * 1024
+    ); // 1.5MB
 
     renderWithProviders(
       <ImageUploader value={null} onUpload={onUpload} progress={0} />
@@ -93,13 +97,13 @@ describe("ImageUploader file validation", () => {
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     expect(input).toBeInTheDocument();
-    
+
     // Create a FileList-like object
     Object.defineProperty(input, "files", {
       value: [validFile],
       writable: false,
     });
-    
+
     fireEvent.change(input);
 
     await waitFor(() => {
@@ -119,8 +123,8 @@ describe("ImageUploader file validation", () => {
     const largeFile = createMockFile(
       "large.jpg",
       "image/jpeg",
-      9 * 1024 * 1024
-    ); // 9MB
+      3 * 1024 * 1024
+    ); // 3MB
 
     renderWithProviders(
       <ImageUploader value={null} onUpload={onUpload} progress={0} />
@@ -128,12 +132,12 @@ describe("ImageUploader file validation", () => {
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     expect(input).toBeInTheDocument();
-    
+
     Object.defineProperty(input, "files", {
       value: [largeFile],
       writable: false,
     });
-    
+
     fireEvent.change(input);
 
     await waitFor(() => {
@@ -157,7 +161,7 @@ describe("ImageUploader file validation", () => {
     const boundaryFile = createMockFile(
       "boundary.jpg",
       "image/jpeg",
-      8 * 1024 * 1024
+      2 * 1024 * 1024
     );
 
     renderWithProviders(
@@ -166,12 +170,12 @@ describe("ImageUploader file validation", () => {
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     expect(input).toBeInTheDocument();
-    
+
     Object.defineProperty(input, "files", {
       value: [boundaryFile],
       writable: false,
     });
-    
+
     fireEvent.change(input);
 
     await waitFor(() => {
@@ -188,11 +192,11 @@ describe("ImageUploader file validation", () => {
 
   it(`accepts files just under ${MAX_LIMIT_LABEL}MB`, async () => {
     const onUpload = vi.fn();
-    // 7.9MB (should pass)
+    // 1.9MB (should pass)
     const validFile = createMockFile(
       "valid.jpg",
       "image/jpeg",
-      7.9 * 1024 * 1024
+      1.9 * 1024 * 1024
     );
 
     renderWithProviders(
@@ -201,12 +205,12 @@ describe("ImageUploader file validation", () => {
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     expect(input).toBeInTheDocument();
-    
+
     Object.defineProperty(input, "files", {
       value: [validFile],
       writable: false,
     });
-    
+
     fireEvent.change(input);
 
     await waitFor(() => {
@@ -230,7 +234,7 @@ describe("ImageUploader file validation", () => {
     const compressedFile = createMockFile(
       "large-compressed.jpg",
       "image/jpeg",
-      6 * 1024 * 1024
+      1.5 * 1024 * 1024
     );
     mockCompress.mockResolvedValueOnce(compressedFile);
 
@@ -251,8 +255,8 @@ describe("ImageUploader file validation", () => {
     });
 
     expect(
-      screen.getByTestId("image-upload-status")
-    ).toHaveTextContent(/Hem reduït la imatge de/i);
+      screen.queryByTestId("image-upload-status")
+    ).not.toBeInTheDocument();
   });
 
   it("shows a descriptive error if compression throws", async () => {
@@ -295,12 +299,12 @@ describe("ImageUploader file validation", () => {
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     expect(input).toBeInTheDocument();
-    
+
     Object.defineProperty(input, "files", {
       value: [invalidFile],
       writable: false,
     });
-    
+
     fireEvent.change(input);
 
     await waitFor(() => {

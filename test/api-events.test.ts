@@ -56,7 +56,7 @@ describe("lib/api/events", () => {
     (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
 
     await fetchEvents({ place: "barcelona", term: "music", page: 2, size: 20 });
-    
+
     expect(mockFetch).toHaveBeenCalled();
     const calledUrl = mockFetch.mock.calls[0][0] as string;
     const options = mockFetch.mock.calls[0][1] as RequestInit;
@@ -102,22 +102,31 @@ describe("lib/api/events", () => {
     );
   });
 
-  it("uploads images via multipart endpoint and returns url", async () => {
+  it("uploads images via multipart endpoint and returns url/publicId", async () => {
     process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
     const imageFile = new File(["dummy"], "photo.jpg", {
       type: "image/jpeg",
     });
-    const mockResponse = new Response("https://cdn.example.com/photo.jpg", {
-      status: 200,
-      headers: { "content-type": "text/plain" },
-    });
+    const mockResponse = new Response(
+      JSON.stringify({
+        url: "https://cdn.example.com/photo.jpg",
+        publicId: "abc-123",
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
 
     const fetchSpy = vi
       .spyOn(fetchWrapper, "fetchWithHmac")
       .mockResolvedValue(mockResponse as unknown as Response);
 
-    const url = await uploadEventImage(imageFile);
-    expect(url).toBe("https://cdn.example.com/photo.jpg");
+    const result = await uploadEventImage(imageFile);
+    expect(result).toEqual({
+      url: "https://cdn.example.com/photo.jpg",
+      publicId: "abc-123",
+    });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [, options] = fetchSpy.mock.calls[0];
     const body = options?.body as FormData;
@@ -138,5 +147,42 @@ describe("lib/api/events", () => {
     await expect(uploadEventImage(imageFile)).rejects.toThrow(
       EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
     );
+  });
+
+  it("throws when backend response is missing publicId", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response(
+      JSON.stringify({
+        url: "https://cdn.example.com/photo.jpg",
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
+
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    await expect(uploadEventImage(imageFile)).rejects.toThrow(
+      /missing url\/publicId/i
+    );
+  });
+
+  it("throws when backend responds with invalid JSON", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response("not-json", {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    await expect(uploadEventImage(imageFile)).rejects.toThrow(/invalid json/i);
   });
 });
