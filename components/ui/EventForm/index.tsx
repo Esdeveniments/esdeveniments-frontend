@@ -34,6 +34,8 @@ export const EventForm: React.FC<EventFormProps> = ({
   progress,
   imageToUpload,
   imageFile,
+  isUploadingImage = false,
+  uploadMessage,
 }) => {
   const formState = useMemo(() => {
     return getZodValidationState(form, true, imageFile, isEditMode);
@@ -93,6 +95,8 @@ export const EventForm: React.FC<EventFormProps> = ({
         value={imageToUpload}
         onUpload={handleImageChange}
         progress={progress}
+        isUploading={isUploadingImage}
+        uploadMessage={uploadMessage}
       />
 
       {isLoadingRegionsWithCities ? (

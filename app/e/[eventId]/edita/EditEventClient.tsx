@@ -81,7 +81,11 @@ export default function EditEventClient({
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
 
-  const handleImageChange = (file: File) => {
+  const handleImageChange = (file: File | null) => {
+    if (!file) {
+      setImageToUpload(null);
+      return;
+    }
     const reader = new FileReader();
     reader.addEventListener("load", () => {
       setImageToUpload(reader.result as string);

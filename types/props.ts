@@ -144,8 +144,10 @@ export type AcceptedImageTypes =
 
 export interface ImageUploaderProps {
   value: string | null;
-  onUpload: (file: File) => void;
+  onUpload: (file: File | null) => void;
   progress: number;
+  isUploading?: boolean;
+  uploadMessage?: string | null;
 }
 
 export interface InputProps {

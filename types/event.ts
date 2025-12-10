@@ -269,13 +269,15 @@ export interface EventFormProps {
     name: K,
     value: FormData[K]
   ) => void;
-  handleImageChange: (file: File) => void;
+  handleImageChange: (file: File | null) => void;
   handleRegionChange: (region: Option | null) => void;
   handleTownChange: (town: Option | null) => void;
   handleCategoriesChange: (categories: Option[]) => void;
   progress: number;
   imageToUpload: string | null;
   imageFile?: File | null;
+  isUploadingImage?: boolean;
+  uploadMessage?: string | null;
 }
 
 export interface UseEventsOptions {
