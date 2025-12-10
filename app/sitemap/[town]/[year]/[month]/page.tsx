@@ -12,6 +12,8 @@ import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
 import { getHistoricDates, normalizeMonthParam } from "@lib/dates";
 import dynamic from "next/dynamic";
+import { isValidPlace } from "@utils/route-validation";
+import { notFound } from "next/navigation";
 import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import {
@@ -42,6 +44,13 @@ export async function generateMetadata({
   const t = await getTranslations("Pages.SitemapMonth");
   const tConstants = await getTranslations("Components.Constants");
   const { town, year, month } = await params;
+  if (!isValidPlace(town)) {
+    return {
+      title: "Not Found",
+      description: "Page not found",
+    };
+  }
+
   const monthLabels = (tConstants.raw("months") as string[]) || [];
   const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];
   const { slug: normalizedMonthSlug, label: fallbackMonthLabel } =
@@ -87,6 +96,10 @@ export default async function Page({
   const tConstants = await getTranslations("Components.Constants");
   const locale: AppLocale = resolveLocaleFromHeaders(await headers());
   const withLocale = (path: string) => withLocalePath(path, locale);
+
+  if (!isValidPlace(town)) {
+    notFound();
+  }
 
   const monthLabels = (tConstants.raw("months") as string[]) || [];
   const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];

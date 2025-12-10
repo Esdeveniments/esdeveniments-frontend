@@ -15,6 +15,20 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    const message = error?.message ?? "";
+    const normalized = message.toLowerCase();
+    const isChunkLoadError =
+      error?.name === "ChunkLoadError" ||
+      normalized.includes("failed to load chunk") ||
+      normalized.includes("loading chunk") ||
+      normalized.includes("dynamically imported module");
+
+    if (isChunkLoadError && typeof window !== "undefined") {
+      // Reload the page to fetch the latest assets after a deployment
+      window.location.reload();
+      return;
+    }
+
     captureException(error);
   }, [error]);
 

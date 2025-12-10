@@ -185,6 +185,8 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/active",
   "/api/leads/restaurant",
   "/api/cloudinary/sign",
+  // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)
+  "/api/publica/image-upload",
   // Revalidation endpoint handles its own secret, so bypass HMAC middleware
   "/api/revalidate",
 ];

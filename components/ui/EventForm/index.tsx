@@ -35,6 +35,8 @@ export const EventForm: React.FC<EventFormProps> = ({
   progress,
   imageToUpload,
   imageFile,
+  isUploadingImage = false,
+  uploadMessage,
 }) => {
   const t = useTranslations("Utils.Validation");
   const tForm = useTranslations("Components.EventForm");
@@ -122,6 +124,8 @@ export const EventForm: React.FC<EventFormProps> = ({
         value={imageToUpload}
         onUpload={handleImageChange}
         progress={progress}
+        isUploading={isUploadingImage}
+        uploadMessage={uploadMessage}
       />
 
       {isLoadingRegionsWithCities ? (

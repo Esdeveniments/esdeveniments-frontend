@@ -5,6 +5,27 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import caMessages from "../messages/ca.json";
 
 export const MAX_RESULTS = 15;
+// Keep safely under Lambda's 6MB cap and common CDN/body limits
+export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
+export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
+  "event_image_upload_too_large";
+export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads
+
+export const formatMegabytesLabel = (bytes: number): string => {
+  const value = bytes / (1024 * 1024);
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+};
+
+export const formatMegabytes = (bytes: number): string =>
+  (bytes / (1024 * 1024)).toFixed(2);
+
+export const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(
+  MAX_TOTAL_UPLOAD_BYTES
+);
+
+export const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(
+  MAX_ORIGINAL_FILE_BYTES
+);
 
 /**
  * Detects if the application is in build phase (SSG/static generation).

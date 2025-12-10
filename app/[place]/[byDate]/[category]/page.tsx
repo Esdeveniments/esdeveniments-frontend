@@ -37,8 +37,8 @@ import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { redirect, notFound } from "next/navigation";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
@@ -168,8 +168,11 @@ export default async function FilteredPage({
   const locale: AppLocale = resolveLocaleFromHeaders(await headers());
   const tFallback = await getTranslations("App.PlaceByDateCategory");
 
-  // 🛡️ SECURITY: Validate place parameter
-  validatePlaceOrThrow(place);
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.

@@ -33,7 +33,7 @@ import {
   toUrlSearchParams,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -202,7 +202,11 @@ export default async function ByDatePage({
   const tFallback = await getTranslations("App.PlaceByDate");
   const locale: AppLocale = resolveLocaleFromHeaders(await headers());
 
-  validatePlaceOrThrow(place);
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.

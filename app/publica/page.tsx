@@ -20,22 +20,36 @@ import type { E2EEventExtras } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import {
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+  MAX_TOTAL_UPLOAD_BYTES,
+  MAX_UPLOAD_LIMIT_LABEL,
+} from "@utils/constants";
+import { uploadImageWithProgress } from "@utils/upload-event-image-client";
+
+const getDefaultEventDates = () => {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  const startDate = new Date(now);
+  startDate.setHours(9, 0, 0, 0);
+  const endDate = new Date(startDate);
+  endDate.setHours(10, 0, 0, 0);
+
+  return {
+    startDate: startDate.toISOString().slice(0, 16),
+    endDate: endDate.toISOString().slice(0, 16),
+  };
+};
+
+const defaultEventDates = getDefaultEventDates();
 
 const defaultForm: FormData = {
   title: "",
   description: "",
   type: "FREE",
-  startDate: (() => {
-    const now = new Date();
-    now.setHours(9, 0, 0, 0);
-    return now.toISOString().slice(0, 16);
-  })(),
+  startDate: defaultEventDates.startDate,
   startTime: "",
-  endDate: (() => {
-    const now = new Date();
-    now.setHours(10, 0, 0, 0);
-    return now.toISOString().slice(0, 16);
-  })(),
+  endDate: defaultEventDates.endDate,
   endTime: "",
   region: null,
   town: null,
@@ -74,6 +88,9 @@ const isCategoryOption = (
     "label" in category
   );
 
+const buildFileSignature = (file: File) =>
+  `${file.name}-${file.size}-${file.lastModified}`;
+
 const Publica = () => {
   const t = useTranslations("App.Publish");
   const router = useRouter();
@@ -82,6 +99,17 @@ const Publica = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [uploadAbortController, setUploadAbortController] =
+    useState<AbortController | null>(null);
+  const [uploadedImageSignature, setUploadedImageSignature] = useState<
+    string | null
+  >(null);
+  const [imageUploadMessage, setImageUploadMessage] = useState<string | null>(
+    null
+  );
 
   const {
     regionsWithCities,
@@ -142,13 +170,28 @@ const Publica = () => {
     handleFormChange("region", region);
   };
 
-  const handleImageChange = (file: File) => {
+  const handleImageChange = (file: File | null) => {
+    setError(null);
+    setImageUploadMessage(null);
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(null);
+      setUploadedImageUrl(null);
+      setUploadedImageSignature(null);
+      setUploadProgress(0);
+      return;
+    }
+
     setImageFile(file);
     const reader = new FileReader();
     reader.addEventListener("load", () => {
       setImagePreview(reader.result as string);
     });
     reader.readAsDataURL(file);
+    setUploadedImageUrl(null);
+    setUploadedImageSignature(null);
+    setUploadProgress(0);
   };
 
   const handleTownChange = (town: Option | null) =>
@@ -259,8 +302,82 @@ const Publica = () => {
 
   const onSubmit = async () => {
     setError(null); // Clear any previous errors
+    setImageUploadMessage(null);
+
+    if (imageFile && imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+      setError(
+        `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, tria una imatge més petita.`
+      );
+      return;
+    }
+
+    if (isUploadingImage) {
+      return;
+    }
+
     startTransition(async () => {
       try {
+        let resolvedImageUrl = uploadedImageUrl;
+
+        if (imageFile) {
+          const signature = buildFileSignature(imageFile);
+          if (signature !== uploadedImageSignature) {
+            setIsUploadingImage(true);
+            setUploadProgress(0);
+            uploadAbortController?.abort();
+            const controller = new AbortController();
+            setUploadAbortController(controller);
+            try {
+              const uploadResult = await uploadImageWithProgress(imageFile, {
+                onProgress: (percent) => setUploadProgress(percent),
+                signal: controller.signal,
+              });
+              resolvedImageUrl = uploadResult.url;
+              setUploadedImageUrl(uploadResult.url);
+              setUploadedImageSignature(signature);
+              setImageUploadMessage("Imatge pujada correctament.");
+              setUploadProgress(100);
+              setTimeout(() => setUploadProgress(0), 800);
+            } catch (uploadError) {
+              if (
+                uploadError instanceof DOMException &&
+                uploadError.name === "AbortError"
+              ) {
+                setIsUploadingImage(false);
+                setUploadProgress(0);
+                setImageUploadMessage(null);
+                setUploadAbortController(null);
+                return;
+              }
+              const uploadMessage =
+                uploadError instanceof Error
+                  ? uploadError.message
+                  : String(uploadError);
+              if (uploadMessage === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
+                setError(
+                  `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
+                );
+              } else {
+                setError(
+                  "No hem pogut pujar la imatge. Revisa la connexió i torna-ho a intentar."
+                );
+              }
+              setImageUploadMessage(null);
+              setIsUploadingImage(false);
+              setUploadProgress(0);
+              return;
+            } finally {
+              setIsUploadingImage(false);
+              setUploadAbortController(null);
+            }
+          }
+        }
+
+        if (!resolvedImageUrl) {
+          setError("La imatge és obligatòria.");
+          return;
+        }
+
         const regionLabel =
           form.region && "label" in form.region ? form.region.label : "";
         const townLabel =
@@ -272,51 +389,78 @@ const Publica = () => {
           ...form,
           url: normalizeUrl(form.url),
           location,
+          imageUrl: resolvedImageUrl,
         });
 
         const e2eExtras = buildE2EExtras();
-        const result = await createEventAction(
-          eventData,
-          imageFile || undefined,
-          e2eExtras
-        );
+        const { success, event } = await createEventAction(eventData, e2eExtras);
 
-        if (result && result.success && result.event) {
-          const { slug } = result.event;
-          if (typeof document !== "undefined") {
-            document.body.dataset.lastE2eSlug = slug;
-          }
-          if (typeof window !== "undefined") {
-            window.__LAST_E2E_PUBLISH_SLUG__ = slug;
-          }
-
-          router.push(`/e/${slug}`);
-        } else {
+        if (!success || !event) {
           setError(t("errorCreate"));
           captureException("Error creating event");
+          return;
         }
+
+        const { slug } = event;
+        if (typeof document !== "undefined") {
+          document.body.dataset.lastE2eSlug = slug;
+        }
+        if (typeof window !== "undefined") {
+          window.__LAST_E2E_PUBLISH_SLUG__ = slug;
+        }
+
+        router.push(`/e/${slug}`);
       } catch (error) {
         console.error("Submission error:", error);
-        
-        // Check if it's a body size limit error
-        // Note: Next.js server actions throw Error objects without structured error codes,
-        // so we check error messages. The configured limit is 10 MB (see next.config.js).
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (
-          errorMessage.includes("body size limit") ||
-          errorMessage.includes("Body exceeded") ||
-          errorMessage.includes("10 MB limit") ||
-          errorMessage.includes("10mb")
-        ) {
-          setError(t("errorBodyLimit"));
+
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const normalizedMessage = errorMessage.toLowerCase();
+        const isImageUploadLimit = normalizedMessage.includes(
+          EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
+        );
+        const isBodyLimit =
+          normalizedMessage.includes("body size limit") ||
+          normalizedMessage.includes("body exceeded") ||
+          normalizedMessage.includes("10 mb limit") ||
+          normalizedMessage.includes("10mb");
+        const isRequestTooLarge =
+          normalizedMessage.includes("status: 413") ||
+          normalizedMessage.includes("request entity too large");
+        const isFormParsingError =
+          normalizedMessage.includes("unexpected end of form") ||
+          normalizedMessage.includes("failed to parse body as formdata");
+
+        if (isImageUploadLimit) {
+          setError(
+            `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
+          );
+        } else if (isBodyLimit || isRequestTooLarge) {
+          setError(
+            "La mida total de la sol·licitud (imatge + dades) supera el límit permès pel servidor. Redueix la mida de la imatge abans de tornar-ho a intentar."
+          );
+        } else if (isFormParsingError) {
+          setError(
+            "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar."
+          );
         } else {
           setError(t("errorGeneric"));
         }
-        
-        captureException(error);
+
+        if (
+          !(
+            isBodyLimit ||
+            isRequestTooLarge ||
+            isImageUploadLimit ||
+            isFormParsingError
+          )
+        ) {
+          captureException(error);
+        }
       }
     });
   };
+
   return (
     <div className="container flex flex-col justify-center pt-2 pb-14">
       <div className="flex flex-col gap-4 px-2 lg:px-0">
@@ -340,7 +484,7 @@ const Publica = () => {
             regionOptions={regionOptions}
             cityOptions={cityOptions}
             categoryOptions={categoryOptions}
-            progress={0}
+            progress={uploadProgress}
             isLoadingRegionsWithCities={isLoadingRegions}
             handleFormChange={handleFormChange}
             handleImageChange={handleImageChange}
@@ -349,6 +493,8 @@ const Publica = () => {
             handleCategoriesChange={handleCategoriesChange}
             imageToUpload={imagePreview}
             imageFile={imageFile}
+            isUploadingImage={isUploadingImage}
+            uploadMessage={imageUploadMessage}
           />
         </div>
       </div>

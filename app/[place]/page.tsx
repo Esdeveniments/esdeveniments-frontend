@@ -20,7 +20,6 @@ import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
-  isValidPlace,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
@@ -88,12 +87,11 @@ export default async function Page({
   const locale = (resolveLocaleFromHeaders(headersList) ||
     DEFAULT_LOCALE) as AppLocale;
 
-  // Return 404 for invalid places (e.g., sitemap files) instead of throwing
-  if (!isValidPlace(place)) {
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
     notFound();
   }
-
-  validatePlaceOrThrow(place);
 
   const categoriesPromise = fetchCategories().catch((error) => {
     console.error("Error fetching categories:", error);

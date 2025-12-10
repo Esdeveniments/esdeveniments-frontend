@@ -14,6 +14,9 @@ const nextConfig = {
   // --- SST/OpenNext Configuration ---
   // Required for SST deployment (uses OpenNext adapter)
   output: "standalone",
+  // Disable incremental cache while SST/OpenNext lacks __fetch bucket
+  cacheHandler: undefined,
+  cacheMaxMemorySize: 0,
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,

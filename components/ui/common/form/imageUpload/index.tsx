@@ -3,17 +3,33 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import UploadIcon from "@heroicons/react/outline/UploadIcon";
 import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
+import {
+  MAX_TOTAL_UPLOAD_BYTES,
+  MAX_UPLOAD_LIMIT_LABEL,
+  MAX_ORIGINAL_FILE_BYTES,
+  MAX_ORIGINAL_LIMIT_LABEL,
+} from "@utils/constants";
+import { compressImageIfNeeded } from "@utils/image-optimizer";
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   value,
   onUpload,
   progress,
+  isUploading = false,
+  uploadMessage,
 }) => {
   const t = useTranslations("Components.ImageUploader");
   const fileSelect = useRef<HTMLInputElement>(null);
   const [imgData, setImgData] = useState<string | null>(value);
   const [dragOver, setDragOver] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+
+  const resetMessages = () => {
+    setError(null);
+    setStatus(null);
+  };
 
   async function handleImageUpload(): Promise<void> {
     if (fileSelect.current) {
@@ -39,28 +55,84 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       return false;
     }
 
-    setError("");
+    if (file.size > MAX_ORIGINAL_FILE_BYTES) {
+      setError(
+        `La imatge supera el límit màxim de ${MAX_ORIGINAL_LIMIT_LABEL} MB. Redueix la mida de la imatge abans de tornar-ho a intentar.`
+      );
+      return false;
+    }
 
     return true;
   }
 
-  const onChangeImage = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const tryPrepareFile = async (file: File): Promise<File | null> => {
+    if (!handleFileValidation(file)) {
+      return null;
+    }
+
+    resetMessages();
+    let workingFile = file;
+
+    if (file.size > MAX_TOTAL_UPLOAD_BYTES) {
+      setIsOptimizing(true);
+      try {
+        const optimized = await compressImageIfNeeded(file, {
+          maxBytes: MAX_TOTAL_UPLOAD_BYTES,
+        });
+
+        if (optimized) {
+          workingFile = optimized;
+        }
+      } catch (compressionError) {
+        console.error("Image optimization failed", compressionError);
+        setError(
+          "No hem pogut reduir la imatge. Revisa la connexió i torna-ho a intentar."
+        );
+        return null;
+      } finally {
+        setIsOptimizing(false);
+      }
+    }
+
+    if (workingFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+      setError(
+        `La mida de la imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Redueix la mida de la imatge abans de tornar-ho a intentar.`
+      );
+      return null;
+    }
+
+    return workingFile;
+  };
+
+  const onChangeImage = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
     const file = e.target.files?.[0];
-    if (file && handleFileValidation(file)) {
-      updateImage(file);
-      onUpload(file);
+    if (!file) {
+      return;
+    }
+    const preparedFile = await tryPrepareFile(file);
+    if (preparedFile) {
+      updateImage(preparedFile);
+      onUpload(preparedFile);
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
+  const handleDrop = async (
+    e: React.DragEvent<HTMLDivElement>
+  ): Promise<void> => {
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
 
     const file = e.dataTransfer.files[0];
-    if (file && handleFileValidation(file)) {
-      updateImage(file);
-      onUpload(file);
+    if (!file) {
+      return;
+    }
+    const preparedFile = await tryPrepareFile(file);
+    if (preparedFile) {
+      updateImage(preparedFile);
+      onUpload(preparedFile);
     }
   };
 
@@ -72,6 +144,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleRemoveImage = () => {
+    setImgData(null);
+    resetMessages();
+    if (fileSelect.current) {
+      fileSelect.current.value = "";
+    }
+    onUpload(null);
+  };
+
+  const isRemoteUploading = progress > 0 && progress < 100;
+  const isInteractionDisabled = isOptimizing || isUploading || isRemoteUploading;
+
   return (
     <div className="w-full text-foreground-strong">
       <label htmlFor="image" className="text-foreground-strong font-bold">
@@ -79,24 +163,26 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       </label>
 
       <div
-        className={`mt-2 border ${
-          dragOver ? "border-primary" : "border-border"
-        } rounded-xl cursor-pointer`}
+        className={`mt-2 border ${dragOver ? "border-primary" : "border-border"
+          } rounded-xl cursor-pointer`}
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setDragOver(true);
         }}
         onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
+        onDrop={(event) => {
+          void handleDrop(event);
+        }}
       >
         <div className="flex justify-center items-center h-full">
           {progress === 0 ? (
             <div className="text-center">
               <button
-                className="bg-background hover:bg-primary font-bold px-2 py-2 rounded-xl"
+                className="bg-background hover:bg-primary font-bold px-2 py-2 rounded-xl disabled:opacity-60"
                 onClick={handleImageUpload}
                 type="button"
+                disabled={isInteractionDisabled}
               >
                 <UploadIcon className="w-6 h-6 text-foreground-strong hover:text-background" />
               </button>
@@ -108,18 +194,50 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           <input
             ref={fileSelect}
             type="file"
-            accept="image/png, image/jpeg, image/jpg"
+            accept="image/png, image/jpeg, image/jpg, image/webp"
             style={{ display: "none" }}
-            onChange={onChangeImage}
+            onChange={(event) => {
+              void onChangeImage(event);
+            }}
+            disabled={isInteractionDisabled}
           />
         </div>
-        {error && <p className="text-primary text-sm mt-2">{error}</p>}
       </div>
+      {isOptimizing && (
+        <p className="text-sm text-foreground/70 mt-2">
+          Optimitzant la imatge per complir el límit de {MAX_UPLOAD_LIMIT_LABEL} MB...
+        </p>
+      )}
+      {progress > 0 && (
+        <div className="w-full mt-3">
+          <div className="h-2 rounded-full bg-border overflow-hidden">
+            <div
+              className="h-full bg-primary transition-[width] duration-200"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-foreground/70 mt-1">
+            {progress >= 100
+              ? "Imatge pujada correctament."
+              : `Pujant la imatge (${progress}%)...`}
+          </p>
+        </div>
+      )}
+      {status && (
+        <p className="text-sm text-foreground/80 mt-2" data-testid="image-upload-status">
+          {status}
+        </p>
+      )}
+      {uploadMessage && (
+        <p className="text-sm text-foreground/80 mt-2">{uploadMessage}</p>
+      )}
+      {error && <p className="text-primary text-sm mt-2">{error}</p>}
       {imgData && (
         <div className="flex justify-center items-start p-4">
           <button
-            onClick={() => setImgData(null)}
+            onClick={handleRemoveImage}
             className="bg-background rounded-full p-1 hover:bg-primary"
+            type="button"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -1,5 +1,6 @@
 import { cache } from "react";
-import { captureException } from "@sentry/nextjs";
+import { captureException, captureMessage } from "@sentry/nextjs";
+import { formatMegabytes } from "@utils/constants";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
@@ -13,7 +14,11 @@ import {
   fetchEventsExternal,
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
-import { isBuildPhase } from "@utils/constants";
+import {
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+  MAX_TOTAL_UPLOAD_BYTES,
+  isBuildPhase,
+} from "@utils/constants";
 import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,
@@ -28,6 +33,7 @@ import {
   GlobalWithE2EStore,
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
+import type { UploadImageResponse } from "types/upload";
 
 const isE2ETestMode =
   process.env.E2E_TEST_MODE === "1" ||
@@ -39,6 +45,36 @@ const e2eEventsStore = isE2ETestMode
   ? getE2EGlobal().__E2E_EVENTS__ ??
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
   : null;
+
+const IMAGE_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
+
+const recordImageSizeTelemetry = (imageBytes: number) => {
+  if (imageBytes < IMAGE_WARNING_THRESHOLD) {
+    return;
+  }
+  const level = imageBytes > MAX_TOTAL_UPLOAD_BYTES ? "error" : "warning";
+  captureMessage("uploadEventImage size near limit", {
+    level,
+    extra: {
+      imageBytes,
+      limitBytes: MAX_TOTAL_UPLOAD_BYTES,
+      imageMb: formatMegabytes(imageBytes),
+      limitMb: formatMegabytes(MAX_TOTAL_UPLOAD_BYTES),
+    },
+  });
+};
+
+const ensureImageWithinLimit = (imageFile: File) => {
+  recordImageSizeTelemetry(imageFile.size);
+  if (imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+    console.warn(
+      `uploadEventImage: image ${formatMegabytes(
+        imageFile.size
+      )}MB exceeds limit ${formatMegabytes(MAX_TOTAL_UPLOAD_BYTES)}MB`
+    );
+    throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
+  }
+};
 
 async function fetchEventsInternal(
   params: FetchEventsParams
@@ -58,16 +94,13 @@ async function fetchEventsInternal(
       const validated = parsePagedEvents(data);
       if (!validated) {
         console.error("fetchEvents: external validation failed");
-        captureException(
-          new Error("fetchEvents: external validation failed"),
-          {
-            tags: {
-              section: "events-fetch",
-              fallback: "external-validation-failed",
-            },
-            extra: { params },
-          }
-        );
+        captureException(new Error("fetchEvents: external validation failed"), {
+          tags: {
+            section: "events-fetch",
+            fallback: "external-validation-failed",
+          },
+          extra: { params },
+        });
         return null;
       }
       return validated;
@@ -90,7 +123,7 @@ async function fetchEventsInternal(
   try {
     const queryString = buildEventsQuery(params);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    
+
     if (!apiUrl) {
       throw new Error("NEXT_PUBLIC_API_URL is not defined");
     }
@@ -100,8 +133,8 @@ async function fetchEventsInternal(
     const response = await fetchWithHmac(finalUrl, {
       next: { revalidate: 300, tags: ["events"] },
       headers: {
-        "Accept": "application/json",
-      }
+        Accept: "application/json",
+      },
     });
 
     if (!response.ok) {
@@ -134,10 +167,13 @@ async function fetchEventsInternal(
     // This is just a safety net
     const externalResult = await fetchExternalWithValidation();
     if (!externalResult) {
-      captureException(new Error("Both direct and fallback external API failed"), {
-        tags: { section: "events-fetch", fallback: "external-also-failed" },
-        extra: { params },
-      });
+      captureException(
+        new Error("Both direct and fallback external API failed"),
+        {
+          tags: { section: "events-fetch", fallback: "external-also-failed" },
+          extra: { params },
+        }
+      );
     }
     return externalResult ?? fallbackResponse;
   }
@@ -159,17 +195,24 @@ export async function fetchEventBySlug(
     });
 
     if (res.status === 404) {
-      console.warn(`fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`);
+      console.warn(
+        `fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`
+      );
       return null;
     }
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error text");
-      console.error(`fetchEventBySlug: HTTP error! status: ${res.status}, body: ${errorText}`);
+      console.error(
+        `fetchEventBySlug: HTTP error! status: ${res.status}, body: ${errorText}`
+      );
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     return parseEventDetail(await res.json());
   } catch (error) {
-    console.error(`Error fetching event by slug (internal) for ${fullSlug}:`, error);
+    console.error(
+      `Error fetching event by slug (internal) for ${fullSlug}:`,
+      error
+    );
     return null;
   }
 }
@@ -205,31 +248,26 @@ export async function updateEventById(
 
 export async function createEvent(
   data: EventCreateRequestDTO,
-  imageFile?: File,
   e2eExtras?: E2EEventExtras
 ): Promise<EventDetailResponseDTO> {
   if (isE2ETestMode && e2eEventsStore) {
     return createE2EEvent(data, e2eExtras);
   }
 
-  const formData = new FormData();
-
-  formData.append("request", JSON.stringify(data));
-
-  if (imageFile) {
-    formData.append("imageFile", imageFile);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL is not defined");
   }
 
-  const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/events`,
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-      },
-      body: formData,
-    }
-  );
+  const response = await fetchWithHmac(`${apiUrl}/events`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+    skipBodySigning: true, // backend ignores body for signature; align client signing
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -239,6 +277,74 @@ export async function createEvent(
     );
   }
   return response.json();
+}
+
+export async function uploadEventImage(
+  imageFile: File
+): Promise<UploadImageResponse> {
+  if (!imageFile) {
+    throw new Error("uploadEventImage: imageFile is required");
+  }
+  ensureImageWithinLimit(imageFile);
+
+  if (isE2ETestMode) {
+    return {
+      url: `https://example.com/${imageFile.name || "e2e-image"}.jpg`,
+      publicId: "e2e-image",
+    };
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  }
+
+  const formData = new FormData();
+  formData.append("imageFile", imageFile);
+
+  const response = await fetchWithHmac(`${apiUrl}/events/images`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response
+      .text()
+      .catch(() => "Unable to read error response");
+    console.error(
+      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`
+    );
+    if (response.status === 413) {
+      throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
+    }
+    throw new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`
+    );
+  }
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("uploadEventImage: invalid JSON response from backend");
+  }
+
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    typeof (payload as { url?: unknown }).url !== "string" ||
+    typeof (payload as { publicId?: unknown }).publicId !== "string"
+  ) {
+    throw new Error(
+      "uploadEventImage: backend response missing url/publicId fields"
+    );
+  }
+
+  const { url, publicId } = payload as UploadImageResponse;
+  return { url, publicId };
 }
 
 function createE2EEvent(
@@ -353,15 +459,15 @@ export async function fetchCategorizedEvents(
     if (maxEventsPerCategory !== undefined) {
       params.append("maxEventsPerCategory", String(maxEventsPerCategory));
     }
-    
+
     const queryString = params.toString() ? `?${params.toString()}` : "";
     const finalUrl = `${apiUrl}/events/categorized${queryString}`;
 
     const response = await fetchWithHmac(finalUrl, {
       next: { revalidate: 300, tags: ["events", "events:categorized"] },
       headers: {
-        "Accept": "application/json",
-      }
+        Accept: "application/json",
+      },
     });
 
     if (!response.ok) {
