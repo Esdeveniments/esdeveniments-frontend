@@ -139,15 +139,15 @@ export default async function Page({
 
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(
-        (event) => !event.isAd
-      )
+      (event) => !event.isAd
+    )
     : [];
 
   // Generate event JSON-LD data
   const jsonData = filteredEvents
     ? filteredEvents
-        .map((event) => generateJsonData(event))
-        .filter((data) => data !== null)
+      .map((event) => generateJsonData(event))
+      .filter((data) => data !== null)
     : [];
 
   // Generate structured data for the month archive
@@ -165,11 +165,11 @@ export default async function Page({
   const eventsItemList =
     filteredEvents.length > 0
       ? generateItemListStructuredData(
-          filteredEvents,
-          t("itemListTitle", { town: townLabel, month: monthLabel, year }),
-          t("itemListDescription", { town: townLabel, month: monthLabel, year }),
-          locale
-        )
+        filteredEvents,
+        t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+        t("itemListDescription", { town: townLabel, month: monthLabel, year }),
+        locale
+      )
       : null;
 
   // Generate collection page schema
