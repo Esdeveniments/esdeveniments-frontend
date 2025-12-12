@@ -20,3 +20,5 @@ describe("buildAlternateLinks", () => {
     expect(alternates["en"]).toMatch(/\/en\/baz$/);
   });
 });
+
+

@@ -2,7 +2,10 @@ import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import type { ByDateOption } from "types/common";
 import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import caMessages from "../messages/ca.json";
+import esMessages from "../messages/es.json";
+import enMessages from "../messages/en.json";
 
 export const MAX_RESULTS = 15;
 // Keep safely under Lambda's 6MB cap and common CDN/body limits
@@ -39,23 +42,36 @@ export const isBuildPhase =
   process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
   (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
 
-const constantsLabels = (caMessages as any).Components.Constants;
+const constantsLabelsByLocale: Record<AppLocale, any> = {
+  ca: (caMessages as any).Components.Constants,
+  es: (esMessages as any).Components.Constants,
+  en: (enMessages as any).Components.Constants,
+};
 
-// Localized constants (sync for server components/tests)
-export const DAY_NAMES: string[] = constantsLabels.days as string[];
-export const MONTH_NAMES: string[] = constantsLabels.months as string[];
-export const MONTHS_URL: string[] = constantsLabels.monthsUrl as string[];
+const defaultConstantsLabels = constantsLabelsByLocale[DEFAULT_LOCALE];
+
+// Localized constants (sync for server components/tests) – default to Catalan
+export const DAY_NAMES: string[] = defaultConstantsLabels.days as string[];
+export const MONTH_NAMES: string[] = defaultConstantsLabels.months as string[];
+export const MONTHS_URL: string[] =
+  defaultConstantsLabels.monthsUrl as string[];
 export const NEWS_HUBS = [
-  { slug: "mataro", name: constantsLabels.newsHubs.mataro as string },
-  { slug: "barcelona", name: constantsLabels.newsHubs.barcelona as string },
-  { slug: "tarragona", name: constantsLabels.newsHubs.tarragona as string },
-  { slug: "lleida", name: constantsLabels.newsHubs.lleida as string },
+  { slug: "mataro", name: defaultConstantsLabels.newsHubs.mataro as string },
+  {
+    slug: "barcelona",
+    name: defaultConstantsLabels.newsHubs.barcelona as string,
+  },
+  {
+    slug: "tarragona",
+    name: defaultConstantsLabels.newsHubs.tarragona as string,
+  },
+  { slug: "lleida", name: defaultConstantsLabels.newsHubs.lleida as string },
 ];
 export const NEARBY_PLACES_BY_HUB: Record<
   string,
   { slug: string; name: string }[]
 > = Object.entries(
-  constantsLabels.nearbyHubs as Record<string, Record<string, string>>
+  defaultConstantsLabels.nearbyHubs as Record<string, Record<string, string>>
 ).reduce((acc, [hub, places]) => {
   acc[hub] = Object.entries(places).map(([slug, name]) => ({
     slug,
@@ -64,16 +80,19 @@ export const NEARBY_PLACES_BY_HUB: Record<
   return acc;
 }, {} as Record<string, { slug: string; name: string }[]>);
 
-export function getDayNames(): string[] {
-  return DAY_NAMES;
+export function getDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
+  return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
+    .days as string[];
 }
 
-export function getMonthNames(): string[] {
-  return MONTH_NAMES;
+export function getMonthNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
+  return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
+    .months as string[];
 }
 
-export function getMonthUrlNames(): string[] {
-  return MONTHS_URL;
+export function getMonthUrlNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
+  return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
+    .monthsUrl as string[];
 }
 
 // Legacy category constants removed - API is now the source of truth
@@ -190,15 +209,18 @@ export async function getNearbyPlacesByHub(): Promise<
 > {
   const t = await getTranslations("Components.Constants.nearbyHubs");
   return Object.fromEntries(
-    Object.entries(constantsLabels.nearbyHubs as Record<string, Record<string, string>>).map(
-      ([hub, places]) => [
-        hub,
-        Object.entries(places).map(([slug]) => ({
-          slug,
-          name: t(`${hub}.${slug}`),
-        })),
-      ]
-    )
+    Object.entries(
+      defaultConstantsLabels.nearbyHubs as Record<
+        string,
+        Record<string, string>
+      >
+    ).map(([hub, places]) => [
+      hub,
+      Object.entries(places).map(([slug]) => ({
+        slug,
+        name: t(`${hub}.${slug}`),
+      })),
+    ])
   );
 }
 

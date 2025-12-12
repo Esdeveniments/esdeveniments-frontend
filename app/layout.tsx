@@ -54,7 +54,11 @@ export default async function RootLayout({
         )}
       </head>
       <body>
-        <NextIntlClientProvider messages={messages} locale={locale}>
+        <NextIntlClientProvider
+          key={locale}
+          messages={messages}
+          locale={locale}
+        >
           <AdProvider>
             <WebsiteSchema locale={locale} />
             <GoogleScripts />

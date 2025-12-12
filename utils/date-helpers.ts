@@ -7,6 +7,7 @@ import type {
 import { getTranslations } from "next-intl/server";
 import type { EventTimeDTO } from "types/api/event";
 import caMessages from "../messages/ca.json";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export type { EventTimeLabels };
 
@@ -47,12 +48,38 @@ function calculateDetailedDurationISO8601(start: Date, end: Date): string {
   return duration === "P" ? "PT1H" : duration;
 }
 
+const formatDateForLocale = (
+  locale: AppLocale,
+  day: number,
+  monthName: string,
+  year: number,
+  includeYear: boolean
+): string => {
+  switch (locale) {
+    case "es":
+      return includeYear
+        ? `${day} de ${monthName} de ${year}`
+        : `${day} de ${monthName}`;
+    case "en":
+      return includeYear
+        ? `${monthName} ${day}, ${year}`
+        : `${monthName} ${day}`;
+    case "ca":
+    default:
+      return includeYear
+        ? `${day} de ${monthName} del ${year}`
+        : `${day} de ${monthName}`;
+  }
+};
+
 export const getFormattedDate = (
   start: string | DateObject,
-  end?: string | DateObject
+  end?: string | DateObject,
+  locale: AppLocale = DEFAULT_LOCALE
 ): FormattedDateResult => {
-  const days = getDayNames();
-  const months = getMonthNames();
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const days = getDayNames(localeToUse);
+  const months = getMonthNames(localeToUse);
 
   const startDate = new Date(
     typeof start === "object" ? start.date || start.dateTime || "" : start
@@ -83,16 +110,30 @@ export const getFormattedDate = (
   const nameDay = days[weekDay];
   const nameMonth = months[month];
 
-  const originalFormattedStart = `${startDay} de ${nameMonth} del ${year}`;
+  const originalFormattedStart = formatDateForLocale(
+    localeToUse,
+    startDay,
+    nameMonth,
+    year,
+    true
+  );
   const formattedStart =
     isMultipleDays && isSameMonth
       ? `${startDay}`
-      : `${startDay} de ${nameMonth}${
-          isMultipleDays && isSameYear ? "" : ` del ${year}`
-        }`;
-  const formattedEnd = `${endDay} de ${
-    months[endDateConverted.getMonth()]
-  } del ${endDateConverted.getFullYear()}`;
+      : formatDateForLocale(
+          localeToUse,
+          startDay,
+          nameMonth,
+          year,
+          !(isMultipleDays && isSameYear)
+        );
+  const formattedEnd = formatDateForLocale(
+    localeToUse,
+    endDay,
+    months[endDateConverted.getMonth()],
+    endDateConverted.getFullYear(),
+    true
+  );
 
   const startTime = `${startDateConverted.getHours()}:${String(
     startDateConverted.getMinutes()

@@ -9,6 +9,8 @@ import {
 import { getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 const CardHorizontalServer = async ({
   event,
@@ -16,6 +18,8 @@ const CardHorizontalServer = async ({
   useDetailTimeFormat = false,
 }: CardHorizontalServerProps) => {
   const tTime = await getTranslations("Utils.EventTime");
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList);
   const timeLabels = {
     consult: tTime("consult"),
     startsAt: tTime("startsAt", { time: "{time}" }),
@@ -36,7 +40,8 @@ const CardHorizontalServer = async ({
   // Format the date
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
   const eventDate = formattedEnd
     ? `Del ${formattedStart} al ${formattedEnd}`

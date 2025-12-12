@@ -4,11 +4,8 @@ import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
-import {
-  getRegionValue,
-  formDataToBackendDTO,
-  getTownValue,
-} from "@utils/helpers";
+import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
+import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
@@ -117,38 +114,16 @@ const Publica = () => {
     isError: isErrorRegionsWithCities,
   } = useGetRegionsWithCities();
 
-  const isLoadingRegions =
+  const isLoadingCities =
     isLoadingRegionsWithCities ||
     (!regionsWithCities && !isErrorRegionsWithCities);
 
   const { categories } = useCategories();
 
-  const regionOptions = useMemo(
-    () =>
-      regionsWithCities
-        ? regionsWithCities.map((region) => ({
-          label: region.name,
-          value: region.id.toString(),
-        }))
-        : [],
+  const { cityOptions, cityToRegionOptionMap } = useMemo(
+    () => generateCityOptionsWithRegionMap(regionsWithCities),
     [regionsWithCities]
   );
-
-  const cityOptions = useMemo(() => {
-    if (!regionsWithCities || !form.region) return [];
-
-    const regionId = getRegionValue(form.region);
-    if (!regionId) return [];
-
-    const region = regionsWithCities.find((r) => r.id.toString() === regionId);
-    return region
-      ? region.cities.map((city) => ({
-        id: city.id,
-        label: city.label,
-        value: city.id.toString(),
-      }))
-      : [];
-  }, [regionsWithCities, form.region]);
 
   const categoryOptions = useMemo(
     () =>
@@ -164,10 +139,6 @@ const Publica = () => {
     value: FormData[K]
   ) => {
     setForm({ ...form, [name]: value });
-  };
-
-  const handleRegionChange = (region: Option | null) => {
-    handleFormChange("region", region);
   };
 
   const handleImageChange = (file: File | null) => {
@@ -194,8 +165,17 @@ const Publica = () => {
     setUploadProgress(0);
   };
 
-  const handleTownChange = (town: Option | null) =>
-    handleFormChange("town", town);
+  const handleTownChange = (town: Option | null) => {
+    setForm((prev) => {
+      const next = { ...prev, town };
+      if (town) {
+        next.region = cityToRegionOptionMap[town.value] ?? null;
+      } else {
+        next.region = null;
+      }
+      return next;
+    });
+  };
 
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
@@ -317,7 +297,9 @@ const Publica = () => {
 
     startTransition(async () => {
       try {
-        let resolvedImageUrl = uploadedImageUrl;
+        let resolvedImageUrl =
+          uploadedImageUrl ||
+          (form.imageUrl ? normalizeUrl(form.imageUrl) || null : null);
 
         if (imageFile) {
           const signature = buildFileSignature(imageFile);
@@ -481,14 +463,12 @@ const Publica = () => {
             onSubmit={onSubmit}
             submitLabel={t("submitLabel")}
             isLoading={isPending}
-            regionOptions={regionOptions}
             cityOptions={cityOptions}
             categoryOptions={categoryOptions}
             progress={uploadProgress}
-            isLoadingRegionsWithCities={isLoadingRegions}
+            isLoadingCities={isLoadingCities}
             handleFormChange={handleFormChange}
             handleImageChange={handleImageChange}
-            handleRegionChange={handleRegionChange}
             handleTownChange={handleTownChange}
             handleCategoriesChange={handleCategoriesChange}
             imageToUpload={imagePreview}

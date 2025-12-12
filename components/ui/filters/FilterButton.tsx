@@ -1,6 +1,6 @@
 "use client";
 import { JSX, MouseEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "../../../i18n/routing";
 import XIcon from "@heroicons/react/solid/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
 import { usePressFeedback } from "@components/hooks/usePressFeedback";
@@ -39,11 +39,10 @@ const FilterButton = ({
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${
-          enabled
+        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${enabled
             ? "border-primary bg-primary/5 text-foreground-strong"
             : "border-border text-foreground-strong hover:bg-muted"
-        }`}
+          }`}
         data-pressed={isPressed ? "true" : undefined}
         onClick={onOpenModal}
         {...handlers}

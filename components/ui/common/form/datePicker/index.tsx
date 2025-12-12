@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
@@ -57,6 +57,9 @@ export default function DatePickerComponent({
   onChange,
   required,
   className,
+  enableAllDayToggle = false,
+  isAllDay = false,
+  onToggleAllDay,
 }: DatePickerComponentProps) {
   const t = useTranslations("Components.DatePicker");
   const dateFormat = t("dateFormat");
@@ -71,26 +74,33 @@ export default function DatePickerComponent({
       ? initialEndCandidate
       : new Date(startingDate.getTime() + 60 * 60 * 1000);
   const minDateObj = minDate ? toDate(minDate) : undefined;
+  const baseEnd = endingDate > startingDate ? endingDate : startingDate;
+  const startDate = startingDate;
+  const endDate = isAllDay
+    ? setSeconds(setMinutes(setHours(startDate, 23), 59), 59)
+    : baseEnd;
 
-  const [startDate, setStartDate] = useState<Date>(startingDate);
-  const [endDate, setEndDate] = useState<Date>(endingDate);
-
-  
   // Emit string values on change
   const onChangeStart = (date: Date) => {
-    setStartDate(date);
-    if (date > endDate) {
+    if (isAllDay) {
+      const endOfDay = setSeconds(setMinutes(setHours(date, 23), 59), 59);
+      onChange("endDate", toISOString(endOfDay));
+    } else if (date > endDate) {
       const corrected = new Date(date.getTime() + 60 * 60 * 1000);
-      setEndDate(corrected);
       onChange("endDate", toISOString(corrected));
     }
     onChange("startDate", toISOString(date));
   };
   const onChangeEnd = (date: Date) => {
-    const corrected = date < startDate
-      ? new Date(startDate.getTime() + 60 * 60 * 1000)
-      : date;
-    setEndDate(corrected);
+    if (isAllDay) {
+      const endOfDay = setSeconds(setMinutes(setHours(startDate, 23), 59), 59);
+      onChange("endDate", toISOString(endOfDay));
+      return;
+    }
+    const corrected =
+      date < startDate
+        ? new Date(startDate.getTime() + 60 * 60 * 1000)
+        : date;
     onChange("endDate", toISOString(corrected));
   };
 
@@ -98,6 +108,30 @@ export default function DatePickerComponent({
     <div
       className={`flex flex-col md:flex-row gap-4 w-full ${className ?? ""}`}
     >
+      {enableAllDayToggle ? (
+        <label
+          htmlFor={`${idPrefix}-all-day`}
+          className="flex items-center gap-2 w-full md:w-auto cursor-pointer px-3 py-2 border border-border rounded-input hover:border-foreground/60 focus-within:border-foreground-strong"
+          aria-pressed={isAllDay}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onToggleAllDay?.(!isAllDay);
+            }
+          }}
+        >
+          <input
+            id={`${idPrefix}-all-day`}
+            type="checkbox"
+            checked={isAllDay}
+            onChange={(event) => onToggleAllDay?.(event.target.checked)}
+            className="h-4 w-4 accent-primary"
+          />
+          <span className="text-foreground-strong text-sm">{t("allDay")}</span>
+        </label>
+      ) : null}
       <div className="w-full">
         <label
           htmlFor={`${idPrefix}-start`}
@@ -139,11 +173,10 @@ export default function DatePickerComponent({
                     onClick={decreaseMonth}
                     disabled={prevMonthButtonDisabled}
                     type="button"
-                    className={`${
-                      prevMonthButtonDisabled
+                    className={`${prevMonthButtonDisabled
                         ? " cursor-not-allowed opacity-50"
                         : ""
-                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
+                      }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
                   >
                     <ChevronLeftIcon className="w-5 h-5 text-foreground-strong" />
                   </button>
@@ -151,11 +184,10 @@ export default function DatePickerComponent({
                     onClick={increaseMonth}
                     disabled={nextMonthButtonDisabled}
                     type="button"
-                    className={`${
-                      nextMonthButtonDisabled
+                    className={`${nextMonthButtonDisabled
                         ? " cursor-not-allowed opacity-50"
                         : ""
-                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
+                      }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
                   >
                     <ChevronRightIcon className="w-5 h-5 text-foreground-strong" />
                   </button>
@@ -165,83 +197,87 @@ export default function DatePickerComponent({
           />
         </div>
       </div>
-      <div className="w-full">
-        <label
-          htmlFor={`${idPrefix}-end`}
-          className="w-full text-foreground-strong font-bold"
-        >
-          {t("end")}
-        </label>
-        <div className="w-full mt-2">
-          <DatePicker
-            id={`${idPrefix}-end`}
-            locale={ca}
-            selected={endDate}
-            onChange={onChangeEnd}
-            showTimeSelect
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            minDate={startDate}
-            minTime={
-              startDate.toDateString() === endDate.toDateString()
-                ? startDate
-                : undefined
-            }
-            maxTime={
-              startDate.toDateString() === endDate.toDateString()
-                ? setSeconds(setMinutes(setHours(endDate, 23), 59), 59)
-                : undefined
-            }
-            required={required}
-            nextMonthButtonLabel=">"
-            previousMonthButtonLabel="<"
-            popperClassName="react-datepicker-left"
-            popperPlacement="top-end"
-            dateFormat={dateFormat}
-            customInput={<ButtonInput />}
-            renderCustomHeader={({
-              date,
-              decreaseMonth,
-              increaseMonth,
-              prevMonthButtonDisabled,
-              nextMonthButtonDisabled,
-            }: CustomHeaderProps) => (
-              <div className="flex justify-center items-center p-2">
-                <span className="w-1/2 text-foreground-strong uppercase">
-                  {format(date, monthYearFormat, { locale: ca })}
-                </span>
-                <div className="w-1/2 flex justify-evenly">
-                  <button
-                    onClick={decreaseMonth}
-                    disabled={prevMonthButtonDisabled}
-                    type="button"
-                    className={`${
-                      prevMonthButtonDisabled
-                        ? " cursor-not-allowed opacity-50"
-                        : ""
-                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
-                  >
-                    <ChevronLeftIcon className="w-5 h-5 text-foreground-strong" />
-                  </button>
-                  <button
-                    onClick={increaseMonth}
-                    disabled={nextMonthButtonDisabled}
-                    type="button"
-                    className={`${
-                      nextMonthButtonDisabled
-                        ? " cursor-not-allowed opacity-50"
-                        : ""
-                    }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
-                  >
-                    <ChevronRightIcon className="w-5 h-5 text-foreground-strong" />
-                  </button>
-                </div>
-              </div>
-            )}
-          />
+      {isAllDay ? (
+        <div className="w-full text-foreground/80 text-sm">
+          {t("allDayHelper")}
         </div>
-      </div>
+      ) : (
+        <div className="w-full">
+          <label
+            htmlFor={`${idPrefix}-end`}
+            className="w-full text-foreground-strong font-bold"
+          >
+            {t("end")}
+          </label>
+          <div className="w-full mt-2">
+            <DatePicker
+              id={`${idPrefix}-end`}
+              locale={ca}
+              selected={endDate}
+              onChange={onChangeEnd}
+              showTimeSelect
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              minTime={
+                startDate.toDateString() === endDate.toDateString()
+                  ? startDate
+                  : undefined
+              }
+              maxTime={
+                startDate.toDateString() === endDate.toDateString()
+                  ? setSeconds(setMinutes(setHours(endDate, 23), 59), 59)
+                  : undefined
+              }
+              required={required}
+              nextMonthButtonLabel=">"
+              previousMonthButtonLabel="<"
+              popperClassName="react-datepicker-left"
+              popperPlacement="top-end"
+              dateFormat={dateFormat}
+              customInput={<ButtonInput />}
+              renderCustomHeader={({
+                date,
+                decreaseMonth,
+                increaseMonth,
+                prevMonthButtonDisabled,
+                nextMonthButtonDisabled,
+              }: CustomHeaderProps) => (
+                <div className="flex justify-center items-center p-2">
+                  <span className="w-1/2 text-foreground-strong uppercase">
+                    {format(date, monthYearFormat, { locale: ca })}
+                  </span>
+                  <div className="w-1/2 flex justify-evenly">
+                    <button
+                      onClick={decreaseMonth}
+                      disabled={prevMonthButtonDisabled}
+                      type="button"
+                      className={`${prevMonthButtonDisabled
+                          ? " cursor-not-allowed opacity-50"
+                          : ""
+                        }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
+                    >
+                      <ChevronLeftIcon className="w-5 h-5 text-foreground-strong" />
+                    </button>
+                    <button
+                      onClick={increaseMonth}
+                      disabled={nextMonthButtonDisabled}
+                      type="button"
+                      className={`${nextMonthButtonDisabled
+                          ? " cursor-not-allowed opacity-50"
+                          : ""
+                        }flex p-1 text-foreground-strong bg-background border border-foreground-strong rounded-xl focus:outline-none`}
+                    >
+                      <ChevronRightIcon className="w-5 h-5 text-foreground-strong" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

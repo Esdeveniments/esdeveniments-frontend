@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter } from "../../../../i18n/routing";
 import { useState, useMemo, useTransition } from "react";
 import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
@@ -10,6 +10,7 @@ import { EventDetailResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { Option } from "types/common";
 import { useCategories } from "@components/hooks/useCategories";
+import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 
 export default function EditEventClient({
   event,
@@ -29,17 +30,6 @@ export default function EditEventClient({
   // Fetch categories
   const { categories, isLoading: isLoadingCategories } = useCategories();
 
-  const regionOptions = useMemo(
-    () =>
-      regions
-        ? regions.map((region) => ({
-            label: region.name,
-            value: region.id.toString(),
-          }))
-        : [],
-    [regions]
-  );
-
   const categoryOptions = useMemo(
     () =>
       categories.map((category) => ({
@@ -49,34 +39,31 @@ export default function EditEventClient({
     [categories]
   );
 
-  const cityOptions = useMemo(() => {
-    if (!regions || !form.region) return [];
-    const region = regions.find(
-      (r) =>
-        r.id.toString() ===
-        (form.region && "value" in form.region ? form.region.value : "")
-    );
-    return region
-      ? region.cities.map((city) => ({
-          id: city.id,
-          label: city.label,
-          value: city.id.toString(), // Use ID as value for proper form handling
-        }))
-      : [];
-  }, [regions, form.region]);
+  const { cityOptions, cityToRegionOptionMap } = useMemo(
+    () => generateCityOptionsWithRegionMap(regions),
+    [regions]
+  );
+
+  const isLoadingCities = !regions;
 
   // Simple form change handler - no validation here
   const handleFormChange = <K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
-    setForm({ ...form, [name]: value });
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleRegionChange = (region: Option | null) =>
-    handleFormChange("region", region);
   const handleTownChange = (town: Option | null) =>
-    handleFormChange("town", town);
+    setForm((prev) => {
+      const next = { ...prev, town };
+      if (town) {
+        next.region = cityToRegionOptionMap[town.value] ?? prev.region ?? null;
+      } else {
+        next.region = null;
+      }
+      return next;
+    });
 
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
@@ -125,13 +112,12 @@ export default function EditEventClient({
         submitLabel="Desa canvis"
         isEditMode={true}
         isLoading={isPending}
-        regionOptions={regionOptions}
         cityOptions={cityOptions}
         categoryOptions={categoryOptions}
+        isLoadingCities={isLoadingCities}
         isLoadingCategories={isLoadingCategories}
         handleFormChange={handleFormChange}
         handleImageChange={handleImageChange}
-        handleRegionChange={handleRegionChange}
         handleTownChange={handleTownChange}
         handleCategoriesChange={handleCategoriesChange}
         progress={progress}

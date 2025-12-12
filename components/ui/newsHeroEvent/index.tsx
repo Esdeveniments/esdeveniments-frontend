@@ -3,11 +3,15 @@ import { getTranslations } from "next-intl/server";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
   const t = await getTranslations("Components.News");
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList);
   const image = event.imageUrl;
-  const formatted = getFormattedDate(event.startDate, event.endDate);
+  const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;

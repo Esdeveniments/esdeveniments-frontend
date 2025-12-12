@@ -8,6 +8,7 @@ import {
 } from "./string-helpers";
 import type { EventCopyLabels, StringHelperLabels } from "types/common";
 import caMessages from "../messages/ca.json";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 const defaultEventCopyLabels: EventCopyLabels = (caMessages as any).Utils
   .EventCopy as EventCopyLabels;
@@ -262,7 +263,8 @@ function capitalizePlaces(text: string): string {
 
 export async function buildEventIntroText(
   event: EventDetailResponseDTO,
-  labels: EventCopyLabels = defaultEventCopyLabels
+  labels: EventCopyLabels = defaultEventCopyLabels,
+  locale: AppLocale = DEFAULT_LOCALE
 ): Promise<string> {
   const cityName = formatPlaceName(event.city?.name || "");
   const regionName = formatPlaceName(event.region?.name || "");
@@ -270,7 +272,8 @@ export async function buildEventIntroText(
 
   const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
 
   const placeSummary = cityName

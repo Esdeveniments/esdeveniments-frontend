@@ -8,7 +8,8 @@ import {
   KeyboardEvent,
   JSX,
 } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "../../../i18n/routing";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import XIcon from "@heroicons/react/solid/XIcon";
 import SearchIcon from "@heroicons/react/solid/SearchIcon";
@@ -104,18 +105,16 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${
-        isSearchActive ? "border-primary border-2" : "border-border"
-      }`}
+      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${isSearchActive ? "border-primary border-2" : "border-border"
+        }`}
       data-testid="search-bar"
     >
       <div className="w-full flex justify-start items-center gap-element-gap rounded-input">
         {/* Decorative search icon on the left */}
         <div className="h-10 flex justify-center items-center px-button-x">
           <SearchIcon
-            className={`h-5 w-5 transition-interactive ${
-              isSearchActive ? "text-primary" : "text-foreground-strong"
-            }`}
+            className={`h-5 w-5 transition-interactive ${isSearchActive ? "text-primary" : "text-foreground-strong"
+              }`}
             aria-hidden="true"
           />
         </div>

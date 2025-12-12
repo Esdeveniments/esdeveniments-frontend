@@ -17,7 +17,7 @@ export default async function NewsCard({
   const headersList = await headers();
   const locale = resolveLocaleFromHeaders(headersList);
   const image = event.imageUrl;
-  const formatted = getFormattedDate(event.startDate, event.endDate);
+  const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;

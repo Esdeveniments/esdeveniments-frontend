@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { KeyboardEvent } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "../../../i18n/routing";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
@@ -14,6 +15,7 @@ import {
 } from "@heroicons/react/solid";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
+import { stripLocalePrefix } from "@utils/i18n-routing";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
 import { useHero } from "./HeroContext";
@@ -44,8 +46,9 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
   // --- Location Logic ---
   const isPlacePage = useMemo(() => {
-    const segment = pathname?.split("/")[1];
-    return !!segment && segment !== "catalunya" && pathname !== "/";
+    const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");
+    const segment = pathnameWithoutLocale?.split("/")[1];
+    return !!segment && segment !== "catalunya" && pathnameWithoutLocale !== "/";
   }, [pathname]);
 
   const {
@@ -69,7 +72,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   }, [regionsAndCitiesArray]);
 
   useEffect(() => {
-    const segment = pathname?.split("/")[1];
+    const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");
+    const segment = pathnameWithoutLocale?.split("/")[1];
     if (segment && segment !== "catalunya") {
       const match = allLocations.find((loc) => loc.value === segment);
       if (match) {

@@ -1,7 +1,7 @@
 "use client";
 import { FC } from "react";
 import { useTranslations } from "next-intl";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
 import Modal from "@components/ui/common/modal";
 import { PencilIcon, XCircleIcon } from "@heroicons/react/outline";
 import type { EditModalProps } from "types/editModal";
@@ -28,7 +28,7 @@ const EditModal: FC<EditModalProps> = ({
       >
         <ul role="list" className="divide-y divide-foreground-strong text-left">
           <li key="edit" className="p-4 flex">
-            <PressableAnchor
+            <PressableAnchorClient
               href={`/e/${slug}/edita`}
               prefetch={false}
               variant="inline"
@@ -43,7 +43,7 @@ const EditModal: FC<EditModalProps> = ({
                   <p className="text-sm">{t("editDescription")}</p>
                 </div>
               </div>
-            </PressableAnchor>
+            </PressableAnchorClient>
           </li>
           <li key="remove" className="p-4 flex">
             <button className="cursor-pointer" onClick={onRemove}>

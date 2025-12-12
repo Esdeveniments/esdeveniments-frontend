@@ -32,6 +32,7 @@ import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { addLocalizedDateFields } from "@utils/mappers/event";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -220,8 +221,9 @@ export async function buildPlaceEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const eventsWithAds = insertAds(events);
-  const validEvents = events.filter(isEventSummaryResponseDTO);
+  const localizedEvents = addLocalizedDateFields(events, locale);
+  const eventsWithAds = insertAds(localizedEvents);
+  const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const structuredScripts =
     validEvents.length > 0
       ? [

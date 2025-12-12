@@ -166,7 +166,8 @@ export default async function EventPage({
 
   const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
 
   const statusMeta = {
@@ -175,7 +176,7 @@ export default async function EventPage({
   };
 
   // Build intro and FAQ via shared utils (no assumptions)
-  const introText = await buildEventIntroText(event, eventCopyLabels);
+  const introText = await buildEventIntroText(event, eventCopyLabels, locale);
   const faqItems = await buildFaqItems(event, eventCopyLabels);
   const faqJsonLd = buildFaqJsonLd(faqItems);
 
@@ -311,6 +312,7 @@ export default async function EventPage({
               location={cityName || regionName}
               introText={introText}
               locationType="town"
+              locale={locale as AppLocale}
             />
             {/* Location (SSR for SEO) with client map toggle */}
             <EventLocation

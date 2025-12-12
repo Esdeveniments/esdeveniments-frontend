@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePathname, useRouter } from "../../../../i18n/routing";
+import { startNavigationFeedback } from "@lib/navigation-feedback";
 import {
   LOCALE_COOKIE,
   LOCALE_COOKIE_MAX_AGE,
@@ -49,10 +50,17 @@ export default function LanguageSwitcher() {
       if (nextLocale === locale) return;
 
       const search = searchParams.toString();
-      const target = search ? `${normalizedPath}?${search}` : normalizedPath;
+      const target = search
+        ? `${normalizedPath}?${search}`
+        : normalizedPath || "/";
 
-      router.replace(target || "/", { locale: nextLocale });
+      startNavigationFeedback();
       document.cookie = buildCookieString(nextLocale);
+      router.replace(target || "/", { locale: nextLocale });
+      // Ensure refresh happens after navigation so messages reload under new locale
+      requestAnimationFrame(() => {
+        router.refresh();
+      });
     },
     [locale, normalizedPath, router, searchParams]
   );

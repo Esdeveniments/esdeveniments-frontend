@@ -43,11 +43,12 @@ export async function generateMetadata({
 }) {
   const t = await getTranslations("Pages.SitemapMonth");
   const tConstants = await getTranslations("Components.Constants");
+  const tNotFound = await getTranslations("App.NotFound");
   const { town, year, month } = await params;
   if (!isValidPlace(town)) {
     return {
-      title: "Not Found",
-      description: "Page not found",
+      title: tNotFound("title"),
+      description: tNotFound("description"),
     };
   }
 

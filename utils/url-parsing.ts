@@ -4,14 +4,21 @@
  */
 
 import { URLSegments } from "../types/url-parsing";
+import { stripLocalePrefix } from "./i18n-routing";
 
 /**
  * Extract URL segments from a pathname
  * Handles the new URL structure where /tots/ is omitted for default date
  */
 export function extractURLSegments(pathname: string): URLSegments {
+  // Strip locale prefix to avoid treating it as the place segment
+  const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");
+
   // Remove leading slash and split into segments
-  const segments = pathname.replace(/^\//, "").split("/").filter(Boolean);
+  const segments = (pathnameWithoutLocale || "/")
+    .replace(/^\//, "")
+    .split("/")
+    .filter(Boolean);
 
   // Handle different URL patterns
   switch (segments.length) {

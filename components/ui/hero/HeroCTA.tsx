@@ -1,7 +1,7 @@
 "use client";
 
 import { useHero } from "./HeroContext";
-import { useRouter } from "next/navigation";
+import { useRouter } from "../../../i18n/routing";
 import { useTranslations } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { SearchIcon } from "@heroicons/react/solid";
@@ -31,11 +31,11 @@ export default function HeroCTA() {
     }
 
     if (date) {
-        const filter = HERO_DATE_FILTERS.find((f) => f.value === date);
-        if (filter) {
-          const translated = tFilters(filter.labelKey);
-          const dateLabel =
-            date === "cap-de-setmana" ? t("dateWeekend") : translated.toLowerCase();
+      const filter = HERO_DATE_FILTERS.find((f) => f.value === date);
+      if (filter) {
+        const translated = tFilters(filter.labelKey);
+        const dateLabel =
+          date === "cap-de-setmana" ? t("dateWeekend") : translated.toLowerCase();
         text += ` ${dateLabel}`;
       }
     }

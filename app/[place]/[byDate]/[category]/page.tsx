@@ -44,6 +44,7 @@ import type { AppLocale } from "types/i18n";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
+import { addLocalizedDateFields } from "@utils/mappers/event";
 
 export const revalidate = 300;
 // Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
@@ -425,8 +426,9 @@ async function buildCategoryEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const eventsWithAds = insertAds(events);
-  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const localizedEvents = addLocalizedDateFields(events, locale);
+  const eventsWithAds = insertAds(localizedEvents);
+  const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const pageData = await pageDataPromise;
   const structuredScripts: JsonLdScript[] = [];
 

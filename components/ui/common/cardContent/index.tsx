@@ -1,3 +1,4 @@
+"use client";
 import NextImage from "next/image";
 import {
   ClockIcon,
@@ -11,17 +12,19 @@ import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import MobileShareIsland from "./MobileShareIsland";
 import DesktopShareIsland from "./DesktopShareIsland";
-import CardLink from "./CardLink";
+import CardLinkClient from "./CardLinkClient";
 import { CardContentProps } from "types/props";
-import { getTranslations } from "next-intl/server";
+import { useTranslations, useLocale } from "next-intl";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
-export default async function CardContentServer({
+export default function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
 }: CardContentProps) {
-  const tCard = await getTranslations("Components.CardContent");
-  const tTime = await getTranslations("Utils.EventTime");
+  const tCard = useTranslations("Components.CardContent");
+  const tTime = useTranslations("Utils.EventTime");
+  const locale = (useLocale?.() || DEFAULT_LOCALE) as AppLocale;
   const timeLabels = {
     consult: tTime("consult"),
     startsAt: tTime("startsAt", { time: "{time}" }),
@@ -29,10 +32,14 @@ export default async function CardContentServer({
     simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
   };
   const { description, icon } = event.weather || {};
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
-    event.startDate,
-    event.endDate
-  );
+  const { formattedStart, formattedEnd, nameDay } =
+    event.formattedStart && event.nameDay
+      ? {
+        formattedStart: event.formattedStart,
+        formattedEnd: event.formattedEnd ?? null,
+        nameDay: event.nameDay,
+      }
+      : getFormattedDate(event.startDate, event.endDate, locale);
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
   // Show full location: location, city, region combined
   // Note: List API responses may not include city/region, so we check if they exist
@@ -52,7 +59,7 @@ export default async function CardContentServer({
 
   return (
     <>
-      <CardLink
+      <CardLinkClient
         href={`/e/${event.slug}`}
         className="w-full pressable-card transition-card"
       >
@@ -104,7 +111,7 @@ export default async function CardContentServer({
             </div>
           </div>
         </div>
-      </CardLink>
+      </CardLinkClient>
       <div className="w-full flex justify-between items-center px-card-padding-sm mb-element-gap-sm">
         <DesktopShareIsland slug={event.slug} />
         <ViewCounterIsland

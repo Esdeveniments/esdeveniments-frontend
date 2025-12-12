@@ -47,6 +47,7 @@ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { addLocalizedDateFields } from "@utils/mappers/event";
 
 // page-level ISR not set here; fetch-level caching applies
 export const revalidate = 300;
@@ -472,8 +473,9 @@ async function buildPlaceByDateEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const eventsWithAds = insertAds(events);
-  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const localizedEvents = addLocalizedDateFields(events, locale);
+  const eventsWithAds = insertAds(localizedEvents);
+  const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const pageData = await pageDataPromise;
   const structuredScripts: JsonLdScript[] = [];
 

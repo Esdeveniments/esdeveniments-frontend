@@ -1,6 +1,8 @@
+"use client";
+
 import clsx from "clsx";
-import { getLocale } from "next-intl/server";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 
 import type { PressableAnchorProps, PressableLinkVariant } from "types/ui";
 import { DEFAULT_LOCALE } from "types/i18n";
@@ -12,7 +14,7 @@ const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
   plain: "",
 };
 
-export default async function PressableAnchor({
+export default function PressableAnchorClient({
   className = "",
   children,
   variant = "inline",
@@ -20,7 +22,7 @@ export default async function PressableAnchor({
   disableNavigationSignal = false,
   ...props
 }: PressableAnchorProps) {
-  const locale = (await getLocale()) || DEFAULT_LOCALE;
+  const locale = useLocale?.() || DEFAULT_LOCALE;
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;
@@ -71,3 +73,4 @@ export default async function PressableAnchor({
     </Link>
   );
 }
+

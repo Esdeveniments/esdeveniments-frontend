@@ -5,8 +5,10 @@ import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
-export default function EventCalendar({ event }: EventCalendarProps) {
+export default async function EventCalendar({ event }: EventCalendarProps) {
   // Extract needed fields
   const {
     title,
@@ -21,9 +23,12 @@ export default function EventCalendar({ event }: EventCalendarProps) {
     endTime,
   } = event;
 
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList);
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     startDate,
-    endDate
+    endDate,
+    locale
   );
 
   const eventDate = formattedEnd

@@ -73,18 +73,19 @@ export default async function NewsArticleDetail({
     return notFound();
   }
 
+  const headersList = await headers();
+  const locale = (resolveLocaleFromHeaders(headersList) ||
+    DEFAULT_LOCALE) as AppLocale;
+
   const plainDescription = DOMPurify.sanitize(detail.description || "", {
     ALLOWED_TAGS: [],
   });
   const dateRangeText = (() => {
-    const f = getFormattedDate(detail.startDate, detail.endDate);
+    const f = getFormattedDate(detail.startDate, detail.endDate, locale);
     return f.formattedEnd
       ? `${f.formattedStart} – ${f.formattedEnd}`
       : f.formattedStart;
   })();
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
   const localePrefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocalePath = (path: string) => {
     if (!path.startsWith("/")) return path;

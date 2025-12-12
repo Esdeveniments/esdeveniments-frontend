@@ -364,6 +364,9 @@ export default async function proxy(request: NextRequest) {
     ? (() => {
         const rewriteUrl = request.nextUrl.clone();
         rewriteUrl.pathname = pathnameWithoutLocale || "/";
+        // Avoid RSC/data cache collisions between locales by making the rewritten
+        // request URL vary per locale while keeping the visible URL unchanged.
+        rewriteUrl.searchParams.set("__locale", resolvedLocale);
         return NextResponse.rewrite(rewriteUrl, baseResponseInit);
       })()
     : NextResponse.next(baseResponseInit);

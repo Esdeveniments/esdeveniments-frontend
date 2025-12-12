@@ -8,6 +8,7 @@ import type {
 import type { CitySummaryResponseDTO } from "./api/city";
 import type { CategorySummaryResponseDTO } from "./api/category";
 import type { DateRange, DeleteReason, Option } from "./common";
+import type { AppLocale } from "./i18n";
 
 // Helper schemas for form validation
 const OptionSchema = z.object({ value: z.string(), label: z.string() });
@@ -80,6 +81,7 @@ export const createEventFormSchema = (
       ),
     categories: z.array(CategoryFormItemSchema),
     email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
+    isAllDay: z.boolean().optional(),
   });
 
 // --- Zod schema for canonical event form data ---
@@ -132,6 +134,8 @@ export interface FormData {
     { id: number; name: string } | { value: string; label: string } | number
   >;
   email?: string; // UI only
+  // Flag to mark single-day/all-day events (end time auto-handled)
+  isAllDay?: boolean;
 }
 
 /**
@@ -232,6 +236,7 @@ export interface EventDescriptionProps {
   locationValue: string;
   introText?: string;
   locationType?: "region" | "town" | "general";
+  locale?: AppLocale;
 }
 
 export interface EventTagsProps {
@@ -293,24 +298,33 @@ export interface EventFormProps {
   submitLabel: string;
   isEditMode?: boolean;
   isLoading?: boolean;
-  regionOptions: Option[];
   cityOptions: Option[];
   categoryOptions: Option[];
-  isLoadingRegionsWithCities?: boolean;
+  isLoadingCities?: boolean;
   isLoadingCategories?: boolean;
+  isLocating?: boolean;
   handleFormChange: <K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => void;
   handleImageChange: (file: File | null) => void;
-  handleRegionChange: (region: Option | null) => void;
   handleTownChange: (town: Option | null) => void;
   handleCategoriesChange: (categories: Option[]) => void;
+  handleUseGeolocation?: () => void;
+  handleTestUrl?: (url: string) => void;
   progress: number;
   imageToUpload: string | null;
   imageFile?: File | null;
   isUploadingImage?: boolean;
   uploadMessage?: string | null;
+  onPreview?: () => void;
+  canPreview?: boolean;
+  previewLabel?: string;
+  previewTestId?: string;
+  imageMode?: "upload" | "url";
+  onImageModeChange?: (mode: "upload" | "url") => void;
+  handleImageUrlChange?: (url: string) => void;
+  imageUrlValue?: string | null;
 }
 
 export interface UseEventsOptions {

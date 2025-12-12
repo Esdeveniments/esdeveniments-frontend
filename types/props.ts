@@ -130,6 +130,9 @@ export interface DatePickerComponentProps {
   onChange: (field: "startDate" | "endDate", value: string) => void;
   required?: boolean;
   className?: string;
+  enableAllDayToggle?: boolean;
+  isAllDay?: boolean;
+  onToggleAllDay?: (value: boolean) => void;
 }
 
 export interface CustomHeaderProps {
@@ -152,6 +155,11 @@ export interface ImageUploaderProps {
   progress: number;
   isUploading?: boolean;
   uploadMessage?: string | null;
+  mode?: "upload" | "url";
+  onModeChange?: (mode: "upload" | "url") => void;
+  imageUrlValue?: string;
+  onImageUrlChange?: (value: string) => void;
+  imageUrlError?: string | null;
 }
 
 export interface InputProps {
@@ -394,9 +402,7 @@ export interface ServerEventsCategorizedProps {
 
 export type ServerEventsCategorizedContentProps = Pick<
   ServerEventsCategorizedProps,
-  | "categorizedEventsPromise"
-  | "categoriesPromise"
-  | "featuredPlaces"
+  "categorizedEventsPromise" | "categoriesPromise" | "featuredPlaces"
 >;
 
 export interface SearchAwareHeadingProps {
@@ -540,7 +546,10 @@ export interface DateFilterBadgeLabels {
   today: { label: string; ariaLabelText: string };
   tomorrow: { label: string; ariaLabelText: string };
   weekend: { label: string; ariaLabelText: string };
-  ariaPlace: (options: { ariaLabelText: string; contextName: string }) => string;
+  ariaPlace: (options: {
+    ariaLabelText: string;
+    contextName: string;
+  }) => string;
   ariaCategory: (options: {
     ariaLabelText: string;
     contextName: string;

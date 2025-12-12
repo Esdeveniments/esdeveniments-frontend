@@ -162,10 +162,21 @@
       "errorCreate": "Error creating the event. Please try again.",
       "errorBodyLimit": "The total request size (image + data) exceeds the allowed limit of 10 MB. Please reduce the image size or remove unnecessary data.",
       "errorGeneric": "There was an error publishing the event. Please try again.",
+      "errorFormParsing": "The connection was interrupted while sending the form. Reload the page and try again.",
       "submitLabel": "Publish",
+      "imageTooLarge": "The image exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
+      "uploadSuccess": "Image uploaded successfully.",
+      "uploadFailed": "We couldn't upload the image. Check your connection and try again.",
+      "imageRequired": "Image is required.",
       "fallbackRegion": "Region {id}",
       "fallbackCity": "City {id}",
-      "noEventsFound": "We couldn't find recent events for this area. Please try again later."
+      "noEventsFound": "We couldn't find recent events for this area. Please try again later.",
+      "restoreDraftTitle": "You have a saved draft",
+      "restoreDraftDescription": "Recover what you were writing or start fresh.",
+      "restoreDraftApply": "Restore draft",
+      "restoreDraftDiscard": "Discard",
+      "geoNotSupported": "Your browser does not allow location access.",
+      "geoDenied": "We couldn't get your location. Please check permissions."
     },
     "PlaceFallback": {
       "placeSuffix": " in {place}",
@@ -481,8 +492,19 @@
     "ImageUploader": {
       "label": "Image *",
       "unsupported": "The selected file is not a supported image. Please upload a JPEG, PNG, JPG, or WEBP file.",
-      "tooLarge": "The image size exceeds the 8 MB limit. Please choose a smaller image.",
+      "originalTooLarge": "The image exceeds the maximum limit of {limit} MB. Reduce the image size before retrying.",
+      "tooLarge": "The image size exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
+      "compressFailed": "We couldn't reduce the image. Check your connection and try again.",
+      "optimizing": "Optimizing the image to meet the {limit} MB limit...",
       "progress": "{progress}%",
+      "uploading": "Uploading the image ({progress}%)...",
+      "uploadSuccess": "Image uploaded successfully.",
+      "uploadMode": "Upload a file",
+      "urlMode": "Use an image URL",
+      "imageUrlLabel": "Image URL",
+      "imageUrlPlaceholder": "https://example.com/image.jpg",
+      "imageUrlHelper": "If your image is already online, paste the link and we'll use it directly without uploading.",
+      "imageUrlInvalid": "Add a valid image URL",
       "remove": "Remove image",
       "altPreview": "Image"
     },
@@ -574,6 +596,30 @@
       "url": "Event link",
       "region": "County *",
       "town": "Town *",
+      "titleHint": "Example: Summer street festival",
+      "locationHint": "Add the exact spot: square, street or venue",
+      "urlHint": "Optional: official link or social post",
+      "imageHint": "JPG/PNG/WebP. A clear image helps people find it.",
+      "reviewTitle": "Before publishing",
+      "reviewReady": "All set! Review and publish.",
+      "reviewMissing": "Missing: {fields}",
+      "imageLabel": "Image",
+      "datesLabel": "Dates & time",
+      "previewButton": "Preview",
+      "previewModalTitle": "Preview your event",
+      "previewMissingUrl": "Add a link so people can see more details.",
+      "previewMissingDescription": "Add a description to help people find it.",
+      "previewMissingCategories": "No categories yet",
+      "previewWarnings": "Recommendations",
+      "step": "Step {current} of {total}",
+      "stepBasics": "Basics",
+      "stepLocation": "Location",
+      "stepImage": "Image & review",
+      "previous": "Back",
+      "next": "Next",
+      "useLocation": "Use my location",
+      "locating": "Locating...",
+      "testLink": "Test link",
       "regionPlaceholder": "Select a county",
       "townPlaceholder": "Select a town",
       "categoriesPlaceholder": "Select categories (optional)",
@@ -620,7 +666,9 @@
       "start": "Start *",
       "end": "End *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
-      "monthYearFormat": "MMMM yyyy"
+      "monthYearFormat": "MMMM yyyy",
+      "allDay": "All day (no end time)",
+      "allDayHelper": "If it lasts all day, we'll set the end to the same day."
     },
     "LoadMoreButton": {
       "loading": "Loading more events",
@@ -649,7 +697,15 @@
       "ariaAlso": "See also"
     },
     "Description": {
-      "title": "Description"
+      "title": "Description",
+      "translateCta": "Translate the description to {target}",
+      "translating": "Translating…",
+      "translatedLabel": "Translated from Catalan to {target}",
+      "translateError": "We couldn't translate right now. Please try again.",
+      "target": {
+        "en": "English",
+        "es": "Spanish"
+      }
     },
     "HorizontalScroll": {
       "next": "Next",

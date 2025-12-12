@@ -121,7 +121,11 @@ export function generateEventMetadata(
       event.description
     );
     // Enrich description with date and venue, keeping under 156 chars
-    const { formattedStart } = getFormattedDate(event.startDate, event.endDate);
+    const { formattedStart } = getFormattedDate(
+      event.startDate,
+      event.endDate,
+      localeToUse
+    );
     const descriptionParts = [enhancedDescription];
     if (formattedStart && formattedStart.trim().length > 0) {
       descriptionParts.push(formattedStart);

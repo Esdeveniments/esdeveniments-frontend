@@ -11,6 +11,8 @@ import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 async function CardContentServer({
   event,
@@ -19,6 +21,8 @@ async function CardContentServer({
 }: CardContentProps) {
   const tCard = await getTranslations("Components.CardContent");
   const tTime = await getTranslations("Utils.EventTime");
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList);
   const timeLabels = {
     consult: tTime("consult"),
     startsAt: tTime("startsAt"),
@@ -29,7 +33,8 @@ async function CardContentServer({
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
 
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);

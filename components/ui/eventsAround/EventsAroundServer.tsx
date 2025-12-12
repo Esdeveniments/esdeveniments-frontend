@@ -10,6 +10,8 @@ import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 import caMessages from "../../../messages/ca.json";
+import { headers } from "next/headers";
+import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const cardClass =
@@ -44,7 +46,19 @@ function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   );
 }
 
-function EventsAroundServer({
+export function dedupeEvents(events: EventsAroundServerProps["events"]) {
+  const seen = new Set<string | number | undefined>();
+  const result = [] as typeof events;
+  for (const ev of events) {
+    const key = (ev.id as string | number | undefined) ?? ev.slug;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(ev);
+  }
+  return result;
+}
+
+async function EventsAroundServer({
   events,
   layout = "compact",
   loading = false,
@@ -54,19 +68,11 @@ function EventsAroundServer({
   title,
   useDetailTimeFormat = false,
 }: EventsAroundServerProps) {
+  const headersList = await headers();
+  const locale = resolveLocaleFromHeaders(headersList);
   // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
   // Keep first occurrence order-stable. Key used: id fallback to slug.
-  const uniqueEvents = (() => {
-    const seen = new Set<string | number | undefined>();
-    const result = [] as typeof events;
-    for (const ev of events) {
-      const key = (ev.id as string | number | undefined) ?? ev.slug;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      result.push(ev);
-    }
-    return result;
-  })();
+  const uniqueEvents = dedupeEvents(events);
 
   // Generate JSON-LD data for SEO
   const generateJsonLdData = () => {
@@ -144,7 +150,7 @@ function EventsAroundServer({
         )}
         <HorizontalScroll
           className="py-element-gap px-section-x"
-            ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
+          ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
           nudgeOnFirstLoad
           showDesktopArrows
           hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
@@ -192,7 +198,8 @@ function EventsAroundServer({
           // Format the date
           const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
             event.startDate,
-            event.endDate
+            event.endDate,
+            locale
           );
           const eventDate = formattedEnd
             ? `Del ${formattedStart} al ${formattedEnd}`

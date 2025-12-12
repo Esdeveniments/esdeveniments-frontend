@@ -162,10 +162,21 @@
       "errorCreate": "Error al crear el evento. Por favor, inténtalo de nuevo.",
       "errorBodyLimit": "El tamaño total de la solicitud (imagen + datos) supera el límite permitido de 10 MB. Por favor, reduce el tamaño de la imagen o elimina datos innecesarios.",
       "errorGeneric": "Ha habido un error al publicar el evento. Por favor, inténtalo de nuevo.",
+      "errorFormParsing": "Se cortó la conexión mientras se enviaba el formulario. Recarga la página e inténtalo de nuevo.",
       "submitLabel": "Publicar",
+      "imageTooLarge": "La imagen supera el límite permitido de {limit} MB. Por favor, elige una imagen más pequeña.",
+      "uploadSuccess": "Imagen subida correctamente.",
+      "uploadFailed": "No hemos podido subir la imagen. Revisa la conexión e inténtalo de nuevo.",
+      "imageRequired": "La imagen es obligatoria.",
       "fallbackRegion": "Región {id}",
       "fallbackCity": "Ciudad {id}",
-      "noEventsFound": "No hemos encontrado eventos recientes para esta zona. Inténtalo más tarde."
+      "noEventsFound": "No hemos encontrado eventos recientes para esta zona. Inténtalo más tarde.",
+      "restoreDraftTitle": "Tienes un borrador guardado",
+      "restoreDraftDescription": "Puedes recuperar lo que estabas escribiendo o empezar de cero.",
+      "restoreDraftApply": "Recuperar borrador",
+      "restoreDraftDiscard": "Descartar",
+      "geoNotSupported": "Tu navegador no permite obtener la ubicación.",
+      "geoDenied": "No hemos podido obtener la ubicación. Revisa los permisos."
     },
     "PlaceFallback": {
       "placeSuffix": " en {place}",
@@ -481,8 +492,19 @@
     "ImageUploader": {
       "label": "Imagen *",
       "unsupported": "El archivo seleccionado no es una imagen soportada. Por favor, sube un archivo en formato JPEG, PNG, JPG o WEBP.",
-      "tooLarge": "El tamaño de la imagen supera el límite permitido de 8 MB. Por favor, elige una imagen más pequeña.",
+      "originalTooLarge": "La imagen supera el límite máximo de {limit} MB. Reduce el tamaño de la imagen antes de volver a intentarlo.",
+      "tooLarge": "El tamaño de la imagen supera el límite permitido de {limit} MB. Por favor, elige una imagen más pequeña.",
+      "compressFailed": "No hemos podido reducir la imagen. Revisa la conexión e inténtalo de nuevo.",
+      "optimizing": "Optimizando la imagen para cumplir el límite de {limit} MB...",
       "progress": "{progress}%",
+      "uploading": "Subiendo la imagen ({progress}%)...",
+      "uploadSuccess": "Imagen subida correctamente.",
+      "uploadMode": "Subir un archivo",
+      "urlMode": "Usar URL de imagen",
+      "imageUrlLabel": "URL de la imagen",
+      "imageUrlPlaceholder": "https://ejemplo.com/imagen.jpg",
+      "imageUrlHelper": "Si la imagen ya está online, pega el enlace y la usaremos directamente sin subirla.",
+      "imageUrlInvalid": "Añade una URL válida",
       "remove": "Eliminar imagen",
       "altPreview": "Imagen"
     },
@@ -574,6 +596,30 @@
       "url": "Enlace del evento",
       "region": "Comarca *",
       "town": "Población *",
+      "titleHint": "Ejemplo: Fiesta mayor del barrio",
+      "locationHint": "Añade el punto exacto: plaza, calle o equipamiento",
+      "urlHint": "Opcional: enlace oficial o redes del evento",
+      "imageHint": "Formatos JPG/PNG/WebP. Una imagen clara ayuda a encontrarlo.",
+      "reviewTitle": "Antes de publicar",
+      "reviewReady": "¡Todo listo! Revisa y publica.",
+      "reviewMissing": "Faltan: {fields}",
+      "imageLabel": "Imagen",
+      "datesLabel": "Fechas y horario",
+      "previewButton": "Previsualizar",
+      "previewModalTitle": "Previsualiza el evento",
+      "previewMissingUrl": "Añade un enlace para que la gente pueda ver más detalles.",
+      "previewMissingDescription": "Añade una descripción para que sea más fácil encontrarlo.",
+      "previewMissingCategories": "Aún no has añadido categorías",
+      "previewWarnings": "Recomendaciones",
+      "step": "Paso {current} de {total}",
+      "stepBasics": "Información básica",
+      "stepLocation": "Ubicación",
+      "stepImage": "Imagen y revisión",
+      "previous": "Atrás",
+      "next": "Siguiente",
+      "useLocation": "Usar mi ubicación",
+      "locating": "Localizando...",
+      "testLink": "Probar enlace",
       "regionPlaceholder": "Selecciona una comarca",
       "townPlaceholder": "Selecciona un pueblo",
       "categoriesPlaceholder": "Selecciona categorías (opcional)",
@@ -620,7 +666,9 @@
       "start": "Inicio *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
-      "monthYearFormat": "MMMM yyyy"
+      "monthYearFormat": "MMMM yyyy",
+      "allDay": "Todo el día (sin hora de fin)",
+      "allDayHelper": "Si dura todo el día, marcaremos el final en el mismo día."
     },
     "LoadMoreButton": {
       "loading": "Cargando más eventos",
@@ -649,7 +697,15 @@
       "ariaAlso": "Ver también"
     },
     "Description": {
-      "title": "Descripción"
+      "title": "Descripción",
+      "translateCta": "Traducir la descripción al {target}",
+      "translating": "Traduciendo…",
+      "translatedLabel": "Traducido del catalán al {target}",
+      "translateError": "No hemos podido traducir ahora mismo. Inténtalo de nuevo.",
+      "target": {
+        "en": "inglés",
+        "es": "español"
+      }
     },
     "HorizontalScroll": {
       "next": "Siguiente",

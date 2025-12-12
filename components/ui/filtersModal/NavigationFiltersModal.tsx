@@ -9,7 +9,7 @@ import {
   useRef,
 } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "../../../i18n/routing";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
@@ -638,7 +638,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                       onClick={handleUseMyLocation}
                       className="text-primary underline hover:text-primary/80 transition-colors"
                     >
-                    {t("useLocation.cta")}
+                      {t("useLocation.cta")}
                     </button>
                   </>
                 )}
