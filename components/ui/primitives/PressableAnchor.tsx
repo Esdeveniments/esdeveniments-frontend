@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
@@ -20,6 +19,7 @@ export default async function PressableAnchor({
   disableNavigationSignal = false,
   ...props
 }: PressableAnchorProps) {
+  const { default: clsx } = await import("clsx");
   const locale = (await getLocale()) || DEFAULT_LOCALE;
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {

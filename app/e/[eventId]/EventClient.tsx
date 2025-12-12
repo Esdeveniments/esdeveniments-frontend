@@ -15,6 +15,7 @@ import {
 } from "@heroicons/react/outline";
 import AdArticle from "components/ui/adArticle";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { useTranslations } from "next-intl";
 
 // const Tooltip = dynamic(() => import("components/ui/tooltip"), {
 //   ssr: false,
@@ -27,6 +28,7 @@ export default function EventClient({
 }: {
   event: EventDetailResponseDTO;
 }) {
+  const t = useTranslations("Components.EventPage");
   // const editModalRef = useRef<HTMLDivElement>(null);
 
   // const isEditModalVisible = useOnScreen(
@@ -96,7 +98,7 @@ export default function EventClient({
           <SectionHeading
             Icon={SpeakerphoneIcon}
             iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-            title="Contingut patrocinat"
+            title={t("sponsored")}
             titleClassName="heading-2"
           />
           <div className="px-section-x">

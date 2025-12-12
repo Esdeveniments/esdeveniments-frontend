@@ -1,6 +1,8 @@
+"use client";
+
 import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
 import NextImage from "next/image";
-import { FireIcon } from "@heroicons/react/outline"; // using FireIcon as dining marker (no direct utensils icon in outline set v1)
+import { FireIcon } from "@heroicons/react/outline";
 import { getOptimalImageQuality } from "@utils/image-quality";
 import {
   formatPriceLevelGeneric,
@@ -10,6 +12,7 @@ import {
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { withImageCacheKey } from "@utils/image-cache";
 import { siteUrl } from "@config/index";
+import { useTranslations } from "next-intl";
 
 // Helper: derive photo proxy URL (Places API v1 only)
 function getPhotoUrl(place: GooglePlace): string | null {
@@ -26,6 +29,8 @@ export default function WhereToEatSection({
   attribution,
   onPromoteClick,
 }: WhereToEatSectionProps) {
+  const t = useTranslations("Components.WhereToEatSection");
+
   if (!places || places.length === 0) {
     return null;
   }
@@ -37,7 +42,7 @@ export default function WhereToEatSection({
           headingId="where-to-eat"
           Icon={FireIcon}
           iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-          title="On pots menjar"
+          title={t("title")}
           titleClassName="heading-2"
         />
         {onPromoteClick && (
@@ -46,7 +51,7 @@ export default function WhereToEatSection({
             onClick={onPromoteClick}
             className="text-xs font-medium text-primary hover:text-primary-dark underline focus:outline-none"
           >
-            Promociona el teu restaurant
+            {t("promote")}
           </button>
         )}
       </div>

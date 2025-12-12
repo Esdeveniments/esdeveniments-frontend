@@ -528,6 +528,10 @@
       "badge": "Patrocinat",
       "activeUntil": "Promoció activa fins al {date}"
     },
+    "WhereToEatSection": {
+      "title": "On pots menjar",
+      "promote": "Promociona el teu restaurant"
+    },
     "FeaturedPlaceSection": {
       "seeMore": "Veure més",
       "aria": "Explora {title} per data"

@@ -528,6 +528,10 @@
       "badge": "Patrocinado",
       "activeUntil": "Promoción activa hasta el {date}"
     },
+    "WhereToEatSection": {
+      "title": "Dónde puedes comer",
+      "promote": "Promociona tu restaurante"
+    },
     "FeaturedPlaceSection": {
       "seeMore": "Ver más",
       "aria": "Explora {title} por fecha"
