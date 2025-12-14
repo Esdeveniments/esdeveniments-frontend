@@ -38,6 +38,10 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    locale: "ca-ES",
+    extraHTTPHeaders: {
+      "accept-language": "ca",
+    },
   },
   projects: [
     {

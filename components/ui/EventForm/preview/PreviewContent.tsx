@@ -42,9 +42,20 @@ export const PreviewContent = ({
       ? formatDate(event.endDate, locale)
       : "";
   const timeLabel = formatTimeRange(event.startTime, event.endTime);
+
+  // Check what's complete
+  const hasImage = Boolean(event.imageUrl);
   const hasUrl = Boolean(event.url);
   const hasDescription = Boolean(event.description?.trim());
+  const hasCategories = event.categories && event.categories.length > 0;
 
+  // Required fields that are missing (blocking)
+  const requiredMissing: string[] = [];
+  if (!hasImage) {
+    requiredMissing.push(hasKey("previewRequiredImage") ? tForm("previewRequiredImage") : "Falta la imatge");
+  }
+
+  // Soft warnings (recommendations, not blocking)
   const softWarnings: string[] = [];
   if (!hasUrl && hasKey("previewMissingUrl")) {
     softWarnings.push(tForm("previewMissingUrl"));
@@ -52,65 +63,83 @@ export const PreviewContent = ({
   if (!hasDescription && hasKey("previewMissingDescription")) {
     softWarnings.push(tForm("previewMissingDescription"));
   }
+  if (!hasCategories && hasKey("previewMissingCategories")) {
+    softWarnings.push(tForm("previewMissingCategories"));
+  }
 
   return (
     <div className="flex flex-col gap-element-gap py-3">
-      <div className="w-full rounded-card overflow-hidden bg-muted">
-        {event.imageUrl ? (
+      {/* Image preview */}
+      <div className={`w-full rounded-card overflow-hidden ${hasImage ? 'bg-muted' : 'bg-error/10 border-2 border-dashed border-error/50'}`}>
+        {hasImage ? (
           <ClientImage
             image={event.imageUrl}
             title={event.title}
-            className="w-full h-60"
+            className="w-full aspect-video object-cover"
             context="detail"
           />
         ) : (
-          <div className="w-full h-60 flex-center text-foreground/60">
-            {hasKey("imageLabel") ? tForm("imageLabel") : "Imatge"}
+          <div className="w-full h-48 flex-center flex-col gap-2 text-error/70">
+            <span className="text-3xl">🖼️</span>
+            <p className="body-normal font-medium">
+              {hasKey("previewRequiredImage") ? tForm("previewRequiredImage") : "Falta la imatge"}
+            </p>
           </div>
         )}
       </div>
 
       <div className="stack">
+        {/* Event title section */}
         <div className="flex flex-col gap-1">
           <p className="label text-foreground/70">
             {hasKey("reviewTitle")
               ? tForm("reviewTitle")
               : "Abans de publicar"}
           </p>
-          <h2 className="heading-2">{event.title}</h2>
+          <h2 className="heading-2">{event.title || <span className="text-error/70">Sense títol</span>}</h2>
         </div>
 
+        {/* Event details card */}
         <div className="card-bordered card-body space-y-element-gap">
+          {/* Date & Time */}
           <div className="space-y-1">
-            <p className="body-normal text-foreground-strong/80">
-              {dateLabel}
-              {dateEndLabel ? ` · ${dateEndLabel}` : ""}
-            </p>
+            <div className="flex items-center gap-2">
+              <span>📅</span>
+              <p className="body-normal text-foreground-strong/80">
+                {dateLabel}
+                {dateEndLabel ? ` · ${dateEndLabel}` : ""}
+              </p>
+            </div>
             {timeLabel && (
-              <p className="body-normal text-foreground/70">{timeLabel}</p>
+              <p className="body-normal text-foreground/70 ml-6">{timeLabel}</p>
             )}
           </div>
 
+          {/* Location */}
           <div className="space-y-1">
-            <p className="body-normal font-semibold text-foreground-strong">
-              {hasKey("location") ? tForm("location") : "Ubicació"}
-            </p>
-            <p className="body-normal text-foreground/80">
-              {event.location ||
-                event.city?.name ||
-                event.region?.name ||
-                "—"}
-            </p>
+            <div className="flex items-center gap-2">
+              <span>📍</span>
+              <p className="body-normal font-medium text-foreground-strong">
+                {event.location ||
+                  event.city?.name ||
+                  event.region?.name ||
+                  "—"}
+              </p>
+            </div>
           </div>
 
+          {/* Categories */}
           <div className="space-y-1">
-            <p className="body-normal font-semibold text-foreground-strong">
-              {hasKey("categoriesPlaceholder")
-                ? tForm("categoriesPlaceholder")
-                : "Categories"}
-            </p>
-            {event.categories && event.categories.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span>🏷️</span>
+              <p className="body-normal font-medium text-foreground-strong">
+                {hasKey("categoriesPlaceholder")
+                  ? "Categories"
+                  : "Categories"}
+              </p>
+            </div>
+            {hasCategories ? (
+              <div className="flex flex-wrap gap-2 ml-6">
                 {event.categories.map((category) => (
                   <span
                     key={category.slug || category.id}
@@ -121,21 +150,23 @@ export const PreviewContent = ({
                 ))}
               </div>
             ) : (
-              <p className="body-small text-foreground/70">
-                {hasKey("previewMissingCategories")
-                  ? tForm("previewMissingCategories")
-                  : "Encara no has afegit categories"}
+              <p className="body-small text-foreground/50 ml-6 italic">
+                Cap categoria seleccionada
               </p>
             )}
           </div>
 
+          {/* URL */}
           <div className="space-y-1">
-            <p className="body-normal font-semibold text-foreground-strong">
-              {hasKey("url") ? tForm("url") : "Enllaç"}
-            </p>
+            <div className="flex items-center gap-2">
+              <span>🔗</span>
+              <p className="body-normal font-medium text-foreground-strong">
+                Enllaç
+              </p>
+            </div>
             {hasUrl ? (
               <a
-                className="body-normal text-primary hover:underline"
+                className="body-normal text-primary hover:underline ml-6 break-all"
                 href={event.url}
                 target="_blank"
                 rel="noreferrer"
@@ -143,37 +174,57 @@ export const PreviewContent = ({
                 {event.url}
               </a>
             ) : (
-              <p className="body-small text-foreground/70">
-                {hasKey("previewMissingUrl")
-                  ? tForm("previewMissingUrl")
-                  : "Afegeix un enllaç perquè la gent pugui veure'n més detalls."}
+              <p className="body-small text-foreground/50 ml-6 italic">
+                Opcional
               </p>
             )}
           </div>
 
+          {/* Description */}
           <div className="space-y-1">
-            <p className="body-normal font-semibold text-foreground-strong">
-              {hasKey("descriptionLabel")
-                ? tForm("descriptionLabel")
-                : "Descripció"}
-            </p>
+            <div className="flex items-center gap-2">
+              <span>📝</span>
+              <p className="body-normal font-medium text-foreground-strong">
+                Descripció
+              </p>
+            </div>
             {hasDescription ? (
-              <p className="body-normal whitespace-pre-wrap text-foreground/80">
+              <p className="body-normal whitespace-pre-wrap text-foreground/80 ml-6 line-clamp-4">
                 {event.description}
               </p>
             ) : (
-              <p className="body-small text-foreground/70">
-                {hasKey("previewMissingDescription")
-                  ? tForm("previewMissingDescription")
-                  : "Afegeix una descripció perquè sigui més fàcil trobar-lo."}
+              <p className="body-small text-foreground/50 ml-6 italic">
+                Opcional
               </p>
             )}
           </div>
         </div>
 
+        {/* Required items missing - RED warning box */}
+        {requiredMissing.length > 0 && (
+          <div className="card-body space-y-2 bg-error/10 border border-error/30 rounded-card">
+            <p className="body-normal font-semibold text-error flex items-center gap-2">
+              <span>❌</span>
+              {hasKey("previewRequired") ? tForm("previewRequired") : "Necessari"}
+            </p>
+            <ul className="space-y-1">
+              {requiredMissing.map((item) => (
+                <li
+                  key={item}
+                  className="body-small text-error/80 list-disc list-inside ml-2"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Soft recommendations - MUTED warning box */}
         {softWarnings.length > 0 && (
-          <div className="card-bordered card-body space-y-2 bg-muted/50 border-dashed border-border">
-            <p className="body-normal font-semibold text-foreground-strong">
+          <div className="card-body space-y-2 bg-warning/10 border border-warning/30 rounded-card">
+            <p className="body-normal font-semibold text-warning-dark flex items-center gap-2">
+              <span>💡</span>
               {hasKey("previewWarnings")
                 ? tForm("previewWarnings")
                 : "Recomanacions"}
@@ -182,7 +233,7 @@ export const PreviewContent = ({
               {softWarnings.map((warning) => (
                 <li
                   key={warning}
-                  className="body-small text-foreground/80 list-disc list-inside"
+                  className="body-small text-foreground/80 list-disc list-inside ml-2"
                 >
                   {warning}
                 </li>
@@ -196,6 +247,7 @@ export const PreviewContent = ({
 };
 
 export default PreviewContent;
+
 
 
 

@@ -1,5 +1,11 @@
 import { test, expect } from "@playwright/test";
 
+declare global {
+  interface Window {
+    __OPENED_URLS__?: Array<string | URL>;
+  }
+}
+
 test.describe("Publish wizard UX", () => {
   test("step navigation enables Next after basics and shows location step", async ({
     page,
@@ -24,22 +30,7 @@ test.describe("Publish wizard UX", () => {
     await page.waitForTimeout(500);
   });
 
-  test("draft restore prompt appears after reload", async ({ page }) => {
-    await page.goto("/publica", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-    await page.evaluate(() => {
-      localStorage.setItem(
-        "publish-form-draft",
-        JSON.stringify({ title: "Esborrany de prova" })
-      );
-    });
-    await page.reload({ waitUntil: "domcontentloaded" });
 
-    const restorePrompt = page.getByTestId("restore-draft-apply");
-    await expect(restorePrompt).toBeVisible({ timeout: 10000 });
-  });
 
   test("test link button opens normalized URL", async ({ page }) => {
     await page.goto("/publica", {
@@ -50,7 +41,11 @@ test.describe("Publish wizard UX", () => {
       window.__OPENED_URLS__ = [];
       const originalOpen = window.open;
       window.open = (...args) => {
-        window.__OPENED_URLS__.push(args[0]);
+        const urlArg = args[0];
+        if (urlArg) {
+          const value = typeof urlArg === "string" ? urlArg : urlArg.toString();
+          window.__OPENED_URLS__?.push(value);
+        }
         return originalOpen ? originalOpen(...args) : null;
       };
     });

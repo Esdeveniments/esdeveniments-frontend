@@ -197,31 +197,39 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   return (
     <div className="w-full text-foreground-strong">
-      <label htmlFor="image" className="text-foreground-strong font-bold">
+      <label htmlFor="image" className="form-label">
         {t("label")}
       </label>
 
       <div className="flex gap-2 mt-3">
         <button
           type="button"
-          className={isUploadMode ? "btn-primary" : "btn-outline"}
+          className={`px-4 py-2.5 rounded-button font-medium text-sm transition-all ${isUploadMode
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground hover:bg-border"
+            }`}
           onClick={() => handleModeSwitch("upload")}
+          aria-pressed={isUploadMode}
         >
           {t("uploadMode")}
         </button>
         <button
           type="button"
-          className={!isUploadMode ? "btn-primary" : "btn-outline"}
+          className={`px-4 py-2.5 rounded-button font-medium text-sm transition-all ${!isUploadMode
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground hover:bg-border"
+            }`}
           onClick={() => handleModeSwitch("url")}
+          aria-pressed={!isUploadMode}
         >
           {t("urlMode")}
         </button>
       </div>
 
-      {isUploadMode ? (
+      {isUploadMode && (
         <div
-          className={`mt-2 border ${dragOver ? "border-primary" : "border-border"
-            } rounded-xl cursor-pointer`}
+          className={`mt-3 border-2 border-dashed rounded-card ${dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50"
+            } ${isInteractionDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"} transition-all`}
           onDragOver={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -231,21 +239,41 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           onDrop={(event) => {
             void handleDrop(event);
           }}
+          onClick={() => {
+            if (isInteractionDisabled) return;
+            void handleImageUpload();
+          }}
+          onKeyDown={(event) => {
+            if (isInteractionDisabled) return;
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              void handleImageUpload();
+            }
+          }}
+          role="button"
+          tabIndex={isInteractionDisabled ? -1 : 0}
+          aria-disabled={isInteractionDisabled}
         >
-          <div className="flex justify-center items-center h-full">
+          <div className="flex-center flex-col gap-3 p-8 text-center">
             {progress === 0 ? (
-              <div className="text-center">
-                <button
-                  className="bg-background hover:bg-primary font-bold px-2 py-2 rounded-xl disabled:opacity-60"
-                  onClick={handleImageUpload}
-                  type="button"
-                  disabled={isInteractionDisabled}
-                >
-                  <UploadIcon className="w-6 h-6 text-foreground-strong hover:text-background" />
-                </button>
-              </div>
+              <>
+                <UploadIcon className="w-10 h-10 text-foreground/50" />
+                <p className="body-normal text-foreground/70">
+                  {t("uploadDropCta")}
+                </p>
+                <p className="body-small text-foreground/50">
+                  {t("uploadDropHelper")}
+                </p>
+                {/* Clear CTA Button */}
+                <span className="inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-primary-foreground min-h-[44px]">
+                  {t("selectButton")}
+                </span>
+                <p className="body-small text-foreground/50 mt-1">
+                  {t("formatHelper")}
+                </p>
+              </>
             ) : (
-              <span className="text-foreground-strong">
+              <span className="body-normal text-foreground-strong">
                 {t("progress", { progress })}
               </span>
             )}
@@ -262,11 +290,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             />
           </div>
         </div>
-      ) : (
-        <div className="mt-3 space-y-2">
+      )}
+      {!isUploadMode && (
+        <div className="mt-3 space-y-3">
           <label
             htmlFor="image-url"
-            className="w-full text-foreground-strong font-bold"
+            className="w-full form-label"
           >
             {t("imageUrlLabel")}
           </label>
@@ -277,9 +306,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             placeholder={t("imageUrlPlaceholder")}
             onChange={(event) => handleImageUrlInput(event.target.value)}
             onBlur={handleImageUrlBlur}
-            className="w-full p-2.5 border border-border rounded-input text-foreground-strong text-base focus:border-foreground-strong focus:outline-none"
+            className="input min-h-[44px]"
           />
-          <p className="text-xs text-foreground/70">
+          <p className="form-helper">
             {t("imageUrlHelper")}
           </p>
         </div>
@@ -313,7 +342,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         <p className="text-sm text-foreground/80 mt-2">{uploadMessage}</p>
       )}
       {displayedError && <p className="text-primary text-sm mt-2">{displayedError}</p>}
-      {imgData && (
+      {imgData && (imgData.startsWith("http") || imgData.startsWith("data:") || imgData.startsWith("/")) ? (
         <div className="flex justify-center items-start p-4">
           <button
             onClick={handleRemoveImage}
@@ -347,7 +376,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             }}
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

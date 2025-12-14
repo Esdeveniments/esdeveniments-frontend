@@ -72,7 +72,20 @@ export const createEventFormSchema = (
     region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
     town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
     location: z.string().min(1, labels.locationRequired),
-    imageUrl: z.string().nullable(),
+    imageUrl: z
+      .string()
+      .url(labels.invalidUrl)
+      .refine((val) => {
+        if (!val) return true;
+        try {
+          const url = new URL(val);
+          return url.hostname.includes(".");
+        } catch {
+          return false;
+        }
+      }, labels.invalidUrl)
+      .nullable()
+      .or(z.literal("")),
     url: z
       .string()
       .refine(

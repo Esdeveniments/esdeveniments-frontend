@@ -529,8 +529,7 @@
       "activeUntil": "Promotion active until {date}"
     },
     "WhereToEatSection": {
-      "title": "Where you can eat",
-      "promote": "Promote your restaurant"
+      "title": "Where you can eat"
     },
     "FeaturedPlaceSection": {
       "seeMore": "See more",

@@ -132,13 +132,15 @@ export default function Search(): JSX.Element {
         />
         {/* Clear button (X) when there's text */}
         {inputValue.length > 0 && (
-          <div className="flex justify-end items-center cursor-pointer px-button-x">
-            <XIcon
-              className="h-4 w-4 text-foreground-strong"
-              onClick={clearSearchTerm}
-              aria-label={t("clear")}
-            />
-          </div>
+          <button
+            type="button"
+            className="flex justify-end items-center cursor-pointer px-button-x"
+            onClick={clearSearchTerm}
+            aria-label={t("clear")}
+            data-testid="clear-search-button"
+          >
+            <XIcon className="h-4 w-4 text-foreground-strong" aria-hidden="true" />
+          </button>
         )}
         {/* Search button on the right */}
         <button

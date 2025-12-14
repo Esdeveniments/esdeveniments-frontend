@@ -17,11 +17,7 @@ import {
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
-import {
-  RouteSegments,
-  URLQueryParams,
-  URLFilterState,
-} from "types/url-filters";
+import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
 import type { FaqItem } from "types/faq";
 
@@ -86,13 +82,16 @@ export interface ModalProps {
   children: ReactNode;
   actionButton?: ReactNode;
   onActionButtonClick?: () => boolean | void | Promise<boolean | void>;
+  actionButtonDisabled?: boolean;
   testId?: string;
 }
 
 export interface TextAreaProps {
   id: string;
   value: string;
-  onChange: (e: ChangeEvent<{ name: string; value: string }>) => void;
+  onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export interface SocialProps {
@@ -132,7 +131,7 @@ export interface DatePickerComponentProps {
   className?: string;
   enableAllDayToggle?: boolean;
   isAllDay?: boolean;
-  onToggleAllDay?: (value: boolean) => void;
+  onToggleAllDay?: (isAllDayEvent: boolean) => void;
 }
 
 export interface CustomHeaderProps {
@@ -158,7 +157,7 @@ export interface ImageUploaderProps {
   mode?: "upload" | "url";
   onModeChange?: (mode: "upload" | "url") => void;
   imageUrlValue?: string;
-  onImageUrlChange?: (value: string) => void;
+  onImageUrlChange?: (url: string) => void;
   imageUrlError?: string | null;
 }
 
@@ -168,6 +167,8 @@ export interface InputProps {
   subtitle?: string;
   value: string | number;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export type RadioInputValue = string | number;
@@ -215,18 +216,6 @@ export interface VideoDisplayProps {
   videoUrl: string | null | undefined;
 }
 
-export interface CategoryEventsSectionProps {
-  events: EventSummaryResponseDTO[];
-  categoryName: string;
-  categorySlug: string;
-  categoryPhrase: string;
-  categories: CategorySummaryResponseDTO[];
-  shouldUsePriority: boolean;
-  showAd: boolean;
-  labels: CategorySectionLabels;
-  badgeLabels: DateFilterBadgeLabels;
-}
-
 export interface LoadMoreButtonProps {
   onLoadMore: () => void | Promise<void>;
   isLoading?: boolean;
@@ -261,12 +250,6 @@ export interface FilteredPageProps {
 }
 
 // Component props interfaces
-export interface FilterLabels {
-  triggerLabel: string;
-  displayNameMap: Partial<Record<keyof URLFilterState, string>>;
-  byDates: Record<string, string>;
-}
-
 export interface ClientInteractiveLayerProps {
   categories?: CategorySummaryResponseDTO[];
   placeTypeLabel: PlaceTypeAndLabel;
@@ -280,6 +263,21 @@ export interface ClientInteractiveLayerContentProps
   isModalOpen: boolean;
   handleOpenModal: () => void;
   handleCloseModal: () => void;
+}
+
+export type FilterLabels = {
+  triggerLabel: string;
+  displayNameMap: Record<string, string>;
+  byDates: Record<string, string>;
+};
+
+export interface FiltersClientProps {
+  segments: RouteSegments;
+  queryParams: URLQueryParams;
+  categories?: CategorySummaryResponseDTO[];
+  placeTypeLabel: PlaceTypeAndLabel;
+  onOpenModal: () => void;
+  labels: FilterLabels;
 }
 
 export interface ActiveNavLinkProps {
@@ -297,20 +295,11 @@ export interface FilterButtonProps {
   testId?: string;
 }
 
-export interface FiltersClientProps {
-  segments: RouteSegments;
-  queryParams: URLQueryParams;
-  categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel?: PlaceTypeAndLabel;
-  onOpenModal: () => void;
-  labels: FilterLabels;
-}
-
 export interface ServerFiltersProps {
   segments: RouteSegments;
   queryParams: URLQueryParams;
   categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel?: PlaceTypeAndLabel;
+  placeTypeLabel: PlaceTypeAndLabel;
   onOpenModal: () => void;
 }
 
@@ -541,22 +530,35 @@ export interface DateFilterBadgesProps {
   labels?: DateFilterBadgeLabels;
 }
 
-export interface DateFilterBadgeLabels {
+export type TranslationFn = (
+  key: string,
+  values?: Record<string, any>
+) => string;
+
+export type DateFilterBadgeLabels = {
   navAriaLabel: string;
   today: { label: string; ariaLabelText: string };
   tomorrow: { label: string; ariaLabelText: string };
   weekend: { label: string; ariaLabelText: string };
-  ariaPlace: (options: {
+  ariaPlace: (args: { ariaLabelText: string; contextName: string }) => string;
+  ariaCategory: (args: {
     ariaLabelText: string;
     contextName: string;
   }) => string;
-  ariaCategory: (options: {
-    ariaLabelText: string;
-    contextName: string;
-  }) => string;
-}
+};
 
-export type TranslationFn = (
-  key: string,
-  options?: Record<string, string>
-) => string;
+export interface CategoryEventsSectionProps {
+  events: EventSummaryResponseDTO[];
+  categoryName: string;
+  categorySlug: string;
+  categoryPhrase: string;
+  categories?: CategorySummaryResponseDTO[];
+  shouldUsePriority?: boolean;
+  showAd?: boolean;
+  labels: {
+    heading: string;
+    seeMore: string;
+    sponsored: string;
+  };
+  badgeLabels?: DateFilterBadgeLabels;
+}

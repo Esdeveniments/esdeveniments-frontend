@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import setHours from "date-fns/setHours";
 import setMinutes from "date-fns/setMinutes";
 import setSeconds from "date-fns/setSeconds";
@@ -54,13 +54,14 @@ export const EventForm: React.FC<EventFormProps> = ({
   const tForm = useTranslations("Components.EventForm");
   const [step, setStep] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const steps = ["stepBasics", "stepLocation", "stepImage"];
   const helperTitle = tForm.has("titleHint") ? tForm("titleHint") : "";
   const helperLocation = tForm.has("locationHint") ? tForm("locationHint") : "";
   const helperUrl = tForm.has("urlHint") ? tForm("urlHint") : "";
   const helperImage = tForm.has("imageHint") ? tForm("imageHint") : "";
-  const reviewTitle = tForm.has("reviewTitle") ? tForm("reviewTitle") : "";
-  const reviewReady = tForm.has("reviewReady") ? tForm("reviewReady") : "";
+
   const reviewImageLabel = tForm.has("imageLabel") ? tForm("imageLabel") : "";
   const reviewDatesLabel = tForm.has("datesLabel") ? tForm("datesLabel") : "";
   const validationLabels = useMemo(
@@ -80,17 +81,18 @@ export const EventForm: React.FC<EventFormProps> = ({
     }),
     [t]
   );
+  // Reactive form state based on interaction
   const formState = useMemo(() => {
     return getZodValidationState(
       form,
-      true,
+      !hasInteracted, // If interacted, validation runs in non-pristine mode
       imageFile,
       isEditMode,
       validationLabels,
       zodLabels,
       form.imageUrl
     );
-  }, [form, imageFile, isEditMode, validationLabels, zodLabels]);
+  }, [form, imageFile, isEditMode, validationLabels, zodLabels, hasInteracted]);
 
   const handleAllDayToggle = (isAllDayEvent: boolean) => {
     const startDateValue = form.startDate ? new Date(form.startDate) : new Date();
@@ -115,50 +117,31 @@ export const EventForm: React.FC<EventFormProps> = ({
     handleImageUrlChange ??
     ((value: string) => handleFormChange("imageUrl", value || null));
 
-  const [submitFormState, setSubmitFormState] = useState<{
-    isDisabled: boolean;
-    isPristine: boolean;
-    message: string;
-  } | null>(null);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasInteracted(true);
 
+    // Run one-off validation to check if we can proceed
     const submitValidation = getZodValidationState(
       form,
-      false,
+      false, // Force non-pristine check
       imageFile,
       isEditMode,
       validationLabels,
       zodLabels,
       form.imageUrl
     );
-    setSubmitFormState(submitValidation);
 
     if (!submitValidation.isDisabled) {
       onSubmit(e);
     }
   };
 
-  const currentFormState = submitFormState || formState;
   const hasImage = Boolean(
     imageToUpload || imageFile || effectiveImageUrlValue || form.imageUrl
   );
   const hasDates = Boolean(form.startDate && (form.isAllDay ? true : form.endDate));
-  const reviewItems = [
-    { label: tForm("title"), ok: Boolean(form.title.trim()) },
-    { label: tForm("town"), ok: Boolean(form.town) },
-    {
-      label: reviewImageLabel || "Image",
-      ok: hasImage,
-    },
-    {
-      label: reviewDatesLabel || "Dates",
-      ok: hasDates,
-    },
-  ];
-  const missing = reviewItems.filter((item) => !item.ok).map((i) => i.label);
+
 
   const previewRequirements = [
     form.title.trim() ? null : tForm("title"),
@@ -188,6 +171,8 @@ export const EventForm: React.FC<EventFormProps> = ({
       return missing;
     }
     if (currentStep === 2) {
+      // Step 2 validation (Image + Dates)
+      // Visual check for missing fields
       const missing: string[] = [];
       if (!hasImage) missing.push(reviewImageLabel || t("imageRequired"));
       if (!form.startDate) missing.push(reviewDatesLabel || tForm("datesLabel"));
@@ -207,29 +192,54 @@ export const EventForm: React.FC<EventFormProps> = ({
         : stepMissing.join(", ")
       : "";
   const isNextDisabled = stepMissing.length > 0 || isUploadingImage;
-  const shouldShowFeedback = hasInteracted || submitFormState !== null;
+  const shouldShowFeedback = hasInteracted;
+
+  // Feedback message comes from step errors OR global form errors (if we are at the end)
   const feedbackMessage = shouldShowFeedback
     ? stepErrorMessage ||
-    (step === steps.length - 1 ? currentFormState.message : "")
+    (step === steps.length - 1 ? formState.message : "")
     : "";
 
   const goNext = () => {
     if (isNextDisabled) {
       setHasInteracted(true);
-      setSubmitFormState({
-        isDisabled: true,
-        isPristine: false,
-        message: stepErrorMessage || validationLabels.genericError,
-      });
       return;
     }
     if (step < steps.length - 1) {
-      setSubmitFormState(null);
+      // When moving steps, we can reset interaction if we want to treat new step as fresh, 
+      // but usually keeping it true is safer to show errors immediately. 
+      // However, design pattern usually suggests showing errors only after interaction on that step?
+      // For now, let's keep hasInteracted=true if we clicked next.
       setStep((prev) => prev + 1);
     }
   };
 
   const goPrev = () => setStep((prev) => Math.max(0, prev - 1));
+
+  const handleStepClick = (targetStep: number) => {
+    // Only allow navigation to previous steps or current step
+    if (targetStep <= step) {
+      setStep(targetStep);
+    }
+  };
+
+  const handleFieldBlur = (fieldName: string) => {
+    setTouchedFields((prev) => new Set(prev).add(fieldName));
+
+    // Validate specific field
+    const errors: Record<string, string> = {};
+    if (fieldName === "title" && !form.title.trim()) {
+      errors.title = t("titleRequired");
+    }
+    if (fieldName === "description" && !form.description.trim()) {
+      errors.description = t("descriptionRequired");
+    }
+    if (fieldName === "location" && !form.location.trim()) {
+      errors.location = t("locationRequired");
+    }
+
+    setFieldErrors((prev) => ({ ...prev, ...errors }));
+  };
 
   return (
     <form
@@ -238,19 +248,31 @@ export const EventForm: React.FC<EventFormProps> = ({
       data-testid="event-form"
     >
       <div className="w-full">
-        <div className="flex justify-between text-sm text-foreground/80 mb-2">
-          <span>
+        <div className="flex justify-between text-sm md:text-base text-foreground/80 mb-2">
+          <span className="font-medium">
             {tForm.has("step")
               ? tForm("step", { current: step + 1, total: steps.length })
               : `${step + 1}/${steps.length}`}
           </span>
-          <span>{tForm.has(steps[step]) ? tForm(steps[step]) : steps[step]}</span>
+          <span className="font-medium">{tForm.has(steps[step]) ? tForm(steps[step]) : steps[step]}</span>
         </div>
-        <div className="w-full bg-border h-2 rounded-input overflow-hidden">
-          <div
-            className="bg-primary h-2"
-            style={{ width: `${((step + 1) / steps.length) * 100}%` }}
-          />
+        {/* Clickable progress bar */}
+        <div className="w-full flex gap-1">
+          {steps.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => handleStepClick(index)}
+              disabled={index > step}
+              className={`h-2 flex-1 rounded-input transition-all ${index < step
+                ? "bg-primary hover:bg-primary-dark cursor-pointer"
+                : index === step
+                  ? "bg-primary"
+                  : "bg-border cursor-not-allowed"
+                }`}
+              aria-label={`${tForm.has(steps[index]) ? tForm(steps[index]) : steps[index]} ${index < step ? "(completed)" : index === step ? "(current)" : "(pending)"}`}
+            />
+          ))}
         </div>
       </div>
 
@@ -262,12 +284,16 @@ export const EventForm: React.FC<EventFormProps> = ({
             subtitle={helperTitle}
             value={form.title}
             onChange={(e) => handleFormChange("title", e.target.value)}
+            onBlur={() => handleFieldBlur("title")}
+            error={touchedFields.has("title") ? fieldErrors.title : undefined}
           />
 
           <TextArea
             id="description"
             value={form.description}
             onChange={(e) => handleFormChange("description", e.target.value)}
+            onBlur={() => handleFieldBlur("description")}
+            error={touchedFields.has("description") ? fieldErrors.description : undefined}
           />
 
           <div className="w-full">
@@ -340,6 +366,8 @@ export const EventForm: React.FC<EventFormProps> = ({
             subtitle={helperLocation}
             value={form.location}
             onChange={(e) => handleFormChange("location", e.target.value)}
+            onBlur={() => handleFieldBlur("location")}
+            error={touchedFields.has("location") ? fieldErrors.location : undefined}
           />
 
           <MultiSelect
@@ -400,29 +428,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             onToggleAllDay={handleAllDayToggle}
           />
 
-          {reviewTitle ? (
-            <div className="w-full card-bordered card-body text-foreground">
-              <p className="font-semibold">{reviewTitle}</p>
-              <ul className="mt-2 space-y-1">
-                {reviewItems.map((item) => (
-                  <li key={item.label} className="text-sm flex items-center gap-2">
-                    <span className={item.ok ? "text-primary" : "text-foreground/60"}>
-                      {item.ok ? "●" : "○"}
-                    </span>
-                    <span>{item.label}</span>
-                  </li>
-                ))}
-              </ul>
-              {missing.length === 0 && reviewReady ? (
-                <p className="text-sm text-primary mt-2">{reviewReady}</p>
-              ) : null}
-              {missing.length > 0 && tForm.has("reviewMissing") ? (
-                <p className="text-sm text-foreground/80 mt-2">
-                  {tForm("reviewMissing", { fields: missing.join(", ") })}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
+
 
           {isEditMode && (
             <Input
@@ -446,10 +452,10 @@ export const EventForm: React.FC<EventFormProps> = ({
         {step > 0 ? (
           <Button
             type="button"
-            variant="neutral"
-            className="btn-outline"
+            variant="ghost"
             data-testid="prev-button"
             onClick={goPrev}
+            className="min-h-[44px] px-6"
           >
             {tForm.has("previous") ? tForm("previous") : "Enrere"}
           </Button>
@@ -461,7 +467,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             <Button
               type="button"
               variant="neutral"
-              className="btn-outline"
+              className="btn-outline min-h-[44px] px-6"
               disabled={!isPreviewReady || isLoading}
               data-testid={previewTestId || "preview-button"}
               onClick={onPreview}
@@ -476,7 +482,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               disabled={isNextDisabled}
               data-testid="next-button"
               onClick={goNext}
-              className={isNextDisabled ? "opacity-50 cursor-not-allowed" : ""}
+              className={`min-h-[44px] px-6 ${isNextDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {tForm.has("next") ? tForm("next") : "Següent"}
             </Button>
@@ -484,10 +490,10 @@ export const EventForm: React.FC<EventFormProps> = ({
             <Button
               type="submit"
               variant="primary"
-              disabled={currentFormState.isDisabled || isLoading}
-              className={`${currentFormState.isDisabled || isLoading
-                ? "opacity-50 cursor-not-allowed"
-                : "opacity-100"
+              disabled={formState.isDisabled || isLoading}
+              className={`min-h-[44px] px-6 ${formState.isDisabled || isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "opacity-100"
                 }`}
               data-testid="publish-button"
             >
@@ -522,4 +528,4 @@ export const EventForm: React.FC<EventFormProps> = ({
   );
 };
 
-export default memo(EventForm);
+export default EventForm;

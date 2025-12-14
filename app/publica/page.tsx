@@ -1,12 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
+import { getZodValidationState } from "@utils/form-validation";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
@@ -23,6 +24,11 @@ import {
   MAX_UPLOAD_LIMIT_LABEL,
 } from "@utils/constants";
 import { uploadImageWithProgress } from "@utils/upload-event-image-client";
+import PreviewContent from "@components/ui/EventForm/preview/PreviewContent";
+import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
+
+import Modal from "@components/ui/common/modal";
+import type { EventDetailResponseDTO } from "types/api/event";
 
 const getDefaultEventDates = () => {
   const now = new Date();
@@ -134,12 +140,12 @@ const Publica = () => {
     [categories]
   );
 
-  const handleFormChange = <K extends keyof FormData>(
+  const handleFormChange = useCallback(<K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
-    setForm({ ...form, [name]: value });
-  };
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleImageChange = (file: File | null) => {
     setError(null);
@@ -179,6 +185,33 @@ const Publica = () => {
 
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
+
+  const handleTestUrl = (value: string) => {
+    const normalized = normalizeUrl(value);
+    if (!normalized) return;
+    window.open(normalized, "_blank", "noopener,noreferrer");
+  };
+
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewEvent, setPreviewEvent] = useState<EventDetailResponseDTO | null>(
+    null
+  );
+
+  const handlePreview = () => {
+    // Determine the image URL to show in preview
+    // 1. Uploaded image URL if available
+    // 2. Currently selected file (as data URL) if available
+    // 3. Any manual URL entered
+    const previewImageUrl =
+      uploadedImageUrl || imagePreview || form.imageUrl || "";
+
+    const event = mapDraftToPreviewEvent({
+      form,
+      imageUrl: previewImageUrl,
+    });
+    setPreviewEvent(event);
+    setShowPreview(true);
+  };
 
   const buildE2EExtras = (): E2EEventExtras | undefined => {
     const regionIdValue = getRegionValue(form.region);
@@ -425,6 +458,10 @@ const Publica = () => {
           setError(
             "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar."
           );
+        } else if (normalizedMessage.includes("duplicate") || normalizedMessage.includes("integrity violation")) {
+          setError(
+            "Aquest esdeveniment ja existeix. Si creus que és un error, contacta amb nosaltres."
+          );
         } else {
           setError(t("errorGeneric"));
         }
@@ -443,42 +480,63 @@ const Publica = () => {
     });
   };
 
+  const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
+
   return (
-    <div className="container flex flex-col justify-center pt-2 pb-14">
-      <div className="flex flex-col gap-4 px-2 lg:px-0">
-        <div className="flex flex-col gap-2">
-          <h1 className="uppercase font-semibold">
-            {t("heading")}
-          </h1>
-          <p className="text-sm text-center">{t("requiredNote")}</p>
-        </div>
-        {error && (
-          <div className="w-full px-4 py-3 bg-destructive/10 border border-destructive rounded-lg">
-            <p className="text-sm text-destructive">{error}</p>
+    <>
+      {showPreview && previewEvent && (
+        <Modal
+          open={showPreview}
+          setOpen={setShowPreview}
+          title="Preview"
+          actionButton={t("submitLabel")}
+          actionButtonDisabled={isFormDisabled || isPending}
+          onActionButtonClick={async () => {
+            await onSubmit();
+          }}
+        >
+          <PreviewContent event={previewEvent} />
+        </Modal>
+      )}
+      <div className="container flex flex-col justify-center pt-2 pb-14">
+        <div className="flex flex-col gap-4 px-2 lg:px-0">
+          <div className="flex flex-col gap-2">
+            <h1 className="uppercase font-semibold">
+              {t("heading")}
+            </h1>
+            <p className="text-sm text-center">{t("requiredNote")}</p>
           </div>
-        )}
-        <div className="w-full flex flex-col gap-y-4 pt-4">
-          <EventForm
-            form={form}
-            onSubmit={onSubmit}
-            submitLabel={t("submitLabel")}
-            isLoading={isPending}
-            cityOptions={cityOptions}
-            categoryOptions={categoryOptions}
-            progress={uploadProgress}
-            isLoadingCities={isLoadingCities}
-            handleFormChange={handleFormChange}
-            handleImageChange={handleImageChange}
-            handleTownChange={handleTownChange}
-            handleCategoriesChange={handleCategoriesChange}
-            imageToUpload={imagePreview}
-            imageFile={imageFile}
-            isUploadingImage={isUploadingImage}
-            uploadMessage={imageUploadMessage}
-          />
+          {error && (
+            <div className="w-full px-4 py-3 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+          <div className="w-full flex flex-col gap-y-4 pt-4">
+            <EventForm
+              form={form}
+              onSubmit={onSubmit}
+              submitLabel={t("submitLabel")}
+              isLoading={isPending}
+              cityOptions={cityOptions}
+              categoryOptions={categoryOptions}
+              progress={uploadProgress}
+              isLoadingCities={isLoadingCities}
+              handleFormChange={handleFormChange}
+              handleImageChange={handleImageChange}
+              handleTownChange={handleTownChange}
+              handleCategoriesChange={handleCategoriesChange}
+              imageToUpload={imagePreview}
+              imageFile={imageFile}
+              isUploadingImage={isUploadingImage}
+              uploadMessage={imageUploadMessage}
+              handleTestUrl={handleTestUrl}
+              onPreview={handlePreview}
+              canPreview={true}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -662,9 +662,9 @@
       "edit": "✏️ Editar",
       "preview": "👁️ Previsualitzar",
       "emptyPreview": "Escriu alguna cosa per veure la previsualització...",
-      "placeholder": "Descriu el teu esdeveniment... Pots escriure enllaços directament i es convertiran automàticament.",
+      "placeholder": "Descriu el teu esdeveniment...",
       "helperPreview": "Així és com veuran la descripció els visitants",
-      "helperEdit": "Els enllaços es convertiran automàticament. Prem Enter per fer salts de línia."
+      "helperEdit": "Prem Enter per fer salts de línia."
     },
     "DatePicker": {
       "start": "Inici *",

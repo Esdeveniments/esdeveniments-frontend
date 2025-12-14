@@ -128,7 +128,12 @@ export function normalizeUrl(url: string): string {
     return trimmed;
   }
 
-  // Add https:// protocol if missing
+  // Add https:// protocol if missing, unless it's localhost (allow http)
+  if (trimmed.startsWith("localhost") || trimmed.includes("://localhost")) {
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      return `http://${trimmed}`;
+  }
+
   return `https://${trimmed}`;
 }
 

@@ -88,7 +88,7 @@ function ClientImage({
       )}
       <NextImage
         key={imageKey}
-        className="object-cover"
+        className="object-cover w-full h-full"
         src={finalImageSrc}
         alt={alt}
         width={500}
