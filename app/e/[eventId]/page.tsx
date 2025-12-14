@@ -18,7 +18,8 @@ import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
 import { getFormattedDate } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
-import Breadcrumbs, { BreadcrumbItem } from "@components/ui/common/Breadcrumbs";
+import Breadcrumbs from "@components/ui/common/Breadcrumbs";
+import type { BreadcrumbNavItem } from "types/props";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import NoEventFound from "components/ui/common/noEventFound";
@@ -312,7 +313,7 @@ export default async function EventPage({
                   }]
                   : []),
                 { label: title },
-              ] as BreadcrumbItem[]}
+              ] as BreadcrumbNavItem[]}
               className="px-section-x pt-4"
             />
             {/* Event Media Hero + Share cluster */}
