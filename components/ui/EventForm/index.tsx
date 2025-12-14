@@ -188,7 +188,10 @@ export const EventForm: React.FC<EventFormProps> = ({
   const stepErrorMessage =
     stepMissing.length > 0
       ? tForm.has("reviewMissing")
-        ? tForm("reviewMissing", { fields: stepMissing.join(", ") })
+        ? tForm("reviewMissing", {
+          count: stepMissing.length,
+          fields: stepMissing.join(", ")
+        })
         : stepMissing.join(", ")
       : "";
   const isNextDisabled = stepMissing.length > 0 || isUploadingImage;
@@ -372,7 +375,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 
           <MultiSelect
             id="categories"
-            title="Categories"
+            title={tForm("categories") + " *"}
             value={
               Array.isArray(form.categories)
                 ? form.categories
@@ -492,8 +495,8 @@ export const EventForm: React.FC<EventFormProps> = ({
               variant="primary"
               disabled={formState.isDisabled || isLoading}
               className={`min-h-[44px] px-6 ${formState.isDisabled || isLoading
-                  ? "opacity-50 cursor-not-allowed"
-                  : "opacity-100"
+                ? "opacity-50 cursor-not-allowed"
+                : "opacity-100"
                 }`}
               data-testid="publish-button"
             >

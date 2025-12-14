@@ -148,7 +148,7 @@ export default function DatePickerComponent({
       <div className="flex flex-col md:flex-row gap-4 w-full">
         {/* Start Date */}
         <div className="w-full">
-          <span className="text-sm text-foreground/70 mb-1.5 block font-medium">{t("start")} *</span>
+          <span className="text-sm text-foreground/70 mb-1.5 block font-medium">{t("start")}</span>
           <DatePicker
             id={`${idPrefix}-start`}
             locale={ca}
@@ -184,7 +184,7 @@ export default function DatePickerComponent({
            Simplicity: If All Day, usually Start Date implies the day. If we want ranges, we show End Date. 
            Let's show End Date input but only Date if All Day is checked. */}
         <div className="w-full">
-          <span className="text-sm text-foreground/70 mb-1.5 block font-medium">{t("end")} *</span>
+          <span className="text-sm text-foreground/70 mb-1.5 block font-medium">{t("end")}</span>
           <DatePicker
             id={`${idPrefix}-end`}
             locale={ca}

@@ -53,6 +53,9 @@ jobs:
       - name: Type check
         run: yarn typecheck
 
+      - name: Check i18n translations
+        run: yarn i18n:check
+
       - name: Run unit tests (Vitest)
         env:
           CI: true

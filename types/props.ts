@@ -562,3 +562,13 @@ export interface CategoryEventsSectionProps {
   };
   badgeLabels?: DateFilterBadgeLabels;
 }
+
+export interface BreadcrumbNavItem {
+  label: string;
+  href?: string;
+}
+
+export interface BreadcrumbsProps {
+  items: BreadcrumbNavItem[];
+  className?: string;
+}

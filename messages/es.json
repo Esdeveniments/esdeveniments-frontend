@@ -227,6 +227,15 @@
     }
   },
   "Components": {
+    "HowTo": {
+      "name": "Cómo asistir a {title}",
+      "step1": "Consulta la fecha y hora del evento en nuestra agenda.",
+      "step2": "Añade el evento a tu calendario o compártelo.",
+      "step3": "Visita la página oficial o sitio web del organizador para más detalles."
+    },
+    "Breadcrumbs": {
+      "home": "Inicio"
+    },
     "Footer": {
       "navigation": {
         "home": "Inicio",
@@ -506,7 +515,11 @@
       "imageUrlHelper": "Si la imagen ya está online, pega el enlace y la usaremos directamente sin subirla.",
       "imageUrlInvalid": "Añade una URL válida",
       "remove": "Eliminar imagen",
-      "altPreview": "Imagen"
+      "altPreview": "Imagen",
+      "uploadDropCta": "Arrastra tu imagen aquí",
+      "uploadDropHelper": "o haz clic para seleccionar",
+      "selectButton": "Seleccionar archivo",
+      "formatHelper": "Formato: JPEG, PNG, JPG o WEBP"
     },
     "HeroCTA": {
       "buttonBase": "Ver eventos",
@@ -529,7 +542,8 @@
       "activeUntil": "Promoción activa hasta el {date}"
     },
     "WhereToEatSection": {
-      "title": "Dónde puedes comer"
+      "title": "Dónde puedes comer",
+      "promote": "Promociona el teu restaurant"
     },
     "FeaturedPlaceSection": {
       "seeMore": "Ver más",
@@ -605,7 +619,7 @@
       "imageHint": "Formatos JPG/PNG/WebP. Una imagen clara ayuda a encontrarlo.",
       "reviewTitle": "Antes de publicar",
       "reviewReady": "¡Todo listo! Revisa y publica.",
-      "reviewMissing": "Faltan: {fields}",
+      "reviewMissing": "{count, plural, one {Falta: {fields}} other {Faltan: {fields}}}",
       "imageLabel": "Imagen",
       "datesLabel": "Fechas y horario",
       "previewButton": "Previsualizar",
@@ -626,6 +640,7 @@
       "regionPlaceholder": "Selecciona una comarca",
       "townPlaceholder": "Selecciona un pueblo",
       "categoriesPlaceholder": "Selecciona categorías (opcional)",
+      "categories": "Categorías",
       "location": "Lugar *",
       "email": "Correo electrónico",
       "emailSubtitle": "¿Quieres que te avisemos cuando el evento se haya actualizado? (no guardamos los datos)",
@@ -1115,7 +1130,9 @@
         "isFreeYes": "Sí, el evento es gratuito.",
         "isFreeNo": "No, el evento es de pago.",
         "durationQ": "¿Cuál es la duración aproximada?",
-        "durationA": "{duration}"
+        "durationA": "{duration}",
+        "moreInfoQ": "¿Dónde puedo encontrar más información?",
+        "moreInfoA": "Puedes consultar todos los detalles en la página oficial del evento."
       }
     },
     "StringHelpers": {
@@ -1184,29 +1201,6 @@
         "other": "Otros"
       },
       "ariaAdd": "Add to {name}"
-    },
-    "ListPageFaq": {
-      "title": "Preguntas frecuentes",
-      "dateInline": {
-        "today": "hoy",
-        "tomorrow": "mañana",
-        "weekend": "este fin de semana",
-        "week": "esta semana",
-        "fallback": "los próximos días"
-      },
-      "dateCapitalized": {
-        "today": "Hoy",
-        "tomorrow": "Mañana",
-        "weekend": "Este fin de semana",
-        "week": "Esta semana",
-        "fallback": "Los próximos días"
-      },
-      "q1": "¿Qué puedo hacer {contextInline}?",
-      "a1": "{capitalizedContext} encontrarás conciertos, ferias, actividades familiares y propuestas culturales actualizadas cada día.",
-      "q2": "¿Hay actividades gratuitas {contextInline}?",
-      "a2": "Sí. Usa la búsqueda, los filtros de categoría y la distancia para descubrir actividades gratuitas {contextInline}.",
-      "q3": "¿Dónde puedo ver {categoryName} {contextInline}?",
-      "a3": "Selecciona la categoría \"{categoryName}\" para destacar estos eventos {contextInline} y guarda la agenda para consultarla a menudo."
     },
     "LocationHelpers": {
       "newsAll": "Noticias de Cataluña",

@@ -293,7 +293,8 @@ export const generateJsonData = (
       url: siteUrl,
     },
     offers,
-    isAccessibleForFree: event.type === "FREE",
+    // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
+    // We only want to claim "Free" when we are 100% sure.
     ...(isValidHttpUrl(event.url) && {
       sameAs: event.url,
     }),
@@ -305,3 +306,18 @@ export const generateJsonData = (
 
 // Backward-compatible alias with a clearer name for AEO/GEO context
 export const buildEventSchema = generateJsonData;
+
+export const generateHowToSchema = (
+  name: string,
+  steps: string[]
+): import("types/schema").HowTo => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    step: steps.map((text) => ({
+      "@type": "HowToStep",
+      text,
+    })),
+  };
+};

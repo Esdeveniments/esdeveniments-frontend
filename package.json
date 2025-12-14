@@ -17,6 +17,8 @@
     "prebuild": "node scripts/generate-sw.mjs",
     "prepare": "husky",
     "scan": "npx react-scan@latest localhost:3000",
+    "i18n:sync": "node scripts/sync-locales.mjs",
+    "i18n:check": "i18n-check -s ca --locales messages --only invalidKeys,missingKeys -i \"Utils.Calendar.moreInfoHtml\" -i \"Utils.StringHelpers.capitalizePrepositions.*\" -i \"Utils.StringHelpers.feminineExceptions.*\" -i \"Utils.StringHelpers.masculineExceptions.*\"",
     "start": "next start",
     "start:development": "env-cmd -f .env.development next start",
     "start:production": "NODE_ENV=production env-cmd -f .env.production next start",
@@ -33,6 +35,10 @@
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
+      "git add"
+    ],
+    "messages/*.json": [
+      "yarn i18n:check",
       "git add"
     ],
     "*.{json,md,yml,yaml}": [
@@ -70,6 +76,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-ssm": "^3.940.0",
+    "@lingual/i18n-check": "^0.8.15",
     "@next/bundle-analyzer": "^16.0.7",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/context-async-hooks": "^2.2.0",

@@ -227,6 +227,15 @@
     }
   },
   "Components": {
+    "HowTo": {
+      "name": "Com assistir a {title}",
+      "step1": "Consulta la data i hora de l'esdeveniment a la nostra agenda.",
+      "step2": "Afegeix l'esdeveniment al teu calendari o comparteix-lo.",
+      "step3": "Visita la pàgina oficial o lloc web de l'organitzador per a més detalls."
+    },
+    "Breadcrumbs": {
+      "home": "Inici"
+    },
     "Footer": {
       "navigation": {
         "home": "Inici",
@@ -506,7 +515,11 @@
       "imageUrlHelper": "Si ja tens la imatge en línia, enganxa-hi l'enllaç i l'usarem directament sense pujar res.",
       "imageUrlInvalid": "Afegeix una URL vàlida",
       "remove": "Eliminar imatge",
-      "altPreview": "Imatge"
+      "altPreview": "Imatge",
+      "uploadDropCta": "Arrossega la teva imatge aquí",
+      "uploadDropHelper": "o fes clic per seleccionar",
+      "selectButton": "Seleccionar fitxer",
+      "formatHelper": "Format: JPEG, PNG, JPG o WEBP"
     },
     "HeroCTA": {
       "buttonBase": "Veure esdeveniments",
@@ -606,7 +619,7 @@
       "imageHint": "Formats JPG/PNG/WebP. Imatges clares ajuden a trobar-ho.",
       "reviewTitle": "Abans de publicar",
       "reviewReady": "Tot a punt! Revisa i publica.",
-      "reviewMissing": "Falten: {fields}",
+      "reviewMissing": "{count, plural, one {Falta: {fields}} other {Falten: {fields}}}",
       "imageLabel": "Imatge",
       "datesLabel": "Dates i horari",
       "previewButton": "Previsualitza",
@@ -627,6 +640,7 @@
       "regionPlaceholder": "Selecciona una comarca",
       "townPlaceholder": "Selecciona un poble",
       "categoriesPlaceholder": "Selecciona categories (opcional)",
+      "categories": "Categories",
       "location": "Lloc *",
       "email": "Correu electrònic",
       "emailSubtitle": "Vols que t'avisem quan l'esdeveniment s'hagi actualitzat? (no guardem les dades)",
@@ -1116,7 +1130,9 @@
         "isFreeYes": "Sí, l’esdeveniment és gratuït.",
         "isFreeNo": "No, l’esdeveniment és de pagament.",
         "durationQ": "Quina és la durada aproximada?",
-        "durationA": "{duration}"
+        "durationA": "{duration}",
+        "moreInfoQ": "On puc trobar més informació?",
+        "moreInfoA": "Pots consultar tots els detalls a la pàgina oficial de l'esdeveniment."
       }
     },
     "StringHelpers": {

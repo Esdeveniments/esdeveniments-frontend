@@ -3,6 +3,16 @@
 import ClientImage from "@components/ui/common/image/ClientImage";
 import { useLocale, useTranslations } from "next-intl";
 import type { EventDetailResponseDTO } from "types/api/event";
+import {
+  PhotographIcon,
+  CalendarIcon,
+  LocationMarkerIcon,
+  TagIcon,
+  ExternalLinkIcon,
+  DocumentIcon,
+  XCircleIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/outline";
 
 const formatDate = (value: string, locale: string) => {
   const date = new Date(value);
@@ -80,7 +90,7 @@ export const PreviewContent = ({
           />
         ) : (
           <div className="w-full h-48 flex-center flex-col gap-2 text-error/70">
-            <span className="text-3xl">🖼️</span>
+            <PhotographIcon className="w-12 h-12" />
             <p className="body-normal font-medium">
               {hasKey("previewRequiredImage") ? tForm("previewRequiredImage") : "Falta la imatge"}
             </p>
@@ -104,7 +114,7 @@ export const PreviewContent = ({
           {/* Date & Time */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span>📅</span>
+              <CalendarIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal text-foreground-strong/80">
                 {dateLabel}
                 {dateEndLabel ? ` · ${dateEndLabel}` : ""}
@@ -118,7 +128,7 @@ export const PreviewContent = ({
           {/* Location */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span>📍</span>
+              <LocationMarkerIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
                 {event.location ||
                   event.city?.name ||
@@ -131,7 +141,7 @@ export const PreviewContent = ({
           {/* Categories */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span>🏷️</span>
+              <TagIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
                 {hasKey("categoriesPlaceholder")
                   ? "Categories"
@@ -159,7 +169,7 @@ export const PreviewContent = ({
           {/* URL */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span>🔗</span>
+              <ExternalLinkIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
                 Enllaç
               </p>
@@ -183,7 +193,7 @@ export const PreviewContent = ({
           {/* Description */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span>📝</span>
+              <DocumentIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
                 Descripció
               </p>
@@ -204,7 +214,7 @@ export const PreviewContent = ({
         {requiredMissing.length > 0 && (
           <div className="card-body space-y-2 bg-error/10 border border-error/30 rounded-card">
             <p className="body-normal font-semibold text-error flex items-center gap-2">
-              <span>❌</span>
+              <XCircleIcon className="w-5 h-5" />
               {hasKey("previewRequired") ? tForm("previewRequired") : "Necessari"}
             </p>
             <ul className="space-y-1">
@@ -224,7 +234,7 @@ export const PreviewContent = ({
         {softWarnings.length > 0 && (
           <div className="card-body space-y-2 bg-warning/10 border border-warning/30 rounded-card">
             <p className="body-normal font-semibold text-warning-dark flex items-center gap-2">
-              <span>💡</span>
+              <InformationCircleIcon className="w-5 h-5" />
               {hasKey("previewWarnings")
                 ? tForm("previewWarnings")
                 : "Recomanacions"}

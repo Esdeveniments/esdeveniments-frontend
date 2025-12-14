@@ -290,6 +290,8 @@ export interface EventCopyFaqLabels {
   isFreeNo: string;
   durationQ: string;
   durationA: string;
+  moreInfoQ: string;
+  moreInfoA: string;
 }
 
 export interface EventCopyLabels {

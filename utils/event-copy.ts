@@ -563,15 +563,24 @@ export async function buildFaqItems(
     });
   }
 
-  items.push({
-    q: labels.faq.isFreeQ,
-    a: event.type === "FREE" ? labels.faq.isFreeYes : labels.faq.isFreeNo,
-  });
+  // NOTE: "Is it free?" FAQ removed intentionally.
+  // We don't have reliable pricing data (event.type defaults to "FREE"),
+  // so showing this FAQ could mislead users. See implementation_plan.md.
 
   if (event.duration && event.duration.trim().length > 0) {
     items.push({
       q: labels.faq.durationQ,
       a: labels.faq.durationA.replace("{duration}", event.duration),
+    });
+  }
+
+  // "More Info" FAQ: only show if event has an external URL.
+  // This provides SEO value by answering "where can I find more info?" queries
+  // while directing users to the official source.
+  if (event.url && event.url.trim().length > 0) {
+    items.push({
+      q: labels.faq.moreInfoQ,
+      a: labels.faq.moreInfoA,
     });
   }
 

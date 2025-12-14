@@ -227,6 +227,15 @@
     }
   },
   "Components": {
+    "HowTo": {
+      "name": "How to attend {title}",
+      "step1": "Check the date and time of the event in our agenda.",
+      "step2": "Add the event to your calendar or share it.",
+      "step3": "Visit the official page or organizer's website for more details."
+    },
+    "Breadcrumbs": {
+      "home": "Home"
+    },
     "Footer": {
       "navigation": {
         "home": "Home",
@@ -506,7 +515,11 @@
       "imageUrlHelper": "If your image is already online, paste the link and we'll use it directly without uploading.",
       "imageUrlInvalid": "Add a valid image URL",
       "remove": "Remove image",
-      "altPreview": "Image"
+      "altPreview": "Image",
+      "uploadDropCta": "Drop your image here",
+      "uploadDropHelper": "or click to select",
+      "selectButton": "Select file",
+      "formatHelper": "Format: JPEG, PNG, JPG, or WEBP"
     },
     "HeroCTA": {
       "buttonBase": "See events",
@@ -529,7 +542,8 @@
       "activeUntil": "Promotion active until {date}"
     },
     "WhereToEatSection": {
-      "title": "Where you can eat"
+      "title": "Where you can eat",
+      "promote": "Promociona el teu restaurant"
     },
     "FeaturedPlaceSection": {
       "seeMore": "See more",
@@ -626,6 +640,7 @@
       "regionPlaceholder": "Select a county",
       "townPlaceholder": "Select a town",
       "categoriesPlaceholder": "Select categories (optional)",
+      "categories": "Categories",
       "location": "Venue *",
       "email": "Email",
       "emailSubtitle": "Do you want us to notify you when the event is updated? (we don't store the data)",
@@ -1092,7 +1107,9 @@
         "isFreeYes": "Yes, the event is free.",
         "isFreeNo": "No, the event is paid.",
         "durationQ": "What is the approximate duration?",
-        "durationA": "{duration}"
+        "durationA": "{duration}",
+        "moreInfoQ": "Where can I find more information?",
+        "moreInfoA": "You can check all the details on the official event page."
       }
     },
     "StringHelpers": {

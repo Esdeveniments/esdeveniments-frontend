@@ -1,2 +1,3 @@
 yarn typecheck
 yarn test --run
+yarn i18n:check

@@ -18,6 +18,7 @@ import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
 import { getFormattedDate } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
+import Breadcrumbs, { BreadcrumbItem } from "@components/ui/common/Breadcrumbs";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import NoEventFound from "components/ui/common/noEventFound";
@@ -35,6 +36,7 @@ import {
   buildFaqJsonLd,
   formatPlaceName,
 } from "@utils/helpers";
+import { generateHowToSchema } from "@utils/schema-helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
@@ -153,6 +155,8 @@ export default async function EventPage({
       isFreeNo: tCopy("faq.isFreeNo"),
       durationQ: tCopy("faq.durationQ"),
       durationA: tCopy("faq.durationA", { duration: "{duration}" }),
+      moreInfoQ: tCopy("faq.moreInfoQ"),
+      moreInfoA: tCopy("faq.moreInfoA"),
     },
   };
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
@@ -222,6 +226,18 @@ export default async function EventPage({
       }
       : null;
 
+  const tHowTo = await getTranslations("Components.HowTo");
+  const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
+  const howToSteps = [
+    tHowTo("step1"),
+    tHowTo("step2"),
+    tHowTo("step3"),
+  ];
+  const howToJsonData = generateHowToSchema(
+    tHowTo("name", { title: title || "Esdeveniment" }),
+    howToSteps
+  );
+
   // Generate BreadcrumbList JSON-LD
   // Ensure breadcrumb name is never empty (required by Google structured data)
   const breadcrumbName = (() => {
@@ -273,11 +289,32 @@ export default async function EventPage({
           data={relatedEventsJsonData}
         />
       )}
+      {/* HowTo JSON-LD for SEO strategy 5 */}
+      {howToJsonData && (
+        <JsonLdServer id={`howto-${event.id}`} data={howToJsonData} />
+      )}
       {/* Breadcrumbs JSON-LD */}
       <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
+            {/* Visible Breadcrumbs for internal linking */}
+            <Breadcrumbs
+              items={[
+                { label: tBreadcrumbs("home"), href: "/" },
+                ...(placeSlug !== "catalunya"
+                  ? [{ label: placeLabel, href: `/${placeSlug}` }]
+                  : []),
+                ...(primaryCategorySlug
+                  ? [{
+                    label: event.categories?.[0]?.name || primaryCategorySlug,
+                    href: `/${placeSlug}/${primaryCategorySlug}`,
+                  }]
+                  : []),
+                { label: title },
+              ] as BreadcrumbItem[]}
+              className="px-section-x pt-4"
+            />
             {/* Event Media Hero + Share cluster */}
             <div className="w-full flex flex-col">
               <div className="w-full">
