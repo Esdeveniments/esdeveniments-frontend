@@ -271,6 +271,11 @@
         "es": "Castellano",
         "en": "Inglés"
       },
+      "languagesShort": {
+        "ca": "Cat",
+        "es": "Cast",
+        "en": "Eng"
+      },
       "mobilePublishLabel": "Publicar"
     },
     "NoEventsFound": {

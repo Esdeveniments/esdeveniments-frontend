@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { fetchNewsBySlugExternal } from "@lib/api/news-external";
 import { handleApiError } from "@utils/api-error-handler";
+import { createKeyedCache } from "@lib/api/cache";
+import type { NewsDetailResponseDTO } from "types/api/news";
 
 export const runtime = "nodejs";
+
+// Cache for news detail by slug (24h TTL) to prevent backend visit increments on refresh
+const { cache: newsDetailCache } =
+  createKeyedCache<NewsDetailResponseDTO | null>(
+    86400000 // 24 hours
+  );
 
 export async function GET(
   _req: Request,
@@ -10,7 +18,10 @@ export async function GET(
 ) {
   try {
     const { slug } = await ctx.params;
-    const data = await fetchNewsBySlugExternal(slug);
+    // Use cache to prevent hitting backend on every request (which increments visits)
+    const data = await newsDetailCache(slug, async (key) => {
+      return await fetchNewsBySlugExternal(key as string);
+    });
     if (!data) return NextResponse.json(null, { status: 404 });
     return NextResponse.json(data, {
       status: 200,
@@ -24,4 +35,3 @@ export async function GET(
     });
   }
 }
-

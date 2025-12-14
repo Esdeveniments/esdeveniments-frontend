@@ -150,7 +150,7 @@ export default function Navbar() {
                   {item.name}
                 </ActiveLink>
               ))}
-              <div className="pt-2 border-t border-border flex justify-end">
+              <div className="pt-3 border-t border-border flex justify-end items-center">
                 <LanguageSwitcher />
               </div>
             </div>

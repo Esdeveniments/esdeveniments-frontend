@@ -121,7 +121,7 @@ export default async function Page({
   const agendaHref = place === "catalunya" ? "/catalunya" : `/${place}`;
 
   return (
-    <div className="container flex-col justify-center items-center mt-8">
+    <div className="container flex-col justify-center items-center mt-8 pb-section-y-lg">
       {/* Head links for prev/next are removed as they require data. 
           If critical, they should be in generateMetadata or we accept they load later? 
           Actually we can't inject into head from here easily if streaming. */}
@@ -131,15 +131,16 @@ export default async function Page({
         <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
       )}
 
+      {/* Breadcrumb Navigation */}
       <nav
         aria-label="Breadcrumb"
-        className="mb-3 w-full px-2 lg:px-0 text-sm text-foreground-strong/70"
+        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
       >
         <ol className="flex items-center space-x-2">
           <li>
             <PressableAnchor
               href={withLocale("/")}
-              className="hover:underline"
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
@@ -147,12 +148,12 @@ export default async function Page({
             </PressableAnchor>
           </li>
           <li>
-            <span className="mx-1">/</span>
+            <span className="mx-1" aria-hidden="true">/</span>
           </li>
           <li>
             <PressableAnchor
               href={withLocale("/noticies")}
-              className="hover:underline"
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
@@ -160,43 +161,60 @@ export default async function Page({
             </PressableAnchor>
           </li>
           <li>
-            <span className="mx-1">/</span>
+            <span className="mx-1" aria-hidden="true">/</span>
           </li>
-          <li className="text-foreground-strong">{placeLabel}</li>
+          <li className="text-foreground-strong font-medium" aria-current="page">
+            {placeLabel}
+          </li>
         </ol>
       </nav>
-      <h1 className="uppercase mb-2 px-2 lg:px-0">
-        {t("heading", { place: placeLabel })}
-      </h1>
-      <div className="w-full flex flex-wrap items-center justify-end gap-2 px-2 lg:px-0 mb-2 text-sm">
-        <PressableAnchor
-          href={withLocale(agendaHref)}
-          className="text-primary underline text-sm"
-          prefetch={false}
-          variant="inline"
-        >
-          {t("seeAgenda", { place: placeLabel })}
-        </PressableAnchor>
-        <span className="mx-2 hidden sm:inline">·</span>
-        <PressableAnchor
-          href={withLocale(`/noticies`)}
-          className="text-primary underline text-sm"
-          prefetch={false}
-          variant="inline"
-        >
-          {t("seeAll")}
-        </PressableAnchor>
-        <span className="mx-2">·</span>
-        <PressableAnchor
-          href={withLocale(`/noticies/${place}/rss.xml`)}
-          className="text-primary underline text-sm"
-          prefetch={false}
-          variant="inline"
-        >
-          {t("rssLabel")}
-        </PressableAnchor>
-      </div>
 
+      {/* Page Header Section */}
+      <header className="w-full px-2 lg:px-0 mb-section-y-sm">
+        {/* Title and Action Links */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-element-gap mb-element-gap">
+          <h1 className="heading-1 uppercase text-foreground-strong flex-1">
+            {t("heading", { place: placeLabel })}
+          </h1>
+          <nav
+            aria-label="Page actions"
+            className="flex flex-wrap items-center gap-x-4 gap-y-2 md:mt-0"
+          >
+            <PressableAnchor
+              href={withLocale(agendaHref)}
+              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+              prefetch={false}
+              variant="inline"
+            >
+              {t("seeAgenda", { place: placeLabel })}
+            </PressableAnchor>
+            <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              ·
+            </span>
+            <PressableAnchor
+              href={withLocale(`/noticies`)}
+              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+              prefetch={false}
+              variant="inline"
+            >
+              {t("seeAll")}
+            </PressableAnchor>
+            <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              ·
+            </span>
+            <PressableAnchor
+              href={withLocale(`/noticies/${place}/rss.xml`)}
+              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+              prefetch={false}
+              variant="inline"
+            >
+              {t("rssLabel")}
+            </PressableAnchor>
+          </nav>
+        </div>
+      </header>
+
+      {/* News List Content */}
       <Suspense fallback={<NewsListSkeleton />}>
         <NewsList
           newsPromise={newsPromise}

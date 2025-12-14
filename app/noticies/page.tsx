@@ -59,35 +59,22 @@ export default async function Page() {
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
 
   return (
-    <div className="container flex-col justify-center items-center mt-8">
+    <div className="container flex-col justify-center items-center mt-8 pb-section-y-lg">
       <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
       {breadcrumbListSchema && (
         <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
       )}
 
-      <h1 className="uppercase mb-2 px-2 lg:px-0">{t("heading")}</h1>
-      <p className="text-[16px] font-normal text-foreground-strong text-left mb-8 px-2 font-barlow">
-        {t("intro")}
-      </p>
-      {/* <div className="w-full flex justify-end px-2 lg:px-0 mb-4 text-sm">
-        <PressableAnchor
-          href={withLocale(`/noticies/rss.xml`)}
-          className="text-primary underline text-sm"
-          prefetch={false}
-          variant="inline"
-        >
-          RSS
-        </PressableAnchor>
-      </div> */}
+      {/* Breadcrumb Navigation */}
       <nav
         aria-label="Breadcrumb"
-        className="mb-6 px-2 lg:px-0 text-sm text-foreground-strong/70"
+        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
       >
         <ol className="flex items-center space-x-2">
           <li>
             <PressableAnchor
               href={withLocale("/")}
-              className="hover:underline"
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
@@ -95,12 +82,25 @@ export default async function Page() {
             </PressableAnchor>
           </li>
           <li>
-            <span className="mx-1">/</span>
+            <span className="mx-1" aria-hidden="true">/</span>
           </li>
-          <li className="text-foreground-strong">{t("breadcrumbCurrent")}</li>
+          <li className="text-foreground-strong font-medium" aria-current="page">
+            {t("breadcrumbCurrent")}
+          </li>
         </ol>
       </nav>
 
+      {/* Page Header Section */}
+      <header className="w-full px-2 lg:px-0 mb-section-y-sm">
+        <h1 className="heading-1 uppercase text-foreground-strong mb-element-gap">
+          {t("heading")}
+        </h1>
+        <p className="body-large text-foreground-strong/80 text-left">
+          {t("intro")}
+        </p>
+      </header>
+
+      {/* News Hubs Grid */}
       <Suspense fallback={<NewsGridSkeleton />}>
         <NewsHubsGrid promise={hubResultsPromise} />
       </Suspense>

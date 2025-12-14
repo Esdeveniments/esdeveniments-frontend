@@ -160,9 +160,9 @@ export default async function NewsArticleDetail({
   });
 
   return (
-    <div className="min-h-screen bg-background mt-4">
+    <div className="w-full min-h-screen bg-background mt-4">
       {/* Breadcrumbs */}
-      <div className="bg-background border-b border-border">
+      <div className="w-full bg-background border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav
             className="text-sm text-foreground-strong/70"
@@ -203,7 +203,7 @@ export default async function NewsArticleDetail({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
           <h1 className="heading-1 mb-6">{detail.title}</h1>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-foreground-strong/70">

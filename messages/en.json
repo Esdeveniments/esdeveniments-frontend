@@ -271,6 +271,11 @@
         "es": "Spanish",
         "en": "English"
       },
+      "languagesShort": {
+        "ca": "Cat",
+        "es": "Cast",
+        "en": "Eng"
+      },
       "mobilePublishLabel": "Publish"
     },
     "NoEventsFound": {

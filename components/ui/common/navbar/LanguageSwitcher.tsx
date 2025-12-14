@@ -39,7 +39,7 @@ export default function LanguageSwitcher() {
     () =>
       SUPPORTED_LOCALES.map((value) => ({
         value,
-        label: t(`languages.${value}`),
+        label: t(`languagesShort.${value}`),
       })),
     [t]
   );
@@ -70,7 +70,7 @@ export default function LanguageSwitcher() {
       <span className="sr-only">{t("languageLabel")}</span>
       <select
         aria-label={t("languageLabel")}
-        className="rounded-input border border-border bg-background px-button-x py-button-y text-foreground"
+        className="rounded-input border border-border bg-background pl-button-x pr-8 py-button-y text-foreground min-h-[44px] md:min-h-0"
         onChange={handleChange}
         value={locale}
       >

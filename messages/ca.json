@@ -271,6 +271,11 @@
         "es": "Castellà",
         "en": "Anglès"
       },
+      "languagesShort": {
+        "ca": "Cat",
+        "es": "Cast",
+        "en": "Eng"
+      },
       "mobilePublishLabel": "Publica"
     },
     "NoEventsFound": {
