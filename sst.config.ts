@@ -116,6 +116,10 @@ export default $config({
           }
           return secret;
         })(),
+        // Disable Next.js fetch cache to prevent S3 __fetch bucket errors
+        // OpenNext/SST doesn't configure the __fetch bucket, causing "NoSuchBucket" errors
+        // This prevents Next.js from trying to cache fetch() responses to S3
+        NEXT_PRIVATE_DISABLE_FETCH_CACHE: "1",
       },
       warm: 5,
       transform: {
