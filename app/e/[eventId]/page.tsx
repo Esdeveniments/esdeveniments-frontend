@@ -182,7 +182,7 @@ export default async function EventPage({
 
   // Build intro and FAQ via shared utils (no assumptions)
   const introText = await buildEventIntroText(event, eventCopyLabels, locale);
-  const faqItems = await buildFaqItems(event, eventCopyLabels);
+  const faqItems = await buildFaqItems(event, eventCopyLabels, locale);
   const faqJsonLd = buildFaqJsonLd(faqItems);
 
   // Prepare place data for LatestNewsSection (streamed separately)

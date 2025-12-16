@@ -96,6 +96,7 @@ const buildFileSignature = (file: File) =>
 
 const Publica = () => {
   const t = useTranslations("App.Publish");
+  const tForm = useTranslations("Components.EventForm");
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -488,7 +489,7 @@ const Publica = () => {
         <Modal
           open={showPreview}
           setOpen={setShowPreview}
-          title="Preview"
+          title={tForm("previewModalTitle")}
           actionButton={t("submitLabel")}
           actionButtonDisabled={isFormDisabled || isPending}
           onActionButtonClick={async () => {

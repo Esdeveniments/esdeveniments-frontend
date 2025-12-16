@@ -560,6 +560,7 @@
       "sponsored": "Sponsored content"
     },
     "Weather": {
+      "title": "Weather",
       "noData": "No weather data available."
     },
     "DateFilterBadges": {
@@ -633,6 +634,14 @@
       "previewMissingDescription": "Add a description to help people find it.",
       "previewMissingCategories": "No categories yet",
       "previewWarnings": "Recommendations",
+      "previewRequired": "Required",
+      "previewRequiredImage": "Image is missing",
+      "previewNoTitle": "No title",
+      "previewCategoriesLabel": "Categories",
+      "previewNoCategories": "No categories selected",
+      "previewLinkLabel": "Link",
+      "previewOptional": "Optional",
+      "previewDescriptionLabel": "Description",
       "step": "Step {current} of {total}",
       "stepBasics": "Basics",
       "stepLocation": "Location",
@@ -644,7 +653,7 @@
       "testLink": "Test link",
       "regionPlaceholder": "Select a county",
       "townPlaceholder": "Select a town",
-      "categoriesPlaceholder": "Select categories (optional)",
+      "categoriesPlaceholder": "Select categories",
       "categories": "Categories",
       "location": "Venue *",
       "email": "Email",
@@ -665,6 +674,9 @@
     "EventLocation": {
       "title": "Location"
     },
+    "EventCalendar": {
+      "title": "Date and time"
+    },
     "Select": {
       "placeholder": "an option",
       "create": "Add new place: \"{value}\"",
@@ -681,11 +693,12 @@
       "edit": "✏️ Edit",
       "preview": "👁️ Preview",
       "emptyPreview": "Write something to see the preview...",
-      "placeholder": "Describe your event... You can write links directly and they will convert automatically.",
+      "placeholder": "Describe your event...",
       "helperPreview": "This is how visitors will see the description",
       "helperEdit": "Links will be converted automatically. Press Enter for line breaks."
     },
     "DatePicker": {
+      "dateAndTime": "Date and time",
       "start": "Start *",
       "end": "End *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",

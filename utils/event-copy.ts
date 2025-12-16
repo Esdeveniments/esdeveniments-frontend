@@ -484,7 +484,8 @@ export async function buildEventIntroText(
 
 export async function buildFaqItems(
   event: EventDetailResponseDTO,
-  labels: EventCopyLabels = defaultEventCopyLabels
+  labels: EventCopyLabels = defaultEventCopyLabels,
+  locale: AppLocale = DEFAULT_LOCALE
 ): Promise<FaqItem[]> {
   const items: FaqItem[] = [];
 
@@ -494,14 +495,15 @@ export async function buildFaqItems(
 
   const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
   const formattedEventDate = formattedEnd
     ? labels.sentence.dateRange
         .replace("{start}", formattedStart)
         .replace("{end}", formattedEnd)
     : labels.sentence.dateSingle
-        .replace("{nameDay}", nameDay)
+        .replace("{nameDay}", nameDay.toLowerCase())
         .replace("{start}", formattedStart);
 
   const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
@@ -512,8 +514,10 @@ export async function buildFaqItems(
     ? `${startTimeLabel}${hasDistinctEndTime ? ` - ${endTimeLabel}` : ""}`
     : "";
 
+  // Capitalize first letter since the date starts the answer sentence
+  const capitalizedDate = capitalizeFirstLetter(formattedEventDate);
   const whenAnswer = labels.faq.whenA
-    .replace("{date}", formattedEventDate)
+    .replace("{date}", capitalizedDate)
     .replace(
       "{time}",
       timeLabel ? labels.sentence.timeSuffix.replace("{time}", timeLabel) : ""

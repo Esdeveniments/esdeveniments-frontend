@@ -2,6 +2,7 @@ import { CalendarIcon, ClockIcon } from "@heroicons/react/outline";
 import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
+import { getTranslations } from "next-intl/server";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
 import SectionHeading from "@components/ui/common/SectionHeading";
@@ -9,6 +10,8 @@ import { headers } from "next/headers";
 import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 export default async function EventCalendar({ event }: EventCalendarProps) {
+  const t = await getTranslations("Components.EventCalendar");
+
   // Extract needed fields
   const {
     title,
@@ -41,7 +44,7 @@ export default async function EventCalendar({ event }: EventCalendarProps) {
         <SectionHeading
           Icon={CalendarIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title="Data i hora"
+          title={t("title")}
           titleClassName="heading-2"
         />
         <div className="w-full flex flex-col gap-element-gap px-section-x">

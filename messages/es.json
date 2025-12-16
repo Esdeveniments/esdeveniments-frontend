@@ -560,6 +560,7 @@
       "sponsored": "Contenido patrocinado"
     },
     "Weather": {
+      "title": "El tiempo",
       "noData": "No hay datos meteorológicos disponibles."
     },
     "DateFilterBadges": {
@@ -633,6 +634,14 @@
       "previewMissingDescription": "Añade una descripción para que sea más fácil encontrarlo.",
       "previewMissingCategories": "Aún no has añadido categorías",
       "previewWarnings": "Recomendaciones",
+      "previewRequired": "Necesario",
+      "previewRequiredImage": "Falta la imagen",
+      "previewNoTitle": "Sin título",
+      "previewCategoriesLabel": "Categorías",
+      "previewNoCategories": "Ninguna categoría seleccionada",
+      "previewLinkLabel": "Enlace",
+      "previewOptional": "Opcional",
+      "previewDescriptionLabel": "Descripción",
       "step": "Paso {current} de {total}",
       "stepBasics": "Información básica",
       "stepLocation": "Ubicación",
@@ -644,7 +653,7 @@
       "testLink": "Probar enlace",
       "regionPlaceholder": "Selecciona una comarca",
       "townPlaceholder": "Selecciona un pueblo",
-      "categoriesPlaceholder": "Selecciona categorías (opcional)",
+      "categoriesPlaceholder": "Selecciona categorías",
       "categories": "Categorías",
       "location": "Lugar *",
       "email": "Correo electrónico",
@@ -665,6 +674,9 @@
     "EventLocation": {
       "title": "Ubicación"
     },
+    "EventCalendar": {
+      "title": "Fecha y hora"
+    },
     "Select": {
       "placeholder": "una opción",
       "create": "Añadir nuevo lugar: \"{value}\"",
@@ -681,11 +693,12 @@
       "edit": "✏️ Editar",
       "preview": "👁️ Previsualizar",
       "emptyPreview": "Escribe algo para ver la previsualización...",
-      "placeholder": "Describe tu evento... Puedes escribir enlaces directamente y se convertirán automáticamente.",
+      "placeholder": "Describe tu evento...",
       "helperPreview": "Así es como verán la descripción los visitantes",
       "helperEdit": "Los enlaces se convertirán automáticamente. Pulsa Enter para hacer saltos de línea."
     },
     "DatePicker": {
+      "dateAndTime": "Fecha y hora",
       "start": "Inicio *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",

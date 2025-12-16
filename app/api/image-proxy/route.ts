@@ -120,6 +120,43 @@ function hasStrongCacheKey(upstreamUrl: string): boolean {
   }
 }
 
+function buildFetchCandidates(
+  absoluteUrl: string,
+  originalWasHttp: boolean
+): string[] {
+  // Always try HTTPS first for non-localhost, then fall back to HTTP when applicable.
+  try {
+    const parsed = new URL(absoluteUrl);
+    const isLocalhost =
+      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+
+    const https = new URL(parsed.toString());
+    https.protocol = "https:";
+
+    const http = new URL(parsed.toString());
+    http.protocol = "http:";
+
+    // If localhost, prefer original protocol (usually http) and don't force https first.
+    if (isLocalhost) {
+      return [parsed.toString()];
+    }
+
+    // If input already https, only add http fallback when the original input was http.
+    if (parsed.protocol === "https:") {
+      return originalWasHttp ? [https.toString(), http.toString()] : [https.toString()];
+    }
+
+    // If input is http, still try https first, then http.
+    if (parsed.protocol === "http:") {
+      return [https.toString(), http.toString()];
+    }
+
+    return [parsed.toString()];
+  } catch {
+    return [absoluteUrl];
+  }
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const rawTarget = url.searchParams.get("url") || "";
@@ -142,10 +179,7 @@ export async function GET(request: Request) {
     }
   })();
 
-  const candidates = [normalized];
-  if (originalWasHttp && normalized.startsWith("https://")) {
-    candidates.push(normalized.replace(/^https:\/\//, "http://"));
-  }
+  const candidates = buildFetchCandidates(normalized, originalWasHttp);
 
   for (const candidate of candidates) {
     try {

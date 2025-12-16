@@ -125,7 +125,7 @@ export default function DatePickerComponent({
       {/* Header Row: Label + All Day Toggle */}
       <div className="flex justify-between items-center">
         <label className="form-label">
-          {t.has("dateAndTime") ? t("dateAndTime") : "Data i hora"}
+          {t("dateAndTime")}
         </label>
 
         {enableAllDayToggle && (

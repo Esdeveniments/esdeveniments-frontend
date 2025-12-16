@@ -1,10 +1,13 @@
 import React from "react";
 import { CloudIcon } from "@heroicons/react/outline";
+import { useTranslations } from "next-intl";
 import type { EventWeatherProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import Weather from "components/ui/weather";
 
 const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
+  const t = useTranslations("Components.Weather");
+
   if (!weather) return null;
 
   return (
@@ -13,7 +16,7 @@ const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
         <SectionHeading
           Icon={CloudIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title="El temps"
+          title={t("title")}
           titleClassName="heading-2"
         />
         <Weather weather={weather} />

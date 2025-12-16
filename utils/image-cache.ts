@@ -46,14 +46,6 @@ export function normalizeExternalImageUrl(imageUrl: string): string {
     urlObj.username = "";
     urlObj.password = "";
 
-    const isLocalhost =
-      urlObj.hostname === "localhost" || urlObj.hostname === "127.0.0.1";
-
-    // Prefer https for external hosts
-    if (!isLocalhost && urlObj.protocol === "http:") {
-      urlObj.protocol = "https:";
-    }
-
     // Collapse duplicate slashes in pathname (keeping leading slash)
     urlObj.pathname = urlObj.pathname.replace(/\/{2,}/g, "/");
 
@@ -149,9 +141,52 @@ export function buildOptimizedImageUrl(
   imageUrl: string,
   cacheKey?: string | number | null
 ): string {
-  const normalized = normalizeExternalImageUrl(imageUrl);
-  if (!normalized) return imageUrl;
-  const cacheKeyed =
-    cacheKey !== undefined ? withImageCacheKey(normalized, cacheKey) : normalized;
-  return toProxiedImageUrl(cacheKeyed);
+  const trimmed = sanitizeUrlCandidate(imageUrl);
+  if (!trimmed) return "";
+
+  const shouldProxyByPrefix =
+    trimmed.startsWith("http://") || trimmed.startsWith("//");
+
+  // Some municipal hosting setups publish HTTPS URLs but ship an invalid TLS cert.
+  // For these, the only workable path is our proxy trying HTTPS first and falling
+  // back to HTTP. Keep this narrowly-scoped to avoid proxying everything.
+  const shouldProxyByHostname = (() => {
+    try {
+      const absolute = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
+      if (!ABSOLUTE_URL_REGEX.test(absolute)) return false;
+      const parsed = new URL(absolute);
+      return parsed.hostname.endsWith(".altanet.org");
+    } catch {
+      return false;
+    }
+  })();
+
+  const shouldProxy = shouldProxyByPrefix || shouldProxyByHostname;
+
+  // If we intend to proxy, preserve original protocol where possible so the proxy
+  // can retry HTTP when HTTPS is broken (common on misconfigured town sites).
+  if (shouldProxy) {
+    const absolute = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
+    try {
+      const parsed = new URL(absolute);
+      parsed.username = "";
+      parsed.password = "";
+      parsed.pathname = parsed.pathname.replace(/\/{2,}/g, "/");
+      if (cacheKey !== undefined && cacheKey !== null) {
+        const normalizedKey = String(cacheKey).trim();
+        if (normalizedKey) parsed.searchParams.set(CACHE_PARAM, normalizedKey);
+      }
+      // Use the preserved protocol (http stays http). Protocol-relative becomes https.
+      const preserved = parsed.toString();
+      return toProxiedImageUrl(preserved);
+    } catch {
+      // Fail-open: if URL parsing fails, don't proxy
+      return trimmed;
+    }
+  }
+
+  // Non-proxied path: normalize (can prefer https) and append cache key
+  const normalized = normalizeExternalImageUrl(trimmed);
+  if (!normalized) return trimmed;
+  return cacheKey !== undefined ? withImageCacheKey(normalized, cacheKey) : normalized;
 }

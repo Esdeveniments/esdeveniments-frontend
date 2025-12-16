@@ -17,12 +17,14 @@ import {
 const formatDate = (value: string, locale: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat(locale, {
+  const formatted = new Intl.DateTimeFormat(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   }).format(date);
+  // Capitalize first letter of the formatted date
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 };
 
 const formatTimeRange = (start?: string | null, end?: string | null) => {
@@ -41,10 +43,6 @@ export const PreviewContent = ({
 }) => {
   const tForm = useTranslations("Components.EventForm");
   const locale = useLocale();
-  const hasKey = (key: string) =>
-    typeof (tForm as any).has === "function"
-      ? (tForm as any).has(key)
-      : Boolean((tForm as any).raw?.(key));
 
   const dateLabel = formatDate(event.startDate, locale);
   const dateEndLabel =
@@ -62,18 +60,18 @@ export const PreviewContent = ({
   // Required fields that are missing (blocking)
   const requiredMissing: string[] = [];
   if (!hasImage) {
-    requiredMissing.push(hasKey("previewRequiredImage") ? tForm("previewRequiredImage") : "Falta la imatge");
+    requiredMissing.push(tForm("previewRequiredImage"));
   }
 
   // Soft warnings (recommendations, not blocking)
   const softWarnings: string[] = [];
-  if (!hasUrl && hasKey("previewMissingUrl")) {
+  if (!hasUrl) {
     softWarnings.push(tForm("previewMissingUrl"));
   }
-  if (!hasDescription && hasKey("previewMissingDescription")) {
+  if (!hasDescription) {
     softWarnings.push(tForm("previewMissingDescription"));
   }
-  if (!hasCategories && hasKey("previewMissingCategories")) {
+  if (!hasCategories) {
     softWarnings.push(tForm("previewMissingCategories"));
   }
 
@@ -92,7 +90,7 @@ export const PreviewContent = ({
           <div className="w-full h-48 flex-center flex-col gap-2 text-error/70">
             <PhotographIcon className="w-12 h-12" />
             <p className="body-normal font-medium">
-              {hasKey("previewRequiredImage") ? tForm("previewRequiredImage") : "Falta la imatge"}
+              {tForm("previewRequiredImage")}
             </p>
           </div>
         )}
@@ -102,11 +100,9 @@ export const PreviewContent = ({
         {/* Event title section */}
         <div className="flex flex-col gap-1">
           <p className="label text-foreground/70">
-            {hasKey("reviewTitle")
-              ? tForm("reviewTitle")
-              : "Abans de publicar"}
+            {tForm("reviewTitle")}
           </p>
-          <h2 className="heading-2">{event.title || <span className="text-error/70">Sense títol</span>}</h2>
+          <h2 className="heading-2">{event.title || <span className="text-error/70">{tForm("previewNoTitle")}</span>}</h2>
         </div>
 
         {/* Event details card */}
@@ -143,9 +139,7 @@ export const PreviewContent = ({
             <div className="flex items-center gap-2">
               <TagIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
-                {hasKey("categoriesPlaceholder")
-                  ? "Categories"
-                  : "Categories"}
+                {tForm("previewCategoriesLabel")}
               </p>
             </div>
             {hasCategories ? (
@@ -161,7 +155,7 @@ export const PreviewContent = ({
               </div>
             ) : (
               <p className="body-small text-foreground/50 ml-6 italic">
-                Cap categoria seleccionada
+                {tForm("previewNoCategories")}
               </p>
             )}
           </div>
@@ -171,7 +165,7 @@ export const PreviewContent = ({
             <div className="flex items-center gap-2">
               <ExternalLinkIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
-                Enllaç
+                {tForm("previewLinkLabel")}
               </p>
             </div>
             {hasUrl ? (
@@ -185,7 +179,7 @@ export const PreviewContent = ({
               </a>
             ) : (
               <p className="body-small text-foreground/50 ml-6 italic">
-                Opcional
+                {tForm("previewOptional")}
               </p>
             )}
           </div>
@@ -195,7 +189,7 @@ export const PreviewContent = ({
             <div className="flex items-center gap-2">
               <DocumentIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
-                Descripció
+                {tForm("previewDescriptionLabel")}
               </p>
             </div>
             {hasDescription ? (
@@ -204,7 +198,7 @@ export const PreviewContent = ({
               </p>
             ) : (
               <p className="body-small text-foreground/50 ml-6 italic">
-                Opcional
+                {tForm("previewOptional")}
               </p>
             )}
           </div>
@@ -215,7 +209,7 @@ export const PreviewContent = ({
           <div className="card-body space-y-2 bg-error/10 border border-error/30 rounded-card">
             <p className="body-normal font-semibold text-error flex items-center gap-2">
               <XCircleIcon className="w-5 h-5" />
-              {hasKey("previewRequired") ? tForm("previewRequired") : "Necessari"}
+              {tForm("previewRequired")}
             </p>
             <ul className="space-y-1">
               {requiredMissing.map((item) => (
@@ -235,9 +229,7 @@ export const PreviewContent = ({
           <div className="card-body space-y-2 bg-warning/10 border border-warning/30 rounded-card">
             <p className="body-normal font-semibold text-warning-dark flex items-center gap-2">
               <InformationCircleIcon className="w-5 h-5" />
-              {hasKey("previewWarnings")
-                ? tForm("previewWarnings")
-                : "Recomanacions"}
+              {tForm("previewWarnings")}
             </p>
             <ul className="space-y-1">
               {softWarnings.map((warning) => (

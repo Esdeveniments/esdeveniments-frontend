@@ -29,6 +29,7 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   const normalizedImage = normalizeExternalImageUrl(image);
   const proxiedImage = buildOptimizedImageUrl(image);
   const anchorHref = normalizedImage || image;
+  const shouldRenderFallbackUnderlay = proxiedImage.startsWith("/api/image-proxy");
 
   return (
     <div
@@ -42,10 +43,13 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
         className="block w-full h-full cursor-pointer hover:opacity-95 transition-opacity relative"
         aria-label={`Veure imatge completa de ${safeTitle}`}
       >
-        {/* Server-rendered fallback under the image (no client-side onError needed) */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <ImgDefaultServer title={title} />
-        </div>
+        {/* Server-only fallback underlay ONLY when using the proxy (risky sources).
+            Avoids a visual flash for normal HTTPS images. */}
+        {shouldRenderFallbackUnderlay && (
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <ImgDefaultServer title={title} />
+          </div>
+        )}
         <NextImage
           src={proxiedImage}
           alt={safeTitle}

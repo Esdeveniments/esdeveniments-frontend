@@ -560,6 +560,7 @@
       "sponsored": "Contingut patrocinat"
     },
     "Weather": {
+      "title": "El temps",
       "noData": "No hi ha dades meteorològiques disponibles."
     },
     "DateFilterBadges": {
@@ -633,6 +634,14 @@
       "previewMissingDescription": "Afegeix una descripció perquè sigui més fàcil trobar-lo.",
       "previewMissingCategories": "Encara no has afegit categories",
       "previewWarnings": "Recomanacions",
+      "previewRequired": "Necessari",
+      "previewRequiredImage": "Falta la imatge",
+      "previewNoTitle": "Sense títol",
+      "previewCategoriesLabel": "Categories",
+      "previewNoCategories": "Cap categoria seleccionada",
+      "previewLinkLabel": "Enllaç",
+      "previewOptional": "Opcional",
+      "previewDescriptionLabel": "Descripció",
       "step": "Pas {current} de {total}",
       "stepBasics": "Informació bàsica",
       "stepLocation": "Ubicació",
@@ -644,7 +653,7 @@
       "testLink": "Prova l'enllaç",
       "regionPlaceholder": "Selecciona una comarca",
       "townPlaceholder": "Selecciona un poble",
-      "categoriesPlaceholder": "Selecciona categories (opcional)",
+      "categoriesPlaceholder": "Selecciona categories",
       "categories": "Categories",
       "location": "Lloc *",
       "email": "Correu electrònic",
@@ -664,6 +673,9 @@
     },
     "EventLocation": {
       "title": "Ubicació"
+    },
+    "EventCalendar": {
+      "title": "Data i hora"
     },
     "Select": {
       "placeholder": "una opció",
@@ -686,6 +698,7 @@
       "helperEdit": "Prem Enter per fer salts de línia."
     },
     "DatePicker": {
+      "dateAndTime": "Data i hora",
       "start": "Inici *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",

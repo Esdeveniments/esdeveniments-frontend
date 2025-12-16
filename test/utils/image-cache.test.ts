@@ -68,9 +68,9 @@ describe("withImageCacheKey", () => {
 });
 
 describe("normalizeExternalImageUrl", () => {
-  it("prefers https over http for non-localhost", () => {
+  it("preserves http protocol (proxy decides https-first)", () => {
     expect(normalizeExternalImageUrl("http://example.com/image.jpg")).toBe(
-      "https://example.com/image.jpg"
+      "http://example.com/image.jpg"
     );
   });
 
@@ -92,12 +92,25 @@ describe("normalizeExternalImageUrl", () => {
 });
 
 describe("buildOptimizedImageUrl", () => {
-  it("proxies absolute URLs", () => {
+  it("does not proxy HTTPS absolute URLs (performance)", () => {
     const result = buildOptimizedImageUrl("https://example.com/img.jpg", "k1");
+    expect(result).toBe("https://example.com/img.jpg?v=k1");
+  });
+
+  it("proxies HTTP absolute URLs (mixed content)", () => {
+    const result = buildOptimizedImageUrl("http://example.com/img.jpg", "k1");
     expect(result).toMatch(/^\/api\/image-proxy\?url=/);
     expect(decodeURIComponent(result.split("url=")[1])).toContain(
-      "https://example.com/img.jpg?v=k1"
+      "http://example.com/img.jpg?v=k1"
     );
+  });
+
+  it("proxies known-bad TLS hostname even when HTTPS (allows HTTP fallback)", () => {
+    const result = buildOptimizedImageUrl(
+      "https://www.bot.altanet.org/sites/bot/files/recursos/document_0.jpg",
+      "k3"
+    );
+    expect(result).toMatch(/^\/api\/image-proxy\?url=/);
   });
 
   it("keeps relative URLs unproxied but normalized", () => {
