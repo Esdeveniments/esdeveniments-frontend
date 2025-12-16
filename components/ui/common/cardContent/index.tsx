@@ -92,7 +92,7 @@ export default function CardContentServer({
           </div>
           <div className="p-card-padding-sm flex justify-center items-center">
             <div
-              className="w-full relative"
+              className="w-full relative max-w-2xl mx-auto"
               style={{
                 height: isHorizontal ? "16rem" : "auto",
                 viewTransitionName: `event-image-${event.id}`,

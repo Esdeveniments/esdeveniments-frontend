@@ -99,7 +99,8 @@ export const getOptimalImageSizes = (
 ): string => {
   const sizesMap = {
     // Event cards in listings (most common usage)
-    card: "(max-width: 540px) 92vw, (max-width: 768px) 45vw, (max-width: 1024px) 33vw, 25vw",
+    // Constrained to max-w-2xl (672px) on desktop, so cap at 672px
+    card: "(max-width: 540px) 92vw, (max-width: 768px) 45vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 672px",
     // Hero/featured images
     hero: "(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw",
     // List view / horizontal cards: tighter sizes to avoid over-downloading on desktop

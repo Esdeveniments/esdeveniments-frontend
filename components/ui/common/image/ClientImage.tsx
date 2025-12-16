@@ -13,7 +13,7 @@ import {
   getOptimalImageSizes,
   getServerImageQuality,
 } from "@utils/image-quality";
-import { withImageCacheKey } from "@utils/image-cache";
+import { buildOptimizedImageUrl } from "@utils/image-cache";
 
 /**
  * ClientImage
@@ -50,9 +50,7 @@ function ClientImage({
     customQuality,
   });
 
-  const finalImageSrc = cacheKey
-    ? withImageCacheKey(image, cacheKey)
-    : image;
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
 
   const imageKey = getImageKey(finalImageSrc);
 
@@ -80,7 +78,13 @@ function ClientImage({
   }
 
   return (
-    <div className={imageClassName} style={{ position: "relative" }}>
+    <div
+      className={imageClassName}
+      style={{
+        position: "relative",
+        maxWidth: "100%", // Ensure image doesn't exceed container
+      }}
+    >
       {isLoading && (
         <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
           <div className="w-full h-60 bg-muted animate-fast-pulse"></div>
@@ -102,6 +106,7 @@ function ClientImage({
           opacity: isLoading ? 0 : 1,
           transition: "opacity 0.3s ease-in-out",
           height: "auto",
+          maxWidth: "100%", // Ensure image respects container constraints
         }}
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}
