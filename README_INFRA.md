@@ -290,6 +290,7 @@ For automatic deployment to work, configure these secrets in GitHub:
 | `REVALIDATE_SECRET`      | Secret for on-demand cache revalidation API      | (random secure string, 32+ chars)       |
 | `SENTRY_DSN`             | Sentry DSN for server-side error tracking        | `https://...@sentry.io/...`             |
 | `NEXT_PUBLIC_API_URL`    | Production API backend URL                       | `https://api-pre.esdeveniments.cat/api` |
+| `DEEPL_API_KEY`          | DeepL API key for translation services           | (DeepL API authentication key)          |
 
 ### Optional Secrets (Recommended)
 
