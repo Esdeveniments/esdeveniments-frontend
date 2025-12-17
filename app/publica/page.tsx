@@ -456,13 +456,9 @@ const Publica = () => {
             "La mida total de la sol·licitud (imatge + dades) supera el límit permès pel servidor. Redueix la mida de la imatge abans de tornar-ho a intentar."
           );
         } else if (isFormParsingError) {
-          setError(
-            "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar."
-          );
+          setError(t("errorFormParsing"));
         } else if (normalizedMessage.includes("duplicate") || normalizedMessage.includes("integrity violation")) {
-          setError(
-            "Aquest esdeveniment ja existeix. Si creus que és un error, contacta amb nosaltres."
-          );
+          setError(t("errorDuplicate"));
         } else {
           setError(t("errorGeneric"));
         }
@@ -495,6 +491,7 @@ const Publica = () => {
           onActionButtonClick={async () => {
             await onSubmit();
           }}
+          testId="preview-modal"
         >
           <PreviewContent event={previewEvent} />
         </Modal>

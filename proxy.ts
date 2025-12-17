@@ -401,12 +401,18 @@ export default async function proxy(request: NextRequest) {
     "camera=(), microphone=(), geolocation=(self)"
   );
 
-  // Add Cache-Control for public pages (excluding API and internal paths handled above)
-  // public, max-age=3600 (1h browser), s-maxage=86400 (24h CDN), stale-while-revalidate=86400 (24h)
+  // Cache-Control for public HTML pages (excluding API and Next assets).
+  //
+  // IMPORTANT: We must not cache HTML for 24h at the CDN, otherwise "today" pages
+  // (e.g., /catalunya) can show yesterday's events for up to a day. Keep a short
+  // shared-cache TTL aligned with our typical ISR revalidate window (5 minutes).
+  //
+  // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
+  // still serve quickly and revalidate in the background.
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
     response.headers.set(
       "Cache-Control",
-      "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+      "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
     );
   }
 

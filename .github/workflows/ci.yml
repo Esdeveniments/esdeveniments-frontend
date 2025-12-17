@@ -61,6 +61,11 @@ jobs:
           CI: true
         run: yarn test
 
+      - name: Generate service worker (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+        run: yarn prebuild
+
       - name: Build application
         env:
           NODE_ENV: production

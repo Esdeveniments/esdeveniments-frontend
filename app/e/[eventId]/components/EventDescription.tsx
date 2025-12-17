@@ -3,6 +3,8 @@ import React from "react";
 import TranslateDescription from "./TranslateDescription";
 import type { EventDescriptionProps } from "types/event";
 
+const DESCRIPTION_BODY_ID = "event-description-body";
+
 const EventDescription: React.FC<EventDescriptionProps> = ({
   description,
   location,
@@ -19,10 +21,15 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
         locationValue={locationValue}
         introText={introText}
         locationType={locationType}
+        descriptionHtmlId={DESCRIPTION_BODY_ID}
+        headerActions={
+          <TranslateDescription
+            description={description}
+            locale={locale}
+            targetId={DESCRIPTION_BODY_ID}
+          />
+        }
       />
-      <div className="px-4 pt-4">
-        <TranslateDescription description={description} locale={locale} />
-      </div>
     </div>
   );
 };

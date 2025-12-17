@@ -163,6 +163,7 @@
       "errorBodyLimit": "El tamaño total de la solicitud (imagen + datos) supera el límite permitido de 10 MB. Por favor, reduce el tamaño de la imagen o elimina datos innecesarios.",
       "errorGeneric": "Ha habido un error al publicar el evento. Por favor, inténtalo de nuevo.",
       "errorFormParsing": "Se cortó la conexión mientras se enviaba el formulario. Recarga la página e inténtalo de nuevo.",
+      "errorDuplicate": "Este evento ya existe. Si crees que es un error, contáctanos.",
       "submitLabel": "Publicar",
       "imageTooLarge": "La imagen supera el límite permitido de {limit} MB. Por favor, elige una imagen más pequeña.",
       "uploadSuccess": "Imagen subida correctamente.",
@@ -737,10 +738,11 @@
       "translateCta": "Traducir la descripción al {target}",
       "translating": "Traduciendo…",
       "translatedLabel": "Traducido del catalán al {target}",
+      "showOriginal": "Mostrar original",
       "translateError": "No hemos podido traducir ahora mismo. Inténtalo de nuevo.",
       "target": {
         "en": "inglés",
-        "es": "español"
+        "es": "castellano"
       }
     },
     "HorizontalScroll": {

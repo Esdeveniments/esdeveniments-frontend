@@ -163,6 +163,7 @@
       "errorBodyLimit": "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries.",
       "errorGeneric": "Hi ha hagut un error en publicar l'esdeveniment. Si us plau, torna-ho a intentar.",
       "errorFormParsing": "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar.",
+      "errorDuplicate": "Aquest esdeveniment ja existeix. Si creus que és un error, contacta amb nosaltres.",
       "submitLabel": "Publicar",
       "imageTooLarge": "La imatge supera el límit permès de {limit} MB. Si us plau, tria una imatge més petita.",
       "uploadSuccess": "Imatge pujada correctament.",
@@ -737,6 +738,7 @@
       "translateCta": "Traduir la descripció al {target}",
       "translating": "Traduïnt…",
       "translatedLabel": "Traduït del català al {target}",
+      "showOriginal": "Mostrar original",
       "translateError": "No hem pogut traduir ara mateix. Torna-ho a provar.",
       "target": {
         "en": "anglès",

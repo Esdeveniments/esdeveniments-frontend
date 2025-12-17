@@ -117,6 +117,16 @@ export interface DescriptionProps {
   locationValue?: string;
   introText?: string;
   locationType?: "region" | "town" | "general";
+  /**
+   * Optional actions rendered next to the section title (e.g. a client island button).
+   * Must remain serializable/ReactNode compatible with server rendering.
+   */
+  headerActions?: ReactNode;
+  /**
+   * Optional id applied to the main description HTML container so a client island
+   * can replace its content (e.g. translated text) without converting this component to client.
+   */
+  descriptionHtmlId?: string;
 }
 
 // NavigationItem and Href are now imported from types/common.ts

@@ -163,6 +163,7 @@
       "errorBodyLimit": "The total request size (image + data) exceeds the allowed limit of 10 MB. Please reduce the image size or remove unnecessary data.",
       "errorGeneric": "There was an error publishing the event. Please try again.",
       "errorFormParsing": "The connection was interrupted while sending the form. Reload the page and try again.",
+      "errorDuplicate": "This event already exists. If you think this is an error, please contact us.",
       "submitLabel": "Publish",
       "imageTooLarge": "The image exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
       "uploadSuccess": "Image uploaded successfully.",
@@ -737,6 +738,7 @@
       "translateCta": "Translate the description to {target}",
       "translating": "Translating…",
       "translatedLabel": "Translated from Catalan to {target}",
+      "showOriginal": "Show original",
       "translateError": "We couldn't translate right now. Please try again.",
       "target": {
         "en": "English",

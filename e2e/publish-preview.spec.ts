@@ -52,7 +52,7 @@ test.describe("Publish - Preview", () => {
     await previewButton.click();
 
     // Assert Modal
-    const modal = page.getByRole("dialog", { name: "Preview" });
+    const modal = page.getByTestId("preview-modal");
     await expect(modal).toBeVisible({ timeout: 20000 });
 
     // Assert Content
