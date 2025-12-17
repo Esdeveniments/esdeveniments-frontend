@@ -4,14 +4,13 @@ import type { Metadata } from "next";
 import { getNewsBySlug } from "@lib/api/news";
 import type { NewsDetailResponseDTO } from "types/api/news";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 export async function generateMetadata({
   params,
@@ -19,7 +18,6 @@ export async function generateMetadata({
   params: Promise<{ place: string; article: string }>;
 }): Promise<Metadata> {
   const { place, article } = await params;
-  const t = await getTranslations("App.NewsArticleFallback");
   let detail: NewsDetailResponseDTO | null = null;
   try {
     detail = await getNewsBySlug(article);
@@ -28,7 +26,11 @@ export async function generateMetadata({
     captureException(error);
   }
   const placeType = await getPlaceTypeAndLabelCached(place);
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "App.NewsArticleFallback",
+  });
   if (detail) {
     const base = buildPageMeta({
       title: `${detail.title} | ${placeType.label}`,
@@ -62,18 +64,18 @@ export default async function Page({
   params: Promise<{ place: string; article: string }>;
 }) {
   const { place, article } = await params;
-  
+
   // Start fetches immediately
   const detailPromise = getNewsBySlug(article);
   const placeTypePromise = getPlaceTypeAndLabelCached(place);
 
   return (
     <Suspense fallback={<NewsArticleSkeleton />}>
-      <NewsArticleDetail 
-        detailPromise={detailPromise} 
-        placeTypePromise={placeTypePromise} 
-        place={place} 
-        article={article} 
+      <NewsArticleDetail
+        detailPromise={detailPromise}
+        placeTypePromise={placeTypePromise}
+        place={place}
+        article={article}
       />
     </Suspense>
   );

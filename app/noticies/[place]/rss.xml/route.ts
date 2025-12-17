@@ -1,19 +1,17 @@
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { fetchNews } from "@lib/api/news";
-import { resolveLocaleFromHeaders, toLocalizedUrl } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, localeToHrefLang, type AppLocale } from "types/i18n";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { localeToHrefLang } from "types/i18n";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ place: string }> }
 ) {
   const { place } = await params;
-  const t = await getTranslations("App.NewsPlaceRss");
-  const locale =
-    (resolveLocaleFromHeaders(await headers()) as AppLocale) || DEFAULT_LOCALE;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.NewsPlaceRss" });
   const language = localeToHrefLang[locale] ?? locale;
   const feed = new Feed({
     id: toLocalizedUrl(`/noticies/${place}`, locale),

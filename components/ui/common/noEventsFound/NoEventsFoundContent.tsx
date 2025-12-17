@@ -5,7 +5,7 @@ import type { NoEventsFoundContentProps } from "types/props";
 const resolveHref = (path: string, prefix: string) => {
   if (!path.startsWith("/")) return path;
   if (!prefix) return path;
-  if (path === "/") return prefix || "/";
+  if (path === "/") return prefix;
   if (path.startsWith(prefix)) return path;
   return `${prefix}${path}`;
 };

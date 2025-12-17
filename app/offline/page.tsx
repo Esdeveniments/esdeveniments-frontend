@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("App.Offline");
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.Offline" });
   const description = t("schemaDescription");
-  const locale = resolveLocaleFromHeaders(await headers());
 
   return {
     ...(buildPageMeta({
@@ -25,10 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function OfflinePage() {
-  const t = await getTranslations("App.Offline");
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.Offline" });
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;

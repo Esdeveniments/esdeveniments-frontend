@@ -1,26 +1,24 @@
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
 import type { Metadata } from "next";
-import { buildPageMeta } from "@components/partials/seo-meta";
-import { NEWS_HUBS } from "@utils/constants";
-import { siteUrl } from "@config/index";
 import {
+  buildPageMeta,
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
+import { NEWS_HUBS } from "@utils/constants";
+import { siteUrl } from "@config/index";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import NewsHubsGrid from "@components/noticies/NewsHubsGrid";
 import NewsGridSkeleton from "@components/noticies/NewsGridSkeleton";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 export const revalidate = 600;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("App.News");
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.News" });
   return buildPageMeta({
     title: t("metaTitle"),
     description: t("metaDescription"),
@@ -30,10 +28,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const t = await getTranslations("App.News");
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.News" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;

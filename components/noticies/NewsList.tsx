@@ -5,12 +5,10 @@ import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsListProps } from "types/props";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import { headers } from "next/headers";
 import {
-  resolveLocaleFromHeaders,
+  getLocaleSafely,
   withLocalePath,
 } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export default async function NewsList({
   newsPromise,
@@ -19,10 +17,8 @@ export default async function NewsList({
   currentPage,
   pageSize,
 }: NewsListProps) {
-  const t = await getTranslations("Components.NewsList");
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Components.NewsList" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const [response, placeType] = await Promise.all([
     newsPromise,

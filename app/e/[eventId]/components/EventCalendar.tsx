@@ -6,11 +6,14 @@ import { getTranslations } from "next-intl/server";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { headers } from "next/headers";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 export default async function EventCalendar({ event }: EventCalendarProps) {
-  const t = await getTranslations("Components.EventCalendar");
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "Components.EventCalendar",
+  });
 
   // Extract needed fields
   const {
@@ -26,8 +29,6 @@ export default async function EventCalendar({ event }: EventCalendarProps) {
     endTime,
   } = event;
 
-  const headersList = await headers();
-  const locale = resolveLocaleFromHeaders(headersList);
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     startDate,
     endDate,

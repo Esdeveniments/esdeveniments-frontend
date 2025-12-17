@@ -1,5 +1,4 @@
 import { siteUrl } from "@config/index";
-import { headers } from "next/headers";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import {
@@ -9,10 +8,7 @@ import {
 } from "types/common";
 import { formatCatalanA } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
-import {
-  applyLocaleToCanonical,
-  resolveLocaleFromHeaders,
-} from "@utils/i18n-seo";
+import { applyLocaleToCanonical, getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Normalize subtitles for LLM/AI SEO extractability:
@@ -85,18 +81,17 @@ export async function generatePagesData({
 }: GeneratePagesDataProps & {
   placeTypeLabel?: PlaceTypeAndLabel;
 }): Promise<PageData> {
-  const t = await getTranslations("Partials.GeneratePagesData");
-  const tConstants = await getTranslations("Components.Constants");
+  const resolvedLocale = (await getLocaleSafely()) || DEFAULT_LOCALE;
+  const t = await getTranslations({
+    locale: resolvedLocale,
+    namespace: "Partials.GeneratePagesData",
+  });
+  const tConstants = await getTranslations({
+    locale: resolvedLocale,
+    namespace: "Components.Constants",
+  });
   const months = (tConstants.raw("months") as string[]) || [];
   const month = months[new Date().getMonth()] || "";
-  let resolvedLocale = DEFAULT_LOCALE;
-  try {
-    const headersList = await headers();
-    resolvedLocale =
-      resolveLocaleFromHeaders(headersList) || DEFAULT_LOCALE;
-  } catch {
-    resolvedLocale = DEFAULT_LOCALE;
-  }
   const categoryTemplates = (t.raw("categories") || {}) as Record<
     string,
     {

@@ -15,22 +15,33 @@ test.describe("Publish wizard UX", () => {
       timeout: 60000,
     });
 
+    // Wait for form to be ready
+    await expect(page.getByTestId("event-form")).toBeVisible();
+    await expect(page.locator("input#title")).toBeVisible();
+
     const next = page.getByTestId("next-button");
     await expect(next).toBeVisible();
 
-    await page.fill("input#title", "Concert de prova");
-    await page.fill(
-      "textarea#description",
-      "Descripció de prova amb prou caràcters."
-    );
+    await page.locator("input#title").pressSequentially("Concert de prova", {
+      delay: 50,
+    });
+    await page.locator("input#title").blur();
 
-    await expect(next).toBeEnabled();
+    await page
+      .locator("textarea#description")
+      .pressSequentially("Descripció de prova amb prou caràcters.", {
+        delay: 20,
+      });
+    await page.locator("textarea#description").blur();
+
+    // Wait for validation to clear
+    await page.waitForTimeout(1000);
+
+    await expect(next).toBeEnabled({ timeout: 10000 });
     await next.click();
 
     await page.waitForTimeout(500);
   });
-
-
 
   test("test link button opens normalized URL", async ({ page }) => {
     await page.goto("/publica", {
@@ -55,9 +66,3 @@ test.describe("Publish wizard UX", () => {
     await page.waitForTimeout(300);
   });
 });
-
-
-
-
-
-

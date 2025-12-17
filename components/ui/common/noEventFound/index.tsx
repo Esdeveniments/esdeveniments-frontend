@@ -3,15 +3,15 @@ import type { JSX } from "react";
 import Image from "next/image";
 import eventNotFound from "@public/static/images/error_404_page_not_found.png";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { headers } from "next/headers";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 const NoEventFound = async (): Promise<JSX.Element> => {
-  const t = await getTranslations("Components.NoEventFound");
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "Components.NoEventFound",
+  });
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;

@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { headers } from "next/headers";
 import { generateJsonData } from "@utils/helpers";
 import { getEventBySlug } from "@lib/api/events";
 import { EventDetailResponseDTO } from "types/api/event";
@@ -45,15 +44,14 @@ import AdArticleIsland from "./components/AdArticleIsland";
 import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
-import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
-  const headersList = await headers();
-  const locale = resolveLocaleFromHeaders(headersList) as AppLocale;
+  const locale = await getLocaleSafely();
   let event = await getEventBySlug(slug);
   if (!event) {
     // Defensive: try fetching by trailing id (legacy slugs)
@@ -108,8 +106,7 @@ export default async function EventPage({
   const regionName = formatPlaceName(rawRegionName);
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
-  const headersList = await headers();
-  const locale = resolveLocaleFromHeaders(headersList);
+  const locale = await getLocaleSafely();
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const explorePlaceHref = `/${primaryPlaceSlug}`;
@@ -120,9 +117,9 @@ export default async function EventPage({
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event });
-  const tStatus = await getTranslations("Utils.EventStatus");
-  const tEvent = await getTranslations("Components.EventPage");
-  const tCopy = await getTranslations("Utils.EventCopy");
+  const tStatus = await getTranslations({ locale, namespace: "Utils.EventStatus" });
+  const tEvent = await getTranslations({ locale, namespace: "Components.EventPage" });
+  const tCopy = await getTranslations({ locale, namespace: "Utils.EventCopy" });
   const statusLabels = buildEventStatusLabels(tStatus);
   const eventCopyLabels: EventCopyLabels = {
     sentence: {

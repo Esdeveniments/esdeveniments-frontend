@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { getAllYears, normalizeMonthParam } from "@lib/dates";
 import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
@@ -15,7 +14,7 @@ import {
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
 import {
-  resolveLocaleFromHeaders,
+  getLocaleSafely,
   toLocalizedUrl,
   withLocalePath,
 } from "@utils/i18n-seo";
@@ -32,14 +31,14 @@ export async function generateMetadata({
 }: {
   params: Promise<TownStaticPathParams>;
 }) {
-  const t = await getTranslations("Pages.SitemapTown");
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const { town } = await params;
   const place = await getPlaceBySlug(town);
   const label = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
   const locationPhrase = formatCatalanA(label, placeType, false);
-  const locale = resolveLocaleFromHeaders(await headers());
 
   return buildPageMeta({
     title: t("metaTitle", { locationPhrase }),
@@ -69,11 +68,13 @@ export default function Page({
 
 async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) {
   const { town } = await params;
-  const t = await getTranslations("Pages.SitemapTown");
-  const tConstants = await getTranslations("Components.Constants");
   const years: number[] = getAllYears();
-  const headersList = await headers();
-  const locale: AppLocale = resolveLocaleFromHeaders(headersList);
+  const locale: AppLocale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
+  const tConstants = await getTranslations({
+    locale,
+    namespace: "Components.Constants",
+  });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const monthLabels = (tConstants.raw("months") as string[]) || [];
   const monthSlugs =

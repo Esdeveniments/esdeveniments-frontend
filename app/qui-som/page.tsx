@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { siteUrl } from "@config/index";
 import Image from "next/image";
@@ -7,12 +7,11 @@ import type { NextPage } from "next";
 import type { TeamMember as TeamMemberType } from "types/common";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 export async function generateMetadata() {
-  const t = await getTranslations("App.About");
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.About" });
   return buildPageMeta({
     title: t("metaTitle"),
     description: t("metaDescription"),
@@ -46,10 +45,8 @@ const teamMembers: TeamMemberType[] = [
 ];
 
 const QuiSom: NextPage = async () => {
-  const t = await getTranslations("App.About");
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.About" });
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;

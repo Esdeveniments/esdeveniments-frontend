@@ -29,8 +29,7 @@ import type { PlacePageEventsResult } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 
@@ -69,7 +68,7 @@ export async function generateMetadata({
     byDate: "",
     placeTypeLabel,
   });
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -84,9 +83,7 @@ export default async function Page({
   params: Promise<PlaceStaticPathParams>;
 }) {
   const { place } = await params;
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
 
   try {
     validatePlaceOrThrow(place);
@@ -103,7 +100,7 @@ export default async function Page({
     return false;
   });
   const placeShellDataPromise = (async () => {
-    const t = await getTranslations("App.Publish");
+    const t = await getTranslations({ locale, namespace: "App.Publish" });
     try {
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);

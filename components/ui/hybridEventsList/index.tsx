@@ -12,9 +12,8 @@ import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -28,7 +27,11 @@ async function HybridEventsList({
   hasNews,
   categories,
 }: HybridEventsListProps): Promise<ReactElement> {
-  const tLoc = await getTranslations("Utils.LocationHelpers");
+  const locale = await getLocaleSafely();
+  const tLoc = await getTranslations({
+    locale,
+    namespace: "Utils.LocationHelpers",
+  });
   const newsLabels = {
     newsAll: tLoc("newsAll"),
     newsWithPlace: tLoc("newsWithPlace", { deLabel: "{deLabel}" }),
@@ -55,9 +58,6 @@ async function HybridEventsList({
       </div>
     ) : null;
 
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
 
   if (noEventsFound || initialEvents.length === 0) {

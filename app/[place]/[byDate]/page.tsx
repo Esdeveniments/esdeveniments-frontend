@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
 import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
@@ -46,7 +46,6 @@ import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 
 // page-level ISR not set here; fetch-level caching applies
@@ -116,7 +115,7 @@ export async function generateMetadata({
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
   });
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -200,8 +199,11 @@ export default async function ByDatePage({
 }) {
   const { place, byDate } = await params;
   const search = await searchParams;
-  const tFallback = await getTranslations("App.PlaceByDate");
-  const locale: AppLocale = resolveLocaleFromHeaders(await headers());
+  const locale: AppLocale = await getLocaleSafely();
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDate",
+  });
 
   try {
     validatePlaceOrThrow(place);

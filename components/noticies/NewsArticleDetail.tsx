@@ -16,12 +16,10 @@ import { notFound } from "next/navigation";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import {
   DEFAULT_LOCALE,
   localeToHrefLang,
-  type AppLocale,
 } from "types/i18n";
 
 export default async function NewsArticleDetail({
@@ -30,7 +28,6 @@ export default async function NewsArticleDetail({
   place,
   article,
 }: NewsArticleDetailProps) {
-  const t = await getTranslations("App.NewsArticleDetail");
   const [detailResult, placeTypeResult] = await Promise.allSettled([
     detailPromise,
     placeTypePromise,
@@ -73,9 +70,11 @@ export default async function NewsArticleDetail({
     return notFound();
   }
 
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "App.NewsArticleDetail",
+  });
 
   const plainDescription = DOMPurify.sanitize(detail.description || "", {
     ALLOWED_TAGS: [],

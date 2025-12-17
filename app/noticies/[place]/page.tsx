@@ -1,13 +1,12 @@
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import { fetchNews } from "@lib/api/news";
 import type { Metadata } from "next";
 import {
   buildPageMeta,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
@@ -15,7 +14,6 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import NewsList from "@components/noticies/NewsList";
 import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 export const revalidate = 600;
 
 export async function generateMetadata({
@@ -24,9 +22,9 @@ export async function generateMetadata({
   params: Promise<{ place: string }>;
 }): Promise<Metadata> {
   const { place } = await params;
-  const t = await getTranslations("App.NewsPlace");
   const placeType = await getPlaceTypeAndLabelCached(place);
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const base = buildPageMeta({
     title: t("metaTitle", { place: placeType.label }),
     description: t("metaDescription", { place: placeType.label }),
@@ -58,10 +56,8 @@ export default async function Page({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { place } = await params;
-  const t = await getTranslations("App.NewsPlace");
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const query = (await (searchParams || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;

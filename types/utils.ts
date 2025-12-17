@@ -5,6 +5,4 @@ export interface RetryOptions {
   onError?: (attempt: number, error: unknown) => void;
 }
 
-
-
-
+export type HeadersFn = () => Headers | Promise<Headers>;

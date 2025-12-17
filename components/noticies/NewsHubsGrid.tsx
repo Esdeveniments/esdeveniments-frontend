@@ -1,18 +1,19 @@
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import NewsCard from "@components/ui/newsCard";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 // import { NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
-import { resolveLocaleFromHeaders, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsHubsGridProps } from "types/props";
 
 export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
-  const t = await getTranslations("Components.NewsHubsGrid");
-  const headersList = await headers();
-  const locale = resolveLocaleFromHeaders(headersList);
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "Components.NewsHubsGrid",
+  });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;

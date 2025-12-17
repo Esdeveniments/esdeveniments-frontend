@@ -37,9 +37,8 @@ import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
@@ -114,7 +113,7 @@ export async function generateMetadata({
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
   });
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
 
   return buildPageMeta({
     title: pageData.title,
@@ -166,8 +165,11 @@ export default async function FilteredPage({
     params,
     searchParams,
   ]);
-  const locale: AppLocale = resolveLocaleFromHeaders(await headers());
-  const tFallback = await getTranslations("App.PlaceByDateCategory");
+  const locale: AppLocale = await getLocaleSafely();
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDateCategory",
+  });
 
   try {
     validatePlaceOrThrow(place);

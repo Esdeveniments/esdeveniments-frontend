@@ -85,10 +85,6 @@ export default function DatePickerComponent({
     // If start date moves past end date, push end date to keep same duration or at least +1h
     // Current requirement: "Smart Default: End date defaults to same day". 
     // Let's ensure End Date is at least Start Date + 1h
-    let newEnd = endDate;
-    if (date >= endDate || isAllDay) {
-      newEnd = addMinutes(date, 60);
-    }
 
     // Convert to ISO
     onChange("startDate", toISOString(date));
@@ -101,11 +97,7 @@ export default function DatePickerComponent({
       // User requested: "Smart default... End Date automatically defaults to same day". 
       // Let's basically ensure End Date is >= Start + Duration, or simpler: push End to Start + 1h if it was behind.
       const diff = endingDate.getTime() - startingDate.getTime();
-      if (diff > 0) {
-        newEnd = new Date(date.getTime() + diff);
-      } else {
-        newEnd = addMinutes(date, 60);
-      }
+      const newEnd = diff > 0 ? new Date(date.getTime() + diff) : addMinutes(date, 60);
       onChange("endDate", toISOString(newEnd));
     } else {
       // For All Day, sync end date to end of *this* new day

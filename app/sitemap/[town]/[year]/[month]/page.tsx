@@ -6,7 +6,6 @@ import {
   formatCatalanA,
 } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
@@ -24,7 +23,7 @@ import {
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import {
-  resolveLocaleFromHeaders,
+  getLocaleSafely,
   toLocalizedUrl,
   withLocalePath,
 } from "@utils/i18n-seo";
@@ -41,9 +40,13 @@ export async function generateMetadata({
 }: {
   params: Promise<MonthStaticPathParams>;
 }) {
-  const t = await getTranslations("Pages.SitemapMonth");
-  const tConstants = await getTranslations("Components.Constants");
-  const tNotFound = await getTranslations("App.NotFound");
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
+  const tConstants = await getTranslations({
+    locale,
+    namespace: "Components.Constants",
+  });
+  const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
   const { town, year, month } = await params;
   if (!isValidPlace(town)) {
     return {
@@ -72,7 +75,6 @@ export async function generateMetadata({
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
   const locationPhrase = formatCatalanA(townLabel, placeType, false);
-  const locale = resolveLocaleFromHeaders(await headers());
 
   return buildPageMeta({
     title: t("metaTitle", { town: townLabel, month: monthLabel, year }),
@@ -93,9 +95,12 @@ export default async function Page({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
-  const t = await getTranslations("Pages.SitemapMonth");
-  const tConstants = await getTranslations("Components.Constants");
-  const locale: AppLocale = resolveLocaleFromHeaders(await headers());
+  const locale: AppLocale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
+  const tConstants = await getTranslations({
+    locale,
+    namespace: "Components.Constants",
+  });
   const withLocale = (path: string) => withLocalePath(path, locale);
 
   if (!isValidPlace(town)) {

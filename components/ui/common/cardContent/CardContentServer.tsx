@@ -11,18 +11,16 @@ import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 async function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
 }: CardContentProps) {
-  const tCard = await getTranslations("Components.CardContent");
-  const tTime = await getTranslations("Utils.EventTime");
-  const headersList = await headers();
-  const locale = resolveLocaleFromHeaders(headersList);
+  const locale = await getLocaleSafely();
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const timeLabels = {
     consult: tTime("consult"),
     startsAt: tTime("startsAt"),

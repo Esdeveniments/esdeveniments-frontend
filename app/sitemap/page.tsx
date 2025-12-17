@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import { siteUrl } from "@config/index";
 import { fetchRegions } from "@lib/api/regions";
 import { fetchCities } from "@lib/api/cities";
@@ -12,7 +11,7 @@ import {
   buildPageMeta,
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
-import { resolveLocaleFromHeaders, toLocalizedUrl } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import SitemapContent from "@components/sitemap/SitemapContent";
 import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
@@ -20,8 +19,8 @@ import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 export const revalidate = 86400;
 
 export async function generateMetadata() {
-  const t = await getTranslations("App.Sitemap");
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.Sitemap" });
   return buildPageMeta({
     title: t("metaTitle"),
     description: t("metaDescription"),
@@ -40,11 +39,14 @@ async function getData(): Promise<{
 }
 
 export default async function Page() {
-  const tAppPromise = getTranslations("App.Sitemap");
-  const tContentPromise = getTranslations("Components.SitemapContent");
   const dataPromise = getData();
+  const locale = await getLocaleSafely();
+  const tAppPromise = getTranslations({ locale, namespace: "App.Sitemap" });
+  const tContentPromise = getTranslations({
+    locale,
+    namespace: "Components.SitemapContent",
+  });
   const pageMetaPromise = Promise.all([tAppPromise, tContentPromise]);
-  const locale = resolveLocaleFromHeaders(await headers());
 
   // Generate structured data for the sitemap (localized)
   const data = await pageMetaPromise;
@@ -76,7 +78,7 @@ export default async function Page() {
     <>
       {/* Structured Data */}
       <JsonLdServer id="webpage-schema" data={webPageSchema} />
-      
+
       <SitemapLayout testId="sitemap-page">
         <SitemapBreadcrumb items={breadcrumbs} />
 

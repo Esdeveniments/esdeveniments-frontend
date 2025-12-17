@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { JSX } from "react";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { getCategorizedEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -20,7 +20,6 @@ import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
 
 export const revalidate = 300;
 
@@ -30,7 +29,7 @@ export async function generateMetadata() {
     place: "",
     byDate: "",
   });
-  const locale = resolveLocaleFromHeaders(await headers());
+  const locale = await getLocaleSafely();
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -40,11 +39,14 @@ export async function generateMetadata() {
 }
 
 export default async function Page(): Promise<JSX.Element> {
-  const locale: AppLocale = resolveLocaleFromHeaders(await headers());
+  const locale: AppLocale = await getLocaleSafely();
   const categorizedEventsPromise = getCategorizedEvents(5);
   const categoriesPromise = fetchCategories();
-  const t = await getTranslations("App.Home");
-  const tTopAgenda = await getTranslations("Config.TopAgenda");
+  const t = await getTranslations({ locale, namespace: "App.Home" });
+  const tTopAgenda = await getTranslations({
+    locale,
+    namespace: "Config.TopAgenda",
+  });
   const agendaLabel = tTopAgenda("agenda");
 
   const pageData: PageData = await generatePagesData({

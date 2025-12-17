@@ -74,6 +74,16 @@ export const NextIntlClientProvider = ({
 
 export const getLocale = async () => "ca";
 export const getMessages = async () => caMessages;
-export const getTranslations = async (namespace?: string) =>
-  createTranslator(namespace);
+export const getTranslations = async (
+  arg?: string | { locale?: string; namespace?: string }
+) => {
+  const namespace =
+    typeof arg === "string"
+      ? arg
+      : arg && typeof arg === "object"
+        ? arg.namespace
+        : undefined;
+
+  return createTranslator(namespace);
+};
 export const useLocale = () => "ca";

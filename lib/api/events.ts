@@ -2,7 +2,11 @@ import { cache } from "react";
 import { captureException, captureMessage } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
 import { fetchWithHmac } from "./fetch-wrapper";
-import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
+import {
+  getInternalApiUrl,
+  buildEventsQuery,
+  getVercelProtectionBypassHeaders,
+} from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import {
   parseEventDetail,
@@ -190,7 +194,10 @@ export async function fetchEventBySlug(
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
     // Use getInternalApiUrl which now properly resolves to CloudFront in SST
-    const res = await fetch(getInternalApiUrl(`/api/events/${fullSlug}`), {
+    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
+
+    const res = await fetch(internalApiUrl, {
+      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
     });
 
@@ -203,15 +210,16 @@ export async function fetchEventBySlug(
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error text");
       console.error(
-        `fetchEventBySlug: HTTP error! status: ${res.status}, body: ${errorText}`
+        `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
       );
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     return parseEventDetail(await res.json());
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
-      error
+      errorMessage
     );
     return null;
   }

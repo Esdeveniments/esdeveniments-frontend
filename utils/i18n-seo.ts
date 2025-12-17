@@ -82,6 +82,22 @@ export function resolveLocaleFromHeaders(
 }
 
 /**
+ * Safely gets the locale from headers() with fallback to DEFAULT_LOCALE.
+ * Use this in generateMetadata() and other functions that may run during static generation.
+ * @returns The resolved locale, or DEFAULT_LOCALE if headers() is unavailable
+ */
+export async function getLocaleSafely(): Promise<AppLocale> {
+  try {
+    const { headers } = await import("next/headers");
+    const headersList = await headers();
+    return resolveLocaleFromHeaders(headersList);
+  } catch {
+    // headers() is not available during static generation
+    return DEFAULT_LOCALE;
+  }
+}
+
+/**
  * Prefixes a relative path with the locale segment when needed.
  * - Leaves absolute URLs (http, mailto, tel, protocol-relative) untouched.
  * - Leaves non-root relative paths (e.g., "#section", "mailto:") untouched.

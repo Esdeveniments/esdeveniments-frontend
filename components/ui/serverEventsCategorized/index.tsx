@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
 import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
-import { headers } from "next/headers";
 import {
   SparklesIcon,
   ShoppingBagIcon,
@@ -34,8 +33,8 @@ import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
-import { resolveLocaleFromHeaders } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
@@ -139,18 +138,20 @@ async function ServerEventsCategorized({
   seoLinkSections = [],
   ...contentProps
 }: ServerEventsCategorizedProps) {
-  const tCategories = await getTranslations("Config.Categories");
-  const tServerCategories = await getTranslations(
-    "Components.ServerEventsCategorized"
-  );
-  const headersList = await headers();
-  const locale = (resolveLocaleFromHeaders(headersList) ||
-    DEFAULT_LOCALE) as AppLocale;
+  const locale = await getLocaleSafely();
+  const tCategories = await getTranslations({
+    locale,
+    namespace: "Config.Categories",
+  });
+  const tServerCategories = await getTranslations({
+    locale,
+    namespace: "Components.ServerEventsCategorized",
+  });
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;
     if (!prefix) return path;
-    if (path === "/") return prefix || "/";
+    if (path === "/") return prefix;
     if (path.startsWith(prefix)) return path;
     return `${prefix}${path}`;
   };
@@ -257,6 +258,7 @@ export async function ServerEventsCategorizedContent({
   featuredPlaces,
   localePrefix = "",
 }: ServerEventsCategorizedContentProps & { localePrefix?: string }) {
+  const locale = await getLocaleSafely();
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
     categoriesPromise || Promise.resolve([])
@@ -402,14 +404,23 @@ export async function ServerEventsCategorizedContent({
     return <NoEventsFound />;
   }
 
-  const tCategory = await getTranslations("Components.CategoryEventsSection");
-  const tCta = await getTranslations("Components.ServerEventsCategorized");
-  const tDateFilters = await getTranslations("Components.DateFilterBadges");
+  const tCategory = await getTranslations({
+    locale,
+    namespace: "Components.CategoryEventsSection",
+  });
+  const tCta = await getTranslations({
+    locale,
+    namespace: "Components.ServerEventsCategorized",
+  });
+  const tDateFilters = await getTranslations({
+    locale,
+    namespace: "Components.DateFilterBadges",
+  });
   const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;
     if (!localePrefix) return path;
-    if (path === "/") return localePrefix || "/";
+    if (path === "/") return localePrefix;
     if (path.startsWith(localePrefix)) return path;
     return `${localePrefix}${path}`;
   };
