@@ -134,6 +134,8 @@ jobs:
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
           # Provide server-only secret to the preview deployment so server HMAC signing works
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          # Vercel Deployment Protection bypass secret (optional but required for CI E2E against protected previews)
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           # Deploy and capture logs
           LOG=$(mktemp)
@@ -154,6 +156,7 @@ jobs:
           npx vercel@25 --token="$VERCEL_TOKEN" \
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
+            --env VERCEL_AUTOMATION_BYPASS_SECRET="$VERCEL_AUTOMATION_BYPASS_SECRET" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --build-env HMAC_SECRET="$HMAC_SECRET" \
             --confirm | tee "$LOG"
@@ -170,12 +173,18 @@ jobs:
           echo "preview-url=$URL" >> $GITHUB_OUTPUT
       - name: Verify preview readiness
         if: ${{ env.PREVIEW_URL != '' }}
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           echo "Verifying deployment at ${{ env.PREVIEW_URL }}"
           MAX_RETRIES=5
           RETRY=0
           while [ $RETRY -lt $MAX_RETRIES ]; do
-            if curl -f "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null; then
+            RESP=$(curl -fsSL \
+              -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
+              -H "x-vercel-set-bypass-cookie: true" \
+              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || true)
+            if echo "$RESP" | head -c 1 | grep -q "{"; then
               echo "Preview is ready"
               exit 0
             fi
@@ -191,7 +200,8 @@ jobs:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
-        run: yarn test:e2e
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: yarn test:e2e -- -c playwright.remote.config.ts
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

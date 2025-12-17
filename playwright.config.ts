@@ -5,6 +5,14 @@ const port = process.env.PORT || "3000";
 const baseUrl =
   process.env.PLAYWRIGHT_TEST_BASE_URL || `http://${host}:${port}`;
 
+const vercelBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const vercelBypassHeaders: Record<string, string> = vercelBypassSecret
+  ? {
+      "x-vercel-protection-bypass": vercelBypassSecret,
+      "x-vercel-set-bypass-cookie": "true",
+    }
+  : {};
+
 // Ensure the spawned dev server inherits required env in CI without violating TS types
 const webServerEnv: Record<string, string> = {
   NODE_ENV: process.env.NODE_ENV || "development",
@@ -41,6 +49,7 @@ export default defineConfig({
     locale: "ca-ES",
     extraHTTPHeaders: {
       "accept-language": "ca",
+      ...vercelBypassHeaders,
     },
   },
   projects: [
