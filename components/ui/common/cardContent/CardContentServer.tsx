@@ -54,7 +54,13 @@ async function CardContentServer({
 
   return (
     <>
-      <CardLink href={`/e/${event.slug}`} className="w-full">
+      <CardLink
+        href={`/e/${event.slug}`}
+        className="w-full"
+        data-analytics-event-name="select_event"
+        data-analytics-event-id={event.id ? String(event.id) : ""}
+        data-analytics-event-slug={event.slug || ""}
+      >
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
           {/* Title and Weather Icon */}
           <div className="bg-background h-fit flex justify-start items-start gap-2 pr-4">

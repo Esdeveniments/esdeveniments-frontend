@@ -432,11 +432,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       return true;
     }
 
-    sendEventToGA("Place", changes.place);
-    sendEventToGA("ByDate", changes.byDate);
-    sendEventToGA("Category", changes.category);
+    sendEventToGA("Place", changes.place, "filters_modal_apply");
+    sendEventToGA("ByDate", changes.byDate, "filters_modal_apply");
+    sendEventToGA("Category", changes.category, "filters_modal_apply");
     if (changes.distance !== undefined) {
-      sendEventToGA("Distance", changes.distance.toString());
+      sendEventToGA("Distance", changes.distance.toString(), "filters_modal_apply");
     }
 
     startNavigationFeedback();

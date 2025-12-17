@@ -216,6 +216,10 @@ async function EventsAroundServer({
               <CardLink
                 href={`/e/${event.slug}`}
                 className="block pressable-card transition-card"
+                data-analytics-event-name="related_event_click"
+                data-analytics-event-id={event.id ? String(event.id) : ""}
+                data-analytics-event-slug={event.slug || ""}
+                data-analytics-position={String(index + 1)}
               >
                 {/* ImageEvent */}
                 <div className="w-full h-32 flex justify-center items-center overflow-hidden">

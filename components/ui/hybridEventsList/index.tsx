@@ -65,6 +65,11 @@ async function HybridEventsList({
       <div
         className="container flex-col justify-center items-center pt-[6rem]"
         data-testid="events-list"
+        data-analytics-container="true"
+        data-analytics-context="events_list"
+        data-analytics-place-slug={place || undefined}
+        data-analytics-category-slug={category || undefined}
+        data-analytics-date-slug={date || undefined}
       >
         <NoEventsFound
           title={pageData?.notFoundTitle}
@@ -88,6 +93,11 @@ async function HybridEventsList({
     <div
       className="container flex-col justify-center items-center pt-[6rem]"
       data-testid="events-list"
+      data-analytics-container="true"
+      data-analytics-context="events_list"
+      data-analytics-place-slug={place || undefined}
+      data-analytics-category-slug={category || undefined}
+      data-analytics-date-slug={date || undefined}
     >
       {pageData && (
         <Suspense

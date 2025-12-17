@@ -13,6 +13,7 @@ import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
 import { useTranslations } from "next-intl";
+import { sendGoogleEvent } from "@utils/analytics";
 
 // Client side enhancer: handles pagination & de-duplication.
 // Expects initialEvents to be the SSR list (may include ad markers). We pass only
@@ -152,7 +153,19 @@ function HybridEventsListClientContent({
             )}
           </List>
           <LoadMoreButton
-            onLoadMore={loadMore}
+            onLoadMore={async () => {
+              sendGoogleEvent("load_more", {
+                context: "hybrid_events_list",
+                place: place || undefined,
+                category: category || undefined,
+                date: date || undefined,
+                has_client_filters: hasClientFilters,
+                search_present: Boolean(search),
+                distance_present: Boolean(distance),
+                geo_present: Boolean(lat && lon),
+              });
+              await loadMore();
+            }}
             isLoading={isLoadingMore}
             hasMore={hasMore}
           />

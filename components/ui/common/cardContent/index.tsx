@@ -62,6 +62,9 @@ export default function CardContentServer({
       <CardLinkClient
         href={`/e/${event.slug}`}
         className="w-full pressable-card transition-card"
+        data-analytics-event-name="select_event"
+        data-analytics-event-id={event.id ? String(event.id) : ""}
+        data-analytics-event-slug={event.slug || ""}
       >
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
           <div className="bg-background h-fit flex justify-start items-start gap-element-gap-sm pr-card-padding-sm">

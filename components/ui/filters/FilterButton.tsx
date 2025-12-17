@@ -10,8 +10,10 @@ import {
   startNavigationFeedback,
 } from "@lib/navigation-feedback";
 import { FilterButtonProps } from "types/props";
+import { sendGoogleEvent } from "@utils/analytics";
 
 const FilterButton = ({
+  filterKey,
   text,
   enabled,
   removeUrl,
@@ -24,6 +26,13 @@ const FilterButton = ({
 
   const handleRemove = (e: MouseEvent) => {
     e.stopPropagation();
+
+    sendGoogleEvent("filter_remove", {
+      context: "filters_bar",
+      filter_key: filterKey,
+      enabled,
+    });
+
     if (isPlainLeftClick(e)) {
       startNavigationFeedback();
     }
@@ -31,6 +40,15 @@ const FilterButton = ({
     router.push(removeUrl);
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleChipClick = () => {
+    sendGoogleEvent("filter_chip_click", {
+      context: "filters_bar",
+      filter_key: filterKey,
+      enabled,
+    });
+    onOpenModal();
   };
 
   return (
@@ -44,7 +62,7 @@ const FilterButton = ({
             : "border-border text-foreground-strong hover:bg-muted"
           }`}
         data-pressed={isPressed ? "true" : undefined}
-        onClick={onOpenModal}
+        onClick={handleChipClick}
         {...handlers}
       >
         <span className="text-center body-small">

@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/outline";
 import dynamic from "next/dynamic";
 import type { EventLocationProps } from "types/event";
+import { sendGoogleEvent } from "@utils/analytics";
 
 const Maps = dynamic(() => import("components/ui/maps"), { ssr: false });
 
@@ -40,6 +41,14 @@ export default function EventLocationClient({
 
   const handleDirectionsClick = () => {
     const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
+
+    sendGoogleEvent("outbound_click", {
+      link_domain: "www.google.com",
+      link_path: "/maps/search/",
+      link_type: "maps_directions",
+      context: "event_location",
+    });
+
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
       "_blank"

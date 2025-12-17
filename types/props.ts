@@ -298,6 +298,7 @@ export interface ActiveNavLinkProps {
 }
 
 export interface FilterButtonProps {
+  filterKey: string;
   text: string;
   enabled: boolean;
   removeUrl: string;

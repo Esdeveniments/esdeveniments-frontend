@@ -79,6 +79,92 @@ export default function GoogleScripts() {
   const autoAdsInitRef = useRef(false);
   const autoAdsPendingToken = useRef<symbol | null>(null);
 
+  // Track outbound link clicks (external http/https) with optional enrichment via data attributes.
+  // This provides feature-usage visibility (Maps clicks, external event links, etc.) without
+  // requiring per-component client handlers.
+  useEffect(() => {
+    if (!GA_MEASUREMENT_ID) return;
+    if (!adsAllowed) return;
+    const win = ensureGtag();
+    if (!win) return;
+
+    const getClosestAnchor = (target: EventTarget | null): HTMLAnchorElement | null => {
+      if (!target) return null;
+      const el = target as Element | null;
+      if (!el) return null;
+      if (el instanceof HTMLAnchorElement) return el;
+      return el.closest?.("a") as HTMLAnchorElement | null;
+    };
+
+    const handleClick = (event: MouseEvent) => {
+      const anchor = getClosestAnchor(event.target);
+      if (!anchor) return;
+
+      const hrefAttr = anchor.getAttribute("href") || "";
+      if (!hrefAttr) return;
+
+      // Allow list/section containers to enrich link clicks with context (server-first).
+      // Anchor attributes win over container attributes.
+      const container = anchor.closest(
+        '[data-analytics-container="true"]'
+      ) as HTMLElement | null;
+      const dataset: DOMStringMap = {
+        ...(container?.dataset || {}),
+        ...(anchor.dataset || {}),
+      };
+
+      // If a link declares an analytics event name, emit it regardless of internal/external.
+      // This keeps most UI server-rendered while still providing high-signal interaction analytics.
+      if (dataset.analyticsEventName) {
+        win.gtag("event", dataset.analyticsEventName, {
+          context: dataset.analyticsContext || undefined,
+          target: dataset.analyticsTarget || undefined,
+          category_slug: dataset.analyticsCategorySlug || undefined,
+          place_label: dataset.analyticsPlaceLabel || undefined,
+          temporal_label: dataset.analyticsTemporalLabel || undefined,
+          event_id: dataset.analyticsEventId || undefined,
+          event_slug: dataset.analyticsEventSlug || undefined,
+          place_slug: dataset.analyticsPlaceSlug || undefined,
+          date_slug: dataset.analyticsDateSlug || undefined,
+          position: dataset.analyticsPosition || undefined,
+          source_event_id: dataset.analyticsSourceEventId || undefined,
+          source_event_slug: dataset.analyticsSourceEventSlug || undefined,
+        });
+      }
+
+      // Only track external navigation (http/https) to avoid logging phone/email or internal routes.
+      let url: URL;
+      try {
+        url = new URL(hrefAttr, window.location.origin);
+      } catch {
+        return;
+      }
+
+      const isHttp = url.protocol === "http:" || url.protocol === "https:";
+      if (!isHttp) return;
+      const isExternal = url.origin !== window.location.origin;
+      if (!isExternal) return;
+
+      // Privacy: omit querystring by default (can contain user-provided terms).
+      win.gtag("event", "outbound_click", {
+        link_domain: url.hostname,
+        link_path: url.pathname,
+        link_type: dataset.analyticsLinkType || undefined,
+        context: dataset.analyticsContext || undefined,
+        event_id: dataset.analyticsEventId || undefined,
+        event_slug: dataset.analyticsEventSlug || undefined,
+        place_id: dataset.analyticsPlaceId || undefined,
+        place_name: dataset.analyticsPlaceName || undefined,
+      });
+    };
+
+    // Capture phase to run before any navigation side-effects.
+    document.addEventListener("click", handleClick, true);
+    return () => {
+      document.removeEventListener("click", handleClick, true);
+    };
+  }, [adsAllowed]);
+
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
   // Note: We use the same consent signal (adsAllowed) for both ads and analytics
   // because our TCF implementation (AdContext) provides a unified consent model.

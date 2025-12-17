@@ -48,6 +48,11 @@ export default function PastEventBanner({
               href={explorePlaceHref}
               className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-primary-dark text-primary-foreground text-sm font-semibold hover:bg-primary-dark/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
               variant="inline"
+              data-analytics-event-name="explore_more_click"
+              data-analytics-context="past_event_banner"
+              data-analytics-target="place"
+              data-analytics-place-label={placeLabel}
+              data-analytics-temporal-label={temporalStatus?.label || ""}
             >
               {t("primaryCta")}
             </PressableAnchor>
@@ -57,6 +62,12 @@ export default function PastEventBanner({
                 href={exploreCategoryHref}
                 className="body-small text-primary hover:text-primary-dark font-medium transition-colors sm:ml-2 inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
                 variant="inline"
+                data-analytics-event-name="explore_more_click"
+                data-analytics-context="past_event_banner"
+                data-analytics-target="category"
+                data-analytics-place-label={placeLabel}
+                data-analytics-category-slug={primaryCategorySlug}
+                data-analytics-temporal-label={temporalStatus?.label || ""}
               >
                 {t("secondaryCta")}
                 <span aria-hidden="true">→</span>

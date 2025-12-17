@@ -49,6 +49,9 @@ const CardHorizontalServer = async ({
     <CardLink
       href={`/e/${event.slug}`}
       className="block group relative h-full pressable-card transition-card"
+      data-analytics-event-name="select_event"
+      data-analytics-event-id={event.id ? String(event.id) : ""}
+      data-analytics-event-slug={event.slug || ""}
     >
       <article className="w-full h-full bg-background overflow-hidden cursor-pointer rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200 relative z-10 flex flex-col">
         {/* Image */}

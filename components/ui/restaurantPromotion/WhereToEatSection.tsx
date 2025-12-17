@@ -70,6 +70,10 @@ export default function WhereToEatSection({
               href={`https://www.google.com/maps/search/?api=1&query=${encodedPlaceName}&query_place_id=${place.place_id}`}
               target="_blank"
               rel="noopener noreferrer"
+              data-analytics-link-type="maps_restaurant"
+              data-analytics-context="where_to_eat"
+              data-analytics-place-id={place.place_id}
+              data-analytics-place-name={place.name}
               className="group block border border-border rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
               aria-label={`Obrir ${place.name} a Google Maps`}
             >

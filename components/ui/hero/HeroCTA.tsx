@@ -9,6 +9,7 @@ import Button from "@components/ui/common/button";
 import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";
 import { formatCatalanA } from "@utils/helpers";
+import { sendGoogleEvent } from "@utils/analytics";
 
 export default function HeroCTA() {
   const t = useTranslations("Components.HeroCTA");
@@ -17,6 +18,13 @@ export default function HeroCTA() {
   const router = useRouter();
 
   const handleSearch = () => {
+    sendGoogleEvent("hero_cta_click", {
+      category: "hero_cta",
+      context: "home_hero",
+      place_slug: place,
+      date_slug: date || undefined,
+      has_search: String(Boolean(searchTerm?.trim())),
+    });
     const url = buildHeroUrl(place, date, searchTerm);
     startNavigationFeedback();
     router.push(url);

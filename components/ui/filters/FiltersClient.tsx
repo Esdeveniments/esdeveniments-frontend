@@ -7,6 +7,7 @@ import type { FilterDisplayState } from "types/filters";
 import FilterButton from "./FilterButton";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { FiltersClientProps } from "types/props";
+import { sendGoogleEvent } from "@utils/analytics";
 
 const FiltersClient = ({
   segments,
@@ -56,6 +57,20 @@ const FiltersClient = ({
 
   const { displayNameMap, triggerLabel } = labels;
 
+  const handleOpenModal = () => {
+    sendGoogleEvent("filters_open", {
+      context: "filters_bar",
+      place: filters.place,
+      by_date: filters.byDate,
+      category: filters.category,
+      search_present: Boolean(filters.searchTerm),
+      distance_present: Boolean(queryParams.distance),
+      geo_present: Boolean(filters.lat && filters.lon),
+      has_active_filters: FilterOperations.hasActiveFilters(displayState),
+    });
+    onOpenModal();
+  };
+
   const sortedConfigurations = visibleConfigurations
     .map((config) => ({
       config,
@@ -67,7 +82,7 @@ const FiltersClient = ({
     <div className="w-full bg-background flex justify-center items-center mt-element-gap">
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
         <div
-          onClick={onOpenModal}
+          onClick={handleOpenModal}
           className="mr-element-gap flex justify-center items-center gap-element-gap cursor-pointer"
           data-testid="filters-open"
         >
@@ -102,6 +117,7 @@ const FiltersClient = ({
             return (
               <FilterButton
                 key={config.key}
+                filterKey={config.key}
                 text={getText(
                   translatedDisplayText,
                   displayNameMap[config.key] || config.displayName
@@ -112,7 +128,7 @@ const FiltersClient = ({
                   segments,
                   queryParams
                 )}
-                onOpenModal={onOpenModal}
+                onOpenModal={handleOpenModal}
                 testId={`filter-pill-${config.key}`}
               />
             );

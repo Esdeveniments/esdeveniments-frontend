@@ -5,8 +5,7 @@ import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
-import { redirect } from "next/navigation";
-import { extractUuidFromSlug } from "@utils/string-helpers";
+import { redirect, notFound } from "next/navigation";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
 import ViewCounter from "@components/ui/viewCounter";
@@ -21,7 +20,6 @@ import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import type { BreadcrumbNavItem } from "types/props";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
-import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import {
   SpeakerphoneIcon,
@@ -52,14 +50,7 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
   const locale = await getLocaleSafely();
-  let event = await getEventBySlug(slug);
-  if (!event) {
-    // Defensive: try fetching by trailing id (legacy slugs)
-    const id = extractUuidFromSlug(slug);
-    if (id && id !== slug) {
-      event = await getEventBySlug(id);
-    }
-  }
+  const event = await getEventBySlug(slug);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
@@ -78,23 +69,18 @@ export default async function EventPage({
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 
-  let event: EventDetailResponseDTO | null = await getEventBySlug(slug);
-  if (!event) {
-    // Defensive: try fetching by trailing id (legacy slugs)
-    const id = extractUuidFromSlug(slug);
-    if (id && id !== slug) {
-      event = await getEventBySlug(id);
-    }
-  }
-  if (!event) return <NoEventFound />;
-  if (event.title === "CANCELLED") return <NoEventFound />;
+  const event: EventDetailResponseDTO | null = await getEventBySlug(slug);
+  if (!event) notFound();
+  if (event.title === "CANCELLED") notFound();
 
-  // If the requested slug doesn't match the canonical one, optionally redirect
-  // to consolidate SEO. Gate with env to avoid surprises in rollout.
-  const enforceCanonicalRedirect =
-    process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "1" ||
-    process.env.CANONICAL_REDIRECT === "1";
-  if (enforceCanonicalRedirect && slug !== event.slug && event.slug) {
+  // If the requested slug doesn't match the canonical one, redirect
+  // to consolidate SEO. This prevents duplicate content issues and ensures
+  // all traffic goes to the canonical URL for better rankings.
+  // Default to enabled unless explicitly disabled via environment variable.
+  const disableCanonicalRedirect =
+    process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "0" ||
+    process.env.CANONICAL_REDIRECT === "0";
+  if (!disableCanonicalRedirect && slug !== event.slug && event.slug) {
     redirect(`/e/${event.slug}`);
   }
 
@@ -359,10 +345,17 @@ export default async function EventPage({
             />
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (
-              <EventsAroundSection
-                events={event.relatedEvents}
-                title="Esdeveniments relacionats"
-              />
+              <div
+                data-analytics-container="true"
+                data-analytics-context="related_events"
+                data-analytics-source-event-id={event.id ? String(event.id) : ""}
+                data-analytics-source-event-slug={event.slug || ""}
+              >
+                <EventsAroundSection
+                  events={event.relatedEvents}
+                  title="Esdeveniments relacionats"
+                />
+              </div>
             )}
             {/* Event Categories - Server-side rendered for SEO */}
             <EventCategories categories={event.categories} place={placeSlug} />

@@ -63,6 +63,10 @@ const EventDetailsSection: React.FC<{
                 className="body-normal inline-block text-primary hover:underline transition-colors duration-200 ease-in-out pb-0"
                 target="_blank"
                 rel="noreferrer"
+                data-analytics-link-type="event_website"
+                data-analytics-context="event_details"
+                data-analytics-event-id={event.id ? String(event.id) : ""}
+                data-analytics-event-slug={event.slug || ""}
                 variant="inline"
                 disableNavigationSignal
               >

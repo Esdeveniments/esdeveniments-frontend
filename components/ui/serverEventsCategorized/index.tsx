@@ -35,6 +35,7 @@ import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
+import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
@@ -62,6 +63,7 @@ const CATEGORY_ICONS: Record<string, typeof SparklesIcon> = {
 const PRIORITY_CATEGORY_ORDER = new Map(
   PRIORITY_CATEGORY_SLUGS.map((slug, index) => [slug, index])
 );
+
 
 const resolveCategoryDetails = (
   categoryKey: string,
@@ -172,9 +174,22 @@ async function ServerEventsCategorized({
     ([slug, config]) => ({
       label: tCategories(config.labelKey),
       url: withLocale(`/catalunya/${slug}`),
+      categorySlug: slug,
       Icon: CATEGORY_ICONS[slug] || SparklesIcon,
     })
   );
+
+  const seoLinkSectionsWithAnalytics = renderedLinkSections.map((section) => {
+    const analyticsContext = `home_seo_${section.id}`;
+    return {
+      ...section,
+      analyticsContext,
+      links: section.links.map((link) => ({
+        ...link,
+        ...extractPlaceDateCategorySlugsFromHref(link.href),
+      })),
+    };
+  });
 
   return (
     <div className="w-full bg-background">
@@ -188,9 +203,9 @@ async function ServerEventsCategorized({
       </div>
 
       {/* 2. SEO LINK SECTIONS (weekend, today, tomorrow, agendas) */}
-      {renderedLinkSections.length > 0 && (
+      {seoLinkSectionsWithAnalytics.length > 0 && (
         <div className="container py-8 border-b border-border/40 space-y-8">
-          {renderedLinkSections.map((section) => (
+          {seoLinkSectionsWithAnalytics.map((section) => (
             <div key={section.id} className="flex flex-col gap-4">
               <SectionHeading
                 title={section.title}
@@ -204,6 +219,11 @@ async function ServerEventsCategorized({
                     prefetch={false}
                     variant="plain"
                     className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
+                    data-analytics-event-name="home_chip_click"
+                    data-analytics-context={section.analyticsContext}
+                    data-analytics-place-slug={link.placeSlug}
+                    data-analytics-date-slug={link.dateSlug}
+                    data-analytics-category-slug={link.categorySlug}
                   >
                     {formatLinkLabel(section.id, link.label)}
                   </PressableAnchor>
@@ -221,13 +241,17 @@ async function ServerEventsCategorized({
           titleClassName="heading-2 text-foreground mb-element-gap"
         />
         <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:py-2 sm:px-2 sm:-mx-2">
-          {quickCategoryLinks.map(({ label, url, Icon }) => (
+          {quickCategoryLinks.map(({ label, url, categorySlug, Icon }) => (
             <PressableAnchor
               key={url}
               href={url}
               prefetch={false}
               variant="plain"
               className="btn-category h-full w-full text-xs sm:w-auto whitespace-nowrap"
+              data-analytics-event-name="select_category"
+              data-analytics-context="home_quick_categories"
+              data-analytics-place-slug="catalunya"
+              data-analytics-category-slug={categorySlug}
             >
               <span className="flex items-center gap-2 whitespace-nowrap">
                 <Icon
