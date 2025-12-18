@@ -90,8 +90,11 @@ export async function generatePagesData({
     locale: resolvedLocale,
     namespace: "Components.Constants",
   });
+
+  const effectiveYear = currentYear ?? new Date().getFullYear();
   const months = (tConstants.raw("months") as string[]) || [];
   const month = months[new Date().getMonth()] || "";
+
   const categoryTemplates = (t.raw("categories") || {}) as Record<
     string,
     {
@@ -106,8 +109,8 @@ export async function generatePagesData({
     return categoryTemplates[categorySlug] || null;
   };
   if (
-    typeof currentYear === "number" &&
-    (currentYear < 2000 || currentYear > 3000)
+    typeof effectiveYear === "number" &&
+    (effectiveYear < 2000 || effectiveYear > 3000)
   ) {
     throw new Error("Invalid year range");
   }
@@ -139,7 +142,7 @@ export async function generatePagesData({
 
   if (!place && !byDate) {
     return createPageData(
-      t("root.title", { year: currentYear }),
+      t("root.title", { year: effectiveYear }),
       t("root.subTitle", { month }),
       t("root.metaTitle", { month }),
       t("root.metaDescription", { month }),
@@ -286,11 +289,11 @@ export async function generatePagesData({
 
   if (type === "region" && !byDate) {
     return createPageData(
-      t("regionNoDate.title", { label: labelWithArticle, year: currentYear }),
+      t("regionNoDate.title", { label: labelWithArticle, year: effectiveYear }),
       t("regionNoDate.subTitle", { label: labelWithArticle, month }),
       t("regionNoDate.metaTitle", {
         label: labelWithArticle,
-        year: currentYear,
+        year: effectiveYear,
       }),
       t("regionNoDate.metaDescription", { label: labelWithArticle, month }),
       `${siteUrl}/${place}`,
@@ -302,13 +305,13 @@ export async function generatePagesData({
     // Special handling for Barcelona: include "Esdeveniments" with natural phrasing
     const isBarcelona = place === "barcelona";
     const title = isBarcelona
-      ? t("townNoDate.barcelona.title", { year: currentYear })
+      ? t("townNoDate.barcelona.title", { year: effectiveYear })
       : t("townNoDate.default.title", {
           label: labelWithArticle,
-          year: currentYear,
+          year: effectiveYear,
         });
     const metaTitle = isBarcelona
-      ? t("townNoDate.barcelona.metaTitle", { year: currentYear })
+      ? t("townNoDate.barcelona.metaTitle", { year: effectiveYear })
       : t("townNoDate.default.metaTitle", { label: labelWithArticle, month });
     const metaDescription = isBarcelona
       ? t("townNoDate.barcelona.metaDescription", { month })
@@ -411,10 +414,10 @@ export async function generatePagesData({
 
   // Default fallback
   return createPageData(
-    t("fallback.title", { year: currentYear }),
+    t("fallback.title", { year: effectiveYear }),
     t("fallback.subTitle", { month }),
-    t("fallback.metaTitle", { year: currentYear }),
-    t("fallback.metaDescription", { year: currentYear }),
+    t("fallback.metaTitle", { year: effectiveYear }),
+    t("fallback.metaDescription", { year: effectiveYear }),
     siteUrl,
     t("fallback.notFound")
   );

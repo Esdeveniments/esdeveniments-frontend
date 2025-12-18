@@ -45,10 +45,6 @@ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 
-export const revalidate = 300;
-// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
-export const dynamicParams = true;
-
 export async function generateMetadata({
   params,
   searchParams,
@@ -104,7 +100,6 @@ export async function generateMetadata({
   );
 
   const pageData: PageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
     placeTypeLabel: placeTypeAndLabel,
@@ -255,7 +250,6 @@ export default async function FilteredPage({
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(filters.place);
       const pageData: PageData = await generatePagesData({
-        currentYear: new Date().getFullYear(),
         place: filters.place,
         byDate: filters.byDate as ByDateOptions,
         placeTypeLabel,

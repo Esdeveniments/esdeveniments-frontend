@@ -12,8 +12,6 @@ import {
 } from "types/api/restaurant";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 export async function GET(request: NextRequest) {
   const t = await getTranslations("Api.PlacesNearby");
   const { searchParams } = new URL(request.url);

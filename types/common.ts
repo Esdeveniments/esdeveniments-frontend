@@ -82,7 +82,7 @@ export interface PageData {
 }
 
 export interface GeneratePagesDataProps {
-  currentYear: string | number;
+  currentYear?: string | number;
   place?: string;
   byDate?: ByDateOptions;
   placeTypeLabel?: PlaceTypeAndLabel;

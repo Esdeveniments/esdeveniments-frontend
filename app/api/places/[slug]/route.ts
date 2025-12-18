@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { fetchPlaceBySlugExternal } from "@lib/api/places-external";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 export async function GET(
   _req: Request,
   ctx: { params: Promise<{ slug: string }> }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-export const runtime = "nodejs";
+
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinarySignatureResponse } from "types/api/restaurant";
 import { handleApiError } from "@utils/api-error-handler";

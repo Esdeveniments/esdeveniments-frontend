@@ -176,10 +176,11 @@ export const getHistoricDates = (
 
 /**
  * Returns an array of years from 2023 to current year
+ * @param {number} [overrideYear] - Optional year to use instead of current year
  * @returns {number[]} Array of years
  */
-export const getAllYears = (): number[] => {
-  const currentYear = new Date().getFullYear();
+export const getAllYears = (overrideYear?: number): number[] => {
+  const currentYear = overrideYear ?? new Date().getFullYear();
 
   return Array.from(
     { length: currentYear - 2023 + 1 },

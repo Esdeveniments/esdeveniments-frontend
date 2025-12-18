@@ -1095,6 +1095,11 @@
       "startsToday": "Starts today",
       "today": "Today"
     },
+    "EventStatusBadge": {
+      "ariaLabelPrefix": "Status:",
+      "past": "Finished",
+      "live": "Live"
+    },
     "EventTime": {
       "consult": "Check schedules",
       "startsAt": "Starts at {time}",

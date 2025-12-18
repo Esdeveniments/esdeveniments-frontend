@@ -14,7 +14,6 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import NewsHubsGrid from "@components/noticies/NewsHubsGrid";
 import NewsGridSkeleton from "@components/noticies/NewsGridSkeleton";
-export const revalidate = 600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();

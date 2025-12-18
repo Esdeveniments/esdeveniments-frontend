@@ -49,9 +49,6 @@ import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 
 // page-level ISR not set here; fetch-level caching applies
-export const revalidate = 300;
-// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
-export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
@@ -104,7 +101,6 @@ export async function generateMetadata({
   const categoryData = categories.find((cat) => cat.slug === actualCategory);
 
   const pageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place,
     byDate: actualDate as ByDateOptions,
     placeTypeLabel,
@@ -293,7 +289,6 @@ export default async function ByDatePage({
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);
       const pageData: PageData = await generatePagesData({
-        currentYear: new Date().getFullYear(),
         place,
         byDate: actualDate as ByDateOptions,
         placeTypeLabel,

@@ -12,6 +12,7 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   introText,
   locationType = "general",
   locale,
+  showTranslate,
 }) => {
   return (
     <div className="max-w-none text-foreground min-w-0">
@@ -23,11 +24,13 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
         locationType={locationType}
         descriptionHtmlId={DESCRIPTION_BODY_ID}
         headerActions={
-          <TranslateDescription
-            description={description}
-            locale={locale}
-            targetId={DESCRIPTION_BODY_ID}
-          />
+          showTranslate ? (
+            <TranslateDescription
+              description={description}
+              locale={locale}
+              targetId={DESCRIPTION_BODY_ID}
+            />
+          ) : undefined
         }
       />
     </div>

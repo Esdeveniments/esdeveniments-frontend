@@ -21,11 +21,8 @@ import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 
-export const revalidate = 300;
-
 export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place: "",
     byDate: "",
   });
@@ -50,7 +47,6 @@ export default async function Page(): Promise<JSX.Element> {
   const agendaLabel = tTopAgenda("agenda");
 
   const pageData: PageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place: "",
     byDate: "",
   });

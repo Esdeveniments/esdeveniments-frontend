@@ -4,8 +4,6 @@ import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
 import type { NewsDetailResponseDTO } from "types/api/news";
 
-export const runtime = "nodejs";
-
 // Cache for news detail by slug (24h TTL) to prevent backend visit increments on refresh
 const { cache: newsDetailCache } =
   createKeyedCache<NewsDetailResponseDTO | null>(

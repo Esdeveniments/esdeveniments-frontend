@@ -29,8 +29,6 @@ import {
 } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 
-export const revalidate = 86400;
-
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
 );

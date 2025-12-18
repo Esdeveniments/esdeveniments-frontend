@@ -1095,6 +1095,11 @@
       "startsToday": "Empieza hoy",
       "today": "Hoy"
     },
+    "EventStatusBadge": {
+      "ariaLabelPrefix": "Estado:",
+      "past": "Finalizado",
+      "live": "En curso"
+    },
     "EventTime": {
       "consult": "Consultar horarios",
       "startsAt": "Empieza a las {time}",

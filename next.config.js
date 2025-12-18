@@ -21,8 +21,7 @@ const nextConfig = {
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
 
-  // --- Turbopack (Next 16: default bundler) ---
-  // turbopack: {},
+  cacheComponents: false,
 
   // --- Experimental Features ---
   experimental: {
@@ -30,10 +29,13 @@ const nextConfig = {
     inlineCss: true,
     // Tree-shake heavy libraries to reduce Lambda bundle size
     optimizePackageImports: [
+      "@headlessui/react",
       "@heroicons/react",
       "date-fns",
       "react-datepicker",
       "react-select",
+      "react-share",
+      "react-tooltip",
     ],
     // --- Server Actions Configuration ---
     serverActions: {
@@ -149,14 +151,13 @@ module.exports = withSentryConfig(withNextIntl(nextConfig), {
   // side errors will fail.
   tunnelRoute: "/monitoring",
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
-  automaticVercelMonitors: true,
+  // Sentry configuration options (Next.js 16 / Sentry v10+)
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: true,
+  },
 
   // Release tracking: associate source maps with a specific release
   // Falls back to git commit SHA if available, otherwise uses timestamp

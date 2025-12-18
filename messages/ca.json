@@ -1094,6 +1094,11 @@
       "startsToday": "Comença avui",
       "today": "Avui"
     },
+    "EventStatusBadge": {
+      "ariaLabelPrefix": "Estat:",
+      "past": "Finalitzat",
+      "live": "En curs"
+    },
     "EventTime": {
       "consult": "Consultar horaris",
       "startsAt": "Comença a les {time}",

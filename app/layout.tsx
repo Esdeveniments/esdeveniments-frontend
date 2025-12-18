@@ -1,20 +1,25 @@
 import "../styles/globals.css";
 import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import {
+  getMessages,
+  setRequestLocale,
+  getTranslations,
+} from "next-intl/server";
 import type { Metadata, Viewport } from "next";
+import { getLocaleSafely } from "../utils/i18n-seo";
 import GoogleScripts from "./GoogleScripts";
 import { AdProvider } from "../lib/context/AdContext";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
-// Removed custom fonts - now using system font stack
-// import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";
-import { getTranslations } from "next-intl/server";
-import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Components.Layout");
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "Components.Layout",
+  });
 
   return {
     other: {
@@ -44,7 +49,11 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   const apiOrigin = getApiOrigin();
-  const locale = (await getLocale()) as AppLocale;
+  const locale = await getLocaleSafely();
+
+  // Distribute the locale to all server components in this request
+  setRequestLocale(locale);
+
   const messages = await getMessages();
 
   return (

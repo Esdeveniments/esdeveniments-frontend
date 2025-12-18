@@ -9,8 +9,6 @@ import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
 import { clearCitiesCaches } from "@lib/api/cities";
 
-export const runtime = "nodejs";
-
 /**
  * Whitelist of cache tags that can be revalidated via this endpoint.
  * Only includes tags related to places/regions data (infrequently changing).

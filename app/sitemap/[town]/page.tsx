@@ -24,8 +24,6 @@ import SitemapHeader from "@components/sitemap/SitemapHeader";
 import SitemapHeaderSkeleton from "@components/sitemap/SitemapHeaderSkeleton";
 import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 
-export const revalidate = 86400;
-
 export async function generateMetadata({
   params,
 }: {
@@ -68,8 +66,8 @@ export default function Page({
 
 async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) {
   const { town } = await params;
-  const years: number[] = getAllYears();
   const locale: AppLocale = await getLocaleSafely();
+  const years: number[] = getAllYears();
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const tConstants = await getTranslations({
     locale,

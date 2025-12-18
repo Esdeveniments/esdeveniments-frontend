@@ -346,6 +346,7 @@ export default async function EventPage({
               introText={introText}
               locationType="town"
               locale={locale as AppLocale}
+              showTranslate={temporalStatus.state !== "past"}
             />
             {/* Location (SSR for SEO) with client map toggle */}
             <EventLocation
@@ -465,5 +466,3 @@ export default async function EventPage({
     </>
   );
 }
-
-export const revalidate = 1800;

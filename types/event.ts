@@ -250,6 +250,7 @@ export interface EventDescriptionProps {
   introText?: string;
   locationType?: "region" | "town" | "general";
   locale?: AppLocale;
+  showTranslate?: boolean;
 }
 
 export interface EventTagsProps {

@@ -6,8 +6,6 @@ import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
 import type { EventDetailResponseDTO } from "types/api/event";
 
-export const runtime = "nodejs";
-
 // Cache event detail by slug to avoid hitting backend on every refresh (which increments visits).
 // TTL aligns with Cache-Control s-maxage for consistency.
 const EVENT_DETAIL_TTL_MS = 30 * 60 * 1000; // 30 minutes

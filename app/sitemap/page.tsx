@@ -16,8 +16,6 @@ import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import SitemapContent from "@components/sitemap/SitemapContent";
 import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 
-export const revalidate = 86400;
-
 export async function generateMetadata() {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "App.Sitemap" });

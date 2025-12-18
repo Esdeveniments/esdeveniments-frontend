@@ -33,9 +33,6 @@ import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 
-export const revalidate = 300;
-// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
-export const dynamicParams = true;
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
 
@@ -63,7 +60,6 @@ export async function generateMetadata({
     place
   );
   const pageData: PageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place,
     byDate: "",
     placeTypeLabel,
@@ -105,7 +101,6 @@ export default async function Page({
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);
       const pageData: PageData = await generatePagesData({
-        currentYear: new Date().getFullYear(),
         place,
         byDate: "",
         placeTypeLabel,

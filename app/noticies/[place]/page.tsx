@@ -14,7 +14,6 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import NewsList from "@components/noticies/NewsList";
 import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
-export const revalidate = 600;
 
 export async function generateMetadata({
   params,
