@@ -9,7 +9,7 @@ import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import CardLink from "@components/ui/common/cardContent/CardLink";
-import caMessages from "../../../messages/ca.json";
+import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
@@ -129,8 +129,8 @@ async function EventsAroundServer({
     return null;
   }
 
-  const carouselSuffix =
-    (caMessages as any).Components.EventsAround.carouselSuffix;
+  const t = await getTranslations("Components.EventsAround");
+  const carouselSuffix = t("carouselSuffix");
   // Render different layouts
   if (layout === "horizontal") {
     return (

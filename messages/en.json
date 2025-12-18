@@ -402,7 +402,8 @@
       "seeAlso": "See also"
     },
     "EventsAround": {
-      "carouselSuffix": "events carousel"
+      "carouselSuffix": "events carousel",
+      "relatedEvents": "Related events"
     },
     "ServerEventsCategorized": {
       "cta": "Can't find what you're looking for?",

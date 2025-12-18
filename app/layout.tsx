@@ -10,23 +10,27 @@ import WebsiteSchema from "@components/partials/WebsiteSchema";
 // Removed custom fonts - now using system font stack
 // import { robotoFlex, barlowCondensed } from "../lib/fonts";
 import { getApiOrigin } from "../utils/api-helpers";
-import caMessages from "../messages/ca.json";
+import { getTranslations } from "next-intl/server";
 import type { AppLocale } from "types/i18n";
 
-export const metadata: Metadata = {
-  other: {
-    "mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "default",
-  },
-  alternates: {
-    types: {
-      "application/rss+xml": [
-        { url: "/rss.xml", title: caMessages.Components.Layout.rss },
-        { url: "/noticies/rss.xml", title: caMessages.Components.Layout.rssNews },
-      ],
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Components.Layout");
+
+  return {
+    other: {
+      "mobile-web-app-capable": "yes",
+      "apple-mobile-web-app-status-bar-style": "default",
     },
-  },
-};
+    alternates: {
+      types: {
+        "application/rss+xml": [
+          { url: "/rss.xml", title: t("rss") },
+          { url: "/noticies/rss.xml", title: t("rssNews") },
+        ],
+      },
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

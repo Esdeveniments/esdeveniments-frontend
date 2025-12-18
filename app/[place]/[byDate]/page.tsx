@@ -365,6 +365,7 @@ export default async function ByDatePage({
           title: pageData.title,
           description: pageData.metaDescription,
           url: pageData.canonical,
+          locale,
         })
       }
     />

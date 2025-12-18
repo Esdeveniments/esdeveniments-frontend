@@ -103,7 +103,7 @@ export default async function EventPage({
   const eventDateString = event.endDate
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
-  const jsonData = generateJsonData({ ...event });
+  const jsonData = generateJsonData({ ...event }, locale);
   const tStatus = await getTranslations({ locale, namespace: "Utils.EventStatus" });
   const tEvent = await getTranslations({ locale, namespace: "Components.EventPage" });
   const tCopy = await getTranslations({ locale, namespace: "Utils.EventCopy" });
@@ -207,7 +207,7 @@ export default async function EventPage({
               return {
                 "@type": "ListItem",
                 position: index + 1,
-                item: generateJsonData(relatedEvent),
+                item: generateJsonData(relatedEvent, locale),
               };
             } catch (err) {
               console.error(

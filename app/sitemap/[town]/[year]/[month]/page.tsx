@@ -152,7 +152,7 @@ export default async function Page({
   // Generate event JSON-LD data
   const jsonData = filteredEvents
     ? filteredEvents
-      .map((event) => generateJsonData(event))
+      .map((event) => generateJsonData(event, locale))
       .filter((data) => data !== null)
     : [];
 
@@ -188,6 +188,7 @@ export default async function Page({
     }),
     url: toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale),
     breadcrumbs,
+    locale,
     numberOfItems: filteredEvents.length,
     mainEntity: eventsItemList || {
       "@type": "Thing",

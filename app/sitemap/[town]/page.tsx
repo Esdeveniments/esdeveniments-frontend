@@ -103,6 +103,7 @@ async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) 
     description: t("collectionDescription", { town: townLabel }),
     url: toLocalizedUrl(`/sitemap/${town}`, locale),
     breadcrumbs,
+    locale,
     numberOfItems: years.length * months.length,
     mainEntity: {
       "@type": "ItemList",

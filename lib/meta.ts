@@ -12,6 +12,7 @@ import {
   applyLocaleToCanonical,
   buildLocalizedUrls,
   getSafePathname,
+  stripLocaleFromPathname,
 } from "@utils/i18n-seo";
 import { getFormattedDate } from "@utils/helpers";
 
@@ -140,7 +141,10 @@ export function generateEventMetadata(
   const canonicalBase = url || `${siteUrl}/e/${event.slug}`;
   const canonical = applyLocaleToCanonical(canonicalBase, localeToUse);
 
-  const localizedUrls = buildLocalizedUrls(getSafePathname(canonicalBase));
+  // Ensure we always generate alternates from a clean, non-localized pathname.
+  // Otherwise a localized canonical (e.g. /es/e/slug) would become /es/es/e/slug.
+  const basePathname = stripLocaleFromPathname(getSafePathname(canonicalBase));
+  const localizedUrls = buildLocalizedUrls(basePathname);
   const languageAlternates = Object.entries(localizedUrls).reduce<
     Record<string, string>
   >((acc, [currentLocale, href]) => {

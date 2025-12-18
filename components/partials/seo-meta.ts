@@ -49,7 +49,7 @@ export const defaultMeta = {
     "fb:app_id": "103738478742219",
     "fb:pages": "103738478742219",
     "google-site-verification":
-      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? "",
     author: "Esdeveniments.cat",
     "revisit-after": "1 days",
   },

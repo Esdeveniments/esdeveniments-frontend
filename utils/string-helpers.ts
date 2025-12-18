@@ -130,8 +130,8 @@ export function normalizeUrl(url: string): string {
 
   // Add https:// protocol if missing, unless it's localhost (allow http)
   if (trimmed.startsWith("localhost") || trimmed.includes("://localhost")) {
-      if (/^https?:\/\//i.test(trimmed)) return trimmed;
-      return `http://${trimmed}`;
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `http://${trimmed}`;
   }
 
   return `https://${trimmed}`;

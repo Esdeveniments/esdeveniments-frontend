@@ -402,7 +402,8 @@
       "seeAlso": "Vegeu també"
     },
     "EventsAround": {
-      "carouselSuffix": "carrusel d'esdeveniments"
+      "carouselSuffix": "carrusel d'esdeveniments",
+      "relatedEvents": "Esdeveniments relacionats"
     },
     "ServerEventsCategorized": {
       "cta": "No trobes el que busques?",

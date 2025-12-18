@@ -4,7 +4,6 @@ import type {
   FormattedDateResult,
   EventTimeLabels,
 } from "types/event";
-import { getTranslations } from "next-intl/server";
 import type { EventTimeDTO } from "types/api/event";
 import caMessages from "../messages/ca.json";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
@@ -248,16 +247,6 @@ export const formatTimeForAPI = (timeString: string): string => {
 
 const defaultEventTimeLabels: EventTimeLabels = (caMessages as any).Utils
   .EventTime as EventTimeLabels;
-
-export async function getEventTimeLabels(): Promise<EventTimeLabels> {
-  const t = await getTranslations("Utils.EventTime");
-  return {
-    consult: t("consult"),
-    startsAt: t("startsAt", { time: "{time}" }),
-    range: t("range", { start: "{start}", end: "{end}" }),
-    simpleRange: t("simpleRange", { start: "{start}", end: "{end}" }),
-  };
-}
 
 const fillTemplate = (
   template: string,

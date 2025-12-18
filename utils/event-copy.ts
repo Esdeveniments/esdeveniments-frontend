@@ -534,8 +534,8 @@ export async function buildFaqItems(
         .map((p) => p.trim())
         .filter((p) => p.length > 0)
     : [];
-  const cityKey = cityName ? normalize(cityName) : "";
-  const regionKey = regionName ? normalize(regionName) : "";
+  const normalizedCityName = cityName ? normalize(cityName) : "";
+  const normalizedRegionName = regionName ? normalize(regionName) : "";
   const finalWhereParts: string[] = [];
   const seenWhere = new Set<string>();
 
@@ -549,7 +549,7 @@ export async function buildFaqItems(
 
   for (const p of partsFromLocation) {
     const key = normalize(p);
-    if (key === cityKey || key === regionKey) continue;
+    if (key === normalizedCityName || key === normalizedRegionName) continue;
     addPart(p);
   }
   addPart(cityName);

@@ -4,8 +4,9 @@ import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import type { Metadata } from "next";
 
-export const metadata = (async () => {
+export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "App.PublishPage" });
   return buildPageMeta({
@@ -14,7 +15,7 @@ export const metadata = (async () => {
     canonical: `${siteUrl}/publica`,
     locale,
   });
-})();
+}
 
 const publishEventSchema = async () => {
   const locale = await getLocaleSafely();
@@ -37,7 +38,7 @@ const publishEventSchema = async () => {
     },
     potentialAction: {
       "@type": "CreateAction",
-      target: `${siteUrl}/publica`,
+      target: localizedUrl,
       name: t("schemaAction"),
     },
   };

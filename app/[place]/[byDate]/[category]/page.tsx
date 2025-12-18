@@ -327,6 +327,7 @@ export default async function FilteredPage({
           title: pageData.title,
           description: pageData.metaDescription,
           url: pageData.canonical,
+          locale,
         })
       }
     />
