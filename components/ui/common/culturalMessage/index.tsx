@@ -17,8 +17,8 @@ const CulturalMessage = async ({
   const locationText = formatCatalanA(capitalizedLocation, locationType, false);
 
   return (
-    <div className="leading-relaxed">
-      <p className="text-base leading-relaxed text-foreground-strong font-bold">
+    <div className="leading-relaxed flex flex-col gap-element-gap">
+      <p className="text-base leading-relaxed text-foreground-strong font-bold ">
         {t("explorePrefix", { location: locationText })}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">

@@ -23,6 +23,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   form,
   onSubmit,
   submitLabel,
+  analyticsContext,
   isEditMode = false,
   isLoading = false,
   isLoadingCities = false,
@@ -117,9 +118,26 @@ export const EventForm: React.FC<EventFormProps> = ({
     handleImageUrlChange ??
     ((value: string) => handleFormChange("imageUrl", value || null));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setHasInteracted(true);
+
+    // Never publish via implicit form submits (e.g. pressing Enter in a field).
+    // Only allow publish when the user explicitly clicks the publish button.
+    // Also, if submit happens before the last step, treat it as a "Next" attempt.
+    if (step < steps.length - 1) {
+      goNext();
+      return;
+    }
+
+    const nativeEvent = e.nativeEvent as SubmitEvent;
+    const submitter = (nativeEvent?.submitter as HTMLElement | null) ?? null;
+    const submitterTestId = submitter?.getAttribute?.("data-testid") ?? null;
+    const isExplicitPublishClick = submitterTestId === "publish-button";
+
+    if (!isExplicitPublishClick) {
+      return;
+    }
 
     // Run one-off validation to check if we can proceed
     const submitValidation = getZodValidationState(
@@ -473,6 +491,13 @@ export const EventForm: React.FC<EventFormProps> = ({
               className="btn-outline min-h-[44px] px-6"
               disabled={!isPreviewReady || isLoading}
               data-testid={previewTestId || "preview-button"}
+              data-analytics-event-name={
+                analyticsContext === "publica" ? "publish_preview_click" : undefined
+              }
+              data-analytics-context={analyticsContext}
+              data-analytics-target={
+                analyticsContext === "publica" ? "preview_button" : undefined
+              }
               onClick={onPreview}
             >
               {previewButtonLabel}
@@ -499,6 +524,13 @@ export const EventForm: React.FC<EventFormProps> = ({
                 : "opacity-100"
                 }`}
               data-testid="publish-button"
+              data-analytics-event-name={
+                analyticsContext === "publica" ? "publish_submit_click" : undefined
+              }
+              data-analytics-context={analyticsContext}
+              data-analytics-target={
+                analyticsContext === "publica" ? "publish_button" : undefined
+              }
             >
               {isLoading ? (
                 <>

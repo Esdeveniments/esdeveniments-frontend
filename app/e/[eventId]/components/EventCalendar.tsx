@@ -14,6 +14,16 @@ export default async function EventCalendar({ event }: EventCalendarProps) {
     locale,
     namespace: "Components.EventCalendar",
   });
+  const tTime = await getTranslations({
+    locale,
+    namespace: "Utils.EventTime",
+  });
+  const timeLabels = {
+    consult: tTime("consult"),
+    startsAt: tTime("startsAt", { time: "{time}" }),
+    range: tTime("range", { start: "{start}", end: "{end}" }),
+    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
+  };
 
   // Extract needed fields
   const {
@@ -54,7 +64,7 @@ export default async function EventCalendar({ event }: EventCalendarProps) {
           </p>
           <p className="body-normal flex items-center gap-element-gap text-foreground-strong/80">
             <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
-            {formatEventTimeDisplayDetail(startTime, endTime)}
+            {formatEventTimeDisplayDetail(startTime, endTime, timeLabels)}
           </p>
         </div>
         <div className="px-section-x">

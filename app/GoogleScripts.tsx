@@ -96,26 +96,29 @@ export default function GoogleScripts() {
       return el.closest?.("a") as HTMLAnchorElement | null;
     };
 
+    const getClosestAnalyticsElement = (target: EventTarget | null): HTMLElement | null => {
+      if (!target) return null;
+      const el = target as Element | null;
+      if (!el) return null;
+      return el.closest?.("[data-analytics-event-name]") as HTMLElement | null;
+    };
+
     const handleClick = (event: MouseEvent) => {
+      const analyticsEl = getClosestAnalyticsElement(event.target);
       const anchor = getClosestAnchor(event.target);
-      if (!anchor) return;
+      if (!analyticsEl && !anchor) return;
 
-      const hrefAttr = anchor.getAttribute("href") || "";
-      if (!hrefAttr) return;
+      // If any element declares an analytics event name, emit it.
+      // Supports server-first click tracking on buttons and other non-link elements.
+      if (analyticsEl?.dataset.analyticsEventName) {
+        const container = analyticsEl.closest(
+          '[data-analytics-container="true"]'
+        ) as HTMLElement | null;
+        const dataset: DOMStringMap = {
+          ...(container?.dataset || {}),
+          ...(analyticsEl.dataset || {}),
+        };
 
-      // Allow list/section containers to enrich link clicks with context (server-first).
-      // Anchor attributes win over container attributes.
-      const container = anchor.closest(
-        '[data-analytics-container="true"]'
-      ) as HTMLElement | null;
-      const dataset: DOMStringMap = {
-        ...(container?.dataset || {}),
-        ...(anchor.dataset || {}),
-      };
-
-      // If a link declares an analytics event name, emit it regardless of internal/external.
-      // This keeps most UI server-rendered while still providing high-signal interaction analytics.
-      if (dataset.analyticsEventName) {
         win.gtag("event", dataset.analyticsEventName, {
           context: dataset.analyticsContext || undefined,
           target: dataset.analyticsTarget || undefined,
@@ -131,6 +134,20 @@ export default function GoogleScripts() {
           source_event_slug: dataset.analyticsSourceEventSlug || undefined,
         });
       }
+
+      if (!anchor) return;
+
+      const hrefAttr = anchor.getAttribute("href") || "";
+      if (!hrefAttr) return;
+
+      // Keep dataset available for outbound click enrichment.
+      const outboundContainer = anchor.closest(
+        '[data-analytics-container="true"]'
+      ) as HTMLElement | null;
+      const outboundDataset: DOMStringMap = {
+        ...(outboundContainer?.dataset || {}),
+        ...(anchor.dataset || {}),
+      };
 
       // Only track external navigation (http/https) to avoid logging phone/email or internal routes.
       let url: URL;
@@ -149,12 +166,12 @@ export default function GoogleScripts() {
       win.gtag("event", "outbound_click", {
         link_domain: url.hostname,
         link_path: url.pathname,
-        link_type: dataset.analyticsLinkType || undefined,
-        context: dataset.analyticsContext || undefined,
-        event_id: dataset.analyticsEventId || undefined,
-        event_slug: dataset.analyticsEventSlug || undefined,
-        place_id: dataset.analyticsPlaceId || undefined,
-        place_name: dataset.analyticsPlaceName || undefined,
+        link_type: outboundDataset.analyticsLinkType || undefined,
+        context: outboundDataset.analyticsContext || undefined,
+        event_id: outboundDataset.analyticsEventId || undefined,
+        event_slug: outboundDataset.analyticsEventSlug || undefined,
+        place_id: outboundDataset.analyticsPlaceId || undefined,
+        place_name: outboundDataset.analyticsPlaceName || undefined,
       });
     };
 

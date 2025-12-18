@@ -555,6 +555,9 @@
       "seeMore": "Veure més",
       "aria": "Explora {title} per data"
     },
+    "EventCategories": {
+      "title": "Categories"
+    },
     "CategoryEventsSection": {
       "heading": "L'agenda {categoryPhrase} a Catalunya",
       "seeMore": "Veure més",
@@ -673,7 +676,9 @@
       "duration": "Durada aproximada: {duration}"
     },
     "EventLocation": {
-      "title": "Ubicació"
+      "title": "Ubicació",
+      "showMap": "Mostrar mapa",
+      "getDirections": "Com arribar"
     },
     "EventCalendar": {
       "title": "Data i hora"

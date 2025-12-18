@@ -549,14 +549,18 @@
     },
     "WhereToEatSection": {
       "title": "Where you can eat",
-      "promote": "Promociona el teu restaurant"
+      "promote": "Promote your restaurant"
     },
     "FeaturedPlaceSection": {
       "seeMore": "See more",
       "aria": "Explore {title} by date"
     },
+    "EventCategories": {
+      "title": "Categories"
+    },
     "CategoryEventsSection": {
       "heading": "The {categoryPhrase} agenda in Catalonia",
+      "headingNoArticle": "Agenda in Catalonia · {categoryName}",
       "seeMore": "See more",
       "sponsored": "Sponsored content"
     },
@@ -673,7 +677,9 @@
       "duration": "Approximate duration: {duration}"
     },
     "EventLocation": {
-      "title": "Location"
+      "title": "Location",
+      "showMap": "Show map",
+      "getDirections": "Get directions"
     },
     "EventCalendar": {
       "title": "Date and time"

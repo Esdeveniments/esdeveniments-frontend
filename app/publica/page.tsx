@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { captureException } from "@sentry/nextjs";
+import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
@@ -26,6 +26,12 @@ import {
 import { uploadImageWithProgress } from "@utils/upload-event-image-client";
 import PreviewContent from "@components/ui/EventForm/preview/PreviewContent";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
+import { sendGoogleEvent } from "@utils/analytics";
+import {
+  buildPublishContext,
+  classifyPublishError,
+  classifyUploadError,
+} from "@utils/publica-analytics";
 
 import Modal from "@components/ui/common/modal";
 import type { EventDetailResponseDTO } from "types/api/event";
@@ -191,6 +197,11 @@ const Publica = () => {
     const normalized = normalizeUrl(value);
     if (!normalized) return;
     window.open(normalized, "_blank", "noopener,noreferrer");
+
+    sendGoogleEvent("publish_test_url_click", {
+      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      source: "publica",
+    });
   };
 
   const [showPreview, setShowPreview] = useState(false);
@@ -199,6 +210,11 @@ const Publica = () => {
   );
 
   const handlePreview = () => {
+    sendGoogleEvent("publish_preview_open", {
+      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      source: "publica",
+    });
+
     // Determine the image URL to show in preview
     // 1. Uploaded image URL if available
     // 2. Currently selected file (as data URL) if available
@@ -318,7 +334,27 @@ const Publica = () => {
     setError(null); // Clear any previous errors
     setImageUploadMessage(null);
 
+    addBreadcrumb({
+      category: "publica",
+      message: "publish_submit_attempt",
+      level: "info",
+      data: {
+        source: "publica",
+        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      },
+    });
+
+    sendGoogleEvent("publish_submit_attempt", {
+      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      source: "publica",
+    });
+
     if (imageFile && imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+      sendGoogleEvent("publish_submit_blocked", {
+        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+        source: "publica",
+        reason: "image_too_large_client",
+      });
       setError(
         `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, tria una imatge més petita.`
       );
@@ -326,6 +362,11 @@ const Publica = () => {
     }
 
     if (isUploadingImage) {
+      sendGoogleEvent("publish_submit_blocked", {
+        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+        source: "publica",
+        reason: "upload_in_progress",
+      });
       return;
     }
 
@@ -344,6 +385,15 @@ const Publica = () => {
             const controller = new AbortController();
             setUploadAbortController(controller);
             try {
+              sendGoogleEvent("publish_image_upload_start", {
+                ...buildPublishContext({
+                  form,
+                  imageFile,
+                  uploadedImageUrl,
+                }),
+                source: "publica",
+              });
+
               const uploadResult = await uploadImageWithProgress(imageFile, {
                 onProgress: (percent) => setUploadProgress(percent),
                 signal: controller.signal,
@@ -354,17 +404,35 @@ const Publica = () => {
               setImageUploadMessage("Imatge pujada correctament.");
               setUploadProgress(100);
               setTimeout(() => setUploadProgress(0), 800);
+
+              sendGoogleEvent("publish_image_upload_success", {
+                ...buildPublishContext({
+                  form,
+                  imageFile,
+                  uploadedImageUrl: uploadResult.url,
+                }),
+                source: "publica",
+              });
             } catch (uploadError) {
-              if (
-                uploadError instanceof DOMException &&
-                uploadError.name === "AbortError"
-              ) {
+              const reason = classifyUploadError(uploadError);
+              if (reason === "abort") {
+                sendGoogleEvent("publish_image_upload_abort", {
+                  ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+                  source: "publica",
+                });
                 setIsUploadingImage(false);
                 setUploadProgress(0);
                 setImageUploadMessage(null);
                 setUploadAbortController(null);
                 return;
               }
+
+              sendGoogleEvent("publish_image_upload_error", {
+                ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+                source: "publica",
+                reason,
+              });
+
               const uploadMessage =
                 uploadError instanceof Error
                   ? uploadError.message
@@ -390,6 +458,11 @@ const Publica = () => {
         }
 
         if (!resolvedImageUrl) {
+          sendGoogleEvent("publish_submit_blocked", {
+            ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+            source: "publica",
+            reason: "missing_image",
+          });
           setError("La imatge és obligatòria.");
           return;
         }
@@ -412,8 +485,26 @@ const Publica = () => {
         const { success, event } = await createEventAction(eventData, e2eExtras);
 
         if (!success || !event) {
+          sendGoogleEvent("publish_error", {
+            ...buildPublishContext({
+              form,
+              imageFile,
+              uploadedImageUrl: resolvedImageUrl,
+            }),
+            source: "publica",
+            category: "generic",
+          });
           setError(t("errorCreate"));
-          captureException("Error creating event");
+          captureException(new Error("publica: createEventAction returned no event"), {
+            tags: { section: "publica", action: "create-event", result: "empty" },
+            extra: {
+              publish_context: buildPublishContext({
+                form,
+                imageFile,
+                uploadedImageUrl: resolvedImageUrl,
+              }),
+            },
+          });
           return;
         }
 
@@ -424,6 +515,16 @@ const Publica = () => {
         if (typeof window !== "undefined") {
           window.__LAST_E2E_PUBLISH_SLUG__ = slug;
         }
+
+        sendGoogleEvent("publish_success", {
+          ...buildPublishContext({
+            form,
+            imageFile,
+            uploadedImageUrl: resolvedImageUrl,
+          }),
+          source: "publica",
+          has_slug: Boolean(slug),
+        });
 
         router.push(`/e/${slug}`);
       } catch (error) {
@@ -447,6 +548,22 @@ const Publica = () => {
           normalizedMessage.includes("unexpected end of form") ||
           normalizedMessage.includes("failed to parse body as formdata");
 
+        const isDuplicate =
+          normalizedMessage.includes("duplicate") ||
+          normalizedMessage.includes("integrity violation");
+
+        sendGoogleEvent("publish_error", {
+          ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+          source: "publica",
+          category: classifyPublishError({
+            isImageUploadLimit,
+            isBodyLimit,
+            isRequestTooLarge,
+            isFormParsingError,
+            isDuplicate,
+          }),
+        });
+
         if (isImageUploadLimit) {
           setError(
             `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
@@ -457,7 +574,7 @@ const Publica = () => {
           );
         } else if (isFormParsingError) {
           setError(t("errorFormParsing"));
-        } else if (normalizedMessage.includes("duplicate") || normalizedMessage.includes("integrity violation")) {
+        } else if (isDuplicate) {
           setError(t("errorDuplicate"));
         } else {
           setError(t("errorGeneric"));
@@ -471,7 +588,26 @@ const Publica = () => {
             isFormParsingError
           )
         ) {
-          captureException(error);
+          captureException(error, {
+            tags: {
+              section: "publica",
+              action: "create-event",
+              category: classifyPublishError({
+                isImageUploadLimit,
+                isBodyLimit,
+                isRequestTooLarge,
+                isFormParsingError,
+                isDuplicate,
+              }),
+            },
+            extra: {
+              publish_context: buildPublishContext({
+                form,
+                imageFile,
+                uploadedImageUrl,
+              }),
+            },
+          });
         }
       }
     });
@@ -514,6 +650,7 @@ const Publica = () => {
               form={form}
               onSubmit={onSubmit}
               submitLabel={t("submitLabel")}
+              analyticsContext="publica"
               isLoading={isPending}
               cityOptions={cityOptions}
               categoryOptions={categoryOptions}

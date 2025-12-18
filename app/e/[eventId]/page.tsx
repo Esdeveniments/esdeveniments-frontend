@@ -44,6 +44,7 @@ import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
+import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
@@ -106,6 +107,17 @@ export default async function EventPage({
   const tStatus = await getTranslations({ locale, namespace: "Utils.EventStatus" });
   const tEvent = await getTranslations({ locale, namespace: "Components.EventPage" });
   const tCopy = await getTranslations({ locale, namespace: "Utils.EventCopy" });
+  const tCategories = await getTranslations({
+    locale,
+    namespace: "Config.Categories",
+  });
+  const primaryCategoryLabel = primaryCategorySlug
+    ? getLocalizedCategoryLabelFromConfig(
+      primaryCategorySlug,
+      event.categories?.[0]?.name || primaryCategorySlug,
+      tCategories
+    )
+    : "";
   const statusLabels = buildEventStatusLabels(tStatus);
   const eventCopyLabels: EventCopyLabels = {
     sentence: {
@@ -291,7 +303,7 @@ export default async function EventPage({
                   : []),
                 ...(primaryCategorySlug
                   ? [{
-                    label: event.categories?.[0]?.name || primaryCategorySlug,
+                    label: primaryCategoryLabel,
                     href: `/${placeSlug}/${primaryCategorySlug}`,
                   }]
                   : []),

@@ -309,6 +309,7 @@ export interface EventFormProps {
   form: FormData;
   onSubmit: (e: React.FormEvent) => Promise<void> | void;
   submitLabel: string;
+  analyticsContext?: string;
   isEditMode?: boolean;
   isLoading?: boolean;
   cityOptions: Option[];

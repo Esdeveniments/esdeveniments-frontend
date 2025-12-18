@@ -7,6 +7,7 @@ import {
   ArrowRightIcon,
 } from "@heroicons/react/outline";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import type { EventLocationProps } from "types/event";
 import { sendGoogleEvent } from "@utils/analytics";
 
@@ -17,6 +18,7 @@ export default function EventLocationClient({
   cityName,
   regionName,
 }: Pick<EventLocationProps, "location" | "cityName" | "regionName">) {
+  const t = useTranslations("Components.EventLocation");
   const [showMap, setShowMap] = useState(false);
   const [isMapsVisible, setIsMapsVisible] = useState(false);
   const mapsDivRef = useRef<HTMLDivElement | null>(null);
@@ -62,7 +64,7 @@ export default function EventLocationClient({
         onClick={handleShowMap}
       >
         <button type="button" className="flex-start gap-element-gap">
-          <p className="body-normal font-medium">Mostrar mapa</p>
+          <p className="body-normal font-medium">{t("showMap")}</p>
           {showMap ? (
             <XIcon className="h-5 w-5" aria-hidden="true" />
           ) : (
@@ -81,7 +83,7 @@ export default function EventLocationClient({
               className="flex gap-element-gap-sm"
               onClick={handleDirectionsClick}
             >
-              <p className="body-normal font-medium">Com arribar</p>
+              <p className="body-normal font-medium">{t("getDirections")}</p>
               <ArrowRightIcon className="w-5 h-5" />
             </button>
           </div>

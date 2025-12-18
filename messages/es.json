@@ -549,14 +549,18 @@
     },
     "WhereToEatSection": {
       "title": "Dónde puedes comer",
-      "promote": "Promociona el teu restaurant"
+      "promote": "Promociona tu restaurante"
     },
     "FeaturedPlaceSection": {
       "seeMore": "Ver más",
       "aria": "Explora {title} por fecha"
     },
+    "EventCategories": {
+      "title": "Categorías"
+    },
     "CategoryEventsSection": {
       "heading": "La agenda {categoryPhrase} en Cataluña",
+      "headingNoArticle": "Agenda en Cataluña · {categoryName}",
       "seeMore": "Ver más",
       "sponsored": "Contenido patrocinado"
     },
@@ -673,7 +677,9 @@
       "duration": "Duración aproximada: {duration}"
     },
     "EventLocation": {
-      "title": "Ubicación"
+      "title": "Ubicación",
+      "showMap": "Mostrar mapa",
+      "getDirections": "Cómo llegar"
     },
     "EventCalendar": {
       "title": "Fecha y hora"

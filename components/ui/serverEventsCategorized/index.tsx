@@ -36,6 +36,7 @@ import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
+import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
@@ -432,6 +433,10 @@ export async function ServerEventsCategorizedContent({
     locale,
     namespace: "Components.CategoryEventsSection",
   });
+  const tCategories = await getTranslations({
+    locale,
+    namespace: "Config.Categories",
+  });
   const tCta = await getTranslations({
     locale,
     namespace: "Components.ServerEventsCategorized",
@@ -471,26 +476,40 @@ export async function ServerEventsCategorizedContent({
 
       {/* Categories Render */}
       <div className="container">
-        {categorySectionsToRender.map((section, index) => (
-          <CategoryEventsSection
-            key={section.key}
-            events={section.events}
-            categoryName={section.categoryName}
-            categorySlug={section.categorySlug}
-            categoryPhrase={section.categoryPhrase}
-            categories={categories}
-            shouldUsePriority={index < 2}
-            showAd={adPositions.has(index)}
-            labels={{
-              heading: tCategory("heading", {
-                categoryPhrase: section.categoryPhrase,
-              }),
-              seeMore: tCategory("seeMore"),
-              sponsored: tCategory("sponsored"),
-            }}
-            badgeLabels={badgeLabels}
-          />
-        ))}
+        {categorySectionsToRender.map((section, index) => {
+          const localizedCategoryName = getLocalizedCategoryLabelFromConfig(
+            section.categorySlug,
+            section.categoryName,
+            tCategories
+          );
+          const categoryPhrase = formatCatalanDe(localizedCategoryName, true, true);
+
+          return (
+            <CategoryEventsSection
+              key={section.key}
+              events={section.events}
+              categoryName={localizedCategoryName}
+              categorySlug={section.categorySlug}
+              categoryPhrase={categoryPhrase}
+              categories={categories}
+              shouldUsePriority={index < 2}
+              showAd={adPositions.has(index)}
+              labels={{
+                heading:
+                  locale === DEFAULT_LOCALE
+                    ? tCategory("heading", {
+                      categoryPhrase,
+                    })
+                    : tCategory("headingNoArticle", {
+                      categoryName: localizedCategoryName,
+                    }),
+                seeMore: tCategory("seeMore"),
+                sponsored: tCategory("sponsored"),
+              }}
+              badgeLabels={badgeLabels}
+            />
+          );
+        })}
       </div>
 
       {/* CTA */}

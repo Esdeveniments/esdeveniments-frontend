@@ -2,7 +2,7 @@
 
 import { captureException } from "@sentry/nextjs";
 import { createKeyedCache } from "@lib/api/cache";
-import { createHash } from "node:crypto";
+import { getCacheKey } from "./translation-utils";
 
 const TRANSLATION_TTL_MS = 1000 * 60 * 60 * 24; // 24h
 const DEFAULT_BASE_URL = "https://api-free.deepl.com";
@@ -13,22 +13,6 @@ const ERROR_EMPTY_RESPONSE = "EMPTY_RESPONSE";
 // This helps stay within free tier limits by avoiding duplicate translations
 const { cache: translationCache } =
   createKeyedCache<string>(TRANSLATION_TTL_MS);
-
-function hashText(text: string): string {
-  // Avoid using the full description as a cache key (memory-heavy).
-  // A stable hash gives us a compact key while still deduplicating translations.
-  return createHash("sha256").update(text).digest("hex").slice(0, 16);
-}
-
-function getCacheKey(text: string, targetLang: "en" | "es") {
-  return `${targetLang}:${hashText(text)}`;
-}
-
-// Test-only exports (do not use from client code; this module is server-only)
-export const testing = {
-  hashText,
-  getCacheKey,
-};
 
 function getBaseUrl() {
   const base = process.env.DEEPL_API_BASE;
