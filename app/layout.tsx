@@ -1,5 +1,5 @@
 import "../styles/globals.css";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import {
   getMessages,
@@ -74,7 +74,9 @@ export default async function RootLayout({
         >
           <AdProvider>
             <WebsiteSchema locale={locale} />
-            <GoogleScripts />
+            <Suspense fallback={null}>
+              <GoogleScripts />
+            </Suspense>
             <BaseLayout>{children}</BaseLayout>
           </AdProvider>
         </NextIntlClientProvider>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, type ChangeEvent } from "react";
-import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePathname, useRouter } from "../../../../i18n/routing";
@@ -26,7 +25,6 @@ export default function LanguageSwitcher() {
   const locale = useLocale() as AppLocale;
   const t = useTranslations("Components.Navbar");
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
 
   const normalizedPath = useMemo(() => {
@@ -49,7 +47,8 @@ export default function LanguageSwitcher() {
       const nextLocale = event.target.value as AppLocale;
       if (nextLocale === locale) return;
 
-      const search = searchParams.toString();
+      const search =
+        typeof window === "undefined" ? "" : window.location.search.slice(1);
       const target = search
         ? `${normalizedPath}?${search}`
         : normalizedPath || "/";
@@ -62,7 +61,7 @@ export default function LanguageSwitcher() {
         router.refresh();
       });
     },
-    [locale, normalizedPath, router, searchParams]
+    [locale, normalizedPath, router]
   );
 
   return (
