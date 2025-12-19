@@ -1,9 +1,10 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import { formatPlacePreposition } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 export default async function LatestNewsSection({
   placeSlug,
@@ -12,7 +13,7 @@ export default async function LatestNewsSection({
   newsHref,
 }: LatestNewsSectionProps) {
   const t = await getTranslations("Components.LatestNewsSection");
-  const locale = await getLocale();
+  const locale = await getLocaleSafely();
   const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
   const latestNews = newsResponse.content || [];
 

@@ -144,7 +144,12 @@ export default async function Page({
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatCatalanA(townLabel, placeType, false);
+  const locationPhrase = formatPlacePreposition(
+    townLabel,
+    placeType,
+    locale,
+    false
+  );
 
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(

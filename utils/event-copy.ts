@@ -2,7 +2,6 @@ import type { EventDetailResponseDTO } from "types/api/event";
 import { getFormattedDate, normalizeEndTime } from "@utils/date-helpers";
 import type { FaqItem } from "types/faq";
 import {
-  formatCatalanA,
   capitalizeFirstLetter,
   formatPlaceName,
 } from "./string-helpers";

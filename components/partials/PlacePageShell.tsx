@@ -10,7 +10,8 @@ import ListPageFaq from "@components/ui/common/faq/ListPageFaq";
 import { buildFaqJsonLd } from "@utils/helpers";
 import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 const buildFilterLabels = async () => {
   const tFilters = await getTranslations("Config.Filters");
@@ -134,7 +135,7 @@ async function PlacePageContent({
     ]);
 
   const tFaq = await getTranslations("Utils.ListPageFaq");
-  const locale = await getLocale();
+  const locale = await getLocaleSafely();
 
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
