@@ -188,6 +188,16 @@ export default function DatePickerComponent({
             startDate={startDate}
             endDate={endDate}
             minDate={startDate}
+            minTime={
+              startDate.toDateString() === endDate.toDateString()
+                ? startDate
+                : undefined
+            }
+            maxTime={
+              startDate.toDateString() === endDate.toDateString()
+                ? setSeconds(setMinutes(setHours(endDate, 23), 59), 59)
+                : undefined
+            }
             required={required}
             customInput={<ButtonInput />}
             popperClassName="react-datepicker-left"

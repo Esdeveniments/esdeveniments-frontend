@@ -8,12 +8,14 @@ import { SearchIcon } from "@heroicons/react/solid";
 import Button from "@components/ui/common/button";
 import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";
-import { formatCatalanA } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
+import { useLocale } from "next-intl";
 
 export default function HeroCTA() {
   const t = useTranslations("Components.HeroCTA");
   const tFilters = useTranslations("Components.HeroFilters");
+  const locale = useLocale();
   const { place, label, placeType, date, searchTerm } = useHero();
   const router = useRouter();
 
@@ -34,7 +36,12 @@ export default function HeroCTA() {
     let text = t("buttonBase");
 
     if (place !== "catalunya") {
-      const locationCopy = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general" | "", false);
+      const locationCopy = formatPlacePreposition(
+        label,
+        (placeType || "general") as "region" | "town" | "general" | "",
+        locale as "ca" | "es" | "en",
+        false
+      );
       text += ` ${locationCopy}`;
     }
 

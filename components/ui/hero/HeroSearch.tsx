@@ -13,6 +13,7 @@ import {
   ChevronDownIcon,
   XIcon,
 } from "@heroicons/react/solid";
+import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { stripLocalePrefix } from "@utils/i18n-routing";
@@ -34,6 +35,7 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
 
 export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const t = useTranslations("Components.HeroSearch");
+    const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -138,9 +140,26 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
   const displayLabel = useMemo(() => {
     if (place === "catalunya") return label;
-    const withArticle = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general", false);
-    return withArticle.replace(/^a\s+/, "");
-  }, [label, place, placeType]);
+
+    // EN/ES already include the preposition in surrounding copy (e.g. "What to do in").
+    // Keep the visible label clean (no "a/al/a la...").
+    if (locale !== "ca") return label;
+
+    const withArticle = formatCatalanA(
+      label,
+      (placeType || "general") as "region" | "town" | "general",
+      false
+    );
+
+    // Strip leading Catalan preposition/article forms.
+    return withArticle
+      .replace(/^a\s+l[’']/, "")
+      .replace(/^a\s+les\s+/i, "")
+      .replace(/^a\s+la\s+/i, "")
+      .replace(/^als\s+/i, "")
+      .replace(/^al\s+/i, "")
+      .replace(/^a\s+/i, "");
+  }, [label, locale, place, placeType]);
 
   // --- Search Logic ---
 

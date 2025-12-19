@@ -1,6 +1,7 @@
 "use client";
 
 import { JSX } from "react";
+import { useTranslations } from "next-intl";
 import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
 import { FilterOperations } from "@utils/filter-operations";
 import type { FilterDisplayState } from "types/filters";
@@ -17,6 +18,8 @@ const FiltersClient = ({
   onOpenModal,
   labels,
 }: FiltersClientProps): JSX.Element => {
+  const tSeoCategoryData = useTranslations("Partials.GeneratePagesData");
+
   // Convert URL data to filter state for display
   const filters = {
     place: segments.place || "catalunya",
@@ -53,6 +56,18 @@ const FiltersClient = ({
   const translatedByDate = (value: string | undefined): string | undefined => {
     if (!value) return value;
     return labels.byDates[value] || value;
+  };
+
+  const translatedCategory = (value: string | undefined): string | undefined => {
+    if (!value) return value;
+    const normalized = value.toLowerCase();
+
+    const seoKey = `categories.${normalized}.titleSuffix`;
+    if (tSeoCategoryData.has(seoKey)) {
+      return tSeoCategoryData(seoKey);
+    }
+
+    return labels.categoryLabelsBySlug?.[normalized] || value;
   };
 
   const { displayNameMap, triggerLabel } = labels;
@@ -110,10 +125,13 @@ const FiltersClient = ({
               config.key,
               displayState
             );
+
             const translatedDisplayText =
               config.key === "byDate" && displayText
                 ? translatedByDate(displayText)
-                : displayText;
+                : config.key === "category" && displayText
+                  ? translatedCategory(displayState.filters.category)
+                  : displayText;
             return (
               <FilterButton
                 key={config.key}

@@ -6,6 +6,7 @@ import {
   capitalizeFirstLetter,
   formatPlaceName,
 } from "./string-helpers";
+import { formatPlacePreposition } from "@utils/helpers";
 import type { EventCopyLabels, StringHelperLabels } from "types/common";
 import caMessages from "../messages/ca.json";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
@@ -287,8 +288,12 @@ export async function buildEventIntroText(
     : event.region
     ? "region"
     : "general";
-  // formatCatalanA will handle "a", "al", "a la", etc.; we'll capitalize names afterwards
-  const preposition = formatCatalanA(placeSummary, locationType, false);
+  const preposition = formatPlacePreposition(
+    placeSummary,
+    locationType,
+    locale,
+    false
+  );
 
   // Title and article handling
   const rawTitle = (event.title || "").trim();

@@ -279,6 +279,7 @@ export type FilterLabels = {
   triggerLabel: string;
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
+  categoryLabelsBySlug?: Record<string, string>;
 };
 
 export interface FiltersClientProps {
@@ -455,6 +456,7 @@ export interface ListPageFaqParams {
   category?: string;
   placeTypeLabel?: PlaceTypeAndLabel;
   categories?: CategorySummaryResponseDTO[];
+  locale?: import("types/i18n").AppLocale;
 }
 
 export type DateContext = {

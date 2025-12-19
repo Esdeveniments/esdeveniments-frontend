@@ -302,6 +302,14 @@
       "titleWithPlace": "Últimas noticias {place}",
       "viewAll": "Ver todas"
     },
+    "NewsList": {
+      "emptyTitle": "No hemos encontrado noticias recientes",
+      "emptyBody": "Todavía no tenemos novedades para {place}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras zonas.",
+      "viewAll": "Ver todas las noticias →",
+      "itemListName": "Noticias de {place}",
+      "prev": "← Anterior",
+      "next": "Más noticias →"
+    },
     "CulturalMessage": {
       "explorePrefix": "Explora más planes {location}:",
       "today": "Qué hacer hoy",
@@ -624,7 +632,7 @@
       "title": "Título *",
       "url": "Enlace del evento",
       "region": "Comarca *",
-      "town": "Población *",
+      "town": "Población",
       "titleHint": "Ejemplo: Fiesta mayor del barrio",
       "locationHint": "Añade el punto exacto: plaza, calle o equipamiento",
       "urlHint": "Opcional: enlace oficial o redes del evento",
@@ -661,7 +669,7 @@
       "townPlaceholder": "Selecciona un pueblo",
       "categoriesPlaceholder": "Selecciona categorías",
       "categories": "Categorías",
-      "location": "Lugar *",
+      "location": "Lugar",
       "email": "Correo electrónico",
       "emailSubtitle": "¿Quieres que te avisemos cuando el evento se haya actualizado? (no guardamos los datos)",
       "publishing": "Publicando...",
@@ -706,7 +714,7 @@
       "helperEdit": "Los enlaces se convertirán automáticamente. Pulsa Enter para hacer saltos de línea."
     },
     "DatePicker": {
-      "dateAndTime": "Fecha y hora",
+      "dateAndTime": "Fecha y hora *",
       "start": "Inicio *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
@@ -769,9 +777,13 @@
     },
     "NewsList": {
       "emptyTitle": "No hemos encontrado noticias recientes",
-      "emptyBody": "Aún no tenemos novedades para {placeLabel}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras",
+      "emptyBody": "Todavía no tenemos novedades para {place}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras zonas.",
       "viewAll": "Ver todas las noticias →",
-      "name": "Noticias de {placeLabel}",
+      "itemListName": "Noticias de {place}",
+      "prev": "← Anterior",
+      "next": "Más noticias →",
+
+      "name": "Noticias de {place}",
       "more": "Más noticias →"
     },
     "NewsHubsGrid": {

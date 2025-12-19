@@ -18,6 +18,7 @@ export {
   truncateString,
   formatCatalanDe,
   formatCatalanA,
+  formatPlacePreposition,
   capitalizeFirstLetter,
   formatPlaceName,
 } from "./string-helpers";

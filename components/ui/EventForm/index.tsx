@@ -350,7 +350,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             <div className="w-full space-y-2">
               <Select
                 id="town"
-                title={tForm("town")}
+                title={`${tForm("town")} *`}
                 options={cityOptions}
                 value={isOption(form.town) ? form.town : null}
                 onChange={handleTownChange}
@@ -383,7 +383,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 
           <Input
             id="location"
-            title={tForm("location")}
+            title={`${tForm("location")} *`}
             subtitle={helperLocation}
             value={form.location}
             onChange={(e) => handleFormChange("location", e.target.value)}

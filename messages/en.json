@@ -302,6 +302,14 @@
       "titleWithPlace": "Latest news {place}",
       "viewAll": "View all"
     },
+    "NewsList": {
+      "emptyTitle": "We haven't found recent news",
+      "emptyBody": "We don't have updates yet for {place}, but we keep adding more every week. Meanwhile, explore the latest news from other areas.",
+      "viewAll": "See all news →",
+      "itemListName": "News in {place}",
+      "prev": "← Previous",
+      "next": "More news →"
+    },
     "CulturalMessage": {
       "explorePrefix": "Explore more plans in {location}:",
       "today": "What to do today",
@@ -617,14 +625,14 @@
       "sponsored": "Sponsored content"
     },
     "CardContent": {
-      "dateRange": "From {start} to {end}",
+      "dateRange": "{start} – {end}",
       "dateSingle": "{nameDay}, {start}"
     },
     "EventForm": {
       "title": "Title *",
       "url": "Event link",
       "region": "County *",
-      "town": "Town *",
+      "town": "Town",
       "titleHint": "Example: Summer street festival",
       "locationHint": "Add the exact spot: square, street or venue",
       "urlHint": "Optional: official link or social post",
@@ -661,7 +669,7 @@
       "townPlaceholder": "Select a town",
       "categoriesPlaceholder": "Select categories",
       "categories": "Categories",
-      "location": "Venue *",
+      "location": "Venue",
       "email": "Email",
       "emailSubtitle": "Do you want us to notify you when the event is updated? (we don't store the data)",
       "publishing": "Publishing...",
@@ -706,7 +714,7 @@
       "helperEdit": "Links will be converted automatically. Press Enter for line breaks."
     },
     "DatePicker": {
-      "dateAndTime": "Date and time",
+      "dateAndTime": "Date and time *",
       "start": "Start *",
       "end": "End *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
@@ -769,9 +777,13 @@
     },
     "NewsList": {
       "emptyTitle": "We haven't found recent news",
-      "emptyBody": "We don't have updates yet for {placeLabel}, but we keep adding more every week. Meanwhile, you can explore the latest news from others",
+      "emptyBody": "We don't have updates yet for {place}, but we keep adding more every week. Meanwhile, explore the latest news from other areas.",
       "viewAll": "See all news →",
-      "name": "News from {placeLabel}",
+      "itemListName": "News in {place}",
+      "prev": "← Previous",
+      "next": "More news →",
+
+      "name": "News in {place}",
       "more": "More news →"
     },
     "NewsHubsGrid": {

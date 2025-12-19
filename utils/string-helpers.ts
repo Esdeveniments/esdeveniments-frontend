@@ -3,6 +3,7 @@
  * ======================================================= */
 
 import type { StringHelperLabels } from "types/common";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import caMessages from "../messages/ca.json";
 
 const stringHelperLabels: StringHelperLabels = (caMessages as any).Utils
@@ -395,6 +396,26 @@ export function formatCatalanA(
 
   // general
   return `${a} ${text}`;
+}
+
+/**
+ * Locale-aware place preposition formatting.
+ * - ca: uses Catalan "a" + article handling via formatCatalanA
+ * - es: "en <place>"
+ * - en: "in <place>"
+ */
+export function formatPlacePreposition(
+  name: string,
+  type: "region" | "town" | "general" | "" = "general",
+  locale: AppLocale = DEFAULT_LOCALE,
+  lowercase: boolean = true
+): string {
+  if (locale === "ca") return formatCatalanA(name, type, lowercase);
+
+  const raw = (name || "").trim();
+  const text = lowercase ? raw.toLowerCase() : raw;
+  const prep = locale === "es" ? "en" : "in";
+  return `${prep} ${text}`;
 }
 
 /**

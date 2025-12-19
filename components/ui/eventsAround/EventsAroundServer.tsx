@@ -130,6 +130,7 @@ async function EventsAroundServer({
   }
 
   const t = await getTranslations("Components.EventsAround");
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const carouselSuffix = t("carouselSuffix");
   // Render different layouts
   if (layout === "horizontal") {
@@ -200,8 +201,8 @@ async function EventsAroundServer({
             locale
           );
           const eventDate = formattedEnd
-            ? `Del ${formattedStart} al ${formattedEnd}`
-            : `${nameDay}, ${formattedStart}`;
+            ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+            : tCard("dateSingle", { nameDay, start: formattedStart });
           const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
             cityName: event.city?.name,
             regionName: event.region?.name,

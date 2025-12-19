@@ -8,7 +8,7 @@ import { getPlaceBySlug } from "@lib/api/places";
 import { getTranslations } from "next-intl/server";
 import type { TownStaticPathParams } from "types/common";
 import type { AppLocale } from "types/i18n";
-import { formatCatalanA } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/helpers";
 import {
   buildPageMeta,
   generateCollectionPageSchema,
@@ -36,7 +36,7 @@ export async function generateMetadata({
   const label = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatCatalanA(label, placeType, false);
+  const locationPhrase = formatPlacePreposition(label, placeType, locale, false);
 
   return buildPageMeta({
     title: t("metaTitle", { locationPhrase }),

@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { CulturalMessageProps } from "types/props";
 import { formatCatalanA, formatPlaceName } from "@utils/helpers";
 import Badge from "../badge";
@@ -13,8 +13,12 @@ const CulturalMessage = async ({
   }
 
   const t = await getTranslations("Components.CulturalMessage");
+  const locale = await getLocale();
   const capitalizedLocation = formatPlaceName(location);
-  const locationText = formatCatalanA(capitalizedLocation, locationType, false);
+  const locationText =
+    locale === "ca"
+      ? formatCatalanA(capitalizedLocation, locationType, false)
+      : capitalizedLocation;
 
   return (
     <div className="leading-relaxed flex flex-col gap-element-gap">

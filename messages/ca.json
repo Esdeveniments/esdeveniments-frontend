@@ -302,6 +302,14 @@
       "titleWithPlace": "Últimes notícies {place}",
       "viewAll": "Veure totes"
     },
+    "NewsList": {
+      "emptyTitle": "No hem trobat notícies recents",
+      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
+      "viewAll": "Veure totes les notícies →",
+      "itemListName": "Notícies de {place}",
+      "prev": "← Anterior",
+      "next": "Més notícies →"
+    },
     "CulturalMessage": {
       "explorePrefix": "Explora més plans {location}:",
       "today": "Què fer avui",
@@ -623,7 +631,7 @@
       "title": "Títol *",
       "url": "Enllaç de l'esdeveniment",
       "region": "Comarca *",
-      "town": "Població *",
+      "town": "Població",
       "titleHint": "Exemple: Festa major del barri",
       "locationHint": "Afegeix el punt exacte: plaça, carrer o equipament",
       "urlHint": "Opcional: enllaç oficial o xarxes de l'esdeveniment",
@@ -660,7 +668,7 @@
       "townPlaceholder": "Selecciona un poble",
       "categoriesPlaceholder": "Selecciona categories",
       "categories": "Categories",
-      "location": "Lloc *",
+      "location": "Lloc",
       "email": "Correu electrònic",
       "emailSubtitle": "Vols que t'avisem quan l'esdeveniment s'hagi actualitzat? (no guardem les dades)",
       "publishing": "Publicant...",
@@ -705,7 +713,7 @@
       "helperEdit": "Prem Enter per fer salts de línia."
     },
     "DatePicker": {
-      "dateAndTime": "Data i hora",
+      "dateAndTime": "Data i hora *",
       "start": "Inici *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
@@ -768,9 +776,13 @@
     },
     "NewsList": {
       "emptyTitle": "No hem trobat notícies recents",
-      "emptyBody": "Encara no tenim novetats per {placeLabel}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres",
+      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
       "viewAll": "Veure totes les notícies →",
-      "name": "Notícies de {placeLabel}",
+      "itemListName": "Notícies de {place}",
+      "prev": "← Anterior",
+      "next": "Més notícies →",
+
+      "name": "Notícies de {place}",
       "more": "Més notícies →"
     },
     "NewsHubsGrid": {

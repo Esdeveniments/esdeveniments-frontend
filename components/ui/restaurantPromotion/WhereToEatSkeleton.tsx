@@ -1,4 +1,7 @@
+"use client";
+
 import { FireIcon } from "@heroicons/react/outline";
+import { useTranslations } from "next-intl";
 import type { WhereToEatSkeletonProps } from "types/ui/restaurant-promotion";
 
 // Skeleton loader matching the final WhereToEatSection layout to avoid layout shift.
@@ -6,6 +9,7 @@ export default function WhereToEatSkeleton({
   items = 2,
   onPromoteClick,
 }: WhereToEatSkeletonProps) {
+  const t = useTranslations("Components.WhereToEatSection");
   const count = Number.isFinite(items)
     ? Math.min(Math.max(Math.floor(items), 1), 10)
     : 2;
@@ -22,7 +26,7 @@ export default function WhereToEatSkeleton({
             aria-hidden="true"
           />
           <h2 id="where-to-eat-skel" className="heading-2">
-            On pots menjar
+            {t("title")}
           </h2>
         </div>
         {onPromoteClick && (
@@ -33,7 +37,7 @@ export default function WhereToEatSkeleton({
             disabled
             aria-disabled="true"
           >
-            Promociona el teu restaurant
+            {t("promote")}
           </button>
         )}
       </div>

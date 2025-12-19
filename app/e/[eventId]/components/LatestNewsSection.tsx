@@ -1,7 +1,7 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
-import { formatCatalanA } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 
@@ -12,6 +12,7 @@ export default async function LatestNewsSection({
   newsHref,
 }: LatestNewsSectionProps) {
   const t = await getTranslations("Components.LatestNewsSection");
+  const locale = await getLocale();
   const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
   const latestNews = newsResponse.content || [];
 
@@ -21,7 +22,7 @@ export default async function LatestNewsSection({
 
   const placeSuffix =
     placeLabel && placeSlug !== "catalunya"
-      ? formatCatalanA(placeLabel, placeType, false)
+      ? formatPlacePreposition(placeLabel, placeType, locale, false)
       : "";
   const title = placeSuffix
     ? t("titleWithPlace", { place: placeSuffix })

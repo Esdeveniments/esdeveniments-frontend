@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   formatEventTimeDisplay as baseFormatEventTimeDisplay,
   formatEventTimeDisplayDetail as baseFormatEventTimeDisplayDetail,
+  getFormattedDate,
   type EventTimeLabels,
 } from "../utils/date-helpers";
 
@@ -469,5 +470,51 @@ describe("formatEventTimeDisplayDetail", () => {
         "De 23:30 a 00:30"
       );
     });
+  });
+});
+
+describe("getFormattedDate", () => {
+  it("formats same-month multi-day ranges in English without day-only start", () => {
+    const result = getFormattedDate(
+      "2025-12-19T12:00:00.000Z",
+      "2025-12-31T12:00:00.000Z",
+      "en"
+    );
+
+    expect(result.isMultipleDays).toBe(true);
+    expect(result.formattedStart).toBe("December 19");
+    expect(result.formattedEnd).toBe("31, 2025");
+  });
+
+  it("keeps day-only start for same-month multi-day ranges in Catalan", () => {
+    const result = getFormattedDate(
+      "2025-12-19T12:00:00.000Z",
+      "2025-12-31T12:00:00.000Z",
+      "ca"
+    );
+
+    expect(result.isMultipleDays).toBe(true);
+    expect(result.formattedStart).toBe("19");
+    expect(result.formattedEnd).toBe("31 de desembre del 2025");
+  });
+
+  it("keeps day-only start for same-month multi-day ranges in Spanish", () => {
+    const result = getFormattedDate(
+      "2025-12-19T12:00:00.000Z",
+      "2025-12-31T12:00:00.000Z",
+      "es"
+    );
+
+    expect(result.isMultipleDays).toBe(true);
+    expect(result.formattedStart).toBe("19");
+    expect(result.formattedEnd).toBe("31 de diciembre de 2025");
+  });
+
+  it("includes year for single-day dates in English", () => {
+    const result = getFormattedDate("2025-12-19T12:00:00.000Z", undefined, "en");
+
+    expect(result.isMultipleDays).toBe(false);
+    expect(result.formattedStart).toBe("December 19, 2025");
+    expect(result.formattedEnd).toBe(null);
   });
 });

@@ -23,6 +23,7 @@ import {
   GroupedOption,
   GeolocationError,
 } from "types/common";
+import { CATEGORY_CONFIG } from "@config/categories";
 import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
@@ -48,12 +49,38 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   categories = [],
 }) => {
   const tByDates = useTranslations("Config.ByDates");
+  const tCategories = useTranslations("Config.Categories");
+  const tSeoCategoryData = useTranslations("Partials.GeneratePagesData");
   const {
     regionsWithCities,
     isLoading: isLoadingRegionsWithCities,
     isError: isErrorRegionsWithCities,
   } = useGetRegionsWithCities(isOpen);
   const t = useTranslations("Components.FiltersModal");
+
+  const getCategoryLabel = useCallback(
+    (category: CategorySummaryResponseDTO): string => {
+      const normalizedSlug =
+        typeof category.slug === "string" ? category.slug.toLowerCase() : "";
+
+      const config = normalizedSlug ? CATEGORY_CONFIG[normalizedSlug] : undefined;
+      if (config?.labelKey) {
+        return tCategories(config.labelKey);
+      }
+
+      if (normalizedSlug) {
+        const seoKey = `categories.${normalizedSlug}.titleSuffix` as Parameters<
+          typeof tSeoCategoryData
+        >[0];
+        if (tSeoCategoryData.has(seoKey)) {
+          return tSeoCategoryData(seoKey);
+        }
+      }
+
+      return category.name;
+    },
+    [tCategories, tSeoCategoryData]
+  );
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -604,7 +631,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                       value={category.slug}
                       checkedValue={localCategory}
                       onChange={handleCategoryChange}
-                      label={category.name}
+                      label={getCategoryLabel(category)}
                     />
                   ))}
                 </div>

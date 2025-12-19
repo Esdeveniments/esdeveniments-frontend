@@ -6,7 +6,7 @@ import {
   GeneratePagesDataProps,
   PlaceTypeAndLabel,
 } from "types/common";
-import { formatCatalanA } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical, getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
@@ -118,7 +118,7 @@ export async function generatePagesData({
   const { type, label }: PlaceTypeAndLabel =
     placeTypeLabel || (await getPlaceTypeAndLabel(place));
   // keep legacy naming compatibility without unused var warnings
-  const labelWithArticle = formatCatalanA(label, type, false);
+  const labelWithArticle = formatPlacePreposition(label, type, resolvedLocale, false);
 
   // Get category-specific SEO data
   const categorySEO = getCategorySEO(category);
@@ -153,7 +153,10 @@ export async function generatePagesData({
 
   // Category-specific pages with enhanced SEO
   if (category && categorySEO && place) {
-    const categoryTitle = categoryName || categorySEO.titleSuffix;
+    const categoryTitle =
+      resolvedLocale === DEFAULT_LOCALE && categoryName
+        ? categoryName
+        : categorySEO.titleSuffix;
     const baseCanonical = `${siteUrl}/${place}${
       byDate ? `/${byDate}` : ""
     }/${category}`;

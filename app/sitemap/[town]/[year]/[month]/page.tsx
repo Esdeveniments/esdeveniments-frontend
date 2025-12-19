@@ -3,7 +3,7 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   generateJsonData,
   getFormattedDate,
-  formatCatalanA,
+  formatPlacePreposition,
 } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
@@ -72,7 +72,12 @@ export async function generateMetadata({
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatCatalanA(townLabel, placeType, false);
+  const locationPhrase = formatPlacePreposition(
+    townLabel,
+    placeType,
+    locale,
+    false
+  );
 
   return buildPageMeta({
     title: t("metaTitle", { town: townLabel, month: monthLabel, year }),

@@ -116,8 +116,11 @@ export const getFormattedDate = (
     year,
     true
   );
+
+  const shouldShortenStartForSameMonthRange =
+    localeToUse !== "en" && isMultipleDays && isSameMonth;
   const formattedStart =
-    isMultipleDays && isSameMonth
+    shouldShortenStartForSameMonthRange
       ? `${startDay}`
       : formatDateForLocale(
           localeToUse,
@@ -126,13 +129,21 @@ export const getFormattedDate = (
           year,
           !(isMultipleDays && isSameYear)
         );
-  const formattedEnd = formatDateForLocale(
+
+  const formattedEndFull = formatDateForLocale(
     localeToUse,
     endDay,
     months[endDateConverted.getMonth()],
     endDateConverted.getFullYear(),
     true
   );
+
+  // English: collapse repeated month for same-month ranges.
+  // Example: "December 19 – 23, 2025" instead of "December 19 – December 23, 2025".
+  const formattedEnd =
+    localeToUse === "en" && isMultipleDays && isSameMonth && isSameYear
+      ? `${endDay}, ${endDateConverted.getFullYear()}`
+      : formattedEndFull;
 
   const startTime = `${startDateConverted.getHours()}:${String(
     startDateConverted.getMinutes()

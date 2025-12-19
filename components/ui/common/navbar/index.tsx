@@ -96,44 +96,50 @@ export default function Navbar() {
                 </div>
               </div>
               {/* SecondBar - Mobile Bottom Navigation */}
-              <div className="fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-background/95 backdrop-blur-md flex justify-evenly items-center gap-2 md:hidden px-section-x z-50 shadow-lg">
-                {/* Home */}
-                <div className="flex-center">
-                  <ActiveLink
-                    href={withLocale("/")}
-                    activeLinkClass="text-primary bg-primary/10"
-                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                    aria-label={t("aria.home")}
-                  >
-                    <HomeIcon className="h-6 w-6" />
-                  </ActiveLink>
-                </div>
+              <div className="fixed bottom-0 left-0 right-0 h-16 border-t border-border md:hidden z-50 shadow-lg">
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-background/95 backdrop-blur-md pointer-events-none"
+                />
+                <div className="relative h-full flex justify-evenly items-center gap-2 px-section-x">
+                  {/* Home */}
+                  <div className="flex-center">
+                    <ActiveLink
+                      href={withLocale("/")}
+                      activeLinkClass="text-primary bg-primary/10"
+                      className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                      aria-label={t("aria.home")}
+                    >
+                      <HomeIcon className="h-6 w-6" />
+                    </ActiveLink>
+                  </div>
 
-                {/* Publicar */}
-                <div className="flex-center">
-                  <ActiveLink
-                    href={withLocale("/publica")}
-                    activeLinkClass="text-primary bg-primary/10"
-                    className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
-                    aria-label={t("aria.publish")}
-                  >
-                    <PlusSmIcon className="h-6 w-6" />
-                    <span className="hidden sm:block label font-semibold">
-                      {t("mobilePublishLabel")}
-                    </span>
-                  </ActiveLink>
-                </div>
+                  {/* Publicar */}
+                  <div className="flex-center">
+                    <ActiveLink
+                      href={withLocale("/publica")}
+                      activeLinkClass="text-primary bg-primary/10"
+                      className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
+                      aria-label={t("aria.publish")}
+                    >
+                      <PlusSmIcon className="h-6 w-6" />
+                      <span className="hidden sm:block label font-semibold">
+                        {t("mobilePublishLabel")}
+                      </span>
+                    </ActiveLink>
+                  </div>
 
-                {/* Notícies */}
-                <div className="flex-center">
-                  <ActiveLink
-                    href={withLocale("/noticies")}
-                    activeLinkClass="text-primary bg-primary/10"
-                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                    aria-label={t("aria.news")}
-                  >
-                    <NewspaperIcon className="h-6 w-6" />
-                  </ActiveLink>
+                  {/* Notícies */}
+                  <div className="flex-center">
+                    <ActiveLink
+                      href={withLocale("/noticies")}
+                      activeLinkClass="text-primary bg-primary/10"
+                      className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                      aria-label={t("aria.news")}
+                    >
+                      <NewspaperIcon className="h-6 w-6" />
+                    </ActiveLink>
+                  </div>
                 </div>
               </div>
             </div>

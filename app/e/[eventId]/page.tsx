@@ -111,6 +111,10 @@ export default async function EventPage({
     locale,
     namespace: "Config.Categories",
   });
+  const tEventsAround = await getTranslations({
+    locale,
+    namespace: "Components.EventsAround",
+  });
   const primaryCategoryLabel = primaryCategorySlug
     ? getLocalizedCategoryLabelFromConfig(
       primaryCategorySlug,
@@ -366,7 +370,7 @@ export default async function EventPage({
               >
                 <EventsAroundSection
                   events={event.relatedEvents}
-                  title="Esdeveniments relacionats"
+                  title={tEventsAround("relatedEvents")}
                 />
               </div>
             )}

@@ -1,7 +1,15 @@
 import React from "react";
 import caMessages from "../../messages/ca.json";
+import enMessages from "../../messages/en.json";
+import esMessages from "../../messages/es.json";
 
 type Messages = Record<string, any>;
+
+const messagesByLocale: Record<string, Messages> = {
+  ca: caMessages,
+  en: enMessages,
+  es: esMessages,
+};
 
 const getMessage = (messages: Messages, path?: string, key?: string) => {
   if (!key) return undefined;
@@ -27,9 +35,9 @@ const formatTemplate = (
   }, template);
 };
 
-const createTranslator = (namespace?: string) => {
+const createTranslator = (messages: Messages, namespace?: string) => {
   const t = (key: string, values?: Record<string, any>) => {
-    const message = getMessage(caMessages, namespace, key);
+    const message = getMessage(messages, namespace, key);
     const template =
       typeof message === "string"
         ? message
@@ -37,9 +45,9 @@ const createTranslator = (namespace?: string) => {
     return formatTemplate(template, values);
   };
 
-  t.raw = (key: string) => getMessage(caMessages, namespace, key);
+  t.raw = (key: string) => getMessage(messages, namespace, key);
   (t as any).has = (key: string) =>
-    getMessage(caMessages, namespace, key) !== undefined;
+    getMessage(messages, namespace, key) !== undefined;
 
   t.rich = (
     key: string,
@@ -64,7 +72,7 @@ const createTranslator = (namespace?: string) => {
 };
 
 export const useTranslations = (namespace?: string) =>
-  createTranslator(namespace);
+  createTranslator(caMessages, namespace);
 
 export const NextIntlClientProvider = ({
   children,
@@ -77,6 +85,9 @@ export const getMessages = async () => caMessages;
 export const getTranslations = async (
   arg?: string | { locale?: string; namespace?: string }
 ) => {
+  const locale =
+    typeof arg === "object" && arg && arg.locale ? String(arg.locale) : "ca";
+  const messages = messagesByLocale[locale] ?? caMessages;
   const namespace =
     typeof arg === "string"
       ? arg
@@ -84,6 +95,6 @@ export const getTranslations = async (
         ? arg.namespace
         : undefined;
 
-  return createTranslator(namespace);
+  return createTranslator(messages, namespace);
 };
 export const useLocale = () => "ca";

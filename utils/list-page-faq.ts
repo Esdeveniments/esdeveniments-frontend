@@ -2,7 +2,7 @@ import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { PlaceTypeAndLabel } from "types/common";
 import type { DateContextLabels, FaqItem, ListPageFaqLabels } from "types/faq";
 import type { DateContext, ListPageFaqParams } from "types/props";
-import { capitalizeFirstLetter, formatCatalanA } from "@utils/helpers";
+import { capitalizeFirstLetter, formatPlacePreposition } from "@utils/helpers";
 
 const fillTemplate = (
   template: string,
@@ -27,21 +27,25 @@ function getDateContext(
 
 function getScopePhrase(
   place: string,
-  placeTypeLabel?: PlaceTypeAndLabel
+  placeTypeLabel?: PlaceTypeAndLabel,
+  locale?: ListPageFaqParams["locale"]
 ): string {
   if (placeTypeLabel?.label) {
-    return formatCatalanA(
+    return formatPlacePreposition(
       placeTypeLabel.label,
       placeTypeLabel.type ?? "general",
+      locale,
       false
     );
   }
 
   if (place === "catalunya" || !place) {
+    if (locale === "en") return "in Catalonia";
+    if (locale === "es") return "en Cataluña";
     return "a Catalunya";
   }
 
-  return formatCatalanA(place, "general", false);
+  return formatPlacePreposition(place, "general", locale, false);
 }
 
 function composeContext(...parts: (string | undefined)[]): string {
@@ -70,6 +74,7 @@ export function buildListPageFaqItems({
   category,
   placeTypeLabel,
   categories,
+  locale,
   labels,
   dateLabels,
 }: ListPageFaqParams & {
@@ -77,7 +82,7 @@ export function buildListPageFaqItems({
   dateLabels: DateContextLabels;
 }): FaqItem[] {
   const dateContext = getDateContext(dateLabels, date);
-  const scopePhrase = getScopePhrase(place, placeTypeLabel);
+  const scopePhrase = getScopePhrase(place, placeTypeLabel, locale);
   const contextInline = composeContext(dateContext.inline, scopePhrase);
   const capitalizedContext = capitalizeFirstLetter(
     composeContext(dateContext.capitalized, scopePhrase)

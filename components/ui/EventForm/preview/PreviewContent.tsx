@@ -111,14 +111,19 @@ export const PreviewContent = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-foreground/70" />
-              <p className="body-normal text-foreground-strong/80">
+              <p className="body-normal font-medium text-foreground-strong">
+                {tForm("datesLabel")}
+              </p>
+            </div>
+            <div className="ml-6 space-y-1">
+              <p className="body-normal text-foreground/80">
                 {dateLabel}
                 {dateEndLabel ? ` · ${dateEndLabel}` : ""}
               </p>
+              {timeLabel && (
+                <p className="body-normal text-foreground/70">{timeLabel}</p>
+              )}
             </div>
-            {timeLabel && (
-              <p className="body-normal text-foreground/70 ml-6">{timeLabel}</p>
-            )}
           </div>
 
           {/* Location */}
@@ -126,12 +131,42 @@ export const PreviewContent = ({
             <div className="flex items-center gap-2">
               <LocationMarkerIcon className="w-5 h-5 text-foreground/70" />
               <p className="body-normal font-medium text-foreground-strong">
-                {event.location ||
-                  event.city?.name ||
-                  event.region?.name ||
-                  "—"}
+                {tForm("location")}
               </p>
             </div>
+            {event.location ? (
+              <p className="body-normal text-foreground/80 ml-6">
+                {event.location}
+              </p>
+            ) : (
+              <p className="body-small text-foreground/50 ml-6 italic">
+                {tForm("previewOptional")}
+              </p>
+            )}
+          </div>
+
+          {/* City (mandatory) */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <LocationMarkerIcon className="w-5 h-5 text-foreground/70" />
+              <p className="body-normal font-medium text-foreground-strong">
+                {tForm("town")}
+              </p>
+            </div>
+            {event.city?.name ? (
+              <p className="body-normal text-foreground/80 ml-6">
+                {event.city.name}
+                {event.region?.name && (
+                  <span className="text-foreground/60">
+                    {" "}· {event.region.name}
+                  </span>
+                )}
+              </p>
+            ) : (
+              <p className="body-small text-error/80 ml-6 italic">
+                {tForm("previewRequired")}
+              </p>
+            )}
           </div>
 
           {/* Categories */}

@@ -17,6 +17,7 @@ const CardHorizontalServer = async ({
   useDetailTimeFormat = false,
 }: CardHorizontalServerProps) => {
   const locale = await getLocaleSafely();
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const timeLabels = {
     consult: tTime("consult"),
@@ -42,8 +43,8 @@ const CardHorizontalServer = async ({
     locale
   );
   const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+    : tCard("dateSingle", { nameDay, start: formattedStart });
 
   return (
     <CardLink
