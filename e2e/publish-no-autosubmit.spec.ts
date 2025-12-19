@@ -51,6 +51,11 @@ test.describe("Publish wizard should not auto publish", () => {
       "Descripció de prova amb prou caràcters."
     );
 
+    // Ensure controlled inputs propagate state before clicking Next
+    await page.locator("input#title").blur();
+    await page.locator("textarea#description").blur();
+    await expect(page.getByTestId("next-button")).toBeEnabled({ timeout: 10000 });
+
     // Go to Step 2 using the explicit Next button (deterministic)
     await page.getByTestId("next-button").click();
 
@@ -64,6 +69,8 @@ test.describe("Publish wizard should not auto publish", () => {
     await page.getByRole("option", { name: "Cardedeu" }).click();
 
     await page.fill("input#location", "Plaça Major");
+
+    await expect(page.getByTestId("next-button")).toBeEnabled({ timeout: 10000 });
 
     // Advance to Step 3
     await page.getByTestId("next-button").click();
@@ -84,6 +91,7 @@ test.describe("Publish wizard should not auto publish", () => {
     await page.getByTestId("prev-button").click();
     await expect(page.locator("input#location")).toBeVisible();
 
+    await expect(page.getByTestId("next-button")).toBeEnabled({ timeout: 10000 });
     await page.getByTestId("next-button").click();
     await expect(page.getByTestId("publish-button")).toBeVisible();
 
