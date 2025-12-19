@@ -1,14 +1,12 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import NewsCard from "@components/ui/newsCard";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsListProps } from "types/props";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import {
-  getLocaleSafely,
-  withLocalePath,
-} from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 
 export default async function NewsList({
   newsPromise,
@@ -17,7 +15,7 @@ export default async function NewsList({
   currentPage,
   pageSize,
 }: NewsListProps) {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const t = await getTranslations({ locale, namespace: "Components.NewsList" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const [response, placeType] = await Promise.all([

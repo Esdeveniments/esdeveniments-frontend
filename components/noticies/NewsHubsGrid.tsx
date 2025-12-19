@@ -1,15 +1,16 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import NewsCard from "@components/ui/newsCard";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 // import { NEARBY_PLACES_BY_HUB } from "@utils/constants";
 import { siteUrl } from "@config/index";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsHubsGridProps } from "types/props";
+import { ensureLocale } from "@utils/i18n-routing";
 
 export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const t = await getTranslations({
     locale,
     namespace: "Components.NewsHubsGrid",

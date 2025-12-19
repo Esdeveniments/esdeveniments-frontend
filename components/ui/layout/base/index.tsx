@@ -12,14 +12,18 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
-      <Navbar />
+      <Suspense fallback={null}>
+        <Navbar />
+      </Suspense>
       <div
         className="w-full bg-background flex flex-col justify-center items-center overflow-hidden"
         data-testid="app-content"
       >
         {children}
       </div>
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </>
   );
 }

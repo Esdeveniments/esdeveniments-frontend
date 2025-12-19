@@ -7,27 +7,32 @@ import {
   type AppLocale,
 } from "../types/i18n";
 
-const messagesLoaders: Record<AppLocale, () => Promise<AbstractIntlMessages>> = {
-  ca: () =>
-    import("../messages/ca.json").then(
-      (mod) => mod.default as unknown as AbstractIntlMessages
-    ),
-  es: () =>
-    import("../messages/es.json").then(
-      (mod) => mod.default as unknown as AbstractIntlMessages
-    ),
-  en: () =>
-    import("../messages/en.json").then(
-      (mod) => mod.default as unknown as AbstractIntlMessages
-    ),
-};
+const messagesLoaders: Record<AppLocale, () => Promise<AbstractIntlMessages>> =
+  {
+    ca: () =>
+      import("../messages/ca.json").then(
+        (mod) => mod.default as unknown as AbstractIntlMessages
+      ),
+    es: () =>
+      import("../messages/es.json").then(
+        (mod) => mod.default as unknown as AbstractIntlMessages
+      ),
+    en: () =>
+      import("../messages/en.json").then(
+        (mod) => mod.default as unknown as AbstractIntlMessages
+      ),
+  };
 
-export default getRequestConfig(async ({ requestLocale }) => {
-  let locale = await requestLocale;
+export default getRequestConfig(async ({ locale, requestLocale }) => {
+  // Prefer an explicit locale override (passed by next-intl APIs like
+  // `getMessages({locale})`) to avoid awaiting request-bound `requestLocale`
+  // in sensitive places (e.g. RootLayout with `experimental.cacheComponents`).
+  const candidate = locale ?? (await requestLocale);
 
-  const resolvedLocale = locale && SUPPORTED_LOCALES.includes(locale as AppLocale)
-    ? (locale as AppLocale)
-    : DEFAULT_LOCALE;
+  const resolvedLocale =
+    candidate && SUPPORTED_LOCALES.includes(candidate as AppLocale)
+      ? (candidate as AppLocale)
+      : DEFAULT_LOCALE;
 
   const messages = await messagesLoaders[resolvedLocale]();
 

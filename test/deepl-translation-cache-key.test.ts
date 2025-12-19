@@ -1,17 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { hashText, getCacheKey } from "../app/e/[eventId]/translation-utils";
+import {
+  hashText,
+  getCacheKey,
+} from "../app/[locale]/e/[eventId]/translation-utils";
 
 describe("DeepL translation cache key", () => {
   it("is deterministic for the same (text, lang)", () => {
-    const text = "a càrrec de Carme Porcel - Lloc: Sala d'Actes de la Biblioteca";
+    const text =
+      "a càrrec de Carme Porcel - Lloc: Sala d'Actes de la Biblioteca";
     const k1 = getCacheKey(text, "en");
     const k2 = getCacheKey(text, "en");
     expect(k1).toBe(k2);
   });
 
   it("differs when target language differs", () => {
-    const text = "a càrrec de Carme Porcel - Lloc: Sala d'Actes de la Biblioteca";
+    const text =
+      "a càrrec de Carme Porcel - Lloc: Sala d'Actes de la Biblioteca";
     const enKey = getCacheKey(text, "en");
     const esKey = getCacheKey(text, "es");
     expect(enKey).not.toBe(esKey);
@@ -33,5 +38,3 @@ describe("DeepL translation cache key", () => {
     expect(hash).toMatch(/^[a-f0-9]{16}$/);
   });
 });
-
-

@@ -11,8 +11,7 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocale, getTranslations } from "next-intl/server";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 async function HybridEventsList({
@@ -27,7 +26,7 @@ async function HybridEventsList({
   hasNews,
   categories,
 }: HybridEventsListProps): Promise<ReactElement> {
-  const locale = await getLocaleSafely();
+  const locale = await getLocale();
   const tLoc = await getTranslations({
     locale,
     namespace: "Utils.LocationHelpers",

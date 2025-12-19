@@ -1,6 +1,6 @@
 import { siteUrl } from "@config/index";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
   PageData,
   GeneratePagesDataProps,
@@ -8,7 +8,8 @@ import {
 } from "types/common";
 import { formatCatalanA } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
-import { applyLocaleToCanonical, getLocaleSafely } from "@utils/i18n-seo";
+import { applyLocaleToCanonical } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Normalize subtitles for LLM/AI SEO extractability:
@@ -81,13 +82,22 @@ export async function generatePagesData({
 }: GeneratePagesDataProps & {
   placeTypeLabel?: PlaceTypeAndLabel;
 }): Promise<PageData> {
-  const resolvedLocale = (await getLocaleSafely()) || DEFAULT_LOCALE;
+  const resolvedLocale = (() => {
+    try {
+      // Uses setRequestLocale() from the active request; avoids headers() access.
+      return getLocale().then((value) => ensureLocale(value));
+    } catch {
+      return Promise.resolve(DEFAULT_LOCALE);
+    }
+  })();
+
+  const locale = await resolvedLocale;
   const t = await getTranslations({
-    locale: resolvedLocale,
+    locale,
     namespace: "Partials.GeneratePagesData",
   });
   const tConstants = await getTranslations({
-    locale: resolvedLocale,
+    locale,
     namespace: "Components.Constants",
   });
 
@@ -135,7 +145,7 @@ export async function generatePagesData({
       subTitle,
       metaTitle,
       metaDescription,
-      applyLocaleToCanonical(canonical, resolvedLocale),
+      applyLocaleToCanonical(canonical, locale),
       notFoundText,
       search
     );

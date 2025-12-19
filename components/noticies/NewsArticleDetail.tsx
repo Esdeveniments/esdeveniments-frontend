@@ -15,12 +15,10 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { notFound } from "next/navigation";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
-import {
-  DEFAULT_LOCALE,
-  localeToHrefLang,
-} from "types/i18n";
+import { getLocale, getTranslations } from "next-intl/server";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
+import { localeToHrefLang, type AppLocale } from "types/i18n";
 
 export default async function NewsArticleDetail({
   detailPromise,
@@ -70,7 +68,7 @@ export default async function NewsArticleDetail({
     return notFound();
   }
 
-  const locale = await getLocaleSafely();
+  const locale: AppLocale = ensureLocale(await getLocale());
   const t = await getTranslations({
     locale,
     namespace: "App.NewsArticleDetail",
@@ -85,16 +83,8 @@ export default async function NewsArticleDetail({
       ? `${f.formattedStart} – ${f.formattedEnd}`
       : f.formattedStart;
   })();
-  const localePrefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocalePath = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!localePrefix) return path;
-    if (path === "/") return localePrefix || "/";
-    if (path.startsWith(localePrefix)) return path;
-    return `${localePrefix}${path}`;
-  };
   const absolute = (path: string) =>
-    path.startsWith("http") ? path : `${siteUrl}${withLocalePath(path)}`;
+    path.startsWith("http") ? path : `${siteUrl}${withLocalePath(path, locale)}`;
 
   // Build keywords from available data (categories and locations)
   const categoryKeywords = Array.from(
@@ -168,7 +158,7 @@ export default async function NewsArticleDetail({
             aria-label="Breadcrumb"
           >
             <PressableAnchor
-              href={withLocalePath("/")}
+              href={withLocalePath("/", locale)}
               className="hover:underline"
               variant="inline"
               prefetch={false}
@@ -177,7 +167,7 @@ export default async function NewsArticleDetail({
             </PressableAnchor>{" "}
             /{" "}
             <PressableAnchor
-              href={withLocalePath("/noticies")}
+              href={withLocalePath("/noticies", locale)}
               className="hover:underline"
               variant="inline"
               prefetch={false}
@@ -186,7 +176,7 @@ export default async function NewsArticleDetail({
             </PressableAnchor>{" "}
             /{" "}
             <PressableAnchor
-              href={withLocalePath(`/noticies/${place}`)}
+              href={withLocalePath(`/noticies/${place}`, locale)}
               className="hover:underline"
               variant="inline"
               prefetch={false}

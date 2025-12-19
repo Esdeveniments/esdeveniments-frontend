@@ -9,8 +9,8 @@ import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import CardLink from "@components/ui/common/cardContent/CardLink";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocale, getTranslations } from "next-intl/server";
+import { ensureLocale } from "@utils/i18n-routing";
 
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const cardClass =
@@ -67,7 +67,7 @@ async function EventsAroundServer({
   title,
   useDetailTimeFormat = false,
 }: EventsAroundServerProps) {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
   // Keep first occurrence order-stable. Key used: id fallback to slug.
   const uniqueEvents = dedupeEvents(events);

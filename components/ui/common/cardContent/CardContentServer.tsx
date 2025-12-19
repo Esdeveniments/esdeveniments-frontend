@@ -10,15 +10,16 @@ import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocale, getTranslations } from "next-intl/server";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 
 async function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
 }: CardContentProps) {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const timeLabels = {
@@ -55,7 +56,7 @@ async function CardContentServer({
   return (
     <>
       <CardLink
-        href={`/e/${event.slug}`}
+        href={withLocalePath(`/e/${event.slug}`, locale)}
         className="w-full"
         data-analytics-event-name="select_event"
         data-analytics-event-id={event.id ? String(event.id) : ""}

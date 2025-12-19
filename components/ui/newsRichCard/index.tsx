@@ -1,17 +1,18 @@
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { NewsRichCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 
 export default async function NewsRichCard({
   event,
   variant = "default",
   numbered,
 }: NewsRichCardProps) {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const t = await getTranslations({ locale, namespace: "Components.News" });
   const image = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
@@ -56,7 +57,10 @@ export default async function NewsRichCard({
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {primaryCategory && (
                 <PressableAnchor
-                  href={`/catalunya/${primaryCategory.slug}`}
+                  href={withLocalePath(
+                    `/catalunya/${primaryCategory.slug}`,
+                    locale
+                  )}
                   prefetch={false}
                   className="badge-primary"
                   aria-label={t("viewCategory", { name: primaryCategory.name })}
@@ -73,7 +77,7 @@ export default async function NewsRichCard({
 
             <h3 className="heading-2 mb-3 text-foreground-strong group-hover:text-primary transition-colors">
               <PressableAnchor
-                href={`/e/${event.slug}`}
+                href={withLocalePath(`/e/${event.slug}`, locale)}
                 prefetch={false}
                 className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
                 aria-label={event.title}
@@ -91,7 +95,7 @@ export default async function NewsRichCard({
 
             <div className="flex items-center justify-between">
               <PressableAnchor
-                href={`/e/${event.slug}`}
+                href={withLocalePath(`/e/${event.slug}`, locale)}
                 prefetch={false}
                 className="btn-primary"
                 aria-label={t("readMoreAria", { title: event.title })}
@@ -127,7 +131,10 @@ export default async function NewsRichCard({
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {primaryCategory && (
             <PressableAnchor
-              href={`/catalunya/${primaryCategory.slug}`}
+              href={withLocalePath(
+                `/catalunya/${primaryCategory.slug}`,
+                locale
+              )}
               prefetch={false}
               className="badge-primary"
               aria-label={`Veure categoria ${primaryCategory.name}`}
@@ -144,7 +151,7 @@ export default async function NewsRichCard({
 
         <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
           <PressableAnchor
-            href={`/e/${event.slug}`}
+            href={withLocalePath(`/e/${event.slug}`, locale)}
             prefetch={false}
             className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
             aria-label={event.title}
@@ -162,7 +169,7 @@ export default async function NewsRichCard({
 
         <div className="flex items-center justify-between">
           <PressableAnchor
-            href={`/e/${event.slug}`}
+            href={withLocalePath(`/e/${event.slug}`, locale)}
             prefetch={false}
             className="btn-primary"
             aria-label={t("readMoreAria", { title: event.title })}

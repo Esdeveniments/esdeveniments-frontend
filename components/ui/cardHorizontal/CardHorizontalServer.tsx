@@ -6,17 +6,18 @@ import {
   formatEventTimeDisplay,
   formatEventTimeDisplayDetail,
 } from "@utils/date-helpers";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 
 const CardHorizontalServer = async ({
   event,
   isPriority = false,
   useDetailTimeFormat = false,
 }: CardHorizontalServerProps) => {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const timeLabels = {
     consult: tTime("consult"),
@@ -47,7 +48,7 @@ const CardHorizontalServer = async ({
 
   return (
     <CardLink
-      href={`/e/${event.slug}`}
+      href={withLocalePath(`/e/${event.slug}`, locale)}
       className="block group relative h-full pressable-card transition-card"
       data-analytics-event-name="select_event"
       data-analytics-event-id={event.id ? String(event.id) : ""}

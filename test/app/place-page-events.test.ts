@@ -1,7 +1,18 @@
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
-import { buildPlaceEventsPromise } from "app/[place]/page";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterAll,
+} from "vitest";
+import { buildPlaceEventsPromise } from "app/[locale]/[place]/page";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
-import type { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
+import type {
+  EventSummaryResponseDTO,
+  PagedResponseDTO,
+} from "types/api/event";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
@@ -42,7 +53,9 @@ const baseEvent: EventSummaryResponseDTO = {
   categories: [],
 };
 
-const buildEvent = (overrides: Partial<EventSummaryResponseDTO>): EventSummaryResponseDTO => ({
+const buildEvent = (
+  overrides: Partial<EventSummaryResponseDTO>
+): EventSummaryResponseDTO => ({
   ...baseEvent,
   ...overrides,
 });

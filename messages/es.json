@@ -247,7 +247,7 @@
         "archive": "Archivo"
       },
       "featuredAgendas": "Agendas destacadas",
-      "copyright": "© {year} Esdeveniments.cat",
+      "copyright": "© <year></year> Esdeveniments.cat",
       "tagline": "Descubre los mejores eventos en Cataluña"
     },
     "Navbar": {

@@ -1,41 +1,10 @@
 import "../styles/globals.css";
-import { Suspense, type ReactNode } from "react";
-import { NextIntlClientProvider } from "next-intl";
-import {
-  getMessages,
-  setRequestLocale,
-  getTranslations,
-} from "next-intl/server";
-import type { Metadata, Viewport } from "next";
-import { getLocaleSafely } from "../utils/i18n-seo";
-import GoogleScripts from "./GoogleScripts";
-import { AdProvider } from "../lib/context/AdContext";
-import { BaseLayout } from "@components/ui/layout";
-import WebsiteSchema from "@components/partials/WebsiteSchema";
-import { getApiOrigin } from "../utils/api-helpers";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
-  const t = await getTranslations({
-    locale,
-    namespace: "Components.Layout",
-  });
-
-  return {
-    other: {
-      "mobile-web-app-capable": "yes",
-      "apple-mobile-web-app-status-bar-style": "default",
-    },
-    alternates: {
-      types: {
-        "application/rss+xml": [
-          { url: "/rss.xml", title: t("rss") },
-          { url: "/noticies/rss.xml", title: t("rssNews") },
-        ],
-      },
-    },
-  };
-}
+import type { ReactNode } from "react";
+import type { Viewport } from "next";
+import { headers } from "next/headers";
+import { getApiOrigin } from "@utils/api-helpers";
+import { ensureLocale } from "@utils/i18n-routing";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -49,15 +18,11 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   const apiOrigin = getApiOrigin();
-  const locale = await getLocaleSafely();
-
-  // Distribute the locale to all server components in this request
-  setRequestLocale(locale);
-
-  const messages = await getMessages();
+  const requestHeaders = await headers();
+  const requestLocale = ensureLocale(requestHeaders.get("x-next-intl-locale") || undefined);
 
   return (
-    <html lang={locale}>
+    <html lang={requestLocale}>
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
@@ -67,19 +32,7 @@ export default async function RootLayout({
         )}
       </head>
       <body>
-        <NextIntlClientProvider
-          key={locale}
-          messages={messages}
-          locale={locale}
-        >
-          <AdProvider>
-            <WebsiteSchema locale={locale} />
-            <Suspense fallback={null}>
-              <GoogleScripts />
-            </Suspense>
-            <BaseLayout>{children}</BaseLayout>
-          </AdProvider>
-        </NextIntlClientProvider>
+        {children}
       </body>
     </html>
   );

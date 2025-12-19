@@ -5,11 +5,16 @@ import Social from "@components/ui/common/social";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { NavigationItem, SocialLinks } from "types/common";
+import CurrentYear from "./CurrentYear";
 
 export default async function Footer(): Promise<JSX.Element> {
   const t = await getTranslations("Components.Footer");
   const tTopAgenda = await getTranslations("Config.TopAgenda");
   const agendaLabel = tTopAgenda("agenda");
+
+  const copyright = t.rich("copyright", {
+    year: () => <CurrentYear />,
+  });
 
   const navigation: NavigationItem[] = [
     { name: t("navigation.home"), href: "/", current: false },
@@ -88,7 +93,7 @@ export default async function Footer(): Promise<JSX.Element> {
         {/* Copyright Section */}
         <div className="w-full flex flex-col items-center gap-element-gap-sm px-section-x">
           <span className="body-small text-foreground/70 text-center">
-            {t("copyright", { year: new Date().getFullYear() })}
+            {copyright}
           </span>
           <span className="text-xs text-foreground/50 text-center">
             {t("tagline")}

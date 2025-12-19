@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
 import dynamic from "next/dynamic";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
   SparklesIcon,
   ShoppingBagIcon,
@@ -33,7 +33,6 @@ import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
-import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
@@ -141,7 +140,7 @@ async function ServerEventsCategorized({
   seoLinkSections = [],
   ...contentProps
 }: ServerEventsCategorizedProps) {
-  const locale = await getLocaleSafely();
+  const locale = await getLocale();
   const tCategories = await getTranslations({
     locale,
     namespace: "Config.Categories",
@@ -283,7 +282,7 @@ export async function ServerEventsCategorizedContent({
   featuredPlaces,
   localePrefix = "",
 }: ServerEventsCategorizedContentProps & { localePrefix?: string }) {
-  const locale = await getLocaleSafely();
+  const locale = await getLocale();
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
     categoriesPromise || Promise.resolve([])

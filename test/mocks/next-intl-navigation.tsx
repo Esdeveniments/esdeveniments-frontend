@@ -44,3 +44,7 @@ export const createNavigation = (_routing: RoutingConfig) => {
   return { Link, redirect, usePathname, useRouter, getPathname };
 };
 
+
+
+
+

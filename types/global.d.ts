@@ -30,7 +30,6 @@ declare module "react" {
     viewTransitionName?: string;
   }
 }
+declare module "*.css";
 
 export {};
-
-declare module "*.css";

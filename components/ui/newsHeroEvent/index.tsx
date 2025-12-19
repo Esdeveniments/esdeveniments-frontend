@@ -1,12 +1,13 @@
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 
 export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const t = await getTranslations({ locale, namespace: "Components.News" });
   const image = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
@@ -47,7 +48,7 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
             )}
           </div>
           <PressableAnchor
-            href={`/e/${event.slug}`}
+            href={withLocalePath(`/e/${event.slug}`, locale)}
             prefetch={false}
             className="btn-primary"
             variant="inline"

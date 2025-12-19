@@ -304,6 +304,27 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // Routes that are intentionally not localized and must remain at the root.
+  // Do not rewrite these to /ca/...
+  const nonLocalizedExact = new Set([
+    "/manifest.webmanifest",
+    "/sitemap.xml",
+    "/server-sitemap.xml",
+    "/server-news-sitemap.xml",
+    "/server-place-sitemap.xml",
+    "/server-google-news-sitemap.xml",
+    "/server-static-sitemap.xml",
+    "/sentry-example-page",
+  ]);
+  if (
+    nonLocalizedExact.has(pathname) ||
+    pathname.startsWith("/.well-known/") ||
+    pathname === "/e2e" ||
+    pathname.startsWith("/e2e/")
+  ) {
+    return NextResponse.next();
+  }
+
   const { locale: localeFromPath, pathnameWithoutLocale } =
     stripLocalePrefix(pathname);
   const localeFromCookie = getLocaleFromCookie(request);
@@ -358,20 +379,28 @@ export default async function proxy(request: NextRequest) {
     },
   };
 
-  // When a locale prefix exists (e.g., /es/...), rewrite to the locale-stripped
-  // pathname for routing while preserving the original URL in the browser.
-  // This keeps locale-prefixed URLs indexable and allows us to reuse the
-  // existing route tree without duplicating files.
+  // C1 locale routing:
+  // - /es/... and /en/... are real routes handled by app/[locale]/...
+  // - Default locale (ca) stays unprefixed in the browser, but we rewrite
+  //   internally to /ca/... so the App Router always has a locale param.
   const response = localeFromPath
-    ? (() => {
-        const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = pathnameWithoutLocale || "/";
-        // Avoid RSC/data cache collisions between locales by making the rewritten
-        // request URL vary per locale while keeping the visible URL unchanged.
-        rewriteUrl.searchParams.set("__locale", resolvedLocale);
+    ? NextResponse.next(baseResponseInit)
+    : (() => {
+        const baseUrl =
+          typeof request.url === "string" && request.url
+            ? request.url
+            : `https://example.test${pathname}${search || ""}`;
+
+        const rewriteUrl =
+          typeof (request.nextUrl as unknown as { clone?: () => URL }).clone ===
+          "function"
+            ? (request.nextUrl as unknown as { clone: () => URL }).clone()
+            : new URL(baseUrl);
+        rewriteUrl.pathname = `/${DEFAULT_LOCALE}${
+          pathname === "/" ? "" : pathname
+        }`;
         return NextResponse.rewrite(rewriteUrl, baseResponseInit);
-      })()
-    : NextResponse.next(baseResponseInit);
+      })();
 
   if (shouldPersistLocaleFromPath && localeFromPath) {
     persistLocaleCookie(response, localeFromPath);

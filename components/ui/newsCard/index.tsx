@@ -1,10 +1,11 @@
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 
 export default async function NewsCard({
   event,
@@ -12,7 +13,7 @@ export default async function NewsCard({
   placeLabel,
   variant = "default",
 }: NewsCardProps) {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const t = await getTranslations({ locale, namespace: "Components.News" });
   const image = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);

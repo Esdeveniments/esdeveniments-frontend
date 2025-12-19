@@ -1,29 +1,21 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { JSX } from "react";
 import Image from "next/image";
 import eventNotFound from "@public/static/images/error_404_page_not_found.png";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { getLocaleSafely } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE } from "types/i18n";
+import { withLocalePath } from "@utils/i18n-seo";
+import { ensureLocale } from "@utils/i18n-routing";
 
 const NoEventFound = async (): Promise<JSX.Element> => {
-  const locale = await getLocaleSafely();
+  const locale = ensureLocale(await getLocale());
   const t = await getTranslations({
     locale,
     namespace: "Components.NoEventFound",
   });
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
   const description = t.rich("description", {
     search: (chunks) => (
       <PressableAnchor
-        href={withLocale("/catalunya")}
+        href={withLocalePath("/catalunya", locale)}
         prefetch={false}
         className="font-bold text-black hover:underline"
         variant="inline"
@@ -33,7 +25,7 @@ const NoEventFound = async (): Promise<JSX.Element> => {
     ),
     today: (chunks) => (
       <PressableAnchor
-        href={withLocale("/")}
+        href={withLocalePath("/", locale)}
         prefetch={false}
         className="font-bold text-black hover:underline"
         variant="inline"
@@ -43,7 +35,7 @@ const NoEventFound = async (): Promise<JSX.Element> => {
     ),
     publish: (chunks) => (
       <PressableAnchor
-        href={withLocale("/publica")}
+        href={withLocalePath("/publica", locale)}
         prefetch={false}
         className="font-bold text-black hover:underline"
         variant="inline"

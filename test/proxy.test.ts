@@ -17,7 +17,10 @@ vi.stubGlobal("crypto", {
 
 vi.mock("next/server", () => {
   // Use a function constructor wrapped with vi.fn() for Vitest 4 compatibility
-  const MockNextResponseFn = vi.fn(function (body?: unknown, options?: { status?: number }) {
+  const MockNextResponseFn = vi.fn(function (
+    body?: unknown,
+    options?: { status?: number }
+  ) {
     return {
       status: options?.status || 200,
       headers: new Headers(),
@@ -38,6 +41,17 @@ vi.mock("next/server", () => {
       }
       return response;
     }),
+    rewrite: vi.fn(
+      (url: unknown, options?: { request?: { headers?: Headers } }) => {
+        const response = MockNextResponseFn("", {});
+        // Store the rewritten URL + request for assertions
+        (response as any).rewrittenUrl = url;
+        if (options?.request) {
+          (response as any).request = options.request;
+        }
+        return response;
+      }
+    ),
     redirect: vi.fn((_: unknown, status?: number) =>
       MockNextResponseFn("redirect", { status })
     ),
@@ -77,6 +91,7 @@ describe("proxy", () => {
 
     // Reset NextResponse.next and redirect mocks
     (NextResponse.next as any).mockReset();
+    (NextResponse.rewrite as any).mockReset();
     (NextResponse.redirect as any).mockReset();
   });
 
@@ -99,7 +114,7 @@ describe("proxy", () => {
 
       const result = await proxy(mockRequest);
 
-      expect(NextResponse.next).toHaveBeenCalled();
+      expect(NextResponse.rewrite).toHaveBeenCalled();
       expect(result).toBeDefined();
     });
 
@@ -115,7 +130,7 @@ describe("proxy", () => {
       } as unknown as NextRequest;
 
       const mockResponse = { headers: new Headers() };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       const result = await proxy(mockRequest);
 
@@ -234,7 +249,7 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse.next).toHaveBeenCalled();
+      expect(NextResponse.rewrite).toHaveBeenCalled();
     });
 
     it("removes invalid date query by redirecting to /place (no extra segment)", async () => {
@@ -561,13 +576,15 @@ describe("proxy", () => {
         text: () => Promise.resolve(""),
       } as unknown as NextResponse;
       // Use mockImplementation instead of mockReturnValue to capture the request parameter
-      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
-        // Store the request for test assertions
-        if (options?.request) {
-          (mockResponse as any).request = options.request;
+      (NextResponse.next as unknown as any).mockImplementation(
+        (options?: { request?: { headers?: Headers } }) => {
+          // Store the request for test assertions
+          if (options?.request) {
+            (mockResponse as any).request = options.request;
+          }
+          return mockResponse;
         }
-        return mockResponse;
-      });
+      );
 
       // No visitor cookie present
       const mockRequest = {
@@ -581,7 +598,9 @@ describe("proxy", () => {
 
       // Ensure x-visitor-id was injected into the forwarded request headers
       // The request is stored on the mockResponse object
-      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
+      const forwardedVisitorId = (mockResponse as any).request?.headers.get(
+        "x-visitor-id"
+      );
       expect(forwardedVisitorId).toBeDefined();
       // crypto.randomUUID() is mocked to 'test-uuid' => header should be without dashes
       expect(forwardedVisitorId).toBe("testuuid");
@@ -608,13 +627,15 @@ describe("proxy", () => {
         text: () => Promise.resolve(""),
       } as unknown as NextResponse;
       // Use mockImplementation instead of mockReturnValue to capture the request parameter
-      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
-        // Store the request for test assertions
-        if (options?.request) {
-          (mockResponse as any).request = options.request;
+      (NextResponse.next as unknown as any).mockImplementation(
+        (options?: { request?: { headers?: Headers } }) => {
+          // Store the request for test assertions
+          if (options?.request) {
+            (mockResponse as any).request = options.request;
+          }
+          return mockResponse;
         }
-        return mockResponse;
-      });
+      );
 
       // Existing visitor cookie present
       const existingVisitorId = "existing-visitor-123";
@@ -631,7 +652,9 @@ describe("proxy", () => {
 
       // Ensure x-visitor-id header uses the existing cookie value
       // The request is stored on the mockResponse object
-      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
+      const forwardedVisitorId = (mockResponse as any).request?.headers.get(
+        "x-visitor-id"
+      );
       expect(forwardedVisitorId).toBe(existingVisitorId);
 
       // Cookie should NOT be set when it already exists
@@ -654,7 +677,7 @@ describe("proxy", () => {
       const mockResponse = {
         headers: new Headers(),
       };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       await proxy(mockRequest);
 
@@ -691,7 +714,7 @@ describe("proxy", () => {
       const mockResponse = {
         headers: new Headers(),
       };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       await proxy(mockRequest);
 
@@ -718,11 +741,11 @@ describe("proxy", () => {
       const mockResponse = {
         headers: new Headers(),
       };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       await proxy(mockRequest);
 
-      const nextResponseCall = (NextResponse.next as Mock).mock.calls[0][0];
+      const nextResponseCall = (NextResponse.rewrite as Mock).mock.calls[0][1];
       expect(nextResponseCall.request.headers.get("x-pathname")).toBe("/home");
       // No nonce header with relaxed CSP
       expect(nextResponseCall.request.headers.get("x-nonce")).toBeNull();

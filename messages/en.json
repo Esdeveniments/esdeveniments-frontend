@@ -247,7 +247,7 @@
         "archive": "Archive"
       },
       "featuredAgendas": "Featured agendas",
-      "copyright": "© {year} Esdeveniments.cat",
+      "copyright": "© <year></year> Esdeveniments.cat",
       "tagline": "Discover the best events in Catalonia"
     },
     "Navbar": {
