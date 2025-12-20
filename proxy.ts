@@ -417,6 +417,9 @@ export default async function proxy(request: NextRequest) {
     );
   }
 
+  // Set Content-Language header for SEO and accessibility
+  response.headers.set("Content-Language", resolvedLocale);
+
   return response;
 }
 

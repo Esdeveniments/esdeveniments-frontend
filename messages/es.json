@@ -302,14 +302,6 @@
       "titleWithPlace": "Últimas noticias {place}",
       "viewAll": "Ver todas"
     },
-    "NewsList": {
-      "emptyTitle": "No hemos encontrado noticias recientes",
-      "emptyBody": "Todavía no tenemos novedades para {place}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras zonas.",
-      "viewAll": "Ver todas las noticias →",
-      "itemListName": "Noticias de {place}",
-      "prev": "← Anterior",
-      "next": "Más noticias →"
-    },
     "CulturalMessage": {
       "explorePrefix": "Explora más planes {location}:",
       "today": "Qué hacer hoy",
