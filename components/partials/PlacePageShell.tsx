@@ -109,13 +109,11 @@ export async function ClientLayerWithPlaceLabel({
   const { placeTypeLabel } = await shellDataPromise;
 
   return (
-    <Suspense fallback={null}>
-      <LazyClientInteractiveLayer
-        categories={categories}
-        placeTypeLabel={placeTypeLabel}
-        filterLabels={filterLabels}
-      />
-    </Suspense>
+    <LazyClientInteractiveLayer
+      categories={categories}
+      placeTypeLabel={placeTypeLabel}
+      filterLabels={filterLabels}
+    />
   );
 }
 

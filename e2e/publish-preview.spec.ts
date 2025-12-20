@@ -6,6 +6,11 @@ test.describe("Publish - Preview", () => {
 
     // Wait for form to be ready
     await expect(page.getByTestId("event-form")).toBeVisible();
+        await expect(page.getByTestId("event-form")).toHaveAttribute(
+          "data-hydrated",
+          "true",
+          { timeout: 30000 }
+        );
     await expect(page.locator("input#title")).toBeVisible();
 
     const title = "Esdeveniment amb Preview";

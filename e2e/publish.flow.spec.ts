@@ -13,7 +13,11 @@ test.describe("Publish event flow", () => {
     await expect(page.getByTestId("event-form")).toBeVisible({
       timeout: 30000,
     });
-    // First step shows the "next" button; publish appears on final step after required fields.
+      await expect(page.getByTestId("event-form")).toHaveAttribute(
+        "data-hydrated",
+        "true",
+        { timeout: 30000 }
+      );
     await expect(page.getByTestId("next-button")).toBeVisible({
       timeout: 30000,
     });

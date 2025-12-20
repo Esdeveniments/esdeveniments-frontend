@@ -53,6 +53,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 }) => {
   const t = useTranslations("Utils.Validation");
   const tForm = useTranslations("Components.EventForm");
+  const [isHydrated, setIsHydrated] = useState(false);
   const [step, setStep] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -106,6 +107,10 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   const [internalImageMode, setInternalImageMode] =
     useState<"upload" | "url">(imageMode);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     setInternalImageMode(imageMode);
@@ -267,6 +272,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       onSubmit={handleSubmit}
       className="w-full flex flex-col justify-center items-center gap-y-4"
       data-testid="event-form"
+      data-hydrated={isHydrated ? "true" : "false"}
     >
       <div className="w-full">
         <div className="flex justify-between text-sm md:text-base text-foreground/80 mb-2">

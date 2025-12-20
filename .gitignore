@@ -43,6 +43,11 @@ yarn-error.log*
 # logs
 *.log
 
+# bundle analysis outputs (generated locally/CI)
+/bundle-analysis-current.txt
+/bundle-sizes.json
+/bundle-sizes-new.json
+
 # local env files
 .env
 .env.local

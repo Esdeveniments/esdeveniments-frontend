@@ -43,6 +43,11 @@ test.describe("Publish wizard should not auto publish", () => {
     });
 
     await expect(page.getByTestId("event-form")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId("event-form")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+      { timeout: 30000 }
+    );
 
     // Step 1: basics
     await page.fill("input#title", `Concert de prova ${Date.now()}`);
