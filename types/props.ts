@@ -515,6 +515,13 @@ export interface NewsHubsGridProps {
   promise: Promise<HubResult[]>;
 }
 
+export interface NewsCitiesSectionProps {
+  citiesPromise: Promise<import("./api/event").PagedResponseDTO<import("./api/city").CitySummaryResponseDTO>>;
+  showAll: boolean;
+  showMoreHref: import("./common").Href;
+  showLessHref: import("./common").Href;
+}
+
 export interface NewsListProps {
   newsPromise: Promise<
     import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>
@@ -523,6 +530,8 @@ export interface NewsListProps {
   place: string;
   currentPage: number;
   pageSize: number;
+  /** Optional override for pagination base URL (e.g., "/noticies" for global feed). */
+  basePath?: string;
 }
 
 // Mobile share island component props

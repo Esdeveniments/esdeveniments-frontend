@@ -96,6 +96,25 @@ describe("Filter Configuration System", () => {
       ).toBe("Concerts");
     });
 
+    test("getDisplayText for byDate returns labelKey (not URL value)", () => {
+      // getDisplayText returns labelKey (e.g., "today") which is used internally
+      // FiltersClient component translates this using URL value (e.g., "avui")
+      const stateWithDate: FilterDisplayState = {
+        ...mockDisplayState,
+        filters: {
+          ...mockDisplayState.filters,
+          byDate: "avui",
+        },
+        segments: {
+          ...mockDisplayState.segments,
+          date: "avui",
+        },
+      };
+      const displayText = FilterOperations.getDisplayText("byDate", stateWithDate);
+      // Should return labelKey, not URL value
+      expect(displayText).toBe("today");
+    });
+
     test("hasActiveFilters works correctly", () => {
       expect(FilterOperations.hasActiveFilters(mockDisplayState)).toBe(true);
 

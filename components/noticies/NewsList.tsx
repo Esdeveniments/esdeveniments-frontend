@@ -16,6 +16,7 @@ export default async function NewsList({
   place,
   currentPage,
   pageSize,
+  basePath,
 }: NewsListProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.NewsList" });
@@ -47,23 +48,37 @@ export default async function NewsList({
     );
   }
 
+  const schemaBasePath = basePath || `/noticies/${place}`;
+
+  const getItemPlace = (item: NewsSummaryResponseDTO) => {
+    const slug = item.city?.slug || item.region?.slug || place;
+    const label = item.city?.name || item.region?.name || placeType.label;
+    return { slug, label };
+  };
+
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": `${siteUrl}${withLocale(`/noticies/${place}`)}#news-itemlist`,
+    "@id": `${siteUrl}${withLocale(schemaBasePath)}#news-itemlist`,
     name: t("itemListName", { place: placeType.label }),
     numberOfItems: list.length,
-    itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "NewsArticle",
-        "@id": `${siteUrl}${withLocale(`/noticies/${place}/${item.slug}`)}`,
-        url: `${siteUrl}${withLocale(`/noticies/${place}/${item.slug}`)}`,
-        headline: item.title,
-        ...(item.imageUrl ? { image: item.imageUrl } : {}),
-      },
-    })),
+    itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => {
+      const itemPlace = basePath
+        ? getItemPlace(item)
+        : { slug: place, label: placeType.label };
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "NewsArticle",
+          "@id": `${siteUrl}${withLocale(`/noticies/${itemPlace.slug}/${item.slug}`)}`,
+          url: `${siteUrl}${withLocale(`/noticies/${itemPlace.slug}/${item.slug}`)}`,
+          headline: item.title,
+          ...(item.imageUrl ? { image: item.imageUrl } : {}),
+        },
+      };
+    }),
   };
 
   return (
@@ -75,21 +90,27 @@ export default async function NewsList({
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
 
       <section className="flex flex-col gap-6 px-2 lg:px-0">
-        {list.map((event: NewsSummaryResponseDTO, index: number) => (
-          <NewsCard
-            key={`${event.id}-${index}`}
-            event={event}
-            placeSlug={place}
-            placeLabel={placeType.label}
-            variant={index === 0 ? "hero" : "default"}
-          />
-        ))}
+        {list.map((event: NewsSummaryResponseDTO, index: number) => {
+          const itemPlace = basePath
+            ? getItemPlace(event)
+            : { slug: place, label: placeType.label };
+
+          return (
+            <NewsCard
+              key={`${event.id}-${index}`}
+              event={event}
+              placeSlug={itemPlace.slug}
+              placeLabel={itemPlace.label}
+              variant={index === 0 ? "hero" : "default"}
+            />
+          );
+        })}
       </section>
       <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
         {currentPage > 0 ? (
           <PressableAnchor
             href={{
-              pathname: withLocale(`/noticies/${place}`),
+              pathname: withLocale(basePath || `/noticies/${place}`),
               query: { page: String(currentPage - 1), size: String(pageSize) },
             }}
             prefetch={false}
@@ -104,7 +125,7 @@ export default async function NewsList({
         {!response.last && (
           <PressableAnchor
             href={{
-              pathname: withLocale(`/noticies/${place}`),
+              pathname: withLocale(basePath || `/noticies/${place}`),
               query: { page: String(currentPage + 1), size: String(pageSize) },
             }}
             prefetch={false}

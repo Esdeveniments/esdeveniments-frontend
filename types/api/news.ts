@@ -1,4 +1,8 @@
-import type { PagedResponseDTO as EventPagedResponseDTO } from "./event";
+import type {
+  PagedResponseDTO as EventPagedResponseDTO,
+  RegionSummaryResponseDTO,
+} from "./event";
+import type { CitySummaryResponseDTO } from "./city";
 
 export type NewsType = "WEEKLY" | "WEEKEND" | string;
 
@@ -12,6 +16,8 @@ export interface NewsSummaryResponseDTO {
   readingTime: number;
   visits: number;
   slug: string;
+  city?: CitySummaryResponseDTO;
+  region?: RegionSummaryResponseDTO;
   updatedAt?: string;
 }
 

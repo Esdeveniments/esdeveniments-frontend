@@ -795,6 +795,11 @@
       "title": "Últimas noticias por hub",
       "hubTitle": "Últimas noticias {hubName}"
     },
+    "NewsCities": {
+      "title": "Ciudades con noticias",
+      "showMore": "Ver más…",
+      "showLess": "Ver menos"
+    },
     "NewsArticleDetail": {
       "breadcrumbNews": "Noticias",
       "moreProposals": "MÁS PROPUESTAS"

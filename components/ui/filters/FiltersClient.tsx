@@ -53,9 +53,11 @@ const FiltersClient = ({
     (config) => config.key !== "searchTerm"
   );
 
-  const translatedByDate = (value: string | undefined): string | undefined => {
-    if (!value) return value;
-    return labels.byDates[value] || value;
+  const translatedByDate = (urlValue: string | undefined): string | undefined => {
+    if (!urlValue) return urlValue;
+    // labels.byDates is keyed by URL values (avui, dema, setmana, cap-de-setmana)
+    // not by labelKeys (today, tomorrow, week, weekend)
+    return labels.byDates[urlValue] || urlValue;
   };
 
   const translatedCategory = (value: string | undefined): string | undefined => {
@@ -127,8 +129,8 @@ const FiltersClient = ({
             );
 
             const translatedDisplayText =
-              config.key === "byDate" && displayText
-                ? translatedByDate(displayText)
+              config.key === "byDate" && displayState.filters.byDate !== DEFAULT_FILTER_VALUE
+                ? translatedByDate(displayState.filters.byDate)
                 : config.key === "category" && displayText
                   ? translatedCategory(displayState.filters.category)
                   : displayText;

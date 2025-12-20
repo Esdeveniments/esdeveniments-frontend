@@ -5,6 +5,8 @@ import type {
   NewsDetailResponseDTO,
   FetchNewsParams,
 } from "types/api/news";
+import type { CitySummaryResponseDTO } from "types/api/city";
+import type { PagedResponseDTO } from "types/api/event";
 import { createKeyedCache } from "./cache";
 import {
   getInternalApiUrl,
@@ -118,6 +120,43 @@ export async function fetchNewsBySlug(
   } catch (e) {
     console.error("Error fetching news by slug:", e);
     return null;
+  }
+}
+
+export async function fetchNewsCities(params?: {
+  page?: number;
+  size?: number;
+}): Promise<PagedResponseDTO<CitySummaryResponseDTO>> {
+  try {
+    const query = new URLSearchParams();
+    if (typeof params?.page === "number") query.set("page", String(params.page));
+    if (typeof params?.size === "number") query.set("size", String(params.size));
+
+    const qs = query.toString();
+    const finalUrl = await getInternalApiUrl(
+      qs ? `/api/news/cities?${qs}` : `/api/news/cities`
+    );
+
+    const response = await fetch(finalUrl, {
+      headers: getVercelProtectionBypassHeaders(),
+      next: { revalidate: 3600, tags: [newsTag] },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return (await response.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
+  } catch (e) {
+    console.error("Error fetching news cities:", e);
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: 0,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
   }
 }
 

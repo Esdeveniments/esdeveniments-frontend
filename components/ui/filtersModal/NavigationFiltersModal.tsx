@@ -8,7 +8,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "../../../i18n/routing";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
@@ -201,6 +201,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   ]);
 
   const router = useRouter();
+  const locale = useLocale();
   const { setLoading } = useFilterLoading();
 
   const handlePlaceChange = useCallback(
@@ -449,10 +450,25 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     };
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
-    const currentUrl =
-      typeof window !== "undefined"
-        ? `${window.location.pathname}${window.location.search}`
-        : "";
+
+    // `buildFilterUrl` returns a canonical URL WITHOUT a locale prefix.
+    // On locale-prefixed routes (e.g. `/es/catalunya`), `window.location.pathname`
+    // includes the prefix, which would incorrectly look like a change and leave the
+    // loading gate stuck when the router normalizes back to the same URL.
+    const currentUrl = (() => {
+      if (typeof window === "undefined") return "";
+
+      const { pathname, search } = window.location;
+      const localePrefix = `/${locale}`;
+      const normalizedPathname =
+        pathname === localePrefix
+          ? "/"
+          : pathname.startsWith(`${localePrefix}/`)
+            ? pathname.slice(localePrefix.length) || "/"
+            : pathname;
+
+      return `${normalizedPathname}${search}`;
+    })();
 
     // If nothing changed, avoid triggering loading state that won't auto-reset
     if (currentUrl === newUrl) {

@@ -7,13 +7,16 @@ import {
   generateWebPageSchema,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { NEWS_HUBS } from "@utils/constants";
 import { siteUrl } from "@config/index";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import type { Href } from "types/common";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import NewsHubsGrid from "@components/noticies/NewsHubsGrid";
-import NewsGridSkeleton from "@components/noticies/NewsGridSkeleton";
+import NewsList from "@components/noticies/NewsList";
+import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
+import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import { fetchNewsCities } from "@lib/api/news";
+import NewsCitiesSection from "@components/noticies/NewsCitiesSection";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();
@@ -26,19 +29,73 @@ export async function generateMetadata(): Promise<Metadata> {
   }) as unknown as Metadata;
 }
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "App.News" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
-  // Start fetching, don't wait
-  const hubResultsPromise = Promise.all(
-    NEWS_HUBS.map(async (hub) => {
-      const res = await fetchNews({ page: 0, size: 1, place: hub.slug });
-      return { hub, items: res.content };
-    })
-  );
+
+  // Option A: /noticies shows latest Catalunya news.
+  const query = (await (searchParams || Promise.resolve({}))) as {
+    [key: string]: string | string[] | undefined;
+  };
+  const pageParam =
+    typeof query.page === "string"
+      ? query.page
+      : Array.isArray(query.page)
+        ? query.page[0]
+        : undefined;
+  const sizeParam =
+    typeof query.size === "string"
+      ? query.size
+      : Array.isArray(query.size)
+        ? query.size[0]
+        : undefined;
+  const parsedPage = Number.isFinite(Number(pageParam))
+    ? Number(pageParam)
+    : 0;
+  const currentPage = parsedPage >= 0 ? parsedPage : 0;
+  const parsedSize = Number.isFinite(Number(sizeParam))
+    ? Number(sizeParam)
+    : 10;
+  const pageSize = parsedSize > 0 ? parsedSize : 10;
+
+  const citiesParam =
+    typeof query.cities === "string"
+      ? query.cities
+      : Array.isArray(query.cities)
+        ? query.cities[0]
+        : undefined;
+  const showAllCities = citiesParam === "all";
+  const citiesSize = showAllCities ? 200 : 30;
+
+  // NOTE: Backend expects a city/region name for `place`.
+  // Swagger shows `place` is optional; using "catalunya" can yield 0 results.
+  // For the main /noticies feed, fetch without place to get global latest.
+  // We still use "catalunya" as the URL segment when linking to articles.
+  const articlePlaceSlug = "catalunya";
+  const newsPromise = fetchNews({ page: currentPage, size: pageSize });
+  const placeTypePromise = getPlaceTypeAndLabelCached(articlePlaceSlug);
+  const citiesPromise = fetchNewsCities({ page: 0, size: citiesSize });
+
+  const noticiesBasePath = withLocale("/noticies");
+  const showMoreParams = new URLSearchParams();
+  if (currentPage) showMoreParams.set("page", String(currentPage));
+  if (pageSize !== 10) showMoreParams.set("size", String(pageSize));
+  showMoreParams.set("cities", "all");
+  const showMoreHref = `${noticiesBasePath}?${showMoreParams.toString()}` as Href;
+
+  const showLessParams = new URLSearchParams();
+  if (currentPage) showLessParams.set("page", String(currentPage));
+  if (pageSize !== 10) showLessParams.set("size", String(pageSize));
+  const showLessHref = (showLessParams.toString()
+    ? `${noticiesBasePath}?${showLessParams.toString()}`
+    : noticiesBasePath) as Href;
 
   const breadcrumbs = [
     { name: t("breadcrumbHome"), url: absolute("/") },
@@ -95,10 +152,28 @@ export default async function Page() {
         </p>
       </header>
 
-      {/* News Hubs Grid */}
-      <Suspense fallback={<NewsGridSkeleton />}>
-        <NewsHubsGrid promise={hubResultsPromise} />
+      {/* Latest News List (Catalunya) */}
+      <Suspense fallback={<NewsListSkeleton />}>
+        <NewsList
+          newsPromise={newsPromise}
+          placeTypePromise={placeTypePromise}
+          place={articlePlaceSlug}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          basePath="/noticies"
+        />
       </Suspense>
+
+      <Suspense fallback={null}>
+        <NewsCitiesSection
+          citiesPromise={citiesPromise}
+          showAll={showAllCities}
+          showMoreHref={showMoreHref}
+          showLessHref={showLessHref}
+        />
+      </Suspense>
+
+      {/* Featured places section temporarily disabled. */}
     </div>
   );
 }

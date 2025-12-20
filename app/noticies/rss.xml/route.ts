@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
-import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { localeToHrefLang } from "types/i18n";
@@ -24,28 +23,24 @@ export async function GET() {
     },
   });
 
-  for (const hub of NEWS_HUBS) {
-    try {
-      const res = await fetchNews({ page: 0, size: 10, place: hub.slug });
-      const items = Array.isArray(res.content) ? res.content : [];
-      for (const item of items) {
-        const articleUrl = toLocalizedUrl(
-          `/noticies/${hub.slug}/${item.slug}`,
-          locale
-        );
-        feed.addItem({
-          id: item.id,
-          title: item.title,
-          link: articleUrl,
-          description: item.description,
-          content: item.description,
-          date: new Date(item.startDate),
-          image: item.imageUrl,
-        });
-      }
-    } catch (e) {
-      console.error("news rss: error fetching hub", hub.slug, e);
+  try {
+    const res = await fetchNews({ page: 0, size: 50 });
+    const items = Array.isArray(res.content) ? res.content : [];
+    for (const item of items) {
+      const placeSlug = item.city?.slug || item.region?.slug || "catalunya";
+      const articleUrl = toLocalizedUrl(`/noticies/${placeSlug}/${item.slug}`, locale);
+      feed.addItem({
+        id: item.id,
+        title: item.title,
+        link: articleUrl,
+        description: item.description,
+        content: item.description,
+        date: new Date(item.startDate),
+        image: item.imageUrl,
+      });
     }
+  } catch (e) {
+    console.error("news rss: error fetching latest", e);
   }
 
   return new Response(feed.rss2(), {

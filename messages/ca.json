@@ -794,6 +794,11 @@
       "title": "Últimes notícies per hub",
       "hubTitle": "Últimes notícies {hubName}"
     },
+    "NewsCities": {
+      "title": "Ciutats amb notícies",
+      "showMore": "Veure més…",
+      "showLess": "Veure menys"
+    },
     "NewsArticleDetail": {
       "breadcrumbNews": "Notícies",
       "moreProposals": "MÉS PROPOSTES"

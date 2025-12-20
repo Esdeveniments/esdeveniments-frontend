@@ -194,7 +194,7 @@ export default async function Page({
             >
               {t("seeAll")}
             </PressableAnchor>
-            <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+            {/* <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
               ·
             </span>
             <PressableAnchor
@@ -204,7 +204,7 @@ export default async function Page({
               variant="inline"
             >
               {t("rssLabel")}
-            </PressableAnchor>
+            </PressableAnchor> */}
           </nav>
         </div>
       </header>
