@@ -13,6 +13,7 @@ import {
   PlaceTypeAndLabel,
   JsonLdScript,
   Href,
+  NavigationItem,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
@@ -257,6 +258,21 @@ export interface FilteredPageProps {
     category: string;
   }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export interface NavbarLabels {
+  logoAlt: string;
+  openMenu: string;
+  closeMenu: string;
+  home: string;
+  publish: string;
+  news: string;
+  mobilePublishLabel: string;
+}
+
+export interface NavbarClientProps {
+  navigation: NavigationItem[];
+  labels: NavbarLabels;
 }
 
 // Component props interfaces

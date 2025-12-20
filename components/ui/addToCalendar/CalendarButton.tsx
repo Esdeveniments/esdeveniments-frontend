@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/outline";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import ChevronDownIcon from "@heroicons/react/outline/esm/ChevronDownIcon";
 import Button from "../common/button";
 import { CalendarButtonProps } from "types/common";
 

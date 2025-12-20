@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
@@ -24,7 +25,6 @@ import {
   MAX_UPLOAD_LIMIT_LABEL,
 } from "@utils/constants";
 import { uploadImageWithProgress } from "@utils/upload-event-image-client";
-import PreviewContent from "@components/ui/EventForm/preview/PreviewContent";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
 import { sendGoogleEvent } from "@utils/analytics";
 import {
@@ -35,6 +35,18 @@ import {
 
 import Modal from "@components/ui/common/modal";
 import type { EventDetailResponseDTO } from "types/api/event";
+
+// Lazy load preview content (only shown in modal when user clicks preview)
+// Client component, so we can use dynamic directly with ssr: false
+const PreviewContent = dynamic(
+  () => import("@components/ui/EventForm/preview/PreviewContent"),
+  {
+    ssr: false, // Preview is only shown in modal, not needed for initial render
+    loading: () => (
+      <div className="w-full h-64 bg-muted animate-pulse rounded" aria-label="Loading preview" />
+    ),
+  }
+);
 
 const getDefaultEventDates = () => {
   const now = new Date();

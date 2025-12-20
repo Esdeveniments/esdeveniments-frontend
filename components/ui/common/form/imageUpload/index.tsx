@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import UploadIcon from "@heroicons/react/outline/UploadIcon";
+import UploadIcon from "@heroicons/react/outline/esm/UploadIcon";
 import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
 import {
   MAX_TOTAL_UPLOAD_BYTES,

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
 import { fetchNews } from "@lib/api/news";
 import type { Metadata } from "next";
@@ -16,7 +17,13 @@ import NewsList from "@components/noticies/NewsList";
 import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchNewsCities } from "@lib/api/news";
-import NewsCitiesSection from "@components/noticies/NewsCitiesSection";
+
+// Lazy load server component (below the fold, cities section)
+// No client wrapper needed - it's a server component
+const NewsCitiesSection = dynamic(() => import("@components/noticies/NewsCitiesSection"), {
+  // No ssr: false needed - it's a server component
+  loading: () => null, // Cities section is below the fold
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();

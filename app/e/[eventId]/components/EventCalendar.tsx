@@ -1,4 +1,5 @@
-import { CalendarIcon, ClockIcon } from "@heroicons/react/outline";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";

@@ -7,6 +7,7 @@ import {
   getTranslations,
 } from "next-intl/server";
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { getLocaleSafely } from "../utils/i18n-seo";
 import GoogleScripts from "./GoogleScripts";
 import { AdProvider } from "../lib/context/AdContext";
@@ -67,6 +68,19 @@ export default async function RootLayout({
         )}
       </head>
       <body>
+        <Script
+          id="sw-register"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                  navigator.serviceWorker.register('/sw.js').catch(() => {});
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
         <NextIntlClientProvider
           key={locale}
           messages={messages}

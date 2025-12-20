@@ -1,5 +1,5 @@
 import DOMPurify from "isomorphic-dompurify";
-import DocumentIcon from "@heroicons/react/outline/DocumentIcon";
+import DocumentIcon from "@heroicons/react/outline/esm/DocumentIcon";
 import CulturalMessage from "../culturalMessage";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { JSX } from "react";

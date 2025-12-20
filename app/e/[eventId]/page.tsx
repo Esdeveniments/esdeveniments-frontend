@@ -21,12 +21,10 @@ import type { BreadcrumbNavItem } from "types/props";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
-import {
-  SpeakerphoneIcon,
-  InformationCircleIcon as InfoIcon,
-} from "@heroicons/react/outline";
+import SpeakerphoneIcon from "@heroicons/react/outline/esm/SpeakerphoneIcon";
+import InformationCircleIcon from "@heroicons/react/outline/esm/InformationCircleIcon";
+const InfoIcon = InformationCircleIcon;
 import EventDetailsSection from "./components/EventDetailsSection";
-import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import {
   buildEventIntroText,
@@ -38,13 +36,17 @@ import { generateHowToSchema } from "@utils/schema-helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
-import AdArticleIsland from "./components/AdArticleIsland";
 import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+
+// Lazy load below-the-fold client components via client component wrappers
+// This allows us to use ssr: false in Next.js 16 (required for client components)
+import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
+import LazyAdArticleIsland from "./components/LazyAdArticleIsland";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
@@ -384,7 +386,7 @@ export default async function EventPage({
               formattedEnd={formattedEnd}
               nameDay={nameDay}
             />
-            {/* Weather (SSR; hidden for past events) */}
+            {/* Weather - Server component (converted from client for better performance) */}
             {temporalStatus.state !== "past" && (
               <EventWeather weather={event.weather} />
             )}
@@ -426,18 +428,20 @@ export default async function EventPage({
                 </div>
               </section>
             )}
-            {/* Restaurant Promotion Section */}
-            <RestaurantPromotionSection
-              eventId={event.id}
-              eventLocation={event.location}
-              eventLat={event.city?.latitude}
-              eventLng={event.city?.longitude}
-              eventStartDate={event.startDate}
-              eventEndDate={event.endDate}
-              eventStartTime={event.startTime}
-              eventEndTime={event.endTime}
-            />
-            {/* Final Ad Section */}
+            {/* Restaurant Promotion Section - Lazy loaded (below fold, uses intersection observer) */}
+            <Suspense fallback={null}>
+              <LazyRestaurantPromotion
+                eventId={event.id}
+                eventLocation={event.location}
+                eventLat={event.city?.latitude}
+                eventLng={event.city?.longitude}
+                eventStartDate={event.startDate}
+                eventEndDate={event.endDate}
+                eventStartTime={event.startTime}
+                eventEndTime={event.endTime}
+              />
+            </Suspense>
+            {/* Final Ad Section - Lazy loaded (ads should not block initial render) */}
             <div className="w-full h-full min-h-[250px]">
               <div className="w-full flex flex-col gap-element-gap">
                 <SectionHeading
@@ -447,7 +451,9 @@ export default async function EventPage({
                   titleClassName="heading-2"
                 />
                 <div className="px-section-x">
-                  <AdArticleIsland slot="9643657007" />
+                  <Suspense fallback={<div className="w-full h-[250px] bg-muted animate-pulse rounded" />}>
+                    <LazyAdArticleIsland slot="9643657007" />
+                  </Suspense>
                 </div>
               </div>
             </div>

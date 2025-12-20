@@ -1,9 +1,10 @@
 import EventStatusGroup from "./EventStatusGroup";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
+import GlobeAltIcon from "@heroicons/react/outline/esm/GlobeAltIcon";
+const GlobeIcon = GlobeAltIcon;
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
-import { ClockIcon } from "@heroicons/react/outline";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import { useTranslations } from "next-intl";

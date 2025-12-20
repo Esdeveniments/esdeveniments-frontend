@@ -8,11 +8,9 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { sendGoogleEvent } from "@utils/analytics";
-import {
-  SearchIcon,
-  ChevronDownIcon,
-  XIcon,
-} from "@heroicons/react/solid";
+import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
+import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
+import XIcon from "@heroicons/react/solid/esm/XIcon";
 import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";

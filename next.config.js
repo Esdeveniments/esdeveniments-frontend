@@ -1,5 +1,8 @@
 const { withSentryConfig } = require("@sentry/nextjs");
 const createNextIntlPlugin = require("next-intl/plugin");
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true" || process.env.BUNDLE_ANALYZE === "browser" || process.env.BUNDLE_ANALYZE === "server",
+});
 
 const withNextIntl = createNextIntlPlugin();
 
@@ -97,7 +100,7 @@ const nextConfig = {
 // Enable uploads only when an auth token is present. Otherwise skip network calls to avoid build failures.
 const sentryUploadsEnabled = Boolean(process.env.SENTRY_AUTH_TOKEN);
 
-module.exports = withSentryConfig(withNextIntl(nextConfig), {
+module.exports = withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 

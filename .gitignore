@@ -10,6 +10,9 @@
 playwright-report/
 test-results/
 
+# lighthouse-ci
+.lighthouseci/
+
 # generated service worker
 /public/sw.js
 

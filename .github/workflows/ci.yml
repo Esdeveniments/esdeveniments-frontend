@@ -71,6 +71,76 @@ jobs:
           NODE_ENV: production
         run: yarn build
 
+      - name: Analyze bundle sizes (JSON)
+        run: node scripts/analyze-bundles-cli.mjs --format json > bundle-sizes.json
+
+      - name: Compare bundle sizes against baseline
+        run: node scripts/compare-bundle-sizes.mjs --baseline bundle-size-baseline.json --current bundle-sizes.json
+
+      - name: Upload bundle sizes report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-sizes
+          path: bundle-sizes.json
+          retention-days: 14
+
+  lighthouse:
+    name: Lighthouse CI (regression tripwire)
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 25
+
+    env:
+      LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate service worker (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+        run: yarn prebuild
+
+      - name: Build application
+        env:
+          NODE_ENV: production
+        run: yarn build
+
+      - name: Run Lighthouse CI
+        env:
+          NODE_ENV: production
+        run: yarn lighthouse:ci
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouseci-report
+          path: .lighthouseci/
+          retention-days: 14
+          if-no-files-found: ignore
+
   e2e:
     name: E2E tests (Playwright)
     runs-on: ubuntu-latest

@@ -711,7 +711,7 @@
       "emptyPreview": "Escribe algo para ver la previsualización...",
       "placeholder": "Describe tu evento...",
       "helperPreview": "Así es como verán la descripción los visitantes",
-      "helperEdit": "Los enlaces se convertirán automáticamente. Pulsa Enter para hacer saltos de línea."
+      "helperEdit": "Pulsa Enter para hacer saltos de línea."
     },
     "DatePicker": {
       "dateAndTime": "Fecha y hora *",

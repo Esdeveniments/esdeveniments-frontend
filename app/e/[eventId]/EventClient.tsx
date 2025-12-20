@@ -8,11 +8,10 @@ import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
-import {
-  // PencilIcon,
-  // InformationCircleIcon as InfoIcon,
-  SpeakerphoneIcon,
-} from "@heroicons/react/outline";
+// import PencilIcon from "@heroicons/react/outline/esm/PencilIcon";
+// import InformationCircleIcon from "@heroicons/react/outline/esm/InformationCircleIcon";
+// const InfoIcon = InformationCircleIcon;
+import SpeakerphoneIcon from "@heroicons/react/outline/esm/SpeakerphoneIcon";
 import AdArticle from "components/ui/adArticle";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { useTranslations } from "next-intl";

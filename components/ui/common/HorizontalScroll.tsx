@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
-import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
+import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
+import ChevronLeftIcon from "@heroicons/react/solid/esm/ChevronLeftIcon";
 import type { HorizontalScrollProps } from "types/ui";
 import { useTranslations } from "next-intl";
 

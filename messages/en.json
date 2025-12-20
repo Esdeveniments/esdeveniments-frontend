@@ -711,7 +711,7 @@
       "emptyPreview": "Write something to see the preview...",
       "placeholder": "Describe your event...",
       "helperPreview": "This is how visitors will see the description",
-      "helperEdit": "Links will be converted automatically. Press Enter for line breaks."
+      "helperEdit": "Press Enter for line breaks."
     },
     "DatePicker": {
       "dateAndTime": "Date and time *",

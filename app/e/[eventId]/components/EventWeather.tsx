@@ -1,12 +1,13 @@
-import React from "react";
-import { CloudIcon } from "@heroicons/react/outline";
-import { useTranslations } from "next-intl";
+import CloudIcon from "@heroicons/react/outline/esm/CloudIcon";
+import { getTranslations } from "next-intl/server";
 import type { EventWeatherProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import Weather from "components/ui/weather";
 
-const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
-  const t = useTranslations("Components.Weather");
+// Converted to server component for better performance
+// Uses getTranslations instead of useTranslations to enable SSR
+async function EventWeather({ weather }: EventWeatherProps) {
+  const t = await getTranslations("Components.Weather");
 
   if (!weather) return null;
 
@@ -23,6 +24,6 @@ const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
       </div>
     </div>
   );
-};
+}
 
 export default EventWeather;

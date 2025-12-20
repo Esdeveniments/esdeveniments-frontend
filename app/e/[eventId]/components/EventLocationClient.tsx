@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import {
-  XIcon,
-  ChevronDownIcon,
-  ArrowRightIcon,
-} from "@heroicons/react/outline";
+import XIcon from "@heroicons/react/outline/esm/XIcon";
+import ChevronDownIcon from "@heroicons/react/outline/esm/ChevronDownIcon";
+import ArrowRightIcon from "@heroicons/react/outline/esm/ArrowRightIcon";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import type { EventLocationProps } from "types/event";

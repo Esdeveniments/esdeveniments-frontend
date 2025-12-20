@@ -2,14 +2,12 @@ import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
 import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
-import {
-  SparklesIcon,
-  ShoppingBagIcon,
-  EmojiHappyIcon,
-  MusicNoteIcon,
-  TicketIcon,
-  PhotographIcon,
-} from "@heroicons/react/outline";
+import SparklesIcon from "@heroicons/react/outline/esm/SparklesIcon";
+import ShoppingBagIcon from "@heroicons/react/outline/esm/ShoppingBagIcon";
+import EmojiHappyIcon from "@heroicons/react/outline/esm/EmojiHappyIcon";
+import MusicNoteIcon from "@heroicons/react/outline/esm/MusicNoteIcon";
+import TicketIcon from "@heroicons/react/outline/esm/TicketIcon";
+import PhotographIcon from "@heroicons/react/outline/esm/PhotographIcon";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";

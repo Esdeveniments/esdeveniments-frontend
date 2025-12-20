@@ -1,8 +1,8 @@
 "use client";
 import { JSX, MouseEvent } from "react";
 import { useRouter } from "../../../i18n/routing";
-import XIcon from "@heroicons/react/solid/XIcon";
-import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
+import XIcon from "@heroicons/react/solid/esm/XIcon";
+import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
 import { usePressFeedback } from "@components/hooks/usePressFeedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
 import {

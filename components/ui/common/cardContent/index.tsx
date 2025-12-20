@@ -1,10 +1,8 @@
 "use client";
 import NextImage from "next/image";
-import {
-  ClockIcon,
-  LocationMarkerIcon,
-  CalendarIcon,
-} from "@heroicons/react/outline";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import { buildDisplayLocation } from "@utils/location-helpers";

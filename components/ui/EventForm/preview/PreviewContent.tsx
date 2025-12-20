@@ -3,16 +3,14 @@
 import ClientImage from "@components/ui/common/image/ClientImage";
 import { useLocale, useTranslations } from "next-intl";
 import type { EventDetailResponseDTO } from "types/api/event";
-import {
-  PhotographIcon,
-  CalendarIcon,
-  LocationMarkerIcon,
-  TagIcon,
-  ExternalLinkIcon,
-  DocumentIcon,
-  XCircleIcon,
-  InformationCircleIcon,
-} from "@heroicons/react/outline";
+import PhotographIcon from "@heroicons/react/outline/esm/PhotographIcon";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+import TagIcon from "@heroicons/react/outline/esm/TagIcon";
+import ExternalLinkIcon from "@heroicons/react/outline/esm/ExternalLinkIcon";
+import DocumentIcon from "@heroicons/react/outline/esm/DocumentIcon";
+import XCircleIcon from "@heroicons/react/outline/esm/XCircleIcon";
+import InformationCircleIcon from "@heroicons/react/outline/esm/InformationCircleIcon";
 
 const formatDate = (value: string, locale: string) => {
   const date = new Date(value);

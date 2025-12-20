@@ -2,7 +2,7 @@
 
 import { JSX } from "react";
 import { useTranslations } from "next-intl";
-import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
+import AdjustmentsIcon from "@heroicons/react/outline/esm/AdjustmentsIcon";
 import { FilterOperations } from "@utils/filter-operations";
 import type { FilterDisplayState } from "types/filters";
 import FilterButton from "./FilterButton";

@@ -7,7 +7,7 @@ import {
   DialogTitle,
   Transition,
 } from "@headlessui/react";
-import { ArrowLeftIcon } from "@heroicons/react/outline";
+import ArrowLeftIcon from "@heroicons/react/outline/esm/ArrowLeftIcon";
 import { ModalProps } from "types/props";
 import Button from "@components/ui/common/button";
 

@@ -5,7 +5,8 @@ import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
-import { CalendarIcon, LocationMarkerIcon } from "@heroicons/react/outline";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
 
 export default async function NewsCard({
   event,

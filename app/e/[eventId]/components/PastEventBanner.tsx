@@ -1,5 +1,5 @@
 import type { PastEventBannerProps } from "types/common";
-import { ClockIcon } from "@heroicons/react/outline";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { useTranslations } from "next-intl";
 

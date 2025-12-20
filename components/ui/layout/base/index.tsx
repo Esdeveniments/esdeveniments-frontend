@@ -2,13 +2,11 @@ import { JSX, Suspense } from "react";
 import type { BaseLayoutProps } from "types/common";
 import Footer from "@components/ui/common/footer";
 import Navbar from "@components/ui/common/navbar";
-import ServiceWorkerRegistration from "@components/partials/ServiceWorkerRegistration";
 import NavigationProgress from "./NavigationProgress";
 
 export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
   return (
     <>
-      <ServiceWorkerRegistration />
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>

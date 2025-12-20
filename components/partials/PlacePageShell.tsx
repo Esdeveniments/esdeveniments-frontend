@@ -1,17 +1,27 @@
 import { Suspense } from "react";
 import type { JSX } from "react";
+import dynamic from "next/dynamic";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
 import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
-import ListPageFaq from "@components/ui/common/faq/ListPageFaq";
 import { buildFaqJsonLd } from "@utils/helpers";
 import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
+
+// Lazy load below-the-fold client component via client component wrapper
+// This allows us to use ssr: false in Next.js 16 (required for client components)
+import LazyClientInteractiveLayer from "./LazyClientInteractiveLayer";
+
+// Lazy load server component directly (no client wrapper needed)
+// FAQ section is below the fold, so we can lazy load it to reduce initial bundle
+const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"), {
+  // No ssr: false needed - it's a server component
+  loading: () => null, // FAQ section is below the fold
+});
 
 const buildFilterLabels = async () => {
   const tFilters = await getTranslations("Config.Filters");
@@ -64,8 +74,9 @@ export default async function PlacePageShell({
         />
       </Suspense>
 
+      {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
       <Suspense fallback={null}>
-        <ClientInteractiveLayer
+        <LazyClientInteractiveLayer
           categories={categories}
           placeTypeLabel={placeTypeLabel}
           filterLabels={filterLabels}
@@ -98,11 +109,13 @@ export async function ClientLayerWithPlaceLabel({
   const { placeTypeLabel } = await shellDataPromise;
 
   return (
-    <ClientInteractiveLayer
-      categories={categories}
-      placeTypeLabel={placeTypeLabel}
-      filterLabels={filterLabels}
-    />
+    <Suspense fallback={null}>
+      <LazyClientInteractiveLayer
+        categories={categories}
+        placeTypeLabel={placeTypeLabel}
+        filterLabels={filterLabels}
+      />
+    </Suspense>
   );
 }
 
@@ -215,7 +228,10 @@ async function PlacePageContent({
         />
       </FilterLoadingGate>
 
-      <ListPageFaq items={faqItems} />
+      {/* FAQ Section - Lazy loaded (below the fold, server component) */}
+      <Suspense fallback={null}>
+        <ListPageFaq items={faqItems} />
+      </Suspense>
     </>
   );
 }

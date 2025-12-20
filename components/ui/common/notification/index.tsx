@@ -2,9 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { FC } from "react";
-import CheckCircleIcon from "@heroicons/react/solid/CheckCircleIcon";
-import ExclamationCircleIcon from "@heroicons/react/solid/ExclamationCircleIcon";
-import XIcon from "@heroicons/react/solid/XIcon";
+import CheckCircleIcon from "@heroicons/react/solid/esm/CheckCircleIcon";
+import ExclamationCircleIcon from "@heroicons/react/solid/esm/ExclamationCircleIcon";
+import XIcon from "@heroicons/react/solid/esm/XIcon";
 import type { EventNotificationProps } from "types/event";
 
 const Notification: FC<EventNotificationProps> = ({

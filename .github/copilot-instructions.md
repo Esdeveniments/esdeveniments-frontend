@@ -1,6 +1,6 @@
 # AI Coding Agent Instructions for this Repository
 
-Purpose: Catalan events discovery web app (Next.js 16 App Router + React 19 + TypeScript) focused on SEO, performance (service worker + image optimization), and a configuration‑driven URL-first filtering system. Tooling: Node >=22, Yarn 4.12 (per package.json).
+Purpose: Catalan events discovery web app (Next.js 16.1 App Router + React 19 + TypeScript) focused on SEO, performance (service worker + image optimization), and a configuration‑driven URL-first filtering system. Tooling: Node >=22, Yarn 4.12 (per package.json).
 
 ## 1. Core Architecture
 
@@ -92,9 +92,11 @@ Adding a new filter:
 ## 8. Build / Run / Test Workflow
 
 - Runtime: Node >=22 and Yarn 4.12 (per `package.json` engines). Use Corepack.
-- Dev: `yarn dev` (Next dev server). Run `yarn prebuild` first if you changed `public/sw-template.js` so `public/sw.js` is regenerated.
+- Dev: `yarn dev` (Next dev server with Turbopack file system caching enabled by default). Run `yarn prebuild` first if you changed `public/sw-template.js` so `public/sw.js` is regenerated.
+- Dev with debugger: `yarn dev:inspect` (enables Node.js debugger via `next dev --inspect`).
 - Build: `yarn build` (Next build only). Run `yarn prebuild` beforehand whenever the SW template changes. Environment-specific builds (`build:development|staging|production`) already run `prebuild` before `next build`.
-- Analyze bundles: `yarn analyze`, `analyze:server`, `analyze:browser` (uses Next bundle analyzer via env vars).
+- Analyze bundles: `yarn analyze`, `analyze:server`, `analyze:browser` (uses Next bundle analyzer via env vars). `yarn analyze:experimental` launches Next.js 16.1 experimental bundle analyzer with interactive UI (Turbopack-compatible).
+- Upgrade: `yarn upgrade` (uses `next upgrade` command for easier Next.js version upgrades).
 - Tests: `yarn test` (Vitest, jsdom). Only current custom suite: filter system. Add new domain tests under `test/` and import utilities directly.
 - Type check: `yarn typecheck`.
 - Lint: `yarn lint` (ESLint + Next config). Maintain existing conventions; prefer config-driven patterns over ad hoc conditionals.
