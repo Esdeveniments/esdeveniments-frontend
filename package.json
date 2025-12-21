@@ -1,22 +1,31 @@
 {
   "private": true,
   "engines": {
-    "node": ">=22.0.0",
+    "node": "22.x",
     "yarn": ">=4.0.0"
   },
   "scripts": {
     "analyze": "cross-env ANALYZE=true next build",
     "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build",
     "analyze:server": "cross-env BUNDLE_ANALYZE=server next build",
-    "build": "yarn run prebuild && next build",
+    "analyze:experimental": "next experimental-analyze",
+    "analyze:webpack": "cross-env ANALYZE=true next build --webpack",
+    "analyze:cli": "node scripts/analyze-bundles-cli.mjs",
+    "analyze:api": "node scripts/analyze-bundles-api.mjs",
+    "upgrade": "next upgrade",
+    "build": "next build",
     "build:development": "NODE_ENV=development env-cmd -f .env.development yarn run prebuild && env-cmd -f .env.development next build",
     "build:production": "NODE_ENV=production env-cmd -f .env.production yarn run prebuild && env-cmd -f .env.production next build",
     "build:staging": "NODE_ENV=staging env-cmd -f .env.staging yarn run prebuild && env-cmd -f .env.staging next build",
-    "dev": "yarn run prebuild && next dev",
+    "dev": "next dev",
+    "dev:inspect": "next dev --inspect",
     "lint": "eslint .",
     "prebuild": "node scripts/generate-sw.mjs",
     "prepare": "husky",
     "scan": "npx react-scan@latest localhost:3000",
+    "i18n:sync": "node scripts/sync-locales.mjs",
+    "i18n:check": "i18n-check -s ca --locales messages --only invalidKeys,missingKeys -i \"Utils.Calendar.moreInfoHtml\" -i \"Utils.StringHelpers.capitalizePrepositions.*\" -i \"Utils.StringHelpers.feminineExceptions.*\" -i \"Utils.StringHelpers.masculineExceptions.*\"",
+    "lighthouse:ci": "lhci autorun --config=.lighthouserc.json",
     "start": "next start",
     "start:development": "env-cmd -f .env.development next start",
     "start:production": "NODE_ENV=production env-cmd -f .env.production next start",
@@ -35,6 +44,10 @@
       "eslint --fix",
       "git add"
     ],
+    "messages/*.json": [
+      "yarn i18n:check",
+      "git add"
+    ],
     "*.{json,md,yml,yaml}": [
       "git add"
     ]
@@ -42,26 +55,26 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^1.0.6",
-    "@sentry/nextjs": "^10.27.0",
+    "@sentry/nextjs": "^10.32.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.9",
     "autoprefixer": "^10.4.20",
-    "cloudinary": "^2.7.0",
     "cssnano": "^7.0.6",
     "date-fns": "^2.29.3",
     "fast-xml-parser": "^4.4.0",
     "feed": "^5.1.0",
     "isomorphic-dompurify": "^2.25.0",
-    "next": "^16.0.7",
+    "next": "^16.1.0",
+    "next-intl": "^4.6.1",
     "postcss": "^8.5.1",
-    "react": "^19.2.1",
+    "react": "^19.2.3",
     "react-datepicker": "^8.8.0",
-    "react-dom": "^19.2.1",
+    "react-dom": "^19.2.3",
     "react-select": "^5.7.0",
     "react-share": "^5.0.3",
     "react-tooltip": "^5.26.0",
-    "sst": "3.17.24",
+    "sst": "^3.17.25",
     "swr": "^2.2.5",
     "tailwindcss": "^3.3.6",
     "zod": "3.24.3",
@@ -69,7 +82,9 @@
   },
   "devDependencies": {
     "@aws-sdk/client-ssm": "^3.940.0",
-    "@next/bundle-analyzer": "^16.0.7",
+    "@lhci/cli": "^0.15.1",
+    "@lingual/i18n-check": "^0.8.15",
+    "@next/bundle-analyzer": "^16.1.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/context-async-hooks": "^2.2.0",
     "@opentelemetry/core": "^2.2.0",
@@ -81,18 +96,19 @@
     "@types/jest": "^30.0.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^24.10.1",
-    "@types/react": "19.2.2",
+    "@types/react": "^19.2.7",
     "@types/react-datepicker": "^7.0.0",
-    "@types/react-dom": "19.2.2",
+    "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
     "@vitejs/plugin-react": "^4.3.0",
     "babel-plugin-react-compiler": "^19.1.0-rc.1",
     "baseline-browser-mapping": "^2.8.32",
+    "cheerio": "^1.1.2",
     "cross-env": "^10.1.0",
     "env-cmd": "^10.1.0",
     "eslint": "^9",
-    "eslint-config-next": "^16.0.7",
+    "eslint-config-next": "^16.1.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
@@ -119,7 +135,7 @@
     ]
   },
   "resolutions": {
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2"
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3"
   }
 }

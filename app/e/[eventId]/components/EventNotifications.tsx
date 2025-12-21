@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslations } from "next-intl";
 import Notification from "components/ui/common/notification";
 import type { EventNotificationsProps } from "types/event";
 
@@ -9,6 +10,8 @@ const EventNotifications: React.FC<EventNotificationsProps> = ({
   showThankYouBanner,
   setShowThankYouBanner,
 }) => {
+  const t = useTranslations("Components.EventNotifications");
+
   return (
     <>
       {newEvent && <Notification title={title} url={slug} />}
@@ -17,7 +20,7 @@ const EventNotifications: React.FC<EventNotificationsProps> = ({
           customNotification={false}
           hideClose
           hideNotification={setShowThankYouBanner}
-          title="Gràcies per contribuir a millorar el contingut de Esdeveniments.cat! En menys de 24 hores estarà disponible el canvi."
+          title={t("thankYou")}
         />
       )}
     </>

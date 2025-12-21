@@ -1,10 +1,18 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import CardShareButton from "components/ui/common/cardShareButton";
 import NativeShareButton from "components/ui/common/nativeShareButton";
 import useCheckMobileScreen from "components/hooks/useCheckMobileScreen";
 import ShareIslandSkeleton from "@components/ui/common/shareIslandSkeleton";
 import type { EventShareBarClientProps } from "types/event";
+
+const CardShareButton = dynamic(
+  () => import("@components/ui/common/cardShareButton"),
+  {
+    ssr: false,
+    loading: () => <ShareIslandSkeleton />,
+  }
+);
 
 export default function EventShareBar({
   slug,

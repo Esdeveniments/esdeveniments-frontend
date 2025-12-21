@@ -10,6 +10,7 @@ import {
   WhatsappIcon,
 } from "react-share";
 import type { CardShareButtonProps, CustomIconProps } from "types/common";
+import { sendGoogleEvent } from "@utils/analytics";
 
 export default function CardShareButton({
   slug,
@@ -25,19 +26,34 @@ export default function CardShareButton({
 
   return (
     <div className="w-full h-8 flex justify-start items-center gap-4">
-      <TelegramShareButton url={eventUrl} aria-label="Telegram">
+      <TelegramShareButton
+        url={eventUrl}
+        aria-label="Telegram"
+        onClick={() => sendGoogleEvent("share", { method: "telegram", content: slug })}
+      >
         <TelegramIcon {...iconProps} className="mr-[10px]" />
       </TelegramShareButton>
 
-      <WhatsappShareButton url={eventUrl} aria-label="Whatsapp">
+      <WhatsappShareButton
+        url={eventUrl}
+        aria-label="Whatsapp"
+        onClick={() => sendGoogleEvent("share", { method: "whatsapp", content: slug })}
+      >
         <WhatsappIcon {...iconProps} className="mr-1" />
       </WhatsappShareButton>
 
-      <FacebookShareButton url={eventUrl} aria-label="Facebook">
+      <FacebookShareButton
+        url={eventUrl}
+        aria-label="Facebook"
+        onClick={() => sendGoogleEvent("share", { method: "facebook", content: slug })}
+      >
         <FacebookIcon {...iconProps} size={31} />
       </FacebookShareButton>
 
-      <TwitterShareButton url={eventUrl}>
+      <TwitterShareButton
+        url={eventUrl}
+        onClick={() => sendGoogleEvent("share", { method: "twitter", content: slug })}
+      >
         <svg
           className="w-7 h-5 fill-foreground-strong"
           role="img"

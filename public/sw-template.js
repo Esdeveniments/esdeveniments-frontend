@@ -1,4 +1,5 @@
 // Service Worker for improved caching and performance using Workbox (2025 Best Practices)
+// Build marker (replaced at prebuild time): {{BUILD_VERSION}}
 
 // Import the Workbox library from Google's CDN.
 // Workbox simplifies common service worker tasks like caching, routing, and lifecycle management.
@@ -159,4 +160,20 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
+});
+
+// Prevent hydration mismatches across deploys:
+// We cache navigations (HTML documents) for offline support, but if markup changes between
+// versions and an old cached HTML response is served, React hydration can fail.
+// When a new service worker activates, clear the pages cache so future navigations fetch fresh HTML.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        await caches.delete("esdeveniments-pages-cache");
+      } catch {
+        // noop: cache API may be unavailable or restricted
+      }
+    })()
+  );
 });

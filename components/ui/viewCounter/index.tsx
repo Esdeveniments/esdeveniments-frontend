@@ -1,4 +1,4 @@
-import ChartBarIcon from "@heroicons/react/outline/ChartBarIcon";
+import ChartBarIcon from "@heroicons/react/outline/esm/ChartBarIcon";
 import type { ViewCounterProps } from "types/common";
 
 function ViewCounter({ visits, hideText = false }: ViewCounterProps) {

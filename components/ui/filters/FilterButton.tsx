@@ -1,8 +1,8 @@
 "use client";
 import { JSX, MouseEvent } from "react";
-import { useRouter } from "next/navigation";
-import XIcon from "@heroicons/react/solid/XIcon";
-import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
+import { useRouter } from "../../../i18n/routing";
+import XIcon from "@heroicons/react/solid/esm/XIcon";
+import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
 import { usePressFeedback } from "@components/hooks/usePressFeedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
 import {
@@ -10,8 +10,10 @@ import {
   startNavigationFeedback,
 } from "@lib/navigation-feedback";
 import { FilterButtonProps } from "types/props";
+import { sendGoogleEvent } from "@utils/analytics";
 
 const FilterButton = ({
+  filterKey,
   text,
   enabled,
   removeUrl,
@@ -24,6 +26,13 @@ const FilterButton = ({
 
   const handleRemove = (e: MouseEvent) => {
     e.stopPropagation();
+
+    sendGoogleEvent("filter_remove", {
+      context: "filters_bar",
+      filter_key: filterKey,
+      enabled,
+    });
+
     if (isPlainLeftClick(e)) {
       startNavigationFeedback();
     }
@@ -33,19 +42,27 @@ const FilterButton = ({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleChipClick = () => {
+    sendGoogleEvent("filter_chip_click", {
+      context: "filters_bar",
+      filter_key: filterKey,
+      enabled,
+    });
+    onOpenModal();
+  };
+
   return (
     <div
       className="flex-shrink-0 bg-background flex justify-center items-center nowrap min-w-max"
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${
-          enabled
+        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${enabled
             ? "border-primary bg-primary/5 text-foreground-strong"
             : "border-border text-foreground-strong hover:bg-muted"
-        }`}
+          }`}
         data-pressed={isPressed ? "true" : undefined}
-        onClick={onOpenModal}
+        onClick={handleChipClick}
         {...handlers}
       >
         <span className="text-center body-small">

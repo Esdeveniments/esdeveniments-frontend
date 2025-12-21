@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   getInternalApiUrl,
+  getVercelProtectionBypassHeaders,
   buildEventsQuery,
   buildNewsQuery,
   applyDistanceToParams,
@@ -20,38 +21,62 @@ describe("utils/api-helpers:getInternalApiUrl", () => {
     process.env = originalEnv;
   });
 
-  it("builds absolute URLs from app-relative API paths", () => {
-    expect(getInternalApiUrl("/api/foo?x=1")).toBe(
+  it("builds absolute URLs from app-relative API paths", async () => {
+    expect(await getInternalApiUrl("/api/foo?x=1")).toBe(
       "http://localhost:3000/api/foo?x=1"
     );
-    expect(getInternalApiUrl("api/bar")).toBe("http://localhost:3000/api/bar");
+    expect(await getInternalApiUrl("api/bar")).toBe(
+      "http://localhost:3000/api/bar"
+    );
   });
 
-  it("prefers INTERNAL_SITE_URL when available", () => {
+  it("prefers INTERNAL_SITE_URL when available", async () => {
     process.env.INTERNAL_SITE_URL = "https://internal.esdeveniments.cat";
-    expect(getInternalApiUrl("/api/test")).toBe(
+    expect(await getInternalApiUrl("/api/test")).toBe(
       "https://internal.esdeveniments.cat/api/test"
     );
   });
 
-  it("falls back to NEXT_PUBLIC_SITE_URL when internal is not set", () => {
+  it("falls back to NEXT_PUBLIC_SITE_URL when internal is not set", async () => {
     delete process.env.INTERNAL_SITE_URL;
     process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-    expect(getInternalApiUrl("/api/test")).toBe(
+    expect(await getInternalApiUrl("/api/test")).toBe(
       "https://www.esdeveniments.cat/api/test"
     );
   });
 
-  it("prefers VERCEL_URL origin when available", () => {
+  it("prefers VERCEL_URL origin when available", async () => {
     process.env.VERCEL_URL = "preview-abc.vercel.app";
-    expect(getInternalApiUrl("/api/test")).toBe(
+    expect(await getInternalApiUrl("/api/test")).toBe(
       "https://preview-abc.vercel.app/api/test"
     );
     // Accept already-prefixed protocol
     process.env.VERCEL_URL = "https://another.vercel.app";
-    expect(getInternalApiUrl("/api/test")).toBe(
+    expect(await getInternalApiUrl("/api/test")).toBe(
       "https://another.vercel.app/api/test"
     );
+  });
+});
+
+describe("utils/api-helpers:getVercelProtectionBypassHeaders", () => {
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it("returns empty headers when secret is not set", () => {
+    delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    expect(getVercelProtectionBypassHeaders()).toEqual({});
+  });
+
+  it("returns x-vercel-protection-bypass header when secret is set", () => {
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET = "test-bypass-secret";
+    expect(getVercelProtectionBypassHeaders()).toEqual({
+      "x-vercel-protection-bypass": "test-bypass-secret",
+    });
   });
 });
 

@@ -3,6 +3,7 @@ import CreatableSelect from "react-select/creatable";
 import { components, StylesConfig, GroupBase } from "react-select";
 import { SelectComponentProps } from "types/props";
 import { Option } from "types/common";
+import { useTranslations } from "next-intl";
 
 const borderColor = "#CCC !important";
 
@@ -63,11 +64,12 @@ export default function SelectComponent({
   isDisabled = false,
   isValidNewOption = false,
   isClearable = false,
-  placeholder = "una opció",
+  placeholder,
   testId,
   autoFocus = false,
   menuPosition = "absolute",
 }: SelectComponentProps) {
+  const t = useTranslations("Components.Select");
   const inputId = `${id}-input`;
 
   // Removed setState - no longer needed for page/scroll reset
@@ -110,9 +112,9 @@ export default function SelectComponent({
             isSearchable
             isClearable={isClearable}
             formatCreateLabel={(inputValue: string) =>
-              `Afegir nou lloc: "${inputValue}"`
+              t("create", { value: inputValue })
             }
-            placeholder={placeholder}
+            placeholder={placeholder || t("placeholder")}
             defaultValue={selectedOption || initialValue}
             value={selectedOption || initialValue}
             onChange={handleChange}
@@ -120,7 +122,7 @@ export default function SelectComponent({
             styles={customStyles}
             isDisabled={isDisabled}
             isValidNewOption={() => isValidNewOption}
-            noOptionsMessage={() => "No s'ha trobat cap opció"}
+            noOptionsMessage={() => t("noOptions")}
             autoFocus={autoFocus}
             menuPosition={menuPosition}
             components={{

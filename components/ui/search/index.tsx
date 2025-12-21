@@ -8,10 +8,12 @@ import {
   KeyboardEvent,
   JSX,
 } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import XIcon from "@heroicons/react/solid/XIcon";
-import SearchIcon from "@heroicons/react/solid/SearchIcon";
-import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
+import { useRouter, usePathname } from "../../../i18n/routing";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import XIcon from "@heroicons/react/solid/esm/XIcon";
+import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
+import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
 import { sendGoogleEvent } from "@utils/analytics";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
@@ -28,6 +30,7 @@ const sendSearchTermGA = (searchTerm: string): void => {
 };
 
 export default function Search(): JSX.Element {
+  const t = useTranslations("Components.SearchBar");
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -102,18 +105,16 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${
-        isSearchActive ? "border-primary border-2" : "border-border"
-      }`}
+      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${isSearchActive ? "border-primary border-2" : "border-border"
+        }`}
       data-testid="search-bar"
     >
       <div className="w-full flex justify-start items-center gap-element-gap rounded-input">
         {/* Decorative search icon on the left */}
         <div className="h-10 flex justify-center items-center px-button-x">
           <SearchIcon
-            className={`h-5 w-5 transition-interactive ${
-              isSearchActive ? "text-primary" : "text-foreground-strong"
-            }`}
+            className={`h-5 w-5 transition-interactive ${isSearchActive ? "text-primary" : "text-foreground-strong"
+              }`}
             aria-hidden="true"
           />
         </div>
@@ -121,30 +122,32 @@ export default function Search(): JSX.Element {
         <input
           type="text"
           className="w-full border-0 placeholder:text-foreground/60 body-normal focus:outline-none"
-          placeholder="Què estàs buscant?"
+          placeholder={t("placeholder")}
           value={inputValue}
           onKeyDown={handleKeyPress}
           onChange={handleChange}
           autoComplete="off"
-          aria-label="Search input"
+          aria-label={t("search")}
           data-testid="search-input"
         />
         {/* Clear button (X) when there's text */}
         {inputValue.length > 0 && (
-          <div className="flex justify-end items-center cursor-pointer px-button-x">
-            <XIcon
-              className="h-4 w-4 text-foreground-strong"
-              onClick={clearSearchTerm}
-              aria-label="Clear search"
-            />
-          </div>
+          <button
+            type="button"
+            className="flex justify-end items-center cursor-pointer px-button-x"
+            onClick={clearSearchTerm}
+            aria-label={t("clear")}
+            data-testid="clear-search-button"
+          >
+            <XIcon className="h-4 w-4 text-foreground-strong" aria-hidden="true" />
+          </button>
         )}
         {/* Search button on the right */}
         <button
           type="button"
           onClick={triggerSearch}
           className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
-          aria-label="Search"
+          aria-label={t("search")}
           data-testid="search-button"
         >
           <ChevronRightIcon className="h-5 w-5 text-foreground-strong" />

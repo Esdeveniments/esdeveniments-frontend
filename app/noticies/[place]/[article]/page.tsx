@@ -3,12 +3,14 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getNewsBySlug } from "@lib/api/news";
 import type { NewsDetailResponseDTO } from "types/api/news";
+import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 export async function generateMetadata({
   params,
@@ -24,12 +26,18 @@ export async function generateMetadata({
     captureException(error);
   }
   const placeType = await getPlaceTypeAndLabelCached(place);
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "App.NewsArticleFallback",
+  });
   if (detail) {
     const base = buildPageMeta({
       title: `${detail.title} | ${placeType.label}`,
       description: detail.description,
       canonical: `${siteUrl}/noticies/${place}/${article}`,
       image: detail.events?.[0]?.imageUrl,
+      locale,
     }) as unknown as Metadata;
     const augmented: Metadata = {
       ...base,
@@ -43,9 +51,10 @@ export async function generateMetadata({
     return augmented;
   }
   return buildPageMeta({
-    title: `Notícia | ${placeType.label}`,
-    description: `Detall de la notícia`,
+    title: t("title", { place: placeType.label }),
+    description: t("description"),
     canonical: `${siteUrl}/noticies/${place}/${article}`,
+    locale,
   }) as unknown as Metadata;
 }
 
@@ -55,18 +64,18 @@ export default async function Page({
   params: Promise<{ place: string; article: string }>;
 }) {
   const { place, article } = await params;
-  
+
   // Start fetches immediately
   const detailPromise = getNewsBySlug(article);
   const placeTypePromise = getPlaceTypeAndLabelCached(place);
 
   return (
     <Suspense fallback={<NewsArticleSkeleton />}>
-      <NewsArticleDetail 
-        detailPromise={detailPromise} 
-        placeTypePromise={placeTypePromise} 
-        place={place} 
-        article={article} 
+      <NewsArticleDetail
+        detailPromise={detailPromise}
+        placeTypePromise={placeTypePromise}
+        place={place}
+        article={article}
       />
     </Suspense>
   );

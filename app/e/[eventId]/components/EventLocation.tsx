@@ -1,4 +1,5 @@
-import { LocationMarkerIcon as LocationIcon } from "@heroicons/react/outline";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+const LocationIcon = LocationMarkerIcon;
 import {
   buildEventLocationLabels,
   buildDisplayLocation,
@@ -7,6 +8,7 @@ import { EventLocationProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import EventLocationClient from "./EventLocationClient";
+import { useTranslations } from "next-intl";
 
 export default function EventLocation({
   location,
@@ -15,6 +17,7 @@ export default function EventLocation({
   citySlug,
   regionSlug,
 }: EventLocationProps) {
+  const t = useTranslations("Components.EventLocation");
   const cityHref = citySlug ? `/${citySlug}` : null;
   const regionHref = regionSlug ? `/${regionSlug}` : null;
   const showPlaceLinks = Boolean(cityHref || regionHref);
@@ -42,7 +45,7 @@ export default function EventLocation({
         <SectionHeading
           Icon={LocationIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title="Ubicació"
+          title={t("title")}
           titleClassName="heading-2"
         />
         <div className="w-full flex flex-col justify-center items-center gap-element-gap px-section-x">

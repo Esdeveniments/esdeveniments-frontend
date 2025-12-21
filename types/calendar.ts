@@ -12,3 +12,10 @@ export interface CalendarUrls {
   outlook: string;
   ical: string;
 }
+
+export interface CalendarLabels {
+  moreInfoHtml: string;
+  moreInfoText: string;
+  dateRange: string;
+  dateSingle: string;
+}

@@ -65,7 +65,7 @@ describe("Filter Configuration System", () => {
       const placeConfig = FilterOperations.getConfig("place");
       expect(placeConfig).toBeDefined();
       expect(placeConfig?.key).toBe("place");
-      expect(placeConfig?.displayName).toBe("Població");
+      expect(placeConfig?.displayName).toBe("place");
     });
 
     test("getConfig returns undefined for invalid key", () => {
@@ -94,6 +94,25 @@ describe("Filter Configuration System", () => {
       expect(
         FilterOperations.getDisplayText("category", mockDisplayState)
       ).toBe("Concerts");
+    });
+
+    test("getDisplayText for byDate returns labelKey (not URL value)", () => {
+      // getDisplayText returns labelKey (e.g., "today") which is used internally
+      // FiltersClient component translates this using URL value (e.g., "avui")
+      const stateWithDate: FilterDisplayState = {
+        ...mockDisplayState,
+        filters: {
+          ...mockDisplayState.filters,
+          byDate: "avui",
+        },
+        segments: {
+          ...mockDisplayState.segments,
+          date: "avui",
+        },
+      };
+      const displayText = FilterOperations.getDisplayText("byDate", stateWithDate);
+      // Should return labelKey, not URL value
+      expect(displayText).toBe("today");
     });
 
     test("hasActiveFilters works correctly", () => {

@@ -1,16 +1,12 @@
 "use client";
 
-import { useEffect, useRef, Suspense, useMemo } from "react";
+import { useEffect, useRef, Suspense, useMemo, useState } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "../lib/context/AdContext";
 import type { WindowWithGtag } from "types/common";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
-const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
-const ADS_SRC = ADS_CLIENT
-  ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
-  : "";
 
 // Google Analytics gtag shim - reused across multiple Script components
 // Conditionally defines gtag only if it doesn't already exist to avoid overwriting
@@ -76,8 +72,9 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
-  const autoAdsInitRef = useRef(false);
-  const autoAdsPendingToken = useRef<symbol | null>(null);
+  const [HeavyComponent, setHeavyComponent] = useState<
+    React.ComponentType<{ adsAllowed: boolean }> | null
+  >(null);
 
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
   // Note: We use the same consent signal (adsAllowed) for both ads and analytics
@@ -103,136 +100,25 @@ export default function GoogleScripts() {
     });
   }, [adsAllowed]);
 
-  // Trigger Google Auto Ads once consented and loader is (or becomes) available.
+  // Load heavy tracking + Auto Ads only after hydration.
+  // This prevents server/client HTML mismatches caused by client-only boundaries.
   useEffect(() => {
-    if (!adsAllowed || !ADS_CLIENT) return;
+    if (!adsAllowed) return;
+    let cancelled = false;
 
-    const setPendingToken = () => {
-      const token = Symbol("auto-ads-init");
-      autoAdsPendingToken.current = token;
-      window.__autoAdsInitPending = token;
-      return token;
-    };
+    import("./GoogleScriptsHeavy")
+      .then((mod) => {
+        if (cancelled) return;
+        setHeavyComponent(() => mod.default);
+      })
+      .catch(() => {
+        // Keep resilient: analytics/ads helpers should never break rendering
+      });
 
-    const clearPendingToken = (token: symbol) => {
-      if (window.__autoAdsInitPending === token) {
-        window.__autoAdsInitPending = undefined;
-      }
-      if (autoAdsPendingToken.current === token) {
-        autoAdsPendingToken.current = null;
-      }
-    };
-
-    if (
-      autoAdsInitRef.current ||
-      window.__autoAdsInitialized ||
-      autoAdsPendingToken.current ||
-      window.__autoAdsInitPending
-    ) {
-      return;
-    }
-
-    const pendingToken = setPendingToken();
-
-    // Manually inject script to avoid data-nscript warning from AdSense
-    // Defer injection to reduce main thread blocking during hydration
-    const injectAdsScript = () => {
-      if (ADS_SRC && !document.querySelector(`script[src="${ADS_SRC}"]`)) {
-        const script = document.createElement("script");
-        script.src = ADS_SRC;
-        script.async = true;
-        script.crossOrigin = "anonymous";
-        document.head.appendChild(script);
-      }
-    };
-
-    if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(() => injectAdsScript(), { timeout: 4000 });
-    } else {
-      setTimeout(injectAdsScript, 2000);
-    }
-
-    const pushAutoAds = () => {
-      if (autoAdsInitRef.current || window.__autoAdsInitialized) {
-        clearPendingToken(pendingToken);
-        return;
-      }
-
-      const initAds = () => {
-        // Double-check inside the callback to prevent race conditions
-        if (autoAdsInitRef.current || window.__autoAdsInitialized) {
-          clearPendingToken(pendingToken);
-          return;
-        }
-
-        try {
-          (window.adsbygoogle = window.adsbygoogle || []).push({
-            google_ad_client: ADS_CLIENT,
-            enable_page_level_ads: true,
-          });
-          autoAdsInitRef.current = true;
-          window.__autoAdsInitialized = true;
-          clearPendingToken(pendingToken);
-        } catch {
-          // Retry once after a short delay if loader isn't ready yet
-          setTimeout(() => {
-            if (autoAdsInitRef.current || window.__autoAdsInitialized) {
-              clearPendingToken(pendingToken);
-              return;
-            }
-            try {
-              (window.adsbygoogle = window.adsbygoogle || []).push({
-                google_ad_client: ADS_CLIENT,
-                enable_page_level_ads: true,
-              });
-              autoAdsInitRef.current = true;
-              window.__autoAdsInitialized = true;
-            } catch {
-              // swallow; individual slots will still render with manual pushes
-            } finally {
-              clearPendingToken(pendingToken);
-            }
-          }, 1000); // Increased delay to reduce CPU pressure
-        }
-      };
-
-      // Use requestIdleCallback if available to avoid blocking main thread
-      if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(() => initAds(), { timeout: 2000 });
-      } else {
-        setTimeout(initAds, 500);
-      }
-    };
-
-    // If the loader isn't on the page yet, wait briefly
-    // The script is now manually injected, but we still need to wait for it to load and parse.
-    const timer = setTimeout(pushAutoAds, 1000); // Increased delay
     return () => {
-      clearTimeout(timer);
-      if (autoAdsPendingToken.current === pendingToken) {
-        autoAdsPendingToken.current = null;
-      }
-      if (window.__autoAdsInitPending === pendingToken) {
-        window.__autoAdsInitPending = undefined;
-      }
+      cancelled = true;
     };
   }, [adsAllowed]);
-
-  useEffect(() => {
-    const handleTagErrors = (event: ErrorEvent) => {
-      if (
-        typeof event.message === "string" &&
-        event.message.includes("adsbygoogle.push() error:")
-      ) {
-        event.preventDefault();
-      }
-    };
-
-    window.addEventListener("error", handleTagErrors);
-    return () => {
-      window.removeEventListener("error", handleTagErrors);
-    };
-  }, []);
 
   return (
     <>
@@ -345,6 +231,9 @@ export default function GoogleScripts() {
           <GoogleAnalyticsPageview adsAllowed={adsAllowed} />
         </Suspense>
       )}
+
+      {/* Heavy tracking + Auto Ads: only load after consent */}
+      {adsAllowed && HeavyComponent && <HeavyComponent adsAllowed={adsAllowed} />}
     </>
   );
 }

@@ -9,7 +9,7 @@ import { BYDATES, DEFAULT_FILTER_VALUE } from "utils/constants";
 export const FILTER_CONFIGURATIONS: FilterConfig[] = [
   {
     key: "place",
-    displayName: "Població",
+    displayName: "place",
     defaultValue: "catalunya",
     type: "place",
     isEnabled: (state: FilterDisplayState) =>
@@ -23,10 +23,11 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
 
   {
     key: "category",
-    displayName: "Categoria",
+    displayName: "category",
     defaultValue: DEFAULT_FILTER_VALUE,
     type: "category",
-    isEnabled: (state: FilterDisplayState) => state.filters.category !== DEFAULT_FILTER_VALUE,
+    isEnabled: (state: FilterDisplayState) =>
+      state.filters.category !== DEFAULT_FILTER_VALUE,
     getDisplayText: (state: FilterDisplayState) => {
       if (state.filters.category === DEFAULT_FILTER_VALUE) return undefined;
       const category = state.extraData?.categories?.find(
@@ -39,22 +40,23 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
 
   {
     key: "byDate",
-    displayName: "Data",
+    displayName: "date",
     defaultValue: DEFAULT_FILTER_VALUE,
     type: "date",
-    isEnabled: (state: FilterDisplayState) => state.filters.byDate !== DEFAULT_FILTER_VALUE,
+    isEnabled: (state: FilterDisplayState) =>
+      state.filters.byDate !== DEFAULT_FILTER_VALUE,
     getDisplayText: (state: FilterDisplayState) => {
       const byDate = BYDATES.find(
         (item) => item.value === state.filters.byDate
       );
-      return byDate?.label;
+      return byDate?.labelKey;
     },
     getRemovalChanges: () => ({ byDate: DEFAULT_FILTER_VALUE }),
   },
 
   {
     key: "distance",
-    displayName: "Distància",
+    displayName: "distance",
     defaultValue: 50,
     type: "distance",
     dependencies: ["lat", "lon"],
@@ -79,7 +81,7 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
 
   {
     key: "searchTerm",
-    displayName: "Cerca",
+    displayName: "search",
     defaultValue: "",
     type: "search",
     // Don't show search term as a chip - it's always visible in the search input field

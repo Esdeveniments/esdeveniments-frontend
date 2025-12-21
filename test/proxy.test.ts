@@ -103,6 +103,27 @@ describe("proxy", () => {
       expect(result).toBeDefined();
     });
 
+    it("sets short CDN cache headers for public pages to avoid day-stale HTML", async () => {
+      const mockRequest = {
+        nextUrl: {
+          pathname: "/catalunya",
+          search: "",
+          searchParams: new URLSearchParams(),
+        },
+        headers: new Headers({ accept: "text/html" }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(mockRequest);
+
+      expect(result.headers.get("Cache-Control")).toBe(
+        "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
+      );
+    });
+
     it("handles /sw.js route with cache headers", async () => {
       const mockRequest = {
         nextUrl: {

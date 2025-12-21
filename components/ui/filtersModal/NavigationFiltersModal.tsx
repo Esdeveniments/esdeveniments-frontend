@@ -8,7 +8,8 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "../../../i18n/routing";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
@@ -22,6 +23,7 @@ import {
   GroupedOption,
   GeolocationError,
 } from "types/common";
+import { CATEGORY_CONFIG } from "@config/categories";
 import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
@@ -46,11 +48,39 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   userLocation: initialUserLocation,
   categories = [],
 }) => {
+  const tByDates = useTranslations("Config.ByDates");
+  const tCategories = useTranslations("Config.Categories");
+  const tSeoCategoryData = useTranslations("Partials.GeneratePagesData");
   const {
     regionsWithCities,
     isLoading: isLoadingRegionsWithCities,
     isError: isErrorRegionsWithCities,
   } = useGetRegionsWithCities(isOpen);
+  const t = useTranslations("Components.FiltersModal");
+
+  const getCategoryLabel = useCallback(
+    (category: CategorySummaryResponseDTO): string => {
+      const normalizedSlug =
+        typeof category.slug === "string" ? category.slug.toLowerCase() : "";
+
+      const config = normalizedSlug ? CATEGORY_CONFIG[normalizedSlug] : undefined;
+      if (config?.labelKey) {
+        return tCategories(config.labelKey);
+      }
+
+      if (normalizedSlug) {
+        const seoKey = `categories.${normalizedSlug}.titleSuffix` as Parameters<
+          typeof tSeoCategoryData
+        >[0];
+        if (tSeoCategoryData.has(seoKey)) {
+          return tSeoCategoryData(seoKey);
+        }
+      }
+
+      return category.name;
+    },
+    [tCategories, tSeoCategoryData]
+  );
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -171,6 +201,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   ]);
 
   const router = useRouter();
+  const locale = useLocale();
   const { setLoading } = useFilterLoading();
 
   const handlePlaceChange = useCallback(
@@ -242,24 +273,16 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
             switch (error.code) {
               case 1: // PERMISSION_DENIED
-                setUserLocationError(
-                  "Permisos de localització denegats. Activa la localització al navegador per utilitzar aquesta funció."
-                );
+                setUserLocationError(t("geo.permissionDenied"));
                 break;
               case 2: // POSITION_UNAVAILABLE
-                setUserLocationError(
-                  "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància."
-                );
+                setUserLocationError(t("geo.positionUnavailable"));
                 break;
               case 3: // TIMEOUT
-                setUserLocationError(
-                  "Temps d'espera esgotat. Prova de nou o selecciona una població."
-                );
+                setUserLocationError(t("geo.timeout"));
                 break;
               default:
-                setUserLocationError(
-                  "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
-                );
+                setUserLocationError(t("geo.genericError"));
             }
 
             resolveAndClear(undefined);
@@ -272,9 +295,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         );
       } else {
         console.log("Geolocation is not supported by this browser.");
-        setUserLocationError(
-          "La geolocalització no està disponible en aquest navegador."
-        );
+        setUserLocationError(t("geo.unsupported"));
         setUserLocationLoading(false);
         resolveAndClear(undefined);
       }
@@ -285,7 +306,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     setUserLocationError("");
 
     return pendingPromise;
-  }, [localUserLocation, userLocationLoading]);
+  }, [localUserLocation, t, userLocationLoading]);
 
   const handleUserLocation = useCallback(
     (value: string) => {
@@ -429,21 +450,36 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     };
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
-    const currentUrl =
-      typeof window !== "undefined"
-        ? `${window.location.pathname}${window.location.search}`
-        : "";
+
+    // `buildFilterUrl` returns a canonical URL WITHOUT a locale prefix.
+    // On locale-prefixed routes (e.g. `/es/catalunya`), `window.location.pathname`
+    // includes the prefix, which would incorrectly look like a change and leave the
+    // loading gate stuck when the router normalizes back to the same URL.
+    const currentUrl = (() => {
+      if (typeof window === "undefined") return "";
+
+      const { pathname, search } = window.location;
+      const localePrefix = `/${locale}`;
+      const normalizedPathname =
+        pathname === localePrefix
+          ? "/"
+          : pathname.startsWith(`${localePrefix}/`)
+            ? pathname.slice(localePrefix.length) || "/"
+            : pathname;
+
+      return `${normalizedPathname}${search}`;
+    })();
 
     // If nothing changed, avoid triggering loading state that won't auto-reset
     if (currentUrl === newUrl) {
       return true;
     }
 
-    sendEventToGA("Place", changes.place);
-    sendEventToGA("ByDate", changes.byDate);
-    sendEventToGA("Category", changes.category);
+    sendEventToGA("Place", changes.place, "filters_modal_apply");
+    sendEventToGA("ByDate", changes.byDate, "filters_modal_apply");
+    sendEventToGA("Category", changes.category, "filters_modal_apply");
     if (changes.distance !== undefined) {
-      sendEventToGA("Distance", changes.distance.toString());
+      sendEventToGA("Distance", changes.distance.toString(), "filters_modal_apply");
     }
 
     startNavigationFeedback();
@@ -487,21 +523,21 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const distanceLabel = useMemo(() => {
     if (isRegionSelected) {
-      return "Distància";
+      return t("distance.label");
     }
     if (selectedOption && localPlaceCoords) {
-      return `Distància des de ${selectedOption.label}`;
+      return t("distance.labelFromPlace", { place: selectedOption.label });
     }
-    return "Distància des de la teva ubicació";
-  }, [selectedOption, localPlaceCoords, isRegionSelected]);
+    return t("distance.labelFromLocation");
+  }, [selectedOption, localPlaceCoords, isRegionSelected, t]);
 
   // Helper text explaining the distance filter behavior
   const distanceHelperText = useMemo(() => {
     if (isRegionSelected) {
-      return "Per utilitzar el filtre de distància, selecciona una població específica o la teva ubicació actual.";
+      return t("distance.helperRegion");
     }
-    return "Si tries una població, calcularem el radi des d'aquell punt. Si no n'hi ha cap, utilitzarem la teva ubicació actual. Activa el filtre per limitar els resultats a un radi concret.";
-  }, [isRegionSelected]);
+    return t("distance.helperPlace");
+  }, [isRegionSelected, t]);
 
   const shouldShowGeolocationFeedback =
     isDistanceActive &&
@@ -512,9 +548,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const useLocationLabel = useMemo(
     () =>
       useCurrentLocationMode
-        ? "Estàs utilitzant la teva ubicació"
-        : "Utilitzar la meva ubicació",
-    [useCurrentLocationMode]
+        ? t("useLocation.using")
+        : t("useLocation.cta"),
+    [useCurrentLocationMode, t]
   );
 
   return (
@@ -522,15 +558,15 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       <Modal
         open={isOpen}
         setOpen={onClose}
-        title="Filtres"
-        actionButton="Aplicar filtres"
+        title={t("modal.title")}
+        actionButton={t("modal.action")}
         onActionButtonClick={applyFilters}
         testId="filters-modal"
       >
         <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
           <div className="w-full flex flex-col justify-start items-start gap-4">
             <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-              Poblacions
+              {t("modal.locations")}
             </p>
             <div className="w-full flex flex-col gap-2">
               <div className="w-full flex flex-col px-0">
@@ -538,7 +574,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   <SelectSkeleton />
                 ) : isErrorRegionsWithCities ? (
                   <div className="text-destructive text-sm py-2">
-                    Error carregant les poblacions. Torna-ho a provar més tard.
+                    {t("modal.loadError")}
                   </div>
                 ) : (
                   <Select
@@ -548,7 +584,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     value={selectedOption}
                     onChange={handlePlaceChange}
                     isClearable
-                    placeholder="Selecciona població o comarca"
+                    placeholder={t("modal.selectPlaceholder")}
                     isDisabled={isPlaceSelectDisabled}
                     testId="place-select"
                   />
@@ -564,27 +600,27 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               </button>
               {useCurrentLocationMode && (
                 <div className="text-xs text-border flex items-center gap-2">
-                  Ubicació actual activada.
+                  {t("useLocation.active")}
                   <button
                     onClick={() => setUseCurrentLocationMode(false)}
                     className="text-primary underline hover:text-primary/80 transition-colors"
                   >
-                    Canvia a una població
+                    {t("useLocation.switchToPlace")}
                   </button>
                 </div>
               )}
               {isRegionSelected && (
                 <div className="text-xs text-border bg-background border border-border rounded-md p-2">
-                  Has seleccionat una comarca. Les comarques no tenen un punt geogràfic concret, per això no es pot utilitzar el filtre de distància. Per utilitzar el filtre de distància, selecciona una població específica o utilitza la teva ubicació. Pots continuar filtrant per data i categories per afinar els resultats.
+                  {t("useLocation.regionNotice")}
                 </div>
               )}
             </div>
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
               <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
-                Data
+                {t("modal.dateHeading")}
               </p>
               <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-                {BYDATES.map(({ value, label }) => (
+                {BYDATES.map(({ value, labelKey }) => (
                   <RadioInput
                     key={value}
                     id={value}
@@ -592,7 +628,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     value={value}
                     checkedValue={localByDate}
                     onChange={handleByDateChange}
-                    label={label}
+                    label={tByDates(labelKey)}
                   />
                 ))}
               </div>
@@ -600,7 +636,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             {categories.length > 0 && (
               <fieldset className="w-full flex flex-col justify-start items-start gap-4">
                 <p className="w-full font-semibold font-barlow uppercase">
-                  Categories
+                  {t("modal.categoriesHeading")}
                 </p>
                 <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
                   {categories.map((category: CategorySummaryResponseDTO) => (
@@ -611,7 +647,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                       value={category.slug}
                       checkedValue={localCategory}
                       onChange={handleCategoryChange}
-                      label={category.name}
+                      label={getCategoryLabel(category)}
                     />
                   ))}
                 </div>
@@ -633,7 +669,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     className="h-4 w-4 accent-primary rounded border-border"
                     data-testid="distance-toggle"
                   />
-                  Filtrar per radi
+                  {t("distance.toggle")}
                 </label>
               </div>
               <p className={`text-sm -mt-2 ${isRegionSelected ? "text-destructive" : "text-border"}`}>
@@ -645,7 +681,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                       onClick={handleUseMyLocation}
                       className="text-primary underline hover:text-primary/80 transition-colors"
                     >
-                      Utilitzar la meva ubicació
+                      {t("useLocation.cta")}
                     </button>
                   </>
                 )}
@@ -655,7 +691,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   <div className="flex flex-col">
                     {userLocationLoading && (
                       <div className="text-sm text-border">
-                        Carregant localització...
+                        {t("geo.loading")}
                       </div>
                     )}
                     {userLocationError && (
@@ -681,7 +717,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                       : Number(DISTANCES[0])
                   }
                   onChange={handleDistanceChange}
-                  label="Esdeveniments a"
+                  label={t("distance.rangeLabel")}
                   disabled={distanceControlDisabled}
                   onMouseDown={() => {
                     setIsDragging(true);

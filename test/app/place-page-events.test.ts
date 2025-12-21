@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vites
 import { buildPlaceEventsPromise } from "app/[place]/page";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import type { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
+import { addLocalizedDateFields } from "@utils/mappers/event";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 vi.mock("@lib/helpers/event-fallback", () => ({
   fetchEventsWithFallback: vi.fn(),
@@ -102,7 +104,12 @@ describe("buildPlaceEventsPromise", () => {
 
     const result = await buildPlaceEventsPromise({ place: "catalunya" });
 
-    expect(result.events).toEqual([eventA, eventB]);
+    const localized = addLocalizedDateFields(
+      [eventA, eventB],
+      DEFAULT_LOCALE as AppLocale
+    );
+
+    expect(result.events).toEqual(localized);
     expect(result.noEventsFound).toBe(false);
     expect(result.serverHasMore).toBe(true);
   });

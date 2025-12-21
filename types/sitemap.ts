@@ -18,6 +18,7 @@ export interface SitemapField {
   changefreq: ChangeFreq;
   priority: number;
   image?: SitemapImage;
+  alternates?: Record<string, string>; // hreflang -> URL (include x-default)
 }
 
 export interface BuildSitemapOptions {
@@ -31,6 +32,7 @@ export interface SitemapContentProps {
     regions: import("./api/event").RegionSummaryResponseDTO[];
     cities: import("./api/city").CitySummaryResponseDTO[];
   }>;
+  locale: import("./i18n").AppLocale;
 }
 
 export interface SitemapHeaderProps {

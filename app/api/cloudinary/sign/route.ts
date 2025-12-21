@@ -1,19 +1,46 @@
+// DISABLED: Restaurant promotions feature is currently disabled
+// This endpoint can be re-enabled when restaurant promotions are needed
+// 
+// Original implementation is preserved below in comments for reference.
+// To re-enable: uncomment the code below and remove the simple 404 handler.
+
 import { NextRequest, NextResponse } from "next/server";
-export const runtime = "nodejs";
-import { v2 as cloudinary } from "cloudinary";
+
+export async function POST(_request: NextRequest) {
+  return NextResponse.json(
+    { error: "Restaurant promotions are currently disabled" },
+    { status: 404 }
+  );
+}
+
+/* 
+Original implementation (commented out):
+
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+
 import { CloudinarySignatureResponse } from "types/api/restaurant";
 import { handleApiError } from "@utils/api-error-handler";
 
-/**
- * Cloudinary signed upload endpoint
- * Generates signed parameters for client-side upload
- */
+function generateCloudinarySignature(
+  params: Record<string, string | number | undefined>,
+  apiSecret: string
+): string {
+  const sortedParams = Object.keys(params)
+    .filter((key) => params[key] !== undefined)
+    .sort()
+    .map((key) => `${key}=${params[key]}`)
+    .join("&");
+
+  const signatureString = sortedParams + apiSecret;
+  return crypto.createHash("sha1").update(signatureString).digest("hex");
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { public_id, folder = "restaurant-promotions" } =
       await request.json();
 
-    // Validate Cloudinary configuration
     if (
       !process.env.CLOUDINARY_CLOUD_NAME ||
       !process.env.CLOUDINARY_API_KEY ||
@@ -26,20 +53,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Configure Cloudinary
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-
-    // Generate signed upload parameters
     const timestamp = Math.round(new Date().getTime() / 1000);
-    const signature = cloudinary.utils.api_sign_request(
+    const signature = generateCloudinarySignature(
       {
-        timestamp,
+        timestamp: timestamp.toString(),
         folder,
-        public_id: public_id || undefined,
+        ...(public_id && { public_id }),
         transformation: "w_800,h_600,c_fill,q_auto,f_auto",
       },
       process.env.CLOUDINARY_API_SECRET
@@ -59,3 +78,4 @@ export async function POST(request: NextRequest) {
     });
   }
 }
+*/

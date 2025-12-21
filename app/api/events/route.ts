@@ -3,8 +3,6 @@ import { fetchEventsExternal } from "@lib/api/events-external";
 import { FetchEventsParams } from "types/event";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 // GET /api/events - proxy to external API with server-side HMAC signing
 export async function GET(request: Request) {
   try {

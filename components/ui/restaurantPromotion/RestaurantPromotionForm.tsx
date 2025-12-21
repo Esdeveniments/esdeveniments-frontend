@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { CloudinaryUploadWidget } from "./CloudinaryUploadWidget";
 import {
   getAvailableDurations,
@@ -22,6 +23,7 @@ export default function RestaurantPromotionForm({
   onSuccess,
   onError,
 }: RestaurantPromotionFormProps) {
+  const t = useTranslations("Components.RestaurantPromotionForm");
   // Suppress unused parameter warnings for optional callbacks
   void onSuccess;
   void onError;
@@ -239,11 +241,8 @@ export default function RestaurantPromotionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-4">Promote Your Restaurant</h3>
-        <p className="text-sm text-foreground/80 mb-6">
-          Get your restaurant featured on this event page and reach more
-          customers.
-        </p>
+        <h3 className="text-lg font-semibold mb-4">{t("heading")}</h3>
+        <p className="text-sm text-foreground/80 mb-6">{t("intro")}</p>
       </div>
 
       {/* Restaurant Name */}
@@ -252,7 +251,7 @@ export default function RestaurantPromotionForm({
           htmlFor="restaurantName"
           className="block text-sm font-medium text-foreground mb-1"
         >
-          Restaurant Name *
+          {t("restaurantNameLabel")}
         </label>
         <input
           type="text"
@@ -262,7 +261,7 @@ export default function RestaurantPromotionForm({
             setFormData((prev) => ({ ...prev, restaurantName: e.target.value }))
           }
           className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          placeholder="Enter your restaurant name"
+          placeholder={t("restaurantNamePlaceholder")}
         />
         {errors.restaurantName && (
           <p className="mt-1 text-sm text-red-600">{errors.restaurantName}</p>
@@ -275,7 +274,7 @@ export default function RestaurantPromotionForm({
           htmlFor="location"
           className="block text-sm font-medium text-foreground mb-1"
         >
-          Location *
+          {t("locationLabel")}
         </label>
         <input
           type="text"
@@ -285,7 +284,7 @@ export default function RestaurantPromotionForm({
             setFormData((prev) => ({ ...prev, location: e.target.value }))
           }
           className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          placeholder="Enter restaurant location"
+          placeholder={t("locationPlaceholder")}
         />
         {errors.location && (
           <p className="mt-1 text-sm text-red-600">{errors.location}</p>
@@ -298,7 +297,7 @@ export default function RestaurantPromotionForm({
           htmlFor="duration"
           className="block text-sm font-medium text-foreground mb-1"
         >
-          Promotion Duration *
+          {t("durationLabel")}
         </label>
         <select
           id="duration"
@@ -313,7 +312,7 @@ export default function RestaurantPromotionForm({
         >
           {durations.map((duration) => (
             <option key={duration} value={duration}>
-              {duration} day{duration > 1 ? "s" : ""}
+              {t("durationOption", { days: duration })}
             </option>
           ))}
         </select>
@@ -325,7 +324,7 @@ export default function RestaurantPromotionForm({
           htmlFor="geoScopeType"
           className="block text-sm font-medium text-foreground mb-1"
         >
-          Geographic Scope *
+          {t("geoScopeTypeLabel")}
         </label>
         <select
           id="geoScopeType"
@@ -340,7 +339,7 @@ export default function RestaurantPromotionForm({
         >
           {geoScopes.map((scope) => (
             <option key={scope} value={scope}>
-              {scope === "town" ? "Town/City" : "Region"}
+              {scope === "town" ? t("geoScopeTown") : t("geoScopeRegion")}
             </option>
           ))}
         </select>
@@ -352,7 +351,10 @@ export default function RestaurantPromotionForm({
           htmlFor="geoScopeId"
           className="block text-sm font-medium text-foreground mb-1"
         >
-          {formData.geoScopeType === "town" ? "Town/City" : "Region"} *
+          {formData.geoScopeType === "town"
+            ? t("geoScopeTown")
+            : t("geoScopeRegion")}{" "}
+          *
         </label>
         <input
           type="text"
@@ -362,9 +364,11 @@ export default function RestaurantPromotionForm({
             setFormData((prev) => ({ ...prev, geoScopeId: e.target.value }))
           }
           className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          placeholder={`Enter ${
-            formData.geoScopeType === "town" ? "town or city" : "region"
-          } name`}
+          placeholder={
+            formData.geoScopeType === "town"
+              ? t("geoScopeTownPlaceholder")
+              : t("geoScopeRegionPlaceholder")
+          }
         />
         {errors.geoScopeId && (
           <p className="mt-1 text-sm text-red-600">{errors.geoScopeId}</p>
@@ -377,7 +381,7 @@ export default function RestaurantPromotionForm({
           htmlFor="placeId"
           className="block text-sm font-medium text-foreground mb-1"
         >
-          Google Place ID (Optional)
+          {t("placeIdLabel")}
         </label>
         <input
           type="text"
@@ -387,18 +391,17 @@ export default function RestaurantPromotionForm({
             setFormData((prev) => ({ ...prev, placeId: e.target.value }))
           }
           className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          placeholder="Enter Google Place ID if available"
+          placeholder={t("placeIdPlaceholder")}
         />
         <p className="mt-1 text-xs text-foreground/70">
-          If your restaurant is on Google Maps, you can find the Place ID in the
-          URL
+          {t("placeIdHelp")}
         </p>
       </div>
 
       {/* Image Upload */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-1">
-          Restaurant Image *
+          {t("imageLabel")}
         </label>
         <CloudinaryUploadWidget
           onUpload={handleImageUpload}
@@ -412,13 +415,13 @@ export default function RestaurantPromotionForm({
       {/* Price Display */}
       <div className="bg-muted p-4 rounded-md">
         <div className="flex-between">
-          <span className="font-medium">Total Price:</span>
+          <span className="font-medium">{t("priceLabel")}</span>
           <span className="text-lg font-bold text-primary">
-            {isLoadingPrice ? "Loading..." : getPriceDisplay()}
+            {isLoadingPrice ? t("loading") : getPriceDisplay()}
           </span>
         </div>
         <p className="text-xs text-foreground/70 mt-1">
-          Payment will be processed securely via Stripe
+          {t("priceNote")}
         </p>
       </div>
 
@@ -428,7 +431,7 @@ export default function RestaurantPromotionForm({
         disabled={isSubmitting}
         className="btn-primary w-full"
       >
-        {isSubmitting ? "Processing..." : "Proceed to Payment"}
+        {isSubmitting ? t("processing") : t("submit")}
       </button>
 
       {errors.submit && (

@@ -1,6 +1,6 @@
 import { CitySummaryResponseDTO } from "types/api/city";
 import { createCache, createKeyedCache } from "lib/api/cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { fetchCitiesExternal } from "./cities-external";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
@@ -20,8 +20,9 @@ export function clearCitiesCaches(): void {
 }
 
 async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
-  const url = getInternalApiUrl(`/api/cities`);
+  const url = await getInternalApiUrl(`/api/cities`);
   const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["cities"] },
   });
   if (!response.ok) {
@@ -87,7 +88,9 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 async function fetchCityByIdApi(
   id: string | number
 ): Promise<CitySummaryResponseDTO | null> {
-  const response = await fetch(getInternalApiUrl(`/api/cities/${id}`), {
+  const url = await getInternalApiUrl(`/api/cities/${id}`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["cities", `city:${id}`] },
   });
   if (!response.ok) return null;

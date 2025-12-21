@@ -1,8 +1,14 @@
 // components/partials/WebsiteSchema.tsx
 import { siteUrl } from "@config/index";
+import { DEFAULT_LOCALE, localeToHrefLang, type AppLocale } from "types/i18n";
 import JsonLdServer from "./JsonLdServer";
 
-export default function WebsiteSchema() {
+export default function WebsiteSchema({
+  locale = DEFAULT_LOCALE,
+}: {
+  locale?: AppLocale;
+}) {
+  const inLanguage = localeToHrefLang[locale] ?? locale;
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -11,7 +17,7 @@ export default function WebsiteSchema() {
     alternateName: "Esdeveniments Catalunya",
     url: siteUrl,
     description: "Descobreix esdeveniments culturals a Catalunya",
-    inLanguage: "ca",
+    inLanguage,
     sameAs: [
       "https://www.facebook.com/esdevenimentscat",
       "https://www.instagram.com/esdevenimentscat",

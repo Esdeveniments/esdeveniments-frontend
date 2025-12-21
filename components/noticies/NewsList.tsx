@@ -1,9 +1,14 @@
+import { getTranslations } from "next-intl/server";
 import NewsCard from "@components/ui/newsCard";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsListProps } from "types/props";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import {
+  getLocaleSafely,
+  withLocalePath,
+} from "@utils/i18n-seo";
 
 export default async function NewsList({
   newsPromise,
@@ -11,7 +16,11 @@ export default async function NewsList({
   place,
   currentPage,
   pageSize,
+  basePath,
 }: NewsListProps) {
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Components.NewsList" });
+  const withLocale = (path: string) => withLocalePath(path, locale);
   const [response, placeType] = await Promise.all([
     newsPromise,
     placeTypePromise,
@@ -22,42 +31,54 @@ export default async function NewsList({
     return (
       <div className="flex flex-col items-center gap-4 px-2 lg:px-0 text-center">
         <h2 className="heading-3" data-testid="not-found-title">
-          No hem trobat notícies recents
+          {t("emptyTitle")}
         </h2>
         <p className="text-foreground-strong/70 max-w-2xl">
-          Encara no tenim novetats per {placeType.label}, però continuem afegint-ne
-          cada setmana. Mentrestant, pots explorar les últimes notícies d&apos;altres
-          zones.
+          {t("emptyBody", { place: placeType.label })}
         </p>
         <PressableAnchor
-          href="/noticies"
+          href={withLocale("/noticies")}
           className="text-primary underline"
           variant="inline"
           prefetch={false}
         >
-          Veure totes les notícies →
+          {t("viewAll")}
         </PressableAnchor>
       </div>
     );
   }
 
+  const schemaBasePath = basePath || `/noticies/${place}`;
+
+  const getItemPlace = (item: NewsSummaryResponseDTO) => {
+    const slug = item.city?.slug || item.region?.slug || place;
+    const label = item.city?.name || item.region?.name || placeType.label;
+    return { slug, label };
+  };
+
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": `${siteUrl}/noticies/${place}#news-itemlist`,
-    name: `Notícies de ${placeType.label}`,
+    "@id": `${siteUrl}${withLocale(schemaBasePath)}#news-itemlist`,
+    name: t("itemListName", { place: placeType.label }),
     numberOfItems: list.length,
-    itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "NewsArticle",
-        "@id": `${siteUrl}/noticies/${place}/${item.slug}`,
-        url: `${siteUrl}/noticies/${place}/${item.slug}`,
-        headline: item.title,
-        ...(item.imageUrl ? { image: item.imageUrl } : {}),
-      },
-    })),
+    itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => {
+      const itemPlace = basePath
+        ? getItemPlace(item)
+        : { slug: place, label: placeType.label };
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "NewsArticle",
+          "@id": `${siteUrl}${withLocale(`/noticies/${itemPlace.slug}/${item.slug}`)}`,
+          url: `${siteUrl}${withLocale(`/noticies/${itemPlace.slug}/${item.slug}`)}`,
+          headline: item.title,
+          ...(item.imageUrl ? { image: item.imageUrl } : {}),
+        },
+      };
+    }),
   };
 
   return (
@@ -65,32 +86,38 @@ export default async function NewsList({
       {/* Note: Head links for prev/next were here but next/head is not supported in App Router server components in the same way. 
           We omit them here or they should be handled via metadata if blocking is acceptable, 
           but since we are streaming, we can't easily inject into head. */}
-      
+
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
 
       <section className="flex flex-col gap-6 px-2 lg:px-0">
-        {list.map((event: NewsSummaryResponseDTO, index: number) => (
-          <NewsCard
-            key={`${event.id}-${index}`}
-            event={event}
-            placeSlug={place}
-            placeLabel={placeType.label}
-            variant={index === 0 ? "hero" : "default"}
-          />
-        ))}
+        {list.map((event: NewsSummaryResponseDTO, index: number) => {
+          const itemPlace = basePath
+            ? getItemPlace(event)
+            : { slug: place, label: placeType.label };
+
+          return (
+            <NewsCard
+              key={`${event.id}-${index}`}
+              event={event}
+              placeSlug={itemPlace.slug}
+              placeLabel={itemPlace.label}
+              variant={index === 0 ? "hero" : "default"}
+            />
+          );
+        })}
       </section>
       <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
         {currentPage > 0 ? (
           <PressableAnchor
             href={{
-              pathname: `/noticies/${place}`,
+              pathname: withLocale(basePath || `/noticies/${place}`),
               query: { page: String(currentPage - 1), size: String(pageSize) },
             }}
             prefetch={false}
             className="text-primary underline"
             variant="inline"
           >
-            ← Anterior
+            {t("prev")}
           </PressableAnchor>
         ) : (
           <span />
@@ -98,14 +125,14 @@ export default async function NewsList({
         {!response.last && (
           <PressableAnchor
             href={{
-              pathname: `/noticies/${place}`,
+              pathname: withLocale(basePath || `/noticies/${place}`),
               query: { page: String(currentPage + 1), size: String(pageSize) },
             }}
             prefetch={false}
             className="text-primary underline"
             variant="inline"
           >
-            Més notícies →
+            {t("next")}
           </PressableAnchor>
         )}
       </div>

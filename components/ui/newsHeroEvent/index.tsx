@@ -1,11 +1,15 @@
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
-export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
+export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Components.News" });
   const image = event.imageUrl;
-  const formatted = getFormattedDate(event.startDate, event.endDate);
+  const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;
@@ -48,7 +52,7 @@ export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
             className="btn-primary"
             variant="inline"
           >
-            Llegir més
+            {t("readMore")}
           </PressableAnchor>
         </div>
       </div>

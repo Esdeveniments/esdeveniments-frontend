@@ -1,26 +1,36 @@
 import NextImage from "next/image";
-import {
-  ClockIcon,
-  LocationMarkerIcon,
-  CalendarIcon,
-} from "@heroicons/react/outline";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import { buildDisplayLocation } from "@utils/location-helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import CardLink from "./CardLink";
 import { CardContentProps } from "types/props";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
-function CardContentServer({
+async function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
 }: CardContentProps) {
+  const locale = await getLocaleSafely();
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
+  const timeLabels = {
+    consult: tTime("consult"),
+    startsAt: tTime("startsAt"),
+    range: tTime("range"),
+    simpleRange: tTime("simpleRange"),
+  };
   const { description, icon } = event.weather || {};
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
 
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
@@ -37,12 +47,18 @@ function CardContentServer({
   const primaryLocation = truncateString(fullLocation, 80);
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+    : tCard("dateSingle", { nameDay, start: formattedStart });
 
   return (
     <>
-      <CardLink href={`/e/${event.slug}`} className="w-full">
+      <CardLink
+        href={`/e/${event.slug}`}
+        className="w-full"
+        data-analytics-event-name="select_event"
+        data-analytics-event-id={event.id ? String(event.id) : ""}
+        data-analytics-event-slug={event.slug || ""}
+      >
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
           {/* Title and Weather Icon */}
           <div className="bg-background h-fit flex justify-start items-start gap-2 pr-4">
@@ -106,7 +122,11 @@ function CardContentServer({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="px-2">
-            {formatEventTimeDisplayDetail(event.startTime, event.endTime)}
+            {formatEventTimeDisplayDetail(
+              event.startTime,
+              event.endTime,
+              timeLabels
+            )}
           </p>
         </div>
         {!isHorizontal && <div className="mb-8" />}

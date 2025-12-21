@@ -1,6 +1,9 @@
 import Description from "@components/ui/common/description";
 import React from "react";
+import TranslateDescription from "./TranslateDescription";
 import type { EventDescriptionProps } from "types/event";
+
+const DESCRIPTION_BODY_ID = "event-description-body";
 
 const EventDescription: React.FC<EventDescriptionProps> = ({
   description,
@@ -8,6 +11,8 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   locationValue,
   introText,
   locationType = "general",
+  locale,
+  showTranslate,
 }) => {
   return (
     <div className="max-w-none text-foreground min-w-0">
@@ -17,6 +22,16 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
         locationValue={locationValue}
         introText={introText}
         locationType={locationType}
+        descriptionHtmlId={DESCRIPTION_BODY_ID}
+        headerActions={
+          showTranslate ? (
+            <TranslateDescription
+              description={description}
+              locale={locale}
+              targetId={DESCRIPTION_BODY_ID}
+            />
+          ) : undefined
+        }
       />
     </div>
   );

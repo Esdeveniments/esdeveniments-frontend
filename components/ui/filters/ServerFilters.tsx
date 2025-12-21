@@ -1,103 +1,112 @@
 import { JSX } from "react";
-import AdjustmentsIcon from "@heroicons/react/outline/AdjustmentsIcon";
-import { FilterOperations } from "@utils/filter-operations";
-import type { FilterDisplayState } from "types/filters";
-import FilterButton from "./FilterButton";
-import { ServerFiltersProps } from "types/props";
+import { getTranslations } from "next-intl/server";
+import FiltersClient from "./FiltersClient";
+import type { ServerFiltersProps } from "types/props";
+import { CATEGORY_CONFIG } from "@config/categories";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
-const ServerFilters = ({
+const ServerFilters = async ({
   segments,
   queryParams,
   categories = [],
   placeTypeLabel,
   onOpenModal,
-}: ServerFiltersProps): JSX.Element => {
-  // Convert URL data to filter state for display
-  const filters = {
-    place: segments.place || "catalunya",
-    byDate: segments.date || DEFAULT_FILTER_VALUE,
-    category: segments.category || DEFAULT_FILTER_VALUE,
-    searchTerm: queryParams.search || "",
-    distance: parseInt(queryParams.distance || "50"),
-    lat: queryParams.lat ? parseFloat(queryParams.lat) : undefined,
-    lon: queryParams.lon ? parseFloat(queryParams.lon) : undefined,
+}: ServerFiltersProps): Promise<JSX.Element> => {
+  const tFilters = await getTranslations("Config.Filters");
+  const tFiltersUi = await getTranslations("Components.Filters");
+  const tByDates = await getTranslations("Config.ByDates");
+  const tCategories = await getTranslations("Config.Categories");
+  const tSeoCategoryData = await getTranslations("Partials.GeneratePagesData");
+
+  const getCategoryLabelBySlug = (
+    slug: unknown,
+    fallbackName?: string
+  ): string | null => {
+    const normalizedSlug = typeof slug === "string" ? slug.toLowerCase() : "";
+    if (!normalizedSlug) return null;
+
+    const config = CATEGORY_CONFIG[normalizedSlug];
+    if (config?.labelKey) {
+      return tCategories(config.labelKey);
+    }
+
+    const seoKey = `categories.${normalizedSlug}.titleSuffix` as Parameters<
+      typeof tSeoCategoryData
+    >[0];
+    if (tSeoCategoryData.has(seoKey)) {
+      return tSeoCategoryData(seoKey);
+    }
+
+    return fallbackName || normalizedSlug;
   };
 
-  // Create display state for configuration-driven operations
-  const displayState: FilterDisplayState = {
-    filters,
-    queryParams,
-    segments,
-    extraData: { categories, placeTypeLabel },
-  };
+  const baseCategoryEntries = Object.entries(CATEGORY_CONFIG)
+    .map(([slug, config]) => {
+      if (!config?.labelKey) return null;
+      const normalizedSlug = slug.toLowerCase();
+      return [normalizedSlug, tCategories(config.labelKey)] as const;
+    })
+    .filter((entry): entry is readonly [string, string] => Boolean(entry));
 
-  const configurations = FilterOperations.getAllConfigurations();
+  const dynamicCategoryEntries = categories
+    .map((category) => {
+      const normalizedSlug =
+        typeof category.slug === "string" ? category.slug.toLowerCase() : "";
+      if (!normalizedSlug) return null;
+      const label = getCategoryLabelBySlug(normalizedSlug, category.name);
+      if (!label) return null;
+      return [normalizedSlug, label] as const;
+    })
+    .filter((entry): entry is readonly [string, string] => Boolean(entry));
 
-  const isAnyFilterSelected = (): boolean => {
-    return FilterOperations.hasActiveFilters(displayState);
-  };
+  const currentCategorySlugRaw = segments.category;
+  const currentCategorySlug =
+    typeof currentCategorySlugRaw === "string"
+      ? currentCategorySlugRaw.toLowerCase()
+      : "";
+  const currentCategoryEntry: readonly [string, string] | null =
+    currentCategorySlug && currentCategorySlug !== DEFAULT_FILTER_VALUE
+      ? (() => {
+          const label = getCategoryLabelBySlug(currentCategorySlug);
+          return label ? ([currentCategorySlug, label] as const) : null;
+        })()
+      : null;
 
-  const getText = (value: string | undefined, defaultValue: string): string =>
-    value || defaultValue;
-
-  // Filter out searchTerm - it's always visible in the search input, no need for chip
-  const visibleConfigurations = configurations.filter(
-    (config) => config.key !== "searchTerm"
+  const categoryLabelsBySlug = Object.fromEntries(
+    new Map<string, string>([
+      ...baseCategoryEntries,
+      ...dynamicCategoryEntries,
+      ...(currentCategoryEntry ? [currentCategoryEntry] : []),
+    ])
   );
 
-  const sortedConfigurations = visibleConfigurations
-    .map((config) => ({
-      config,
-      enabled: FilterOperations.isEnabled(config.key, displayState),
-    }))
-    .sort((a, b) => Number(b.enabled) - Number(a.enabled));
+  const labels = {
+    triggerLabel: tFiltersUi("triggerLabel"),
+    displayNameMap: {
+      place: tFilters("place"),
+      category: tFilters("category"),
+      byDate: tFilters("date"),
+      distance: tFilters("distance"),
+      searchTerm: tFilters("search"),
+    },
+    byDates: {
+      avui: tByDates("today"),
+      dema: tByDates("tomorrow"),
+      setmana: tByDates("week"),
+      "cap-de-setmana": tByDates("weekend"),
+    },
+    categoryLabelsBySlug,
+  };
 
   return (
-    <div className="w-full bg-background flex justify-center items-center mt-element-gap">
-      <div className="w-full h-10 flex justify-start items-center cursor-pointer">
-        <div
-          onClick={onOpenModal}
-          className="mr-element-gap flex justify-center items-center gap-element-gap cursor-pointer"
-          data-testid="filters-open"
-        >
-          <AdjustmentsIcon
-            className={
-              isAnyFilterSelected()
-                ? "w-5 h-5 text-primary"
-                : "w-5 h-5 text-foreground-strong hover:text-primary"
-            }
-            aria-hidden="true"
-          />
-          <p className="hidden md:block body-small font-medium">Filtres</p>
-        </div>
-        <div
-          className="flex-1 flex items-center gap-element-gap-sm border-0 placeholder:text-border overflow-x-auto"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#cccccc transparent",
-          }}
-        >
-          {sortedConfigurations.map(({ config, enabled }) => (
-            <FilterButton
-              key={config.key}
-              text={getText(
-                FilterOperations.getDisplayText(config.key, displayState),
-                config.displayName
-              )}
-              enabled={enabled}
-              removeUrl={FilterOperations.getRemovalUrl(
-                config.key,
-                segments,
-                queryParams
-              )}
-              onOpenModal={onOpenModal}
-              testId={`filter-pill-${config.key}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
+    <FiltersClient
+      segments={segments}
+      queryParams={queryParams}
+      categories={categories}
+      placeTypeLabel={placeTypeLabel}
+      onOpenModal={onOpenModal}
+      labels={labels}
+    />
   );
 };
 

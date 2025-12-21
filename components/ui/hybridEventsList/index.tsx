@@ -1,4 +1,4 @@
-import { ReactElement, memo, Suspense } from "react";
+import { ReactElement, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
@@ -11,8 +11,11 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE } from "types/i18n";
 
-function HybridEventsList({
+async function HybridEventsList({
   initialEvents = [],
   pageData,
   noEventsFound = false,
@@ -23,18 +26,28 @@ function HybridEventsList({
   serverHasMore = false,
   hasNews,
   categories,
-}: HybridEventsListProps): ReactElement {
+}: HybridEventsListProps): Promise<ReactElement> {
+  const locale = await getLocaleSafely();
+  const tLoc = await getTranslations({
+    locale,
+    namespace: "Utils.LocationHelpers",
+  });
+  const newsLabels = {
+    newsAll: tLoc("newsAll"),
+    newsWithPlace: tLoc("newsWithPlace", { deLabel: "{deLabel}" }),
+  };
   const placeLabel = placeTypeLabel?.label;
   const placeType =
     placeTypeLabel?.type === "town"
       ? "town"
       : placeTypeLabel?.type === "region"
-      ? "region"
-      : undefined;
+        ? "region"
+        : undefined;
   const { href: newsHref, text: newsText } = getNewsCta(
     place,
     placeLabel,
-    placeType
+    placeType,
+    newsLabels
   );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
@@ -45,15 +58,23 @@ function HybridEventsList({
       </div>
     ) : null;
 
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
         className="container flex-col justify-center items-center pt-[6rem]"
         data-testid="events-list"
+        data-analytics-container="true"
+        data-analytics-context="events_list"
+        data-analytics-place-slug={place || undefined}
+        data-analytics-category-slug={category || undefined}
+        data-analytics-date-slug={date || undefined}
       >
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
+          prefix={prefix}
         />
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
@@ -72,6 +93,11 @@ function HybridEventsList({
     <div
       className="container flex-col justify-center items-center pt-[6rem]"
       data-testid="events-list"
+      data-analytics-container="true"
+      data-analytics-context="events_list"
+      data-analytics-place-slug={place || undefined}
+      data-analytics-category-slug={category || undefined}
+      data-analytics-date-slug={date || undefined}
     >
       {pageData && (
         <Suspense
@@ -143,4 +169,4 @@ function HybridEventsList({
   );
 }
 
-export default memo(HybridEventsList);
+export default HybridEventsList;
