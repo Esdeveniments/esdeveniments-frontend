@@ -6,6 +6,7 @@ declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     __LAST_E2E_PUBLISH_SLUG__?: string;
+    __OPENED_URLS__?: string[];
     __adsConsentGranted?: boolean;
     __autoAdsInitialized?: boolean;
     __autoAdsInitPending?: symbol;

@@ -6,7 +6,7 @@ import {
   getOptimalImageQuality,
   getOptimalImageSizes,
 } from "@utils/image-quality";
-import { withImageCacheKey } from "@utils/image-cache";
+import { buildOptimizedImageUrl } from "@utils/image-cache";
 
 // Server-side compatible Image component
 function ImageServer({
@@ -41,7 +41,7 @@ function ImageServer({
     customQuality: quality,
   });
 
-  const finalImageSrc = cacheKey ? withImageCacheKey(image, cacheKey) : image;
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
 
   return (
     <div
@@ -49,6 +49,7 @@ function ImageServer({
       style={{
         position: "relative",
         aspectRatio: "500 / 260", // Prevent CLS by reserving space
+        maxWidth: "100%", // Ensure image doesn't exceed container
       }}
     >
       <NextImage
@@ -62,6 +63,7 @@ function ImageServer({
         style={{
           objectFit: "cover",
           height: "auto", // Maintain aspect ratio
+          maxWidth: "100%", // Ensure image respects container constraints
         }}
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}

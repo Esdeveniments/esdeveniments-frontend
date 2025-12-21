@@ -6,14 +6,25 @@ import {
   formatEventTimeDisplay,
   formatEventTimeDisplayDetail,
 } from "@utils/date-helpers";
+import { getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
-const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
+const CardHorizontalServer = async ({
   event,
   isPriority = false,
   useDetailTimeFormat = false,
-}) => {
+}: CardHorizontalServerProps) => {
+  const locale = await getLocaleSafely();
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
+  const timeLabels = {
+    consult: tTime("consult"),
+    startsAt: tTime("startsAt", { time: "{time}" }),
+    range: tTime("range", { start: "{start}", end: "{end}" }),
+    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
+  };
   const title = truncateString(event.title || "", 60);
   // const description = truncateString(event.description || "", 60);
 
@@ -28,16 +39,20 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
   // Format the date
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
   const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+    : tCard("dateSingle", { nameDay, start: formattedStart });
 
   return (
     <CardLink
       href={`/e/${event.slug}`}
       className="block group relative h-full pressable-card transition-card"
+      data-analytics-event-name="select_event"
+      data-analytics-event-id={event.id ? String(event.id) : ""}
+      data-analytics-event-slug={event.slug || ""}
     >
       <article className="w-full h-full bg-background overflow-hidden cursor-pointer rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200 relative z-10 flex flex-col">
         {/* Image */}
@@ -110,8 +125,16 @@ const CardHorizontalServer: React.FC<CardHorizontalServerProps> = ({
               </svg>
               <span>
                 {useDetailTimeFormat
-                  ? formatEventTimeDisplayDetail(event.startTime, event.endTime)
-                  : formatEventTimeDisplay(event.startTime, event.endTime)}
+                  ? formatEventTimeDisplayDetail(
+                    event.startTime,
+                    event.endTime,
+                    timeLabels
+                  )
+                  : formatEventTimeDisplay(
+                    event.startTime,
+                    event.endTime,
+                    timeLabels
+                  )}
               </span>
             </div>
 

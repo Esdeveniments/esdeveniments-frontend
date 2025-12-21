@@ -1,7 +1,7 @@
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { createCache } from "lib/api/cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import {
   fetchRegionsExternal,
   fetchRegionsOptionsExternal,
@@ -24,8 +24,9 @@ export function clearRegionsCaches(): void {
 }
 
 async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
-  const url = getInternalApiUrl(`/api/regions`);
+  const url = await getInternalApiUrl(`/api/regions`);
   const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["regions"] },
   });
   if (!response.ok) {
@@ -99,7 +100,9 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
 async function fetchRegionsWithCitiesFromApi(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
-  const response = await fetch(getInternalApiUrl(`/api/regions/options`), {
+  const url = await getInternalApiUrl(`/api/regions/options`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["regions", "regions:options"] },
   });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -179,7 +182,9 @@ export async function fetchRegionById(
   id: string | number
 ): Promise<RegionSummaryResponseDTO | null> {
   try {
-    const response = await fetch(getInternalApiUrl(`/api/regions/${id}`), {
+    const url = await getInternalApiUrl(`/api/regions/${id}`);
+    const response = await fetch(url, {
+      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 86400, tags: ["regions", `region:${id}`] },
     });
     if (!response.ok) return null;

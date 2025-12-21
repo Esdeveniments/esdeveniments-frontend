@@ -1,5 +1,6 @@
 import { JSX } from "react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { SocialProps } from "types/props";
 
 const SOCIAL_BUTTON_CLASS =
@@ -105,11 +106,12 @@ const renderTelegram = (link: string | undefined): JSX.Element | null =>
     </Link>
   ) : null;
 
-export default function Social({ links }: SocialProps): JSX.Element {
+export default async function Social({ links }: SocialProps): Promise<JSX.Element> {
+  const t = await getTranslations("Components.Social");
   return (
     <div className="flex flex-col items-center gap-element-gap-sm">
       <h3 className="body-small font-semibold text-foreground/70 uppercase tracking-wider">
-        Segueix-nos
+        {t("followUs")}
       </h3>
       <div className="flex justify-center items-center gap-3">
         {renderTwitter(links.twitter)}

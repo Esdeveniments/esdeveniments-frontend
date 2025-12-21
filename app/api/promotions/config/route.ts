@@ -7,8 +7,6 @@ import {
 } from "@config/pricing";
 import { PromotionsConfigResponse } from "types/api/restaurant";
 
-export const runtime = "nodejs";
-
 export async function GET() {
   const durations = getAvailableDurations();
   const geoScopes = getAvailableGeoScopes();

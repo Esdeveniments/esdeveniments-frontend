@@ -1,0 +1,31 @@
+{
+  "ci": {
+    "collect": {
+      "url": ["http://localhost:3000/", "http://localhost:3000/catalunya"],
+      "numberOfRuns": 3,
+      "startServerCommand": "yarn start -p 3000",
+      "startServerReadyPattern": "Ready",
+      "chromeFlags": "--no-sandbox --disable-dev-shm-usage",
+      "settings": {
+        "preset": "desktop",
+        "extraHeaders": {
+          "accept-language": "ca"
+        }
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.45 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 5000 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.25 }],
+
+        "categories:accessibility": ["warn", { "minScore": 0.8 }],
+        "categories:best-practices": ["warn", { "minScore": 0.8 }],
+        "categories:seo": ["warn", { "minScore": 0.8 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

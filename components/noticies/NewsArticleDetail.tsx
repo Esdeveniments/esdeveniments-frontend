@@ -15,6 +15,12 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { notFound } from "next/navigation";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import {
+  DEFAULT_LOCALE,
+  localeToHrefLang,
+} from "types/i18n";
 
 export default async function NewsArticleDetail({
   detailPromise,
@@ -64,15 +70,31 @@ export default async function NewsArticleDetail({
     return notFound();
   }
 
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "App.NewsArticleDetail",
+  });
+
   const plainDescription = DOMPurify.sanitize(detail.description || "", {
     ALLOWED_TAGS: [],
   });
   const dateRangeText = (() => {
-    const f = getFormattedDate(detail.startDate, detail.endDate);
+    const f = getFormattedDate(detail.startDate, detail.endDate, locale);
     return f.formattedEnd
       ? `${f.formattedStart} – ${f.formattedEnd}`
       : f.formattedStart;
   })();
+  const localePrefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocalePath = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!localePrefix) return path;
+    if (path === "/") return localePrefix || "/";
+    if (path.startsWith(localePrefix)) return path;
+    return `${localePrefix}${path}`;
+  };
+  const absolute = (path: string) =>
+    path.startsWith("http") ? path : `${siteUrl}${withLocalePath(path)}`;
 
   // Build keywords from available data (categories and locations)
   const categoryKeywords = Array.from(
@@ -99,7 +121,7 @@ export default async function NewsArticleDetail({
     datePublished: detail.createdAt,
     dateModified: detail.createdAt,
     image: detail.events?.[0]?.imageUrl,
-    inLanguage: "ca",
+    inLanguage: localeToHrefLang[locale] ?? locale,
     isAccessibleForFree: true,
     articleSection: detail.type,
     ...(keywords.length > 0 ? { keywords } : {}),
@@ -115,55 +137,56 @@ export default async function NewsArticleDetail({
       url: siteUrl,
       logo: `${siteUrl}/static/images/logo-seo-meta.webp`,
     },
-    url: `${siteUrl}/noticies/${place}/${article}`,
+    url: absolute(`/noticies/${place}/${article}`),
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${siteUrl}/noticies/${place}/${article}`,
+      "@id": absolute(`/noticies/${place}/${article}`),
     },
   };
 
   const breadcrumbs = [
-    { name: "Inici", url: siteUrl },
-    { name: "Notícies", url: `${siteUrl}/noticies` },
-    { name: placeType.label, url: `${siteUrl}/noticies/${place}` },
-    { name: detail.title, url: `${siteUrl}/noticies/${place}/${article}` },
+    { name: t("breadcrumbHome"), url: absolute("/") },
+    { name: t("breadcrumbNews"), url: absolute("/noticies") },
+    { name: placeType.label, url: absolute(`/noticies/${place}`) },
+    { name: detail.title, url: absolute(`/noticies/${place}/${article}`) },
   ];
   const webPageSchema = generateWebPageSchema({
     title: detail.title,
     description: detail.description,
-    url: `${siteUrl}/noticies/${place}/${article}`,
+    url: absolute(`/noticies/${place}/${article}`),
     breadcrumbs,
+    locale,
   });
 
   return (
-    <div className="min-h-screen bg-background mt-4">
+    <div className="w-full min-h-screen bg-background mt-4">
       {/* Breadcrumbs */}
-      <div className="bg-background border-b border-border">
+      <div className="w-full bg-background border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav
             className="text-sm text-foreground-strong/70"
             aria-label="Breadcrumb"
           >
             <PressableAnchor
-              href="/"
+              href={withLocalePath("/")}
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
-              Inici
+              {t("breadcrumbHome")}
             </PressableAnchor>{" "}
             /{" "}
             <PressableAnchor
-              href="/noticies"
+              href={withLocalePath("/noticies")}
               className="hover:underline"
               variant="inline"
               prefetch={false}
             >
-              Notícies
+              {t("breadcrumbNews")}
             </PressableAnchor>{" "}
             /{" "}
             <PressableAnchor
-              href={`/noticies/${place}`}
+              href={withLocalePath(`/noticies/${place}`)}
               className="hover:underline"
               variant="inline"
               prefetch={false}
@@ -179,18 +202,20 @@ export default async function NewsArticleDetail({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
           <h1 className="heading-1 mb-6">{detail.title}</h1>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-foreground-strong/70">
             <div className="flex items-center gap-4">
               <span className="bg-primary text-background px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
-                {detail.type === "WEEKEND" ? "Cap de setmana" : "Setmana"}{" "}
+                {detail.type === "WEEKEND"
+                  ? t("sectionWeekend")
+                  : t("sectionWeek")}{" "}
                 {dateRangeText}
               </span>
             </div>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <span>{detail.readingTime} min lectura</span>
+              <span>{t("readingTime", { minutes: detail.readingTime })}</span>
               <ViewCounter visits={detail.visits} hideText={false} />
             </div>
           </div>
@@ -207,7 +232,7 @@ export default async function NewsArticleDetail({
 
         {detail.events && detail.events.length > 0 && (
           <EventsSection
-            title="ELS IMPRESCINDIBLES"
+            title={t("mustSee")}
             events={detail.events.slice(0, Math.min(detail.events.length, 3))}
             showHero={true}
             showNumbered={true}
@@ -216,7 +241,7 @@ export default async function NewsArticleDetail({
 
         {detail.events && detail.events.length > 3 && (
           <EventsSection
-            title="MÉS PROPOSTES"
+            title={t("moreProposals")}
             events={detail.events.slice(3)}
           />
         )}

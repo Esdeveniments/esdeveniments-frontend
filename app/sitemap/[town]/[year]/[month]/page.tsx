@@ -3,8 +3,9 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   generateJsonData,
   getFormattedDate,
-  formatCatalanA,
+  formatPlacePreposition,
 } from "@utils/helpers";
+import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
@@ -21,8 +22,12 @@ import {
 } from "@components/partials/seo-meta";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-
-export const revalidate = 86400;
+import {
+  getLocaleSafely,
+  toLocalizedUrl,
+  withLocalePath,
+} from "@utils/i18n-seo";
+import type { AppLocale } from "types/i18n";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -33,26 +38,57 @@ export async function generateMetadata({
 }: {
   params: Promise<MonthStaticPathParams>;
 }) {
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
+  const tConstants = await getTranslations({
+    locale,
+    namespace: "Components.Constants",
+  });
+  const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
   const { town, year, month } = await params;
-
   if (!isValidPlace(town)) {
     return {
-      title: "Not Found",
-      description: "Page not found",
+      title: tNotFound("title"),
+      description: tNotFound("description"),
     };
   }
 
-  const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
+  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];
+  const { slug: normalizedMonthSlug, label: fallbackMonthLabel } =
+    normalizeMonthParam(month);
+  const monthIndex = monthSlugs.findIndex(
+    (slug) => normalizeMonthParam(slug).slug === normalizedMonthSlug
+  );
+  const monthSlug =
+    monthSlugs[monthIndex] && monthIndex >= 0
+      ? monthSlugs[monthIndex]
+      : normalizedMonthSlug;
+  const monthLabel =
+    (monthLabels[monthIndex] && monthIndex >= 0
+      ? monthLabels[monthIndex]
+      : undefined) || fallbackMonthLabel;
   const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatCatalanA(townLabel, placeType, false);
+  const locationPhrase = formatPlacePreposition(
+    townLabel,
+    placeType,
+    locale,
+    false
+  );
 
   return buildPageMeta({
-    title: `Arxiu de ${townLabel} del ${monthLabel} del ${year} - Esdeveniments.cat`,
-    description: `Descobreix què va passar ${locationPhrase} el ${monthLabel} del ${year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir ${townLabel} - Arxiu - Esdeveniments.cat`,
+    title: t("metaTitle", { town: townLabel, month: monthLabel, year }),
+    description: t("metaDescription", {
+      locationPhrase,
+      month: monthLabel,
+      year,
+      town: townLabel,
+    }),
     canonical: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
+    locale,
   });
 }
 
@@ -62,14 +98,39 @@ export default async function Page({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
+  const locale: AppLocale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
+  const tConstants = await getTranslations({
+    locale,
+    namespace: "Components.Constants",
+  });
+  const withLocale = (path: string) => withLocalePath(path, locale);
 
   if (!isValidPlace(town)) {
     notFound();
   }
 
-  const { slug: monthSlug, label: monthLabel } = normalizeMonthParam(month);
+  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];
+  const { slug: normalizedMonthSlug, label: fallbackMonthLabel } =
+    normalizeMonthParam(month);
+  const monthIndex = monthSlugs.findIndex(
+    (slug) => normalizeMonthParam(slug).slug === normalizedMonthSlug
+  );
+  const monthSlug =
+    monthSlugs[monthIndex] && monthIndex >= 0
+      ? monthSlugs[monthIndex]
+      : normalizedMonthSlug;
+  const monthLabel =
+    (monthLabels[monthIndex] && monthIndex >= 0
+      ? monthLabels[monthIndex]
+      : undefined) || fallbackMonthLabel;
 
-  const { from, until } = getHistoricDates(monthSlug, Number(year));
+  const { from, until } = getHistoricDates(
+    monthSlug,
+    Number(year),
+    monthSlugs.length > 0 ? monthSlugs : undefined
+  );
 
   const [events, place] = await Promise.all([
     fetchEvents({
@@ -83,29 +144,34 @@ export default async function Page({
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatCatalanA(townLabel, placeType, false);
+  const locationPhrase = formatPlacePreposition(
+    townLabel,
+    placeType,
+    locale,
+    false
+  );
 
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(
-        (event) => !event.isAd
-      )
+      (event) => !event.isAd
+    )
     : [];
 
   // Generate event JSON-LD data
   const jsonData = filteredEvents
     ? filteredEvents
-        .map((event) => generateJsonData(event))
-        .filter((data) => data !== null)
+      .map((event) => generateJsonData(event, locale))
+      .filter((data) => data !== null)
     : [];
 
   // Generate structured data for the month archive
   const breadcrumbs = [
-    { name: "Inici", url: siteUrl },
-    { name: "Arxiu", url: `${siteUrl}/sitemap` },
-    { name: townLabel, url: `${siteUrl}/sitemap/${town}` },
+    { name: t("breadcrumbs.home"), url: toLocalizedUrl("/", locale) },
+    { name: t("breadcrumbs.archive"), url: toLocalizedUrl("/sitemap", locale) },
+    { name: townLabel, url: toLocalizedUrl(`/sitemap/${town}`, locale) },
     {
       name: `${monthLabel} ${year}`,
-      url: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
+      url: toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale),
     },
   ];
 
@@ -113,23 +179,29 @@ export default async function Page({
   const eventsItemList =
     filteredEvents.length > 0
       ? generateItemListStructuredData(
-          filteredEvents,
-          `Esdeveniments de ${townLabel} - ${monthLabel} ${year}`,
-          `Col·lecció d'esdeveniments culturals de ${townLabel} del ${monthLabel} del ${year}`
-        )
+        filteredEvents,
+        t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+        t("itemListDescription", { town: townLabel, month: monthLabel, year }),
+        locale
+      )
       : null;
 
   // Generate collection page schema
   const collectionPageSchema = generateCollectionPageSchema({
-    title: `Arxiu de ${townLabel} - ${monthLabel} ${year}`,
-    description: `Esdeveniments culturals que van tenir lloc ${locationPhrase} durant el ${monthLabel} del ${year}`,
-    url: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
+    title: t("collectionTitle", { town: townLabel, month: monthLabel, year }),
+    description: t("collectionDescription", {
+      locationPhrase,
+      month: monthLabel,
+      year,
+    }),
+    url: toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale),
     breadcrumbs,
+    locale,
     numberOfItems: filteredEvents.length,
     mainEntity: eventsItemList || {
       "@type": "Thing",
-      name: `Esdeveniments de ${townLabel} - ${monthLabel} ${year}`,
-      description: "Col·lecció d'esdeveniments culturals",
+      name: t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+      description: t("collectionFallbackDescription"),
     },
   });
 
@@ -159,19 +231,19 @@ export default async function Page({
 
         <header className="text-center">
           <h1 className="heading-2 mb-2">
-            Arxiu {townLabel} - {monthLabel} del {year}
+            {t("headerTitle", { town: townLabel, month: monthLabel, year })}
           </h1>
           <p className="body-normal text-foreground/80">
             {filteredEvents.length > 0
-              ? `${filteredEvents.length} esdeveniments culturals documentats`
-              : `No s'han trobat esdeveniments per aquest període`}
+              ? t("headerCount", { count: filteredEvents.length })
+              : t("headerEmpty")}
           </p>
         </header>
 
         <section className="w-full">
           {filteredEvents.length > 0 ? (
             <div className="stack gap-4">
-              <h2 className="sr-only">Llista d&apos;esdeveniments</h2>
+              <h2 className="sr-only">{t("srList")}</h2>
               {filteredEvents.map((event: EventSummaryResponseDTO) => {
                 const { formattedStart, formattedEnd } = getFormattedDate(
                   event.startDate,
@@ -183,7 +255,7 @@ export default async function Page({
                     className="border-b border-border/30 pb-4 w-full"
                   >
                     <PressableAnchor
-                      href={`/e/${event.slug}`}
+                      href={withLocale(`/e/${event.slug}`)}
                       className="hover:text-primary block group"
                       variant="inline"
                       prefetch={false}
@@ -230,24 +302,24 @@ export default async function Page({
         {filteredEvents.length > 0 && (
           <footer className="pt-8 border-t border-border text-center">
             <p className="body-small text-foreground/80 mb-4">
-              Vols explorar més esdeveniments de {townLabel}?
+              {t("footerExplore", { town: townLabel })}
             </p>
             <div className="flex-center gap-4">
               <PressableAnchor
-                href={`/sitemap/${town}`}
+                href={withLocale(`/sitemap/${town}`)}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
                 variant="inline"
                 prefetch={false}
               >
-                Veure tots els arxius
+                {t("footerViewArchives")}
               </PressableAnchor>
               <PressableAnchor
-                href={`/${town}`}
+                href={withLocale(`/${town}`)}
                 className="text-primary hover:text-primary-dark body-small transition-colors"
                 variant="inline"
                 prefetch={false}
               >
-                Esdeveniments actuals
+                {t("footerCurrentEvents")}
               </PressableAnchor>
             </div>
           </footer>

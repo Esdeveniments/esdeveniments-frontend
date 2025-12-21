@@ -1,11 +1,24 @@
 export const sendEventToGA = (
   filterName: string,
-  filterValue: string
+  filterValue: string,
+  context?: string
 ): void => {
   if (typeof window !== "undefined" && typeof window.gtag === "function") {
+    const keyMap: Record<string, string> = {
+      Place: "place",
+      ByDate: "byDate",
+      Category: "category",
+      Distance: "distance",
+    };
+    const filterKey = keyMap[filterName] ?? filterName;
+
     window.gtag("event", "filter_change", {
       event_category: "Filter",
       event_label: `${filterName}: ${filterValue}`,
+      filter_name: filterName,
+      filter_key: filterKey,
+      filter_value: filterValue,
+      context,
     });
   }
 };

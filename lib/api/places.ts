@@ -1,6 +1,6 @@
 import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache, createCache } from "@lib/api/cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache } from "react";
 
 const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
@@ -22,7 +22,9 @@ async function fetchPlaceBySlugApi(
 ): Promise<PlaceResponseDTO | null> {
   const slug = String(key);
   const encodedSlug = encodeURIComponent(slug);
-  const response = await fetch(getInternalApiUrl(`/api/places/${encodedSlug}`), {
+  const url = await getInternalApiUrl(`/api/places/${encodedSlug}`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["places", `place:${slug}`] },
   });
   if (response.status === 404) {
@@ -52,7 +54,9 @@ export async function fetchPlaceBySlug(
 export const getPlaceBySlug = cache(fetchPlaceBySlug);
 
 async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
-  const response = await fetch(getInternalApiUrl(`/api/places`), {
+  const url = await getInternalApiUrl(`/api/places`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["places"] },
   });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

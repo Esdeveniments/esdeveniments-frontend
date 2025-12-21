@@ -2,7 +2,11 @@ import { cache } from "react";
 import { captureException, captureMessage } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
 import { fetchWithHmac } from "./fetch-wrapper";
-import { getInternalApiUrl, buildEventsQuery } from "@utils/api-helpers";
+import {
+  getInternalApiUrl,
+  buildEventsQuery,
+  getVercelProtectionBypassHeaders,
+} from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import {
   parseEventDetail,
@@ -190,7 +194,10 @@ export async function fetchEventBySlug(
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
     // Use getInternalApiUrl which now properly resolves to CloudFront in SST
-    const res = await fetch(getInternalApiUrl(`/api/events/${fullSlug}`), {
+    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
+
+    const res = await fetch(internalApiUrl, {
+      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
     });
 
@@ -203,15 +210,16 @@ export async function fetchEventBySlug(
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error text");
       console.error(
-        `fetchEventBySlug: HTTP error! status: ${res.status}, body: ${errorText}`
+        `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
       );
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     return parseEventDetail(await res.json());
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
-      error
+      errorMessage
     );
     return null;
   }
@@ -368,7 +376,7 @@ function createE2EEvent(
 
   const fallbackRegion = extras?.region ?? {
     id: safeRegionId,
-    name: `Regió ${safeRegionId}`,
+    name: `Region ${safeRegionId}`,
     slug: slugifySegment(`regio-${safeRegionId}`),
   };
 
@@ -426,6 +434,9 @@ export async function fetchCategorizedEvents(
 ): Promise<CategorizedEvents> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
+    if (isE2ETestMode) {
+      return buildE2EFallbackCategorizedEvents();
+    }
     console.warn(
       "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object"
     );
@@ -481,9 +492,9 @@ export async function fetchCategorizedEvents(
     }
     const data = await response.json();
     const validated = parseCategorizedEvents(data);
-    if (!validated) {
+    if (!validated || Object.keys(validated).length === 0) {
       console.error("fetchCategorizedEvents: Runtime validation failed");
-      return {};
+      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
     }
     return validated;
   } catch {
@@ -491,7 +502,10 @@ export async function fetchCategorizedEvents(
     try {
       const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
       const validated = parseCategorizedEvents(data);
-      return validated || {};
+      if (validated && Object.keys(validated).length > 0) {
+        return validated;
+      }
+      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
     } catch (fallbackError) {
       // Sanitize error logging to prevent information disclosure
       const errorMessage = getSanitizedErrorMessage(fallbackError);
@@ -499,7 +513,7 @@ export async function fetchCategorizedEvents(
         "fetchCategorizedEvents: Both direct and external API failed:",
         errorMessage
       );
-      return {};
+      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
     }
   }
 }
@@ -507,6 +521,51 @@ export async function fetchCategorizedEvents(
 // Cached wrapper to deduplicate categorized events within the same request
 // Mirrors existing pattern used for events/news slugs
 export const getCategorizedEvents = cache(fetchCategorizedEvents);
+
+function buildE2EFallbackCategorizedEvents(): CategorizedEvents {
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const placeholderEvent: EventSummaryResponseDTO = {
+    id: "e2e-fallback",
+    hash: "e2e-fallback",
+    slug: "e2e-fallback",
+    title: "Esdeveniment de prova E2E",
+    type: "FREE",
+    url: "https://example.com",
+    description: "Esdeveniment de prova per a E2E.",
+    imageUrl: "https://via.placeholder.com/800x600",
+    startDate: now.toISOString(),
+    startTime: null,
+    endDate: tomorrow.toISOString(),
+    endTime: null,
+    location: "Barcelona",
+    visits: 0,
+    origin: "MANUAL",
+    city: {
+      id: 1,
+      name: "Barcelona",
+      slug: "barcelona",
+      latitude: 41.3851,
+      longitude: 2.1734,
+      postalCode: "08001",
+      rssFeed: null,
+      enabled: true,
+    },
+    region: { id: 1, name: "Barcelona", slug: "barcelona" },
+    province: { id: 1, name: "Barcelona", slug: "barcelona" },
+    categories: [
+      {
+        id: 1,
+        name: "música",
+        slug: "musica",
+      },
+    ],
+  };
+
+  return {
+    musica: [placeholderEvent],
+  };
+}
 
 /**
  * Filter out past events from an array of events.

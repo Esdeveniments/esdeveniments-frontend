@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
 import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
@@ -20,6 +22,7 @@ import {
   PageData,
   JsonLdScript,
 } from "types/common";
+import type { AppLocale } from "types/i18n";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
@@ -43,11 +46,9 @@ import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
+import { addLocalizedDateFields } from "@utils/mappers/event";
 
 // page-level ISR not set here; fetch-level caching applies
-export const revalidate = 300;
-// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
-export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
@@ -100,7 +101,6 @@ export async function generateMetadata({
   const categoryData = categories.find((cat) => cat.slug === actualCategory);
 
   const pageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place,
     byDate: actualDate as ByDateOptions,
     placeTypeLabel,
@@ -111,10 +111,12 @@ export async function generateMetadata({
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
   });
+  const locale = await getLocaleSafely();
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
+    locale,
   });
 }
 
@@ -193,6 +195,11 @@ export default async function ByDatePage({
 }) {
   const { place, byDate } = await params;
   const search = await searchParams;
+  const locale: AppLocale = await getLocaleSafely();
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDate",
+  });
 
   try {
     validatePlaceOrThrow(place);
@@ -282,7 +289,6 @@ export default async function ByDatePage({
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);
       const pageData: PageData = await generatePagesData({
-        currentYear: new Date().getFullYear(),
         place,
         byDate: actualDate as ByDateOptions,
         placeTypeLabel,
@@ -304,6 +310,7 @@ export default async function ByDatePage({
         actualDate,
         finalCategory,
         categoryName: categoryData?.name,
+        t: tFallback,
       });
     }
   })();
@@ -314,6 +321,7 @@ export default async function ByDatePage({
     actualDate,
     paramsForFetch,
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
+    locale,
   });
 
   const hasNewsPromise = hasNewsForPlace(place).catch((error) => {
@@ -352,6 +360,7 @@ export default async function ByDatePage({
           title: pageData.title,
           description: pageData.metaDescription,
           url: pageData.canonical,
+          locale,
         })
       }
     />
@@ -363,49 +372,67 @@ function buildFallbackPlaceByDateShellData({
   actualDate,
   finalCategory,
   categoryName,
+  t,
 }: {
   place: string;
   actualDate: string;
   finalCategory?: string;
   categoryName?: string;
+  t: (key: string, values?: Record<string, string>) => string;
 }): { placeTypeLabel: PlaceTypeAndLabel; pageData: PageData } {
   const placeTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
   const hasSpecificDate =
     actualDate && actualDate !== DEFAULT_FILTER_VALUE && actualDate !== "";
-  const dateLabel = hasSpecificDate ? actualDate : "els propers dies";
+  const dateLabel = hasSpecificDate ? actualDate : t("dateFallback");
   const categoryLabel =
     finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
       ? categoryName || finalCategory
       : "";
+  const categoryTitleSuffix = categoryLabel ? ` · ${categoryLabel}` : "";
+  const categorySubSuffix = categoryLabel ? ` (${categoryLabel})` : "";
+  const categoryDescriptionSuffix = categoryLabel
+    ? t("categoryDescriptionSuffix", { categoryLabel })
+    : "";
   const canonicalSegments = [place];
   if (hasSpecificDate) {
     canonicalSegments.push(actualDate);
   }
   const canonicalPath = `/${canonicalSegments.join("/")}`;
   const canonical = `${siteUrl}${canonicalPath}`;
-  const title = `Esdeveniments ${dateLabel} a ${place}${
-    categoryLabel ? ` · ${categoryLabel}` : ""
-  }`;
-  const subTitle = `Descobreix plans ${
-    hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
-  } a ${place}${categoryLabel ? ` (${categoryLabel})` : ""}.`;
+  const title = t("title", {
+    dateLabel,
+    place,
+    categoryLabel: categoryTitleSuffix,
+  });
+  const subTitle = hasSpecificDate
+    ? t("subtitleWithDate", {
+      date: actualDate,
+      place,
+      categoryLabel: categorySubSuffix,
+    })
+    : t("subtitleFallback", { place, categoryLabel: categorySubSuffix });
 
   return {
     placeTypeLabel,
     pageData: {
       title,
       subTitle,
-      metaTitle: `${title} | Esdeveniments.cat`,
-      metaDescription: `Explora activitats i plans ${
-        hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
-      } a ${place}${
-        categoryLabel ? ` en la categoria ${categoryLabel}` : ""
-      }.`,
+      metaTitle: t("metaTitle", { title }),
+      metaDescription: hasSpecificDate
+        ? t("metaDescriptionWithDate", {
+          date: actualDate,
+          place,
+          categoryDescriptionSuffix,
+        })
+        : t("metaDescriptionFallback", {
+          place,
+          categoryDescriptionSuffix,
+        }),
       canonical,
-      notFoundTitle: "Sense esdeveniments disponibles",
-      notFoundDescription: `No hem trobat esdeveniments ${
-        hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
-      } a ${place}. Torna-ho a intentar més tard.`,
+      notFoundTitle: t("notFoundTitle"),
+      notFoundDescription: hasSpecificDate
+        ? t("notFoundDescriptionWithDate", { date: actualDate, place })
+        : t("notFoundDescriptionFallback", { place }),
     },
   };
 }
@@ -416,12 +443,14 @@ async function buildPlaceByDateEventsPromise({
   actualDate,
   paramsForFetch,
   pageDataPromise,
+  locale,
 }: {
   place: string;
   finalCategory?: string;
   actualDate: string;
   paramsForFetch: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
+  locale: AppLocale;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -442,8 +471,9 @@ async function buildPlaceByDateEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const eventsWithAds = insertAds(events);
-  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const localizedEvents = addLocalizedDateFields(events, locale);
+  const eventsWithAds = insertAds(localizedEvents);
+  const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const pageData = await pageDataPromise;
   const structuredScripts: JsonLdScript[] = [];
 
@@ -452,7 +482,9 @@ async function buildPlaceByDateEventsPromise({
       validEvents,
       finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
         ? `Esdeveniments ${finalCategory} ${place}`
-        : `Esdeveniments ${actualDate} ${place}`
+        : `Esdeveniments ${actualDate} ${place}`,
+      undefined,
+      locale
     );
 
     structuredScripts.push({
@@ -465,6 +497,7 @@ async function buildPlaceByDateEventsPromise({
       description: pageData.metaDescription,
       url: pageData.canonical,
       numberOfItems: validEvents.length,
+      locale,
     });
 
     if (collectionSchema) {

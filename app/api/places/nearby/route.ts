@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import {
   GooglePlaceResponse,
   GooglePlacesNearbyRequest,
@@ -11,9 +12,8 @@ import {
 } from "types/api/restaurant";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 export async function GET(request: NextRequest) {
+  const t = await getTranslations("Api.PlacesNearby");
   const { searchParams } = new URL(request.url);
   const latStr = searchParams.get("lat");
   const lngStr = searchParams.get("lng");
@@ -26,13 +26,13 @@ export async function GET(request: NextRequest) {
   const lng = lngStr ? parseFloat(lngStr) : NaN;
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return NextResponse.json(
-      { error: "Invalid coordinates: lat,lng must be numbers" },
+      { error: t("invalidNumber") },
       { status: 400 }
     );
   }
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return NextResponse.json(
-      { error: "Invalid coordinates: lat ∈ [-90,90], lng ∈ [-180,180]" },
+      { error: t("invalidRange") },
       { status: 400 }
     );
   }
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
   if (!apiKey) {
     console.error("GOOGLE_PLACES_API_KEY is not configured");
     return NextResponse.json(
-      { error: "Places API not configured" },
+      { error: t("notConfigured") },
       {
         status: 500,
         headers: { "Cache-Control": "no-store" },
@@ -444,7 +444,7 @@ export async function GET(request: NextRequest) {
         return {
           place_id: placeId,
           name: place.displayName?.text || "Restaurant",
-          vicinity: place.formattedAddress || "Localització no disponible",
+          vicinity: place.formattedAddress || t("locationUnavailable"),
           address_lines: addressLines,
           address_locality: locality,
           address_administrative_area: adminArea,

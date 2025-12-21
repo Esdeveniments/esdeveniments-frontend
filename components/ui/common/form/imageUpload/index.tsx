@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { useRef, useState } from "react";
-import UploadIcon from "@heroicons/react/outline/UploadIcon";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import UploadIcon from "@heroicons/react/outline/esm/UploadIcon";
 import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
@@ -9,6 +10,7 @@ import {
   MAX_ORIGINAL_LIMIT_LABEL,
 } from "@utils/constants";
 import { compressImageIfNeeded } from "@utils/image-optimizer";
+import { normalizeUrl } from "@utils/string-helpers";
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   value,
@@ -16,17 +18,60 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   progress,
   isUploading = false,
   uploadMessage,
+  mode = "upload",
+  onModeChange,
+  imageUrlValue = "",
+  onImageUrlChange,
+  imageUrlError,
 }) => {
+  const t = useTranslations("Components.ImageUploader");
   const fileSelect = useRef<HTMLInputElement>(null);
-  const [imgData, setImgData] = useState<string | null>(value);
+  const [imgData, setImgData] = useState<string | null>(value || imageUrlValue || null);
   const [dragOver, setDragOver] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [localUrlError, setLocalUrlError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setImgData(value || imageUrlValue || null);
+  }, [value, imageUrlValue]);
+
+  const isUploadMode = mode === "upload";
 
   const resetMessages = () => {
     setError(null);
     setStatus(null);
+    setLocalUrlError(null);
+  };
+
+  const handleModeSwitch = (nextMode: "upload" | "url") => {
+    if (nextMode === mode) return;
+    resetMessages();
+    setDragOver(false);
+    if (nextMode === "url") {
+      onUpload(null);
+      setImgData(imageUrlValue || null);
+    } else {
+      setImgData(value || null);
+    }
+    onModeChange?.(nextMode);
+  };
+
+  const handleImageUrlInput = (value: string) => {
+    resetMessages();
+    onImageUrlChange?.(value);
+  };
+
+  const handleImageUrlBlur = () => {
+    if (!onImageUrlChange) return;
+    const normalized = normalizeUrl(imageUrlValue || "");
+    if (!normalized) {
+      setLocalUrlError(t("imageUrlInvalid"));
+      return;
+    }
+    onImageUrlChange(normalized);
+    setImgData(normalized);
   };
 
   async function handleImageUpload(): Promise<void> {
@@ -44,16 +89,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     ];
 
     if (!acceptedImageTypes.includes(file.type as AcceptedImageTypes)) {
-      setError(
-        "El fitxer seleccionat no és una imatge suportada. Carrega un fitxer en format JPEG, PNG, JPG o WEBP."
-      );
+      setError(t("unsupported"));
       return false;
     }
 
     if (file.size > MAX_ORIGINAL_FILE_BYTES) {
-      setError(
-        `La imatge supera el límit màxim de ${MAX_ORIGINAL_LIMIT_LABEL} MB. Redueix la mida de la imatge abans de tornar-ho a intentar.`
-      );
+      setError(t("originalTooLarge", { limit: MAX_ORIGINAL_LIMIT_LABEL }));
       return false;
     }
 
@@ -80,9 +121,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         }
       } catch (compressionError) {
         console.error("Image optimization failed", compressionError);
-        setError(
-          "No hem pogut reduir la imatge. Revisa la connexió i torna-ho a intentar."
-        );
+        setError(t("compressFailed"));
         return null;
       } finally {
         setIsOptimizing(false);
@@ -90,9 +129,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
 
     if (workingFile.size > MAX_TOTAL_UPLOAD_BYTES) {
-      setError(
-        `La mida de la imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Redueix la mida de la imatge abans de tornar-ho a intentar.`
-      );
+      setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
       return null;
     }
 
@@ -102,6 +139,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const onChangeImage = async (
     e: React.ChangeEvent<HTMLInputElement>
   ): Promise<void> => {
+    if (!isUploadMode) return;
     const file = e.target.files?.[0];
     if (!file) {
       return;
@@ -116,6 +154,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const handleDrop = async (
     e: React.DragEvent<HTMLDivElement>
   ): Promise<void> => {
+    if (!isUploadMode) {
+      setDragOver(false);
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
@@ -146,61 +188,134 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       fileSelect.current.value = "";
     }
     onUpload(null);
+    onImageUrlChange?.("");
   };
 
   const isRemoteUploading = progress > 0 && progress < 100;
+  const displayedError = error || localUrlError || imageUrlError || null;
   const isInteractionDisabled = isOptimizing || isUploading || isRemoteUploading;
 
   return (
     <div className="w-full text-foreground-strong">
-      <label htmlFor="image" className="text-foreground-strong font-bold">
-        Imatge *
+      <label htmlFor="image" className="form-label">
+        {t("label")}
       </label>
 
-      <div
-        className={`mt-2 border ${dragOver ? "border-primary" : "border-border"
-          } rounded-xl cursor-pointer`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(event) => {
-          void handleDrop(event);
-        }}
-      >
-        <div className="flex justify-center items-center h-full">
-          {progress === 0 ? (
-            <div className="text-center">
-              <button
-                className="bg-background hover:bg-primary font-bold px-2 py-2 rounded-xl disabled:opacity-60"
-                onClick={handleImageUpload}
-                type="button"
-                disabled={isInteractionDisabled}
-              >
-                <UploadIcon className="w-6 h-6 text-foreground-strong hover:text-background" />
-              </button>
-            </div>
-          ) : (
-            <span className="text-foreground-strong">{progress}%</span>
-          )}
-
-          <input
-            ref={fileSelect}
-            type="file"
-            accept="image/png, image/jpeg, image/jpg, image/webp"
-            style={{ display: "none" }}
-            onChange={(event) => {
-              void onChangeImage(event);
-            }}
-            disabled={isInteractionDisabled}
-          />
-        </div>
+      <div className="flex gap-2 mt-3">
+        <button
+          type="button"
+          className={`px-4 py-2.5 rounded-button font-medium text-sm transition-all ${isUploadMode
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground hover:bg-border"
+            }`}
+          onClick={() => handleModeSwitch("upload")}
+          aria-pressed={isUploadMode}
+        >
+          {t("uploadMode")}
+        </button>
+        <button
+          type="button"
+          className={`px-4 py-2.5 rounded-button font-medium text-sm transition-all ${!isUploadMode
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground hover:bg-border"
+            }`}
+          onClick={() => handleModeSwitch("url")}
+          aria-pressed={!isUploadMode}
+        >
+          {t("urlMode")}
+        </button>
       </div>
+
+      {isUploadMode && (
+        <div
+          className={`mt-3 border-2 border-dashed rounded-card ${dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50"
+            } ${isInteractionDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"} transition-all`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(event) => {
+            void handleDrop(event);
+          }}
+          onClick={() => {
+            if (isInteractionDisabled) return;
+            void handleImageUpload();
+          }}
+          onKeyDown={(event) => {
+            if (isInteractionDisabled) return;
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              void handleImageUpload();
+            }
+          }}
+          role="button"
+          tabIndex={isInteractionDisabled ? -1 : 0}
+          aria-disabled={isInteractionDisabled}
+        >
+          <div className="flex-center flex-col gap-3 p-8 text-center">
+            {progress === 0 ? (
+              <>
+                <UploadIcon className="w-10 h-10 text-foreground/50" />
+                <p className="body-normal text-foreground/70">
+                  {t("uploadDropCta")}
+                </p>
+                <p className="body-small text-foreground/50">
+                  {t("uploadDropHelper")}
+                </p>
+                {/* Clear CTA Button */}
+                <span className="inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-primary-foreground min-h-[44px]">
+                  {t("selectButton")}
+                </span>
+                <p className="body-small text-foreground/50 mt-1">
+                  {t("formatHelper")}
+                </p>
+              </>
+            ) : (
+              <span className="body-normal text-foreground-strong">
+                {t("progress", { progress })}
+              </span>
+            )}
+
+            <input
+              ref={fileSelect}
+              type="file"
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+              style={{ display: "none" }}
+              onChange={(event) => {
+                void onChangeImage(event);
+              }}
+              disabled={isInteractionDisabled}
+            />
+          </div>
+        </div>
+      )}
+      {!isUploadMode && (
+        <div className="mt-3 space-y-3">
+          <label
+            htmlFor="image-url"
+            className="w-full form-label"
+          >
+            {t("imageUrlLabel")}
+          </label>
+          <input
+            id="image-url"
+            type="text"
+            value={imageUrlValue}
+            placeholder={t("imageUrlPlaceholder")}
+            onChange={(event) => handleImageUrlInput(event.target.value)}
+            onBlur={handleImageUrlBlur}
+            className="input min-h-[44px]"
+          />
+          <p className="form-helper">
+            {t("imageUrlHelper")}
+          </p>
+        </div>
+      )}
       {isOptimizing && (
         <p className="text-sm text-foreground/70 mt-2">
-          Optimitzant la imatge per complir el límit de {MAX_UPLOAD_LIMIT_LABEL} MB...
+          {t("optimizing", { limit: MAX_UPLOAD_LIMIT_LABEL })}
         </p>
       )}
       {progress > 0 && (
@@ -213,8 +328,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           </div>
           <p className="text-xs text-foreground/70 mt-1">
             {progress >= 100
-              ? "Imatge pujada correctament."
-              : `Pujant la imatge (${progress}%)...`}
+              ? t("uploadSuccess")
+              : t("uploading", { progress })}
           </p>
         </div>
       )}
@@ -226,8 +341,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       {uploadMessage && (
         <p className="text-sm text-foreground/80 mt-2">{uploadMessage}</p>
       )}
-      {error && <p className="text-primary text-sm mt-2">{error}</p>}
-      {imgData && (
+      {displayedError && <p className="text-primary text-sm mt-2">{displayedError}</p>}
+      {imgData && (imgData.startsWith("http") || imgData.startsWith("data:") || imgData.startsWith("/")) ? (
         <div className="flex justify-center items-start p-4">
           <button
             onClick={handleRemoveImage}
@@ -250,7 +365,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             </svg>
           </button>
           <Image
-            alt="Imatge"
+            alt={t("altPreview")}
             height={100}
             width={100}
             className="object-contain"
@@ -261,7 +376,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             }}
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

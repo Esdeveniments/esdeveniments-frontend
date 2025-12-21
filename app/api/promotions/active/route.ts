@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ActivePromotion } from "types/api/restaurant";
 
-export const runtime = "nodejs";
-
 /**
  * Placeholder endpoint to fetch active promotion for an event.
  * Returns null until backend persistence is implemented.

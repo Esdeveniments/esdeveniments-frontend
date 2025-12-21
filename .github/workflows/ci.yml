@@ -53,15 +53,93 @@ jobs:
       - name: Type check
         run: yarn typecheck
 
+      - name: Check i18n translations
+        run: yarn i18n:check
+
       - name: Run unit tests (Vitest)
         env:
           CI: true
         run: yarn test
 
+      - name: Generate service worker (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+        run: yarn prebuild
+
       - name: Build application
         env:
           NODE_ENV: production
         run: yarn build
+
+      - name: Analyze bundle sizes (JSON)
+        run: node scripts/analyze-bundles-cli.mjs --format json > bundle-sizes.json
+
+      - name: Compare bundle sizes against baseline
+        run: node scripts/compare-bundle-sizes.mjs --baseline bundle-size-baseline.json --current bundle-sizes.json
+
+      - name: Upload bundle sizes report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-sizes
+          path: bundle-sizes.json
+          retention-days: 14
+
+  lighthouse:
+    name: Lighthouse CI (regression tripwire)
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 25
+
+    env:
+      LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate service worker (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+        run: yarn prebuild
+
+      - name: Build application
+        env:
+          NODE_ENV: production
+        run: yarn build
+
+      - name: Run Lighthouse CI
+        env:
+          NODE_ENV: production
+        run: yarn lighthouse:ci
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouseci-report
+          path: .lighthouseci/
+          retention-days: 14
+          if-no-files-found: ignore
 
   e2e:
     name: E2E tests (Playwright)
@@ -126,6 +204,8 @@ jobs:
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
           # Provide server-only secret to the preview deployment so server HMAC signing works
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          # Vercel Deployment Protection bypass secret (optional but required for CI E2E against protected previews)
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           # Deploy and capture logs
           LOG=$(mktemp)
@@ -146,6 +226,7 @@ jobs:
           npx vercel@25 --token="$VERCEL_TOKEN" \
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
+            --env VERCEL_AUTOMATION_BYPASS_SECRET="$VERCEL_AUTOMATION_BYPASS_SECRET" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --build-env HMAC_SECRET="$HMAC_SECRET" \
             --confirm | tee "$LOG"
@@ -162,12 +243,18 @@ jobs:
           echo "preview-url=$URL" >> $GITHUB_OUTPUT
       - name: Verify preview readiness
         if: ${{ env.PREVIEW_URL != '' }}
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           echo "Verifying deployment at ${{ env.PREVIEW_URL }}"
           MAX_RETRIES=5
           RETRY=0
           while [ $RETRY -lt $MAX_RETRIES ]; do
-            if curl -f "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null; then
+            RESP=$(curl -fsSL \
+              -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
+              -H "x-vercel-set-bypass-cookie: true" \
+              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || true)
+            if echo "$RESP" | head -c 1 | grep -q "{"; then
               echo "Preview is ready"
               exit 0
             fi
@@ -183,7 +270,8 @@ jobs:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
-        run: yarn test:e2e
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: yarn test:e2e -- -c playwright.remote.config.ts
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

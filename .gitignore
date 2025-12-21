@@ -10,6 +10,9 @@
 playwright-report/
 test-results/
 
+# lighthouse-ci
+.lighthouseci/
+
 # generated service worker
 /public/sw.js
 
@@ -39,6 +42,11 @@ yarn-error.log*
 
 # logs
 *.log
+
+# bundle analysis outputs (generated locally/CI)
+/bundle-analysis-current.txt
+/bundle-sizes.json
+/bundle-sizes-new.json
 
 # local env files
 .env

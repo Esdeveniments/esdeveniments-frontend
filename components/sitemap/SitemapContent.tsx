@@ -1,13 +1,17 @@
+import { getTranslations } from "next-intl/server";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { generateSiteNavigationElementSchema } from "@components/partials/seo-meta";
 import type { SitemapContentProps } from "types/sitemap";
+import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
 
 export default async function SitemapContent({
   dataPromise,
+  locale,
 }: SitemapContentProps) {
+  const t = await getTranslations("Components.SitemapContent");
   const { regions, cities } = await dataPromise;
+  const withLocale = (path: string) => withLocalePath(path, locale);
 
   // Sort regions and cities by name
   const sortedRegions = [...regions].sort((a, b) =>
@@ -20,12 +24,12 @@ export default async function SitemapContent({
   // Generate navigation schema for regions and cities
   const regionNavigation = sortedRegions.map((region) => ({
     name: region.name,
-    url: `${siteUrl}/sitemap/${region.slug}`,
+    url: toLocalizedUrl(`/sitemap/${region.slug}`, locale),
   }));
 
   const cityNavigation = sortedCities.slice(0, 50).map((city) => ({
     name: city.name,
-    url: `${siteUrl}/sitemap/${city.slug}`,
+    url: toLocalizedUrl(`/sitemap/${city.slug}`, locale),
   }));
 
   const siteNavigationSchema = generateSiteNavigationElementSchema([
@@ -45,22 +49,20 @@ export default async function SitemapContent({
       <section className="stack gap-8">
         <header>
           <h1 className="heading-1 mb-4" data-testid="sitemap-title">
-            Arxiu d&apos;esdeveniments culturals
+            {t("title")}
           </h1>
           <p className="body-large text-foreground">
-            Descobreix tot el què ha passat a Catalunya cada any. Navega per
-            comarques i poblacions per trobar l&apos;història cultural del
-            territori.
+            {t("description")}
           </p>
         </header>
 
         <div className="stack gap-6">
-          <h2 className="heading-2">Comarques de Catalunya</h2>
+          <h2 className="heading-2">{t("regionsTitle")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4" role="list">
             {sortedRegions.map((region) => (
               <div key={region.slug} role="listitem">
                 <PressableAnchor
-                  href={`/sitemap/${region.slug}`}
+                  href={withLocale(`/sitemap/${region.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                   data-testid="sitemap-region-link"
                   variant="inline"
@@ -73,12 +75,12 @@ export default async function SitemapContent({
         </div>
 
         <div className="stack gap-6">
-          <h2 className="heading-2">Poblacions principals</h2>
+          <h2 className="heading-2">{t("citiesTitle")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
             {sortedCities.map((city) => (
               <div key={city.slug} role="listitem">
                 <PressableAnchor
-                  href={`/sitemap/${city.slug}`}
+                  href={withLocale(`/sitemap/${city.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
                   data-testid="sitemap-city-link"
                   variant="inline"

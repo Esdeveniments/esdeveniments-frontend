@@ -45,6 +45,23 @@ vi.mock("@components/ui/adArticle", () => ({
   default: () => <div data-testid="ad-slot" />,
 }));
 
+vi.mock("@components/ui/primitives/PressableAnchor", () => ({
+  default: ({
+    href,
+    children,
+    prefetch, // eslint-disable-line @typescript-eslint/no-unused-vars
+    ...rest
+  }: {
+    href: string;
+    children: React.ReactNode;
+    prefetch?: boolean;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("@heroicons/react/solid/ChevronRightIcon", () => ({
   default: () => <svg data-testid="chevron-icon" />,
 }));

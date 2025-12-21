@@ -116,6 +116,15 @@ export default $config({
           }
           return secret;
         })(),
+        DEEPL_API_KEY: (() => {
+          const key = process.env.DEEPL_API_KEY;
+          if (!key) {
+            throw new Error(
+              "DEEPL_API_KEY environment variable must be set for SST deployment"
+            );
+          }
+          return key;
+        })(),
       },
       warm: 5,
       transform: {

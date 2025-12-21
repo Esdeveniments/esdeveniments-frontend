@@ -9,8 +9,6 @@ import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
 import { clearCitiesCaches } from "@lib/api/cities";
 
-export const runtime = "nodejs";
-
 /**
  * Whitelist of cache tags that can be revalidated via this endpoint.
  * Only includes tags related to places/regions data (infrequently changing).
@@ -177,10 +175,7 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON body" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
     const { tags } = body;
@@ -249,8 +244,8 @@ export async function POST(request: Request) {
         cloudflareResult.purged
           ? "purged"
           : cloudflareResult.skipped
-            ? "skipped"
-            : "failed"
+          ? "skipped"
+          : "failed"
       }`
     );
 
@@ -301,4 +296,3 @@ export async function DELETE() {
     { status: 405 }
   );
 }
-

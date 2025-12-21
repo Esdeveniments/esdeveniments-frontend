@@ -1,15 +1,16 @@
-import { memo, FC } from "react";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import type { EventWeatherProps } from "types/event";
 
-const Weather: FC<EventWeatherProps> = ({ weather }) => {
+export default async function Weather({ weather }: EventWeatherProps) {
+  const t = await getTranslations("Components.Weather");
   if (
     !weather ||
     !weather.temperature ||
     !weather.description ||
     !weather.icon
   ) {
-    return <p>No hi ha dades meteorològiques disponibles.</p>;
+    return <p>{t("noData")}</p>;
   }
 
   const { temperature, description, icon } = weather;
@@ -35,8 +36,4 @@ const Weather: FC<EventWeatherProps> = ({ weather }) => {
       </div>
     </div>
   );
-};
-
-Weather.displayName = "Weather";
-
-export default memo(Weather);
+}

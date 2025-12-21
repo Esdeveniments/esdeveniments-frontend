@@ -8,7 +8,7 @@ test.describe("Sitemaps and feed", () => {
   test("sitemap index renders", async ({ page }) => {
     await page.goto("/sitemap", { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("sitemap-page")).toBeVisible();
-    await expect(page.getByTestId("sitemap-title")).toBeVisible();
+    await expect(page.getByTestId("sitemap-title").first()).toBeVisible();
   });
 
   test("sitemap displays regions and cities data", async ({ page }) => {
@@ -16,7 +16,7 @@ test.describe("Sitemaps and feed", () => {
     
     // Verify page structure
     await expect(page.getByTestId("sitemap-page")).toBeVisible();
-    await expect(page.getByTestId("sitemap-title")).toBeVisible();
+    await expect(page.getByTestId("sitemap-title").first()).toBeVisible();
     
     // Verify regions section has data
     const regionLinks = page.getByTestId("sitemap-region-link");

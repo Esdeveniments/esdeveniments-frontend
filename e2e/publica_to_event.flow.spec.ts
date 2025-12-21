@@ -55,6 +55,11 @@ test.skip("Publica -> Event flow (deterministic)", () => {
     await expect(page.getByTestId("event-form")).toBeVisible({
       timeout: 30000,
     });
+    await expect(page.getByTestId("event-form")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+      { timeout: 30000 }
+    );
 
     const imagePath = path.join(
       process.cwd(),

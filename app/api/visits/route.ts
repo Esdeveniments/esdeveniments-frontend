@@ -3,8 +3,6 @@ import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { handleApiError } from "@utils/api-error-handler";
 import * as Sentry from "@sentry/nextjs";
 
-export const runtime = "nodejs";
-
 export async function POST(request: Request) {
   try {
     const { eventId, slug } = (await request.json().catch(() => ({}))) as {

@@ -1,9 +1,8 @@
+"use client";
 import NextImage from "next/image";
-import {
-  ClockIcon,
-  LocationMarkerIcon,
-  CalendarIcon,
-} from "@heroicons/react/outline";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import { buildDisplayLocation } from "@utils/location-helpers";
@@ -11,19 +10,34 @@ import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import MobileShareIsland from "./MobileShareIsland";
 import DesktopShareIsland from "./DesktopShareIsland";
-import CardLink from "./CardLink";
+import CardLinkClient from "./CardLinkClient";
 import { CardContentProps } from "types/props";
+import { useTranslations, useLocale } from "next-intl";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export default function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
 }: CardContentProps) {
+  const tCard = useTranslations("Components.CardContent");
+  const tTime = useTranslations("Utils.EventTime");
+  const locale = (useLocale?.() || DEFAULT_LOCALE) as AppLocale;
+  const timeLabels = {
+    consult: tTime("consult"),
+    startsAt: tTime("startsAt", { time: "{time}" }),
+    range: tTime("range", { start: "{start}", end: "{end}" }),
+    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
+  };
   const { description, icon } = event.weather || {};
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
-    event.startDate,
-    event.endDate
-  );
+  const { formattedStart, formattedEnd, nameDay } =
+    event.formattedStart && event.nameDay
+      ? {
+        formattedStart: event.formattedStart,
+        formattedEnd: event.formattedEnd ?? null,
+        nameDay: event.nameDay,
+      }
+      : getFormattedDate(event.startDate, event.endDate, locale);
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
   // Show full location: location, city, region combined
   // Note: List API responses may not include city/region, so we check if they exist
@@ -38,14 +52,17 @@ export default function CardContentServer({
   const primaryLocation = truncateString(fullLocation, 80);
   const image = event.imageUrl || "";
   const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+    : tCard("dateSingle", { nameDay, start: formattedStart });
 
   return (
     <>
-      <CardLink
+      <CardLinkClient
         href={`/e/${event.slug}`}
         className="w-full pressable-card transition-card"
+        data-analytics-event-name="select_event"
+        data-analytics-event-id={event.id ? String(event.id) : ""}
+        data-analytics-event-slug={event.slug || ""}
       >
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer">
           <div className="bg-background h-fit flex justify-start items-start gap-element-gap-sm pr-card-padding-sm">
@@ -76,7 +93,7 @@ export default function CardContentServer({
           </div>
           <div className="p-card-padding-sm flex justify-center items-center">
             <div
-              className="w-full relative"
+              className="w-full relative max-w-2xl mx-auto"
               style={{
                 height: isHorizontal ? "16rem" : "auto",
                 viewTransitionName: `event-image-${event.id}`,
@@ -95,7 +112,7 @@ export default function CardContentServer({
             </div>
           </div>
         </div>
-      </CardLink>
+      </CardLinkClient>
       <div className="w-full flex justify-between items-center px-card-padding-sm mb-element-gap-sm">
         <DesktopShareIsland slug={event.slug} />
         <ViewCounterIsland
@@ -121,7 +138,11 @@ export default function CardContentServer({
         <div className="flex justify-start items-center">
           <ClockIcon className="h-5 w-5" />
           <p className="body-small px-element-gap-sm">
-            {formatEventTimeDisplayDetail(event.startTime, event.endTime)}
+            {formatEventTimeDisplayDetail(
+              event.startTime,
+              event.endTime,
+              timeLabels
+            )}
           </p>
         </div>
         {!isHorizontal && <div className="mb-element-gap" />}

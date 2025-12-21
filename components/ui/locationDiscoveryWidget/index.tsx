@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "../../../i18n/routing";
+import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 // import { useGeolocation } from "@components/hooks/useGeolocation";
 import { LocationDiscoveryWidgetProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
-import {
-  SearchIcon,
-  LocationMarkerIcon,
-  ChevronDownIcon,
-} from "@heroicons/react/solid";
-import { GlobeAltIcon as GlobeIcon } from "@heroicons/react/outline";
+import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
+import LocationMarkerIcon from "@heroicons/react/solid/esm/LocationMarkerIcon";
+import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
+import GlobeAltIcon from "@heroicons/react/outline/esm/GlobeAltIcon";
+const GlobeIcon = GlobeAltIcon;
 import { transformRegionsToOptions } from "./utils";
 import { normalizeForSearch } from "@utils/string-helpers";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
@@ -20,6 +20,7 @@ export default function LocationDiscoveryWidget({
   className = "",
   onLocationChange,
 }: LocationDiscoveryWidgetProps) {
+  const t = useTranslations("Components.LocationDiscovery");
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
@@ -143,7 +144,7 @@ export default function LocationDiscoveryWidget({
           <div className="flex items-center gap-element-gap mb-element-gap flex-wrap md:flex-nowrap">
             <GlobeIcon className="w-4 h-4" />
             <h3 className="heading-3 text-foreground">
-              Mirant esdeveniments a
+              {t("heading")}
             </h3>
             <div className="relative w-full md:w-auto flex-shrink-0">
               <button
@@ -160,7 +161,7 @@ export default function LocationDiscoveryWidget({
                 <div className="flex items-center gap-2">
                   <LocationMarkerIcon className="h-5 w-5 text-primary" />
                   <span className="text-foreground-strong">
-                    {currentLocation || "Selecciona ubicació"}
+                    {currentLocation || t("selectLocation")}
                   </span>
                 </div>
                 <ChevronDownIcon
@@ -179,7 +180,7 @@ export default function LocationDiscoveryWidget({
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Cercar ubicació..."
+                        placeholder={t("searchPlaceholder")}
                         className="input pl-9 text-base"
                         inputMode="search"
                         autoFocus
@@ -200,7 +201,7 @@ export default function LocationDiscoveryWidget({
                       </div>
                     </div>
                     <span className="text-foreground-strong body-small font-medium group-hover:opacity-90">
-                      Descobrir altres esdeveniments
+                      {t("discover")}
                     </span>
                   </button>
 
@@ -212,7 +213,7 @@ export default function LocationDiscoveryWidget({
                         data-testid="location-loading"
                       >
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
-                        <span>Carregant ubicacions...</span>
+                        <span>{t("loading")}</span>
                       </div>
                     ) : filteredLocations.length > 0 ? (
                       <ul role="listbox">
@@ -237,7 +238,7 @@ export default function LocationDiscoveryWidget({
                       </ul>
                     ) : (
                       <div className="px-4 py-3 text-center body-small text-foreground-strong/70">
-                        No hi ha resultats
+                        {t("noResults")}
                       </div>
                     )}
                   </div>

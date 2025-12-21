@@ -7,7 +7,6 @@ export {
   getFormattedDate,
   nextDay,
   isWeekend,
-  monthsName,
   parseTimeToEventTimeDTO,
   toLocalDateString,
 } from "./date-helpers";
@@ -19,6 +18,7 @@ export {
   truncateString,
   formatCatalanDe,
   formatCatalanA,
+  formatPlacePreposition,
   capitalizeFirstLetter,
   formatPlaceName,
 } from "./string-helpers";

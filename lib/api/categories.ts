@@ -3,7 +3,7 @@ import {
   CategorySummaryResponseDTO,
 } from "types/api/category";
 import { createCache, createKeyedCache } from "lib/api/cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache as reactCache } from "react";
 import { parseCategories } from "lib/validation/category";
 
@@ -22,7 +22,9 @@ export function clearCategoriesCaches(): void {
 }
 
 async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
-  const response = await fetch(getInternalApiUrl(`/api/categories`), {
+  const url = await getInternalApiUrl(`/api/categories`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["categories"] },
   });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -47,7 +49,9 @@ export const getCategories = reactCache(fetchCategories);
 async function fetchCategoryByIdApi(
   id: string | number
 ): Promise<CategoryDetailResponseDTO | null> {
-  const response = await fetch(getInternalApiUrl(`/api/categories/${id}`), {
+  const url = await getInternalApiUrl(`/api/categories/${id}`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["categories", `category:${id}`] },
   });
   if (!response.ok) return null;

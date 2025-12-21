@@ -2,12 +2,14 @@ import { TextAreaProps } from "types/props";
 import { useEffect, useRef, useState, useMemo } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { processDescription } from "utils/text-processing";
+import { useTranslations } from "next-intl";
 
-export default function TextArea({ id, value, onChange }: TextAreaProps) {
+export default function TextArea({ id, value, onChange, error, onBlur }: TextAreaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPreview, setShowPreview] = useState(false);
   const characterCount = value?.length || 0;
   const maxLength = 1000;
+  const t = useTranslations("Components.TextArea");
 
   // Auto-expand textarea height based on content
   useEffect(() => {
@@ -27,15 +29,15 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
   return (
     <div className="w-full">
       <div className="flex-between">
-        <label htmlFor={id} className="text-foreground-strong font-bold">
-          Descripció *
+        <label htmlFor={id} className="form-label">
+          {t("label")}
         </label>
         <button
           type="button"
           onClick={() => setShowPreview(!showPreview)}
           className="text-sm text-primary hover:text-primary-dark focus:outline-none"
         >
-          {showPreview ? "✏️ Editar" : "👁️ Previsualitzar"}
+          {showPreview ? t("edit") : t("preview")}
         </button>
       </div>
       <div className="mt-2">
@@ -47,7 +49,7 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             />
             {!value && (
               <p className="text-foreground/70 italic">
-                Escriu alguna cosa per veure la previsualització...
+                {t("emptyPreview")}
               </p>
             )}
             <style jsx>{`
@@ -70,23 +72,29 @@ export default function TextArea({ id, value, onChange }: TextAreaProps) {
             name={id}
             value={value}
             onChange={onChange}
-            className="w-full min-h-[300px] p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical"
-            placeholder="Descriu el teu esdeveniment... Pots escriure enllaços directament i es convertiran automàticament."
+            onBlur={onBlur}
+            className={`w-full min-h-[300px] p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical ${error ? "input-error" : ""
+              }`}
+            placeholder={t("placeholder")}
             maxLength={maxLength}
+            aria-invalid={error ? "true" : "false"}
+            aria-describedby={error ? `${id}-error` : undefined}
           />
+        )}
+        {error && (
+          <p id={`${id}-error`} className="helper-text-error" role="alert">
+            {error}
+          </p>
         )}
         <div className="flex-between mt-1">
           <p className="text-sm text-foreground/80">
-            {showPreview
-              ? "Així és com veuran la descripció els visitants"
-              : "Els enllaços es convertiran automàticament. Prem Enter per fer salts de línia."}
+            {showPreview ? t("helperPreview") : t("helperEdit")}
           </p>
           <span
-            className={`text-sm ${
-              characterCount > maxLength * 0.9
+            className={`text-sm ${characterCount > maxLength * 0.9
                 ? "text-orange-500"
                 : "text-foreground/70"
-            }`}
+              }`}
           >
             {characterCount}/{maxLength}
           </span>

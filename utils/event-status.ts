@@ -1,5 +1,35 @@
-import type { EventTemporalStatus } from "types/event-status";
+import type {
+  EventTemporalStatus,
+  EventStatusLabels,
+} from "types/event-status";
 import { normalizeEndTime } from "@utils/date-helpers";
+import caMessages from "../messages/ca.json";
+
+const defaultLabels: EventStatusLabels = (caMessages as any).Utils
+  .EventStatus as EventStatusLabels;
+
+const COUNT_PLACEHOLDER = "{count}";
+
+export const buildEventStatusLabels = (
+  translate: (
+    key: keyof EventStatusLabels,
+    values?: Record<string, string | number | Date>
+  ) => string
+): EventStatusLabels => ({
+  past: translate("past"),
+  live: translate("live"),
+  upcoming: translate("upcoming"),
+  endsInDays: translate("endsInDays", { count: COUNT_PLACEHOLDER }),
+  endsInHours: translate("endsInHours", { count: COUNT_PLACEHOLDER }),
+  endsSoon: translate("endsSoon"),
+  startsInDays: translate("startsInDays", { count: COUNT_PLACEHOLDER }),
+  startsInHours: translate("startsInHours", { count: COUNT_PLACEHOLDER }),
+  startsToday: translate("startsToday"),
+  today: translate("today"),
+});
+
+const formatCount = (template: string, count: number) =>
+  template.replace("{count}", count.toString());
 
 /**
  * Compute temporal status of an event given start & optional end date.
@@ -18,7 +48,8 @@ export function computeTemporalStatus(
   endDate?: string,
   nowOverride?: Date,
   startTime?: string | null,
-  endTime?: string | null
+  endTime?: string | null,
+  labels: EventStatusLabels = defaultLabels
 ): EventTemporalStatus {
   // Treat identical start/end times as "no end time" to avoid zero-length windows
   const normalizedEndTime = normalizeEndTime(startTime, endTime);
@@ -77,14 +108,14 @@ export function computeTemporalStatus(
     if (end && isBeforeDay(end, now)) {
       return {
         state: "past",
-        label: "Esdeveniment finalitzat",
+        label: labels.past,
         endedOn: end.toISOString().split("T")[0],
       };
     }
     if (!end && isBeforeDay(start, now)) {
       return {
         state: "past",
-        label: "Esdeveniment finalitzat",
+        label: labels.past,
         endedOn: start.toISOString().split("T")[0],
       };
     }
@@ -97,12 +128,12 @@ export function computeTemporalStatus(
         if (days > 0) {
           return {
             state: "live",
-            label: "En curs",
-            endsIn: `Acaba en ${days} dies`,
+            label: labels.live,
+            endsIn: formatCount(labels.endsInDays, days),
           };
         }
       }
-      return { state: "live", label: "En curs" };
+      return { state: "live", label: labels.live };
     }
 
     // Live: today is between start and end dates
@@ -112,11 +143,11 @@ export function computeTemporalStatus(
       if (days > 0) {
         return {
           state: "live",
-          label: "En curs",
-          endsIn: `Acaba en ${days} dies`,
+          label: labels.live,
+          endsIn: formatCount(labels.endsInDays, days),
         };
       }
-      return { state: "live", label: "En curs" };
+      return { state: "live", label: labels.live };
     }
 
     // Upcoming: start date is in the future
@@ -131,11 +162,15 @@ export function computeTemporalStatus(
     if (days > 0) {
       return {
         state: "upcoming",
-        label: "Properament",
-        startsIn: `Comença en ${days} dies`,
+        label: labels.upcoming,
+        startsIn: formatCount(labels.startsInDays, days),
       };
     }
-    return { state: "upcoming", label: "Avui", startsIn: "Comença avui" };
+    return {
+      state: "upcoming",
+      label: labels.today,
+      startsIn: labels.startsToday,
+    };
   }
 
   // For timed events, use the original timestamp-based logic
@@ -147,7 +182,7 @@ export function computeTemporalStatus(
     const endedOn = end
       ? end.toISOString().split("T")[0]
       : start.toISOString().split("T")[0];
-    return { state: "past", label: "Esdeveniment finalitzat", endedOn };
+    return { state: "past", label: labels.past, endedOn };
   }
 
   // Live
@@ -159,18 +194,18 @@ export function computeTemporalStatus(
       if (days > 0)
         return {
           state: "live",
-          label: "En curs",
-          endsIn: `Acaba en ${days} dies`,
+          label: labels.live,
+          endsIn: formatCount(labels.endsInDays, days),
         };
       if (hours > 0)
         return {
           state: "live",
-          label: "En curs",
-          endsIn: `Acaba en ${hours} hores`,
+          label: labels.live,
+          endsIn: formatCount(labels.endsInHours, hours),
         };
-      return { state: "live", label: "En curs", endsIn: "Acaba aviat" };
+      return { state: "live", label: labels.live, endsIn: labels.endsSoon };
     }
-    return { state: "live", label: "En curs" };
+    return { state: "live", label: labels.live };
   }
 
   // Upcoming
@@ -180,16 +215,20 @@ export function computeTemporalStatus(
   if (daysUntil > 0) {
     return {
       state: "upcoming",
-      label: "Properament",
-      startsIn: `Comença en ${daysUntil} dies`,
+      label: labels.upcoming,
+      startsIn: formatCount(labels.startsInDays, daysUntil),
     };
   }
   if (hoursUntil > 0) {
     return {
       state: "upcoming",
-      label: "Properament",
-      startsIn: `Comença en ${hoursUntil} hores`,
+      label: labels.upcoming,
+      startsIn: formatCount(labels.startsInHours, hoursUntil),
     };
   }
-  return { state: "upcoming", label: "Avui", startsIn: "Comença avui" };
+  return {
+    state: "upcoming",
+    label: labels.today,
+    startsIn: labels.startsToday,
+  };
 }

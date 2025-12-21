@@ -1,11 +1,13 @@
 import { fetchWithHmac } from "./fetch-wrapper";
-import { buildNewsQuery } from "@utils/api-helpers";
 import type {
   PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
 import type { FetchNewsParams } from "./news";
+import type { CitySummaryResponseDTO } from "types/api/city";
+import type { PagedResponseDTO } from "types/api/event";
+import { buildNewsQuery } from "@utils/api-helpers";
 
 export async function fetchNewsExternal(
   params: FetchNewsParams
@@ -67,5 +69,55 @@ export async function fetchNewsBySlugExternal(
   } catch (error) {
     console.error("fetchNewsBySlugExternal:", slug, "failed", error);
     return null;
+  }
+}
+
+export async function fetchNewsCitiesExternal(
+  params: { page?: number; size?: number }
+): Promise<PagedResponseDTO<CitySummaryResponseDTO>> {
+  const api = process.env.NEXT_PUBLIC_API_URL;
+  if (!api) {
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: 0,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
+  }
+
+  try {
+    const query = new URLSearchParams();
+    if (typeof params.page === "number") query.set("page", String(params.page));
+    if (typeof params.size === "number") query.set("size", String(params.size));
+
+    const url = query.toString()
+      ? `${api}/news/cities?${query.toString()}`
+      : `${api}/news/cities`;
+
+    const res = await fetchWithHmac(url);
+    if (!res.ok) {
+      console.error(`fetchNewsCitiesExternal: HTTP ${res.status}`);
+      return {
+        content: [],
+        currentPage: 0,
+        pageSize: 0,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      };
+    }
+    return (await res.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
+  } catch (error) {
+    console.error("fetchNewsCitiesExternal: failed", error);
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: 0,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
   }
 }

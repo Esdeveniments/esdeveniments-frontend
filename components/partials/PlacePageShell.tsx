@@ -1,28 +1,52 @@
 import { Suspense } from "react";
 import type { JSX } from "react";
+import dynamic from "next/dynamic";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import ClientInteractiveLayer from "@components/ui/clientInteractiveLayer";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
 import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
-import ListPageFaq from "@components/ui/common/faq/ListPageFaq";
 import { buildFaqJsonLd } from "@utils/helpers";
 import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
-export async function ClientLayerWithPlaceLabel({
-  shellDataPromise,
-  categories,
-}: Pick<PlacePageShellProps, "shellDataPromise" | "categories">) {
-  const { placeTypeLabel } = await shellDataPromise;
+// Lazy load below-the-fold client component via client component wrapper
+// This allows us to use ssr: false in Next.js 16 (required for client components)
+import LazyClientInteractiveLayer from "./LazyClientInteractiveLayer";
 
-  return (
-    <ClientInteractiveLayer categories={categories} placeTypeLabel={placeTypeLabel} />
-  );
-}
+// Lazy load server component directly (no client wrapper needed)
+// FAQ section is below the fold, so we can lazy load it to reduce initial bundle
+const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"), {
+  // No ssr: false needed - it's a server component
+  loading: () => null, // FAQ section is below the fold
+});
 
-export default function PlacePageShell({
+const buildFilterLabels = async () => {
+  const tFilters = await getTranslations("Config.Filters");
+  const tFiltersUi = await getTranslations("Components.Filters");
+  const tByDates = await getTranslations("Config.ByDates");
+
+  return {
+    triggerLabel: tFiltersUi("triggerLabel"),
+    displayNameMap: {
+      place: tFilters("place"),
+      category: tFilters("category"),
+      byDate: tFilters("date"),
+      distance: tFilters("distance"),
+      searchTerm: tFilters("search"),
+    },
+    byDates: {
+      avui: tByDates("today"),
+      dema: tByDates("tomorrow"),
+      setmana: tByDates("week"),
+      "cap-de-setmana": tByDates("weekend"),
+    },
+  };
+};
+
+export default async function PlacePageShell({
   eventsPromise,
   shellDataPromise,
   place,
@@ -32,6 +56,9 @@ export default function PlacePageShell({
   categories = [],
   webPageSchemaFactory,
 }: PlacePageShellProps) {
+  const { placeTypeLabel } = await shellDataPromise;
+  const filterLabels = await buildFilterLabels();
+
   return (
     <FilterLoadingProvider>
       <Suspense fallback={<EventsListSkeleton />}>
@@ -47,13 +74,46 @@ export default function PlacePageShell({
         />
       </Suspense>
 
+      {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
       <Suspense fallback={null}>
-        <ClientLayerWithPlaceLabel
-          shellDataPromise={shellDataPromise}
+        <LazyClientInteractiveLayer
           categories={categories}
+          placeTypeLabel={placeTypeLabel}
+          filterLabels={filterLabels}
         />
       </Suspense>
     </FilterLoadingProvider>
+  );
+}
+
+export async function ClientLayerWithPlaceLabel({
+  shellDataPromise,
+  categories = [],
+  filterLabels: filterLabelsOverride,
+}: Pick<PlacePageShellProps, "shellDataPromise" | "categories"> & {
+  filterLabels?: Awaited<ReturnType<typeof buildFilterLabels>>;
+}) {
+  const filterLabels =
+    filterLabelsOverride ??
+    (await buildFilterLabels().catch(() => ({
+      triggerLabel: "",
+      displayNameMap: {
+        place: "place",
+        category: "category",
+        byDate: "date",
+        distance: "distance",
+        searchTerm: "search",
+      },
+      byDates: {},
+    })));
+  const { placeTypeLabel } = await shellDataPromise;
+
+  return (
+    <LazyClientInteractiveLayer
+      categories={categories}
+      placeTypeLabel={placeTypeLabel}
+      filterLabels={filterLabels}
+    />
   );
 }
 
@@ -85,6 +145,9 @@ async function PlacePageContent({
       hasNewsPromise || Promise.resolve(false),
     ]);
 
+  const tFaq = await getTranslations("Utils.ListPageFaq");
+  const locale = await getLocaleSafely();
+
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
     ? webPageSchemaFactory(pageData)
@@ -96,6 +159,37 @@ async function PlacePageContent({
     category,
     placeTypeLabel,
     categories,
+    locale,
+    labels: {
+      q1: tFaq("q1", { contextInline: "{contextInline}" }),
+      a1: tFaq("a1", { capitalizedContext: "{capitalizedContext}" }),
+      q2: tFaq("q2", { contextInline: "{contextInline}" }),
+      a2: tFaq("a2", { contextInline: "{contextInline}" }),
+      q3: tFaq("q3", {
+        categoryName: "{categoryName}",
+        contextInline: "{contextInline}",
+      }),
+      a3: tFaq("a3", {
+        categoryName: "{categoryName}",
+        contextInline: "{contextInline}",
+      }),
+    },
+    dateLabels: {
+      inline: {
+        avui: tFaq("dateInline.today"),
+        dema: tFaq("dateInline.tomorrow"),
+        setmana: tFaq("dateInline.week"),
+        "cap-de-setmana": tFaq("dateInline.weekend"),
+      },
+      capitalized: {
+        avui: tFaq("dateCapitalized.today"),
+        dema: tFaq("dateCapitalized.tomorrow"),
+        setmana: tFaq("dateCapitalized.week"),
+        "cap-de-setmana": tFaq("dateCapitalized.weekend"),
+      },
+      fallbackInline: tFaq("dateInline.fallback"),
+      fallbackCapitalized: tFaq("dateCapitalized.fallback"),
+    },
   });
   const faqJsonLd =
     faqItems.length > 1 ? buildFaqJsonLd(faqItems) : null;
@@ -132,7 +226,10 @@ async function PlacePageContent({
         />
       </FilterLoadingGate>
 
-      <ListPageFaq items={faqItems} />
+      {/* FAQ Section - Lazy loaded (below the fold, server component) */}
+      <Suspense fallback={null}>
+        <ListPageFaq items={faqItems} />
+      </Suspense>
     </>
   );
 }

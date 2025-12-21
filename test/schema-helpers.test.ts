@@ -68,11 +68,13 @@ describe("generateJsonData", () => {
       })
     );
 
-    expect(schema.isAccessibleForFree).toBe(false);
+    // isAccessibleForFree was removed - event.type defaults to "FREE" so it's unreliable
     expect(schema.offers).toBeDefined();
     expect(schema.offers!.price).toBe(0);
     expect(schema.offers!.priceSpecification).toBeDefined();
-    expect(schema.offers!.priceSpecification?.description).toBe("Consult price");
+    expect(schema.offers!.priceSpecification?.description).toBe(
+      "Consult price"
+    );
     expect(schema.performer.name).toBe("Palau de la Música");
     expect(schema.location.address.streetAddress).toBe("Palau de la Música");
   });
@@ -287,12 +289,16 @@ describe("buildDateTime", () => {
   });
 
   it("handles ISO datetime strings as date input", () => {
-    expect(buildDateTime("2025-01-10T10:00:00Z", "15:30")).toBe("2025-01-10T15:30");
+    expect(buildDateTime("2025-01-10T10:00:00Z", "15:30")).toBe(
+      "2025-01-10T15:30"
+    );
     expect(buildDateTime("2025-01-10T10:00:00Z", null)).toBe("2025-01-10");
   });
 
   it("trims whitespace in inputs", () => {
-    expect(buildDateTime("  2025-01-10  ", "  10:00  ")).toBe("2025-01-10T10:00");
+    expect(buildDateTime("  2025-01-10  ", "  10:00  ")).toBe(
+      "2025-01-10T10:00"
+    );
   });
 });
 

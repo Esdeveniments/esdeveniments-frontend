@@ -1,7 +1,10 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { FC } from "react";
-import CheckCircleIcon from "@heroicons/react/solid/CheckCircleIcon";
-import ExclamationCircleIcon from "@heroicons/react/solid/ExclamationCircleIcon";
-import XIcon from "@heroicons/react/solid/XIcon";
+import CheckCircleIcon from "@heroicons/react/solid/esm/CheckCircleIcon";
+import ExclamationCircleIcon from "@heroicons/react/solid/esm/ExclamationCircleIcon";
+import XIcon from "@heroicons/react/solid/esm/XIcon";
 import type { EventNotificationProps } from "types/event";
 
 const Notification: FC<EventNotificationProps> = ({
@@ -12,6 +15,8 @@ const Notification: FC<EventNotificationProps> = ({
   hideNotification,
   hideClose = false,
 }) => {
+  const t = useTranslations("Components.Notification");
+
   if (customNotification) {
     return (
       <div className="rounded-md bg-green-50 p-4 mb-4 break-word">
@@ -24,8 +29,7 @@ const Notification: FC<EventNotificationProps> = ({
           </div>
           <div className="ml-3">
             <h3 className="text-sm font-semibold text-foreground-strong">
-              Fantàstic!! L&apos;esdeveniment {title} s&apos;ha creat
-              correctament i ja el pot veure tothom!
+              {t("createdSuccess", { title: title || "Event" })}
             </h3>
           </div>
         </div>
@@ -42,7 +46,7 @@ const Notification: FC<EventNotificationProps> = ({
             className="rounded-md text-foreground/60 hover:text-foreground/80"
             onClick={() => hideNotification?.(true)}
           >
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("close")}</span>
             <XIcon className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
@@ -70,7 +74,7 @@ const Notification: FC<EventNotificationProps> = ({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Veure esdeveniment
+              {t("viewEvent")}
             </a>
           )}
         </div>

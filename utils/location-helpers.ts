@@ -7,7 +7,7 @@ import {
   formatCatalanDe,
   formatPlaceName,
 } from "./string-helpers";
-import type { Location, PlaceTypeAndLabel } from "types/common";
+import type { Location, PlaceTypeAndLabel, LocationNewsLabels } from "types/common";
 import type {
   BuildDisplayLocationOptions,
   EventLocationLabelOptions,
@@ -286,10 +286,16 @@ export const deg2rad = (deg: number): number => {
 
 // Build simple News CTA (href + text) without network lookups
 // Preference: use provided human label when available, fallback to capitalized slug
+const defaultNewsLabels: LocationNewsLabels = {
+  newsAll: "News from Catalonia",
+  newsWithPlace: "News {deLabel}",
+};
+
 export function getNewsCta(
   place: string | undefined,
   placeLabel?: string,
-  placeType?: "region" | "town"
+  placeType?: "region" | "town",
+  labels: LocationNewsLabels = defaultNewsLabels
 ): { href: string; text: string } {
   const safePlace = (place || "").trim();
   const href =
@@ -325,7 +331,7 @@ export function getNewsCta(
   // Fallback to "Catalunya" when place is empty to avoid dangling preposition
   const text =
     safePlace === "catalunya" || safePlace === ""
-      ? "Notícies de Catalunya"
-      : `Notícies ${deLabel}`;
+      ? labels.newsAll
+      : labels.newsWithPlace.replace("{deLabel}", deLabel);
   return { href, text };
 }

@@ -16,6 +16,7 @@ alwaysApply: false
 - Special case: `place=catalunya` + `byDate` + `category=tots` may redirect to home.
 - Dynamic categories: validate with `isValidCategorySlug`; use backend slugs when available; fallback to legacy list.
 - Validation: Use `validatePlaceOrThrow` for server components and `validatePlaceForMetadata` in `generateMetadata`.
+- Locales: When building localized URLs, use `next-intl` routing helpers (`Link`, `redirect`, `getPathname`) from `i18n/routing.ts`; avoid manual locale prefixes.
 
 #### When adding a new filter
 

@@ -1,6 +1,12 @@
 import { siteUrl } from "@config/index";
 import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews, fetchNewsBySlug } from "@lib/api/news";
+import {
+  SUPPORTED_LOCALES,
+  localeToHrefLang,
+  type AppLocale,
+} from "types/i18n";
+import { buildLocalizedUrls } from "@utils/i18n-seo";
 
 function buildNewsSitemap(
   items: {
@@ -55,12 +61,18 @@ export async function GET() {
         if (!detail || !detail.createdAt) continue;
         const pubMs = Date.parse(detail.createdAt);
         if (isNaN(pubMs) || now - pubMs > cutoffMs) continue;
-        candidates.push({
-          loc: `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
-          publicationName: "Esdeveniments.cat",
-          language: "ca",
-          title: detail.title,
-          publicationDate: new Date(pubMs).toISOString(),
+        const basePath = `/noticies/${hub.slug}/${item.slug}`;
+        const localizedUrls = buildLocalizedUrls(basePath);
+
+        SUPPORTED_LOCALES.forEach((locale) => {
+          const loc = localizedUrls[locale] ?? `${siteUrl}${basePath}`;
+          candidates.push({
+            loc,
+            publicationName: "Esdeveniments.cat",
+            language: localeToHrefLang[locale as AppLocale] ?? locale,
+            title: detail.title,
+            publicationDate: new Date(pubMs).toISOString(),
+          });
         });
       }
     } catch (e) {

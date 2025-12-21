@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import {
-  XIcon,
-  ChevronDownIcon,
-  ArrowRightIcon,
-} from "@heroicons/react/outline";
+import XIcon from "@heroicons/react/outline/esm/XIcon";
+import ChevronDownIcon from "@heroicons/react/outline/esm/ChevronDownIcon";
+import ArrowRightIcon from "@heroicons/react/outline/esm/ArrowRightIcon";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import type { EventLocationProps } from "types/event";
+import { sendGoogleEvent } from "@utils/analytics";
 
 const Maps = dynamic(() => import("components/ui/maps"), { ssr: false });
 
@@ -16,6 +16,7 @@ export default function EventLocationClient({
   cityName,
   regionName,
 }: Pick<EventLocationProps, "location" | "cityName" | "regionName">) {
+  const t = useTranslations("Components.EventLocation");
   const [showMap, setShowMap] = useState(false);
   const [isMapsVisible, setIsMapsVisible] = useState(false);
   const mapsDivRef = useRef<HTMLDivElement | null>(null);
@@ -40,6 +41,14 @@ export default function EventLocationClient({
 
   const handleDirectionsClick = () => {
     const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
+
+    sendGoogleEvent("outbound_click", {
+      link_domain: "www.google.com",
+      link_path: "/maps/search/",
+      link_type: "maps_directions",
+      context: "event_location",
+    });
+
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
       "_blank"
@@ -53,7 +62,7 @@ export default function EventLocationClient({
         onClick={handleShowMap}
       >
         <button type="button" className="flex-start gap-element-gap">
-          <p className="body-normal font-medium">Mostrar mapa</p>
+          <p className="body-normal font-medium">{t("showMap")}</p>
           {showMap ? (
             <XIcon className="h-5 w-5" aria-hidden="true" />
           ) : (
@@ -72,7 +81,7 @@ export default function EventLocationClient({
               className="flex gap-element-gap-sm"
               onClick={handleDirectionsClick}
             >
-              <p className="body-normal font-medium">Com arribar</p>
+              <p className="body-normal font-medium">{t("getDirections")}</p>
               <ArrowRightIcon className="w-5 h-5" />
             </button>
           </div>
