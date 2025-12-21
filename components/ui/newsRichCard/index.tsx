@@ -29,7 +29,7 @@ export default async function NewsRichCard({
   if (variant === "horizontal") {
     return (
       <article className="card-elevated group w-full overflow-hidden">
-        <div className="flex flex-col md:flex-row gap-6 p-6 relative z-[1]">
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 p-4 sm:p-6 relative z-[1]">
           {numbered && (
             <div className="flex-shrink-0">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-background">
@@ -53,6 +53,18 @@ export default async function NewsRichCard({
           </div>
 
           <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-3 text-foreground-strong group-hover:text-primary transition-colors">
+              <PressableAnchor
+                href={`/e/${event.slug}`}
+                prefetch={false}
+                className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
+                aria-label={event.title}
+                variant="inline"
+              >
+                {event.title}
+              </PressableAnchor>
+            </h3>
+
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {primaryCategory && (
                 <PressableAnchor
@@ -65,26 +77,14 @@ export default async function NewsRichCard({
                   {primaryCategory.name}
                 </PressableAnchor>
               )}
+              <span className="badge-default">📅 {dateLabel}</span>
               {event.location && (
                 <span className="badge-default">📍 {event.location}</span>
               )}
-              <span className="badge-default">📅 {dateLabel}</span>
             </div>
 
-            <h3 className="heading-2 mb-3 text-foreground-strong group-hover:text-primary transition-colors">
-              <PressableAnchor
-                href={`/e/${event.slug}`}
-                prefetch={false}
-                className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
-                aria-label={event.title}
-                variant="inline"
-              >
-                {event.title}
-              </PressableAnchor>
-            </h3>
-
             {plainDescription && (
-              <p className="body-normal mb-4 text-foreground-strong/70 line-clamp-3">
+              <p className="text-xs sm:text-sm font-normal leading-relaxed tracking-normal mb-4 text-foreground-strong/70 line-clamp-3">
                 {plainDescription}
               </p>
             )}
@@ -93,7 +93,7 @@ export default async function NewsRichCard({
               <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
-                className="btn-primary"
+                className="btn-primary text-xs sm:text-sm"
                 aria-label={t("readMoreAria", { title: event.title })}
                 variant="inline"
               >
@@ -123,7 +123,19 @@ export default async function NewsRichCard({
         )}
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-4 text-foreground-strong group-hover:text-primary transition-colors">
+          <PressableAnchor
+            href={`/e/${event.slug}`}
+            prefetch={false}
+            className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
+            aria-label={event.title}
+            variant="inline"
+          >
+            {event.title}
+          </PressableAnchor>
+        </h3>
+
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {primaryCategory && (
             <PressableAnchor
@@ -136,26 +148,14 @@ export default async function NewsRichCard({
               {primaryCategory.name}
             </PressableAnchor>
           )}
+          <span className="badge-default">📅 {dateLabel}</span>
           {event.location && (
             <span className="badge-default">📍 {event.location}</span>
           )}
-          <span className="badge-default">📅 {dateLabel}</span>
         </div>
 
-        <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
-          <PressableAnchor
-            href={`/e/${event.slug}`}
-            prefetch={false}
-            className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
-            aria-label={event.title}
-            variant="inline"
-          >
-            {event.title}
-          </PressableAnchor>
-        </h3>
-
         {plainDescription && (
-          <p className="body-small mb-5 text-foreground-strong/70 line-clamp-3">
+          <p className="text-xs sm:text-sm font-normal leading-relaxed tracking-normal mb-5 text-foreground-strong/70 line-clamp-3">
             {plainDescription}
           </p>
         )}
@@ -164,7 +164,7 @@ export default async function NewsRichCard({
           <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
-            className="btn-primary"
+            className="btn-primary text-xs sm:text-sm"
             aria-label={t("readMoreAria", { title: event.title })}
             variant="inline"
           >

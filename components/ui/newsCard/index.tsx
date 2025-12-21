@@ -7,6 +7,7 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
 import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-quality";
 
 export default async function NewsCard({
   event,
@@ -27,6 +28,12 @@ export default async function NewsCard({
   });
 
   if (variant === "hero") {
+    const heroImageQuality = getOptimalImageQuality({
+      isPriority: true,
+      isExternal: true,
+    });
+    const heroImageSizes = getOptimalImageSizes("hero");
+
     return (
       <PressableAnchor
         href={href}
@@ -43,7 +50,8 @@ export default async function NewsCard({
                 alt={event.title}
                 fill
                 priority
-                sizes="(max-width: 768px) 82vw, (max-width: 1280px) 75vw, 1200px"
+                quality={heroImageQuality}
+                sizes={heroImageSizes}
                 className="object-cover"
               />
             </div>
@@ -53,7 +61,7 @@ export default async function NewsCard({
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground-strong/95 via-foreground-strong/70 to-foreground-strong/40" />
 
           <div className="absolute inset-x-0 bottom-0 px-4 pt-4 pb-4 sm:p-6 text-background">
-            <h2 className="heading-1 mb-2 md:drop-shadow-2xl text-balance line-clamp-3 sm:line-clamp-none">
+            <h2 className="font-bold tracking-tight leading-tight mb-2 md:drop-shadow-2xl text-balance line-clamp-3 sm:line-clamp-none" style={{ fontSize: 'clamp(1.125rem, 2.5vw + 0.5rem, 1.875rem)' }}>
               {event.title}
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -69,7 +77,7 @@ export default async function NewsCard({
                   </span>
                 )}
               </div>
-              <span className="btn-primary inline-block">
+              <span className="btn-primary text-xs sm:text-sm inline-block w-fit">
                 {t("readMore")}
               </span>
             </div>
@@ -78,6 +86,12 @@ export default async function NewsCard({
       </PressableAnchor>
     );
   }
+
+  const cardImageQuality = getOptimalImageQuality({
+    isPriority: false,
+    isExternal: true,
+  });
+  const cardImageSizes = getOptimalImageSizes("card");
 
   return (
     <PressableAnchor
@@ -95,7 +109,8 @@ export default async function NewsCard({
               alt={event.title}
               width={1200}
               height={675}
-              sizes="(max-width: 768px) 88vw, (max-width: 1280px) 70vw, 800px"
+              quality={cardImageQuality}
+              sizes={cardImageSizes}
               className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
             />
           ) : (
@@ -103,32 +118,32 @@ export default async function NewsCard({
           )}
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-4 text-foreground-strong group-hover:text-primary transition-colors">
+            {event.title}
+          </h3>
+
           <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="badge-default inline-flex items-center gap-1.5">
+              <CalendarIcon className="w-4 h-4 flex-shrink-0" />
+              {dateLabel}
+            </span>
             {placeLabel && (
               <span className="badge-default inline-flex items-center gap-1.5">
                 <LocationMarkerIcon className="w-4 h-4 flex-shrink-0" />
                 {placeLabel}
               </span>
             )}
-            <span className="badge-default inline-flex items-center gap-1.5">
-              <CalendarIcon className="w-4 h-4 flex-shrink-0" />
-              {dateLabel}
-            </span>
           </div>
 
-          <h3 className="heading-3 mb-4 text-foreground-strong group-hover:text-primary transition-colors">
-            {event.title}
-          </h3>
-
           {plainDescription && (
-            <p className="body-small mb-5 text-foreground-strong/70 line-clamp-3">
+            <p className="text-xs sm:text-sm font-normal leading-relaxed tracking-normal mb-5 text-foreground-strong/70 line-clamp-3">
               {plainDescription}
             </p>
           )}
 
           <div className="flex items-center justify-between">
-            <span className="btn-primary inline-block">
+            <span className="btn-primary text-xs sm:text-sm inline-block">
               {t("readMore")}
             </span>
           </div>
