@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { MetadataRoute } from "next";
 import { getCacheControlHeader } from "@utils/cache";
+import { siteUrl } from "@config/index";
 
 /**
  * robots.txt route handler with explicit cache control
@@ -20,9 +21,6 @@ import { getCacheControlHeader } from "@utils/cache";
  * The host is dynamically determined for multi-domain support.
  */
 export async function GET(request: NextRequest) {
-  // Use NEXT_PUBLIC_SITE_URL for production, fallback for local development
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.esdeveniments.cat";
 
   const robotsConfig: MetadataRoute.Robots = {
     rules: [

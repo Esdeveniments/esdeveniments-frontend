@@ -16,6 +16,13 @@ import {
   DEFAULT_FILTER_VALUE,
   getDateLabelKey,
 } from "@utils/constants";
+import {
+  addPlaceBreadcrumb,
+  addIntermediateDateBreadcrumb,
+  addCurrentPageBreadcrumb,
+  handleCatalunyaHomepage,
+  updatePlaceBreadcrumbUrl,
+} from "@utils/breadcrumb-helpers";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
 
@@ -29,6 +36,7 @@ const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"
   // No ssr: false needed - it's a server component
   loading: () => null, // FAQ section is below the fold
 });
+
 
 function buildPlaceBreadcrumbs({
   homeLabel,
@@ -55,13 +63,8 @@ function buildPlaceBreadcrumbs({
     { name: homeLabel, url: toLocalizedUrl("/", locale) },
   ];
 
-  // Treat the default "catalunya" agenda as the homepage canonical.
-  if (place !== "catalunya") {
-    breadcrumbs.push({
-      name: placeLabel || place,
-      url: toLocalizedUrl(`/${place}`, locale),
-    });
-  }
+  // Add place breadcrumb if not catalunya
+  addPlaceBreadcrumb(breadcrumbs, place, placeLabel, locale);
 
   const hasSpecificDate = !!date && date !== DEFAULT_FILTER_VALUE;
   const hasSpecificCategory = !!category && category !== DEFAULT_FILTER_VALUE;
@@ -71,38 +74,46 @@ function buildPlaceBreadcrumbs({
   if (hasSpecificDate) pathSegments.push(date as string);
   if (hasSpecificCategory) pathSegments.push(category as string);
 
-  // Only include intermediate crumbs when they aren't the current page.
+  // Handle different breadcrumb scenarios
   if (hasSpecificDate && !hasSpecificCategory) {
-    // current page is date
-    breadcrumbs.push({
-      name: dateLabel || (date as string),
-      url: currentUrl,
-    });
+    // Current page is date only
+    addCurrentPageBreadcrumb(
+      breadcrumbs,
+      hasSpecificDate,
+      hasSpecificCategory,
+      date,
+      dateLabel,
+      category,
+      categoryLabel,
+      currentUrl
+    );
   } else if (hasSpecificCategory) {
+    // Category is present - may have intermediate date
     if (hasSpecificDate) {
-      // date is intermediate
-      const datePath = `/${[place, date].filter(Boolean).join("/")}`;
-      breadcrumbs.push({
-        name: dateLabel || (date as string),
-        url: toLocalizedUrl(datePath, locale),
-      });
+      addIntermediateDateBreadcrumb(
+        breadcrumbs,
+        place,
+        date as string,
+        dateLabel,
+        locale
+      );
     }
-
-    // current page is category (or place+category)
-    breadcrumbs.push({
-      name: categoryLabel || (category as string),
-      url: currentUrl,
-    });
+    addCurrentPageBreadcrumb(
+      breadcrumbs,
+      hasSpecificDate,
+      hasSpecificCategory,
+      date,
+      dateLabel,
+      category,
+      categoryLabel,
+      currentUrl
+    );
   } else if (place === "catalunya") {
-    // homepage canonical
-    breadcrumbs[0] = { name: homeLabel, url: currentUrl };
+    // Homepage canonical
+    handleCatalunyaHomepage(breadcrumbs, homeLabel, currentUrl);
   } else if (pathSegments.length === 1) {
-    // current page is place
-    // If we already pushed place above, ensure its URL is canonical for this page.
-    breadcrumbs[breadcrumbs.length - 1] = {
-      ...breadcrumbs[breadcrumbs.length - 1],
-      url: currentUrl,
-    };
+    // Current page is place only
+    updatePlaceBreadcrumbUrl(breadcrumbs, currentUrl);
   }
 
   return breadcrumbs;
