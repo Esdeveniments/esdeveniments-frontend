@@ -164,6 +164,8 @@ export default $config({
       // Explicitly invalidate robots.txt on deploy to ensure route handler changes take effect
       // CloudFront caches robots.txt with s-maxage=86400 (24 hours) by default, so we need
       // to invalidate it after deployment to serve the new route handler response
+      // Note: Since robots.txt is NOT in public/, it should be handled by app/robots.txt/route.ts
+      // The invalidation ensures CloudFront doesn't serve a cached version
       invalidation: {
         paths: ["/robots.txt"],
         wait: true, // Wait for invalidation to complete before deployment finishes
