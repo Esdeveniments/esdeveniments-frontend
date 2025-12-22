@@ -6,6 +6,11 @@ import type { WindowWithGtag } from "types/common";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
+
+// Disable GA in E2E test mode to prevent test traffic from polluting analytics
+const isE2ETestMode =
+  process.env.E2E_TEST_MODE === "1" ||
+  process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
 const ADS_SRC = ADS_CLIENT
   ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
   : "";
@@ -34,7 +39,7 @@ export default function GoogleScriptsHeavy({
 
   // Track outbound link clicks (external http/https) with optional enrichment via data attributes.
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
     if (!adsAllowed) return;
     const win = ensureGtag();
     if (!win) return;

@@ -7,6 +7,7 @@ import {
   type AppLocale,
 } from "types/i18n";
 import { buildLocalizedUrls } from "@utils/i18n-seo";
+import { escapeXml } from "@utils/xml-escape";
 
 function buildNewsSitemap(
   items: {
@@ -22,16 +23,21 @@ function buildNewsSitemap(
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n`;
   const urls = items
     .map((i) => {
+      // Use publicationDate for lastmod (ISO 8601 format)
+      const lastmod = i.publicationDate;
       return (
         `  <url>\n` +
-        `    <loc>${i.loc}</loc>\n` +
+        `    <loc>${escapeXml(i.loc)}</loc>\n` +
+        `    <lastmod>${lastmod}</lastmod>\n` +
+        `    <changefreq>daily</changefreq>\n` +
+        `    <priority>0.8</priority>\n` +
         `    <news:news>\n` +
         `      <news:publication>\n` +
-        `        <news:name>${i.publicationName}</news:name>\n` +
-        `        <news:language>${i.language}</news:language>\n` +
+        `        <news:name>${escapeXml(i.publicationName)}</news:name>\n` +
+        `        <news:language>${escapeXml(i.language)}</news:language>\n` +
         `      </news:publication>\n` +
         `      <news:publication_date>${i.publicationDate}</news:publication_date>\n` +
-        `      <news:title>${i.title}</news:title>\n` +
+        `      <news:title>${escapeXml(i.title)}</news:title>\n` +
         `    </news:news>\n` +
         `  </url>`
       );

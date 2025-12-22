@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactElement } from "react";
+import { ReactElement, useEffect } from "react";
 import type { SearchAwareHeadingProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
@@ -12,9 +12,29 @@ export default function SearchAwareHeading({
   titleClass,
   subtitleClass,
   cta,
-}: SearchAwareHeadingProps): ReactElement {
+}: SearchAwareHeadingProps): ReactElement | null {
   const { queryParams } = useUrlFilters(categories);
   const searchTerm = queryParams.search;
+
+  // Hide the server-rendered heading when client enhancement loads
+  // Must be called before any early returns to satisfy React Hooks rules
+  useEffect(() => {
+    if (!searchTerm) return;
+    const serverHeading = document.querySelector("[data-server-heading]");
+    if (serverHeading) {
+      (serverHeading as HTMLElement).style.display = "none";
+    }
+    return () => {
+      if (serverHeading) {
+        (serverHeading as HTMLElement).style.display = "";
+      }
+    };
+  }, [searchTerm]);
+
+  // Only enhance if there's a search query
+  if (!searchTerm) {
+    return null;
+  }
 
   const enhancedTitle = appendSearchQuery(pageData.title, searchTerm);
   const enhancedSubtitle = appendSearchQuery(pageData.subTitle, searchTerm);

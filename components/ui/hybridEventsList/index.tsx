@@ -100,8 +100,9 @@ async function HybridEventsList({
       data-analytics-date-slug={date || undefined}
     >
       {pageData && (
-        <Suspense
-          fallback={
+        <>
+          {/* Always render H1 directly in server component for SEO - ensures it's in initial HTML */}
+          <div data-server-heading>
             <HeadingLayout
               title={pageData.title}
               subtitle={pageData.subTitle}
@@ -109,16 +110,18 @@ async function HybridEventsList({
               subtitleClass={subtitleClass}
               cta={newsCta}
             />
-          }
-        >
-          <SearchAwareHeading
-            pageData={pageData}
-            categories={categories}
-            titleClass={titleClass}
-            subtitleClass={subtitleClass}
-            cta={newsCta}
-          />
-        </Suspense>
+          </div>
+          {/* Client-side enhancement: conditionally replace heading when search query is present */}
+          <Suspense fallback={null}>
+            <SearchAwareHeading
+              pageData={pageData}
+              categories={categories}
+              titleClass={titleClass}
+              subtitleClass={subtitleClass}
+              cta={newsCta}
+            />
+          </Suspense>
+        </>
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}

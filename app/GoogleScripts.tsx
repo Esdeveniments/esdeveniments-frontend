@@ -8,6 +8,11 @@ import type { WindowWithGtag } from "types/common";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 
+// Disable GA in E2E test mode to prevent test traffic from polluting analytics
+const isE2ETestMode =
+  process.env.E2E_TEST_MODE === "1" ||
+  process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
+
 // Google Analytics gtag shim - reused across multiple Script components
 // Conditionally defines gtag only if it doesn't already exist to avoid overwriting
 // the real gtag.js implementation if it has already loaded
@@ -44,7 +49,7 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
     const win = ensureGtag();
     if (!win) return;
 
@@ -81,7 +86,7 @@ export default function GoogleScripts() {
   // because our TCF implementation (AdContext) provides a unified consent model.
   // This is intentional and aligns with our CMP's consent structure.
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
     const win = ensureGtag();
     if (!win) return;
 
@@ -123,7 +128,7 @@ export default function GoogleScripts() {
   return (
     <>
       {/* Google Analytics - Consent Mode v2 */}
-      {GA_MEASUREMENT_ID && (
+      {GA_MEASUREMENT_ID && !isE2ETestMode && (
         <>
           <Script id="google-analytics-consent" strategy="afterInteractive">
             {`
@@ -226,7 +231,7 @@ export default function GoogleScripts() {
       </Script>
 
       {/* Pageview tracking - wrapped in Suspense for useSearchParams */}
-      {GA_MEASUREMENT_ID && (
+      {GA_MEASUREMENT_ID && !isE2ETestMode && (
         <Suspense fallback={null}>
           <GoogleAnalyticsPageview adsAllowed={adsAllowed} />
         </Suspense>

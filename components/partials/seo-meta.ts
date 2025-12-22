@@ -60,13 +60,15 @@ export function generateItemListStructuredData(
   events: EventSummaryResponseDTO[],
   listName: string,
   description?: string,
-  locale?: AppLocale
+  locale?: AppLocale,
+  pageUrl?: string
 ) {
   if (!events || events.length === 0) return null;
 
   const localeToUse = locale ?? DEFAULT_LOCALE;
 
-  const itemListIdBase = toLocalizedUrl("/", localeToUse);
+  const siteHomeUrl = toLocalizedUrl("/", localeToUse);
+  const itemListIdBase = pageUrl ?? siteHomeUrl;
 
   const itemListElements = events.slice(0, 20).map((event, index) => {
     // Build location object with proper null checks
@@ -101,7 +103,7 @@ export function generateItemListStructuredData(
         organizer: {
           "@type": "Organization",
           name: "Esdeveniments.cat",
-          url: itemListIdBase,
+          url: siteHomeUrl,
         },
         ...(event.imageUrl && {
           image: event.imageUrl,
@@ -119,6 +121,7 @@ export function generateItemListStructuredData(
     "@id": `${itemListIdBase}#itemlist-${listName
       ?.toLowerCase()
       .replace(/\s+/g, "-")}`,
+    url: itemListIdBase,
     name: listName,
     description: description ?? listName,
     numberOfItems: events.length,

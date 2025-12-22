@@ -22,6 +22,7 @@ export default async function Navbar() {
       openMenu: t("aria.openMenu"),
       closeMenu: t("aria.closeMenu"),
       home: t("aria.home"),
+      agenda: t("aria.agenda"),
       publish: t("aria.publish"),
       news: t("aria.news"),
       mobilePublishLabel: t("mobilePublishLabel"),

@@ -265,6 +265,7 @@ export interface NavbarLabels {
   openMenu: string;
   closeMenu: string;
   home: string;
+  agenda: string;
   publish: string;
   news: string;
   mobilePublishLabel: string;

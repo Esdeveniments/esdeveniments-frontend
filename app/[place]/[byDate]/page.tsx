@@ -484,7 +484,8 @@ async function buildPlaceByDateEventsPromise({
         ? `Esdeveniments ${finalCategory} ${place}`
         : `Esdeveniments ${actualDate} ${place}`,
       undefined,
-      locale
+      locale,
+      pageData.canonical
     );
 
     structuredScripts.push({
