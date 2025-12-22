@@ -84,7 +84,9 @@ export async function GET(request: NextRequest) {
   const rules = [robotsConfig.rules].flat().filter(Boolean);
   rules.forEach((rule) => {
     if (rule.userAgent) {
-      lines.push(`User-Agent: ${rule.userAgent}`);
+      [rule.userAgent].flat().forEach((agent) =>
+        lines.push(`User-Agent: ${agent}`)
+      );
       if (rule.allow) {
         [rule.allow].flat().forEach((path) => lines.push(`Allow: ${path}`));
       }
