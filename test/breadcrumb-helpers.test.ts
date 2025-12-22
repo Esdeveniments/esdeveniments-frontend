@@ -471,6 +471,89 @@ describe("breadcrumb-helpers", () => {
       expect(breadcrumbs[0].name).toBe("Home");
       expect(breadcrumbs[1]).toEqual({ name: "Mataró", url: "/mataro" });
     });
+
+    it("builds correct breadcrumbs for catalunya + date scenario (no place breadcrumb)", () => {
+      const breadcrumbs: BreadcrumbItem[] = [
+        { name: "Home", url: "/" },
+      ];
+      const locale: AppLocale = "ca";
+
+      // Catalunya doesn't add place breadcrumb
+      addPlaceBreadcrumb(breadcrumbs, "catalunya", "Catalunya", locale);
+      addCurrentPageBreadcrumb(
+        breadcrumbs,
+        true,
+        false,
+        "avui",
+        "Avui",
+        undefined,
+        undefined,
+        "/catalunya/avui"
+      );
+
+      expect(breadcrumbs).toHaveLength(2);
+      expect(breadcrumbs[0].name).toBe("Home");
+      expect(breadcrumbs[1]).toEqual({ name: "Avui", url: "/catalunya/avui" });
+    });
+
+    it("builds correct breadcrumbs for catalunya + category scenario (no place breadcrumb)", () => {
+      const breadcrumbs: BreadcrumbItem[] = [
+        { name: "Home", url: "/" },
+      ];
+      const locale: AppLocale = "ca";
+
+      // Catalunya doesn't add place breadcrumb
+      addPlaceBreadcrumb(breadcrumbs, "catalunya", "Catalunya", locale);
+      addCurrentPageBreadcrumb(
+        breadcrumbs,
+        false,
+        true,
+        undefined,
+        undefined,
+        "musica",
+        "Música",
+        "/catalunya/musica"
+      );
+
+      expect(breadcrumbs).toHaveLength(2);
+      expect(breadcrumbs[0].name).toBe("Home");
+      expect(breadcrumbs[1]).toEqual({ name: "Música", url: "/catalunya/musica" });
+    });
+
+    it("builds correct breadcrumbs for catalunya + date + category scenario", () => {
+      const breadcrumbs: BreadcrumbItem[] = [
+        { name: "Home", url: "/" },
+      ];
+      const locale: AppLocale = "ca";
+
+      // Catalunya doesn't add place breadcrumb, but intermediate date should include catalunya in path
+      addPlaceBreadcrumb(breadcrumbs, "catalunya", "Catalunya", locale);
+      addIntermediateDateBreadcrumb(
+        breadcrumbs,
+        "catalunya",
+        "avui",
+        "Avui",
+        locale
+      );
+      addCurrentPageBreadcrumb(
+        breadcrumbs,
+        true,
+        true,
+        "avui",
+        "Avui",
+        "musica",
+        "Música",
+        "/catalunya/avui/musica"
+      );
+
+      expect(breadcrumbs).toHaveLength(3);
+      expect(breadcrumbs[0].name).toBe("Home");
+      expect(breadcrumbs[1]).toEqual({ name: "Avui", url: `${siteUrl}/catalunya/avui` });
+      expect(breadcrumbs[2]).toEqual({
+        name: "Música",
+        url: "/catalunya/avui/musica",
+      });
+    });
   });
 
   describe("edge cases", () => {
