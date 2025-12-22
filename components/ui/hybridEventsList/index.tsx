@@ -13,7 +13,6 @@ import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE } from "types/i18n";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -58,8 +57,6 @@ async function HybridEventsList({
       </div>
     ) : null;
 
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
@@ -74,7 +71,6 @@ async function HybridEventsList({
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
-          prefix={prefix}
         />
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
@@ -100,8 +96,10 @@ async function HybridEventsList({
       data-analytics-date-slug={date || undefined}
     >
       {pageData && (
-        <Suspense
-          fallback={
+        <>
+          {/* Always render H1 directly in server component for SEO - ensures it's in initial HTML */}
+          {/* aria-hidden will be set by SearchAwareHeading when search query is present */}
+          <div data-server-heading>
             <HeadingLayout
               title={pageData.title}
               subtitle={pageData.subTitle}
@@ -109,16 +107,18 @@ async function HybridEventsList({
               subtitleClass={subtitleClass}
               cta={newsCta}
             />
-          }
-        >
-          <SearchAwareHeading
-            pageData={pageData}
-            categories={categories}
-            titleClass={titleClass}
-            subtitleClass={subtitleClass}
-            cta={newsCta}
-          />
-        </Suspense>
+          </div>
+          {/* Client-side enhancement: conditionally replace heading when search query is present */}
+          <Suspense fallback={null}>
+            <SearchAwareHeading
+              pageData={pageData}
+              categories={categories}
+              titleClass={titleClass}
+              subtitleClass={subtitleClass}
+              cta={newsCta}
+            />
+          </Suspense>
+        </>
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}

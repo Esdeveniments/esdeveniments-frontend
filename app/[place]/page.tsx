@@ -7,6 +7,7 @@ import { hasNewsForPlace } from "@lib/api/news";
 import {
   buildPageMeta,
   generateItemListStructuredData,
+  generateWebPageSchema,
 } from "@components/partials/seo-meta";
 import type {
   PlaceStaticPathParams,
@@ -32,6 +33,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -140,6 +142,14 @@ export default async function Page({
       place={place}
       hasNewsPromise={hasNewsPromise}
       categories={categories}
+      webPageSchemaFactory={(pageData) =>
+        generateWebPageSchema({
+          title: pageData.title,
+          description: pageData.metaDescription,
+          url: pageData.canonical,
+          locale,
+        })
+      }
     />
   );
 }
@@ -216,6 +226,7 @@ export async function buildPlaceEventsPromise({
   const localizedEvents = addLocalizedDateFields(events, locale);
   const eventsWithAds = insertAds(localizedEvents);
   const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
+  const pageUrl = toLocalizedUrl(place === "catalunya" ? "/" : `/${place}`, locale);
   const structuredScripts =
     validEvents.length > 0
       ? [
@@ -225,7 +236,8 @@ export async function buildPlaceEventsPromise({
             validEvents,
             `Esdeveniments ${place}`,
             undefined,
-            locale
+            locale,
+            pageUrl
           ),
         },
       ]

@@ -10,7 +10,21 @@ import { buildFaqJsonLd } from "@utils/helpers";
 import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { generateBreadcrumbList } from "@components/partials/seo-meta";
+import {
+  DEFAULT_FILTER_VALUE,
+  getDateLabelKey,
+} from "@utils/constants";
+import {
+  addPlaceBreadcrumb,
+  addIntermediateDateBreadcrumb,
+  addCurrentPageBreadcrumb,
+  handleCatalunyaHomepage,
+  updatePlaceBreadcrumbUrl,
+} from "@utils/breadcrumb-helpers";
+import type { BreadcrumbItem } from "types/common";
+import type { AppLocale } from "types/i18n";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -22,6 +36,83 @@ const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"
   // No ssr: false needed - it's a server component
   loading: () => null, // FAQ section is below the fold
 });
+
+
+function buildPlaceBreadcrumbs({
+  homeLabel,
+  place,
+  placeLabel,
+  date,
+  category,
+  categoryLabel,
+  locale,
+  currentUrl,
+  dateLabel,
+}: {
+  homeLabel: string;
+  place: string;
+  placeLabel: string;
+  date?: string;
+  category?: string;
+  categoryLabel?: string;
+  locale: AppLocale;
+  currentUrl: string;
+  dateLabel?: string;
+}): BreadcrumbItem[] {
+  const breadcrumbs: BreadcrumbItem[] = [
+    { name: homeLabel, url: toLocalizedUrl("/", locale) },
+  ];
+
+  // Add place breadcrumb if not catalunya
+  addPlaceBreadcrumb(breadcrumbs, place, placeLabel, locale);
+
+  const hasSpecificDate = !!date && date !== DEFAULT_FILTER_VALUE;
+  const hasSpecificCategory = !!category && category !== DEFAULT_FILTER_VALUE;
+
+  // Handle different breadcrumb scenarios
+  if (hasSpecificDate && !hasSpecificCategory) {
+    // Current page is date only
+    addCurrentPageBreadcrumb(
+      breadcrumbs,
+      hasSpecificDate,
+      hasSpecificCategory,
+      date,
+      dateLabel,
+      category,
+      categoryLabel,
+      currentUrl
+    );
+  } else if (hasSpecificCategory) {
+    // Category is present - may have intermediate date
+    if (hasSpecificDate) {
+      addIntermediateDateBreadcrumb(
+        breadcrumbs,
+        place,
+        date as string,
+        dateLabel,
+        locale
+      );
+    }
+    addCurrentPageBreadcrumb(
+      breadcrumbs,
+      hasSpecificDate,
+      hasSpecificCategory,
+      date,
+      dateLabel,
+      category,
+      categoryLabel,
+      currentUrl
+    );
+  } else if (place === "catalunya") {
+    // Homepage canonical
+    handleCatalunyaHomepage(breadcrumbs, homeLabel, currentUrl);
+  } else {
+    // Current page is place only
+    updatePlaceBreadcrumbUrl(breadcrumbs, currentUrl);
+  }
+
+  return breadcrumbs;
+}
 
 const buildFilterLabels = async () => {
   const tFilters = await getTranslations("Config.Filters");
@@ -146,6 +237,8 @@ async function PlacePageContent({
     ]);
 
   const tFaq = await getTranslations("Utils.ListPageFaq");
+  const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
+  const tByDates = await getTranslations("Config.ByDates");
   const locale = await getLocaleSafely();
 
   // Generate webPageSchema after shell data is available
@@ -194,10 +287,41 @@ async function PlacePageContent({
   const faqJsonLd =
     faqItems.length > 1 ? buildFaqJsonLd(faqItems) : null;
 
+  const hasSpecificCategory = !!category && category !== DEFAULT_FILTER_VALUE;
+  const categoryName =
+    hasSpecificCategory
+      ? categories?.find((c) => c.slug === category)?.name || category
+      : undefined;
+
+  const hasSpecificDate = !!date && date !== DEFAULT_FILTER_VALUE;
+  let dateLabel: string | undefined;
+  if (hasSpecificDate) {
+    const key = getDateLabelKey(date as string);
+    dateLabel = key ? tByDates(key) : (date as string);
+  }
+
+  const breadcrumbItems = buildPlaceBreadcrumbs({
+    homeLabel: tBreadcrumbs("home"),
+    place,
+    placeLabel: placeTypeLabel.label || place,
+    date,
+    category,
+    categoryLabel: categoryName,
+    locale,
+    currentUrl: pageData.canonical,
+    dateLabel,
+  });
+
+  const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
+
   return (
     <>
       {webPageSchema && (
         <JsonLdServer id="webpage-schema" data={webPageSchema} />
+      )}
+
+      {breadcrumbListSchema && (
+        <JsonLdServer id="breadcrumbs-schema" data={breadcrumbListSchema} />
       )}
 
       {structuredScripts?.map((script) => (

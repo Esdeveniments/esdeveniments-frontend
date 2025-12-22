@@ -440,7 +440,8 @@ async function buildCategoryEventsPromise({
         validEvents,
         label,
         undefined,
-        locale
+          locale,
+          pageData.canonical
       ),
     });
 

@@ -218,7 +218,6 @@ export interface NoEventsFoundProps {
 }
 
 export interface NoEventsFoundContentProps extends NoEventsFoundProps {
-  prefix?: string;
   ctaLabel: string;
   helperText: string;
 }
@@ -265,6 +264,7 @@ export interface NavbarLabels {
   openMenu: string;
   closeMenu: string;
   home: string;
+  agenda: string;
   publish: string;
   news: string;
   mobilePublishLabel: string;

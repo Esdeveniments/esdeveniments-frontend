@@ -68,9 +68,6 @@ yarn-error.log*
 # Sentry
 .sentryclirc
 
-# Generated robots.txt
-/public/robots.txt
-
 .aider*
 
 .early.coverage

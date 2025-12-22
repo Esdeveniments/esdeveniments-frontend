@@ -3,8 +3,9 @@
 import { useEffect, useRef, Suspense, useMemo, useState } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useAdContext } from "../lib/context/AdContext";
+import { useAdContext } from "@lib/context/AdContext";
 import type { WindowWithGtag } from "types/common";
+import { isE2ETestMode } from "@utils/env";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 
@@ -44,7 +45,7 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
     const win = ensureGtag();
     if (!win) return;
 
@@ -81,7 +82,7 @@ export default function GoogleScripts() {
   // because our TCF implementation (AdContext) provides a unified consent model.
   // This is intentional and aligns with our CMP's consent structure.
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
     const win = ensureGtag();
     if (!win) return;
 
@@ -123,7 +124,7 @@ export default function GoogleScripts() {
   return (
     <>
       {/* Google Analytics - Consent Mode v2 */}
-      {GA_MEASUREMENT_ID && (
+      {GA_MEASUREMENT_ID && !isE2ETestMode && (
         <>
           <Script id="google-analytics-consent" strategy="afterInteractive">
             {`
@@ -226,7 +227,7 @@ export default function GoogleScripts() {
       </Script>
 
       {/* Pageview tracking - wrapped in Suspense for useSearchParams */}
-      {GA_MEASUREMENT_ID && (
+      {GA_MEASUREMENT_ID && !isE2ETestMode && (
         <Suspense fallback={null}>
           <GoogleAnalyticsPageview adsAllowed={adsAllowed} />
         </Suspense>
