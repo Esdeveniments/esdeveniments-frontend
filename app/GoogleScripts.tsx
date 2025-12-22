@@ -105,6 +105,7 @@ export default function GoogleScripts() {
   // This prevents server/client HTML mismatches caused by client-only boundaries.
   useEffect(() => {
     if (!adsAllowed) return;
+    if (isE2ETestMode) return;
     let cancelled = false;
 
     import("./GoogleScriptsHeavy")
@@ -158,73 +159,77 @@ export default function GoogleScripts() {
         </>
       )}
 
-      {/* AdBlock Detection - keep afterInteractive (UI logic) */}
-      <Script id="google-adblock" strategy="afterInteractive">
-        {`
-          (function() {
-            function signalGooglefcPresent() {
-              if (!window.frames['googlefcPresent']) {
-                if (document.body) {
-                 const iframe = document.createElement('iframe');
-                 iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;';
-                 iframe.style.display = 'none';
-                 iframe.name = 'googlefcPresent';
-                 document.body.appendChild(iframe);
-                } else {
-                 setTimeout(signalGooglefcPresent, 0);
+      {!isE2ETestMode && (
+        <>
+          {/* AdBlock Detection - keep afterInteractive (UI logic) */}
+          <Script id="google-adblock" strategy="afterInteractive">
+            {`
+              (function() {
+                function signalGooglefcPresent() {
+                  if (!window.frames['googlefcPresent']) {
+                    if (document.body) {
+                     const iframe = document.createElement('iframe');
+                     iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;';
+                     iframe.style.display = 'none';
+                     iframe.name = 'googlefcPresent';
+                     document.body.appendChild(iframe);
+                    } else {
+                     setTimeout(signalGooglefcPresent, 0);
+                    }
+                  }
                 }
-              }
-            }
-            signalGooglefcPresent();
-          })();
-        `}
-      </Script>
+                signalGooglefcPresent();
+              })();
+            `}
+          </Script>
 
-      {/* Funding Choices (CMP) - keep afterInteractive */}
-      <Script
-        src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
-        strategy="afterInteractive"
-      />
+          {/* Funding Choices (CMP) - keep afterInteractive */}
+          <Script
+            src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
+            strategy="afterInteractive"
+          />
 
-      {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
-      <Script id="ai-referrer-analytics" strategy="lazyOnload">
-        {`
-          (function() {
-            try {
-              const referrer = document.referrer;
-              if (!referrer) return;
-              
-              const aiDomains = [
-                'chat.openai.com',
-                'perplexity.ai',
-                'gemini.google.com',
-                'bard.google.com',
-                'claude.ai'
-              ];
-              
-              const isAiReferrer = aiDomains.some(domain => referrer.includes(domain));
-              if (!isAiReferrer) return;
-              
-              const domain = aiDomains.find(d => referrer.includes(d));
-              const sessionKey = 'ai_referrer_tracked_' + domain;
-              
-              if (sessionStorage.getItem(sessionKey)) return;
-              
-              // Robustness fix: Push directly to dataLayer instead of relying on global gtag function
-              window.dataLayer = window.dataLayer || [];
-              window.dataLayer.push({
-                event: 'ai_referrer',
-                referrer_domain: domain,
-                referrer_url: referrer
-              });
-              
-              sessionStorage.setItem(sessionKey, 'true');
-            } catch (error) {
-              console.warn('AI referrer analytics error:', error);
-            }
-          })();
-        `}
-      </Script>
+          {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
+          <Script id="ai-referrer-analytics" strategy="lazyOnload">
+            {`
+              (function() {
+                try {
+                  const referrer = document.referrer;
+                  if (!referrer) return;
+                  
+                  const aiDomains = [
+                    'chat.openai.com',
+                    'perplexity.ai',
+                    'gemini.google.com',
+                    'bard.google.com',
+                    'claude.ai'
+                  ];
+                  
+                  const isAiReferrer = aiDomains.some(domain => referrer.includes(domain));
+                  if (!isAiReferrer) return;
+                  
+                  const domain = aiDomains.find(d => referrer.includes(d));
+                  const sessionKey = 'ai_referrer_tracked_' + domain;
+                  
+                  if (sessionStorage.getItem(sessionKey)) return;
+                  
+                  // Robustness fix: Push directly to dataLayer instead of relying on global gtag function
+                  window.dataLayer = window.dataLayer || [];
+                  window.dataLayer.push({
+                    event: 'ai_referrer',
+                    referrer_domain: domain,
+                    referrer_url: referrer
+                  });
+                  
+                  sessionStorage.setItem(sessionKey, 'true');
+                } catch (error) {
+                  console.warn('AI referrer analytics error:', error);
+                }
+              })();
+            `}
+          </Script>
+        </>
+      )}
 
       {/* Pageview tracking - wrapped in Suspense for useSearchParams */}
       {GA_MEASUREMENT_ID && !isE2ETestMode && (
@@ -234,7 +239,9 @@ export default function GoogleScripts() {
       )}
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
-      {adsAllowed && HeavyComponent && <HeavyComponent adsAllowed={adsAllowed} />}
+      {!isE2ETestMode && adsAllowed && HeavyComponent && (
+        <HeavyComponent adsAllowed={adsAllowed} />
+      )}
     </>
   );
 }

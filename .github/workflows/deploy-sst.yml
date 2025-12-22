@@ -182,7 +182,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: yarn prebuild
 
-      - name: Build Next.js application (E2E mode: disable GA)
+      - name: "Build Next.js application (E2E mode: disable GA)"
         run: yarn build
         env:
           NODE_ENV: production
@@ -231,6 +231,12 @@ jobs:
             rm .next-server.pid
           fi
           pkill -f "yarn start" || true
+
+      - name: Clean build artifacts (before production deploy build)
+        run: |
+          rm -rf .next
+          rm -rf .sst .open-next
+          echo "✅ Cleaned build artifacts"
 
       - name: Rebuild Next.js application (production deploy)
         run: yarn build
