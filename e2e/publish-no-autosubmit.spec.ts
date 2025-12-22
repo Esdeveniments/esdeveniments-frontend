@@ -42,7 +42,9 @@ test.describe("Publish wizard should not auto publish", () => {
       timeout: 60000,
     });
 
-    await expect(page.getByTestId("event-form")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId("event-form")).toBeVisible({
+      timeout: 30000,
+    });
     await expect(page.getByTestId("event-form")).toHaveAttribute(
       "data-hydrated",
       "true",
@@ -59,13 +61,17 @@ test.describe("Publish wizard should not auto publish", () => {
     // Ensure controlled inputs propagate state before clicking Next
     await page.locator("input#title").blur();
     await page.locator("textarea#description").blur();
-    await expect(page.getByTestId("next-button")).toBeEnabled({ timeout: 10000 });
+    await expect(page.getByTestId("next-button")).toBeEnabled({
+      timeout: 10000,
+    });
 
     // Go to Step 2 using the explicit Next button (deterministic)
     await page.getByTestId("next-button").click();
 
     // Step 2: location should be visible now
-    await expect(page.getByTestId("town-select")).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId("town-select")).toBeVisible({
+      timeout: 20000,
+    });
     await expect(page.locator("input#location")).toBeVisible();
 
     // Select a town (react-select)
@@ -75,13 +81,17 @@ test.describe("Publish wizard should not auto publish", () => {
 
     await page.fill("input#location", "Plaça Major");
 
-    await expect(page.getByTestId("next-button")).toBeEnabled({ timeout: 10000 });
+    await expect(page.getByTestId("next-button")).toBeEnabled({
+      timeout: 10000,
+    });
 
     // Advance to Step 3
     await page.getByTestId("next-button").click();
 
     // Step 3: image/dates step
-    await expect(page.getByTestId("publish-button")).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId("publish-button")).toBeVisible({
+      timeout: 20000,
+    });
 
     const imagePath = path.join(
       process.cwd(),
@@ -96,20 +106,28 @@ test.describe("Publish wizard should not auto publish", () => {
     await page.getByTestId("prev-button").click();
     await expect(page.locator("input#location")).toBeVisible();
 
-    await expect(page.getByTestId("next-button")).toBeEnabled({ timeout: 10000 });
+    await expect(page.getByTestId("next-button")).toBeEnabled({
+      timeout: 10000,
+    });
     await page.getByTestId("next-button").click();
     await expect(page.getByTestId("publish-button")).toBeVisible();
 
     // Ensure we did not auto-publish / redirect
-    await page.waitForTimeout(800);
+    const navigatedToEventUrl = await page
+      .waitForURL(/\/e\//, { timeout: 2000 })
+      .then(() => page.url())
+      .catch(() => null);
+
     await expect(page).toHaveURL(/\/publica/);
 
     const publishedSlug = await page.evaluate(() => {
       const bodySlug = document.body?.dataset?.lastE2eSlug;
-      const windowSlug = (window as unknown as { __LAST_E2E_PUBLISH_SLUG__?: string })
-        .__LAST_E2E_PUBLISH_SLUG__;
+      const windowSlug = (
+        window as unknown as { __LAST_E2E_PUBLISH_SLUG__?: string }
+      ).__LAST_E2E_PUBLISH_SLUG__;
       return bodySlug || windowSlug || null;
     });
     expect(publishedSlug).toBeNull();
+    expect(navigatedToEventUrl).toBeNull();
   });
 });
