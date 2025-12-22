@@ -104,6 +104,10 @@ export const BYDATES: ByDateOption[] = [
   { value: "setmana", labelKey: "week" },
 ];
 
+/**
+ * Maps date slugs to their corresponding translation label keys.
+ * Used for consistent date label resolution across the application.
+ */
 export const dateFunctions: { [key: string]: string } = {
   avui: "today",
   dema: "tomorrow",
@@ -112,18 +116,23 @@ export const dateFunctions: { [key: string]: string } = {
 };
 
 /**
- * Maps date slugs to their corresponding translation label keys.
- * Used for consistent date label resolution across the application.
+ * Type-safe helper to get date label key from slug.
+ * Reuses dateFunctions to avoid duplication.
  */
-export const byDateSlugToLabelKey: Record<
-  string,
-  "today" | "tomorrow" | "week" | "weekend"
-> = {
-  avui: "today",
-  dema: "tomorrow",
-  setmana: "week",
-  "cap-de-setmana": "weekend",
-};
+export function getDateLabelKey(
+  slug: string
+): "today" | "tomorrow" | "week" | "weekend" | undefined {
+  const key = dateFunctions[slug];
+  if (
+    key === "today" ||
+    key === "tomorrow" ||
+    key === "week" ||
+    key === "weekend"
+  ) {
+    return key;
+  }
+  return undefined;
+}
 
 export const DISTANCES: number[] = [5, 10, 25, 50, 100];
 

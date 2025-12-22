@@ -14,7 +14,7 @@ import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import {
   DEFAULT_FILTER_VALUE,
-  byDateSlugToLabelKey,
+  getDateLabelKey,
 } from "@utils/constants";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
@@ -288,12 +288,11 @@ async function PlacePageContent({
       : undefined;
 
   const hasSpecificDate = !!date && date !== DEFAULT_FILTER_VALUE;
-  const dateLabel = hasSpecificDate
-    ? (() => {
-      const key = byDateSlugToLabelKey[date as string];
-      return key ? tByDates(key) : (date as string);
-    })()
-    : undefined;
+  let dateLabel: string | undefined;
+  if (hasSpecificDate) {
+    const key = getDateLabelKey(date as string);
+    dateLabel = key ? tByDates(key) : (date as string);
+  }
 
   const breadcrumbItems = buildPlaceBreadcrumbs({
     homeLabel: tBreadcrumbs("home"),

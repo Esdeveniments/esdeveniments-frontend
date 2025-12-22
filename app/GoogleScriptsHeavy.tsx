@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import type { WindowWithGtag } from "types/common";
-import { isE2ETestMode } from "../utils/env";
+import { isE2ETestMode } from "@utils/env";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;

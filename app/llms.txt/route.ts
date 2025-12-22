@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     "# llms.txt",
     `# Site: ${siteUrl}`,
     "# Purpose: Help LLM-based tools discover canonical URLs and high-signal content.",
-    "# Updated: " + new Date().toISOString(),
+    "# Updated: " + new Date().toISOString().split("T")[0], // Date only for better cache consistency
     "",
     "## About (EN)",
     "Esdeveniments.cat is a multilingual (ca/es/en) events discovery site for Catalonia (Spain). It publishes up-to-date event listings by place, date and category, plus individual event detail pages and local news.",

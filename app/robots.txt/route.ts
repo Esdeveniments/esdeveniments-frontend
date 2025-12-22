@@ -82,26 +82,20 @@ export async function GET(request: NextRequest) {
 
   // Add rules
   const rules = [robotsConfig.rules].flat().filter(Boolean);
-  for (const rule of rules) {
+  rules.forEach((rule) => {
     if (rule.userAgent) {
       lines.push(`User-Agent: ${rule.userAgent}`);
-    }
-    if (rule.allow) {
-      const allowPaths = Array.isArray(rule.allow) ? rule.allow : [rule.allow];
-      for (const path of allowPaths) {
-        lines.push(`Allow: ${path}`);
+      if (rule.allow) {
+        [rule.allow].flat().forEach((path) => lines.push(`Allow: ${path}`));
       }
-    }
-    if (rule.disallow) {
-      const disallowPaths = Array.isArray(rule.disallow)
-        ? rule.disallow
-        : [rule.disallow];
-      for (const path of disallowPaths) {
-        lines.push(`Disallow: ${path}`);
+      if (rule.disallow) {
+        [rule.disallow]
+          .flat()
+          .forEach((path) => lines.push(`Disallow: ${path}`));
       }
+      lines.push(""); // Empty line between rules
     }
-    lines.push(""); // Empty line between rules
-  }
+  });
 
   // Add host directive
   if (robotsConfig.host) {
@@ -111,12 +105,9 @@ export async function GET(request: NextRequest) {
 
   // Add sitemaps
   if (robotsConfig.sitemap) {
-    const sitemaps = Array.isArray(robotsConfig.sitemap)
-      ? robotsConfig.sitemap
-      : [robotsConfig.sitemap];
-    for (const sitemap of sitemaps) {
-      lines.push(`Sitemap: ${sitemap}`);
-    }
+    [robotsConfig.sitemap]
+      .flat()
+      .forEach((sitemap) => lines.push(`Sitemap: ${sitemap}`));
   }
 
   // Add a comment with timestamp to verify route handler is being used
