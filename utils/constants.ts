@@ -111,6 +111,20 @@ export const dateFunctions: { [key: string]: string } = {
   "cap-de-setmana": "weekend",
 };
 
+/**
+ * Maps date slugs to their corresponding translation label keys.
+ * Used for consistent date label resolution across the application.
+ */
+export const byDateSlugToLabelKey: Record<
+  string,
+  "today" | "tomorrow" | "week" | "weekend"
+> = {
+  avui: "today",
+  dema: "tomorrow",
+  setmana: "week",
+  "cap-de-setmana": "weekend",
+};
+
 export const DISTANCES: number[] = [5, 10, 25, 50, 100];
 
 /**

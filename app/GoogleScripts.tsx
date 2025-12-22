@@ -5,13 +5,9 @@ import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "../lib/context/AdContext";
 import type { WindowWithGtag } from "types/common";
+import { isE2ETestMode } from "../utils/env";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
-
-// Disable GA in E2E test mode to prevent test traffic from polluting analytics
-const isE2ETestMode =
-  process.env.E2E_TEST_MODE === "1" ||
-  process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
 
 // Google Analytics gtag shim - reused across multiple Script components
 // Conditionally defines gtag only if it doesn't already exist to avoid overwriting

@@ -12,7 +12,10 @@ import type { PlacePageShellProps } from "types/props";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import {
+  DEFAULT_FILTER_VALUE,
+  byDateSlugToLabelKey,
+} from "@utils/constants";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
 
@@ -26,13 +29,6 @@ const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"
   // No ssr: false needed - it's a server component
   loading: () => null, // FAQ section is below the fold
 });
-
-const byDateSlugToLabelKey: Record<string, "today" | "tomorrow" | "week" | "weekend"> = {
-  avui: "today",
-  dema: "tomorrow",
-  setmana: "week",
-  "cap-de-setmana": "weekend",
-};
 
 function buildPlaceBreadcrumbs({
   homeLabel,

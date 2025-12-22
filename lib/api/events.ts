@@ -38,10 +38,7 @@ import {
 } from "types/api/event";
 import { FetchEventsParams } from "types/event";
 import type { UploadImageResponse } from "types/upload";
-
-const isE2ETestMode =
-  process.env.E2E_TEST_MODE === "1" ||
-  process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
+import { isE2ETestMode } from "@utils/env";
 
 const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
 

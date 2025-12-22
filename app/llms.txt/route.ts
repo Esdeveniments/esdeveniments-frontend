@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCacheControlHeader } from "@utils/cache";
+import { siteUrl } from "@config/index";
 
 export async function GET(request: NextRequest) {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.esdeveniments.cat";
 
   const lines: string[] = [
     "# llms.txt",
@@ -54,12 +54,7 @@ export async function GET(request: NextRequest) {
 
   const llmsTxt = lines.join("\n");
 
-  const searchParams = request.nextUrl.searchParams;
-  const hasCacheBust = searchParams?.has("v") || searchParams?.has("nocache");
-
-  const cacheControl = hasCacheBust
-    ? "no-cache, no-store, must-revalidate"
-    : "public, s-maxage=300, stale-while-revalidate=0";
+  const cacheControl = getCacheControlHeader(request, 300);
 
   return new NextResponse(llmsTxt, {
     status: 200,

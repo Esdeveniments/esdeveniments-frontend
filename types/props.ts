@@ -218,7 +218,6 @@ export interface NoEventsFoundProps {
 }
 
 export interface NoEventsFoundContentProps extends NoEventsFoundProps {
-  prefix?: string;
   ctaLabel: string;
   helperText: string;
 }

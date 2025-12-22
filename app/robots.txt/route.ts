@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { MetadataRoute } from "next";
+import { getCacheControlHeader } from "@utils/cache";
 
 /**
  * robots.txt route handler with explicit cache control
@@ -80,11 +81,7 @@ export async function GET(request: NextRequest) {
   const lines: string[] = [];
 
   // Add rules
-  const rules = Array.isArray(robotsConfig.rules)
-    ? robotsConfig.rules
-    : robotsConfig.rules
-    ? [robotsConfig.rules]
-    : [];
+  const rules = [robotsConfig.rules].flat().filter(Boolean);
   for (const rule of rules) {
     if (rule.userAgent) {
       lines.push(`User-Agent: ${rule.userAgent}`);
@@ -129,16 +126,10 @@ export async function GET(request: NextRequest) {
 
   const robotsTxt = lines.join("\n");
 
-  // Check for cache-busting query parameter (e.g., ?v=2 or ?nocache=1)
-  const searchParams = request.nextUrl.searchParams;
-  const hasCacheBust = searchParams?.has("v") || searchParams?.has("nocache");
-
   // Set cache headers: short TTL at edge (5 minutes) to prevent stale content
   // Matches the pattern used by sitemap.xml/route.ts for consistency
   // If cache-busting is requested, disable caching entirely
-  const cacheControl = hasCacheBust
-    ? "no-cache, no-store, must-revalidate"
-    : "public, s-maxage=300, stale-while-revalidate=0";
+  const cacheControl = getCacheControlHeader(request, 300);
 
   return new NextResponse(robotsTxt, {
     status: 200,

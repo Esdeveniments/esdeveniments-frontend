@@ -18,15 +18,20 @@ export default function SearchAwareHeading({
 
   // Hide the server-rendered heading when client enhancement loads
   // Must be called before any early returns to satisfy React Hooks rules
+  // Also set aria-hidden for accessibility when hiding
   useEffect(() => {
     if (!searchTerm) return;
-    const serverHeading = document.querySelector("[data-server-heading]");
+    const serverHeading = document.querySelector(
+      "[data-server-heading]"
+    ) as HTMLElement | null;
     if (serverHeading) {
-      (serverHeading as HTMLElement).style.display = "none";
+      serverHeading.style.display = "none";
+      serverHeading.setAttribute("aria-hidden", "true");
     }
     return () => {
       if (serverHeading) {
-        (serverHeading as HTMLElement).style.display = "";
+        serverHeading.style.display = "";
+        serverHeading.removeAttribute("aria-hidden");
       }
     };
   }, [searchTerm]);
