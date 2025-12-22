@@ -20,7 +20,7 @@ import { siteUrl } from "@config/index";
  * 
  * The host is dynamically determined for multi-domain support.
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const robotsConfig: MetadataRoute.Robots = {
     rules: [
@@ -80,19 +80,15 @@ export async function GET(request: NextRequest) {
 
   // Add rules
   const rules = [robotsConfig.rules].flat().filter(Boolean);
+  const addDirectives = (key: string, value: string | string[] | undefined) => {
+    if (!value) return;
+    [value].flat().forEach((v) => lines.push(`${key}: ${v}`));
+  };
   rules.forEach((rule) => {
     if (rule.userAgent) {
-      [rule.userAgent].flat().forEach((agent) =>
-        lines.push(`User-Agent: ${agent}`)
-      );
-      if (rule.allow) {
-        [rule.allow].flat().forEach((path) => lines.push(`Allow: ${path}`));
-      }
-      if (rule.disallow) {
-        [rule.disallow]
-          .flat()
-          .forEach((path) => lines.push(`Disallow: ${path}`));
-      }
+      addDirectives("User-Agent", rule.userAgent);
+      addDirectives("Allow", rule.allow);
+      addDirectives("Disallow", rule.disallow);
       lines.push(""); // Empty line between rules
     }
   });

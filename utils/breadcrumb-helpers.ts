@@ -52,6 +52,10 @@ export function addIntermediateDateBreadcrumb(
  * Adds the current page breadcrumb based on the scenario.
  * Handles cases where the current page is a date filter or category filter.
  * 
+ * Note: The caller contract guarantees that when hasSpecificDate is true, date is defined,
+ * and when hasSpecificCategory is true, category is defined. This is enforced by the
+ * calling code in buildPlaceBreadcrumbs.
+ * 
  * @param breadcrumbs - The breadcrumbs array to modify
  * @param hasSpecificDate - Whether a specific date filter is active
  * @param hasSpecificCategory - Whether a specific category filter is active
@@ -74,13 +78,13 @@ export function addCurrentPageBreadcrumb(
   if (hasSpecificDate && !hasSpecificCategory) {
     // Current page is date only
     breadcrumbs.push({
-      name: dateLabel || (date as string),
+      name: dateLabel || date || "",
       url: currentUrl,
     });
   } else if (hasSpecificCategory) {
     // Current page is category (or place+category)
     breadcrumbs.push({
-      name: categoryLabel || (category as string),
+      name: categoryLabel || category || "",
       url: currentUrl,
     });
   }
@@ -113,6 +117,9 @@ export function updatePlaceBreadcrumbUrl(
   breadcrumbs: BreadcrumbItem[],
   currentUrl: string
 ): void {
+  if (breadcrumbs.length === 0) {
+    return;
+  }
   breadcrumbs[breadcrumbs.length - 1] = {
     ...breadcrumbs[breadcrumbs.length - 1],
     url: currentUrl,

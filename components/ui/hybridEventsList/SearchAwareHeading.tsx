@@ -23,13 +23,13 @@ export default function SearchAwareHeading({
     if (!searchTerm) return;
     const serverHeading = document.querySelector(
       "[data-server-heading]"
-    ) as HTMLElement | null;
-    if (serverHeading) {
+    );
+    if (serverHeading instanceof HTMLElement) {
       serverHeading.style.display = "none";
       serverHeading.setAttribute("aria-hidden", "true");
     }
     return () => {
-      if (serverHeading) {
+      if (serverHeading instanceof HTMLElement) {
         serverHeading.style.display = "";
         serverHeading.removeAttribute("aria-hidden");
       }

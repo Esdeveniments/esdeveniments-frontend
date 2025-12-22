@@ -3,9 +3,9 @@
 import { useEffect, useRef, Suspense, useMemo, useState } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useAdContext } from "../lib/context/AdContext";
+import { useAdContext } from "@lib/context/AdContext";
 import type { WindowWithGtag } from "types/common";
-import { isE2ETestMode } from "../utils/env";
+import { isE2ETestMode } from "@utils/env";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 

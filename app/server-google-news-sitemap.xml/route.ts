@@ -28,7 +28,7 @@ function buildNewsSitemap(
       return (
         `  <url>\n` +
         `    <loc>${escapeXml(i.loc)}</loc>\n` +
-        `    <lastmod>${lastmod}</lastmod>\n` +
+        `    <lastmod>${escapeXml(lastmod)}</lastmod>\n` +
         `    <changefreq>daily</changefreq>\n` +
         `    <priority>0.8</priority>\n` +
         `    <news:news>\n` +
@@ -36,7 +36,7 @@ function buildNewsSitemap(
         `        <news:name>${escapeXml(i.publicationName)}</news:name>\n` +
         `        <news:language>${escapeXml(i.language)}</news:language>\n` +
         `      </news:publication>\n` +
-        `      <news:publication_date>${i.publicationDate}</news:publication_date>\n` +
+        `      <news:publication_date>${escapeXml(i.publicationDate)}</news:publication_date>\n` +
         `      <news:title>${escapeXml(i.title)}</news:title>\n` +
         `    </news:news>\n` +
         `  </url>`

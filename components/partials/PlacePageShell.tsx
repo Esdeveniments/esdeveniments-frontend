@@ -69,11 +69,6 @@ function buildPlaceBreadcrumbs({
   const hasSpecificDate = !!date && date !== DEFAULT_FILTER_VALUE;
   const hasSpecificCategory = !!category && category !== DEFAULT_FILTER_VALUE;
 
-  const pathSegments: string[] = [];
-  if (place !== "catalunya") pathSegments.push(place);
-  if (hasSpecificDate) pathSegments.push(date as string);
-  if (hasSpecificCategory) pathSegments.push(category as string);
-
   // Handle different breadcrumb scenarios
   if (hasSpecificDate && !hasSpecificCategory) {
     // Current page is date only
@@ -111,7 +106,7 @@ function buildPlaceBreadcrumbs({
   } else if (place === "catalunya") {
     // Homepage canonical
     handleCatalunyaHomepage(breadcrumbs, homeLabel, currentUrl);
-  } else if (pathSegments.length === 1) {
+  } else {
     // Current page is place only
     updatePlaceBreadcrumbUrl(breadcrumbs, currentUrl);
   }

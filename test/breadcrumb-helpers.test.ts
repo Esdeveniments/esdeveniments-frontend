@@ -139,6 +139,29 @@ describe("breadcrumb-helpers", () => {
 
       expect(breadcrumbs[2].url).toBe(`${siteUrl}/es/barcelona/avui`);
     });
+
+    it("includes catalunya in path for intermediate date breadcrumb (not homepage)", () => {
+      const breadcrumbs: BreadcrumbItem[] = [
+        { name: "Home", url: "/" },
+      ];
+      const locale: AppLocale = "ca";
+
+      // Even though catalunya is treated specially for homepage breadcrumbs,
+      // filtered pages (date + category) should include catalunya in the URL path
+      addIntermediateDateBreadcrumb(
+        breadcrumbs,
+        "catalunya",
+        "avui",
+        "Avui",
+        locale
+      );
+
+      expect(breadcrumbs).toHaveLength(2);
+      expect(breadcrumbs[1]).toEqual({
+        name: "Avui",
+        url: `${siteUrl}/catalunya/avui`, // Must include catalunya, not just /avui
+      });
+    });
   });
 
   describe("addCurrentPageBreadcrumb", () => {
