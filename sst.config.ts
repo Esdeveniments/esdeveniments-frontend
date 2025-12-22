@@ -161,6 +161,13 @@ export default $config({
         memory: "3008 MB", // Maximum allowed for image optimizer Lambda (3 vCPUs)
         staticEtag: true, // Enable stronger caching for optimized images
       },
+      // Explicitly invalidate robots.txt on deploy to ensure route handler changes take effect
+      // CloudFront caches robots.txt with s-maxage=86400 (24 hours) by default, so we need
+      // to invalidate it after deployment to serve the new route handler response
+      invalidation: {
+        paths: ["/robots.txt"],
+        wait: true, // Wait for invalidation to complete before deployment finishes
+      },
     });
 
     // Validate that server node exists before creating alarms
