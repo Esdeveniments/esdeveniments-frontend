@@ -176,6 +176,8 @@ export const PUBLIC_API_PATTERNS = [
   /^\/api\/(categories|cities|news)(\/[^/]+)?$/,
   // Places: base, [slug], /nearby, or /photo
   /^\/api\/places(\/(nearby|photo|[^/]+))?$/,
+  // Geocoding (public GET, used by events map)
+  /^\/api\/geocode$/,
 ];
 
 // Routes that require exact match

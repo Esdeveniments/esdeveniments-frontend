@@ -15,6 +15,8 @@ const GlobeIcon = GlobeAltIcon;
 import { transformRegionsToOptions } from "./utils";
 import { normalizeForSearch } from "@utils/string-helpers";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
+import { useSearchParams } from "next/navigation";
+import { preserveMapViewParam } from "@utils/view-mode";
 
 export default function LocationDiscoveryWidget({
   className = "",
@@ -22,6 +24,7 @@ export default function LocationDiscoveryWidget({
 }: LocationDiscoveryWidgetProps) {
   const t = useTranslations("Components.LocationDiscovery");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,9 +78,13 @@ export default function LocationDiscoveryWidget({
       // Navigate to location using the correct URL value
       const urlValue = locationOption?.value || "catalunya";
       startNavigationFeedback();
-      router.push(`/${urlValue}`);
+      const nextUrl = preserveMapViewParam(
+        `/${urlValue}`,
+        searchParams?.toString() || ""
+      );
+      router.push(nextUrl);
     },
-    [allLocations, onLocationChange, router]
+    [allLocations, onLocationChange, router, searchParams]
   );
 
   // Handle current location
@@ -127,8 +134,12 @@ export default function LocationDiscoveryWidget({
   const onDiscoverOtherEvents = useCallback(() => {
     //
     startNavigationFeedback();
-    router.push("/catalunya");
-  }, [router]);
+    const nextUrl = preserveMapViewParam(
+      "/catalunya",
+      searchParams?.toString() || ""
+    );
+    router.push(nextUrl);
+  }, [router, searchParams]);
 
   if (isError) {
     console.error("Failed to load regions data");

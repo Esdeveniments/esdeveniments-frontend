@@ -49,6 +49,10 @@ export function normalizeExternalImageUrl(imageUrl: string): string {
     // Collapse duplicate slashes in pathname (keeping leading slash)
     urlObj.pathname = urlObj.pathname.replace(/\/{2,}/g, "/");
 
+    // Encode pipe characters (|) in pathname to %7C for consistent hydration
+    // This prevents server/client mismatch where browser encodes | but URL() doesn't
+    urlObj.pathname = urlObj.pathname.replace(/\|/g, "%7C");
+
     return urlObj.toString();
   } catch {
     // Fail-open: keep the original trimmed URL so we don't break rendering

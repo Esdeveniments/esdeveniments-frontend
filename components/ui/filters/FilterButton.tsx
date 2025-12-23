@@ -1,6 +1,7 @@
 "use client";
 import { JSX, MouseEvent } from "react";
 import { useRouter } from "../../../i18n/routing";
+import { useSearchParams } from "next/navigation";
 import XIcon from "@heroicons/react/solid/esm/XIcon";
 import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
 import { usePressFeedback } from "@components/hooks/usePressFeedback";
@@ -11,6 +12,7 @@ import {
 } from "@lib/navigation-feedback";
 import { FilterButtonProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
+import { preserveMapViewParam } from "@utils/view-mode";
 
 const FilterButton = ({
   filterKey,
@@ -21,6 +23,7 @@ const FilterButton = ({
   testId,
 }: FilterButtonProps): JSX.Element => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { handlers, isPressed } = usePressFeedback();
   const { setLoading } = useFilterLoading();
 
@@ -37,7 +40,8 @@ const FilterButton = ({
       startNavigationFeedback();
     }
     setLoading(true);
-    router.push(removeUrl);
+    const nextUrl = preserveMapViewParam(removeUrl, searchParams?.toString() || "");
+    router.push(nextUrl);
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -58,8 +62,8 @@ const FilterButton = ({
     >
       <div
         className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${enabled
-            ? "border-primary bg-primary/5 text-foreground-strong"
-            : "border-border text-foreground-strong hover:bg-muted"
+          ? "border-primary bg-primary/5 text-foreground-strong"
+          : "border-border text-foreground-strong hover:bg-muted"
           }`}
         data-pressed={isPressed ? "true" : undefined}
         onClick={handleChipClick}

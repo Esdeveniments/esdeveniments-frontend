@@ -15,6 +15,7 @@ import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { stripLocalePrefix } from "@utils/i18n-routing";
+import { preserveMapViewParam } from "@utils/view-mode";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
 import { useHero } from "./HeroContext";
@@ -33,7 +34,7 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
 
 export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const t = useTranslations("Components.HeroSearch");
-    const locale = useLocale();
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -176,10 +177,11 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
     // Always navigate (even with empty search to clear the param)
     const url = buildHeroUrl(place, date, value);
+    const nextUrl = preserveMapViewParam(url, searchParams?.toString() || "");
 
     startNavigationFeedback();
-    router.push(url);
-  }, [searchTerm, place, date, router]);
+    router.push(nextUrl);
+  }, [searchTerm, place, date, router, searchParams]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -191,9 +193,10 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const handleClearSearch = useCallback(() => {
     setSearchTerm("");
     const url = buildHeroUrl(place, date, "");
+    const nextUrl = preserveMapViewParam(url, searchParams?.toString() || "");
     startNavigationFeedback();
-    router.push(url);
-  }, [place, date, router, setSearchTerm]);
+    router.push(nextUrl);
+  }, [place, date, router, searchParams, setSearchTerm]);
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -285,6 +288,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
               onClick={handleClearSearch}
               className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
               aria-label={t("clearSearch")}
+              data-testid="search-clear-button"
             >
               <XIcon className="h-4 w-4" />
             </Button>

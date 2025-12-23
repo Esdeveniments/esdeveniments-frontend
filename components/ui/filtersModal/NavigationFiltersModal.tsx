@@ -25,6 +25,7 @@ import {
 } from "types/common";
 import { CATEGORY_CONFIG } from "@config/categories";
 import { buildFilterUrl } from "@utils/url-filters";
+import { preserveMapViewParam } from "@utils/view-mode";
 import { NavigationFiltersModalProps } from "types/props";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
@@ -451,6 +452,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
     const newUrl = buildFilterUrl(currentSegments, currentQueryParams, changes);
 
+    const finalUrl =
+      typeof window === "undefined"
+        ? newUrl
+        : preserveMapViewParam(newUrl, window.location.search);
+
     // `buildFilterUrl` returns a canonical URL WITHOUT a locale prefix.
     // On locale-prefixed routes (e.g. `/es/catalunya`), `window.location.pathname`
     // includes the prefix, which would incorrectly look like a change and leave the
@@ -471,7 +477,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     })();
 
     // If nothing changed, avoid triggering loading state that won't auto-reset
-    if (currentUrl === newUrl) {
+    if (currentUrl === finalUrl) {
       return true;
     }
 
@@ -484,7 +490,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
     startNavigationFeedback();
     setLoading(true);
-    router.push(newUrl);
+    router.push(finalUrl);
     return true;
   };
 

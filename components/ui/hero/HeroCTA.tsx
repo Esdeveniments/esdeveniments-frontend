@@ -11,6 +11,8 @@ import { HERO_DATE_FILTERS } from "./constants";
 import { formatPlacePreposition } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
 import { useLocale } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { preserveMapViewParam } from "@utils/view-mode";
 
 export default function HeroCTA() {
   const t = useTranslations("Components.HeroCTA");
@@ -18,6 +20,7 @@ export default function HeroCTA() {
   const locale = useLocale();
   const { place, label, placeType, date, searchTerm } = useHero();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSearch = () => {
     sendGoogleEvent("hero_cta_click", {
@@ -28,8 +31,9 @@ export default function HeroCTA() {
       has_search: String(Boolean(searchTerm?.trim())),
     });
     const url = buildHeroUrl(place, date, searchTerm);
+    const nextUrl = preserveMapViewParam(url, searchParams?.toString() || "");
     startNavigationFeedback();
-    router.push(url);
+    router.push(nextUrl);
   };
 
   const getButtonText = () => {

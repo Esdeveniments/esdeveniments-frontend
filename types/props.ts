@@ -494,7 +494,6 @@ export interface UseGeolocationReturn {
 export interface NewsEventsSectionProps {
   title: string;
   events: NewsEventItemDTO[];
-  showHero?: boolean;
   showNumbered?: boolean;
 }
 

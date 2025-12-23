@@ -3,6 +3,7 @@ import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
+import ViewToggle from "./ViewToggle";
 import List from "@components/ui/list";
 import Card from "@components/ui/card";
 import { getNewsCta } from "@utils/helpers";
@@ -121,7 +122,13 @@ async function HybridEventsList({
         </>
       )}
 
+      {/* View Toggle placed here, above the list */}
+      <Suspense fallback={null}>
+        <ViewToggle />
+      </Suspense>
+
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
+      {/* Now hidden if view=map (via SsrListWrapper) */}
       {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}
       {/* Wrapped in Suspense because SsrListWrapper uses useSearchParams() */}
       {/* Fallback renders SSR content directly to ensure SEO visibility */}
