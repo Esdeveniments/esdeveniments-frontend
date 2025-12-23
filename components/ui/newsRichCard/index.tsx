@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
 import type { NewsRichCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import DOMPurify from "isomorphic-dompurify";
@@ -77,9 +79,15 @@ export default async function NewsRichCard({
                   {primaryCategory.name}
                 </PressableAnchor>
               )}
-              <span className="badge-default">📅 {dateLabel}</span>
+              <span className="badge-default inline-flex items-center gap-1.5">
+                <CalendarIcon className="w-4 h-4 flex-shrink-0" />
+                {dateLabel}
+              </span>
               {event.location && (
-                <span className="badge-default">📍 {event.location}</span>
+                <span className="badge-default inline-flex items-center gap-1.5">
+                  <LocationMarkerIcon className="w-4 h-4 flex-shrink-0" />
+                  {event.location}
+                </span>
               )}
             </div>
 
@@ -148,9 +156,15 @@ export default async function NewsRichCard({
               {primaryCategory.name}
             </PressableAnchor>
           )}
-          <span className="badge-default">📅 {dateLabel}</span>
+          <span className="badge-default inline-flex items-center gap-1.5">
+            <CalendarIcon className="w-4 h-4 flex-shrink-0" />
+            {dateLabel}
+          </span>
           {event.location && (
-            <span className="badge-default">📍 {event.location}</span>
+            <span className="badge-default inline-flex items-center gap-1.5">
+              <LocationMarkerIcon className="w-4 h-4 flex-shrink-0" />
+              {event.location}
+            </span>
           )}
         </div>
 
