@@ -56,7 +56,9 @@ function decodeCookieValue(raw: string): string {
 function parseCookieArray(raw: string): string[] {
   const decoded = decodeCookieValue(raw);
   const parsed = JSON.parse(decoded) as unknown;
-  return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
+  return Array.isArray(parsed)
+    ? parsed.filter((v): v is string => typeof v === "string")
+    : [];
 }
 
 const originalEnv = { ...process.env };
@@ -106,7 +108,7 @@ describe("favorites server actions", () => {
       sameSite: "lax",
     });
 
-    expect(revalidatePathMock).toHaveBeenCalledWith("/favorits");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/preferits");
   });
 
   it("removes a favorite", async () => {
@@ -117,7 +119,7 @@ describe("favorites server actions", () => {
 
     expect(result).toEqual(["b"]);
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(["b"]);
-    expect(revalidatePathMock).toHaveBeenCalledWith("/favorits");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/preferits");
   });
 
   it("does not duplicate favorites", async () => {
