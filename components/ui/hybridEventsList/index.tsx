@@ -4,7 +4,7 @@ import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
 import List from "@components/ui/list";
-import Card from "@components/ui/card";
+import CardServer from "@components/ui/card/CardServer";
 import { getNewsCta } from "@utils/helpers";
 import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
@@ -74,7 +74,7 @@ async function HybridEventsList({
         />
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
-            <Card
+            <CardServer
               key={`${event.id}-${index}`}
               event={event}
               isPriority={index === 0}
@@ -130,7 +130,7 @@ async function HybridEventsList({
           <div data-ssr-list-wrapper>
             <List events={initialEvents}>
               {(event: ListEvent, index: number) => (
-                <Card
+                <CardServer
                   key={`${event.id ?? "ad"}-${index}`}
                   event={event}
                   isPriority={index === 0}
@@ -144,7 +144,7 @@ async function HybridEventsList({
         <SsrListWrapper categories={categories}>
           <List events={initialEvents}>
             {(event: ListEvent, index: number) => (
-              <Card
+              <CardServer
                 key={`${event.id ?? "ad"}-${index}`}
                 event={event}
                 isPriority={index === 0}

@@ -63,6 +63,19 @@ export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
   isHorizontal?: boolean;
+  initialIsFavorite?: boolean;
+}
+
+export interface FavoriteButtonLabels {
+  add: string;
+  remove: string;
+}
+
+export interface FavoriteButtonProps {
+  eventSlug: string;
+  initialIsFavorite: boolean;
+  labels: FavoriteButtonLabels;
+  className?: string;
 }
 
 export interface NativeShareButtonProps {
@@ -265,6 +278,7 @@ export interface NavbarLabels {
   closeMenu: string;
   home: string;
   agenda: string;
+  favorites: string;
   publish: string;
   news: string;
   mobilePublishLabel: string;
@@ -532,7 +546,11 @@ export interface NewsHubsGridProps {
 }
 
 export interface NewsCitiesSectionProps {
-  citiesPromise: Promise<import("./api/event").PagedResponseDTO<import("./api/city").CitySummaryResponseDTO>>;
+  citiesPromise: Promise<
+    import("./api/event").PagedResponseDTO<
+      import("./api/city").CitySummaryResponseDTO
+    >
+  >;
   showAll: boolean;
   showMoreHref: import("./common").Href;
   showLessHref: import("./common").Href;

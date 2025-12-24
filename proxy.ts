@@ -411,9 +411,18 @@ export default async function proxy(request: NextRequest) {
   // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
   // still serve quickly and revalidate in the background.
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
+    const normalizedPath = pathnameWithoutLocale || pathname;
+    const isFavoritesPage = normalizedPath === "/favorits";
+    const hasFavoritesCookie = Boolean(
+      request.cookies?.get?.("user_favorites")?.value
+    );
+    const isPersonalizedHtml = isFavoritesPage || hasFavoritesCookie;
+
     response.headers.set(
       "Cache-Control",
-      "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
+      isPersonalizedHtml
+        ? "private, no-store"
+        : "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
     );
   }
 

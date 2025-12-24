@@ -42,6 +42,8 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import FavoriteButton from "@components/ui/common/favoriteButton";
+import { getFavoritesFromCookies } from "@utils/favorites";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -108,6 +110,7 @@ export default async function EventPage({
   const jsonData = generateJsonData({ ...event }, locale);
   const tStatus = await getTranslations({ locale, namespace: "Utils.EventStatus" });
   const tEvent = await getTranslations({ locale, namespace: "Components.EventPage" });
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tCopy = await getTranslations({ locale, namespace: "Utils.EventCopy" });
   const tCategories = await getTranslations({
     locale,
@@ -179,6 +182,16 @@ export default async function EventPage({
   const statusMeta = {
     state: temporalStatus.state,
     label: temporalStatus.label,
+  };
+
+  const favorites = await getFavoritesFromCookies();
+  const isFavorite = Boolean(event.slug && favorites.includes(event.slug));
+  const shouldShowFavoriteButton = Boolean(
+    event.slug && (isFavorite || temporalStatus.state !== "past")
+  );
+  const favoriteLabels = {
+    add: tCard("favoriteAddAria"),
+    remove: tCard("favoriteRemoveAria"),
   };
 
   // Build intro and FAQ via shared utils (no assumptions)
@@ -335,7 +348,14 @@ export default async function EventPage({
                   regionName={regionName}
                   postalCode={event.city?.postalCode || ""}
                 />
-                <div className="ml-element-gap-sm">
+                <div className="ml-element-gap-sm flex items-center gap-2">
+                  {shouldShowFavoriteButton && (
+                    <FavoriteButton
+                      eventSlug={event.slug}
+                      initialIsFavorite={isFavorite}
+                      labels={favoriteLabels}
+                    />
+                  )}
                   <ViewCounter visits={event.visits} />
                 </div>
               </div>

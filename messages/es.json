@@ -71,6 +71,14 @@
       "schemaName": "Página offline de Esdeveniments.cat",
       "schemaDescription": "Página en modo offline de Esdeveniments.cat para seguir navegando mientras vuelve la conexión."
     },
+    "Favorites": {
+      "title": "Favoritos - Esdeveniments.cat",
+      "description": "Tus eventos futuros guardados",
+      "heading": "Favoritos",
+      "subtitle": "Solo se muestran eventos futuros. Cuando un evento termina, se elimina automáticamente de favoritos.",
+      "emptyTitle": "Aún no tienes eventos futuros guardados",
+      "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos."
+    },
     "About": {
       "metaTitle": "Quiénes somos - Esdeveniments.cat",
       "metaDescription": "Quiénes somos? - Esdeveniments.cat es una iniciativa ciudadana para ver de un vistazo todos los actos culturales que se hacen en Cataluña.",
@@ -241,6 +249,7 @@
       "navigation": {
         "home": "Inicio",
         "agenda": "Agenda",
+        "favorites": "Favoritos",
         "publish": "Publicar",
         "news": "Noticias",
         "about": "Quiénes somos",
@@ -254,6 +263,7 @@
       "navigation": {
         "home": "Inicio",
         "agenda": "Agenda",
+        "favorites": "Favoritos",
         "publish": "Publicar",
         "news": "Noticias",
         "archive": "Archivo"
@@ -264,6 +274,7 @@
         "closeMenu": "Cerrar menú",
         "home": "Inicio",
         "agenda": "Agenda",
+        "favorites": "Favoritos",
         "publish": "Publicar",
         "news": "Noticias"
       },
@@ -619,7 +630,9 @@
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
-      "dateSingle": "{nameDay}, {start}"
+      "dateSingle": "{nameDay}, {start}",
+      "favoriteAddAria": "Añadir a favoritos",
+      "favoriteRemoveAria": "Quitar de favoritos"
     },
     "EventForm": {
       "title": "Título *",

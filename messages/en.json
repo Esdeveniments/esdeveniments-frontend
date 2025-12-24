@@ -71,6 +71,14 @@
       "schemaName": "Esdeveniments.cat offline page",
       "schemaDescription": "Offline page for Esdeveniments.cat to keep browsing while the connection is restored."
     },
+    "Favorites": {
+      "title": "Favorites - Esdeveniments.cat",
+      "description": "Your saved upcoming events",
+      "heading": "Favorites",
+      "subtitle": "Only upcoming events are shown. When an event ends, it is automatically removed from favorites.",
+      "emptyTitle": "No upcoming favorites yet",
+      "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites."
+    },
     "About": {
       "metaTitle": "About us - Esdeveniments.cat",
       "metaDescription": "Who are we? - Esdeveniments.cat is a citizen initiative to see at a glance all the cultural events happening in Catalonia.",
@@ -241,6 +249,7 @@
       "navigation": {
         "home": "Home",
         "agenda": "Agenda",
+        "favorites": "Favorites",
         "publish": "Publish",
         "news": "News",
         "about": "About us",
@@ -254,6 +263,7 @@
       "navigation": {
         "home": "Home",
         "agenda": "Agenda",
+        "favorites": "Favorites",
         "publish": "Publish",
         "news": "News",
         "archive": "Archive"
@@ -264,6 +274,7 @@
         "closeMenu": "Close menu",
         "home": "Home",
         "agenda": "Agenda",
+        "favorites": "Favorites",
         "publish": "Publish",
         "news": "News"
       },
@@ -627,7 +638,9 @@
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
-      "dateSingle": "{nameDay}, {start}"
+      "dateSingle": "{nameDay}, {start}",
+      "favoriteAddAria": "Add to favorites",
+      "favoriteRemoveAria": "Remove from favorites"
     },
     "EventForm": {
       "title": "Title *",

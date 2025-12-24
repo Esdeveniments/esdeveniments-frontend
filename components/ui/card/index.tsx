@@ -1,5 +1,5 @@
 import type { CardProps } from "types/common";
-import CardContentServer from "@components/ui/common/cardContent";
+import CardContentClient from "@components/ui/common/cardContent/CardContentClient";
 import CardLoading from "@components/ui/cardLoading";
 import AdCardClient from "./AdCardClient";
 
@@ -11,7 +11,7 @@ export default function Card({
   if (isLoading) return <CardLoading />;
   if (event.isAd) return <AdCardClient />;
   return (
-    <CardContentServer
+    <CardContentClient
       event={event}
       isPriority={isPriority}
       isHorizontal={false}

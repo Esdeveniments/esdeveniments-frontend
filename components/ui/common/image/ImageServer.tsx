@@ -53,7 +53,7 @@ function ImageServer({
       }}
     >
       <NextImage
-        className="object-cover"
+        className="object-cover w-full h-full"
         src={finalImageSrc}
         alt={alt}
         width={500}
@@ -62,6 +62,7 @@ function ImageServer({
         quality={imageQuality}
         style={{
           objectFit: "cover",
+          width: "100%",
           height: "auto", // Maintain aspect ratio
           maxWidth: "100%", // Ensure image respects container constraints
         }}

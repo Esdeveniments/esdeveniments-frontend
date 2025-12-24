@@ -1,48 +1,50 @@
+"use client";
 import NextImage from "next/image";
 import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
 import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
 import { truncateString, getFormattedDate } from "@utils/helpers";
-import { buildDisplayLocation } from "@utils/location-helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
-import ImageServer from "@components/ui/common/image/ImageServer";
-import CardLink from "./CardLink";
+import { buildDisplayLocation } from "@utils/location-helpers";
+import Image from "@components/ui/common/image";
+import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import MobileShareIsland from "./MobileShareIsland";
 import DesktopShareIsland from "./DesktopShareIsland";
-import ViewCounter from "@components/ui/viewCounter";
+import CardLinkClient from "./CardLinkClient";
 import { CardContentProps } from "types/props";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { useTranslations, useLocale } from "next-intl";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
-import { getFavoritesFromCookies } from "@utils/favorites";
 import { normalizeImageUrl } from "./normalizeImageUrl";
 
-async function CardContentServer({
+export default function CardContentClient({
   event,
   isPriority = false,
   isHorizontal = false,
+  initialIsFavorite = false,
 }: CardContentProps) {
-  const locale = await getLocaleSafely();
-  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
-  const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
+  const tCard = useTranslations("Components.CardContent");
+  const tTime = useTranslations("Utils.EventTime");
+  const locale = (useLocale?.() || DEFAULT_LOCALE) as AppLocale;
   const timeLabels = {
     consult: tTime("consult"),
     startsAt: tTime("startsAt", { time: "{time}" }),
     range: tTime("range", { start: "{start}", end: "{end}" }),
     simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
   };
-  const { description, icon } = event.weather || {};
-  const weatherIconUrl = normalizeImageUrl(icon);
 
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
-    event.startDate,
-    event.endDate,
-    locale
-  );
+  const { description, icon } = event.weather || {};
+  const { formattedStart, formattedEnd, nameDay } =
+    event.formattedStart && event.nameDay
+      ? {
+        formattedStart: event.formattedStart,
+        formattedEnd: event.formattedEnd ?? null,
+        nameDay: event.nameDay,
+      }
+      : getFormattedDate(event.startDate, event.endDate, locale);
 
   const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
-  // Show full location: location, city, region combined
-  // Note: List API responses may not include city/region, so we check if they exist
+
   const cityName = event.city?.name;
   const regionName = event.region?.name;
   const fullLocation = buildDisplayLocation({
@@ -52,23 +54,24 @@ async function CardContentServer({
     hidePlaceSegments: false,
   });
   const primaryLocation = truncateString(fullLocation, 80);
+
   const image = event.imageUrl || "";
+
   const eventDate = formattedEnd
     ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
     : tCard("dateSingle", { nameDay, start: formattedStart });
 
-  const favorites = await getFavoritesFromCookies();
-  const isFavorite = Boolean(event.slug && favorites.includes(event.slug));
-  const shouldShowFavoriteButton = Boolean(event.slug);
+  const weatherIconUrl = normalizeImageUrl(icon);
   const favoriteLabels = {
     add: tCard("favoriteAddAria"),
     remove: tCard("favoriteRemoveAria"),
   };
+  const shouldShowFavoriteButton = Boolean(event.slug);
 
   return (
     <>
       <div className="w-full relative pressable-card transition-card">
-        <CardLink
+        <CardLinkClient
           href={`/e/${event.slug}`}
           className="absolute inset-0"
           aria-label={title}
@@ -77,12 +80,12 @@ async function CardContentServer({
           data-analytics-event-slug={event.slug || ""}
         >
           <span className="sr-only">{title}</span>
-        </CardLink>
+        </CardLinkClient>
+
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer pointer-events-none">
-          {/* Title and Weather Icon */}
-          <div className="bg-background h-fit flex justify-start items-start gap-2 pr-4">
+          <div className="bg-background h-fit flex justify-start items-start gap-element-gap-sm pr-card-padding-sm">
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
-              <div className="w-2 h-6 bg-gradient-to-r from-primary to-primary-dark"></div>
+              <div className="w-2 h-6 bg-gradient-to-r from-primary to-primary-dark" />
             </div>
             <h3 className="heading-4 flex-1 min-w-0">{title}</h3>
             <div className="flex items-end gap-2 shrink-0">
@@ -93,40 +96,38 @@ async function CardContentServer({
                     src={weatherIconUrl}
                     width={30}
                     height={30}
-                    style={{
-                      maxWidth: "100%",
-                      height: "auto",
-                    }}
+                    style={{ maxWidth: "100%", height: "auto" }}
                     priority={isPriority}
                   />
                 </div>
               )}
             </div>
           </div>
-          {/* ImageEvent */}
-          <div className="p-2 flex justify-center items-center">
+
+          <div className="py-4 flex justify-center items-center">
             <div
               className="w-full relative"
-              style={{ height: isHorizontal ? "16rem" : "auto" }}
+              style={{
+                height: isHorizontal ? "16rem" : "auto",
+                viewTransitionName: `event-image-${event.id}`,
+              }}
             >
               {shouldShowFavoriteButton && (
                 <FavoriteButtonOverlay
                   eventSlug={event.slug}
-                  initialIsFavorite={isFavorite}
+                  initialIsFavorite={initialIsFavorite}
                   labels={favoriteLabels}
                   wrapperClassName="pointer-events-auto"
                 />
               )}
-              <ImageServer
+              <Image
                 className={`w-full flex justify-center ${isHorizontal ? "h-64 object-cover" : "object-contain"
                   }`}
                 title={event.title}
                 image={image}
                 priority={isPriority}
                 alt={event.title}
-                location={event.city?.name || event.location}
-                region={event.region?.name || event.city?.name}
-                date={eventDate}
+                context={isHorizontal ? "list" : "card"}
                 cacheKey={event.hash || event.updatedAt}
               />
             </div>
@@ -144,9 +145,12 @@ async function CardContentServer({
           />
           <DesktopShareIsland slug={event.slug} />
         </div>
-        <div className="flex items-center justify-end">
-          <ViewCounter visits={event.visits} hideText />
-        </div>
+        <ViewCounterIsland
+          visits={event.visits}
+          priority={isPriority}
+          hideText
+          className="flex items-center justify-end"
+        />
       </div>
 
       <div className="w-full flex flex-col gap-element-gap">
@@ -175,5 +179,3 @@ async function CardContentServer({
     </>
   );
 }
-
-export default CardContentServer;

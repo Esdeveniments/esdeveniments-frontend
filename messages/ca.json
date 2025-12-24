@@ -71,6 +71,14 @@
       "schemaName": "Pàgina offline d'Esdeveniments.cat",
       "schemaDescription": "Pàgina en mode offline d'Esdeveniments.cat per continuar navegant mentre es recupera la connexió."
     },
+    "Favorites": {
+      "title": "Preferits - Esdeveniments.cat",
+      "description": "Els teus esdeveniments futurs guardats",
+      "heading": "Preferits",
+      "subtitle": "Només es mostren esdeveniments futurs. Quan un esdeveniment finalitza, s'elimina automàticament dels preferits.",
+      "emptyTitle": "Encara no tens esdeveniments futurs desats",
+      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits."
+    },
     "About": {
       "metaTitle": "Qui som - Esdeveniments.cat",
       "metaDescription": "Qui som? - Esdeveniments.cat és una iniciativa ciutadana per veure en un cop d'ull tots els actes culturals que es fan a Catalunya.",
@@ -241,6 +249,7 @@
       "navigation": {
         "home": "Inici",
         "agenda": "Agenda",
+        "favorites": "Preferits",
         "publish": "Publicar",
         "news": "Notícies",
         "about": "Qui som",
@@ -254,6 +263,7 @@
       "navigation": {
         "home": "Inici",
         "agenda": "Agenda",
+        "favorites": "Preferits",
         "publish": "Publicar",
         "news": "Notícies",
         "archive": "Arxiu"
@@ -264,6 +274,7 @@
         "closeMenu": "Close menu",
         "home": "Home",
         "agenda": "Agenda",
+        "favorites": "Preferits",
         "publish": "Publish",
         "news": "Notícies"
       },
@@ -626,7 +637,9 @@
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
-      "dateSingle": "{nameDay}, {start}"
+      "dateSingle": "{nameDay}, {start}",
+      "favoriteAddAria": "Afegeix a preferits",
+      "favoriteRemoveAria": "Elimina de preferits"
     },
     "EventForm": {
       "title": "Títol *",
@@ -774,17 +787,6 @@
       "regionsTitle": "Comarques de Catalunya",
       "citiesTitle": "Poblacions principals",
       "footer": "L'arxiu conté esdeveniments culturals de totes les comarques de Catalunya. Cada enllaç et porta a un històric detallat organitzat per anys i mesos."
-    },
-    "NewsList": {
-      "emptyTitle": "No hem trobat notícies recents",
-      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
-      "viewAll": "Veure totes les notícies →",
-      "itemListName": "Notícies de {place}",
-      "prev": "← Anterior",
-      "next": "Més notícies →",
-
-      "name": "Notícies de {place}",
-      "more": "Més notícies →"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Últimes notícies per hub",

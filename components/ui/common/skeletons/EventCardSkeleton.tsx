@@ -12,12 +12,12 @@ export default function EventCardSkeleton() {
         <div className="w-full h-64 bg-border/40 rounded animate-pulse" />
       </div>
       {/* Share and view counter - simplified */}
-      <div className="w-full flex justify-between items-center px-card-padding-sm mb-element-gap-sm">
+      <div className="w-full flex justify-between items-center mb-element-gap-sm">
         <div className="w-20 h-4 bg-border/40 rounded animate-pulse" />
         <div className="w-16 h-4 bg-border/40 rounded animate-pulse" />
       </div>
       {/* Event details - simplified to 2 items for faster render */}
-      <div className="w-full flex flex-col px-card-padding-sm gap-element-gap">
+      <div className="w-full flex flex-col gap-element-gap">
         <div className="h-4 bg-border/40 rounded w-3/4 animate-pulse" />
         <div className="h-4 bg-border/40 rounded w-2/3 animate-pulse" />
         <div className="mb-element-gap" />
