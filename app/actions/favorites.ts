@@ -50,7 +50,7 @@ export async function setFavoriteAction(
   const nextFavorites = Array.from(nextSet).slice(0, MAX_FAVORITES);
   await persistFavoritesCookie(nextFavorites);
 
-  revalidatePath("/favorits");
+  revalidatePath("/preferits");
   return nextFavorites;
 }
 
@@ -74,6 +74,6 @@ export async function pruneFavoritesAction(
   }
 
   await persistFavoritesCookie(nextFavorites);
-  revalidatePath("/favorits");
+  revalidatePath("/preferits");
   return nextFavorites;
 }

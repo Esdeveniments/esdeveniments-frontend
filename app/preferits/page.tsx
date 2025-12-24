@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     ...(buildPageMeta({
       title: t("title"),
       description: t("description"),
-      canonical: `${siteUrl}/favorits`,
+      canonical: `${siteUrl}/preferits`,
       locale,
     }) as Metadata),
     robots: "noindex, nofollow",

@@ -35,14 +35,17 @@ describe("pruneFavoritesAction", () => {
   });
 
   it("removes provided slugs and persists cookie", async () => {
-    cookieValueByName.set(FAVORITES_COOKIE_NAME, JSON.stringify(["a", "b", "c"]));
+    cookieValueByName.set(
+      FAVORITES_COOKIE_NAME,
+      JSON.stringify(["a", "b", "c"])
+    );
 
     const { pruneFavoritesAction } = await import("@app/actions/favorites");
     const result = await pruneFavoritesAction(["b", " ", "missing"]);
 
     expect(result).toEqual(["a", "c"]);
     expect(cookieSetMock).toHaveBeenCalledTimes(1);
-    expect(revalidatePathMock).toHaveBeenCalledWith("/favorits");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/preferits");
   });
 
   it("does nothing when there is nothing to prune", async () => {

@@ -10,7 +10,7 @@ export default async function Navbar() {
   const navigation: NavigationItem[] = [
     { name: t("navigation.home"), href: "/", current: true },
     { name: t("navigation.agenda"), href: "/catalunya", current: false },
-    { name: t("navigation.favorites"), href: "/favorits", current: false },
+    { name: t("navigation.favorites"), href: "/preferits", current: false },
     { name: t("navigation.publish"), href: "/publica", current: false },
     { name: t("navigation.news"), href: "/noticies", current: false },
   ];

@@ -40,9 +40,13 @@ test.describe("Favorites flow", () => {
     const cardContainer = firstEventLink.locator(
       "xpath=ancestor::div[.//button[contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'preferits')]][1]"
     );
-    const favButton = cardContainer.getByRole("button", { name: /preferits/i }).first();
+    const favButton = cardContainer
+      .getByRole("button", { name: /preferits/i })
+      .first();
     await expect(favButton).toBeVisible({ timeout: 15000 });
-    await expect(favButton).toBeEnabled({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(favButton).toBeEnabled({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
 
     const urlBefore = page.url();
     await favButton.click();
@@ -52,13 +56,17 @@ test.describe("Favorites flow", () => {
     });
   });
 
-  test("add favorite, see it on /favorits, persists after reload", async ({ page }) => {
+  test("add favorite, see it on /preferits, persists after reload", async ({
+    page,
+  }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const firstEventLink = page
       .locator('a[href^="/e/"][data-analytics-event-slug]')
       .first();
-    await expect(firstEventLink).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(firstEventLink).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
 
     const href = await firstEventLink.getAttribute("href");
     expect(href).toBeTruthy();
@@ -69,10 +77,14 @@ test.describe("Favorites flow", () => {
     const cardContainer = firstEventLink.locator(
       "xpath=ancestor::div[.//button[contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'preferits')]][1]"
     );
-    const favButton = cardContainer.getByRole("button", { name: /preferits/i }).first();
+    const favButton = cardContainer
+      .getByRole("button", { name: /preferits/i })
+      .first();
 
     await expect(favButton).toBeVisible({ timeout: 15000 });
-    await expect(favButton).toBeEnabled({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(favButton).toBeEnabled({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
     await expect(favButton).toHaveAttribute("aria-pressed", "false");
 
     await favButton.click();
@@ -85,7 +97,10 @@ test.describe("Favorites flow", () => {
       })
       .toBe(true);
 
-    await page.goto("/favorits", { waitUntil: "domcontentloaded", timeout: 90000 });
+    await page.goto("/preferits", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
 
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
       "content",
@@ -113,13 +128,17 @@ test.describe("Favorites flow", () => {
     });
   });
 
-  test("remove favorite, /favorits becomes empty state after reload", async ({ page }) => {
+  test("remove favorite, /preferits becomes empty state after reload", async ({
+    page,
+  }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const firstEventLink = page
       .locator('a[href^="/e/"][data-analytics-event-slug]')
       .first();
-    await expect(firstEventLink).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(firstEventLink).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
 
     const href = await firstEventLink.getAttribute("href");
     expect(href).toBeTruthy();
@@ -130,23 +149,31 @@ test.describe("Favorites flow", () => {
     const cardContainer = firstEventLink.locator(
       "xpath=ancestor::div[.//button[contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'preferits')]][1]"
     );
-    const favButton = cardContainer.getByRole("button", { name: /preferits/i }).first();
+    const favButton = cardContainer
+      .getByRole("button", { name: /preferits/i })
+      .first();
 
-    await expect(favButton).toBeEnabled({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(favButton).toBeEnabled({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
 
     // Toggle ON
     await favButton.click();
     await expect(favButton).toHaveAttribute("aria-pressed", "true");
 
     // In CI the server action can keep the button disabled briefly.
-    await expect(favButton).toBeEnabled({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(favButton).toBeEnabled({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
 
     // Toggle OFF
     await favButton.click();
     await expect(favButton).toHaveAttribute("aria-pressed", "false");
 
     // Wait for the server action to finish; navigating too early can abort the request.
-    await expect(favButton).toBeEnabled({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(favButton).toBeEnabled({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
 
     await expect
       .poll(
@@ -160,13 +187,18 @@ test.describe("Favorites flow", () => {
       )
       .toBe(false);
 
-    await page.goto("/favorits", { waitUntil: "domcontentloaded", timeout: 90000 });
+    await page.goto("/preferits", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
     await expect(page.getByTestId("no-events-found")).toBeVisible({
       timeout: process.env.CI ? 60000 : 30000,
     });
   });
 
-  test("corrupted favorites cookie does not crash /favorits", async ({ page }) => {
+  test("corrupted favorites cookie does not crash /preferits", async ({
+    page,
+  }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const origin = new URL(page.url()).origin;
@@ -178,15 +210,21 @@ test.describe("Favorites flow", () => {
       },
     ]);
 
-    await page.goto("/favorits", { waitUntil: "domcontentloaded", timeout: 90000 });
+    await page.goto("/preferits", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
 
     await expect(page.getByTestId("no-events-found")).toBeVisible({
       timeout: process.env.CI ? 60000 : 30000,
     });
   });
 
-  test("/favorits is noindex, nofollow", async ({ page }) => {
-    await page.goto("/favorits", { waitUntil: "domcontentloaded", timeout: 90000 });
+  test("/preferits is noindex, nofollow", async ({ page }) => {
+    await page.goto("/preferits", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
 
     const robots = page.locator('meta[name="robots"]');
     await expect(robots).toHaveAttribute("content", /noindex/i);

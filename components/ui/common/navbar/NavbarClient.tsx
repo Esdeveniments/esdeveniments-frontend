@@ -111,7 +111,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
 
                   <div className="flex-center">
                     <ActiveLink
-                      href="/favorits"
+                      href="/preferits"
                       activeLinkClass="text-primary bg-primary/10"
                       className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
                       aria-label={labels.favorites}
