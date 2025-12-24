@@ -144,7 +144,7 @@ describe("favorites server actions", () => {
   });
 
   it("sets secure cookies only in production", async () => {
-    process.env.NODE_ENV = "production";
+    process.env = { ...process.env, NODE_ENV: "production" };
 
     const { setFavoriteAction } = await import("@app/actions/favorites");
     await setFavoriteAction("secure-check", true);
