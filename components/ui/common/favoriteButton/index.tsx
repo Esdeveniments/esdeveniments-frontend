@@ -6,10 +6,14 @@ import HeartIconSolid from "@heroicons/react/solid/esm/HeartIcon";
 import HeartIconOutline from "@heroicons/react/outline/esm/HeartIcon";
 
 import Button from "@components/ui/common/button";
+import { sendGoogleEvent } from "@utils/analytics";
 import type { FavoriteButtonProps } from "types/props";
+import { captureException } from "@sentry/nextjs";
 
 export default function FavoriteButton({
   eventSlug,
+  eventId,
+  eventTitle,
   initialIsFavorite,
   labels,
   className = "",
@@ -52,12 +56,31 @@ export default function FavoriteButton({
               throw new Error("Failed to update favorites");
             }
 
+            const analyticsEventName = nextIsFavorite
+              ? "favorite_add"
+              : "favorite_remove";
+
+            sendGoogleEvent(analyticsEventName, {
+              event_slug: eventSlug,
+              event_id: eventId,
+              event_title: eventTitle,
+            });
+
             // Preserve existing /preferits UX: reflect removals immediately.
             // Avoid refreshing other pages to keep the toggle lightweight.
             if (pathname.endsWith("/preferits")) {
               router.refresh();
             }
-          } catch {
+          } catch (error: unknown) {
+            captureException(error, {
+              tags: { feature: "favorites" },
+              extra: {
+                event_slug: eventSlug,
+                event_id: eventId,
+                event_title: eventTitle,
+                next_is_favorite: nextIsFavorite,
+              },
+            });
             setIsFavorite(!nextIsFavorite);
           }
         });

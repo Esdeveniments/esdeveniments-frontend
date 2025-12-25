@@ -73,6 +73,8 @@ export interface FavoriteButtonLabels {
 
 export interface FavoriteButtonProps {
   eventSlug: string;
+  eventId?: string;
+  eventTitle?: string;
   initialIsFavorite: boolean;
   labels: FavoriteButtonLabels;
   className?: string;

@@ -205,6 +205,8 @@ const CardHorizontalServer = async ({
       {shouldShowFavoriteButton && (
         <FavoriteButtonOverlay
           eventSlug={event.slug}
+          eventId={event.id ? String(event.id) : undefined}
+          eventTitle={event.title}
           initialIsFavorite={isFavorite}
           labels={favoriteLabels}
         />

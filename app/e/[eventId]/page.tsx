@@ -352,6 +352,8 @@ export default async function EventPage({
                   {shouldShowFavoriteButton && (
                     <FavoriteButton
                       eventSlug={event.slug}
+                      eventId={event.id ? String(event.id) : undefined}
+                      eventTitle={event.title}
                       initialIsFavorite={isFavorite}
                       labels={favoriteLabels}
                     />
