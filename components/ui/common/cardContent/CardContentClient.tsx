@@ -1,5 +1,4 @@
 "use client";
-import NextImage from "next/image";
 import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
 import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
@@ -15,7 +14,6 @@ import { CardContentProps } from "types/props";
 import { useTranslations, useLocale } from "next-intl";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
-import { normalizeImageUrl } from "./normalizeImageUrl";
 
 export default function CardContentClient({
   event,
@@ -32,8 +30,6 @@ export default function CardContentClient({
     range: tTime("range", { start: "{start}", end: "{end}" }),
     simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
   };
-
-  const { description, icon } = event.weather || {};
   const { formattedStart, formattedEnd, nameDay } =
     event.formattedStart && event.nameDay
       ? {
@@ -60,8 +56,6 @@ export default function CardContentClient({
   const eventDate = formattedEnd
     ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
     : tCard("dateSingle", { nameDay, start: formattedStart });
-
-  const weatherIconUrl = normalizeImageUrl(icon);
   const favoriteLabels = {
     add: tCard("favoriteAddAria"),
     remove: tCard("favoriteRemoveAria"),
@@ -88,20 +82,6 @@ export default function CardContentClient({
               <div className="w-2 h-6 bg-gradient-to-r from-primary to-primary-dark" />
             </div>
             <h3 className="heading-4 flex-1 min-w-0">{title}</h3>
-            <div className="flex items-end gap-2 shrink-0">
-              {weatherIconUrl && (
-                <div className="flex items-center gap-1">
-                  <NextImage
-                    alt={description || "Weather icon"}
-                    src={weatherIconUrl}
-                    width={30}
-                    height={30}
-                    style={{ maxWidth: "100%", height: "auto" }}
-                    priority={isPriority}
-                  />
-                </div>
-              )}
-            </div>
           </div>
 
           <div className="py-4 flex justify-center items-center">

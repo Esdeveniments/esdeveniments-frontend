@@ -1,4 +1,3 @@
-import NextImage from "next/image";
 import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
 import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
@@ -15,7 +14,6 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
 import { getFavoritesFromCookies } from "@utils/favorites";
-import { normalizeImageUrl } from "./normalizeImageUrl";
 
 async function CardContentServer({
   event,
@@ -32,8 +30,6 @@ async function CardContentServer({
     range: tTime("range", { start: "{start}", end: "{end}" }),
     simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
   };
-  const { description, icon } = event.weather || {};
-  const weatherIconUrl = normalizeImageUrl(icon);
 
   const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
     event.startDate,
@@ -87,29 +83,12 @@ async function CardContentServer({
           <span className="sr-only">{title}</span>
         </CardLink>
         <div className="w-full flex flex-col justify-center bg-background overflow-hidden cursor-pointer pointer-events-none">
-          {/* Title and Weather Icon */}
+          {/* Title */}
           <div className="bg-background h-fit flex justify-start items-start gap-2 pr-4">
             <div className="flex justify-start items-center gap-0 pt-[2px] m-0">
               <div className="w-2 h-6 bg-gradient-to-r from-primary to-primary-dark"></div>
             </div>
             <h3 className="heading-4 flex-1 min-w-0">{title}</h3>
-            <div className="flex items-end gap-2 shrink-0">
-              {weatherIconUrl && (
-                <div className="flex items-center gap-1">
-                  <NextImage
-                    alt={description || "Weather icon"}
-                    src={weatherIconUrl}
-                    width={30}
-                    height={30}
-                    style={{
-                      maxWidth: "100%",
-                      height: "auto",
-                    }}
-                    priority={isPriority}
-                  />
-                </div>
-              )}
-            </div>
           </div>
           {/* ImageEvent */}
           <div className="p-2 flex justify-center items-center">
