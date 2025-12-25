@@ -42,6 +42,16 @@ export async function setFavoriteAction(
   const nextSet = new Set(currentFavorites);
 
   if (shouldBeFavorite) {
+    // Cap semantics: if we're at capacity and adding a NEW favorite,
+    // evict the oldest (first-added) favorite to make room for the newest.
+    // This matches typical UX expectations: the add succeeds even at MAX_FAVORITES.
+    if (!nextSet.has(normalizedSlug) && nextSet.size >= MAX_FAVORITES) {
+      const oldest = nextSet.values().next().value;
+      if (typeof oldest === "string") {
+        nextSet.delete(oldest);
+      }
+    }
+
     nextSet.add(normalizedSlug);
   } else {
     nextSet.delete(normalizedSlug);

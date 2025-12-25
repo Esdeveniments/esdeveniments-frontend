@@ -137,12 +137,17 @@ describe("favorites server actions", () => {
     const current = Array.from({ length: MAX_FAVORITES }, (_, i) => `s-${i}`);
     setFavoritesCookieValue(JSON.stringify(current));
 
+    // Semantics decision: when already at MAX_FAVORITES, adding a NEW favorite
+    // evicts the oldest favorite (first-added) to make room for the newest.
+    // This ensures the add action succeeds while keeping the list capped.
+    const expected = [...current.slice(1), "new-one"];
+
     const { setFavoriteAction } = await import("@app/actions/favorites");
     const result = await setFavoriteAction("new-one", true);
 
     expect(result).toHaveLength(MAX_FAVORITES);
-    expect(result).toEqual(current);
-    expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(current);
+    expect(result).toEqual(expected);
+    expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(expected);
   });
 
   it("sets secure cookies only in production", async () => {

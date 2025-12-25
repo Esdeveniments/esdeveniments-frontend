@@ -6,6 +6,7 @@ import {
   verifyHmacSignature,
 } from "@utils/hmac";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
+import { FAVORITES_COOKIE_NAME } from "@utils/favorites";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -414,7 +415,7 @@ export default async function proxy(request: NextRequest) {
     const normalizedPath = pathnameWithoutLocale || pathname;
     const isFavoritesPage = normalizedPath === "/favorits";
     const hasFavoritesCookie = Boolean(
-      request.cookies?.get?.("user_favorites")?.value
+      request.cookies?.get?.(FAVORITES_COOKIE_NAME)?.value
     );
     const isPersonalizedHtml = isFavoritesPage || hasFavoritesCookie;
 

@@ -55,9 +55,11 @@ export default async function FavoritsPage() {
   const events = await fetchFavoritesEvents(favoriteSlugs);
   const activeEvents = filterActiveEvents(events);
 
-  const expiredSlugs = events
-    .filter((event) => Boolean(event.slug) && !isEventActive(event))
-    .map((event) => event.slug);
+  const expiredSlugs = events.flatMap((event) => {
+    if (!event.slug) return [];
+    if (isEventActive(event)) return [];
+    return [event.slug];
+  });
 
   if (favoriteSlugs.length === 0 || activeEvents.length === 0) {
     return (

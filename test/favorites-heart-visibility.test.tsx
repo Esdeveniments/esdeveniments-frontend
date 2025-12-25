@@ -30,7 +30,7 @@ describe("favorites heart visibility", () => {
     categories: [],
   };
 
-  it("shows the heart for past events in list cards", async () => {
+  it("shows the heart button when event has a slug (not favorited)", async () => {
     render(
       <CardContentClient
         event={baseEvent}
@@ -43,7 +43,7 @@ describe("favorites heart visibility", () => {
     expect(screen.getByRole("button", { name: /preferits/i })).toBeVisible();
   });
 
-  it("shows the heart for past events when already favorited", async () => {
+  it("shows the heart button when event has a slug (already favorited)", async () => {
     render(
       <CardContentClient
         event={baseEvent}
@@ -54,5 +54,20 @@ describe("favorites heart visibility", () => {
     );
 
     expect(screen.getByRole("button", { name: /preferits/i })).toBeVisible();
+  });
+
+  it("hides the heart button when event has no slug", async () => {
+    render(
+      <CardContentClient
+        event={{ ...baseEvent, slug: "" }}
+        isPriority={false}
+        isHorizontal={false}
+        initialIsFavorite={false}
+      />
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /preferits/i })
+    ).not.toBeInTheDocument();
   });
 });

@@ -21,6 +21,7 @@ async function CardContentServer({
   event,
   isPriority = false,
   isHorizontal = false,
+  initialIsFavorite,
 }: CardContentProps) {
   const locale = await getLocaleSafely();
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
@@ -57,8 +58,15 @@ async function CardContentServer({
     ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
     : tCard("dateSingle", { nameDay, start: formattedStart });
 
-  const favorites = await getFavoritesFromCookies();
-  const isFavorite = Boolean(event.slug && favorites.includes(event.slug));
+  let isFavorite = false;
+  if (event.slug) {
+    if (typeof initialIsFavorite === "boolean") {
+      isFavorite = initialIsFavorite;
+    } else {
+      const favorites = await getFavoritesFromCookies();
+      isFavorite = favorites.includes(event.slug);
+    }
+  }
   const shouldShowFavoriteButton = Boolean(event.slug);
   const favoriteLabels = {
     add: tCard("favoriteAddAria"),
