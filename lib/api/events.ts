@@ -47,13 +47,10 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
   : null;
 
-const IMAGE_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
-
 const recordImageSizeTelemetry = (imageBytes: number) => {
   // Errors-only Sentry policy: no non-error telemetry events.
   // Keep this hook so callers don't change, but do nothing.
   void imageBytes;
-  void IMAGE_WARNING_THRESHOLD;
 };
 
 const ensureImageWithinLimit = (imageFile: File) => {

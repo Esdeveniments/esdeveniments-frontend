@@ -22,7 +22,7 @@ export default function CardContentClient({
 }: CardContentProps) {
   const tCard = useTranslations("Components.CardContent");
   const tTime = useTranslations("Utils.EventTime");
-  const locale = (useLocale?.() || DEFAULT_LOCALE) as AppLocale;
+  const locale = (useLocale() || DEFAULT_LOCALE) as AppLocale;
   const {
     timeLabels,
     title,

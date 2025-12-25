@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 
 export const FAVORITES_COOKIE_NAME = "user_favorites";
@@ -22,11 +23,11 @@ export function parseFavoritesCookie(raw: string | undefined): string[] {
   }
 }
 
-export async function getFavoritesFromCookies(): Promise<string[]> {
+export const getFavoritesFromCookies = cache(async (): Promise<string[]> => {
   const cookieStore = await cookies();
   const currentCookie = cookieStore.get(FAVORITES_COOKIE_NAME);
   return parseFavoritesCookie(currentCookie?.value);
-}
+});
 
 export async function persistFavoritesCookie(
   favorites: string[]

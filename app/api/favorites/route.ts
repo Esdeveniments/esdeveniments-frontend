@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { captureException } from "@sentry/nextjs";
 
 import {
   MAX_FAVORITES,
@@ -8,7 +9,7 @@ import {
 } from "@utils/favorites";
 
 const ToggleFavoriteSchema = z.object({
-  eventSlug: z.string().transform((value) => String(value || "").trim()),
+  eventSlug: z.string().trim(),
   shouldBeFavorite: z.boolean(),
 });
 
@@ -53,7 +54,10 @@ export async function POST(request: Request) {
       { ok: true, favorites: nextFavorites },
       { headers: { "Cache-Control": "no-store" } }
     );
-  } catch {
+  } catch (error: unknown) {
+    captureException(error, {
+      tags: { feature: "favorites", route: "/api/favorites" },
+    });
     return NextResponse.json(
       { ok: false, error: "INTERNAL" },
       { status: 500, headers: { "Cache-Control": "no-store" } }

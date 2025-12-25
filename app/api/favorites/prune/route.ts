@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { captureException } from "@sentry/nextjs";
 
 import {
   getFavoritesFromCookies,
@@ -7,7 +8,7 @@ import {
 } from "@utils/favorites";
 
 const PruneFavoritesSchema = z.object({
-  slugsToRemove: z.array(z.string()).default([]),
+  slugsToRemove: z.array(z.string().trim()).default([]),
 });
 
 export async function POST(request: Request) {
@@ -21,9 +22,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const normalizedToRemove = (parsed.data.slugsToRemove || [])
-      .map((value) => String(value || "").trim())
-      .filter(Boolean);
+    const normalizedToRemove = parsed.data.slugsToRemove.filter(Boolean);
 
     if (normalizedToRemove.length === 0) {
       return NextResponse.json(
@@ -44,7 +43,10 @@ export async function POST(request: Request) {
       { ok: true, favorites: nextFavorites },
       { headers: { "Cache-Control": "no-store" } }
     );
-  } catch {
+  } catch (error: unknown) {
+    captureException(error, {
+      tags: { feature: "favorites", route: "/api/favorites/prune" },
+    });
     return NextResponse.json(
       { ok: false, error: "INTERNAL" },
       { status: 500, headers: { "Cache-Control": "no-store" } }

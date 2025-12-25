@@ -10,7 +10,7 @@ import { filterActiveEvents, isEventActive } from "@utils/event-helpers";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { getFavoritesFromCookies, MAX_FAVORITES } from "@utils/favorites";
 import { getTranslations } from "next-intl/server";
-import type { EventSummaryResponseDTO } from "types/api/event";
+import type { EventDetailResponseDTO, EventSummaryResponseDTO } from "types/api/event";
 import FavoritesAutoPrune from "./FavoritesAutoPrune";
 
 const FETCH_CONCURRENCY = 5;
@@ -39,9 +39,11 @@ async function fetchFavoritesEvents(
   for (let i = 0; i < uniqueSlugs.length; i += FETCH_CONCURRENCY) {
     const chunk = uniqueSlugs.slice(i, i + FETCH_CONCURRENCY);
     const fetched = await Promise.all(chunk.map((slug) => fetchEventBySlug(slug)));
-    for (const event of fetched) {
-      if (event) results.push(event);
-    }
+    results.push(
+      ...fetched.filter(
+        (event): event is EventDetailResponseDTO => event != null
+      )
+    );
   }
 
   return results;

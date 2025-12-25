@@ -2,7 +2,7 @@
 // The config you add here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import { init, captureRouterTransitionStart } from "@sentry/nextjs";
+import { init, replayIntegration, captureRouterTransitionStart } from "@sentry/nextjs";
 import type { BrowserOptions } from "@sentry/nextjs";
 import { beforeSendClient, beforeSendMetric } from "@utils/sentry-helpers";
 
@@ -20,11 +20,23 @@ if (process.env.NODE_ENV === "production") {
       process.env.SENTRY_RELEASE ||
       process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
       undefined,
-    // Errors-only: disable performance tracing and session replay.
+    // Errors-only: disable performance tracing.
     tracesSampleRate: 0,
+
+    // Session replay: only capture replays when an error occurs.
+    // This keeps debugging capability without ingesting baseline session replays.
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 1.0,
     // Privacy: explicitly disable sending PII by default
     sendDefaultPii: false,
     debug: false,
+    integrations: [
+      replayIntegration({
+        // Privacy defaults: avoid capturing typed content.
+        maskAllText: true,
+        blockAllMedia: false,
+      }),
+    ],
     // Errors-only: do not send console logs as Sentry logs.
     enableLogs: false,
     // Metrics: automatically enabled in v10.25.0+ (no explicit enableMetrics needed)
