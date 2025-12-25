@@ -26,17 +26,19 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
     [image]
   );
   const anchorHref = normalizedImage || image || "";
+  const isInternalProxy = optimizedImage.startsWith("/api/");
+  const effectiveUnoptimized = forceUnoptimized || isInternalProxy;
   const imageSrc = forceUnoptimized ? anchorHref : optimizedImage;
 
   const handleImageError = useCallback(() => {
     // First fallback: bypass Next.js optimizer (can 500 on some platforms or bad TLS chains)
-    if (!forceUnoptimized) {
+    if (!forceUnoptimized && !isInternalProxy) {
       setForceUnoptimized(true);
       return;
     }
     // Second failure: stop rendering the broken <img>; keep the underlay visible
     setHideImage(true);
-  }, [forceUnoptimized]);
+  }, [forceUnoptimized, isInternalProxy]);
 
   if (!image) {
     return (
@@ -79,7 +81,8 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
             loading="eager"
             fetchPriority="high"
             onError={handleImageError}
-            unoptimized={forceUnoptimized}
+            // Bypass optimization for internal proxy URLs on SST/OpenNext.
+            unoptimized={effectiveUnoptimized}
           />
         )}
       </a>

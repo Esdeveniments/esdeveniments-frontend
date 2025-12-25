@@ -1,4 +1,4 @@
-import ImageServer from "@components/ui/common/image/ImageServer";
+import Image from "@components/ui/common/image";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { truncateString, getFormattedDate } from "@utils/helpers";
@@ -224,7 +224,7 @@ async function EventsAroundServer({
               >
                 {/* ImageEvent */}
                 <div className="w-full h-32 flex justify-center items-center overflow-hidden">
-                  <ImageServer
+                  <Image
                     className="w-full object-cover"
                     title={event.title}
                     alt={event.title}

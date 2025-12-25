@@ -42,6 +42,7 @@ function ImageServer({
   });
 
   const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 
   return (
     <div
@@ -68,7 +69,9 @@ function ImageServer({
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}
         sizes={getOptimalImageSizes(context)}
-        unoptimized={env === "dev"}
+        // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
+        // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
+        unoptimized={shouldBypassOptimizer || env === "dev"}
       />
     </div>
   );

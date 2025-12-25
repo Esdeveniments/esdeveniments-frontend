@@ -30,6 +30,9 @@ function ClientImage({
   context = "card",
   cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
+
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
@@ -50,8 +53,6 @@ function ClientImage({
     networkQuality: getServerImageQuality(networkQualityString),
     customQuality,
   });
-
-  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
 
   const imageKey = getImageKey(`${finalImageSrc}-${forceUnoptimized ? "direct" : "opt"}`);
 
@@ -123,7 +124,9 @@ function ClientImage({
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}
         sizes={getOptimalImageSizes(context)}
-        unoptimized={forceUnoptimized || env === "dev"}
+        // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
+        // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
+        unoptimized={forceUnoptimized || shouldBypassOptimizer || env === "dev"}
       />
     </div>
   );
