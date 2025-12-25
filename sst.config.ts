@@ -20,6 +20,44 @@ export default $config({
     // Upgraded from nodejs20.x (deprecated April 2026)
     $transform(sst.aws.Function, (args) => {
       args.runtime = "nodejs22.x";
+
+      // Fix OpenNext/SST image optimizer S3 access:
+      // The optimizer reads from the site assets bucket using BUCKET_NAME/BUCKET_KEY_PREFIX.
+      // It needs ListBucket on the bucket ARN (not just GetObject on bucket/*).
+      const environment = args.environment as
+        | Record<string, unknown>
+        | undefined;
+      const bucketKeyPrefix = environment?.BUCKET_KEY_PREFIX;
+      const bucketName = environment?.BUCKET_NAME;
+
+      if (bucketKeyPrefix === "_assets" && bucketName) {
+        const listBucketPermission = {
+          actions: ["s3:ListBucket"],
+          resources: [`arn:aws:s3:::${String(bucketName)}`],
+        };
+
+        const existingPermissions = args.permissions;
+        if (!existingPermissions) {
+          args.permissions = [listBucketPermission];
+        } else if (Array.isArray(existingPermissions)) {
+          const alreadyHasListBucket = existingPermissions.some((p) => {
+            if (!p || typeof p !== "object") return false;
+            const actions = (p as { actions?: unknown }).actions;
+            const resources = (p as { resources?: unknown }).resources;
+            if (!Array.isArray(actions) || !Array.isArray(resources))
+              return false;
+            return (
+              actions.includes("s3:ListBucket") &&
+              resources.some(
+                (r) => String(r) === String(listBucketPermission.resources[0])
+              )
+            );
+          });
+
+          if (!alreadyHasListBucket)
+            existingPermissions.push(listBucketPermission);
+        }
+      }
     });
 
     // Helper function to get parameter from SSM Parameter Store
@@ -73,6 +111,43 @@ export default $config({
       topic: alarmsTopic.arn,
       protocol: "email",
       endpoint: alarmEmail,
+    });
+
+    // Alarm for the OpenNext image optimizer Lambda (Next.js /_next/image).
+    // SST doesn't currently expose this function under `site.nodes`, so we detect it
+    // by its environment vars and attach a CloudWatch alarm.
+    $transform(aws.lambda.Function, (args, _opts, name) => {
+      const environment = args.environment as unknown;
+      const variables =
+        environment &&
+        typeof environment === "object" &&
+        "variables" in environment &&
+        typeof (environment as { variables?: unknown }).variables === "object"
+          ? (environment as { variables?: Record<string, unknown> })
+              .variables ?? undefined
+          : undefined;
+
+      const bucketKeyPrefix = variables?.["BUCKET_KEY_PREFIX"];
+      if (bucketKeyPrefix !== "_assets") return;
+
+      new aws.cloudwatch.MetricAlarm(
+        `${name}ImageOptimizerErrorAlarm`,
+        {
+          comparisonOperator: "GreaterThanThreshold",
+          evaluationPeriods: 1,
+          metricName: "Errors",
+          namespace: "AWS/Lambda",
+          period: 60,
+          statistic: "Sum",
+          threshold: 5,
+          treatMissingData: "notBreaching",
+          dimensions: {
+            FunctionName: args.name,
+          },
+          alarmActions: [alarmsTopic.arn],
+        },
+        { parent: alarmsTopic }
+      );
     });
 
     const site = new sst.aws.Nextjs("site", {
