@@ -34,6 +34,7 @@ import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
+import { resolvePlaceSlugAlias } from "@utils/place-alias";
 
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -127,6 +128,14 @@ export default async function Page({
     } catch {
       // ignore transient errors
     }
+
+    if (placeExists !== true) {
+      const alias = await resolvePlaceSlugAlias(place);
+      if (alias) {
+        redirect(toLocalizedUrl(`/${alias}`, locale));
+      }
+    }
+
     if (placeExists === false) {
       const target = buildFallbackUrlForInvalidPlace({
         rawSearchParams: {},

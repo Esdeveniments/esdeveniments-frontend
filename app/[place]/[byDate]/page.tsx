@@ -47,6 +47,8 @@ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { resolvePlaceSlugAlias } from "@utils/place-alias";
 
 // page-level ISR not set here; fetch-level caching applies
 
@@ -337,6 +339,21 @@ export default async function ByDatePage({
     } catch {
       // ignore transient errors
     }
+
+    if (placeExists !== true) {
+      const alias = await resolvePlaceSlugAlias(place);
+      if (alias) {
+        const queryString = toUrlSearchParams(search).toString();
+        const targetPath = `/${alias}/${actualDate}`;
+        redirect(
+          toLocalizedUrl(
+            queryString ? `${targetPath}?${queryString}` : targetPath,
+            locale
+          )
+        );
+      }
+    }
+
     if (placeExists === false) {
       const target = buildFallbackUrlForInvalidPlace({
         byDate,

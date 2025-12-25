@@ -100,6 +100,40 @@ describe("handleCanonicalRedirects", () => {
     });
   });
 
+  describe("place segment normalization", () => {
+    it("redirects apostrophe place to slug (/l'escala -> /l-escala)", () => {
+      const request = createMockRequest("/l'escala");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/l-escala");
+    });
+
+    it("redirects percent-encoded apostrophe to slug (/l%27escala -> /l-escala)", () => {
+      const request = createMockRequest("/l%27escala");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/l-escala");
+    });
+
+    it("does not redirect placeholder-like paths (/[place])", () => {
+      const request = createMockRequest("/[place]");
+      const result = handleCanonicalRedirects(request);
+      expect(result).toBeNull();
+    });
+
+    it("does not redirect encoded symbol-only paths (/%26)", () => {
+      const request = createMockRequest("/%26");
+      const result = handleCanonicalRedirects(request);
+      expect(result).toBeNull();
+    });
+  });
+
   describe("basic tots redirects without query params", () => {
     it("redirects /place/tots/category to /place/category", () => {
       const request = createMockRequest("/barcelona/tots/teatre");

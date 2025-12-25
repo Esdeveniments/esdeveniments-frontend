@@ -44,6 +44,8 @@ import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { resolvePlaceSlugAlias } from "@utils/place-alias";
 
 export async function generateMetadata({
   params,
@@ -297,6 +299,21 @@ export default async function FilteredPage({
     } catch {
       // ignore transient errors
     }
+
+    if (placeExists !== true) {
+      const alias = await resolvePlaceSlugAlias(place);
+      if (alias) {
+        const queryString = toUrlSearchParams(rawSearchParams).toString();
+        const targetPath = `/${alias}/${filters.byDate}/${filters.category}`;
+        redirect(
+          toLocalizedUrl(
+            queryString ? `${targetPath}?${queryString}` : targetPath,
+            locale
+          )
+        );
+      }
+    }
+
     if (placeExists === false) {
       const target = buildFallbackUrlForInvalidPlace({
         byDate,

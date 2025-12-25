@@ -71,6 +71,8 @@ export default async function EventPage({
 }) {
   const slug = (await params).eventId;
 
+  const locale = await getLocaleSafely();
+
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 
@@ -86,7 +88,7 @@ export default async function EventPage({
     process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "0" ||
     process.env.CANONICAL_REDIRECT === "0";
   if (!disableCanonicalRedirect && slug !== event.slug && event.slug) {
-    redirect(`/e/${event.slug}`);
+    redirect(withLocalePath(`/e/${event.slug}`, locale));
   }
 
   const eventSlug = event?.slug ?? "";
@@ -97,7 +99,6 @@ export default async function EventPage({
   const regionName = formatPlaceName(rawRegionName);
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
-  const locale = await getLocaleSafely();
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const explorePlaceHref = `/${primaryPlaceSlug}`;

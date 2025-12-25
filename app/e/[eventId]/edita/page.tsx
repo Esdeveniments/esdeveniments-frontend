@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { siteUrl } from "@config/index";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { fetchEventBySlug } from "lib/api/events";
 import { fetchRegionsWithCities } from "lib/api/regions";
 import EditEventClient from "./EditEventClient";
@@ -12,8 +13,9 @@ export async function generateMetadata({
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const { eventId } = await params;
-  const t = await getTranslations("App.EventEdit");
-  const canonical = `${siteUrl}/e/${eventId}/edita`;
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.EventEdit" });
+  const canonical = `${siteUrl}${withLocalePath(`/e/${eventId}/edita`, locale)}`;
   return {
     title: t("title"),
     description: t("description"),
