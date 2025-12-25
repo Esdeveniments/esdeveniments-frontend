@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useTransition } from "react";
-import { pruneFavoritesAction } from "@app/actions/favorites";
+import { useRouter } from "next/navigation";
 
 export default function FavoritesAutoPrune({
   slugsToRemove,
@@ -10,6 +10,7 @@ export default function FavoritesAutoPrune({
 }) {
   const [, startTransition] = useTransition();
   const didRunRef = useRef(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (didRunRef.current) return;
@@ -19,12 +20,20 @@ export default function FavoritesAutoPrune({
 
     startTransition(async () => {
       try {
-        await pruneFavoritesAction(slugsToRemove);
+        const response = await fetch("/api/favorites/prune", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slugsToRemove }),
+        });
+
+        if (response.ok) {
+          router.refresh();
+        }
       } catch {
         // Best-effort cleanup: never block rendering.
       }
     });
-  }, [slugsToRemove]);
+  }, [router, slugsToRemove]);
 
   // No UI: this is a background cleanup.
   return null;

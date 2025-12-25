@@ -3,13 +3,18 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Link from "next/link";
 import type { SVGProps } from "react";
 
-const setFavoriteActionMock = vi.fn<
-  (eventSlug: string, shouldBeFavorite: boolean) => Promise<string[]>
+const fetchMock = vi.fn<
+  (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ) => Promise<{ ok: boolean; status: number }>
 >();
 
-vi.mock("@app/actions/favorites", () => ({
-  setFavoriteAction: (eventSlug: string, shouldBeFavorite: boolean) =>
-    setFavoriteActionMock(eventSlug, shouldBeFavorite),
+const refreshMock = vi.fn<() => void>();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: refreshMock }),
+  usePathname: () => "/preferits",
 }));
 
 vi.mock("@heroicons/react/solid/esm/HeartIcon", () => ({
@@ -27,10 +32,11 @@ vi.mock("@heroicons/react/outline/esm/HeartIcon", () => ({
 describe("FavoriteButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (globalThis as unknown as { fetch?: unknown }).fetch = fetchMock;
   });
 
   it("renders with correct aria state and toggles on click", async () => {
-    setFavoriteActionMock.mockResolvedValue(["test-event"]);
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
 
     const { default: FavoriteButton } = await import(
       "@components/ui/common/favoriteButton"
@@ -51,7 +57,12 @@ describe("FavoriteButton", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(setFavoriteActionMock).toHaveBeenCalledWith("test-event", true);
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/favorites",
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
     });
 
     expect(screen.getByRole("button", { name: "Elimina de preferits" })).toHaveAttribute(
@@ -62,7 +73,7 @@ describe("FavoriteButton", () => {
   });
 
   it("rolls back optimistic state when server action fails", async () => {
-    setFavoriteActionMock.mockRejectedValueOnce(new Error("fail"));
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 500 });
 
     const { default: FavoriteButton } = await import(
       "@components/ui/common/favoriteButton"
@@ -84,7 +95,12 @@ describe("FavoriteButton", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(setFavoriteActionMock).toHaveBeenCalledWith("test-event", true);
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/favorites",
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
     });
 
     await waitFor(() => {

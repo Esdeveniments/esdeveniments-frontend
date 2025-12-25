@@ -185,6 +185,9 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/price-preview",
   "/api/promotions/active",
   "/api/leads/restaurant",
+  // Favorites cookie endpoints (browser-initiated)
+  "/api/favorites",
+  "/api/favorites/prune",
   // DISABLED: Restaurant promotions feature is currently disabled
   // "/api/cloudinary/sign",
   // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)

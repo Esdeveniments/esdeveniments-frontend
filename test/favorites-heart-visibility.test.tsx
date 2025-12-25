@@ -4,6 +4,11 @@ import "@testing-library/jest-dom";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import CardContentClient from "@components/ui/common/cardContent/CardContentClient";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+  usePathname: () => "/catalunya",
+}));
+
 vi.mock("next/image", () => ({
   default: ({ alt }: { alt: string }) => (
     <span role="img" aria-label={alt} data-testid="mock-image" />

@@ -9,7 +9,7 @@ export default function FavoriteButtonOverlay({
 }: Omit<FavoriteButtonProps, "className"> & { wrapperClassName?: string }) {
   return (
     <div
-      className={["absolute top-2 right-2 z-20", wrapperClassName]
+      className={["absolute top-2 right-2 z-10", wrapperClassName]
         .filter(Boolean)
         .join(" ")}
     >

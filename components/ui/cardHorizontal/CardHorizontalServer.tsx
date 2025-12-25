@@ -58,13 +58,6 @@ const CardHorizontalServer = async ({
 
   return (
     <div className="w-full relative">
-      {shouldShowFavoriteButton && (
-        <FavoriteButtonOverlay
-          eventSlug={event.slug}
-          initialIsFavorite={isFavorite}
-          labels={favoriteLabels}
-        />
-      )}
       <CardLink
         href={`/e/${event.slug}`}
         className="block group relative h-full pressable-card transition-card"
@@ -209,6 +202,13 @@ const CardHorizontalServer = async ({
           </div>
         </article>
       </CardLink>
+      {shouldShowFavoriteButton && (
+        <FavoriteButtonOverlay
+          eventSlug={event.slug}
+          initialIsFavorite={isFavorite}
+          labels={favoriteLabels}
+        />
+      )}
     </div>
   );
 };
