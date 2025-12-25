@@ -15,7 +15,6 @@ import { useTranslations } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
 
 const ClientCardsList = dynamic(() => import("./ClientCardsList"), {
-  ssr: false,
   loading: () => (
     <div className="w-full">
       {Array.from({ length: 3 }).map((_, index) => (

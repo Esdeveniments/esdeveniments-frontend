@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { captureException } from "@sentry/nextjs";
 
 export default function FavoritesAutoPrune({
   slugsToRemove,
@@ -29,8 +30,19 @@ export default function FavoritesAutoPrune({
         if (response.ok) {
           router.refresh();
         }
-      } catch {
-        // Best-effort cleanup: never block rendering.
+      } catch (error: unknown) {
+        // Best-effort cleanup: never block rendering, but report for debugging.
+        captureException(error, {
+          tags: { feature: "favorites", action: "auto-prune" },
+          extra: {
+            slugs_to_remove_count: slugsToRemove.length,
+            slugs_to_remove_sample: slugsToRemove.slice(0, 20),
+          },
+        });
+
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to auto-prune favorites:", error);
+        }
       }
     });
   }, [router, slugsToRemove]);

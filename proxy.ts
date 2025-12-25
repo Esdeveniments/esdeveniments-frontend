@@ -416,7 +416,7 @@ export default async function proxy(request: NextRequest) {
   // still serve quickly and revalidate in the background.
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
     const normalizedPath = pathnameWithoutLocale || pathname;
-    const isFavoritesPage = normalizedPath === "/favorits";
+    const isFavoritesPage = normalizedPath === "/preferits";
     const hasFavoritesCookie = Boolean(
       request.cookies?.get?.(FAVORITES_COOKIE_NAME)?.value
     );

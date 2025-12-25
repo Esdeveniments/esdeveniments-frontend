@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { captureException, captureMessage } from "@sentry/nextjs";
+import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
 import { fetchWithHmac } from "./fetch-wrapper";
 import {
@@ -50,19 +50,10 @@ const e2eEventsStore = isE2ETestMode
 const IMAGE_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
 
 const recordImageSizeTelemetry = (imageBytes: number) => {
-  if (imageBytes < IMAGE_WARNING_THRESHOLD) {
-    return;
-  }
-  const level = imageBytes > MAX_TOTAL_UPLOAD_BYTES ? "error" : "warning";
-  captureMessage("uploadEventImage size near limit", {
-    level,
-    extra: {
-      imageBytes,
-      limitBytes: MAX_TOTAL_UPLOAD_BYTES,
-      imageMb: formatMegabytes(imageBytes),
-      limitMb: formatMegabytes(MAX_TOTAL_UPLOAD_BYTES),
-    },
-  });
+  // Errors-only Sentry policy: no non-error telemetry events.
+  // Keep this hook so callers don't change, but do nothing.
+  void imageBytes;
+  void IMAGE_WARNING_THRESHOLD;
 };
 
 const ensureImageWithinLimit = (imageFile: File) => {

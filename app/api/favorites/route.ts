@@ -1,37 +1,16 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 
 import {
-  FAVORITES_COOKIE_NAME,
   MAX_FAVORITES,
-  parseFavoritesCookie,
+  getFavoritesFromCookies,
+  persistFavoritesCookie,
 } from "@utils/favorites";
-
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 const ToggleFavoriteSchema = z.object({
   eventSlug: z.string().transform((value) => String(value || "").trim()),
   shouldBeFavorite: z.boolean(),
 });
-
-async function persistFavoritesCookie(favorites: string[]): Promise<void> {
-  const safe = favorites.slice(0, MAX_FAVORITES);
-  const cookieStore = await cookies();
-  cookieStore.set(FAVORITES_COOKIE_NAME, JSON.stringify(safe), {
-    path: "/",
-    maxAge: MAX_AGE_SECONDS,
-    sameSite: "lax",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  });
-}
-
-async function getFavoritesFromRequestCookies(): Promise<string[]> {
-  const cookieStore = await cookies();
-  const currentCookie = cookieStore.get(FAVORITES_COOKIE_NAME);
-  return parseFavoritesCookie(currentCookie?.value);
-}
 
 export async function POST(request: Request) {
   try {
@@ -47,12 +26,12 @@ export async function POST(request: Request) {
     const { eventSlug, shouldBeFavorite } = parsed.data;
     if (!eventSlug) {
       return NextResponse.json(
-        { ok: true, favorites: await getFavoritesFromRequestCookies() },
+        { ok: true, favorites: await getFavoritesFromCookies() },
         { headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    const currentFavorites = await getFavoritesFromRequestCookies();
+    const currentFavorites = await getFavoritesFromCookies();
     const nextSet = new Set(currentFavorites);
 
     if (shouldBeFavorite) {

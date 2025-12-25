@@ -25,14 +25,8 @@ const cookiesMock = vi.fn(async () => ({
   set: cookieSetMock,
 }));
 
-const revalidatePathMock = vi.fn<(path: string) => void>();
-
 vi.mock("next/headers", () => ({
   cookies: () => cookiesMock(),
-}));
-
-vi.mock("next/cache", () => ({
-  revalidatePath: (path: string) => revalidatePathMock(path),
 }));
 
 function setFavoritesCookieValue(value: string): void {
@@ -63,7 +57,7 @@ function parseCookieArray(raw: string): string[] {
 
 const originalEnv = { ...process.env };
 
-describe("favorites server actions", () => {
+describe("/api/favorites", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cookieValueByName.clear();
@@ -80,23 +74,35 @@ describe("favorites server actions", () => {
     process.env = originalEnv;
   });
 
-  it("does nothing for empty/whitespace slug", async () => {
+  it("returns current favorites for empty/whitespace slug and does not write cookie", async () => {
     setFavoritesCookieValue(JSON.stringify(["a"]));
 
-    const { setFavoriteAction } = await import("@app/actions/favorites");
-    const result = await setFavoriteAction("   ", true);
+    const { POST } = await import("@app/api/favorites/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "   ", shouldBeFavorite: true }),
+      })
+    );
 
-    expect(result).toEqual(["a"]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: ["a"] });
     expect(cookieSetMock).not.toHaveBeenCalled();
-    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   it("adds a favorite and persists httpOnly cookie", async () => {
-    const { setFavoriteAction } = await import("@app/actions/favorites");
+    const { POST } = await import("@app/api/favorites/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "  test-slug  ", shouldBeFavorite: true }),
+      })
+    );
 
-    const result = await setFavoriteAction("  test-slug  ", true);
-
-    expect(result).toEqual(["test-slug"]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: ["test-slug"] });
     expect(cookieSetMock).toHaveBeenCalledTimes(1);
 
     const [name, value, options] = cookieSetMock.mock.calls[0] ?? [];
@@ -107,54 +113,74 @@ describe("favorites server actions", () => {
       httpOnly: true,
       sameSite: "lax",
     });
-
-    expect(revalidatePathMock).toHaveBeenCalledWith("/preferits");
   });
 
   it("removes a favorite", async () => {
     setFavoritesCookieValue(JSON.stringify(["a", "b"]));
 
-    const { setFavoriteAction } = await import("@app/actions/favorites");
-    const result = await setFavoriteAction("a", false);
+    const { POST } = await import("@app/api/favorites/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "a", shouldBeFavorite: false }),
+      })
+    );
 
-    expect(result).toEqual(["b"]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: ["b"] });
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(["b"]);
-    expect(revalidatePathMock).toHaveBeenCalledWith("/preferits");
   });
 
   it("does not duplicate favorites", async () => {
     setFavoritesCookieValue(JSON.stringify(["a"]));
 
-    const { setFavoriteAction } = await import("@app/actions/favorites");
-    const result = await setFavoriteAction("a", true);
+    const { POST } = await import("@app/api/favorites/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "a", shouldBeFavorite: true }),
+      })
+    );
 
-    expect(result).toEqual(["a"]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: ["a"] });
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(["a"]);
   });
 
-  it("enforces MAX_FAVORITES cap (does not exceed 50)", async () => {
+  it("enforces MAX_FAVORITES cap (evicts oldest when adding new favorite)", async () => {
     const { MAX_FAVORITES } = await import("@utils/favorites");
     const current = Array.from({ length: MAX_FAVORITES }, (_, i) => `s-${i}`);
     setFavoritesCookieValue(JSON.stringify(current));
 
-    // Semantics decision: when already at MAX_FAVORITES, adding a NEW favorite
-    // evicts the oldest favorite (first-added) to make room for the newest.
-    // This ensures the add action succeeds while keeping the list capped.
     const expected = [...current.slice(1), "new-one"];
 
-    const { setFavoriteAction } = await import("@app/actions/favorites");
-    const result = await setFavoriteAction("new-one", true);
+    const { POST } = await import("@app/api/favorites/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "new-one", shouldBeFavorite: true }),
+      })
+    );
 
-    expect(result).toHaveLength(MAX_FAVORITES);
-    expect(result).toEqual(expected);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: expected });
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(expected);
   });
 
   it("sets secure cookies only in production", async () => {
     process.env = { ...process.env, NODE_ENV: "production" };
 
-    const { setFavoriteAction } = await import("@app/actions/favorites");
-    await setFavoriteAction("secure-check", true);
+    const { POST } = await import("@app/api/favorites/route");
+    await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "secure-check", shouldBeFavorite: true }),
+      })
+    );
 
     const options = cookieSetMock.mock.calls[0]?.[2];
     expect(options?.secure).toBe(true);

@@ -6,24 +6,30 @@ type CookieGetResult = { name: string; value: string } | undefined;
 
 const cookieValueByName = new Map<string, string>();
 const cookieGetMock = vi.fn<(name: string) => CookieGetResult>();
-const cookieSetMock = vi.fn<(name: string, value: string) => void>();
+const cookieSetMock = vi.fn<
+  (
+    name: string,
+    value: string,
+    options: {
+      path: string;
+      maxAge: number;
+      sameSite: "lax" | "strict" | "none";
+      httpOnly: boolean;
+      secure: boolean;
+    }
+  ) => void
+>();
 
 const cookiesMock = vi.fn(async () => ({
   get: cookieGetMock,
   set: cookieSetMock,
 }));
 
-const revalidatePathMock = vi.fn<(path: string) => void>();
-
 vi.mock("next/headers", () => ({
   cookies: () => cookiesMock(),
 }));
 
-vi.mock("next/cache", () => ({
-  revalidatePath: (path: string) => revalidatePathMock(path),
-}));
-
-describe("pruneFavoritesAction", () => {
+describe("/api/favorites/prune", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cookieValueByName.clear();
@@ -40,33 +46,51 @@ describe("pruneFavoritesAction", () => {
       JSON.stringify(["a", "b", "c"])
     );
 
-    const { pruneFavoritesAction } = await import("@app/actions/favorites");
-    const result = await pruneFavoritesAction(["b", " ", "missing"]);
+    const { POST } = await import("@app/api/favorites/prune/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites/prune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slugsToRemove: ["b", " ", "missing"] }),
+      })
+    );
 
-    expect(result).toEqual(["a", "c"]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: ["a", "c"] });
     expect(cookieSetMock).toHaveBeenCalledTimes(1);
-    expect(revalidatePathMock).toHaveBeenCalledWith("/preferits");
   });
 
   it("does nothing when there is nothing to prune", async () => {
     cookieValueByName.set(FAVORITES_COOKIE_NAME, JSON.stringify(["a"]));
 
-    const { pruneFavoritesAction } = await import("@app/actions/favorites");
-    const result = await pruneFavoritesAction(["", "   "]);
+    const { POST } = await import("@app/api/favorites/prune/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites/prune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slugsToRemove: ["", "   "] }),
+      })
+    );
 
-    expect(result).toEqual(["a"]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: ["a"] });
     expect(cookieSetMock).not.toHaveBeenCalled();
-    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   it("does not write cookie when pruning changes nothing", async () => {
     cookieValueByName.set(FAVORITES_COOKIE_NAME, JSON.stringify(["a"]));
 
-    const { pruneFavoritesAction } = await import("@app/actions/favorites");
-    const result = await pruneFavoritesAction(["missing"]);
+    const { POST } = await import("@app/api/favorites/prune/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites/prune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slugsToRemove: ["missing"] }),
+      })
+    );
 
-    expect(result).toEqual(["a"]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: ["a"] });
     expect(cookieSetMock).not.toHaveBeenCalled();
-    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });

@@ -2,9 +2,7 @@
 import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
 import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
-import { truncateString, getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
-import { buildDisplayLocation } from "@utils/location-helpers";
 import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import MobileShareIsland from "./MobileShareIsland";
@@ -14,6 +12,7 @@ import { CardContentProps } from "types/props";
 import { useTranslations, useLocale } from "next-intl";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
+import { prepareCardContentData } from "./prepareCardContentData";
 
 export default function CardContentClient({
   event,
@@ -24,43 +23,22 @@ export default function CardContentClient({
   const tCard = useTranslations("Components.CardContent");
   const tTime = useTranslations("Utils.EventTime");
   const locale = (useLocale?.() || DEFAULT_LOCALE) as AppLocale;
-  const timeLabels = {
-    consult: tTime("consult"),
-    startsAt: tTime("startsAt", { time: "{time}" }),
-    range: tTime("range", { start: "{start}", end: "{end}" }),
-    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
-  };
-  const { formattedStart, formattedEnd, nameDay } =
-    event.formattedStart && event.nameDay
-      ? {
-        formattedStart: event.formattedStart,
-        formattedEnd: event.formattedEnd ?? null,
-        nameDay: event.nameDay,
-      }
-      : getFormattedDate(event.startDate, event.endDate, locale);
-
-  const title = truncateString(event.title || "", isHorizontal ? 30 : 75);
-
-  const cityName = event.city?.name;
-  const regionName = event.region?.name;
-  const fullLocation = buildDisplayLocation({
-    location: event.location || "",
-    cityName: cityName || "",
-    regionName: regionName || "",
-    hidePlaceSegments: false,
+  const {
+    timeLabels,
+    title,
+    primaryLocation,
+    image,
+    eventDate,
+    favoriteLabels,
+    shouldShowFavoriteButton,
+  } = prepareCardContentData({
+    event,
+    isHorizontal,
+    locale,
+    tCard,
+    tTime,
+    preferPreformattedDates: true,
   });
-  const primaryLocation = truncateString(fullLocation, 80);
-
-  const image = event.imageUrl || "";
-
-  const eventDate = formattedEnd
-    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
-    : tCard("dateSingle", { nameDay, start: formattedStart });
-  const favoriteLabels = {
-    add: tCard("favoriteAddAria"),
-    remove: tCard("favoriteRemoveAria"),
-  };
-  const shouldShowFavoriteButton = Boolean(event.slug);
 
   return (
     <>
