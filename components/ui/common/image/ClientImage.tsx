@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useRef, RefObject } from "react";
+import { memo, useRef, RefObject, useState, useCallback } from "react";
 import NextImage from "next/image";
 import ImgDefault from "@components/ui/imgDefault";
 import useOnScreen from "@components/hooks/useOnScreen";
@@ -30,8 +30,12 @@ function ClientImage({
   context = "card",
   cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
+
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
+  const [forceUnoptimized, setForceUnoptimized] = useState(false);
   const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
     imgDefaultRef as RefObject<HTMLDivElement>,
     { freezeOnceVisible: true }
@@ -40,7 +44,7 @@ function ClientImage({
   const imageClassName = `${className}`;
   const networkQualityString = useNetworkSpeed();
 
-  const { hasError, isLoading, handleError, handleLoad, getImageKey } =
+  const { hasError, isLoading, handleError, handleLoad, reset, getImageKey } =
     useImageRetry(2);
 
   const imageQuality = getOptimalImageQuality({
@@ -50,9 +54,18 @@ function ClientImage({
     customQuality,
   });
 
-  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+  const imageKey = getImageKey(`${finalImageSrc}-${forceUnoptimized ? "direct" : "opt"}`);
 
-  const imageKey = getImageKey(finalImageSrc);
+  const handleImageError = useCallback(() => {
+    // If the Next.js image optimizer fails (common with TLS/cert issues or platform adapters),
+    // retry once by bypassing optimization and letting the browser fetch the image directly.
+    if (!forceUnoptimized) {
+      setForceUnoptimized(true);
+      reset();
+      return;
+    }
+    handleError();
+  }, [forceUnoptimized, handleError, reset]);
 
   // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
   if (hasError) {
@@ -98,7 +111,7 @@ function ClientImage({
         width={500}
         height={260}
         loading={priority ? "eager" : "lazy"}
-        onError={handleError}
+        onError={handleImageError}
         onLoad={handleLoad}
         quality={imageQuality}
         style={{
@@ -111,7 +124,9 @@ function ClientImage({
         priority={priority}
         fetchPriority={priority ? "high" : "auto"}
         sizes={getOptimalImageSizes(context)}
-        unoptimized={env === "dev"}
+        // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
+        // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
+        unoptimized={forceUnoptimized || shouldBypassOptimizer || env === "dev"}
       />
     </div>
   );
