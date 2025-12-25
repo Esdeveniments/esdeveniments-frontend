@@ -458,6 +458,7 @@ export interface ImageComponentProps {
   image?: string;
   className?: string;
   priority?: boolean;
+  fetchPriority?: "high" | "auto" | "low";
   alt?: string;
   location?: string;
   region?: string;

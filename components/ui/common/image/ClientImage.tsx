@@ -25,6 +25,7 @@ function ClientImage({
   image = "",
   className = "w-full h-full flex justify-center items-center",
   priority = false,
+  fetchPriority,
   alt = title,
   quality: customQuality,
   context = "card",
@@ -122,7 +123,7 @@ function ClientImage({
           maxWidth: "100%", // Ensure image respects container constraints
         }}
         priority={priority}
-        fetchPriority={priority ? "high" : "auto"}
+        fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
         sizes={getOptimalImageSizes(context)}
         // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
         // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.

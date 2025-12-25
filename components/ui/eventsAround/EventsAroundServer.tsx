@@ -235,6 +235,7 @@ async function EventsAroundServer({
                     alt={event.title}
                     image={image}
                     priority={false}
+                    fetchPriority="low"
                     context="card"
                     cacheKey={event.hash || event.updatedAt}
                   />
