@@ -203,6 +203,48 @@ export async function fetchEventBySlug(
   }
 }
 
+export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
+  event: EventDetailResponseDTO | null;
+  notFound: boolean;
+}> {
+  if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
+    return { event: e2eEventsStore.get(fullSlug) ?? null, notFound: false };
+  }
+
+  try {
+    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
+
+    const res = await fetch(internalApiUrl, {
+      headers: getVercelProtectionBypassHeaders(),
+      next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
+    });
+
+    if (res.status === 404) {
+      console.warn(
+        `fetchEventBySlugWithStatus: Event not found (404) for slug: ${fullSlug}`
+      );
+      return { event: null, notFound: true };
+    }
+
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "No error text");
+      console.error(
+        `fetchEventBySlugWithStatus: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
+      );
+      return { event: null, notFound: false };
+    }
+
+    return { event: parseEventDetail(await res.json()), notFound: false };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(
+      `Error fetching event by slug (internal) for ${fullSlug}:`,
+      errorMessage
+    );
+    return { event: null, notFound: false };
+  }
+}
+
 // Cached wrapper to deduplicate event fetches within the same request
 // Used by both generateMetadata and the page component
 export const getEventBySlug = cache(fetchEventBySlug);

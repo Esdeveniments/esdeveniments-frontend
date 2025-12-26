@@ -37,12 +37,13 @@ export async function POST(request: Request) {
       (slug) => !removeSet.has(slug)
     );
 
-    if (nextFavorites.length !== currentFavorites.length) {
-      await persistFavoritesCookie(nextFavorites);
-    }
+    const responseFavorites =
+      nextFavorites.length !== currentFavorites.length
+        ? await persistFavoritesCookie(nextFavorites)
+        : nextFavorites;
 
     return NextResponse.json(
-      { ok: true, favorites: nextFavorites },
+      { ok: true, favorites: responseFavorites },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error: unknown) {

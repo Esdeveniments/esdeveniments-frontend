@@ -9,7 +9,10 @@ import {
 } from "@utils/favorites";
 
 const ToggleFavoriteSchema = z.object({
-  eventSlug: z.string().trim(),
+  eventSlug: z
+    .string()
+    .trim()
+    .min(1, { message: "Event slug cannot be empty" }),
   shouldBeFavorite: z.boolean(),
 });
 
@@ -18,6 +21,22 @@ export async function POST(request: Request) {
     const json = (await request.json().catch(() => null)) as unknown;
     const parsed = ToggleFavoriteSchema.safeParse(json);
     if (!parsed.success) {
+      const hasEmptySlugIssue = parsed.error.issues.some(
+        (issue) =>
+          issue.path.length === 1 &&
+          issue.path[0] === "eventSlug" &&
+          issue.code === "too_small" &&
+          issue.type === "string" &&
+          issue.minimum === 1
+      );
+
+      if (hasEmptySlugIssue) {
+        return NextResponse.json(
+          { ok: false, error: "EMPTY_EVENT_SLUG" },
+          { status: 400, headers: { "Cache-Control": "no-store" } }
+        );
+      }
+
       return NextResponse.json(
         { ok: false, error: "INVALID_BODY" },
         { status: 400, headers: { "Cache-Control": "no-store" } }
@@ -26,12 +45,6 @@ export async function POST(request: Request) {
 
     const { eventSlug, shouldBeFavorite } = parsed.data;
     const currentFavorites = await getFavoritesFromCookies();
-    if (!eventSlug) {
-      return NextResponse.json(
-        { ok: false, error: "EMPTY_EVENT_SLUG" },
-        { status: 400, headers: { "Cache-Control": "no-store" } }
-      );
-    }
     const nextSet = new Set(currentFavorites);
 
     if (shouldBeFavorite) {
@@ -46,11 +59,11 @@ export async function POST(request: Request) {
       nextSet.delete(eventSlug);
     }
 
-    const nextFavorites = Array.from(nextSet).slice(0, MAX_FAVORITES);
-    await persistFavoritesCookie(nextFavorites);
+    const nextFavorites = Array.from(nextSet);
+    const persistedFavorites = await persistFavoritesCookie(nextFavorites);
 
     return NextResponse.json(
-      { ok: true, favorites: nextFavorites },
+      { ok: true, favorites: persistedFavorites },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error: unknown) {

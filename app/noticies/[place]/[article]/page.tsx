@@ -36,7 +36,8 @@ const getCanonicalPlaceSlugFromDetail = (
   detail: NewsDetailResponseDTO | null,
   fallbackPlace: string
 ) => {
-  const candidate = detail?.city?.slug || detail?.region?.slug;
+  const candidate =
+    detail?.city?.slug || detail?.region?.slug || detail?.province?.slug;
   return typeof candidate === "string" && candidate.length > 0
     ? candidate
     : fallbackPlace;

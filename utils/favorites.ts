@@ -31,7 +31,7 @@ export const getFavoritesFromCookies = cache(async (): Promise<string[]> => {
 
 export async function persistFavoritesCookie(
   favorites: string[]
-): Promise<void> {
+): Promise<string[]> {
   const safe = favorites.slice(0, MAX_FAVORITES);
   const cookieStore = await cookies();
   cookieStore.set(FAVORITES_COOKIE_NAME, JSON.stringify(safe), {
@@ -41,4 +41,6 @@ export async function persistFavoritesCookie(
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
   });
+
+  return safe;
 }
