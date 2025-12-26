@@ -25,14 +25,13 @@ export async function POST(request: Request) {
     }
 
     const { eventSlug, shouldBeFavorite } = parsed.data;
+    const currentFavorites = await getFavoritesFromCookies();
     if (!eventSlug) {
       return NextResponse.json(
-        { ok: true, favorites: await getFavoritesFromCookies() },
+        { ok: true, favorites: currentFavorites },
         { headers: { "Cache-Control": "no-store" } }
       );
     }
-
-    const currentFavorites = await getFavoritesFromCookies();
     const nextSet = new Set(currentFavorites);
 
     if (shouldBeFavorite) {

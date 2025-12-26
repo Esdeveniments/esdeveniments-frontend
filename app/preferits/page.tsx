@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import CardServer from "@components/ui/card/CardServer";
 import List from "@components/ui/list";
 import NoEventsFound from "@components/ui/common/noEventsFound";
+import HeadingLayout from "@components/ui/hybridEventsList/HeadingLayout";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { fetchEventBySlug } from "@lib/api/events";
@@ -75,9 +76,14 @@ export default async function FavoritsPage() {
   return (
     <div className="container flex-col justify-center items-center pt-[6rem]" data-testid="favorites-page">
       <FavoritesAutoPrune slugsToRemove={expiredSlugs} />
-      <div className="w-full px-element-gap mb-6">
-        <h1 className="heading-1">{t("heading")}</h1>
-        <p className="body-large text-foreground/80">{t("subtitle")}</p>
+      <div className="w-full">
+        <HeadingLayout
+          title={t("heading")}
+          subtitle={t("subtitle")}
+          titleClass="heading-1"
+          subtitleClass="body-large"
+          cta={null}
+        />
       </div>
       <List events={activeEvents}>
         {(event, index) => <CardServer key={`${event.id}-${index}`} event={event} isPriority={index === 0} />}

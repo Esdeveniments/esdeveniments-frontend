@@ -10,8 +10,8 @@ import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
-import { getLocaleSafely } from "@utils/i18n-seo";
-import { redirect } from "next/navigation";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { permanentRedirect } from "next/navigation";
 
 const getCanonicalPlaceSlugFromDetail = (
   detail: NewsDetailResponseDTO | null,
@@ -81,11 +81,10 @@ export default async function Page({
   const detail = await getNewsBySlug(article);
   const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
   if (canonicalPlace !== place) {
-    const localePrefix = locale === "ca" ? "" : `/${locale}`;
-    redirect(`${localePrefix}/noticies/${canonicalPlace}/${article}`);
+    permanentRedirect(withLocalePath(`/noticies/${canonicalPlace}/${article}`, locale));
   }
 
-  // Start remaining fetches immediately
+  // Wrap already-fetched data as a promise for the component API
   const detailPromise = Promise.resolve(detail);
   const placeTypePromise = getPlaceTypeAndLabelCached(place);
 

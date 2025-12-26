@@ -41,15 +41,10 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "git add"
+      "eslint --fix"
     ],
     "messages/*.json": [
-      "yarn i18n:check",
-      "git add"
-    ],
-    "*.{json,md,yml,yaml}": [
-      "git add"
+      "yarn i18n:check"
     ]
   },
   "dependencies": {

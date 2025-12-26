@@ -23,17 +23,19 @@ export async function POST(request: Request) {
     }
 
     const normalizedToRemove = parsed.data.slugsToRemove.filter(Boolean);
+    const currentFavorites = await getFavoritesFromCookies();
 
     if (normalizedToRemove.length === 0) {
       return NextResponse.json(
-        { ok: true, favorites: await getFavoritesFromCookies() },
+        { ok: true, favorites: currentFavorites },
         { headers: { "Cache-Control": "no-store" } }
       );
     }
 
     const removeSet = new Set(normalizedToRemove);
-    const currentFavorites = await getFavoritesFromCookies();
-    const nextFavorites = currentFavorites.filter((slug) => !removeSet.has(slug));
+    const nextFavorites = currentFavorites.filter(
+      (slug) => !removeSet.has(slug)
+    );
 
     if (nextFavorites.length !== currentFavorites.length) {
       await persistFavoritesCookie(nextFavorites);
