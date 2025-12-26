@@ -1,5 +1,12 @@
-import React from "react";
+import { createElement, type ReactNode } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+import type {
+  EventDetailResponseDTO,
+  EventSummaryResponseDTO,
+  ListEvent,
+} from "types/api/event";
 
 const autoPruneProps: Array<{ slugsToRemove: string[] }> = [];
 
@@ -17,8 +24,11 @@ vi.mock("@utils/favorites", () => ({
 }));
 
 vi.mock("@utils/event-helpers", () => ({
-  filterActiveEvents: vi.fn((events: unknown[]) => events),
-  isEventActive: vi.fn((_event: unknown) => true),
+  filterActiveEvents: vi.fn(
+    (events: EventSummaryResponseDTO[] | ListEvent[]) =>
+      events as EventSummaryResponseDTO[]
+  ),
+  isEventActive: vi.fn((_event: EventSummaryResponseDTO) => true),
 }));
 
 vi.mock("@lib/api/events", () => ({
@@ -35,8 +45,8 @@ vi.mock("@components/ui/card/CardServer", () => ({
 }));
 
 vi.mock("@components/ui/list", () => ({
-  default: function ListMock(props: { children?: unknown }) {
-    return React.createElement("div", null, props.children);
+  default: function ListMock(props: { children?: ReactNode }) {
+    return createElement("div", null, props.children);
   },
 }));
 
@@ -63,7 +73,7 @@ vi.mock("./../app/preferits/FavoritesAutoPrune", () => ({
   },
 }));
 
-function createEventDetail(slug: string) {
+function createEventDetail(slug: string): EventDetailResponseDTO {
   return {
     id: `id-${slug}`,
     hash: `hash-${slug}`,
@@ -137,12 +147,16 @@ describe("Favorites page auto-prune", () => {
       return e.slug === okSlug;
     });
 
-    vi.mocked(filterActiveEvents).mockImplementation((events: unknown[]) => {
-      return events.filter((event) => (event as { slug?: string }).slug === okSlug);
-    });
+    vi.mocked(filterActiveEvents).mockImplementation(
+      (events: EventSummaryResponseDTO[] | ListEvent[]) => {
+        const candidates = events as EventSummaryResponseDTO[];
+        return candidates.filter((event) => event.slug === okSlug);
+      }
+    );
 
     const { default: FavoritsPage } = await import("@app/preferits/page");
-    await FavoritsPage();
+    const element = await FavoritsPage();
+    renderToStaticMarkup(element);
 
     expect(autoPruneProps).toHaveLength(1);
     expect(new Set(autoPruneProps[0].slugsToRemove)).toEqual(
@@ -171,10 +185,14 @@ describe("Favorites page auto-prune", () => {
       return { event: null, notFound: false };
     });
 
-    vi.mocked(filterActiveEvents).mockImplementation((events: unknown[]) => events);
+    vi.mocked(filterActiveEvents).mockImplementation(
+      (events: EventSummaryResponseDTO[] | ListEvent[]) =>
+        events as EventSummaryResponseDTO[]
+    );
 
     const { default: FavoritsPage } = await import("@app/preferits/page");
-    await FavoritsPage();
+    const element = await FavoritsPage();
+    renderToStaticMarkup(element);
 
     expect(autoPruneProps).toHaveLength(1);
     expect(autoPruneProps[0].slugsToRemove).toEqual([]);
