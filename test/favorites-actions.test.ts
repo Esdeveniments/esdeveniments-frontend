@@ -86,8 +86,8 @@ describe("/api/favorites", () => {
       })
     );
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, favorites: ["a"] });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ ok: false, error: "EMPTY_EVENT_SLUG" });
     expect(cookieSetMock).not.toHaveBeenCalled();
   });
 
