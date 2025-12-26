@@ -11,6 +11,17 @@ import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { redirect } from "next/navigation";
+
+const getCanonicalPlaceSlugFromDetail = (
+  detail: NewsDetailResponseDTO | null,
+  fallbackPlace: string
+) => {
+  const candidate = detail?.city?.slug || detail?.region?.slug;
+  return typeof candidate === "string" && candidate.length > 0
+    ? candidate
+    : fallbackPlace;
+};
 
 export async function generateMetadata({
   params,
@@ -25,6 +36,7 @@ export async function generateMetadata({
     console.error("generateMetadata: Error fetching news detail", error);
     captureException(error);
   }
+  const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
   const placeType = await getPlaceTypeAndLabelCached(place);
   const locale = await getLocaleSafely();
   const t = await getTranslations({
@@ -35,7 +47,7 @@ export async function generateMetadata({
     const base = buildPageMeta({
       title: `${detail.title} | ${placeType.label}`,
       description: detail.description,
-      canonical: `${siteUrl}/noticies/${place}/${article}`,
+      canonical: `${siteUrl}/noticies/${canonicalPlace}/${article}`,
       image: detail.events?.[0]?.imageUrl,
       locale,
     }) as unknown as Metadata;
@@ -53,7 +65,7 @@ export async function generateMetadata({
   return buildPageMeta({
     title: t("title", { place: placeType.label }),
     description: t("description"),
-    canonical: `${siteUrl}/noticies/${place}/${article}`,
+    canonical: `${siteUrl}/noticies/${canonicalPlace}/${article}`,
     locale,
   }) as unknown as Metadata;
 }
@@ -65,8 +77,16 @@ export default async function Page({
 }) {
   const { place, article } = await params;
 
-  // Start fetches immediately
-  const detailPromise = getNewsBySlug(article);
+  const locale = await getLocaleSafely();
+  const detail = await getNewsBySlug(article);
+  const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
+  if (canonicalPlace !== place) {
+    const localePrefix = locale === "ca" ? "" : `/${locale}`;
+    redirect(`${localePrefix}/noticies/${canonicalPlace}/${article}`);
+  }
+
+  // Start remaining fetches immediately
+  const detailPromise = Promise.resolve(detail);
   const placeTypePromise = getPlaceTypeAndLabelCached(place);
 
   return (

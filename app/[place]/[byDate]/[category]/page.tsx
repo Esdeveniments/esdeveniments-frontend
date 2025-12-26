@@ -44,8 +44,7 @@ import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
-import { toLocalizedUrl } from "@utils/i18n-seo";
-import { resolvePlaceSlugAlias } from "@utils/place-alias";
+import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
 
 export async function generateMetadata({
   params,
@@ -292,36 +291,21 @@ export default async function FilteredPage({
   });
 
   // Late existence check to preserve UX without creating an early oracle
-  if (place !== "catalunya") {
-    let placeExists: boolean | undefined;
-    try {
-      placeExists = (await fetchPlaceBySlug(place)) !== null;
-    } catch {
-      // ignore transient errors
-    }
-
-    if (placeExists !== true) {
-      const alias = await resolvePlaceSlugAlias(place);
-      if (alias) {
-        const queryString = toUrlSearchParams(rawSearchParams).toString();
-        const targetPath = `/${alias}/${filters.byDate}/${filters.category}`;
-        redirect(
-          toLocalizedUrl(
-            queryString ? `${targetPath}?${queryString}` : targetPath,
-            locale
-          )
-        );
-      }
-    }
-
-    if (placeExists === false) {
-      const target = buildFallbackUrlForInvalidPlace({
+  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
+    place,
+    locale,
+    rawSearchParams,
+    buildTargetPath: (alias) => `/${alias}/${filters.byDate}/${filters.category}`,
+    buildFallbackUrlForInvalidPlace: () =>
+      buildFallbackUrlForInvalidPlace({
         byDate,
         category,
-        rawSearchParams: rawSearchParams,
-      });
-      redirect(target);
-    }
+        rawSearchParams,
+      }),
+    fetchPlaceBySlug,
+  });
+  if (placeRedirectUrl) {
+    redirect(placeRedirectUrl);
   }
 
   return (
@@ -457,8 +441,8 @@ async function buildCategoryEventsPromise({
         validEvents,
         label,
         undefined,
-          locale,
-          pageData.canonical
+        locale,
+        pageData.canonical
       ),
     });
 

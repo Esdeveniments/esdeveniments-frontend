@@ -107,7 +107,6 @@ export default function CardContentClient({
         </div>
         <ViewCounterIsland
           visits={event.visits}
-          priority={isPriority}
           hideText
           className="flex items-center justify-end"
         />

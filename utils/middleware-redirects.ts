@@ -111,8 +111,7 @@ export function handleCanonicalRedirects(
     safeDecodedPlaceSegment.length <= 100 &&
     normalizedPlaceSegment !== "n-a" &&
     normalizedPlaceSegment !== rawPlaceSegment &&
-    /^[a-z0-9-]+$/.test(normalizedPlaceSegment) &&
-    !/^[a-z0-9-]+$/.test(rawPlaceSegment);
+    /^[a-z0-9-]+$/.test(normalizedPlaceSegment);
 
   const segmentsToUse = shouldNormalizePlaceSegment
     ? [normalizedPlaceSegment, ...segments.slice(1)]

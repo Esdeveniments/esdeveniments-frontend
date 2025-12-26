@@ -34,7 +34,7 @@ import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
-import { resolvePlaceSlugAlias } from "@utils/place-alias";
+import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
 
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -78,10 +78,13 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
+  const rawSearchParams = await searchParams;
   const locale = await getLocaleSafely();
 
   try {
@@ -121,27 +124,19 @@ export default async function Page({
   const categories = await categoriesPromise;
 
   // Late existence check to preserve UX without creating an enumeration oracle
-  if (place !== "catalunya") {
-    let placeExists: boolean | undefined;
-    try {
-      placeExists = (await fetchPlaceBySlug(place)) !== null;
-    } catch {
-      // ignore transient errors
-    }
-
-    if (placeExists !== true) {
-      const alias = await resolvePlaceSlugAlias(place);
-      if (alias) {
-        redirect(toLocalizedUrl(`/${alias}`, locale));
-      }
-    }
-
-    if (placeExists === false) {
-      const target = buildFallbackUrlForInvalidPlace({
-        rawSearchParams: {},
-      });
-      redirect(target);
-    }
+  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
+    place,
+    locale,
+    rawSearchParams,
+    buildTargetPath: (alias) => `/${alias}`,
+    buildFallbackUrlForInvalidPlace: () =>
+      buildFallbackUrlForInvalidPlace({
+        rawSearchParams,
+      }),
+    fetchPlaceBySlug,
+  });
+  if (placeRedirectUrl) {
+    redirect(placeRedirectUrl);
   }
 
   return (

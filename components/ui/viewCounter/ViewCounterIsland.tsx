@@ -5,7 +5,7 @@ export default function ViewCounterIsland({
   visits,
   hideText = true,
   className,
-}: ViewCounterProps & { priority?: boolean; className?: string }) {
+}: ViewCounterProps & { className?: string }) {
 
   return (
     <div className={className || ""} data-view-counter style={{ minWidth: 80 }}>

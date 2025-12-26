@@ -2,19 +2,23 @@ import { NextResponse } from "next/server";
 import { fetchPlaceBySlugExternal } from "@lib/api/places-external";
 import { handleApiError } from "@utils/api-error-handler";
 
+const MAX_PLACE_SLUG_LENGTH = 80;
+const MIN_NON_HYPHENATED_SUSPICIOUS_LENGTH = 18;
+
 export function isSuspiciousPlaceSlug(rawSlug: string): boolean {
   const slug = rawSlug.trim().toLowerCase();
   if (slug.length === 0) return true;
 
   // Hard safety limits (avoid pathological upstream calls)
-  if (slug.length > 80) return true;
+  if (slug.length > MAX_PLACE_SLUG_LENGTH) return true;
 
   // Only allow canonical-ish slug characters for backend lookups
   if (!/^[a-z0-9-]+$/.test(slug)) return true;
 
   // Bots often try very long, hyphen-less concatenations.
   // Canonical multi-word places should be hyphenated.
-  if (!slug.includes("-") && slug.length >= 18) return true;
+  if (!slug.includes("-") && slug.length >= MIN_NON_HYPHENATED_SUSPICIOUS_LENGTH)
+    return true;
 
   // Obvious placeholder-ish values
   if (slug.includes("undefined") || slug.includes("null")) return true;

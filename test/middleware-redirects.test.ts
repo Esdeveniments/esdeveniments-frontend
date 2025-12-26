@@ -132,6 +132,36 @@ describe("handleCanonicalRedirects", () => {
       const result = handleCanonicalRedirects(request);
       expect(result).toBeNull();
     });
+
+    it("redirects structurally invalid but charset-valid slugs (/foo--bar -> /foo-bar)", () => {
+      const request = createMockRequest("/foo--bar");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/foo-bar");
+    });
+
+    it("redirects leading hyphen slugs (/-foo -> /foo)", () => {
+      const request = createMockRequest("/-foo");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/foo");
+    });
+
+    it("redirects trailing hyphen slugs (/foo- -> /foo)", () => {
+      const request = createMockRequest("/foo-");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/foo");
+    });
   });
 
   describe("basic tots redirects without query params", () => {
