@@ -13,6 +13,25 @@ import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { permanentRedirect } from "next/navigation";
 
+const reportNewsDetailError = (
+  source: "generateMetadata" | "Page",
+  error: unknown,
+  context: { place: string; article: string }
+) => {
+  console.error(`${source}: Error fetching news detail`, error);
+  captureException(error, {
+    tags: {
+      source,
+      feature: "news-article",
+      route: "noticies/[place]/[article]",
+    },
+    extra: {
+      place: context.place,
+      article: context.article,
+    },
+  });
+};
+
 const getCanonicalPlaceSlugFromDetail = (
   detail: NewsDetailResponseDTO | null,
   fallbackPlace: string
@@ -33,8 +52,7 @@ export async function generateMetadata({
   try {
     detail = await getNewsBySlug(article);
   } catch (error) {
-    console.error("generateMetadata: Error fetching news detail", error);
-    captureException(error);
+    reportNewsDetailError("generateMetadata", error, { place, article });
   }
   const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
   const placeType = await getPlaceTypeAndLabelCached(place);
@@ -78,10 +96,20 @@ export default async function Page({
   const { place, article } = await params;
 
   const locale = await getLocaleSafely();
-  const detail = await getNewsBySlug(article);
-  const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
-  if (canonicalPlace !== place) {
-    permanentRedirect(withLocalePath(`/noticies/${canonicalPlace}/${article}`, locale));
+  let detail: NewsDetailResponseDTO | null = null;
+  try {
+    detail = await getNewsBySlug(article);
+  } catch (error) {
+    reportNewsDetailError("Page", error, { place, article });
+  }
+
+  if (detail) {
+    const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
+    if (canonicalPlace !== place) {
+      permanentRedirect(
+        withLocalePath(`/noticies/${canonicalPlace}/${article}`, locale)
+      );
+    }
   }
 
   // Wrap already-fetched data as a promise for the component API

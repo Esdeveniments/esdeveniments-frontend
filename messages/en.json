@@ -116,14 +116,6 @@
       "seeAgenda": "See agenda for {place}",
       "nearbyLabel": "Nearby:"
     },
-    "NewsList": {
-      "emptyTitle": "We haven't found recent news",
-      "emptyBody": "We don't have updates yet for {place}, but we keep adding more every week. Meanwhile, explore the latest news from other areas.",
-      "viewAll": "See all news →",
-      "itemListName": "News in {place}",
-      "prev": "← Previous",
-      "next": "More news →"
-    },
     "EventEdit": {
       "title": "Edit event",
       "description": "Secure panel to edit Esdeveniments.cat events."
@@ -313,14 +305,6 @@
       "title": "Latest news",
       "titleWithPlace": "Latest news {place}",
       "viewAll": "View all"
-    },
-    "NewsList": {
-      "emptyTitle": "We haven't found recent news",
-      "emptyBody": "We don't have updates yet for {place}, but we keep adding more every week. Meanwhile, explore the latest news from other areas.",
-      "viewAll": "See all news →",
-      "itemListName": "News in {place}",
-      "prev": "← Previous",
-      "next": "More news →"
     },
     "CulturalMessage": {
       "explorePrefix": "Explore more plans in {location}:",

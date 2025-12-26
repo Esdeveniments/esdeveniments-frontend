@@ -116,14 +116,6 @@
       "seeAgenda": "Veure agenda {place}",
       "nearbyLabel": "A prop:"
     },
-    "NewsList": {
-      "emptyTitle": "No hem trobat notícies recents",
-      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
-      "viewAll": "Veure totes les notícies →",
-      "itemListName": "Notícies de {place}",
-      "prev": "← Anterior",
-      "next": "Més notícies →"
-    },
     "EventEdit": {
       "title": "Editar esdeveniment",
       "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat."
@@ -320,7 +312,9 @@
       "viewAll": "Veure totes les notícies →",
       "itemListName": "Notícies de {place}",
       "prev": "← Anterior",
-      "next": "Més notícies →"
+      "next": "Més notícies →",
+      "name": "Notícies de {place}",
+      "more": "Més notícies →"
     },
     "CulturalMessage": {
       "explorePrefix": "Explora més plans {location}:",

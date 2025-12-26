@@ -37,6 +37,13 @@ describe("utils/sanitize-segment sanitize()", () => {
   it("returns 'n-a' for whitespace-only input", () => {
     expect(sanitize("   ")).toBe("n-a");
   });
+
+  it("caps work by truncating very long input", () => {
+    const long = `${" ".repeat(10)}${"a".repeat(600)}`;
+    const out = sanitize(long);
+    expect(out.length).toBe(512);
+    expect(out).toBe("a".repeat(512));
+  });
 });
 
 describe("utils/sanitize-segment sanitizeLegacyApostrophe()", () => {
@@ -48,5 +55,12 @@ describe("utils/sanitize-segment sanitizeLegacyApostrophe()", () => {
   it("keeps other rules aligned with sanitize()", () => {
     expect(sanitizeLegacyApostrophe("Sants–Montjuïc")).toBe("sants-montjuic");
     expect(sanitizeLegacyApostrophe("Rock & Roll")).toBe("rock-i-roll");
+  });
+
+  it("caps work by truncating very long input", () => {
+    const long = `${" ".repeat(10)}${"a".repeat(600)}`;
+    const out = sanitizeLegacyApostrophe(long);
+    expect(out.length).toBe(512);
+    expect(out).toBe("a".repeat(512));
   });
 });

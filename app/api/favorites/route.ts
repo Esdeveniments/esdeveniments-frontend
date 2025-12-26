@@ -28,8 +28,8 @@ export async function POST(request: Request) {
     const currentFavorites = await getFavoritesFromCookies();
     if (!eventSlug) {
       return NextResponse.json(
-        { ok: true, favorites: currentFavorites },
-        { headers: { "Cache-Control": "no-store" } }
+        { ok: false, error: "EMPTY_EVENT_SLUG" },
+        { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }
     const nextSet = new Set(currentFavorites);

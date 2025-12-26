@@ -8,8 +8,9 @@
 /** Lowercases, strips diacritics, handles Catalan l·l and apostrophes, collapses to ascii-friendly slugs. */
 export function sanitize(input: string): string {
   if (!input) return "";
-  const s = input
-    .trim()
+  const MAX_SEGMENT_LENGTH = 512;
+  const trimmed = input.trim().slice(0, MAX_SEGMENT_LENGTH);
+  const s = trimmed
     .toLowerCase()
     .normalize("NFKD")
     .replace(/\p{M}+/gu, "")
@@ -19,7 +20,8 @@ export function sanitize(input: string): string {
     .replace(/&/g, " i ")
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+/g, "")
+    .replace(/-+$/g, "");
   return s || "n-a";
 }
 
@@ -30,8 +32,9 @@ export function sanitize(input: string): string {
  */
 export function sanitizeLegacyApostrophe(input: string): string {
   if (!input) return "";
-  const s = input
-    .trim()
+  const MAX_SEGMENT_LENGTH = 512;
+  const trimmed = input.trim().slice(0, MAX_SEGMENT_LENGTH);
+  const s = trimmed
     .toLowerCase()
     .normalize("NFKD")
     .replace(/\p{M}+/gu, "")
@@ -41,6 +44,7 @@ export function sanitizeLegacyApostrophe(input: string): string {
     .replace(/&/g, " i ")
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+/g, "")
+    .replace(/-+$/g, "");
   return s || "n-a";
 }
