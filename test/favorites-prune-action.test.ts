@@ -5,6 +5,7 @@ type CookieGetResult = { name: string; value: string } | undefined;
 
 const cookieValueByName = new Map<string, string>();
 const cookieGetMock = vi.fn<(name: string) => CookieGetResult>();
+const cookieDeleteMock = vi.fn<(name: string) => void>();
 const cookieSetMock = vi.fn<
   (
     name: string,
@@ -21,6 +22,7 @@ const cookieSetMock = vi.fn<
 
 const cookiesMock = vi.fn(async () => ({
   get: cookieGetMock,
+  delete: cookieDeleteMock,
   set: cookieSetMock,
 }));
 

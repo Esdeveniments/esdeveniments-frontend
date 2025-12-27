@@ -5,6 +5,7 @@ type CookieGetResult = { name: string; value: string } | undefined;
 
 const cookieValueByName = new Map<string, string>();
 const cookieGetMock = vi.fn<(name: string) => CookieGetResult>();
+const cookieDeleteMock = vi.fn<(name: string) => void>();
 const cookieSetMock = vi.fn<
   (
     name: string,
@@ -21,6 +22,7 @@ const cookieSetMock = vi.fn<
 
 const cookiesMock = vi.fn(async () => ({
   get: cookieGetMock,
+  delete: cookieDeleteMock,
   set: cookieSetMock,
 }));
 
@@ -138,6 +140,24 @@ describe("/api/favorites", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true, favorites: ["b"] });
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(["b"]);
+  });
+
+  it("deletes favorites cookie when removing the last favorite", async () => {
+    setFavoritesCookieValue(JSON.stringify(["a"]));
+
+    const { POST } = await import("@app/api/favorites/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "a", shouldBeFavorite: false }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: [] });
+    expect(cookieSetMock).not.toHaveBeenCalled();
+    expect(cookieDeleteMock).toHaveBeenCalledWith(FAVORITES_COOKIE_NAME);
   });
 
   it("does not duplicate favorites", async () => {

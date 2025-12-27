@@ -34,6 +34,12 @@ export async function persistFavoritesCookie(
 ): Promise<string[]> {
   const safe = favorites.slice(0, MAX_FAVORITES);
   const cookieStore = await cookies();
+
+  if (safe.length === 0) {
+    cookieStore.delete(FAVORITES_COOKIE_NAME);
+    return safe;
+  }
+
   cookieStore.set(FAVORITES_COOKIE_NAME, JSON.stringify(safe), {
     path: "/",
     maxAge: MAX_AGE_SECONDS,

@@ -5,6 +5,7 @@ type CookieGetResult = { name: string; value: string } | undefined;
 
 const cookieValueByName = new Map<string, string>();
 const cookieGetMock = vi.fn<(name: string) => CookieGetResult>();
+const cookieDeleteMock = vi.fn<(name: string) => void>();
 const cookieSetMock = vi.fn<
   (
     name: string,
@@ -21,6 +22,7 @@ const cookieSetMock = vi.fn<
 
 const cookiesMock = vi.fn(async () => ({
   get: cookieGetMock,
+  delete: cookieDeleteMock,
   set: cookieSetMock,
 }));
 
@@ -87,6 +89,15 @@ describe("persistFavoritesCookie", () => {
 
     expect(persisted).toHaveLength(MAX_FAVORITES);
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(persisted);
+  });
+
+  it("deletes the cookie when persisting an empty list", async () => {
+    const { persistFavoritesCookie } = await import("@utils/favorites");
+    const persisted = await persistFavoritesCookie([]);
+
+    expect(persisted).toEqual([]);
+    expect(cookieSetMock).not.toHaveBeenCalled();
+    expect(cookieDeleteMock).toHaveBeenCalledWith(FAVORITES_COOKIE_NAME);
   });
 });
 
@@ -162,5 +173,23 @@ describe("/api/favorites/prune", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true, favorites: ["a", "c"] });
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(["a", "c"]);
+  });
+
+  it("prunes all favorites and deletes cookie", async () => {
+    setFavoritesCookieValue(JSON.stringify(["a", "b"]));
+
+    const { POST } = await import("@app/api/favorites/prune/route");
+    const response = await POST(
+      new Request("http://localhost/api/favorites/prune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slugsToRemove: ["a", "b"] }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, favorites: [] });
+    expect(cookieSetMock).not.toHaveBeenCalled();
+    expect(cookieDeleteMock).toHaveBeenCalledWith(FAVORITES_COOKIE_NAME);
   });
 });
