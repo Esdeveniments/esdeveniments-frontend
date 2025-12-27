@@ -11,8 +11,9 @@ import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
+import type { AppLocale } from "types/i18n";
 
 const ClientCardsList = dynamic(() => import("./ClientCardsList"), {
   loading: () => (
@@ -41,6 +42,7 @@ function HybridEventsListClientContent({
 }: HybridEventsListClientProps): ReactElement | null {
   const parsed = useUrlFilters(categories);
   const t = useTranslations("Components.HybridEventsListClient");
+  const locale = useLocale() as AppLocale;
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
@@ -112,8 +114,8 @@ function HybridEventsListClientContent({
     if (!pageData?.notFoundTitle) {
       return undefined;
     }
-    return appendSearchQuery(pageData.notFoundTitle, search);
-  }, [pageData, search]);
+    return appendSearchQuery(pageData.notFoundTitle, search, locale);
+  }, [pageData, search, locale]);
 
   return (
     <>

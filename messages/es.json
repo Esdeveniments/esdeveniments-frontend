@@ -76,6 +76,7 @@
       "description": "Tus eventos futuros guardados",
       "heading": "Favoritos",
       "subtitle": "Solo se muestran eventos futuros. Cuando un evento termina, se elimina automáticamente de favoritos.",
+      "countLabel": "{count}/{max} guardados",
       "emptyTitle": "Aún no tienes eventos futuros guardados",
       "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos."
     },
@@ -301,6 +302,9 @@
       "createdSuccess": "¡Fantástico! El evento {title} se ha creado correctamente y ya lo puede ver todo el mundo.",
       "close": "Cerrar",
       "viewEvent": "Ver evento"
+    },
+    "FavoriteButton": {
+      "maxReached": "Has alcanzado el límite de {max} favoritos. Elimina uno para añadir más."
     },
     "EventNotifications": {
       "thankYou": "¡Gracias por ayudar a mejorar el contenido de Esdeveniments.cat! En menos de 24 horas el cambio estará disponible."
@@ -783,10 +787,7 @@
       "viewAll": "Ver todas las noticias →",
       "itemListName": "Noticias de {place}",
       "prev": "← Anterior",
-      "next": "Más noticias →",
-
-      "name": "Noticias de {place}",
-      "more": "Más noticias →"
+      "next": "Más noticias →"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Últimas noticias por hub",
@@ -1093,6 +1094,9 @@
     }
   },
   "Utils": {
+    "SearchQuery": {
+      "forSearch": "para la búsqueda"
+    },
     "Validation": {
       "genericError": "Hay errores de validación",
       "imageRequired": "La imagen es obligatoria",

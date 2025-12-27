@@ -96,6 +96,12 @@ function ClientImage({
       className={imageClassName}
       style={{
         position: "relative",
+        ...(context === "card" || context === "list"
+          ? {
+              aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
+              overflow: "hidden",
+            }
+          : {}),
         maxWidth: "100%", // Ensure image doesn't exceed container
       }}
     >
@@ -119,7 +125,8 @@ function ClientImage({
           objectFit: "cover",
           opacity: isLoading ? 0 : 1,
           transition: "opacity 0.3s ease-in-out",
-          height: "auto",
+          width: "100%",
+          height: "100%",
           maxWidth: "100%", // Ensure image respects container constraints
         }}
         priority={priority}

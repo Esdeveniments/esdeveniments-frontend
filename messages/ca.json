@@ -76,6 +76,7 @@
       "description": "Els teus esdeveniments futurs guardats",
       "heading": "Preferits",
       "subtitle": "Només es mostren esdeveniments futurs. Quan un esdeveniment finalitza, s'elimina automàticament dels preferits.",
+      "countLabel": "{count}/{max} desats",
       "emptyTitle": "Encara no tens esdeveniments futurs desats",
       "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits."
     },
@@ -302,6 +303,9 @@
       "close": "Close",
       "viewEvent": "Veure esdeveniment"
     },
+    "FavoriteButton": {
+      "maxReached": "Has arribat al límit de {max} preferits. Elimina'n un per afegir-ne més."
+    },
     "EventNotifications": {
       "thankYou": "Gràcies per contribuir a millorar el contingut de Esdeveniments.cat! En menys de 24 hores estarà disponible el canvi."
     },
@@ -316,9 +320,7 @@
       "viewAll": "Veure totes les notícies →",
       "itemListName": "Notícies de {place}",
       "prev": "← Anterior",
-      "next": "Més notícies →",
-      "name": "Notícies de {place}",
-      "more": "Més notícies →"
+      "next": "Més notícies →"
     },
     "CulturalMessage": {
       "explorePrefix": "Explora més plans {location}:",
@@ -1099,6 +1101,9 @@
       "locationRequired": "La localització és obligatòria",
       "invalidUrl": "URL invàlida",
       "invalidEmail": "Email invàlid"
+    },
+    "SearchQuery": {
+      "forSearch": "per a la cerca"
     },
     "EventStatus": {
       "past": "Esdeveniment finalitzat",

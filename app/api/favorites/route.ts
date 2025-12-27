@@ -49,11 +49,16 @@ export async function POST(request: Request) {
 
     if (shouldBeFavorite) {
       if (!nextSet.has(eventSlug) && nextSet.size >= MAX_FAVORITES) {
-        const oldest = nextSet.values().next().value;
-        if (typeof oldest === "string") {
-          nextSet.delete(oldest);
-        }
+        return NextResponse.json(
+          { ok: false, error: "MAX_FAVORITES_REACHED", maxFavorites: MAX_FAVORITES },
+          { status: 409, headers: { "Cache-Control": "no-store" } }
+        );
       }
+
+      if (nextSet.has(eventSlug)) {
+        nextSet.delete(eventSlug);
+      }
+
       nextSet.add(eventSlug);
     } else {
       nextSet.delete(eventSlug);

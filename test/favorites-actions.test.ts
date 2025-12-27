@@ -149,12 +149,56 @@ describe("/api/favorites", () => {
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(["a"]);
   });
 
-  it("enforces MAX_FAVORITES cap (evicts oldest when adding new favorite)", async () => {
+  it("treats re-adding an existing favorite as most recent (LRU-like)", async () => {
     const { MAX_FAVORITES } = await import("@utils/favorites");
     const current = Array.from({ length: MAX_FAVORITES }, (_, i) => `s-${i}`);
     setFavoritesCookieValue(JSON.stringify(current));
 
-    const expected = [...current.slice(1), "new-one"];
+    const { POST } = await import("@app/api/favorites/route");
+
+    // Refresh s-0 recency (move it to end)
+    const refreshResponse = await POST(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "s-0", shouldBeFavorite: true }),
+      })
+    );
+
+    const refreshed = [...current.slice(1), "s-0"];
+    expect(refreshResponse.status).toBe(200);
+    expect(await refreshResponse.json()).toEqual({ ok: true, favorites: refreshed });
+    expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(refreshed);
+
+    // Simulate a follow-up request by carrying forward the latest cookie value and
+    // resetting module cache so React/Next `cache()` doesn't reuse prior cookie reads.
+    setFavoritesCookieValue(getPersistedFavoritesValue());
+    vi.resetModules();
+
+    const { POST: POST2 } = await import("@app/api/favorites/route");
+
+    // Now adding a new favorite should be rejected (no silent eviction).
+    const addResponse = await POST2(
+      new Request("http://localhost/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventSlug: "new-one", shouldBeFavorite: true }),
+      })
+    );
+
+    expect(addResponse.status).toBe(409);
+    expect(await addResponse.json()).toEqual({
+      ok: false,
+      error: "MAX_FAVORITES_REACHED",
+      maxFavorites: MAX_FAVORITES,
+    });
+    expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(refreshed);
+  });
+
+  it("enforces MAX_FAVORITES cap (rejects new favorite when full)", async () => {
+    const { MAX_FAVORITES } = await import("@utils/favorites");
+    const current = Array.from({ length: MAX_FAVORITES }, (_, i) => `s-${i}`);
+    setFavoritesCookieValue(JSON.stringify(current));
 
     const { POST } = await import("@app/api/favorites/route");
     const response = await POST(
@@ -165,9 +209,15 @@ describe("/api/favorites", () => {
       })
     );
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, favorites: expected });
-    expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(expected);
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: "MAX_FAVORITES_REACHED",
+      maxFavorites: MAX_FAVORITES,
+    });
+
+    // No cookie write on rejection
+    expect(cookieSetMock).not.toHaveBeenCalled();
   });
 
   it("sets secure cookies only in production", async () => {

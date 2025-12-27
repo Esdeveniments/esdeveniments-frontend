@@ -43,6 +43,8 @@ describe("handleCanonicalRedirects", () => {
       "/server-news-sitemap.xml",
       "/server-place-sitemap.xml",
       "/server-google-news-sitemap.xml",
+      "/noticies",
+      "/login",
     ])("does not redirect %s", (pathname) => {
       const request = createMockRequest(pathname);
       const result = handleCanonicalRedirects(request);
@@ -272,20 +274,6 @@ describe("handleCanonicalRedirects", () => {
       const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
       const redirectUrl = redirectCall[0] as URL;
       expect(redirectUrl.pathname).toBe("/barcelona/avui/teatre");
-    });
-  });
-
-  describe("non-place routes", () => {
-    it("does not redirect non-place routes", () => {
-      const request = createMockRequest("/noticies");
-      const result = handleCanonicalRedirects(request);
-      expect(result).toBeNull();
-    });
-
-    it("does not redirect login route", () => {
-      const request = createMockRequest("/login");
-      const result = handleCanonicalRedirects(request);
-      expect(result).toBeNull();
     });
   });
 

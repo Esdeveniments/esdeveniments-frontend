@@ -76,6 +76,7 @@
       "description": "Your saved upcoming events",
       "heading": "Favorites",
       "subtitle": "Only upcoming events are shown. When an event ends, it is automatically removed from favorites.",
+      "countLabel": "{count}/{max} saved",
       "emptyTitle": "No upcoming favorites yet",
       "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites."
     },
@@ -301,6 +302,9 @@
       "createdSuccess": "Great! The event {title} was created successfully and is visible to everyone!",
       "close": "Close",
       "viewEvent": "View event"
+    },
+    "FavoriteButton": {
+      "maxReached": "You've reached the limit of {max} favorites. Remove one to add more."
     },
     "EventNotifications": {
       "thankYou": "Thanks for helping improve Esdeveniments.cat! Your change will be live within 24 hours."
@@ -783,10 +787,7 @@
       "viewAll": "See all news →",
       "itemListName": "News in {place}",
       "prev": "← Previous",
-      "next": "More news →",
-
-      "name": "News in {place}",
-      "more": "More news →"
+      "next": "More news →"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Latest news by hub",
@@ -1093,6 +1094,9 @@
     }
   },
   "Utils": {
+    "SearchQuery": {
+      "forSearch": "for the search"
+    },
     "Validation": {
       "genericError": "There are validation errors",
       "imageRequired": "Image is required",

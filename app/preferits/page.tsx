@@ -11,7 +11,7 @@ import { filterActiveEvents, isEventActive } from "@utils/event-helpers";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { getFavoritesFromCookies, MAX_FAVORITES } from "@utils/favorites";
 import { getTranslations } from "next-intl/server";
-import type { EventDetailResponseDTO, EventSummaryResponseDTO } from "types/api/event";
+import type { EventSummaryResponseDTO } from "types/api/event";
 import FavoritesAutoPrune from "./FavoritesAutoPrune";
 
 const FETCH_CONCURRENCY = 5;
@@ -53,7 +53,7 @@ async function fetchFavoritesEvents(
       }
 
       if (event != null) {
-        results.push(event satisfies EventDetailResponseDTO);
+        results.push(event);
       }
     }
   }
@@ -66,6 +66,7 @@ export default async function FavoritsPage() {
   const t = await getTranslations({ locale, namespace: "App.Favorites" });
 
   const favoriteSlugs = await getFavoritesFromCookies();
+  const uniqueFavoritesCount = new Set(favoriteSlugs).size;
   const { events, notFoundSlugs } = await fetchFavoritesEvents(favoriteSlugs);
   const activeEvents = filterActiveEvents(events);
 
@@ -97,6 +98,12 @@ export default async function FavoritsPage() {
           subtitleClass="body-large"
           cta={null}
         />
+        <p className="body-small text-foreground/80 mb-element-gap">
+          {t("countLabel", {
+            count: uniqueFavoritesCount,
+            max: MAX_FAVORITES,
+          })}
+        </p>
       </div>
       <List events={activeEvents}>
         {(event, index) => <CardServer key={`${event.id}-${index}`} event={event} isPriority={index === 0} />}

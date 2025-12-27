@@ -9,7 +9,7 @@ import {
 import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical, getLocaleSafely } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE } from "types/i18n";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 // Normalize subtitles for LLM/AI SEO extractability:
 // - Remove HTML
@@ -55,10 +55,11 @@ const baseCreatePageData = (
   metaDescription: string,
   canonical: string,
   notFoundText: string,
-  searchQuery?: string
+  searchQuery?: string,
+  locale: AppLocale = DEFAULT_LOCALE
 ): PageData => {
   const { title: notFoundTitle, description: notFoundDescription } =
-    splitNotFoundText(notFoundText, searchQuery);
+    splitNotFoundText(notFoundText, searchQuery, locale);
   return {
     title,
     subTitle: normalizeSubTitle(subTitle),
@@ -165,8 +166,8 @@ export async function generatePagesData({
     return categoryTemplates[categorySlug] || null;
   };
   if (
-    typeof effectiveYear === "number" &&
-    (effectiveYear < 2000 || effectiveYear > 3000)
+    typeof currentYear === "number" &&
+    (currentYear < 2000 || currentYear > 3000)
   ) {
     throw new Error("Invalid year range");
   }
@@ -198,7 +199,8 @@ export async function generatePagesData({
       metaDescription,
       applyLocaleToCanonical(canonical, resolvedLocale),
       notFoundText,
-      search
+      search,
+      resolvedLocale
     );
 
   if (!place && !byDate) {

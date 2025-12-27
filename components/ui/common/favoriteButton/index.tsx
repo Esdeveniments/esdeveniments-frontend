@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import HeartIconSolid from "@heroicons/react/solid/esm/HeartIcon";
 import HeartIconOutline from "@heroicons/react/outline/esm/HeartIcon";
 
@@ -9,6 +10,17 @@ import Button from "@components/ui/common/button";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
+
+function parseMaxFavorites(payload: unknown): number | null {
+  if (!payload || typeof payload !== "object") return null;
+  const maybe = (payload as Record<string, unknown>).maxFavorites;
+  return typeof maybe === "number" ? maybe : null;
+}
+
+function isMaxReachedPayload(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  return (payload as Record<string, unknown>).error === "MAX_FAVORITES_REACHED";
+}
 
 export default function FavoriteButton({
   eventSlug,
@@ -19,76 +31,97 @@ export default function FavoriteButton({
   className = "",
 }: FavoriteButtonProps) {
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations("Components.FavoriteButton");
 
   const ariaLabel = isFavorite ? labels.remove : labels.add;
   const Icon = isFavorite ? HeartIconSolid : HeartIconOutline;
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      className={["group p-2", className].filter(Boolean).join(" ")}
-      aria-label={ariaLabel}
-      aria-pressed={isFavorite}
-      disabled={isPending}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    <div className="relative">
+      <Button
+        type="button"
+        variant="ghost"
+        className={["group p-2", className].filter(Boolean).join(" ")}
+        aria-label={ariaLabel}
+        aria-pressed={isFavorite}
+        disabled={isPending}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
 
-        const nextIsFavorite = !isFavorite;
-        setIsFavorite(nextIsFavorite);
+          setLimitMessage(null);
+          const nextIsFavorite = !isFavorite;
+          setIsFavorite(nextIsFavorite);
 
-        startTransition(async () => {
-          try {
-            const response = await fetch("/api/favorites", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                eventSlug,
-                shouldBeFavorite: nextIsFavorite,
-              }),
-            });
+          startTransition(async () => {
+            try {
+              const response = await fetch("/api/favorites", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  eventSlug,
+                  shouldBeFavorite: nextIsFavorite,
+                }),
+              });
 
-            if (!response.ok) {
-              throw new Error("Failed to update favorites");
-            }
+              if (!response.ok) {
+                const payload = (await response.json().catch(() => null)) as unknown;
+                if (response.status === 409 && isMaxReachedPayload(payload)) {
+                  const max = parseMaxFavorites(payload);
+                  setLimitMessage(t("maxReached", { max: max ?? "" }));
+                  setIsFavorite(!nextIsFavorite);
+                  return;
+                }
 
-            const analyticsEventName = nextIsFavorite
-              ? "favorite_add"
-              : "favorite_remove";
+                throw new Error("Failed to update favorites");
+              }
 
-            sendGoogleEvent(analyticsEventName, {
-              event_slug: eventSlug,
-              event_id: eventId,
-              event_title: eventTitle,
-            });
+              const analyticsEventName = nextIsFavorite
+                ? "favorite_add"
+                : "favorite_remove";
 
-            // Preserve existing /preferits UX: reflect removals immediately.
-            // Avoid refreshing other pages to keep the toggle lightweight.
-            if (pathname.endsWith("/preferits")) {
-              router.refresh();
-            }
-          } catch (error: unknown) {
-            captureException(error, {
-              tags: { feature: "favorites" },
-              extra: {
+              sendGoogleEvent(analyticsEventName, {
                 event_slug: eventSlug,
                 event_id: eventId,
                 event_title: eventTitle,
-                next_is_favorite: nextIsFavorite,
-              },
-            });
-            setIsFavorite(!nextIsFavorite);
-          }
-        });
-      }}
-    >
-      <Icon
-        className="h-6 w-6 text-primary transition-transform duration-200 group-hover:scale-[1.06] group-active:scale-[0.96]"
-      />
-    </Button>
+              });
+
+              // Preserve existing /preferits UX: reflect removals immediately.
+              // Avoid refreshing other pages to keep the toggle lightweight.
+              if (pathname.endsWith("/preferits")) {
+                router.refresh();
+              }
+            } catch (error: unknown) {
+              captureException(error, {
+                tags: { feature: "favorites" },
+                extra: {
+                  event_slug: eventSlug,
+                  event_id: eventId,
+                  event_title: eventTitle,
+                  next_is_favorite: nextIsFavorite,
+                },
+              });
+              setIsFavorite(!nextIsFavorite);
+            }
+          });
+        }}
+      >
+        <Icon className="h-6 w-6 text-primary transition-transform duration-200 group-hover:scale-[1.06] group-active:scale-[0.96]" />
+      </Button>
+
+      {limitMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="absolute right-0 top-full mt-1 w-56 rounded-input border border-border bg-background p-2 body-small text-foreground/80"
+        >
+          {limitMessage}
+        </div>
+      )}
+    </div>
   );
 }
