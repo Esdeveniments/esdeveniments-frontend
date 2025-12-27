@@ -68,6 +68,17 @@ function ClientImage({
     handleError();
   }, [forceUnoptimized, handleError, reset]);
 
+  const containerStyle: React.CSSProperties = {
+    position: "relative",
+    ...(context === "card" || context === "list"
+      ? {
+          aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
+          overflow: "hidden",
+        }
+      : {}),
+    maxWidth: "100%", // Ensure image doesn't exceed container
+  };
+
   // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
   if (hasError) {
     return (
@@ -76,13 +87,14 @@ function ClientImage({
         ref={divRef}
         role="img"
         aria-label={title || "Imatge no disponible"}
+        style={containerStyle}
       >
         {isImgDefaultVisible ? (
           <ImgDefault title={title} />
         ) : (
-          <div className="flex justify-center items-center w-full">
+          <div className="flex justify-center items-center w-full h-full">
             <div
-              className="w-full h-60 bg-muted animate-fast-pulse"
+              className="w-full h-full bg-muted animate-fast-pulse"
               ref={imgDefaultRef}
             ></div>
           </div>
@@ -94,20 +106,11 @@ function ClientImage({
   return (
     <div
       className={imageClassName}
-      style={{
-        position: "relative",
-        ...(context === "card" || context === "list"
-          ? {
-              aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
-              overflow: "hidden",
-            }
-          : {}),
-        maxWidth: "100%", // Ensure image doesn't exceed container
-      }}
+      style={containerStyle}
     >
       {isLoading && (
         <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
-          <div className="w-full h-60 bg-muted animate-fast-pulse"></div>
+          <div className="w-full h-full bg-muted animate-fast-pulse"></div>
         </div>
       )}
       <NextImage

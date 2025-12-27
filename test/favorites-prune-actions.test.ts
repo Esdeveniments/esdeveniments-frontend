@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
-const FAVORITES_COOKIE_NAME = "user_favorites";
+import { FAVORITES_COOKIE_NAME } from "@utils/favorites";
 
 type CookieGetResult = { name: string; value: string } | undefined;
 
@@ -138,9 +137,14 @@ describe("/api/favorites/prune", () => {
     );
 
     expect(response.status).toBe(200);
-    const json = (await response.json()) as { ok: boolean; favorites: string[] };
+    const json = (await response.json()) as {
+      ok: boolean;
+      favorites: string[];
+    };
     expect(json).toEqual({ ok: true, favorites: ["a", "c"] });
-    expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(json.favorites);
+    expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(
+      json.favorites
+    );
   });
 
   it("trims and ignores empty removal slugs", async () => {

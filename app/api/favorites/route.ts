@@ -19,24 +19,22 @@ const ToggleFavoriteSchema = z.object({
 export async function POST(request: Request) {
   try {
     const json = (await request.json().catch(() => null)) as unknown;
+
+    if (
+      json &&
+      typeof json === "object" &&
+      "eventSlug" in json &&
+      typeof (json as { eventSlug?: unknown }).eventSlug === "string" &&
+      (json as { eventSlug: string }).eventSlug.trim() === ""
+    ) {
+      return NextResponse.json(
+        { ok: false, error: "EMPTY_EVENT_SLUG" },
+        { status: 400, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
     const parsed = ToggleFavoriteSchema.safeParse(json);
     if (!parsed.success) {
-      const hasEmptySlugIssue = parsed.error.issues.some(
-        (issue) =>
-          issue.path.length === 1 &&
-          issue.path[0] === "eventSlug" &&
-          issue.code === "too_small" &&
-          issue.type === "string" &&
-          issue.minimum === 1
-      );
-
-      if (hasEmptySlugIssue) {
-        return NextResponse.json(
-          { ok: false, error: "EMPTY_EVENT_SLUG" },
-          { status: 400, headers: { "Cache-Control": "no-store" } }
-        );
-      }
-
       return NextResponse.json(
         { ok: false, error: "INVALID_BODY" },
         { status: 400, headers: { "Cache-Control": "no-store" } }

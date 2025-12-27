@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
-const FAVORITES_COOKIE_NAME = "user_favorites";
+import { FAVORITES_COOKIE_NAME } from "@utils/favorites";
 
 type CookieGetResult = { name: string; value: string } | undefined;
 

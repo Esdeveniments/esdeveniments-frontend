@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
-const FAVORITES_COOKIE_NAME = "user_favorites";
+import { FAVORITES_COOKIE_NAME } from "@utils/favorites";
 
 type CookieGetResult = { name: string; value: string } | undefined;
 
@@ -87,7 +86,10 @@ describe("/api/favorites", () => {
     );
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ ok: false, error: "EMPTY_EVENT_SLUG" });
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: "EMPTY_EVENT_SLUG",
+    });
     expect(cookieSetMock).not.toHaveBeenCalled();
   });
 
@@ -97,12 +99,18 @@ describe("/api/favorites", () => {
       new Request("http://localhost/api/favorites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventSlug: "  test-slug  ", shouldBeFavorite: true }),
+        body: JSON.stringify({
+          eventSlug: "  test-slug  ",
+          shouldBeFavorite: true,
+        }),
       })
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, favorites: ["test-slug"] });
+    expect(await response.json()).toEqual({
+      ok: true,
+      favorites: ["test-slug"],
+    });
     expect(cookieSetMock).toHaveBeenCalledTimes(1);
 
     const [name, value, options] = cookieSetMock.mock.calls[0] ?? [];
@@ -167,7 +175,10 @@ describe("/api/favorites", () => {
 
     const refreshed = [...current.slice(1), "s-0"];
     expect(refreshResponse.status).toBe(200);
-    expect(await refreshResponse.json()).toEqual({ ok: true, favorites: refreshed });
+    expect(await refreshResponse.json()).toEqual({
+      ok: true,
+      favorites: refreshed,
+    });
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(refreshed);
 
     // Simulate a follow-up request by carrying forward the latest cookie value and
@@ -228,7 +239,10 @@ describe("/api/favorites", () => {
       new Request("http://localhost/api/favorites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventSlug: "secure-check", shouldBeFavorite: true }),
+        body: JSON.stringify({
+          eventSlug: "secure-check",
+          shouldBeFavorite: true,
+        }),
       })
     );
 
