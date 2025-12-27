@@ -13,7 +13,22 @@ const PruneFavoritesSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const json = (await request.json().catch(() => null)) as unknown;
+    let json: unknown;
+    try {
+      json = await request.json();
+    } catch (error: unknown) {
+      captureException(error, {
+        tags: {
+          feature: "favorites",
+          route: "/api/favorites/prune",
+          phase: "parse_json",
+        },
+      });
+      return NextResponse.json(
+        { ok: false, error: "INVALID_BODY" },
+        { status: 400, headers: { "Cache-Control": "no-store" } }
+      );
+    }
     const parsed = PruneFavoritesSchema.safeParse(json);
     if (!parsed.success) {
       return NextResponse.json(
