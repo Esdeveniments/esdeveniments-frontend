@@ -37,6 +37,23 @@ describe("handleCanonicalRedirects", () => {
     } as unknown as NextRequest;
   }
 
+  describe("non-place routes", () => {
+    it.each([
+      "/server-sitemap.xml",
+      "/server-news-sitemap.xml",
+      "/server-place-sitemap.xml",
+      "/server-google-news-sitemap.xml",
+      "/noticies",
+      "/login",
+    ])("does not redirect %s", (pathname) => {
+      const request = createMockRequest(pathname);
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+  });
+
   describe("tots redirects with query params", () => {
     it("preserves date query param for /place/tots/category?date=avui", () => {
       const request = createMockRequest("/barcelona/tots/teatre", "?date=avui");
@@ -97,6 +114,70 @@ describe("handleCanonicalRedirects", () => {
       const redirectUrl = redirectCall[0] as URL;
       expect(redirectUrl.pathname).toBe("/barcelona/avui/teatre");
       expect(redirectUrl.search).toBe("?search=rock");
+    });
+  });
+
+  describe("place segment normalization", () => {
+    it("redirects apostrophe place to slug (/l'escala -> /l-escala)", () => {
+      const request = createMockRequest("/l'escala");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/l-escala");
+    });
+
+    it("redirects percent-encoded apostrophe to slug (/l%27escala -> /l-escala)", () => {
+      const request = createMockRequest("/l%27escala");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/l-escala");
+    });
+
+    it("does not redirect placeholder-like paths (/[place])", () => {
+      const request = createMockRequest("/[place]");
+      const result = handleCanonicalRedirects(request);
+      expect(result).toBeNull();
+    });
+
+    it("does not redirect encoded symbol-only paths (/%26)", () => {
+      const request = createMockRequest("/%26");
+      const result = handleCanonicalRedirects(request);
+      expect(result).toBeNull();
+    });
+
+    it("redirects structurally invalid but charset-valid slugs (/foo--bar -> /foo-bar)", () => {
+      const request = createMockRequest("/foo--bar");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/foo-bar");
+    });
+
+    it("redirects leading hyphen slugs (/-foo -> /foo)", () => {
+      const request = createMockRequest("/-foo");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/foo");
+    });
+
+    it("redirects trailing hyphen slugs (/foo- -> /foo)", () => {
+      const request = createMockRequest("/foo-");
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).not.toBeNull();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/foo");
     });
   });
 
@@ -193,20 +274,6 @@ describe("handleCanonicalRedirects", () => {
       const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
       const redirectUrl = redirectCall[0] as URL;
       expect(redirectUrl.pathname).toBe("/barcelona/avui/teatre");
-    });
-  });
-
-  describe("non-place routes", () => {
-    it("does not redirect non-place routes", () => {
-      const request = createMockRequest("/noticies");
-      const result = handleCanonicalRedirects(request);
-      expect(result).toBeNull();
-    });
-
-    it("does not redirect login route", () => {
-      const request = createMockRequest("/login");
-      const result = handleCanonicalRedirects(request);
-      expect(result).toBeNull();
     });
   });
 

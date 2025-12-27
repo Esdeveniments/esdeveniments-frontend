@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { siteUrl } from "@config/index";
+import { contactEmail, siteUrl } from "@config/index";
 import Image from "next/image";
 import type { NextPage } from "next";
 import type { TeamMember as TeamMemberType } from "types/common";
@@ -69,6 +69,15 @@ const QuiSom: NextPage = async () => {
       "@type": "Organization",
       name: "Esdeveniments.cat",
       url: siteUrl,
+      email: contactEmail,
+      contactPoint: [
+        {
+          "@type": "ContactPoint",
+          contactType: "general inquiries",
+          email: contactEmail,
+          availableLanguage: ["ca", "es", "en"],
+        },
+      ],
       sameAs: [
         "https://www.facebook.com/esdevenimentscat",
         "https://www.instagram.com/esdevenimentscat",
@@ -95,7 +104,7 @@ const QuiSom: NextPage = async () => {
             <h1 className="heading-1 text-center">{t("heading")}</h1>
             <h2 className="heading-2 text-center text-primary">{t("subheading")}</h2>
           </div>
-          <div className="stack gap-6">
+          <div className="w-full stack gap-6">
             <p className="body-normal">{t("paragraph1")}</p>
             <p className="body-normal">
               {t.rich("paragraph2", {
@@ -112,6 +121,19 @@ const QuiSom: NextPage = async () => {
               })}
             </p>
             <p className="body-normal">{t("paragraph3")}</p>
+
+            <section className="card-bordered rounded-card">
+              <div className="card-body stack gap-3">
+                <h3 className="heading-3">{t("contactHeading")}</h3>
+                <p className="body-normal text-foreground/80">{t("contactBody")}</p>
+                <a
+                  href={`mailto:${contactEmail}`}
+                  className="btn-primary w-fit transition-interactive"
+                >
+                  {t("contactCta")}
+                </a>
+              </div>
+            </section>
           </div>
         </div>
         <div className="w-full stack gap-8 items-center py-section-y">

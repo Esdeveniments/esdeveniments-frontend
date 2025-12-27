@@ -9,10 +9,14 @@ import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
-import { getHistoricDates, normalizeMonthParam } from "@lib/dates";
+import {
+  getHistoricDates,
+  normalizeMonthParam,
+  resolveMonthIndexFromSlug,
+} from "@lib/dates";
 import dynamic from "next/dynamic";
 import { isValidPlace } from "@utils/route-validation";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import {
@@ -28,6 +32,7 @@ import {
   withLocalePath,
 } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
+import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -54,20 +59,16 @@ export async function generateMetadata({
   }
 
   const monthLabels = (tConstants.raw("months") as string[]) || [];
-  const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];
-  const { slug: normalizedMonthSlug, label: fallbackMonthLabel } =
-    normalizeMonthParam(month);
-  const monthIndex = monthSlugs.findIndex(
-    (slug) => normalizeMonthParam(slug).slug === normalizedMonthSlug
-  );
-  const monthSlug =
-    monthSlugs[monthIndex] && monthIndex >= 0
-      ? monthSlugs[monthIndex]
-      : normalizedMonthSlug;
+  const monthIndex = resolveMonthIndexFromSlug(month);
+  if (monthIndex === null) {
+    return {
+      title: tNotFound("title"),
+      description: tNotFound("description"),
+    };
+  }
+  const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
   const monthLabel =
-    (monthLabels[monthIndex] && monthIndex >= 0
-      ? monthLabels[monthIndex]
-      : undefined) || fallbackMonthLabel;
+    monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
   const place = await getPlaceBySlug(town);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
@@ -87,7 +88,7 @@ export async function generateMetadata({
       year,
       town: townLabel,
     }),
-    canonical: `${siteUrl}/sitemap/${town}/${year}/${monthSlug}`,
+    canonical: `${siteUrl}/sitemap/${town}/${year}/${canonicalMonthSlug}`,
     locale,
   });
 }
@@ -111,25 +112,22 @@ export default async function Page({
   }
 
   const monthLabels = (tConstants.raw("months") as string[]) || [];
-  const monthSlugs = (tConstants.raw("monthsUrl") as string[]) || [];
-  const { slug: normalizedMonthSlug, label: fallbackMonthLabel } =
-    normalizeMonthParam(month);
-  const monthIndex = monthSlugs.findIndex(
-    (slug) => normalizeMonthParam(slug).slug === normalizedMonthSlug
-  );
-  const monthSlug =
-    monthSlugs[monthIndex] && monthIndex >= 0
-      ? monthSlugs[monthIndex]
-      : normalizedMonthSlug;
+  const monthIndex = resolveMonthIndexFromSlug(month);
+  if (monthIndex === null) {
+    notFound();
+  }
+  const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
+  const normalizedIncomingSlug = normalizeMonthParam(month).slug;
+  if (normalizedIncomingSlug !== canonicalMonthSlug) {
+    permanentRedirect(withLocale(`/sitemap/${town}/${year}/${canonicalMonthSlug}`));
+  }
   const monthLabel =
-    (monthLabels[monthIndex] && monthIndex >= 0
-      ? monthLabels[monthIndex]
-      : undefined) || fallbackMonthLabel;
+    monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
 
   const { from, until } = getHistoricDates(
-    monthSlug,
+    canonicalMonthSlug,
     Number(year),
-    monthSlugs.length > 0 ? monthSlugs : undefined
+    DEFAULT_MONTHS_URL
   );
 
   const [events, place] = await Promise.all([
@@ -171,7 +169,7 @@ export default async function Page({
     { name: townLabel, url: toLocalizedUrl(`/sitemap/${town}`, locale) },
     {
       name: `${monthLabel} ${year}`,
-      url: toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale),
+      url: toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale),
     },
   ];
 
@@ -183,7 +181,7 @@ export default async function Page({
         t("itemListTitle", { town: townLabel, month: monthLabel, year }),
         t("itemListDescription", { town: townLabel, month: monthLabel, year }),
         locale,
-        toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale)
+        toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale)
       )
       : null;
 
@@ -195,7 +193,7 @@ export default async function Page({
       month: monthLabel,
       year,
     }),
-    url: toLocalizedUrl(`/sitemap/${town}/${year}/${monthSlug}`, locale),
+    url: toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale),
     breadcrumbs,
     locale,
     numberOfItems: filteredEvents.length,

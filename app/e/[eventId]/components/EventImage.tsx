@@ -11,11 +11,56 @@ import {
 } from "@utils/image-cache";
 import { escapeXml } from "@utils/xml-escape";
 
+function EventHeroImage({
+  imageSrc,
+  safeTitle,
+  title,
+  imageQuality,
+  effectiveUnoptimized,
+  onError,
+}: {
+  imageSrc: string;
+  safeTitle: string;
+  title: string;
+  imageQuality: number;
+  effectiveUnoptimized: boolean;
+  onError: () => "retry" | "fail";
+}) {
+  const [hasFailed, setHasFailed] = useState(false);
+
+  if (hasFailed) {
+    return (
+      <div className="absolute inset-0">
+        <ImgDefaultServer title={title} />
+      </div>
+    );
+  }
+
+  return (
+    <NextImage
+      src={imageSrc}
+      alt={safeTitle}
+      fill
+      sizes="(max-width: 768px) 80vw, (max-width: 1280px) 70vw, 1200px"
+      className="object-cover relative z-10"
+      priority={true}
+      quality={imageQuality}
+      loading="eager"
+      fetchPriority="high"
+      onError={() => {
+        const outcome = onError();
+        if (outcome === "fail") setHasFailed(true);
+      }}
+      // Bypass optimization for internal proxy URLs on SST/OpenNext.
+      unoptimized={effectiveUnoptimized}
+    />
+  );
+}
+
 const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   // Escape title for safe use in HTML attributes (React also escapes, but this is defensive)
   const safeTitle = escapeXml(title || "");
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
-  const [hideImage, setHideImage] = useState(false);
 
   const normalizedImage = useMemo(
     () => (image ? normalizeExternalImageUrl(image) : ""),
@@ -30,14 +75,13 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   const effectiveUnoptimized = forceUnoptimized || isInternalProxy;
   const imageSrc = forceUnoptimized ? anchorHref : optimizedImage;
 
-  const handleImageError = useCallback(() => {
+  const handleImageError = useCallback((): "retry" | "fail" => {
     // First fallback: bypass Next.js optimizer (can 500 on some platforms or bad TLS chains)
     if (!forceUnoptimized && !isInternalProxy) {
       setForceUnoptimized(true);
-      return;
+      return "retry";
     }
-    // Second failure: stop rendering the broken <img>; keep the underlay visible
-    setHideImage(true);
+    return "fail";
   }, [forceUnoptimized, isInternalProxy]);
 
   if (!image) {
@@ -65,26 +109,15 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
         className="block w-full h-full cursor-pointer hover:opacity-95 transition-opacity relative"
         aria-label={`Veure imatge completa de ${safeTitle}`}
       >
-        {/* Default image underlay ensures a graceful visual fallback even if the image fails. */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <ImgDefaultServer title={title} />
-        </div>
-        {!hideImage && (
-          <NextImage
-            src={imageSrc}
-            alt={safeTitle}
-            fill
-            sizes="(max-width: 768px) 80vw, (max-width: 1280px) 70vw, 1200px"
-            className="object-cover relative z-10"
-            priority={true}
-            quality={imageQuality}
-            loading="eager"
-            fetchPriority="high"
-            onError={handleImageError}
-            // Bypass optimization for internal proxy URLs on SST/OpenNext.
-            unoptimized={effectiveUnoptimized}
-          />
-        )}
+        <EventHeroImage
+          key={imageSrc}
+          imageSrc={imageSrc}
+          safeTitle={safeTitle}
+          title={title}
+          imageQuality={imageQuality}
+          effectiveUnoptimized={effectiveUnoptimized}
+          onError={handleImageError}
+        />
       </a>
     </div>
   );

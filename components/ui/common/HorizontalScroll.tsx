@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
 import ChevronLeftIcon from "@heroicons/react/solid/esm/ChevronLeftIcon";
 import type { HorizontalScrollProps } from "types/ui";
-import { useTranslations } from "next-intl";
 
 /**
  * Lightweight horizontal scroller with subtle gradients that hint scrollability.
@@ -20,8 +19,8 @@ export default function HorizontalScroll({
   showDesktopArrows = false,
   scrollStepPx,
   hintStorageKey,
+  labels,
 }: HorizontalScrollProps) {
-  const t = useTranslations("Components.HorizontalScroll");
   const uniqueId = useId();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const measuredStepRef = useRef<number>(scrollStepPx ?? 320);
@@ -245,7 +244,7 @@ export default function HorizontalScroll({
           {!atStart && (
             <button
               type="button"
-              aria-label={t("previous")}
+              aria-label={labels?.previous || "Previous"}
               onClick={() => scrollByStep(-1)}
               className="hidden sm:flex items-center justify-center absolute left-2 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-background shadow-md ring-1 ring-border/60 z-10 transition-interactive hover:shadow-lg"
             >
@@ -255,7 +254,7 @@ export default function HorizontalScroll({
           {!atEnd && (
             <button
               type="button"
-              aria-label={t("next")}
+              aria-label={labels?.next || "Next"}
               onClick={() => scrollByStep(1)}
               className="hidden sm:flex items-center justify-center absolute right-2 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-background shadow-md ring-1 ring-border/60 z-10 transition-interactive hover:shadow-lg"
             >

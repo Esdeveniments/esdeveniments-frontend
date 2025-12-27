@@ -10,11 +10,11 @@ export default function HeadingLayout({
 }: HybridEventsHeadingLayoutProps): ReactElement {
   return (
     <>
-      <div className="px-section-x mt-element-gap mb-element-gap md:flex md:items-start md:justify-between gap-element-gap">
+      <div className="mt-element-gap mb-element-gap md:flex md:items-start md:justify-between gap-element-gap">
         <h1 className={`${titleClass} flex-1`}>{title}</h1>
         {cta}
       </div>
-      <p className={`${subtitleClass} text-left mb-element-gap px-section-x`}>
+      <p className={`${subtitleClass} text-left mb-element-gap`}>
         {subtitle}
       </p>
     </>

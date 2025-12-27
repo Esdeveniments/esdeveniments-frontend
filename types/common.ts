@@ -458,6 +458,7 @@ export interface ImageComponentProps {
   image?: string;
   className?: string;
   priority?: boolean;
+  fetchPriority?: "high" | "auto" | "low";
   alt?: string;
   location?: string;
   region?: string;
@@ -563,11 +564,6 @@ export interface CollectionPageOptions {
   mainEntity?: Record<string, unknown>;
   numberOfItems?: number;
   locale?: AppLocale;
-}
-
-export interface LocationNewsLabels {
-  newsAll: string;
-  newsWithPlace: string;
 }
 
 // E2E test component props

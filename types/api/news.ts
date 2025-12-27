@@ -1,6 +1,7 @@
 import type {
   PagedResponseDTO as EventPagedResponseDTO,
   RegionSummaryResponseDTO,
+  ProvinceSummaryResponseDTO,
 } from "./event";
 import type { CitySummaryResponseDTO } from "./city";
 
@@ -41,6 +42,9 @@ export interface NewsEventItemDTO {
   endDate: string; // YYYY-MM-DD
   endTime?: { hour: number; minute: number; second: number; nano: number } | null;
   location: string;
+  city?: CitySummaryResponseDTO;
+  region?: RegionSummaryResponseDTO;
+  province?: ProvinceSummaryResponseDTO;
   visits: number;
   origin: string;
   categories: NewsEventCategoryDTO[];
@@ -56,8 +60,12 @@ export interface NewsDetailResponseDTO {
   readingTime: number;
   visits: number;
   events: NewsEventItemDTO[];
+  relatedNews?: NewsSummaryResponseDTO[];
   createdAt: string; // ISO datetime
   updatedAt?: string;
+  city?: CitySummaryResponseDTO;
+  region?: RegionSummaryResponseDTO;
+  province?: ProvinceSummaryResponseDTO;
 }
 
 export type PagedResponseDTO<T> = EventPagedResponseDTO<T>;

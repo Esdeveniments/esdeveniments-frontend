@@ -131,6 +131,10 @@ async function EventsAroundServer({
 
   const t = await getTranslations("Components.EventsAround");
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tScroll = await getTranslations({
+    locale,
+    namespace: "Components.HorizontalScroll",
+  });
   const carouselSuffix = t("carouselSuffix");
   // Render different layouts
   if (layout === "horizontal") {
@@ -153,6 +157,7 @@ async function EventsAroundServer({
           nudgeOnFirstLoad
           showDesktopArrows
           hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
+          labels={{ previous: tScroll("previous"), next: tScroll("next") }}
         >
           <div className="flex gap-element-gap">
             {uniqueEvents.map((event, index) => (
@@ -230,6 +235,7 @@ async function EventsAroundServer({
                     alt={event.title}
                     image={image}
                     priority={false}
+                    fetchPriority="low"
                     context="card"
                     cacheKey={event.hash || event.updatedAt}
                   />

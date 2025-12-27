@@ -9,7 +9,7 @@ import {
 import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical, getLocaleSafely } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE } from "types/i18n";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 // Normalize subtitles for LLM/AI SEO extractability:
 // - Remove HTML
@@ -55,10 +55,11 @@ const baseCreatePageData = (
   metaDescription: string,
   canonical: string,
   notFoundText: string,
-  searchQuery?: string
+  searchQuery?: string,
+  locale: AppLocale = DEFAULT_LOCALE
 ): PageData => {
   const { title: notFoundTitle, description: notFoundDescription } =
-    splitNotFoundText(notFoundText, searchQuery);
+    splitNotFoundText(notFoundText, searchQuery, locale);
   return {
     title,
     subTitle: normalizeSubTitle(subTitle),
@@ -91,9 +92,65 @@ export async function generatePagesData({
     namespace: "Components.Constants",
   });
 
-  const effectiveYear = currentYear ?? new Date().getFullYear();
+  const now = new Date();
+
+  // Used only for parsing numeric month/year parts deterministically.
+  // We force Latin digits to keep Number(...) stable across locales.
+  const intlNumberLocale =
+    resolvedLocale === "ca"
+      ? "ca-ES-u-nu-latn"
+      : resolvedLocale === "es"
+      ? "es-ES-u-nu-latn"
+      : "en-GB-u-nu-latn";
+  const effectiveYear =
+    currentYear ??
+    (() => {
+      try {
+        const parts = new Intl.DateTimeFormat(intlNumberLocale, {
+          timeZone: "Europe/Madrid",
+          year: "numeric",
+        }).formatToParts(now);
+
+        const yearPart = parts.find((p) => p.type === "year")?.value;
+        const yearNumber = yearPart ? Number(yearPart) : NaN;
+
+        if (
+          !Number.isFinite(yearNumber) ||
+          yearNumber < 2000 ||
+          yearNumber > 3000
+        ) {
+          return now.getFullYear();
+        }
+
+        return yearNumber;
+      } catch {
+        return now.getFullYear();
+      }
+    })();
+
   const months = (tConstants.raw("months") as string[]) || [];
-  const month = months[new Date().getMonth()] || "";
+  const monthIndex = (() => {
+    try {
+      const parts = new Intl.DateTimeFormat(intlNumberLocale, {
+        timeZone: "Europe/Madrid",
+        month: "numeric",
+      }).formatToParts(now);
+      const monthPart = parts.find((p) => p.type === "month")?.value;
+      const monthNumber = monthPart ? Number(monthPart) : NaN;
+      if (
+        !Number.isFinite(monthNumber) ||
+        monthNumber < 1 ||
+        monthNumber > 12
+      ) {
+        return now.getMonth();
+      }
+      return monthNumber - 1;
+    } catch {
+      return now.getMonth();
+    }
+  })();
+
+  const month = months[monthIndex] || "";
 
   const categoryTemplates = (t.raw("categories") || {}) as Record<
     string,
@@ -109,8 +166,8 @@ export async function generatePagesData({
     return categoryTemplates[categorySlug] || null;
   };
   if (
-    typeof effectiveYear === "number" &&
-    (effectiveYear < 2000 || effectiveYear > 3000)
+    typeof currentYear === "number" &&
+    (currentYear < 2000 || currentYear > 3000)
   ) {
     throw new Error("Invalid year range");
   }
@@ -118,7 +175,12 @@ export async function generatePagesData({
   const { type, label }: PlaceTypeAndLabel =
     placeTypeLabel || (await getPlaceTypeAndLabel(place));
   // keep legacy naming compatibility without unused var warnings
-  const labelWithArticle = formatPlacePreposition(label, type, resolvedLocale, false);
+  const labelWithArticle = formatPlacePreposition(
+    label,
+    type,
+    resolvedLocale,
+    false
+  );
 
   // Get category-specific SEO data
   const categorySEO = getCategorySEO(category);
@@ -137,7 +199,8 @@ export async function generatePagesData({
       metaDescription,
       applyLocaleToCanonical(canonical, resolvedLocale),
       notFoundText,
-      search
+      search,
+      resolvedLocale
     );
 
   if (!place && !byDate) {

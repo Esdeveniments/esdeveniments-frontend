@@ -7,7 +7,6 @@ import type {
 } from "types/api/news";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { PagedResponseDTO } from "types/api/event";
-import { createKeyedCache } from "./cache";
 import {
   getInternalApiUrl,
   buildNewsQuery,
@@ -19,9 +18,6 @@ import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cach
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
-
-// Cache for checking if place has news (24h TTL)
-const { cache: placeHasNewsCache } = createKeyedCache<boolean>(86400000);
 
 export async function fetchNews(
   params: FetchNewsParams
@@ -60,47 +56,6 @@ export async function fetchNews(
       last: true,
     };
   }
-}
-
-/**
- * Lightweight check if a place has any news articles.
- * Cached for 24h to minimize API calls.
- * @param place - The place slug to check
- * @returns boolean indicating if the place has news
- */
-export async function hasNewsForPlace(place: string): Promise<boolean> {
-  // Catalunya always has news (main news page)
-  if (place === "catalunya" || !place) {
-    return true;
-  }
-
-  // Internal route; if errors, return false
-
-  return placeHasNewsCache(place, async () => {
-    try {
-      // Fetch only 1 item to check existence
-      const queryString = new URLSearchParams({
-        page: "0",
-        size: "1",
-        place,
-      });
-      const finalUrl = await getInternalApiUrl(`/api/news?${queryString}`);
-
-      const response = await fetch(finalUrl, {
-        headers: getVercelProtectionBypassHeaders(),
-        next: { revalidate: 3600, tags: [newsTag, newsPlaceTag(place)] },
-      });
-      if (!response.ok) {
-        return false;
-      }
-      const data: PagedNewsResponseDTO<NewsSummaryResponseDTO> =
-        await response.json();
-      return addCacheKeyToNewsList(data.content).length > 0;
-    } catch (e) {
-      console.error("Error checking news for place:", place, e);
-      return false;
-    }
-  });
 }
 
 export async function fetchNewsBySlug(

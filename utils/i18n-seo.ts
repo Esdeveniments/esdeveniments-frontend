@@ -27,6 +27,18 @@ export function stripLocaleFromPathname(pathname: string): string {
   return pathname || "/";
 }
 
+export function resolveLocaleFromPathname(
+  pathname: string | null | undefined
+): AppLocale | null {
+  if (!pathname) return null;
+  const segments = pathname.split("/").filter(Boolean);
+  const first = segments[0];
+  if (first && SUPPORTED_LOCALES.includes(first as AppLocale)) {
+    return first as AppLocale;
+  }
+  return null;
+}
+
 export function buildLocalizedUrls(
   pathname: string
 ): Record<AppLocale, string> {
@@ -78,6 +90,13 @@ export function resolveLocaleFromHeaders(
   if (value && SUPPORTED_LOCALES.includes(value as AppLocale)) {
     return value as AppLocale;
   }
+
+  // Fallback: infer locale from the original request pathname.
+  // This helps avoid cross-locale canonical tags if the locale header is missing.
+  const pathname = headersLike?.get?.("x-pathname");
+  const localeFromPath = resolveLocaleFromPathname(pathname);
+  if (localeFromPath) return localeFromPath;
+
   return DEFAULT_LOCALE;
 }
 
