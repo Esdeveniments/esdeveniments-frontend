@@ -6,7 +6,6 @@ import {
   verifyHmacSignature,
 } from "@utils/hmac";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
-import { FAVORITES_COOKIE_NAME } from "@utils/favorites";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -417,10 +416,7 @@ export default async function proxy(request: NextRequest) {
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
     const normalizedPath = pathnameWithoutLocale || pathname;
     const isFavoritesPage = normalizedPath === "/preferits";
-    const hasFavoritesCookie = Boolean(
-      request.cookies?.get?.(FAVORITES_COOKIE_NAME)?.value
-    );
-    const isPersonalizedHtml = isFavoritesPage || hasFavoritesCookie;
+    const isPersonalizedHtml = isFavoritesPage;
 
     response.headers.set(
       "Cache-Control",

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Link from "next/link";
 import type { SVGProps } from "react";
+import { SWRConfig } from "swr";
 
 const fetchMock = vi.fn<
   (
@@ -36,18 +37,32 @@ describe("FavoriteButton", () => {
   });
 
   it("renders with correct aria state and toggles on click", async () => {
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock
+      // Initial hydration: GET /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: [] }),
+      })
+      // Toggle: POST /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: ["test-event"] }),
+      });
 
     const { default: FavoriteButton } = await import(
       "@components/ui/common/favoriteButton"
     );
 
     render(
-      <FavoriteButton
-        eventSlug="test-event"
-        initialIsFavorite={false}
-        labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
-      />
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
     );
 
     const button = screen.getByRole("button", { name: "Afegeix a preferits" });
@@ -73,7 +88,19 @@ describe("FavoriteButton", () => {
   });
 
   it("rolls back optimistic state when server action fails", async () => {
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
+    fetchMock
+      // Initial hydration: GET /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: [] }),
+      })
+      // Toggle: POST /api/favorites
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({}),
+      });
 
     const { default: FavoriteButton } = await import(
       "@components/ui/common/favoriteButton"
@@ -82,13 +109,15 @@ describe("FavoriteButton", () => {
     const parentClick = vi.fn();
 
     render(
-      <Link href="/e/test-event" onClick={parentClick}>
-        <FavoriteButton
-          eventSlug="test-event"
-          initialIsFavorite={false}
-          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
-        />
-      </Link>
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <Link href="/e/test-event" onClick={parentClick}>
+          <FavoriteButton
+            eventSlug="test-event"
+            initialIsFavorite={false}
+            labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+          />
+        </Link>
+      </SWRConfig>
     );
 
     const button = screen.getByRole("button", { name: "Afegeix a preferits" });
@@ -114,22 +143,36 @@ describe("FavoriteButton", () => {
   });
 
   it("shows a friendly message when MAX_FAVORITES_REACHED and rolls back", async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      status: 409,
-      json: async () => ({ ok: false, error: "MAX_FAVORITES_REACHED", maxFavorites: 50 }),
-    });
+    fetchMock
+      // Initial hydration: GET /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: [] }),
+      })
+      // Toggle: POST /api/favorites
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        json: async () => ({
+          ok: false,
+          error: "MAX_FAVORITES_REACHED",
+          maxFavorites: 50,
+        }),
+      });
 
     const { default: FavoriteButton } = await import(
       "@components/ui/common/favoriteButton"
     );
 
     render(
-      <FavoriteButton
-        eventSlug="test-event"
-        initialIsFavorite={false}
-        labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
-      />
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
     );
 
     const button = screen.getByRole("button", { name: "Afegeix a preferits" });

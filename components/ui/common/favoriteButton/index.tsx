@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import useSWR from "swr";
 import HeartIconSolid from "@heroicons/react/solid/esm/HeartIcon";
 import HeartIconOutline from "@heroicons/react/outline/esm/HeartIcon";
 
@@ -10,6 +11,8 @@ import Button from "@components/ui/common/button";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
+
+const FAVORITES_SWR_KEY = "favorites:list";
 
 function parseMaxFavorites(payload: unknown): number | null {
   if (!payload || typeof payload !== "object") return null;
@@ -33,9 +36,35 @@ export default function FavoriteButton({
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const isMutatingRef = useRef(false);
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("Components.FavoriteButton");
+
+  const { data: favoritesData, mutate: mutateFavorites } = useSWR<
+    { ok: true; favorites: string[] } | { ok: false; error: string }
+  >(
+    FAVORITES_SWR_KEY,
+    async () => {
+      const res = await fetch("/api/favorites", { method: "GET" });
+      if (!res.ok) throw new Error("Failed to fetch favorites");
+      return res.json() as Promise<
+        { ok: true; favorites: string[] } | { ok: false; error: string }
+      >;
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      revalidateIfStale: true,
+      dedupingInterval: 30_000,
+    }
+  );
+
+  useEffect(() => {
+    if (isMutatingRef.current) return;
+    if (!favoritesData || favoritesData.ok !== true) return;
+    setIsFavorite(favoritesData.favorites.includes(eventSlug));
+  }, [favoritesData, eventSlug]);
 
   const ariaLabel = isFavorite ? labels.remove : labels.add;
   const Icon = isFavorite ? HeartIconSolid : HeartIconOutline;
@@ -58,6 +87,7 @@ export default function FavoriteButton({
           setIsFavorite(nextIsFavorite);
 
           startTransition(async () => {
+            isMutatingRef.current = true;
             try {
               const response = await fetch("/api/favorites", {
                 method: "POST",
@@ -78,6 +108,21 @@ export default function FavoriteButton({
                 }
 
                 throw new Error("Failed to update favorites");
+              }
+
+              const payload = (await response.json().catch(() => null)) as unknown;
+              if (
+                payload &&
+                typeof payload === "object" &&
+                "favorites" in payload &&
+                Array.isArray((payload as { favorites?: unknown }).favorites)
+              ) {
+                const favorites = (payload as { favorites: unknown[] }).favorites
+                  .filter((value): value is string => typeof value === "string")
+                  .map((value) => value.trim())
+                  .filter(Boolean);
+
+                mutateFavorites({ ok: true, favorites }, { revalidate: false });
               }
 
               const analyticsEventName = nextIsFavorite
@@ -106,6 +151,8 @@ export default function FavoriteButton({
                 },
               });
               setIsFavorite(!nextIsFavorite);
+            } finally {
+              isMutatingRef.current = false;
             }
           });
         }}

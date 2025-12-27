@@ -43,7 +43,6 @@ import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
-import { getFavoritesFromCookies } from "@utils/favorites";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -185,11 +184,7 @@ export default async function EventPage({
     label: temporalStatus.label,
   };
 
-  const favorites = await getFavoritesFromCookies();
-  const isFavorite = Boolean(event.slug && favorites.includes(event.slug));
-  const shouldShowFavoriteButton = Boolean(
-    event.slug && (isFavorite || temporalStatus.state !== "past")
-  );
+  const shouldShowFavoriteButton = Boolean(event.slug);
   const favoriteLabels = {
     add: tCard("favoriteAddAria"),
     remove: tCard("favoriteRemoveAria"),
@@ -355,7 +350,7 @@ export default async function EventPage({
                       eventSlug={event.slug}
                       eventId={event.id ? String(event.id) : undefined}
                       eventTitle={event.title}
-                      initialIsFavorite={isFavorite}
+                      initialIsFavorite={false}
                       labels={favoriteLabels}
                     />
                   )}

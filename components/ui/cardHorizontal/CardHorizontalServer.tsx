@@ -11,12 +11,12 @@ import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
-import { getFavoritesFromCookies } from "@utils/favorites";
 
 const CardHorizontalServer = async ({
   event,
   isPriority = false,
   useDetailTimeFormat = false,
+  initialIsFavorite,
 }: CardHorizontalServerProps) => {
   const locale = await getLocaleSafely();
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
@@ -48,8 +48,7 @@ const CardHorizontalServer = async ({
     ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
     : tCard("dateSingle", { nameDay, start: formattedStart });
 
-  const favorites = await getFavoritesFromCookies();
-  const isFavorite = Boolean(event.slug && favorites.includes(event.slug));
+  const isFavorite = Boolean(event.slug && initialIsFavorite);
   const shouldShowFavoriteButton = Boolean(event.slug);
   const favoriteLabels = {
     add: tCard("favoriteAddAria"),

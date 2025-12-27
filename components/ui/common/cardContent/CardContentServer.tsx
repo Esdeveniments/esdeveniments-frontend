@@ -11,7 +11,6 @@ import { CardContentProps } from "types/props";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
-import { getFavoritesFromCookies } from "@utils/favorites";
 import { prepareCardContentData } from "./prepareCardContentData";
 
 async function CardContentServer({
@@ -40,15 +39,7 @@ async function CardContentServer({
     preferPreformattedDates: false,
   });
 
-  let isFavorite = false;
-  if (event.slug) {
-    if (typeof initialIsFavorite === "boolean") {
-      isFavorite = initialIsFavorite;
-    } else {
-      const favorites = await getFavoritesFromCookies();
-      isFavorite = favorites.includes(event.slug);
-    }
-  }
+  const isFavorite = Boolean(event.slug && initialIsFavorite);
   return (
     <>
       <div className="w-full relative pressable-card transition-card">

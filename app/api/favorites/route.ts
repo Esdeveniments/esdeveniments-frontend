@@ -16,6 +16,24 @@ const ToggleFavoriteSchema = z.object({
   shouldBeFavorite: z.boolean(),
 });
 
+export async function GET() {
+  try {
+    const favorites = await getFavoritesFromCookies();
+    return NextResponse.json(
+      { ok: true, favorites },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  } catch (error: unknown) {
+    captureException(error, {
+      tags: { feature: "favorites", route: "/api/favorites", method: "GET" },
+    });
+    return NextResponse.json(
+      { ok: false, error: "INTERNAL" },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     let json: unknown;
@@ -23,7 +41,11 @@ export async function POST(request: Request) {
       json = await request.json();
     } catch (error: unknown) {
       captureException(error, {
-        tags: { feature: "favorites", route: "/api/favorites", phase: "parse_json" },
+        tags: {
+          feature: "favorites",
+          route: "/api/favorites",
+          phase: "parse_json",
+        },
       });
       return NextResponse.json(
         { ok: false, error: "INVALID_BODY" },
@@ -59,7 +81,11 @@ export async function POST(request: Request) {
     if (shouldBeFavorite) {
       if (!nextSet.has(eventSlug) && nextSet.size >= MAX_FAVORITES) {
         return NextResponse.json(
-          { ok: false, error: "MAX_FAVORITES_REACHED", maxFavorites: MAX_FAVORITES },
+          {
+            ok: false,
+            error: "MAX_FAVORITES_REACHED",
+            maxFavorites: MAX_FAVORITES,
+          },
           { status: 409, headers: { "Cache-Control": "no-store" } }
         );
       }

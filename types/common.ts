@@ -325,6 +325,7 @@ export interface CardProps {
   event: ListEvent;
   isLoading?: boolean;
   isPriority?: boolean;
+  initialIsFavorite?: boolean;
 }
 
 export interface CardHorizontalProps {
@@ -337,6 +338,7 @@ export interface CardHorizontalServerProps {
   event: EventSummaryResponseDTO;
   isPriority?: boolean;
   useDetailTimeFormat?: boolean; // Use phrase format for times (e.g., "De 9.00 a 11.30") instead of numeric format
+  initialIsFavorite?: boolean;
 }
 
 export interface CardShareButtonProps {

@@ -106,7 +106,14 @@ export default async function FavoritsPage() {
         </p>
       </div>
       <List events={activeEvents}>
-        {(event, index) => <CardServer key={`${event.id}-${index}`} event={event} isPriority={index === 0} />}
+        {(event, index) => (
+          <CardServer
+            key={`${event.id}-${index}`}
+            event={event}
+            isPriority={index === 0}
+            initialIsFavorite
+          />
+        )}
       </List>
     </div>
   );
