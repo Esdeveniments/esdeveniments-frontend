@@ -73,7 +73,7 @@ describe("/api/favorites", () => {
     process.env = originalEnv;
   });
 
-  it("returns current favorites for empty/whitespace slug and does not write cookie", async () => {
+  it("returns 400 EMPTY_EVENT_SLUG for empty/whitespace slug and does not write cookie", async () => {
     setFavoritesCookieValue(JSON.stringify(["a"]));
 
     const { POST } = await import("@app/api/favorites/route");

@@ -53,10 +53,7 @@ export async function POST(request: Request) {
         );
       }
 
-      if (nextSet.has(eventSlug)) {
-        nextSet.delete(eventSlug);
-      }
-
+      nextSet.delete(eventSlug);
       nextSet.add(eventSlug);
     } else {
       nextSet.delete(eventSlug);
