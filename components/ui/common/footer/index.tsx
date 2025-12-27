@@ -4,22 +4,57 @@ import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
-import { NavigationItem, SocialLinks } from "types/common";
+import { SocialLinks } from "types/common";
+import { contactEmail } from "@config/index";
 
 export default async function Footer(): Promise<JSX.Element> {
   const t = await getTranslations("Components.Footer");
   const tTopAgenda = await getTranslations("Config.TopAgenda");
   const agendaLabel = tTopAgenda("agenda");
 
-  const navigation: NavigationItem[] = [
-    { name: t("navigation.home"), href: "/", current: false },
-    { name: t("navigation.agenda"), href: "/catalunya", current: false },
-    { name: t("navigation.favorites"), href: "/preferits", current: false },
-    { name: t("navigation.publish"), href: "/publica", current: false },
-    { name: t("navigation.news"), href: "/noticies", current: false },
-    { name: t("navigation.about"), href: "/qui-som", current: false },
-    { name: t("navigation.archive"), href: "/sitemap", current: false },
-  ];
+  const navigation = [
+    { name: t("navigation.home"), href: "/", kind: "internal", current: false },
+    {
+      name: t("navigation.agenda"),
+      href: "/catalunya",
+      kind: "internal",
+      current: false,
+    },
+    {
+      name: t("navigation.favorites"),
+      href: "/preferits",
+      kind: "internal",
+      current: false,
+    },
+    {
+      name: t("navigation.publish"),
+      href: "/publica",
+      kind: "internal",
+      current: false,
+    },
+    { name: t("navigation.news"), href: "/noticies", kind: "internal", current: false },
+    { name: t("navigation.about"), href: "/qui-som", kind: "internal", current: false },
+    {
+      name: t("navigation.contact"),
+      href: `mailto:${contactEmail}`,
+      kind: "mailto",
+      current: false,
+    },
+    { name: t("navigation.archive"), href: "/sitemap", kind: "internal", current: false },
+  ] satisfies Array<
+    | {
+      name: string;
+      href: `/${string}`;
+      kind: "internal";
+      current: boolean;
+    }
+    | {
+      name: string;
+      href: `mailto:${string}`;
+      kind: "mailto";
+      current: boolean;
+    }
+  >;
   const links: SocialLinks = {
     web: "https://www.esdeveniments.cat",
     twitter: "https://twitter.com/esdeveniments_",
@@ -44,15 +79,25 @@ export default async function Footer(): Promise<JSX.Element> {
           className="flex flex-wrap justify-center items-center gap-4 w-full max-w-full"
           aria-label="Footer navigation"
         >
-          {navigation.map((item) => (
-            <ActiveLink
-              href={item.href}
-              key={item.name}
-              className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive"
-            >
-              {item.name}
-            </ActiveLink>
-          ))}
+          {navigation.map((item) =>
+            item.kind === "mailto" ? (
+              <a
+                key={item.name}
+                href={item.href}
+                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive pressable-inline"
+              >
+                {item.name}
+              </a>
+            ) : (
+              <ActiveLink
+                href={item.href}
+                key={item.name}
+                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive"
+              >
+                {item.name}
+              </ActiveLink>
+            )
+          )}
         </nav>
 
         {/* Horizontal Divider */}

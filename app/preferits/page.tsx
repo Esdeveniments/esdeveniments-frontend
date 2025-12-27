@@ -79,7 +79,7 @@ export default async function FavoritsPage() {
 
   if (favoriteSlugs.length === 0 || activeEvents.length === 0) {
     return (
-      <div className="container flex-col justify-center items-center pt-[6rem]">
+      <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page-empty">
         <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
         <NoEventsFound title={t("emptyTitle")} description={t("emptyDescription")} />
       </div>
@@ -87,7 +87,7 @@ export default async function FavoritsPage() {
   }
 
   return (
-    <div className="container flex-col justify-center items-center pt-[6rem]" data-testid="favorites-page">
+    <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page">
       <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
       <div className="w-full">
         <HeadingLayout

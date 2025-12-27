@@ -91,9 +91,65 @@ export async function generatePagesData({
     namespace: "Components.Constants",
   });
 
-  const effectiveYear = currentYear ?? new Date().getFullYear();
+  const now = new Date();
+
+  // Used only for parsing numeric month/year parts deterministically.
+  // We force Latin digits to keep Number(...) stable across locales.
+  const intlNumberLocale =
+    resolvedLocale === "ca"
+      ? "ca-ES-u-nu-latn"
+      : resolvedLocale === "es"
+      ? "es-ES-u-nu-latn"
+      : "en-GB-u-nu-latn";
+  const effectiveYear =
+    currentYear ??
+    (() => {
+      try {
+        const parts = new Intl.DateTimeFormat(intlNumberLocale, {
+          timeZone: "Europe/Madrid",
+          year: "numeric",
+        }).formatToParts(now);
+
+        const yearPart = parts.find((p) => p.type === "year")?.value;
+        const yearNumber = yearPart ? Number(yearPart) : NaN;
+
+        if (
+          !Number.isFinite(yearNumber) ||
+          yearNumber < 2000 ||
+          yearNumber > 3000
+        ) {
+          return now.getFullYear();
+        }
+
+        return yearNumber;
+      } catch {
+        return now.getFullYear();
+      }
+    })();
+
   const months = (tConstants.raw("months") as string[]) || [];
-  const month = months[new Date().getMonth()] || "";
+  const monthIndex = (() => {
+    try {
+      const parts = new Intl.DateTimeFormat(intlNumberLocale, {
+        timeZone: "Europe/Madrid",
+        month: "numeric",
+      }).formatToParts(now);
+      const monthPart = parts.find((p) => p.type === "month")?.value;
+      const monthNumber = monthPart ? Number(monthPart) : NaN;
+      if (
+        !Number.isFinite(monthNumber) ||
+        monthNumber < 1 ||
+        monthNumber > 12
+      ) {
+        return now.getMonth();
+      }
+      return monthNumber - 1;
+    } catch {
+      return now.getMonth();
+    }
+  })();
+
+  const month = months[monthIndex] || "";
 
   const categoryTemplates = (t.raw("categories") || {}) as Record<
     string,
@@ -118,7 +174,12 @@ export async function generatePagesData({
   const { type, label }: PlaceTypeAndLabel =
     placeTypeLabel || (await getPlaceTypeAndLabel(place));
   // keep legacy naming compatibility without unused var warnings
-  const labelWithArticle = formatPlacePreposition(label, type, resolvedLocale, false);
+  const labelWithArticle = formatPlacePreposition(
+    label,
+    type,
+    resolvedLocale,
+    false
+  );
 
   // Get category-specific SEO data
   const categorySEO = getCategorySEO(category);

@@ -365,14 +365,13 @@ export interface HybridEventsListProps {
   category?: string;
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
-  hasNews: boolean; // Whether the place has news articles
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
 export type HybridEventsListClientProps = Omit<
   HybridEventsListProps,
-  "hasNews" | "placeTypeLabel" | "noEventsFound"
+  "placeTypeLabel" | "noEventsFound"
 >;
 
 export interface SsrListWrapperProps {
@@ -398,7 +397,6 @@ export interface PlacePageShellProps {
   place: string;
   category?: string;
   date?: string;
-  hasNewsPromise?: Promise<boolean>;
   categories?: CategorySummaryResponseDTO[];
   webPageSchemaFactory?: (pageData: PageData) => Record<string, unknown>;
 }

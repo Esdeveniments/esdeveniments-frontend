@@ -566,11 +566,6 @@ export interface CollectionPageOptions {
   locale?: AppLocale;
 }
 
-export interface LocationNewsLabels {
-  newsAll: string;
-  newsWithPlace: string;
-}
-
 // E2E test component props
 export interface ClientTestProps {
   initialEvents: EventSummaryResponseDTO[];

@@ -5,57 +5,23 @@ import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
 import List from "@components/ui/list";
 import CardServer from "@components/ui/card/CardServer";
-import { getNewsCta } from "@utils/helpers";
-import NewsCta from "@components/ui/newsCta";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
 
 async function HybridEventsList({
   initialEvents = [],
   pageData,
   noEventsFound = false,
   place,
-  placeTypeLabel,
   category,
   date,
   serverHasMore = false,
-  hasNews,
   categories,
 }: HybridEventsListProps): Promise<ReactElement> {
-  const locale = await getLocaleSafely();
-  const tLoc = await getTranslations({
-    locale,
-    namespace: "Utils.LocationHelpers",
-  });
-  const newsLabels = {
-    newsAll: tLoc("newsAll"),
-    newsWithPlace: tLoc("newsWithPlace", { deLabel: "{deLabel}" }),
-  };
-  const placeLabel = placeTypeLabel?.label;
-  const placeType =
-    placeTypeLabel?.type === "town"
-      ? "town"
-      : placeTypeLabel?.type === "region"
-        ? "region"
-        : undefined;
-  const { href: newsHref, text: newsText } = getNewsCta(
-    place,
-    placeLabel,
-    placeType,
-    newsLabels
-  );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
-  const newsCta =
-    place && hasNews && newsHref && newsText ? (
-      <div className="mb-4 md:mb-0 md:mt-0 shrink-0 px-element-gap">
-        <NewsCta href={newsHref} label={newsText} data-cta="news-inline" />
-      </div>
-    ) : null;
 
   if (noEventsFound || initialEvents.length === 0) {
     return (
@@ -68,6 +34,26 @@ async function HybridEventsList({
         data-analytics-category-slug={category || undefined}
         data-analytics-date-slug={date || undefined}
       >
+        {pageData && (
+          <>
+            <div data-server-heading>
+              <HeadingLayout
+                title={pageData.title}
+                subtitle={pageData.subTitle}
+                titleClass={titleClass}
+                subtitleClass={subtitleClass}
+              />
+            </div>
+            <Suspense fallback={null}>
+              <SearchAwareHeading
+                pageData={pageData}
+                categories={categories}
+                titleClass={titleClass}
+                subtitleClass={subtitleClass}
+              />
+            </Suspense>
+          </>
+        )}
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
@@ -105,7 +91,6 @@ async function HybridEventsList({
               subtitle={pageData.subTitle}
               titleClass={titleClass}
               subtitleClass={subtitleClass}
-              cta={newsCta}
             />
           </div>
           {/* Client-side enhancement: conditionally replace heading when search query is present */}
@@ -115,7 +100,6 @@ async function HybridEventsList({
               categories={categories}
               titleClass={titleClass}
               subtitleClass={subtitleClass}
-              cta={newsCta}
             />
           </Suspense>
         </>

@@ -37,12 +37,6 @@ vi.mock("@lib/api/categories", () => {
   };
 });
 
-vi.mock("@lib/api/news", () => {
-  return {
-    hasNewsForPlace: vi.fn(async () => false),
-  };
-});
-
 vi.mock("@lib/helpers/event-fallback", () => {
   return {
     fetchEventsWithFallback: vi.fn(async () => ({

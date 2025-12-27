@@ -38,12 +38,6 @@ export type PlainMouseEvent = Pick<
   "button" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey"
 >;
 
-export interface NewsCtaProps {
-  href: string;
-  label: string; // full text already composed (e.g., "Actualitat cultural d'Osona")
-  "data-cta"?: string;
-}
-
 export interface HorizontalScrollLabels {
   previous: string;
   next: string;

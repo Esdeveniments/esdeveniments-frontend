@@ -80,6 +80,7 @@ export function handleCanonicalRedirects(
     "qui-som",
     "server-sitemap.xml",
     "server-news-sitemap.xml",
+    "server-place-sitemap.xml",
     "server-google-news-sitemap.xml",
   ]);
 

@@ -37,6 +37,21 @@ describe("handleCanonicalRedirects", () => {
     } as unknown as NextRequest;
   }
 
+  describe("non-place routes", () => {
+    it.each([
+      "/server-sitemap.xml",
+      "/server-news-sitemap.xml",
+      "/server-place-sitemap.xml",
+      "/server-google-news-sitemap.xml",
+    ])("does not redirect %s", (pathname) => {
+      const request = createMockRequest(pathname);
+      const result = handleCanonicalRedirects(request);
+
+      expect(result).toBeNull();
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+  });
+
   describe("tots redirects with query params", () => {
     it("preserves date query param for /place/tots/category?date=avui", () => {
       const request = createMockRequest("/barcelona/tots/teatre", "?date=avui");
