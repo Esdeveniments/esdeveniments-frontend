@@ -7,6 +7,15 @@ importScripts(
   "https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js"
 );
 
+// Defensive check: if Workbox failed to load (e.g., CDN blocked), exit gracefully.
+// This prevents the entire SW from failing if the external dependency is unavailable.
+if (!self.workbox) {
+  console.warn("Workbox failed to load. Service worker features disabled.");
+  // Still handle basic offline fallback without Workbox
+  self.addEventListener("fetch", () => {});
+  // Exit early - don't try to use workbox APIs
+} else {
+
 // Set a more descriptive name for your caches for easier debugging.
 workbox.core.setCacheNameDetails({
   prefix: "esdeveniments-app",
@@ -33,7 +42,24 @@ const APP_SHELL_ASSETS = [
 ];
 workbox.precaching.precacheAndRoute(APP_SHELL_ASSETS);
 
+// Clean up outdated precache entries from previous versions.
+// Without this, old precache entries linger indefinitely.
+workbox.precaching.cleanupOutdatedCaches();
+
 // --- 3. Caching Strategies for Runtime Requests ---
+
+// Custom plugin to respect server Cache-Control headers.
+// This prevents caching HTML marked as "private" or "no-store" (e.g., personalized pages like favorites).
+const respectCacheControlPlugin = {
+  cacheWillUpdate: async ({ response }) => {
+    const cacheControl = response.headers.get("Cache-Control") || "";
+    // Don't cache responses the server explicitly marked as non-cacheable
+    if (cacheControl.includes("private") || cacheControl.includes("no-store")) {
+      return null; // Returning null tells Workbox not to cache this response
+    }
+    return response;
+  },
+};
 
 // Strategy for Pages (Network First)
 // This ensures users always get the latest content if they are online.
@@ -42,6 +68,7 @@ workbox.precaching.precacheAndRoute(APP_SHELL_ASSETS);
 const pageStrategy = new workbox.strategies.NetworkFirst({
   cacheName: "esdeveniments-pages-cache",
   plugins: [
+    respectCacheControlPlugin, // Don't cache private/no-store responses
     new workbox.broadcastUpdate.BroadcastUpdatePlugin(),
     new workbox.expiration.ExpirationPlugin({
       maxEntries: 50, // Don't cache more than 50 pages.
@@ -80,21 +107,43 @@ workbox.routing.registerRoute(
   new workbox.strategies.NetworkOnly()
 );
 
-// Strategy for Static Assets (CSS, JS, Fonts, Images) - Cache First
+// Strategy for Static Assets (CSS, JS, Fonts) - Cache First
 // These files don't change often, so serving them from the cache first is fastest.
 workbox.routing.registerRoute(
   ({ request }) =>
     request.destination === "style" ||
     request.destination === "script" ||
     request.destination === "worker" ||
-    request.destination === "font" ||
-    request.destination === "image",
+    request.destination === "font",
   new workbox.strategies.CacheFirst({
     cacheName: "esdeveniments-static-assets-cache",
     plugins: [
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 100,
         maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+      }),
+    ],
+  })
+);
+
+// Strategy for Images - Stale-While-Revalidate
+// External images through Next.js Image Optimization (/_next/image) can occasionally fail (500 errors).
+// Using StaleWhileRevalidate ensures we serve cached images while updating in the background,
+// and CacheableResponsePlugin ensures we ONLY cache successful responses (not 500 errors).
+workbox.routing.registerRoute(
+  ({ request }) => request.destination === "image",
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: "esdeveniments-images-cache",
+    plugins: [
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 200,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 Days for images
       }),
     ],
   })
@@ -112,6 +161,24 @@ workbox.routing.registerRoute(
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 50,
         maxAgeSeconds: 300, // 5 minutes
+      }),
+    ],
+  })
+);
+
+// Strategy for News API Requests - Stale-While-Revalidate with 1-minute TTL
+// News is time-sensitive content that updates frequently.
+// Server sets s-maxage=60, so SW cache should match.
+workbox.routing.registerRoute(
+  ({ url }) =>
+    url.pathname === "/api/news" ||
+    url.pathname.startsWith("/api/news/"),
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: "esdeveniments-news-api-cache",
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 30,
+        maxAgeSeconds: 60, // 1 minute - matches server cache TTL
       }),
     ],
   })
@@ -154,6 +221,42 @@ workbox.routing.registerRoute(
   })
 );
 
+// --- Default Handler (Safety Net) ---
+// Catches any request that doesn't match explicit routes above.
+// Industry best practice from Twitter/Pinterest PWAs.
+workbox.routing.setDefaultHandler(
+  new workbox.strategies.NetworkFirst({
+    cacheName: "esdeveniments-default-cache",
+    plugins: [
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 24 * 60 * 60, // 24 hours
+      }),
+    ],
+  })
+);
+
+// --- Global Catch Handler (Error Recovery) ---
+// When all strategies fail (network down + nothing in cache), provide graceful fallback.
+// This is the last line of defense before the browser shows an error.
+workbox.routing.setCatchHandler(async ({ request }) => {
+  // For navigation requests, show the offline page
+  if (request.destination === "document") {
+    const cache = await caches.open(workbox.core.cacheNames.precache);
+    const offlineResponse = await cache.match("/offline");
+    if (offlineResponse) return offlineResponse;
+  }
+  // For images, could return a placeholder (optional)
+  // if (request.destination === "image") {
+  //   return caches.match("/static/images/placeholder.png");
+  // }
+  // For everything else, return a proper error response
+  return Response.error();
+});
+
 // --- 4. Service Worker Lifecycle ---
 // This ensures that the new service worker activates immediately upon installation.
 self.addEventListener("message", (event) => {
@@ -169,6 +272,8 @@ self.addEventListener("message", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
+      // Take control of all clients immediately (don't wait for page reload)
+      await self.clients.claim();
       try {
         await caches.delete("esdeveniments-pages-cache");
       } catch {
@@ -177,3 +282,5 @@ self.addEventListener("activate", (event) => {
     })()
   );
 });
+
+} // End of Workbox-available block
