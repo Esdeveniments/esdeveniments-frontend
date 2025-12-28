@@ -44,6 +44,7 @@ export async function POST(request: Request) {
         tags: {
           feature: "favorites",
           route: "/api/favorites",
+          method: "POST",
           phase: "parse_json",
         },
       });
@@ -85,6 +86,11 @@ export async function POST(request: Request) {
             ok: false,
             error: "MAX_FAVORITES_REACHED",
             maxFavorites: MAX_FAVORITES,
+            analyticsEvent: "favorites_limit_reached",
+            analyticsParams: {
+              action: "add",
+              max_favorites: MAX_FAVORITES,
+            },
           },
           { status: 409, headers: { "Cache-Control": "no-store" } }
         );
@@ -105,7 +111,7 @@ export async function POST(request: Request) {
     );
   } catch (error: unknown) {
     captureException(error, {
-      tags: { feature: "favorites", route: "/api/favorites" },
+      tags: { feature: "favorites", route: "/api/favorites", method: "POST" },
     });
     return NextResponse.json(
       { ok: false, error: "INTERNAL" },

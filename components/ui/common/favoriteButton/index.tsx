@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { usePathname, useRouter } from "../../../../i18n/routing";
 import useSWR from "swr";
 import HeartIconSolid from "@heroicons/react/solid/esm/HeartIcon";
 import HeartIconOutline from "@heroicons/react/outline/esm/HeartIcon";
@@ -102,6 +102,13 @@ export default function FavoriteButton({
                 const payload = (await response.json().catch(() => null)) as unknown;
                 if (response.status === 409 && isMaxReachedPayload(payload)) {
                   const max = parseMaxFavorites(payload);
+                  sendGoogleEvent("favorites_limit_reached", {
+                    action: "add",
+                    max_favorites: max,
+                    event_slug: eventSlug,
+                    event_id: eventId,
+                    event_title: eventTitle,
+                  });
                   setLimitMessage(t("maxReached", { max: max ?? "" }));
                   setIsFavorite(!nextIsFavorite);
                   return;

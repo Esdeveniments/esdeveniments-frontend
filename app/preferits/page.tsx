@@ -7,6 +7,7 @@ import HeadingLayout from "@components/ui/hybridEventsList/HeadingLayout";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { fetchEventBySlugWithStatus } from "@lib/api/events";
+import { captureException } from "@sentry/nextjs";
 import { filterActiveEvents, isEventActive } from "@utils/event-helpers";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { getFavoritesFromCookies, MAX_FAVORITES } from "@utils/favorites";
@@ -38,15 +39,35 @@ async function fetchFavoritesEvents(
   const results: EventSummaryResponseDTO[] = [];
   const notFoundSlugs: string[] = [];
 
+  const reasonToString = (reason: unknown): string => {
+    if (reason instanceof Error) return reason.message;
+    if (typeof reason === "string") return reason;
+
+    try {
+      return JSON.stringify(reason);
+    } catch {
+      return "unknown";
+    }
+  };
+
   for (let i = 0; i < uniqueSlugs.length; i += FETCH_CONCURRENCY) {
     const chunk = uniqueSlugs.slice(i, i + FETCH_CONCURRENCY);
-    const fetched = await Promise.all(
+    const fetched = await Promise.allSettled(
       chunk.map((slug) => fetchEventBySlugWithStatus(slug))
     );
 
+    const failedFetches: Array<{ slug: string | undefined; reason: unknown }> =
+      [];
+
     for (let j = 0; j < fetched.length; j++) {
       const slug = chunk[j];
-      const { event, notFound } = fetched[j];
+      const settled = fetched[j];
+      if (settled.status !== "fulfilled") {
+        failedFetches.push({ slug, reason: settled.reason });
+        continue;
+      }
+
+      const { event, notFound } = settled.value;
 
       if (notFound && slug) {
         notFoundSlugs.push(slug);
@@ -55,6 +76,21 @@ async function fetchFavoritesEvents(
       if (event != null) {
         results.push(event);
       }
+    }
+
+    if (failedFetches.length > 0) {
+      captureException(new Error("Favorites: fetch failures"), {
+        tags: {
+          feature: "favorites",
+          page: "/preferits",
+          phase: "fetch_event_by_slug",
+        },
+        extra: {
+          failedCount: failedFetches.length,
+          failedSlugs: failedFetches.map((f) => f.slug).filter(Boolean),
+          failedReasons: failedFetches.map((f) => reasonToString(f.reason)),
+        },
+      });
     }
   }
 

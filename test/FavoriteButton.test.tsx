@@ -13,9 +13,17 @@ const fetchMock = vi.fn<
 
 const refreshMock = vi.fn<() => void>();
 
+const sendGoogleEventMock = vi.fn<
+  (event: string, obj: Record<string, unknown>) => void
+>();
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: refreshMock }),
   usePathname: () => "/preferits",
+}));
+
+vi.mock("@utils/analytics", () => ({
+  sendGoogleEvent: sendGoogleEventMock,
 }));
 
 vi.mock("@heroicons/react/solid/esm/HeartIcon", () => ({
@@ -157,7 +165,7 @@ describe("FavoriteButton", () => {
         json: async () => ({
           ok: false,
           error: "MAX_FAVORITES_REACHED",
-          maxFavorites: 50,
+          maxFavorites: 10,
         }),
       });
 
@@ -192,8 +200,17 @@ describe("FavoriteButton", () => {
       );
     });
 
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "favorites_limit_reached",
+      expect.objectContaining({
+        action: "add",
+        max_favorites: 10,
+        event_slug: "test-event",
+      })
+    );
+
     expect(
-      screen.getByText(/Has arribat al límit de 50 preferits/i)
+      screen.getByText(/Has arribat al límit de 10 preferits/i)
     ).toBeInTheDocument();
   });
 });

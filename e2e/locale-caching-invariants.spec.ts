@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const LOCALE_COOKIE = "NEXT_LOCALE";
+import { LOCALE_COOKIE } from "../types/i18n";
 
 test.describe("Locale caching invariants", () => {
   test.setTimeout(process.env.CI ? 120000 : 60000);
@@ -20,9 +20,11 @@ test.describe("Locale caching invariants", () => {
       waitUntil: "domcontentloaded",
       timeout: 90000,
     });
-    expect(response).not.toBeNull();
+    if (!response) {
+      throw new Error("Navigation to '/' did not return a response");
+    }
 
-    const headers = await response!.allHeaders();
+    const headers = await response.allHeaders();
     const hasProxyHeaders = Boolean(
       headers["content-security-policy"] ||
         headers["content-security-policy-report-only"]
@@ -61,9 +63,11 @@ test.describe("Locale caching invariants", () => {
       waitUntil: "domcontentloaded",
       timeout: 90000,
     });
-    expect(responseDefault).not.toBeNull();
+    if (!responseDefault) {
+      throw new Error("Navigation to '/catalunya' did not return a response");
+    }
 
-    const headersDefault = await responseDefault!.allHeaders();
+    const headersDefault = await responseDefault.allHeaders();
     const cacheDefault = headersDefault["cache-control"];
     const contentLangDefault = headersDefault["content-language"];
 
@@ -77,6 +81,10 @@ test.describe("Locale caching invariants", () => {
     );
 
     expect(contentLangDefault).toBe("ca");
+
+    if (!cacheDefault) {
+      throw new Error("Missing 'cache-control' header on default locale response");
+    }
 
     const contextWithLocaleCookie = await browser.newContext({
       extraHTTPHeaders: { "accept-language": "es" },
@@ -95,9 +103,11 @@ test.describe("Locale caching invariants", () => {
       waitUntil: "domcontentloaded",
       timeout: 90000,
     });
-    expect(responseCookie).not.toBeNull();
+    if (!responseCookie) {
+      throw new Error("Navigation to '/catalunya' did not return a response (cookie context)");
+    }
 
-    const headersCookie = await responseCookie!.allHeaders();
+    const headersCookie = await responseCookie.allHeaders();
     const cacheCookie = headersCookie["cache-control"];
     const contentLangCookie = headersCookie["content-language"];
 

@@ -222,6 +222,11 @@ describe("/api/favorites", () => {
       ok: false,
       error: "MAX_FAVORITES_REACHED",
       maxFavorites: MAX_FAVORITES,
+      analyticsEvent: "favorites_limit_reached",
+      analyticsParams: {
+        action: "add",
+        max_favorites: MAX_FAVORITES,
+      },
     });
     expect(parseCookieArray(getPersistedFavoritesValue())).toEqual(refreshed);
   });
@@ -245,6 +250,11 @@ describe("/api/favorites", () => {
       ok: false,
       error: "MAX_FAVORITES_REACHED",
       maxFavorites: MAX_FAVORITES,
+      analyticsEvent: "favorites_limit_reached",
+      analyticsParams: {
+        action: "add",
+        max_favorites: MAX_FAVORITES,
+      },
     });
 
     // No cookie write on rejection

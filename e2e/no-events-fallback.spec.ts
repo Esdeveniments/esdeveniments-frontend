@@ -20,25 +20,35 @@ test.describe("No events fallback", () => {
     const noEvents = page.getByTestId("no-events-found");
     const eventLinks = page.locator('a[href^="/e/"]');
 
+    let outcome: "loading" | "no-events" | "has-events" = "loading";
+
     await expect
       .poll(
         async () => {
-          const noEventsVisible = await noEvents.isVisible().catch(() => false);
-          if (noEventsVisible) return "no-events";
+          if (await noEvents.isVisible()) {
+            outcome = "no-events";
+            return outcome;
+          }
 
           const eventCount = await eventLinks.count();
-          if (eventCount > 0) return "has-events";
+          if (eventCount > 0) {
+            outcome = "has-events";
+            return outcome;
+          }
 
-          return "loading";
+          outcome = "loading";
+          return outcome;
         },
         { timeout: process.env.CI ? 60000 : 20000 }
       )
       .not.toBe("loading");
 
-    // If we have events, consider it acceptable as API may fallback to region/latest.
-    const noEventsVisible = await noEvents.isVisible().catch(() => false);
-    if (noEventsVisible) {
-      await expect(noEvents).toBeVisible({ timeout: 10000 });
+    if (outcome === "no-events") {
+      await expect(noEvents).toBeVisible();
+      return;
     }
+
+    expect(outcome).toBe("has-events");
+    expect(await eventLinks.count()).toBeGreaterThan(0);
   });
 });

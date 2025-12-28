@@ -2,7 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 
 export const FAVORITES_COOKIE_NAME = "user_favorites";
-export const MAX_FAVORITES = 50;
+export const MAX_FAVORITES = 10;
 
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
