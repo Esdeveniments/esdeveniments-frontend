@@ -9,6 +9,7 @@ import HeartIconOutline from "@heroicons/react/outline/esm/HeartIcon";
 
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent } from "@utils/analytics";
+import { queueFavoriteRequest } from "@utils/favorites-queue";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
 
@@ -89,14 +90,16 @@ export default function FavoriteButton({
           startTransition(async () => {
             isMutatingRef.current = true;
             try {
-              const response = await fetch("/api/favorites", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  eventSlug,
-                  shouldBeFavorite: nextIsFavorite,
-                }),
-              });
+              const response = await queueFavoriteRequest(() =>
+                fetch("/api/favorites", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    eventSlug,
+                    shouldBeFavorite: nextIsFavorite,
+                  }),
+                })
+              );
 
               if (!response.ok) {
                 const payload = (await response.json().catch(() => null)) as unknown;
