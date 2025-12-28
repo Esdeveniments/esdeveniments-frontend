@@ -3,7 +3,6 @@ import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
-import { hasNewsForPlace } from "@lib/api/news";
 import {
   buildPageMeta,
   generateItemListStructuredData,
@@ -34,6 +33,8 @@ import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
+import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import { getRobotsForListingPage } from "@utils/robots-listings";
 
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -48,10 +49,13 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
+  const rawSearchParams = await searchParams;
 
   const validation = validatePlaceForMetadata(place);
   if (!validation.isValid) {
@@ -72,15 +76,19 @@ export async function generateMetadata({
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
+    robotsOverride: getRobotsForListingPage(rawSearchParams),
   });
 }
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
+  const rawSearchParams = await searchParams;
   const locale = await getLocaleSafely();
 
   try {
@@ -92,10 +100,6 @@ export default async function Page({
   const categoriesPromise = fetchCategories().catch((error) => {
     console.error("Error fetching categories:", error);
     return [] as CategorySummaryResponseDTO[];
-  });
-  const hasNewsPromise = hasNewsForPlace(place).catch((error) => {
-    console.error("Error checking news availability:", error);
-    return false;
   });
   const placeShellDataPromise = (async () => {
     const t = await getTranslations({ locale, namespace: "App.Publish" });
@@ -120,19 +124,19 @@ export default async function Page({
   const categories = await categoriesPromise;
 
   // Late existence check to preserve UX without creating an enumeration oracle
-  if (place !== "catalunya") {
-    let placeExists: boolean | undefined;
-    try {
-      placeExists = (await fetchPlaceBySlug(place)) !== null;
-    } catch {
-      // ignore transient errors
-    }
-    if (placeExists === false) {
-      const target = buildFallbackUrlForInvalidPlace({
-        rawSearchParams: {},
-      });
-      redirect(target);
-    }
+  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
+    place,
+    locale,
+    rawSearchParams,
+    buildTargetPath: (alias) => `/${alias}`,
+    buildFallbackUrlForInvalidPlace: () =>
+      buildFallbackUrlForInvalidPlace({
+        rawSearchParams,
+      }),
+    fetchPlaceBySlug,
+  });
+  if (placeRedirectUrl) {
+    redirect(placeRedirectUrl);
   }
 
   return (
@@ -140,7 +144,6 @@ export default async function Page({
       eventsPromise={eventsPromise}
       shellDataPromise={placeShellDataPromise}
       place={place}
-      hasNewsPromise={hasNewsPromise}
       categories={categories}
       webPageSchemaFactory={(pageData) =>
         generateWebPageSchema({

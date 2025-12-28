@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { captureException, captureMessage } from "@sentry/nextjs";
+import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
 import { fetchWithHmac } from "./fetch-wrapper";
 import {
@@ -47,26 +47,7 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
   : null;
 
-const IMAGE_WARNING_THRESHOLD = MAX_TOTAL_UPLOAD_BYTES * 0.75;
-
-const recordImageSizeTelemetry = (imageBytes: number) => {
-  if (imageBytes < IMAGE_WARNING_THRESHOLD) {
-    return;
-  }
-  const level = imageBytes > MAX_TOTAL_UPLOAD_BYTES ? "error" : "warning";
-  captureMessage("uploadEventImage size near limit", {
-    level,
-    extra: {
-      imageBytes,
-      limitBytes: MAX_TOTAL_UPLOAD_BYTES,
-      imageMb: formatMegabytes(imageBytes),
-      limitMb: formatMegabytes(MAX_TOTAL_UPLOAD_BYTES),
-    },
-  });
-};
-
 const ensureImageWithinLimit = (imageFile: File) => {
-  recordImageSizeTelemetry(imageFile.size);
   if (imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
     console.warn(
       `uploadEventImage: image ${formatMegabytes(
@@ -219,6 +200,48 @@ export async function fetchEventBySlug(
       errorMessage
     );
     return null;
+  }
+}
+
+export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
+  event: EventDetailResponseDTO | null;
+  notFound: boolean;
+}> {
+  if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
+    return { event: e2eEventsStore.get(fullSlug) ?? null, notFound: false };
+  }
+
+  try {
+    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
+
+    const res = await fetch(internalApiUrl, {
+      headers: getVercelProtectionBypassHeaders(),
+      next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
+    });
+
+    if (res.status === 404) {
+      console.warn(
+        `fetchEventBySlugWithStatus: Event not found (404) for slug: ${fullSlug}`
+      );
+      return { event: null, notFound: true };
+    }
+
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "No error text");
+      console.error(
+        `fetchEventBySlugWithStatus: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
+      );
+      return { event: null, notFound: false };
+    }
+
+    return { event: parseEventDetail(await res.json()), notFound: false };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(
+      `Error fetching event by slug (internal) for ${fullSlug}:`,
+      errorMessage
+    );
+    return { event: null, notFound: false };
   }
 }
 

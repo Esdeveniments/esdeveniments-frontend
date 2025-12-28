@@ -2,7 +2,6 @@ import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { handleApiError } from "@utils/api-error-handler";
-import * as Sentry from "@sentry/nextjs";
 import type { RevalidatableTag } from "types/cache";
 import { clearPlacesCaches } from "@lib/api/places";
 import { clearRegionsCaches } from "@lib/api/regions";
@@ -160,13 +159,28 @@ export async function POST(request: Request) {
     const secret = request.headers.get("x-revalidate-secret");
 
     if (!isValidSecret(secret)) {
-      // Log unauthorized attempts in production
-      if (process.env.NODE_ENV === "production") {
-        Sentry.captureMessage("Unauthorized revalidation attempt", {
-          level: "warning",
-          tags: { route: "/api/revalidate", type: "unauthorized" },
+      const rawSampleRate = process.env.REVALIDATE_UNAUTHORIZED_LOG_SAMPLE_RATE;
+      const parsedSampleRate = rawSampleRate ? Number(rawSampleRate) : 0.01;
+      const sampleRate = Number.isFinite(parsedSampleRate)
+        ? Math.min(1, Math.max(0, parsedSampleRate))
+        : 0.01;
+
+      if (sampleRate > 0 && Math.random() < sampleRate) {
+        const url = new URL(request.url);
+        const userAgent = request.headers.get("user-agent") ?? "unknown";
+        const cfConnectingIp = request.headers.get("cf-connecting-ip");
+        const forwardedFor = request.headers.get("x-forwarded-for");
+        const clientIp =
+          cfConnectingIp ?? forwardedFor?.split(",")[0]?.trim() ?? "unknown";
+
+        console.warn("Unauthorized revalidate attempt", {
+          path: url.pathname,
+          hasSecret: Boolean(secret),
+          clientIp,
+          userAgent,
         });
       }
+
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -248,14 +262,6 @@ export async function POST(request: Request) {
           : "failed"
       }`
     );
-
-    if (process.env.NODE_ENV === "production") {
-      Sentry.captureMessage("Cache revalidation triggered", {
-        level: "info",
-        tags: { route: "/api/revalidate", type: "revalidation" },
-        extra: { revalidatedTags, cloudflareResult },
-      });
-    }
 
     return NextResponse.json(
       {

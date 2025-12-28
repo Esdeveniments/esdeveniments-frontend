@@ -25,6 +25,7 @@ function ClientImage({
   image = "",
   className = "w-full h-full flex justify-center items-center",
   priority = false,
+  fetchPriority,
   alt = title,
   quality: customQuality,
   context = "card",
@@ -67,6 +68,17 @@ function ClientImage({
     handleError();
   }, [forceUnoptimized, handleError, reset]);
 
+  const containerStyle: React.CSSProperties = {
+    position: "relative",
+    ...(context === "card" || context === "list"
+      ? {
+          aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
+          overflow: "hidden",
+        }
+      : {}),
+    maxWidth: "100%", // Ensure image doesn't exceed container
+  };
+
   // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
   if (hasError) {
     return (
@@ -75,13 +87,14 @@ function ClientImage({
         ref={divRef}
         role="img"
         aria-label={title || "Imatge no disponible"}
+        style={containerStyle}
       >
         {isImgDefaultVisible ? (
           <ImgDefault title={title} />
         ) : (
-          <div className="flex justify-center items-center w-full">
+          <div className="flex justify-center items-center w-full h-full">
             <div
-              className="w-full h-60 bg-muted animate-fast-pulse"
+              className="w-full h-full bg-muted animate-fast-pulse"
               ref={imgDefaultRef}
             ></div>
           </div>
@@ -93,14 +106,11 @@ function ClientImage({
   return (
     <div
       className={imageClassName}
-      style={{
-        position: "relative",
-        maxWidth: "100%", // Ensure image doesn't exceed container
-      }}
+      style={containerStyle}
     >
       {isLoading && (
         <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
-          <div className="w-full h-60 bg-muted animate-fast-pulse"></div>
+          <div className="w-full h-full bg-muted animate-fast-pulse"></div>
         </div>
       )}
       <NextImage
@@ -118,11 +128,12 @@ function ClientImage({
           objectFit: "cover",
           opacity: isLoading ? 0 : 1,
           transition: "opacity 0.3s ease-in-out",
-          height: "auto",
+          width: "100%",
+          height: "100%",
           maxWidth: "100%", // Ensure image respects container constraints
         }}
         priority={priority}
-        fetchPriority={priority ? "high" : "auto"}
+        fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
         sizes={getOptimalImageSizes(context)}
         // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
         // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.

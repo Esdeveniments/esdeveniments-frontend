@@ -135,12 +135,14 @@ export function buildPageMeta({
   canonical,
   image = `${siteUrl}/static/images/logo-seo-meta.webp`,
   locale,
+  robotsOverride,
 }: {
   title: string;
   description: string;
   canonical: string;
   image?: string;
   locale?: AppLocale;
+  robotsOverride?: string;
 }) {
   const resolvedLocale = locale ?? DEFAULT_LOCALE;
   const basePathname = stripLocaleFromPathname(getSafePathname(canonical));
@@ -183,7 +185,7 @@ export function buildPageMeta({
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : "index, follow",
+        : robotsOverride ?? "index, follow",
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,

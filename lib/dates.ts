@@ -1,4 +1,8 @@
-import { MONTHS_URL as MONTHS, DEFAULT_FILTER_VALUE } from "@utils/constants";
+import {
+  MONTHS_URL as MONTHS,
+  DEFAULT_FILTER_VALUE,
+  getMonthUrlNames,
+} from "@utils/constants";
 import { nextDay, isWeekend } from "@utils/helpers";
 import { DateRange } from "types/common";
 import type { ValidDateSlug } from "types/dates";
@@ -16,6 +20,28 @@ export const normalizeMonthParam = (
   const slug = decoded === "març" ? "marc" : decoded;
   const label = slug === "marc" ? "març" : decoded;
   return { slug, label };
+};
+
+export const resolveMonthIndexFromSlug = (rawMonth: string): number | null => {
+  const targetSlug = normalizeMonthParam(rawMonth).slug;
+
+  const resolveIndex = (list: string[]) =>
+    list.findIndex(
+      (candidate) => normalizeMonthParam(candidate).slug === targetSlug
+    );
+
+  const listsToTry: string[][] = [
+    MONTHS,
+    getMonthUrlNames("es"),
+    getMonthUrlNames("en"),
+  ];
+
+  for (const list of listsToTry) {
+    const index = resolveIndex(list);
+    if (index >= 0) return index;
+  }
+
+  return null;
 };
 
 // Valid date formats - this becomes the source of truth

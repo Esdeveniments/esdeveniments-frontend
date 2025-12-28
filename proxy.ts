@@ -184,6 +184,9 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/price-preview",
   "/api/promotions/active",
   "/api/leads/restaurant",
+  // Favorites cookie endpoints (browser-initiated)
+  "/api/favorites",
+  "/api/favorites/prune",
   // DISABLED: Restaurant promotions feature is currently disabled
   // "/api/cloudinary/sign",
   // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)
@@ -411,9 +414,15 @@ export default async function proxy(request: NextRequest) {
   // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
   // still serve quickly and revalidate in the background.
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
+    const normalizedPath = pathnameWithoutLocale || pathname;
+    const isFavoritesPage = normalizedPath === "/preferits";
+    const isPersonalizedHtml = isFavoritesPage;
+
     response.headers.set(
       "Cache-Control",
-      "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
+      isPersonalizedHtml
+        ? "private, no-store"
+        : "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
     );
   }
 

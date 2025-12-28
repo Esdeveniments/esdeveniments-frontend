@@ -4,6 +4,8 @@ import { ReactElement, useEffect } from "react";
 import type { SearchAwareHeadingProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
+import { useLocale } from "next-intl";
+import type { AppLocale } from "types/i18n";
 import HeadingLayout from "./HeadingLayout";
 
 export default function SearchAwareHeading({
@@ -15,6 +17,7 @@ export default function SearchAwareHeading({
 }: SearchAwareHeadingProps): ReactElement | null {
   const { queryParams } = useUrlFilters(categories);
   const searchTerm = queryParams.search;
+  const locale = useLocale() as AppLocale;
 
   // Hide the server-rendered heading when client enhancement loads
   // Must be called before any early returns to satisfy React Hooks rules
@@ -41,8 +44,8 @@ export default function SearchAwareHeading({
     return null;
   }
 
-  const enhancedTitle = appendSearchQuery(pageData.title, searchTerm);
-  const enhancedSubtitle = appendSearchQuery(pageData.subTitle, searchTerm);
+  const enhancedTitle = appendSearchQuery(pageData.title, searchTerm, locale);
+  const enhancedSubtitle = appendSearchQuery(pageData.subTitle, searchTerm, locale);
 
   return (
     <HeadingLayout

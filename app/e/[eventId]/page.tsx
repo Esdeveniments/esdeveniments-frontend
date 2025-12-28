@@ -42,6 +42,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import FavoriteButton from "@components/ui/common/favoriteButton";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -69,6 +70,8 @@ export default async function EventPage({
 }) {
   const slug = (await params).eventId;
 
+  const locale = await getLocaleSafely();
+
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 
@@ -84,7 +87,7 @@ export default async function EventPage({
     process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "0" ||
     process.env.CANONICAL_REDIRECT === "0";
   if (!disableCanonicalRedirect && slug !== event.slug && event.slug) {
-    redirect(`/e/${event.slug}`);
+    redirect(withLocalePath(`/e/${event.slug}`, locale));
   }
 
   const eventSlug = event?.slug ?? "";
@@ -95,7 +98,6 @@ export default async function EventPage({
   const regionName = formatPlaceName(rawRegionName);
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
-  const locale = await getLocaleSafely();
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const explorePlaceHref = `/${primaryPlaceSlug}`;
@@ -108,6 +110,7 @@ export default async function EventPage({
   const jsonData = generateJsonData({ ...event }, locale);
   const tStatus = await getTranslations({ locale, namespace: "Utils.EventStatus" });
   const tEvent = await getTranslations({ locale, namespace: "Components.EventPage" });
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tCopy = await getTranslations({ locale, namespace: "Utils.EventCopy" });
   const tCategories = await getTranslations({
     locale,
@@ -179,6 +182,12 @@ export default async function EventPage({
   const statusMeta = {
     state: temporalStatus.state,
     label: temporalStatus.label,
+  };
+
+  const shouldShowFavoriteButton = Boolean(event.slug);
+  const favoriteLabels = {
+    add: tCard("favoriteAddAria"),
+    remove: tCard("favoriteRemoveAria"),
   };
 
   // Build intro and FAQ via shared utils (no assumptions)
@@ -335,7 +344,16 @@ export default async function EventPage({
                   regionName={regionName}
                   postalCode={event.city?.postalCode || ""}
                 />
-                <div className="ml-element-gap-sm">
+                <div className="ml-element-gap-sm flex items-center gap-2">
+                  {shouldShowFavoriteButton && (
+                    <FavoriteButton
+                      eventSlug={event.slug}
+                      eventId={event.id ? String(event.id) : undefined}
+                      eventTitle={event.title}
+                      initialIsFavorite={false}
+                      labels={favoriteLabels}
+                    />
+                  )}
                   <ViewCounter visits={event.visits} />
                 </div>
               </div>

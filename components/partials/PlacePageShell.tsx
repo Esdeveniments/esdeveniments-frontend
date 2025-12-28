@@ -143,7 +143,6 @@ export default async function PlacePageShell({
   place,
   category,
   date,
-  hasNewsPromise,
   categories = [],
   webPageSchemaFactory,
 }: PlacePageShellProps) {
@@ -159,7 +158,6 @@ export default async function PlacePageShell({
           place={place}
           category={category}
           date={date}
-          hasNewsPromise={hasNewsPromise}
           categories={categories}
           webPageSchemaFactory={webPageSchemaFactory}
         />
@@ -214,7 +212,6 @@ async function PlacePageContent({
   place,
   category,
   date,
-  hasNewsPromise,
   categories,
   webPageSchemaFactory,
 }: Pick<
@@ -224,17 +221,12 @@ async function PlacePageContent({
   | "place"
   | "category"
   | "date"
-  | "hasNewsPromise"
   | "categories"
   | "webPageSchemaFactory"
 >): Promise<JSX.Element> {
   // Await shell data and events in parallel
-  const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, structuredScripts }, hasNews] =
-    await Promise.all([
-      shellDataPromise,
-      eventsPromise,
-      hasNewsPromise || Promise.resolve(false),
-    ]);
+  const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, structuredScripts }] =
+    await Promise.all([shellDataPromise, eventsPromise]);
 
   const tFaq = await getTranslations("Utils.ListPageFaq");
   const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
@@ -345,7 +337,6 @@ async function PlacePageContent({
           category={category}
           date={date}
           serverHasMore={serverHasMore}
-          hasNews={hasNews}
           categories={categories}
         />
       </FilterLoadingGate>
