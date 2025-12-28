@@ -75,7 +75,7 @@ describe("/api/favorites", () => {
     process.env = originalEnv;
   });
 
-  it("returns 400 EMPTY_EVENT_SLUG for empty/whitespace slug and does not write cookie", async () => {
+  it("returns 400 INVALID_BODY for empty/whitespace slug and does not write cookie", async () => {
     setFavoritesCookieValue(JSON.stringify(["a"]));
 
     const { POST } = await import("@app/api/favorites/route");
@@ -90,7 +90,7 @@ describe("/api/favorites", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
       ok: false,
-      error: "EMPTY_EVENT_SLUG",
+      error: "INVALID_BODY",
     });
     expect(cookieSetMock).not.toHaveBeenCalled();
   });
@@ -178,7 +178,7 @@ describe("/api/favorites", () => {
   });
 
   it("treats re-adding an existing favorite as most recent (LRU-like)", async () => {
-    const { MAX_FAVORITES } = await import("@utils/favorites");
+    const { MAX_FAVORITES } = await import("@utils/constants");
     const current = Array.from({ length: MAX_FAVORITES }, (_, i) => `s-${i}`);
     setFavoritesCookieValue(JSON.stringify(current));
 
@@ -232,7 +232,7 @@ describe("/api/favorites", () => {
   });
 
   it("enforces MAX_FAVORITES cap (rejects new favorite when full)", async () => {
-    const { MAX_FAVORITES } = await import("@utils/favorites");
+    const { MAX_FAVORITES } = await import("@utils/constants");
     const current = Array.from({ length: MAX_FAVORITES }, (_, i) => `s-${i}`);
     setFavoritesCookieValue(JSON.stringify(current));
 

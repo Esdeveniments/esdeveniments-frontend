@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { captureException } from "@sentry/nextjs";
+import { MAX_FAVORITES } from "@utils/constants";
 
 import {
-  MAX_FAVORITES,
   getFavoritesFromCookies,
   persistFavoritesCookie,
 } from "@utils/favorites";
@@ -50,19 +50,6 @@ export async function POST(request: Request) {
       });
       return NextResponse.json(
         { ok: false, error: "INVALID_BODY" },
-        { status: 400, headers: { "Cache-Control": "no-store" } }
-      );
-    }
-
-    if (
-      json &&
-      typeof json === "object" &&
-      "eventSlug" in json &&
-      typeof (json as { eventSlug?: unknown }).eventSlug === "string" &&
-      (json as { eventSlug: string }).eventSlug.trim() === ""
-    ) {
-      return NextResponse.json(
-        { ok: false, error: "EMPTY_EVENT_SLUG" },
         { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }

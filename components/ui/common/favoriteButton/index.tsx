@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "../../../../i18n/routing";
+import { usePathname, useRouter } from "@i18n/routing";
 import useSWR from "swr";
 import HeartIconSolid from "@heroicons/react/solid/esm/HeartIcon";
 import HeartIconOutline from "@heroicons/react/outline/esm/HeartIcon";

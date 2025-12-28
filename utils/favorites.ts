@@ -1,8 +1,9 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { MAX_FAVORITES } from "@utils/constants";
 
 export const FAVORITES_COOKIE_NAME = "user_favorites";
-export const MAX_FAVORITES = 10;
+export { MAX_FAVORITES };
 
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 

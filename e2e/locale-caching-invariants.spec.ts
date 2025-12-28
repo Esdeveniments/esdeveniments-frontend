@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import { LOCALE_COOKIE } from "../types/i18n";
+import { LOCALE_COOKIE } from "types/i18n";
 
 test.describe("Locale caching invariants", () => {
   test.setTimeout(process.env.CI ? 120000 : 60000);
@@ -52,7 +52,9 @@ test.describe("Locale caching invariants", () => {
     browser,
     baseURL,
   }) => {
-    expect(baseURL).toBeTruthy();
+    if (!baseURL) {
+      throw new Error("Missing Playwright baseURL; set use.baseURL in config");
+    }
 
     const contextDefault = await browser.newContext({
       extraHTTPHeaders: { "accept-language": "ca" },
@@ -83,7 +85,9 @@ test.describe("Locale caching invariants", () => {
     expect(contentLangDefault).toBe("ca");
 
     if (!cacheDefault) {
-      throw new Error("Missing 'cache-control' header on default locale response");
+      throw new Error(
+        "Missing 'cache-control' header on default locale response"
+      );
     }
 
     const contextWithLocaleCookie = await browser.newContext({
@@ -94,7 +98,7 @@ test.describe("Locale caching invariants", () => {
       {
         name: LOCALE_COOKIE,
         value: "es",
-        url: baseURL!,
+        url: baseURL,
       },
     ]);
 
@@ -104,7 +108,9 @@ test.describe("Locale caching invariants", () => {
       timeout: 90000,
     });
     if (!responseCookie) {
-      throw new Error("Navigation to '/catalunya' did not return a response (cookie context)");
+      throw new Error(
+        "Navigation to '/catalunya' did not return a response (cookie context)"
+      );
     }
 
     const headersCookie = await responseCookie.allHeaders();

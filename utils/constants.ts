@@ -8,6 +8,7 @@ import esMessages from "../messages/es.json";
 import enMessages from "../messages/en.json";
 
 export const MAX_RESULTS = 15;
+export const MAX_FAVORITES = 10;
 // Keep safely under Lambda's 6MB cap and common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =

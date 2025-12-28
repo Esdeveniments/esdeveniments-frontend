@@ -76,9 +76,8 @@ describe("persistFavoritesCookie", () => {
   });
 
   it("returns the capped list and persists that exact list", async () => {
-    const { MAX_FAVORITES, persistFavoritesCookie } = await import(
-      "@utils/favorites"
-    );
+    const { MAX_FAVORITES } = await import("@utils/constants");
+    const { persistFavoritesCookie } = await import("@utils/favorites");
 
     const favorites = Array.from(
       { length: MAX_FAVORITES + 7 },

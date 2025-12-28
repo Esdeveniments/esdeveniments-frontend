@@ -17,7 +17,7 @@ const sendGoogleEventMock = vi.fn<
   (event: string, obj: Record<string, unknown>) => void
 >();
 
-vi.mock("next/navigation", () => ({
+vi.mock("@i18n/routing", () => ({
   useRouter: () => ({ refresh: refreshMock }),
   usePathname: () => "/preferits",
 }));
@@ -86,6 +86,10 @@ describe("FavoriteButton", () => {
           method: "POST",
         })
       );
+    });
+
+    await waitFor(() => {
+      expect(refreshMock).toHaveBeenCalled();
     });
 
     expect(screen.getByRole("button", { name: "Elimina de preferits" })).toHaveAttribute(
