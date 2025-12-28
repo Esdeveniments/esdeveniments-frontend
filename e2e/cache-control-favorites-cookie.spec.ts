@@ -45,8 +45,12 @@ test.describe("Cache-Control with favorites cookie", () => {
     ];
     expect(cacheControlWithCookie).toBeTruthy();
 
-    // Regression guard: favorites cookie must NOT turn most of the site into private HTML.
-    expect(cacheControlWithCookie).not.toContain("private");
+    // Regression guard: the favorites cookie must NOT be the reason a page becomes private.
+    // Some CI/preview layers may already force private/no-store for all HTML.
+    const baselineIsPrivate = cacheControlWithoutCookie.includes("private");
+    if (!baselineIsPrivate) {
+      expect(cacheControlWithCookie).not.toContain("private");
+    }
 
     // In environments where we do emit CDN caching headers, ensure they're preserved.
     const looksLikeCdnCaching =
