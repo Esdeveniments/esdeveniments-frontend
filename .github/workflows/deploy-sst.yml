@@ -242,7 +242,7 @@ jobs:
           echo "✅ robots.txt looks correct"
 
       - name: Run E2E tests
-        run: yarn test:e2e
+        run: yarn test:e2e -c playwright.remote.config.ts --workers=2
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
