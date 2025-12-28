@@ -1,7 +1,13 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
+import { unregisterServiceWorkers } from "./helpers/unregister-sw";
 
 test.describe("Publish wizard should not auto publish", () => {
+  // Unregister SW before tests - SWs intercept fetch before Playwright's route handlers
+  test.beforeEach(async ({ page }) => {
+    await unregisterServiceWorkers(page);
+  });
+
   test("does not publish when navigating back and forth and ignores implicit submits", async ({
     page,
   }) => {

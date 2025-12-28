@@ -50,6 +50,20 @@ describe("normalizeMonthParam", () => {
     expect(resolveMonthIndexFromSlug("february")).toBe(1);
     expect(resolveMonthIndexFromSlug("september")).toBe(8);
   });
+
+  it("getHistoricDates handles Spanish month slugs (e.g., mayo)", () => {
+    expect(() => getHistoricDates("mayo", 2024)).not.toThrow();
+    const { from } = getHistoricDates("mayo", 2024);
+    expect(from.getMonth()).toBe(4); // May is month index 4
+    expect(from.getFullYear()).toBe(2024);
+  });
+
+  it("getHistoricDates handles English month slugs", () => {
+    expect(() => getHistoricDates("august", 2024)).not.toThrow();
+    const { from } = getHistoricDates("august", 2024);
+    expect(from.getMonth()).toBe(7); // August is month index 7
+    expect(from.getFullYear()).toBe(2024);
+  });
 });
 
 

@@ -1,10 +1,16 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
+import { unregisterServiceWorkers } from "./helpers/unregister-sw";
 
 // This test relies on E2E_TEST_MODE to short-circuit the server action and produce a stable slug.
 // CI sets no E2E_TEST_MODE by default. We set it via Playwright config env or GitHub Actions step if needed.
 
 test.skip("Publica -> Event flow (deterministic)", () => {
+  // Unregister SW before tests - SWs intercept fetch before Playwright's route handlers
+  test.beforeEach(async ({ page }) => {
+    await unregisterServiceWorkers(page);
+  });
+
   test("publishes an event and displays the created detail page", async ({
     page,
   }) => {

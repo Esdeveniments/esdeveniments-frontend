@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { unregisterServiceWorkers } from "./helpers/unregister-sw";
 
 const getFutureDate = (daysAhead: number): string => {
   const date = new Date();
@@ -7,6 +8,11 @@ const getFutureDate = (daysAhead: number): string => {
 };
 
 test.describe("Client-side filters fetch & SSR list hiding", () => {
+  // Unregister SW before tests - SWs intercept fetch before Playwright's route handlers
+  test.beforeEach(async ({ page }) => {
+    await unregisterServiceWorkers(page);
+  });
+
   test("search filter: sends term=cardedeu and hides SSR list", async ({ page }) => {
     const searchEventDate = getFutureDate(30);
     // Intercept client calls to the internal proxy and assert term

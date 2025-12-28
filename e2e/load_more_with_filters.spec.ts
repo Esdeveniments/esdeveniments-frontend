@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { unregisterServiceWorkers } from "./helpers/unregister-sw";
 
 test.describe("Load more with filters via proxy", () => {
+  // Unregister SW before tests - SWs intercept fetch before Playwright's route handlers
+  test.beforeEach(async ({ page }) => {
+    await unregisterServiceWorkers(page);
+  });
+
   test("appends pages and hides button when last", async ({ page }) => {
     test.setTimeout(45000);
     // Intercept client calls to the internal proxy
