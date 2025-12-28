@@ -1,12 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { unregisterServiceWorkers } from "./helpers/unregister-sw";
+
+// Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
+// This allows Playwright's route handlers to intercept API requests for mocking
 
 test.describe("Load more with filters via proxy", () => {
-  // Unregister SW before tests - SWs intercept fetch before Playwright's route handlers
-  test.beforeEach(async ({ page }) => {
-    await unregisterServiceWorkers(page);
-  });
-
   test("appends pages and hides button when last", async ({ page }) => {
     test.setTimeout(45000);
     // Intercept client calls to the internal proxy
@@ -14,9 +11,81 @@ test.describe("Load more with filters via proxy", () => {
       const url = new URL(route.request().url());
       const pageParam = url.searchParams.get("page");
 
-      // Continue with normal request for pages we don't mock
-      if (pageParam !== "1" && pageParam !== "2") {
-        return route.continue();
+      // Mock page 0 to match the test page's initial events
+      if (pageParam === "0" || !pageParam) {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            content: [
+              {
+                id: "1",
+                hash: "hash-1",
+                slug: "e1",
+                title: "Initial Event 1",
+                type: "FREE",
+                url: "https://example.com/e1",
+                description: "Event description",
+                imageUrl: "",
+                startDate: "2025-01-01",
+                startTime: null,
+                endDate: "2025-01-01",
+                endTime: null,
+                location: "Barcelona",
+                visits: 0,
+                origin: "MANUAL",
+                city: {
+                  id: 1,
+                  name: "Barcelona",
+                  slug: "barcelona",
+                  latitude: 41.3851,
+                  longitude: 2.1734,
+                  postalCode: "08001",
+                  rssFeed: null,
+                  enabled: true,
+                },
+                region: { id: 1, name: "Barcelona", slug: "barcelona" },
+                province: { id: 1, name: "Barcelona", slug: "barcelona" },
+                categories: [],
+              },
+              {
+                id: "2",
+                hash: "hash-2",
+                slug: "e2",
+                title: "Initial Event 2",
+                type: "FREE",
+                url: "https://example.com/e2",
+                description: "Event description",
+                imageUrl: "",
+                startDate: "2025-01-01",
+                startTime: null,
+                endDate: "2025-01-01",
+                endTime: null,
+                location: "Barcelona",
+                visits: 0,
+                origin: "MANUAL",
+                city: {
+                  id: 1,
+                  name: "Barcelona",
+                  slug: "barcelona",
+                  latitude: 41.3851,
+                  longitude: 2.1734,
+                  postalCode: "08001",
+                  rssFeed: null,
+                  enabled: true,
+                },
+                region: { id: 1, name: "Barcelona", slug: "barcelona" },
+                province: { id: 1, name: "Barcelona", slug: "barcelona" },
+                categories: [],
+              },
+            ],
+            currentPage: 0,
+            pageSize: 10,
+            totalElements: 5,
+            totalPages: 3,
+            last: false,
+          }),
+        });
       }
 
       if (pageParam === "1") {

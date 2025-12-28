@@ -1,22 +1,31 @@
-import type { Page } from "@playwright/test";
+import type { Page, BrowserContext } from "@playwright/test";
 
 /**
- * Unregisters all service workers to prevent them from intercepting
- * network requests before Playwright's route handlers.
- * 
- * Call this BEFORE page.route() in tests that need to mock API responses.
- * Service Workers intercept fetch requests before Playwright's network layer,
- * so mocked routes won't work correctly if a SW is active.
+ * NOTE: Service Workers are now blocked globally via playwright.config.ts
+ * using `serviceWorkers: 'block'` in the project configuration.
+ *
+ * This file is kept for backward compatibility and documentation.
+ * The functions below are no longer needed for tests that rely on route mocking.
  */
-export async function unregisterServiceWorkers(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    // Unregister any existing service workers
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        for (const registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-  });
+
+/**
+ * @deprecated Service workers are now blocked globally in playwright.config.ts
+ *
+ * Blocks the service worker from loading and unregisters any existing SWs.
+ * This allows Playwright's route handlers to intercept network requests.
+ */
+export async function unregisterServiceWorkers(_page: Page): Promise<void> {
+  // No-op: SWs are blocked globally in playwright.config.ts
+  // Keeping this function for backward compatibility
+}
+
+/**
+ * @deprecated Service workers are now blocked globally in playwright.config.ts
+ *
+ * Alternative: Configure the entire browser context to block service workers.
+ */
+export async function blockServiceWorkersInContext(
+  _context: BrowserContext
+): Promise<void> {
+  // No-op: SWs are blocked globally in playwright.config.ts
 }

@@ -269,6 +269,7 @@ self.addEventListener("message", (event) => {
 // We cache navigations (HTML documents) for offline support, but if markup changes between
 // versions and an old cached HTML response is served, React hydration can fail.
 // When a new service worker activates, clear the pages cache so future navigations fetch fresh HTML.
+// Also clear the images cache to ensure broken image responses are not served.
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -276,6 +277,7 @@ self.addEventListener("activate", (event) => {
       await self.clients.claim();
       try {
         await caches.delete("esdeveniments-pages-cache");
+        await caches.delete("esdeveniments-images-cache");
       } catch {
         // noop: cache API may be unavailable or restricted
       }
