@@ -98,11 +98,11 @@ async function fetchFavoritesEvents(
   return { events: results, notFoundSlugs };
 }
 
-export default async function FavoritsPage() {
+export default async function PreferitsPage() {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "App.Favorites" });
 
-  const favoriteSlugs = await getFavoritesFromCookies();
+  const favoriteSlugs = [...(await getFavoritesFromCookies())].reverse();
   const uniqueFavoritesCount = new Set(favoriteSlugs).size;
   const { events, notFoundSlugs } = await fetchFavoritesEvents(favoriteSlugs);
   const activeEvents = filterActiveEvents(events);

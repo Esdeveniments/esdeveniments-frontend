@@ -154,8 +154,8 @@ describe("Favorites page auto-prune", () => {
       }
     );
 
-    const { default: FavoritsPage } = await import("@app/preferits/page");
-    const element = await FavoritsPage();
+    const { default: PreferitsPage } = await import("@app/preferits/page");
+    const element = await PreferitsPage();
     renderToStaticMarkup(element);
 
     expect(autoPruneProps).toHaveLength(1);
@@ -190,8 +190,8 @@ describe("Favorites page auto-prune", () => {
         events as EventSummaryResponseDTO[]
     );
 
-    const { default: FavoritsPage } = await import("@app/preferits/page");
-    const element = await FavoritsPage();
+    const { default: PreferitsPage } = await import("@app/preferits/page");
+    const element = await PreferitsPage();
     renderToStaticMarkup(element);
 
     expect(autoPruneProps).toHaveLength(1);
