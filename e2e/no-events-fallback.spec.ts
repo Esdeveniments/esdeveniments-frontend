@@ -20,35 +20,26 @@ test.describe("No events fallback", () => {
     const noEvents = page.getByTestId("no-events-found");
     const eventLinks = page.locator('a[href^="/e/"]');
 
-    let outcome: "loading" | "no-events" | "has-events" = "loading";
-
     await expect
       .poll(
         async () => {
-          if (await noEvents.isVisible()) {
-            outcome = "no-events";
-            return outcome;
-          }
+          if (await noEvents.isVisible()) return "no-events";
 
           const eventCount = await eventLinks.count();
-          if (eventCount > 0) {
-            outcome = "has-events";
-            return outcome;
-          }
+          if (eventCount > 0) return "has-events";
 
-          outcome = "loading";
-          return outcome;
+          return "loading";
         },
         { timeout: process.env.CI ? 60000 : 20000 }
       )
       .not.toBe("loading");
 
-    if (outcome === "no-events") {
+    // Make the accepted outcomes explicit: either the "no events" widget appears,
+    // or we have at least one event due to upstream fallback behavior.
+    if (await noEvents.isVisible()) {
       await expect(noEvents).toBeVisible();
-      return;
+    } else {
+      expect(await eventLinks.count()).toBeGreaterThan(0);
     }
-
-    expect(outcome).toBe("has-events");
-    expect(await eventLinks.count()).toBeGreaterThan(0);
   });
 });
