@@ -113,7 +113,7 @@ async function fetchEventsInternal(
     const finalUrl = `${apiUrl}/events?${queryString}`;
 
     const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 300, tags: ["events"] },
+      next: { revalidate: 600, tags: ["events"] },
       headers: {
         Accept: "application/json",
       },
@@ -495,7 +495,7 @@ export async function fetchCategorizedEvents(
     const finalUrl = `${apiUrl}/events/categorized${queryString}`;
 
     const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 300, tags: ["events", "events:categorized"] },
+      next: { revalidate: 600, tags: ["events", "events:categorized"] },
       headers: {
         Accept: "application/json",
       },

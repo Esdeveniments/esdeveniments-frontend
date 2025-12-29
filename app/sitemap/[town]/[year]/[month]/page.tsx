@@ -130,12 +130,18 @@ export default async function Page({
     DEFAULT_MONTHS_URL
   );
 
+  // Limit to 100 events per page to stay under Lambda's 6MB payload limit
+  // Archive pages are for SEO/discoverability; users can click through to event detail pages
+  const MAX_EVENTS_PER_PAGE = 100;
+  // Limit JSON-LD to top 50 events to reduce payload size while maintaining SEO value
+  const MAX_EVENTS_FOR_JSON_LD = 50;
+
   const [events, place] = await Promise.all([
     fetchEvents({
       place: town,
       from: from.toISOString().split("T")[0],
       to: until.toISOString().split("T")[0],
-      size: 2500,
+      size: MAX_EVENTS_PER_PAGE,
     }),
     getPlaceBySlug(town),
   ]);
@@ -155,9 +161,13 @@ export default async function Page({
     )
     : [];
 
-  // Generate event JSON-LD data
-  const jsonData = filteredEvents
-    ? filteredEvents
+  // Limit JSON-LD to first N events to reduce payload size
+  // This still provides good SEO value while staying under Lambda's 6MB limit
+  const eventsForJsonLd = filteredEvents.slice(0, MAX_EVENTS_FOR_JSON_LD);
+
+  // Generate event JSON-LD data (limited to avoid payload overflow)
+  const jsonData = eventsForJsonLd
+    ? eventsForJsonLd
       .map((event) => generateJsonData(event, locale))
       .filter((data) => data !== null)
     : [];
@@ -173,11 +183,11 @@ export default async function Page({
     },
   ];
 
-  // Generate ItemList for events if available
+  // Generate ItemList for events if available (limited to reduce payload)
   const eventsItemList =
-    filteredEvents.length > 0
+    eventsForJsonLd.length > 0
       ? generateItemListStructuredData(
-        filteredEvents,
+        eventsForJsonLd,
         t("itemListTitle", { town: townLabel, month: monthLabel, year }),
         t("itemListDescription", { town: townLabel, month: monthLabel, year }),
         locale,

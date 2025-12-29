@@ -34,7 +34,7 @@ export async function fetchNews(
     }
     const response = await fetch(finalUrl, {
       headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 60, tags },
+      next: { revalidate: 3600, tags },
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -66,7 +66,7 @@ export async function fetchNewsBySlug(
     const url = await getInternalApiUrl(`/api/news/${slug}`);
     const response = await fetch(url, {
       headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 60, tags: [newsTag, newsSlugTag(slug)] },
+      next: { revalidate: 3600, tags: [newsTag, newsSlugTag(slug)] },
     });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

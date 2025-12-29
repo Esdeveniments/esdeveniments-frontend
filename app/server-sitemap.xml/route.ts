@@ -1,56 +1,19 @@
 import { siteUrl } from "@config/index";
-import { fetchEvents } from "@lib/api/events";
-import { EventSummaryResponseDTO } from "types/api/event";
-import { buildSitemap } from "@utils/sitemap";
-import type { SitemapField } from "types/sitemap";
-import { buildAlternateLinks } from "@utils/i18n-seo";
+import { buildSitemapIndex } from "@utils/sitemap";
 
 export async function GET() {
-  // Removed date filtering - new API doesn't support it
+  // Sitemap index: references chunked event sitemaps to avoid 6MB Lambda payload limit
+  // Each chunk handles 500 events (see sitemap-events route)
+  // Adjust CHUNKS based on expected total event count (~2500 events = 5 chunks)
+  const CHUNKS = 5;
 
-  const response = await fetchEvents({
-    page: 0,
-    size: 2500,
-  });
+  const sitemaps = Array.from(
+    { length: CHUNKS },
+    (_, i) => `${siteUrl}/sitemap-events/${i + 1}.xml`
+  );
 
-  const events = response.content;
+  const xml = buildSitemapIndex(sitemaps);
 
-  if (!Array.isArray(events)) {
-    return new Response("<error>events is not an array</error>", {
-      status: 500,
-      headers: { "Content-Type": "application/xml" },
-    });
-  }
-
-  const normalizedEvents = JSON.parse(
-    JSON.stringify(events)
-  ) as EventSummaryResponseDTO[];
-
-  const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
-
-  const fields: SitemapField[] = normalizedEvents
-    .filter((event) => !event.isAd)
-    .map((data) => {
-      const image = data.imageUrl || defaultImage;
-      // Use event's updatedAt if available, otherwise fall back to endDate || startDate
-      let lastModDate = data.updatedAt
-        ? new Date(data.updatedAt)
-        : new Date(data.endDate || data.startDate);
-      if (isNaN(lastModDate.getTime())) {
-        lastModDate = new Date();
-      }
-      const loc = `${siteUrl}/e/${data.slug}`;
-      return {
-        loc,
-        lastmod: lastModDate.toISOString(),
-        changefreq: "daily",
-        priority: 0.7,
-        image: image ? { loc: image, title: data.title } : undefined,
-        alternates: buildAlternateLinks(loc),
-      };
-    });
-
-  const xml = buildSitemap(fields, { includeImage: true });
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
