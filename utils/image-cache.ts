@@ -1,5 +1,4 @@
 const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
-const DUMMY_BASE_URL = "https://cache-buster.local";
 const CACHE_PARAM = "v";
 const MAX_URL_LENGTH = 2048;
 
@@ -22,12 +21,15 @@ function sanitizeUrlCandidate(imageUrl: string | null | undefined): string {
 }
 
 /**
- * Normalize external image URLs:
+ * Normalize external image URLs using string operations only (no URL object serialization).
+ * This ensures byte-for-byte identical output on server (Node) and client (browser),
+ * avoiding hydration mismatches caused by different URL serialization behaviors.
+ *
  * - Trim whitespace
  * - Reject overly long / invalid URLs
  * - Normalize protocol-relative to https
  * - Collapse duplicate slashes in pathname (preserve protocol)
- * - Prefer https over http when the host is not localhost/127.0.0.1
+ * - Strip userinfo (credentials) for security
  */
 export function normalizeExternalImageUrl(imageUrl: string): string {
   const trimmed = sanitizeUrlCandidate(imageUrl);
@@ -35,9 +37,14 @@ export function normalizeExternalImageUrl(imageUrl: string): string {
     return "";
   }
 
+  // Reject overly long URLs
+  if (trimmed.length > MAX_URL_LENGTH) {
+    return trimmed.slice(0, MAX_URL_LENGTH);
+  }
+
   // Handle protocol-relative
   if (trimmed.startsWith("//")) {
-    return `https:${trimmed}`;
+    return normalizeExternalImageUrl(`https:${trimmed}`);
   }
 
   // If it looks like a URL with protocol but not http/https, drop it
@@ -47,32 +54,52 @@ export function normalizeExternalImageUrl(imageUrl: string): string {
 
   // If not absolute, return trimmed as-is (relative URLs are allowed)
   if (!ABSOLUTE_URL_REGEX.test(trimmed)) {
+    // Collapse duplicate slashes in relative paths
+    return trimmed.replace(/\/{2,}/g, "/");
+  }
+
+  // --- String-based normalization for absolute URLs ---
+  // Split into protocol + rest
+  const protocolMatch = trimmed.match(/^(https?:\/\/)/i);
+  if (!protocolMatch) {
     return trimmed;
   }
+  const protocol = protocolMatch[1].toLowerCase(); // normalize to lowercase
+  let rest = trimmed.slice(protocolMatch[1].length);
 
-  try {
-    const urlObj = new URL(trimmed);
-
-    // Avoid userinfo (credentials) in URL to prevent SSRF-style surprises
-    urlObj.username = "";
-    urlObj.password = "";
-
-    // Collapse duplicate slashes in pathname (keeping leading slash)
-    urlObj.pathname = urlObj.pathname.replace(/\/{2,}/g, "/");
-
-    return urlObj.toString();
-  } catch {
-    // Fail-open: keep the original trimmed URL so we don't break rendering
-    // for upstreams that return slightly non-compliant but still fetchable URLs.
-    return trimmed.length > MAX_URL_LENGTH ? trimmed.slice(0, MAX_URL_LENGTH) : trimmed;
+  // Strip userinfo (user:pass@) if present
+  const atIndex = rest.indexOf("@");
+  const slashIndex = rest.indexOf("/");
+  if (atIndex !== -1 && (slashIndex === -1 || atIndex < slashIndex)) {
+    rest = rest.slice(atIndex + 1);
   }
+
+  // Find where the path starts
+  const pathStart = rest.indexOf("/");
+  if (pathStart === -1) {
+    // No path, just host (possibly with query/hash)
+    return `${protocol}${rest}`;
+  }
+
+  const hostPart = rest.slice(0, pathStart);
+  let pathAndRest = rest.slice(pathStart);
+
+  // Collapse duplicate slashes in pathname only (not in query or hash)
+  const queryIndex = pathAndRest.indexOf("?");
+  const hashIndex = pathAndRest.indexOf("#");
+  const pathEnd = queryIndex !== -1 ? queryIndex : hashIndex !== -1 ? hashIndex : pathAndRest.length;
+  const pathname = pathAndRest.slice(0, pathEnd).replace(/\/{2,}/g, "/");
+  const suffix = pathAndRest.slice(pathEnd);
+
+  return `${protocol}${hostPart}${pathname}${suffix}`;
 }
 
 /**
  * Appends (or replaces) a cache-busting query parameter to an image URL.
+ * Uses string-based operations only to ensure SSR/client hydration consistency.
  * Uses the provided cacheKey (event hash, updatedAt, etc.) so that
  * CloudFront can keep a long TTL while still reflecting new uploads.
- * 
+ *
  * Also normalizes protocol-relative URLs (//cdn.example.com/image.jpg) to HTTPS.
  */
 export function withImageCacheKey(
@@ -94,35 +121,28 @@ export function withImageCacheKey(
     return normalizedUrl;
   }
 
-  const isAbsolute = ABSOLUTE_URL_REGEX.test(normalizedUrl);
+  const encodedKey = encodeURIComponent(normalizedKey);
 
-  try {
-    const parsed = isAbsolute
-      ? new URL(normalizedUrl)
-      : new URL(normalizedUrl, DUMMY_BASE_URL);
+  // Regex to find existing cache param (case-insensitive)
+  const cacheParamRegex = new RegExp(`([?&])${CACHE_PARAM}=([^&#]*)`, "i");
 
-    parsed.searchParams.set(CACHE_PARAM, normalizedKey);
-
-    if (isAbsolute) {
-      return parsed.toString();
-    }
-
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch {
-    // Fallback: naive string manipulation (covers protocol-relative or malformed URLs)
-    const encodedKey = encodeURIComponent(normalizedKey);
-    const cacheParamRegex = new RegExp(`([?\u0026])${CACHE_PARAM}=([^\u0026#]*)`, "i");
-
-    if (cacheParamRegex.test(normalizedUrl)) {
-      return normalizedUrl.replace(
-        cacheParamRegex,
-        `$1${CACHE_PARAM}=${encodedKey}`
-      );
-    }
-
-    const separator = normalizedUrl.includes("?") ? "\u0026" : "?";
-    return `${normalizedUrl}${separator}${CACHE_PARAM}=${encodedKey}`;
+  if (cacheParamRegex.test(normalizedUrl)) {
+    // Replace existing cache param
+    return normalizedUrl.replace(cacheParamRegex, `$1${CACHE_PARAM}=${encodedKey}`);
   }
+
+  // Append new cache param
+  // Check if URL has a hash - insert before it
+  const hashIndex = normalizedUrl.indexOf("#");
+  if (hashIndex !== -1) {
+    const beforeHash = normalizedUrl.slice(0, hashIndex);
+    const hash = normalizedUrl.slice(hashIndex);
+    const separator = beforeHash.includes("?") ? "&" : "?";
+    return `${beforeHash}${separator}${CACHE_PARAM}=${encodedKey}${hash}`;
+  }
+
+  const separator = normalizedUrl.includes("?") ? "&" : "?";
+  return `${normalizedUrl}${separator}${CACHE_PARAM}=${encodedKey}`;
 }
 
 /**

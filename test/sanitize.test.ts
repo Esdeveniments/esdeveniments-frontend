@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { stripHtmlTags, sanitizeHtml } from "@utils/sanitize";
+import {
+  stripHtmlTags,
+  sanitizeHtml,
+  sanitizeHtmlClient,
+} from "@utils/sanitize";
 
 describe("stripHtmlTags", () => {
   describe("basic functionality", () => {
@@ -336,6 +340,141 @@ describe("sanitizeHtml", () => {
       expect(result).not.toContain("<style>");
       expect(result).toContain("<p>Text</p>");
       expect(result).toContain("<a>Click</a>");
+    });
+  });
+});
+
+describe("sanitizeHtmlClient", () => {
+  describe("basic functionality", () => {
+    it("returns empty string for falsy input", () => {
+      expect(sanitizeHtmlClient("")).toBe("");
+      expect(sanitizeHtmlClient(null as unknown as string)).toBe("");
+      expect(sanitizeHtmlClient(undefined as unknown as string)).toBe("");
+    });
+
+    it("preserves plain text", () => {
+      expect(sanitizeHtmlClient("Hello world")).toBe("Hello world");
+    });
+
+    it("preserves allowed tags", () => {
+      expect(sanitizeHtmlClient("<p>Paragraph</p>")).toBe("<p>Paragraph</p>");
+      expect(sanitizeHtmlClient("<strong>Bold</strong>")).toBe(
+        "<strong>Bold</strong>"
+      );
+      expect(sanitizeHtmlClient("<em>Italic</em>")).toBe("<em>Italic</em>");
+      expect(sanitizeHtmlClient("<br>")).toBe("<br>");
+    });
+
+    it("preserves nested allowed tags", () => {
+      const html = "<p>Text with <strong>bold</strong> and <em>italic</em></p>";
+      expect(sanitizeHtmlClient(html)).toBe(html);
+    });
+  });
+
+  describe("XSS prevention", () => {
+    it("removes script tags", () => {
+      const result = sanitizeHtmlClient("<script>alert('xss')</script>");
+      expect(result).not.toContain("<script>");
+      expect(result).not.toContain("</script>");
+    });
+
+    it("removes event handlers", () => {
+      const result = sanitizeHtmlClient('<p onclick="alert(1)">Text</p>');
+      expect(result).not.toContain("onclick");
+      expect(result).toContain("<p>Text</p>");
+    });
+
+    it("removes javascript: URLs from links", () => {
+      const result = sanitizeHtmlClient(
+        '<a href="javascript:alert(1)">Link</a>'
+      );
+      expect(result).not.toContain("javascript:");
+    });
+
+    it("removes onerror handlers from images", () => {
+      const result = sanitizeHtmlClient('<img src="x" onerror="alert(1)">');
+      expect(result).not.toContain("onerror");
+    });
+
+    it("removes style tags", () => {
+      const result = sanitizeHtmlClient("<style>body{display:none}</style>");
+      expect(result).not.toContain("<style>");
+    });
+
+    it("handles multiple attack vectors", () => {
+      const malicious = `
+        <script>alert('xss')</script>
+        <p onclick="alert(1)">Safe text</p>
+        <a href="javascript:void(0)">Click</a>
+        <style>.hide{display:none}</style>
+      `;
+      const result = sanitizeHtmlClient(malicious);
+      expect(result).not.toContain("<script>");
+      expect(result).not.toContain("onclick");
+      expect(result).not.toContain("javascript:");
+      expect(result).not.toContain("<style>");
+      expect(result).toContain("Safe text");
+    });
+  });
+
+  describe("link sanitization", () => {
+    it("preserves valid http links", () => {
+      const result = sanitizeHtmlClient('<a href="https://example.com">Link</a>');
+      expect(result).toContain('href="https://example.com"');
+    });
+
+    it("removes data: URLs", () => {
+      const result = sanitizeHtmlClient(
+        '<a href="data:text/html,<script>alert(1)</script>">Link</a>'
+      );
+      expect(result).not.toContain("data:");
+    });
+  });
+
+  describe("HTML comments", () => {
+    it("removes HTML comments", () => {
+      const result = sanitizeHtmlClient("<!-- comment --><p>Text</p>");
+      expect(result).not.toContain("<!--");
+      expect(result).not.toContain("-->");
+      expect(result).toContain("<p>Text</p>");
+    });
+
+    it("removes conditional comments", () => {
+      const result = sanitizeHtmlClient(
+        "<!--[if IE]><script>alert(1)</script><![endif]--><p>Safe</p>"
+      );
+      expect(result).not.toContain("<!--");
+      expect(result).not.toContain("<script>");
+      expect(result).toContain("<p>Safe</p>");
+    });
+  });
+
+  describe("list handling", () => {
+    it("preserves unordered lists", () => {
+      const html = "<ul><li>Item 1</li><li>Item 2</li></ul>";
+      expect(sanitizeHtmlClient(html)).toBe(html);
+    });
+
+    it("preserves ordered lists", () => {
+      const html = "<ol><li>First</li><li>Second</li></ol>";
+      expect(sanitizeHtmlClient(html)).toBe(html);
+    });
+  });
+
+  describe("real-world content", () => {
+    it("handles event description HTML", () => {
+      const html = `
+        <p>Join us for an amazing <strong>cultural event</strong>!</p>
+        <ul>
+          <li>Live music</li>
+          <li>Art exhibitions</li>
+        </ul>
+        <p>Location: <a href="https://maps.google.com">View map</a></p>
+      `;
+      const result = sanitizeHtmlClient(html);
+      expect(result).toContain("<strong>cultural event</strong>");
+      expect(result).toContain("<li>Live music</li>");
+      expect(result).toContain('href="https://maps.google.com"');
     });
   });
 });
