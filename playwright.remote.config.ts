@@ -5,6 +5,14 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000";
 
+const vercelBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const vercelBypassHeaders: Record<string, string> = vercelBypassSecret
+  ? {
+      "x-vercel-protection-bypass": vercelBypassSecret,
+      "x-vercel-set-bypass-cookie": "true",
+    }
+  : {};
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -23,11 +31,21 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    locale: "ca-ES",
+    extraHTTPHeaders: {
+      "accept-language": "ca",
+      ...vercelBypassHeaders,
+    },
   },
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Block service workers to allow Playwright route handlers to intercept requests.
+        // SWs intercept fetch before Playwright's network layer, breaking route mocks.
+        serviceWorkers: "block",
+      },
     },
   ],
   expect: { timeout: 10000 },

@@ -1,5 +1,5 @@
 import { FC } from "react";
-import XIcon from "@heroicons/react/outline/XIcon";
+import XIcon from "@heroicons/react/outline/esm/XIcon";
 import { RangeInputProps } from "types/props";
 
 const RangeInput: FC<RangeInputProps> = ({

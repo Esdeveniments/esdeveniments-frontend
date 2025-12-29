@@ -1,12 +1,14 @@
-import React from "react";
-import dynamic from "next/dynamic";
-import { CloudIcon } from "@heroicons/react/outline";
+import CloudIcon from "@heroicons/react/outline/esm/CloudIcon";
+import { getTranslations } from "next-intl/server";
 import type { EventWeatherProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import Weather from "components/ui/weather";
 
-const Weather = dynamic(() => import("components/ui/weather"), { ssr: false });
+// Converted to server component for better performance
+// Uses getTranslations instead of useTranslations to enable SSR
+async function EventWeather({ weather }: EventWeatherProps) {
+  const t = await getTranslations("Components.Weather");
 
-const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
   if (!weather) return null;
 
   return (
@@ -15,13 +17,13 @@ const EventWeather: React.FC<EventWeatherProps> = ({ weather }) => {
         <SectionHeading
           Icon={CloudIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title="El temps"
+          title={t("title")}
           titleClassName="heading-2"
         />
         <Weather weather={weather} />
       </div>
     </div>
   );
-};
+}
 
 export default EventWeather;

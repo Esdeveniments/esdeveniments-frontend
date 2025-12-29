@@ -1,16 +1,30 @@
 import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache, createCache } from "@lib/api/cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache } from "react";
 
-const placeBySlugCache = createKeyedCache<PlaceResponseDTO | null>(86400000);
-const placesCache = createCache<PlaceResponseDTO[]>(86400000);
+const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
+  createKeyedCache<PlaceResponseDTO | null>(86400000);
+const { cache: placesCache, clear: clearPlacesListCache } =
+  createCache<PlaceResponseDTO[]>(86400000);
+
+/**
+ * Clear all in-memory place caches.
+ * Called by the revalidation API to ensure fresh data.
+ */
+export function clearPlacesCaches(): void {
+  clearPlaceBySlugCache();
+  clearPlacesListCache();
+}
 
 async function fetchPlaceBySlugApi(
   key: string | number
 ): Promise<PlaceResponseDTO | null> {
   const slug = String(key);
-  const response = await fetch(getInternalApiUrl(`/api/places/${slug}`), {
+  const encodedSlug = encodeURIComponent(slug);
+  const url = await getInternalApiUrl(`/api/places/${encodedSlug}`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["places", `place:${slug}`] },
   });
   if (response.status === 404) {
@@ -40,7 +54,9 @@ export async function fetchPlaceBySlug(
 export const getPlaceBySlug = cache(fetchPlaceBySlug);
 
 async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
-  const response = await fetch(getInternalApiUrl(`/api/places`), {
+  const url = await getInternalApiUrl(`/api/places`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["places"] },
   });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

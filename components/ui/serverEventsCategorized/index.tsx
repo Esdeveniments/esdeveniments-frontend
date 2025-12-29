@@ -1,20 +1,20 @@
 import { Suspense } from "react";
 import { captureException } from "@sentry/nextjs";
 import dynamic from "next/dynamic";
-import {
-  SparklesIcon,
-  ShoppingBagIcon,
-  EmojiHappyIcon,
-  MusicNoteIcon,
-  TicketIcon,
-  PhotographIcon,
-} from "@heroicons/react/outline";
+import { getTranslations } from "next-intl/server";
+import SparklesIcon from "@heroicons/react/outline/esm/SparklesIcon";
+import ShoppingBagIcon from "@heroicons/react/outline/esm/ShoppingBagIcon";
+import EmojiHappyIcon from "@heroicons/react/outline/esm/EmojiHappyIcon";
+import MusicNoteIcon from "@heroicons/react/outline/esm/MusicNoteIcon";
+import TicketIcon from "@heroicons/react/outline/esm/TicketIcon";
+import PhotographIcon from "@heroicons/react/outline/esm/PhotographIcon";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import type {
   FeaturedPlaceConfig,
+  SeoLinkSection,
   ServerEventsCategorizedContentProps,
   ServerEventsCategorizedProps,
 } from "types/props";
@@ -29,7 +29,12 @@ import {
 import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
+import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE } from "types/i18n";
+import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
+import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
@@ -58,17 +63,6 @@ const PRIORITY_CATEGORY_ORDER = new Map(
   PRIORITY_CATEGORY_SLUGS.map((slug, index) => [slug, index])
 );
 
-/**
- * Quick category links for the homepage navigation.
- * Combines category config (from shared config) with icons (component-specific).
- */
-const QUICK_CATEGORY_LINKS = Object.entries(CATEGORY_CONFIG).map(
-  ([slug, config]) => ({
-    label: config.label,
-    url: `/catalunya/${slug}`,
-    Icon: CATEGORY_ICONS[slug] || SparklesIcon, // Fallback icon
-  })
-);
 
 const resolveCategoryDetails = (
   categoryKey: string,
@@ -140,11 +134,62 @@ const resolveCategoryDetails = (
 };
 
 // --- MAIN COMPONENT ---
-function ServerEventsCategorized({
+async function ServerEventsCategorized({
   pageData,
-  seoTopTownLinks = [],
+  seoLinkSections = [],
   ...contentProps
 }: ServerEventsCategorizedProps) {
+  const locale = await getLocaleSafely();
+  const tCategories = await getTranslations({
+    locale,
+    namespace: "Config.Categories",
+  });
+  const tServerCategories = await getTranslations({
+    locale,
+    namespace: "Components.ServerEventsCategorized",
+  });
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!prefix) return path;
+    if (path === "/") return prefix;
+    if (path.startsWith(prefix)) return path;
+    return `${prefix}${path}`;
+  };
+
+  const renderedLinkSections = seoLinkSections.filter(
+    (section): section is SeoLinkSection =>
+      Boolean(section?.links && section.links.length > 0)
+  );
+
+  const formatLinkLabel = (sectionId: string, label: string) => {
+    if (sectionId === "local-agendas") {
+      return label.replace(/^Agenda\s+/i, "");
+    }
+    return label;
+  };
+
+  const quickCategoryLinks = Object.entries(CATEGORY_CONFIG).map(
+    ([slug, config]) => ({
+      label: tCategories(config.labelKey),
+      url: withLocale(`/catalunya/${slug}`),
+      categorySlug: slug,
+      Icon: CATEGORY_ICONS[slug] || SparklesIcon,
+    })
+  );
+
+  const seoLinkSectionsWithAnalytics = renderedLinkSections.map((section) => {
+    const analyticsContext = `home_seo_${section.id}`;
+    return {
+      ...section,
+      analyticsContext,
+      links: section.links.map((link) => ({
+        ...link,
+        ...extractPlaceDateCategorySlugsFromHref(link.href),
+      })),
+    };
+  });
+
   return (
     <div className="w-full bg-background">
       {/* 1. HERO SECTION: Search + Location + Dates */}
@@ -156,45 +201,56 @@ function ServerEventsCategorized({
         </div>
       </div>
 
-      {/* 2. TOP LOCATIONS (Moved from bottom) */}
-      {seoTopTownLinks.length > 0 && (
-        <div className="container py-8 border-b border-border/40">
-          <div className="flex flex-col gap-4">
-            <SectionHeading
-              title="Poblacions més buscades"
-              titleClassName="heading-2 text-foreground mb-element-gap"
-            />
-            <div className="flex flex-wrap gap-2">
-              {seoTopTownLinks.map((link) => (
-                <PressableAnchor
-                  key={link.href}
-                  href={link.href}
-                  prefetch={false}
-                  variant="plain"
-                  className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
-                >
-                  {link.label.replace("Agenda ", "")}
-                </PressableAnchor>
-              ))}
+      {/* 2. SEO LINK SECTIONS (weekend, today, tomorrow, agendas) */}
+      {seoLinkSectionsWithAnalytics.length > 0 && (
+        <div className="container py-8 border-b border-border/40 space-y-8">
+          {seoLinkSectionsWithAnalytics.map((section) => (
+            <div key={section.id} className="flex flex-col gap-4">
+              <SectionHeading
+                title={section.title}
+                titleClassName="heading-2 text-foreground mb-element-gap"
+              />
+              <div className="flex flex-wrap gap-2">
+                {section.links.map((link) => (
+                  <PressableAnchor
+                    key={`${section.id}-${link.href}`}
+                    href={withLocale(link.href)}
+                    prefetch={false}
+                    variant="plain"
+                    className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
+                    data-analytics-event-name="home_chip_click"
+                    data-analytics-context={section.analyticsContext}
+                    data-analytics-place-slug={link.placeSlug}
+                    data-analytics-date-slug={link.dateSlug}
+                    data-analytics-category-slug={link.categorySlug}
+                  >
+                    {formatLinkLabel(section.id, link.label)}
+                  </PressableAnchor>
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
 
       {/* 3. QUICK CATEGORIES */}
       <section className="py-section-y container border-b">
         <SectionHeading
-          title="Explora per interessos"
+          title={tServerCategories("quickCategoriesTitle")}
           titleClassName="heading-2 text-foreground mb-element-gap"
         />
         <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:py-2 sm:px-2 sm:-mx-2">
-          {QUICK_CATEGORY_LINKS.map(({ label, url, Icon }) => (
+          {quickCategoryLinks.map(({ label, url, categorySlug, Icon }) => (
             <PressableAnchor
               key={url}
               href={url}
               prefetch={false}
               variant="plain"
               className="btn-category h-full w-full text-xs sm:w-auto whitespace-nowrap"
+              data-analytics-event-name="select_category"
+              data-analytics-context="home_quick_categories"
+              data-analytics-place-slug="catalunya"
+              data-analytics-category-slug={categorySlug}
             >
               <span className="flex items-center gap-2 whitespace-nowrap">
                 <Icon
@@ -211,6 +267,7 @@ function ServerEventsCategorized({
       {/* 4. STREAMED CONTENT: HEAVY FETCHING */}
       <Suspense fallback={<ServerEventsCategorizedFallback />}>
         <ServerEventsCategorizedContent
+          localePrefix={prefix}
           {...contentProps}
         />
       </Suspense>
@@ -222,7 +279,9 @@ export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
   categoriesPromise,
   featuredPlaces,
-}: ServerEventsCategorizedContentProps) {
+  localePrefix = "",
+}: ServerEventsCategorizedContentProps & { localePrefix?: string }) {
+  const locale = await getLocaleSafely();
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
     categoriesPromise || Promise.resolve([])
@@ -368,6 +427,31 @@ export async function ServerEventsCategorizedContent({
     return <NoEventsFound />;
   }
 
+  const tCategory = await getTranslations({
+    locale,
+    namespace: "Components.CategoryEventsSection",
+  });
+  const tCategories = await getTranslations({
+    locale,
+    namespace: "Config.Categories",
+  });
+  const tCta = await getTranslations({
+    locale,
+    namespace: "Components.ServerEventsCategorized",
+  });
+  const tDateFilters = await getTranslations({
+    locale,
+    namespace: "Components.DateFilterBadges",
+  });
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!localePrefix) return path;
+    if (path === "/") return localePrefix;
+    if (path.startsWith(localePrefix)) return path;
+    return `${localePrefix}${path}`;
+  };
+
   // Ad Logic
   const adPositions = new Set<number>();
   for (let i = 1; i < categorySectionsToRender.length; i += 3) {
@@ -390,32 +474,54 @@ export async function ServerEventsCategorizedContent({
 
       {/* Categories Render */}
       <div className="container">
-        {categorySectionsToRender.map((section, index) => (
-          <CategoryEventsSection
-            key={section.key}
-            events={section.events}
-            categoryName={section.categoryName}
-            categorySlug={section.categorySlug}
-            categoryPhrase={section.categoryPhrase}
-            categories={categories}
-            shouldUsePriority={index < 2}
-            showAd={adPositions.has(index)}
-          />
-        ))}
+        {categorySectionsToRender.map((section, index) => {
+          const localizedCategoryName = getLocalizedCategoryLabelFromConfig(
+            section.categorySlug,
+            section.categoryName,
+            tCategories
+          );
+          const categoryPhrase = formatCatalanDe(localizedCategoryName, true, true);
+
+          return (
+            <CategoryEventsSection
+              key={section.key}
+              events={section.events}
+              categoryName={localizedCategoryName}
+              categorySlug={section.categorySlug}
+              categoryPhrase={categoryPhrase}
+              categories={categories}
+              shouldUsePriority={index < 2}
+              showAd={adPositions.has(index)}
+              labels={{
+                heading:
+                  locale === DEFAULT_LOCALE
+                    ? tCategory("heading", {
+                      categoryPhrase,
+                    })
+                    : tCategory("headingNoArticle", {
+                      categoryName: localizedCategoryName,
+                    }),
+                seeMore: tCategory("seeMore"),
+                sponsored: tCategory("sponsored"),
+              }}
+              badgeLabels={badgeLabels}
+            />
+          );
+        })}
       </div>
 
       {/* CTA */}
       <section className="py-section-y container text-center">
         <p className="body-large text-foreground/70 font-medium mb-element-gap">
-          No trobes el que busques?
+          {tCta("cta")}
         </p>
         <PressableAnchor
-          href="/catalunya"
+          href={withLocale("/catalunya")}
           prefetch={false}
           variant="plain"
           className="btn-primary w-full sm:w-auto"
         >
-          Veure tota l&apos;agenda
+          {tCta("ctaButton")}
         </PressableAnchor>
       </section>
     </>

@@ -87,9 +87,22 @@ export interface SchemaOrgEvent {
     priceSpecification?: {
       "@type": "PriceSpecification";
       priceCurrency: string;
+      description?: string;
     };
   };
-  isAccessibleForFree: boolean;
+  isAccessibleForFree?: boolean;
   duration?: string;
   video?: VideoObject;
+}
+
+export interface HowToStep {
+  "@type": "HowToStep";
+  text: string;
+}
+
+export interface HowTo {
+  "@context": "https://schema.org";
+  "@type": "HowTo";
+  name: string;
+  step: HowToStep[];
 }

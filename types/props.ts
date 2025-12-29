@@ -13,12 +13,14 @@ import {
   PlaceTypeAndLabel,
   JsonLdScript,
   Href,
+  NavigationItem,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
+import type { FaqItem } from "types/faq";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -61,6 +63,21 @@ export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
   isHorizontal?: boolean;
+  initialIsFavorite?: boolean;
+}
+
+export interface FavoriteButtonLabels {
+  add: string;
+  remove: string;
+}
+
+export interface FavoriteButtonProps {
+  eventSlug: string;
+  eventId?: string;
+  eventTitle?: string;
+  initialIsFavorite: boolean;
+  labels: FavoriteButtonLabels;
+  className?: string;
 }
 
 export interface NativeShareButtonProps {
@@ -81,13 +98,16 @@ export interface ModalProps {
   children: ReactNode;
   actionButton?: ReactNode;
   onActionButtonClick?: () => boolean | void | Promise<boolean | void>;
+  actionButtonDisabled?: boolean;
   testId?: string;
 }
 
 export interface TextAreaProps {
   id: string;
   value: string;
-  onChange: (e: ChangeEvent<{ name: string; value: string }>) => void;
+  onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export interface SocialProps {
@@ -113,6 +133,16 @@ export interface DescriptionProps {
   locationValue?: string;
   introText?: string;
   locationType?: "region" | "town" | "general";
+  /**
+   * Optional actions rendered next to the section title (e.g. a client island button).
+   * Must remain serializable/ReactNode compatible with server rendering.
+   */
+  headerActions?: ReactNode;
+  /**
+   * Optional id applied to the main description HTML container so a client island
+   * can replace its content (e.g. translated text) without converting this component to client.
+   */
+  descriptionHtmlId?: string;
 }
 
 // NavigationItem and Href are now imported from types/common.ts
@@ -125,6 +155,9 @@ export interface DatePickerComponentProps {
   onChange: (field: "startDate" | "endDate", value: string) => void;
   required?: boolean;
   className?: string;
+  enableAllDayToggle?: boolean;
+  isAllDay?: boolean;
+  onToggleAllDay?: (isAllDayEvent: boolean) => void;
 }
 
 export interface CustomHeaderProps {
@@ -143,8 +176,15 @@ export type AcceptedImageTypes =
 
 export interface ImageUploaderProps {
   value: string | null;
-  onUpload: (file: File) => void;
+  onUpload: (file: File | null) => void;
   progress: number;
+  isUploading?: boolean;
+  uploadMessage?: string | null;
+  mode?: "upload" | "url";
+  onModeChange?: (mode: "upload" | "url") => void;
+  imageUrlValue?: string;
+  onImageUrlChange?: (url: string) => void;
+  imageUrlError?: string | null;
 }
 
 export interface InputProps {
@@ -153,6 +193,8 @@ export interface InputProps {
   subtitle?: string;
   value: string | number;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export type RadioInputValue = string | number;
@@ -190,6 +232,11 @@ export interface NoEventsFoundProps {
   description?: string;
 }
 
+export interface NoEventsFoundContentProps extends NoEventsFoundProps {
+  ctaLabel: string;
+  helperText: string;
+}
+
 export interface VideoDisplayProps {
   videoUrl: string | null | undefined;
 }
@@ -200,6 +247,12 @@ export interface LoadMoreButtonProps {
   hasMore?: boolean;
   currentCount?: number;
   totalEvents?: number;
+}
+
+export interface CategorySectionLabels {
+  heading: string;
+  seeMore: string;
+  sponsored: string;
 }
 
 export interface FilterLoadingContextValue {
@@ -221,10 +274,33 @@ export interface FilteredPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// Route handler context for catch-all sitemap routes
+export interface SitemapPartsRouteContext {
+  params: Promise<{ parts: string[] }>;
+}
+
+export interface NavbarLabels {
+  logoAlt: string;
+  openMenu: string;
+  closeMenu: string;
+  home: string;
+  agenda: string;
+  favorites: string;
+  publish: string;
+  news: string;
+  mobilePublishLabel: string;
+}
+
+export interface NavbarClientProps {
+  navigation: NavigationItem[];
+  labels: NavbarLabels;
+}
+
 // Component props interfaces
 export interface ClientInteractiveLayerProps {
   categories?: CategorySummaryResponseDTO[];
   placeTypeLabel: PlaceTypeAndLabel;
+  filterLabels: FilterLabels;
 }
 
 export interface ClientInteractiveLayerContentProps
@@ -236,6 +312,22 @@ export interface ClientInteractiveLayerContentProps
   handleCloseModal: () => void;
 }
 
+export type FilterLabels = {
+  triggerLabel: string;
+  displayNameMap: Record<string, string>;
+  byDates: Record<string, string>;
+  categoryLabelsBySlug?: Record<string, string>;
+};
+
+export interface FiltersClientProps {
+  segments: RouteSegments;
+  queryParams: URLQueryParams;
+  categories?: CategorySummaryResponseDTO[];
+  placeTypeLabel: PlaceTypeAndLabel;
+  onOpenModal: () => void;
+  labels: FilterLabels;
+}
+
 export interface ActiveNavLinkProps {
   href: string;
   children: ReactNode;
@@ -244,6 +336,7 @@ export interface ActiveNavLinkProps {
 }
 
 export interface FilterButtonProps {
+  filterKey: string;
   text: string;
   enabled: boolean;
   removeUrl: string;
@@ -255,7 +348,7 @@ export interface ServerFiltersProps {
   segments: RouteSegments;
   queryParams: URLQueryParams;
   categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel?: PlaceTypeAndLabel;
+  placeTypeLabel: PlaceTypeAndLabel;
   onOpenModal: () => void;
 }
 
@@ -277,14 +370,13 @@ export interface HybridEventsListProps {
   category?: string;
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
-  hasNews: boolean; // Whether the place has news articles
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
 export type HybridEventsListClientProps = Omit<
   HybridEventsListProps,
-  "hasNews" | "placeTypeLabel" | "noEventsFound"
+  "placeTypeLabel" | "noEventsFound"
 >;
 
 export interface SsrListWrapperProps {
@@ -310,7 +402,6 @@ export interface PlacePageShellProps {
   place: string;
   category?: string;
   date?: string;
-  hasNewsPromise?: Promise<boolean>;
   categories?: CategorySummaryResponseDTO[];
   webPageSchemaFactory?: (pageData: PageData) => Record<string, unknown>;
 }
@@ -342,14 +433,12 @@ export interface ServerEventsCategorizedProps {
   pageData?: PageData;
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
   featuredPlaces?: FeaturedPlaceConfig[];
-  seoTopTownLinks?: SeoLinkItem[];
+  seoLinkSections?: SeoLinkSection[];
 }
 
 export type ServerEventsCategorizedContentProps = Pick<
   ServerEventsCategorizedProps,
-  | "categorizedEventsPromise"
-  | "categoriesPromise"
-  | "featuredPlaces"
+  "categorizedEventsPromise" | "categoriesPromise" | "featuredPlaces"
 >;
 
 export interface SearchAwareHeadingProps {
@@ -390,6 +479,25 @@ export interface GeolocationButtonProps {
   error?: string | null;
   className?: string;
 }
+
+export interface ListPageFaqProps {
+  items: FaqItem[];
+  title?: string;
+}
+
+export interface ListPageFaqParams {
+  place: string;
+  date?: string;
+  category?: string;
+  placeTypeLabel?: PlaceTypeAndLabel;
+  categories?: CategorySummaryResponseDTO[];
+  locale?: import("types/i18n").AppLocale;
+}
+
+export type DateContext = {
+  inline: string;
+  capitalized: string;
+};
 
 export interface UseGeolocationReturn {
   location: GeolocationCoordinates | null;
@@ -442,6 +550,17 @@ export interface NewsHubsGridProps {
   promise: Promise<HubResult[]>;
 }
 
+export interface NewsCitiesSectionProps {
+  citiesPromise: Promise<
+    import("./api/event").PagedResponseDTO<
+      import("./api/city").CitySummaryResponseDTO
+    >
+  >;
+  showAll: boolean;
+  showMoreHref: import("./common").Href;
+  showLessHref: import("./common").Href;
+}
+
 export interface NewsListProps {
   newsPromise: Promise<
     import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>
@@ -450,6 +569,8 @@ export interface NewsListProps {
   place: string;
   currentPage: number;
   pageSize: number;
+  /** Optional override for pagination base URL (e.g., "/noticies" for global feed). */
+  basePath?: string;
 }
 
 // Mobile share island component props
@@ -467,4 +588,48 @@ export interface DateFilterBadgesProps {
   categories?: CategorySummaryResponseDTO[];
   contextName: string;
   ariaLabel?: string;
+  labels?: DateFilterBadgeLabels;
+}
+
+export type TranslationFn = (
+  key: string,
+  values?: Record<string, any>
+) => string;
+
+export type DateFilterBadgeLabels = {
+  navAriaLabel: string;
+  today: { label: string; ariaLabelText: string };
+  tomorrow: { label: string; ariaLabelText: string };
+  weekend: { label: string; ariaLabelText: string };
+  ariaPlace: (args: { ariaLabelText: string; contextName: string }) => string;
+  ariaCategory: (args: {
+    ariaLabelText: string;
+    contextName: string;
+  }) => string;
+};
+
+export interface CategoryEventsSectionProps {
+  events: EventSummaryResponseDTO[];
+  categoryName: string;
+  categorySlug: string;
+  categoryPhrase: string;
+  categories?: CategorySummaryResponseDTO[];
+  shouldUsePriority?: boolean;
+  showAd?: boolean;
+  labels: {
+    heading: string;
+    seeMore: string;
+    sponsored: string;
+  };
+  badgeLabels?: DateFilterBadgeLabels;
+}
+
+export interface BreadcrumbNavItem {
+  label: string;
+  href?: string;
+}
+
+export interface BreadcrumbsProps {
+  items: BreadcrumbNavItem[];
+  className?: string;
 }

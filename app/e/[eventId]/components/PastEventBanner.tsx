@@ -1,6 +1,7 @@
 import type { PastEventBannerProps } from "types/common";
-import { ClockIcon } from "@heroicons/react/outline";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { useTranslations } from "next-intl";
 
 export default function PastEventBanner({
   temporalStatus,
@@ -10,8 +11,9 @@ export default function PastEventBanner({
   exploreCategoryHref,
   primaryCategorySlug,
 }: PastEventBannerProps) {
+  const t = useTranslations("Components.PastEventBanner");
   const placeLabel = cityName || regionName || "Catalunya";
-  const timeWindow = "aquesta setmana";
+  const timeWindow = t("timeWindow");
 
   return (
     <div className="w-full px-section-x py-5 sm:py-6">
@@ -28,13 +30,15 @@ export default function PastEventBanner({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="heading-5 sm:heading-4 text-foreground-strong mb-1 sm:mb-1.5">
-                Aquest esdeveniment ja ha finalitzat
+                {t("title")}
               </h3>
               <p className="body-small text-foreground/70 leading-snug">
-                No et perdis què passa {timeWindow} a {placeLabel}
+                {t("subtitle", { timeWindow, placeLabel })}
               </p>
               {/* Hidden readable state for screen readers */}
-              <span className="sr-only">Estat: {temporalStatus.label}.</span>
+              <span className="sr-only">
+                {t("srStatus", { label: temporalStatus.label })}
+              </span>
             </div>
           </div>
 
@@ -44,8 +48,13 @@ export default function PastEventBanner({
               href={explorePlaceHref}
               className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-primary-dark text-primary-foreground text-sm font-semibold hover:bg-primary-dark/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
               variant="inline"
+              data-analytics-event-name="explore_more_click"
+              data-analytics-context="past_event_banner"
+              data-analytics-target="place"
+              data-analytics-place-label={placeLabel}
+              data-analytics-temporal-label={temporalStatus?.label || ""}
             >
-              Consulta l&apos;agenda
+              {t("primaryCta")}
             </PressableAnchor>
 
             {primaryCategorySlug && (
@@ -53,8 +62,14 @@ export default function PastEventBanner({
                 href={exploreCategoryHref}
                 className="body-small text-primary hover:text-primary-dark font-medium transition-colors sm:ml-2 inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
                 variant="inline"
+                data-analytics-event-name="explore_more_click"
+                data-analytics-context="past_event_banner"
+                data-analytics-target="category"
+                data-analytics-place-label={placeLabel}
+                data-analytics-category-slug={primaryCategorySlug}
+                data-analytics-temporal-label={temporalStatus?.label || ""}
               >
-                o explora aquesta categoria
+                {t("secondaryCta")}
                 <span aria-hidden="true">→</span>
               </PressableAnchor>
             )}

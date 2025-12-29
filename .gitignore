@@ -9,6 +9,10 @@
 /coverage
 playwright-report/
 test-results/
+blob-report/
+
+# lighthouse-ci
+.lighthouseci/
 
 # generated service worker
 /public/sw.js
@@ -40,6 +44,11 @@ yarn-error.log*
 # logs
 *.log
 
+# bundle analysis outputs (generated locally/CI)
+/bundle-analysis-current.txt
+/bundle-sizes.json
+/bundle-sizes-new.json
+
 # local env files
 .env
 .env.local
@@ -50,18 +59,15 @@ yarn-error.log*
 # vercel
 .vercel
 
-# Sitemap files
-sitemap.xml
-sitemap-*.xml
+# Sitemap files (generated static files only, not route handlers)
+/public/sitemap.xml
+/public/sitemap-*.xml
 /server-place-sitemap.xml
 /server-google-news-sitemap.xml
 /server-sitemap.xml
 
 # Sentry
 .sentryclirc
-
-# Generated robots.txt
-/public/robots.txt
 
 .aider*
 
@@ -105,3 +111,14 @@ node_modules/
 # Task files
 tasks.json
 tasks/ 
+
+# sst
+.sst
+
+
+# open-next
+.open-next
+.env*.local
+
+# Sentry Config File
+.env.sentry-build-plugin

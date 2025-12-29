@@ -7,7 +7,6 @@ import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import ViewCounter from "@components/ui/viewCounter";
 import AdArticle from "@components/ui/adArticle";
-import NewsHeroEvent from "@components/ui/newsHeroEvent";
 import NewsRichCard from "@components/ui/newsRichCard";
 import { getFormattedDate } from "@utils/date-helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
@@ -15,6 +14,12 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { notFound } from "next/navigation";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import {
+  DEFAULT_LOCALE,
+  localeToHrefLang,
+} from "types/i18n";
 
 export default async function NewsArticleDetail({
   detailPromise,
@@ -64,15 +69,31 @@ export default async function NewsArticleDetail({
     return notFound();
   }
 
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({
+    locale,
+    namespace: "App.NewsArticleDetail",
+  });
+
   const plainDescription = DOMPurify.sanitize(detail.description || "", {
     ALLOWED_TAGS: [],
   });
   const dateRangeText = (() => {
-    const f = getFormattedDate(detail.startDate, detail.endDate);
+    const f = getFormattedDate(detail.startDate, detail.endDate, locale);
     return f.formattedEnd
       ? `${f.formattedStart} – ${f.formattedEnd}`
       : f.formattedStart;
   })();
+  const localePrefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocalePath = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!localePrefix) return path;
+    if (path === "/") return localePrefix || "/";
+    if (path.startsWith(localePrefix)) return path;
+    return `${localePrefix}${path}`;
+  };
+  const absolute = (path: string) =>
+    path.startsWith("http") ? path : `${siteUrl}${withLocalePath(path)}`;
 
   // Build keywords from available data (categories and locations)
   const categoryKeywords = Array.from(
@@ -99,7 +120,7 @@ export default async function NewsArticleDetail({
     datePublished: detail.createdAt,
     dateModified: detail.createdAt,
     image: detail.events?.[0]?.imageUrl,
-    inLanguage: "ca",
+    inLanguage: localeToHrefLang[locale] ?? locale,
     isAccessibleForFree: true,
     articleSection: detail.type,
     ...(keywords.length > 0 ? { keywords } : {}),
@@ -115,82 +136,98 @@ export default async function NewsArticleDetail({
       url: siteUrl,
       logo: `${siteUrl}/static/images/logo-seo-meta.webp`,
     },
-    url: `${siteUrl}/noticies/${place}/${article}`,
+    url: absolute(`/noticies/${place}/${article}`),
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${siteUrl}/noticies/${place}/${article}`,
+      "@id": absolute(`/noticies/${place}/${article}`),
     },
   };
 
   const breadcrumbs = [
-    { name: "Inici", url: siteUrl },
-    { name: "Notícies", url: `${siteUrl}/noticies` },
-    { name: placeType.label, url: `${siteUrl}/noticies/${place}` },
-    { name: detail.title, url: `${siteUrl}/noticies/${place}/${article}` },
+    { name: t("breadcrumbHome"), url: absolute("/") },
+    { name: t("breadcrumbNews"), url: absolute("/noticies") },
+    { name: placeType.label, url: absolute(`/noticies/${place}`) },
+    { name: detail.title, url: absolute(`/noticies/${place}/${article}`) },
   ];
   const webPageSchema = generateWebPageSchema({
     title: detail.title,
     description: detail.description,
-    url: `${siteUrl}/noticies/${place}/${article}`,
+    url: absolute(`/noticies/${place}/${article}`),
     breadcrumbs,
+    locale,
   });
 
   return (
-    <div className="min-h-screen bg-background mt-4">
+    <div className="container flex-col justify-center items-center mt-8 pb-section-y-lg">
+      <JsonLdServer id="news-article-schema" data={articleSchema} />
+      <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
+
       {/* Breadcrumbs */}
-      <div className="bg-background border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav
-            className="text-sm text-foreground-strong/70"
-            aria-label="Breadcrumb"
-          >
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
+      >
+        <ol className="flex items-center space-x-2 flex-wrap">
+          <li>
             <PressableAnchor
-              href="/"
-              className="hover:underline"
+              href={withLocalePath("/")}
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
-              Inici
-            </PressableAnchor>{" "}
-            /{" "}
+              {t("breadcrumbHome")}
+            </PressableAnchor>
+          </li>
+          <li>
+            <span className="mx-1" aria-hidden="true">/</span>
+          </li>
+          <li>
             <PressableAnchor
-              href="/noticies"
-              className="hover:underline"
+              href={withLocalePath("/noticies")}
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
-              Notícies
-            </PressableAnchor>{" "}
-            /{" "}
+              {t("breadcrumbNews")}
+            </PressableAnchor>
+          </li>
+          <li>
+            <span className="mx-1" aria-hidden="true">/</span>
+          </li>
+          <li>
             <PressableAnchor
-              href={`/noticies/${place}`}
-              className="hover:underline"
+              href={withLocalePath(`/noticies/${place}`)}
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
               {placeType.label}
-            </PressableAnchor>{" "}
-            /{" "}
-            <span className="text-foreground-strong font-medium">
-              {detail.title}
-            </span>
-          </nav>
-        </div>
-      </div>
+            </PressableAnchor>
+          </li>
+          <li>
+            <span className="mx-1" aria-hidden="true">/</span>
+          </li>
+          <li className="text-foreground-strong font-medium truncate max-w-[200px] sm:max-w-none" aria-current="page">
+            {detail.title}
+          </li>
+        </ol>
+      </nav>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full px-2 lg:px-0">
         <div className="mb-6">
-          <h1 className="heading-1 mb-6">{detail.title}</h1>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-foreground-strong/70">
-            <div className="flex items-center gap-4">
-              <span className="bg-primary text-background px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
-                {detail.type === "WEEKEND" ? "Cap de setmana" : "Setmana"}{" "}
+          <h1 className="heading-1 mb-6 text-balance break-words">{detail.title}</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 text-sm text-foreground-strong/70">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+              <span className="bg-primary text-background px-3 sm:px-4 py-2 rounded-full font-medium uppercase text-xs sm:text-sm break-words">
+                {detail.type === "WEEKEND"
+                  ? t("sectionWeekend")
+                  : t("sectionWeek")}{" "}
                 {dateRangeText}
               </span>
             </div>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <span>{detail.readingTime} min lectura</span>
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+              <span className="whitespace-nowrap">{t("readingTime", { minutes: detail.readingTime })}</span>
               <ViewCounter visits={detail.visits} hideText={false} />
             </div>
           </div>
@@ -207,23 +244,19 @@ export default async function NewsArticleDetail({
 
         {detail.events && detail.events.length > 0 && (
           <EventsSection
-            title="ELS IMPRESCINDIBLES"
+            title={t("mustSee")}
             events={detail.events.slice(0, Math.min(detail.events.length, 3))}
-            showHero={true}
             showNumbered={true}
           />
         )}
 
         {detail.events && detail.events.length > 3 && (
           <EventsSection
-            title="MÉS PROPOSTES"
+            title={t("moreProposals")}
             events={detail.events.slice(3)}
           />
         )}
       </div>
-
-      <JsonLdServer id="news-article-schema" data={articleSchema} />
-      <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
     </div>
   );
 }
@@ -231,42 +264,33 @@ export default async function NewsArticleDetail({
 function EventsSection({
   title,
   events,
-  showHero = false,
   showNumbered = false,
 }: NewsEventsSectionProps) {
-  const [heroEvent, ...otherEvents] = events;
-
   return (
-    <section className="mb-16">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-foreground-strong mb-3 md:text-4xl">
+    <section className="mb-12 sm:mb-16">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground-strong mb-3">
           {title}
         </h2>
         <div className="w-20 h-1.5 bg-primary rounded-full"></div>
       </div>
 
-      {showHero && heroEvent && (
-        <div className="mb-12">
-          <NewsHeroEvent event={heroEvent} />
-        </div>
-      )}
-
       {showNumbered ? (
-        <div className="space-y-8">
-          {(showHero ? otherEvents : events).map((event, index) => (
-            <div key={event.id} className="flex gap-6 items-start">
+        <div className="space-y-6 sm:space-y-8">
+          {events.map((event, index) => (
+            <div key={event.id} className="flex gap-4 sm:gap-6 items-start">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-background rounded-full flex items-center justify-center font-bold text-sm">
-                {showHero ? index + 2 : index + 1}
+                {index + 1}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <NewsRichCard event={event} variant="horizontal" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {(showHero ? otherEvents : events).map((event) => (
+        <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {events.map((event) => (
             <NewsRichCard key={event.id} event={event} />
           ))}
         </div>

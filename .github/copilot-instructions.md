@@ -1,6 +1,6 @@
 # AI Coding Agent Instructions for this Repository
 
-Purpose: Catalan events discovery web app (Next.js 15 App Router + TypeScript) focused on SEO, performance (service worker + image optimization), and a configuration‑driven URL-first filtering system.
+Purpose: Catalan events discovery web app (Next.js 16.1 App Router + React 19 + TypeScript) focused on SEO, performance (service worker + image optimization), and a configuration‑driven URL-first filtering system. Tooling: Node >=22, Yarn 4.12 (per package.json).
 
 ## 1. Core Architecture
 
@@ -8,7 +8,7 @@ Purpose: Catalan events discovery web app (Next.js 15 App Router + TypeScript) f
 - Filters are configuration‑driven: single source in `config/filters.ts`; operations in `utils/filter-operations.ts`; URL parsing/building in `utils/url-filters.ts` + `utils/url-parsing.ts`.
 - Pages fetch data server-side (edge friendly) and render a hybrid list: SSR list + client enhancement (`HybridEventsList`, `ClientInteractiveLayer`). Ads inserted via `insertAds` during server fetch.
 - Service Worker generated at build (`scripts/generate-sw.mjs` → `public/sw.js` from `sw-template.js`) enabling offline + caching strategies (Workbox 7).
-- Security: `middleware.ts` injects security headers and CSP (relaxed policy with host allowlisting). JSON-LD rendered server-side via `JsonLdServer` component (no nonce required).
+- Security: `proxy.ts` (Next.js 16 middleware replacement) injects security headers and CSP (relaxed policy with host allowlisting). JSON-LD rendered server-side via `JsonLdServer` component (no nonce required).
 
 ## 2. Filters & URLs (MOST IMPORTANT DOMAIN LOGIC)
 
@@ -25,7 +25,7 @@ Adding a new filter:
 - Canonical omission rules: if date === `tots` AND category === `tots` → `/place`; if date === `tots` and category != `tots` → `/place/category`; if category === `tots` and date != `tots` → `/place/date`.
 - Query params for non‑segment filters: `search`, `distance`, `lat`, `lon` (distance omitted when default 50). Parsing helpers: `parseFiltersFromUrl`, `urlToFilterState`, `getRedirectUrl` enforce normalization.
 - Dynamic categories supported; fallback to legacy list (see `utils/url-filters.ts` & `utils/constants.ts`). Always validate slugs via `isValidCategorySlug`.
-- **URL Canonicalization**: Middleware (`utils/middleware-redirects.ts`, `handleCanonicalRedirects`) automatically redirects non-canonical URLs to canonical form:
+- **URL Canonicalization**: Proxy (`proxy.ts`) calls `handleCanonicalRedirects` from `utils/middleware-redirects.ts` to redirect non-canonical URLs to canonical form:
   - Legacy query params (`?category=X&date=Y`) → canonical path segments (`/place/date/category`)
   - `/tots` in path segments → omitted in canonical URLs (e.g., `/place/tots/category` → `/place/category`)
   - Preserves unrelated query params (e.g., `search`, `distance`, `lat`, `lon`) during redirects
@@ -54,7 +54,7 @@ Adding a new filter:
 - Date filtering: `byDate` shortcut (avui, dema, setmana, cap-de-setmana) and optional explicit `from/to`; don't send both unless intentional.
 - Ad insertion: `insertAds` decorates event list with synthetic `{ isAd: true }` items. See Hybrid Rendering contract for client append rules.
 - Visit tracking: Client beacon (`navigator.sendBeacon` / `fetch` with `keepalive`) on event pages to `/api/visits`. Middleware stamps `x-visitor-id` header and issues `visitor_id` cookie when missing; server forwards to backend (HMAC) and returns 204.
-- Adding new API call (pattern): 
+- Adding new API call (pattern):
   1. Define DTO in `types/api/*`
   2. Create `*-external.ts` wrapper with env guard + `fetchWithHmac` + Zod parsing + safe fallback
   3. Create internal API route in `app/api/*` that calls external wrapper and sets cache headers
@@ -91,10 +91,13 @@ Adding a new filter:
 
 ## 8. Build / Run / Test Workflow
 
-- Dev: `yarn dev` (runs `prebuild` to generate service worker) then Next dev server.
-- Build: `yarn build` (calls `prebuild` then `next build`). Environment-specific builds: `build:development|staging|production` with env-cmd loading `.env.*` files.
-- Analyze bundles: `yarn analyze`, `analyze:server`, `analyze:browser` (uses Next bundle analyzer via env vars).
-- Tests: `yarn test` (Jest, jsdom). Only current custom suite: filter system. Add new domain tests under `test/` and import utilities directly.
+- Runtime: Node >=22 and Yarn 4.12 (per `package.json` engines). Use Corepack.
+- Dev: `yarn dev` (Next dev server with Turbopack file system caching enabled by default). Run `yarn prebuild` first if you changed `public/sw-template.js` so `public/sw.js` is regenerated.
+- Dev with debugger: `yarn dev:inspect` (enables Node.js debugger via `next dev --inspect`).
+- Build: `yarn build` (Next build only). Run `yarn prebuild` beforehand whenever the SW template changes. Environment-specific builds (`build:development|staging|production`) already run `prebuild` before `next build`.
+- Analyze bundles: `yarn analyze`, `analyze:server`, `analyze:browser` (uses Next bundle analyzer via env vars). `yarn analyze:experimental` launches Next.js 16.1 experimental bundle analyzer with interactive UI (Turbopack-compatible).
+- Upgrade: `yarn upgrade` (uses `next upgrade` command for easier Next.js version upgrades).
+- Tests: `yarn test` (Vitest, jsdom). Only current custom suite: filter system. Add new domain tests under `test/` and import utilities directly.
 - Type check: `yarn typecheck`.
 - Lint: `yarn lint` (ESLint + Next config). Maintain existing conventions; prefer config-driven patterns over ad hoc conditionals.
 
@@ -118,13 +121,13 @@ Adding a new filter:
 ## 10. Service Worker Pattern
 
 - Template: `public/sw-template.js` (contains placeholder `{{API_ORIGIN}}`).
-- Generation script replaces placeholder with `NEXT_PUBLIC_API_URL` origin (fallback pre env) -> writes `public/sw.js` consumed by middleware (special cache headers).
+- Generation script replaces placeholder with `NEXT_PUBLIC_API_URL` origin (fallback pre env) -> writes `public/sw.js` consumed by proxy (special cache headers).
 - Update caching logic ONLY via template; never hand-edit generated `public/sw.js` (will be overwritten).
 
 ## 11. Security & Analytics
 
 - CSP: Relaxed policy with host allowlisting (configured in `proxy.ts`). Allows `'unsafe-inline'` for inline scripts and JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains (googletagmanager.com, google-analytics.com, googlesyndication.com, etc.) are allowlisted in `script-src` and `script-src-elem`. No nonce required—scripts work without nonce props.
-- External tracking (GA, Ads, Sentry) loaded via Next.js `<Script>` component with `strategy="afterInteractive"`. No nonce props needed.
+- External tracking (GA, Ads, Sentry) loaded via Next.js `<Script>` component. Use `strategy="afterInteractive"` by default, but `strategy="lazyOnload"` is acceptable for non-critical analytics scripts (e.g., GA loader/config) to optimize Core Web Vitals. Critical scripts (consent initialization, CMP) should use `afterInteractive`. No nonce props needed.
 - JSON-LD: Server-rendered via `JsonLdServer` component (`components/partials/JsonLdServer.tsx`). Escapes `</script>` and `<` to prevent XSS. Data comes from server-side API responses, not user input. No nonce required due to relaxed CSP.
 - Rationale: For a cultural events site with HMAC-protected backend, relaxed CSP enables better performance (ISR/PPR) while maintaining security through host allowlisting.
 
@@ -142,13 +145,14 @@ Adding a new filter:
 
 - Prefer adding capabilities via configuration (filters, categories) rather than branching conditionals.
 - Centralize constants in `utils/constants.ts`; avoid duplicating literals (dates, distances, category labels).
-- When adding environment-dependent behavior for edge/server, follow existing pattern of safe fallbacks (see `middleware.getApiOrigin`).
+- When adding environment-dependent behavior for edge/server, follow existing pattern of safe fallbacks (see `getApiOrigin` used by `proxy.ts`).
+- Before creating new helpers/components, search existing utils/hooks/components (filters, URLs, i18n, images, forms) and reuse when possible.
 - Dates: Use `getFormattedDate(start, end)` from `utils/date-helpers.ts` for any human-readable date range in UI (e.g., pills, subtitles). Do not inline `toLocaleDateString` in components.
 - Colors: Use Tailwind theme tokens defined in `tailwind.config.js` (e.g., `primary`, `background`, `foreground`, `muted`, `border`). Do not hardcode hex values in components/styles. If a new color is needed, add it to the Tailwind theme and reference by token. Do NOT use deprecated aliases (`primarydark`, `primarySoft`, `whiteCorp`, `darkCorp`, `blackCorp`, `fullBlackCorp`, `bColor`).
 
 ## 15. Common Pitfalls
 
-- Forgetting to regenerate SW after changing template (always rely on `prebuild`).
+- Forgetting to regenerate SW after changing template—run `yarn prebuild` before `yarn dev`/`yarn build` when `public/sw-template.js` changes (base `yarn build` does not run prebuild; env-specific builds do).
 - Calling external API directly from pages/components instead of using internal API routes (`app/api/*`).
 - Encoding filter defaults in multiple places instead of relying on config defaults.
 - Creating URLs that include unused default segments (`/tots/`). Always use `buildCanonicalUrl` helpers.
@@ -349,3 +353,13 @@ When modifying existing components:
 
 - Overview: `/docs/design-system-overview.md`
 - Implementation Reference (ALL CODE): `/docs/implementation-reference.md`
+
+## 21. Internationalization (next-intl)
+
+- Library: `next-intl` 4.5 with plugin enabled in `next.config.js` (`withNextIntl`).
+- Routing: `i18n/routing.ts` defines locales (`ca`, `es`, `en`), default `ca`, and `as-needed` prefix via `defineRouting`; use the exported `Link`, `redirect`, `usePathname`, `useRouter`, `getPathname` from `createNavigation`.
+- Requests/messages: `i18n/request.ts` uses `getRequestConfig` to load messages from `messages/{locale}.json`. Add locales by updating `types/i18n.ts` (supported locales, mappings), adding the JSON file, and extending the loader map.
+- App layout: `app/layout.tsx` wraps with `NextIntlClientProvider` using `getLocale`/`getMessages`. Server components should use `getTranslations` from `next-intl/server`; client components should use `useTranslations`/`useLocale` from `next-intl`. Don’t pass messages manually down the tree.
+- Locale header: `proxy.ts` sets `x-next-intl-locale`; `utils/i18n-seo.ts` reads it. Avoid rolling your own locale detection.
+- Strings: keep user-facing text in `messages/*.json`; prefer reuse of existing keys before adding new ones.
+- Tests: Vitest mocks live in `test/mocks/next-intl.ts` and `test/mocks/next-intl-server.ts`; `vitest.config.ts` aliases `next-intl` and `next-intl/server` to these mocks.

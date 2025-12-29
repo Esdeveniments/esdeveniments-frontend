@@ -22,7 +22,7 @@ export function getSanitizedErrorMessage(error: unknown): string {
 /**
  * Shared error handler for API routes that:
  * 1. Captures exceptions to Sentry (production only)
- * 2. Logs errors to console
+ * 2. Logs errors using Sentry logger (when available) or console
  * 3. Returns a standardized error response
  *
  * @param error - The error that occurred
@@ -42,10 +42,11 @@ export function handleApiError(
   const errorObj =
     error instanceof Error ? error : new Error(getSanitizedErrorMessage(error));
 
-  // Log to console for local debugging
+  // Log to console - consoleLoggingIntegration will automatically send to Sentry in production
+  // when enableLogs: true is set in config. This is the recommended approach for v10.27.0+
   console.error(`${routePath} error:`, errorObj);
 
-  // Capture to Sentry in production
+  // Capture exception to Sentry in production
   if (process.env.NODE_ENV === "production") {
     Sentry.captureException(errorObj, {
       tags: {

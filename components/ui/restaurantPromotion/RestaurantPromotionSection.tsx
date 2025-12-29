@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { parseISO, isValid, differenceInCalendarDays, format } from "date-fns";
-import { computeTemporalStatus } from "@utils/event-status";
+import { useTranslations } from "next-intl";
+import { computeTemporalStatus, buildEventStatusLabels } from "@utils/event-status";
 import {
   RestaurantPromotionSectionProps,
   PlacesResponse,
@@ -30,6 +31,9 @@ export default function RestaurantPromotionSection({
   eventStartTime,
   eventEndTime,
 }: RestaurantPromotionSectionProps) {
+  const tStatus = useTranslations("Utils.EventStatus");
+  const statusLabels = useMemo(() => buildEventStatusLabels(tStatus), [tStatus]);
+
   // Suppress unused parameter warning - eventId is used in commented-out form
   void eventId;
   // All hooks must be called at the top level before any conditional returns
@@ -58,7 +62,8 @@ export default function RestaurantPromotionSection({
       eventEndDate,
       undefined, // no nowOverride, use current time
       eventStartTime,
-      eventEndTime
+      eventEndTime,
+      statusLabels
     );
 
     // Event has finished if temporal status is "past"
@@ -81,7 +86,7 @@ export default function RestaurantPromotionSection({
     const eventIsWithinFetchWindow =
       daysAhead >= 0 && daysAhead <= MAX_DAYS && !eventHasFinished;
     return { eventIsWithinFetchWindow, eventIsInFuture };
-  }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime]);
+  }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime, statusLabels]);
 
   // Fetch places when section becomes visible and event is in future and within the fetch window
   useEffect(() => {

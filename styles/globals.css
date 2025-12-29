@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Optimize font loading - ensure text stays visible during webfont loading */
+@font-face {
+  font-family: 'system-ui';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont');
+}
+
 html {
   font-synthesis-weight: none;
 }
@@ -386,6 +395,15 @@ p {
     @apply body-small text-error mt-1;
   }
 
+  /* Form-specific typography for accessibility */
+  .form-label {
+    @apply text-base md:text-lg font-semibold text-foreground-strong;
+  }
+
+  .form-helper {
+    @apply text-sm md:text-base text-foreground/70;
+  }
+
   /* ===================================== */
   /* FOCUS UTILITIES */
   /* ===================================== */
@@ -547,13 +565,13 @@ iframe {
 }
 
 #ad-card-slot {
-  min-height: 240px;
-  min-width: 280px;
+  min-height: 250px;
+  min-width: 300px;
 }
 
 #ad-article-slot {
   min-height: 280px;
-  min-width: 280px;
+  min-width: 300px;
 }
 
 .ql-editor > p {

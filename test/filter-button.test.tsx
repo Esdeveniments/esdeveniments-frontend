@@ -15,6 +15,7 @@ describe("FilterButton (black-box)", () => {
     const { rerender } = renderWithProviders(
       <FilterButton
         text="Categoria"
+        filterKey="category"
         enabled={true}
         removeUrl="/barcelona"
         onOpenModal={onOpenModal}
@@ -28,6 +29,7 @@ describe("FilterButton (black-box)", () => {
     rerender(
       <FilterButton
         text="Categoria"
+        filterKey="category"
         enabled={false}
         removeUrl="/barcelona"
         onOpenModal={onOpenModal}
@@ -43,6 +45,7 @@ describe("FilterButton (black-box)", () => {
     renderWithProviders(
       <FilterButton
         text="Categoria"
+        filterKey="category"
         enabled={false}
         removeUrl="/barcelona"
         onOpenModal={onOpenModal}

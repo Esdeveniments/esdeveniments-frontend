@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useTranslations } from "next-intl";
+import { useState, useMemo, useTransition, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { captureException } from "@sentry/nextjs";
-import {
-  getRegionValue,
-  formDataToBackendDTO,
-  getTownValue,
-} from "@utils/helpers";
+import { addBreadcrumb, captureException } from "@sentry/nextjs";
+import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
+import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
+import { getZodValidationState } from "@utils/form-validation";
 import EventForm from "@components/ui/EventForm";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
@@ -19,22 +19,58 @@ import type { E2EEventExtras } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import {
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+  MAX_TOTAL_UPLOAD_BYTES,
+  MAX_UPLOAD_LIMIT_LABEL,
+} from "@utils/constants";
+import { uploadImageWithProgress } from "@utils/upload-event-image-client";
+import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
+import { sendGoogleEvent } from "@utils/analytics";
+import {
+  buildPublishContext,
+  classifyPublishError,
+  classifyUploadError,
+} from "@utils/publica-analytics";
+
+import Modal from "@components/ui/common/modal";
+import type { EventDetailResponseDTO } from "types/api/event";
+
+// Lazy load preview content (only shown in modal when user clicks preview)
+// Client component, so we can use dynamic directly with ssr: false
+const PreviewContent = dynamic(
+  () => import("@components/ui/EventForm/preview/PreviewContent"),
+  {
+    ssr: false, // Preview is only shown in modal, not needed for initial render
+    loading: () => (
+      <div className="w-full h-64 bg-muted animate-pulse rounded" aria-label="Loading preview" />
+    ),
+  }
+);
+
+const getDefaultEventDates = () => {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  const startDate = new Date(now);
+  startDate.setHours(9, 0, 0, 0);
+  const endDate = new Date(startDate);
+  endDate.setHours(10, 0, 0, 0);
+
+  return {
+    startDate: startDate.toISOString().slice(0, 16),
+    endDate: endDate.toISOString().slice(0, 16),
+  };
+};
+
+const defaultEventDates = getDefaultEventDates();
 
 const defaultForm: FormData = {
   title: "",
   description: "",
   type: "FREE",
-  startDate: (() => {
-    const now = new Date();
-    now.setHours(9, 0, 0, 0);
-    return now.toISOString().slice(0, 16);
-  })(),
+  startDate: defaultEventDates.startDate,
   startTime: "",
-  endDate: (() => {
-    const now = new Date();
-    now.setHours(10, 0, 0, 0);
-    return now.toISOString().slice(0, 16);
-  })(),
+  endDate: defaultEventDates.endDate,
   endTime: "",
   region: null,
   town: null,
@@ -73,12 +109,29 @@ const isCategoryOption = (
     "label" in category
   );
 
+const buildFileSignature = (file: File) =>
+  `${file.name}-${file.size}-${file.lastModified}`;
+
 const Publica = () => {
+  const t = useTranslations("App.Publish");
+  const tForm = useTranslations("Components.EventForm");
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [uploadAbortController, setUploadAbortController] =
+    useState<AbortController | null>(null);
+  const [uploadedImageSignature, setUploadedImageSignature] = useState<
+    string | null
+  >(null);
+  const [imageUploadMessage, setImageUploadMessage] = useState<string | null>(
+    null
+  );
 
   const {
     regionsWithCities,
@@ -86,38 +139,16 @@ const Publica = () => {
     isError: isErrorRegionsWithCities,
   } = useGetRegionsWithCities();
 
-  const isLoadingRegions =
+  const isLoadingCities =
     isLoadingRegionsWithCities ||
     (!regionsWithCities && !isErrorRegionsWithCities);
 
   const { categories } = useCategories();
 
-  const regionOptions = useMemo(
-    () =>
-      regionsWithCities
-        ? regionsWithCities.map((region) => ({
-          label: region.name,
-          value: region.id.toString(),
-        }))
-        : [],
+  const { cityOptions, cityToRegionOptionMap } = useMemo(
+    () => generateCityOptionsWithRegionMap(regionsWithCities),
     [regionsWithCities]
   );
-
-  const cityOptions = useMemo(() => {
-    if (!regionsWithCities || !form.region) return [];
-
-    const regionId = getRegionValue(form.region);
-    if (!regionId) return [];
-
-    const region = regionsWithCities.find((r) => r.id.toString() === regionId);
-    return region
-      ? region.cities.map((city) => ({
-        id: city.id,
-        label: city.label,
-        value: city.id.toString(),
-      }))
-      : [];
-  }, [regionsWithCities, form.region]);
 
   const categoryOptions = useMemo(
     () =>
@@ -128,31 +159,88 @@ const Publica = () => {
     [categories]
   );
 
-  const handleFormChange = <K extends keyof FormData>(
+  const handleFormChange = useCallback(<K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
-    setForm({ ...form, [name]: value });
-  };
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
-  const handleRegionChange = (region: Option | null) => {
-    handleFormChange("region", region);
-  };
+  const handleImageChange = (file: File | null) => {
+    setError(null);
+    setImageUploadMessage(null);
 
-  const handleImageChange = (file: File) => {
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(null);
+      setUploadedImageUrl(null);
+      setUploadedImageSignature(null);
+      setUploadProgress(0);
+      return;
+    }
+
     setImageFile(file);
     const reader = new FileReader();
     reader.addEventListener("load", () => {
       setImagePreview(reader.result as string);
     });
     reader.readAsDataURL(file);
+    setUploadedImageUrl(null);
+    setUploadedImageSignature(null);
+    setUploadProgress(0);
   };
 
-  const handleTownChange = (town: Option | null) =>
-    handleFormChange("town", town);
+  const handleTownChange = (town: Option | null) => {
+    setForm((prev) => {
+      const next = { ...prev, town };
+      if (town) {
+        next.region = cityToRegionOptionMap[town.value] ?? null;
+      } else {
+        next.region = null;
+      }
+      return next;
+    });
+  };
 
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
+
+  const handleTestUrl = (value: string) => {
+    const normalized = normalizeUrl(value);
+    if (!normalized) return;
+    window.open(normalized, "_blank", "noopener,noreferrer");
+
+    sendGoogleEvent("publish_test_url_click", {
+      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      source: "publica",
+    });
+  };
+
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewEvent, setPreviewEvent] = useState<EventDetailResponseDTO | null>(
+    null
+  );
+
+  const handlePreview = () => {
+    sendGoogleEvent("publish_preview_open", {
+      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      source: "publica",
+    });
+
+    // Determine the image URL to show in preview
+    // 1. Uploaded image URL if available
+    // 2. Currently selected file (as data URL) if available
+    // 3. Any manual URL entered
+    const previewImageUrl =
+      uploadedImageUrl || imagePreview || form.imageUrl || "";
+
+    const event = mapDraftToPreviewEvent({
+      form,
+      imageUrl: previewImageUrl,
+    });
+    setPreviewEvent(event);
+    setShowPreview(true);
+  };
 
   const buildE2EExtras = (): E2EEventExtras | undefined => {
     const regionIdValue = getRegionValue(form.region);
@@ -164,7 +252,7 @@ const Publica = () => {
         regionMeta = form.region;
       } else if (form.region) {
         const option = form.region as Option;
-        const name = option?.label ?? `Regió ${regionIdValue}`;
+        const name = option?.label ?? t("fallbackRegion", { id: regionIdValue });
         regionMeta = {
           id: Number(regionIdValue),
           name,
@@ -179,7 +267,7 @@ const Publica = () => {
         cityMeta = form.town;
       } else if (form.town) {
         const option = form.town as Option;
-        const name = option?.label ?? `Ciutat ${townIdValue}`;
+        const name = option?.label ?? t("fallbackCity", { id: townIdValue });
         cityMeta = {
           id: Number(townIdValue),
           name,
@@ -255,8 +343,142 @@ const Publica = () => {
   };
 
   const onSubmit = async () => {
+    setError(null); // Clear any previous errors
+    setImageUploadMessage(null);
+
+    addBreadcrumb({
+      category: "publica",
+      message: "publish_submit_attempt",
+      level: "info",
+      data: {
+        source: "publica",
+        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      },
+    });
+
+    sendGoogleEvent("publish_submit_attempt", {
+      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      source: "publica",
+    });
+
+    if (imageFile && imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+      sendGoogleEvent("publish_submit_blocked", {
+        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+        source: "publica",
+        reason: "image_too_large_client",
+      });
+      setError(
+        `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, tria una imatge més petita.`
+      );
+      return;
+    }
+
+    if (isUploadingImage) {
+      sendGoogleEvent("publish_submit_blocked", {
+        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+        source: "publica",
+        reason: "upload_in_progress",
+      });
+      return;
+    }
+
     startTransition(async () => {
       try {
+        let resolvedImageUrl =
+          uploadedImageUrl ||
+          (form.imageUrl ? normalizeUrl(form.imageUrl) || null : null);
+
+        if (imageFile) {
+          const signature = buildFileSignature(imageFile);
+          if (signature !== uploadedImageSignature) {
+            setIsUploadingImage(true);
+            setUploadProgress(0);
+            uploadAbortController?.abort();
+            const controller = new AbortController();
+            setUploadAbortController(controller);
+            try {
+              sendGoogleEvent("publish_image_upload_start", {
+                ...buildPublishContext({
+                  form,
+                  imageFile,
+                  uploadedImageUrl,
+                }),
+                source: "publica",
+              });
+
+              const uploadResult = await uploadImageWithProgress(imageFile, {
+                onProgress: (percent) => setUploadProgress(percent),
+                signal: controller.signal,
+              });
+              resolvedImageUrl = uploadResult.url;
+              setUploadedImageUrl(uploadResult.url);
+              setUploadedImageSignature(signature);
+              setImageUploadMessage("Imatge pujada correctament.");
+              setUploadProgress(100);
+              setTimeout(() => setUploadProgress(0), 800);
+
+              sendGoogleEvent("publish_image_upload_success", {
+                ...buildPublishContext({
+                  form,
+                  imageFile,
+                  uploadedImageUrl: uploadResult.url,
+                }),
+                source: "publica",
+              });
+            } catch (uploadError) {
+              const reason = classifyUploadError(uploadError);
+              if (reason === "abort") {
+                sendGoogleEvent("publish_image_upload_abort", {
+                  ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+                  source: "publica",
+                });
+                setIsUploadingImage(false);
+                setUploadProgress(0);
+                setImageUploadMessage(null);
+                setUploadAbortController(null);
+                return;
+              }
+
+              sendGoogleEvent("publish_image_upload_error", {
+                ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+                source: "publica",
+                reason,
+              });
+
+              const uploadMessage =
+                uploadError instanceof Error
+                  ? uploadError.message
+                  : String(uploadError);
+              if (uploadMessage === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
+                setError(
+                  `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
+                );
+              } else {
+                setError(
+                  "No hem pogut pujar la imatge. Revisa la connexió i torna-ho a intentar."
+                );
+              }
+              setImageUploadMessage(null);
+              setIsUploadingImage(false);
+              setUploadProgress(0);
+              return;
+            } finally {
+              setIsUploadingImage(false);
+              setUploadAbortController(null);
+            }
+          }
+        }
+
+        if (!resolvedImageUrl) {
+          sendGoogleEvent("publish_submit_blocked", {
+            ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+            source: "publica",
+            reason: "missing_image",
+          });
+          setError("La imatge és obligatòria.");
+          return;
+        }
+
         const regionLabel =
           form.region && "label" in form.region ? form.region.label : "";
         const townLabel =
@@ -268,65 +490,200 @@ const Publica = () => {
           ...form,
           url: normalizeUrl(form.url),
           location,
+          imageUrl: resolvedImageUrl,
         });
 
         const e2eExtras = buildE2EExtras();
-        const result = await createEventAction(
-          eventData,
-          imageFile || undefined,
-          e2eExtras
-        );
+        const { success, event } = await createEventAction(eventData, e2eExtras);
 
-        if (result && result.success && result.event) {
-          const { slug } = result.event;
-          if (typeof document !== "undefined") {
-            document.body.dataset.lastE2eSlug = slug;
-          }
-          if (typeof window !== "undefined") {
-            window.__LAST_E2E_PUBLISH_SLUG__ = slug;
-          }
-
-          router.push(`/e/${slug}`);
-        } else {
-          captureException("Error creating event");
+        if (!success || !event) {
+          sendGoogleEvent("publish_error", {
+            ...buildPublishContext({
+              form,
+              imageFile,
+              uploadedImageUrl: resolvedImageUrl,
+            }),
+            source: "publica",
+            category: "generic",
+          });
+          setError(t("errorCreate"));
+          captureException(new Error("publica: createEventAction returned no event"), {
+            tags: { section: "publica", action: "create-event", result: "empty" },
+            extra: {
+              publish_context: buildPublishContext({
+                form,
+                imageFile,
+                uploadedImageUrl: resolvedImageUrl,
+              }),
+            },
+          });
+          return;
         }
+
+        const { slug } = event;
+        if (typeof document !== "undefined") {
+          document.body.dataset.lastE2eSlug = slug;
+        }
+        if (typeof window !== "undefined") {
+          window.__LAST_E2E_PUBLISH_SLUG__ = slug;
+        }
+
+        sendGoogleEvent("publish_success", {
+          ...buildPublishContext({
+            form,
+            imageFile,
+            uploadedImageUrl: resolvedImageUrl,
+          }),
+          source: "publica",
+          has_slug: Boolean(slug),
+        });
+
+        router.push(`/e/${slug}`);
       } catch (error) {
         console.error("Submission error:", error);
-        captureException(error);
+
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const normalizedMessage = errorMessage.toLowerCase();
+        const isImageUploadLimit = normalizedMessage.includes(
+          EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
+        );
+        const isBodyLimit =
+          normalizedMessage.includes("body size limit") ||
+          normalizedMessage.includes("body exceeded") ||
+          normalizedMessage.includes("10 mb limit") ||
+          normalizedMessage.includes("10mb");
+        const isRequestTooLarge =
+          normalizedMessage.includes("status: 413") ||
+          normalizedMessage.includes("request entity too large");
+        const isFormParsingError =
+          normalizedMessage.includes("unexpected end of form") ||
+          normalizedMessage.includes("failed to parse body as formdata");
+
+        const isDuplicate =
+          normalizedMessage.includes("duplicate") ||
+          normalizedMessage.includes("integrity violation");
+
+        sendGoogleEvent("publish_error", {
+          ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+          source: "publica",
+          category: classifyPublishError({
+            isImageUploadLimit,
+            isBodyLimit,
+            isRequestTooLarge,
+            isFormParsingError,
+            isDuplicate,
+          }),
+        });
+
+        if (isImageUploadLimit) {
+          setError(
+            `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
+          );
+        } else if (isBodyLimit || isRequestTooLarge) {
+          setError(
+            "La mida total de la sol·licitud (imatge + dades) supera el límit permès pel servidor. Redueix la mida de la imatge abans de tornar-ho a intentar."
+          );
+        } else if (isFormParsingError) {
+          setError(t("errorFormParsing"));
+        } else if (isDuplicate) {
+          setError(t("errorDuplicate"));
+        } else {
+          setError(t("errorGeneric"));
+        }
+
+        if (
+          !(
+            isBodyLimit ||
+            isRequestTooLarge ||
+            isImageUploadLimit ||
+            isFormParsingError
+          )
+        ) {
+          captureException(error, {
+            tags: {
+              section: "publica",
+              action: "create-event",
+              category: classifyPublishError({
+                isImageUploadLimit,
+                isBodyLimit,
+                isRequestTooLarge,
+                isFormParsingError,
+                isDuplicate,
+              }),
+            },
+            extra: {
+              publish_context: buildPublishContext({
+                form,
+                imageFile,
+                uploadedImageUrl,
+              }),
+            },
+          });
+        }
       }
     });
   };
+
+  const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
+
   return (
-    <div className="container flex flex-col justify-center pt-2 pb-14">
-      <div className="flex flex-col gap-4 px-2 lg:px-0">
-        <div className="flex flex-col gap-2">
-          <h1 className="uppercase font-semibold">
-            Publica un esdeveniment
-          </h1>
-          <p className="text-sm text-center">* camps obligatoris</p>
-        </div>
-        <div className="w-full flex flex-col gap-y-4 pt-4">
-          <EventForm
-            form={form}
-            onSubmit={onSubmit}
-            submitLabel="Publicar"
-            isLoading={isPending}
-            regionOptions={regionOptions}
-            cityOptions={cityOptions}
-            categoryOptions={categoryOptions}
-            progress={0}
-            isLoadingRegionsWithCities={isLoadingRegions}
-            handleFormChange={handleFormChange}
-            handleImageChange={handleImageChange}
-            handleRegionChange={handleRegionChange}
-            handleTownChange={handleTownChange}
-            handleCategoriesChange={handleCategoriesChange}
-            imageToUpload={imagePreview}
-            imageFile={imageFile}
-          />
+    <>
+      {showPreview && previewEvent && (
+        <Modal
+          open={showPreview}
+          setOpen={setShowPreview}
+          title={tForm("previewModalTitle")}
+          actionButton={t("submitLabel")}
+          actionButtonDisabled={isFormDisabled || isPending}
+          onActionButtonClick={async () => {
+            await onSubmit();
+          }}
+          testId="preview-modal"
+        >
+          <PreviewContent event={previewEvent} />
+        </Modal>
+      )}
+      <div className="container flex flex-col justify-center pt-2 pb-14">
+        <div className="flex flex-col gap-4 px-2 lg:px-0">
+          <div className="flex flex-col gap-2">
+            <h1 className="uppercase font-semibold">
+              {t("heading")}
+            </h1>
+            <p className="text-sm text-center">{t("requiredNote")}</p>
+          </div>
+          {error && (
+            <div className="w-full px-4 py-3 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+          <div className="w-full flex flex-col gap-y-4 pt-4">
+            <EventForm
+              form={form}
+              onSubmit={onSubmit}
+              submitLabel={t("submitLabel")}
+              analyticsContext="publica"
+              isLoading={isPending}
+              cityOptions={cityOptions}
+              categoryOptions={categoryOptions}
+              progress={uploadProgress}
+              isLoadingCities={isLoadingCities}
+              handleFormChange={handleFormChange}
+              handleImageChange={handleImageChange}
+              handleTownChange={handleTownChange}
+              handleCategoriesChange={handleCategoriesChange}
+              imageToUpload={imagePreview}
+              imageFile={imageFile}
+              isUploadingImage={isUploadingImage}
+              uploadMessage={imageUploadMessage}
+              handleTestUrl={handleTestUrl}
+              onPreview={handlePreview}
+              canPreview={true}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

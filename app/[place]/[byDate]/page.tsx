@@ -1,7 +1,8 @@
-import { insertAds, filterPastEvents } from "@lib/api/events";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { insertAds } from "@lib/api/events";
 import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
-import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -20,6 +21,7 @@ import {
   PageData,
   JsonLdScript,
 } from "types/common";
+import type { AppLocale } from "types/i18n";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
@@ -30,7 +32,7 @@ import {
   toUrlSearchParams,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -43,11 +45,11 @@ import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
+import { addLocalizedDateFields } from "@utils/mappers/event";
+import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import { getRobotsForListingPage } from "@utils/robots-listings";
 
 // page-level ISR not set here; fetch-level caching applies
-export const revalidate = 300;
-// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
-export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
@@ -100,7 +102,6 @@ export async function generateMetadata({
   const categoryData = categories.find((cat) => cat.slug === actualCategory);
 
   const pageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place,
     byDate: actualDate as ByDateOptions,
     placeTypeLabel,
@@ -111,10 +112,13 @@ export async function generateMetadata({
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
   });
+  const locale = await getLocaleSafely();
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
+    locale,
+    robotsOverride: getRobotsForListingPage(rawSearchParams),
   });
 }
 
@@ -193,8 +197,17 @@ export default async function ByDatePage({
 }) {
   const { place, byDate } = await params;
   const search = await searchParams;
+  const locale: AppLocale = await getLocaleSafely();
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDate",
+  });
 
-  validatePlaceOrThrow(place);
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
@@ -278,7 +291,6 @@ export default async function ByDatePage({
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);
       const pageData: PageData = await generatePagesData({
-        currentYear: new Date().getFullYear(),
         place,
         byDate: actualDate as ByDateOptions,
         placeTypeLabel,
@@ -300,6 +312,7 @@ export default async function ByDatePage({
         actualDate,
         finalCategory,
         categoryName: categoryData?.name,
+        t: tFallback,
       });
     }
   })();
@@ -310,28 +323,25 @@ export default async function ByDatePage({
     actualDate,
     paramsForFetch,
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
+    locale,
   });
 
-  const hasNewsPromise = hasNewsForPlace(place).catch((error) => {
-    console.error("Error checking news availability:", error);
-    return false;
-  });
 
   // Late existence check to preserve UX without creating an early oracle
-  if (place !== "catalunya") {
-    let placeExists: boolean | undefined;
-    try {
-      placeExists = (await fetchPlaceBySlug(place)) !== null;
-    } catch {
-      // ignore transient errors
-    }
-    if (placeExists === false) {
-      const target = buildFallbackUrlForInvalidPlace({
+  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
+    place,
+    locale,
+    rawSearchParams: search,
+    buildTargetPath: (alias) => `/${alias}/${actualDate}`,
+    buildFallbackUrlForInvalidPlace: () =>
+      buildFallbackUrlForInvalidPlace({
         byDate,
         rawSearchParams: search,
-      });
-      redirect(target);
-    }
+      }),
+    fetchPlaceBySlug,
+  });
+  if (placeRedirectUrl) {
+    redirect(placeRedirectUrl);
   }
 
   return (
@@ -342,12 +352,12 @@ export default async function ByDatePage({
       category={finalCategory}
       date={actualDate}
       categories={categories}
-      hasNewsPromise={hasNewsPromise}
       webPageSchemaFactory={(pageData) =>
         generateWebPageSchema({
           title: pageData.title,
           description: pageData.metaDescription,
           url: pageData.canonical,
+          locale,
         })
       }
     />
@@ -359,49 +369,67 @@ function buildFallbackPlaceByDateShellData({
   actualDate,
   finalCategory,
   categoryName,
+  t,
 }: {
   place: string;
   actualDate: string;
   finalCategory?: string;
   categoryName?: string;
+  t: (key: string, values?: Record<string, string>) => string;
 }): { placeTypeLabel: PlaceTypeAndLabel; pageData: PageData } {
   const placeTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
   const hasSpecificDate =
     actualDate && actualDate !== DEFAULT_FILTER_VALUE && actualDate !== "";
-  const dateLabel = hasSpecificDate ? actualDate : "els propers dies";
+  const dateLabel = hasSpecificDate ? actualDate : t("dateFallback");
   const categoryLabel =
     finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
       ? categoryName || finalCategory
       : "";
+  const categoryTitleSuffix = categoryLabel ? ` · ${categoryLabel}` : "";
+  const categorySubSuffix = categoryLabel ? ` (${categoryLabel})` : "";
+  const categoryDescriptionSuffix = categoryLabel
+    ? t("categoryDescriptionSuffix", { categoryLabel })
+    : "";
   const canonicalSegments = [place];
   if (hasSpecificDate) {
     canonicalSegments.push(actualDate);
   }
   const canonicalPath = `/${canonicalSegments.join("/")}`;
   const canonical = `${siteUrl}${canonicalPath}`;
-  const title = `Esdeveniments ${dateLabel} a ${place}${
-    categoryLabel ? ` · ${categoryLabel}` : ""
-  }`;
-  const subTitle = `Descobreix plans ${
-    hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
-  } a ${place}${categoryLabel ? ` (${categoryLabel})` : ""}.`;
+  const title = t("title", {
+    dateLabel,
+    place,
+    categoryLabel: categoryTitleSuffix,
+  });
+  const subTitle = hasSpecificDate
+    ? t("subtitleWithDate", {
+      date: actualDate,
+      place,
+      categoryLabel: categorySubSuffix,
+    })
+    : t("subtitleFallback", { place, categoryLabel: categorySubSuffix });
 
   return {
     placeTypeLabel,
     pageData: {
       title,
       subTitle,
-      metaTitle: `${title} | Esdeveniments.cat`,
-      metaDescription: `Explora activitats i plans ${
-        hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
-      } a ${place}${
-        categoryLabel ? ` en la categoria ${categoryLabel}` : ""
-      }.`,
+      metaTitle: t("metaTitle", { title }),
+      metaDescription: hasSpecificDate
+        ? t("metaDescriptionWithDate", {
+          date: actualDate,
+          place,
+          categoryDescriptionSuffix,
+        })
+        : t("metaDescriptionFallback", {
+          place,
+          categoryDescriptionSuffix,
+        }),
       canonical,
-      notFoundTitle: "Sense esdeveniments disponibles",
-      notFoundDescription: `No hem trobat esdeveniments ${
-        hasSpecificDate ? `per ${actualDate}` : "per als propers dies"
-      } a ${place}. Torna-ho a intentar més tard.`,
+      notFoundTitle: t("notFoundTitle"),
+      notFoundDescription: hasSpecificDate
+        ? t("notFoundDescriptionWithDate", { date: actualDate, place })
+        : t("notFoundDescriptionFallback", { place }),
     },
   };
 }
@@ -412,12 +440,14 @@ async function buildPlaceByDateEventsPromise({
   actualDate,
   paramsForFetch,
   pageDataPromise,
+  locale,
 }: {
   place: string;
   finalCategory?: string;
   actualDate: string;
   paramsForFetch: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
+  locale: AppLocale;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -438,16 +468,9 @@ async function buildPlaceByDateEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const filteredEvents = filterPastEvents(events);
-
-  // Align noEventsFound logic with root page
-  let finalNoEventsFound = noEventsFound;
-  if (events.length > 0 && filteredEvents.length === 0 && !finalNoEventsFound) {
-    finalNoEventsFound = true;
-  }
-
-  const eventsWithAds = insertAds(filteredEvents);
-  const validEvents = eventsWithAds.filter(isEventSummaryResponseDTO);
+  const localizedEvents = addLocalizedDateFields(events, locale);
+  const eventsWithAds = insertAds(localizedEvents);
+  const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const pageData = await pageDataPromise;
   const structuredScripts: JsonLdScript[] = [];
 
@@ -456,7 +479,10 @@ async function buildPlaceByDateEventsPromise({
       validEvents,
       finalCategory && finalCategory !== DEFAULT_FILTER_VALUE
         ? `Esdeveniments ${finalCategory} ${place}`
-        : `Esdeveniments ${actualDate} ${place}`
+        : `Esdeveniments ${actualDate} ${place}`,
+      undefined,
+      locale,
+      pageData.canonical
     );
 
     structuredScripts.push({
@@ -469,6 +495,7 @@ async function buildPlaceByDateEventsPromise({
       description: pageData.metaDescription,
       url: pageData.canonical,
       numberOfItems: validEvents.length,
+      locale,
     });
 
     if (collectionSchema) {
@@ -481,7 +508,7 @@ async function buildPlaceByDateEventsPromise({
 
   return {
     events: eventsWithAds,
-    noEventsFound: finalNoEventsFound,
+    noEventsFound,
     serverHasMore,
     structuredScripts: structuredScripts.length
       ? structuredScripts

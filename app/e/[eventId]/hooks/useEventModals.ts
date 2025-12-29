@@ -5,14 +5,22 @@ import type { DeleteReason } from "types/event";
 
 export function useEventModals() {
   const [openModal, setOpenModal] = useState(false);
-  const [openDeleteReasonModal, setOpenModalDeleteReasonModal] = useState(false);
+  const [openDeleteReasonModal, setOpenModalDeleteReasonModal] =
+    useState(false);
   const [reasonToDelete, setReasonToDelete] = useState<DeleteReason>(null);
   const [showThankYouBanner, setShowThankYouBanner] = useState(false);
 
   const onSendDeleteReason = async (eventId: string, eventTitle: string) => {
     setOpenModalDeleteReasonModal(false);
 
-    const rawResponse = await fetch(process.env.NEXT_PUBLIC_DELETE_EVENT!, {
+    const deleteEventUrl = process.env.NEXT_PUBLIC_DELETE_EVENT;
+    if (!deleteEventUrl) {
+      throw new Error(
+        "NEXT_PUBLIC_DELETE_EVENT environment variable must be set"
+      );
+    }
+
+    const rawResponse = await fetch(deleteEventUrl, {
       method: "DELETE",
       headers: {
         Accept: "application/json",
@@ -25,6 +33,11 @@ export function useEventModals() {
         isProduction: process.env.NODE_ENV === "production",
       }),
     });
+
+    if (!rawResponse.ok) {
+      console.error("Failed to delete event:", rawResponse.status);
+      return;
+    }
 
     const { success } = await rawResponse.json();
 

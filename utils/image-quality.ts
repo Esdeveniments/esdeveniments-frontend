@@ -21,24 +21,28 @@ export function getOptimalImageQuality({
   networkQuality = 70,
   customQuality,
 }: QualityOptions): number {
+  const clampQuality = (value: number) => Math.max(0, Math.min(value, 100));
+  const normalizedNetworkQuality = clampQuality(networkQuality);
+
   // Use custom quality if explicitly provided
   if (customQuality !== undefined) {
-    return customQuality;
+    return clampQuality(customQuality);
   }
 
   // For external images, use optimized quality settings for performance
   if (isExternal) {
     if (isPriority) {
-      // LCP external images: 60-65 quality for critical loading (reduced from 70)
-      return 60;
+      // LCP external images: 55-60 quality for critical loading (lowered to trim mobile payloads)
+      return 55;
     } else {
       // For regular external images, use network-based quality, capped for performance.
-      return Math.min(networkQuality, 50);
+      // Lowered cap to 45 to reduce payload on listing cards (Lighthouse flagged oversized downloads).
+      return Math.min(normalizedNetworkQuality, 45);
     }
   }
 
   // For internal images (rare in this app), use network-based quality
-  return networkQuality;
+  return normalizedNetworkQuality;
 }
 
 // Network-aware quality mapping
@@ -50,7 +54,8 @@ const QUALITY_MAP: Record<NetworkQuality, number> = {
 };
 
 export function getServerImageQuality(networkQuality?: NetworkQuality): number {
-  return QUALITY_MAP[networkQuality || "unknown"];
+  const clampQuality = (value: number) => Math.max(0, Math.min(value, 100));
+  return clampQuality(QUALITY_MAP[networkQuality || "unknown"]);
 }
 
 /**
@@ -94,11 +99,12 @@ export const getOptimalImageSizes = (
 ): string => {
   const sizesMap = {
     // Event cards in listings (most common usage)
-    card: "(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
+    // Constrained to max-w-2xl (672px) on desktop, so cap at 672px
+    card: "(max-width: 540px) 92vw, (max-width: 768px) 45vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 672px",
     // Hero/featured images
     hero: "(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw",
-    // List view images (smaller)
-    list: "(max-width: 480px) 100vw, (max-width: 768px) 30vw, 20vw",
+    // List view / horizontal cards: tighter sizes to avoid over-downloading on desktop
+    list: "(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 22vw",
     // Detail page images
     detail: "(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 40vw",
   };

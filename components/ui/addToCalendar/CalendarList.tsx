@@ -3,7 +3,12 @@ import Image from "next/image";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { CalendarOption, CalendarListProps } from "types/common";
 
-const CalendarList: FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
+const CalendarList: FC<CalendarListProps> = ({
+  onClick,
+  getUrls,
+  title,
+  labels,
+}) => {
   const urls = getUrls();
 
   const handleCalendarClick = useCallback(
@@ -20,17 +25,17 @@ const CalendarList: FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
 
   const calendarOptions: CalendarOption[] = [
     {
-      name: "Google Calendar",
+      name: labels.google,
       url: urls.google,
       icon: "google-calendar.png",
     },
     {
-      name: "Outlook",
+      name: labels.outlook,
       url: urls.outlook,
       icon: "outlook.jpeg",
     },
     {
-      name: "Altres",
+      name: labels.other,
       url: urls.ical,
       icon: "ical.png",
       download: `${title}.ics`,
@@ -57,8 +62,8 @@ const CalendarList: FC<CalendarListProps> = ({ onClick, getUrls, title }) => {
                 rel="noopener noreferrer"
                 download={option.download}
                 className={linkClass}
-                onClick={() => handleCalendarClick(option.name)}
-                aria-label={`Add to ${option.name}`}
+              onClick={() => handleCalendarClick(option.name)}
+              aria-label={labels.ariaAdd.replace("{name}", option.name)}
               >
                 <button className={buttonClass} aria-label={option.name}>
                   <Image

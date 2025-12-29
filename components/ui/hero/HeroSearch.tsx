@@ -2,17 +2,19 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { KeyboardEvent } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "../../../i18n/routing";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { sendGoogleEvent } from "@utils/analytics";
-import {
-  SearchIcon,
-  ChevronDownIcon,
-  XIcon,
-} from "@heroicons/react/solid";
+import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
+import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
+import XIcon from "@heroicons/react/solid/esm/XIcon";
+import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
+import { stripLocalePrefix } from "@utils/i18n-routing";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
 import { useHero } from "./HeroContext";
@@ -30,6 +32,8 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
 });
 
 export default function HeroSearch({ subTitle }: { subTitle?: string }) {
+  const t = useTranslations("Components.HeroSearch");
+    const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -42,8 +46,9 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
   // --- Location Logic ---
   const isPlacePage = useMemo(() => {
-    const segment = pathname?.split("/")[1];
-    return !!segment && segment !== "catalunya" && pathname !== "/";
+    const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");
+    const segment = pathnameWithoutLocale?.split("/")[1];
+    return !!segment && segment !== "catalunya" && pathnameWithoutLocale !== "/";
   }, [pathname]);
 
   const {
@@ -67,7 +72,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   }, [regionsAndCitiesArray]);
 
   useEffect(() => {
-    const segment = pathname?.split("/")[1];
+    const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");
+    const segment = pathnameWithoutLocale?.split("/")[1];
     if (segment && segment !== "catalunya") {
       const match = allLocations.find((loc) => loc.value === segment);
       if (match) {
@@ -132,9 +138,26 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
   const displayLabel = useMemo(() => {
     if (place === "catalunya") return label;
-    const withArticle = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general", false);
-    return withArticle.replace(/^a\s+/, "");
-  }, [label, place, placeType]);
+
+    // EN/ES already include the preposition in surrounding copy (e.g. "What to do in").
+    // Keep the visible label clean (no "a/al/a la...").
+    if (locale !== "ca") return label;
+
+    const withArticle = formatCatalanA(
+      label,
+      (placeType || "general") as "region" | "town" | "general",
+      false
+    );
+
+    // Strip leading Catalan preposition/article forms.
+    return withArticle
+      .replace(/^a\s+l[’']/, "")
+      .replace(/^a\s+les\s+/i, "")
+      .replace(/^a\s+la\s+/i, "")
+      .replace(/^als\s+/i, "")
+      .replace(/^al\s+/i, "")
+      .replace(/^a\s+/i, "");
+  }, [label, locale, place, placeType]);
 
   // --- Search Logic ---
 
@@ -177,7 +200,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       {/* Title Section */}
       <div className="flex flex-col items-center justify-center text-center gap-2">
         <h1 className="heading-1 flex flex-wrap items-center justify-center gap-2">
-          <span>Què fer a</span>
+          <span>{t("titlePrefix")}</span>
           <div className="relative inline-block">
             <Button
               variant="ghost"
@@ -199,8 +222,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <Modal
               open={isModalOpen}
               setOpen={setIsModalOpen}
-              title="Selecciona població"
-              actionButton="Seleccionar"
+              title={t("modalTitle")}
+              actionButton={t("modalAction")}
               onActionButtonClick={handleApplyLocation}
               testId="location-modal"
             >
@@ -211,10 +234,10 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                   ) : regionsError ? (
                     <div className="flex flex-col items-center gap-2 text-center py-4">
                       <p className="text-destructive">
-                        Error carregant les poblacions.
+                        {t("errorLoadingLocations")}
                       </p>
                       <Button onClick={() => mutate()} variant="outline" className="text-sm">
-                        Torna-ho a provar
+                        {t("retry")}
                       </Button>
                     </div>
                   ) : (
@@ -225,7 +248,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                       value={selectedOption}
                       onChange={handlePlaceChange}
                       isClearable
-                      placeholder="Cercar població o comarca..."
+                      placeholder={t("selectPlaceholder")}
                       testId="hero-location-select"
                       autoFocus
                       menuPosition="fixed"
@@ -237,7 +260,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           </div>
         </h1>
         <p className="body-large text-foreground/70 max-w-xl mx-auto">
-          {subTitle || "Agenda cultural, festes majors i activitats"}
+          {subTitle || t("subtitleDefault")}
         </p>
       </div>
 
@@ -250,7 +273,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           <input
             type="text"
             className="w-full pl-11 pr-12 py-3 bg-background border border-border rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-foreground/40"
-            placeholder={`Cerca esdeveniments a ${label}...`}
+            placeholder={t("searchPlaceholder", { location: label })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -261,7 +284,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
               variant="ghost"
               onClick={handleClearSearch}
               className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
-              aria-label="Clear search"
+              aria-label={t("clearSearch")}
             >
               <XIcon className="h-4 w-4" />
             </Button>

@@ -49,6 +49,48 @@ export function generateTownsOptions(
 }
 
 /**
+ * Generate a flat list of city options and a lookup map to their regions.
+ * Useful when you want a single city selector but still need the region id.
+ */
+export function generateCityOptionsWithRegionMap(
+  regionsWithCities: RegionsGroupedByCitiesResponseDTO[] | null | undefined
+): {
+  cityOptions: Option[];
+  cityToRegionOptionMap: Record<string, Option>;
+} {
+  if (!regionsWithCities || regionsWithCities.length === 0) {
+    return { cityOptions: [], cityToRegionOptionMap: {} };
+  }
+
+  const cityToRegionOptionMap: Record<string, Option> = {};
+
+  const cityOptions = regionsWithCities.flatMap((region) => {
+    const regionOption: Option = {
+      value: region.id.toString(),
+      label: region.name,
+      placeType: "region",
+    };
+
+    return region.cities.map((city) => {
+      const cityOption: Option = {
+        value: city.id.toString(),
+        label: city.label,
+        placeType: "town",
+        latitude: city.latitude ?? (city as { lat?: number }).lat,
+        longitude: city.longitude ?? (city as { lng?: number }).lng,
+      };
+      cityToRegionOptionMap[city.id.toString()] = regionOption;
+      return cityOption;
+    });
+  });
+
+  return {
+    cityOptions: cityOptions.sort((a, b) => a.label.localeCompare(b.label)),
+    cityToRegionOptionMap,
+  };
+}
+
+/**
  * Generate complete regions and towns options structure
  * Returns "Comarques" group first, followed by towns grouped by regions
  * This matches the structure from the old codebase

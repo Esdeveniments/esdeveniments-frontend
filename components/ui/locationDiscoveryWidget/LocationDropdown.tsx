@@ -3,8 +3,9 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { Option } from "types/common";
 import { LocationDropdownProps } from "types/props";
-import ChevronDownIcon from "@heroicons/react/solid/ChevronDownIcon";
-import LocationIcon from "@heroicons/react/solid/LocationMarkerIcon";
+import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
+import LocationMarkerIcon from "@heroicons/react/solid/esm/LocationMarkerIcon";
+const LocationIcon = LocationMarkerIcon;
 import { transformRegionsToOptions } from "./utils";
 import { normalizeForSearch } from "@utils/string-helpers";
 
@@ -113,9 +114,8 @@ export default function LocationDropdown({
           </span>
         </div>
         <ChevronDownIcon
-          className={`h-5 w-5 text-foreground-strong transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 text-foreground-strong transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 

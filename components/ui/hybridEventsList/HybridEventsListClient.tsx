@@ -1,18 +1,29 @@
 "use client";
 
 import { memo, ReactElement, useMemo, Suspense } from "react";
-import List from "@components/ui/list";
-import Card from "@components/ui/card";
+import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import CardLoading from "@components/ui/cardLoading";
-import NoEventsFound from "@components/ui/common/noEventsFound";
+import NoEventsFound from "@components/ui/common/noEventsFound/NoEventsFoundClient";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
-import { computeTemporalStatus } from "@utils/event-status";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
+import { useTranslations, useLocale } from "next-intl";
+import { sendGoogleEvent } from "@utils/analytics";
+import type { AppLocale } from "types/i18n";
+
+const ClientCardsList = dynamic(() => import("./ClientCardsList"), {
+  loading: () => (
+    <div className="w-full">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <CardLoading key={`loading-${index}`} />
+      ))}
+    </div>
+  ),
+});
 
 // Client side enhancer: handles pagination & de-duplication.
 // Expects initialEvents to be the SSR list (may include ad markers). We pass only
@@ -30,6 +41,8 @@ function HybridEventsListClientContent({
   pageData,
 }: HybridEventsListClientProps): ReactElement | null {
   const parsed = useUrlFilters(categories);
+  const t = useTranslations("Components.HybridEventsListClient");
+  const locale = useLocale() as AppLocale;
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
@@ -57,34 +70,20 @@ function HybridEventsListClientContent({
       serverHasMore,
     });
 
-  // When filters are active, show ALL filtered events (replace SSR list)
+  // When filters are active, show ALL fetched events (replace SSR list)
   // When no filters, show only appended events (SSR list remains visible)
-  // Filter out past events in both cases
   const displayedEvents: ListEvent[] = useMemo(() => {
     if (!events || events.length === 0) return [];
 
-    // Filter out past events
-    const activeEvents = events.filter((event) => {
-      if (!isEventSummaryResponseDTO(event)) return true; // Keep ads
-      const status = computeTemporalStatus(
-        event.startDate,
-        event.endDate,
-        undefined,
-        event.startTime,
-        event.endTime
-      );
-      return status.state !== "past";
-    });
-
     if (hasClientFilters) {
       // Filters active: show all filtered events (replace SSR list)
-      return activeEvents;
+      return events;
     }
 
     // No filters: only show appended events beyond SSR list
     const seen = new Set<string>(realInitialEvents.map((e) => e.id));
     const uniqueAppended: EventSummaryResponseDTO[] = [];
-    for (const event of activeEvents) {
+    for (const event of events) {
       if (!isEventSummaryResponseDTO(event)) continue; // Skip ads in appended list
       if (seen.has(event.id)) continue;
       seen.add(event.id);
@@ -115,8 +114,8 @@ function HybridEventsListClientContent({
     if (!pageData?.notFoundTitle) {
       return undefined;
     }
-    return appendSearchQuery(pageData.notFoundTitle, search);
-  }, [pageData, search]);
+    return appendSearchQuery(pageData.notFoundTitle, search, locale);
+  }, [pageData, search, locale]);
 
   return (
     <>
@@ -125,10 +124,10 @@ function HybridEventsListClientContent({
         <div className="w-full flex flex-col items-center gap-element-gap py-section-y px-section-x">
           <div className="w-full text-center">
             <p className="body-normal text-foreground-strong mb-element-gap">
-              Error al carregar esdeveniments
+              {t("errorTitle")}
             </p>
             <p className="body-small text-foreground/80">
-              Si us plau, torna-ho a intentar més tard.
+              {t("error")}
             </p>
           </div>
         </div>
@@ -141,31 +140,29 @@ function HybridEventsListClientContent({
           />
           {showFallbackEvents && (
             <div className="w-full mt-section-y">
-              <List events={realInitialEvents}>
-                {(event: ListEvent, index: number) => (
-                  <Card
-                    key={`${event.id ?? "ad"}-${index}`}
-                    event={event}
-                    isPriority={index === 0}
-                  />
-                )}
-              </List>
+              <ClientCardsList events={realInitialEvents} />
             </div>
           )}
         </>
       ) : (
         <>
-          <List events={displayedEvents}>
-            {(event: ListEvent, index: number) => (
-              <Card
-                key={`${event.id ?? "ad"}-${index}`}
-                event={event}
-                isPriority={index === 0}
-              />
-            )}
-          </List>
+          {displayedEvents.length > 0 ? (
+            <ClientCardsList events={displayedEvents} />
+          ) : null}
           <LoadMoreButton
-            onLoadMore={loadMore}
+            onLoadMore={async () => {
+              sendGoogleEvent("load_more", {
+                context: "hybrid_events_list",
+                place: place || undefined,
+                category: category || undefined,
+                date: date || undefined,
+                has_client_filters: hasClientFilters,
+                search_present: Boolean(search),
+                distance_present: Boolean(distance),
+                geo_present: Boolean(lat && lon),
+              });
+              await loadMore();
+            }}
             isLoading={isLoadingMore}
             hasMore={hasMore}
           />

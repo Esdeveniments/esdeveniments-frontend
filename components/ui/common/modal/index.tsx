@@ -7,7 +7,7 @@ import {
   DialogTitle,
   Transition,
 } from "@headlessui/react";
-import { ArrowLeftIcon } from "@heroicons/react/outline";
+import ArrowLeftIcon from "@heroicons/react/outline/esm/ArrowLeftIcon";
 import { ModalProps } from "types/props";
 import Button from "@components/ui/common/button";
 
@@ -18,6 +18,7 @@ export default function Modal({
   children,
   actionButton,
   onActionButtonClick,
+  actionButtonDisabled = false,
   testId,
 }: ModalProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -53,7 +54,7 @@ export default function Modal({
               leaveFrom="opacity-70"
               leaveTo="opacity-0"
             >
-              <DialogPanel 
+              <DialogPanel
                 className="flex justify-center items-center relative z-10 pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
@@ -100,7 +101,8 @@ export default function Modal({
                           setOpen(false);
                         }}
                         data-testid={testId ? `${testId}-action-button` : undefined}
-                        className="w-full"
+                        className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={actionButtonDisabled}
                       >
                         {actionButton}
                       </Button>

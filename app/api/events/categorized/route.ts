@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { fetchCategorizedEventsExternal } from "@lib/api/events-external";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);

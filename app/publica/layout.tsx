@@ -1,40 +1,57 @@
 import { ReactNode } from "react";
+import { getTranslations } from "next-intl/server";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import type { Metadata } from "next";
 
-export const metadata = buildPageMeta({
-  title: "Publica - Esdeveniments.cat",
-  description: "Publica un acte cultural - Esdeveniments.cat",
-  canonical: `${siteUrl}/publica`,
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.PublishPage" });
+  return buildPageMeta({
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    canonical: `${siteUrl}/publica`,
+    locale,
+  });
+}
 
-const publishEventSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "@id": `${siteUrl}/publica#webpage`,
-  url: `${siteUrl}/publica`,
-  name: "Publica un acte cultural",
-  description:
-    "Formulari oficial per afegir nous actes culturals a l'agenda col·laborativa d'Esdeveniments.cat.",
-  inLanguage: "ca",
-  isPartOf: { "@id": `${siteUrl}#website` },
-  mainEntity: {
-    "@type": "Organization",
-    name: "Esdeveniments.cat",
-    url: siteUrl,
-  },
-  potentialAction: {
-    "@type": "CreateAction",
-    target: `${siteUrl}/publica`,
-    name: "Publicar esdeveniment cultural",
-  },
+const publishEventSchema = async () => {
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "App.PublishPage" });
+  const localizedPath = withLocalePath("/publica", locale);
+  const localizedUrl = `${siteUrl}${localizedPath === "/" ? "" : localizedPath}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${localizedUrl}#webpage`,
+    url: localizedUrl,
+    name: t("schemaName"),
+    description: t("schemaDescription"),
+    inLanguage: locale,
+    isPartOf: { "@id": `${siteUrl}#website` },
+    mainEntity: {
+      "@type": "Organization",
+      name: "Esdeveniments.cat",
+      url: siteUrl,
+    },
+    potentialAction: {
+      "@type": "CreateAction",
+      target: localizedUrl,
+      name: t("schemaAction"),
+    },
+  };
 };
 
 export default function PublicaLayout({ children }: { children: ReactNode }) {
+  const schemaPromise = publishEventSchema();
   return (
     <>
-      <JsonLdServer id="publica-webpage-schema" data={publishEventSchema} />
+      <JsonLdServer
+        id="publica-webpage-schema"
+        data={schemaPromise as unknown as Record<string, unknown>}
+      />
       {children}
     </>
   );

@@ -1,16 +1,18 @@
-import { memo, FC } from "react";
-import ImageServer from "@components/ui/common/image/ImageServer";
+import Image from "@components/ui/common/image";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { truncateString, getFormattedDate } from "@utils/helpers";
+import { buildEventPlaceLabels } from "@utils/location-helpers";
 import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import CardLink from "@components/ui/common/cardContent/CardLink";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
-const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
+function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const cardClass =
     layout === "horizontal"
       ? "flex-none w-96 min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
@@ -41,9 +43,21 @@ const EventCardLoading: FC<{ layout: EventsAroundLayout }> = ({ layout }) => {
       </div>
     </div>
   );
-};
+}
 
-const EventsAroundServer: FC<EventsAroundServerProps> = ({
+export function dedupeEvents(events: EventsAroundServerProps["events"]) {
+  const seen = new Set<string | number | undefined>();
+  const result = [] as typeof events;
+  for (const ev of events) {
+    const key = (ev.id as string | number | undefined) ?? ev.slug;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(ev);
+  }
+  return result;
+}
+
+async function EventsAroundServer({
   events,
   layout = "compact",
   loading = false,
@@ -51,20 +65,12 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
   showJsonLd = false,
   jsonLdId,
   title,
-}) => {
+  useDetailTimeFormat = false,
+}: EventsAroundServerProps) {
+  const locale = await getLocaleSafely();
   // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
   // Keep first occurrence order-stable. Key used: id fallback to slug.
-  const uniqueEvents = (() => {
-    const seen = new Set<string | number | undefined>();
-    const result = [] as typeof events;
-    for (const ev of events) {
-      const key = (ev.id as string | number | undefined) ?? ev.slug;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      result.push(ev);
-    }
-    return result;
-  })();
+  const uniqueEvents = dedupeEvents(events);
 
   // Generate JSON-LD data for SEO
   const generateJsonLdData = () => {
@@ -123,6 +129,13 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
     return null;
   }
 
+  const t = await getTranslations("Components.EventsAround");
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tScroll = await getTranslations({
+    locale,
+    namespace: "Components.HorizontalScroll",
+  });
+  const carouselSuffix = t("carouselSuffix");
   // Render different layouts
   if (layout === "horizontal") {
     return (
@@ -140,10 +153,11 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
         )}
         <HorizontalScroll
           className="py-element-gap px-section-x"
-          ariaLabel={title ? `${title} - carrusel d'esdeveniments` : undefined}
+          ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
           nudgeOnFirstLoad
           showDesktopArrows
           hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
+          labels={{ previous: tScroll("previous"), next: tScroll("next") }}
         >
           <div className="flex gap-element-gap">
             {uniqueEvents.map((event, index) => (
@@ -156,6 +170,7 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                 <CardHorizontalServer
                   event={event}
                   isPriority={usePriority && index <= 2}
+                  useDetailTimeFormat={useDetailTimeFormat}
                 />
               </div>
             ))}
@@ -187,11 +202,17 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
           // Format the date
           const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
             event.startDate,
-            event.endDate
+            event.endDate,
+            locale
           );
           const eventDate = formattedEnd
-            ? `Del ${formattedStart} al ${formattedEnd}`
-            : `${nameDay}, ${formattedStart}`;
+            ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
+            : tCard("dateSingle", { nameDay, start: formattedStart });
+          const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
+            cityName: event.city?.name,
+            regionName: event.region?.name,
+            location: event.location,
+          });
 
           return (
             <div
@@ -201,16 +222,22 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
               <CardLink
                 href={`/e/${event.slug}`}
                 className="block pressable-card transition-card"
+                data-analytics-event-name="related_event_click"
+                data-analytics-event-id={event.id ? String(event.id) : ""}
+                data-analytics-event-slug={event.slug || ""}
+                data-analytics-position={String(index + 1)}
               >
                 {/* ImageEvent */}
                 <div className="w-full h-32 flex justify-center items-center overflow-hidden">
-                  <ImageServer
+                  <Image
                     className="w-full object-cover"
                     title={event.title}
                     alt={event.title}
                     image={image}
                     priority={false}
+                    fetchPriority="low"
                     context="card"
+                    cacheKey={event.hash || event.updatedAt}
                   />
                 </div>
                 {/* Title */}
@@ -222,10 +249,17 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
                     {eventTitle}
                   </h3>
                 </div>
-                {/* Location */}
+                {/* Location - city primary, venue optional */}
                 <div className="pt-1">
-                  <div className="body-small font-normal text-ellipsis overflow-hidden whitespace-nowrap">
-                    <span>{event.location || ""}</span>
+                  <div className="body-small font-normal text-ellipsis overflow-hidden whitespace-nowrap flex flex-col text-foreground">
+                    <span className="truncate font-semibold">
+                      {primaryLabel}
+                    </span>
+                    {secondaryLabel && (
+                      <span className="truncate text-foreground/70">
+                        {secondaryLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
                 {/* Date */}
@@ -245,4 +279,4 @@ const EventsAroundServer: FC<EventsAroundServerProps> = ({
 
 EventsAroundServer.displayName = "EventsAroundServer";
 
-export default memo(EventsAroundServer);
+export default EventsAroundServer;

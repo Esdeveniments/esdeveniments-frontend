@@ -1,22 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
-import type { EventTemporalStatus } from "types/event-status";
 import { useSearchParams } from "next/navigation";
 // import useOnScreen from "components/hooks/useOnScreen";
 import { sendGoogleEvent } from "@utils/analytics";
 
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
-import EventWeather from "./components/EventWeather";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
-import {
-  // PencilIcon,
-  // InformationCircleIcon as InfoIcon,
-  SpeakerphoneIcon,
-} from "@heroicons/react/outline";
+// import PencilIcon from "@heroicons/react/outline/esm/PencilIcon";
+// import InformationCircleIcon from "@heroicons/react/outline/esm/InformationCircleIcon";
+// const InfoIcon = InformationCircleIcon;
+import SpeakerphoneIcon from "@heroicons/react/outline/esm/SpeakerphoneIcon";
 import AdArticle from "components/ui/adArticle";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { useTranslations } from "next-intl";
 
 // const Tooltip = dynamic(() => import("components/ui/tooltip"), {
 //   ssr: false,
@@ -26,11 +24,10 @@ import SectionHeading from "@components/ui/common/SectionHeading";
 
 export default function EventClient({
   event,
-  temporalStatus,
 }: {
   event: EventDetailResponseDTO;
-  temporalStatus: EventTemporalStatus;
 }) {
+  const t = useTranslations("Components.EventPage");
   // const editModalRef = useRef<HTMLDivElement>(null);
 
   // const isEditModalVisible = useOnScreen(
@@ -60,26 +57,26 @@ export default function EventClient({
     sendGoogleEvent("view_event_page", {});
   }, []);
 
-  // Count a visit (client beacon). Backend dedupes by event + visitor id.
-  useEffect(() => {
-    const payload = { eventId: event.id, slug: event.slug };
-    try {
-      const json = JSON.stringify(payload);
-      if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
-        const blob = new Blob([json], { type: "application/json" });
-        navigator.sendBeacon("/api/visits", blob);
-      } else {
-        fetch("/api/visits", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: json,
-          keepalive: true,
-        }).catch(() => {});
-      }
-    } catch {
-      // no-op
-    }
-  }, [event.id, event.slug]);
+  // Count a visit (client beacon). Backend dedupes by event + visitor id. Not implemented in backend
+  // useEffect(() => {
+  //   const payload = { eventId: event.id, slug: event.slug };
+  //   try {
+  //     const json = JSON.stringify(payload);
+  //     if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+  //       const blob = new Blob([json], { type: "application/json" });
+  //       navigator.sendBeacon("/api/visits", blob);
+  //     } else {
+  //       fetch("/api/visits", {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: json,
+  //         keepalive: true,
+  //       }).catch(() => { });
+  //     }
+  //   } catch {
+  //     // no-op
+  //   }
+  // }, [event.id, event.slug]);
 
   const slug = event.slug ?? "";
   const title = event.title ?? "";
@@ -100,7 +97,7 @@ export default function EventClient({
           <SectionHeading
             Icon={SpeakerphoneIcon}
             iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-            title="Contingut patrocinat"
+            title={t("sponsored")}
             titleClassName="heading-2"
           />
           <div className="px-section-x">
@@ -109,12 +106,6 @@ export default function EventClient({
         </div>
       </div>
 
-      {/* Weather (hidden for past events to reduce noise) */}
-      {temporalStatus.state !== "past" && (
-        <div className="w-full">
-          <EventWeather weather={event.weather} />
-        </div>
-      )}
       {/* Edit Button Section */}
 
       {/* <div className="w-full flex justify-center items-start gap-2 px-4">

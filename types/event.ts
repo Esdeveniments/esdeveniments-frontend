@@ -8,6 +8,7 @@ import type {
 import type { CitySummaryResponseDTO } from "./api/city";
 import type { CategorySummaryResponseDTO } from "./api/category";
 import type { DateRange, DeleteReason, Option } from "./common";
+import type { AppLocale } from "./i18n";
 
 // Helper schemas for form validation
 const OptionSchema = z.object({ value: z.string(), label: z.string() });
@@ -35,29 +36,69 @@ const CategoryFormItemSchema = z.union([
   z.number(),
 ]);
 
+export type EventFormZodLabels = {
+  titleRequired: string;
+  descriptionRequired: string;
+  locationRequired: string;
+  invalidUrl: string;
+  invalidEmail: string;
+};
+
+export interface ValidationLabels {
+  genericError: string;
+  imageRequired: string;
+}
+
+export const defaultEventFormZodLabels: EventFormZodLabels = {
+  titleRequired: "Title is required",
+  descriptionRequired: "Description is required",
+  locationRequired: "Location is required",
+  invalidUrl: "Invalid URL",
+  invalidEmail: "Invalid email",
+};
+
+export const createEventFormSchema = (
+  labels: EventFormZodLabels = defaultEventFormZodLabels
+) =>
+  z.object({
+    id: z.string().optional(),
+    title: z.string().min(1, labels.titleRequired),
+    description: z.string().min(1, labels.descriptionRequired),
+    type: z.enum(["FREE", "PAID"]),
+    startDate: z.string(), // "YYYY-MM-DD" - consistent with API
+    startTime: z.string().nullable(), // ISO time string or null - consistent with API
+    endDate: z.string(), // "YYYY-MM-DD" - consistent with API
+    endTime: z.string().nullable(), // ISO time string or null - consistent with API
+    region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
+    town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
+    location: z.string().min(1, labels.locationRequired),
+    imageUrl: z
+      .string()
+      .url(labels.invalidUrl)
+      .refine((val) => {
+        if (!val) return true;
+        try {
+          const url = new URL(val);
+          return url.hostname.includes(".");
+        } catch {
+          return false;
+        }
+      }, labels.invalidUrl)
+      .nullable()
+      .or(z.literal("")),
+    url: z
+      .string()
+      .refine(
+        (val) => !val || z.string().url().safeParse(val).success,
+        labels.invalidUrl
+      ),
+    categories: z.array(CategoryFormItemSchema),
+    email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
+    isAllDay: z.boolean().optional(),
+  });
+
 // --- Zod schema for canonical event form data ---
-export const EventFormSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(1, "Títol obligatori"),
-  description: z.string().min(1, "Descripció obligatòria"),
-  type: z.enum(["FREE", "PAID"]),
-  startDate: z.string(), // "YYYY-MM-DD" - consistent with API
-  startTime: z.string().nullable(), // ISO time string or null - consistent with API
-  endDate: z.string(), // "YYYY-MM-DD" - consistent with API
-  endTime: z.string().nullable(), // ISO time string or null - consistent with API
-  region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
-  town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
-  location: z.string().min(1, "Localització obligatòria"),
-  imageUrl: z.string().nullable(),
-  url: z
-    .string()
-    .refine(
-      (val) => !val || z.string().url().safeParse(val).success,
-      "URL invàlida"
-    ),
-  categories: z.array(CategoryFormItemSchema),
-  email: z.string().email("Email invàlid").or(z.literal("")).optional(),
-});
+export const EventFormSchema = createEventFormSchema();
 
 export type EventFormSchemaType = z.infer<typeof EventFormSchema>;
 
@@ -80,6 +121,13 @@ export interface FormattedDateResult {
   duration: string;
 }
 
+export interface EventTimeLabels {
+  consult: string;
+  startsAt: string;
+  range: string;
+  simpleRange: string;
+}
+
 // --- Centralized event form types ---
 export interface FormData {
   id?: string;
@@ -99,6 +147,8 @@ export interface FormData {
     { id: number; name: string } | { value: string; label: string } | number
   >;
   email?: string; // UI only
+  // Flag to mark single-day/all-day events (end time auto-handled)
+  isAllDay?: boolean;
 }
 
 /**
@@ -199,6 +249,8 @@ export interface EventDescriptionProps {
   locationValue: string;
   introText?: string;
   locationType?: "region" | "town" | "general";
+  locale?: AppLocale;
+  showTranslate?: boolean;
 }
 
 export interface EventTagsProps {
@@ -258,24 +310,36 @@ export interface EventFormProps {
   form: FormData;
   onSubmit: (e: React.FormEvent) => Promise<void> | void;
   submitLabel: string;
+  analyticsContext?: string;
   isEditMode?: boolean;
   isLoading?: boolean;
-  regionOptions: Option[];
   cityOptions: Option[];
   categoryOptions: Option[];
-  isLoadingRegionsWithCities?: boolean;
+  isLoadingCities?: boolean;
   isLoadingCategories?: boolean;
+  isLocating?: boolean;
   handleFormChange: <K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => void;
-  handleImageChange: (file: File) => void;
-  handleRegionChange: (region: Option | null) => void;
+  handleImageChange: (file: File | null) => void;
   handleTownChange: (town: Option | null) => void;
   handleCategoriesChange: (categories: Option[]) => void;
+  handleUseGeolocation?: () => void;
+  handleTestUrl?: (url: string) => void;
   progress: number;
   imageToUpload: string | null;
   imageFile?: File | null;
+  isUploadingImage?: boolean;
+  uploadMessage?: string | null;
+  onPreview?: () => void;
+  canPreview?: boolean;
+  previewLabel?: string;
+  previewTestId?: string;
+  imageMode?: "upload" | "url";
+  onImageModeChange?: (mode: "upload" | "url") => void;
+  handleImageUrlChange?: (url: string) => void;
+  imageUrlValue?: string | null;
 }
 
 export interface UseEventsOptions {

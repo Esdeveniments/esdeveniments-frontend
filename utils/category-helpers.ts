@@ -1,5 +1,6 @@
 import { findCategoryBySlug } from "./category-mapping";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import { CATEGORY_CONFIG } from "@config/categories";
 
 /**
  * Finds a category by slug in dynamic category data
@@ -78,4 +79,21 @@ export function getCategoryDisplayName(
   if (!category) return "";
 
   return category.name || category.slug || `Category ${category.id}`;
+}
+
+/**
+ * Localizes a category label when the slug is known in CATEGORY_CONFIG.
+ * Falls back to the backend-provided name (or slug) when unknown.
+ */
+export function getLocalizedCategoryLabelFromConfig(
+  slug: unknown,
+  fallbackName: string,
+  tCategories: (key: string) => string
+): string {
+  const normalizedSlug = typeof slug === "string" ? slug.toLowerCase() : "";
+  const config = normalizedSlug ? CATEGORY_CONFIG[normalizedSlug] : undefined;
+  if (config?.labelKey) {
+    return tCategories(config.labelKey);
+  }
+  return fallbackName;
 }

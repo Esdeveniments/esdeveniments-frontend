@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "lastUpdated": "2025-12-25",
+  "thresholds": {
+    "warning": { "ratio": 0.05, "bytes": 51200 },
+    "error": { "ratio": 0.1, "bytes": 102400 }
+  },
+  "clientTotalBytes": 2939061,
+  "routes": {
+    "/": { "serverBytes": 22950 },
+    "/[place]": { "serverBytes": 1310410 },
+    "/e/[eventId]": { "serverBytes": 1094728 },
+    "/noticies": { "serverBytes": 1389103 },
+    "/publica": { "serverBytes": 454637 }
+  }
+}

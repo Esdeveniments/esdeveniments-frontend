@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 import { DateFilterBadges } from "../components/ui/serverEventsCategorized/DateFilterBadges";
 import type { CategorySummaryResponseDTO } from "../types/api/category";
 import type { URLFilterState } from "../types/url-filters";
+import type { DateFilterBadgesProps } from "../types/props";
 
 // Mock buildCanonicalUrl to verify it's called with correct params
 const mockBuildCanonicalUrl = vi.fn(
@@ -50,14 +51,19 @@ describe("DateFilterBadges", () => {
     vi.clearAllMocks();
   });
 
+  const renderComponent = (props: Partial<DateFilterBadgesProps>) => {
+    render(
+      <DateFilterBadges
+        placeSlug="barcelona"
+        contextName="Barcelona"
+        {...props}
+      />
+    );
+  };
+
   describe("Rendering", () => {
     it("renders all three date filter badges", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="barcelona"
-          contextName="Barcelona"
-        />
-      );
+      renderComponent({});
 
       expect(screen.getByText("Avui")).toBeInTheDocument();
       expect(screen.getByText("Demà")).toBeInTheDocument();
@@ -65,25 +71,14 @@ describe("DateFilterBadges", () => {
     });
 
     it("renders with correct nav aria-label by default", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="barcelona"
-          contextName="Barcelona"
-        />
-      );
+      renderComponent({});
 
       const nav = screen.getByRole("navigation");
       expect(nav).toHaveAttribute("aria-label", "Vegeu també");
     });
 
     it("renders with custom nav aria-label when provided", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="barcelona"
-          contextName="Barcelona"
-          ariaLabel="Explora Barcelona per data"
-        />
-      );
+      renderComponent({ ariaLabel: "Explora Barcelona per data" });
 
       const nav = screen.getByRole("navigation");
       expect(nav).toHaveAttribute("aria-label", "Explora Barcelona per data");
@@ -92,12 +87,7 @@ describe("DateFilterBadges", () => {
 
   describe("URL generation without category", () => {
     it("generates correct URLs for place-only filters", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="barcelona"
-          contextName="Barcelona"
-        />
-      );
+      renderComponent({});
 
       expect(mockBuildCanonicalUrl).toHaveBeenCalledTimes(3);
       expect(mockBuildCanonicalUrl).toHaveBeenCalledWith(
@@ -115,17 +105,12 @@ describe("DateFilterBadges", () => {
     });
 
     it("generates correct hrefs for badges", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="girona"
-          contextName="Girona"
-        />
-      );
+      renderComponent({ placeSlug: "mataro", contextName: "Mataró" });
 
       const badges = screen.getAllByTestId("date-filter-badge");
-      expect(badges[0]).toHaveAttribute("href", "/girona/avui");
-      expect(badges[1]).toHaveAttribute("href", "/girona/dema");
-      expect(badges[2]).toHaveAttribute("href", "/girona/cap-de-setmana");
+      expect(badges[0]).toHaveAttribute("href", "/mataro/avui");
+      expect(badges[1]).toHaveAttribute("href", "/mataro/dema");
+      expect(badges[2]).toHaveAttribute("href", "/mataro/cap-de-setmana");
     });
   });
 
@@ -135,14 +120,12 @@ describe("DateFilterBadges", () => {
     ];
 
     it("generates correct URLs with category slug", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="catalunya"
-          categorySlug="concerts"
-          categories={categories}
-          contextName="Concerts"
-        />
-      );
+      renderComponent({
+        placeSlug: "catalunya",
+        categorySlug: "concerts",
+        categories,
+        contextName: "Concerts",
+      });
 
       expect(mockBuildCanonicalUrl).toHaveBeenCalledTimes(3);
       expect(mockBuildCanonicalUrl).toHaveBeenCalledWith(
@@ -164,14 +147,12 @@ describe("DateFilterBadges", () => {
     });
 
     it("generates correct hrefs for badges with category", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="catalunya"
-          categorySlug="concerts"
-          categories={categories}
-          contextName="Concerts"
-        />
-      );
+      renderComponent({
+        placeSlug: "catalunya",
+        categorySlug: "concerts",
+        categories,
+        contextName: "Concerts",
+      });
 
       const badges = screen.getAllByTestId("date-filter-badge");
       expect(badges[0]).toHaveAttribute("href", "/catalunya/avui/concerts");
@@ -185,12 +166,7 @@ describe("DateFilterBadges", () => {
 
   describe("Aria label generation", () => {
     it("generates correct aria labels for place-only context", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="barcelona"
-          contextName="Barcelona"
-        />
-      );
+      renderComponent({});
 
       const badges = screen.getAllByTestId("date-filter-badge");
       expect(badges[0]).toHaveAttribute(
@@ -212,14 +188,12 @@ describe("DateFilterBadges", () => {
         { id: 1, name: "Teatre", slug: "teatre" },
       ];
 
-      render(
-        <DateFilterBadges
-          placeSlug="catalunya"
-          categorySlug="teatre"
-          categories={categories}
-          contextName="Teatre"
-        />
-      );
+      renderComponent({
+        placeSlug: "catalunya",
+        categorySlug: "teatre",
+        categories,
+        contextName: "Teatre",
+      });
 
       const badges = screen.getAllByTestId("date-filter-badge");
       expect(badges[0]).toHaveAttribute(
@@ -239,13 +213,11 @@ describe("DateFilterBadges", () => {
 
   describe("Edge cases", () => {
     it("handles categorySlug without categories array", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="catalunya"
-          categorySlug="festivals"
-          contextName="Festivals"
-        />
-      );
+      renderComponent({
+        placeSlug: "catalunya",
+        categorySlug: "festivals",
+        contextName: "Festivals",
+      });
 
       // Should still generate URLs with category
       expect(mockBuildCanonicalUrl).toHaveBeenCalledWith(
@@ -255,14 +227,12 @@ describe("DateFilterBadges", () => {
     });
 
     it("handles empty categories array", () => {
-      render(
-        <DateFilterBadges
-          placeSlug="catalunya"
-          categorySlug="concerts"
-          categories={[]}
-          contextName="Concerts"
-        />
-      );
+      renderComponent({
+        placeSlug: "catalunya",
+        categorySlug: "concerts",
+        categories: [],
+        contextName: "Concerts",
+      });
 
       expect(mockBuildCanonicalUrl).toHaveBeenCalledWith(
         { place: "catalunya", byDate: "avui", category: "concerts" },

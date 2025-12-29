@@ -4,12 +4,28 @@ declare global {
   }
 
   interface Window {
-    gtag?: (command: string, event: string, params?: unknown) => void;
+    gtag?: (...args: unknown[]) => void;
     __LAST_E2E_PUBLISH_SLUG__?: string;
+    __OPENED_URLS__?: string[];
+    __adsConsentGranted?: boolean;
+    __autoAdsInitialized?: boolean;
+    __autoAdsInitPending?: symbol;
+    dataLayer?: unknown[];
+    __tcfapi?: (
+      command: "addEventListener" | "removeEventListener" | "getTCData",
+      version: number,
+      callback: import("./ads").TcfCallback,
+      listenerId?: number
+    ) => void;
+    requestIdleCallback?: (
+      callback: () => void,
+      options?: { timeout: number }
+    ) => number;
+    cancelIdleCallback?: (handle: number) => void;
   }
 }
 
-declare module 'react' {
+declare module "react" {
   interface CSSProperties {
     viewTransitionName?: string;
   }

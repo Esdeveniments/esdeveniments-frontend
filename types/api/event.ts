@@ -44,6 +44,10 @@ export interface EventSummaryResponseDTO {
     icon: string;
   };
   isAd?: boolean;
+  // Preformatted, locale-specific view fields (optional, computed server-side)
+  formattedStart?: string;
+  formattedEnd?: string | null;
+  nameDay?: string;
 }
 
 export interface AdEvent {

@@ -1,9 +1,11 @@
+import { getTranslations } from "next-intl/server";
 import ImageServer from "@components/ui/common/image/ImageServer";
 import { PromotedRestaurantCardProps } from "types/api/restaurant";
 
-export default function PromotedRestaurantCard({
+export default async function PromotedRestaurantCard({
   promotion,
 }: PromotedRestaurantCardProps) {
+  const t = await getTranslations("Components.PromotedRestaurantCard");
   const formatExpiryDate = (expiresAt: string) => {
     const date = new Date(expiresAt);
     return date.toLocaleDateString("ca-ES", {
@@ -30,8 +32,8 @@ export default function PromotedRestaurantCard({
       </svg>
       <div className="stack w-11/12">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Restaurant promocionat</h2>
-          <span className="badge-primary">Patrocinat</span>
+          <h2 className="text-lg font-semibold">{t("title")}</h2>
+          <span className="badge-primary">{t("badge")}</span>
         </div>
 
         <div className="border border-primary/20 rounded-lg p-4 bg-gradient-to-r from-primary/5 to-primary/10">
@@ -44,6 +46,7 @@ export default function PromotedRestaurantCard({
                 alt={promotion.restaurantName}
                 className="w-16 h-16"
                 context="card"
+                cacheKey={promotion.image.public_id || promotion.id}
               />
             </div>
 
@@ -56,9 +59,8 @@ export default function PromotedRestaurantCard({
 
               {/* Expiry Info */}
               <div className="mt-2 text-sm text-foreground/70">
-                <span>Promoció activa fins al </span>
                 <span className="font-medium">
-                  {formatExpiryDate(promotion.expiresAt)}
+                  {t("activeUntil", { date: formatExpiryDate(promotion.expiresAt) })}
                 </span>
               </div>
             </div>

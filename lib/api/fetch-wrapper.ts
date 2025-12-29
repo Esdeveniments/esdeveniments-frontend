@@ -2,7 +2,7 @@ import { generateHmac } from "@utils/hmac";
 
 export async function fetchWithHmac(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit & { skipBodySigning?: boolean } = {}
 ): Promise<Response> {
   const timestamp = Date.now();
   let bodyToSign = "";
@@ -28,6 +28,10 @@ export async function fetchWithHmac(
         `fetchWithHmac: Unsupported body type. Only string, URLSearchParams, and FormData are supported.`
       );
     }
+  }
+
+  if (options.skipBodySigning) {
+    bodyToSign = "";
   }
 
   let urlObject: URL;
@@ -60,10 +64,14 @@ export async function fetchWithHmac(
 
   // Use the normalized body (URLSearchParams converted to string) to ensure
   // the server middleware reads the exact same string we signed.
-  // Enforce no-store to prevent caching of authenticated requests (cannot be overridden)
+
+  // Always enforce no-store for security when no Next.js cache options are provided
+  // This prevents caching of sensitive HMAC-signed requests
+  const cacheOption = options.next ? undefined : "no-store";
+
   return fetch(url, {
     ...options,
-    cache: "no-store",
+    cache: cacheOption,
     method,
     body: normalizedBody,
     headers,

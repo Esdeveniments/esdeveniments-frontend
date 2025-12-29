@@ -51,6 +51,38 @@ describe("url-filters: canonical building and parsing", () => {
     expect(url).toBe("/barcelona/avui?search=rock&distance=25");
   });
 
+  it("includes search and lat/lon as query parameters", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: "avui",
+      category: DEFAULT_FILTER_VALUE,
+      searchTerm: "concerts",
+      lat: 41.3888,
+      lon: 2.159,
+    });
+    expect(url).toContain("/barcelona/avui?");
+    expect(url).toContain("search=concerts");
+    expect(url).toContain("lat=41.3888");
+    expect(url).toContain("lon=2.159");
+  });
+
+  it("includes search, distance, lat, and lon all together", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "catalunya",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+      searchTerm: "castellers",
+      distance: 30,
+      lat: 41.643119809884865,
+      lon: 2.3563432607664034,
+    });
+    expect(url).toContain("/catalunya?");
+    expect(url).toContain("search=castellers");
+    expect(url).toContain("distance=30");
+    expect(url).toContain("lat=41.643119809884865");
+    expect(url).toContain("lon=2.3563432607664034");
+  });
+
   it("parses 1, 2 and 3 segments correctly", () => {
     const one = parseFiltersFromUrl(
       { place: "catalunya" },
@@ -83,11 +115,11 @@ describe("url-filters: canonical building and parsing", () => {
     });
 
     const three = parseFiltersFromUrl(
-      { place: "girona", date: "avui", category: "concerts" },
+      { place: "mataro", date: "avui", category: "concerts" },
       new URLSearchParams("search=art")
     );
     expect(three.segments).toEqual({
-      place: "girona",
+      place: "mataro",
       date: "avui",
       category: "concerts",
     });
@@ -389,14 +421,19 @@ describe("url-filters: toUrlSearchParams conversion", () => {
   describe("security: MAX_QUERY_PARAMS limit enforcement", () => {
     it("enforces MAX_QUERY_PARAMS limit per parameter value, not per key", () => {
       // Create an array with more values than MAX_QUERY_PARAMS
-      const manyValues = Array.from({ length: MAX_QUERY_PARAMS + 10 }, (_, i) => `value${i}`);
+      const manyValues = Array.from(
+        { length: MAX_QUERY_PARAMS + 10 },
+        (_, i) => `value${i}`
+      );
       const raw = { foo: manyValues };
       const params = toUrlSearchParams(raw);
-      
+
       // Should only append MAX_QUERY_PARAMS values, not all of them
       expect(params.getAll("foo").length).toBe(MAX_QUERY_PARAMS);
       expect(params.getAll("foo")[0]).toBe("value0");
-      expect(params.getAll("foo")[MAX_QUERY_PARAMS - 1]).toBe(`value${MAX_QUERY_PARAMS - 1}`);
+      expect(params.getAll("foo")[MAX_QUERY_PARAMS - 1]).toBe(
+        `value${MAX_QUERY_PARAMS - 1}`
+      );
     });
 
     it("stops appending when MAX_QUERY_PARAMS is reached across multiple keys", () => {
@@ -406,13 +443,13 @@ describe("url-filters: toUrlSearchParams conversion", () => {
         raw[`key${i}`] = Array.from({ length: 10 }, (_, j) => `value${i}-${j}`);
       }
       const params = toUrlSearchParams(raw);
-      
+
       // Count total parameters
       let totalParams = 0;
       for (const key of Object.keys(raw)) {
         totalParams += params.getAll(key).length;
       }
-      
+
       // Should not exceed MAX_QUERY_PARAMS
       expect(totalParams).toBeLessThanOrEqual(MAX_QUERY_PARAMS);
     });
@@ -423,10 +460,12 @@ describe("url-filters: toUrlSearchParams conversion", () => {
         raw[`key${i}`] = `value${i}`;
       }
       const params = toUrlSearchParams(raw);
-      
+
       // All should be present
       expect(params.get("key0")).toBe("value0");
-      expect(params.get(`key${MAX_QUERY_PARAMS - 1}`)).toBe(`value${MAX_QUERY_PARAMS - 1}`);
+      expect(params.get(`key${MAX_QUERY_PARAMS - 1}`)).toBe(
+        `value${MAX_QUERY_PARAMS - 1}`
+      );
     });
 
     it("stops at MAX_QUERY_PARAMS even with mixed arrays and strings", () => {
@@ -436,13 +475,13 @@ describe("url-filters: toUrlSearchParams conversion", () => {
         single2: "value2",
       };
       const params = toUrlSearchParams(raw);
-      
+
       // Count total parameters
       let totalParams = 0;
       totalParams += params.getAll("single1").length;
       totalParams += params.getAll("array").length;
       totalParams += params.getAll("single2").length;
-      
+
       // Should not exceed MAX_QUERY_PARAMS
       expect(totalParams).toBeLessThanOrEqual(MAX_QUERY_PARAMS);
     });

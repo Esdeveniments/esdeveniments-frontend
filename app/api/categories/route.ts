@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { fetchCategoriesExternal } from "@lib/api/categories-external";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 export async function GET() {
   try {
     const data = await fetchCategoriesExternal();

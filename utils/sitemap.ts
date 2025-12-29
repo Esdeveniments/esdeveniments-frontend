@@ -12,6 +12,9 @@ export function buildSitemap(
     namespaces.push(
       'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'
     );
+  if (fields.some((field) => field.alternates)) {
+    namespaces.push('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+  }
 
   const namespaceString =
     namespaces.length > 0 ? ` ${namespaces.join(" ")}` : "";
@@ -28,6 +31,17 @@ export function buildSitemap(
           `    <changefreq>${field.changefreq}</changefreq>\n` +
           `    <priority>${field.priority}</priority>\n`;
 
+        if (field.alternates) {
+          xml += Object.entries(field.alternates)
+            .map(
+              ([hreflang, url]) =>
+                `    <xhtml:link rel="alternate" hreflang="${escapeXml(
+                  hreflang
+                )}" href="${escapeXml(url)}" />\n`
+            )
+            .join("");
+        }
+
         if (includeImage && field.image) {
           xml +=
             `    <image:image>\n` +
@@ -43,5 +57,23 @@ export function buildSitemap(
       })
       .join("\n") +
     `\n</urlset>`
+  );
+}
+
+export function buildSitemapIndex(sitemapUrls: string[]): string {
+  const lastmod = new Date().toISOString();
+  return (
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    sitemapUrls
+      .map(
+        (url) =>
+          `  <sitemap>\n` +
+          `    <loc>${escapeXml(url)}</loc>\n` +
+          `    <lastmod>${lastmod}</lastmod>\n` +
+          `  </sitemap>`
+      )
+      .join("\n") +
+    `\n</sitemapindex>`
   );
 }

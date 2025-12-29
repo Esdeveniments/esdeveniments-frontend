@@ -1,0 +1,1294 @@
+{
+  "App": {
+    "Home": {
+      "seoSections": {
+        "weekend": {
+          "title": "What to do this weekend",
+          "links": {
+            "topPlans": "10 plans for the weekend",
+            "popularFestes": "Popular festivals this weekend",
+            "family": "Activities with kids this weekend",
+            "music": "Concerts this weekend"
+          }
+        },
+        "today": {
+          "title": "What to do today",
+          "links": {
+            "barcelona": "What to do today in Barcelona",
+            "maresme": "What to do today in the Maresme",
+            "vallesOriental": "What to do today in Vallès Oriental",
+            "mataro": "What to do today in Mataró"
+          }
+        },
+        "tomorrow": {
+          "title": "What to do tomorrow",
+          "links": {
+            "barcelona": "What to do tomorrow in Barcelona",
+            "maresme": "What to do tomorrow in the Maresme",
+            "vallesOccidental": "What to do tomorrow in Vallès Occidental"
+          }
+        },
+        "localAgendas": {
+          "title": "Most visited local agendas"
+        }
+      },
+      "featuredPlaces": {
+        "barcelona": {
+          "title": "What to do in Barcelona",
+          "subtitle": "Featured plans in the city"
+        },
+        "maresme": {
+          "title": "Maresme agenda",
+          "subtitle": "The best of the county"
+        },
+        "vallesOccidental": {
+          "title": "Plans in Vallès Occidental"
+        }
+      }
+    },
+    "NotFound": {
+      "title": "Page not found",
+      "description": "We couldn't find the page you're looking for.",
+      "homeLink": "Back to home"
+    },
+    "Error": {
+      "title": "Something went wrong",
+      "retry": "Please, try again.",
+      "reload": "Reload"
+    },
+    "GlobalError": {
+      "title": "Something went wrong",
+      "retry": "Please, try again.",
+      "reload": "Reload"
+    },
+    "Offline": {
+      "title": "Offline - Esdeveniments.cat",
+      "heading": "🌐 Offline",
+      "description": "You can't connect to the internet. Some cached content might still be available.",
+      "homeLink": "Back to home",
+      "barcelona": "Barcelona",
+      "catalunya": "Catalonia",
+      "schemaName": "Esdeveniments.cat offline page",
+      "schemaDescription": "Offline page for Esdeveniments.cat to keep browsing while the connection is restored."
+    },
+    "Favorites": {
+      "title": "Favorites - Esdeveniments.cat",
+      "description": "Your saved upcoming events",
+      "heading": "Favorites",
+      "subtitle": "Only upcoming events are shown. When an event ends, it is automatically removed from favorites.",
+      "countLabel": "{count}/{max} saved",
+      "emptyTitle": "No upcoming favorites yet",
+      "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites."
+    },
+    "About": {
+      "metaTitle": "About us - Esdeveniments.cat",
+      "metaDescription": "Who are we? - Esdeveniments.cat is a citizen initiative to see at a glance all the cultural events happening in Catalonia.",
+      "schemaName": "About us - Esdeveniments.cat",
+      "schemaDescription": "Meet the Esdeveniments.cat team and the mission behind the collaborative cultural agenda of Catalonia.",
+      "heading": "Who are we?",
+      "subheading": "esdeveniments.cat",
+      "paragraph1": "Esdeveniments.cat is a citizen initiative to easily and quickly see all the cultural events happening in Catalonia.",
+      "paragraph2": "The agenda is collaborative, and anyone organizing a cultural event can publish it <publish>here</publish> on their own.",
+      "paragraph3": "You can follow the cultural agenda on this website or follow us on social networks:",
+      "contactHeading": "Contact",
+      "contactBody": "For partnerships, press, or questions, email us.",
+      "contactCta": "Email us",
+      "teamHeading": "Our team",
+      "linkedin": "LinkedIn"
+    },
+    "News": {
+      "metaTitle": "News | Esdeveniments.cat",
+      "metaDescription": "The latest news, recommendations, and cultural plans in Catalonia.",
+      "heading": "News",
+      "intro": "The latest news and event recommendations.",
+      "breadcrumbHome": "Home",
+      "breadcrumbCurrent": "News"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbHome": "Home",
+      "breadcrumbNews": "News",
+      "sectionWeekend": "Weekend",
+      "sectionWeek": "Week",
+      "readingTime": "{minutes} min read",
+      "mustSee": "MUST-SEE",
+      "moreProposals": "MORE IDEAS"
+    },
+    "NewsHubsGrid": {
+      "itemListTitle": "Latest news by hub",
+      "titleWithPlace": "Latest news {place}",
+      "seeMore": "See more…",
+      "seeAgenda": "See agenda for {place}",
+      "nearbyLabel": "Nearby:"
+    },
+    "EventEdit": {
+      "title": "Edit event",
+      "description": "Secure panel to edit Esdeveniments.cat events."
+    },
+    "PublishPage": {
+      "metaTitle": "Publish - Esdeveniments.cat",
+      "metaDescription": "Publish a cultural event - Esdeveniments.cat",
+      "schemaName": "Publish a cultural event",
+      "schemaDescription": "Official form to add new cultural events to the collaborative agenda of Esdeveniments.cat.",
+      "schemaAction": "Publish cultural event"
+    },
+    "PlacesNearby": {
+      "invalidNumber": "Invalid coordinates: lat,lng must be numbers",
+      "invalidRange": "Invalid coordinates: lat ∈ [-90,90], lng ∈ [-180,180]",
+      "notConfigured": "Places API not configured",
+      "locationUnavailable": "Location unavailable"
+    },
+    "NewsPlace": {
+      "metaTitle": "News in {place} | Esdeveniments.cat",
+      "metaDescription": "Archive and recommendations of events in {place}",
+      "breadcrumbHome": "Home",
+      "breadcrumbNews": "News",
+      "heading": "News in {place}",
+      "seeAgenda": "See agenda for {place}",
+      "seeAll": "See all news",
+      "rssLabel": "RSS",
+      "rssTitle": "RSS News {place}"
+    },
+    "NewsArticleFallback": {
+      "title": "News | {place}",
+      "description": "News detail"
+    },
+    "NewsPlaceRss": {
+      "title": "News {place} - Esdeveniments.cat",
+      "description": "The latest cultural news and recommendations for {place}"
+    },
+    "NewsRss": {
+      "title": "News - Esdeveniments.cat",
+      "description": "The latest news and cultural recommendations for Catalonia"
+    },
+    "Publish": {
+      "heading": "Publish an event",
+      "requiredNote": "* required fields",
+      "errorCreate": "Error creating the event. Please try again.",
+      "errorBodyLimit": "The total request size (image + data) exceeds the allowed limit of 10 MB. Please reduce the image size or remove unnecessary data.",
+      "errorGeneric": "There was an error publishing the event. Please try again.",
+      "errorFormParsing": "The connection was interrupted while sending the form. Reload the page and try again.",
+      "errorDuplicate": "This event already exists. If you think this is an error, please contact us.",
+      "submitLabel": "Publish",
+      "imageTooLarge": "The image exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
+      "uploadSuccess": "Image uploaded successfully.",
+      "uploadFailed": "We couldn't upload the image. Check your connection and try again.",
+      "imageRequired": "Image is required.",
+      "fallbackRegion": "Region {id}",
+      "fallbackCity": "City {id}",
+      "noEventsFound": "We couldn't find recent events for this area. Please try again later.",
+      "restoreDraftTitle": "You have a saved draft",
+      "restoreDraftDescription": "Recover what you were writing or start fresh.",
+      "restoreDraftApply": "Restore draft",
+      "restoreDraftDiscard": "Discard",
+      "geoNotSupported": "Your browser does not allow location access.",
+      "geoDenied": "We couldn't get your location. Please check permissions."
+    },
+    "PlaceFallback": {
+      "placeSuffix": " in {place}",
+      "catalunyaSuffix": " in Catalonia",
+      "title": "Events{suffix}",
+      "subTitle": "Discover plans and activities{suffix}.",
+      "metaTitle": "Events{suffix} | Esdeveniments.cat",
+      "metaDescription": "Explore the best plans and activities{suffix}.",
+      "notFoundTitle": "No events available"
+    },
+    "Sitemap": {
+      "metaTitle": "Archive - Esdeveniments.cat",
+      "metaDescription": "Discover everything that has happened in Catalonia each year. The best cultural plans to make the most of Catalonia - Archive - Esdeveniments.cat",
+      "breadcrumbHome": "Home",
+      "breadcrumbCurrent": "Archive"
+    },
+    "PlaceByDate": {
+      "dateFallback": "the coming days",
+      "title": "Events {dateLabel} in {place}{categoryLabel}",
+      "subtitleWithDate": "Discover plans for {date} in {place}{categoryLabel}.",
+      "subtitleFallback": "Discover plans for the coming days in {place}{categoryLabel}.",
+      "categoryDescriptionSuffix": " in the category {categoryLabel}",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explore activities and plans for {date} in {place}{categoryDescriptionSuffix}.",
+      "metaDescriptionFallback": "Explore activities and plans for the coming days in {place}{categoryDescriptionSuffix}.",
+      "notFoundTitle": "No events available",
+      "notFoundDescriptionWithDate": "We couldn't find events for {date} in {place}. Please try again later.",
+      "notFoundDescriptionFallback": "We couldn't find events for the coming days in {place}. Please try again later."
+    },
+    "PlaceByDateCategory": {
+      "dateFallback": "the coming days",
+      "categoryFallback": "Events",
+      "plansWithCategory": "{categoryLabel} plans",
+      "plansFallback": "plans",
+      "proposalsWithCategory": "{categoryLabel} ideas",
+      "proposalsFallback": "ideas",
+      "activitiesWithCategory": "{categoryLabel} activities",
+      "activitiesFallback": "activities",
+      "title": "{categoryLabel} {dateLabel} in {place}",
+      "subtitleWithDate": "Discover {plansLabel} for {date} in {place}.",
+      "subtitleFallback": "Discover {plansLabel} for the coming days in {place}.",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explore {proposalsLabel} for {date} in {place}.",
+      "metaDescriptionFallback": "Explore {proposalsLabel} for the coming days in {place}.",
+      "notFoundTitle": "No events available",
+      "notFoundDescriptionWithDate": "We couldn't find {activitiesLabel} for {date} in {place}.",
+      "notFoundDescriptionFallback": "We couldn't find {activitiesLabel} for the coming days in {place}."
+    }
+  },
+  "Components": {
+    "HowTo": {
+      "name": "How to attend {title}",
+      "step1": "Check the date and time of the event in our agenda.",
+      "step2": "Add the event to your calendar or share it.",
+      "step3": "Visit the official page or organizer's website for more details."
+    },
+    "Breadcrumbs": {
+      "home": "Home"
+    },
+    "Footer": {
+      "navigation": {
+        "home": "Home",
+        "agenda": "Agenda",
+        "favorites": "Favorites",
+        "publish": "Publish",
+        "news": "News",
+        "about": "About us",
+        "contact": "Contact",
+        "archive": "Archive"
+      },
+      "featuredAgendas": "Featured agendas",
+      "copyright": "© {year} Esdeveniments.cat",
+      "tagline": "Discover the best events in Catalonia"
+    },
+    "Navbar": {
+      "navigation": {
+        "home": "Home",
+        "agenda": "Agenda",
+        "favorites": "Favorites",
+        "publish": "Publish",
+        "news": "News",
+        "archive": "Archive"
+      },
+      "logoAlt": "Esdeveniments.cat logo",
+      "aria": {
+        "openMenu": "Open menu",
+        "closeMenu": "Close menu",
+        "home": "Home",
+        "agenda": "Agenda",
+        "favorites": "Favorites",
+        "publish": "Publish",
+        "news": "News"
+      },
+      "languageLabel": "Language",
+      "languages": {
+        "ca": "Catalan",
+        "es": "Spanish",
+        "en": "English"
+      },
+      "languagesShort": {
+        "ca": "Cat",
+        "es": "Esp",
+        "en": "Eng"
+      },
+      "mobilePublishLabel": "Publish"
+    },
+    "NoEventsFound": {
+      "cta": "Add an event",
+      "helper": "It's free and only takes a minute"
+    },
+    "NoEventFound": {
+      "imageTitle": "Event not found - Esdeveniments.cat",
+      "imageAlt": "Event not found - Esdeveniments.cat",
+      "title": "Oops! The event doesn't exist or has been cancelled by the organizers",
+      "description": "You can try the <search>search</search>, see <today>what's on today in Catalonia</today>, or <publish>publish the event</publish>. If you think there's an error, contact us at: <email>hola@esdeveniments.cat</email>."
+    },
+    "Notification": {
+      "createdSuccess": "Great! The event {title} was created successfully and is visible to everyone!",
+      "close": "Close",
+      "viewEvent": "View event"
+    },
+    "FavoriteButton": {
+      "maxReached": "You've reached the limit of {max} favorites. Remove one to add more."
+    },
+    "EventNotifications": {
+      "thankYou": "Thanks for helping improve Esdeveniments.cat! Your change will be live within 24 hours."
+    },
+    "LatestNewsSection": {
+      "title": "Latest news",
+      "titleWithPlace": "Latest news {place}",
+      "viewAll": "View all"
+    },
+    "CulturalMessage": {
+      "explorePrefix": "Explore more plans in {location}:",
+      "today": "What to do today",
+      "tomorrow": "What to do tomorrow",
+      "week": "What to do this week",
+      "weekend": "What to do this weekend"
+    },
+    "HeroSearch": {
+      "titlePrefix": "What to do in",
+      "modalTitle": "Select town",
+      "modalAction": "Select",
+      "errorLoadingLocations": "Error loading towns.",
+      "retry": "Try again",
+      "selectPlaceholder": "Search town or county...",
+      "subtitleDefault": "Cultural agenda, festivals, and activities",
+      "searchPlaceholder": "Search events in {location}...",
+      "clearSearch": "Clear search"
+    },
+    "HeroFilters": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "weekend": "Weekend",
+      "active": "active"
+    },
+    "Constants": {
+      "days": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ],
+      "months": [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+      ],
+      "monthsUrl": [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december"
+      ],
+      "newsHubs": {
+        "mataro": "Mataró",
+        "barcelona": "Barcelona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida"
+      },
+      "nearbyHubs": {
+        "mataro": {
+          "vilassar-de-mar": "Vilassar de Mar",
+          "premia-de-dalt": "Premià de Dalt",
+          "argentona": "Argentona",
+          "calella": "Calella",
+          "canet-de-mar": "Canet de Mar"
+        },
+        "barcelona": {
+          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
+          "badalona": "Badalona",
+          "sant-just-desvern": "Sant Just Desvern",
+          "cardedeu": "Cardedeu",
+          "granollers": "Granollers",
+          "castelldefels": "Castelldefels"
+        },
+        "tarragona": {
+          "reus": "Reus",
+          "cambrils": "Cambrils",
+          "salou": "Salou"
+        },
+        "lleida": {
+          "balaguer": "Balaguer",
+          "tremp": "Tremp",
+          "tarrega": "Tàrrega"
+        }
+      }
+    },
+    "HomePageSkeleton": {
+      "seeAlso": "See also"
+    },
+    "EventsAround": {
+      "carouselSuffix": "events carousel",
+      "relatedEvents": "Related events"
+    },
+    "ServerEventsCategorized": {
+      "cta": "Can't find what you're looking for?",
+      "ctaButton": "View full agenda",
+      "quickCategoriesTitle": "Explore by interests"
+    },
+    "Filters": {
+      "triggerLabel": "Filters"
+    },
+    "Social": {
+      "followUs": "Follow us"
+    },
+    "ListPageFaq": {
+      "title": "Frequently asked questions"
+    },
+    "RestaurantPromotionForm": {
+      "heading": "Promote your restaurant",
+      "intro": "Get your restaurant featured on this event page and reach more customers.",
+      "restaurantNameLabel": "Restaurant name *",
+      "restaurantNamePlaceholder": "Enter the restaurant name",
+      "locationLabel": "Location *",
+      "locationPlaceholder": "Enter the restaurant location",
+      "durationLabel": "Promotion duration *",
+      "durationOption": "{days} day{days, plural, one {} other {s}}",
+      "geoScopeTypeLabel": "Geographic scope *",
+      "geoScopeTown": "Town/City",
+      "geoScopeRegion": "Region",
+      "geoScopeTownPlaceholder": "Enter the town or city name",
+      "geoScopeRegionPlaceholder": "Enter the region name",
+      "placeIdLabel": "Google Place ID (Optional)",
+      "placeIdPlaceholder": "Enter the Google Place ID if you have it",
+      "placeIdHelp": "If your restaurant is on Google Maps, you'll find the Place ID in the URL",
+      "imageLabel": "Restaurant image *",
+      "priceLabel": "Total price:",
+      "loading": "Loading...",
+      "priceNote": "Payment will be processed securely via Stripe",
+      "processing": "Processing...",
+      "submit": "Go to payment"
+    },
+    "AdBoard": {
+      "title": "The ad couldn't be loaded.",
+      "body": "Please help us keep this page running by disabling any ad blocker. Thanks for your understanding and support!",
+      "contactPrefix": "If you're interested in advertising here,",
+      "contactCta": "contact us",
+      "contactSuffix": "to get more information."
+    },
+    "EditModalLegacy": {
+      "title": "Suggest an edit",
+      "editTitle": "Change the title or other details",
+      "editDescription": "Edit the title, location, schedule, etc.",
+      "removeTitle": "Remove",
+      "removeDescription": "The event doesn't exist, is duplicated, etc.",
+      "deleteTitle": "Suggest a deletion",
+      "deleteReasonPrompt": "Reason for the suggested deletion",
+      "deleteLegend": "Deletion request",
+      "reason": {
+        "notExist": "Does not exist",
+        "duplicated": "Duplicated",
+        "offensive": "Offensive, harmful or misleading",
+        "others": "Others",
+        "othersDescription": "Send an email with the reason to:",
+        "othersEmail": "hola@esdeveniments.cat"
+      },
+      "submit": "Send"
+    },
+    "FiltersModal": {
+      "geo": {
+        "permissionDenied": "Location permissions denied. Enable location in your browser to use this feature.",
+        "positionUnavailable": "Location unavailable. Try selecting a town instead of using distance.",
+        "timeout": "Timeout. Try again or select a town.",
+        "genericError": "Error getting location. Try selecting a town instead of using distance.",
+        "unsupported": "Geolocation is not available in this browser.",
+        "loading": "Loading location..."
+      },
+      "distance": {
+        "label": "Distance",
+        "labelFromPlace": "Distance from {place}",
+        "labelFromLocation": "Distance from your location",
+        "helperRegion": "To use the distance filter, select a specific town or your current location.",
+        "helperPlace": "If you choose a town, we'll calculate the radius from that point. If none is selected, we'll use your current location. Turn on the filter to limit results to a specific radius.",
+        "toggle": "Filter by radius",
+        "rangeLabel": "Events within"
+      },
+      "useLocation": {
+        "using": "You are using your location",
+        "cta": "Use my location",
+        "active": "Current location enabled.",
+        "switchToPlace": "Switch to a town",
+        "regionNotice": "You've selected a county. Counties don't have a specific geographic point, so the distance filter can't be used. To use it, select a specific town or your location. You can still filter by date and categories to refine results."
+      },
+      "modal": {
+        "title": "Filters",
+        "action": "Apply filters",
+        "locations": "Towns",
+        "loadError": "Error loading towns. Please try again later.",
+        "selectPlaceholder": "Select town or county",
+        "tagline": "Active filters",
+        "dateHeading": "Date",
+        "categoriesHeading": "Categories"
+      }
+    },
+    "ImageUploader": {
+      "label": "Image *",
+      "unsupported": "The selected file is not a supported image. Please upload a JPEG, PNG, JPG, or WEBP file.",
+      "originalTooLarge": "The image exceeds the maximum limit of {limit} MB. Reduce the image size before retrying.",
+      "tooLarge": "The image size exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
+      "compressFailed": "We couldn't reduce the image. Check your connection and try again.",
+      "optimizing": "Optimizing the image to meet the {limit} MB limit...",
+      "progress": "{progress}%",
+      "uploading": "Uploading the image ({progress}%)...",
+      "uploadSuccess": "Image uploaded successfully.",
+      "uploadMode": "Upload a file",
+      "urlMode": "Use an image URL",
+      "imageUrlLabel": "Image URL",
+      "imageUrlPlaceholder": "https://example.com/image.jpg",
+      "imageUrlHelper": "If your image is already online, paste the link and we'll use it directly without uploading.",
+      "imageUrlInvalid": "Add a valid image URL",
+      "remove": "Remove image",
+      "altPreview": "Image",
+      "uploadDropCta": "Drop your image here",
+      "uploadDropHelper": "or click to select",
+      "selectButton": "Select file",
+      "formatHelper": "Format: JPEG, PNG, JPG, or WEBP"
+    },
+    "HeroCTA": {
+      "buttonBase": "See events",
+      "dateWeekend": "this weekend",
+      "helper": "Select the town and dates, then click 'See events'"
+    },
+    "PromotionInfoModal": {
+      "title": "Promote your restaurant",
+      "intro1": "Want your restaurant featured here when people view a nearby event? We're preparing the promotions system.",
+      "intro2": "For now, send us an email at <email>{contactEmail}</email> with:",
+      "itemName": "Restaurant name",
+      "itemPlace": "Town / Region",
+      "itemLink": "Link (Google Maps or website / social media)",
+      "footer": "We'll let you know as soon as automated promotions are available.",
+      "contactSubject": "Promote restaurant"
+    },
+    "PromotedRestaurantCard": {
+      "title": "Sponsored restaurant",
+      "badge": "Sponsored",
+      "activeUntil": "Promotion active until {date}"
+    },
+    "WhereToEatSection": {
+      "title": "Where you can eat",
+      "promote": "Promote your restaurant"
+    },
+    "FeaturedPlaceSection": {
+      "seeMore": "See more",
+      "aria": "Explore {title} by date"
+    },
+    "EventCategories": {
+      "title": "Categories"
+    },
+    "CategoryEventsSection": {
+      "heading": "The {categoryPhrase} agenda in Catalonia",
+      "headingNoArticle": "Agenda in Catalonia · {categoryName}",
+      "seeMore": "See more",
+      "sponsored": "Sponsored content"
+    },
+    "Weather": {
+      "title": "Weather",
+      "noData": "No weather data available."
+    },
+    "DateFilterBadges": {
+      "ariaLabel": "See also",
+      "today": {
+        "label": "Today",
+        "aria": "See today's activities"
+      },
+      "tomorrow": {
+        "label": "Tomorrow",
+        "aria": "See tomorrow's activities"
+      },
+      "weekend": {
+        "label": "Weekend",
+        "aria": "See activities this weekend"
+      },
+      "ariaCategory": "{ariaLabelText} for the category {contextName}",
+      "ariaPlace": "{ariaLabelText} in {contextName}"
+    },
+    "SearchBar": {
+      "placeholder": "What are you looking for?",
+      "clear": "Clear search",
+      "search": "Search"
+    },
+    "News": {
+      "readMore": "Read more",
+      "readMoreAria": "Read more about {title}",
+      "viewCategory": "See category {name}"
+    },
+    "LocationDiscovery": {
+      "heading": "Viewing events in",
+      "selectLocation": "Select location",
+      "searchPlaceholder": "Search location...",
+      "discover": "Discover other events",
+      "loading": "Loading locations...",
+      "noResults": "No results"
+    },
+    "PastEventBanner": {
+      "title": "This event has already ended",
+      "subtitle": "Don't miss what's happening {timeWindow} in {placeLabel}",
+      "primaryCta": "Check the agenda",
+      "secondaryCta": "or explore this category",
+      "srStatus": "Status: {label}.",
+      "timeWindow": "this week"
+    },
+    "EventPage": {
+      "faqTitle": "Frequently asked questions",
+      "sponsored": "Sponsored content"
+    },
+    "CardContent": {
+      "dateRange": "{start} – {end}",
+      "dateSingle": "{nameDay}, {start}",
+      "favoriteAddAria": "Add to favorites",
+      "favoriteRemoveAria": "Remove from favorites"
+    },
+    "EventForm": {
+      "title": "Title *",
+      "url": "Event link",
+      "region": "County *",
+      "town": "Town",
+      "titleHint": "Example: Summer street festival",
+      "locationHint": "Add the exact spot: square, street or venue",
+      "urlHint": "Optional: official link or social post",
+      "imageHint": "JPG/PNG/WebP. A clear image helps people find it.",
+      "reviewTitle": "Before publishing",
+      "reviewReady": "All set! Review and publish.",
+      "reviewMissing": "Missing: {fields}",
+      "imageLabel": "Image",
+      "datesLabel": "Dates & time",
+      "previewButton": "Preview",
+      "previewModalTitle": "Preview your event",
+      "previewMissingUrl": "Add a link so people can see more details.",
+      "previewMissingDescription": "Add a description to help people find it.",
+      "previewMissingCategories": "No categories yet",
+      "previewWarnings": "Recommendations",
+      "previewRequired": "Required",
+      "previewRequiredImage": "Image is missing",
+      "previewNoTitle": "No title",
+      "previewCategoriesLabel": "Categories",
+      "previewNoCategories": "No categories selected",
+      "previewLinkLabel": "Link",
+      "previewOptional": "Optional",
+      "previewDescriptionLabel": "Description",
+      "step": "Step {current} of {total}",
+      "stepBasics": "Basics",
+      "stepLocation": "Location",
+      "stepImage": "Image & review",
+      "previous": "Back",
+      "next": "Next",
+      "useLocation": "Use my location",
+      "locating": "Locating...",
+      "testLink": "Test link",
+      "regionPlaceholder": "Select a county",
+      "townPlaceholder": "Select a town",
+      "categoriesPlaceholder": "Select categories",
+      "categories": "Categories",
+      "location": "Venue",
+      "email": "Email",
+      "emailSubtitle": "Do you want us to notify you when the event is updated? (we don't store the data)",
+      "publishing": "Publishing...",
+      "regionSkeleton": "County *",
+      "townSkeleton": "Town *"
+    },
+    "Layout": {
+      "rss": "RSS",
+      "rssNews": "RSS News"
+    },
+    "EventDetailsSection": {
+      "title": "Event details",
+      "eventLink": "Event link:",
+      "duration": "Approximate duration: {duration}"
+    },
+    "EventLocation": {
+      "title": "Location",
+      "showMap": "Show map",
+      "getDirections": "Get directions"
+    },
+    "EventCalendar": {
+      "title": "Date and time"
+    },
+    "Select": {
+      "placeholder": "an option",
+      "create": "Add new place: \"{value}\"",
+      "noOptions": "No options found"
+    },
+    "MultiSelect": {
+      "placeholder": "Select categories",
+      "loading": "Loading categories...",
+      "noOptions": "No categories found",
+      "loadingShort": "Loading..."
+    },
+    "TextArea": {
+      "label": "Description *",
+      "edit": "✏️ Edit",
+      "preview": "👁️ Preview",
+      "emptyPreview": "Write something to see the preview...",
+      "placeholder": "Describe your event...",
+      "helperPreview": "This is how visitors will see the description",
+      "helperEdit": "Press Enter for line breaks."
+    },
+    "DatePicker": {
+      "dateAndTime": "Date and time *",
+      "start": "Start *",
+      "end": "End *",
+      "dateFormat": "d MMMM, yyyy HH:mm aa",
+      "monthYearFormat": "MMMM yyyy",
+      "allDay": "All day (no end time)",
+      "allDayHelper": "If it lasts all day, we'll set the end to the same day."
+    },
+    "LoadMoreButton": {
+      "loading": "Loading more events",
+      "label": "Load more"
+    },
+    "HybridEventsListClient": {
+      "errorTitle": "Error loading events",
+      "error": "Please try again later."
+    },
+    "Hero": {
+      "options": {
+        "tomorrow": "Tomorrow"
+      }
+    },
+    "EditModal": {
+      "editTitle": "Suggest an edit",
+      "editIntro": "Change the title or other details",
+      "editHelper": "Edit the title, location, schedule, etc.",
+      "dupHelper": "The event doesn't exist, is duplicated, etc.",
+      "deleteTitle": "Suggest a deletion",
+      "deleteReasonLabel": "Reason for the suggested deletion",
+      "deleteLegend": "Deletion request",
+      "deleteOption": "Offensive, harmful or misleading"
+    },
+    "HomePageSkeletonLegacy": {
+      "ariaAlso": "See also"
+    },
+    "Description": {
+      "title": "Description",
+      "translateCta": "Translate the description to {target}",
+      "translating": "Translating…",
+      "translatedLabel": "Translated from Catalan to {target}",
+      "showOriginal": "Show original",
+      "translateError": "We couldn't translate right now. Please try again.",
+      "target": {
+        "en": "English",
+        "es": "Spanish"
+      }
+    },
+    "HorizontalScroll": {
+      "next": "Next",
+      "previous": "Previous"
+    },
+    "SitemapHeader": {
+      "title": "Historical archive of {label}",
+      "subtitle": "Discover the cultural evolution of {label} year after year. Each link takes you to the events of a specific month."
+    },
+    "SitemapContent": {
+      "title": "Cultural events archive",
+      "description": "Discover everything that has happened in Catalonia each year. Browse by counties and towns to find the cultural history of the territory.",
+      "regionsTitle": "Counties of Catalonia",
+      "citiesTitle": "Main towns",
+      "footer": "The archive contains cultural events from all the counties of Catalonia. Each link takes you to a detailed history organized by years and months."
+    },
+    "NewsList": {
+      "emptyTitle": "We haven't found recent news",
+      "emptyBody": "We don't have updates yet for {place}, but we keep adding more every week. Meanwhile, explore the latest news from other areas.",
+      "viewAll": "See all news →",
+      "itemListName": "News in {place}",
+      "prev": "← Previous",
+      "next": "More news →"
+    },
+    "NewsHubsGrid": {
+      "itemListTitle": "Latest news by hub",
+      "titleWithPlace": "Latest news {place}",
+      "seeMore": "See more…",
+      "seeAgenda": "See agenda for {place}",
+      "nearbyLabel": "Nearby:",
+      "title": "Latest news by hub",
+      "hubTitle": "Latest news {hubName}"
+    },
+    "NewsCities": {
+      "title": "Cities with news",
+      "showMore": "See more…",
+      "showLess": "See less"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbNews": "News",
+      "moreProposals": "MORE IDEAS"
+    },
+    "UseGeolocation": {
+      "notAvailable": "Geolocation is not available in this browser.",
+      "denied": "Location permissions denied. Enable location in your browser to use this feature.",
+      "unavailable": "Location unavailable. Try selecting a town instead of using distance.",
+      "timeout": "Timeout. Try again or select a town.",
+      "genericError": "Error getting location. Try selecting a town instead of using distance."
+    }
+  },
+  "Partials": {
+    "GeneratePagesData": {
+      "categories": {
+        "literatura": {
+          "titleSuffix": "Literature and books",
+          "description": "literature, books, literary presentations, reading clubs, author meet-ups",
+          "context": "Discover Catalan literature with presentations, reading clubs, and author meet-ups",
+          "noEvents": "literary activities or book presentations"
+        },
+        "fires-i-mercats": {
+          "titleSuffix": "Fairs",
+          "description": "fairs, markets, trade events, crafts, local products",
+          "context": "Discover traditional fairs and markets with local products, crafts, and a festive atmosphere",
+          "noEvents": "fairs or markets in the area"
+        },
+        "festes-populars": {
+          "titleSuffix": "Popular festivals",
+          "description": "popular festivals, traditional celebrations, folk culture, correfocs, castells",
+          "context": "Join the best Catalan popular festivals with correfocs, castellers, and unique traditions",
+          "noEvents": "popular festivals or traditional celebrations"
+        },
+        "tallers-i-formacio": {
+          "titleSuffix": "Workshops and training",
+          "description": "workshops, training, courses, learning, practical activities",
+          "context": "Learn and train with practical workshops, specialized courses, and training activities",
+          "noEvents": "workshops, courses, or training activities"
+        },
+        "dansa": {
+          "titleSuffix": "Dance",
+          "description": "dance, performances, dance classes, contemporary dance",
+          "context": "Feel the passion of dance with performances, workshops, and classes for all levels",
+          "noEvents": "dance activities or performances"
+        },
+        "salut-i-benestar": {
+          "titleSuffix": "Health and wellness",
+          "description": "health, wellness, healthy activities, yoga, meditation, wellness",
+          "context": "Take care of yourself with health and wellness activities, yoga sessions, meditation, and healthy habits",
+          "noEvents": "health, wellness, or yoga activities"
+        },
+        "esport": {
+          "titleSuffix": "Sports and physical activity",
+          "description": "sports, physical activity, competitions, popular races",
+          "context": "Stay active with sports activities, competitions, popular races, and outdoor plans",
+          "noEvents": "sports activities or events"
+        },
+        "patrimoni-cultural": {
+          "titleSuffix": "Cultural heritage",
+          "description": "cultural heritage, history, monuments, traditions, guided tours",
+          "context": "Discover Catalonia's rich cultural heritage with guided tours, historical routes, and monuments",
+          "noEvents": "activities related to cultural heritage"
+        },
+        "serveis-municipals": {
+          "titleSuffix": "Municipal services",
+          "description": "municipal services, administration, paperwork, citizen information, participation",
+          "context": "Find out about available municipal services, paperwork, offices, and information for citizens",
+          "noEvents": "activities or information on municipal services"
+        },
+        "gent-gran": {
+          "titleSuffix": "Activities for seniors",
+          "description": "activities for seniors, elderly, senior citizens, senior centers",
+          "context": "Discover activities especially designed for seniors: workshops, talks, light exercise, and social gatherings",
+          "noEvents": "activities aimed at seniors"
+        },
+        "familia-i-infants": {
+          "titleSuffix": "Family activities",
+          "description": "family activities, children, kids, family fun, plans with kids",
+          "context": "Fun for the whole family with activities for children, family shows, and plans with kids",
+          "noEvents": "family or children's activities"
+        },
+        "exposicions": {
+          "titleSuffix": "Exhibitions and art",
+          "description": "exhibitions, art galleries, museums, visual art, cultural routes",
+          "context": "Explore art and visual culture with exhibitions, museums, and cultural routes",
+          "noEvents": "exhibitions or art activities"
+        },
+        "cinema": {
+          "titleSuffix": "Cinema and audiovisual",
+          "description": "cinema, screenings, film festivals, audiovisual, cineforum",
+          "context": "Enjoy the best cinema with screenings, festivals, and cineforums",
+          "noEvents": "film screenings or audiovisual activities"
+        },
+        "musica": {
+          "titleSuffix": "Concerts",
+          "description": "concerts, music, musical shows, music festivals, live music",
+          "context": "Discover the best live music with concerts, festivals, and performances near you",
+          "noEvents": "concerts, festivals, or musical shows"
+        },
+        "teatre": {
+          "titleSuffix": "Theatre",
+          "description": "theatre, opera, performing arts, theatre shows, monologues",
+          "context": "Experience the best theatre plays, monologues, and performing arts shows",
+          "noEvents": "theatre plays or performing arts shows"
+        },
+        "altres": {
+          "titleSuffix": "Other activities",
+          "description": "other activities, miscellaneous events, original plans",
+          "context": "Discover other interesting activities and original plans for your free time",
+          "noEvents": "activities in this category"
+        }
+      },
+      "root": {
+        "title": "Agenda today in Catalonia and plans {year}",
+        "subTitle": "Agenda today in Catalonia this {month}, with concerts, exhibitions, theatre, family activities, and plans for all ages.",
+        "metaTitle": "Events in Catalonia | Cultural agenda and things to do",
+        "metaDescription": "Explore today's agenda in Catalonia: concerts, exhibitions, theatre, family activities, and free plans to inspire you this {month}.",
+        "notFound": "Sorry, there are no events available in Catalonia right now. Check other dates or nearby locations in our cultural agenda, where you'll surely find plans you'll like."
+      },
+      "categoryWithDate": {
+        "avui": {
+          "title": "{titleSuffix} today {label}",
+          "subTitle": "Discover {titleSuffix} today {label} with updated proposals and last-minute plans. Concerts, theatre, exhibitions, and activities for all tastes.",
+          "metaTitle": "{categoryTitle} today {label} - Cultural agenda and plans",
+          "metaDescription": "{context} today {label}. Check the agenda to discover plans for today: schedules, venues, family activities, and free options.",
+          "notFound": "Sorry, there are no {noEventsText} today {label}. Check the proposals for tomorrow, this weekend, or other nearby locations to find plans that might interest you."
+        },
+        "dema": {
+          "title": "{titleSuffix} tomorrow {label}",
+          "subTitle": "Discover {titleSuffix} tomorrow {label} and plan ahead. Music, theatre, exhibitions, and activities to enjoy local culture.",
+          "metaTitle": "{categoryTitle} tomorrow {label} - Cultural ideas and plans",
+          "metaDescription": "{context} tomorrow {label}. Get ahead and find the best plans for tomorrow: family activities, nightlife ideas, and cultural events near you.",
+          "notFound": "Sorry, there are no {noEventsText} tomorrow {label}. Check the agenda for today, this week, or other nearby destinations to find new proposals."
+        },
+        "setmana": {
+          "title": "{titleSuffix} this week {label}",
+          "subTitle": "Discover {titleSuffix} this week {label} and fill your agenda with plans. Concerts, workshops, exhibitions, and family activities.",
+          "metaTitle": "{categoryTitle} this week {label} - Complete agenda",
+          "metaDescription": "{context} this week {label}. Discover a selection of highlighted activities, weekend plans, and free proposals for all ages.",
+          "notFound": "Sorry, there are no {noEventsText} this week {label}. Try changing the date or explore other municipalities and nearby counties to find new plans."
+        },
+        "capDeSetmana": {
+          "title": "{titleSuffix} this weekend {label}",
+          "subTitle": "Discover {titleSuffix} this weekend {label} with going-out plans and family-friendly options. Concerts, activities with kids, and local culture.",
+          "metaTitle": "{categoryTitle} this weekend {label} - Plans and agenda",
+          "metaDescription": "{context} this weekend {label}. Find concerts, festivals, activities with kids, and other plans to make the most of the weekend.",
+          "notFound": "Sorry, there are no {noEventsText} this weekend {label}. Check other dates, explore activities across Catalonia, or adjust your search filters to discover more options."
+        }
+      },
+      "categoryNoDate": {
+        "title": "{titleSuffix} {label}",
+        "subTitle": "Discover {titleSuffix} {label} with a curated selection of cultural events and activities. Concerts, workshops, exhibitions, family plans, and free options.",
+        "metaTitle": "Events {label} | {categoryTitle} and more",
+        "metaDescription": "{context} {label}. Check the updated cultural agenda and find concerts, workshops, exhibitions, family activities, and other plans for your free time.",
+        "notFound": "Sorry, there are no {noEventsText} {label} at this time. Try other dates, categories, or nearby locations to discover new cultural proposals."
+      },
+      "regionNoDate": {
+        "title": "What to do {label}. Agenda {year}",
+        "subTitle": "Discover the best leisure and cultural plans {label} this {month}. Find concerts, theatre, exhibitions, routes, and family activities to make the most of the weekend.",
+        "metaTitle": "Featured events {label}. Agenda {year}",
+        "metaDescription": "Explore the best cultural agenda {label} this {month}. Find concerts, festivals, theatre, children's activities, and free plans to enjoy the region.",
+        "canonical": "{siteUrl}/{place}",
+        "notFound": "Sorry, there are no events {label} on this date. Check other days, adjust filters, or look at nearby locations to find new plans and activities."
+      },
+      "townNoDate": {
+        "barcelona": {
+          "title": "Events in Barcelona and things to do. Agenda {year}",
+          "metaTitle": "Events in Barcelona and what to do today - Agenda {year}",
+          "metaDescription": "Events in Barcelona and things to do this {month}. Check the agenda with concerts, festivals, family activities, workshops, exhibitions, and other proposals to enjoy the city."
+        },
+        "default": {
+          "title": "Agenda today {label}. What to do {year}",
+          "metaTitle": "Events {label} | Cultural agenda and things to do",
+          "metaDescription": "Discover the agenda today {label} this {month}. Check concerts, festivals, family activities, workshops, exhibitions, and other plans to enjoy the town."
+        },
+        "subTitle": "Discover the best leisure and cultural plans {label} this {month}. Check the updated agenda with festivals, concerts, theatre, cinema, exhibitions, and family activities.",
+        "notFound": "Sorry, there are no events {label} for this date. Try changing the date, exploring other categories, or looking at nearby towns to find activities that interest you.",
+        "canonical": "{siteUrl}/{place}"
+      },
+      "byDatePlace": {
+        "avui": {
+          "title": "What to do today {label}",
+          "subTitle": "Discover what to do today {label}: concerts, theatre, exhibitions, family activities, and last-minute plans. Check the updated agenda and don't miss out.",
+          "metaTitle": "Events today {label} - Plans and agenda",
+          "metaDescription": "Discover what to do today {label}. Check the updated cultural agenda with concerts, festivals, activities with kids, free proposals, and other plans near you.",
+          "notFound": "Sorry, there are no events today {label}. Check the proposals for tomorrow, this week, or other nearby locations to find plans that suit you."
+        },
+        "dema": {
+          "title": "What to do tomorrow {label}",
+          "subTitle": "Plan ahead and discover what to do tomorrow {label}: concerts, theatre, exhibitions, and family activities. Check the agenda and choose your plan.",
+          "metaTitle": "Events tomorrow {label} - Ideas and plans",
+          "metaDescription": "Discover what to do tomorrow {label}. Find concerts, activities for kids, exhibitions, routes, and other plans to organize your day in advance.",
+          "notFound": "Sorry, there are no events tomorrow {label}. Check the agenda for today, this week, or other nearby destinations to discover new options."
+        },
+        "setmana": {
+          "title": "Weekly agenda {label}",
+          "subTitle": "Discover what to do this week {label} with concerts, workshops, exhibitions, and family activities. Plans and culture to fill the week.",
+          "metaTitle": "Events this week {label} - Complete agenda",
+          "metaDescription": "Explore the cultural agenda this week {label}. Find concerts, exhibitions, theatre, family activities, routes, and other plans to fill your week.",
+          "notFound": "Sorry, there are no events this week {label}. Try other weeks, change category, or explore nearby towns to find more activities."
+        },
+        "capDeSetmana": {
+          "title": "What to do this weekend {label}",
+          "subTitle": "Discover what to do this weekend {label}: concerts, festivals, family activities, and outdoor plans. Find your plan and make the most of the weekend.",
+          "metaTitle": "Plans for this weekend {label} - Agenda",
+          "metaDescription": "Discover the best plans for this weekend {label}. Check concerts, popular festivals, activities with kids, routes, and other cultural proposals to make the most of the weekend.",
+          "notFound": "Sorry, there are no events this weekend {label}. Check other dates, explore different categories, or see what's on in the rest of Catalonia to find new plans."
+        }
+      },
+      "byDateNoPlace": {
+        "avui": {
+          "title": "What to do today in Catalonia",
+          "subTitle": "Discover things to do today in Catalonia with an up-to-date cultural agenda. Concerts, theatre, exhibitions, family activities, and free plans across the region.",
+          "metaTitle": "Events today in Catalonia - Plans and agenda",
+          "metaDescription": "Discover what to do today in Catalonia. Check the updated cultural agenda with concerts, festivals, activities with kids, free proposals, and last-minute plans across the territory.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Sorry, there are no events today in Catalonia. Check the proposals for tomorrow, this week, or filter by location and category to find other interesting plans."
+        },
+        "dema": {
+          "title": "What to do tomorrow in Catalonia",
+          "subTitle": "Discover things to do tomorrow in Catalonia and plan your free time ahead. Concerts, theatre, exhibitions, family activities, and ideas for every taste.",
+          "metaTitle": "Events tomorrow in Catalonia - Ideas and plans",
+          "metaDescription": "Discover what to do tomorrow in Catalonia. Find concerts, family activities, routes, festivals, and other plans to organize your free time in advance.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Sorry, there are no events tomorrow in Catalonia. Check the agenda for today, this week, or explore different categories and locations to discover new options."
+        },
+        "setmana": {
+          "title": "Weekly agenda in Catalonia",
+          "subTitle": "Discover things to do this week in Catalonia with cultural plans for every day. Concerts, exhibitions, theatre, festivals, and family activities.",
+          "metaTitle": "Events this week in Catalonia - Complete agenda",
+          "metaDescription": "Explore the cultural agenda this week in Catalonia. Find concerts, festivals, routes, workshops, activities for kids, and other plans to fill your week with culture and leisure.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Sorry, there are no events this week in Catalonia. Try changing the week, adjusting filters, or exploring different areas to find more activities."
+        },
+        "capDeSetmana": {
+          "title": "What to do this weekend in Catalonia",
+          "subTitle": "Discover things to do this weekend in Catalonia and make the most of it. Concerts, local festivals, kids activities, routes, and getaways.",
+          "metaTitle": "Events this weekend in Catalonia - Plans and agenda",
+          "metaDescription": "Discover the best plans for this weekend in Catalonia. Check concerts, popular festivals, activities for kids, routes, and other cultural and leisure proposals across the country.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Sorry, there are no events this weekend in Catalonia. Check other weekends, explore different categories, or focus on a specific area to find new ideas."
+        }
+      },
+      "fallback": {
+        "title": "What to do in Catalonia. Agenda {year}",
+        "subTitle": "Cultural agenda of Catalonia this {month}, with concerts, exhibitions, theatre, family activities, popular festivals, and many other plans for your free time.",
+        "metaTitle": "Discover events in Catalonia this {year}",
+        "metaDescription": "Explore the best cultural agenda of Catalonia. Find concerts, routes, festivals, activities with kids, free proposals, and other plans to enjoy {year}.",
+        "notFound": "Sorry, there are no events available in Catalonia right now. Try other dates, categories, or locations to discover new cultural and leisure proposals."
+      }
+    }
+  },
+  "Pages": {
+    "SitemapMonth": {
+      "metaTitle": "Archive of {town} for {month} {year} - Esdeveniments.cat",
+      "metaDescription": "Discover what happened {locationPhrase} in {month} {year}. Theatre, cinema, music, art, and more reasons to keep exploring {town} - Archive - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Home",
+        "archive": "Archive"
+      },
+      "itemListTitle": "Events in {town} - {month} {year}",
+      "itemListDescription": "Collection of cultural events in {town} in {month} {year}",
+      "collectionTitle": "Archive of {town} - {month} {year}",
+      "collectionDescription": "Cultural events that took place {locationPhrase} during {month} {year}",
+      "collectionFallbackDescription": "Collection of cultural events",
+      "headerTitle": "{town} archive - {month} {year}",
+      "headerCount": "{count} documented cultural events",
+      "headerEmpty": "No events found for this period",
+      "srList": "Event list",
+      "footerExplore": "Want to explore more events in {town}?",
+      "footerViewArchives": "View all archives",
+      "footerCurrentEvents": "Current events"
+    },
+    "SitemapTown": {
+      "metaTitle": "Archive. Discover everything that has happened {locationPhrase} - Esdeveniments.cat",
+      "metaDescription": "Discover everything that has happened {locationPhrase} each year. The best cultural plans to make the most of {town} - Archive - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Home",
+        "archive": "Archive"
+      },
+      "collectionTitle": "Archive of {town}",
+      "collectionDescription": "Historical record of cultural events in {town} organized by years and months",
+      "mainEntityName": "Historical archive of {town}",
+      "mainEntityDescription": "Collection of cultural events in {town}",
+      "aboutTitle": "About this archive",
+      "aboutBody": "This archive contains a compilation of cultural events in {town} organized chronologically. Each month includes theatre, music, art, festivals, and other cultural activities.",
+      "quickNavTitle": "Quick navigation",
+      "quickNavBody": "Use the links to jump directly to a specific month. The most recent years appear first for easier browsing."
+    }
+  },
+  "Utils": {
+    "SearchQuery": {
+      "forSearch": "for the search"
+    },
+    "Validation": {
+      "genericError": "There are validation errors",
+      "imageRequired": "Image is required",
+      "titleRequired": "Title is required",
+      "descriptionRequired": "Description is required",
+      "locationRequired": "Location is required",
+      "invalidUrl": "Invalid URL",
+      "invalidEmail": "Invalid email"
+    },
+    "EventStatus": {
+      "past": "Event finished",
+      "live": "Live",
+      "upcoming": "Upcoming",
+      "endsInDays": "Ends in {count} days",
+      "endsInHours": "Ends in {count} hours",
+      "endsSoon": "Ends soon",
+      "startsInDays": "Starts in {count} days",
+      "startsInHours": "Starts in {count} hours",
+      "startsToday": "Starts today",
+      "today": "Today"
+    },
+    "EventStatusBadge": {
+      "ariaLabelPrefix": "Status:",
+      "past": "Finished",
+      "live": "Live"
+    },
+    "EventTime": {
+      "consult": "Check schedules",
+      "startsAt": "Starts at {time}",
+      "range": "From {start} to {end}",
+      "simpleRange": "{start} - {end}"
+    },
+    "OpeningHours": {
+      "openNow": "Open now",
+      "closesAt": "Closes at {time}",
+      "closedNow": "Closed now",
+      "opensAt": "Opens at {time}",
+      "unknown": "Schedule unavailable",
+      "overnight": "(overnight)",
+      "inferred": "(probable)",
+      "confirmed": "(confirmed)",
+      "openConfirmed": "Open (confirmed)",
+      "openProbable": "Open (probable)",
+      "closed": "Closed",
+      "unconfirmed": "Schedule not confirmed"
+    },
+    "EventCopy": {
+      "sentence": {
+        "verbSingular": "takes place",
+        "verbPlural": "take place",
+        "dateRange": "from {start} to {end}",
+        "dateSingle": "on {nameDay}, {start}",
+        "sentence": "{title} {verb} {date}{time}{place}.",
+        "timeSuffix": ", {time}",
+        "placeSuffix": ", {place}"
+      },
+      "faq": {
+        "whenQ": "When is the event?",
+        "whenA": "{date}{time}",
+        "whereQ": "Where is it held?",
+        "whereA": "{place}",
+        "isFreeQ": "Is it free?",
+        "isFreeYes": "Yes, the event is free.",
+        "isFreeNo": "No, the event is paid.",
+        "durationQ": "What is the approximate duration?",
+        "durationA": "{duration}",
+        "moreInfoQ": "Where can I find more information?",
+        "moreInfoA": "You can check all the details on the official event page."
+      }
+    },
+    "StringHelpers": {
+      "articles": {
+        "el": "The",
+        "la": "The",
+        "l": "The",
+        "els": "The",
+        "les": "The"
+      },
+      "prepositions": {
+        "a": "to",
+        "al": "to the",
+        "als": "to the",
+        "aLa": "to the",
+        "aLes": "to the",
+        "aL": "to the",
+        "de": "of",
+        "del": "of the",
+        "dels": "of the",
+        "deLa": "of the",
+        "deLes": "of the",
+        "deL": "of the"
+      },
+      "capitalizePrepositions": [
+        "to the",
+        "to",
+        "of the",
+        "of",
+        "for the",
+        "by the"
+      ],
+      "feminineExceptions": ["gent gran", "dansa"],
+      "masculineExceptions": [
+        "penedès",
+        "alt penedès",
+        "baix penedès",
+        "rosselló",
+        "urgell",
+        "alt urgell",
+        "pla d'urgell",
+        "vallès",
+        "vallès oriental",
+        "vallès occidental",
+        "gironès",
+        "barcelonès",
+        "tarragonès",
+        "montsià",
+        "baix ebre",
+        "maresme",
+        "bages"
+      ]
+    },
+    "Calendar": {
+      "moreInfoHtml": "More information: <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Esdeveniments.cat</a>",
+      "moreInfoText": "More information: {url}",
+      "dateRange": "From {start} to {end}",
+      "dateSingle": "From {start}",
+      "loading": "Loading...",
+      "button": "Add to calendar",
+      "providers": {
+        "google": "Google Calendar",
+        "outlook": "Outlook",
+        "other": "Others"
+      },
+      "ariaAdd": "Add to {name}"
+    },
+    "ListPageFaq": {
+      "title": "Frequently asked questions",
+      "dateInline": {
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "weekend": "this weekend",
+        "week": "this week",
+        "fallback": "the coming days"
+      },
+      "dateCapitalized": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "weekend": "This weekend",
+        "week": "This week",
+        "fallback": "The coming days"
+      },
+      "q1": "What can I do {contextInline}?",
+      "a1": "In {capitalizedContext} you'll find concerts, fairs, family activities, and cultural plans updated daily.",
+      "q2": "Are there free activities {contextInline}?",
+      "a2": "Yes. Use search, category filters, and distance to discover free activities {contextInline}.",
+      "q3": "Where can I see {categoryName} {contextInline}?",
+      "a3": "Select the \"{categoryName}\" category to highlight these events {contextInline} and save the agenda to check it often."
+    },
+    "LocationHelpers": {
+      "newsAll": "News from Catalonia",
+      "newsWithPlace": "News in {deLabel}"
+    },
+    "Rss": {
+      "feedTitle": "RSS {site} - {place}",
+      "feedDescription": "RSS {site} for {place}",
+      "itemDescription": "{title}\n\n🗓️ {nameDay} {formattedStart}\n\n🏡 {location}, {town}, {region} \n\nℹ️ More information available on our website!"
+    }
+  },
+  "Config": {
+    "TopAgenda": {
+      "agenda": "Agenda"
+    },
+    "Filters": {
+      "place": "Place",
+      "category": "Category",
+      "date": "Date",
+      "distance": "Distance",
+      "search": "Search"
+    },
+    "Categories": {
+      "festesPopulars": "Popular festivals",
+      "firesIMercats": "Fairs and markets",
+      "familiaIInfants": "Family activities",
+      "musica": "Concerts",
+      "teatre": "Theatre",
+      "exposicions": "Exhibitions"
+    },
+    "ByDates": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "weekend": "Weekend",
+      "week": "This week"
+    }
+  }
+}

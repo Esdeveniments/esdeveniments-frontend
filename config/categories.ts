@@ -7,7 +7,7 @@
  */
 
 export type CategoryConfig = {
-  label: string;
+  labelKey: string;
   isPriority: boolean;
 };
 
@@ -17,27 +17,27 @@ export type CategoryConfig = {
  */
 export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   "festes-populars": {
-    label: "Festes Populars",
+    labelKey: "festesPopulars",
     isPriority: true,
   },
   "fires-i-mercats": {
-    label: "Fires i Mercats",
+    labelKey: "firesIMercats",
     isPriority: true,
   },
   "familia-i-infants": {
-    label: "Família i Infants",
+    labelKey: "familiaIInfants",
     isPriority: true,
   },
   musica: {
-    label: "Música",
+    labelKey: "musica",
     isPriority: true,
   },
   teatre: {
-    label: "Teatre",
+    labelKey: "teatre",
     isPriority: true,
   },
   exposicions: {
-    label: "Exposicions",
+    labelKey: "exposicions",
     isPriority: false,
   },
 } as const;

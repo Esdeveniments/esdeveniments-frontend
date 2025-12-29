@@ -103,6 +103,27 @@ describe("proxy", () => {
       expect(result).toBeDefined();
     });
 
+    it("sets short CDN cache headers for public pages to avoid day-stale HTML", async () => {
+      const mockRequest = {
+        nextUrl: {
+          pathname: "/catalunya",
+          search: "",
+          searchParams: new URLSearchParams(),
+        },
+        headers: new Headers({ accept: "text/html" }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(mockRequest);
+
+      expect(result.headers.get("Cache-Control")).toBe(
+        "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
+      );
+    });
+
     it("handles /sw.js route with cache headers", async () => {
       const mockRequest = {
         nextUrl: {
@@ -249,9 +270,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 401 when x-timestamp header is missing", async () => {
@@ -265,9 +287,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 408 for invalid timestamp format", async () => {
@@ -284,9 +307,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 408 for future timestamp", async () => {
@@ -304,9 +328,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 401 for expired timestamp", async () => {
@@ -324,9 +349,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("returns 401 for invalid HMAC", async () => {
@@ -347,9 +373,10 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      expect(NextResponse).toHaveBeenCalledWith("Unauthorized", {
-        status: 401,
-      });
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     });
 
     it("passes through valid requests", async () => {

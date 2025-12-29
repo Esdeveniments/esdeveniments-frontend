@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchEvents, insertAds } from "../lib/api/events";
+import { fetchEvents, insertAds, uploadEventImage } from "../lib/api/events";
+import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
   PagedResponseDTO,
   EventSummaryResponseDTO,
   ListEvent,
 } from "types/api/event";
+import {
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+  MAX_TOTAL_UPLOAD_BYTES,
+} from "@utils/constants";
 
 const originalEnv = { ...process.env };
 
@@ -21,17 +26,8 @@ describe("lib/api/events", () => {
 
   it("returns safe fallback when backend URL is missing (internal route returns empty)", async () => {
     delete process.env.NEXT_PUBLIC_API_URL;
-    const mockJson = vi.fn().mockResolvedValue({
-      content: [],
-      currentPage: 0,
-      pageSize: 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    });
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: mockJson });
-    (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
-
+    // When NEXT_PUBLIC_API_URL is missing, fetchEventsExternal returns early without calling fetch
+    // So we just verify it returns the fallback response
     const result: PagedResponseDTO<EventSummaryResponseDTO> = await fetchEvents(
       { page: 0, size: 10 }
     );
@@ -43,12 +39,10 @@ describe("lib/api/events", () => {
       totalPages: 0,
       last: true,
     });
-    // Called internal API route
-    const calledUrl = mockFetch.mock.calls[0][0] as string;
-    expect(calledUrl).toContain("/api/events?");
   });
 
-  it("maps params correctly and hits internal route (no HMAC headers here)", async () => {
+  it("maps params correctly and hits external API with HMAC headers", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
     const mockJson = vi.fn().mockResolvedValue({
       content: [],
       currentPage: 0,
@@ -57,19 +51,26 @@ describe("lib/api/events", () => {
       totalPages: 0,
       last: true,
     });
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: mockJson });
+    const mockResponse = { ok: true, json: mockJson };
+    const mockFetch = vi.fn().mockResolvedValue(mockResponse);
     (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
 
     await fetchEvents({ place: "barcelona", term: "music", page: 2, size: 20 });
+
+    expect(mockFetch).toHaveBeenCalled();
     const calledUrl = mockFetch.mock.calls[0][0] as string;
     const options = mockFetch.mock.calls[0][1] as RequestInit;
 
-    expect(calledUrl).toContain("/api/events?");
+    expect(calledUrl).toContain("https://api.example.com/events?");
     expect(calledUrl).toContain("place=barcelona");
     expect(calledUrl).toContain("term=music");
     expect(calledUrl).toContain("page=2");
     expect(calledUrl).toContain("size=20");
-    expect(options?.headers).toBeUndefined();
+    // fetchWithHmac adds HMAC headers, so headers should be defined
+    expect(options?.headers).toBeDefined();
+    const headers = options.headers as Headers;
+    expect(headers.get("x-timestamp")).toBeDefined();
+    expect(headers.get("x-hmac")).toBeDefined();
   });
 
   it("insertAds returns empty when no events", () => {
@@ -86,5 +87,102 @@ describe("lib/api/events", () => {
     // Allow broader tolerance to avoid coupling to exact implementation
     expect(adCount).toBeGreaterThanOrEqual(3);
     expect(adCount).toBeLessThanOrEqual(7);
+  });
+
+  it("rejects oversized images before calling the API", async () => {
+    const oversizedFile = new File(["a".repeat(10)], "large.jpg", {
+      type: "image/jpeg",
+    });
+    Object.defineProperty(oversizedFile, "size", {
+      value: MAX_TOTAL_UPLOAD_BYTES + 1024,
+    });
+
+    await expect(uploadEventImage(oversizedFile)).rejects.toThrow(
+      EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
+    );
+  });
+
+  it("uploads images via multipart endpoint and returns url/publicId", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response(
+      JSON.stringify({
+        url: "https://cdn.example.com/photo.jpg",
+        publicId: "abc-123",
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
+
+    const fetchSpy = vi
+      .spyOn(fetchWrapper, "fetchWithHmac")
+      .mockResolvedValue(mockResponse as unknown as Response);
+
+    const result = await uploadEventImage(imageFile);
+    expect(result).toEqual({
+      url: "https://cdn.example.com/photo.jpg",
+      publicId: "abc-123",
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const [, options] = fetchSpy.mock.calls[0];
+    const body = options?.body as FormData;
+    expect(body.get("imageFile")).toBe(imageFile);
+  });
+
+  it("maps 413 responses from the image endpoint to descriptive errors", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response("413 Request Entity Too Large", {
+      status: 413,
+    });
+
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    await expect(uploadEventImage(imageFile)).rejects.toThrow(
+      EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
+    );
+  });
+
+  it("throws when backend response is missing publicId", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response(
+      JSON.stringify({
+        url: "https://cdn.example.com/photo.jpg",
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
+
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    await expect(uploadEventImage(imageFile)).rejects.toThrow(
+      /missing url\/publicId/i
+    );
+  });
+
+  it("throws when backend responds with invalid JSON", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+    const imageFile = new File(["dummy"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const mockResponse = new Response("not-json", {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    await expect(uploadEventImage(imageFile)).rejects.toThrow(/invalid json/i);
   });
 });

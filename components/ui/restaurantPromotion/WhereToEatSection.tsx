@@ -1,6 +1,8 @@
+"use client";
+
 import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
 import NextImage from "next/image";
-import { FireIcon } from "@heroicons/react/outline"; // using FireIcon as dining marker (no direct utensils icon in outline set v1)
+import FireIcon from "@heroicons/react/outline/esm/FireIcon";
 import { getOptimalImageQuality } from "@utils/image-quality";
 import {
   formatPriceLevelGeneric,
@@ -8,12 +10,18 @@ import {
   formatAddressLines,
 } from "@utils/place-format";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { withImageCacheKey } from "@utils/image-cache";
+import { siteUrl } from "@config/index";
+import { useTranslations } from "next-intl";
 
 // Helper: derive photo proxy URL (Places API v1 only)
 function getPhotoUrl(place: GooglePlace): string | null {
   const photo = place.photos?.[0];
   if (!photo) return null;
-  return `/api/places/photo?name=${encodeURIComponent(photo.name)}&w=160`;
+  const basePath = `/api/places/photo?name=${encodeURIComponent(
+    photo.name
+  )}&w=160`;
+  return `${siteUrl}${basePath}`;
 }
 
 export default function WhereToEatSection({
@@ -21,6 +29,8 @@ export default function WhereToEatSection({
   attribution,
   onPromoteClick,
 }: WhereToEatSectionProps) {
+  const t = useTranslations("Components.WhereToEatSection");
+
   if (!places || places.length === 0) {
     return null;
   }
@@ -32,7 +42,7 @@ export default function WhereToEatSection({
           headingId="where-to-eat"
           Icon={FireIcon}
           iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-          title="On pots menjar"
+          title={t("title")}
           titleClassName="heading-2"
         />
         {onPromoteClick && (
@@ -41,7 +51,7 @@ export default function WhereToEatSection({
             onClick={onPromoteClick}
             className="text-xs font-medium text-primary hover:text-primary-dark underline focus:outline-none"
           >
-            Promociona el teu restaurant
+            {t("promote")}
           </button>
         )}
       </div>
@@ -60,6 +70,10 @@ export default function WhereToEatSection({
               href={`https://www.google.com/maps/search/?api=1&query=${encodedPlaceName}&query_place_id=${place.place_id}`}
               target="_blank"
               rel="noopener noreferrer"
+              data-analytics-link-type="maps_restaurant"
+              data-analytics-context="where_to_eat"
+              data-analytics-place-id={place.place_id}
+              data-analytics-place-name={place.name}
               className="group block border border-border rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
               aria-label={`Obrir ${place.name} a Google Maps`}
             >
@@ -85,10 +99,14 @@ export default function WhereToEatSection({
                       </div>
                     );
                   }
+                  const normalizedPhotoUrl = withImageCacheKey(
+                    photoUrl,
+                    place.place_id || place.name
+                  );
                   return (
                     <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted ml-4">
                       <NextImage
-                        src={photoUrl}
+                        src={normalizedPhotoUrl}
                         alt={`Foto de ${place.name}`}
                         fill
                         priority={false}

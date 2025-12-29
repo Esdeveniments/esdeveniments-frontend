@@ -2,13 +2,17 @@ import React from "react";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import type { EventsAroundProps } from "types/common";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { ShareIcon } from "@heroicons/react/outline";
+import ShareIcon from "@heroicons/react/outline/esm/ShareIcon";
+import { getTranslations } from "next-intl/server";
 
-const EventsAroundSection: React.FC<EventsAroundProps> = ({
+const EventsAroundSection: React.FC<EventsAroundProps> = async ({
   events,
-  title = "Esdeveniments relacionats",
+  title,
 }) => {
   if (!events || events.length === 0) return null;
+
+  const t = await getTranslations("Components.EventsAround");
+  const displayTitle = title || t("relatedEvents");
 
   return (
     <div className="w-full min-w-0">
@@ -17,7 +21,7 @@ const EventsAroundSection: React.FC<EventsAroundProps> = ({
         <SectionHeading
           Icon={ShareIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title={title}
+          title={displayTitle}
           titleClassName="heading-2"
         />
       </div>
@@ -27,7 +31,8 @@ const EventsAroundSection: React.FC<EventsAroundProps> = ({
           events={events}
           layout="compact"
           showJsonLd={false} // JSON-LD handled server-side for SEO
-          title={title}
+          title={displayTitle}
+          useDetailTimeFormat={true} // Use phrase format for related events in detail pages
         />
       </div>
     </div>

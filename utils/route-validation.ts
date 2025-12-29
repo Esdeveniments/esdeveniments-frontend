@@ -11,6 +11,20 @@ const INVALID_PLACES = [
   "favicon.ico",
   "robots.txt",
   "sitemap.xml",
+  "sitemap-0.xml",
+  "sitemap-1.xml",
+  "sitemap-2.xml",
+  "sitemap-3.xml",
+  "sitemap-4.xml",
+  "sitemap-5.xml",
+  "sitemap-6.xml",
+  "sitemap-7.xml",
+  "sitemap-8.xml",
+  "sitemap-9.xml",
+  "server-sitemap.xml",
+  "server-news-sitemap.xml",
+  "server-place-sitemap.xml",
+  "server-google-news-sitemap.xml",
   "ads.txt",
   "manifest.json",
 ] as const;
@@ -42,6 +56,12 @@ export function isValidPlace(place: string): boolean {
 
   // Block common system paths
   if (place.startsWith("_next") || place.startsWith("api")) {
+    return false;
+  }
+
+  // Block special characters - place slugs should only contain lowercase letters, numbers, and hyphens
+  // This prevents issues like $ being URL-encoded to %24 in metadata titles
+  if (!/^[a-z0-9-]+$/.test(place)) {
     return false;
   }
 

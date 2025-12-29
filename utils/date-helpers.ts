@@ -1,6 +1,14 @@
-import { DAYS, MONTHS } from "./constants";
-import type { DateObject, FormattedDateResult } from "types/event";
+import { getDayNames, getMonthNames } from "./constants";
+import type {
+  DateObject,
+  FormattedDateResult,
+  EventTimeLabels,
+} from "types/event";
 import type { EventTimeDTO } from "types/api/event";
+import caMessages from "../messages/ca.json";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+
+export type { EventTimeLabels };
 
 export const isLessThanFiveDays = (date: Date): boolean => {
   const currentDate = new Date();
@@ -39,10 +47,39 @@ function calculateDetailedDurationISO8601(start: Date, end: Date): string {
   return duration === "P" ? "PT1H" : duration;
 }
 
+const formatDateForLocale = (
+  locale: AppLocale,
+  day: number,
+  monthName: string,
+  year: number,
+  includeYear: boolean
+): string => {
+  switch (locale) {
+    case "es":
+      return includeYear
+        ? `${day} de ${monthName} de ${year}`
+        : `${day} de ${monthName}`;
+    case "en":
+      return includeYear
+        ? `${monthName} ${day}, ${year}`
+        : `${monthName} ${day}`;
+    case "ca":
+    default:
+      return includeYear
+        ? `${day} de ${monthName} del ${year}`
+        : `${day} de ${monthName}`;
+  }
+};
+
 export const getFormattedDate = (
   start: string | DateObject,
-  end?: string | DateObject
+  end?: string | DateObject,
+  locale: AppLocale = DEFAULT_LOCALE
 ): FormattedDateResult => {
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const days = getDayNames(localeToUse);
+  const months = getMonthNames(localeToUse);
+
   const startDate = new Date(
     typeof start === "object" ? start.date || start.dateTime || "" : start
   );
@@ -69,19 +106,44 @@ export const getFormattedDate = (
   const weekDay = startDateConverted.getDay();
   const month = startDateConverted.getMonth();
   const year = startDateConverted.getFullYear();
-  const nameDay = DAYS[weekDay];
-  const nameMonth = MONTHS[month];
+  const nameDay = days[weekDay];
+  const nameMonth = months[month];
 
-  const originalFormattedStart = `${startDay} de ${nameMonth} del ${year}`;
+  const originalFormattedStart = formatDateForLocale(
+    localeToUse,
+    startDay,
+    nameMonth,
+    year,
+    true
+  );
+
+  const shouldShortenStartForSameMonthRange =
+    localeToUse !== "en" && isMultipleDays && isSameMonth;
   const formattedStart =
-    isMultipleDays && isSameMonth
+    shouldShortenStartForSameMonthRange
       ? `${startDay}`
-      : `${startDay} de ${nameMonth}${
-          isMultipleDays && isSameYear ? "" : ` del ${year}`
-        }`;
-  const formattedEnd = `${endDay} de ${
-    MONTHS[endDateConverted.getMonth()]
-  } del ${endDateConverted.getFullYear()}`;
+      : formatDateForLocale(
+          localeToUse,
+          startDay,
+          nameMonth,
+          year,
+          !(isMultipleDays && isSameYear)
+        );
+
+  const formattedEndFull = formatDateForLocale(
+    localeToUse,
+    endDay,
+    months[endDateConverted.getMonth()],
+    endDateConverted.getFullYear(),
+    true
+  );
+
+  // English: collapse repeated month for same-month ranges.
+  // Example: "December 19 – 23, 2025" instead of "December 19 – December 23, 2025".
+  const formattedEnd =
+    localeToUse === "en" && isMultipleDays && isSameMonth && isSameYear
+      ? `${endDay}, ${endDateConverted.getFullYear()}`
+      : formattedEndFull;
 
   const startTime = `${startDateConverted.getHours()}:${String(
     startDateConverted.getMinutes()
@@ -119,21 +181,6 @@ export const isWeekend = (): boolean => {
   const today = new Date();
   return today.getDay() === 0 || today.getDay() === 5 || today.getDay() === 6;
 };
-
-export const monthsName: string[] = [
-  "gener",
-  "febrer",
-  "març",
-  "abril",
-  "maig",
-  "juny",
-  "juliol",
-  "agost",
-  "setembre",
-  "octubre",
-  "novembre",
-  "desembre",
-];
 
 /**
  * Converts ISO time string or Date to EventTimeDTO shape for backend requests.
@@ -209,6 +256,18 @@ export const formatTimeForAPI = (timeString: string): string => {
   return `${hour}:${minute}`;
 };
 
+const defaultEventTimeLabels: EventTimeLabels = (caMessages as any).Utils
+  .EventTime as EventTimeLabels;
+
+const fillTemplate = (
+  template: string,
+  replacements: Record<string, string>
+): string =>
+  Object.entries(replacements).reduce(
+    (acc, [key, value]) => acc.replace(`{${key}}`, value),
+    template
+  );
+
 /**
  * Format time from API response (EventTimeDTO) to string format
  * @param timeObj - EventTimeDTO object from API
@@ -242,7 +301,8 @@ export const normalizeEndTime = (
  */
 export const formatEventTimeDisplay = (
   startTime?: string | null,
-  endTime?: string | null
+  endTime?: string | null,
+  labels: EventTimeLabels = defaultEventTimeLabels
 ): string => {
   // Ensure we only work with HH:mm
   const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
@@ -254,7 +314,7 @@ export const formatEventTimeDisplay = (
 
   // No start time or all-day event (00:00) -> show "Consultar horaris"
   if (!hasStartTime) {
-    return "Consultar horaris";
+    return labels.consult;
   }
 
   // Has start time but no end time -> show just start time
@@ -263,5 +323,47 @@ export const formatEventTimeDisplay = (
   }
 
   // Both times available -> show range
-  return `${cleanStart} - ${normalizedEndTime}`;
+  return fillTemplate(labels.simpleRange, {
+    start: cleanStart,
+    end: normalizedEndTime,
+  });
+};
+
+/**
+ * Format event time for display in event detail page with natural Catalan phrases
+ * Returns "Consultar horaris" if no start time or start time is "00:00" (all-day event)
+ * Returns "Comença a les HH:mm" if only start time is provided
+ * Returns "De HH:mm a HH:mm" if both times are available
+ * @param startTime - Start time in HH:mm format or null/undefined
+ * @param endTime - End time in HH:mm format or null/undefined
+ * @returns Formatted time string for display in detail page
+ */
+export const formatEventTimeDisplayDetail = (
+  startTime?: string | null,
+  endTime?: string | null,
+  labels: EventTimeLabels = defaultEventTimeLabels
+): string => {
+  // Ensure we only work with HH:mm
+  const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
+  const cleanEnd = endTime ? formatTimeForAPI(endTime) : null;
+
+  const normalizedEndTime = normalizeEndTime(cleanStart, cleanEnd);
+  const hasStartTime = !!cleanStart && cleanStart !== "00:00";
+  const hasEndTime = !!normalizedEndTime && normalizedEndTime !== "00:00";
+
+  // No start time or all-day event (00:00) -> show "Consultar horaris"
+  if (!hasStartTime) {
+    return labels.consult;
+  }
+
+  // Has start time but no end time -> show "Comença a les HH:mm"
+  if (!hasEndTime) {
+    return fillTemplate(labels.startsAt, { time: cleanStart });
+  }
+
+  // Both times available -> show "De HH:mm a HH:mm"
+  return fillTemplate(labels.range, {
+    start: cleanStart,
+    end: normalizedEndTime,
+  });
 };

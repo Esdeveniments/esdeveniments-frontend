@@ -1,14 +1,18 @@
-import { CheckIcon } from "@heroicons/react/solid";
+import CheckIcon from "@heroicons/react/solid/esm/CheckIcon";
+import { useTranslations } from "next-intl";
 import { useHero } from "./HeroContext";
 import { HERO_DATE_FILTERS } from "./constants";
 import type { JSX } from "react";
+import { sendGoogleEvent } from "@utils/analytics";
 
 export default function DateQuickFilters(): JSX.Element {
+  const t = useTranslations("Components.HeroFilters");
   const { date, setDate } = useHero();
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
       {HERO_DATE_FILTERS.map((filter) => {
+        const label = t(filter.labelKey);
         const isActive = date === filter.value;
 
         return (
@@ -16,8 +20,17 @@ export default function DateQuickFilters(): JSX.Element {
             key={filter.value}
             type="button"
             aria-pressed={isActive}
-            aria-label={`${filter.label}${isActive ? ' (actiu)' : ''}`}
-            onClick={() => setDate(isActive ? null : filter.value)}
+            aria-label={`${label}${isActive ? ` (${t("active")})` : ""}`}
+            onClick={() => {
+              const nextValue = isActive ? null : filter.value;
+              setDate(nextValue);
+              sendGoogleEvent("hero_date_filter_toggle", {
+                category: "hero_filters",
+                context: "home_hero",
+                date_slug: filter.value,
+                is_active: String(!isActive),
+              });
+            }}
             className={`
               px-4 py-2 rounded-full text-sm font-medium transition-all border outline-none focus:ring-2 focus:ring-primary/50 relative
               ${isActive
@@ -31,7 +44,7 @@ export default function DateQuickFilters(): JSX.Element {
                 <CheckIcon className="w-4 h-4" />
               </span>
             )}
-            {filter.label}
+            {label}
           </button>
         );
       })}

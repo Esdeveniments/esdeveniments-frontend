@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fetchWithHmac } from "../lib/api/fetch-wrapper";
+import * as hmac from "../utils/hmac";
 
 const originalEnv = { ...process.env };
 
@@ -67,6 +68,25 @@ describe("lib/api/fetch-wrapper", () => {
       // Verify the HMAC was calculated with body included
       expect(timestamp).toBeDefined();
       expect(hmac).toBeDefined();
+    });
+
+    it("skips body signing when skipBodySigning is true", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+      const hmacSpy = vi
+        .spyOn(hmac, "generateHmac")
+        .mockResolvedValue("deadbeef".padEnd(64, "f"));
+
+      (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+
+      await fetchWithHmac("https://api.example.com/test", {
+        method: "POST",
+        body: "should-be-ignored",
+        skipBodySigning: true,
+      });
+
+      expect(hmacSpy).toHaveBeenCalledTimes(1);
+      // First argument is bodyToSign; should be empty string when skipping
+      expect(hmacSpy.mock.calls[0][0]).toBe("");
     });
 
     it("does not include non-string body in HMAC calculation", async () => {

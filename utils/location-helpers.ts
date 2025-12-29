@@ -4,13 +4,29 @@ import { fetchPlaceBySlug } from "@lib/api/places";
 import {
   sanitize,
   sanitizeLegacyApostrophe,
-  formatCatalanDe,
   formatPlaceName,
 } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
-import type { BuildDisplayLocationOptions } from "types/location";
+import type {
+  BuildDisplayLocationOptions,
+  EventLocationLabelOptions,
+  EventLocationLabels,
+  EventPlaceLabelOptions,
+  EventPlaceLabels,
+  EventListLocationLabelOptions,
+  EventListLocationLabels,
+} from "types/location";
 
 const normalize = (value: string) => value.trim().toLowerCase();
+const formatOptionalPlace = (value?: string | null) =>
+  value && value.trim().length > 0 ? formatPlaceName(value) : "";
+const isDistinctLabel = (candidate: string, ...others: string[]): boolean => {
+  if (!candidate) return false;
+  const normalizedCandidate = normalize(candidate);
+  return !others.some(
+    (other) => other && normalize(other) === normalizedCandidate
+  );
+};
 
 /**
  * Build a clean location string:
@@ -24,8 +40,8 @@ export const buildDisplayLocation = ({
   regionName,
   hidePlaceSegments,
 }: BuildDisplayLocationOptions): string => {
-  const formattedCityName = cityName ? formatPlaceName(cityName) : "";
-  const formattedRegionName = regionName ? formatPlaceName(regionName) : "";
+  const formattedCityName = formatOptionalPlace(cityName);
+  const formattedRegionName = formatOptionalPlace(regionName);
 
   const baseSegments = location
     .split(",")
@@ -73,6 +89,123 @@ export const buildDisplayLocation = ({
   }
 
   return uniqueSegments[0] ?? location;
+};
+
+export const buildEventLocationLabels = ({
+  cityName,
+  regionName,
+  location,
+  secondaryPreference = "venue",
+}: EventLocationLabelOptions): EventLocationLabels => {
+  const cityLabel = formatOptionalPlace(cityName);
+  const regionLabel = formatOptionalPlace(regionName);
+  const venueLabel = formatOptionalPlace(location);
+
+  const primaryLabel = cityLabel || regionLabel || venueLabel || "";
+  const preferRegion = secondaryPreference === "region";
+  const preferredSecondary = preferRegion ? regionLabel : venueLabel;
+  const fallbackSecondary = preferRegion ? venueLabel : regionLabel;
+
+  let secondaryLabel = "";
+  if (isDistinctLabel(preferredSecondary, primaryLabel)) {
+    secondaryLabel = preferredSecondary;
+  } else if (
+    isDistinctLabel(fallbackSecondary, primaryLabel, preferredSecondary)
+  ) {
+    secondaryLabel = fallbackSecondary;
+  }
+
+  return {
+    cityLabel,
+    regionLabel,
+    venueLabel,
+    primaryLabel,
+    secondaryLabel,
+  };
+};
+
+/**
+ * Build place and region labels for list views (events list, categorized events, related events).
+ * Prioritizes city and region, excluding the venue/location field which may be generic
+ * (e.g., "Biblioteca Municipal" with no additional context).
+ * Falls back to location if city and region are both missing.
+ */
+export const buildEventPlaceLabels = ({
+  cityName,
+  regionName,
+  location,
+}: EventPlaceLabelOptions): EventPlaceLabels => {
+  const cityLabel = formatOptionalPlace(cityName);
+  const regionLabel = formatOptionalPlace(regionName);
+  const venueLabel = formatOptionalPlace(location);
+
+  // Prioritize city and region, but fall back to location if both are missing
+  const primaryLabel = cityLabel || regionLabel || venueLabel || "";
+  const secondaryLabel =
+    cityLabel && regionLabel && isDistinctLabel(regionLabel, cityLabel)
+      ? regionLabel
+      : "";
+
+  return {
+    cityLabel,
+    regionLabel,
+    primaryLabel,
+    secondaryLabel,
+  };
+};
+
+/**
+ * Build location labels for event list cards.
+ * Shows location first, then city and region combined, since list cards have more space.
+ * Always shows all available and distinct values.
+ */
+export const buildEventListLocationLabels = ({
+  cityName,
+  regionName,
+  location,
+}: EventListLocationLabelOptions): EventListLocationLabels => {
+  const cityLabel = formatOptionalPlace(cityName);
+  const regionLabel = formatOptionalPlace(regionName);
+  const locationLabel = formatOptionalPlace(location);
+
+  // Primary: location (if available), otherwise city, otherwise region
+  // Secondary: city and region combined (if distinct from primary)
+  let primaryLabel = "";
+  const secondaryParts: string[] = [];
+
+  if (locationLabel) {
+    // Location exists - use it as primary
+    primaryLabel = locationLabel;
+    // Add city and region to secondary if they're distinct from location
+    if (cityLabel && isDistinctLabel(cityLabel, locationLabel)) {
+      secondaryParts.push(cityLabel);
+    }
+    if (regionLabel && isDistinctLabel(regionLabel, locationLabel)) {
+      secondaryParts.push(regionLabel);
+    }
+  } else if (cityLabel) {
+    // No location, but city exists - use city as primary
+    primaryLabel = cityLabel;
+    // Add region to secondary if distinct from city
+    if (regionLabel && isDistinctLabel(regionLabel, cityLabel)) {
+      secondaryParts.push(regionLabel);
+    }
+  } else if (regionLabel) {
+    // Only region exists
+    primaryLabel = regionLabel;
+  }
+
+  // Combine secondary parts with comma
+  const secondaryLabel =
+    secondaryParts.length > 0 ? secondaryParts.join(", ") : "";
+
+  return {
+    cityLabel,
+    regionLabel,
+    locationLabel,
+    primaryLabel,
+    secondaryLabel,
+  };
 };
 
 export const getPlaceTypeAndLabel = async (
@@ -149,49 +282,3 @@ export const getDistance = (
 export const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);
 };
-
-// Build simple News CTA (href + text) without network lookups
-// Preference: use provided human label when available, fallback to capitalized slug
-export function getNewsCta(
-  place: string | undefined,
-  placeLabel?: string,
-  placeType?: "region" | "town"
-): { href: string; text: string } {
-  const safePlace = (place || "").trim();
-  const href =
-    safePlace === "catalunya" || safePlace === ""
-      ? "/noticies"
-      : `/noticies/${safePlace}`;
-
-  const formatWords = (text: string): string =>
-    text
-      .split(/\s+/)
-      .map((t) =>
-        t
-          .split("-")
-          .map((h) => (h.length ? h.charAt(0).toUpperCase() + h.slice(1) : h))
-          .join("-")
-      )
-      .join(" ");
-
-  const baseLabel =
-    safePlace === "catalunya"
-      ? "Catalunya"
-      : placeLabel
-      ? placeLabel
-      : formatWords(safePlace.replace(/-/g, " "));
-
-  // Use existing Catalan contraction helper for "de" forms with proper article handling
-  // For regions, use article (del/de la/de l'); for towns, no article (de)
-  const deLabel = placeType
-    ? formatCatalanDe(baseLabel, false, true, placeType)
-    : formatCatalanDe(baseLabel, false); // fallback to no article if type unknown
-
-  // CTA copy: Simple and direct news label
-  // Fallback to "Catalunya" when place is empty to avoid dangling preposition
-  const text =
-    safePlace === "catalunya" || safePlace === ""
-      ? "Notícies de Catalunya"
-      : `Notícies ${deLabel}`;
-  return { href, text };
-}

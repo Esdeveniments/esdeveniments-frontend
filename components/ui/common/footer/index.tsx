@@ -1,20 +1,60 @@
+import { getTranslations } from "next-intl/server";
 import { JSX } from "react";
 import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
-import { NavigationItem, SocialLinks } from "types/common";
+import { SocialLinks } from "types/common";
+import { contactEmail } from "@config/index";
 
-const navigation: NavigationItem[] = [
-  { name: "Inici", href: "/", current: false },
-  { name: "Agenda", href: "/catalunya", current: false },
-  { name: "Publicar", href: "/publica", current: false },
-  { name: "Notícies", href: "/noticies", current: false },
-  { name: "Qui som", href: "/qui-som", current: false },
-  { name: "Arxiu", href: "/sitemap", current: false },
-];
+export default async function Footer(): Promise<JSX.Element> {
+  const t = await getTranslations("Components.Footer");
+  const tTopAgenda = await getTranslations("Config.TopAgenda");
+  const agendaLabel = tTopAgenda("agenda");
 
-export default function Footer(): JSX.Element {
+  const navigation = [
+    { name: t("navigation.home"), href: "/", kind: "internal", current: false },
+    {
+      name: t("navigation.agenda"),
+      href: "/catalunya",
+      kind: "internal",
+      current: false,
+    },
+    {
+      name: t("navigation.favorites"),
+      href: "/preferits",
+      kind: "internal",
+      current: false,
+    },
+    {
+      name: t("navigation.publish"),
+      href: "/publica",
+      kind: "internal",
+      current: false,
+    },
+    { name: t("navigation.news"), href: "/noticies", kind: "internal", current: false },
+    { name: t("navigation.about"), href: "/qui-som", kind: "internal", current: false },
+    {
+      name: t("navigation.contact"),
+      href: `mailto:${contactEmail}`,
+      kind: "mailto",
+      current: false,
+    },
+    { name: t("navigation.archive"), href: "/sitemap", kind: "internal", current: false },
+  ] satisfies Array<
+    | {
+      name: string;
+      href: `/${string}`;
+      kind: "internal";
+      current: boolean;
+    }
+    | {
+      name: string;
+      href: `mailto:${string}`;
+      kind: "mailto";
+      current: boolean;
+    }
+  >;
   const links: SocialLinks = {
     web: "https://www.esdeveniments.cat",
     twitter: "https://twitter.com/esdeveniments_",
@@ -39,15 +79,25 @@ export default function Footer(): JSX.Element {
           className="flex flex-wrap justify-center items-center gap-4 w-full max-w-full"
           aria-label="Footer navigation"
         >
-          {navigation.map((item) => (
-            <ActiveLink
-              href={item.href}
-              key={item.name}
-              className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive"
-            >
-              {item.name}
-            </ActiveLink>
-          ))}
+          {navigation.map((item) =>
+            item.kind === "mailto" ? (
+              <a
+                key={item.name}
+                href={item.href}
+                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive pressable-inline"
+              >
+                {item.name}
+              </a>
+            ) : (
+              <ActiveLink
+                href={item.href}
+                key={item.name}
+                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive"
+              >
+                {item.name}
+              </ActiveLink>
+            )
+          )}
         </nav>
 
         {/* Horizontal Divider */}
@@ -59,7 +109,7 @@ export default function Footer(): JSX.Element {
           aria-labelledby="featured-agendas"
         >
           <h2 id="featured-agendas" className="heading-4 text-foreground-strong">
-            Agendes destacades
+            {t("featuredAgendas")}
           </h2>
           <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-sm border border-border/40">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
@@ -71,7 +121,7 @@ export default function Footer(): JSX.Element {
                   className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1"
                   variant="inline"
                 >
-                  {item.label}
+                  {`${agendaLabel} ${item.name}`}
                 </PressableAnchor>
               ))}
             </div>
@@ -84,10 +134,10 @@ export default function Footer(): JSX.Element {
         {/* Copyright Section */}
         <div className="w-full flex flex-col items-center gap-element-gap-sm px-section-x">
           <span className="body-small text-foreground/70 text-center">
-            © {new Date().getFullYear()} Esdeveniments.cat
+            {t("copyright", { year: new Date().getFullYear() })}
           </span>
           <span className="text-xs text-foreground/50 text-center">
-            Descobreix els millors esdeveniments a Catalunya
+            {t("tagline")}
           </span>
         </div>
       </div>
