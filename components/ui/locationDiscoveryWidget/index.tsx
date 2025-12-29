@@ -7,10 +7,12 @@ import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCiti
 // import { useGeolocation } from "@components/hooks/useGeolocation";
 import { LocationDiscoveryWidgetProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
-import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
-import LocationMarkerIcon from "@heroicons/react/solid/esm/LocationMarkerIcon";
-import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
-import GlobeAltIcon from "@heroicons/react/outline/esm/GlobeAltIcon";
+import {
+  MagnifyingGlassIcon as SearchIcon,
+  MapPinIcon as LocationMarkerIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/solid";
+import { GlobeAltIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
 import { transformRegionsToOptions } from "./utils";
 import { normalizeForSearch } from "@utils/string-helpers";

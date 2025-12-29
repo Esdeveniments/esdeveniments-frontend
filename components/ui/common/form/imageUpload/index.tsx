@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import UploadIcon from "@heroicons/react/outline/esm/UploadIcon";
+import { ArrowUpTrayIcon as UploadIcon } from "@heroicons/react/24/outline";
 import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
 import {
   MAX_TOTAL_UPLOAD_BYTES,

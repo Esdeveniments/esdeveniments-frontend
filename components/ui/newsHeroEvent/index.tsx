@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
-import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
-import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";

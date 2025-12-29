@@ -2,7 +2,7 @@ import React from "react";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import type { EventsAroundProps } from "types/common";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import ShareIcon from "@heroicons/react/outline/esm/ShareIcon";
+import { ShareIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from "next-intl/server";
 
 const EventsAroundSection: React.FC<EventsAroundProps> = async ({

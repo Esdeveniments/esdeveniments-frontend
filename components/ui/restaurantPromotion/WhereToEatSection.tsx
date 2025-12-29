@@ -2,7 +2,7 @@
 
 import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
 import NextImage from "next/image";
-import FireIcon from "@heroicons/react/outline/esm/FireIcon";
+import { FireIcon } from "@heroicons/react/24/outline";
 import { getOptimalImageQuality } from "@utils/image-quality";
 import {
   formatPriceLevelGeneric,

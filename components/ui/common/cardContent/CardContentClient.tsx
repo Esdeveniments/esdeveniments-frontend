@@ -1,7 +1,9 @@
 "use client";
-import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
-import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
-import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import {
+  ClockIcon,
+  MapPinIcon as LocationMarkerIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";

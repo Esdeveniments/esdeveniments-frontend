@@ -3,8 +3,10 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { Option } from "types/common";
 import { LocationDropdownProps } from "types/props";
-import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
-import LocationMarkerIcon from "@heroicons/react/solid/esm/LocationMarkerIcon";
+import {
+  ChevronDownIcon,
+  MapPinIcon as LocationMarkerIcon,
+} from "@heroicons/react/24/solid";
 const LocationIcon = LocationMarkerIcon;
 import { transformRegionsToOptions } from "./utils";
 import { normalizeForSearch } from "@utils/string-helpers";

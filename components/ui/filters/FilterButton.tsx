@@ -1,8 +1,7 @@
 "use client";
 import { JSX, MouseEvent } from "react";
 import { useRouter } from "../../../i18n/routing";
-import XIcon from "@heroicons/react/solid/esm/XIcon";
-import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
+import { XMarkIcon as XIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import { usePressFeedback } from "@components/hooks/usePressFeedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
 import {
@@ -58,8 +57,8 @@ const FilterButton = ({
     >
       <div
         className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${enabled
-            ? "border-primary bg-primary/5 text-foreground-strong"
-            : "border-border text-foreground-strong hover:bg-muted"
+          ? "border-primary bg-primary/5 text-foreground-strong"
+          : "border-border text-foreground-strong hover:bg-muted"
           }`}
         data-pressed={isPressed ? "true" : undefined}
         onClick={handleChipClick}

@@ -1,6 +1,6 @@
 "use client";
 
-import FireIcon from "@heroicons/react/outline/esm/FireIcon";
+import { FireIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import type { WhereToEatSkeletonProps } from "types/ui/restaurant-promotion";
 

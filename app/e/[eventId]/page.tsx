@@ -21,8 +21,10 @@ import type { BreadcrumbNavItem } from "types/props";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
-import SpeakerphoneIcon from "@heroicons/react/outline/esm/SpeakerphoneIcon";
-import InformationCircleIcon from "@heroicons/react/outline/esm/InformationCircleIcon";
+import {
+  MegaphoneIcon as SpeakerphoneIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline";
 const InfoIcon = InformationCircleIcon;
 import EventDetailsSection from "./components/EventDetailsSection";
 import SectionHeading from "@components/ui/common/SectionHeading";

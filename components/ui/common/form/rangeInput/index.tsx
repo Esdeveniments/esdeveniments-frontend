@@ -1,5 +1,5 @@
 import { FC } from "react";
-import XIcon from "@heroicons/react/outline/esm/XIcon";
+import { XMarkIcon as XIcon } from "@heroicons/react/24/outline";
 import { RangeInputProps } from "types/props";
 
 const RangeInput: FC<RangeInputProps> = ({

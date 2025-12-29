@@ -1,9 +1,8 @@
 "use client";
 
-import { memo, useRef, RefObject, useState, useCallback } from "react";
+import { memo, useRef, useState, useCallback } from "react";
 import NextImage from "next/image";
 import ImgDefault from "@components/ui/imgDefault";
-import useOnScreen from "@components/hooks/useOnScreen";
 import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImageRetry } from "@components/hooks/useImageRetry";
@@ -34,13 +33,8 @@ function ClientImage({
   const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
   const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 
-  const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
-  const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
-    imgDefaultRef as RefObject<HTMLDivElement>,
-    { freezeOnceVisible: true }
-  );
 
   const imageClassName = `${className}`;
   const networkQualityString = useNetworkSpeed();
@@ -80,6 +74,7 @@ function ClientImage({
   };
 
   // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
+  // Show ImgDefault immediately when image fails - no visibility check needed for error state
   if (hasError) {
     return (
       <div
@@ -89,16 +84,7 @@ function ClientImage({
         aria-label={title || "Imatge no disponible"}
         style={containerStyle}
       >
-        {isImgDefaultVisible ? (
-          <ImgDefault title={title} />
-        ) : (
-          <div className="flex justify-center items-center w-full h-full">
-            <div
-              className="w-full h-full bg-muted animate-fast-pulse"
-              ref={imgDefaultRef}
-            ></div>
-          </div>
-        )}
+        <ImgDefault title={title} />
       </div>
     );
   }

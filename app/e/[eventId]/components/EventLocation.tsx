@@ -1,4 +1,4 @@
-import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
+import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 const LocationIcon = LocationMarkerIcon;
 import {
   buildEventLocationLabels,

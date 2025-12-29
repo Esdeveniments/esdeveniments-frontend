@@ -2,9 +2,8 @@
 
 import React, { useMemo } from "react";
 import DatePicker from "react-datepicker";
-import ChevronLeftIcon from "@heroicons/react/solid/esm/ChevronLeftIcon";
-import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
-import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { CalendarIcon } from "@heroicons/react/24/outline";
 import { format, setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
 import { ca } from "date-fns/locale";
 import { useTranslations } from "next-intl";

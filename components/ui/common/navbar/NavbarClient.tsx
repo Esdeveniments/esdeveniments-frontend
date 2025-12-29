@@ -2,14 +2,16 @@
 
 import { usePathname } from "next/navigation";
 import { Disclosure } from "@headlessui/react";
-import MenuIcon from "@heroicons/react/outline/esm/MenuIcon";
-import XIcon from "@heroicons/react/outline/esm/XIcon";
-import PlusIcon from "@heroicons/react/outline/esm/PlusIcon";
+import {
+  Bars3Icon as MenuIcon,
+  XMarkIcon as XIcon,
+  PlusIcon,
+  HomeIcon,
+  CalendarIcon,
+  HeartIcon,
+  NewspaperIcon,
+} from "@heroicons/react/24/outline";
 const PlusSmIcon = PlusIcon;
-import HomeIcon from "@heroicons/react/outline/esm/HomeIcon";
-import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
-import HeartIcon from "@heroicons/react/outline/esm/HeartIcon";
-import NewspaperIcon from "@heroicons/react/outline/esm/NewspaperIcon";
 import Image from "next/image";
 
 import ActiveLink from "@components/ui/common/link";
