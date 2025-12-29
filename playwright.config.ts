@@ -55,7 +55,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Block service workers to allow Playwright route handlers to intercept requests
+        // SWs intercept fetch before Playwright's network layer, breaking route mocks
+        serviceWorkers: "block",
+      },
     },
   ],
   webServer: {

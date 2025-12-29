@@ -75,7 +75,21 @@ export default async function RootLayout({
             __html: `
               try {
                 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-                  navigator.serviceWorker.register('/sw.js').catch(() => {});
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    // When a new SW is found, tell it to skip waiting and activate immediately.
+                    // This ensures users get the latest version without closing all tabs.
+                    registration.addEventListener('updatefound', function() {
+                      var newWorker = registration.installing;
+                      if (newWorker) {
+                        newWorker.addEventListener('statechange', function() {
+                          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New SW installed while old one was active - trigger skipWaiting
+                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                          }
+                        });
+                      }
+                    });
+                  }).catch(function() {});
                 }
               } catch (_) {}
             `,

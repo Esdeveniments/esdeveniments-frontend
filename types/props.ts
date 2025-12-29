@@ -274,6 +274,11 @@ export interface FilteredPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// Route handler context for catch-all sitemap routes
+export interface SitemapPartsRouteContext {
+  params: Promise<{ parts: string[] }>;
+}
+
 export interface NavbarLabels {
   logoAlt: string;
   openMenu: string;

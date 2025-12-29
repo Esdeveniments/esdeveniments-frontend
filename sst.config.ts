@@ -116,6 +116,7 @@ export default $config({
     // Alarm for the OpenNext image optimizer Lambda (Next.js /_next/image).
     // SST doesn't currently expose this function under `site.nodes`, so we detect it
     // by its environment vars and attach a CloudWatch alarm.
+    // Also configure timeout and SSL settings for the image optimizer.
     $transform(aws.lambda.Function, (args, _opts, name) => {
       const environment = args.environment as unknown;
       const variables =
@@ -129,6 +130,17 @@ export default $config({
 
       const bucketKeyPrefix = variables?.["BUCKET_KEY_PREFIX"];
       if (bucketKeyPrefix !== "_assets") return;
+
+      // Configure image optimizer Lambda settings:
+      // - Increase timeout for slow external image sources (default is 25s)
+      // - Disable strict SSL verification for external images with incomplete certificate chains
+      //   (e.g., biguesiriells.cat missing intermediate certs). This is a security tradeoff -
+      //   ideally those servers should fix their SSL config.
+      args.timeout = 60;
+      if (variables && typeof variables === "object") {
+        (variables as Record<string, unknown>)["NODE_TLS_REJECT_UNAUTHORIZED"] =
+          "0";
+      }
 
       new aws.cloudwatch.MetricAlarm(
         `${name}ImageOptimizerErrorAlarm`,
@@ -203,21 +215,25 @@ export default $config({
       },
       warm: 5,
       transform: {
-        server: {
+        server: (args) => {
           // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x
           // OpenNext applies this runtime to all Lambda functions it creates
-          runtime: "nodejs22.x", // Upgraded from nodejs20.x (deprecated April 2026)
-          memory: "3008 MB", // Maximum allowed: 3 GB = 3 vCPUs (AWS Lambda limit for arm64/eu-west-3)
-          timeout: "20 seconds",
-          architecture: "arm64",
+          args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
+          args.memory = "3008 MB"; // Maximum allowed: 3 GB = 3 vCPUs (AWS Lambda limit for arm64/eu-west-3)
+          args.timeout = "20 seconds";
+          args.architecture = "arm64";
           // Sentry layer ARN - configurable per environment/region
           // Defaults to eu-west-3 version 283 if not specified
-          layers: process.env.SENTRY_LAYER_ARN
+          args.layers = process.env.SENTRY_LAYER_ARN
             ? [process.env.SENTRY_LAYER_ARN]
             : [
                 "arn:aws:lambda:eu-west-3:943013980633:layer:SentryNodeServerlessSDK:283",
-              ],
-          environment: {
+              ];
+          // IMPORTANT: Merge with existing environment to preserve SST's auto-set variables
+          // SST automatically sets CACHE_BUCKET_NAME, CACHE_BUCKET_KEY_PREFIX, CACHE_BUCKET_REGION
+          // for OpenNext ISR/fetch caching. Overwriting environment loses these.
+          args.environment = {
+            ...args.environment,
             SENTRY_DSN: (() => {
               const dsn = process.env.SENTRY_DSN;
               if (!dsn) {
@@ -229,7 +245,12 @@ export default $config({
             })(),
             SENTRY_TRACES_SAMPLE_RATE:
               process.env.SENTRY_TRACES_SAMPLE_RATE || "0.1",
-          },
+            // Bypass strict SSL verification for external images with incomplete certificate
+            // chains (e.g., biguesiriells.cat missing intermediate certs). This allows the
+            // /api/image-proxy route to fetch images from misconfigured municipal servers.
+            // Security tradeoff: ideally these servers should fix their SSL config.
+            NODE_TLS_REJECT_UNAUTHORIZED: "0",
+          };
         },
       },
       imageOptimization: {
