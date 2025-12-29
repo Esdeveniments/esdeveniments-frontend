@@ -22,7 +22,6 @@ import {
   urlToFilterState,
   getTopStaticCombinations,
   getRedirectUrl,
-  toUrlSearchParams,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
@@ -44,19 +43,13 @@ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getRobotsForListingPage } from "@utils/robots-listings";
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string; category: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ place, byDate, category }, rawSearchParams] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const { place, byDate, category } = await params;
 
   // 🛡️ SECURITY: Validate place parameter
   const validation = validatePlaceForMetadata(place);
@@ -73,8 +66,8 @@ export async function generateMetadata({
     categories = [];
   }
 
-  // Convert searchParams to URLSearchParams for parsing
-  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+  // Use empty URLSearchParams since we don't read searchParams (keeps page static)
+  const canonicalSearchParams = new URLSearchParams();
 
   // Preserve user-requested category from path if categories API fails
   if (
@@ -116,7 +109,6 @@ export async function generateMetadata({
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
-    robotsOverride: getRobotsForListingPage(rawSearchParams),
   });
 }
 
@@ -153,15 +145,10 @@ export async function generateStaticParams() {
 
 export default async function FilteredPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string; category: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ place, byDate, category }, rawSearchParams] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const { place, byDate, category } = await params;
   const locale: AppLocale = await getLocaleSafely();
   const tFallback = await getTranslations({
     locale,
@@ -187,8 +174,9 @@ export default async function FilteredPage({
     categories = []; // Fallback to empty array if fetch fails
   }
 
-  // Convert searchParams to URLSearchParams for parsing
-  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+  // Use empty searchParams to keep pages static (ISR-compatible)
+  // Query params (search, distance, lat, lon) are handled client-side
+  const canonicalSearchParams = new URLSearchParams();
 
   // Preserve user-requested category from path if categories API fails
   if (
@@ -287,16 +275,18 @@ export default async function FilteredPage({
   });
 
   // Late existence check to preserve UX without creating an early oracle
+  // Note: We pass empty searchParams to keep pages static (ISR-compatible).
+  // Query params are not preserved on alias redirects (rare edge case).
   const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
     place,
     locale,
-    rawSearchParams,
+    rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}/${filters.byDate}/${filters.category}`,
     buildFallbackUrlForInvalidPlace: () =>
       buildFallbackUrlForInvalidPlace({
         byDate,
         category,
-        rawSearchParams,
+        rawSearchParams: {},
       }),
     fetchPlaceBySlug,
   });

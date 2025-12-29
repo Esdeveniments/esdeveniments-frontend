@@ -34,7 +34,6 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getRobotsForListingPage } from "@utils/robots-listings";
 
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -49,13 +48,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
-  const rawSearchParams = await searchParams;
 
   const validation = validatePlaceForMetadata(place);
   if (!validation.isValid) {
@@ -76,19 +72,15 @@ export async function generateMetadata({
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
-    robotsOverride: getRobotsForListingPage(rawSearchParams),
   });
 }
 
 export default async function Page({
   params,
-  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
-  const rawSearchParams = await searchParams;
   const locale = await getLocaleSafely();
 
   try {
@@ -124,14 +116,16 @@ export default async function Page({
   const categories = await categoriesPromise;
 
   // Late existence check to preserve UX without creating an enumeration oracle
+  // Note: We pass empty searchParams to keep pages static (ISR-compatible).
+  // Query params are not preserved on alias redirects (rare edge case).
   const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
     place,
     locale,
-    rawSearchParams,
+    rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}`,
     buildFallbackUrlForInvalidPlace: () =>
       buildFallbackUrlForInvalidPlace({
-        rawSearchParams,
+        rawSearchParams: {},
       }),
     fetchPlaceBySlug,
   });

@@ -29,7 +29,6 @@ import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
   getRedirectUrl,
-  toUrlSearchParams,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import { redirect, notFound } from "next/navigation";
@@ -47,21 +46,15 @@ import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getRobotsForListingPage } from "@utils/robots-listings";
 
 // page-level ISR not set here; fetch-level caching applies
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ place, byDate }, rawSearchParams] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const { place, byDate } = await params;
 
   const validation = validatePlaceForMetadata(place);
   if (!validation.isValid) {
@@ -75,8 +68,8 @@ export async function generateMetadata({
     console.error("generateMetadata: Error fetching categories:", error);
   }
 
-  // Convert searchParams to URLSearchParams for parsing
-  const canonicalSearchParams = toUrlSearchParams(rawSearchParams);
+  // Use empty URLSearchParams since we don't read searchParams (keeps page static)
+  const canonicalSearchParams = new URLSearchParams();
 
   // Preserve user-requested category even if categories API fails
   if (categories.length === 0) {
@@ -118,7 +111,6 @@ export async function generateMetadata({
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
-    robotsOverride: getRobotsForListingPage(rawSearchParams),
   });
 }
 
@@ -190,13 +182,10 @@ export async function generateStaticParams() {
 
 export default async function ByDatePage({
   params,
-  searchParams,
 }: {
   params: Promise<{ place: string; byDate: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { place, byDate } = await params;
-  const search = await searchParams;
   const locale: AppLocale = await getLocaleSafely();
   const tFallback = await getTranslations({
     locale,
@@ -223,8 +212,9 @@ export default async function ByDatePage({
     categories = [];
   }
 
-  // Convert searchParams to URLSearchParams for parsing
-  const urlSearchParams = toUrlSearchParams(search);
+  // Use empty searchParams to keep pages static (ISR-compatible)
+  // Query params (search, distance, lat, lon) are handled client-side
+  const urlSearchParams = new URLSearchParams();
 
   // Preserve user-requested category even if categories API fails
   if (categories.length === 0) {
@@ -257,9 +247,8 @@ export default async function ByDatePage({
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
 
-  const searchCategory =
-    typeof search.category === "string" ? search.category : undefined;
-  const finalCategory = searchCategory || actualCategory;
+  // Since we don't read searchParams (to keep pages static), category comes from URL path only
+  const finalCategory = actualCategory;
 
   const paramsForFetch: FetchEventsParams = {
     page: 0,
@@ -328,15 +317,17 @@ export default async function ByDatePage({
 
 
   // Late existence check to preserve UX without creating an early oracle
+  // Note: We pass empty searchParams to keep pages static (ISR-compatible).
+  // Query params are not preserved on alias redirects (rare edge case).
   const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
     place,
     locale,
-    rawSearchParams: search,
+    rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}/${actualDate}`,
     buildFallbackUrlForInvalidPlace: () =>
       buildFallbackUrlForInvalidPlace({
         byDate,
-        rawSearchParams: search,
+        rawSearchParams: {},
       }),
     fetchPlaceBySlug,
   });

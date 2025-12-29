@@ -154,4 +154,23 @@ export default [
       "import/no-anonymous-default-export": "off",
     },
   },
+  // CRITICAL: Prevent searchParams in listing pages to avoid $300+ DynamoDB cost spikes
+  // Reading searchParams makes pages dynamic, causing OpenNext/SST to create millions of cache entries
+  // See: Dec 28, 2025 incident - 200M DynamoDB writes = $307 cost
+  {
+    files: [
+      "app/\\[place\\]/**/*.tsx",
+      "app/\\[place\\]/**/*.ts",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Identifier[name='searchParams']",
+          message:
+            "⚠️ COST ALERT: Do NOT use searchParams in app/[place]/* pages! This makes pages dynamic and causes OpenNext to create millions of DynamoDB cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
+        },
+      ],
+    },
+  },
 ];

@@ -5,21 +5,21 @@ import { siteUrl } from "@config/index";
 
 /**
  * robots.txt route handler with explicit cache control
- * 
+ *
  * Converted from app/robots.ts (Metadata API) to route handler to:
  * 1. Set explicit cache headers for CloudFront/SST (short TTL to prevent stale content)
  * 2. Ensure dynamic generation on every deployment
  * 3. Match the pattern used by sitemap.xml/route.ts for consistency
- * 
+ *
  * 2025 SEO Best Practices:
  * - Allow search engine crawlers (Googlebot, Bingbot, etc.)
  * - Block AI training crawlers (GPTBot, CCBot, etc.) to protect content
  * - Block /_next/ static files (JS chunks, CSS, build artifacts)
  * - Block /api/ routes (internal endpoints, not for indexing)
  * - Declare multiple sitemaps for comprehensive discovery
- * 
+ *
  * The host is dynamically determined for multi-domain support.
- * 
+ *
  * IMPORTANT: This route is marked as dynamic to prevent Next.js from caching it.
  * Without this, Next.js may serve a cached version even after deployment.
  */
@@ -27,7 +27,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-
   const robotsConfig: MetadataRoute.Robots = {
     rules: [
       // Default rules for all crawlers (including search engines)
@@ -49,13 +48,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
       // Block AI TRAINING crawlers (2025 best practice)
       // These crawlers scrape content for LLM training without adding SEO value
-      // NOTE: We ALLOW browsing/search crawlers (ChatGPT-User, Claude-Web) so we appear in AI searches
+      // NOTE: We ALLOW browsing/search crawlers (ChatGPT-User, Claude-Web, PerplexityBot)
+      // so we appear in AI-powered searches
       {
         userAgent: "GPTBot", // OpenAI's training crawler
         disallow: ["/"],
       },
       {
-        userAgent: "CCBot", // Common Crawl bot (used for AI training)
+        userAgent: "CCBot", // Common Crawl bot (used for AI training datasets)
         disallow: ["/"],
       },
       {
@@ -66,7 +66,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         userAgent: "Bytespider", // ByteDance/TikTok AI crawler
         disallow: ["/"],
       },
-      // ChatGPT-User and Claude-Web are ALLOWED (not listed) so we appear in AI-powered searches
+      {
+        userAgent: "anthropic-ai", // Anthropic's training crawler
+        disallow: ["/"],
+      },
+      {
+        userAgent: "ClaudeBot", // Anthropic training bot (different from Claude-Web browsing)
+        disallow: ["/"],
+      },
+      {
+        userAgent: "Applebot-Extended", // Apple's AI training (separate from search)
+        disallow: ["/"],
+      },
+      {
+        userAgent: "Meta-ExternalAgent", // Meta/Facebook AI training
+        disallow: ["/"],
+      },
+      {
+        userAgent: "cohere-ai", // Cohere AI training crawler
+        disallow: ["/"],
+      },
+      {
+        userAgent: "Omgilibot", // Webz.io data harvesting
+        disallow: ["/"],
+      },
+      // ALLOWED for AI-powered SEARCH (not blocked):
+      // - ChatGPT-User (ChatGPT browsing feature)
+      // - Claude-Web (Claude browsing feature)
+      // - PerplexityBot (Perplexity search)
+      // - Googlebot (includes AI Overviews)
     ],
     // Declare all sitemaps for comprehensive discovery
     sitemap: [
@@ -134,4 +162,3 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
   });
 }
-

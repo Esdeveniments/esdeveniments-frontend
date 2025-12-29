@@ -159,6 +159,7 @@ Adding a new filter:
 - **Type duplication**: Creating duplicate interfaces instead of importing from canonical sources in `types/common.ts`.
 - Forgetting to use query builders (`buildEventsQuery`, `buildNewsQuery`) and manually constructing URLSearchParams.
 - Not setting appropriate cache headers (`s-maxage`, `stale-while-revalidate`) in internal API routes.
+- **⚠️ CRITICAL - Adding `searchParams` to listing pages**: Reading `searchParams` in `app/[place]/*` page components makes pages dynamic, causing OpenNext/SST to create millions of DynamoDB cache entries (one per unique URL+query). This caused a $300+ spike on Dec 28, 2025. Query-dependent behavior must be handled in middleware (`proxy.ts`) or client-side (SWR).
 
 ## 16. Quick Examples
 

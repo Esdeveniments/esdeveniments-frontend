@@ -431,6 +431,17 @@ export default async function proxy(request: NextRequest) {
   // Set Content-Language header for SEO and accessibility
   response.headers.set("Content-Language", resolvedLocale);
 
+  // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, lat, lon)
+  // This prevents indexing of filtered/personalized URLs without making pages dynamic
+  const NON_CANONICAL_PARAMS = ["search", "distance", "lat", "lon"];
+  const hasNonCanonicalParams = NON_CANONICAL_PARAMS.some((param) => {
+    const value = request.nextUrl.searchParams.get(param);
+    return value !== null && value.trim().length > 0;
+  });
+  if (hasNonCanonicalParams) {
+    response.headers.set("X-Robots-Tag", "noindex, follow");
+  }
+
   return response;
 }
 

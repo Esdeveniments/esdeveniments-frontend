@@ -69,6 +69,23 @@
 - SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `middleware.ts` handles edge behavior, canonical redirects, and CSP.
 - URL canonicalization: Middleware automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
 
+## ⚠️ CRITICAL: ISR/Caching Cost Prevention
+
+**NEVER add `searchParams` to page components in `app/[place]/` routes.**
+
+Reading `searchParams` in a page component makes the page **dynamic**, causing OpenNext/SST to create a separate DynamoDB cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
+
+**Rules:**
+1. Listing pages (`app/[place]/*`) must NOT read `searchParams` - keep them static (ISR)
+2. Query params (`search`, `distance`, `lat`, `lon`) are handled **client-side only** via SWR
+3. SEO robots `noindex` for filtered URLs is handled via `X-Robots-Tag` header in `proxy.ts`
+4. CloudWatch alarm `DynamoDB-HighWriteCost-Alert` monitors for write spikes >100k/hour
+
+**If you need query-dependent behavior:**
+- Handle it in middleware (`proxy.ts`) for headers/redirects
+- Handle it client-side for data fetching
+- NEVER make the page component read `searchParams`
+
 ## Local Setup
 
 - Requirements: Node 20, Yarn 4.9+ (use Corepack).

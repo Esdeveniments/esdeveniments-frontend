@@ -119,24 +119,22 @@ describe("/[place] alias redirects preserve query", () => {
     redirectHelperMock.mockReset();
   });
 
-  test("passes raw searchParams into alias/invalid redirect helper", async () => {
-    const rawSearchParams = { search: "teatre", distance: "10", lat: "1", lon: "2" };
-
+  test("passes empty searchParams into alias/invalid redirect helper (ISR compatibility)", async () => {
+    // Note: Since we removed searchParams from page props to keep pages static (ISR-compatible),
+    // the redirect helper now receives an empty object. Query params are not preserved on
+    // alias redirects (rare edge case, acceptable trade-off for $300+ cost savings per deploy).
     redirectHelperMock.mockImplementation(async (args) => {
-      expect(args.rawSearchParams).toEqual(rawSearchParams);
-      return "/ca/barcelona?search=teatre&distance=10&lat=1&lon=2";
+      expect(args.rawSearchParams).toEqual({});
+      return "/ca/barcelona";
     });
 
     await expect(
       Page({
         params: Promise.resolve({ place: "bcn" }),
-        searchParams: Promise.resolve(rawSearchParams),
       })
     ).rejects.toThrow("NEXT_REDIRECT");
 
     expect(redirectHelperMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith(
-      "/ca/barcelona?search=teatre&distance=10&lat=1&lon=2"
-    );
+    expect(redirectMock).toHaveBeenCalledWith("/ca/barcelona");
   });
 });
