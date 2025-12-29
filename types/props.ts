@@ -633,3 +633,12 @@ export interface BreadcrumbsProps {
   items: BreadcrumbNavItem[];
   className?: string;
 }
+
+export interface EventStatusDetailsProps {
+  temporalStatus: import("types/event-status").EventTemporalStatus;
+  formattedStart?: string | null;
+  formattedEnd?: string | null;
+  nameDay?: string | null;
+  timeDisplay?: string;
+  className?: string;
+}

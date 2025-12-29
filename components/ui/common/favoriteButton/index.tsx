@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@i18n/routing";
 import useSWR from "swr";
-import HeartIconSolid from "@heroicons/react/solid/esm/HeartIcon";
-import HeartIconOutline from "@heroicons/react/outline/esm/HeartIcon";
+import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
+import { HeartIcon as HeartIconOutline } from "@heroicons/react/24/outline";
 
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent } from "@utils/analytics";

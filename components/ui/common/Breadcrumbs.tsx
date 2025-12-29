@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import type { BreadcrumbsProps } from "types/props";
 
 export default function Breadcrumbs({ items, className = "" }: BreadcrumbsProps) {

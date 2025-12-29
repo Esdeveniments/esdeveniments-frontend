@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import setHours from "date-fns/setHours";
-import setMinutes from "date-fns/setMinutes";
-import setSeconds from "date-fns/setSeconds";
+import { setHours, setMinutes, setSeconds } from "date-fns";
 import {
   DatePicker,
   Input,
@@ -483,6 +481,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             enableAllDayToggle
             isAllDay={Boolean(form.isAllDay)}
             onToggleAllDay={handleAllDayToggle}
+            className="w-full"
           />
 
 
@@ -505,26 +504,26 @@ export const EventForm: React.FC<EventFormProps> = ({
         </div>
       )}
 
-      <div className="flex justify-between w-full pt-6">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-4 w-full pt-6">
         {step > 0 ? (
           <Button
             type="button"
             variant="ghost"
             data-testid="prev-button"
             onClick={goPrev}
-            className="min-h-[44px] px-6"
+            className="min-h-[44px] px-6 w-full sm:w-auto"
           >
             {tForm.has("previous") ? tForm("previous") : "Enrere"}
           </Button>
         ) : (
-          <div />
+          <div className="hidden sm:block" />
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           {step === steps.length - 1 && onPreview ? (
             <Button
               type="button"
               variant="neutral"
-              className="btn-outline min-h-[44px] px-6"
+              className="btn-outline min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!isPreviewReady || isLoading}
               data-testid={previewTestId || "preview-button"}
               data-analytics-event-name={
@@ -546,7 +545,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               disabled={isNextDisabled}
               data-testid="next-button"
               onClick={goNext}
-              className={`min-h-[44px] px-6 ${isNextDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {tForm.has("next") ? tForm("next") : "Següent"}
             </Button>
@@ -555,10 +554,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               type="submit"
               variant="primary"
               disabled={formState.isDisabled || isLoading}
-              className={`min-h-[44px] px-6 ${formState.isDisabled || isLoading
-                ? "opacity-50 cursor-not-allowed"
-                : "opacity-100"
-                }`}
+              className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="publish-button"
               data-analytics-event-name={
                 analyticsContext === "publica" ? "publish_submit_click" : undefined

@@ -1,25 +1,21 @@
-import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
-import type { EventTemporalStatus } from "types/event-status";
+import { ClockIcon } from "@heroicons/react/24/outline";
+import { getTranslations } from "next-intl/server";
+import type { EventStatusDetailsProps } from "types/props";
 
 const contentClassName =
   "flex items-center gap-element-gap-sm body-normal text-foreground-strong/70";
 
-const EventStatusDetails: React.FC<{
-  temporalStatus: EventTemporalStatus;
-  formattedStart?: string | null;
-  formattedEnd?: string | null;
-  nameDay?: string | null;
-  timeDisplay?: string;
-  className?: string;
-}> = ({
+const EventStatusDetails = async ({
   temporalStatus,
   formattedStart,
   formattedEnd,
   nameDay,
   timeDisplay,
   className = "",
-}) => {
+}: EventStatusDetailsProps) => {
   if (!temporalStatus) return null;
+
+  const t = await getTranslations("EventStatus");
 
   const liveContent =
     temporalStatus.state === "live"
@@ -28,6 +24,13 @@ const EventStatusDetails: React.FC<{
   const upcomingContent =
     temporalStatus.state === "upcoming"
       ? temporalStatus.startsIn || timeDisplay
+      : null;
+
+  const pastContent =
+    temporalStatus.state === "past"
+      ? formattedEnd && formattedStart
+        ? t("dateRangePast", { start: formattedStart, end: formattedEnd })
+        : [nameDay, formattedStart].filter(Boolean).join(", ")
       : null;
 
   return (
@@ -41,12 +44,9 @@ const EventStatusDetails: React.FC<{
         <div className={contentClassName}>{upcomingContent}</div>
       )}
 
-      {temporalStatus.state === "past" && (
+      {pastContent && (
         <div className={contentClassName}>
-          Va finalitzar el{" "}
-          {formattedEnd
-            ? `Del ${formattedStart} al ${formattedEnd}`
-            : `${nameDay}, ${formattedStart}`}
+          {t("endedOn")} {pastContent}
         </div>
       )}
     </div>

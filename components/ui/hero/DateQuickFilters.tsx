@@ -1,4 +1,4 @@
-import CheckIcon from "@heroicons/react/solid/esm/CheckIcon";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import { useTranslations } from "next-intl";
 import { useHero } from "./HeroContext";
 import { HERO_DATE_FILTERS } from "./constants";

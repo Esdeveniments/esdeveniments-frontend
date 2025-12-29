@@ -11,9 +11,11 @@ import {
 import { useRouter, usePathname } from "../../../i18n/routing";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import XIcon from "@heroicons/react/solid/esm/XIcon";
-import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
-import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
+import {
+  XMarkIcon as XIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/solid";
 import { sendGoogleEvent } from "@utils/analytics";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";

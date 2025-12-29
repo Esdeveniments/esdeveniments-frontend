@@ -62,18 +62,18 @@ vi.mock("@components/ui/primitives/PressableAnchor", () => ({
   ),
 }));
 
-vi.mock("@heroicons/react/solid/ChevronRightIcon", () => ({
-  default: () => <svg data-testid="chevron-icon" />,
+vi.mock("@heroicons/react/24/solid", () => ({
+  ChevronRightIcon: () => <svg data-testid="chevron-icon" />,
 }));
 
-vi.mock("@heroicons/react/outline", () => ({
-  SpeakerphoneIcon: () => <svg data-testid="speakerphone-icon" />,
+vi.mock("@heroicons/react/24/outline", () => ({
+  MegaphoneIcon: () => <svg data-testid="speakerphone-icon" />,
   SparklesIcon: () => <svg data-testid="sparkles-icon" />,
   ShoppingBagIcon: () => <svg data-testid="shoppingbag-icon" />,
-  EmojiHappyIcon: () => <svg data-testid="emojihappy-icon" />,
-  MusicNoteIcon: () => <svg data-testid="musicnote-icon" />,
+  FaceSmileIcon: () => <svg data-testid="emojihappy-icon" />,
+  MusicalNoteIcon: () => <svg data-testid="musicnote-icon" />,
   TicketIcon: () => <svg data-testid="ticket-icon" />,
-  PhotographIcon: () => <svg data-testid="photograph-icon" />,
+  PhotoIcon: () => <svg data-testid="photograph-icon" />,
 }));
 
 vi.mock("next/link", () => ({
