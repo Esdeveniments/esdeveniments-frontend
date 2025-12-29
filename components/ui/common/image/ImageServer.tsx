@@ -23,35 +23,10 @@ function ImageServer({
   context = "card", // Add context prop for size optimization
   cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
-  if (!image) {
-    return (
-      <div
-        className={className}
-        style={{
-          position: "relative",
-          aspectRatio: "500 / 260", // Match image aspect ratio for fallback
-          maxWidth: "100%",
-        }}
-      >
-        <ImgDefaultServer
-          title={title}
-          location={location}
-          region={region}
-          date={date}
-        />
-      </div>
-    );
-  }
+  // buildOptimizedImageUrl handles null/empty input and returns "" for invalid URLs (e.g., overly long)
+  const finalImageSrc = buildOptimizedImageUrl(image ?? "", cacheKey);
 
-  const imageQuality = getOptimalImageQuality({
-    isPriority: priority,
-    isExternal: true,
-    customQuality: quality,
-  });
-
-  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
-
-  // If URL normalization failed (e.g., overly long URL), show fallback
+  // Show fallback if no image or URL normalization failed
   if (!finalImageSrc) {
     return (
       <div
@@ -71,6 +46,12 @@ function ImageServer({
       </div>
     );
   }
+
+  const imageQuality = getOptimalImageQuality({
+    isPriority: priority,
+    isExternal: true,
+    customQuality: quality,
+  });
 
   const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 

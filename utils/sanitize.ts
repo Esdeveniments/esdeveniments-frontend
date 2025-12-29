@@ -1,6 +1,20 @@
 /**
  * HTML sanitization utilities - lightweight replacements for isomorphic-dompurify
  *
+ * ⚠️  SECURITY WARNING - READ BEFORE MODIFYING ⚠️
+ * This module uses regex-based HTML parsing, which is inherently fragile.
+ * Regex cannot fully parse HTML (it's not a regular language), making it
+ * susceptible to bypass attacks when complexity increases.
+ *
+ * DO NOT extend allowed tags/attributes without:
+ * 1. Security review of potential XSS vectors
+ * 2. Adding bypass tests (see test/sanitize.test.ts "protocol blocking" section)
+ * 3. Testing against OWASP XSS filter evasion cheat sheet
+ *
+ * If you need richer HTML support, consider:
+ * - DOMPurify (browser) or jsdom + DOMPurify (server)
+ * - The browser's native Sanitizer API (when widely available)
+ *
  * Security model:
  * - Content comes from our own HMAC-protected API (trusted source)
  * - Backend sanitizes on input, so output is pre-validated
