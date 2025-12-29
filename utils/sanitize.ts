@@ -87,30 +87,17 @@ const SAFE_REL_VALUES = new Set([
 function normalizeUrl(url: string): string {
   if (!url) return "";
 
-  let normalized = url;
+  // Decode HTML entities (numeric &#106; and hex &#x6A;) in one pass
+  let normalized = url.replace(/&#(?:x([\da-fA-F]+)|(\d+));/g, (_, hex, dec) =>
+    String.fromCharCode(hex ? parseInt(hex, 16) : parseInt(dec, 10))
+  );
 
-  // Decode HTML entities (&#106; &#x6A; etc.)
-  normalized = normalized
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) =>
-      String.fromCharCode(parseInt(code, 16))
-    );
+  // Remove null bytes, control characters (0x00-0x1F, 0x7F), and whitespace
+  // in one pass. Control char regex is necessary for security bypass prevention.
+  // eslint-disable-next-line no-control-regex
+  normalized = normalized.replace(/[\x00-\x1f\x7f\s]+/g, "");
 
-  // Remove null bytes and control characters (0x00-0x1F, 0x7F)
-  // Using filter to avoid ESLint no-control-regex warning
-  normalized = normalized
-    .split("")
-    .filter((char) => {
-      const code = char.charCodeAt(0);
-      return code > 0x1f && code !== 0x7f;
-    })
-    .join("");
-
-  // Remove whitespace that could be used to bypass protocol detection
-  // This handles spaces, tabs, newlines within the protocol part
-  normalized = normalized.replace(/\s+/g, "");
-
-  return normalized.toLowerCase().trim();
+  return normalized.toLowerCase();
 }
 
 /**
@@ -205,12 +192,19 @@ const HTML_ENTITIES: Record<string, string> = {
  * Decodes common HTML entities for plain text output.
  */
 function decodeHtmlEntities(text: string): string {
-  let decoded = text;
+  if (!text) return "";
 
-  // Replace named entities
-  for (const [entity, char] of Object.entries(HTML_ENTITIES)) {
-    decoded = decoded.replaceAll(entity, char);
-  }
+  // Replace named entities in one pass using a combined regex
+  const namedEntitiesRegex = new RegExp(
+    Object.keys(HTML_ENTITIES)
+      .map((e) => e.replace(/[&;]/g, "\\$&"))
+      .join("|"),
+    "g"
+  );
+  let decoded = text.replace(
+    namedEntitiesRegex,
+    (match) => HTML_ENTITIES[match]
+  );
 
   // Decode numeric entities (&#123;)
   decoded = decoded.replace(/&#(\d+);/g, (_, code) =>
