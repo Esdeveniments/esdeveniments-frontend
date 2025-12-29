@@ -50,6 +50,28 @@ function ImageServer({
   });
 
   const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+
+  // If URL normalization failed (e.g., overly long URL), show fallback
+  if (!finalImageSrc) {
+    return (
+      <div
+        className={className}
+        style={{
+          position: "relative",
+          aspectRatio: "500 / 260",
+          maxWidth: "100%",
+        }}
+      >
+        <ImgDefaultServer
+          title={title}
+          location={location}
+          region={region}
+          date={date}
+        />
+      </div>
+    );
+  }
+
   const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 
   return (

@@ -37,9 +37,9 @@ export function normalizeExternalImageUrl(imageUrl: string): string {
     return "";
   }
 
-  // Reject overly long URLs
+  // Reject overly long URLs - return empty to trigger fallback image rather than broken truncated URL
   if (trimmed.length > MAX_URL_LENGTH) {
-    return trimmed.slice(0, MAX_URL_LENGTH);
+    return "";
   }
 
   // Handle protocol-relative

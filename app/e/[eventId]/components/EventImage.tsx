@@ -70,6 +70,10 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
     () => (image ? buildOptimizedImageUrl(image) : ""),
     [image]
   );
+
+  // If URL normalization failed (e.g., overly long URL), treat as no image
+  const hasValidImage = Boolean(image && optimizedImage);
+
   const anchorHref = normalizedImage || image || "";
   const isInternalProxy = optimizedImage.startsWith("/api/");
   const effectiveUnoptimized = forceUnoptimized || isInternalProxy;
@@ -84,7 +88,7 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
     return "fail";
   }, [forceUnoptimized, isInternalProxy]);
 
-  if (!image) {
+  if (!hasValidImage) {
     return (
       <div className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card">
         <ImgDefaultServer title={title} />

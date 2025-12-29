@@ -89,6 +89,11 @@ describe("normalizeExternalImageUrl", () => {
   it("returns empty for invalid URL", () => {
     expect(normalizeExternalImageUrl("ht!tp://")).toBe("");
   });
+
+  it("returns empty for overly long URLs (triggers fallback image)", () => {
+    const longUrl = `https://example.com/${"a".repeat(2100)}.jpg`;
+    expect(normalizeExternalImageUrl(longUrl)).toBe("");
+  });
 });
 
 describe("buildOptimizedImageUrl", () => {
