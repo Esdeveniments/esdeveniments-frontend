@@ -80,8 +80,9 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
         backgroundPosition: "center",
         minHeight: "100%",
       }}
-      role="img"
-      aria-label={title ? `Imatge decorativa per ${title}` : "Imatge decorativa"}
+      role={title ? "img" : "presentation"}
+      aria-label={title || undefined}
+      aria-hidden={!title}
     />
   );
 };
