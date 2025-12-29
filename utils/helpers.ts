@@ -7,7 +7,6 @@ export {
   getFormattedDate,
   nextDay,
   isWeekend,
-  monthsName,
   parseTimeToEventTimeDTO,
   toLocalDateString,
 } from "./date-helpers";
@@ -19,6 +18,7 @@ export {
   truncateString,
   formatCatalanDe,
   formatCatalanA,
+  formatPlacePreposition,
   capitalizeFirstLetter,
   formatPlaceName,
 } from "./string-helpers";
@@ -53,7 +53,6 @@ export {
   getPlaceTypeAndLabelCached,
   getDistance,
   deg2rad,
-  getNewsCta,
 } from "./location-helpers";
 
 // Schema helpers

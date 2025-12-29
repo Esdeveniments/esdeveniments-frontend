@@ -1,11 +1,17 @@
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
-export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
+export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
+  const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Components.News" });
   const image = event.imageUrl;
-  const formatted = getFormattedDate(event.startDate, event.endDate);
+  const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;
@@ -33,12 +39,14 @@ export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
         </h2>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-col gap-1 max-w-full">
-            <span className="inline-flex items-center text-sm font-medium md:drop-shadow-lg md:text-base">
-              📅 {dateLabel}
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium md:drop-shadow-lg md:text-base">
+              <CalendarIcon className="w-5 h-5 flex-shrink-0" />
+              {dateLabel}
             </span>
             {event.location && (
-              <span className="inline-flex items-center text-sm font-medium md:drop-shadow-lg md:text-base">
-                📍 {event.location}
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium md:drop-shadow-lg md:text-base">
+                <LocationMarkerIcon className="w-5 h-5 flex-shrink-0" />
+                {event.location}
               </span>
             )}
           </div>
@@ -48,7 +56,7 @@ export default function NewsHeroEvent({ event }: NewsHeroEventProps) {
             className="btn-primary"
             variant="inline"
           >
-            Llegir més
+            {t("readMore")}
           </PressableAnchor>
         </div>
       </div>

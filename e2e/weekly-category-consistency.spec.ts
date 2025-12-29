@@ -1,18 +1,16 @@
 import { test, expect } from "@playwright/test";
+import { getDateRangeFromByDate } from "@lib/dates";
+import { toLocalDateString } from "@utils/helpers";
 
 function computeWeekRange(): { from: string; to: string } {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const from = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
-    now.getDate()
-  )}`;
-  const toDate = new Date(now);
-  const add = (7 - now.getDay()) % 7 || 7; // ensure Sunday advances to next Sunday
-  toDate.setDate(now.getDate() + add);
-  const to = `${toDate.getFullYear()}-${pad(toDate.getMonth() + 1)}-${pad(
-    toDate.getDate()
-  )}`;
-  return { from, to };
+  const range = getDateRangeFromByDate("setmana");
+  if (!range) {
+    throw new Error("Expected setmana to resolve to a date range");
+  }
+  return {
+    from: toLocalDateString(range.from),
+    to: toLocalDateString(range.until),
+  };
 }
 
 test.describe("Weekly category consistency (catalunya)", () => {

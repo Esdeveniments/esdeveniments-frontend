@@ -1,4 +1,10 @@
 const { withSentryConfig } = require("@sentry/nextjs");
+const createNextIntlPlugin = require("next-intl/plugin");
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true" || process.env.BUNDLE_ANALYZE === "browser" || process.env.BUNDLE_ANALYZE === "server",
+});
+
+const withNextIntl = createNextIntlPlugin();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -11,12 +17,14 @@ const nextConfig = {
   // --- SST/OpenNext Configuration ---
   // Required for SST deployment (uses OpenNext adapter)
   output: "standalone",
+  // Disable incremental cache while SST/OpenNext lacks __fetch bucket
+  cacheHandler: undefined,
+  cacheMaxMemorySize: 0,
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
 
-  // --- Turbopack (Next 16: default bundler) ---
-  turbopack: {},
+  cacheComponents: false,
 
   // --- Experimental Features ---
   experimental: {
@@ -24,10 +32,13 @@ const nextConfig = {
     inlineCss: true,
     // Tree-shake heavy libraries to reduce Lambda bundle size
     optimizePackageImports: [
+      "@headlessui/react",
       "@heroicons/react",
       "date-fns",
       "react-datepicker",
       "react-select",
+      "react-share",
+      "react-tooltip",
     ],
     // --- Server Actions Configuration ---
     serverActions: {
@@ -66,6 +77,9 @@ const nextConfig = {
       {
         pathname: "/api/places/photo",
       },
+      {
+        pathname: "/api/image-proxy",
+      },
       // Allow loading local images from the public/static directory (e.g., /static/images/*)
       {
         pathname: "/static/**",
@@ -86,7 +100,7 @@ const nextConfig = {
 // Enable uploads only when an auth token is present. Otherwise skip network calls to avoid build failures.
 const sentryUploadsEnabled = Boolean(process.env.SENTRY_AUTH_TOKEN);
 
-module.exports = withSentryConfig(nextConfig, {
+module.exports = withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -140,14 +154,13 @@ module.exports = withSentryConfig(nextConfig, {
   // side errors will fail.
   tunnelRoute: "/monitoring",
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
-  automaticVercelMonitors: true,
+  // Sentry configuration options (Next.js 16 / Sentry v10+)
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: true,
+  },
 
   // Release tracking: associate source maps with a specific release
   // Falls back to git commit SHA if available, otherwise uses timestamp

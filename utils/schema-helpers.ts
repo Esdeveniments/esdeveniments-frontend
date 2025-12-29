@@ -1,9 +1,15 @@
 import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import type {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
 } from "types/api/event";
+import {
+  DEFAULT_LOCALE,
+  localeToHrefLang,
+  type AppLocale,
+} from "types/i18n";
 import type { VideoObject, SchemaOrgEvent } from "types/schema";
 
 const SCHEMA_WARNING_LIMIT = 5;
@@ -73,7 +79,8 @@ export const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefine
 };
 
 export const generateJsonData = (
-  event: EventDetailResponseDTO | EventSummaryResponseDTO
+  event: EventDetailResponseDTO | EventSummaryResponseDTO,
+  locale?: AppLocale
 ): SchemaOrgEvent => {
   const {
     title,
@@ -201,12 +208,17 @@ export const generateJsonData = (
     logSchemaWarning(slug, "name");
   }
 
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const inLanguage = localeToHrefLang[localeToUse] ?? localeToUse;
+  const slugPart = typeof slug === "string" ? slug : "";
+  const eventUrl = toLocalizedUrl(`/e/${slugPart}`, localeToUse);
+
   const buildOffer = () => {
     const baseOffer = {
       "@type": "Offer" as const,
       priceCurrency: "EUR",
       availability: "https://schema.org/InStock",
-      url: `${siteUrl}/e/${slug}`,
+      url: eventUrl,
       validFrom: resolvedStartDate,
     };
 
@@ -252,9 +264,9 @@ export const generateJsonData = (
   return {
     "@context": "https://schema.org" as const,
     "@type": "Event" as const,
-    "@id": `${siteUrl}/e/${slug}`,
+    "@id": eventUrl,
     name: schemaName,
-    url: `${siteUrl}/e/${slug}`,
+    url: eventUrl,
     startDate: resolvedStartDate,
     endDate: resolvedEndDate,
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
@@ -281,7 +293,7 @@ export const generateJsonData = (
     },
     image: images,
     description: descriptionValue,
-    inLanguage: "ca",
+    inLanguage,
     ...(genre && { genre }),
     performer: {
       "@type": "PerformingGroup" as const,
@@ -293,7 +305,8 @@ export const generateJsonData = (
       url: siteUrl,
     },
     offers,
-    isAccessibleForFree: event.type === "FREE",
+    // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
+    // We only want to claim "Free" when we are 100% sure.
     ...(isValidHttpUrl(event.url) && {
       sameAs: event.url,
     }),
@@ -305,3 +318,18 @@ export const generateJsonData = (
 
 // Backward-compatible alias with a clearer name for AEO/GEO context
 export const buildEventSchema = generateJsonData;
+
+export const generateHowToSchema = (
+  name: string,
+  steps: string[]
+): import("types/schema").HowTo => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    step: steps.map((text) => ({
+      "@type": "HowToStep",
+      text,
+    })),
+  };
+};

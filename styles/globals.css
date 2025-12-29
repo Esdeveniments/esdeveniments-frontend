@@ -395,6 +395,15 @@ p {
     @apply body-small text-error mt-1;
   }
 
+  /* Form-specific typography for accessibility */
+  .form-label {
+    @apply text-base md:text-lg font-semibold text-foreground-strong;
+  }
+
+  .form-helper {
+    @apply text-sm md:text-base text-foreground/70;
+  }
+
   /* ===================================== */
   /* FOCUS UTILITIES */
   /* ===================================== */

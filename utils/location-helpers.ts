@@ -4,7 +4,6 @@ import { fetchPlaceBySlug } from "@lib/api/places";
 import {
   sanitize,
   sanitizeLegacyApostrophe,
-  formatCatalanDe,
   formatPlaceName,
 } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
@@ -283,49 +282,3 @@ export const getDistance = (
 export const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);
 };
-
-// Build simple News CTA (href + text) without network lookups
-// Preference: use provided human label when available, fallback to capitalized slug
-export function getNewsCta(
-  place: string | undefined,
-  placeLabel?: string,
-  placeType?: "region" | "town"
-): { href: string; text: string } {
-  const safePlace = (place || "").trim();
-  const href =
-    safePlace === "catalunya" || safePlace === ""
-      ? "/noticies"
-      : `/noticies/${safePlace}`;
-
-  const formatWords = (text: string): string =>
-    text
-      .split(/\s+/)
-      .map((t) =>
-        t
-          .split("-")
-          .map((h) => (h.length ? h.charAt(0).toUpperCase() + h.slice(1) : h))
-          .join("-")
-      )
-      .join(" ");
-
-  const baseLabel =
-    safePlace === "catalunya"
-      ? "Catalunya"
-      : placeLabel
-      ? placeLabel
-      : formatWords(safePlace.replace(/-/g, " "));
-
-  // Use existing Catalan contraction helper for "de" forms with proper article handling
-  // For regions, use article (del/de la/de l'); for towns, no article (de)
-  const deLabel = placeType
-    ? formatCatalanDe(baseLabel, false, true, placeType)
-    : formatCatalanDe(baseLabel, false); // fallback to no article if type unknown
-
-  // CTA copy: Simple and direct news label
-  // Fallback to "Catalunya" when place is empty to avoid dangling preposition
-  const text =
-    safePlace === "catalunya" || safePlace === ""
-      ? "Notícies de Catalunya"
-      : `Notícies ${deLabel}`;
-  return { href, text };
-}

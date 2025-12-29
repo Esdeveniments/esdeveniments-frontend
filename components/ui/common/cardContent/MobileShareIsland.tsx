@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { ShareIcon } from "@heroicons/react/outline";
+import ShareIcon from "@heroicons/react/outline/esm/ShareIcon";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { useHydration } from "@components/hooks/useHydration";
 import { memo } from "react";

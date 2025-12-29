@@ -3,6 +3,7 @@ import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
+import { buildAlternateLinks } from "@utils/i18n-seo";
 
 export async function GET() {
   // Removed date filtering - new API doesn't support it
@@ -38,12 +39,14 @@ export async function GET() {
       if (isNaN(lastModDate.getTime())) {
         lastModDate = new Date();
       }
+      const loc = `${siteUrl}/e/${data.slug}`;
       return {
-        loc: `${siteUrl}/e/${data.slug}`,
+        loc,
         lastmod: lastModDate.toISOString(),
         changefreq: "daily",
         priority: 0.7,
         image: image ? { loc: image, title: data.title } : undefined,
+        alternates: buildAlternateLinks(loc),
       };
     });
 

@@ -12,6 +12,12 @@ describe('service worker generation', () => {
     expect(content).toContain('{{API_ORIGIN}}')
   })
 
+  it('sw-template contains BUILD_VERSION placeholder (forces SW updates per deploy)', () => {
+    const templatePath = path.join(__dirname, '..', 'public', 'sw-template.js')
+    const content = fs.readFileSync(templatePath, 'utf8')
+    expect(content).toContain('{{BUILD_VERSION}}')
+  })
+
   it('generated sw exists after build process (prebuild)', () => {
     const swPath = path.join(__dirname, '..', 'public', 'sw.js')
     // File should exist after prebuild. In CI build, this is true.

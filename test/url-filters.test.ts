@@ -51,6 +51,38 @@ describe("url-filters: canonical building and parsing", () => {
     expect(url).toBe("/barcelona/avui?search=rock&distance=25");
   });
 
+  it("includes search and lat/lon as query parameters", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: "avui",
+      category: DEFAULT_FILTER_VALUE,
+      searchTerm: "concerts",
+      lat: 41.3888,
+      lon: 2.159,
+    });
+    expect(url).toContain("/barcelona/avui?");
+    expect(url).toContain("search=concerts");
+    expect(url).toContain("lat=41.3888");
+    expect(url).toContain("lon=2.159");
+  });
+
+  it("includes search, distance, lat, and lon all together", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "catalunya",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+      searchTerm: "castellers",
+      distance: 30,
+      lat: 41.643119809884865,
+      lon: 2.3563432607664034,
+    });
+    expect(url).toContain("/catalunya?");
+    expect(url).toContain("search=castellers");
+    expect(url).toContain("distance=30");
+    expect(url).toContain("lat=41.643119809884865");
+    expect(url).toContain("lon=2.3563432607664034");
+  });
+
   it("parses 1, 2 and 3 segments correctly", () => {
     const one = parseFiltersFromUrl(
       { place: "catalunya" },

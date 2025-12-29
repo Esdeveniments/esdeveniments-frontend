@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
-import ChevronLeftIcon from "@heroicons/react/solid/ChevronLeftIcon";
+import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
+import ChevronLeftIcon from "@heroicons/react/solid/esm/ChevronLeftIcon";
 import type { HorizontalScrollProps } from "types/ui";
 
 /**
@@ -19,6 +19,7 @@ export default function HorizontalScroll({
   showDesktopArrows = false,
   scrollStepPx,
   hintStorageKey,
+  labels,
 }: HorizontalScrollProps) {
   const uniqueId = useId();
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -243,7 +244,7 @@ export default function HorizontalScroll({
           {!atStart && (
             <button
               type="button"
-              aria-label="Anterior"
+              aria-label={labels?.previous || "Previous"}
               onClick={() => scrollByStep(-1)}
               className="hidden sm:flex items-center justify-center absolute left-2 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-background shadow-md ring-1 ring-border/60 z-10 transition-interactive hover:shadow-lg"
             >
@@ -253,7 +254,7 @@ export default function HorizontalScroll({
           {!atEnd && (
             <button
               type="button"
-              aria-label="Següent"
+              aria-label={labels?.next || "Next"}
               onClick={() => scrollByStep(1)}
               className="hidden sm:flex items-center justify-center absolute right-2 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-background shadow-md ring-1 ring-border/60 z-10 transition-interactive hover:shadow-lg"
             >

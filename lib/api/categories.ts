@@ -3,17 +3,28 @@ import {
   CategorySummaryResponseDTO,
 } from "types/api/category";
 import { createCache, createKeyedCache } from "lib/api/cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache as reactCache } from "react";
 import { parseCategories } from "lib/validation/category";
 
-const cache = createCache<CategorySummaryResponseDTO[]>(86400000);
-const categoryByIdCache = createKeyedCache<CategoryDetailResponseDTO | null>(
-  86400000
-);
+const { cache: categoriesListCache, clear: clearCategoriesListCache } =
+  createCache<CategorySummaryResponseDTO[]>(86400000);
+const { cache: categoryByIdCache, clear: clearCategoryByIdCache } =
+  createKeyedCache<CategoryDetailResponseDTO | null>(86400000);
+
+/**
+ * Clear all in-memory category caches.
+ * Called by the revalidation API to ensure fresh data.
+ */
+export function clearCategoriesCaches(): void {
+  clearCategoriesListCache();
+  clearCategoryByIdCache();
+}
 
 async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
-  const response = await fetch(getInternalApiUrl(`/api/categories`), {
+  const url = await getInternalApiUrl(`/api/categories`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["categories"] },
   });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -25,7 +36,7 @@ export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return [];
   try {
-    return await cache(fetchCategoriesFromApi);
+    return await categoriesListCache(fetchCategoriesFromApi);
   } catch (e) {
     console.error("Error fetching categories:", e);
     return [];
@@ -38,7 +49,9 @@ export const getCategories = reactCache(fetchCategories);
 async function fetchCategoryByIdApi(
   id: string | number
 ): Promise<CategoryDetailResponseDTO | null> {
-  const response = await fetch(getInternalApiUrl(`/api/categories/${id}`), {
+  const url = await getInternalApiUrl(`/api/categories/${id}`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["categories", `category:${id}`] },
   });
   if (!response.ok) return null;

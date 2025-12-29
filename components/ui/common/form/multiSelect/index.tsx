@@ -3,6 +3,7 @@ import CreatableSelect from "react-select/creatable";
 import { components, StylesConfig, GroupBase } from "react-select";
 import { Option } from "types/common";
 import { MultiSelectProps } from "types/props";
+import { useTranslations } from "next-intl";
 
 const borderColor = "#CCC !important";
 
@@ -75,6 +76,7 @@ export default function MultiSelectComponent({
   placeholder = "Selecciona categories",
   isLoading = false,
 }: MultiSelectProps) {
+  const t = useTranslations("Components.MultiSelect");
   const [selectedOptions, setSelectedOptions] = useState<Option[]>(value);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -109,14 +111,16 @@ export default function MultiSelectComponent({
             isSearchable
             isClearable
             isLoading={isLoading}
-            placeholder={isLoading ? "Carregant categories..." : placeholder}
+            placeholder={
+              isLoading ? t("loading") : placeholder || t("placeholder")
+            }
             value={selectedOptions}
             onChange={handleChange}
             options={options}
             styles={customStyles}
             isDisabled={isDisabled || isLoading}
-            noOptionsMessage={() => "No s'ha trobat cap categoria"}
-            loadingMessage={() => "Carregant..."}
+            noOptionsMessage={() => t("noOptions")}
+            loadingMessage={() => t("loadingShort")}
             components={{
               Input,
             }}

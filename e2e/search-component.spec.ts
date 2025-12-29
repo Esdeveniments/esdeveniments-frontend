@@ -9,13 +9,15 @@ test.describe("Search behavior", () => {
 
     const input = page.getByTestId("search-input");
     const searchButton = page.getByTestId("search-button");
-    await expect(input).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
+    await expect(input).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
     await expect(searchButton).toBeVisible();
 
     // Type text - URL should NOT update (no auto-search)
     await input.fill("");
     await input.type("castellers");
-    
+
     // Verify URL doesn't update after typing (no debounced auto-search)
     // Wait briefly to ensure no auto-search triggers, then check once
     await page.waitForTimeout(1000);
@@ -36,12 +38,14 @@ test.describe("Search behavior", () => {
 
     // Clear search - type new text first so clear button is visible
     await input.fill("test");
-    const clearButton = page.getByLabel("Clear search");
-    await expect(clearButton).toBeVisible();
+    const clearButton = page.getByTestId("clear-search-button");
+    await expect(clearButton).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
     // Click clear button - should reset input immediately (but not URL until submit)
     await clearButton.click();
     await expect(input).toHaveValue("");
-    
+
     // Submit to verify URL clears
     await searchButton.click();
     await expect

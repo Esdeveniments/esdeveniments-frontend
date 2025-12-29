@@ -1,57 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import EventsAroundServer from "../components/ui/eventsAround/EventsAroundServer";
+import { describe, it, expect } from "vitest";
+import { dedupeEvents } from "../components/ui/eventsAround/EventsAroundServer";
 import type { EventSummaryResponseDTO } from "../types/api/event";
-
-vi.mock("next/link", () => ({
-  default: ({
-    href,
-    children,
-  }: {
-    href: string;
-    children: React.ReactNode;
-  }) => <a href={href}>{children}</a>,
-}));
-
-vi.mock("@components/ui/common/image/ImageServer", () => ({
-  default: ({ alt }: { alt?: string }) => (
-    <span role="img" aria-label={alt || "event"} data-testid="image-server" />
-  ),
-}));
-
-vi.mock("@components/ui/cardHorizontal/CardHorizontalServer", () => ({
-  default: ({ event }: { event: { title: string } }) => (
-    <div data-testid="event-card">{event.title}</div>
-  ),
-}));
-
-vi.mock("@components/ui/common/HorizontalScroll", () => ({
-  default: ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }) => <div data-testid="horizontal-scroll">{children}</div>,
-}));
-
-vi.mock("@components/partials/JsonLdServer", () => ({
-  default: () => null,
-}));
-
-vi.mock("@utils/helpers", async () => {
-  const actual = await vi.importActual<typeof import("@utils/helpers")>(
-    "@utils/helpers"
-  );
-  return {
-    ...actual,
-    truncateString: (value: string) => value,
-    getFormattedDate: () => ({
-      formattedStart: "1 gener",
-      formattedEnd: "",
-      nameDay: "Dilluns",
-    }),
-  };
-});
 
 const baseEvent: EventSummaryResponseDTO = {
   id: "event-1",
@@ -72,7 +21,7 @@ const baseEvent: EventSummaryResponseDTO = {
   categories: [],
 };
 
-describe("EventsAroundServer", () => {
+describe("dedupeEvents", () => {
   it("deduplicates events with identical ids before rendering", () => {
     const events = [
       baseEvent,
@@ -80,14 +29,10 @@ describe("EventsAroundServer", () => {
       { ...baseEvent, id: "event-2", slug: "event-two", title: "Event Two" },
     ];
 
-    render(
-      <EventsAroundServer events={events} layout="horizontal" showJsonLd={false} />
-    );
-
-    const cards = screen.getAllByTestId("event-card");
-    expect(cards).toHaveLength(2);
-    expect(cards[0]).toHaveTextContent("Event One");
-    expect(cards[1]).toHaveTextContent("Event Two");
+    const deduped = dedupeEvents(events);
+    expect(deduped).toHaveLength(2);
+    expect(deduped[0].title).toBe("Event One");
+    expect(deduped[1].title).toBe("Event Two");
   });
 
   it("uses the slug as fallback when ids are missing", () => {
@@ -107,14 +52,10 @@ describe("EventsAroundServer", () => {
       },
     ];
 
-    render(
-      <EventsAroundServer events={events} layout="horizontal" showJsonLd={false} />
-    );
-
-    const cards = screen.getAllByTestId("event-card");
-    expect(cards).toHaveLength(2);
-    expect(cards[0]).toHaveTextContent("Event One");
-    expect(cards[1]).toHaveTextContent("Unique slug");
+    const deduped = dedupeEvents(events);
+    expect(deduped).toHaveLength(2);
+    expect(deduped[0].title).toBe("Event One");
+    expect(deduped[1].title).toBe("Unique slug");
   });
 });
 

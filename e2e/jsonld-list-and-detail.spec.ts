@@ -15,25 +15,45 @@ test.describe("JSON-LD presence", () => {
       waitUntil: "domcontentloaded",
       timeout: 90000,
     });
-    // Wait until at least one JSON-LD script is present (SSR should render Website schema)
-    // Use auto-waiting assertion instead of waitForSelector (longer timeout for remote URLs)
-    await expect(page.locator('script[type="application/ld+json"]').first()).toBeAttached({ timeout: process.env.CI ? 90000 : 60000 });
-    const scripts = page.locator('script[type="application/ld+json"]');
-    const count = await scripts.count();
-    let found = false;
-    for (let i = 0; i < count; i++) {
-      const jsonText = await scripts.nth(i).textContent();
-      if (
-        jsonText &&
-        (/"@type"\s*:\s*"ItemList"/.test(jsonText) ||
-          /"@type"\s*:\s*"Event"/.test(jsonText) ||
-          /"@type"\s*:\s*"CollectionPage"/.test(jsonText) ||
-          /"@type"\s*:\s*"WebPage"/.test(jsonText))
-      ) {
-        found = true;
-        break;
-      }
-    }
+    const found = await page.waitForFunction(
+      () => {
+        const matchesType = (type: unknown): boolean => {
+          if (typeof type === "string") {
+            return (
+              type === "ItemList" ||
+              type === "Event" ||
+              type === "CollectionPage" ||
+              type === "WebPage" ||
+              type === "WebSite"
+            );
+          }
+          if (Array.isArray(type)) {
+            return type.some((t) => matchesType(t));
+          }
+          return false;
+        };
+
+        const scripts = Array.from(
+          document.querySelectorAll('script[type="application/ld+json"]')
+        );
+
+        return scripts.some((script) => {
+          const text = script.textContent || "";
+          try {
+            const data = JSON.parse(text);
+            const graph = Array.isArray(data?.["@graph"])
+              ? data["@graph"]
+              : [data];
+            return graph.some((entry) => matchesType(entry?.["@type"]));
+          } catch {
+            return /"@type"\s*:\s*"(ItemList|Event|CollectionPage|WebPage|WebSite)"/.test(
+              text
+            );
+          }
+        });
+      },
+      { timeout: process.env.CI ? 90000 : 60000 }
+    );
     expect(found).toBeTruthy();
   });
 
@@ -45,7 +65,9 @@ test.describe("JSON-LD presence", () => {
       timeout: 90000,
     });
     // Use auto-waiting assertion instead of waitForSelector (longer timeout for remote URLs)
-    await expect(page.locator('script[type="application/ld+json"]').first()).toBeAttached({ timeout: process.env.CI ? 90000 : 60000 });
+    await expect(
+      page.locator('script[type="application/ld+json"]').first()
+    ).toBeAttached({ timeout: process.env.CI ? 90000 : 60000 });
     const scripts = page.locator('script[type="application/ld+json"]');
     // Some JSON-LD scripts may be hidden; assert presence instead of visibility
     await expect(scripts.first()).toHaveCount(1, { timeout: 10000 });

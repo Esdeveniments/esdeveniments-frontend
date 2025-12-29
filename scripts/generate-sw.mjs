@@ -12,6 +12,14 @@ const apiUrl =
 // Extract just the origin (protocol + hostname) for service worker matching
 const apiOrigin = new URL(apiUrl).origin;
 
+// Ensure sw.js changes on every build/deploy so the browser updates the SW.
+// This is important because we clear cached HTML pages on SW activate to avoid hydration mismatches.
+const buildVersion =
+  process.env.BUILD_VERSION ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.VERCEL_DEPLOYMENT_ID ||
+  `${Date.now()}`;
+
 // Read the service worker template
 const swTemplatePath = path.join(__dirname, "..", "public", "sw-template.js");
 const swOutputPath = path.join(__dirname, "..", "public", "sw.js");
@@ -20,8 +28,11 @@ let swContent = fs.readFileSync(swTemplatePath, "utf8");
 
 // Replace the placeholder with the actual API origin
 swContent = swContent.replace("{{API_ORIGIN}}", apiOrigin);
+swContent = swContent.replace("{{BUILD_VERSION}}", buildVersion);
 
 // Write the generated service worker
 fs.writeFileSync(swOutputPath, swContent);
 
-console.log(`Service worker generated with API origin: ${apiOrigin}`);
+console.log(
+  `Service worker generated with API origin: ${apiOrigin} (build: ${buildVersion})`
+);

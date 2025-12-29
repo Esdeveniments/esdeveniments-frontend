@@ -7,11 +7,10 @@ import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 
 export async function createEventAction(
   data: EventCreateRequestDTO,
-  imageFile?: File,
   e2eExtras?: E2EEventExtras
 ) {
   // 1. Create the event in your backend
-  const created = await createEvent(data, imageFile, e2eExtras);
+  const created = await createEvent(data, e2eExtras);
 
   // 2. Immediately expire cache tags for event lists and categorized collections
   // This ensures read-your-own-writes: the new event appears immediately

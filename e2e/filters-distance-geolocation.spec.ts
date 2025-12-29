@@ -76,7 +76,9 @@ test.describe("Filters Distance + Geolocation URL Tests", () => {
     expect(lat).toBeCloseTo(41.643, 1);
     expect(lon).toBeCloseTo(2.356, 1);
 
-    await expect(page.getByTestId("events-list")).toBeVisible({
+    const eventsList = page.getByTestId("events-list").first();
+
+    await expect(eventsList).toBeVisible({
       timeout: 15000,
     });
   });
@@ -84,10 +86,9 @@ test.describe("Filters Distance + Geolocation URL Tests", () => {
   test("should show distance filter pill when distance params are in URL", async ({
     page,
   }) => {
-    await page.goto(
-      "/catalunya?distance=25&lat=41.65&lon=2.36",
-      { waitUntil: "domcontentloaded" }
-    );
+    await page.goto("/catalunya?distance=25&lat=41.65&lon=2.36", {
+      waitUntil: "domcontentloaded",
+    });
 
     const distancePill = page.getByTestId(/filter-pill-distance/);
     await expect(distancePill.first()).toBeVisible({ timeout: 5000 });
@@ -96,10 +97,9 @@ test.describe("Filters Distance + Geolocation URL Tests", () => {
   test("should maintain geolocation params when navigating with filters", async ({
     page,
   }) => {
-    await page.goto(
-      "/catalunya?distance=20&lat=41.65&lon=2.36",
-      { waitUntil: "domcontentloaded" }
-    );
+    await page.goto("/catalunya?distance=20&lat=41.65&lon=2.36", {
+      waitUntil: "domcontentloaded",
+    });
 
     let url = new URL(page.url());
     expect(url.searchParams.get("distance")).toBe("20");
@@ -119,13 +119,13 @@ test.describe("Filters Distance + Geolocation URL Tests", () => {
 
 test.describe("Filters Interaction - Distance with Other Filters", () => {
   test("should combine distance + category filters", async ({ page }) => {
-    await page.goto(
-      "/catalunya/musica?distance=20&lat=41.65&lon=2.36",
-      { waitUntil: "domcontentloaded", timeout: 30000 }
-    );
+    await page.goto("/catalunya/musica?distance=20&lat=41.65&lon=2.36", {
+      waitUntil: "domcontentloaded",
+      timeout: 30000,
+    });
 
     const url = new URL(page.url());
-    
+
     // Should have both distance and category in URL
     expect(url.pathname).toContain("/musica");
     expect(url.searchParams.get("distance")).toBe("20");
@@ -140,7 +140,7 @@ test.describe("Filters Interaction - Distance with Other Filters", () => {
     await expect(page.getByTestId(/filter-pill-distance/).first()).toBeVisible({
       timeout: 5000,
     });
-    
+
     // Category pill should be visible
     await expect(page.getByTestId(/filter-pill-category/).first()).toBeVisible({
       timeout: 5000,
@@ -148,30 +148,30 @@ test.describe("Filters Interaction - Distance with Other Filters", () => {
   });
 
   test("should allow distance filter on any place", async ({ page }) => {
-    await page.goto(
-      "/barcelona?distance=20&lat=41.39&lon=2.17",
-      { waitUntil: "domcontentloaded" }
-    );
+    await page.goto("/barcelona?distance=20&lat=41.39&lon=2.17", {
+      waitUntil: "domcontentloaded",
+    });
 
     await page.waitForTimeout(2000);
 
     const url = new URL(page.url());
-    
+
     // Distance params should be present
     expect(url.searchParams.get("distance")).toBe("20");
     expect(url.searchParams.has("lat")).toBeTruthy();
     expect(url.searchParams.has("lon")).toBeTruthy();
-    
+
     // Can stay on barcelona or catalunya
     expect(url.pathname).toMatch(/^\/(barcelona|catalunya)/);
   });
 
-  test("should clear distance when switching to a specific place", async ({ page }) => {
+  test("should clear distance when switching to a specific place", async ({
+    page,
+  }) => {
     // Start with distance filter
-    await page.goto(
-      "/catalunya?distance=20&lat=41.65&lon=2.36",
-      { waitUntil: "domcontentloaded" }
-    );
+    await page.goto("/catalunya?distance=20&lat=41.65&lon=2.36", {
+      waitUntil: "domcontentloaded",
+    });
 
     await expect(page.getByTestId("events-list")).toBeVisible({
       timeout: 15000,
@@ -183,7 +183,7 @@ test.describe("Filters Interaction - Distance with Other Filters", () => {
     await page.waitForTimeout(1000);
 
     const url = new URL(page.url());
-    
+
     // Distance params should be cleared
     expect(url.pathname).toContain("/barcelona");
     expect(url.searchParams.has("distance")).toBeFalsy();
@@ -198,7 +198,7 @@ test.describe("Filters Interaction - Distance with Other Filters", () => {
     );
 
     const url = new URL(page.url());
-    
+
     // Should have both distance and search in URL
     expect(url.searchParams.get("distance")).toBe("30");
     expect(url.searchParams.get("search")).toBe("concert");

@@ -116,14 +116,14 @@ function createTestEvent(
 
 describe("buildEventIntroText", () => {
   describe("preposition handling for towns and regions", () => {
-    it("should use 'a' for towns (not 'al') - the Tona bug fix", () => {
+    it("should use 'a' for towns (not 'al') - the Tona bug fix", async () => {
       const event = createTestEvent({
         title: "Festa Major",
         city: MOCK_CITIES.tona,
         region: MOCK_REGIONS.osona,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should be "a Tona" not "al Tona" (this was the bug)
       expect(result).toContain("a Tona");
@@ -132,53 +132,53 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("(Osona)");
     });
 
-    it("should use 'a' for towns starting with consonants", () => {
+    it("should use 'a' for towns starting with consonants", async () => {
       const event = createTestEvent({
         title: "Concert de Jazz",
         city: MOCK_CITIES.barcelona,
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       expect(result).toContain("a Barcelona");
       expect(result).not.toContain("al Barcelona");
     });
 
-    it("should use 'al' for masculine regions", () => {
+    it("should use 'al' for masculine regions", async () => {
       const event = createTestEvent({
         title: "Caminada Popular",
         city: undefined,
         region: MOCK_REGIONS.vallesOriental,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Masculine region should use "al"
       expect(result).toContain("al Vallès Oriental");
     });
 
-    it("should use 'a la' for feminine regions", () => {
+    it("should use 'a la' for feminine regions", async () => {
       const event = createTestEvent({
         title: "Fira Medieval",
         city: undefined,
         region: MOCK_REGIONS.selva,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Feminine region should use "a la"
       expect(result).toContain("a la Selva");
     });
 
-    it("should use 'a' for towns even when region is also present", () => {
+    it("should use 'a' for towns even when region is also present", async () => {
       const event = createTestEvent({
         title: "Mercat de Pagès",
         city: MOCK_CITIES.vic,
         region: MOCK_REGIONS.osona,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should prioritize city and use "a" for the town
       expect(result).toContain("a Vic");
@@ -187,7 +187,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("(Osona)");
     });
 
-    it("should use 'a' for towns starting with vowels", () => {
+    it("should use 'a' for towns starting with vowels", async () => {
       const event = createTestEvent({
         title: "Exposició d'Art",
         city: MOCK_CITIES.olot,
@@ -195,14 +195,14 @@ describe("buildEventIntroText", () => {
         type: "PAID",
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       expect(result).toContain("a Olot");
     });
   });
 
   describe("article detection for event titles", () => {
-    it("should detect plural titles and use correct verb form", () => {
+    it("should detect plural titles and use correct verb form", async () => {
       const event = createTestEvent({
         title: "Les Fires de Sant Miquel",
         startDate: "2025-09-29",
@@ -211,14 +211,14 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Plural title should use "se celebren"
       expect(result).toContain("se celebren");
       expect(result).not.toContain("se celebra");
     });
 
-    it("should detect singular titles and use correct verb form", () => {
+    it("should detect singular titles and use correct verb form", async () => {
       const event = createTestEvent({
         title: "El Festival de Música",
         startDate: "2025-07-01",
@@ -228,7 +228,7 @@ describe("buildEventIntroText", () => {
         type: "PAID",
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Singular title should use "se celebra"
       expect(result).toContain("se celebra");
@@ -237,7 +237,7 @@ describe("buildEventIntroText", () => {
   });
 
   describe("parentheses capitalization with backslashes", () => {
-    it("should title-case content inside parentheses even with backslashes", () => {
+    it("should title-case content inside parentheses even with backslashes", async () => {
       const event = createTestEvent({
         title: "Fira d'artesania",
         city: {
@@ -253,7 +253,7 @@ describe("buildEventIntroText", () => {
         region: { id: 11, name: "test\\data", slug: "test-data" },
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Parentheses text should be title-cased even with a backslash
       expect(result).toContain("(Test\\data)");
@@ -261,7 +261,7 @@ describe("buildEventIntroText", () => {
   });
 
   describe("article gender validation and correction", () => {
-    it("should correct wrong masculine plural article to feminine plural", () => {
+    it("should correct wrong masculine plural article to feminine plural", async () => {
       const event = createTestEvent({
         title: "Els festes d'aniversari",
         startDate: "2025-11-09",
@@ -270,7 +270,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should correct "Els festes" to "Les festes" (first word is lowercase)
       expect(result).toContain("Les festes");
@@ -279,7 +279,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebren");
     });
 
-    it("should correct wrong feminine article to masculine", () => {
+    it("should correct wrong feminine article to masculine", async () => {
       const event = createTestEvent({
         title: "La festival de música",
         startDate: "2025-07-15",
@@ -288,7 +288,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should correct "La festival" to "El festival" (first word is lowercase)
       expect(result).toContain("El festival");
@@ -297,7 +297,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should correct wrong singular article to plural", () => {
+    it("should correct wrong singular article to plural", async () => {
       const event = createTestEvent({
         title: "El fires de Sant Miquel",
         startDate: "2025-09-29",
@@ -306,7 +306,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should correct "El fires" to "Les fires" (plural feminine, first word lowercase)
       expect(result).toContain("Les fires");
@@ -315,7 +315,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebren");
     });
 
-    it("should keep correct article when it matches the noun", () => {
+    it("should keep correct article when it matches the noun", async () => {
       const event = createTestEvent({
         title: "Les festes de Tardor",
         startDate: "2025-11-14",
@@ -324,7 +324,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should keep "Les festes" as it's correct (first word is lowercase)
       expect(result).toContain("Les festes");
@@ -332,7 +332,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebren");
     });
 
-    it("should handle L' article correctly", () => {
+    it("should handle L' article correctly", async () => {
       const event = createTestEvent({
         title: "L'activitat cultural",
         startDate: "2025-06-20",
@@ -341,7 +341,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should keep "L'activitat" as it's correct for vowel-starting feminine noun (first word is lowercase)
       expect(result).toContain("L'activitat");
@@ -351,7 +351,7 @@ describe("buildEventIntroText", () => {
   });
 
   describe("Roman numeral handling", () => {
-    it("should handle Roman numeral at start of title and capitalize it", () => {
+    it("should handle Roman numeral at start of title and capitalize it", async () => {
       const event = createTestEvent({
         title: "ii fira animalista del Masnou",
         startDate: "2025-11-09",
@@ -360,7 +360,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "La" article, capitalize Roman numeral, and keep next word lowercase
       expect(result).toContain("La II fira");
@@ -369,7 +369,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should correct L' article before Roman numeral to La", () => {
+    it("should correct L' article before Roman numeral to La", async () => {
       const event = createTestEvent({
         title: "L'ii fira animalista del Masnou",
         startDate: "2025-11-09",
@@ -378,7 +378,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should correct "L'ii" to "La II" and keep next word lowercase
       expect(result).toContain("La II fira");
@@ -387,7 +387,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
   });
 
-  it("should handle lowercase Roman numeral and capitalize it", () => {
+  it("should handle lowercase Roman numeral and capitalize it", async () => {
     const event = createTestEvent({
       title: "iii edició del festival",
         startDate: "2025-08-15",
@@ -396,7 +396,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "La" (edició is feminine), capitalize Roman numeral to "III", and keep next word lowercase
       expect(result).toContain("La III edició");
@@ -404,7 +404,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should handle Roman numeral with correct article already present", () => {
+    it("should handle Roman numeral with correct article already present", async () => {
       const event = createTestEvent({
         title: "La II Fira Animalista",
         startDate: "2025-11-09",
@@ -413,14 +413,14 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should keep "La II fira" as it's already correct (Roman numeral capitalized, word lowercase)
       expect(result).toContain("La II fira");
       expect(result).toContain("se celebra");
     });
 
-    it("should handle single Roman numeral I", () => {
+    it("should handle single Roman numeral I", async () => {
       const event = createTestEvent({
         title: "i jornada de poesia",
         startDate: "2025-05-10",
@@ -429,7 +429,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "La", capitalize Roman numeral to "I", and keep next word lowercase
       expect(result).toContain("La I jornada");
@@ -437,7 +437,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should handle Roman numeral not at the start of title", () => {
+    it("should handle Roman numeral not at the start of title", async () => {
       const event = createTestEvent({
         title: "Fira de la II edició",
         startDate: "2025-09-20",
@@ -446,7 +446,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should detect "fira" as the first word and use "La fira" (lowercase)
       expect(result).toContain("La fira");
@@ -454,7 +454,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should use masculine article for Roman numeral with masculine noun", () => {
+    it("should use masculine article for Roman numeral with masculine noun", async () => {
       const event = createTestEvent({
         title: "xx campionat de parxís",
         startDate: "2025-08-16",
@@ -463,7 +463,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (campionat is masculine), not "La"
       expect(result).toContain("El XX campionat");
@@ -471,7 +471,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should detect feminine noun 'nit' correctly", () => {
+    it("should detect feminine noun 'nit' correctly", async () => {
       const event = createTestEvent({
         title: "la nit jove",
         startDate: "2025-08-15",
@@ -480,7 +480,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "La" (nit is feminine), not "El"
       expect(result).toContain("La nit");
@@ -488,7 +488,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should detect other feminine nouns without typical endings", () => {
+    it("should detect other feminine nouns without typical endings", async () => {
       const event = createTestEvent({
         title: "la llum de la ciutat",
         startDate: "2025-08-20",
@@ -497,7 +497,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "La" (llum is feminine)
       expect(result).toContain("La llum");
@@ -505,7 +505,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should use plural verb for plural titles starting with Roman numeral", () => {
+    it("should use plural verb for plural titles starting with Roman numeral", async () => {
       const event = createTestEvent({
         title: "xx festes majors",
         startDate: "2025-07-15",
@@ -514,7 +514,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "Les" (festes is plural feminine) and "se celebren" (plural verb)
       expect(result).toContain("Les XX festes");
@@ -522,7 +522,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebra");
     });
 
-    it("should handle singular words ending in accented -s (e.g., 'Congrés')", () => {
+    it("should handle singular words ending in accented -s (e.g., 'Congrés')", async () => {
       // Test case: "Congrés" (congress, singular masculine)
       // Words ending in accented -s are singular, not plural, so they should not trigger
       // plural detection logic. After normalization, "congrés" becomes "congres" which ends
@@ -535,7 +535,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (congrés is singular masculine) and "se celebra" (singular verb)
       expect(result).toContain("El XVIII congrés");
@@ -544,7 +544,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebren");
     });
 
-    it("should handle other singular words ending in accented -s (e.g., 'París')", () => {
+    it("should handle other singular words ending in accented -s (e.g., 'París')", async () => {
       // Test case: "París" (Paris, singular - city name, but tests the same pattern)
       const event = createTestEvent({
         title: "Festival de París",
@@ -554,7 +554,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (festival is singular masculine) and "se celebra" (singular verb)
       // The important part is that "París" doesn't trigger plural detection
@@ -563,7 +563,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebren");
     });
 
-    it("should convert L' to La when followed by Roman numeral and feminine vowel-starting word", () => {
+    it("should convert L' to La when followed by Roman numeral and feminine vowel-starting word", async () => {
       // Test case: "L'XVIII edició" - "edició" starts with vowel and is feminine
       // getCatalanArticleForWord would return "L'" for vowel-starting words, but "L'"
       // cannot precede a Roman numeral, so it must be converted to "La"
@@ -575,7 +575,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should convert "L'XVIII" to "La XVIII" (edició is feminine)
       expect(result).toContain("La XVIII edició");
@@ -584,7 +584,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should convert L' to El when followed by Roman numeral and masculine vowel-starting word", () => {
+    it("should convert L' to El when followed by Roman numeral and masculine vowel-starting word", async () => {
       // Test case: "L'XVIII congrés" - "congrés" starts with vowel and is masculine
       // getCatalanArticleForWord would return "L'" for vowel-starting words, but "L'"
       // cannot precede a Roman numeral, so it must be converted to "El"
@@ -596,7 +596,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should convert "L'XVIII" to "El XVIII" (congrés is masculine)
       expect(result).toContain("El XVIII congrés");
@@ -605,7 +605,7 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should convert L' to La/El when article is wrong and followed by Roman numeral", () => {
+    it("should convert L' to La/El when article is wrong and followed by Roman numeral", async () => {
       // Test case: Wrong article "L'" before Roman numeral should be corrected
       // even when the article doesn't match (testing the else branch)
       const event = createTestEvent({
@@ -616,7 +616,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should convert "L'XIX" to "La XIX" (edició is feminine)
       expect(result).toContain("La XIX edició");
@@ -624,13 +624,13 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("se celebra");
     });
 
-    it("should use feminine article for feminine ordinal numbers", () => {
+    it("should use feminine article for feminine ordinal numbers", async () => {
       const event = createTestEvent({
         title: "10ª fira de la Col",
         city: MOCK_CITIES.barcelona,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       expect(result).toContain("La 10ª fira");
       expect(result).toContain("se celebra");
@@ -638,7 +638,7 @@ describe("buildEventIntroText", () => {
   });
 
   describe("plural detection logic (conservative stem checking)", () => {
-    it("should check stem first before adding 'a' for words ending in 'es'", () => {
+    it("should check stem first before adding 'a' for words ending in 'es'", async () => {
       // This test validates Fix 2: the logic checks if the stem alone is already
       // clearly feminine before trying to add "a". This prevents incorrect
       // transformations while still handling cases like "festes" → "festa".
@@ -655,7 +655,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should correctly identify "festes" as plural feminine
       expect(result).toContain("Les festes");
@@ -664,7 +664,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebra");
     });
 
-    it("should handle plural words ending in 'es' with stem-first checking", () => {
+    it("should handle plural words ending in 'es' with stem-first checking", async () => {
       // Additional test to ensure the conservative approach works for various cases
       const event = createTestEvent({
         title: "fires de Sant Miquel",
@@ -674,7 +674,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // "fires" stem is "fire" (not clearly feminine), adding "a" gives "firea" (feminine)
       // Should correctly identify as plural feminine
@@ -684,7 +684,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebra");
     });
 
-    it("should keep masculine plural words masculine (e.g., 'pares' from 'pare')", () => {
+    it("should keep masculine plural words masculine (e.g., 'pares' from 'pare')", async () => {
       // Test case: "pares" (parents, plural of "pare" which is masculine)
       // - Stem: "par" → detected as masculine (default)
       // - Should NOT try to add "a" to make it "para" (feminine)
@@ -697,7 +697,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should correctly identify "pares" as plural masculine
       expect(result).toContain("Els pares");
@@ -706,7 +706,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("se celebra");
     });
 
-    it("should set singular to 'pare' when stem+e is explicitly masculine", () => {
+    it("should set singular to 'pare' when stem+e is explicitly masculine", async () => {
       // Test case: "pares" → stem "par" + "e" = "pare" (explicitly masculine)
       // This test verifies Fix 1: when isExplicitlyMasculine(singularWithE) is true,
       // the singular variable should be updated to singularWithE ("pare"), not left as "par"
@@ -719,7 +719,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should correctly identify as plural masculine using "pare" (not "par") for gender detection
       expect(result).toContain("Els pares");
@@ -730,7 +730,7 @@ describe("buildEventIntroText", () => {
   });
 
   describe("Greek/loanword masculine endings (-ma, -ema, -oma pattern)", () => {
-    it("should correctly identify masculine words ending in -ema", () => {
+    it("should correctly identify masculine words ending in -ema", async () => {
       const event = createTestEvent({
         title: "El problema de la ciutat",
         startDate: "2025-07-15",
@@ -739,7 +739,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (problema is masculine) and "se celebra" (singular verb)
       expect(result).toContain("El problema");
@@ -747,7 +747,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("La problema");
     });
 
-    it("should correctly identify masculine words ending in -ma (not -ama)", () => {
+    it("should correctly identify masculine words ending in -ma (not -ama)", async () => {
       const event = createTestEvent({
         title: "El cinema independent",
         startDate: "2025-08-20",
@@ -756,7 +756,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (cinema is masculine) and "se celebra" (singular verb)
       expect(result).toContain("El cinema");
@@ -764,7 +764,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("La cinema");
     });
 
-    it("should correctly identify masculine exceptions ending in -ama (programa)", () => {
+    it("should correctly identify masculine exceptions ending in -ama (programa)", async () => {
       const event = createTestEvent({
         title: "El programa cultural",
         startDate: "2025-09-10",
@@ -773,7 +773,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (programa is masculine exception) and "se celebra" (singular verb)
       expect(result).toContain("El programa");
@@ -781,7 +781,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("La programa");
     });
 
-    it("should correctly identify masculine exceptions ending in -ama (drama)", () => {
+    it("should correctly identify masculine exceptions ending in -ama (drama)", async () => {
       const event = createTestEvent({
         title: "El drama teatral",
         startDate: "2025-10-05",
@@ -790,7 +790,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (drama is masculine exception) and "se celebra" (singular verb)
       expect(result).toContain("El drama");
@@ -798,7 +798,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("La drama");
     });
 
-    it("should correctly identify masculine exception ending in -ima (clima)", () => {
+    it("should correctly identify masculine exception ending in -ima (clima)", async () => {
       const event = createTestEvent({
         title: "El clima mediterrani",
         startDate: "2025-07-01",
@@ -807,7 +807,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "El" (clima is masculine exception) and "se celebra" (singular verb)
       expect(result).toContain("El clima");
@@ -815,7 +815,7 @@ describe("buildEventIntroText", () => {
       expect(result).not.toContain("La clima");
     });
 
-    it("should NOT incorrectly classify feminine words ending in -ama as masculine", () => {
+    it("should NOT incorrectly classify feminine words ending in -ama as masculine", async () => {
       // This test ensures that the -ama exclusion works correctly
       // If a feminine word ending in -ama appears, it should use "La" not "El"
       // Note: We test with a word that would be feminine if it existed in Catalan
@@ -829,7 +829,7 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
 
-      const result = buildEventIntroText(event);
+      const result = await buildEventIntroText(event);
 
       // Should use "La" (festa is feminine, ends in -a) and "se celebra" (singular verb)
       expect(result).toContain("La festa");

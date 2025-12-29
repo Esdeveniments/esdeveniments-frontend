@@ -1,10 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import type { ListPageFaqProps } from "types/props";
 
-export default function ListPageFaq({
+export default async function ListPageFaq({
   items,
-  title = "Preguntes freqüents",
+  title,
 }: ListPageFaqProps) {
+  const t = await getTranslations("Components.ListPageFaq");
+  const resolvedTitle = title || t("title");
   if (!items || items.length < 2) {
     return null;
   }
@@ -12,7 +15,7 @@ export default function ListPageFaq({
   return (
     <section className="container border-t border-border/40 py-section-y">
       <SectionHeading
-        title={title}
+        title={resolvedTitle}
         titleClassName="heading-2 text-foreground mb-element-gap"
       />
       <dl className="grid gap-element-gap md:grid-cols-2">

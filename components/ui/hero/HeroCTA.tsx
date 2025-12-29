@@ -1,36 +1,56 @@
 "use client";
 
 import { useHero } from "./HeroContext";
-import { useRouter } from "next/navigation";
+import { useRouter } from "../../../i18n/routing";
+import { useTranslations } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
-import { SearchIcon } from "@heroicons/react/solid";
+import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
 import Button from "@components/ui/common/button";
 import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";
-import { formatCatalanA } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/helpers";
+import { sendGoogleEvent } from "@utils/analytics";
+import { useLocale } from "next-intl";
 
 export default function HeroCTA() {
+  const t = useTranslations("Components.HeroCTA");
+  const tFilters = useTranslations("Components.HeroFilters");
+  const locale = useLocale();
   const { place, label, placeType, date, searchTerm } = useHero();
   const router = useRouter();
 
   const handleSearch = () => {
+    sendGoogleEvent("hero_cta_click", {
+      category: "hero_cta",
+      context: "home_hero",
+      place_slug: place,
+      date_slug: date || undefined,
+      has_search: String(Boolean(searchTerm?.trim())),
+    });
     const url = buildHeroUrl(place, date, searchTerm);
     startNavigationFeedback();
     router.push(url);
   };
 
   const getButtonText = () => {
-    let text = "Veure esdeveniments";
+    let text = t("buttonBase");
 
     if (place !== "catalunya") {
-      const locationCopy = formatCatalanA(label, (placeType || "general") as "region" | "town" | "general" | "", false);
+      const locationCopy = formatPlacePreposition(
+        label,
+        (placeType || "general") as "region" | "town" | "general" | "",
+        locale as "ca" | "es" | "en",
+        false
+      );
       text += ` ${locationCopy}`;
     }
 
     if (date) {
-      const filter = HERO_DATE_FILTERS.find(f => f.value === date);
+      const filter = HERO_DATE_FILTERS.find((f) => f.value === date);
       if (filter) {
-        const dateLabel = date === "cap-de-setmana" ? "aquest cap de setmana" : filter.label.toLowerCase();
+        const translated = tFilters(filter.labelKey);
+        const dateLabel =
+          date === "cap-de-setmana" ? t("dateWeekend") : translated.toLowerCase();
         text += ` ${dateLabel}`;
       }
     }
@@ -52,7 +72,7 @@ export default function HeroCTA() {
         </span>
       </Button>
       <p className="text-xs text-foreground/50 mt-3 text-center">
-        Selecciona la població i les dates, i prem &apos;Veure esdeveniments&apos;
+        {t("helper")}
       </p>
     </div>
   );

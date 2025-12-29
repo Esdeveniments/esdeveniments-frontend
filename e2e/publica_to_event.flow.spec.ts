@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
 
+// Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
+// This allows Playwright's route handlers to intercept API requests for mocking
+
 // This test relies on E2E_TEST_MODE to short-circuit the server action and produce a stable slug.
 // CI sets no E2E_TEST_MODE by default. We set it via Playwright config env or GitHub Actions step if needed.
 
@@ -55,6 +58,11 @@ test.skip("Publica -> Event flow (deterministic)", () => {
     await expect(page.getByTestId("event-form")).toBeVisible({
       timeout: 30000,
     });
+    await expect(page.getByTestId("event-form")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+      { timeout: 30000 }
+    );
 
     const imagePath = path.join(
       process.cwd(),

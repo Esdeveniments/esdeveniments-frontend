@@ -1,16 +1,28 @@
 import { CitySummaryResponseDTO } from "types/api/city";
 import { createCache, createKeyedCache } from "lib/api/cache";
-import { getInternalApiUrl } from "@utils/api-helpers";
+import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { fetchCitiesExternal } from "./cities-external";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
-const cache = createCache<CitySummaryResponseDTO[]>(86400000);
-const cityByIdCache = createKeyedCache<CitySummaryResponseDTO | null>(86400000);
+const { cache: citiesListCache, clear: clearCitiesListCache } =
+  createCache<CitySummaryResponseDTO[]>(86400000);
+const { cache: cityByIdCache, clear: clearCityByIdCache } =
+  createKeyedCache<CitySummaryResponseDTO | null>(86400000);
+
+/**
+ * Clear all in-memory city caches.
+ * Called by the revalidation API to ensure fresh data.
+ */
+export function clearCitiesCaches(): void {
+  clearCitiesListCache();
+  clearCityByIdCache();
+}
 
 async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
-  const url = getInternalApiUrl(`/api/cities`);
+  const url = await getInternalApiUrl(`/api/cities`);
   const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["cities"] },
   });
   if (!response.ok) {
@@ -56,7 +68,7 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
   // Runtime: use internal API proxy with caching
   // If internal API fails (e.g., during build when server isn't running), fallback to external
   try {
-    return await cache(fetchCitiesFromApi);
+    return await citiesListCache(fetchCitiesFromApi);
   } catch {
     // If internal API fails, try external API as fallback (handles edge cases)
     try {
@@ -76,7 +88,9 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 async function fetchCityByIdApi(
   id: string | number
 ): Promise<CitySummaryResponseDTO | null> {
-  const response = await fetch(getInternalApiUrl(`/api/cities/${id}`), {
+  const url = await getInternalApiUrl(`/api/cities/${id}`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 86400, tags: ["cities", `city:${id}`] },
   });
   if (!response.ok) return null;

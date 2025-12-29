@@ -160,7 +160,6 @@ export function parseEventDetail(
   }
 
   const event = result.data as EventDetailResponseDTO;
-
   // Log warning if title is empty (helps identify data quality issues)
   if (!event.title || event.title.trim() === "") {
     console.warn(

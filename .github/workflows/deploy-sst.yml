@@ -9,6 +9,11 @@ concurrency:
   group: deploy-sst-${{ github.ref }}
   cancel-in-progress: false # Don't cancel - let deployments complete
 
+# Explicit least-privilege permissions (security best practice)
+permissions:
+  contents: read
+  actions: read
+
 env:
   NODE_VERSION: "22"
   AWS_REGION: "eu-west-3"
@@ -18,13 +23,17 @@ jobs:
     name: Deploy to AWS with SST
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
+    environment:
+      name: production
+      url: https://www.esdeveniments.cat
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Pin: b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4 # Pin: 39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
@@ -39,26 +48,75 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Security audit
+        run: yarn npm audit --all --recursive || true
+        # Note: Using || true to not fail the build on audit findings
+        # Review findings manually and address high/critical vulnerabilities
+
+      - name: Clean build artifacts
+        run: |
+          # Remove Next.js cache to prevent stale/malformed cached responses
+          rm -rf .next
+          # Remove SST artifacts from previous builds
+          rm -rf .sst .open-next
+          echo "✅ Cleaned build artifacts"
+
+      - name: Ensure robots.txt is route-generated
+        run: |
+          # Guardrail: a static public/robots.txt would shadow app/robots.ts in some deployments.
+          rm -f public/robots.txt
+
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4 # Pin: 0c45773b623bea8c8e75f6c82b208c3cf94ea4f9
+        with:
+          path: |
+            ${{ github.workspace }}/.next/cache
+          # Generate a new cache whenever packages or source files change.
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          # If source files changed but packages didn't, rebuild from a prior cache.
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
+
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v4 # Pin: e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Create .env file for SST deployment
+      - name: Create .env.production file for SST deployment
         env:
           # Optional secrets
           NEXT_PUBLIC_GOOGLE_ANALYTICS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ANALYTICS }}
           NEXT_PUBLIC_GOOGLE_ADS: ${{ secrets.NEXT_PUBLIC_GOOGLE_ADS }}
+          NEXT_PUBLIC_GOOGLE_MAPS: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS }}
+          NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+          # Server-side runtime secrets
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          # Cache revalidation secrets (optional but recommended)
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           # Required secrets (validated below)
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          # SST requires a .env file in the root during deployment
-          touch .env
+          # Mask sensitive values in logs (defense in depth)
+          echo "::add-mask::$HMAC_SECRET"
+          echo "::add-mask::$NEXT_PUBLIC_API_URL"
+          echo "::add-mask::$SENTRY_DSN"
+          echo "::add-mask::$DEEPL_API_KEY"
+          echo "::add-mask::$SENTRY_AUTH_TOKEN"
+          echo "::add-mask::$REVALIDATE_SECRET"
+          echo "::add-mask::$CLOUDFLARE_API_TOKEN"
+          echo "::add-mask::$GOOGLE_PLACES_API_KEY"
+
+          # Create .env.production for Next.js build (NODE_ENV=production)
+          # Next.js loads .env.production when NODE_ENV=production
+          touch .env.production
 
           # --- Validate and Set Required Secrets ---
 
@@ -67,41 +125,170 @@ jobs:
             echo "::error::NEXT_PUBLIC_API_URL secret is required but not set in GitHub Secrets"
             exit 1
           fi
-          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env
+          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
 
           # 2. HMAC_SECRET
           if [ -z "$HMAC_SECRET" ]; then
             echo "::error::HMAC_SECRET secret is required but not set in GitHub Secrets"
             exit 1
           fi
-          echo "HMAC_SECRET=$HMAC_SECRET" >> .env
+          echo "HMAC_SECRET=$HMAC_SECRET" >> .env.production
 
           # 3. SENTRY_DSN
           if [ -z "$SENTRY_DSN" ]; then
             echo "::error::SENTRY_DSN secret is required but not set in GitHub Secrets"
             exit 1
           fi
-          echo "SENTRY_DSN=$SENTRY_DSN" >> .env
+          echo "SENTRY_DSN=$SENTRY_DSN" >> .env.production
+
+          # 4. DEEPL_API_KEY
+          if [ -z "$DEEPL_API_KEY" ]; then
+            echo "::error::DEEPL_API_KEY secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "DEEPL_API_KEY=$DEEPL_API_KEY" >> .env.production
 
           # --- Set Optional/Static Variables ---
 
           # Set NEXT_PUBLIC_SITE_URL for build-time sitemap generation
-          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env
+          echo "NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat" >> .env.production
 
           # SENTRY_AUTH_TOKEN (Required for source map uploads, but we don't fail deployment if missing, just warn/skip in config)
           if [ -n "$SENTRY_AUTH_TOKEN" ]; then
-            echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env
+            echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env.production
           else
              echo "::warning::SENTRY_AUTH_TOKEN is not set. Source maps will not be uploaded."
           fi
 
           if [ -n "$NEXT_PUBLIC_GOOGLE_ANALYTICS" ]; then
-            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env
+            echo "NEXT_PUBLIC_GOOGLE_ANALYTICS=$NEXT_PUBLIC_GOOGLE_ANALYTICS" >> .env.production
           fi
 
           if [ -n "$NEXT_PUBLIC_GOOGLE_ADS" ]; then
-            echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env
+            echo "NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS" >> .env.production
           fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_MAPS" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_MAPS=$NEXT_PUBLIC_GOOGLE_MAPS" >> .env.production
+          fi
+
+          if [ -n "$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" ]; then
+            echo "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION" >> .env.production
+          fi
+
+          # Server-side runtime secrets
+          if [ -n "$GOOGLE_PLACES_API_KEY" ]; then
+            echo "GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY" >> .env.production
+          fi
+
+          # Cache revalidation secrets (optional)
+          if [ -n "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET=$REVALIDATE_SECRET" >> .env.production
+            echo "✅ REVALIDATE_SECRET configured"
+          else
+            echo "::warning::REVALIDATE_SECRET not set. /api/revalidate endpoint will reject all requests."
+          fi
+
+          if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "CLOUDFLARE_ZONE_ID=$CLOUDFLARE_ZONE_ID" >> .env.production
+          fi
+
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN" >> .env.production
+          fi
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Generate service worker (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: yarn prebuild
+
+      - name: "Build Next.js application (E2E mode: disable GA)"
+        run: yarn build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
+          # Next.js automatically loads .env.production when NODE_ENV=production
+
+      - name: Start Next.js server (background)
+        run: |
+          yarn start &
+          echo $! > .next-server.pid
+          echo "Started Next.js server with PID $(cat .next-server.pid)"
+        env:
+          NODE_ENV: production
+          PORT: 3000
+          E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
+          # Server will load environment from .env.production
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Sanity check robots.txt
+        run: |
+          set -euo pipefail
+          robots="$(curl -fsS http://localhost:3000/robots.txt)"
+
+          echo "$robots" | grep -F -i "allow: /" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /_next/" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /api/" > /dev/null
+          echo "$robots" | grep -F -i "user-agent: gptbot" > /dev/null
+          echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
+
+          echo "✅ robots.txt looks correct"
+
+      - name: Run E2E tests
+        run: yarn test:e2e -c playwright.remote.config.ts --workers=2
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+
+      - name: Stop Next.js server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill $(cat .next-server.pid) || true
+            rm .next-server.pid
+          fi
+          pkill -f "yarn start" || true
+
+      - name: Clean build artifacts (before production deploy build)
+        run: |
+          rm -rf .next
+          rm -rf .sst .open-next
+          echo "✅ Cleaned build artifacts"
+
+      - name: Rebuild Next.js application (production deploy)
+        run: yarn build
+        env:
+          NODE_ENV: production
+          # Build again without E2E flags so GA is enabled in the deployed bundle
+
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4 # Pin: 6f51ac03b9356f520e9adb1b1b7802705f340c2b
+        with:
+          name: playwright-report-deploy
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Log SST and OpenNext versions
+        run: |
+          echo "📦 SST version: $(cat node_modules/sst/package.json | jq -r '.version')"
+          echo "📦 OpenNext version: $(cat node_modules/open-next/package.json | jq -r '.version')"
+
+      - name: Preview SST infrastructure changes
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          NODE_ENV: production
+        run: |
+          echo "🔍 Previewing infrastructure changes..."
+          npx sst diff --stage production || true
 
       - name: Deploy to AWS with SST
         env:
@@ -111,6 +298,81 @@ jobs:
           NODE_ENV: production
         run: |
           npx sst deploy --stage production
+
+      - name: Verify CloudFront distribution
+        if: success()
+        run: |
+          echo "🌐 Checking CloudFront edge response..."
+          HEADERS=$(curl -sI https://www.esdeveniments.cat 2>/dev/null | head -20)
+          echo "$HEADERS"
+
+          # Verify we're getting served from CloudFront
+          if echo "$HEADERS" | grep -qi "x-cache"; then
+            echo "✅ CloudFront is serving requests"
+          else
+            echo "::warning::CloudFront cache header not found"
+          fi
+
+      - name: Smoke test critical pages
+        if: success()
+        run: |
+          echo "🧪 Running smoke tests on critical pages..."
+
+          # Test homepage (SSR)
+          if curl -sf --max-time 10 https://www.esdeveniments.cat/ > /dev/null; then
+            echo "✅ Homepage OK"
+          else
+            echo "::error::Homepage failed to load"
+            exit 1
+          fi
+
+          # Test a place page (ISR)
+          if curl -sf --max-time 10 https://www.esdeveniments.cat/barcelona > /dev/null; then
+            echo "✅ Barcelona page OK"
+          else
+            echo "::warning::Barcelona page may be slow or unavailable"
+          fi
+
+          # Test robots.txt (route handler)
+          if curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:"; then
+            echo "✅ robots.txt OK"
+          else
+            echo "::warning::robots.txt may not be correctly configured"
+          fi
+
+          echo "✅ Smoke tests completed"
+
+      - name: Verify deployment health
+        if: success()
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          echo "⏳ Waiting for CloudFront propagation..."
+          sleep 30
+
+          echo "🔍 Checking deployment health..."
+          # Use authenticated endpoint for full diagnostics
+          HTTP_CODE=$(curl -s -o /tmp/health_response.json -w "%{http_code}" "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
+          HEALTH_RESPONSE=$(cat /tmp/health_response.json 2>/dev/null || echo '{"status":"error","message":"curl failed"}')
+
+          echo "HTTP Status: $HTTP_CODE"
+          # Redact sensitive info before logging
+          echo "Health response: $(echo "$HEALTH_RESPONSE" | jq 'del(.cache.s3.bucket, .cache.dynamodb.table)')"
+
+          # Check if cache is configured
+          S3_CONFIGURED=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.s3.configured // false')
+          DYNAMO_CONFIGURED=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.dynamodb.configured // false')
+          S3_ISSUE=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.s3.issue // "none"')
+          DYNAMO_ISSUE=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.dynamodb.issue // "none"')
+
+          if [ "$S3_CONFIGURED" != "true" ] || [ "$DYNAMO_CONFIGURED" != "true" ]; then
+            echo "::warning::Cache infrastructure may not be properly configured!"
+            echo "::warning::S3: configured=$S3_CONFIGURED, issue=$S3_ISSUE"
+            echo "::warning::DynamoDB: configured=$DYNAMO_CONFIGURED, issue=$DYNAMO_ISSUE"
+            echo "::warning::This can cause ISR/fetch cache errors. Run: npx sst refresh --stage production"
+          else
+            echo "✅ Cache infrastructure is properly configured"
+          fi
 
       - name: Deployment summary
         if: success()

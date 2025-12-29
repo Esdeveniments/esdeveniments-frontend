@@ -1,4 +1,4 @@
-import { ClockIcon } from "@heroicons/react/outline";
+import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
 import type { EventTemporalStatus } from "types/event-status";
 
 const contentClassName =

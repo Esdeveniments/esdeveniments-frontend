@@ -40,8 +40,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.[jt]s', '**/*.[jt]sx') }}
+            ${{ github.workspace }}/.next/cache
+          # Generate a new cache whenever packages or source files change.
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
       - name: Install dependencies
@@ -53,15 +55,93 @@ jobs:
       - name: Type check
         run: yarn typecheck
 
+      - name: Check i18n translations
+        run: yarn i18n:check
+
       - name: Run unit tests (Vitest)
         env:
           CI: true
         run: yarn test
 
+      - name: Generate service worker (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+        run: yarn prebuild
+
       - name: Build application
         env:
           NODE_ENV: production
         run: yarn build
+
+      - name: Analyze bundle sizes (JSON)
+        run: node scripts/analyze-bundles-cli.mjs --format json > bundle-sizes.json
+
+      - name: Compare bundle sizes against baseline
+        run: node scripts/compare-bundle-sizes.mjs --baseline bundle-size-baseline.json --current bundle-sizes.json
+
+      - name: Upload bundle sizes report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-sizes
+          path: bundle-sizes.json
+          retention-days: 14
+
+  lighthouse:
+    name: Lighthouse CI (regression tripwire)
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 25
+
+    env:
+      LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate service worker (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+        run: yarn prebuild
+
+      - name: Build application
+        env:
+          NODE_ENV: production
+        run: yarn build
+
+      - name: Run Lighthouse CI
+        env:
+          NODE_ENV: production
+        run: yarn lighthouse:ci
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouseci-report
+          path: .lighthouseci/
+          retention-days: 14
+          if-no-files-found: ignore
 
   e2e:
     name: E2E tests (Playwright)
@@ -98,15 +178,24 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Vercel pull (preview)
+      - name: Setup Vercel project configuration
         if: github.event_name == 'pull_request'
-        continue-on-error: true
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npx vercel@25 pull --environment=preview --token=${{ secrets.VERCEL_TOKEN }} || echo "Warning: vercel pull failed (project may need to be re-linked or IDs updated)"
+          # Create .vercel directory with project configuration
+          # This is required because .vercel is gitignored and won't exist on new branches
+          # The Vercel CLI reads this file to know which project to deploy to
+          mkdir -p .vercel
+          cat > .vercel/project.json << EOF
+          {
+            "projectId": "$VERCEL_PROJECT_ID",
+            "orgId": "$VERCEL_ORG_ID"
+          }
+          EOF
+          echo "Created .vercel/project.json with project configuration"
       - name: Deploy Preview to Vercel (CLI)
         if: github.event_name == 'pull_request'
         id: deploy_preview
@@ -117,16 +206,29 @@ jobs:
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
           # Provide server-only secret to the preview deployment so server HMAC signing works
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          # Vercel Deployment Protection bypass secret (optional but required for CI E2E against protected previews)
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           # Deploy and capture logs
           LOG=$(mktemp)
+          # Verify token is set (without exposing it)
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "Error: VERCEL_TOKEN is not set!" >&2
+            exit 1
+          fi
+          echo "Token is set (length: ${#VERCEL_TOKEN} chars)"
           # --env sets runtime env vars for this deployment only
           # --build-env sets build-time env vars for this deployment only
           # These flags apply env vars to the specific deployment, not the project
           # Quotes ensure proper handling of values with special characters
-          npx vercel@25 --token=${{ secrets.VERCEL_TOKEN }} \
+          # Pass token explicitly via --token flag (required by Vercel CLI in CI)
+          # VERCEL_ORG_ID and VERCEL_PROJECT_ID env vars should be automatically used by Vercel CLI
+          # along with the .vercel/project.json file
+          # --confirm avoids interactive prompts
+          npx vercel@25 --token="$VERCEL_TOKEN" \
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
+            --env VERCEL_AUTOMATION_BYPASS_SECRET="$VERCEL_AUTOMATION_BYPASS_SECRET" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --build-env HMAC_SECRET="$HMAC_SECRET" \
             --confirm | tee "$LOG"
@@ -143,12 +245,18 @@ jobs:
           echo "preview-url=$URL" >> $GITHUB_OUTPUT
       - name: Verify preview readiness
         if: ${{ env.PREVIEW_URL != '' }}
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           echo "Verifying deployment at ${{ env.PREVIEW_URL }}"
           MAX_RETRIES=5
           RETRY=0
           while [ $RETRY -lt $MAX_RETRIES ]; do
-            if curl -f "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null; then
+            RESP=$(curl -fsSL \
+              -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
+              -H "x-vercel-set-bypass-cookie: true" \
+              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || true)
+            if echo "$RESP" | head -c 1 | grep -q "{"; then
               echo "Preview is ready"
               exit 0
             fi
@@ -164,7 +272,8 @@ jobs:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
           NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
-        run: yarn test:e2e
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: yarn test:e2e -c playwright.remote.config.ts --workers=2
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

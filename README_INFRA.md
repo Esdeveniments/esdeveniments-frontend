@@ -45,41 +45,41 @@ Our infrastructure is defined in code. Key optimizations we applied:
 
 ### Environment Variables
 
-SST does **not** automatically load `.env.production`.
+**For GitHub Actions (CI/CD):**
+- The workflow automatically creates `.env.production` from GitHub Secrets
+- No manual `.env` file management needed
 
-- **Local Dev:** Uses `.env.local`
-- **Deployment:** You **must** have a `.env` file present in the root during deploy.
-
-  ```bash
-  # Copy production envs before deploying
-  cp .env.production .env
-  ```
+**For Local Development:**
+- Uses `.env.local` for local dev server (`yarn dev`)
+- For manual deployments, you need `.env.production` in the root
 
 ### Deploying to Production
 
-#### Automatic Deployment (Recommended)
+#### Automatic Deployment (Recommended) ✅
 
-**Automatic deployment is configured via GitHub Actions.** When you push or merge to `main`, the workflow (`.github/workflows/deploy-sst.yml`) will automatically:
+**Automatic deployment happens via GitHub Actions** when you push or merge to `main`:
 
-1. Run tests and build
-2. Deploy to AWS using SST
-3. Update CloudFront and Lambda
+1. ✅ **Cleans build cache** - Removes stale `.next`, `.sst`, and `.open-next` directories
+2. ✅ **Creates `.env.production`** - Builds environment file from GitHub Secrets with validation
+3. ✅ **Validates required secrets** - Fails fast if `NEXT_PUBLIC_API_URL`, `HMAC_SECRET`, or `SENTRY_DSN` are missing
+4. ✅ **Builds Next.js app** - Runs production build with correct environment variables
+5. ✅ **Deploys to AWS** - Updates Lambda functions, CloudFront, and S3 assets
+6. ✅ **Invalidates cache** - Ensures users get the latest version
 
-**No manual steps required!** Just push to `main` and it deploys automatically.
+**Workflow:** `.github/workflows/deploy-sst.yml`
 
-#### Manual Deployment
+**No manual steps required!** Just merge to `main` and deployment happens automatically.
 
-For manual deployments (local or CI):
+#### Manual Deployment (Local)
+
+For manual deployments from your local machine:
 
 ```bash
-# Copy production envs before deploying
-cp .env.production .env
-
-# Deploy
+# Ensure you have .env.production with all required variables
 npx sst deploy --stage production
 ```
 
-_This builds the Next.js app, packages it, creates the CloudFormation stack, and updates the Lambda/CloudFront._
+**Note:** The workflow sets `NODE_ENV=production`, so Next.js automatically loads `.env.production` during build.
 
 ---
 
@@ -161,6 +161,100 @@ We have an automated uptime monitor that runs every 15 minutes via GitHub Action
 
 **Note:** For AWS SES, you'll need to verify both the sender and recipient email addresses in the SES console before emails can be sent.
 
+#### AWS CloudWatch Alarms (Native AWS Monitoring)
+
+In addition to the GitHub Actions uptime monitor, you can set up AWS-native alarms for faster detection:
+
+**Existing Alarms (configured in `sst.config.ts`):**
+- ✅ **Lambda Errors Alarm**: Alerts when Lambda function errors exceed 10 in 1 minute
+- ✅ **Lambda Throttling Alarm**: Alerts when Lambda throttles exceed 5 in 1 minute
+- 📧 **SNS Topic**: All alarms send email to `ALARM_EMAIL` (defaults to `esdeveniments.catalunya.cat@gmail.com`)
+
+**To add CloudFront 5xx Error Alarm (Website Down Detection):**
+
+1. **Get CloudFront Distribution ID:**
+   - AWS Console → CloudFront → Distributions
+   - Find distribution for `esdeveniments.cat`
+   - Copy the Distribution ID (starts with `E...`)
+
+2. **Create CloudWatch Alarm:**
+   - AWS Console → CloudWatch → Alarms → Create alarm
+   - **Metric:** `AWS/CloudFront` → `5xxErrorRate`
+   - **Dimensions:** Select your CloudFront Distribution ID
+   - **Statistic:** `Average`
+   - **Period:** `5 minutes`
+   - **Threshold:** `Greater than 0` (alert on any 5xx errors)
+   - **SNS Topic:** Select `SiteAlarms` topic (created by SST)
+   - **Alarm name:** `CloudFront-5xx-Errors`
+
+3. **Optional: CloudWatch Synthetics Canary (Comprehensive Uptime Check):**
+   - AWS Console → CloudWatch → Synthetics → Create canary
+   - **Template:** `Heartbeat monitoring`
+   - **URL:** `https://www.esdeveniments.cat`
+   - **Frequency:** `Every 5 minutes`
+   - **Alarm:** Create alarm when canary fails → Select `SiteAlarms` SNS topic
+
+**Benefits of AWS Alarms:**
+- ⚡ **Faster detection**: Alarms trigger immediately (vs 15-minute GitHub Actions)
+- 🔔 **Multiple channels**: Can add SMS, Slack, PagerDuty integrations to SNS topic
+- 📊 **Better visibility**: CloudWatch dashboards show historical uptime trends
+- 💰 **Cost**: CloudWatch alarms are free; Synthetics Canary costs ~$0.0012 per run (~$0.10/month)
+
+---
+
+## 🔄 On-Demand Cache Revalidation
+
+When adding new towns/places to the backend, use the `/api/revalidate` endpoint to immediately clear all caches.
+
+### What Gets Cleared
+
+| Cache Layer | Mechanism |
+|-------------|-----------|
+| **Next.js Data Cache** | `revalidateTag()` |
+| **Lambda In-Memory Cache** | `clearPlacesCaches()`, etc. |
+| **Cloudflare CDN** | API prefix purge (if configured) |
+
+### Usage
+
+```bash
+curl -X POST https://www.esdeveniments.cat/api/revalidate \
+  -H "Content-Type: application/json" \
+  -H "x-revalidate-secret: YOUR_REVALIDATE_SECRET" \
+  -d '{"tags": ["places", "regions", "regions:options", "cities"]}'
+```
+
+### Response
+
+```json
+{
+  "revalidated": true,
+  "tags": ["places", "regions", "regions:options", "cities"],
+  "cloudflare": {
+    "purged": true,
+    "prefixes": ["/api/places", "/api/regions", "/api/regions/options", "/api/cities"]
+  },
+  "timestamp": "2025-12-07T08:00:00.000Z"
+}
+```
+
+### Allowed Tags
+
+Only these tags can be revalidated (security whitelist):
+- `places` - All place data
+- `regions` - Region list
+- `regions:options` - Region/city dropdown data
+- `cities` - City list
+- `categories` - Category list
+
+### Setting Up Cloudflare Token
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → **My Profile** → **API Tokens**
+2. Click **Create Token**
+3. Use template: **Custom token**
+4. Permissions: **Zone** → **Cache Purge** → **Purge**
+5. Zone Resources: **Include** → **Specific zone** → `esdeveniments.cat`
+6. Click **Create Token** and copy it
+
 ---
 
 ## 🚑 Troubleshooting
@@ -171,27 +265,67 @@ We have an automated uptime monitor that runs every 15 minutes via GitHub Action
 | **Site "Looping"**       | CloudFront Origin  | Ensure Cloudflare points to the **CloudFront URL** (`d123...cloudfront.net`), NOT the Lambda URL. |
 | **Slow Initial Load**    | Cold Start         | Check `sst.config.ts` has `warm: 5`. Check AWS Lambda "Provisioned Concurrency" metrics.          |
 | **Env Vars Missing**     | Build Process      | Did you deploy without `.env`? Re-run `npx sst deploy`.                                           |
+| **API returns "Unauthorized"** | Secret not deployed | Add secret to GitHub Secrets AND `deploy-sst.yml`. See checklist below. |
+| **robots.txt returns 403** | OpenNext Routing Priority | See [robots.txt Issues Documentation](../docs/robots-txt-issues.md) for complete troubleshooting guide. |
+
+> **📖 Detailed Documentation:** For the complete `robots.txt` troubleshooting journey, including all three issues encountered and the final workaround, see [`docs/robots-txt-issues.md`](../docs/robots-txt-issues.md).
 
 ---
 
 ## 🔐 GitHub Secrets Setup (for CI/CD)
 
-For automatic deployment to work, you need to configure these secrets in GitHub:
+For automatic deployment to work, configure these secrets in GitHub:
 
-1. Go to **Settings** → **Secrets and variables** → **Actions**
-2. Add the following secrets:
+> [!IMPORTANT]
+> **When adding new runtime environment variables**, you must do **BOTH**:
+> 1. Add the secret in GitHub: **Settings → Secrets → Actions → New secret**
+> 2. Update `.github/workflows/deploy-sst.yml` to include the secret in the env block AND write it to `.env.production`
+>
+> Missing either step will cause the variable to be undefined at runtime!
 
-| Secret Name                    | Description                                           | Required    |
-| ------------------------------ | ----------------------------------------------------- | ----------- |
-| `AWS_ACCESS_KEY_ID`            | AWS IAM user access key                               | ✅ Yes      |
-| `AWS_SECRET_ACCESS_KEY`        | AWS IAM user secret key                               | ✅ Yes      |
-| `HMAC_SECRET`                  | Server-side HMAC secret for API signing               | ✅ Yes      |
-| `NEXT_PUBLIC_API_URL`          | API URL (defaults to `https://api.esdeveniments.cat`) | ⚠️ Optional |
-| `NEXT_PUBLIC_GOOGLE_ANALYTICS` | Google Analytics ID                                   | ⚠️ Optional |
-| `NEXT_PUBLIC_GOOGLE_ADS`       | Google Ads ID                                         | ⚠️ Optional |
-| `SENTRY_DSN`                   | Sentry DSN for error tracking                         | ⚠️ Optional |
+### Required Secrets
 
-**Note:** The ACM certificate ARN is automatically fetched from SSM Parameter Store, so no secret needed for that.
+| Secret Name              | Description                                      | Example Value                           |
+| ------------------------ | ------------------------------------------------ | --------------------------------------- |
+| `AWS_ACCESS_KEY_ID`      | AWS IAM user access key for deployment           | `AKIA...`                               |
+| `AWS_SECRET_ACCESS_KEY`  | AWS IAM user secret key                          | `wJal...`                               |
+| `HMAC_SECRET`            | Server-side HMAC secret for API request signing  | (random secure string)                  |
+| `REVALIDATE_SECRET`      | Secret for on-demand cache revalidation API      | (random secure string, 32+ chars)       |
+| `SENTRY_DSN`             | Sentry DSN for server-side error tracking        | `https://...@sentry.io/...`             |
+| `NEXT_PUBLIC_API_URL`    | Production API backend URL                       | `https://api-pre.esdeveniments.cat/api` |
+| `DEEPL_API_KEY`          | DeepL API key for translation services           | (DeepL API authentication key)          |
+
+### Optional Secrets (Recommended)
+
+| Secret Name                          | Description                                | Used For            |
+| ------------------------------------ | ------------------------------------------ | ------------------- |
+| `CLOUDFLARE_ZONE_ID`                 | Cloudflare Zone ID for cache purging       | Cache invalidation  |
+| `CLOUDFLARE_API_TOKEN`               | Cloudflare API token (Zone.Cache Purge)    | Cache invalidation  |
+| `SENTRY_AUTH_TOKEN`                  | Sentry auth token for source map uploads   | Better error traces |
+| `NEXT_PUBLIC_GOOGLE_ANALYTICS`       | Google Analytics measurement ID            | Analytics           |
+| `NEXT_PUBLIC_GOOGLE_ADS`             | Google Ads conversion tracking ID          | Ads tracking        |
+| `NEXT_PUBLIC_GOOGLE_MAPS`            | Google Maps API key (client-side)          | Maps integration    |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console verification meta tag | SEO verification    |
+
+### Infrastructure Secrets (Optional)
+
+These are read by `sst.config.ts` at deploy time but have defaults:
+
+| Secret Name          | Description                          | Default Behavior                             |
+| -------------------- | ------------------------------------ | -------------------------------------------- |
+| `ACM_CERTIFICATE_ARN` | SSL certificate ARN                  | Fetched from SSM Parameter Store             |
+| `ALARM_EMAIL`        | Email for CloudWatch alarm alerts    | Defaults to `esdeveniments.catalunya.cat@gmail.com` |
+| `SENTRY_LAYER_ARN`   | Sentry Lambda layer ARN              | Defaults to eu-west-3 version 283            |
+
+### AWS SSM Parameter Store
+
+Some configuration is stored in AWS Systems Manager Parameter Store:
+
+- **Parameter:** `/esdeveniments-frontend/acm-certificate-arn`
+- **Type:** String
+- **Value:** ARN of the ACM certificate for `*.esdeveniments.cat`
+
+**Note:** If this parameter doesn't exist, `sst.config.ts` will fall back to `ACM_CERTIFICATE_ARN` environment variable.
 
 ---
 

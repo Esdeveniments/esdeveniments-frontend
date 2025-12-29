@@ -3,15 +3,20 @@ import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
+import { buildAlternateLinks } from "@utils/i18n-seo";
 
 export async function GET() {
   // Include news list pages and a rolling window of article detail URLs per hub
-  const listEntries: SitemapField[] = NEWS_HUBS.map((hub) => ({
-    loc: `${siteUrl}/noticies/${hub.slug}`,
-    lastmod: new Date().toISOString(),
-    changefreq: "daily",
-    priority: 0.6,
-  }));
+  const listEntries: SitemapField[] = NEWS_HUBS.map((hub) => {
+    const loc = `${siteUrl}/noticies/${hub.slug}`;
+    return {
+      loc,
+      lastmod: new Date().toISOString(),
+      changefreq: "daily",
+      priority: 0.6,
+      alternates: buildAlternateLinks(loc),
+    };
+  });
 
   const articleEntries: SitemapField[] = [];
 
@@ -23,11 +28,13 @@ export async function GET() {
       for (const item of items) {
         const lastDate = item.endDate || item.startDate;
         if (!item.slug || !lastDate) continue;
+        const loc = `${siteUrl}/noticies/${hub.slug}/${item.slug}`;
         articleEntries.push({
-          loc: `${siteUrl}/noticies/${hub.slug}/${item.slug}`,
+          loc,
           lastmod: new Date(lastDate).toISOString(),
           changefreq: "daily",
           priority: 0.7,
+          alternates: buildAlternateLinks(loc),
         });
       }
     } catch (e) {

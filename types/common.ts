@@ -1,9 +1,10 @@
 import type { CSSProperties } from "react";
-import type { StoreState } from "types/store";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
-import { CategorySummaryResponseDTO } from "types/api/category";
 import type { LinkProps } from "next/link";
+import { CategorySummaryResponseDTO } from "types/api/category";
+import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import type { CalendarUrls } from "types/calendar";
+import type { StoreState } from "types/store";
+import type { AppLocale } from "types/i18n";
 
 export interface Option {
   label: string;
@@ -11,6 +12,11 @@ export interface Option {
   placeType?: PlaceType;
   latitude?: number;
   longitude?: number;
+}
+
+export interface ByDateOption {
+  value: string;
+  labelKey: string;
 }
 
 // Type guard for Option (centralized for reuse in forms)
@@ -47,6 +53,12 @@ export interface NetworkInformation {
   saveData?: boolean;
 }
 
+// Google Analytics types
+export interface WindowWithGtag extends Window {
+  gtag: (...args: unknown[]) => void;
+  dataLayer: unknown[];
+}
+
 // Image optimization types
 export type NetworkQuality = "high" | "medium" | "low" | "unknown";
 
@@ -70,7 +82,7 @@ export interface PageData {
 }
 
 export interface GeneratePagesDataProps {
-  currentYear: string | number;
+  currentYear?: string | number;
   place?: string;
   byDate?: ByDateOptions;
   placeTypeLabel?: PlaceTypeAndLabel;
@@ -217,18 +229,103 @@ export interface CalendarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement>;
   hideText?: boolean;
   open?: boolean;
+  label?: string;
+}
+
+export interface CalendarProviderLabels {
+  google: string;
+  outlook: string;
+  other: string;
+  ariaAdd: string;
+}
+
+export interface ArticleLabels {
+  el: string;
+  la: string;
+  l: string;
+  els: string;
+  les: string;
+}
+
+export interface PrepositionLabels {
+  a: string;
+  al: string;
+  als: string;
+  aLa: string;
+  aLes: string;
+  aL: string;
+  de: string;
+  del: string;
+  dels: string;
+  deLa: string;
+  deLes: string;
+  deL: string;
+}
+
+export interface StringHelperLabels {
+  articles: ArticleLabels;
+  prepositions: PrepositionLabels;
+  capitalizePrepositions: string[];
+  feminineExceptions: string[];
+  masculineExceptions: string[];
+}
+
+export interface EventCopySentenceLabels {
+  verbSingular: string;
+  verbPlural: string;
+  dateRange: string;
+  dateSingle: string;
+  sentence: string;
+  timeSuffix: string;
+  placeSuffix: string;
+}
+
+export interface EventCopyFaqLabels {
+  whenQ: string;
+  whenA: string;
+  whereQ: string;
+  whereA: string;
+  isFreeQ: string;
+  isFreeYes: string;
+  isFreeNo: string;
+  durationQ: string;
+  durationA: string;
+  moreInfoQ: string;
+  moreInfoA: string;
+}
+
+export interface EventCopyLabels {
+  sentence: EventCopySentenceLabels;
+  faq: EventCopyFaqLabels;
+}
+
+export interface OpeningHoursLabels {
+  openNow: string;
+  closesAt: string;
+  closedNow: string;
+  opensAt: string;
+  unknown: string;
+  overnight: string;
+  inferred: string;
+  confirmed: string;
+  openConfirmed: string;
+  openProbable: string;
+  closed: string;
+  unconfirmed: string;
 }
 
 export interface CalendarListProps {
   onClick: () => void;
   getUrls: () => CalendarUrls;
   title: string;
+  labels: CalendarProviderLabels;
 }
 
 export interface CardProps {
   event: ListEvent;
   isLoading?: boolean;
   isPriority?: boolean;
+  initialIsFavorite?: boolean;
 }
 
 export interface CardHorizontalProps {
@@ -241,6 +338,7 @@ export interface CardHorizontalServerProps {
   event: EventSummaryResponseDTO;
   isPriority?: boolean;
   useDetailTimeFormat?: boolean; // Use phrase format for times (e.g., "De 9.00 a 11.30") instead of numeric format
+  initialIsFavorite?: boolean;
 }
 
 export interface CardShareButtonProps {
@@ -318,8 +416,8 @@ export interface RssEvent {
 
 export interface MonthStaticPathParams {
   town: string;
-  year?: string;
-  month?: string;
+  year: string;
+  month: string;
   [key: string]: string | undefined;
 }
 
@@ -362,6 +460,7 @@ export interface ImageComponentProps {
   image?: string;
   className?: string;
   priority?: boolean;
+  fetchPriority?: "high" | "auto" | "low";
   alt?: string;
   location?: string;
   region?: string;
@@ -456,6 +555,7 @@ export interface WebPageOptions {
   breadcrumbs?: BreadcrumbItem[];
   isPartOf?: string;
   mainContentOfPage?: Record<string, unknown>;
+  locale?: AppLocale;
 }
 
 export interface CollectionPageOptions {
@@ -465,6 +565,7 @@ export interface CollectionPageOptions {
   breadcrumbs?: BreadcrumbItem[];
   mainEntity?: Record<string, unknown>;
   numberOfItems?: number;
+  locale?: AppLocale;
 }
 
 // E2E test component props

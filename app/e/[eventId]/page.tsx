@@ -5,27 +5,26 @@ import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "../../../lib/meta";
-import { redirect } from "next/navigation";
-import { extractUuidFromSlug } from "@utils/string-helpers";
+import { redirect, notFound } from "next/navigation";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
 import ViewCounter from "@components/ui/viewCounter";
 import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
-import { computeTemporalStatus } from "@utils/event-status";
+import { buildEventStatusLabels, computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
+import type { EventCopyLabels } from "types/common";
 import { getFormattedDate } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
+import Breadcrumbs from "@components/ui/common/Breadcrumbs";
+import type { BreadcrumbNavItem } from "types/props";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
-import NoEventFound from "components/ui/common/noEventFound";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
-import {
-  SpeakerphoneIcon,
-  InformationCircleIcon as InfoIcon,
-} from "@heroicons/react/outline";
+import SpeakerphoneIcon from "@heroicons/react/outline/esm/SpeakerphoneIcon";
+import InformationCircleIcon from "@heroicons/react/outline/esm/InformationCircleIcon";
+const InfoIcon = InformationCircleIcon;
 import EventDetailsSection from "./components/EventDetailsSection";
-import { RestaurantPromotionSection } from "@components/ui/restaurantPromotion";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import {
   buildEventIntroText,
@@ -33,28 +32,34 @@ import {
   buildFaqJsonLd,
   formatPlaceName,
 } from "@utils/helpers";
+import { generateHowToSchema } from "@utils/schema-helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import ClientEventClient from "./components/ClientEventClient";
-import AdArticleIsland from "./components/AdArticleIsland";
 import EventLocation from "./components/EventLocation";
+import EventWeather from "./components/EventWeather";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import type { AppLocale } from "types/i18n";
+import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import FavoriteButton from "@components/ui/common/favoriteButton";
+
+// Lazy load below-the-fold client components via client component wrappers
+// This allows us to use ssr: false in Next.js 16 (required for client components)
+import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
+import LazyAdArticleIsland from "./components/LazyAdArticleIsland";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
-  let event = await getEventBySlug(slug);
-  if (!event) {
-    // Defensive: try fetching by trailing id (legacy slugs)
-    const id = extractUuidFromSlug(slug);
-    if (id && id !== slug) {
-      event = await getEventBySlug(id);
-    }
-  }
+  const locale = await getLocaleSafely();
+  const event = await getEventBySlug(slug);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
-  return generateEventMetadata(event);
+  const canonical = `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`;
+  return generateEventMetadata(event, canonical, undefined, locale);
 }
 
 // Main page component
@@ -65,27 +70,24 @@ export default async function EventPage({
 }) {
   const slug = (await params).eventId;
 
+  const locale = await getLocaleSafely();
+
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 
-  let event: EventDetailResponseDTO | null = await getEventBySlug(slug);
-  if (!event) {
-    // Defensive: try fetching by trailing id (legacy slugs)
-    const id = extractUuidFromSlug(slug);
-    if (id && id !== slug) {
-      event = await getEventBySlug(id);
-    }
-  }
-  if (!event) return <NoEventFound />;
-  if (event.title === "CANCELLED") return <NoEventFound />;
+  const event: EventDetailResponseDTO | null = await getEventBySlug(slug);
+  if (!event) notFound();
+  if (event.title === "CANCELLED") notFound();
 
-  // If the requested slug doesn't match the canonical one, optionally redirect
-  // to consolidate SEO. Gate with env to avoid surprises in rollout.
-  const enforceCanonicalRedirect =
-    process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "1" ||
-    process.env.CANONICAL_REDIRECT === "1";
-  if (enforceCanonicalRedirect && slug !== event.slug && event.slug) {
-    redirect(`/e/${event.slug}`);
+  // If the requested slug doesn't match the canonical one, redirect
+  // to consolidate SEO. This prevents duplicate content issues and ensures
+  // all traffic goes to the canonical URL for better rankings.
+  // Default to enabled unless explicitly disabled via environment variable.
+  const disableCanonicalRedirect =
+    process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "0" ||
+    process.env.CANONICAL_REDIRECT === "0";
+  if (!disableCanonicalRedirect && slug !== event.slug && event.slug) {
+    redirect(withLocalePath(`/e/${event.slug}`, locale));
   }
 
   const eventSlug = event?.slug ?? "";
@@ -105,18 +107,76 @@ export default async function EventPage({
   const eventDateString = event.endDate
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
-  const jsonData = generateJsonData({ ...event });
+  const jsonData = generateJsonData({ ...event }, locale);
+  const tStatus = await getTranslations({ locale, namespace: "Utils.EventStatus" });
+  const tEvent = await getTranslations({ locale, namespace: "Components.EventPage" });
+  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tCopy = await getTranslations({ locale, namespace: "Utils.EventCopy" });
+  const tCategories = await getTranslations({
+    locale,
+    namespace: "Config.Categories",
+  });
+  const tEventsAround = await getTranslations({
+    locale,
+    namespace: "Components.EventsAround",
+  });
+  const primaryCategoryLabel = primaryCategorySlug
+    ? getLocalizedCategoryLabelFromConfig(
+      primaryCategorySlug,
+      event.categories?.[0]?.name || primaryCategorySlug,
+      tCategories
+    )
+    : "";
+  const statusLabels = buildEventStatusLabels(tStatus);
+  const eventCopyLabels: EventCopyLabels = {
+    sentence: {
+      verbSingular: tCopy("sentence.verbSingular"),
+      verbPlural: tCopy("sentence.verbPlural"),
+      dateRange: tCopy("sentence.dateRange", {
+        start: "{start}",
+        end: "{end}",
+      }),
+      dateSingle: tCopy("sentence.dateSingle", {
+        nameDay: "{nameDay}",
+        start: "{start}",
+      }),
+      sentence: tCopy("sentence.sentence", {
+        title: "{title}",
+        verb: "{verb}",
+        date: "{date}",
+        time: "{time}",
+        place: "{place}",
+      }),
+      timeSuffix: tCopy("sentence.timeSuffix", { time: "{time}" }),
+      placeSuffix: tCopy("sentence.placeSuffix", { place: "{place}" }),
+    },
+    faq: {
+      whenQ: tCopy("faq.whenQ"),
+      whenA: tCopy("faq.whenA", { date: "{date}", time: "{time}" }),
+      whereQ: tCopy("faq.whereQ"),
+      whereA: tCopy("faq.whereA", { place: "{place}" }),
+      isFreeQ: tCopy("faq.isFreeQ"),
+      isFreeYes: tCopy("faq.isFreeYes"),
+      isFreeNo: tCopy("faq.isFreeNo"),
+      durationQ: tCopy("faq.durationQ"),
+      durationA: tCopy("faq.durationA", { duration: "{duration}" }),
+      moreInfoQ: tCopy("faq.moreInfoQ"),
+      moreInfoA: tCopy("faq.moreInfoA"),
+    },
+  };
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
     event.endDate,
     undefined,
     event.startTime,
-    event.endTime
+    event.endTime,
+    statusLabels
   );
 
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+  const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
     event.startDate,
-    event.endDate
+    event.endDate,
+    locale
   );
 
   const statusMeta = {
@@ -124,17 +184,25 @@ export default async function EventPage({
     label: temporalStatus.label,
   };
 
+  const shouldShowFavoriteButton = Boolean(event.slug);
+  const favoriteLabels = {
+    add: tCard("favoriteAddAria"),
+    remove: tCard("favoriteRemoveAria"),
+  };
+
   // Build intro and FAQ via shared utils (no assumptions)
-  const introText = buildEventIntroText(event);
-  const faqItems = buildFaqItems(event);
+  const introText = await buildEventIntroText(event, eventCopyLabels, locale);
+  const faqItems = await buildFaqItems(event, eventCopyLabels, locale);
   const faqJsonLd = buildFaqJsonLd(faqItems);
 
   // Prepare place data for LatestNewsSection (streamed separately)
   const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
   const placeLabel = cityName || regionName || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
-  const newsHref =
-    placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`;
+  const newsHref = withLocalePath(
+    placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`,
+    locale
+  );
 
   // Generate JSON-LD for related events (server-side for SEO)
   const relatedEventsJsonData =
@@ -154,7 +222,7 @@ export default async function EventPage({
               return {
                 "@type": "ListItem",
                 position: index + 1,
-                item: generateJsonData(relatedEvent),
+                item: generateJsonData(relatedEvent, locale),
               };
             } catch (err) {
               console.error(
@@ -168,6 +236,18 @@ export default async function EventPage({
           .filter(Boolean),
       }
       : null;
+
+  const tHowTo = await getTranslations("Components.HowTo");
+  const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
+  const howToSteps = [
+    tHowTo("step1"),
+    tHowTo("step2"),
+    tHowTo("step3"),
+  ];
+  const howToJsonData = generateHowToSchema(
+    tHowTo("name", { title: title || "Esdeveniment" }),
+    howToSteps
+  );
 
   // Generate BreadcrumbList JSON-LD
   // Ensure breadcrumb name is never empty (required by Google structured data)
@@ -220,11 +300,32 @@ export default async function EventPage({
           data={relatedEventsJsonData}
         />
       )}
+      {/* HowTo JSON-LD for SEO strategy 5 */}
+      {howToJsonData && (
+        <JsonLdServer id={`howto-${event.id}`} data={howToJsonData} />
+      )}
       {/* Breadcrumbs JSON-LD */}
       <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
+            {/* Visible Breadcrumbs for internal linking */}
+            <Breadcrumbs
+              items={[
+                { label: tBreadcrumbs("home"), href: "/" },
+                ...(placeSlug !== "catalunya"
+                  ? [{ label: placeLabel, href: `/${placeSlug}` }]
+                  : []),
+                ...(primaryCategorySlug
+                  ? [{
+                    label: primaryCategoryLabel,
+                    href: `/${placeSlug}/${primaryCategorySlug}`,
+                  }]
+                  : []),
+                { label: title },
+              ] as BreadcrumbNavItem[]}
+              className="px-section-x pt-4"
+            />
             {/* Event Media Hero + Share cluster */}
             <div className="w-full flex flex-col">
               <div className="w-full">
@@ -243,7 +344,16 @@ export default async function EventPage({
                   regionName={regionName}
                   postalCode={event.city?.postalCode || ""}
                 />
-                <div className="ml-element-gap-sm">
+                <div className="ml-element-gap-sm flex items-center gap-2">
+                  {shouldShowFavoriteButton && (
+                    <FavoriteButton
+                      eventSlug={event.slug}
+                      eventId={event.id ? String(event.id) : undefined}
+                      eventTitle={event.title}
+                      initialIsFavorite={false}
+                      labels={favoriteLabels}
+                    />
+                  )}
                   <ViewCounter visits={event.visits} />
                 </div>
               </div>
@@ -259,6 +369,8 @@ export default async function EventPage({
               location={cityName || regionName}
               introText={introText}
               locationType="town"
+              locale={locale as AppLocale}
+              showTranslate={temporalStatus.state !== "past"}
             />
             {/* Location (SSR for SEO) with client map toggle */}
             <EventLocation
@@ -270,10 +382,17 @@ export default async function EventPage({
             />
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (
-              <EventsAroundSection
-                events={event.relatedEvents}
-                title="Esdeveniments relacionats"
-              />
+              <div
+                data-analytics-container="true"
+                data-analytics-context="related_events"
+                data-analytics-source-event-id={event.id ? String(event.id) : ""}
+                data-analytics-source-event-slug={event.slug || ""}
+              >
+                <EventsAroundSection
+                  events={event.relatedEvents}
+                  title={tEventsAround("relatedEvents")}
+                />
+              </div>
             )}
             {/* Event Categories - Server-side rendered for SEO */}
             <EventCategories categories={event.categories} place={placeSlug} />
@@ -285,6 +404,10 @@ export default async function EventPage({
               formattedEnd={formattedEnd}
               nameDay={nameDay}
             />
+            {/* Weather - Server component (converted from client for better performance) */}
+            {temporalStatus.state !== "past" && (
+              <EventWeather weather={event.weather} />
+            )}
             {/* Past Event Banner (high visibility) - server component */}
             {temporalStatus.state === "past" && (
               <PastEventBanner
@@ -296,7 +419,7 @@ export default async function EventPage({
                 primaryCategorySlug={primaryCategorySlug}
               />
             )}
-            <ClientEventClient event={event} temporalStatus={temporalStatus} />
+            <ClientEventClient event={event} />
             {/* Dynamic FAQ Section (SSR, gated by data) */}
             {faqItems.length >= 2 && (
               <section className="w-full" aria-labelledby="event-faq">
@@ -305,7 +428,7 @@ export default async function EventPage({
                     headingId="event-faq"
                     Icon={InfoIcon}
                     iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-                    title="Preguntes freqüents"
+                    title={tEvent("faqTitle")}
                     titleClassName="heading-2"
                   />
                   <dl className="space-y-element-gap px-section-x">
@@ -323,28 +446,32 @@ export default async function EventPage({
                 </div>
               </section>
             )}
-            {/* Restaurant Promotion Section */}
-            <RestaurantPromotionSection
-              eventId={event.id}
-              eventLocation={event.location}
-              eventLat={event.city?.latitude}
-              eventLng={event.city?.longitude}
-              eventStartDate={event.startDate}
-              eventEndDate={event.endDate}
-              eventStartTime={event.startTime}
-              eventEndTime={event.endTime}
-            />
-            {/* Final Ad Section */}
+            {/* Restaurant Promotion Section - Lazy loaded (below fold, uses intersection observer) */}
+            <Suspense fallback={null}>
+              <LazyRestaurantPromotion
+                eventId={event.id}
+                eventLocation={event.location}
+                eventLat={event.city?.latitude}
+                eventLng={event.city?.longitude}
+                eventStartDate={event.startDate}
+                eventEndDate={event.endDate}
+                eventStartTime={event.startTime}
+                eventEndTime={event.endTime}
+              />
+            </Suspense>
+            {/* Final Ad Section - Lazy loaded (ads should not block initial render) */}
             <div className="w-full h-full min-h-[250px]">
               <div className="w-full flex flex-col gap-element-gap">
                 <SectionHeading
                   Icon={SpeakerphoneIcon}
                   iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-                  title="Contingut patrocinat"
+                  title={tEvent("sponsored")}
                   titleClassName="heading-2"
                 />
                 <div className="px-section-x">
-                  <AdArticleIsland slot="9643657007" />
+                  <Suspense fallback={<div className="w-full h-[250px] bg-muted animate-pulse rounded" />}>
+                    <LazyAdArticleIsland slot="9643657007" />
+                  </Suspense>
                 </div>
               </div>
             </div>
@@ -367,5 +494,3 @@ export default async function EventPage({
     </>
   );
 }
-
-export const revalidate = 1800;

@@ -1,6 +1,8 @@
 import EventCardSkeleton from "./EventCardSkeleton";
+import { getTranslations } from "next-intl/server";
 
-export default function HomePageSkeleton() {
+export default async function HomePageSkeleton() {
+  const t = await getTranslations("Components.HomePageSkeleton");
   return (
     <div
       className="w-full bg-background overflow-hidden"
@@ -45,7 +47,7 @@ export default function HomePageSkeleton() {
 
             {/* Badge navigation skeleton */}
             <nav
-              aria-label="Vegeu també"
+              aria-label={t("seeAlso")}
               className="mt-element-gap-sm mb-element-gap-sm"
             >
               <div className="flex gap-element-gap">

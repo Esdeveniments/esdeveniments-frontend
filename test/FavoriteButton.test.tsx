@@ -1,0 +1,220 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import Link from "next/link";
+import type { SVGProps } from "react";
+import { SWRConfig } from "swr";
+
+const fetchMock = vi.fn<
+  (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ) => Promise<{ ok: boolean; status: number; json?: () => Promise<unknown> }>
+>();
+
+const refreshMock = vi.fn<() => void>();
+
+const sendGoogleEventMock = vi.fn<
+  (event: string, obj: Record<string, unknown>) => void
+>();
+
+vi.mock("@i18n/routing", () => ({
+  useRouter: () => ({ refresh: refreshMock }),
+  usePathname: () => "/preferits",
+}));
+
+vi.mock("@utils/analytics", () => ({
+  sendGoogleEvent: sendGoogleEventMock,
+}));
+
+vi.mock("@heroicons/react/solid/esm/HeartIcon", () => ({
+  default: (props: SVGProps<SVGSVGElement>) => (
+    <svg data-testid="heart-solid" {...props} />
+  ),
+}));
+
+vi.mock("@heroicons/react/outline/esm/HeartIcon", () => ({
+  default: (props: SVGProps<SVGSVGElement>) => (
+    <svg data-testid="heart-outline" {...props} />
+  ),
+}));
+
+describe("FavoriteButton", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (globalThis as unknown as { fetch?: unknown }).fetch = fetchMock;
+  });
+
+  it("renders with correct aria state and toggles on click", async () => {
+    fetchMock
+      // Initial hydration: GET /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: [] }),
+      })
+      // Toggle: POST /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: ["test-event"] }),
+      });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
+    );
+
+    const button = screen.getByRole("button", { name: "Afegeix a preferits" });
+    expect(button).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByTestId("heart-outline")).toBeInTheDocument();
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/favorites",
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(refreshMock).toHaveBeenCalled();
+    });
+
+    expect(screen.getByRole("button", { name: "Elimina de preferits" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByTestId("heart-solid")).toBeInTheDocument();
+  });
+
+  it("rolls back optimistic state when server action fails", async () => {
+    fetchMock
+      // Initial hydration: GET /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: [] }),
+      })
+      // Toggle: POST /api/favorites
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({}),
+      });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+
+    const parentClick = vi.fn();
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <Link href="/e/test-event" onClick={parentClick}>
+          <FavoriteButton
+            eventSlug="test-event"
+            initialIsFavorite={false}
+            labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+          />
+        </Link>
+      </SWRConfig>
+    );
+
+    const button = screen.getByRole("button", { name: "Afegeix a preferits" });
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/favorites",
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Afegeix a preferits" })).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      );
+    });
+
+    expect(parentClick).not.toHaveBeenCalled();
+  });
+
+  it("shows a friendly message when MAX_FAVORITES_REACHED and rolls back", async () => {
+    fetchMock
+      // Initial hydration: GET /api/favorites
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: [] }),
+      })
+      // Toggle: POST /api/favorites
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        json: async () => ({
+          ok: false,
+          error: "MAX_FAVORITES_REACHED",
+          maxFavorites: 10,
+        }),
+      });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
+    );
+
+    const button = screen.getByRole("button", { name: "Afegeix a preferits" });
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/favorites",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Afegeix a preferits" })).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      );
+    });
+
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "favorites_limit_reached",
+      expect.objectContaining({
+        action: "add",
+        max_favorites: 10,
+        event_slug: "test-event",
+      })
+    );
+
+    expect(
+      screen.getByText(/Has arribat al límit de 10 preferits/i)
+    ).toBeInTheDocument();
+  });
+});

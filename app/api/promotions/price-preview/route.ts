@@ -6,8 +6,6 @@ import {
 } from "types/api/restaurant";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 export async function POST(req: NextRequest) {
   try {
     const body: PricePreviewRequest = await req.json();

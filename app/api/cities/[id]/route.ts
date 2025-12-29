@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { fetchCityByIdExternal } from "@lib/api/cities-external";
 import { handleApiError } from "@utils/api-error-handler";
 
-export const runtime = "nodejs";
-
 export async function GET(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }

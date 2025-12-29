@@ -6,7 +6,7 @@ import {
   getOptimalImageQuality,
   getOptimalImageSizes,
 } from "@utils/image-quality";
-import { withImageCacheKey } from "@utils/image-cache";
+import { buildOptimizedImageUrl } from "@utils/image-cache";
 
 // Server-side compatible Image component
 function ImageServer({
@@ -14,6 +14,7 @@ function ImageServer({
   image,
   className = "w-full h-full flex justify-center items-center",
   priority = false,
+  fetchPriority,
   alt = title,
   location,
   region,
@@ -41,7 +42,8 @@ function ImageServer({
     customQuality: quality,
   });
 
-  const finalImageSrc = cacheKey ? withImageCacheKey(image, cacheKey) : image;
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 
   return (
     <div
@@ -49,10 +51,11 @@ function ImageServer({
       style={{
         position: "relative",
         aspectRatio: "500 / 260", // Prevent CLS by reserving space
+        maxWidth: "100%", // Ensure image doesn't exceed container
       }}
     >
       <NextImage
-        className="object-cover"
+        className="object-cover w-full h-full"
         src={finalImageSrc}
         alt={alt}
         width={500}
@@ -61,12 +64,16 @@ function ImageServer({
         quality={imageQuality}
         style={{
           objectFit: "cover",
+          width: "100%",
           height: "auto", // Maintain aspect ratio
+          maxWidth: "100%", // Ensure image respects container constraints
         }}
         priority={priority}
-        fetchPriority={priority ? "high" : "auto"}
+        fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
         sizes={getOptimalImageSizes(context)}
-        unoptimized={env === "dev"}
+        // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
+        // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
+        unoptimized={shouldBypassOptimizer || env === "dev"}
       />
     </div>
   );

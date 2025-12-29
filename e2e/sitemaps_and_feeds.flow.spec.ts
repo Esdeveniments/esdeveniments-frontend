@@ -8,7 +8,7 @@ test.describe("Sitemaps and feed", () => {
   test("sitemap index renders", async ({ page }) => {
     await page.goto("/sitemap", { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("sitemap-page")).toBeVisible();
-    await expect(page.getByTestId("sitemap-title")).toBeVisible();
+    await expect(page.getByTestId("sitemap-title").first()).toBeVisible();
   });
 
   test("sitemap displays regions and cities data", async ({ page }) => {
@@ -16,7 +16,7 @@ test.describe("Sitemaps and feed", () => {
     
     // Verify page structure
     await expect(page.getByTestId("sitemap-page")).toBeVisible();
-    await expect(page.getByTestId("sitemap-title")).toBeVisible();
+    await expect(page.getByTestId("sitemap-title").first()).toBeVisible();
     
     // Verify regions section has data
     const regionLinks = page.getByTestId("sitemap-region-link");
@@ -55,27 +55,52 @@ test.describe("Sitemaps and feed", () => {
     });
   });
 
-  test("server place sitemap responds", async ({ request }) => {
+  test("server place sitemap responds with sitemap index", async ({
+    request,
+  }) => {
     const res = await request.get("/server-place-sitemap.xml");
+    expect(res.status()).toBe(200);
+    const text = await res.text();
+
+    // server-place-sitemap.xml now returns a sitemap index pointing to chunked sitemaps
+    expect(text).toContain("<sitemapindex");
+    expect(text).toContain("/sitemap-places/");
+
+    const parser = new XMLParser();
+    const xmlObj = parser.parse(text);
+    expect(xmlObj.sitemapindex).toBeDefined();
+
+    const sitemaps = Array.isArray(xmlObj.sitemapindex.sitemap)
+      ? xmlObj.sitemapindex.sitemap
+      : [xmlObj.sitemapindex.sitemap];
+
+    expect(sitemaps.length).toBeGreaterThan(0);
+
+    // Check lastmod dates are not 2023
+    sitemaps.forEach((sitemap: { lastmod?: string }) => {
+      expect(sitemap.lastmod).toBeDefined();
+      expect(sitemap.lastmod).not.toContain("2023");
+    });
+  });
+
+  test("chunked place sitemap responds with URLs", async ({ request }) => {
+    const res = await request.get("/sitemap-places/1.xml");
     expect(res.status()).toBe(200);
     const text = await res.text();
 
     const urls = parseAndValidateSitemap(text);
 
-    if (urls.length > 0) {
-      // Check presence of key place URLs if any
-      const urlLocs = urls.map((url: { loc: string }) => url.loc);
-      if (urlLocs.length > 0) {
-        // At least some place URLs should be present
-        expect(urlLocs.length).toBeGreaterThan(0);
-      }
+    // Check presence of place URLs
+    expect(urls.length).toBeGreaterThan(0);
 
-      // Check lastmod dates are not 2023
-      urls.forEach((url: { lastmod?: string }) => {
-        expect(url.lastmod).toBeDefined();
-        expect(url.lastmod).not.toContain("2023");
-      });
-    }
+    const urlLocs = urls.map((url: { loc: string }) => url.loc);
+    expect(urlLocs.length).toBeGreaterThan(0);
+
+    // Check lastmod dates are not 2023
+    urls.forEach((url: { lastmod?: string }) => {
+      expect(url.lastmod).toBeDefined();
+      expect(url.lastmod).not.toContain("2023");
+    });
   });
 
   test("sitemap index does not contain self-references", async ({

@@ -3,10 +3,10 @@ import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
-import { hasNewsForPlace } from "@lib/api/news";
 import {
   buildPageMeta,
   generateItemListStructuredData,
+  generateWebPageSchema,
 } from "@components/partials/seo-meta";
 import type {
   PlaceStaticPathParams,
@@ -20,7 +20,6 @@ import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
-  isValidPlace,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
@@ -29,10 +28,14 @@ import { topStaticGenerationPlaces } from "@utils/priority-places";
 import type { PlacePageEventsResult } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
+import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { addLocalizedDateFields } from "@utils/mappers/event";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import { getRobotsForListingPage } from "@utils/robots-listings";
 
-export const revalidate = 300;
-// Allow dynamic params not in generateStaticParams (default behavior, explicit for clarity)
-export const dynamicParams = true;
 // Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
 
@@ -46,10 +49,13 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
+  const rawSearchParams = await searchParams;
 
   const validation = validatePlaceForMetadata(place);
   if (!validation.isValid) {
@@ -60,46 +66,47 @@ export async function generateMetadata({
     place
   );
   const pageData: PageData = await generatePagesData({
-    currentYear: new Date().getFullYear(),
     place,
     byDate: "",
     placeTypeLabel,
   });
+  const locale = await getLocaleSafely();
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
+    locale,
+    robotsOverride: getRobotsForListingPage(rawSearchParams),
   });
 }
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<PlaceStaticPathParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { place } = await params;
+  const rawSearchParams = await searchParams;
+  const locale = await getLocaleSafely();
 
-  // Return 404 for invalid places (e.g., sitemap files) instead of throwing
-  if (!isValidPlace(place)) {
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
     notFound();
   }
-
-  validatePlaceOrThrow(place);
 
   const categoriesPromise = fetchCategories().catch((error) => {
     console.error("Error fetching categories:", error);
     return [] as CategorySummaryResponseDTO[];
   });
-  const hasNewsPromise = hasNewsForPlace(place).catch((error) => {
-    console.error("Error checking news availability:", error);
-    return false;
-  });
   const placeShellDataPromise = (async () => {
+    const t = await getTranslations({ locale, namespace: "App.Publish" });
     try {
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);
       const pageData: PageData = await generatePagesData({
-        currentYear: new Date().getFullYear(),
         place,
         byDate: "",
         placeTypeLabel,
@@ -107,29 +114,29 @@ export default async function Page({
       return { placeTypeLabel, pageData };
     } catch (error) {
       console.error("Place page: unable to build shell data", error);
-      return buildFallbackPlaceShellData(place);
+      return await buildFallbackPlaceShellData(place, t("noEventsFound"));
     }
   })();
 
-  const eventsPromise = buildPlaceEventsPromise({ place });
+  const eventsPromise = buildPlaceEventsPromise({ place, locale });
 
   // Await categories for late existence check only
   const categories = await categoriesPromise;
 
   // Late existence check to preserve UX without creating an enumeration oracle
-  if (place !== "catalunya") {
-    let placeExists: boolean | undefined;
-    try {
-      placeExists = (await fetchPlaceBySlug(place)) !== null;
-    } catch {
-      // ignore transient errors
-    }
-    if (placeExists === false) {
-      const target = buildFallbackUrlForInvalidPlace({
-        rawSearchParams: {},
-      });
-      redirect(target);
-    }
+  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
+    place,
+    locale,
+    rawSearchParams,
+    buildTargetPath: (alias) => `/${alias}`,
+    buildFallbackUrlForInvalidPlace: () =>
+      buildFallbackUrlForInvalidPlace({
+        rawSearchParams,
+      }),
+    fetchPlaceBySlug,
+  });
+  if (placeRedirectUrl) {
+    redirect(placeRedirectUrl);
   }
 
   return (
@@ -137,41 +144,59 @@ export default async function Page({
       eventsPromise={eventsPromise}
       shellDataPromise={placeShellDataPromise}
       place={place}
-      hasNewsPromise={hasNewsPromise}
       categories={categories}
+      webPageSchemaFactory={(pageData) =>
+        generateWebPageSchema({
+          title: pageData.title,
+          description: pageData.metaDescription,
+          url: pageData.canonical,
+          locale,
+        })
+      }
     />
   );
 }
 
-function buildFallbackPlaceShellData(place: string): {
+async function buildFallbackPlaceShellData(
+  place: string,
+  notFoundDescription: string
+): Promise<{
   placeTypeLabel: PlaceTypeAndLabel;
   pageData: PageData;
-} {
+}> {
+  const tFallback = await getTranslations("App.PlaceFallback");
   const fallbackPlaceTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
   const pathSegment = place === "catalunya" ? "" : `/${place}`;
   const canonical = `${siteUrl}${pathSegment}`;
-  const title = place === "catalunya" ? "Esdeveniments a Catalunya" : `Esdeveniments a ${place}`;
+  const titleSuffix =
+    place === "catalunya"
+      ? tFallback("catalunyaSuffix")
+      : tFallback("placeSuffix", { place });
+  const descriptionSuffix =
+    place === "catalunya" ? "" : tFallback("placeSuffix", { place });
+
   return {
     placeTypeLabel: fallbackPlaceTypeLabel,
     pageData: {
-      title,
-      subTitle: `Descobreix plans i activitats${place === "catalunya" ? "" : ` a ${place}`}.`,
-      metaTitle: `${title} | Esdeveniments.cat`,
-      metaDescription: `Explora els millors plans i activitats${
-        place === "catalunya" ? "" : ` a ${place}`
-      }.`,
+      title: tFallback("title", { suffix: titleSuffix }),
+      subTitle: tFallback("subTitle", { suffix: descriptionSuffix }),
+      metaTitle: tFallback("metaTitle", { suffix: titleSuffix }),
+      metaDescription: tFallback("metaDescription", {
+        suffix: descriptionSuffix,
+      }),
       canonical,
-      notFoundTitle: "Sense esdeveniments disponibles",
-      notFoundDescription:
-        "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a intentar més tard.",
+      notFoundTitle: tFallback("notFoundTitle"),
+      notFoundDescription,
     },
   };
 }
 
 export async function buildPlaceEventsPromise({
   place,
+  locale = DEFAULT_LOCALE,
 }: {
   place: string;
+  locale?: AppLocale;
 }): Promise<PlacePageEventsResult> {
   const fetchParams: FetchEventsParams = {
     page: 0,
@@ -201,19 +226,24 @@ export async function buildPlaceEventsPromise({
     });
   const serverHasMore = eventsResponse ? !eventsResponse.last : false;
 
-  const eventsWithAds = insertAds(events);
-  const validEvents = events.filter(isEventSummaryResponseDTO);
+  const localizedEvents = addLocalizedDateFields(events, locale);
+  const eventsWithAds = insertAds(localizedEvents);
+  const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
+  const pageUrl = toLocalizedUrl(place === "catalunya" ? "/" : `/${place}`, locale);
   const structuredScripts =
     validEvents.length > 0
       ? [
-          {
-            id: `events-${place}`,
-            data: generateItemListStructuredData(
-              validEvents,
-              `Esdeveniments ${place}`
-            ),
-          },
-        ]
+        {
+          id: `events-${place}`,
+          data: generateItemListStructuredData(
+            validEvents,
+            `Esdeveniments ${place}`,
+            undefined,
+            locale,
+            pageUrl
+          ),
+        },
+      ]
       : undefined;
 
   return {

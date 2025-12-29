@@ -1,12 +1,16 @@
-import ChevronRightIcon from "@heroicons/react/solid/ChevronRightIcon";
+import { getTranslations } from "next-intl/server";
+import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";
-import { DateFilterBadges } from "./DateFilterBadges";
+import {
+  createDateFilterBadgeLabels,
+  DateFilterBadges,
+} from "./DateFilterBadges";
 import type { FeaturedPlaceConfig } from "types/props";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
-export function FeaturedPlaceSection({
+export async function FeaturedPlaceSection({
   section,
 }: {
   section: FeaturedPlaceConfig & {
@@ -15,6 +19,9 @@ export function FeaturedPlaceSection({
     usePriority: boolean;
   };
 }) {
+  const t = await getTranslations("Components.FeaturedPlaceSection");
+  const tDateFilters = await getTranslations("Components.DateFilterBadges");
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
   return (
     <section className="py-section-y border-b">
       <div className="flex-between gap-element-gap">
@@ -30,7 +37,7 @@ export function FeaturedPlaceSection({
           prefetch={false}
           variant="inline"
         >
-          Veure més
+          {t("seeMore")}
           <ChevronRightIcon className="w-5 h-5" />
         </PressableAnchor>
       </div>
@@ -38,7 +45,8 @@ export function FeaturedPlaceSection({
       <DateFilterBadges
         placeSlug={section.placeSlug}
         contextName={section.title}
-        ariaLabel={`Explora ${section.title} per data`}
+        ariaLabel={t("aria", { title: section.title })}
+        labels={badgeLabels}
       />
 
       <EventsAroundServer

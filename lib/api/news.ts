@@ -5,17 +5,19 @@ import type {
   NewsDetailResponseDTO,
   FetchNewsParams,
 } from "types/api/news";
-import { createKeyedCache } from "./cache";
-import { getInternalApiUrl, buildNewsQuery } from "@utils/api-helpers";
+import type { CitySummaryResponseDTO } from "types/api/city";
+import type { PagedResponseDTO } from "types/api/event";
+import {
+  getInternalApiUrl,
+  buildNewsQuery,
+  getVercelProtectionBypassHeaders,
+} from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cache";
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
-
-// Cache for checking if place has news (24h TTL)
-const placeHasNewsCache = createKeyedCache<boolean>(86400000);
 
 export async function fetchNews(
   params: FetchNewsParams
@@ -24,13 +26,14 @@ export async function fetchNews(
 
   try {
     const queryString = buildNewsQuery(params);
-    const finalUrl = getInternalApiUrl(`/api/news?${queryString}`);
+    const finalUrl = await getInternalApiUrl(`/api/news?${queryString}`);
 
     const tags: CacheTag[] = [newsTag];
     if (params.place) {
       tags.push(newsPlaceTag(params.place));
     }
     const response = await fetch(finalUrl, {
+      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 60, tags },
     });
     if (!response.ok) {
@@ -55,52 +58,14 @@ export async function fetchNews(
   }
 }
 
-/**
- * Lightweight check if a place has any news articles.
- * Cached for 24h to minimize API calls.
- * @param place - The place slug to check
- * @returns boolean indicating if the place has news
- */
-export async function hasNewsForPlace(place: string): Promise<boolean> {
-  // Catalunya always has news (main news page)
-  if (place === "catalunya" || !place) {
-    return true;
-  }
-
-  // Internal route; if errors, return false
-
-  return placeHasNewsCache(place, async () => {
-    try {
-      // Fetch only 1 item to check existence
-      const queryString = new URLSearchParams({
-        page: "0",
-        size: "1",
-        place,
-      });
-      const finalUrl = getInternalApiUrl(`/api/news?${queryString}`);
-
-      const response = await fetch(finalUrl, {
-        next: { revalidate: 3600, tags: [newsTag, newsPlaceTag(place)] },
-      });
-      if (!response.ok) {
-        return false;
-      }
-      const data: PagedNewsResponseDTO<NewsSummaryResponseDTO> =
-        await response.json();
-      return addCacheKeyToNewsList(data.content).length > 0;
-    } catch (e) {
-      console.error("Error checking news for place:", place, e);
-      return false;
-    }
-  });
-}
-
 export async function fetchNewsBySlug(
   slug: string
 ): Promise<NewsDetailResponseDTO | null> {
   // Internal route
   try {
-    const response = await fetch(getInternalApiUrl(`/api/news/${slug}`), {
+    const url = await getInternalApiUrl(`/api/news/${slug}`);
+    const response = await fetch(url, {
+      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 60, tags: [newsTag, newsSlugTag(slug)] },
     });
     if (response.status === 404) return null;
@@ -110,6 +75,43 @@ export async function fetchNewsBySlug(
   } catch (e) {
     console.error("Error fetching news by slug:", e);
     return null;
+  }
+}
+
+export async function fetchNewsCities(params?: {
+  page?: number;
+  size?: number;
+}): Promise<PagedResponseDTO<CitySummaryResponseDTO>> {
+  try {
+    const query = new URLSearchParams();
+    if (typeof params?.page === "number") query.set("page", String(params.page));
+    if (typeof params?.size === "number") query.set("size", String(params.size));
+
+    const qs = query.toString();
+    const finalUrl = await getInternalApiUrl(
+      qs ? `/api/news/cities?${qs}` : `/api/news/cities`
+    );
+
+    const response = await fetch(finalUrl, {
+      headers: getVercelProtectionBypassHeaders(),
+      next: { revalidate: 3600, tags: [newsTag] },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return (await response.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
+  } catch (e) {
+    console.error("Error fetching news cities:", e);
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: 0,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
   }
 }
 

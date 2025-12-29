@@ -1,26 +1,27 @@
+"use client";
 import { memo, JSX } from "react";
+import { useTranslations } from "next-intl";
+import { contactEmail } from "@config/index";
 
 function AdBoard(): JSX.Element {
+  const t = useTranslations("Components.AdBoard");
+
   return (
-    <div className="flex flex-col items-center justify-center h-56 w-full bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-center">
+    <div className="flex flex-col items-center justify-center h-56 w-full bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-center mb-4">
       <p className="text-lg font-semibold text-yellow-800">
-        L&apos;anunci no s&apos;ha pogut carregar.
+        {t("title")}
       </p>
+      <p className="text-sm text-yellow-700 mt-2">{t("body")}</p>
       <p className="text-sm text-yellow-700 mt-2">
-        Si us plau, ajuda&apos;ns a mantenir aquesta pàgina desactivant
-        qualsevol bloquejador d&apos;anuncis. Gràcies per la teva comprensió i
-        suport!
-      </p>
-      <p className="text-sm text-yellow-700 mt-2">
-        Si estàs interessat a anunciar-te aquí,{" "}
+        {t("contactPrefix")}{" "}
         <a
           className="text-primary"
-          href="mailto:hola@esdeveniments.cat"
+          href={`mailto:${contactEmail}`}
           rel="noopener noreferrer"
         >
-          contacta&apos;ns
+          {t("contactCta")}
         </a>{" "}
-        per obtenir més informació.
+        {t("contactSuffix")}
       </p>
     </div>
   );

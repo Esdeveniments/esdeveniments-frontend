@@ -2,7 +2,7 @@ import { generateHmac } from "@utils/hmac";
 
 export async function fetchWithHmac(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit & { skipBodySigning?: boolean } = {}
 ): Promise<Response> {
   const timestamp = Date.now();
   let bodyToSign = "";
@@ -28,6 +28,10 @@ export async function fetchWithHmac(
         `fetchWithHmac: Unsupported body type. Only string, URLSearchParams, and FormData are supported.`
       );
     }
+  }
+
+  if (options.skipBodySigning) {
+    bodyToSign = "";
   }
 
   let urlObject: URL;

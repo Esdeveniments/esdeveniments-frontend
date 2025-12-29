@@ -7,6 +7,18 @@ import {
   CollectionPageOptions,
   NavigationItem,
 } from "types/common";
+import {
+  DEFAULT_LOCALE,
+  localeToHrefLang,
+  localeToOgLocale,
+  type AppLocale,
+} from "types/i18n";
+import {
+  buildLocalizedUrls,
+  getSafePathname,
+  stripLocaleFromPathname,
+  toLocalizedUrl,
+} from "@utils/i18n-seo";
 
 export const defaultMeta = {
   openGraph: {
@@ -37,7 +49,7 @@ export const defaultMeta = {
     "fb:app_id": "103738478742219",
     "fb:pages": "103738478742219",
     "google-site-verification":
-      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? "",
     author: "Esdeveniments.cat",
     "revisit-after": "1 days",
   },
@@ -47,9 +59,16 @@ export const defaultMeta = {
 export function generateItemListStructuredData(
   events: EventSummaryResponseDTO[],
   listName: string,
-  description?: string
+  description?: string,
+  locale?: AppLocale,
+  pageUrl?: string
 ) {
   if (!events || events.length === 0) return null;
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+
+  const siteHomeUrl = toLocalizedUrl("/", localeToUse);
+  const itemListIdBase = pageUrl ?? siteHomeUrl;
 
   const itemListElements = events.slice(0, 20).map((event, index) => {
     // Build location object with proper null checks
@@ -73,9 +92,9 @@ export function generateItemListStructuredData(
       position: index + 1,
       item: {
         "@type": "Event",
-        "@id": `${siteUrl}/e/${event.slug}`,
+        "@id": toLocalizedUrl(`/e/${event.slug}`, localeToUse),
         name: event.title,
-        url: `${siteUrl}/e/${event.slug}`,
+        url: toLocalizedUrl(`/e/${event.slug}`, localeToUse),
         startDate: event.startDate,
         endDate: event.endDate || event.startDate,
         eventStatus: "https://schema.org/EventScheduled",
@@ -84,7 +103,7 @@ export function generateItemListStructuredData(
         organizer: {
           "@type": "Organization",
           name: "Esdeveniments.cat",
-          url: siteUrl,
+          url: siteHomeUrl,
         },
         ...(event.imageUrl && {
           image: event.imageUrl,
@@ -99,11 +118,12 @@ export function generateItemListStructuredData(
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": `${siteUrl}#itemlist-${listName
+    "@id": `${itemListIdBase}#itemlist-${listName
       ?.toLowerCase()
       .replace(/\s+/g, "-")}`,
+    url: itemListIdBase,
     name: listName,
-    description: description || `Llista d'esdeveniments culturals: ${listName}`,
+    description: description ?? listName,
     numberOfItems: events.length,
     itemListElement: itemListElements,
   };
@@ -114,23 +134,45 @@ export function buildPageMeta({
   description,
   canonical,
   image = `${siteUrl}/static/images/logo-seo-meta.webp`,
+  locale,
+  robotsOverride,
 }: {
   title: string;
   description: string;
   canonical: string;
   image?: string;
+  locale?: AppLocale;
+  robotsOverride?: string;
 }) {
+  const resolvedLocale = locale ?? DEFAULT_LOCALE;
+  const basePathname = stripLocaleFromPathname(getSafePathname(canonical));
+  const localizedUrls = buildLocalizedUrls(basePathname);
+  const canonicalUrl = localizedUrls[resolvedLocale] ?? canonical;
+  const languageAlternates = Object.entries(localizedUrls).reduce<
+    Record<string, string>
+  >((acc, [currentLocale, url]) => {
+    const hrefLang =
+      localeToHrefLang[currentLocale as AppLocale] ?? currentLocale;
+    acc[hrefLang] = url;
+    return acc;
+  }, {});
+  languageAlternates["x-default"] = localizedUrls[DEFAULT_LOCALE];
+
   const { openGraph, twitter, ...restDefaults } = defaultMeta;
 
   const baseMeta = {
     title,
     description,
-    alternates: { canonical },
+    alternates: {
+      canonical: canonicalUrl,
+      languages: languageAlternates,
+    },
     openGraph: {
       ...openGraph,
+      locale: localeToOgLocale[resolvedLocale] ?? openGraph.locale,
       title,
       description,
-      url: canonical,
+      url: canonicalUrl,
       images: [{ url: image, alt: title }],
     },
     twitter: {
@@ -143,18 +185,15 @@ export function buildPageMeta({
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : "index, follow",
+        : robotsOverride ?? "index, follow",
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,
-      "twitter:url": canonical,
+      "twitter:url": canonicalUrl,
       "twitter:image:src": image,
       "twitter:image:alt": title,
     },
-    // SEO Guru Enhancement: Add language targeting
-    languages: {
-      "ca-ES": canonical, // Catalan (primary)
-    },
+    languages: languageAlternates,
   };
 
   return baseMeta;
@@ -169,9 +208,9 @@ export const deriveNameFromUrl = (url: string): string | null => {
     // Extract the last meaningful segment from the path
     const segments = pathname.split("/").filter((s) => s.length > 0);
     if (segments.length === 0) return null;
-    
+
     const lastSegment = segments[segments.length - 1];
-    // If it's a slug-like segment (e.g., "barcelona", "esdeveniment-123"), 
+    // If it's a slug-like segment (e.g., "barcelona", "esdeveniment-123"),
     // try to make it more readable by replacing hyphens with spaces and capitalizing
     if (lastSegment.includes("-")) {
       return lastSegment
@@ -194,18 +233,12 @@ const shouldLogBreadcrumbWarnings =
   (process.env.NODE_ENV !== "production" ||
     process.env.SCHEMA_WARNINGS === "1");
 
-const logBreadcrumbWarning = (
-  url: string | undefined,
-  detail?: string
-) => {
+const logBreadcrumbWarning = (url: string | undefined, detail?: string) => {
   if (!shouldLogBreadcrumbWarnings) return;
   breadcrumbWarningCounts["empty-name"] =
     (breadcrumbWarningCounts["empty-name"] || 0) + 1;
   if (breadcrumbWarningCounts["empty-name"] > BREADCRUMB_WARNING_LIMIT) return;
-  const parts = [
-    "[breadcrumb-warning]",
-    `url=${url ?? "unknown"}`,
-  ];
+  const parts = ["[breadcrumb-warning]", `url=${url ?? "unknown"}`];
   if (detail) parts.push(detail);
   console.warn(parts.join(" "));
 };
@@ -224,12 +257,13 @@ export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
       if (!name || name.trim() === "") {
         // Try to derive a meaningful name from the URL
         const derivedName = deriveNameFromUrl(breadcrumb.url);
-        name = derivedName || "Pàgina";
+        const fallbackName = derivedName || "Pàgina";
+        name = fallbackName;
         logBreadcrumbWarning(
           breadcrumb.url,
           derivedName
             ? `derived name from URL: "${derivedName}"`
-            : "using generic fallback 'Pàgina'"
+            : "using generic fallback for empty breadcrumb name"
         );
       }
       return {
@@ -243,8 +277,18 @@ export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
 }
 
 export function generateWebPageSchema(options: WebPageOptions) {
-  const { title, description, url, breadcrumbs, isPartOf, mainContentOfPage } =
-    options;
+  const {
+    title,
+    description,
+    url,
+    breadcrumbs,
+    isPartOf,
+    mainContentOfPage,
+    locale,
+  } = options;
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const inLanguage = localeToHrefLang[localeToUse] ?? localeToUse;
 
   return {
     "@context": "https://schema.org",
@@ -253,18 +297,14 @@ export function generateWebPageSchema(options: WebPageOptions) {
     name: title,
     description,
     url,
-    inLanguage: "ca",
+    inLanguage,
     isPartOf: isPartOf || {
       "@type": "WebSite",
       "@id": `${siteUrl}#website`,
       name: "Esdeveniments.cat",
       url: siteUrl,
     },
-    about: {
-      "@type": "Thing",
-      name: "Esdeveniments culturals de Catalunya",
-      description: "Agenda cultural catalana",
-    },
+    about: { "@type": "Thing", name: title, description },
     publisher: {
       "@type": "Organization",
       name: "Esdeveniments.cat",
@@ -277,8 +317,18 @@ export function generateWebPageSchema(options: WebPageOptions) {
 }
 
 export function generateCollectionPageSchema(options: CollectionPageOptions) {
-  const { title, description, url, breadcrumbs, mainEntity, numberOfItems } =
-    options;
+  const {
+    title,
+    description,
+    url,
+    breadcrumbs,
+    mainEntity,
+    numberOfItems,
+    locale,
+  } = options;
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const inLanguage = localeToHrefLang[localeToUse] ?? localeToUse;
 
   return {
     "@context": "https://schema.org",
@@ -287,18 +337,14 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
     name: title,
     description,
     url,
-    inLanguage: "ca",
+    inLanguage,
     isPartOf: {
       "@type": "WebSite",
       "@id": `${siteUrl}#website`,
       name: "Esdeveniments.cat",
       url: siteUrl,
     },
-    about: {
-      "@type": "Thing",
-      name: "Arxiu d'esdeveniments culturals",
-      description: "Històric d'esdeveniments culturals de Catalunya",
-    },
+    about: { "@type": "Thing", name: title, description },
     publisher: {
       "@type": "Organization",
       name: "Esdeveniments.cat",

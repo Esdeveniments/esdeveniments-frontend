@@ -1,4 +1,6 @@
-import type { CalendarParams, CalendarUrls } from "types/calendar";
+import type { CalendarParams, CalendarUrls, CalendarLabels } from "types/calendar";
+
+import * as React from "react";
 
 const formatDate = (date: string | Date): string =>
   new Date(date).toISOString().replace(/-|:|\.\d+/g, "");
@@ -11,27 +13,30 @@ const encodeParams = (params: Record<string, string>): string =>
 const createUrl = (base: string, params: Record<string, string>): string =>
   `${base}?${encodeParams(params)}`;
 
-import * as React from "react";
-
 // Utility to format event date as string and JSX with <time> for accessibility
 export function formatEventDateRange(
   startDate: string,
-  endDate?: string
+  endDate?: string,
+  labels?: Pick<CalendarLabels, "dateRange" | "dateSingle">
 ): { string: string; jsx: React.ReactNode } {
+  const dateLabels = labels;
   if (endDate) {
+    const str = (dateLabels?.dateRange || "")
+      .replace("{start}", startDate)
+      .replace("{end}", endDate);
     return {
-      string: `Del ${startDate} al ${endDate}`,
+      string: str,
       jsx: (
         <>
-          <time dateTime={startDate}>Del {startDate}</time> al{" "}
-          <time dateTime={endDate}>{endDate}</time>
+          <time dateTime={startDate}>{str}</time>
         </>
       ),
     };
   } else {
+    const str = (dateLabels?.dateSingle || "").replace("{start}", startDate);
     return {
-      string: `${startDate}`,
-      jsx: <time dateTime={startDate}>{startDate}</time>,
+      string: str,
+      jsx: <time dateTime={startDate}>{str}</time>,
     };
   }
 }
@@ -43,12 +48,16 @@ export const generateCalendarUrls = ({
   startDate,
   endDate,
   canonical,
-}: CalendarParams): CalendarUrls => {
+  labels,
+}: CalendarParams & { labels: CalendarLabels }): CalendarUrls => {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
 
-  const htmlDescription = `${description.trim()}<br><br>Més informació: <a href="${canonical}" target="_blank" rel="noopener noreferrer">Esdeveniments.cat</a>`;
-  const plainDescription = `${description.trim()}\n\nMés informació: ${canonical}`;
+  const moreInfoHtml = labels.moreInfoHtml.replace("{url}", canonical);
+  const moreInfoText = labels.moreInfoText.replace("{url}", canonical);
+
+  const htmlDescription = `${description.trim()}<br><br>${moreInfoHtml}`;
+  const plainDescription = `${description.trim()}\n\n${moreInfoText}`;
 
   const googleParams = {
     action: "TEMPLATE",

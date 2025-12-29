@@ -1,30 +1,90 @@
 import Badge from "@components/ui/common/badge";
 import { buildCanonicalUrl } from "@utils/url-filters";
-import type { DateFilterBadgesProps } from "types/props";
+import type {
+  DateFilterBadgeLabels,
+  DateFilterBadgesProps,
+  TranslationFn,
+} from "types/props";
+
+const FALLBACK_DATE_FILTER_BADGE_LABELS: DateFilterBadgeLabels = {
+  navAriaLabel: "Vegeu també",
+  today: { label: "Avui", ariaLabelText: "Veure activitats d'avui" },
+  tomorrow: {
+    label: "Demà",
+    ariaLabelText: "Veure activitats de demà",
+  },
+  weekend: {
+    label: "Cap de setmana",
+    ariaLabelText: "Veure activitats aquest cap de setmana",
+  },
+  ariaPlace: ({ ariaLabelText, contextName }) =>
+    `${ariaLabelText} a ${contextName}`,
+  ariaCategory: ({ ariaLabelText, contextName }) =>
+    `${ariaLabelText} per la categoria ${contextName}`,
+};
+
+export const createDateFilterBadgeLabels = (
+  t: TranslationFn
+): DateFilterBadgeLabels => ({
+  navAriaLabel: t("ariaLabel"),
+  today: {
+    label: t("today.label"),
+    ariaLabelText: t("today.aria"),
+  },
+  tomorrow: {
+    label: t("tomorrow.label"),
+    ariaLabelText: t("tomorrow.aria"),
+  },
+  weekend: {
+    label: t("weekend.label"),
+    ariaLabelText: t("weekend.aria"),
+  },
+  ariaPlace: ({ ariaLabelText, contextName }) =>
+    t("ariaPlace", { ariaLabelText, contextName }),
+  ariaCategory: ({ ariaLabelText, contextName }) =>
+    t("ariaCategory", { ariaLabelText, contextName }),
+});
 
 export function DateFilterBadges({
   placeSlug,
   categorySlug,
   categories,
   contextName,
-  ariaLabel = "Vegeu també",
+  ariaLabel,
+  labels,
 }: DateFilterBadgesProps) {
+  const resolvedLabels = labels ?? FALLBACK_DATE_FILTER_BADGE_LABELS;
+  const resolvedAriaLabel = ariaLabel || resolvedLabels.navAriaLabel;
   const dateFilters = [
-    { slug: "avui", label: "Avui", ariaLabelText: `Veure activitats d'avui` },
-    { slug: "dema", label: "Demà", ariaLabelText: `Veure activitats de demà` },
+    {
+      slug: "avui",
+      label: resolvedLabels.today.label,
+      ariaLabelText: resolvedLabels.today.ariaLabelText,
+    },
+    {
+      slug: "dema",
+      label: resolvedLabels.tomorrow.label,
+      ariaLabelText: resolvedLabels.tomorrow.ariaLabelText,
+    },
     {
       slug: "cap-de-setmana",
-      label: "Cap de setmana",
-      ariaLabelText: `Veure activitats aquest cap de setmana`,
+      label: resolvedLabels.weekend.label,
+      ariaLabelText: resolvedLabels.weekend.ariaLabelText,
     },
   ];
 
   // Determine the aria label pattern based on whether we have a category
   const getAriaLabel = (dateFilter: typeof dateFilters[0]) => {
     if (categorySlug) {
-      return `${dateFilter.ariaLabelText} per la categoria ${contextName}`;
+      return resolvedLabels.ariaCategory({
+        ariaLabelText: dateFilter.ariaLabelText,
+        contextName,
+      });
     }
-    return `${dateFilter.ariaLabelText} a ${contextName}`;
+    return resolvedLabels.ariaPlace({
+      ariaLabelText: dateFilter.ariaLabelText,
+      contextName,
+    });
   };
 
   // Build URL params - include category if provided
@@ -46,7 +106,7 @@ export function DateFilterBadges({
   };
 
   return (
-    <nav aria-label={ariaLabel} className="mt-element-gap-sm mb-element-gap-sm">
+    <nav aria-label={resolvedAriaLabel} className="mt-element-gap-sm mb-element-gap-sm">
       <ul className="flex gap-element-gap">
         {dateFilters.map((dateFilter) => (
           <li key={dateFilter.slug}>

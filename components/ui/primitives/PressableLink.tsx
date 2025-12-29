@@ -12,6 +12,8 @@ import type {
   PressableLinkProps,
   PressableLinkVariant,
 } from "types/ui";
+import { useLocale } from "next-intl";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
   inline: "pressable-inline",
@@ -33,6 +35,33 @@ export default function PressableLink({
   const { handlers, isPressed } = usePressFeedback();
   const isTestEnv = process.env.NODE_ENV === "test";
   const resolvedPrefetch = isTestEnv ? undefined : prefetch;
+  const locale = useLocale();
+  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+  const withLocale = (path: string) => {
+    if (!path.startsWith("/")) return path;
+    if (!prefix) return path;
+    if (path === "/") return prefix || "/";
+    if (path.startsWith(prefix)) return path;
+    return `${prefix}${path}`;
+  };
+  const normalizeHref = (hrefValue: PressableLinkProps["href"]) => {
+    if (typeof hrefValue === "string") {
+      if (hrefValue.startsWith("http")) return hrefValue;
+      return withLocale(hrefValue);
+    }
+    if (
+      hrefValue &&
+      typeof hrefValue === "object" &&
+      typeof hrefValue.pathname === "string"
+    ) {
+      return {
+        ...hrefValue,
+        pathname: withLocale(hrefValue.pathname),
+      };
+    }
+    return hrefValue;
+  };
+  const localizedHref = normalizeHref(props.href);
 
   const classes = clsx("cursor-pointer", className, VARIANT_CLASSES[variant]);
 
@@ -48,6 +77,7 @@ export default function PressableLink({
   return (
     <Link
       {...props}
+      href={localizedHref as any}
       prefetch={resolvedPrefetch}
       className={classes}
       onClick={handleClick}

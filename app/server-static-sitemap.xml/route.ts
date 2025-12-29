@@ -2,6 +2,7 @@ import { getSiteUrlFromRequest } from "@config/index";
 import { buildSitemap } from "@utils/sitemap";
 import { NextRequest } from "next/server";
 import { SitemapField } from "types/sitemap";
+import { buildAlternateLinks } from "@utils/i18n-seo";
 
 export async function GET(request: NextRequest) {
   const siteUrl = getSiteUrlFromRequest(request);
@@ -15,30 +16,35 @@ export async function GET(request: NextRequest) {
       lastmod,
       changefreq: "daily",
       priority: 1.0,
+      alternates: buildAlternateLinks(`${siteUrl}/`),
     },
     {
       loc: `${siteUrl}/sitemap`, // Arxiu
       lastmod,
       changefreq: "daily",
       priority: 0.7,
+      alternates: buildAlternateLinks(`${siteUrl}/sitemap`),
     },
     {
       loc: `${siteUrl}/noticies`,
       lastmod,
       changefreq: "daily",
       priority: 0.7,
+      alternates: buildAlternateLinks(`${siteUrl}/noticies`),
     },
     {
       loc: `${siteUrl}/publica`,
       lastmod,
       changefreq: "daily",
       priority: 0.7,
+      alternates: buildAlternateLinks(`${siteUrl}/publica`),
     },
     {
       loc: `${siteUrl}/qui-som`,
       lastmod,
       changefreq: "daily",
       priority: 0.7,
+      alternates: buildAlternateLinks(`${siteUrl}/qui-som`),
     },
   ];
 

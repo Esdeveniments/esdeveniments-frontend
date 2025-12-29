@@ -1,63 +1,66 @@
-import { ReactElement, memo, Suspense } from "react";
+import { ReactElement, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
 import List from "@components/ui/list";
-import Card from "@components/ui/card";
-import { getNewsCta } from "@utils/helpers";
-import NewsCta from "@components/ui/newsCta";
+import CardServer from "@components/ui/card/CardServer";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
 
-function HybridEventsList({
+async function HybridEventsList({
   initialEvents = [],
   pageData,
   noEventsFound = false,
   place,
-  placeTypeLabel,
   category,
   date,
   serverHasMore = false,
-  hasNews,
   categories,
-}: HybridEventsListProps): ReactElement {
-  const placeLabel = placeTypeLabel?.label;
-  const placeType =
-    placeTypeLabel?.type === "town"
-      ? "town"
-      : placeTypeLabel?.type === "region"
-      ? "region"
-      : undefined;
-  const { href: newsHref, text: newsText } = getNewsCta(
-    place,
-    placeLabel,
-    placeType
-  );
+}: HybridEventsListProps): Promise<ReactElement> {
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
-  const newsCta =
-    place && hasNews && newsHref && newsText ? (
-      <div className="mb-4 md:mb-0 md:mt-0 shrink-0 px-element-gap">
-        <NewsCta href={newsHref} label={newsText} data-cta="news-inline" />
-      </div>
-    ) : null;
 
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
         className="container flex-col justify-center items-center pt-[6rem]"
         data-testid="events-list"
+        data-analytics-container="true"
+        data-analytics-context="events_list"
+        data-analytics-place-slug={place || undefined}
+        data-analytics-category-slug={category || undefined}
+        data-analytics-date-slug={date || undefined}
       >
+        {pageData && (
+          <>
+            <div data-server-heading>
+              <HeadingLayout
+                title={pageData.title}
+                subtitle={pageData.subTitle}
+                titleClass={titleClass}
+                subtitleClass={subtitleClass}
+              />
+            </div>
+            <Suspense fallback={null}>
+              <SearchAwareHeading
+                pageData={pageData}
+                categories={categories}
+                titleClass={titleClass}
+                subtitleClass={subtitleClass}
+              />
+            </Suspense>
+          </>
+        )}
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
         />
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
-            <Card
+            <CardServer
               key={`${event.id}-${index}`}
               event={event}
               isPriority={index === 0}
@@ -72,27 +75,34 @@ function HybridEventsList({
     <div
       className="container flex-col justify-center items-center pt-[6rem]"
       data-testid="events-list"
+      data-analytics-container="true"
+      data-analytics-context="events_list"
+      data-analytics-place-slug={place || undefined}
+      data-analytics-category-slug={category || undefined}
+      data-analytics-date-slug={date || undefined}
     >
       {pageData && (
-        <Suspense
-          fallback={
+        <>
+          {/* Always render H1 directly in server component for SEO - ensures it's in initial HTML */}
+          {/* aria-hidden will be set by SearchAwareHeading when search query is present */}
+          <div data-server-heading>
             <HeadingLayout
               title={pageData.title}
               subtitle={pageData.subTitle}
               titleClass={titleClass}
               subtitleClass={subtitleClass}
-              cta={newsCta}
             />
-          }
-        >
-          <SearchAwareHeading
-            pageData={pageData}
-            categories={categories}
-            titleClass={titleClass}
-            subtitleClass={subtitleClass}
-            cta={newsCta}
-          />
-        </Suspense>
+          </div>
+          {/* Client-side enhancement: conditionally replace heading when search query is present */}
+          <Suspense fallback={null}>
+            <SearchAwareHeading
+              pageData={pageData}
+              categories={categories}
+              titleClass={titleClass}
+              subtitleClass={subtitleClass}
+            />
+          </Suspense>
+        </>
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
@@ -104,7 +114,7 @@ function HybridEventsList({
           <div data-ssr-list-wrapper>
             <List events={initialEvents}>
               {(event: ListEvent, index: number) => (
-                <Card
+                <CardServer
                   key={`${event.id ?? "ad"}-${index}`}
                   event={event}
                   isPriority={index === 0}
@@ -118,7 +128,7 @@ function HybridEventsList({
         <SsrListWrapper categories={categories}>
           <List events={initialEvents}>
             {(event: ListEvent, index: number) => (
-              <Card
+              <CardServer
                 key={`${event.id ?? "ad"}-${index}`}
                 event={event}
                 isPriority={index === 0}
@@ -143,4 +153,4 @@ function HybridEventsList({
   );
 }
 
-export default memo(HybridEventsList);
+export default HybridEventsList;

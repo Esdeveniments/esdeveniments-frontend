@@ -13,6 +13,13 @@ describe("calendar utils (black-box)", () => {
       startDate: "2025-06-21T10:00:00",
       endDate: "2025-06-21T12:00:00",
       canonical: "https://www.esdeveniments.cat/e/castellers",
+      labels: {
+        moreInfoHtml:
+          'More info: <a href="{url}" target="_blank" rel="noopener noreferrer">Esdeveniments.cat</a>',
+        moreInfoText: "More info: {url}",
+        dateRange: "From {start} to {end}",
+        dateSingle: "From {start}",
+      },
     });
 
     expect(urls.google).toContain("https://www.google.com/calendar/render?");
@@ -33,15 +40,24 @@ describe("calendar utils (black-box)", () => {
   });
 
   it("formatEventDateRange returns string and jsx in expected shape", () => {
-    const single = formatEventDateRange("2025-06-21T10:00:00");
-    expect(single.string).toBe("2025-06-21T10:00:00");
+    const labels = {
+      dateRange: "From {start} to {end}",
+      dateSingle: "From {start}",
+    };
+    const single = formatEventDateRange(
+      "2025-06-21T10:00:00",
+      undefined,
+      labels
+    );
+    expect(single.string).toBe("From 2025-06-21T10:00:00");
 
     const range = formatEventDateRange(
       "2025-06-21T10:00:00",
-      "2025-06-21T12:00:00"
+      "2025-06-21T12:00:00",
+      labels
     );
-    expect(range.string).toContain(
-      "Del 2025-06-21T10:00:00 al 2025-06-21T12:00:00"
+    expect(range.string).toBe(
+      "From 2025-06-21T10:00:00 to 2025-06-21T12:00:00"
     );
   });
 });

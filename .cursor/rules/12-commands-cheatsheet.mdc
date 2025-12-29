@@ -4,9 +4,8 @@ alwaysApply: false
 
 ### Commands cheatsheet
 
-- Dev: `yarn dev` (runs prebuild and Next dev)
-- Build: `yarn build` (prebuild + Next build)
-- Env-specific builds: `yarn build:development|staging|production`
+- Dev: `yarn dev` (Next dev server). Run `yarn prebuild` first if `public/sw-template.js` changed.
+- Build: `yarn build` (Next build only). Run `yarn prebuild` beforehand when the SW template changes. Env-specific builds: `yarn build:development|staging|production` (these already run prebuild).
 - Start (prod build): `yarn start`
 - Analyze: `yarn analyze` | `yarn analyze:server` | `yarn analyze:browser`
 - Lint: `yarn lint`

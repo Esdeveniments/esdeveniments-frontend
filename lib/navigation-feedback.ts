@@ -5,7 +5,10 @@ import type {
 } from "types/ui";
 
 const listeners = new Set<NavigationFeedbackListener>();
-let pendingCount = 0;
+let isPending = false;
+let failsafeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+const FAILSAFE_TIMEOUT_MS = 20_000;
 
 export function subscribeNavigationFeedback(
   listener: NavigationFeedbackListener
@@ -19,22 +22,39 @@ const emit = (event: NavigationFeedbackEvent) => {
 };
 
 export function startNavigationFeedback(): void {
-  pendingCount += 1;
-  if (pendingCount === 1) {
-    emit("start");
+  if (failsafeTimeoutId) {
+    clearTimeout(failsafeTimeoutId);
+    failsafeTimeoutId = null;
   }
+
+  failsafeTimeoutId = setTimeout(() => {
+    resetNavigationFeedback();
+  }, FAILSAFE_TIMEOUT_MS);
+
+  if (isPending) return;
+  isPending = true;
+  emit("start");
 }
 
 export function completeNavigationFeedback(): void {
-  if (pendingCount === 0) return;
-  pendingCount -= 1;
-  if (pendingCount === 0) {
-    emit("complete");
+  if (!isPending) return;
+
+  if (failsafeTimeoutId) {
+    clearTimeout(failsafeTimeoutId);
+    failsafeTimeoutId = null;
   }
+
+  isPending = false;
+  emit("complete");
 }
 
 export function resetNavigationFeedback(): void {
-  pendingCount = 0;
+  if (failsafeTimeoutId) {
+    clearTimeout(failsafeTimeoutId);
+    failsafeTimeoutId = null;
+  }
+
+  isPending = false;
   emit("complete");
 }
 
