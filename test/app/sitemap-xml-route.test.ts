@@ -69,10 +69,16 @@ describe("app/sitemap.xml/route", () => {
     const response = await GET(mockRequest);
     const text = await response.text();
 
+    // Static sitemap
     expect(text).toContain("/server-static-sitemap.xml");
-    expect(text).toContain("/server-sitemap.xml");
+    // Chunked event sitemaps (no longer /server-sitemap.xml which is now an index)
+    expect(text).toContain("/sitemap-events/1.xml");
+    expect(text).toContain("/sitemap-events/5.xml");
+    // Chunked place sitemaps (no longer /server-place-sitemap.xml which is now an index)
+    expect(text).toContain("/sitemap-places/1.xml");
+    expect(text).toContain("/sitemap-places/5.xml");
+    // News sitemaps
     expect(text).toContain("/server-news-sitemap.xml");
-    expect(text).toContain("/server-place-sitemap.xml");
     expect(text).toContain("/server-google-news-sitemap.xml");
   });
 

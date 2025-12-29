@@ -41,12 +41,46 @@ test.describe("Sitemaps and feed", () => {
     await expect(cityLinks.first()).toBeVisible({ timeout: process.env.CI ? 60000 : 30000 });
   });
 
-  test("server sitemap responds", async ({ request }) => {
+  test("server sitemap responds with sitemap index", async ({ request }) => {
     const res = await request.get("/server-sitemap.xml");
     expect(res.status()).toBe(200);
     const text = await res.text();
 
+    // server-sitemap.xml now returns a sitemap index pointing to chunked event sitemaps
+    expect(text).toContain("<sitemapindex");
+    expect(text).toContain("/sitemap-events/");
+
+    const parser = new XMLParser();
+    const xmlObj = parser.parse(text);
+    expect(xmlObj.sitemapindex).toBeDefined();
+
+    const sitemaps = Array.isArray(xmlObj.sitemapindex.sitemap)
+      ? xmlObj.sitemapindex.sitemap
+      : [xmlObj.sitemapindex.sitemap];
+
+    expect(sitemaps.length).toBeGreaterThan(0);
+
+    // Check lastmod dates are not 2023
+    sitemaps.forEach((sitemap: { lastmod?: string }) => {
+      expect(sitemap.lastmod).toBeDefined();
+      expect(sitemap.lastmod).not.toContain("2023");
+    });
+  });
+
+  test("chunked event sitemap responds with URLs", async ({ request }) => {
+    const res = await request.get("/sitemap-events/1.xml");
+    expect(res.status()).toBe(200);
+    const text = await res.text();
+
     const urls = parseAndValidateSitemap(text);
+
+    // Check presence of event URLs
+    expect(urls.length).toBeGreaterThan(0);
+
+    const urlLocs = urls.map((url: { loc: string }) => url.loc);
+    expect(urlLocs.length).toBeGreaterThan(0);
+    // Event URLs should contain /e/ path
+    expect(urlLocs.some((loc: string) => loc.includes("/e/"))).toBe(true);
 
     // Check lastmod dates are not 2023
     urls.forEach((url: { lastmod?: string }) => {
