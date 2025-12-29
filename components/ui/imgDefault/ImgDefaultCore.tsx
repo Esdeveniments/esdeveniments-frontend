@@ -1,31 +1,51 @@
-import NextImage from "next/image";
 import { ImgDefaultProps, Gradient } from "types/common";
 
+/**
+ * Balanced gradient palette for fallback images.
+ * 
+ * Design rationale:
+ * - Visible enough to look intentional (not broken)
+ * - Muted enough to not compete with real images
+ * - Subtle brand hints without being overpowering
+ */
 const gradients: Gradient[] = [
+  // Soft rose/blush (brand nod - muted primary)
   {
-    gradient: "linear-gradient(120deg, #ff0037, #ff440d, #FF921A)",
-    color: "#ff440d",
+    gradient: "linear-gradient(135deg, #F8E8EB, #EDD8DD, #E2C8CF)",
+    color: "#EDD8DD",
   },
   {
-    gradient: "linear-gradient(120deg, #FF0033, #FF8340, #F8FFC6)",
-    color: "#FF8340",
+    gradient: "linear-gradient(135deg, #FAE5E8, #F0D5DA, #E6C5CC)",
+    color: "#F0D5DA",
+  },
+  // Dusty mauve
+  {
+    gradient: "linear-gradient(135deg, #EDE5E8, #E0D5DA, #D3C5CC)",
+    color: "#E0D5DA",
+  },
+  // Soft blue/slate
+  {
+    gradient: "linear-gradient(135deg, #E8EDF5, #D8E0F0, #C8D3E8)",
+    color: "#D8E0F0",
   },
   {
-    gradient: "linear-gradient(120deg, #FF0033, #FF1D00, #FFA785)",
-    color: "#FF1D00",
+    gradient: "linear-gradient(135deg, #E5EBF5, #D5DEF0, #C5D1E8)",
+    color: "#D5DEF0",
   },
+  // Warm sand/beige
   {
-    gradient: "linear-gradient(120deg, #F06E0C, #EBAB07, #EFE900)",
-    color: "#EBAB07",
+    gradient: "linear-gradient(135deg, #F5F0E8, #EBE5D8, #E0D8C8)",
+    color: "#EBE5D8",
   },
+  // Cool gray with more depth
   {
-    gradient: "linear-gradient(120deg, #03001e, #7303c0, #ec38bc)",
-    color: "#7303c0",
+    gradient: "linear-gradient(135deg, #EAECF0, #D8DCE5, #C6CCD8)",
+    color: "#D8DCE5",
   },
-  { gradient: "linear-gradient(120deg, #0575e6, #00f260)", color: "#0575e6" },
+  // Sage/muted green (adds variety)
   {
-    gradient: "linear-gradient(120deg, #2948ff, #396afc, #4B88FA)",
-    color: "#396afc",
+    gradient: "linear-gradient(135deg, #E8F0EB, #D8E5DD, #C8D8CF)",
+    color: "#D8E5DD",
   },
 ];
 
@@ -46,71 +66,23 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
   region,
   date,
 }) => {
-  // Use deterministic gradient selection based on title
-  const gradientIndex = hashString(title || "default") % gradients.length;
+  // Combine all available props for more unique hash (still deterministic = no layout shift)
+  const hashInput = [title, location, region, date].filter(Boolean).join("|") || "default";
+  const gradientIndex = hashString(hashInput) % gradients.length;
   const background = gradients[gradientIndex];
 
   return (
     <div
-      className="w-full h-full flex flex-col justify-between items-start p-6 sm:p-8"
+      className="w-full h-full"
       style={{
         backgroundImage: background.gradient,
         backgroundSize: "cover",
         backgroundPosition: "center",
         minHeight: "100%",
       }}
-    >
-      {/* Top section - Event Info */}
-      <div className="w-full flex justify-start items-start gap-2">
-        <div className="w-full flex flex-col justify-start items-start gap-3 min-w-0">
-          {/* Location Icon and City */}
-          {location && (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-background/20 flex items-center justify-center flex-shrink-0">
-                <div className="w-2 h-2 rounded-full bg-background"></div>
-              </div>
-              <h2 className="font-bold uppercase text-background text-lg sm:text-xl drop-shadow-md">
-                {location}
-              </h2>
-            </div>
-          )}
-
-          {/* Region */}
-          {region && (
-            <p className="text-background/90 text-sm sm:text-base drop-shadow-md ml-6">
-              {region}
-            </p>
-          )}
-
-          <div className="w-full h-px bg-background/30 my-2"></div>
-
-          {/* Event Title (non-heading to avoid outline pollution) */}
-          <p className="font-bold uppercase font-roboto text-background text-2xl sm:text-3xl leading-tight tracking-wide drop-shadow-md break-words">
-            {title}
-          </p>
-
-          {/* Date */}
-          {date && (
-            <p className="text-background/90 text-sm sm:text-base drop-shadow-md">
-              {date}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom section - Tickets */}
-      <div className="w-full flex justify-end items-end">
-        <div className="w-20 h-12 sm:w-24 sm:h-14">
-          <NextImage
-            className="w-full h-full drop-shadow-md"
-            src="/static/images/tickets-color.svg"
-            alt="Tickets.svg"
-            width={96}
-            height={56}
-          />
-        </div>
-      </div>
-    </div>
+      role="img"
+      aria-label={title || "Imatge no disponible"}
+    />
   );
 };
 

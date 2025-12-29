@@ -29,6 +29,9 @@ function ClientImage({
   quality: customQuality,
   context = "card",
   cacheKey,
+  location,
+  region,
+  date,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
   const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
   const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
@@ -66,9 +69,9 @@ function ClientImage({
     position: "relative",
     ...(context === "card" || context === "list"
       ? {
-          aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
-          overflow: "hidden",
-        }
+        aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
+        overflow: "hidden",
+      }
       : {}),
     maxWidth: "100%", // Ensure image doesn't exceed container
   };
@@ -84,7 +87,7 @@ function ClientImage({
         aria-label={title || "Imatge no disponible"}
         style={containerStyle}
       >
-        <ImgDefault title={title} />
+        <ImgDefault title={title} location={location} region={region} date={date} />
       </div>
     );
   }
