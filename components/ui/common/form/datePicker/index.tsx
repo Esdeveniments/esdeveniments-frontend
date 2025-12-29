@@ -16,7 +16,7 @@ export default function DatePickerComponent(props: DatePickerComponentProps) {
   }, []);
 
   return (
-    <div onPointerEnter={ensureLoaded} onFocus={ensureLoaded}>
+    <div className="w-full" onPointerEnter={ensureLoaded} onFocus={ensureLoaded}>
       {shouldLoad ? (
         <DatePickerImpl {...props} />
       ) : (

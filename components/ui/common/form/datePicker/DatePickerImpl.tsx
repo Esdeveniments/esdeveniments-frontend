@@ -5,12 +5,8 @@ import DatePicker from "react-datepicker";
 import ChevronLeftIcon from "@heroicons/react/solid/esm/ChevronLeftIcon";
 import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
 import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
-import format from "date-fns/format";
-import setHours from "date-fns/setHours";
-import setMinutes from "date-fns/setMinutes";
-import setSeconds from "date-fns/setSeconds";
-import addMinutes from "date-fns/addMinutes";
-import ca from "date-fns/locale/ca";
+import { format, setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
+import { ca } from "date-fns/locale";
 import { useTranslations } from "next-intl";
 import { DatePickerComponentProps, CustomHeaderProps } from "types/props";
 
@@ -176,8 +172,8 @@ export default function DatePickerImpl({
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 w-full">
-        <div className="w-full">
+      <div className="flex flex-col sm:flex-row gap-4 w-full">
+        <div className="w-full sm:flex-1 sm:min-w-0">
           <span className="text-sm text-foreground/70 mb-1.5 block font-medium">
             {t("start")}
           </span>
@@ -200,7 +196,7 @@ export default function DatePickerImpl({
           />
         </div>
 
-        <div className="w-full">
+        <div className="w-full sm:flex-1 sm:min-w-0">
           <span className="text-sm text-foreground/70 mb-1.5 block font-medium">
             {t("end")}
           </span>
