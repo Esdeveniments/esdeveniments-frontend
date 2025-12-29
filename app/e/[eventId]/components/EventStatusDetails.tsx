@@ -15,7 +15,7 @@ const EventStatusDetails = async ({
 }: EventStatusDetailsProps) => {
   if (!temporalStatus) return null;
 
-  const t = await getTranslations("EventStatus");
+  const t = await getTranslations("Utils.EventStatus");
 
   const liveContent =
     temporalStatus.state === "live"
