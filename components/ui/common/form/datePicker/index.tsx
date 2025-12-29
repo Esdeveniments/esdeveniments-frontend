@@ -22,7 +22,7 @@ export default function DatePickerComponent(props: DatePickerComponentProps) {
       ) : (
         <div className="w-full flex flex-col gap-4" onClick={ensureLoaded}>
           <div className="h-5 w-40 bg-muted rounded" />
-          <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <div className="w-full">
               <div className="h-4 w-24 bg-muted rounded mb-2" />
               <div className="w-full min-h-[44px] px-4 py-3 border border-border rounded-xl bg-muted/30" />

@@ -1115,7 +1115,9 @@
       "startsInDays": "Comença en {count} dies",
       "startsInHours": "Comença en {count} hores",
       "startsToday": "Comença avui",
-      "today": "Avui"
+      "today": "Avui",
+      "endedOn": "Va finalitzar el",
+      "dateRangePast": "Del {start} al {end}"
     },
     "EventStatusBadge": {
       "ariaLabelPrefix": "Estat:",

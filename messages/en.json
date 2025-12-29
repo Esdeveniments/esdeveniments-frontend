@@ -1116,7 +1116,9 @@
       "startsInDays": "Starts in {count} days",
       "startsInHours": "Starts in {count} hours",
       "startsToday": "Starts today",
-      "today": "Today"
+      "today": "Today",
+      "endedOn": "Ended on",
+      "dateRangePast": "From {start} to {end}"
     },
     "EventStatusBadge": {
       "ariaLabelPrefix": "Status:",

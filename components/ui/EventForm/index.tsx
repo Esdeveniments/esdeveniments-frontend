@@ -523,7 +523,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             <Button
               type="button"
               variant="neutral"
-              className="btn-outline min-h-[44px] px-6 w-full sm:w-auto"
+              className="btn-outline min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!isPreviewReady || isLoading}
               data-testid={previewTestId || "preview-button"}
               data-analytics-event-name={
@@ -545,7 +545,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               disabled={isNextDisabled}
               data-testid="next-button"
               onClick={goNext}
-              className={`min-h-[44px] px-6 w-full sm:w-auto ${isNextDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {tForm.has("next") ? tForm("next") : "Següent"}
             </Button>
@@ -554,10 +554,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               type="submit"
               variant="primary"
               disabled={formState.isDisabled || isLoading}
-              className={`min-h-[44px] px-6 w-full sm:w-auto ${formState.isDisabled || isLoading
-                ? "opacity-50 cursor-not-allowed"
-                : "opacity-100"
-                }`}
+              className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="publish-button"
               data-analytics-event-name={
                 analyticsContext === "publica" ? "publish_submit_click" : undefined
