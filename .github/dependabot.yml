@@ -2,7 +2,9 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
+
 updates:
+  # npm: Only major updates, monthly, individual PRs
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -13,3 +15,10 @@ updates:
         update-types:
           - "version-update:semver-patch"
           - "version-update:semver-minor"
+
+  # GitHub Actions: Keep workflows secure
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3

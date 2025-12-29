@@ -1,4 +1,4 @@
-import ImageServer from "@components/ui/common/image/ImageServer";
+import Image from "@components/ui/common/image";
 import ViewCounter from "@components/ui/viewCounter";
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import { buildEventPlaceLabels } from "@utils/location-helpers";
@@ -67,7 +67,7 @@ const CardHorizontalServer = async ({
         <article className="w-full h-full bg-background overflow-hidden cursor-pointer rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200 relative z-10 flex flex-col">
           {/* Image */}
           <div className="w-full h-48 overflow-hidden">
-            <ImageServer
+            <Image
               className="w-full h-full"
               title={event.title}
               alt={event.title}
