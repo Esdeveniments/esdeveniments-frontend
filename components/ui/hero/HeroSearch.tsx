@@ -8,9 +8,11 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { sendGoogleEvent } from "@utils/analytics";
-import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
-import ChevronDownIcon from "@heroicons/react/solid/esm/ChevronDownIcon";
-import XIcon from "@heroicons/react/solid/esm/XIcon";
+import {
+  MagnifyingGlassIcon as SearchIcon,
+  ChevronDownIcon,
+  XMarkIcon as XIcon,
+} from "@heroicons/react/24/solid";
 import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
@@ -33,7 +35,7 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
 
 export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const t = useTranslations("Components.HeroSearch");
-    const locale = useLocale();
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();

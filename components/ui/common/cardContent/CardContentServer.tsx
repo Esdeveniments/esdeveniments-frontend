@@ -1,8 +1,10 @@
-import ClockIcon from "@heroicons/react/outline/esm/ClockIcon";
-import LocationMarkerIcon from "@heroicons/react/outline/esm/LocationMarkerIcon";
-import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import {
+  ClockIcon,
+  MapPinIcon as LocationMarkerIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
-import ImageServer from "@components/ui/common/image/ImageServer";
+import Image from "@components/ui/common/image";
 import CardLink from "./CardLink";
 import MobileShareIsland from "./MobileShareIsland";
 import DesktopShareIsland from "./DesktopShareIsland";
@@ -77,7 +79,7 @@ async function CardContentServer({
                   wrapperClassName="pointer-events-auto"
                 />
               )}
-              <ImageServer
+              <Image
                 className={`w-full flex justify-center ${isHorizontal ? "h-64 object-cover" : "object-contain"
                   }`}
                 title={event.title}
@@ -87,6 +89,7 @@ async function CardContentServer({
                 location={event.city?.name || event.location}
                 region={event.region?.name || event.city?.name}
                 date={eventDate}
+                context={isHorizontal ? "list" : "card"}
                 cacheKey={event.hash || event.updatedAt}
               />
             </div>

@@ -3,8 +3,7 @@ import { FC } from "react";
 import { useTranslations } from "next-intl";
 import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
 import Modal from "@components/ui/common/modal";
-import PencilIcon from "@heroicons/react/outline/esm/PencilIcon";
-import XCircleIcon from "@heroicons/react/outline/esm/XCircleIcon";
+import { PencilIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import type { EditModalProps } from "types/editModal";
 
 const EditModal: FC<EditModalProps> = ({

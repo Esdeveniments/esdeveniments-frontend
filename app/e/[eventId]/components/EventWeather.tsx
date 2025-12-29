@@ -1,4 +1,4 @@
-import CloudIcon from "@heroicons/react/outline/esm/CloudIcon";
+import { CloudIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from "next-intl/server";
 import type { EventWeatherProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";

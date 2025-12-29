@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, memo, MouseEvent, JSX } from "react";
-import ShareIcon from "@heroicons/react/outline/esm/ShareIcon";
+import { ShareIcon } from "@heroicons/react/24/outline";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { sendGoogleEvent } from "@utils/analytics";
 import { NativeShareButtonProps } from "../../../../types/props";

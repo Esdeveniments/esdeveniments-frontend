@@ -4,7 +4,7 @@ import { useHero } from "./HeroContext";
 import { useRouter } from "../../../i18n/routing";
 import { useTranslations } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
-import SearchIcon from "@heroicons/react/solid/esm/SearchIcon";
+import { MagnifyingGlassIcon as SearchIcon } from "@heroicons/react/24/solid";
 import Button from "@components/ui/common/button";
 import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";

@@ -26,14 +26,14 @@ vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
 }));
 
-vi.mock("@heroicons/react/solid/esm/HeartIcon", () => ({
-  default: (props: SVGProps<SVGSVGElement>) => (
+vi.mock("@heroicons/react/24/solid", () => ({
+  HeartIcon: (props: SVGProps<SVGSVGElement>) => (
     <svg data-testid="heart-solid" {...props} />
   ),
 }));
 
-vi.mock("@heroicons/react/outline/esm/HeartIcon", () => ({
-  default: (props: SVGProps<SVGSVGElement>) => (
+vi.mock("@heroicons/react/24/outline", () => ({
+  HeartIcon: (props: SVGProps<SVGSVGElement>) => (
     <svg data-testid="heart-outline" {...props} />
   ),
 }));

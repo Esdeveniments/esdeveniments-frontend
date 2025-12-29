@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";

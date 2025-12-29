@@ -1,5 +1,5 @@
 import Badge from "@components/ui/common/badge";
-import TagIcon from "@heroicons/react/outline/esm/TagIcon";
+import { TagIcon } from "@heroicons/react/24/outline";
 import type { EventCategoriesProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { buildCanonicalUrl } from "@utils/url-filters";

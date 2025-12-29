@@ -1,5 +1,5 @@
-import ChevronRightIcon from "@heroicons/react/solid/esm/ChevronRightIcon";
-import SpeakerphoneIcon from "@heroicons/react/outline/esm/SpeakerphoneIcon";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import { MegaphoneIcon as SpeakerphoneIcon } from "@heroicons/react/24/outline";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import AdArticle from "@components/ui/adArticle";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
