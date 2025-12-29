@@ -419,7 +419,9 @@ describe("sanitizeHtmlClient", () => {
 
   describe("link sanitization", () => {
     it("preserves valid http links", () => {
-      const result = sanitizeHtmlClient('<a href="https://example.com">Link</a>');
+      const result = sanitizeHtmlClient(
+        '<a href="https://example.com">Link</a>'
+      );
       expect(result).toContain('href="https://example.com"');
     });
 
@@ -458,6 +460,25 @@ describe("sanitizeHtmlClient", () => {
     it("preserves ordered lists", () => {
       const html = "<ol><li>First</li><li>Second</li></ol>";
       expect(sanitizeHtmlClient(html)).toBe(html);
+    });
+  });
+
+  describe("unwrapping disallowed tags", () => {
+    it("preserves allowed nested tags when unwrapping disallowed parent", () => {
+      const html = "<div>Text <strong>bold</strong> more</div>";
+      const result = sanitizeHtmlClient(html);
+      expect(result).toContain("<strong>bold</strong>");
+      expect(result).toContain("Text ");
+      expect(result).toContain(" more");
+      expect(result).not.toContain("<div>");
+    });
+
+    it("preserves deeply nested allowed tags", () => {
+      const html = "<section><div><p>Keep <em>this</em></p></div></section>";
+      const result = sanitizeHtmlClient(html);
+      expect(result).toContain("<p>Keep <em>this</em></p>");
+      expect(result).not.toContain("<section>");
+      expect(result).not.toContain("<div>");
     });
   });
 

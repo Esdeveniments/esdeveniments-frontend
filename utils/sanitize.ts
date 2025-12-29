@@ -388,9 +388,10 @@ function sanitizeNode(node: Node): void {
       const tagName = element.tagName.toLowerCase();
 
       if (!ALLOWED_TAGS.has(tagName)) {
-        // Replace disallowed element with its text content
-        const text = document.createTextNode(element.textContent || "");
-        node.replaceChild(text, element);
+        // Recursively sanitize children first to preserve allowed nested tags
+        sanitizeNode(element);
+        // Unwrap disallowed tag by replacing it with its sanitized children
+        element.replaceWith(...element.childNodes);
       } else {
         // Clean attributes
         sanitizeElementAttributes(element, tagName);
