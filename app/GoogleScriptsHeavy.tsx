@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import type { WindowWithGtag } from "types/common";
+import { isE2ETestMode } from "@utils/env";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -34,7 +35,7 @@ export default function GoogleScriptsHeavy({
 
   // Track outbound link clicks (external http/https) with optional enrichment via data attributes.
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
     if (!adsAllowed) return;
     const win = ensureGtag();
     if (!win) return;
@@ -133,6 +134,7 @@ export default function GoogleScriptsHeavy({
 
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
+    if (isE2ETestMode) return;
     if (!adsAllowed || !ADS_CLIENT) return;
 
     const setPendingToken = () => {
@@ -240,6 +242,7 @@ export default function GoogleScriptsHeavy({
   }, [adsAllowed]);
 
   useEffect(() => {
+    if (isE2ETestMode) return;
     const handleTagErrors = (event: ErrorEvent) => {
       if (
         typeof event.message === "string" &&

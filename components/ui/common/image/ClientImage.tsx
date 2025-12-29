@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useRef, RefObject } from "react";
+import { memo, useRef, RefObject, useState, useCallback } from "react";
 import NextImage from "next/image";
 import ImgDefault from "@components/ui/imgDefault";
 import useOnScreen from "@components/hooks/useOnScreen";
@@ -25,13 +25,18 @@ function ClientImage({
   image = "",
   className = "w-full h-full flex justify-center items-center",
   priority = false,
+  fetchPriority,
   alt = title,
   quality: customQuality,
   context = "card",
   cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
+
   const imgDefaultRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
+  const [forceUnoptimized, setForceUnoptimized] = useState(false);
   const isImgDefaultVisible = useOnScreen<HTMLDivElement>(
     imgDefaultRef as RefObject<HTMLDivElement>,
     { freezeOnceVisible: true }
@@ -40,7 +45,7 @@ function ClientImage({
   const imageClassName = `${className}`;
   const networkQualityString = useNetworkSpeed();
 
-  const { hasError, isLoading, handleError, handleLoad, getImageKey } =
+  const { hasError, isLoading, handleError, handleLoad, reset, getImageKey } =
     useImageRetry(2);
 
   const imageQuality = getOptimalImageQuality({
@@ -50,9 +55,29 @@ function ClientImage({
     customQuality,
   });
 
-  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
+  const imageKey = getImageKey(`${finalImageSrc}-${forceUnoptimized ? "direct" : "opt"}`);
 
-  const imageKey = getImageKey(finalImageSrc);
+  const handleImageError = useCallback(() => {
+    // If the Next.js image optimizer fails (common with TLS/cert issues or platform adapters),
+    // retry once by bypassing optimization and letting the browser fetch the image directly.
+    if (!forceUnoptimized) {
+      setForceUnoptimized(true);
+      reset();
+      return;
+    }
+    handleError();
+  }, [forceUnoptimized, handleError, reset]);
+
+  const containerStyle: React.CSSProperties = {
+    position: "relative",
+    ...(context === "card" || context === "list"
+      ? {
+          aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
+          overflow: "hidden",
+        }
+      : {}),
+    maxWidth: "100%", // Ensure image doesn't exceed container
+  };
 
   // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
   if (hasError) {
@@ -62,13 +87,14 @@ function ClientImage({
         ref={divRef}
         role="img"
         aria-label={title || "Imatge no disponible"}
+        style={containerStyle}
       >
         {isImgDefaultVisible ? (
           <ImgDefault title={title} />
         ) : (
-          <div className="flex justify-center items-center w-full">
+          <div className="flex justify-center items-center w-full h-full">
             <div
-              className="w-full h-60 bg-muted animate-fast-pulse"
+              className="w-full h-full bg-muted animate-fast-pulse"
               ref={imgDefaultRef}
             ></div>
           </div>
@@ -80,14 +106,11 @@ function ClientImage({
   return (
     <div
       className={imageClassName}
-      style={{
-        position: "relative",
-        maxWidth: "100%", // Ensure image doesn't exceed container
-      }}
+      style={containerStyle}
     >
       {isLoading && (
         <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
-          <div className="w-full h-60 bg-muted animate-fast-pulse"></div>
+          <div className="w-full h-full bg-muted animate-fast-pulse"></div>
         </div>
       )}
       <NextImage
@@ -98,20 +121,23 @@ function ClientImage({
         width={500}
         height={260}
         loading={priority ? "eager" : "lazy"}
-        onError={handleError}
+        onError={handleImageError}
         onLoad={handleLoad}
         quality={imageQuality}
         style={{
           objectFit: "cover",
           opacity: isLoading ? 0 : 1,
           transition: "opacity 0.3s ease-in-out",
-          height: "auto",
+          width: "100%",
+          height: "100%",
           maxWidth: "100%", // Ensure image respects container constraints
         }}
         priority={priority}
-        fetchPriority={priority ? "high" : "auto"}
+        fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
         sizes={getOptimalImageSizes(context)}
-        unoptimized={env === "dev"}
+        // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
+        // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
+        unoptimized={forceUnoptimized || shouldBypassOptimizer || env === "dev"}
       />
     </div>
   );

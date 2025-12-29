@@ -6,6 +6,9 @@ const getFutureDate = (daysAhead: number): string => {
   return date.toISOString().split("T")[0];
 };
 
+// Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
+// This allows Playwright's route handlers to intercept API requests for mocking
+
 test.describe("Client-side filters fetch & SSR list hiding", () => {
   test("search filter: sends term=cardedeu and hides SSR list", async ({ page }) => {
     const searchEventDate = getFutureDate(30);

@@ -5,51 +5,14 @@
 import type { StringHelperLabels } from "types/common";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import caMessages from "../messages/ca.json";
+import { sanitize, sanitizeLegacyApostrophe } from "./sanitize-segment";
 
 const stringHelperLabels: StringHelperLabels = (caMessages as any).Utils
   .StringHelpers as StringHelperLabels;
 const { articles, prepositions, feminineExceptions, masculineExceptions } =
   stringHelperLabels;
 
-/** Lowercases, strips diacritics, handles Catalan l·l and apostrophes, collapses to ascii-friendly slugs. */
-export function sanitize(input: string): string {
-  if (!input) return "";
-  const s = input
-    .trim()
-    .toLowerCase()
-    .normalize("NFKD") // split accents
-    .replace(/\p{M}+/gu, "") // remove all combining marks (faster than hand-picked ranges)
-    .replace(/·/g, "") // l·l -> ll
-    .replace(/['’]+/g, " ") // treat apostrophes as separators (l'escala -> l escala)
-    .replace(/[–—―]/g, "-") // en/em dashes -> hyphen
-    .replace(/&/g, " i ") // & -> i (Catalan)
-    .replace(/[^a-z0-9\s-]/g, "") // drop the rest
-    .replace(/[\s_-]+/g, "-") // collapse separators
-    .replace(/^-+|-+$/g, ""); // trim hyphens
-  return s || "n-a";
-}
-
-/**
- * Legacy sanitize variant used only for matching incoming slugs from older content.
- * Differs from sanitize() by removing apostrophes instead of spacing/hyphenating them.
- * Example: "L'Escala" -> "lescala" (legacy) vs "l-escala" (current).
- */
-export function sanitizeLegacyApostrophe(input: string): string {
-  if (!input) return "";
-  const s = input
-    .trim()
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/\p{M}+/gu, "")
-    .replace(/·/g, "")
-    .replace(/['’]+/g, "") // legacy: drop apostrophes
-    .replace(/[–—―]/g, "-")
-    .replace(/&/g, " i ")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return s || "n-a";
-}
+export { sanitize, sanitizeLegacyApostrophe };
 
 export const slug = (
   title: string,

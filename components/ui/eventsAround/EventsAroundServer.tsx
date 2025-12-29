@@ -1,4 +1,4 @@
-import ImageServer from "@components/ui/common/image/ImageServer";
+import Image from "@components/ui/common/image";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { truncateString, getFormattedDate } from "@utils/helpers";
@@ -131,6 +131,10 @@ async function EventsAroundServer({
 
   const t = await getTranslations("Components.EventsAround");
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tScroll = await getTranslations({
+    locale,
+    namespace: "Components.HorizontalScroll",
+  });
   const carouselSuffix = t("carouselSuffix");
   // Render different layouts
   if (layout === "horizontal") {
@@ -153,6 +157,7 @@ async function EventsAroundServer({
           nudgeOnFirstLoad
           showDesktopArrows
           hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
+          labels={{ previous: tScroll("previous"), next: tScroll("next") }}
         >
           <div className="flex gap-element-gap">
             {uniqueEvents.map((event, index) => (
@@ -224,12 +229,13 @@ async function EventsAroundServer({
               >
                 {/* ImageEvent */}
                 <div className="w-full h-32 flex justify-center items-center overflow-hidden">
-                  <ImageServer
+                  <Image
                     className="w-full object-cover"
                     title={event.title}
                     alt={event.title}
                     image={image}
                     priority={false}
+                    fetchPriority="low"
                     context="card"
                     cacheKey={event.hash || event.updatedAt}
                   />

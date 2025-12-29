@@ -10,7 +10,38 @@ import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { permanentRedirect } from "next/navigation";
+
+const reportNewsDetailError = (
+  source: "generateMetadata" | "Page",
+  error: unknown,
+  context: { place: string; article: string }
+) => {
+  console.error(`${source}: Error fetching news detail`, error);
+  captureException(error, {
+    tags: {
+      source,
+      feature: "news-article",
+      route: "noticies/[place]/[article]",
+    },
+    extra: {
+      place: context.place,
+      article: context.article,
+    },
+  });
+};
+
+const getCanonicalPlaceSlugFromDetail = (
+  detail: NewsDetailResponseDTO | null,
+  fallbackPlace: string
+) => {
+  const candidate =
+    detail?.city?.slug || detail?.region?.slug || detail?.province?.slug;
+  return typeof candidate === "string" && candidate.length > 0
+    ? candidate
+    : fallbackPlace;
+};
 
 export async function generateMetadata({
   params,
@@ -22,9 +53,9 @@ export async function generateMetadata({
   try {
     detail = await getNewsBySlug(article);
   } catch (error) {
-    console.error("generateMetadata: Error fetching news detail", error);
-    captureException(error);
+    reportNewsDetailError("generateMetadata", error, { place, article });
   }
+  const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
   const placeType = await getPlaceTypeAndLabelCached(place);
   const locale = await getLocaleSafely();
   const t = await getTranslations({
@@ -35,7 +66,7 @@ export async function generateMetadata({
     const base = buildPageMeta({
       title: `${detail.title} | ${placeType.label}`,
       description: detail.description,
-      canonical: `${siteUrl}/noticies/${place}/${article}`,
+      canonical: `${siteUrl}/noticies/${canonicalPlace}/${article}`,
       image: detail.events?.[0]?.imageUrl,
       locale,
     }) as unknown as Metadata;
@@ -53,7 +84,7 @@ export async function generateMetadata({
   return buildPageMeta({
     title: t("title", { place: placeType.label }),
     description: t("description"),
-    canonical: `${siteUrl}/noticies/${place}/${article}`,
+    canonical: `${siteUrl}/noticies/${canonicalPlace}/${article}`,
     locale,
   }) as unknown as Metadata;
 }
@@ -65,8 +96,25 @@ export default async function Page({
 }) {
   const { place, article } = await params;
 
-  // Start fetches immediately
-  const detailPromise = getNewsBySlug(article);
+  const locale = await getLocaleSafely();
+  let detail: NewsDetailResponseDTO | null = null;
+  try {
+    detail = await getNewsBySlug(article);
+  } catch (error) {
+    reportNewsDetailError("Page", error, { place, article });
+  }
+
+  if (detail) {
+    const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
+    if (canonicalPlace !== place) {
+      permanentRedirect(
+        withLocalePath(`/noticies/${canonicalPlace}/${article}`, locale)
+      );
+    }
+  }
+
+  // Wrap already-fetched data as a promise for the component API
+  const detailPromise = Promise.resolve(detail);
   const placeTypePromise = getPlaceTypeAndLabelCached(place);
 
   return (

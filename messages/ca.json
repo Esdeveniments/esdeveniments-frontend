@@ -71,6 +71,15 @@
       "schemaName": "Pàgina offline d'Esdeveniments.cat",
       "schemaDescription": "Pàgina en mode offline d'Esdeveniments.cat per continuar navegant mentre es recupera la connexió."
     },
+    "Favorites": {
+      "title": "Preferits - Esdeveniments.cat",
+      "description": "Els teus esdeveniments futurs guardats",
+      "heading": "Preferits",
+      "subtitle": "Només es mostren esdeveniments futurs. Quan un esdeveniment finalitza, s'elimina automàticament dels preferits.",
+      "countLabel": "{count}/{max} desats",
+      "emptyTitle": "Encara no tens esdeveniments futurs desats",
+      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits."
+    },
     "About": {
       "metaTitle": "Qui som - Esdeveniments.cat",
       "metaDescription": "Qui som? - Esdeveniments.cat és una iniciativa ciutadana per veure en un cop d'ull tots els actes culturals que es fan a Catalunya.",
@@ -81,6 +90,9 @@
       "paragraph1": "Esdeveniments.cat és una iniciativa ciutadana per veure de manera fàcil i ràpida tots els actes culturals que es fan a Catalunya.",
       "paragraph2": "L'agenda és col·laborativa, i cada persona que organitzi un acte cultural podrà publicar-lo <publish>aquí</publish> pel seu compte.",
       "paragraph3": "Podreu seguir l'agenda cultural en aquesta pàgina web o seguir-nos a les xarxes socials:",
+      "contactHeading": "Contacte",
+      "contactBody": "Per col·laboracions, premsa o dubtes, escriu-nos.",
+      "contactCta": "Escriu-nos",
       "teamHeading": "El nostre equip",
       "linkedin": "LinkedIn"
     },
@@ -107,14 +119,6 @@
       "seeMore": "Veure més…",
       "seeAgenda": "Veure agenda {place}",
       "nearbyLabel": "A prop:"
-    },
-    "NewsList": {
-      "emptyTitle": "No hem trobat notícies recents",
-      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
-      "viewAll": "Veure totes les notícies →",
-      "itemListName": "Notícies de {place}",
-      "prev": "← Anterior",
-      "next": "Més notícies →"
     },
     "EventEdit": {
       "title": "Editar esdeveniment",
@@ -241,9 +245,11 @@
       "navigation": {
         "home": "Inici",
         "agenda": "Agenda",
+        "favorites": "Preferits",
         "publish": "Publicar",
         "news": "Notícies",
         "about": "Qui som",
+        "contact": "Contacte",
         "archive": "Arxiu"
       },
       "featuredAgendas": "Agendes destacades",
@@ -254,6 +260,7 @@
       "navigation": {
         "home": "Inici",
         "agenda": "Agenda",
+        "favorites": "Preferits",
         "publish": "Publicar",
         "news": "Notícies",
         "archive": "Arxiu"
@@ -263,6 +270,8 @@
         "openMenu": "Open menu",
         "closeMenu": "Close menu",
         "home": "Home",
+        "agenda": "Agenda",
+        "favorites": "Preferits",
         "publish": "Publish",
         "news": "Notícies"
       },
@@ -274,7 +283,7 @@
       },
       "languagesShort": {
         "ca": "Cat",
-        "es": "Cast",
+        "es": "Esp",
         "en": "Eng"
       },
       "mobilePublishLabel": "Publica"
@@ -293,6 +302,9 @@
       "createdSuccess": "Fantàstic!! L'esdeveniment {title} s'ha creat correctament i ja el pot veure tothom!",
       "close": "Close",
       "viewEvent": "Veure esdeveniment"
+    },
+    "FavoriteButton": {
+      "maxReached": "Has arribat al límit de {max} preferits. Elimina'n un per afegir-ne més."
     },
     "EventNotifications": {
       "thankYou": "Gràcies per contribuir a millorar el contingut de Esdeveniments.cat! En menys de 24 hores estarà disponible el canvi."
@@ -625,7 +637,9 @@
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
-      "dateSingle": "{nameDay}, {start}"
+      "dateSingle": "{nameDay}, {start}",
+      "favoriteAddAria": "Afegeix a preferits",
+      "favoriteRemoveAria": "Elimina de preferits"
     },
     "EventForm": {
       "title": "Títol *",
@@ -774,17 +788,6 @@
       "citiesTitle": "Poblacions principals",
       "footer": "L'arxiu conté esdeveniments culturals de totes les comarques de Catalunya. Cada enllaç et porta a un històric detallat organitzat per anys i mesos."
     },
-    "NewsList": {
-      "emptyTitle": "No hem trobat notícies recents",
-      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
-      "viewAll": "Veure totes les notícies →",
-      "itemListName": "Notícies de {place}",
-      "prev": "← Anterior",
-      "next": "Més notícies →",
-
-      "name": "Notícies de {place}",
-      "more": "Més notícies →"
-    },
     "NewsHubsGrid": {
       "itemListTitle": "Últimes notícies per hub",
       "titleWithPlace": "Últimes notícies {place}",
@@ -914,35 +917,35 @@
       "root": {
         "title": "Agenda avui a Catalunya i plans {year}",
         "subTitle": "Agenda avui a Catalunya aquest {month}, amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.",
-        "metaTitle": "Agenda avui a Catalunya - Què fer aquest {month}",
+        "metaTitle": "Esdeveniments a Catalunya | Agenda cultural i plans",
         "metaDescription": "Explora l'agenda avui a Catalunya: concerts, exposicions, teatre, activitats familiars i plans gratuïts per inspirar-te aquest {month}.",
         "notFound": "Ho sentim, però no hi ha esdeveniments disponibles a Catalunya en aquest moment. Mira altres dates o localitats properes a la nostra agenda cultural, on segur que hi trobaràs plans que t’agradaran."
       },
       "categoryWithDate": {
         "avui": {
           "title": "{titleSuffix} avui {label}",
-          "subTitle": "{titleSuffix} avui {label}, amb propostes culturals actualitzades, plans de darrera hora i activitats per a tots els gustos.",
+          "subTitle": "Descobreix {titleSuffix} avui {label} amb propostes actualitzades i plans de darrera hora. Concerts, teatre, exposicions i activitats per a tots els gustos.",
           "metaTitle": "{categoryTitle} avui {label} - Agenda cultural i plans",
           "metaDescription": "{context} avui {label}. Consulta l’agenda per descobrir plans per avui: horaris, espais, activitats per a famílies i opcions gratuïtes.",
           "notFound": "Ho sentim, però no hi ha {noEventsText} avui {label}. Mira les propostes per demà, aquest cap de setmana o altres localitats properes per trobar plans que et puguin interessar."
         },
         "dema": {
           "title": "{titleSuffix} demà {label}",
-          "subTitle": "{titleSuffix} demà {label}, amb activitats destacades, plans per sortir i propostes per gaudir de la cultura.",
+          "subTitle": "Descobreix {titleSuffix} demà {label} i prepara el teu pla amb antelació. Música, teatre, exposicions i activitats per gaudir de la cultura.",
           "metaTitle": "{categoryTitle} demà {label} - Idees i plans culturals",
           "metaDescription": "{context} demà {label}. Avança’t i troba els millors plans per demà: activitats familiars, propostes de nit i esdeveniments culturals a prop teu.",
           "notFound": "Ho sentim, però no hi ha {noEventsText} demà {label}. Consulta l’agenda per avui, aquesta setmana o altres destinacions properes per trobar noves propostes."
         },
         "setmana": {
           "title": "{titleSuffix} aquesta setmana {label}",
-          "subTitle": "{titleSuffix} aquesta setmana {label}, amb concerts, tallers, exposicions i activitats familiars per omplir la teva agenda.",
+          "subTitle": "Descobreix {titleSuffix} aquesta setmana {label} i omple l’agenda de plans. Concerts, tallers, exposicions i activitats familiars.",
           "metaTitle": "{categoryTitle} aquesta setmana {label} - Agenda completa",
           "metaDescription": "{context} aquesta setmana {label}. Descobreix una selecció d’activitats destacades, plans per al cap de setmana i propostes gratuïtes per a totes les edats.",
           "notFound": "Ho sentim, però no hi ha {noEventsText} aquesta setmana {label}. Prova de canviar la data o explora altres municipis i comarques properes per trobar nous plans."
         },
         "capDeSetmana": {
           "title": "{titleSuffix} aquest cap de setmana {label}",
-          "subTitle": "{titleSuffix} aquest cap de setmana {label}, amb plans per sortir, activitats en família i propostes per descobrir la cultura local.",
+          "subTitle": "Descobreix {titleSuffix} aquest cap de setmana {label} amb propostes per sortir i gaudir en família. Concerts, activitats amb nens i cultura local.",
           "metaTitle": "{categoryTitle} aquest cap de setmana {label} - Plans i agenda",
           "metaDescription": "{context} aquest cap de setmana {label}. Troba concerts, festes, activitats amb nens i altres plans per aprofitar al màxim el cap de setmana.",
           "notFound": "Ho sentim, però no hi ha {noEventsText} aquest cap de setmana {label}. Consulta altres dates, explora activitats a la resta de Catalunya o ajusta els filtres de la cerca per descobrir més opcions."
@@ -950,14 +953,14 @@
       },
       "categoryNoDate": {
         "title": "{titleSuffix} {label}",
-        "subTitle": "{titleSuffix} {label}, amb una selecció d’activitats culturals, plans familiars, propostes gratuïtes i esdeveniments destacats.",
-        "metaTitle": "{categoryTitle} {label} - Agenda cultural Catalunya",
+        "subTitle": "Descobreix {titleSuffix} {label} amb una selecció d’esdeveniments i activitats culturals. Concerts, tallers, exposicions, plans familiars i propostes gratuïtes.",
+        "metaTitle": "Esdeveniments {label} | {categoryTitle} i agenda cultural",
         "metaDescription": "{context} {label}. Consulta l’agenda cultural actualitzada i troba concerts, tallers, exposicions, activitats familiars i altres plans per al teu temps lliure.",
         "notFound": "Ho sentim, però no hi ha {noEventsText} {label} en aquest moment. Prova amb altres dates, categories o localitats properes per descobrir noves propostes culturals."
       },
       "regionNoDate": {
         "title": "Què fer {label}. Agenda {year}",
-        "subTitle": "Agenda cultural {label} aquest {month}, amb concerts, exposicions, rutes culturals, activitats familiars i plans per al cap de setmana.",
+        "subTitle": "Descobreix els millors plans d’oci i cultura {label} aquest {month}. Troba concerts, teatre, exposicions, rutes i activitats familiars per aprofitar el cap de setmana.",
         "metaTitle": "Esdeveniments destacats {label}. Agenda {year}",
         "metaDescription": "Explora la millor agenda cultural {label} aquest {month}. Troba concerts, festivals, teatre, activitats per a nens i plans gratuïts per gaudir de la regió.",
         "canonical": "{siteUrl}/{place}",
@@ -971,38 +974,38 @@
         },
         "default": {
           "title": "Agenda avui {label}. Què fer {year}",
-          "metaTitle": "Agenda avui {label} - Què fer aquest {month}",
+          "metaTitle": "Esdeveniments {label} | Agenda cultural i plans",
           "metaDescription": "Descobreix l'agenda avui {label} aquest {month}. Consulta concerts, festes, activitats familiars, tallers, exposicions i altres plans per gaudir del municipi."
         },
-        "subTitle": "Agenda cultural {label} aquest {month}, amb activitats de proximitat, plans en família, concerts, exposicions i festes populars.",
+        "subTitle": "Descobreix els millors plans d’oci i cultura {label} aquest {month}. Consulta l’agenda actualitzada amb festes, concerts, teatre, cinema, exposicions i activitats familiars.",
         "notFound": "Ho sentim, però no hi ha esdeveniments {label} per a aquesta data. Prova de canviar la data, explorar altres categories o mirar municipis propers per trobar activitats que t'interessin.",
         "canonical": "{siteUrl}/{place}"
       },
       "byDatePlace": {
         "avui": {
           "title": "Què fer avui {label}",
-          "subTitle": "Agenda d’avui {label}, amb concerts, exposicions, activitats familiars, rutes i altres plans d’última hora.",
+          "subTitle": "Descobreix què fer avui {label}: concerts, teatre, exposicions, activitats familiars i plans d’última hora. Consulta l’agenda actualitzada i no et perdis res.",
           "metaTitle": "Esdeveniments avui {label} - Plans i agenda",
           "metaDescription": "Descobreix què fer avui {label}. Consulta l’agenda cultural actualitzada amb concerts, festes, activitats amb nens, propostes gratuïtes i altres plans a prop teu.",
           "notFound": "Ho sentim, però no hi ha esdeveniments avui {label}. Mira les propostes per demà, aquesta setmana o altres localitats properes per trobar plans que t’encaixin."
         },
         "dema": {
           "title": "Què fer demà {label}",
-          "subTitle": "Agenda de demà {label}, amb activitats culturals, plans familiars, música, teatre i esdeveniments especials.",
+          "subTitle": "Prepara el teu dia i descobreix què fer demà {label}: concerts, teatre, exposicions i activitats familiars. Consulta l’agenda i tria el teu pla.",
           "metaTitle": "Esdeveniments demà {label} - Idees i plans",
           "metaDescription": "Descobreix què fer demà {label}. Troba concerts, activitats per a nens, exposicions, rutes i altres plans per organitzar el teu dia amb antelació.",
           "notFound": "Ho sentim, però no hi ha esdeveniments demà {label}. Consulta l’agenda per avui, aquesta setmana o altres destinacions properes per descobrir noves opcions."
         },
         "setmana": {
           "title": "Agenda setmanal {label}",
-          "subTitle": "Agenda aquesta setmana {label}, amb una selecció d’activitats culturals, concerts, tallers, plans familiars i propostes gratuïtes.",
+          "subTitle": "Descobreix què fer aquesta setmana {label} amb concerts, tallers, exposicions i activitats en família. Plans i cultura per omplir la setmana.",
           "metaTitle": "Esdeveniments aquesta setmana {label} - Agenda completa",
           "metaDescription": "Explora l’agenda cultural aquesta setmana {label}. Troba concerts, exposicions, teatre, activitats en família, rutes i altres plans per omplir la teva setmana.",
           "notFound": "Ho sentim, però no hi ha esdeveniments aquesta setmana {label}. Prova altres setmanes, canvia de categoria o explora localitats properes per trobar més activitats."
         },
         "capDeSetmana": {
           "title": "Què fer aquest cap de setmana {label}",
-          "subTitle": "Agenda d’aquest cap de setmana {label}, amb plans per sortir, activitats familiars, festes, música en directe i propostes a l’aire lliure.",
+          "subTitle": "Descobreix què fer aquest cap de setmana {label}: concerts, festes, activitats familiars i propostes a l’aire lliure. Troba el teu pla i aprofita el cap de setmana.",
           "metaTitle": "Plans per aquest cap de setmana {label} - Agenda",
           "metaDescription": "Descobreix els millors plans per aquest cap de setmana {label}. Consulta concerts, festes populars, activitats amb nens, rutes i altres propostes culturals per aprofitar al màxim el cap de setmana.",
           "notFound": "Ho sentim, però no hi ha esdeveniments aquest cap de setmana {label}. Consulta altres dates, explora categories diferents o mira què es fa a la resta de Catalunya per trobar nous plans."
@@ -1011,7 +1014,7 @@
       "byDateNoPlace": {
         "avui": {
           "title": "Què fer avui a Catalunya",
-          "subTitle": "Agenda d’avui a Catalunya, amb concerts, exposicions, activitats familiars, festes populars i altres plans per a totes les edats.",
+          "subTitle": "Descobreix què fer avui a Catalunya amb una agenda cultural actualitzada. Concerts, teatre, exposicions, activitats familiars i plans gratuïts arreu del país.",
           "metaTitle": "Esdeveniments avui a Catalunya - Plans i agenda",
           "metaDescription": "Descobreix què fer avui a Catalunya. Consulta l’agenda cultural actualitzada amb concerts, festivals, activitats amb nens, propostes gratuïtes i plans d’última hora a tot el territori.",
           "canonical": "{siteUrl}/{byDate}",
@@ -1019,7 +1022,7 @@
         },
         "dema": {
           "title": "Què fer demà a Catalunya",
-          "subTitle": "Agenda de demà a Catalunya, amb activitats culturals, música, teatre, exposicions i plans familiars arreu del país.",
+          "subTitle": "Descobreix què fer demà a Catalunya i planifica el teu temps lliure. Concerts, teatre, exposicions, activitats en família i plans per a tots els gustos.",
           "metaTitle": "Esdeveniments demà a Catalunya - Idees i plans",
           "metaDescription": "Descobreix què fer demà a Catalunya. Troba concerts, activitats familiars, rutes, festes i altres plans per organitzar el teu temps lliure amb antelació.",
           "canonical": "{siteUrl}/{byDate}",
@@ -1027,7 +1030,7 @@
         },
         "setmana": {
           "title": "Agenda setmanal a Catalunya",
-          "subTitle": "Agenda aquesta setmana a Catalunya, amb una selecció de concerts, exposicions, teatre, festes, activitats familiars i propostes gratuïtes.",
+          "subTitle": "Descobreix què fer aquesta setmana a Catalunya amb plans culturals per a cada dia. Concerts, exposicions, teatre, festes i activitats familiars.",
           "metaTitle": "Esdeveniments aquesta setmana a Catalunya - Agenda completa",
           "metaDescription": "Explora l’agenda cultural aquesta setmana a Catalunya. Troba concerts, festivals, rutes, tallers, activitats per a nens i altres plans per omplir la teva setmana de cultura i lleure.",
           "canonical": "{siteUrl}/{byDate}",
@@ -1035,7 +1038,7 @@
         },
         "capDeSetmana": {
           "title": "Què fer aquest cap de setmana a Catalunya",
-          "subTitle": "Agenda d’aquest cap de setmana a Catalunya, amb plans per sortir, escapades, festes, concerts, activitats en família i rutes per tot el territori.",
+          "subTitle": "Descobreix què fer aquest cap de setmana a Catalunya i aprofita’l al màxim. Concerts, festes populars, activitats amb nens, rutes i escapades.",
           "metaTitle": "Esdeveniments aquest cap de setmana a Catalunya - Plans i agenda",
           "metaDescription": "Descobreix els millors plans per aquest cap de setmana a Catalunya. Consulta concerts, festes populars, activitats per a nens, rutes i altres propostes culturals i de lleure arreu del país.",
           "canonical": "{siteUrl}/{byDate}",
@@ -1098,6 +1101,9 @@
       "locationRequired": "La localització és obligatòria",
       "invalidUrl": "URL invàlida",
       "invalidEmail": "Email invàlid"
+    },
+    "SearchQuery": {
+      "forSearch": "per a la cerca"
     },
     "EventStatus": {
       "past": "Esdeveniment finalitzat",

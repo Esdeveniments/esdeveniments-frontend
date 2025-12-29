@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
 
+// Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
+// This allows Playwright's route handlers to intercept API requests for mocking
+
 // This test relies on E2E_TEST_MODE to short-circuit the server action and produce a stable slug.
 // CI sets no E2E_TEST_MODE by default. We set it via Playwright config env or GitHub Actions step if needed.
 

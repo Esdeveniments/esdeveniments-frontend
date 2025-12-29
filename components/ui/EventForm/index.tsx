@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import setHours from "date-fns/setHours";
 import setMinutes from "date-fns/setMinutes";
 import setSeconds from "date-fns/setSeconds";
@@ -55,6 +55,8 @@ export const EventForm: React.FC<EventFormProps> = ({
   const tForm = useTranslations("Components.EventForm");
   const [isHydrated, setIsHydrated] = useState(false);
   const [step, setStep] = useState(0);
+  const canPublishRef = useRef(false);
+  const publishArmTimeoutRef = useRef<number | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
@@ -113,6 +115,30 @@ export const EventForm: React.FC<EventFormProps> = ({
   }, []);
 
   useEffect(() => {
+    canPublishRef.current = false;
+    if (publishArmTimeoutRef.current !== null) {
+      window.clearTimeout(publishArmTimeoutRef.current);
+      publishArmTimeoutRef.current = null;
+    }
+
+    if (step === steps.length - 1) {
+      // Guard against accidental publish when the Next button is replaced by the Publish
+      // submit button during a step transition (can happen under CI timing/layout shifts).
+      publishArmTimeoutRef.current = window.setTimeout(() => {
+        canPublishRef.current = true;
+        publishArmTimeoutRef.current = null;
+      }, 250);
+    }
+
+    return () => {
+      if (publishArmTimeoutRef.current !== null) {
+        window.clearTimeout(publishArmTimeoutRef.current);
+        publishArmTimeoutRef.current = null;
+      }
+    };
+  }, [step, steps.length]);
+
+  useEffect(() => {
     setInternalImageMode(imageMode);
   }, [imageMode]);
 
@@ -141,6 +167,10 @@ export const EventForm: React.FC<EventFormProps> = ({
     const isExplicitPublishClick = submitterTestId === "publish-button";
 
     if (!isExplicitPublishClick) {
+      return;
+    }
+
+    if (!canPublishRef.current) {
       return;
     }
 

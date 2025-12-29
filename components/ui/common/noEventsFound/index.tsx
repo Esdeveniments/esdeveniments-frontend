@@ -6,15 +6,13 @@ import NoEventsFoundContent from "./NoEventsFoundContent";
 const NoEventsFound = async ({
   title,
   description,
-  prefix = "",
-}: NoEventsFoundProps & { prefix?: string }): Promise<JSX.Element> => {
+}: NoEventsFoundProps): Promise<JSX.Element> => {
   const t = await getTranslations("Components.NoEventsFound");
 
   return (
     <NoEventsFoundContent
       title={title}
       description={description}
-      prefix={prefix}
       ctaLabel={t("cta")}
       helperText={t("helper")}
     />

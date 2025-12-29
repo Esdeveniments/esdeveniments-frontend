@@ -31,14 +31,21 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    locale: "ca-ES",
     extraHTTPHeaders: {
+      "accept-language": "ca",
       ...vercelBypassHeaders,
     },
   },
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Block service workers to allow Playwright route handlers to intercept requests.
+        // SWs intercept fetch before Playwright's network layer, breaking route mocks.
+        serviceWorkers: "block",
+      },
     },
   ],
   expect: { timeout: 10000 },

@@ -266,6 +266,9 @@ Only these tags can be revalidated (security whitelist):
 | **Slow Initial Load**    | Cold Start         | Check `sst.config.ts` has `warm: 5`. Check AWS Lambda "Provisioned Concurrency" metrics.          |
 | **Env Vars Missing**     | Build Process      | Did you deploy without `.env`? Re-run `npx sst deploy`.                                           |
 | **API returns "Unauthorized"** | Secret not deployed | Add secret to GitHub Secrets AND `deploy-sst.yml`. See checklist below. |
+| **robots.txt returns 403** | OpenNext Routing Priority | See [robots.txt Issues Documentation](../docs/robots-txt-issues.md) for complete troubleshooting guide. |
+
+> **📖 Detailed Documentation:** For the complete `robots.txt` troubleshooting journey, including all three issues encountered and the final workaround, see [`docs/robots-txt-issues.md`](../docs/robots-txt-issues.md).
 
 ---
 

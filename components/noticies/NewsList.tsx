@@ -101,7 +101,7 @@ export default async function NewsList({
               event={event}
               placeSlug={itemPlace.slug}
               placeLabel={itemPlace.label}
-              variant={index === 0 ? "hero" : "default"}
+              variant="default"
             />
           );
         })}

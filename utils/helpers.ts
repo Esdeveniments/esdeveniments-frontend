@@ -53,7 +53,6 @@ export {
   getPlaceTypeAndLabelCached,
   getDistance,
   deg2rad,
-  getNewsCta,
 } from "./location-helpers";
 
 // Schema helpers
