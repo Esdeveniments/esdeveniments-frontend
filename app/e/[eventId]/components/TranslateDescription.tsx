@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitizeHtmlClient } from "@utils/sanitize";
 import { captureException } from "@sentry/nextjs";
 import { translateDescription } from "../actions";
 import { processDescription } from "@utils/text-processing";
@@ -26,7 +26,7 @@ export default function TranslateDescription({
   const targetLang = locale === "es" ? "es" : locale === "en" ? "en" : null;
   const originalHtml = useMemo(() => {
     const processed = processDescription(description || "");
-    return DOMPurify.sanitize(processed);
+    return sanitizeHtmlClient(processed);
   }, [description]);
 
   if (!targetLang) {
@@ -72,7 +72,7 @@ export default function TranslateDescription({
 
         if (result?.ok && result.translation) {
           const processed = processDescription(result.translation);
-          const sanitized = DOMPurify.sanitize(processed);
+          const sanitized = sanitizeHtmlClient(processed);
           setTranslationHtml(sanitized);
           setShowTranslated(true);
           swapHtmlWithFade(sanitized);

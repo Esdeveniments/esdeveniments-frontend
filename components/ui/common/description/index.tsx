@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import { sanitizeHtml } from "@utils/sanitize";
 import { DocumentIcon } from "@heroicons/react/24/outline";
 import CulturalMessage from "../culturalMessage";
 import SectionHeading from "@components/ui/common/SectionHeading";
@@ -19,7 +19,7 @@ export default async function Description({
   const t = await getTranslations("Components.Description");
   // Process and sanitize the description to prevent XSS attacks
   const processedDescription = processDescription(description || "");
-  const sanitizedHtml = DOMPurify.sanitize(processedDescription);
+  const sanitizedHtml = sanitizeHtml(processedDescription);
 
   return (
     <section className="w-full" aria-labelledby="description-section">
