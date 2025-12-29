@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
-import { revalidateTag } from "next/cache";
-import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
 import type { EventDetailResponseDTO } from "types/api/event";
@@ -22,12 +20,11 @@ export async function GET(
     const data = await eventDetailCache(slug, async (key) => {
       return await fetchExternalEvent(String(key));
     });
-    // If event is past, mark cache tags as stale for background revalidation
-    // revalidateTag with "max" is idempotent, so multiple calls are safe
-    if (data?.endDate && new Date(data.endDate).getTime() < Date.now()) {
-      revalidateTag(eventsTag, "max");
-      revalidateTag(eventsCategorizedTag, "max");
-    }
+    // Note: Removed per-request revalidateTag call for past events.
+    // The previous logic called revalidateTag on EVERY request for past events,
+    // which caused excessive DynamoDB writeTags operations and transient errors.
+    // Event lists already have time-based revalidation (revalidate: 300 seconds)
+    // via the fetch cache in lib/api/events.ts, so this was redundant.
     return NextResponse.json(data ?? null, {
       status: data ? 200 : 404,
       headers: {
