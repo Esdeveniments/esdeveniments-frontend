@@ -186,11 +186,14 @@ export const getHistoricDates = (
       (candidate) => normalizeMonthParam(candidate).slug === targetSlug
     );
 
+  // Try provided list first, then default MONTHS, then multi-locale resolution
   const primaryIndex = resolveIndex(monthsList);
   const fallbackIndex = primaryIndex === -1 ? resolveIndex(MONTHS) : primaryIndex;
-  const monthIndex = fallbackIndex;
+  const monthIndex = fallbackIndex === -1 
+    ? resolveMonthIndexFromSlug(month) 
+    : fallbackIndex;
 
-  if (monthIndex === -1) {
+  if (monthIndex === null || monthIndex === -1) {
     throw new Error(`Invalid month: ${month}`);
   }
 

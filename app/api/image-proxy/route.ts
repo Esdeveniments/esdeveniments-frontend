@@ -6,6 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
+import { Agent } from "undici";
 import { normalizeExternalImageUrl } from "@utils/image-cache";
 
 const TRANSPARENT_PNG_BASE64 =
@@ -16,14 +17,38 @@ const TIMEOUT_MS = 5000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 
-function buildPlaceholder(status = 200) {
+// Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
+// Node's TLS verification rejects these, so we selectively bypass verification only for
+// known-bad hosts.
+const BROKEN_TLS_HOST_SUFFIXES = [".altanet.org", ".biguesiriells.cat"];
+
+const insecureTlsDispatcher = new Agent({
+  connect: {
+    rejectUnauthorized: false,
+  },
+});
+
+function shouldBypassTlsVerification(candidateUrl: string): boolean {
+  try {
+    const parsed = new URL(candidateUrl);
+    if (parsed.protocol !== "https:") return false;
+    return BROKEN_TLS_HOST_SUFFIXES.some((suffix) =>
+      parsed.hostname.endsWith(suffix)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function buildPlaceholder(status = 502) {
   return new NextResponse(FALLBACK_BUFFER, {
     status,
     headers: {
       "Content-Type": "image/png",
-      // Short caching for failures so broken upstreams don't get hammered,
-      // but we also don't lock-in a failure for too long.
-      "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=3600",
+      // Do not cache fallbacks: if we return the transparent pixel once, we don't want
+      // CloudFront/Service Worker to keep serving it after the upstream recovers.
+      "Cache-Control": "no-store, max-age=0",
+      "X-Image-Proxy-Fallback": "1",
     },
   });
 }
@@ -36,7 +61,15 @@ async function fetchWithTimeout(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    return await fetch(url, { signal: controller.signal });
+    const init: RequestInit & { dispatcher?: unknown } = {
+      signal: controller.signal,
+    };
+
+    if (shouldBypassTlsVerification(url)) {
+      init.dispatcher = insecureTlsDispatcher;
+    }
+
+    return await fetch(url, init as RequestInit);
   } finally {
     clearTimeout(timeout);
   }

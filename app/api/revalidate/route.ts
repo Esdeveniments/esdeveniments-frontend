@@ -207,10 +207,20 @@ export async function POST(request: Request) {
 
     // 4. Revalidate each tag (Next.js data cache)
     // Next 16 requires a profile; use "max" to force full invalidation
+    // Wrapped in try-catch to handle transient DynamoDB tag cache errors in OpenNext
     const revalidatedTags: string[] = [];
+    const failedTags: string[] = [];
     for (const tag of tags) {
-      revalidateTag(tag, "max");
-      revalidatedTags.push(tag);
+      try {
+        revalidateTag(tag, "max");
+        revalidatedTags.push(tag);
+      } catch (error) {
+        // Non-fatal: tag cache write failed, but revalidation still triggered
+        console.warn(`revalidateTag failed for "${tag}":`, error);
+        failedTags.push(tag);
+        // Still count as revalidated since the actual cache invalidation happens
+        revalidatedTags.push(tag);
+      }
     }
 
     // 4b. Clear in-memory Lambda caches based on tags
@@ -254,7 +264,9 @@ export async function POST(request: Request) {
 
     // 6. Log successful revalidation
     console.log(
-      `[revalidate] Tags: ${revalidatedTags.join(", ")} | Cloudflare: ${
+      `[revalidate] Tags: ${revalidatedTags.join(", ")}${
+        failedTags.length > 0 ? ` (tag cache errors: ${failedTags.join(", ")})` : ""
+      } | Cloudflare: ${
         cloudflareResult.purged
           ? "purged"
           : cloudflareResult.skipped
@@ -269,6 +281,10 @@ export async function POST(request: Request) {
         tags: revalidatedTags,
         cloudflare: cloudflareResult,
         timestamp: new Date().toISOString(),
+        // Include warning if any tag cache writes failed (transient DynamoDB errors)
+        ...(failedTags.length > 0 && {
+          warning: `Tag cache write failed for: ${failedTags.join(", ")} (transient, revalidation still applied)`,
+        }),
       },
       { status: 200 }
     );

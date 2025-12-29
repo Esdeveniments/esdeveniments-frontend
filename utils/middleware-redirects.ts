@@ -76,12 +76,16 @@ export function handleCanonicalRedirects(
     "offline",
     "e",
     "sitemap",
+    "sitemap-places",
     "rss.xml",
     "qui-som",
     "server-sitemap.xml",
     "server-news-sitemap.xml",
     "server-place-sitemap.xml",
     "server-google-news-sitemap.xml",
+    "server-static-sitemap.xml",
+    "preferits",
+    "llms.txt",
   ]);
 
   // Only process redirects for place routes

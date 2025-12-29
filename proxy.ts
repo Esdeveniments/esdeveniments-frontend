@@ -193,6 +193,8 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/publica/image-upload",
   // Revalidation endpoint handles its own secret, so bypass HMAC middleware
   "/api/revalidate",
+  // Health check endpoint for monitoring cache infrastructure
+  "/api/health",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
