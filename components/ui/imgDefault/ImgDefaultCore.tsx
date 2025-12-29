@@ -81,7 +81,7 @@ const ImgDefaultCore: React.FC<ImgDefaultProps> = ({
         minHeight: "100%",
       }}
       role="img"
-      aria-label={title || "Imatge no disponible"}
+      aria-label={title ? `Imatge decorativa per ${title}` : "Imatge decorativa"}
     />
   );
 };
