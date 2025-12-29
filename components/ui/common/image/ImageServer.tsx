@@ -25,7 +25,14 @@ function ImageServer({
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
   if (!image) {
     return (
-      <div className={className}>
+      <div
+        className={className}
+        style={{
+          position: "relative",
+          aspectRatio: "500 / 260", // Match image aspect ratio for fallback
+          maxWidth: "100%",
+        }}
+      >
         <ImgDefaultServer
           title={title}
           location={location}

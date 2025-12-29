@@ -89,6 +89,9 @@ export default function CardContentClient({
                 image={image}
                 priority={isPriority}
                 alt={event.title}
+                location={event.city?.name || event.location}
+                region={event.region?.name || event.city?.name}
+                date={eventDate}
                 context={isHorizontal ? "list" : "card"}
                 cacheKey={event.hash || event.updatedAt}
               />

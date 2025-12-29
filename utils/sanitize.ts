@@ -334,19 +334,19 @@ function buildSafeTag(
     return `<${tagName}${selfClose}>`;
   }
 
-  // Parse attributes - handle both single and double quotes
-  const attrRegex = /(\w+)=["']([^"']*)["']/g;
   const safeAttrs: string[] = [];
-  let match;
+  // Robust regex: handles double-quoted, single-quoted, and unquoted values
+  const attrRegex = /([a-zA-Z0-9-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
+  const attrsContent = tagContent.slice(tagName.length);
 
-  while ((match = attrRegex.exec(tagContent)) !== null) {
-    const [, attrName, attrValue] = match;
-    const lowerAttrName = attrName.toLowerCase();
+  for (const match of attrsContent.matchAll(attrRegex)) {
+    const attrName = match[1].toLowerCase();
+    const attrValue = match[2] ?? match[3] ?? match[4] ?? "";
 
-    if (allowedAttrs.has(lowerAttrName)) {
-      const sanitizedValue = sanitizeAttrValue(lowerAttrName, attrValue);
+    if (allowedAttrs.has(attrName)) {
+      const sanitizedValue = sanitizeAttrValue(attrName, attrValue);
       if (sanitizedValue !== null) {
-        safeAttrs.push(`${lowerAttrName}="${sanitizedValue}"`);
+        safeAttrs.push(`${attrName}="${sanitizedValue}"`);
       }
     }
   }

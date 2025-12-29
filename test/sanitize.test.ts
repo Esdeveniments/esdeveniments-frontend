@@ -131,8 +131,8 @@ describe("sanitizeHtml", () => {
       expect(sanitizeHtml('<a href="mailto:test@example.com">Email</a>')).toBe(
         '<a href="mailto:test@example.com">Email</a>'
       );
-      expect(stripHtmlTags('<a href="tel:+1234567890">Phone</a>')).toBe(
-        "Phone"
+      expect(sanitizeHtml('<a href="tel:+1234567890">Phone</a>')).toBe(
+        '<a href="tel:+1234567890">Phone</a>'
       );
     });
 
