@@ -63,6 +63,21 @@ export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
   isHorizontal?: boolean;
+  initialIsFavorite?: boolean;
+}
+
+export interface FavoriteButtonLabels {
+  add: string;
+  remove: string;
+}
+
+export interface FavoriteButtonProps {
+  eventSlug: string;
+  eventId?: string;
+  eventTitle?: string;
+  initialIsFavorite: boolean;
+  labels: FavoriteButtonLabels;
+  className?: string;
 }
 
 export interface NativeShareButtonProps {
@@ -218,7 +233,6 @@ export interface NoEventsFoundProps {
 }
 
 export interface NoEventsFoundContentProps extends NoEventsFoundProps {
-  prefix?: string;
   ctaLabel: string;
   helperText: string;
 }
@@ -260,11 +274,18 @@ export interface FilteredPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// Route handler context for catch-all sitemap routes
+export interface SitemapPartsRouteContext {
+  params: Promise<{ parts: string[] }>;
+}
+
 export interface NavbarLabels {
   logoAlt: string;
   openMenu: string;
   closeMenu: string;
   home: string;
+  agenda: string;
+  favorites: string;
   publish: string;
   news: string;
   mobilePublishLabel: string;
@@ -349,14 +370,13 @@ export interface HybridEventsListProps {
   category?: string;
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
-  hasNews: boolean; // Whether the place has news articles
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
 export type HybridEventsListClientProps = Omit<
   HybridEventsListProps,
-  "hasNews" | "placeTypeLabel" | "noEventsFound"
+  "placeTypeLabel" | "noEventsFound"
 >;
 
 export interface SsrListWrapperProps {
@@ -382,7 +402,6 @@ export interface PlacePageShellProps {
   place: string;
   category?: string;
   date?: string;
-  hasNewsPromise?: Promise<boolean>;
   categories?: CategorySummaryResponseDTO[];
   webPageSchemaFactory?: (pageData: PageData) => Record<string, unknown>;
 }
@@ -532,7 +551,11 @@ export interface NewsHubsGridProps {
 }
 
 export interface NewsCitiesSectionProps {
-  citiesPromise: Promise<import("./api/event").PagedResponseDTO<import("./api/city").CitySummaryResponseDTO>>;
+  citiesPromise: Promise<
+    import("./api/event").PagedResponseDTO<
+      import("./api/city").CitySummaryResponseDTO
+    >
+  >;
   showAll: boolean;
   showMoreHref: import("./common").Href;
   showLessHref: import("./common").Href;

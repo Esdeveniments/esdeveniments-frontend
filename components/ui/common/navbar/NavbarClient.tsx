@@ -7,6 +7,8 @@ import XIcon from "@heroicons/react/outline/esm/XIcon";
 import PlusIcon from "@heroicons/react/outline/esm/PlusIcon";
 const PlusSmIcon = PlusIcon;
 import HomeIcon from "@heroicons/react/outline/esm/HomeIcon";
+import CalendarIcon from "@heroicons/react/outline/esm/CalendarIcon";
+import HeartIcon from "@heroicons/react/outline/esm/HeartIcon";
 import NewspaperIcon from "@heroicons/react/outline/esm/NewspaperIcon";
 import Image from "next/image";
 
@@ -93,6 +95,28 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       aria-label={labels.home}
                     >
                       <HomeIcon className="h-6 w-6" />
+                    </ActiveLink>
+                  </div>
+
+                  <div className="flex-center">
+                    <ActiveLink
+                      href="/catalunya"
+                      activeLinkClass="text-primary bg-primary/10"
+                      className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                      aria-label={labels.agenda}
+                    >
+                      <CalendarIcon className="h-6 w-6" />
+                    </ActiveLink>
+                  </div>
+
+                  <div className="flex-center">
+                    <ActiveLink
+                      href="/preferits"
+                      activeLinkClass="text-primary bg-primary/10"
+                      className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                      aria-label={labels.favorites}
+                    >
+                      <HeartIcon className="h-6 w-6" />
                     </ActiveLink>
                   </div>
 

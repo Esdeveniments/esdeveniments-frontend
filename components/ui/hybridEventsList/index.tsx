@@ -4,61 +4,24 @@ import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
 import List from "@components/ui/list";
-import Card from "@components/ui/card";
-import { getNewsCta } from "@utils/helpers";
-import NewsCta from "@components/ui/newsCta";
+import CardServer from "@components/ui/card/CardServer";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE } from "types/i18n";
 
 async function HybridEventsList({
   initialEvents = [],
   pageData,
   noEventsFound = false,
   place,
-  placeTypeLabel,
   category,
   date,
   serverHasMore = false,
-  hasNews,
   categories,
 }: HybridEventsListProps): Promise<ReactElement> {
-  const locale = await getLocaleSafely();
-  const tLoc = await getTranslations({
-    locale,
-    namespace: "Utils.LocationHelpers",
-  });
-  const newsLabels = {
-    newsAll: tLoc("newsAll"),
-    newsWithPlace: tLoc("newsWithPlace", { deLabel: "{deLabel}" }),
-  };
-  const placeLabel = placeTypeLabel?.label;
-  const placeType =
-    placeTypeLabel?.type === "town"
-      ? "town"
-      : placeTypeLabel?.type === "region"
-        ? "region"
-        : undefined;
-  const { href: newsHref, text: newsText } = getNewsCta(
-    place,
-    placeLabel,
-    placeType,
-    newsLabels
-  );
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
-  const newsCta =
-    place && hasNews && newsHref && newsText ? (
-      <div className="mb-4 md:mb-0 md:mt-0 shrink-0 px-element-gap">
-        <NewsCta href={newsHref} label={newsText} data-cta="news-inline" />
-      </div>
-    ) : null;
-
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
 
   if (noEventsFound || initialEvents.length === 0) {
     return (
@@ -71,14 +34,33 @@ async function HybridEventsList({
         data-analytics-category-slug={category || undefined}
         data-analytics-date-slug={date || undefined}
       >
+        {pageData && (
+          <>
+            <div data-server-heading>
+              <HeadingLayout
+                title={pageData.title}
+                subtitle={pageData.subTitle}
+                titleClass={titleClass}
+                subtitleClass={subtitleClass}
+              />
+            </div>
+            <Suspense fallback={null}>
+              <SearchAwareHeading
+                pageData={pageData}
+                categories={categories}
+                titleClass={titleClass}
+                subtitleClass={subtitleClass}
+              />
+            </Suspense>
+          </>
+        )}
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
-          prefix={prefix}
         />
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
-            <Card
+            <CardServer
               key={`${event.id}-${index}`}
               event={event}
               isPriority={index === 0}
@@ -100,25 +82,27 @@ async function HybridEventsList({
       data-analytics-date-slug={date || undefined}
     >
       {pageData && (
-        <Suspense
-          fallback={
+        <>
+          {/* Always render H1 directly in server component for SEO - ensures it's in initial HTML */}
+          {/* aria-hidden will be set by SearchAwareHeading when search query is present */}
+          <div data-server-heading>
             <HeadingLayout
               title={pageData.title}
               subtitle={pageData.subTitle}
               titleClass={titleClass}
               subtitleClass={subtitleClass}
-              cta={newsCta}
             />
-          }
-        >
-          <SearchAwareHeading
-            pageData={pageData}
-            categories={categories}
-            titleClass={titleClass}
-            subtitleClass={subtitleClass}
-            cta={newsCta}
-          />
-        </Suspense>
+          </div>
+          {/* Client-side enhancement: conditionally replace heading when search query is present */}
+          <Suspense fallback={null}>
+            <SearchAwareHeading
+              pageData={pageData}
+              categories={categories}
+              titleClass={titleClass}
+              subtitleClass={subtitleClass}
+            />
+          </Suspense>
+        </>
       )}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
@@ -130,7 +114,7 @@ async function HybridEventsList({
           <div data-ssr-list-wrapper>
             <List events={initialEvents}>
               {(event: ListEvent, index: number) => (
-                <Card
+                <CardServer
                   key={`${event.id ?? "ad"}-${index}`}
                   event={event}
                   isPriority={index === 0}
@@ -144,7 +128,7 @@ async function HybridEventsList({
         <SsrListWrapper categories={categories}>
           <List events={initialEvents}>
             {(event: ListEvent, index: number) => (
-              <Card
+              <CardServer
                 key={`${event.id ?? "ad"}-${index}`}
                 event={event}
                 isPriority={index === 0}

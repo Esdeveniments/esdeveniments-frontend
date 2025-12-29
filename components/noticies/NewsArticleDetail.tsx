@@ -7,7 +7,6 @@ import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import ViewCounter from "@components/ui/viewCounter";
 import AdArticle from "@components/ui/adArticle";
-import NewsHeroEvent from "@components/ui/newsHeroEvent";
 import NewsRichCard from "@components/ui/newsRichCard";
 import { getFormattedDate } from "@utils/date-helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
@@ -159,63 +158,76 @@ export default async function NewsArticleDetail({
   });
 
   return (
-    <div className="w-full min-h-screen bg-background mt-4">
+    <div className="container flex-col justify-center items-center mt-8 pb-section-y-lg">
+      <JsonLdServer id="news-article-schema" data={articleSchema} />
+      <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
+
       {/* Breadcrumbs */}
-      <div className="w-full bg-background border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav
-            className="text-sm text-foreground-strong/70"
-            aria-label="Breadcrumb"
-          >
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
+      >
+        <ol className="flex items-center space-x-2 flex-wrap">
+          <li>
             <PressableAnchor
               href={withLocalePath("/")}
-              className="hover:underline"
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
               {t("breadcrumbHome")}
-            </PressableAnchor>{" "}
-            /{" "}
+            </PressableAnchor>
+          </li>
+          <li>
+            <span className="mx-1" aria-hidden="true">/</span>
+          </li>
+          <li>
             <PressableAnchor
               href={withLocalePath("/noticies")}
-              className="hover:underline"
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
               {t("breadcrumbNews")}
-            </PressableAnchor>{" "}
-            /{" "}
+            </PressableAnchor>
+          </li>
+          <li>
+            <span className="mx-1" aria-hidden="true">/</span>
+          </li>
+          <li>
             <PressableAnchor
               href={withLocalePath(`/noticies/${place}`)}
-              className="hover:underline"
+              className="hover:underline hover:text-primary transition-colors"
               variant="inline"
               prefetch={false}
             >
               {placeType.label}
-            </PressableAnchor>{" "}
-            /{" "}
-            <span className="text-foreground-strong font-medium">
-              {detail.title}
-            </span>
-          </nav>
-        </div>
-      </div>
+            </PressableAnchor>
+          </li>
+          <li>
+            <span className="mx-1" aria-hidden="true">/</span>
+          </li>
+          <li className="text-foreground-strong font-medium truncate max-w-[200px] sm:max-w-none" aria-current="page">
+            {detail.title}
+          </li>
+        </ol>
+      </nav>
 
       {/* Main Content */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full px-2 lg:px-0">
         <div className="mb-6">
-          <h1 className="heading-1 mb-6">{detail.title}</h1>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 text-sm text-foreground-strong/70">
-            <div className="flex items-center gap-4">
-              <span className="bg-primary text-background px-4 py-2 rounded-full font-medium uppercase whitespace-nowrap">
+          <h1 className="heading-1 mb-6 text-balance break-words">{detail.title}</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 text-sm text-foreground-strong/70">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+              <span className="bg-primary text-background px-3 sm:px-4 py-2 rounded-full font-medium uppercase text-xs sm:text-sm break-words">
                 {detail.type === "WEEKEND"
                   ? t("sectionWeekend")
                   : t("sectionWeek")}{" "}
                 {dateRangeText}
               </span>
             </div>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <span>{t("readingTime", { minutes: detail.readingTime })}</span>
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+              <span className="whitespace-nowrap">{t("readingTime", { minutes: detail.readingTime })}</span>
               <ViewCounter visits={detail.visits} hideText={false} />
             </div>
           </div>
@@ -234,7 +246,6 @@ export default async function NewsArticleDetail({
           <EventsSection
             title={t("mustSee")}
             events={detail.events.slice(0, Math.min(detail.events.length, 3))}
-            showHero={true}
             showNumbered={true}
           />
         )}
@@ -246,9 +257,6 @@ export default async function NewsArticleDetail({
           />
         )}
       </div>
-
-      <JsonLdServer id="news-article-schema" data={articleSchema} />
-      <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
     </div>
   );
 }
@@ -256,42 +264,33 @@ export default async function NewsArticleDetail({
 function EventsSection({
   title,
   events,
-  showHero = false,
   showNumbered = false,
 }: NewsEventsSectionProps) {
-  const [heroEvent, ...otherEvents] = events;
-
   return (
-    <section className="mb-16">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-foreground-strong mb-3 md:text-4xl">
+    <section className="mb-12 sm:mb-16">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground-strong mb-3">
           {title}
         </h2>
         <div className="w-20 h-1.5 bg-primary rounded-full"></div>
       </div>
 
-      {showHero && heroEvent && (
-        <div className="mb-12">
-          <NewsHeroEvent event={heroEvent} />
-        </div>
-      )}
-
       {showNumbered ? (
-        <div className="space-y-8">
-          {(showHero ? otherEvents : events).map((event, index) => (
-            <div key={event.id} className="flex gap-6 items-start">
+        <div className="space-y-6 sm:space-y-8">
+          {events.map((event, index) => (
+            <div key={event.id} className="flex gap-4 sm:gap-6 items-start">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-background rounded-full flex items-center justify-center font-bold text-sm">
-                {showHero ? index + 2 : index + 1}
+                {index + 1}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <NewsRichCard event={event} variant="horizontal" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {(showHero ? otherEvents : events).map((event) => (
+        <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {events.map((event) => (
             <NewsRichCard key={event.id} event={event} />
           ))}
         </div>

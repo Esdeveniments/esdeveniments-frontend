@@ -2,7 +2,7 @@
 // The config you add here will be used whenever a page is built on the server or SSR is used.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import { init, consoleLoggingIntegration } from "@sentry/nextjs";
+import { init } from "@sentry/nextjs";
 import type { NodeOptions } from "@sentry/nextjs";
 import { beforeSendServer, beforeSendMetric } from "@utils/sentry-helpers";
 
@@ -12,18 +12,17 @@ if (process.env.NODE_ENV === "production") {
     environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
     // Release tracking: associate errors with deployments
     // Vercel automatically provides VERCEL_GIT_COMMIT_SHA
-    release: process.env.SENTRY_RELEASE || process.env.VERCEL_GIT_COMMIT_SHA || undefined,
-    // Performance monitoring: 10% sample rate for production (reduced from 100% to minimize overhead)
-    tracesSampleRate: 0.1,
+    release:
+      process.env.SENTRY_RELEASE ||
+      process.env.VERCEL_GIT_COMMIT_SHA ||
+      undefined,
+    // Errors-only: disable performance tracing.
+    tracesSampleRate: 0,
     // Privacy: explicitly disable sending PII by default
     sendDefaultPii: false,
     debug: false,
-    integrations: [
-      // send console.log, console.warn, and console.error calls as logs to Sentry
-      consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
-    ],
-    // Enable logs to be sent to Sentry
-    enableLogs: true,
+    // Errors-only: do not send console logs as Sentry logs.
+    enableLogs: false,
     // Metrics: automatically enabled in v10.25.0+ (no explicit enableMetrics needed)
     // Use Sentry.metrics.count(), Sentry.metrics.gauge(), Sentry.metrics.distribution()
     // Filter and sanitize metrics before sending (removes sensitive data from attributes)

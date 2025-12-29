@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isValidDateSlug } from "@lib/dates";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { stripLocalePrefix } from "./i18n-routing";
+import { sanitize } from "./sanitize-segment";
 import {
   DEFAULT_FILTER_VALUE,
   MAX_QUERY_STRING_LENGTH,
@@ -75,17 +76,51 @@ export function handleCanonicalRedirects(
     "offline",
     "e",
     "sitemap",
+    "sitemap-places",
     "rss.xml",
     "qui-som",
     "server-sitemap.xml",
     "server-news-sitemap.xml",
+    "server-place-sitemap.xml",
     "server-google-news-sitemap.xml",
+    "server-static-sitemap.xml",
+    "preferits",
+    "llms.txt",
   ]);
 
   // Only process redirects for place routes
   if (nonPlaceFirstSegments.has(firstSegment)) {
     return null;
   }
+
+  const segmentCount = segments.length;
+  const rawPlaceSegment = segments[0] || "";
+  const safeDecodedPlaceSegment = (() => {
+    try {
+      return decodeURIComponent(rawPlaceSegment);
+    } catch {
+      return rawPlaceSegment;
+    }
+  })();
+
+  const isPlaceholderLike = /[[\]{}]/.test(safeDecodedPlaceSegment);
+  const hasLettersOrNumbers = /[\p{L}\p{N}]/u.test(safeDecodedPlaceSegment);
+  const normalizedPlaceSegment = hasLettersOrNumbers
+    ? sanitize(safeDecodedPlaceSegment)
+    : "";
+
+  const shouldNormalizePlaceSegment =
+    segmentCount <= 3 &&
+    !isPlaceholderLike &&
+    hasLettersOrNumbers &&
+    safeDecodedPlaceSegment.length <= 100 &&
+    normalizedPlaceSegment !== "n-a" &&
+    normalizedPlaceSegment !== rawPlaceSegment &&
+    /^[a-z0-9-]+$/.test(normalizedPlaceSegment);
+
+  const segmentsToUse = shouldNormalizePlaceSegment
+    ? [normalizedPlaceSegment, ...segments.slice(1)]
+    : segments;
 
   const searchParams = request.nextUrl.searchParams;
   const queryString = request.nextUrl.search; // Raw query string (includes '?')
@@ -100,13 +135,12 @@ export function handleCanonicalRedirects(
   const queryCategory = searchParams.get("category");
   const queryDate = searchParams.get("date");
 
-  const place = segments[0] || "catalunya";
-  const segmentCount = segments.length;
+  const place = segmentsToUse[0] || "catalunya";
   const hasTotsInSegments =
     (segmentCount === 3 || segmentCount === 2) &&
-    segments[1] === DEFAULT_FILTER_VALUE;
+    segmentsToUse[1] === DEFAULT_FILTER_VALUE;
   const hasTotsCategory =
-    segmentCount >= 3 && segments[2] === DEFAULT_FILTER_VALUE;
+    segmentCount >= 3 && segmentsToUse[2] === DEFAULT_FILTER_VALUE;
 
   // Handle redirects: combine /tots segments with query params if present
   // Only process valid place routes (max 3 segments: /place[/date][/category])
@@ -121,9 +155,9 @@ export function handleCanonicalRedirects(
 
     // Determine date: from segment (if not tots) or query param
     let date: string | null = null;
-    if (segmentCount >= 2 && segments[1] !== DEFAULT_FILTER_VALUE) {
+    if (segmentCount >= 2 && segmentsToUse[1] !== DEFAULT_FILTER_VALUE) {
       // /place/date - check if it's a valid date
-      const secondSegment = segments[1];
+      const secondSegment = segmentsToUse[1];
       date = isValidDateSlug(secondSegment) ? secondSegment : null;
     }
     if (
@@ -138,8 +172,8 @@ export function handleCanonicalRedirects(
     // Determine category: from segment (if not tots) or query param
     let category: string | null = null;
     if (segmentCount >= 3) {
-      const secondSegment = segments[1];
-      const thirdSegment = segments[2];
+      const secondSegment = segmentsToUse[1];
+      const thirdSegment = segmentsToUse[2];
       if (thirdSegment !== DEFAULT_FILTER_VALUE) {
         // /place/<something>/<category>
         category = thirdSegment;
@@ -153,9 +187,12 @@ export function handleCanonicalRedirects(
         // /place/<date>/tots or /place/tots/tots -> drop category placeholder
         category = null;
       }
-    } else if (segmentCount === 2 && segments[1] !== DEFAULT_FILTER_VALUE) {
+    } else if (
+      segmentCount === 2 &&
+      segmentsToUse[1] !== DEFAULT_FILTER_VALUE
+    ) {
       // /place/X - check if X is a category (not a date)
-      const secondSegment = segments[1];
+      const secondSegment = segmentsToUse[1];
       if (!isValidDateSlug(secondSegment)) {
         category =
           secondSegment !== DEFAULT_FILTER_VALUE ? secondSegment : null;
@@ -197,7 +234,7 @@ export function handleCanonicalRedirects(
     // Examples:
     // - /place/date?category=foo      -> /place/date/foo
     // - /place/category?date=avui     -> /place/avui/category
-    const secondSegment = segments[1];
+    const secondSegment = segmentsToUse[1];
     const secondIsDate =
       isValidDateSlug(secondSegment) && secondSegment !== DEFAULT_FILTER_VALUE;
 
@@ -241,6 +278,27 @@ export function handleCanonicalRedirects(
       }
     }
     const remainingQuery = remainingParams.toString();
+    const localizedCanonicalPath =
+      localePrefix && localePrefix !== DEFAULT_LOCALE
+        ? `/${localePrefix}${canonicalPath}`
+        : canonicalPath;
+    const finalUrl = remainingQuery
+      ? `${localizedCanonicalPath}?${remainingQuery}`
+      : localizedCanonicalPath;
+
+    return NextResponse.redirect(new URL(finalUrl, request.url), 301);
+  }
+
+  if (shouldNormalizePlaceSegment) {
+    const remainingParams = new URLSearchParams();
+    for (const key of ALLOWED_QUERY_PARAMS) {
+      const value = searchParams.get(key);
+      if (value !== null) {
+        remainingParams.set(key, value);
+      }
+    }
+    const remainingQuery = remainingParams.toString();
+    const canonicalPath = `/${segmentsToUse.join("/")}`;
     const localizedCanonicalPath =
       localePrefix && localePrefix !== DEFAULT_LOCALE
         ? `/${localePrefix}${canonicalPath}`

@@ -9,6 +9,7 @@
 /coverage
 playwright-report/
 test-results/
+blob-report/
 
 # lighthouse-ci
 .lighthouseci/
@@ -67,9 +68,6 @@ yarn-error.log*
 
 # Sentry
 .sentryclirc
-
-# Generated robots.txt
-/public/robots.txt
 
 .aider*
 

@@ -180,7 +180,8 @@ async function HomeStructuredData({
         homepageEvents,
         pageData.title,
         pageData.subTitle,
-        locale
+        locale,
+        pageData.canonical
       )
       : null;
 

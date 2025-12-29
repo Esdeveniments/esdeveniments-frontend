@@ -10,9 +10,9 @@ export default async function Navbar() {
   const navigation: NavigationItem[] = [
     { name: t("navigation.home"), href: "/", current: true },
     { name: t("navigation.agenda"), href: "/catalunya", current: false },
+    { name: t("navigation.favorites"), href: "/preferits", current: false },
     { name: t("navigation.publish"), href: "/publica", current: false },
     { name: t("navigation.news"), href: "/noticies", current: false },
-    { name: t("navigation.archive"), href: "/sitemap", current: false },
   ];
 
   const props: NavbarClientProps = {
@@ -22,6 +22,8 @@ export default async function Navbar() {
       openMenu: t("aria.openMenu"),
       closeMenu: t("aria.closeMenu"),
       home: t("aria.home"),
+      agenda: t("aria.agenda"),
+      favorites: t("aria.favorites"),
       publish: t("aria.publish"),
       news: t("aria.news"),
       mobilePublishLabel: t("mobilePublishLabel"),

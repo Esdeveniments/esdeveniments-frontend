@@ -38,10 +38,9 @@ export type PlainMouseEvent = Pick<
   "button" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey"
 >;
 
-export interface NewsCtaProps {
-  href: string;
-  label: string; // full text already composed (e.g., "Actualitat cultural d'Osona")
-  "data-cta"?: string;
+export interface HorizontalScrollLabels {
+  previous: string;
+  next: string;
 }
 
 export interface HorizontalScrollProps {
@@ -56,6 +55,8 @@ export interface HorizontalScrollProps {
   scrollStepPx?: number;
   /** Storage key for the one-time nudge flag (defaults to a generic key) */
   hintStorageKey?: string;
+  /** Localized labels for desktop arrows (avoids needing next-intl context in this client component) */
+  labels?: HorizontalScrollLabels;
 }
 
 export interface CardLinkProps

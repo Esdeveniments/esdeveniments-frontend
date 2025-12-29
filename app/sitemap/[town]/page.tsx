@@ -75,9 +75,7 @@ async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) 
   });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const monthLabels = (tConstants.raw("months") as string[]) || [];
-  const monthSlugs =
-    (tConstants.raw("monthsUrl") as string[]) || DEFAULT_MONTHS_URL;
-  const months = monthSlugs.map((slug, index) => {
+  const months = DEFAULT_MONTHS_URL.map((slug, index) => {
     const fallback = normalizeMonthParam(slug);
     return {
       slug,

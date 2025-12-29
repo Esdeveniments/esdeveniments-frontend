@@ -113,6 +113,17 @@ describe("buildOptimizedImageUrl", () => {
     expect(result).toMatch(/^\/api\/image-proxy\?url=/);
   });
 
+  it("proxies biguesiriells.cat HTTPS URLs (incomplete SSL chain)", () => {
+    const result = buildOptimizedImageUrl(
+      "https://www.biguesiriells.cat/sites/default/files/imagen.jpg",
+      "k4"
+    );
+    expect(result).toMatch(/^\/api\/image-proxy\?url=/);
+    expect(decodeURIComponent(result.split("url=")[1])).toContain(
+      "https://www.biguesiriells.cat/sites/default/files/imagen.jpg?v=k4"
+    );
+  });
+
   it("keeps relative URLs unproxied but normalized", () => {
     const result = buildOptimizedImageUrl("/static/img.png", "k2");
     expect(result).toBe("/static/img.png?v=k2");

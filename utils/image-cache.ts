@@ -3,6 +3,17 @@ const DUMMY_BASE_URL = "https://cache-buster.local";
 const CACHE_PARAM = "v";
 const MAX_URL_LENGTH = 2048;
 
+/**
+ * Hosts with known broken SSL certificate chains (missing intermediate certs).
+ * These are proxied through /api/image-proxy which bypasses strict SSL verification
+ * (via NODE_TLS_REJECT_UNAUTHORIZED=0 on the server Lambda).
+ * Add new hosts here when they have SSL issues preventing direct image loading.
+ */
+const BROKEN_SSL_HOSTNAMES = [
+  ".altanet.org",
+  ".biguesiriells.cat",
+];
+
 function sanitizeUrlCandidate(imageUrl: string | null | undefined): string {
   if (!imageUrl || typeof imageUrl !== "string") {
     return "";
@@ -147,15 +158,18 @@ export function buildOptimizedImageUrl(
   const shouldProxyByPrefix =
     trimmed.startsWith("http://") || trimmed.startsWith("//");
 
-  // Some municipal hosting setups publish HTTPS URLs but ship an invalid TLS cert.
-  // For these, the only workable path is our proxy trying HTTPS first and falling
-  // back to HTTP. Keep this narrowly-scoped to avoid proxying everything.
+  // Some municipal hosting setups publish HTTPS URLs but ship an invalid TLS cert
+  // (missing intermediate certificates in the chain). For these, the only workable
+  // path is our proxy trying HTTPS first and falling back to HTTP.
+  // Keep this narrowly-scoped to avoid proxying everything.
   const shouldProxyByHostname = (() => {
     try {
       const absolute = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
       if (!ABSOLUTE_URL_REGEX.test(absolute)) return false;
       const parsed = new URL(absolute);
-      return parsed.hostname.endsWith(".altanet.org");
+      return BROKEN_SSL_HOSTNAMES.some((suffix) =>
+        parsed.hostname.endsWith(suffix)
+      );
     } catch {
       return false;
     }

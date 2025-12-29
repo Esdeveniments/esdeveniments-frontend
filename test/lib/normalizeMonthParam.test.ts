@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getHistoricDates, normalizeMonthParam } from "lib/dates";
+import {
+  getHistoricDates,
+  normalizeMonthParam,
+  resolveMonthIndexFromSlug,
+} from "lib/dates";
 
 describe("normalizeMonthParam", () => {
   it("maps marc slug to març label", () => {
@@ -38,6 +42,27 @@ describe("normalizeMonthParam", () => {
       "december",
     ];
     expect(() => getHistoricDates("january", 2024, monthsEn)).not.toThrow();
+  });
+
+  it("resolves ES and EN month slugs to an index", () => {
+    expect(resolveMonthIndexFromSlug("enero")).toBe(0);
+    expect(resolveMonthIndexFromSlug("agosto")).toBe(7);
+    expect(resolveMonthIndexFromSlug("february")).toBe(1);
+    expect(resolveMonthIndexFromSlug("september")).toBe(8);
+  });
+
+  it("getHistoricDates handles Spanish month slugs (e.g., mayo)", () => {
+    expect(() => getHistoricDates("mayo", 2024)).not.toThrow();
+    const { from } = getHistoricDates("mayo", 2024);
+    expect(from.getMonth()).toBe(4); // May is month index 4
+    expect(from.getFullYear()).toBe(2024);
+  });
+
+  it("getHistoricDates handles English month slugs", () => {
+    expect(() => getHistoricDates("august", 2024)).not.toThrow();
+    const { from } = getHistoricDates("august", 2024);
+    expect(from.getMonth()).toBe(7); // August is month index 7
+    expect(from.getFullYear()).toBe(2024);
   });
 });
 

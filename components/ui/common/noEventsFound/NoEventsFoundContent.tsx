@@ -1,23 +1,13 @@
 import type { JSX } from "react";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
 import type { NoEventsFoundContentProps } from "types/props";
-
-const resolveHref = (path: string, prefix: string) => {
-  if (!path.startsWith("/")) return path;
-  if (!prefix) return path;
-  if (path === "/") return prefix;
-  if (path.startsWith(prefix)) return path;
-  return `${prefix}${path}`;
-};
 
 export default function NoEventsFoundContent({
   title,
   description,
-  prefix = "",
   ctaLabel,
   helperText,
 }: NoEventsFoundContentProps): JSX.Element {
-  const href = resolveHref("/publica", prefix);
 
   return (
     <div
@@ -230,8 +220,8 @@ export default function NoEventsFoundContent({
         )}
       </div>
       <div className="flex flex-col items-center gap-3">
-        <PressableAnchor
-          href={href}
+        <PressableAnchorClient
+          href="/publica"
           prefetch={false}
           className="group relative inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-dark text-primary-foreground font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
           variant="inline"
@@ -250,7 +240,7 @@ export default function NoEventsFoundContent({
             />
           </svg>
           <span className="uppercase tracking-wide text-sm">{ctaLabel}</span>
-        </PressableAnchor>
+        </PressableAnchorClient>
         <p className="text-sm text-foreground opacity-70">{helperText}</p>
       </div>
     </div>

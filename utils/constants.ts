@@ -8,6 +8,7 @@ import esMessages from "../messages/es.json";
 import enMessages from "../messages/en.json";
 
 export const MAX_RESULTS = 15;
+export const MAX_FAVORITES = 10;
 // Keep safely under Lambda's 6MB cap and common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
@@ -104,12 +105,35 @@ export const BYDATES: ByDateOption[] = [
   { value: "setmana", labelKey: "week" },
 ];
 
+/**
+ * Maps date slugs to their corresponding translation label keys.
+ * Used for consistent date label resolution across the application.
+ */
 export const dateFunctions: { [key: string]: string } = {
   avui: "today",
   dema: "tomorrow",
   setmana: "week",
   "cap-de-setmana": "weekend",
 };
+
+/**
+ * Type-safe helper to get date label key from slug.
+ * Reuses dateFunctions to avoid duplication.
+ */
+export function getDateLabelKey(
+  slug: string
+): "today" | "tomorrow" | "week" | "weekend" | undefined {
+  const key = dateFunctions[slug];
+  if (
+    key === "today" ||
+    key === "tomorrow" ||
+    key === "week" ||
+    key === "weekend"
+  ) {
+    return key;
+  }
+  return undefined;
+}
 
 export const DISTANCES: number[] = [5, 10, 25, 50, 100];
 

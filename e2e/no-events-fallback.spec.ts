@@ -14,16 +14,32 @@ test.describe("No events fallback", () => {
     await expect(page.getByTestId("events-list")).toBeAttached({
       timeout: process.env.CI ? 60000 : 30000,
     });
-    // Either we see no-results widget or the page loads without events
+
+    // Either we see the no-results widget or we see at least one event.
+    // Avoid flakiness where the list container is attached but content is still loading.
     const noEvents = page.getByTestId("no-events-found");
-    const hasNoEvents = await noEvents.isVisible().catch(() => false);
-    if (!hasNoEvents) {
-      // If we have events, consider it acceptable as API may fallback to region/latest
-      const anyEvent = page.locator('a[href^="/e/"]').first();
-      const count = await anyEvent.count();
-      if (count === 0) {
-        await expect(noEvents).toBeVisible({ timeout: 10000 });
-      }
+    const eventLinks = page.locator('a[href^="/e/"]');
+
+    await expect
+      .poll(
+        async () => {
+          if (await noEvents.isVisible()) return "no-events";
+
+          const eventCount = await eventLinks.count();
+          if (eventCount > 0) return "has-events";
+
+          return "loading";
+        },
+        { timeout: process.env.CI ? 60000 : 20000 }
+      )
+      .not.toBe("loading");
+
+    // Make the accepted outcomes explicit: either the "no events" widget appears,
+    // or we have at least one event due to upstream fallback behavior.
+    if (await noEvents.isVisible()) {
+      await expect(noEvents).toBeVisible();
+    } else {
+      expect(await eventLinks.count()).toBeGreaterThan(0);
     }
   });
 });

@@ -1,7 +1,6 @@
 import { insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import { hasNewsForPlace } from "@lib/api/news";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -44,6 +43,8 @@ import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
+import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import { getRobotsForListingPage } from "@utils/robots-listings";
 
 export async function generateMetadata({
   params,
@@ -115,6 +116,7 @@ export async function generateMetadata({
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
+    robotsOverride: getRobotsForListingPage(rawSearchParams),
   });
 }
 
@@ -284,27 +286,22 @@ export default async function FilteredPage({
     locale,
   });
 
-  const hasNewsPromise = hasNewsForPlace(filters.place).catch((error) => {
-    console.error("Error checking news availability:", error);
-    return false;
-  });
-
   // Late existence check to preserve UX without creating an early oracle
-  if (place !== "catalunya") {
-    let placeExists: boolean | undefined;
-    try {
-      placeExists = (await fetchPlaceBySlug(place)) !== null;
-    } catch {
-      // ignore transient errors
-    }
-    if (placeExists === false) {
-      const target = buildFallbackUrlForInvalidPlace({
+  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
+    place,
+    locale,
+    rawSearchParams,
+    buildTargetPath: (alias) => `/${alias}/${filters.byDate}/${filters.category}`,
+    buildFallbackUrlForInvalidPlace: () =>
+      buildFallbackUrlForInvalidPlace({
         byDate,
         category,
-        rawSearchParams: rawSearchParams,
-      });
-      redirect(target);
-    }
+        rawSearchParams,
+      }),
+    fetchPlaceBySlug,
+  });
+  if (placeRedirectUrl) {
+    redirect(placeRedirectUrl);
   }
 
   return (
@@ -315,7 +312,6 @@ export default async function FilteredPage({
       category={filters.category}
       date={filters.byDate}
       categories={categories}
-      hasNewsPromise={hasNewsPromise}
       webPageSchemaFactory={(pageData) =>
         generateWebPageSchema({
           title: pageData.title,
@@ -440,7 +436,8 @@ async function buildCategoryEventsPromise({
         validEvents,
         label,
         undefined,
-        locale
+        locale,
+        pageData.canonical
       ),
     });
 
