@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import { stripHtmlTags } from "@utils/sanitize";
 import type {
   NewsEventsSectionProps,
   NewsArticleDetailProps,
@@ -75,9 +75,7 @@ export default async function NewsArticleDetail({
     namespace: "App.NewsArticleDetail",
   });
 
-  const plainDescription = DOMPurify.sanitize(detail.description || "", {
-    ALLOWED_TAGS: [],
-  });
+  const plainDescription = stripHtmlTags(detail.description || "");
   const dateRangeText = (() => {
     const f = getFormattedDate(detail.startDate, detail.endDate, locale);
     return f.formattedEnd

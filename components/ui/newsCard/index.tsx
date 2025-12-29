@@ -2,7 +2,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
-import DOMPurify from "isomorphic-dompurify";
+import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
@@ -22,9 +22,7 @@ export default async function NewsCard({
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;
   const href = withLocalePath(`/noticies/${placeSlug}/${event.slug}`, locale);
-  const plainDescription = DOMPurify.sanitize(event.description || "", {
-    ALLOWED_TAGS: [],
-  });
+  const plainDescription = stripHtmlTags(event.description || "");
 
   if (variant === "hero") {
     const heroImageQuality = getOptimalImageQuality({

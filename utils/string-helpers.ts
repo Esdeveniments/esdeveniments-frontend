@@ -286,7 +286,10 @@ export function formatCatalanDe(
 
 /**
  * Catalan preposition "a" with proper article handling.
- * - "town": always "a <town>" (your tests assert this)
+ * - "town": handles contractions for towns starting with "El "/"La ":
+ *     - "El Masnou" → "al Masnou" (a + El = al)
+ *     - "La Granada" → "a la Granada" (feminine article lowercased)
+ *     - "Barcelona" → "a Barcelona" (no article)
  * - "region": narrative case + correct articles:
  *     - plural: "a les … / als …"
  *     - singular vowel/h: "a l’…"
@@ -304,6 +307,20 @@ export function formatCatalanA(
   const { a, al, als, aLa, aLes, aL } = prepositions;
 
   if (normalizedType === "town") {
+    // Handle contractions for towns starting with definite article "El " or "La "
+    const rawLower = raw.toLowerCase();
+    if (rawLower.startsWith("el ")) {
+      // "a + El" contracts to "al" in Catalan
+      const restOfName = raw.slice(3); // Remove "El "
+      const displayRest = lowercase ? restOfName.toLowerCase() : restOfName;
+      return `${al} ${displayRest}`;
+    }
+    if (rawLower.startsWith("la ")) {
+      // "a + La" becomes "a la" (feminine article lowercased in narrative)
+      const restOfName = raw.slice(3); // Remove "La "
+      const displayRest = lowercase ? restOfName.toLowerCase() : restOfName;
+      return `${aLa} ${displayRest}`;
+    }
     return `${a} ${text}`;
   }
 
