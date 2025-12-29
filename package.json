@@ -84,7 +84,7 @@
     "@opentelemetry/context-async-hooks": "^2.2.0",
     "@opentelemetry/core": "^2.2.0",
     "@opentelemetry/sdk-trace-base": "^2.2.0",
-    "@playwright/test": "^1.48.0",
+    "@playwright/test": "^1.56.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
