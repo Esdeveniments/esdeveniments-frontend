@@ -36,6 +36,9 @@ function ClientImage({
   const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
   const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 
+  // If URL normalization failed (e.g., overly long URL), treat as error to show fallback
+  const invalidSrc = !finalImageSrc;
+
   const divRef = useRef<HTMLDivElement>(null);
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
 
@@ -77,8 +80,8 @@ function ClientImage({
   };
 
   // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
-  // Show ImgDefault immediately when image fails - no visibility check needed for error state
-  if (hasError) {
+  // Show ImgDefault immediately when image fails or URL normalization failed
+  if (hasError || invalidSrc) {
     return (
       <div
         className={imageClassName}

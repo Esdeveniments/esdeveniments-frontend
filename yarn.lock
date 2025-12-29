@@ -4857,13 +4857,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/trusted-types@npm:^2.0.7":
-  version: 2.0.7
-  resolution: "@types/trusted-types@npm:2.0.7"
-  checksum: 10c0/4c4855f10de7c6c135e0d32ce462419d8abbbc33713b31d294596c0cc34ae1fa6112a2f9da729c8f7a20707782b0d69da3b1f8df6645b0366d08825ca1522e0c
-  languageName: node
-  linkType: hard
-
 "@types/yargs-parser@npm:*":
   version: 21.0.3
   resolution: "@types/yargs-parser@npm:21.0.3"
@@ -7231,18 +7224,6 @@ __metadata:
   dependencies:
     domelementtype: "npm:^2.3.0"
   checksum: 10c0/bba1e5932b3e196ad6862286d76adc89a0dbf0c773e5ced1eb01f9af930c50093a084eff14b8de5ea60b895c56a04d5de8bbc4930c5543d029091916770b2d2a
-  languageName: node
-  linkType: hard
-
-"dompurify@npm:^3.2.6":
-  version: 3.2.6
-  resolution: "dompurify@npm:3.2.6"
-  dependencies:
-    "@types/trusted-types": "npm:^2.0.7"
-  dependenciesMeta:
-    "@types/trusted-types":
-      optional: true
-  checksum: 10c0/c8f8e5b0879a0d93c84a2e5e78649a47d0c057ed0f7850ca3d573d2cca64b84fb1ff85bd4b20980ade69c4e5b80ae73011340f1c2ff375c7ef98bb8268e1d13a
   languageName: node
   linkType: hard
 
@@ -9759,16 +9740,6 @@ __metadata:
   version: 3.1.1
   resolution: "isexe@npm:3.1.1"
   checksum: 10c0/9ec257654093443eb0a528a9c8cbba9c0ca7616ccb40abd6dde7202734d96bb86e4ac0d764f0f8cd965856aacbff2f4ce23e730dc19dfb41e3b0d865ca6fdcc7
-  languageName: node
-  linkType: hard
-
-"isomorphic-dompurify@npm:^2.25.0":
-  version: 2.25.0
-  resolution: "isomorphic-dompurify@npm:2.25.0"
-  dependencies:
-    dompurify: "npm:^3.2.6"
-    jsdom: "npm:^26.1.0"
-  checksum: 10c0/ce245fb68e9d53ae2f2523623a62f5c0a5252c23a95c7bd67d926ceaa7fa5cb5cdeb8a8a87f448dad43402d692cf4d78ddcfc937860aed822e480bd8a2dcaedd
   languageName: node
   linkType: hard
 
@@ -13104,7 +13075,6 @@ __metadata:
     fast-xml-parser: "npm:^4.4.0"
     feed: "npm:^5.1.0"
     husky: "npm:^9.1.7"
-    isomorphic-dompurify: "npm:^2.25.0"
     jsdom: "npm:^26.1.0"
     lint-staged: "npm:^16.2.7"
     next: "npm:16.1.1"

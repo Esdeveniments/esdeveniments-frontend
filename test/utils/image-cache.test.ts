@@ -89,6 +89,11 @@ describe("normalizeExternalImageUrl", () => {
   it("returns empty for invalid URL", () => {
     expect(normalizeExternalImageUrl("ht!tp://")).toBe("");
   });
+
+  it("returns empty for overly long URLs (triggers fallback image)", () => {
+    const longUrl = `https://example.com/${"a".repeat(2100)}.jpg`;
+    expect(normalizeExternalImageUrl(longUrl)).toBe("");
+  });
 });
 
 describe("buildOptimizedImageUrl", () => {
@@ -127,6 +132,48 @@ describe("buildOptimizedImageUrl", () => {
   it("keeps relative URLs unproxied but normalized", () => {
     const result = buildOptimizedImageUrl("/static/img.png", "k2");
     expect(result).toBe("/static/img.png?v=k2");
+  });
+});
+
+describe("hydration consistency (string-based operations)", () => {
+  it("produces byte-identical output for same input (no URL object variance)", () => {
+    const url = "https://cdn.appculturamataro.cat/medias/agenda/2025/c_crop,x_51,y_36,w_1948,h_1014/image.jpg";
+    const key = "abc123";
+
+    // Call multiple times - should be identical
+    const result1 = withImageCacheKey(url, key);
+    const result2 = withImageCacheKey(url, key);
+    const result3 = buildOptimizedImageUrl(url, key);
+
+    expect(result1).toBe(result2);
+    expect(result1).toBe(result3);
+    // Ensure the URL wasn't re-encoded or altered unexpectedly
+    expect(result1).toBe(`${url}?v=${key}`);
+  });
+
+  it("preserves already-encoded characters without double-encoding", () => {
+    const url = "https://example.com/path%20with%20spaces/image.jpg";
+    const result = normalizeExternalImageUrl(url);
+    // Should NOT double-encode %20 into %2520
+    expect(result).toBe(url);
+  });
+
+  it("handles URLs with existing query params deterministically", () => {
+    const url = "https://example.com/img.jpg?size=large&format=webp";
+    const result = withImageCacheKey(url, "v1");
+    expect(result).toBe("https://example.com/img.jpg?size=large&format=webp&v=v1");
+  });
+
+  it("handles URLs with hash fragments correctly", () => {
+    const url = "https://example.com/img.jpg#section";
+    const result = withImageCacheKey(url, "v1");
+    expect(result).toBe("https://example.com/img.jpg?v=v1#section");
+  });
+
+  it("handles URLs with both query and hash", () => {
+    const url = "https://example.com/img.jpg?foo=bar#section";
+    const result = withImageCacheKey(url, "v1");
+    expect(result).toBe("https://example.com/img.jpg?foo=bar&v=v1#section");
   });
 });
 

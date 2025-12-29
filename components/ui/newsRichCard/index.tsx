@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 import type { NewsRichCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
-import DOMPurify from "isomorphic-dompurify";
+import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
 
@@ -23,9 +23,7 @@ export default async function NewsRichCard({
     event.categories && event.categories.length > 0
       ? { name: event.categories[0].name, slug: event.categories[0].slug }
       : undefined;
-  const plainDescription = DOMPurify.sanitize(event.description || "", {
-    ALLOWED_TAGS: [],
-  });
+  const plainDescription = stripHtmlTags(event.description || "");
 
   if (variant === "horizontal") {
     return (
