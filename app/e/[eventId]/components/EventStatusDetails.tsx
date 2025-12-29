@@ -30,7 +30,7 @@ const EventStatusDetails = async ({
     temporalStatus.state === "past"
       ? formattedEnd && formattedStart
         ? t("dateRangePast", { start: formattedStart, end: formattedEnd })
-        : `${nameDay}, ${formattedStart}`
+        : [nameDay, formattedStart].filter(Boolean).join(", ")
       : null;
 
   return (
