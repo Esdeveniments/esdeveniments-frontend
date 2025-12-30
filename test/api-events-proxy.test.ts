@@ -42,7 +42,7 @@ describe("/api/events proxy", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe(
-      "public, s-maxage=300, stale-while-revalidate=300"
+      "public, s-maxage=600, stale-while-revalidate=600"
     );
 
     // Verify mapping and clamping

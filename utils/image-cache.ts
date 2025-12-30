@@ -2,17 +2,6 @@ const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
 const CACHE_PARAM = "v";
 const MAX_URL_LENGTH = 2048;
 
-/**
- * Hosts with known broken SSL certificate chains (missing intermediate certs).
- * These are proxied through /api/image-proxy which bypasses strict SSL verification
- * (via NODE_TLS_REJECT_UNAUTHORIZED=0 on the server Lambda).
- * Add new hosts here when they have SSL issues preventing direct image loading.
- */
-const BROKEN_SSL_HOSTNAMES = [
-  ".altanet.org",
-  ".biguesiriells.cat",
-];
-
 function sanitizeUrlCandidate(imageUrl: string | null | undefined): string {
   if (!imageUrl || typeof imageUrl !== "string") {
     return "";
@@ -148,25 +137,25 @@ export function withImageCacheKey(
 /**
  * Wrap an external absolute URL with the internal image proxy to avoid mixed content
  * and flaky TLS. Keeps relative URLs untouched.
+ * Uses string operations only to avoid hydration mismatches from URL object serialization.
  */
 export function toProxiedImageUrl(imageUrl: string): string {
   if (!imageUrl) return imageUrl;
   if (imageUrl.startsWith("/api/image-proxy")) return imageUrl;
   if (!ABSOLUTE_URL_REGEX.test(imageUrl)) return imageUrl;
 
-  try {
-    const urlObj = new URL(imageUrl);
-    if (urlObj.protocol !== "http:" && urlObj.protocol !== "https:") {
-      return imageUrl;
-    }
-    return `/api/image-proxy?url=${encodeURIComponent(urlObj.toString())}`;
-  } catch {
+  // Validate protocol using string check (avoid URL object for hydration consistency)
+  const lowerUrl = imageUrl.toLowerCase();
+  if (!lowerUrl.startsWith("http://") && !lowerUrl.startsWith("https://")) {
     return imageUrl;
   }
+
+  return `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
 }
 
 /**
  * Convenience helper: normalize, cache-key, and proxy an image URL.
+ * Uses string-based operations to ensure SSR/client hydration consistency.
  */
 export function buildOptimizedImageUrl(
   imageUrl: string,
@@ -175,51 +164,51 @@ export function buildOptimizedImageUrl(
   const trimmed = sanitizeUrlCandidate(imageUrl);
   if (!trimmed) return "";
 
-  const shouldProxyByPrefix =
-    trimmed.startsWith("http://") || trimmed.startsWith("//");
+  // Proxy ALL external absolute URLs (http, https, protocol-relative)
+  // This ensures we control the upstream fetch and can strip ?v= cache keys
+  // that some external servers reject.
+  const shouldProxy =
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("//");
 
-  // Some municipal hosting setups publish HTTPS URLs but ship an invalid TLS cert
-  // (missing intermediate certificates in the chain). For these, the only workable
-  // path is our proxy trying HTTPS first and falling back to HTTP.
-  // Keep this narrowly-scoped to avoid proxying everything.
-  const shouldProxyByHostname = (() => {
-    try {
-      const absolute = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
-      if (!ABSOLUTE_URL_REGEX.test(absolute)) return false;
-      const parsed = new URL(absolute);
-      return BROKEN_SSL_HOSTNAMES.some((suffix) =>
-        parsed.hostname.endsWith(suffix)
-      );
-    } catch {
-      return false;
-    }
-  })();
-
-  const shouldProxy = shouldProxyByPrefix || shouldProxyByHostname;
-
-  // If we intend to proxy, preserve original protocol where possible so the proxy
-  // can retry HTTP when HTTPS is broken (common on misconfigured town sites).
   if (shouldProxy) {
-    const absolute = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
-    try {
-      const parsed = new URL(absolute);
-      parsed.username = "";
-      parsed.password = "";
-      parsed.pathname = parsed.pathname.replace(/\/{2,}/g, "/");
-      if (cacheKey !== undefined && cacheKey !== null) {
-        const normalizedKey = String(cacheKey).trim();
-        if (normalizedKey) parsed.searchParams.set(CACHE_PARAM, normalizedKey);
+    // Use string-based operations to avoid URL object serialization differences
+    // between Node.js and browser (hydration mismatch with special chars like commas)
+    let absolute = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
+
+    // Collapse duplicate slashes in pathname (after protocol)
+    const protocolEnd = absolute.indexOf("://");
+    if (protocolEnd !== -1) {
+      const afterProtocol = absolute.slice(protocolEnd + 3);
+      const hostEnd = afterProtocol.indexOf("/");
+      if (hostEnd !== -1) {
+        const host = afterProtocol.slice(0, hostEnd);
+        const pathAndRest = afterProtocol.slice(hostEnd);
+        // Split path from query/hash
+        const queryIndex = pathAndRest.indexOf("?");
+        const hashIndex = pathAndRest.indexOf("#");
+        const pathEnd =
+          queryIndex !== -1
+            ? queryIndex
+            : hashIndex !== -1
+              ? hashIndex
+              : pathAndRest.length;
+        const pathname = pathAndRest.slice(0, pathEnd).replace(/\/{2,}/g, "/");
+        const suffix = pathAndRest.slice(pathEnd);
+        absolute = `${absolute.slice(0, protocolEnd + 3)}${host}${pathname}${suffix}`;
       }
-      // Use the preserved protocol (http stays http). Protocol-relative becomes https.
-      const preserved = parsed.toString();
-      return toProxiedImageUrl(preserved);
-    } catch {
-      // Fail-open: if URL parsing fails, don't proxy
-      return trimmed;
     }
+
+    // Add cache key using string operations
+    const urlWithKey = cacheKey !== undefined && cacheKey !== null
+      ? withImageCacheKey(absolute, cacheKey)
+      : absolute;
+
+    return toProxiedImageUrl(urlWithKey);
   }
 
-  // Non-proxied path: normalize (can prefer https) and append cache key
+  // Non-proxied path (relative URLs): normalize and append cache key
   const normalized = normalizeExternalImageUrl(trimmed);
   if (!normalized) return trimmed;
   return cacheKey !== undefined ? withImageCacheKey(normalized, cacheKey) : normalized;

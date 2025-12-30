@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Disclosure } from "@headlessui/react";
 import {
@@ -23,15 +24,23 @@ import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
   const pathname = usePathname();
+  const closeRef = useRef<(() => void) | null>(null);
+
+  // Close mobile menu when pathname changes (navigation occurs)
+  useEffect(() => {
+    closeRef.current?.();
+  }, [pathname]);
 
   return (
     <Disclosure
-      key={pathname}
       as="nav"
       id="site-navbar"
       className="w-full bg-background md:sticky md:top-0 z-50 border-b border-border/50 md:shadow-sm md:backdrop-blur-sm"
     >
-      {({ open }) => (
+      {({ open, close }) => {
+        // Store the close function so we can call it on navigation
+        closeRef.current = close;
+        return (
         <>
           <div className="container bg-background py-2 h-14">
             <div className="h-full flex flex-col justify-center">
@@ -168,7 +177,8 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
             </div>
           </Disclosure.Panel>
         </>
-      )}
+        );
+      }}
     </Disclosure>
   );
 }

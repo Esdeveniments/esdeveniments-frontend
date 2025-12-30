@@ -153,6 +153,22 @@ function hasStrongCacheKey(upstreamUrl: string): boolean {
   }
 }
 
+/**
+ * Strip our cache-busting `?v=` param before fetching from upstream.
+ * Some external servers reject URLs with unexpected query params.
+ * CloudFront still caches by the full proxy URL (with ?v=), so cache-busting
+ * works on our side without affecting upstream servers.
+ */
+function stripCacheKeyForUpstream(imageUrl: string): string {
+  try {
+    const urlObj = new URL(imageUrl);
+    urlObj.searchParams.delete("v");
+    return urlObj.toString();
+  } catch {
+    return imageUrl;
+  }
+}
+
 function buildFetchCandidates(
   absoluteUrl: string,
   originalWasHttp: boolean
@@ -201,6 +217,12 @@ export async function GET(request: Request) {
     return buildPlaceholder(400);
   }
 
+  // Check if URL has cache key BEFORE stripping (for cache header logic later)
+  const hasCacheKey = hasStrongCacheKey(normalized);
+
+  // Strip ?v= before fetching upstream - some servers reject unknown query params
+  const upstreamUrl = stripCacheKeyForUpstream(normalized);
+
   const originalWasHttp = (() => {
     try {
       const original = rawTarget.startsWith("//")
@@ -212,7 +234,7 @@ export async function GET(request: Request) {
     }
   })();
 
-  const candidates = buildFetchCandidates(normalized, originalWasHttp);
+  const candidates = buildFetchCandidates(upstreamUrl, originalWasHttp);
 
   for (const candidate of candidates) {
     try {
@@ -311,7 +333,7 @@ export async function GET(request: Request) {
         },
       });
 
-      const cacheControl = hasStrongCacheKey(candidate)
+      const cacheControl = hasCacheKey
         ? // Align with infra strategy: long TTL + cache-busting via ?v=
           `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
         : // Conservative default for unversioned upstream URLs

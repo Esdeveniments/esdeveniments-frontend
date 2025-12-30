@@ -70,16 +70,16 @@ describe("service worker template", () => {
       expect(contents).toContain("CacheableResponsePlugin");
     });
 
-    it("has separate cache for events API with 5-minute TTL", () => {
+    it("has separate cache for events API with 10-minute TTL", () => {
       const contents = getContents();
       expect(contents).toContain("esdeveniments-events-api-cache");
-      expect(contents).toContain("maxAgeSeconds: 300"); // 5 minutes
+      expect(contents).toContain("maxAgeSeconds: 600"); // 10 minutes - matches server cache TTL
     });
 
-    it("has separate cache for news API with 1-minute TTL", () => {
+    it("has separate cache for news API with 3-minute TTL", () => {
       const contents = getContents();
       expect(contents).toContain("esdeveniments-news-api-cache");
-      expect(contents).toContain("maxAgeSeconds: 60"); // 1 minute
+      expect(contents).toContain("maxAgeSeconds: 180"); // 3 minutes - matches server cache TTL
     });
   });
 

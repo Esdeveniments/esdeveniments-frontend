@@ -151,8 +151,8 @@ if (!self.workbox) {
     })
   );
 
-  // Strategy for Event API Requests - Stale-While-Revalidate with 5-minute TTL
-  // Events need fresher data, so we use a shorter cache duration
+  // Strategy for Event API Requests - Stale-While-Revalidate with 10-minute TTL
+  // Events don't change frequently during the day; aligned with server s-maxage=600
   workbox.routing.registerRoute(
     ({ url }) =>
       url.pathname === "/api/events" ||
@@ -165,15 +165,14 @@ if (!self.workbox) {
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 50,
-          maxAgeSeconds: 300, // 5 minutes
+          maxAgeSeconds: 600, // 10 minutes - matches server cache TTL
         }),
       ],
     })
   );
 
-  // Strategy for News API Requests - Stale-While-Revalidate with 1-minute TTL
-  // News is time-sensitive content that updates frequently.
-  // Server sets s-maxage=60, so SW cache should match.
+  // Strategy for News API Requests - Stale-While-Revalidate with 3-minute TTL
+  // News isn't real-time critical; aligned with server s-maxage=180
   workbox.routing.registerRoute(
     ({ url }) =>
       url.pathname === "/api/news" || url.pathname.startsWith("/api/news/"),
@@ -185,7 +184,7 @@ if (!self.workbox) {
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 30,
-          maxAgeSeconds: 60, // 1 minute - matches server cache TTL
+          maxAgeSeconds: 180, // 3 minutes - matches server cache TTL
         }),
       ],
     })

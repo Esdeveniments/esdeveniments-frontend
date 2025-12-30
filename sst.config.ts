@@ -213,13 +213,13 @@ export default $config({
           return key;
         })(),
       },
-      warm: 5,
+      warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
       transform: {
         server: (args) => {
           // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x
           // OpenNext applies this runtime to all Lambda functions it creates
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
-          args.memory = "3008 MB"; // Maximum allowed: 3 GB = 3 vCPUs (AWS Lambda limit for arm64/eu-west-3)
+          args.memory = "1792 MB"; // Reduced from 3008 MB (1 vCPU equivalent) - saves ~$30/month
           args.timeout = "20 seconds";
           args.architecture = "arm64";
           // Sentry layer ARN - configurable per environment/region
@@ -254,7 +254,7 @@ export default $config({
         },
       },
       imageOptimization: {
-        memory: "3008 MB", // Maximum allowed for image optimizer Lambda (3 vCPUs)
+        memory: "1536 MB", // Reduced from 3008 MB - image resizing doesn't need 3GB RAM
         staticEtag: true, // Enable stronger caching for optimized images
       },
       // Explicitly invalidate robots.txt on deploy to ensure route handler changes take effect

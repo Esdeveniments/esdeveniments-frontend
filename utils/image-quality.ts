@@ -30,14 +30,15 @@ export function getOptimalImageQuality({
   }
 
   // For external images, use optimized quality settings for performance
+  // NOTE: Return values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
   if (isExternal) {
     if (isPriority) {
-      // LCP external images: 55-60 quality for critical loading (lowered to trim mobile payloads)
-      return 55;
+      // LCP external images: 60 quality for critical loading
+      return 60;
     } else {
-      // For regular external images, use network-based quality, capped for performance.
-      // Lowered cap to 45 to reduce payload on listing cards (Lighthouse flagged oversized downloads).
-      return Math.min(normalizedNetworkQuality, 45);
+      // For regular external images, use capped quality for performance
+      // Capped at 50 to reduce payload on listing cards
+      return Math.min(normalizedNetworkQuality, 50);
     }
   }
 
@@ -46,11 +47,12 @@ export function getOptimalImageQuality({
 }
 
 // Network-aware quality mapping
+// NOTE: Values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
 const QUALITY_MAP: Record<NetworkQuality, number> = {
   high: 85,
-  medium: 70,
-  low: 45,
-  unknown: 70, // Default to medium quality
+  medium: 75,
+  low: 50,
+  unknown: 75, // Default to medium quality
 };
 
 export function getServerImageQuality(networkQuality?: NetworkQuality): number {
@@ -61,15 +63,16 @@ export function getServerImageQuality(networkQuality?: NetworkQuality): number {
 /**
  * Quality presets for common scenarios
  * Optimized based on Lighthouse performance analysis
+ * NOTE: Values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
  */
 export const QUALITY_PRESETS = {
-  LCP_EXTERNAL: 60, // LCP external images (reduced from 70)
-  EXTERNAL_HIGH: 50, // High-quality external images (reduced from 65)
-  EXTERNAL_STANDARD: 45, // Regular external images (reduced from 60)
-  EXTERNAL_MOBILE: 40, // Mobile/slow connections (reduced from 55)
-  INTERNAL_HIGH: 80, // Internal high-quality images (unchanged)
-  INTERNAL_STANDARD: 75, // Internal standard images (unchanged)
-  EMERGENCY: 35, // Emergency/breaking news - maximum speed (reduced from 50)
+  LCP_EXTERNAL: 60, // LCP external images
+  EXTERNAL_HIGH: 50, // High-quality external images
+  EXTERNAL_STANDARD: 50, // Regular external images (mapped to allowed 50)
+  EXTERNAL_MOBILE: 35, // Mobile/slow connections (mapped to allowed 35)
+  INTERNAL_HIGH: 85, // Internal high-quality images (mapped to allowed 85)
+  INTERNAL_STANDARD: 75, // Internal standard images
+  EMERGENCY: 35, // Emergency/breaking news - maximum speed
 } as const;
 
 /**

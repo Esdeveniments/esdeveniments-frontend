@@ -16,7 +16,8 @@ export async function GET(request: Request) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=60",
+        // Increased from 60s to reduce Lambda invocations - news isn't real-time critical
+        "Cache-Control": "public, s-maxage=180, stale-while-revalidate=180",
       },
     });
   } catch (e) {
@@ -32,4 +33,3 @@ export async function GET(request: Request) {
     });
   }
 }
-
