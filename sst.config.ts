@@ -303,6 +303,162 @@ export default $config({
       alarmActions: [alarmsTopic.arn],
     });
 
+    // CRITICAL: DynamoDB Write Spike Alarm
+    // This catches issues like the Dec 28, 2025 incident ($282 cost spike)
+    // where searchParams usage caused 200M writes in 16 hours.
+    // Threshold: 100,000 writes/hour (baseline is ~1,500/hour)
+    // Note: Without dimensions, this monitors ALL DynamoDB tables in the account.
+    // Since we only have one table (siteRevalidationTable), this is fine.
+    // If more tables are added, we should add dimensions with the specific table name.
+    new aws.cloudwatch.MetricAlarm("DynamoDBWriteSpikeAlarm", {
+      comparisonOperator: "GreaterThanThreshold",
+      evaluationPeriods: 1,
+      metricName: "ConsumedWriteCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      period: 3600, // 1 hour
+      statistic: "Sum",
+      threshold: 100000, // 100K writes/hour (incident had 22M/hour at peak)
+      treatMissingData: "notBreaching",
+      alarmDescription:
+        "DynamoDB writes exceeded 100K/hour. Check for searchParams usage in listing pages!",
+      alarmActions: [alarmsTopic.arn],
+      okActions: [alarmsTopic.arn], // Also notify when it returns to normal
+    });
+
+    // DynamoDB Read Spike Alarm (secondary indicator of cache issues)
+    new aws.cloudwatch.MetricAlarm("DynamoDBReadSpikeAlarm", {
+      comparisonOperator: "GreaterThanThreshold",
+      evaluationPeriods: 1,
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      period: 3600, // 1 hour
+      statistic: "Sum",
+      threshold: 500000, // 500K reads/hour
+      treatMissingData: "notBreaching",
+      alarmDescription:
+        "DynamoDB reads exceeded 500K/hour. Possible cache thrashing.",
+      alarmActions: [alarmsTopic.arn],
+    });
+
+    // =========================================================================
+    // ADDITIONAL COST MONITORING ALARMS
+    // Baselines established Dec 30, 2025:
+    //   - Lambda: ~66K invocations/day (~2,750/hour)
+    //   - Monthly cost: ~$2-4/month healthy
+    // =========================================================================
+
+    // --- LAMBDA COST ALARMS ---
+
+    // Lambda Invocation Spike (baseline: ~2,750/hour = 66K/day)
+    // High invocations = high Lambda cost
+    new aws.cloudwatch.MetricAlarm("LambdaInvocationSpikeAlarm", {
+      comparisonOperator: "GreaterThanThreshold",
+      evaluationPeriods: 1,
+      metricName: "Invocations",
+      namespace: "AWS/Lambda",
+      period: 3600, // 1 hour
+      statistic: "Sum",
+      threshold: 50000, // 50K invocations/hour (~18x baseline)
+      treatMissingData: "notBreaching",
+      dimensions: {
+        FunctionName: site.nodes.server.name,
+      },
+      alarmDescription:
+        "Lambda invocations exceeded 50K/hour. Check for traffic spike or infinite loops.",
+      alarmActions: [alarmsTopic.arn],
+    });
+
+    // Lambda Duration Spike (baseline: ~625K ms/hour)
+    // High duration = slow code or external API issues
+    new aws.cloudwatch.MetricAlarm("LambdaDurationSpikeAlarm", {
+      comparisonOperator: "GreaterThanThreshold",
+      evaluationPeriods: 1,
+      metricName: "Duration",
+      namespace: "AWS/Lambda",
+      period: 3600, // 1 hour
+      statistic: "Sum",
+      threshold: 10000000, // 10M ms/hour (~16x baseline)
+      treatMissingData: "notBreaching",
+      dimensions: {
+        FunctionName: site.nodes.server.name,
+      },
+      alarmDescription:
+        "Lambda total duration exceeded 10M ms/hour. Check for slow external APIs or code issues.",
+      alarmActions: [alarmsTopic.arn],
+    });
+
+    // Lambda Concurrent Executions (can trigger throttling and cost)
+    new aws.cloudwatch.MetricAlarm("LambdaConcurrencyAlarm", {
+      comparisonOperator: "GreaterThanThreshold",
+      evaluationPeriods: 1,
+      metricName: "ConcurrentExecutions",
+      namespace: "AWS/Lambda",
+      period: 60,
+      statistic: "Maximum",
+      threshold: 100, // High concurrency threshold
+      treatMissingData: "notBreaching",
+      dimensions: {
+        FunctionName: site.nodes.server.name,
+      },
+      alarmDescription:
+        "Lambda concurrent executions exceeded 100. High traffic or slow responses.",
+      alarmActions: [alarmsTopic.arn],
+    });
+
+    // --- CLOUDFRONT ALARMS ---
+    // Note: CloudFront metrics require DistributionId dimension.
+    // SST's Nextjs component exposes site.nodes.cdn (the Cdn component),
+    // which in turn exposes site.nodes.cdn.nodes.distribution (the Pulumi AWS Distribution).
+    // We need to guard against undefined since nodes.cdn might not exist in some configurations.
+
+    // Get CloudFront distribution ID from SST (only if cdn node exists)
+    if (site.nodes.cdn) {
+      const distributionId = site.nodes.cdn.nodes.distribution.id;
+
+      // CloudFront 5xx Error Rate (indicates origin issues)
+      new aws.cloudwatch.MetricAlarm("CloudFront5xxErrorAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 2,
+        metricName: "5xxErrorRate",
+        namespace: "AWS/CloudFront",
+        period: 300, // 5 minutes
+        statistic: "Average",
+        threshold: 5, // 5% error rate
+        treatMissingData: "notBreaching",
+        dimensions: {
+          DistributionId: distributionId,
+          Region: "Global", // CloudFront metrics are always Global
+        },
+        alarmDescription:
+          "CloudFront 5xx error rate exceeded 5%. Check Lambda errors and origin health.",
+        alarmActions: [alarmsTopic.arn],
+      });
+
+      // CloudFront Request Spike (traffic anomaly detection)
+      new aws.cloudwatch.MetricAlarm("CloudFrontRequestSpikeAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 1,
+        metricName: "Requests",
+        namespace: "AWS/CloudFront",
+        period: 3600, // 1 hour
+        statistic: "Sum",
+        threshold: 1000000, // 1M requests/hour
+        treatMissingData: "notBreaching",
+        dimensions: {
+          DistributionId: distributionId,
+          Region: "Global",
+        },
+        alarmDescription:
+          "CloudFront requests exceeded 1M/hour. Check for bot traffic or DDoS.",
+        alarmActions: [alarmsTopic.arn],
+      });
+    }
+
+    // Note: S3 request metrics require enabling request metrics on the bucket,
+    // which adds ~$0.01/1000 requests. Not enabled by default.
+    // The Lambda and DynamoDB alarms cover the main cost drivers.
+    // If you want S3 monitoring, enable request metrics in the S3 console first.
+
     return {
       SiteUrl: site.url,
     };

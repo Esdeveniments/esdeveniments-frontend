@@ -380,6 +380,63 @@ export const topStaticGenerationPlaces = [
 
 ---
 
+## Measured Baseline Data (December 30, 2025)
+
+Real measurements from AWS CloudWatch and Cost Explorer to use as future reference.
+
+### Monthly Cost Forecast (Healthy State)
+
+Based on Dec 27, 2025 (pre-incident healthy day) and Dec 30, 2025 (post-optimization):
+
+| Service                | Daily Cost (Dec 27) | Monthly Forecast | Notes                                     |
+| ---------------------- | ------------------- | ---------------- | ----------------------------------------- |
+| EC2 - Other (NAT)      | $0.0388             | **$1.16**        | Fixed infrastructure cost                 |
+| Elastic Load Balancing | $0.0297             | **$0.89**        | Fixed infrastructure cost                 |
+| Lambda                 | $0.0028             | **$0.08**        | Variable, reduced 62% after optimizations |
+| DynamoDB               | $0.0000             | **$1.64**        | On-demand, ~38K writes/day post-fix       |
+| S3                     | $0.0000             | **<$0.01**       | Static assets                             |
+| CloudFront             | $0.0000             | **<$0.01**       | CDN, mostly free tier                     |
+| **Total (gross)**      |                     | **~$3.78/month** |                                           |
+| Data Transfer Credits  | -$0.0713            | **-$2.14**       | Reserved instance credits                 |
+| **Total (net)**        |                     | **~$1.64/month** |                                           |
+
+### Lambda Usage Comparison
+
+| Metric              | Dec 27 (pre-optimization) | Dec 30 (post-optimization) | Change   |
+| ------------------- | ------------------------- | -------------------------- | -------- |
+| Invocations/day     | 206,039                   | ~65,814 (projected)        | **-68%** |
+| Duration (total ms) | 40,990,627                | ~15,410,659 (projected)    | **-62%** |
+| Avg duration/invoke | 199 ms                    | 234 ms                     | +18%     |
+
+### DynamoDB Incident Data
+
+| Date               | Writes              | Cost        | Status                   |
+| ------------------ | ------------------- | ----------- | ------------------------ |
+| Dec 27             | 0                   | $0.00       | ✅ Normal (pre-incident) |
+| Dec 28             | 56,745,887          | **$80.21**  | 🔴 Incident start        |
+| Dec 29             | 143,116,503         | **$202.32** | 🔴 Incident peak         |
+| Dec 30             | ~38,588 (projected) | **$0.05**   | ✅ Fixed                 |
+| **Incident Total** | **199,862,390**     | **$282.53** |                          |
+
+### DynamoDB Healthy Baseline
+
+Post-fix normal operations (Dec 30):
+
+- Hourly writes: ~1,000-5,000 (ISR cache operations)
+- Daily writes: ~38,000
+- Monthly projection: ~1.16M writes = **$1.64/month**
+
+### Billing Mode
+
+```
+Table: esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf
+Mode: PAY_PER_REQUEST (On-Demand)
+Region: eu-west-3 (Paris)
+Pricing: $1.4135 per million write request units
+```
+
+---
+
 ## Monitoring Recommendations
 
 1. **CloudWatch Dashboard** for:

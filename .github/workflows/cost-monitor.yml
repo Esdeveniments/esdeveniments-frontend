@@ -1,0 +1,220 @@
+name: AWS Cost Monitor
+
+on:
+  # Run twice daily to catch issues:
+  # - 8 AM UTC: Morning cost report
+  # - 10 AM UTC: Secondary check (catches overnight deploys)
+  schedule:
+    - cron: "0 8 * * *"
+    - cron: "0 10 * * *"
+  # Allow manual trigger
+  workflow_dispatch:
+
+# Note: Post-deploy monitoring is handled by CloudWatch alarms (immediate, 24/7)
+# which send email alerts for:
+#   - DynamoDB writes >100K/hour (catches searchParams issues)
+#   - DynamoDB reads >500K/hour (catches cache thrashing)
+#   - Lambda errors >10/min
+#   - Lambda throttles >5/min
+# This workflow provides daily cost summaries and trend analysis.
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: "eu-west-3"
+
+jobs:
+  monitor-costs:
+    name: Monitor AWS Costs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get current date info
+        id: date
+        run: |
+          echo "today=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+          echo "yesterday=$(date -u -d '1 day ago' +%Y-%m-%d)" >> $GITHUB_OUTPUT
+          echo "month_start=$(date -u +%Y-%m-01)" >> $GITHUB_OUTPUT
+          echo "month_name=$(date -u +%B)" >> $GITHUB_OUTPUT
+
+      - name: Fetch monthly costs by service
+        id: monthly_costs
+        run: |
+          echo "📊 Fetching ${{ steps.date.outputs.month_name }} costs..."
+
+          COSTS=$(aws ce get-cost-and-usage \
+            --time-period Start=${{ steps.date.outputs.month_start }},End=${{ steps.date.outputs.today }} \
+            --granularity MONTHLY \
+            --metrics "UnblendedCost" \
+            --group-by Type=DIMENSION,Key=SERVICE \
+            --output json)
+
+          echo "costs<<EOF" >> $GITHUB_OUTPUT
+          echo "$COSTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Fetch DynamoDB writes (last 24h)
+        id: dynamodb_writes
+        run: |
+          echo "📊 Fetching DynamoDB write metrics..."
+
+          WRITES=$(aws cloudwatch get-metric-statistics \
+            --namespace AWS/DynamoDB \
+            --metric-name ConsumedWriteCapacityUnits \
+            --dimensions Name=TableName,Value=esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf \
+            --start-time $(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ) \
+            --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+            --period 3600 \
+            --statistics Sum \
+            --region ${{ env.AWS_REGION }} \
+            --output json)
+
+          echo "writes<<EOF" >> $GITHUB_OUTPUT
+          echo "$WRITES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Fetch Lambda invocations (last 24h)
+        id: lambda_invocations
+        run: |
+          echo "📊 Fetching Lambda metrics..."
+
+          INVOCATIONS=$(aws cloudwatch get-metric-statistics \
+            --namespace AWS/Lambda \
+            --metric-name Invocations \
+            --start-time $(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ) \
+            --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+            --period 86400 \
+            --statistics Sum \
+            --region ${{ env.AWS_REGION }} \
+            --output json)
+
+          echo "invocations<<EOF" >> $GITHUB_OUTPUT
+          echo "$INVOCATIONS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Analyze and report costs
+        id: analysis
+        run: |
+          echo "## 📊 AWS Cost Report - ${{ steps.date.outputs.today }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Parse monthly costs
+          echo "### Monthly Costs (${{ steps.date.outputs.month_name }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Cost (USD) |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|------------|" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_COST=0
+          while IFS= read -r line; do
+            SERVICE=$(echo "$line" | jq -r '.Keys[0]')
+            COST=$(echo "$line" | jq -r '.Metrics.UnblendedCost.Amount')
+            COST_NUM=$(echo "$COST" | awk '{printf "%.4f", $1}')
+            
+            # Skip services with essentially zero cost
+            if (( $(echo "$COST_NUM > 0.0001 || $COST_NUM < -0.0001" | bc -l) )); then
+              echo "| $SERVICE | \$${COST_NUM} |" >> $GITHUB_STEP_SUMMARY
+              TOTAL_COST=$(echo "$TOTAL_COST + $COST_NUM" | bc -l)
+            fi
+          done < <(echo '${{ steps.monthly_costs.outputs.costs }}' | jq -c '.ResultsByTime[0].Groups[]')
+
+          TOTAL_FORMATTED=$(printf "%.4f" $TOTAL_COST)
+          echo "| **Total** | **\$${TOTAL_FORMATTED}** |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Parse DynamoDB writes
+          echo "### DynamoDB Writes (Last 24h)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_WRITES=0
+          MAX_HOURLY=0
+          while IFS= read -r line; do
+            WRITES=$(echo "$line" | jq -r '.Sum // 0')
+            TOTAL_WRITES=$(echo "$TOTAL_WRITES + $WRITES" | bc)
+            if (( $(echo "$WRITES > $MAX_HOURLY" | bc -l) )); then
+              MAX_HOURLY=$WRITES
+            fi
+          done < <(echo '${{ steps.dynamodb_writes.outputs.writes }}' | jq -c '.Datapoints[]')
+
+          echo "- **Total writes:** $(printf "%'d" $TOTAL_WRITES)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Max hourly:** $(printf "%'d" ${MAX_HOURLY%.*})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for anomalies
+          echo "### 🚨 Anomaly Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ANOMALY_DETECTED=false
+
+          # Alert if DynamoDB writes > 100,000/hour (incident threshold)
+          if (( $(echo "${MAX_HOURLY%.*} > 100000" | bc -l) )); then
+            echo "⚠️ **HIGH DYNAMODB WRITES DETECTED!** Max hourly: $(printf "%'d" ${MAX_HOURLY%.*})" >> $GITHUB_STEP_SUMMARY
+            echo "  - Threshold: 100,000/hour" >> $GITHUB_STEP_SUMMARY
+            echo "  - Action: Check for searchParams usage in listing pages" >> $GITHUB_STEP_SUMMARY
+            ANOMALY_DETECTED=true
+          fi
+
+          # Alert if daily writes > 50,000 (healthy baseline is ~38,000)
+          if (( $(echo "$TOTAL_WRITES > 50000" | bc -l) )); then
+            echo "⚠️ **Elevated DynamoDB writes:** $(printf "%'d" $TOTAL_WRITES) (baseline: ~38,000/day)" >> $GITHUB_STEP_SUMMARY
+            ANOMALY_DETECTED=true
+          fi
+
+          # Alert if monthly cost > $10 (healthy baseline is ~$2-4)
+          if (( $(echo "$TOTAL_COST > 10" | bc -l) )); then
+            echo "⚠️ **Elevated monthly cost:** \$${TOTAL_FORMATTED} (baseline: ~\$2-4/month)" >> $GITHUB_STEP_SUMMARY
+            ANOMALY_DETECTED=true
+          fi
+
+          if [ "$ANOMALY_DETECTED" = false ]; then
+            echo "✅ All metrics within normal ranges" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Baselines (Dec 30, 2025)" >> $GITHUB_STEP_SUMMARY
+          echo "- DynamoDB writes: ~38,000/day = \$1.64/month" >> $GITHUB_STEP_SUMMARY
+          echo "- Lambda invocations: ~66,000/day = \$0.08/month" >> $GITHUB_STEP_SUMMARY
+          echo "- Total healthy cost: ~\$2-4/month" >> $GITHUB_STEP_SUMMARY
+
+          # Set output for potential Slack/email notification
+          echo "anomaly=$ANOMALY_DETECTED" >> $GITHUB_OUTPUT
+          echo "total_cost=$TOTAL_FORMATTED" >> $GITHUB_OUTPUT
+          echo "total_writes=$TOTAL_WRITES" >> $GITHUB_OUTPUT
+
+      - name: Send daily report via SNS
+        if: always()
+        run: |
+          # Build email message
+          if [ "${{ steps.analysis.outputs.anomaly }}" = "true" ]; then
+            SUBJECT="⚠️ AWS Cost Alert - Anomaly Detected"
+            URGENCY="HIGH"
+          else
+            SUBJECT="✅ AWS Daily Cost Report - ${{ steps.date.outputs.today }}"
+            URGENCY="normal"
+          fi
+
+          MESSAGE="AWS Cost Report - ${{ steps.date.outputs.today }}
+
+          Monthly Cost: \$${{ steps.analysis.outputs.total_cost }}
+          DynamoDB Writes (24h): ${{ steps.analysis.outputs.total_writes }}
+          Status: $([ '${{ steps.analysis.outputs.anomaly }}' = 'true' ] && echo '⚠️ ANOMALY DETECTED' || echo '✅ Normal')
+
+          Baselines:
+          - DynamoDB writes: ~38,000/day
+          - Monthly cost: ~\$2-4/month
+
+          View full report: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Send via SNS (uses same topic as CloudWatch alarms)
+          aws sns publish \
+            --topic-arn "arn:aws:sns:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:esdeveniments-frontend-production-SiteAlarms" \
+            --subject "$SUBJECT" \
+            --message "$MESSAGE" \
+            --region ${{ env.AWS_REGION }} || echo "SNS publish failed - topic may not exist yet"

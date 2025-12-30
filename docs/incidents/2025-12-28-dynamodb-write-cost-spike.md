@@ -2,29 +2,66 @@
 
 **Date:** December 28, 2025  
 **Severity:** High (Cost)  
-**Status:** Resolved  
+**Status:** Resolved
 
 ## Summary
 
-A code change in the "Favorites feature" deployment caused listing pages to become dynamic instead of static (ISR), resulting in ~200 million DynamoDB writes and a $307.50 cost spike in a single day.
+A code change in the "Favorites feature" deployment caused listing pages to become dynamic instead of static (ISR), resulting in ~200 million DynamoDB writes and a $282.53 cost spike over ~16 hours.
 
 ## Impact
 
-- **Financial:** $307.50 in DynamoDB `EUW3-WriteRequestUnits` charges
+- **Financial:** $282.53 in DynamoDB `EUW3-WriteRequestUnits` charges (measured)
 - **Region:** eu-west-3 (Paris)
-- **Table:** `esdeveniments-frontend-production-siteRevalidationTable-*`
-- **Duration:** ~24 hours (Dec 28-29, 2024)
+- **Table:** `esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf`
+- **Duration:** ~16 hours (Dec 28 17:00 UTC - Dec 29 09:00 UTC)
 - **User Impact:** None (site remained functional)
+
+## Measured Data (CloudWatch)
+
+### Hourly Write Spike
+
+| Time (UTC)       | Writes     | Status          |
+| ---------------- | ---------- | --------------- |
+| Dec 28 17:00     | 2,569,001  | ⚠️ Spike starts |
+| Dec 28 18:00     | 4,636,794  | ⚠️              |
+| Dec 28 19:00     | 10,014,613 | 🔴              |
+| Dec 28 20:00     | 13,253,057 | 🔴              |
+| Dec 28 21:00     | 16,908,817 | 🔴 PEAK         |
+| Dec 28 22:00     | 9,363,551  | 🔴              |
+| Dec 29 00:00     | 2,472,212  | ⚠️              |
+| Dec 29 01:00     | 20,091,967 | 🔴              |
+| Dec 29 02:00     | 17,537,819 | 🔴              |
+| Dec 29 03:00     | 22,730,645 | 🔴 **HIGHEST**  |
+| Dec 29 04:00     | 18,542,045 | 🔴              |
+| Dec 29 05:00     | 16,548,751 | 🔴              |
+| Dec 29 06:00     | 17,092,527 | 🔴              |
+| Dec 29 07:00     | 16,572,126 | 🔴              |
+| Dec 29 08:00     | 11,478,919 | 🔴              |
+| Dec 29 09:00     | 7,225      | ✅ Fix deployed |
+| Dec 30 (all day) | ~38,000    | ✅ Normal       |
+
+### Daily Totals
+
+| Date      | Writes          | Cost        |
+| --------- | --------------- | ----------- |
+| Dec 28    | 56,745,887      | $80.21      |
+| Dec 29    | 143,116,503     | $202.32     |
+| **Total** | **199,862,390** | **$282.53** |
+
+### Post-Fix Baseline
+
+- Dec 30 writes: ~38,000/day (normal ISR cache operations)
+- Monthly projection: ~1.16M writes = $1.64/month
 
 ## Timeline
 
-| Time | Event |
-|------|-------|
-| Dec 28, ~00:00 | Deployment with Favorites feature (#201) |
-| Dec 28, ongoing | ~200M DynamoDB writes occur |
-| Dec 29, morning | Cost spike detected via AWS billing |
-| Dec 29, afternoon | Root cause identified and fix implemented |
-| Dec 30, morning | Prevention measures deployed |
+| Time               | Event                                    |
+| ------------------ | ---------------------------------------- |
+| Dec 28, ~17:00 UTC | Spike begins after deployment            |
+| Dec 28, 21:00 UTC  | First peak (~17M writes/hour)            |
+| Dec 29, 03:00 UTC  | Highest peak (~23M writes/hour)          |
+| Dec 29, 09:00 UTC  | Fix deployed, writes drop to normal      |
+| Dec 30, morning    | Prevention measures and monitoring added |
 
 ## Root Cause
 
@@ -34,7 +71,7 @@ The Favorites feature added `searchParams` to listing page components (`app/[pla
 // BEFORE (problematic code)
 export default async function Page({
   params,
-  searchParams,  // ← This made the page DYNAMIC
+  searchParams, // ← This made the page DYNAMIC
 }: Props) {
   // Used searchParams to set robots: "noindex" for filtered URLs
 }
@@ -52,11 +89,13 @@ export default async function Page({
 ### Immediate Fix
 
 1. **Removed `searchParams`** from all listing page components:
+
    - `app/[place]/page.tsx`
    - `app/[place]/[byDate]/page.tsx`
    - `app/[place]/[byDate]/[category]/page.tsx`
 
 2. **Moved robots logic to middleware** (`proxy.ts`) using `X-Robots-Tag` HTTP header:
+
    ```typescript
    const NON_CANONICAL_PARAMS = ["search", "distance", "lat", "lon"];
    if (hasNonCanonicalParams) {
@@ -69,14 +108,17 @@ export default async function Page({
 ### Prevention Measures
 
 1. **CloudWatch Alarm:** `DynamoDB-HighWriteCost-Alert`
+
    - Threshold: >100,000 writes/hour
    - Action: Email notification
 
 2. **AWS Budget:** `DynamoDB-Monthly-50USD`
+
    - Monthly limit: $50
    - Alerts at 50%, 80%, 100%
 
 3. **ESLint Rule:** Errors on `searchParams` usage in `app/[place]/**/*` files
+
    ```javascript
    // eslint.config.mjs
    {

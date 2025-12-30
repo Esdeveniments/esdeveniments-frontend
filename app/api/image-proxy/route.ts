@@ -127,7 +127,9 @@ function sniffImageContentType(buffer: Buffer): string {
   }
 
   // AVIF (ISO-BMFF): look for "ftypavif" early
-  const head = buffer.subarray(0, Math.min(buffer.length, 64)).toString("binary");
+  const head = buffer
+    .subarray(0, Math.min(buffer.length, 64))
+    .toString("binary");
   if (head.includes("ftypavif")) {
     return "image/avif";
   }
@@ -192,7 +194,9 @@ function buildFetchCandidates(
 
     // If input already https, only add http fallback when the original input was http.
     if (parsed.protocol === "https:") {
-      return originalWasHttp ? [https.toString(), http.toString()] : [https.toString()];
+      return originalWasHttp
+        ? [https.toString(), http.toString()]
+        : [https.toString()];
     }
 
     // If input is http, still try https first, then http.
@@ -357,4 +361,3 @@ export async function GET(request: Request) {
 
   return buildPlaceholder();
 }
-
