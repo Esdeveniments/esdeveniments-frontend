@@ -31,6 +31,14 @@ declare module "react" {
   }
 }
 
+// Type-safe next-intl translations
+// This catches missing placeholder parameters at compile time (yarn typecheck)
+type Messages = typeof import("../messages/ca.json");
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface IntlMessages extends Messages {}
+}
+
 export {};
 
 declare module "*.css";

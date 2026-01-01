@@ -330,6 +330,7 @@ export async function generatePagesData({
         t("categoryNoDate.title", {
           titleSuffix: categorySEO.titleSuffix,
           label: labelWithArticle,
+          year: effectiveYear,
         }),
         t("categoryNoDate.subTitle", {
           titleSuffix: categorySEO.titleSuffix,
@@ -338,6 +339,7 @@ export async function generatePagesData({
         t("categoryNoDate.metaTitle", {
           categoryTitle,
           label: labelWithArticle,
+          year: effectiveYear,
         }),
         t("categoryNoDate.metaDescription", {
           context: categorySEO.context,
@@ -378,7 +380,10 @@ export async function generatePagesData({
         });
     const metaTitle = isBarcelona
       ? t("townNoDate.barcelona.metaTitle", { year: effectiveYear })
-      : t("townNoDate.default.metaTitle", { label: labelWithArticle, month });
+      : t("townNoDate.default.metaTitle", {
+          label: labelWithArticle,
+          year: effectiveYear,
+        });
     const metaDescription = isBarcelona
       ? t("townNoDate.barcelona.metaDescription", { month })
       : t("townNoDate.default.metaDescription", {

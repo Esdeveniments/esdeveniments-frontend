@@ -43,7 +43,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["vitest/globals", "./types/react-datepicker.d.ts"]
+    "types": [
+      "vitest/globals",
+      "./types/react-datepicker.d.ts",
+      "./types/global.d.ts"
+    ]
   },
   "include": [
     "**/*.ts",
