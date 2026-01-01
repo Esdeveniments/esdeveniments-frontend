@@ -25,6 +25,7 @@
     "scan": "npx react-scan@latest localhost:3000",
     "i18n:sync": "node scripts/sync-locales.mjs",
     "i18n:check": "i18n-check -s ca --locales messages --only invalidKeys,missingKeys -i \"Utils.Calendar.moreInfoHtml\" -i \"Utils.StringHelpers.capitalizePrepositions.*\" -i \"Utils.StringHelpers.feminineExceptions.*\" -i \"Utils.StringHelpers.masculineExceptions.*\"",
+    "i18n:validate": "node scripts/validate-i18n-placeholders.mjs",
     "lighthouse:ci": "lhci autorun --config=.lighthouserc.json",
     "start": "next start",
     "start:development": "env-cmd -f .env.development next start",
