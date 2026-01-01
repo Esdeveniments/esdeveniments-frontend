@@ -37,9 +37,14 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
     let listenerId: number | undefined;
+    let consentResolved = false; // Track if we've already resolved consent
 
     const setConsent = (allowed: boolean) => {
       if (!isMounted) return;
+      // Prevent multiple consent state changes for the same value
+      if (consentResolved && window.__adsConsentGranted === allowed) return;
+      consentResolved = true;
+      
       // We can still dispatch the global event for backward compatibility or other scripts
       window.__adsConsentGranted = allowed;
       window.dispatchEvent(

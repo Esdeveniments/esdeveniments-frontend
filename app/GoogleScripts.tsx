@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, Suspense, useMemo, useState } from "react";
+import { useEffect, Suspense, useMemo, useState } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
@@ -29,9 +29,45 @@ const ensureGtag = (): WindowWithGtag | null => {
   return win;
 };
 
+// Debounce tracking: store path + timestamp to allow re-visits but prevent duplicates
+// Key = path, Value = timestamp of last track
+const pageViewTimestamps = new Map<string, number>();
+// Minimum ms between tracking same path (prevents duplicates from re-renders/strict mode)
+const DEBOUNCE_MS = 1000;
+// Track last consent state to avoid duplicate consent updates
+let lastConsentState: "granted" | "denied" | null = null;
+
+/**
+ * Check if we should track this page view.
+ * Returns true if:
+ * - Path hasn't been tracked before, OR
+ * - Path was tracked more than DEBOUNCE_MS ago (legitimate re-visit)
+ */
+function shouldTrackPageView(pagePath: string): boolean {
+  const now = Date.now();
+  const lastTracked = pageViewTimestamps.get(pagePath);
+
+  if (lastTracked === undefined || now - lastTracked > DEBOUNCE_MS) {
+    pageViewTimestamps.set(pagePath, now);
+
+    // Cleanup: remove entries older than 5 minutes to prevent memory growth
+    if (pageViewTimestamps.size > 100) {
+      const fiveMinutesAgo = now - 5 * 60 * 1000;
+      for (const [path, timestamp] of pageViewTimestamps) {
+        if (timestamp < fiveMinutesAgo) {
+          pageViewTimestamps.delete(path);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
 // Separate component for pageview tracking that uses useSearchParams (requires Suspense)
 function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
-  const lastTrackedPathRef = useRef<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   // Normalize search params: sort by key and use consistent encoding to prevent
@@ -46,26 +82,23 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 
   useEffect(() => {
     if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
+    if (!adsAllowed) return; // Don't track when consent is not given
+
     const win = ensureGtag();
     if (!win) return;
-
-    if (!adsAllowed) {
-      // Don't reset the ref when consent is revoked - prevents duplicate pageviews
-      // if consent is re-granted on the same page
-      return;
-    }
 
     const query = searchParamsString ? `?${searchParamsString}` : "";
     const pagePath = `${pathname || "/"}` + query;
 
-    // Only send page_view if we haven't tracked this path yet
-    if (lastTrackedPathRef.current === pagePath) return;
+    // Time-based debounce: prevents duplicates from React re-renders/Strict Mode
+    // but allows legitimate re-visits (user navigates away and back)
+    if (!shouldTrackPageView(pagePath)) {
+      return;
+    }
 
     win.gtag("event", "page_view", {
       page_path: pagePath,
     });
-
-    lastTrackedPathRef.current = pagePath;
   }, [adsAllowed, pathname, searchParamsString]);
 
   return null;
@@ -87,6 +120,11 @@ export default function GoogleScripts() {
     if (!win) return;
 
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
+    
+    // Skip if consent state hasn't actually changed (prevents duplicate events)
+    if (lastConsentState === consentState) return;
+    lastConsentState = consentState;
+
     win.gtag("consent", "update", {
       ad_user_data: consentState,
       ad_personalization: consentState,
