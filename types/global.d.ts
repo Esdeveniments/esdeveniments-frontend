@@ -35,7 +35,6 @@ declare module "react" {
 // This catches missing placeholder parameters at compile time (yarn typecheck)
 type Messages = typeof import("../messages/ca.json");
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface IntlMessages extends Messages {}
 }
 
