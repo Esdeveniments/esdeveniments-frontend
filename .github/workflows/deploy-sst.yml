@@ -61,11 +61,6 @@ jobs:
           rm -rf .sst .open-next
           echo "✅ Cleaned build artifacts"
 
-      - name: Ensure robots.txt is route-generated
-        run: |
-          # Guardrail: a static public/robots.txt would shadow app/robots.ts in some deployments.
-          rm -f public/robots.txt
-
       - name: Cache Next.js build cache
         uses: actions/cache@v4 # Pin: 0c45773b623bea8c8e75f6c82b208c3cf94ea4f9
         with:
@@ -200,10 +195,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Generate service worker (prebuild)
+      - name: Generate service worker and robots.txt (prebuild)
         env:
           BUILD_VERSION: ${{ github.sha }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
         run: yarn prebuild
 
       - name: "Build Next.js application (E2E mode: disable GA)"
