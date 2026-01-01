@@ -207,7 +207,7 @@ export async function generatePagesData({
     return createPageData(
       t("root.title", { year: effectiveYear }),
       t("root.subTitle", { month }),
-      t("root.metaTitle", { month }),
+      t("root.metaTitle", { year: effectiveYear }),
       t("root.metaDescription", { month }),
       siteUrl,
       t("root.notFound")
