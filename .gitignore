@@ -17,6 +17,9 @@ blob-report/
 # generated service worker
 /public/sw.js
 
+# generated robots.txt (built from scripts/generate-robots.mjs)
+/public/robots.txt
+
 # next.js
 /.next/
 /out/

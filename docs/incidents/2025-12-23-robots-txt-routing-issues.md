@@ -2,7 +2,7 @@
 
 **Date:** December 23, 2025  
 **Severity:** Medium (SEO/Functionality)  
-**Status:** Resolved (Workaround)  
+**Status:** Resolved (Automated)  
 
 ## Summary
 
@@ -23,7 +23,8 @@ After migrating to SST/OpenNext, `robots.txt` started returning `403 Access Deni
 | Dec ~20 | Noticed old `robots.txt` being served (caching issue) |
 | Dec ~21 | Deleted `public/robots.txt`, converted to route handler |
 | Dec ~22 | Started getting 403 errors on `robots.txt` |
-| Dec 23 | Root cause identified, workaround implemented |
+| Dec 23 | Root cause identified, manual S3 upload workaround |
+| Jan 1, 2026 | Automated via `scripts/generate-robots.mjs` in prebuild |
 
 ## Root Cause
 
@@ -54,9 +55,34 @@ Request flow:
 
 ## Resolution
 
-### Workaround: Upload Static File to S3
+### Automated Solution (Jan 1, 2026)
 
-Since OpenNext checks S3 first, we uploaded `robots.txt` directly to satisfy that check:
+Since OpenNext checks S3 first, we generate `public/robots.txt` at build time so it's deployed to S3 automatically:
+
+**Build script:** `scripts/generate-robots.mjs`
+
+```bash
+# Runs automatically via prebuild script
+yarn prebuild
+# Or manually:
+node scripts/generate-robots.mjs
+```
+
+The script:
+1. Reads `NEXT_PUBLIC_SITE_URL` environment variable (or defaults to `https://www.esdeveniments.cat`)
+2. Generates `public/robots.txt` with all AI bot blocks and sitemap declarations
+3. File is deployed to S3 by OpenNext, satisfying the S3-first check
+
+**package.json:**
+```json
+"prebuild": "node scripts/generate-sw.mjs && node scripts/generate-robots.mjs"
+```
+
+**`.gitignore`:** `public/robots.txt` is ignored since it's generated.
+
+### Previous Workaround (Dec 23, 2025)
+
+Manual S3 upload was required before automation:
 
 ```bash
 # Generate robots.txt content (matches app/robots.txt/route.ts)
@@ -110,9 +136,9 @@ invalidation: {
 
 ## Prevention Measures
 
-1. **Documentation:** This incident report and `README_INFRA.md` reference
-2. **Keep in sync:** If `app/robots.txt/route.ts` is updated, manually update S3 file
-3. **Future improvement:** Consider build script to generate `robots.txt` from route handler
+1. **Automated generation:** `scripts/generate-robots.mjs` runs in prebuild, ensuring robots.txt is always up-to-date
+2. **Single source:** Update the script to change robots.txt content (route handler is no longer used)
+3. **Documentation:** This incident report and `README_INFRA.md` reference
 
 ## Lessons Learned
 
@@ -128,14 +154,15 @@ invalidation: {
 
 ## Known Limitations
 
-⚠️ **This is a workaround, not a fix:**
-- Route handler (`app/robots.txt/route.ts`) is **not used** because S3 takes precedence
-- Changes to route handler require manual S3 update
-- This appears to be an OpenNext limitation/bug
+⚠️ **OpenNext limitation, not a bug in our code:**
+- Route handler (`app/robots.txt/route.ts`) is **not used in production** because S3 takes precedence
+- Changes to robots.txt should be made in `scripts/generate-robots.mjs`
+- Keep `app/robots.txt/route.ts` in sync for local development (runs without S3)
 
 ## Related Files
 
-- **Route Handler:** `app/robots.txt/route.ts` (not currently used)
+- **Build Script:** `scripts/generate-robots.mjs` (source of truth for production)
+- **Route Handler:** `app/robots.txt/route.ts` (local dev only, not used in production)
 - **S3 Location:** `s3://esdeveniments-frontend-production-siteassetsbucket-czkbdzfa/_assets/robots.txt`
 - **SST Config:** `sst.config.ts`
 - **Infrastructure Docs:** `README_INFRA.md`

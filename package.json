@@ -20,7 +20,7 @@
     "dev": "next dev",
     "dev:inspect": "next dev --inspect",
     "lint": "eslint .",
-    "prebuild": "node scripts/generate-sw.mjs",
+    "prebuild": "node scripts/generate-sw.mjs && node scripts/generate-robots.mjs",
     "prepare": "husky",
     "scan": "npx react-scan@latest localhost:3000",
     "i18n:sync": "node scripts/sync-locales.mjs",
