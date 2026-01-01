@@ -45,7 +45,8 @@
       "eslint --fix"
     ],
     "messages/*.json": [
-      "yarn i18n:check"
+      "yarn i18n:check",
+      "yarn i18n:validate"
     ]
   },
   "dependencies": {

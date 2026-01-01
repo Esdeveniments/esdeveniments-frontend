@@ -58,6 +58,9 @@ jobs:
       - name: Check i18n translations
         run: yarn i18n:check
 
+      - name: Validate i18n placeholders
+        run: yarn i18n:validate
+
       - name: Run unit tests (Vitest)
         env:
           CI: true
