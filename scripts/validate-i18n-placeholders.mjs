@@ -97,7 +97,7 @@ function getSourceFiles(dir) {
         files.push(fullPath);
       }
     }
-  } catch (e) {
+  } catch {
     // Directory doesn't exist, skip
   }
 
