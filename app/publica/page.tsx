@@ -650,7 +650,21 @@ const Publica = () => {
             <h1 className="uppercase font-semibold">
               {t("heading")}
             </h1>
-            <p className="text-sm text-center">{t("requiredNote")}</p>
+            <p className="body-normal text-foreground/80 text-center max-w-2xl mx-auto">
+              {t("subheading")}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 mt-2 text-sm text-foreground/70">
+              <span className="flex items-center gap-1">
+                <span aria-hidden="true">✓</span> {t("benefits.free")}
+              </span>
+              <span className="flex items-center gap-1">
+                <span aria-hidden="true">✓</span> {t("benefits.fast")}
+              </span>
+              <span className="flex items-center gap-1">
+                <span aria-hidden="true">✓</span> {t("benefits.reach")}
+              </span>
+            </div>
+            <p className="text-sm text-center mt-4">{t("requiredNote")}</p>
           </div>
           {error && (
             <div className="w-full px-4 py-3 bg-destructive/10 border border-destructive rounded-lg">

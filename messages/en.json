@@ -81,8 +81,8 @@
       "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites."
     },
     "About": {
-      "metaTitle": "About us - Esdeveniments.cat",
-      "metaDescription": "Who are we? - Esdeveniments.cat is a citizen initiative to see at a glance all the cultural events happening in Catalonia.",
+      "metaTitle": "About us - Cultural agenda of Catalonia | Esdeveniments.cat",
+      "metaDescription": "Meet the team behind Esdeveniments.cat, the collaborative agenda of concerts, exhibitions, theatre and cultural activities in Catalonia. Free citizen initiative.",
       "schemaName": "About us - Esdeveniments.cat",
       "schemaDescription": "Meet the Esdeveniments.cat team and the mission behind the collaborative cultural agenda of Catalonia.",
       "heading": "Who are we?",
@@ -97,8 +97,8 @@
       "linkedin": "LinkedIn"
     },
     "News": {
-      "metaTitle": "News | Esdeveniments.cat",
-      "metaDescription": "The latest news, recommendations, and cultural plans in Catalonia.",
+      "metaTitle": "News and recommendations | What to do in Catalonia - Esdeveniments.cat",
+      "metaDescription": "The latest news, recommendations and cultural plans in Catalonia. Discover concerts, exhibitions, theatre and activities.",
       "heading": "News",
       "intro": "The latest news and event recommendations.",
       "breadcrumbHome": "Home",
@@ -125,10 +125,10 @@
       "description": "Secure panel to edit Esdeveniments.cat events."
     },
     "PublishPage": {
-      "metaTitle": "Publish - Esdeveniments.cat",
-      "metaDescription": "Publish a cultural event - Esdeveniments.cat",
-      "schemaName": "Publish a cultural event",
-      "schemaDescription": "Official form to add new cultural events to the collaborative agenda of Esdeveniments.cat.",
+      "metaTitle": "Publish your event for free in Catalonia | Cultural agenda - Esdeveniments.cat",
+      "metaDescription": "Add your concert, exhibition, theatre or activity to the Catalonia agenda. Free and fast publication. Reach thousands of people interested in culture and leisure.",
+      "schemaName": "Publish a cultural event in Catalonia",
+      "schemaDescription": "Official form to add concerts, exhibitions, theatre and cultural activities to the collaborative Catalonia agenda.",
       "schemaAction": "Publish cultural event"
     },
     "PlacesNearby": {
@@ -138,8 +138,8 @@
       "locationUnavailable": "Location unavailable"
     },
     "NewsPlace": {
-      "metaTitle": "News in {place} | Esdeveniments.cat",
-      "metaDescription": "Archive and recommendations of events in {place}",
+      "metaTitle": "News and plans in {place} | Agenda and recommendations - Esdeveniments.cat",
+      "metaDescription": "Discover the latest news, recommendations and cultural plans in {place}. Concerts, exhibitions, theatre and more.",
       "breadcrumbHome": "Home",
       "breadcrumbNews": "News",
       "heading": "News in {place}",
@@ -161,7 +161,15 @@
       "description": "The latest news and cultural recommendations for Catalonia"
     },
     "Publish": {
-      "heading": "Publish an event",
+      "heading": "Publish your event in Catalonia",
+      "subheading": "Add your concert, exhibition, theatre, workshop or cultural activity to Catalonia's largest agenda. It's free!",
+      "benefits": {
+        "title": "Why publish on Esdeveniments.cat?",
+        "free": "100% free - no hidden costs",
+        "reach": "Reach thousands of people interested in culture",
+        "fast": "Quick publication in less than a minute",
+        "visibility": "Visibility on Google and social media"
+      },
       "requiredNote": "* required fields",
       "errorCreate": "Error creating the event. Please try again.",
       "errorBodyLimit": "The total request size (image + data) exceeds the allowed limit of 10 MB. Please reduce the image size or remove unnecessary data.",

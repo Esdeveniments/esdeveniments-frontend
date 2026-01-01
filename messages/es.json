@@ -81,8 +81,8 @@
       "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos."
     },
     "About": {
-      "metaTitle": "Quiénes somos - Esdeveniments.cat",
-      "metaDescription": "Quiénes somos? - Esdeveniments.cat es una iniciativa ciudadana para ver de un vistazo todos los actos culturales que se hacen en Cataluña.",
+      "metaTitle": "Quiénes somos - Agenda cultural de Cataluña | Esdeveniments.cat",
+      "metaDescription": "Conoce el equipo detrás de Esdeveniments.cat, la agenda colaborativa de conciertos, exposiciones, teatro y actividades culturales en Cataluña. Iniciativa ciudadana gratuita.",
       "schemaName": "Quiénes somos - Esdeveniments.cat",
       "schemaDescription": "Conoce el equipo de Esdeveniments.cat y la misión detrás de la agenda cultural colaborativa de Cataluña.",
       "heading": "Quiénes somos?",
@@ -97,8 +97,8 @@
       "linkedin": "LinkedIn"
     },
     "News": {
-      "metaTitle": "Noticias | Esdeveniments.cat",
-      "metaDescription": "Las últimas noticias, recomendaciones y planes culturales de Cataluña.",
+      "metaTitle": "Noticias y recomendaciones | Qué hacer en Cataluña - Esdeveniments.cat",
+      "metaDescription": "Las últimas noticias, recomendaciones y planes culturales de Cataluña. Descubre conciertos, exposiciones, teatro y actividades.",
       "heading": "Noticias",
       "intro": "Las últimas noticias y recomendaciones de eventos.",
       "breadcrumbHome": "Inicio",
@@ -125,10 +125,10 @@
       "description": "Panel seguro para editar eventos de Esdeveniments.cat."
     },
     "PublishPage": {
-      "metaTitle": "Publicar - Esdeveniments.cat",
-      "metaDescription": "Publica un acto cultural - Esdeveniments.cat",
-      "schemaName": "Publicar un acto cultural",
-      "schemaDescription": "Formulario oficial para añadir nuevos actos culturales a la agenda colaborativa de Esdeveniments.cat.",
+      "metaTitle": "Publica tu evento gratis en Cataluña | Agenda cultural - Esdeveniments.cat",
+      "metaDescription": "Añade tu concierto, exposición, teatro o actividad a la agenda de Cataluña. Publicación gratuita y rápida. Llega a miles de personas interesadas en cultura y ocio.",
+      "schemaName": "Publicar un acto cultural en Cataluña",
+      "schemaDescription": "Formulario oficial para añadir conciertos, exposiciones, teatro y actividades culturales a la agenda colaborativa de Cataluña.",
       "schemaAction": "Publicar evento cultural"
     },
     "PlacesNearby": {
@@ -138,8 +138,8 @@
       "locationUnavailable": "Localización no disponible"
     },
     "NewsPlace": {
-      "metaTitle": "Noticias de {place} | Esdeveniments.cat",
-      "metaDescription": "Archivo y recomendaciones de eventos en {place}",
+      "metaTitle": "Noticias y planes en {place} | Agenda y recomendaciones - Esdeveniments.cat",
+      "metaDescription": "Descubre las últimas noticias, recomendaciones y planes culturales en {place}. Conciertos, exposiciones, teatro y más.",
       "breadcrumbHome": "Inicio",
       "breadcrumbNews": "Noticias",
       "heading": "Noticias de {place}",
@@ -161,7 +161,15 @@
       "description": "Las últimas noticias y recomendaciones culturales de Cataluña"
     },
     "Publish": {
-      "heading": "Publica un evento",
+      "heading": "Publica tu evento en Cataluña",
+      "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
+      "benefits": {
+        "title": "¿Por qué publicar en Esdeveniments.cat?",
+        "free": "100% gratuito - sin costes ocultos",
+        "reach": "Llega a miles de personas interesadas en cultura",
+        "fast": "Publicación rápida en menos de un minuto",
+        "visibility": "Visibilidad en Google y redes sociales"
+      },
       "requiredNote": "* campos obligatorios",
       "errorCreate": "Error al crear el evento. Por favor, inténtalo de nuevo.",
       "errorBodyLimit": "El tamaño total de la solicitud (imagen + datos) supera el límite permitido de 10 MB. Por favor, reduce el tamaño de la imagen o elimina datos innecesarios.",

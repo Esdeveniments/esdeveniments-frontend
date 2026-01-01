@@ -81,8 +81,8 @@
       "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits."
     },
     "About": {
-      "metaTitle": "Qui som - Esdeveniments.cat",
-      "metaDescription": "Qui som? - Esdeveniments.cat és una iniciativa ciutadana per veure en un cop d'ull tots els actes culturals que es fan a Catalunya.",
+      "metaTitle": "Qui som - Agenda cultural de Catalunya | Esdeveniments.cat",
+      "metaDescription": "Coneix l'equip darrere d'Esdeveniments.cat, l'agenda col·laborativa de concerts, exposicions, teatre i activitats culturals a Catalunya. Iniciativa ciutadana gratuïta.",
       "schemaName": "Qui som - Esdeveniments.cat",
       "schemaDescription": "Coneix l'equip d'Esdeveniments.cat i la missió darrere l'agenda cultural col·laborativa de Catalunya.",
       "heading": "Qui som?",
@@ -97,8 +97,8 @@
       "linkedin": "LinkedIn"
     },
     "News": {
-      "metaTitle": "Notícies | Esdeveniments.cat",
-      "metaDescription": "Les últimes notícies, recomanacions i plans culturals de Catalunya.",
+      "metaTitle": "Notícies i recomanacions | Què fer a Catalunya - Esdeveniments.cat",
+      "metaDescription": "Les últimes notícies, recomanacions i plans culturals de Catalunya. Descobreix concerts, exposicions, teatre i activitats.",
       "heading": "Notícies",
       "intro": "Les últimes notícies i recomanacions d'esdeveniments.",
       "breadcrumbHome": "Inici",
@@ -125,10 +125,10 @@
       "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat."
     },
     "PublishPage": {
-      "metaTitle": "Publica - Esdeveniments.cat",
-      "metaDescription": "Publica un acte cultural - Esdeveniments.cat",
-      "schemaName": "Publica un acte cultural",
-      "schemaDescription": "Formulari oficial per afegir nous actes culturals a l'agenda col·laborativa d'Esdeveniments.cat.",
+      "metaTitle": "Publica el teu esdeveniment gratis a Catalunya | Agenda cultural - Esdeveniments.cat",
+      "metaDescription": "Afegeix el teu concert, exposició, teatre o activitat a l'agenda de Catalunya. Publicació gratuïta i ràpida. Arriba a milers de persones interessades en cultura i oci.",
+      "schemaName": "Publica un acte cultural a Catalunya",
+      "schemaDescription": "Formulari oficial per afegir concerts, exposicions, teatre i activitats culturals a l'agenda col·laborativa de Catalunya.",
       "schemaAction": "Publicar esdeveniment cultural"
     },
     "PlacesNearby": {
@@ -138,8 +138,8 @@
       "locationUnavailable": "Localització no disponible"
     },
     "NewsPlace": {
-      "metaTitle": "Notícies de {place} | Esdeveniments.cat",
-      "metaDescription": "Arxiu i recomanacions d'esdeveniments a {place}",
+      "metaTitle": "Notícies i plans a {place} | Agenda i recomanacions - Esdeveniments.cat",
+      "metaDescription": "Descobreix les últimes notícies, recomanacions i plans culturals a {place}. Concerts, exposicions, teatre i més.",
       "breadcrumbHome": "Inici",
       "breadcrumbNews": "Notícies",
       "heading": "Notícies de {place}",
@@ -161,7 +161,15 @@
       "description": "Les últimes notícies i recomanacions culturals de Catalunya"
     },
     "Publish": {
-      "heading": "Publica un esdeveniment",
+      "heading": "Publica el teu esdeveniment a Catalunya",
+      "subheading": "Afegeix el teu concert, exposició, teatre, taller o activitat cultural a l'agenda més gran de Catalunya. És gratuït!",
+      "benefits": {
+        "title": "Per què publicar a Esdeveniments.cat?",
+        "free": "100% gratuït - sense costos ocults",
+        "reach": "Arriba a milers de persones interessades en cultura",
+        "fast": "Publicació ràpida en menys d'un minut",
+        "visibility": "Visibilitat a Google i xarxes socials"
+      },
       "requiredNote": "* camps obligatoris",
       "errorCreate": "Error al crear l'esdeveniment. Si us plau, torna-ho a intentar.",
       "errorBodyLimit": "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries.",
