@@ -825,15 +825,15 @@
           "noEvents": "literary activities or book presentations"
         },
         "fires-i-mercats": {
-          "titleSuffix": "Fairs",
-          "description": "fairs, markets, trade events, crafts, local products",
-          "context": "Discover traditional fairs and markets with local products, crafts, and a festive atmosphere",
+          "titleSuffix": "Fairs and markets",
+          "description": "markets, fairs, artisan markets, local products, crafts",
+          "context": "Markets today? Discover fairs and artisan markets with local products near you",
           "noEvents": "fairs or markets in the area"
         },
         "festes-populars": {
-          "titleSuffix": "Popular festivals",
-          "description": "popular festivals, traditional celebrations, folk culture, correfocs, castells",
-          "context": "Join the best Catalan popular festivals with correfocs, castellers, and unique traditions",
+          "titleSuffix": "Local festivals",
+          "description": "local festivals, traditional celebrations, correfocs, castells, folk culture",
+          "context": "Festivals today? Discover correfocs, castellers, and the best Catalan traditional festivals",
           "noEvents": "popular festivals or traditional celebrations"
         },
         "tallers-i-formacio": {
@@ -879,33 +879,33 @@
           "noEvents": "activities aimed at seniors"
         },
         "familia-i-infants": {
-          "titleSuffix": "Family activities",
-          "description": "family activities, children, kids, family fun, plans with kids",
-          "context": "Fun for the whole family with activities for children, family shows, and plans with kids",
+          "titleSuffix": "Things to do with kids",
+          "description": "things to do with kids, family activities, children activities, family fun, plans with kids",
+          "context": "Things to do with kids? Discover family activities, children's shows, and fun plans near you",
           "noEvents": "family or children's activities"
         },
         "exposicions": {
-          "titleSuffix": "Exhibitions and art",
-          "description": "exhibitions, art galleries, museums, visual art, cultural routes",
-          "context": "Explore art and visual culture with exhibitions, museums, and cultural routes",
+          "titleSuffix": "Exhibitions and museums",
+          "description": "exhibitions, museums, art galleries, visual art, cultural routes",
+          "context": "Exhibitions today? Discover museums, art galleries, and the best visual culture",
           "noEvents": "exhibitions or art activities"
         },
         "cinema": {
-          "titleSuffix": "Cinema and audiovisual",
-          "description": "cinema, screenings, film festivals, audiovisual, cineforum",
-          "context": "Enjoy the best cinema with screenings, festivals, and cineforums",
+          "titleSuffix": "Cinema and movies",
+          "description": "movies, cinema, film screenings, film festivals, what's on",
+          "context": "Movies today? Discover film screenings, festivals, and what's on at cinemas near you",
           "noEvents": "film screenings or audiovisual activities"
         },
         "musica": {
-          "titleSuffix": "Concerts",
-          "description": "concerts, music, musical shows, music festivals, live music",
-          "context": "Discover the best live music with concerts, festivals, and performances near you",
+          "titleSuffix": "Concerts and live music",
+          "description": "concerts, live music, music festivals, gigs, performances",
+          "context": "Concerts today? Discover live music, festivals, and performances near you",
           "noEvents": "concerts, festivals, or musical shows"
         },
         "teatre": {
-          "titleSuffix": "Theatre",
-          "description": "theatre, opera, performing arts, theatre shows, monologues",
-          "context": "Experience the best theatre plays, monologues, and performing arts shows",
+          "titleSuffix": "Theatre shows",
+          "description": "theatre, plays, theatre shows, monologues, performing arts",
+          "context": "Theatre today? Discover plays, monologues, and the best performing arts shows",
           "noEvents": "theatre plays or performing arts shows"
         },
         "altres": {
@@ -916,9 +916,9 @@
         }
       },
       "root": {
-        "title": "Agenda today in Catalonia and plans {year}",
+        "title": "What to do in Catalonia. Agenda {year}",
         "subTitle": "Agenda today in Catalonia this {month}, with concerts, exhibitions, theatre, family activities, and plans for all ages.",
-        "metaTitle": "Events in Catalonia | Cultural agenda and things to do",
+        "metaTitle": "What to do in Catalonia - Cultural agenda and plans {year}",
         "metaDescription": "Explore today's agenda in Catalonia: concerts, exhibitions, theatre, family activities, and free plans to inspire you this {month}.",
         "notFound": "Sorry, there are no events available in Catalonia right now. Check other dates or nearby locations in our cultural agenda, where you'll surely find plans you'll like."
       },
@@ -953,29 +953,29 @@
         }
       },
       "categoryNoDate": {
-        "title": "{titleSuffix} {label}",
+        "title": "{titleSuffix} {label} {year}",
         "subTitle": "Discover {titleSuffix} {label} with a curated selection of cultural events and activities. Concerts, workshops, exhibitions, family plans, and free options.",
-        "metaTitle": "Events {label} | {categoryTitle} and more",
+        "metaTitle": "{categoryTitle} {label} {year} | What to do - Agenda and plans",
         "metaDescription": "{context} {label}. Check the updated cultural agenda and find concerts, workshops, exhibitions, family activities, and other plans for your free time.",
         "notFound": "Sorry, there are no {noEventsText} {label} at this time. Try other dates, categories, or nearby locations to discover new cultural proposals."
       },
       "regionNoDate": {
         "title": "What to do {label}. Agenda {year}",
         "subTitle": "Discover the best leisure and cultural plans {label} this {month}. Find concerts, theatre, exhibitions, routes, and family activities to make the most of the weekend.",
-        "metaTitle": "Featured events {label}. Agenda {year}",
+        "metaTitle": "What to do {label} - Agenda and plans {year}",
         "metaDescription": "Explore the best cultural agenda {label} this {month}. Find concerts, festivals, theatre, children's activities, and free plans to enjoy the region.",
         "canonical": "{siteUrl}/{place}",
         "notFound": "Sorry, there are no events {label} on this date. Check other days, adjust filters, or look at nearby locations to find new plans and activities."
       },
       "townNoDate": {
         "barcelona": {
-          "title": "Events in Barcelona and things to do. Agenda {year}",
-          "metaTitle": "Events in Barcelona and what to do today - Agenda {year}",
+          "title": "What to do in Barcelona. Agenda {year}",
+          "metaTitle": "What to do in Barcelona - Agenda and plans {year}",
           "metaDescription": "Events in Barcelona and things to do this {month}. Check the agenda with concerts, festivals, family activities, workshops, exhibitions, and other proposals to enjoy the city."
         },
         "default": {
-          "title": "Agenda today {label}. What to do {year}",
-          "metaTitle": "Events {label} | Cultural agenda and things to do",
+          "title": "What to do {label}. Agenda {year}",
+          "metaTitle": "What to do {label} - Agenda and plans {year}",
           "metaDescription": "Discover the agenda today {label} this {month}. Check concerts, festivals, family activities, workshops, exhibitions, and other plans to enjoy the town."
         },
         "subTitle": "Discover the best leisure and cultural plans {label} this {month}. Check the updated agenda with festivals, concerts, theatre, cinema, exhibitions, and family activities.",
@@ -986,21 +986,21 @@
         "avui": {
           "title": "What to do today {label}",
           "subTitle": "Discover what to do today {label}: concerts, theatre, exhibitions, family activities, and last-minute plans. Check the updated agenda and don't miss out.",
-          "metaTitle": "Events today {label} - Plans and agenda",
+          "metaTitle": "What to do today {label} - Plans and agenda",
           "metaDescription": "Discover what to do today {label}. Check the updated cultural agenda with concerts, festivals, activities with kids, free proposals, and other plans near you.",
           "notFound": "Sorry, there are no events today {label}. Check the proposals for tomorrow, this week, or other nearby locations to find plans that suit you."
         },
         "dema": {
           "title": "What to do tomorrow {label}",
           "subTitle": "Plan ahead and discover what to do tomorrow {label}: concerts, theatre, exhibitions, and family activities. Check the agenda and choose your plan.",
-          "metaTitle": "Events tomorrow {label} - Ideas and plans",
+          "metaTitle": "What to do tomorrow {label} - Ideas and plans",
           "metaDescription": "Discover what to do tomorrow {label}. Find concerts, activities for kids, exhibitions, routes, and other plans to organize your day in advance.",
           "notFound": "Sorry, there are no events tomorrow {label}. Check the agenda for today, this week, or other nearby destinations to discover new options."
         },
         "setmana": {
           "title": "Weekly agenda {label}",
           "subTitle": "Discover what to do this week {label} with concerts, workshops, exhibitions, and family activities. Plans and culture to fill the week.",
-          "metaTitle": "Events this week {label} - Complete agenda",
+          "metaTitle": "What to do this week {label} - Complete agenda",
           "metaDescription": "Explore the cultural agenda this week {label}. Find concerts, exhibitions, theatre, family activities, routes, and other plans to fill your week.",
           "notFound": "Sorry, there are no events this week {label}. Try other weeks, change category, or explore nearby towns to find more activities."
         },
@@ -1016,7 +1016,7 @@
         "avui": {
           "title": "What to do today in Catalonia",
           "subTitle": "Discover things to do today in Catalonia with an up-to-date cultural agenda. Concerts, theatre, exhibitions, family activities, and free plans across the region.",
-          "metaTitle": "Events today in Catalonia - Plans and agenda",
+          "metaTitle": "What to do today in Catalonia - Plans and agenda",
           "metaDescription": "Discover what to do today in Catalonia. Check the updated cultural agenda with concerts, festivals, activities with kids, free proposals, and last-minute plans across the territory.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events today in Catalonia. Check the proposals for tomorrow, this week, or filter by location and category to find other interesting plans."
@@ -1024,7 +1024,7 @@
         "dema": {
           "title": "What to do tomorrow in Catalonia",
           "subTitle": "Discover things to do tomorrow in Catalonia and plan your free time ahead. Concerts, theatre, exhibitions, family activities, and ideas for every taste.",
-          "metaTitle": "Events tomorrow in Catalonia - Ideas and plans",
+          "metaTitle": "What to do tomorrow in Catalonia - Ideas and plans",
           "metaDescription": "Discover what to do tomorrow in Catalonia. Find concerts, family activities, routes, festivals, and other plans to organize your free time in advance.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events tomorrow in Catalonia. Check the agenda for today, this week, or explore different categories and locations to discover new options."
@@ -1032,7 +1032,7 @@
         "setmana": {
           "title": "Weekly agenda in Catalonia",
           "subTitle": "Discover things to do this week in Catalonia with cultural plans for every day. Concerts, exhibitions, theatre, festivals, and family activities.",
-          "metaTitle": "Events this week in Catalonia - Complete agenda",
+          "metaTitle": "What to do this week in Catalonia - Complete agenda",
           "metaDescription": "Explore the cultural agenda this week in Catalonia. Find concerts, festivals, routes, workshops, activities for kids, and other plans to fill your week with culture and leisure.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events this week in Catalonia. Try changing the week, adjusting filters, or exploring different areas to find more activities."
@@ -1040,7 +1040,7 @@
         "capDeSetmana": {
           "title": "What to do this weekend in Catalonia",
           "subTitle": "Discover things to do this weekend in Catalonia and make the most of it. Concerts, local festivals, kids activities, routes, and getaways.",
-          "metaTitle": "Events this weekend in Catalonia - Plans and agenda",
+          "metaTitle": "What to do this weekend in Catalonia - Plans and agenda",
           "metaDescription": "Discover the best plans for this weekend in Catalonia. Check concerts, popular festivals, activities for kids, routes, and other cultural and leisure proposals across the country.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events this weekend in Catalonia. Check other weekends, explore different categories, or focus on a specific area to find new ideas."
