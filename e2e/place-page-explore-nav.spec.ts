@@ -27,7 +27,7 @@ test.describe("Place Page Explore Navigation", () => {
   });
 
   test("hides category links when category is selected", async ({ page }) => {
-    await page.goto("/barcelona/concerts");
+    await page.goto("/barcelona/musica");
 
     // Date badges should still be visible
     await expect(page.getByText("Cerca per data")).toBeVisible();
@@ -37,7 +37,7 @@ test.describe("Place Page Explore Navigation", () => {
   });
 
   test("hides entire section when fully filtered", async ({ page }) => {
-    await page.goto("/barcelona/avui/concerts");
+    await page.goto("/barcelona/avui/musica");
 
     // Both should be hidden
     await expect(page.getByText("Cerca per data")).not.toBeVisible();
