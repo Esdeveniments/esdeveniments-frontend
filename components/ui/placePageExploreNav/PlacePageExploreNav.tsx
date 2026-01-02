@@ -56,7 +56,7 @@ export default async function PlacePageExploreNav({
   return (
     <section
       className="container border-t border-border/40 py-section-y"
-      aria-label={t("dateAriaLabel")}
+      aria-label={t("sectionAriaLabel")}
     >
       {/* Date badges section */}
       {showDateBadges && (

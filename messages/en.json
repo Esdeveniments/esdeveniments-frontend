@@ -607,6 +607,7 @@
       "ariaPlace": "{ariaLabelText} in {contextName}"
     },
     "PlacePageExploreNav": {
+      "sectionAriaLabel": "Explore by date or category",
       "dateTitle": "Browse by date",
       "dateAriaLabel": "Filter by date",
       "categoryTitle": "Explore categories",
