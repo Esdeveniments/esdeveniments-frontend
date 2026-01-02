@@ -388,10 +388,8 @@ export async function GET(request: Request) {
             .toBuffer();
           outputContentType = "image/webp";
         } else if (sourceType === "image/png") {
-          // Keep PNG format for transparency
-          outputBuffer = await sharpInstance
-            .png({ quality, compressionLevel: 9 })
-            .toBuffer();
+          // Keep PNG format for transparency (use default compressionLevel for speed)
+          outputBuffer = await sharpInstance.png({ quality }).toBuffer();
           outputContentType = "image/png";
         } else if (sourceType === "image/gif") {
           // Keep GIF format if AVIF/WebP not preferred (legacy browsers)
@@ -434,11 +432,13 @@ export async function GET(request: Request) {
         }
 
         // Return original image without processing
+        // Use short cache to allow retry after transient Sharp failures
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
             "Content-Type": sourceType,
-            "Cache-Control": getCacheControl(hasCacheKey),
+            "Cache-Control": "public, max-age=300, s-maxage=300",
+            "X-Image-Proxy-Optimized": "fallback-sharp-error",
           },
         });
       }
