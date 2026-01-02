@@ -39,7 +39,7 @@ export default async function NewsCard({
 
     // Optimize external images through proxy
     const heroImage = rawImage
-      ? buildOptimizedImageUrl(rawImage, event.hash || event.updatedAt, {
+      ? buildOptimizedImageUrl(rawImage, event.updatedAt, {
           width: heroImageWidth,
           quality: heroImageQuality,
         })
@@ -107,7 +107,7 @@ export default async function NewsCard({
 
   // Optimize external images through proxy
   const cardImage = rawImage
-    ? buildOptimizedImageUrl(rawImage, event.hash || event.updatedAt, {
+    ? buildOptimizedImageUrl(rawImage, event.updatedAt, {
         width: cardImageWidth,
         quality: cardImageQuality,
       })

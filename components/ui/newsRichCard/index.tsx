@@ -37,7 +37,7 @@ export default async function NewsRichCard({
   });
   const imageWidth = getOptimalImageWidth(variant === "horizontal" ? "list" : "card");
   const image = rawImage
-    ? buildOptimizedImageUrl(rawImage, event.hash || event.updatedAt, {
+    ? buildOptimizedImageUrl(rawImage, event.hash, {
         width: imageWidth,
         quality: imageQuality,
       })
