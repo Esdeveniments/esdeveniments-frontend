@@ -120,7 +120,7 @@ export default function GoogleScripts() {
     if (!win) return;
 
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
-    
+
     // Skip if consent state hasn't actually changed (prevents duplicate events)
     if (lastConsentState === consentState) return;
     lastConsentState = consentState;

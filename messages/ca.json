@@ -613,6 +613,13 @@
       "ariaCategory": "{ariaLabelText} per la categoria {contextName}",
       "ariaPlace": "{ariaLabelText} a {contextName}"
     },
+    "PlacePageExploreNav": {
+      "dateTitle": "Cerca per data",
+      "dateAriaLabel": "Filtra per data",
+      "categoryTitle": "Explora categories",
+      "categoryAriaLabel": "Navega per categories",
+      "categoryLinkAria": "Veure {category} a {place}"
+    },
     "SearchBar": {
       "placeholder": "Què estàs buscant?",
       "clear": "Neteja la cerca",

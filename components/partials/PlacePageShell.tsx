@@ -37,6 +37,12 @@ const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"
   loading: () => null, // FAQ section is below the fold
 });
 
+// Lazy load explore navigation - below the fold, server component
+const PlacePageExploreNav = dynamic(
+  () => import("@components/ui/placePageExploreNav"),
+  { loading: () => null }
+);
+
 
 function buildPlaceBreadcrumbs({
   homeLabel,
@@ -340,6 +346,17 @@ async function PlacePageContent({
           categories={categories}
         />
       </FilterLoadingGate>
+
+      {/* Explore Navigation - SEO internal links (below events, above FAQ) */}
+      <Suspense fallback={null}>
+        <PlacePageExploreNav
+          place={place}
+          date={date}
+          category={category}
+          categories={categories}
+          placeLabel={placeTypeLabel.label || place}
+        />
+      </Suspense>
 
       {/* FAQ Section - Lazy loaded (below the fold, server component) */}
       <Suspense fallback={null}>

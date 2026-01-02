@@ -642,3 +642,19 @@ export interface EventStatusDetailsProps {
   timeDisplay?: string;
   className?: string;
 }
+
+// Place page explore navigation components
+export interface PlacePageExploreNavProps {
+  place: string;
+  date?: string;
+  category?: string;
+  categories?: CategorySummaryResponseDTO[];
+  placeLabel: string;
+}
+
+export interface CategoryQuicklinksProps {
+  place: string;
+  date?: string;
+  categories?: CategorySummaryResponseDTO[];
+  placeLabel: string;
+}

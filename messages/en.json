@@ -606,6 +606,13 @@
       "ariaCategory": "{ariaLabelText} for the category {contextName}",
       "ariaPlace": "{ariaLabelText} in {contextName}"
     },
+    "PlacePageExploreNav": {
+      "dateTitle": "Browse by date",
+      "dateAriaLabel": "Filter by date",
+      "categoryTitle": "Explore categories",
+      "categoryAriaLabel": "Browse by category",
+      "categoryLinkAria": "View {category} in {place}"
+    },
     "SearchBar": {
       "placeholder": "What are you looking for?",
       "clear": "Clear search",
