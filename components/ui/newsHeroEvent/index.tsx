@@ -24,9 +24,9 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
   const imageWidth = getOptimalImageWidth("hero");
   const image = rawImage
     ? buildOptimizedImageUrl(rawImage, event.hash, {
-        width: imageWidth,
-        quality: imageQuality,
-      })
+      width: imageWidth,
+      quality: imageQuality,
+    })
     : "";
 
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);

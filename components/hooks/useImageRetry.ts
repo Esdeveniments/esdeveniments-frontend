@@ -7,6 +7,7 @@ const LOADING_DELAY_MS = 150;
 /**
  * Hook for handling image loading retry logic
  * Provides state management and handlers for image loading with retry functionality
+ * @param maxRetries - Maximum retry attempts (default: 2)
  */
 export function useImageRetry(maxRetries: number = 2) {
   const [retryCount, setRetryCount] = useState(0);
@@ -18,7 +19,7 @@ export function useImageRetry(maxRetries: number = 2) {
   const loadingDelayRef = useRef<NodeJS.Timeout | null>(null);
   const imageLoadedRef = useRef(false);
 
-  // Start a delayed skeleton timer when component mounts
+  // Start a delayed skeleton timer when component mounts or retryCount changes
   useEffect(() => {
     imageLoadedRef.current = false;
     loadingDelayRef.current = setTimeout(() => {

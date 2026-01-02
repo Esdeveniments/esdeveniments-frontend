@@ -125,10 +125,14 @@ test.describe("Image Proxy", () => {
   });
 
   test.describe("Image proxy API direct", () => {
-    test("returns optimized image with correct headers", async ({ request }) => {
+    test("returns optimized image with correct headers", async ({
+      request,
+    }) => {
       // Test with a reliable public image (picsum.photos is more reliable than placeholder.com)
       const testImageUrl = "https://picsum.photos/400/300.jpg";
-      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(testImageUrl)}&w=200&q=50`;
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
+        testImageUrl
+      )}&w=200&q=50`;
 
       const response = await request.get(proxyUrl);
 
@@ -152,23 +156,28 @@ test.describe("Image Proxy", () => {
     });
 
     test("returns placeholder for invalid URLs", async ({ request }) => {
-      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent("https://invalid-domain-that-does-not-exist-xyz.com/img.jpg")}`;
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
+        "https://invalid-domain-that-does-not-exist-xyz.com/img.jpg"
+      )}`;
 
       const response = await request.get(proxyUrl);
 
-      // Should return fallback (502 with no-store)
+      // Should return fallback (502 with empty body to trigger onerror in browser)
       expect(response.status()).toBe(502);
-
-      const contentType = response.headers()["content-type"];
-      expect(contentType).toBe("image/png");
 
       const cacheControl = response.headers()["cache-control"];
       expect(cacheControl).toContain("no-store");
+
+      // Verify fallback header is set
+      const fallbackHeader = response.headers()["x-image-proxy-fallback"];
+      expect(fallbackHeader).toBe("1");
     });
 
     test("respects Accept header for format selection", async ({ request }) => {
       const testImageUrl = "https://picsum.photos/400/300.jpg";
-      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(testImageUrl)}&w=200&q=50`;
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
+        testImageUrl
+      )}&w=200&q=50`;
 
       // Request with AVIF preference
       const avifResponse = await request.get(proxyUrl, {
@@ -200,7 +209,9 @@ test.describe("Image Proxy", () => {
 
     test("includes optimization headers", async ({ request }) => {
       const testImageUrl = "https://picsum.photos/800/600.jpg";
-      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(testImageUrl)}&w=400&q=60`;
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
+        testImageUrl
+      )}&w=400&q=60`;
 
       const response = await request.get(proxyUrl, {
         headers: { Accept: "image/avif,image/webp,image/*" },
