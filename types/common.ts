@@ -471,11 +471,12 @@ export interface ImageComponentProps {
 
 /**
  * Image optimization options for the proxy
+ * Use getOptimalImageQuality() and getOptimalImageWidth() for context-appropriate values
  */
 export interface ImageProxyOptions {
-  /** Target width in pixels (default: 700) */
+  /** Target width in pixels */
   width?: number;
-  /** Quality 1-100 (default: 75) */
+  /** Quality 1-100 (use getOptimalImageQuality() for recommended values) */
   quality?: number;
 }
 

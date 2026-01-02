@@ -20,11 +20,18 @@ const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 
 // Image optimization defaults
-const DEFAULT_QUALITY = 75;
+const DEFAULT_QUALITY = 50; // Matches QUALITY_PRESETS.EXTERNAL_STANDARD
 const MAX_WIDTH = 1920;
 const CARD_WIDTH = 700; // Default card image width
 const MIN_SIZE_FOR_OPTIMIZATION = 10_000; // 10KB - skip optimization for tiny images
 const ANIMATED_GIF_FRAME_THRESHOLD = 1; // If GIF has more than 1 frame, skip optimization
+
+/** Cache control header based on whether URL has cache-busting key */
+function getCacheControl(hasCacheKey: boolean): string {
+  return hasCacheKey
+    ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
+    : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+}
 
 // Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
 // Node's TLS verification rejects these, so we selectively bypass verification only for
@@ -284,6 +291,7 @@ export async function GET(request: Request) {
       const chunks: Uint8Array[] = [];
       const reader = body.getReader();
       let totalBytes = 0;
+      let imageTooLarge = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -291,9 +299,14 @@ export async function GET(request: Request) {
         totalBytes += value.byteLength;
         if (totalBytes > MAX_BYTES) {
           await reader.cancel();
-          continue;
+          imageTooLarge = true;
+          break; // Exit the while loop
         }
         chunks.push(value);
+      }
+
+      if (imageTooLarge) {
+        continue; // Continue to the next fetch candidate
       }
 
       const imageBuffer = Buffer.concat(chunks);
@@ -315,15 +328,11 @@ export async function GET(request: Request) {
       // Skip optimization for very small images (already optimized or icons)
       // and serve them directly - avoids overhead and potential size increase
       if (imageBuffer.length < MIN_SIZE_FOR_OPTIMIZATION) {
-        const cacheControl = hasCacheKey
-          ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
-          : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
-
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
             "Content-Type": sourceType,
-            "Cache-Control": cacheControl,
+            "Cache-Control": getCacheControl(hasCacheKey),
             "X-Image-Proxy-Optimized": "skipped-small",
           },
         });
@@ -343,15 +352,11 @@ export async function GET(request: Request) {
           (metadata.pages ?? 1) > ANIMATED_GIF_FRAME_THRESHOLD;
 
         if (isAnimatedGif) {
-          const cacheControl = hasCacheKey
-            ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
-            : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
-
           return new NextResponse(new Uint8Array(imageBuffer), {
             status: 200,
             headers: {
               "Content-Type": sourceType,
-              "Cache-Control": cacheControl,
+              "Cache-Control": getCacheControl(hasCacheKey),
               "X-Image-Proxy-Optimized": "skipped-animated",
             },
           });
@@ -370,13 +375,13 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (preferAvif && sourceType !== "image/gif") {
+        if (preferAvif) {
           // AVIF: best compression, wide modern browser support
           outputBuffer = await sharpInstance
             .avif({ quality, effort: 4 })
             .toBuffer();
           outputContentType = "image/avif";
-        } else if (preferWebp && sourceType !== "image/gif") {
+        } else if (preferWebp) {
           // WebP: excellent compression, universal modern browser support
           outputBuffer = await sharpInstance
             .webp({ quality, effort: 4 })
@@ -389,7 +394,7 @@ export async function GET(request: Request) {
             .toBuffer();
           outputContentType = "image/png";
         } else if (sourceType === "image/gif") {
-          // Keep GIF format for animations (Sharp has limited GIF support)
+          // Keep GIF format if AVIF/WebP not preferred (legacy browsers)
           outputBuffer = await sharpInstance.gif().toBuffer();
           outputContentType = "image/gif";
         } else {
@@ -399,10 +404,6 @@ export async function GET(request: Request) {
             .toBuffer();
           outputContentType = "image/jpeg";
         }
-
-        const cacheControl = hasCacheKey
-          ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
-          : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
 
         // Convert Buffer to Uint8Array for NextResponse compatibility
         const responseBody = new Uint8Array(outputBuffer);
@@ -416,7 +417,7 @@ export async function GET(request: Request) {
           status: 200,
           headers: {
             "Content-Type": outputContentType,
-            "Cache-Control": cacheControl,
+            "Cache-Control": getCacheControl(hasCacheKey),
             Vary: "Accept", // Cache different formats separately
             "X-Image-Proxy-Optimized": "true",
             "X-Image-Proxy-Savings": `${savingsPercent}%`,
@@ -433,18 +434,11 @@ export async function GET(request: Request) {
         }
 
         // Return original image without processing
-        const cacheControl = hasCacheKey
-          ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
-          : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
-
-        // Convert Buffer to Uint8Array for NextResponse compatibility
-        const fallbackBody = new Uint8Array(imageBuffer);
-
-        return new NextResponse(fallbackBody, {
+        return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
             "Content-Type": sourceType,
-            "Cache-Control": cacheControl,
+            "Cache-Control": getCacheControl(hasCacheKey),
           },
         });
       }
