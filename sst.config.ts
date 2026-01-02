@@ -254,7 +254,7 @@ export default $config({
         },
       },
       imageOptimization: {
-        memory: "1536 MB", // Reduced from 3008 MB - image resizing doesn't need 3GB RAM
+        memory: "2048 MB", // Increased from 1536 MB - large external images need more RAM for Sharp processing
         staticEtag: true, // Enable stronger caching for optimized images
       },
       // Explicitly invalidate robots.txt on deploy to ensure route handler changes take effect
@@ -322,7 +322,7 @@ export default $config({
       alarmDescription:
         "DynamoDB writes exceeded 100K/hour. Check for searchParams usage in listing pages!",
       alarmActions: [alarmsTopic.arn],
-      okActions: [alarmsTopic.arn], // Also notify when it returns to normal
+      // Note: okActions removed to reduce email noise. You'll only get alerts when threshold is breached.
     });
 
     // DynamoDB Read Spike Alarm (secondary indicator of cache issues)
