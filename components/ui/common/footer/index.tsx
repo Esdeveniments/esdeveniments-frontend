@@ -133,10 +133,10 @@ export default async function Footer(): Promise<JSX.Element> {
 
         {/* Copyright Section */}
         <div className="w-full flex flex-col items-center gap-element-gap-sm px-section-x">
-          <span className="body-small text-foreground/70 text-center">
+          <span className="body-small text-muted-foreground text-center">
             {t("copyright", { year: new Date().getFullYear() })}
           </span>
-          <span className="text-xs text-foreground/50 text-center">
+          <span className="text-xs text-muted-foreground text-center">
             {t("tagline")}
           </span>
         </div>

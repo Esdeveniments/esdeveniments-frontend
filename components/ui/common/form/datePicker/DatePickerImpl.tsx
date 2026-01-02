@@ -24,7 +24,7 @@ const ButtonInput = React.forwardRef<
       {...restProps}
     >
       <span>{value}</span>
-      <CalendarIcon className="w-5 h-5 text-foreground/50 flex-shrink-0" />
+      <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
     </button>
   );
 });
@@ -173,7 +173,7 @@ export default function DatePickerImpl({
 
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         <div className="w-full sm:flex-1 sm:min-w-0">
-          <span className="text-sm text-foreground/70 mb-1.5 block font-medium">
+          <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
             {t("start")}
           </span>
           <DatePicker
@@ -196,7 +196,7 @@ export default function DatePickerImpl({
         </div>
 
         <div className="w-full sm:flex-1 sm:min-w-0">
-          <span className="text-sm text-foreground/70 mb-1.5 block font-medium">
+          <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
             {t("end")}
           </span>
           <DatePicker

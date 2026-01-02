@@ -425,7 +425,7 @@ module.exports = {
   }
 
   .helper-text {
-    @apply body-small text-foreground/70 mt-1;
+    @apply body-small text-muted-foreground mt-1;
   }
 
   .helper-text-error {

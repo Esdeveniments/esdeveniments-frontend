@@ -15,7 +15,7 @@ function AdBoard(): JSX.Element {
       <p className="text-sm text-yellow-700 mt-2">
         {t("contactPrefix")}{" "}
         <a
-          className="text-primary"
+          className="text-primary underline hover:no-underline"
           href={`mailto:${contactEmail}`}
           rel="noopener noreferrer"
         >

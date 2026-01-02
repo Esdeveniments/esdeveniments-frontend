@@ -3,11 +3,13 @@
  * - HTTPS-first; retries HTTP if original was HTTP-only.
  * - Validates protocol and URL length to reduce SSRF risk.
  * - Enforces timeouts and size guard; falls back to 1x1 PNG.
+ * - Supports image optimization: resizing, format conversion (WebP/AVIF), quality control
  */
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Agent } from "undici";
 import { normalizeExternalImageUrl } from "@utils/image-cache";
+import sharp from "sharp";
 
 const TRANSPARENT_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
@@ -16,6 +18,13 @@ const MAX_BYTES = 5_000_000; // 5MB guard
 const TIMEOUT_MS = 5000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
+
+// Image optimization defaults
+const DEFAULT_QUALITY = 75;
+const MAX_WIDTH = 1920;
+const CARD_WIDTH = 700; // Default card image width
+const MIN_SIZE_FOR_OPTIMIZATION = 10_000; // 10KB - skip optimization for tiny images
+const ANIMATED_GIF_FRAME_THRESHOLD = 1; // If GIF has more than 1 frame, skip optimization
 
 // Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
 // Node's TLS verification rejects these, so we selectively bypass verification only for
@@ -215,6 +224,20 @@ export async function GET(request: Request) {
   const rawTarget = url.searchParams.get("url") || "";
   if (!rawTarget) return buildPlaceholder(400);
 
+  // Parse optimization params
+  const requestedWidth =
+    parseInt(url.searchParams.get("w") || "", 10) || CARD_WIDTH;
+  const requestedQuality =
+    parseInt(url.searchParams.get("q") || "", 10) || DEFAULT_QUALITY;
+  // Determine output format based on Accept header (prefer AVIF > WebP > original)
+  const acceptHeader = request.headers.get("accept") || "";
+  const preferAvif = acceptHeader.includes("image/avif");
+  const preferWebp = acceptHeader.includes("image/webp");
+
+  // Clamp values to reasonable limits
+  const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
+  const quality = Math.min(Math.max(requestedQuality, 1), 100);
+
   // Normalize and validate
   const normalized = normalizeExternalImageUrl(rawTarget);
   if (!normalized || !isAbsoluteHttpUrl(normalized)) {
@@ -254,102 +277,177 @@ export async function GET(request: Request) {
         response.headers.get("content-type")
       );
 
-      // Stream the image instead of buffering it: read a small prefix to sniff type,
-      // then pipe the rest while enforcing an upper byte limit.
+      // Buffer the entire image for Sharp processing
       const body = response.body;
       if (!body) continue;
 
+      const chunks: Uint8Array[] = [];
       const reader = body.getReader();
-      const firstRead = await reader.read();
-      if (firstRead.done) continue;
+      let totalBytes = 0;
 
-      const firstChunk = Buffer.from(firstRead.value);
-      if (firstChunk.length === 0) continue;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.byteLength;
+        if (totalBytes > MAX_BYTES) {
+          await reader.cancel();
+          continue;
+        }
+        chunks.push(value);
+      }
 
-      // Sniff only the first bytes (avoid large allocations)
-      const sniffBuffer =
-        firstChunk.length > SNIFF_BYTES
-          ? firstChunk.subarray(0, SNIFF_BYTES)
-          : firstChunk;
+      const imageBuffer = Buffer.concat(chunks);
+      if (imageBuffer.length === 0) continue;
+
+      // Sniff content type
+      const sniffBuffer = imageBuffer.subarray(
+        0,
+        Math.min(imageBuffer.length, SNIFF_BYTES)
+      );
       const sniffedType = sniffImageContentType(sniffBuffer);
 
-      const finalType =
+      const sourceType =
         (isAllowedRasterContentType(headerType) && headerType) ||
         (isAllowedRasterContentType(sniffedType) && sniffedType) ||
         "";
-      if (!finalType) {
-        // Not a valid raster image (or missing type). Cancel upstream stream.
-        try {
-          await reader.cancel();
-        } catch {
-          // ignore
-        }
-        continue;
+      if (!sourceType) continue;
+
+      // Skip optimization for very small images (already optimized or icons)
+      // and serve them directly - avoids overhead and potential size increase
+      if (imageBuffer.length < MIN_SIZE_FOR_OPTIMIZATION) {
+        const cacheControl = hasCacheKey
+          ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
+          : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+
+        return new NextResponse(new Uint8Array(imageBuffer), {
+          status: 200,
+          headers: {
+            "Content-Type": sourceType,
+            "Cache-Control": cacheControl,
+            "X-Image-Proxy-Optimized": "skipped-small",
+          },
+        });
       }
 
-      let bytesSent = firstChunk.length;
-      if (bytesSent > MAX_BYTES) {
-        try {
-          await reader.cancel();
-        } catch {
-          // ignore
+      // Process image with Sharp
+      try {
+        let sharpInstance = sharp(imageBuffer);
+
+        // Get image metadata to determine if resize is needed
+        const metadata = await sharpInstance.metadata();
+        const originalWidth = metadata.width || 0;
+
+        // Skip optimization for animated GIFs to preserve animation
+        const isAnimatedGif =
+          sourceType === "image/gif" &&
+          (metadata.pages ?? 1) > ANIMATED_GIF_FRAME_THRESHOLD;
+
+        if (isAnimatedGif) {
+          const cacheControl = hasCacheKey
+            ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
+            : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+
+          return new NextResponse(new Uint8Array(imageBuffer), {
+            status: 200,
+            headers: {
+              "Content-Type": sourceType,
+              "Cache-Control": cacheControl,
+              "X-Image-Proxy-Optimized": "skipped-animated",
+            },
+          });
         }
-        continue;
+
+        // Only resize if image is larger than requested width
+        if (originalWidth > width) {
+          sharpInstance = sharpInstance.resize({
+            width,
+            withoutEnlargement: true,
+            fit: "inside",
+          });
+        }
+
+        // Determine output format and process
+        let outputBuffer: Buffer;
+        let outputContentType: string;
+
+        if (preferAvif && sourceType !== "image/gif") {
+          // AVIF: best compression, wide modern browser support
+          outputBuffer = await sharpInstance
+            .avif({ quality, effort: 4 })
+            .toBuffer();
+          outputContentType = "image/avif";
+        } else if (preferWebp && sourceType !== "image/gif") {
+          // WebP: excellent compression, universal modern browser support
+          outputBuffer = await sharpInstance
+            .webp({ quality, effort: 4 })
+            .toBuffer();
+          outputContentType = "image/webp";
+        } else if (sourceType === "image/png") {
+          // Keep PNG format for transparency
+          outputBuffer = await sharpInstance
+            .png({ quality, compressionLevel: 9 })
+            .toBuffer();
+          outputContentType = "image/png";
+        } else if (sourceType === "image/gif") {
+          // Keep GIF format for animations (Sharp has limited GIF support)
+          outputBuffer = await sharpInstance.gif().toBuffer();
+          outputContentType = "image/gif";
+        } else {
+          // Default to JPEG for everything else
+          outputBuffer = await sharpInstance
+            .jpeg({ quality, mozjpeg: true })
+            .toBuffer();
+          outputContentType = "image/jpeg";
+        }
+
+        const cacheControl = hasCacheKey
+          ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
+          : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+
+        // Convert Buffer to Uint8Array for NextResponse compatibility
+        const responseBody = new Uint8Array(outputBuffer);
+
+        // Calculate savings for debugging
+        const savingsPercent = Math.round(
+          (1 - outputBuffer.length / imageBuffer.length) * 100
+        );
+
+        return new NextResponse(responseBody, {
+          status: 200,
+          headers: {
+            "Content-Type": outputContentType,
+            "Cache-Control": cacheControl,
+            Vary: "Accept", // Cache different formats separately
+            "X-Image-Proxy-Optimized": "true",
+            "X-Image-Proxy-Savings": `${savingsPercent}%`,
+            "X-Image-Proxy-Original-Size": String(imageBuffer.length),
+            "X-Image-Proxy-Final-Size": String(outputBuffer.length),
+          },
+        });
+      } catch (sharpError) {
+        // If Sharp processing fails, fall back to original image
+        if (process.env.NODE_ENV === "production") {
+          Sentry.captureException(sharpError, {
+            tags: { route: "/api/image-proxy", stage: "sharp-processing" },
+          });
+        }
+
+        // Return original image without processing
+        const cacheControl = hasCacheKey
+          ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
+          : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+
+        // Convert Buffer to Uint8Array for NextResponse compatibility
+        const fallbackBody = new Uint8Array(imageBuffer);
+
+        return new NextResponse(fallbackBody, {
+          status: 200,
+          headers: {
+            "Content-Type": sourceType,
+            "Cache-Control": cacheControl,
+          },
+        });
       }
-
-      const stream = new ReadableStream<Uint8Array>({
-        start(controller) {
-          controller.enqueue(firstChunk);
-        },
-        async pull(controller) {
-          try {
-            const next = await reader.read();
-            if (next.done) {
-              controller.close();
-              return;
-            }
-
-            const chunk = next.value;
-            bytesSent += chunk.byteLength;
-            if (bytesSent > MAX_BYTES) {
-              try {
-                await reader.cancel();
-              } catch {
-                // ignore
-              }
-              // Terminate the stream: Next/Image will treat it as a failed image,
-              // and our server-rendered fallback will remain visible.
-              controller.error(new Error("Image too large"));
-              return;
-            }
-
-            controller.enqueue(chunk);
-          } catch (err) {
-            controller.error(err);
-          }
-        },
-        async cancel() {
-          try {
-            await reader.cancel();
-          } catch {
-            // ignore
-          }
-        },
-      });
-
-      const cacheControl = hasCacheKey
-        ? // Align with infra strategy: long TTL + cache-busting via ?v=
-          `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
-        : // Conservative default for unversioned upstream URLs
-          "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
-
-      return new NextResponse(stream, {
-        status: 200,
-        headers: {
-          "Content-Type": finalType,
-          "Cache-Control": cacheControl,
-        },
-      });
     } catch (error) {
       if (process.env.NODE_ENV === "production") {
         Sentry.captureException(error, {

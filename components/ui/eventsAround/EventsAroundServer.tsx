@@ -259,7 +259,7 @@ async function EventsAroundServer({
                       {primaryLabel}
                     </span>
                     {secondaryLabel && (
-                      <span className="truncate text-foreground/70">
+                      <span className="truncate text-muted-foreground">
                         {secondaryLabel}
                       </span>
                     )}

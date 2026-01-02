@@ -173,7 +173,7 @@ export default function WhereToEatSection({
       </div>
 
       {/* Attribution */}
-      <div className="text-xs text-foreground/70 pt-2 border-t border-border/30">
+      <div className="text-xs text-muted-foreground pt-2 border-t border-border/30">
         {attribution}
       </div>
     </section>

@@ -514,7 +514,7 @@ export async function ServerEventsCategorizedContent({
 
       {/* CTA */}
       <section className="py-section-y container text-center">
-        <p className="body-large text-foreground/70 font-medium mb-element-gap">
+        <p className="body-large text-muted-foreground font-medium mb-element-gap">
           {tCta("cta")}
         </p>
         <PressableAnchor

@@ -5,6 +5,7 @@ import { ImageComponentProps } from "types/common";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
+  getOptimalImageWidth,
 } from "@utils/image-quality";
 import { buildOptimizedImageUrl } from "@utils/image-cache";
 
@@ -23,8 +24,20 @@ function ImageServer({
   context = "card", // Add context prop for size optimization
   cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
+  const imageQuality = getOptimalImageQuality({
+    isPriority: priority,
+    isExternal: true,
+    customQuality: quality,
+  });
+
+  const imageWidth = getOptimalImageWidth(context);
+
   // buildOptimizedImageUrl handles null/empty input and returns "" for invalid URLs (e.g., overly long)
-  const finalImageSrc = buildOptimizedImageUrl(image ?? "", cacheKey);
+  // Pass width and quality to the proxy for server-side optimization
+  const finalImageSrc = buildOptimizedImageUrl(image ?? "", cacheKey, {
+    width: imageWidth,
+    quality: imageQuality,
+  });
 
   // Show fallback if no image or URL normalization failed
   if (!finalImageSrc) {
@@ -47,14 +60,10 @@ function ImageServer({
     );
   }
 
-  const imageQuality = getOptimalImageQuality({
-    isPriority: priority,
-    isExternal: true,
-    customQuality: quality,
-  });
-
   const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 
+  // Since we're already doing server-side optimization in the proxy,
+  // we can skip the Next.js optimizer to avoid double-processing
   return (
     <div
       className={className}
@@ -83,6 +92,8 @@ function ImageServer({
         sizes={getOptimalImageSizes(context)}
         // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
         // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
+        // Note: Our image proxy now handles optimization (resize, format conversion, quality)
+        // so we don't lose quality by bypassing Next.js optimizer.
         unoptimized={shouldBypassOptimizer || env === "dev"}
       />
     </div>

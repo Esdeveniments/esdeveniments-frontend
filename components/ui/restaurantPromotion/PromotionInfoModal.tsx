@@ -39,7 +39,7 @@ const PromotionInfoModal: FC<PromotionInfoModalProps> = ({ open, setOpen }) => {
           <li>{t("itemPlace")}</li>
           <li>{t("itemLink")}</li>
         </ul>
-        <p className="text-xs text-foreground/70">
+        <p className="text-xs text-muted-foreground">
           {t("footer")}
         </p>
       </div>

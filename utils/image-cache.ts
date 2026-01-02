@@ -1,3 +1,5 @@
+import type { ImageProxyOptions } from "types/common";
+
 const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
 const CACHE_PARAM = "v";
 const MAX_URL_LENGTH = 2048;
@@ -134,12 +136,21 @@ export function withImageCacheKey(
   return `${normalizedUrl}${separator}${CACHE_PARAM}=${encodedKey}`;
 }
 
+// Re-export ImageProxyOptions for consumers importing from this module
+export type { ImageProxyOptions };
+
 /**
  * Wrap an external absolute URL with the internal image proxy to avoid mixed content
  * and flaky TLS. Keeps relative URLs untouched.
  * Uses string operations only to avoid hydration mismatches from URL object serialization.
+ * 
+ * @param imageUrl - The external image URL to proxy
+ * @param options - Optional width and quality parameters for optimization
  */
-export function toProxiedImageUrl(imageUrl: string): string {
+export function toProxiedImageUrl(
+  imageUrl: string,
+  options?: ImageProxyOptions
+): string {
   if (!imageUrl) return imageUrl;
   if (imageUrl.startsWith("/api/image-proxy")) return imageUrl;
   if (!ABSOLUTE_URL_REGEX.test(imageUrl)) return imageUrl;
@@ -150,16 +161,31 @@ export function toProxiedImageUrl(imageUrl: string): string {
     return imageUrl;
   }
 
-  return `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+  let proxyUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+  
+  // Add optimization parameters if provided
+  if (options?.width) {
+    proxyUrl += `&w=${options.width}`;
+  }
+  if (options?.quality) {
+    proxyUrl += `&q=${options.quality}`;
+  }
+
+  return proxyUrl;
 }
 
 /**
  * Convenience helper: normalize, cache-key, and proxy an image URL.
  * Uses string-based operations to ensure SSR/client hydration consistency.
+ * 
+ * @param imageUrl - The image URL to optimize
+ * @param cacheKey - Optional cache key for cache busting (e.g., event hash)
+ * @param options - Optional width and quality parameters for optimization
  */
 export function buildOptimizedImageUrl(
   imageUrl: string,
-  cacheKey?: string | number | null
+  cacheKey?: string | number | null,
+  options?: ImageProxyOptions
 ): string {
   const trimmed = sanitizeUrlCandidate(imageUrl);
   if (!trimmed) return "";
@@ -205,7 +231,7 @@ export function buildOptimizedImageUrl(
       ? withImageCacheKey(absolute, cacheKey)
       : absolute;
 
-    return toProxiedImageUrl(urlWithKey);
+    return toProxiedImageUrl(urlWithKey, options);
   }
 
   // Non-proxied path (relative URLs): normalize and append cache key

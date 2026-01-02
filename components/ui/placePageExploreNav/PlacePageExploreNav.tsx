@@ -61,7 +61,7 @@ export default async function PlacePageExploreNav({
       {/* Date badges section */}
       {showDateBadges && (
         <div className="mb-element-gap">
-          <h2 className="body-normal font-medium text-foreground/70 mb-element-gap-sm">
+          <h2 className="body-normal font-medium text-muted-foreground mb-element-gap-sm">
             {t("dateTitle")}
           </h2>
           <DateFilterBadges

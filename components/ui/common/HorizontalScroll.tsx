@@ -205,7 +205,7 @@ export default function HorizontalScroll({
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 h-full w-10 sm:w-12 bg-gradient-to-r from-background to-transparent z-0"
         >
-          <div className="h-full w-full flex items-center justify-start pl-1 text-foreground/50">
+          <div className="h-full w-full flex items-center justify-start pl-1 text-muted-foreground">
             {!(isFinePointer && showDesktopArrows) && (
               <ChevronLeftIcon className="h-4 w-4" />
             )}
@@ -225,7 +225,7 @@ export default function HorizontalScroll({
           <div
             className={[
               "h-full w-full flex items-center justify-end pr-1",
-              showHint ? "text-foreground/70" : "text-foreground/40",
+              showHint ? "text-muted-foreground" : "text-foreground/40",
             ].join(" ")}
           >
             {!(isFinePointer && showDesktopArrows) && (

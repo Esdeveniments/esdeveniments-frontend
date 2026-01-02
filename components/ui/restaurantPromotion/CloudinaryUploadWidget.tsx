@@ -145,7 +145,7 @@ export function CloudinaryUploadWidget({
               <p className="mt-2 text-sm text-foreground/80">
                 Click to upload restaurant image
               </p>
-              <p className="text-xs text-foreground/70">PNG, JPG up to 5MB</p>
+              <p className="text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
             </div>
           )}
         </label>

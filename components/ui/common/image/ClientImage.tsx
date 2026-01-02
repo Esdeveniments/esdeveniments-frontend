@@ -11,6 +11,7 @@ import {
   getOptimalImageQuality,
   getOptimalImageSizes,
   getServerImageQuality,
+  getOptimalImageWidth,
 } from "@utils/image-quality";
 import { buildOptimizedImageUrl } from "@utils/image-cache";
 
@@ -33,12 +34,6 @@ function ClientImage({
   region,
   date,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
-  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
-  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
-
-  // If URL normalization failed (e.g., overly long URL), treat as error to show fallback
-  const invalidSrc = !finalImageSrc;
-
   const divRef = useRef<HTMLDivElement>(null);
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
 
@@ -54,6 +49,18 @@ function ClientImage({
     networkQuality: getServerImageQuality(networkQualityString),
     customQuality,
   });
+
+  const imageWidth = getOptimalImageWidth(context);
+
+  // Pass width and quality to the proxy for server-side optimization
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey, {
+    width: imageWidth,
+    quality: imageQuality,
+  });
+  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
+
+  // If URL normalization failed (e.g., overly long URL), treat as error to show fallback
+  const invalidSrc = !finalImageSrc;
 
   const imageKey = getImageKey(`${finalImageSrc}-${forceUnoptimized ? "direct" : "opt"}`);
 
@@ -129,6 +136,8 @@ function ClientImage({
         sizes={getOptimalImageSizes(context)}
         // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
         // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
+        // Note: Our image proxy now handles optimization (resize, format conversion, quality)
+        // so we don't lose quality by bypassing Next.js optimizer.
         unoptimized={forceUnoptimized || shouldBypassOptimizer || env === "dev"}
       />
     </div>

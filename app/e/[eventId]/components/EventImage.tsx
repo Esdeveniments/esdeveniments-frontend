@@ -4,7 +4,7 @@ import { EventImageProps } from "types/event";
 import { FC, useCallback, useMemo, useState } from "react";
 import NextImage from "next/image";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
-import { getOptimalImageQuality } from "@utils/image-quality";
+import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
 import {
   buildOptimizedImageUrl,
   normalizeExternalImageUrl,
@@ -52,6 +52,8 @@ function EventHeroImage({
         if (outcome === "fail") setHasFailed(true);
       }}
       // Bypass optimization for internal proxy URLs on SST/OpenNext.
+      // Note: Our image proxy now handles optimization (resize, format conversion, quality)
+      // so we don't lose quality by bypassing Next.js optimizer.
       unoptimized={effectiveUnoptimized}
     />
   );
@@ -62,13 +64,25 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   const safeTitle = escapeXml(title || "");
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
 
+  const imageQuality = getOptimalImageQuality({
+    isPriority: true,
+    isExternal: true,
+  });
+
+  const imageWidth = getOptimalImageWidth("hero");
+
   const normalizedImage = useMemo(
     () => (image ? normalizeExternalImageUrl(image) : ""),
     [image]
   );
+  
+  // Pass width and quality to the proxy for server-side optimization
   const optimizedImage = useMemo(
-    () => (image ? buildOptimizedImageUrl(image) : ""),
-    [image]
+    () => (image ? buildOptimizedImageUrl(image, undefined, {
+      width: imageWidth,
+      quality: imageQuality,
+    }) : ""),
+    [image, imageWidth, imageQuality]
   );
 
   // If URL normalization failed (e.g., overly long URL), treat as no image
@@ -95,11 +109,6 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
       </div>
     );
   }
-
-  const imageQuality = getOptimalImageQuality({
-    isPriority: true,
-    isExternal: true,
-  });
 
   return (
     <div
