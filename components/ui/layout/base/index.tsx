@@ -17,7 +17,9 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
       >
         {children}
       </main>
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </>
   );
 }

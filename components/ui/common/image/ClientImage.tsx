@@ -40,7 +40,7 @@ function ClientImage({
   const imageClassName = `${className}`;
   const networkQualityString = useNetworkSpeed();
 
-  const { hasError, isLoading, handleError, handleLoad, reset, getImageKey } =
+  const { hasError, isLoading, showSkeleton, handleError, handleLoad, reset, getImageKey } =
     useImageRetry(2);
 
   const imageQuality = getOptimalImageQuality({
@@ -107,7 +107,7 @@ function ClientImage({
       className={imageClassName}
       style={containerStyle}
     >
-      {isLoading && (
+      {showSkeleton && (
         <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
           <div className="w-full h-full bg-muted animate-fast-pulse"></div>
         </div>

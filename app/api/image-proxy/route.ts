@@ -11,9 +11,6 @@ import { Agent } from "undici";
 import { normalizeExternalImageUrl } from "@utils/image-cache";
 import sharp from "sharp";
 
-const TRANSPARENT_PNG_BASE64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
-const FALLBACK_BUFFER = Buffer.from(TRANSPARENT_PNG_BASE64, "base64");
 const MAX_BYTES = 5_000_000; // 5MB guard
 const TIMEOUT_MS = 5000;
 const SNIFF_BYTES = 64;
@@ -57,11 +54,12 @@ function shouldBypassTlsVerification(candidateUrl: string): boolean {
 }
 
 function buildPlaceholder(status = 502) {
-  return new NextResponse(FALLBACK_BUFFER, {
+  // Return empty response (not valid image data) so browser triggers onerror
+  // This allows ClientImage to show ImgDefault fallback
+  return new NextResponse(null, {
     status,
     headers: {
-      "Content-Type": "image/png",
-      // Do not cache fallbacks: if we return the transparent pixel once, we don't want
+      // Do not cache fallbacks: if we return an error once, we don't want
       // CloudFront/Service Worker to keep serving it after the upstream recovers.
       "Cache-Control": "no-store, max-age=0",
       "X-Image-Proxy-Fallback": "1",
