@@ -32,7 +32,11 @@ import {
   withLocalePath,
 } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
+import {
+  MONTHS_URL as DEFAULT_MONTHS_URL,
+  MIN_VALID_YEAR,
+  MAX_VALID_YEAR,
+} from "@utils/constants";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -62,7 +66,7 @@ export async function generateMetadata({
   
   // Validate year is numeric and reasonable
   const yearNum = Number(year);
-  if (!Number.isFinite(yearNum) || yearNum < 2000 || yearNum > 2100) {
+  if (!Number.isFinite(yearNum) || yearNum < MIN_VALID_YEAR || yearNum > MAX_VALID_YEAR) {
     return {
       title: tNotFound("title"),
       description: tNotFound("description"),
@@ -125,7 +129,7 @@ export default async function Page({
   
   // Validate year is numeric and reasonable
   const yearNum = Number(year);
-  if (!Number.isFinite(yearNum) || yearNum < 2000 || yearNum > 2100) {
+  if (!Number.isFinite(yearNum) || yearNum < MIN_VALID_YEAR || yearNum > MAX_VALID_YEAR) {
     notFound();
   }
 

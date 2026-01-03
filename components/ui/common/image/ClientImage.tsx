@@ -7,6 +7,7 @@ import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImageRetry } from "@components/hooks/useImageRetry";
 import { ImageComponentProps } from "types/common";
+import type { ClientImageInnerProps } from "types/props";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
@@ -104,19 +105,7 @@ function ClientImageInner({
   location,
   region,
   date,
-}: {
-  finalImageSrc: string;
-  title: string;
-  className: string;
-  priority: boolean;
-  fetchPriority?: "high" | "low" | "auto";
-  alt: string;
-  imageQuality: number;
-  context: "card" | "hero" | "list" | "detail";
-  location?: string;
-  region?: string;
-  date?: string;
-}) {
+}: ClientImageInnerProps) {
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
 
   const { hasError, imageLoaded, showSkeleton, handleError, handleLoad, reset, getImageKey } =

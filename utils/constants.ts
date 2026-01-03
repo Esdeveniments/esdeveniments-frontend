@@ -9,6 +9,10 @@ import enMessages from "../messages/en.json";
 
 export const MAX_RESULTS = 15;
 export const MAX_FAVORITES = 10;
+
+// Year range for sitemap/archive pages validation
+export const MIN_VALID_YEAR = 2000;
+export const MAX_VALID_YEAR = 2100;
 // Keep safely under Lambda's 6MB cap and common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
 // Sitemap chunking: places per chunk to stay under Lambda 6MB payload limit

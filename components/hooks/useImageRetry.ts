@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import type { UseImageRetryReturn } from "types/props";
 
 // Delay before showing loading skeleton (ms)
 // Prevents skeleton flash for cached/fast images
@@ -9,7 +10,7 @@ const LOADING_DELAY_MS = 150;
  * Provides state management and handlers for image loading with retry functionality
  * @param maxRetries - Maximum retry attempts (default: 2)
  */
-export function useImageRetry(maxRetries: number = 2) {
+export function useImageRetry(maxRetries: number = 2): UseImageRetryReturn {
   const [retryCount, setRetryCount] = useState(0);
   const [hasError, setHasError] = useState(false);
   // Track if image has successfully loaded (for opacity control)
