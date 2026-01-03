@@ -51,7 +51,18 @@ export async function generateMetadata({
   });
   const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
   const { town, year, month } = await params;
-  if (!isValidPlace(town)) {
+  
+  // Validate required params
+  if (!town || !year || !month || !isValidPlace(town)) {
+    return {
+      title: tNotFound("title"),
+      description: tNotFound("description"),
+    };
+  }
+  
+  // Validate year is numeric and reasonable
+  const yearNum = Number(year);
+  if (!Number.isFinite(yearNum) || yearNum < 2000 || yearNum > 2100) {
     return {
       title: tNotFound("title"),
       description: tNotFound("description"),
@@ -107,7 +118,14 @@ export default async function Page({
   });
   const withLocale = (path: string) => withLocalePath(path, locale);
 
-  if (!isValidPlace(town)) {
+  // Validate required params
+  if (!town || !year || !month || !isValidPlace(town)) {
+    notFound();
+  }
+  
+  // Validate year is numeric and reasonable
+  const yearNum = Number(year);
+  if (!Number.isFinite(yearNum) || yearNum < 2000 || yearNum > 2100) {
     notFound();
   }
 

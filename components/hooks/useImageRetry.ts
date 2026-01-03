@@ -12,21 +12,28 @@ const LOADING_DELAY_MS = 150;
 export function useImageRetry(maxRetries: number = 2) {
   const [retryCount, setRetryCount] = useState(0);
   const [hasError, setHasError] = useState(false);
-  // Start false to avoid skeleton flash for cached/fast images
-  const [isLoading, setIsLoading] = useState(false);
+  // Track if image has successfully loaded (for opacity control)
+  // Uses retryCount in key to auto-reset when retry happens
+  const [imageLoaded, setImageLoaded] = useState(false);
+  // Track which retryCount the imageLoaded state corresponds to
+  const [loadedForRetry, setLoadedForRetry] = useState(-1);
+  // Skeleton shows after delay if image hasn't loaded yet
   const [showSkeleton, setShowSkeleton] = useState(false);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const loadingDelayRef = useRef<NodeJS.Timeout | null>(null);
   const imageLoadedRef = useRef(false);
 
+  // Derive actual loaded state - only true if loaded for current retry
+  const isImageLoaded = imageLoaded && loadedForRetry === retryCount;
+
   // Start a delayed skeleton timer when component mounts or retryCount changes
   useEffect(() => {
     imageLoadedRef.current = false;
+    // Note: imageLoaded state is derived via loadedForRetry comparison
     loadingDelayRef.current = setTimeout(() => {
       // Only show skeleton if image hasn't loaded yet
       if (!imageLoadedRef.current) {
         setShowSkeleton(true);
-        setIsLoading(true);
       }
     }, LOADING_DELAY_MS);
 
@@ -53,11 +60,9 @@ export function useImageRetry(maxRetries: number = 2) {
       const delay = 1000 * 2 ** retryCount;
       retryTimeoutRef.current = setTimeout(() => {
         setRetryCount((prev) => prev + 1);
-        setIsLoading(true);
       }, delay);
     } else {
       setHasError(true);
-      setIsLoading(false);
     }
   }, [retryCount, maxRetries]);
 
@@ -76,10 +81,11 @@ export function useImageRetry(maxRetries: number = 2) {
       clearTimeout(loadingDelayRef.current);
       loadingDelayRef.current = null;
     }
-    setIsLoading(false);
+    setImageLoaded(true);
+    setLoadedForRetry(retryCount);
     setShowSkeleton(false);
     setHasError(false);
-  }, []);
+  }, [retryCount]);
 
   /**
    * Reset retry state (useful for new image sources)
@@ -97,7 +103,8 @@ export function useImageRetry(maxRetries: number = 2) {
     imageLoadedRef.current = false;
     setRetryCount(0);
     setHasError(false);
-    setIsLoading(false);
+    setImageLoaded(false);
+    setLoadedForRetry(-1);
     setShowSkeleton(false);
   }, []);
 
@@ -126,7 +133,7 @@ export function useImageRetry(maxRetries: number = 2) {
   return {
     retryCount,
     hasError,
-    isLoading,
+    imageLoaded: isImageLoaded,
     showSkeleton,
     handleError,
     handleLoad,

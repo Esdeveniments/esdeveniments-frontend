@@ -119,7 +119,7 @@ function ClientImageInner({
 }) {
   const [forceUnoptimized, setForceUnoptimized] = useState(false);
 
-  const { hasError, showSkeleton, handleError, handleLoad, reset, getImageKey } =
+  const { hasError, imageLoaded, showSkeleton, handleError, handleLoad, reset, getImageKey } =
     useImageRetry(2);
 
   const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
@@ -182,7 +182,8 @@ function ClientImageInner({
         quality={imageQuality}
         style={{
           objectFit: "cover",
-          opacity: showSkeleton ? 0 : 1,
+          // Hide image until loaded to prevent broken image flash
+          opacity: imageLoaded ? 1 : 0,
           transition: "opacity 0.3s ease-in-out",
           width: "100%",
           height: "100%",
