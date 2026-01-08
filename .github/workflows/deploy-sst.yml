@@ -48,9 +48,8 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      # TEMPORARILY DISABLED FOR FAST DEPLOY
-      # - name: Security audit
-      #   run: yarn npm audit --all --recursive || true
+      - name: Security audit
+        run: yarn npm audit --all --recursive || true
 
       - name: Clean build artifacts
         run: |
@@ -200,9 +199,8 @@ jobs:
             echo "CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN" >> .env.production
           fi
 
-      # TEMPORARILY DISABLED FOR FAST DEPLOY - RE-ENABLE AFTER FIX
-      # - name: Install Playwright browsers
-      #   run: npx playwright install chromium --with-deps
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
 
       - name: Generate service worker and robots.txt (prebuild)
         env:
@@ -211,63 +209,50 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
         run: yarn prebuild
 
-      # TEMPORARILY: Single build for fast deploy (skipping E2E)
-      # - name: "Build Next.js application"
-      #   run: yarn build
-      #   env:
-      #     NODE_ENV: production
+      - name: Build Next.js application
+        run: yarn build
+        env:
+          NODE_ENV: production
 
-      # TEMPORARILY DISABLED FOR FAST DEPLOY - RE-ENABLE AFTER FIX
-      # - name: Start Next.js server (background)
-      #   run: |
-      #     yarn start &
-      #     echo $! > .next-server.pid
-      #     echo "Started Next.js server with PID $(cat .next-server.pid)"
-      #   env:
-      #     NODE_ENV: production
-      #     PORT: 3000
-      #     E2E_TEST_MODE: "1"
-      #     NEXT_PUBLIC_E2E_TEST_MODE: "1"
+      - name: Start Next.js server (background)
+        run: |
+          yarn start &
+          echo $! > .next-server.pid
+          echo "Started Next.js server with PID $(cat .next-server.pid)"
+        env:
+          NODE_ENV: production
+          PORT: 3000
+          E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
 
-      # - name: Wait for server to be ready
-      #   run: npx wait-on http://localhost:3000 --timeout 60000
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
 
-      # - name: Sanity check robots.txt
-      #   run: |
-      #     set -euo pipefail
-      #     robots="$(curl -fsS http://localhost:3000/robots.txt)"
-      #     echo "$robots" | grep -F -i "allow: /" > /dev/null
-      #     echo "$robots" | grep -F -i "disallow: /_next/" > /dev/null
-      #     echo "$robots" | grep -F -i "disallow: /api/" > /dev/null
-      #     echo "$robots" | grep -F -i "user-agent: gptbot" > /dev/null
-      #     echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
-      #     echo "✅ robots.txt looks correct"
+      - name: Sanity check robots.txt
+        run: |
+          set -euo pipefail
+          robots="$(curl -fsS http://localhost:3000/robots.txt)"
+          echo "$robots" | grep -F -i "allow: /" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /_next/" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /api/" > /dev/null
+          echo "$robots" | grep -F -i "user-agent: gptbot" > /dev/null
+          echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
+          echo "✅ robots.txt looks correct"
 
-      # - name: Run E2E tests
-      #   run: yarn test:e2e -c playwright.remote.config.ts --workers=2
-      #   env:
-      #     CI: true
-      #     PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+      - name: Run E2E tests
+        run: yarn test:e2e -c playwright.remote.config.ts --workers=2
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
 
-      # - name: Stop Next.js server
-      #   if: always()
-      #   run: |
-      #     if [ -f .next-server.pid ]; then
-      #       kill $(cat .next-server.pid) || true
-      #       rm .next-server.pid
-      #     fi
-      #     pkill -f "yarn start" || true
-
-      # - name: Clean build artifacts (before production deploy build)
-      #   run: |
-      #     rm -rf .next
-      #     rm -rf .sst .open-next
-      #     echo "✅ Cleaned build artifacts"
-
-      # - name: Rebuild Next.js application (production deploy)
-      #   run: yarn build
-      #   env:
-      #     NODE_ENV: production
+      - name: Stop Next.js server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill $(cat .next-server.pid) || true
+            rm .next-server.pid
+          fi
+          pkill -f "yarn start" || true
 
       - name: Upload Playwright report (on failure)
         if: failure()
@@ -283,81 +268,47 @@ jobs:
           echo "📦 SST version: $(cat node_modules/sst/package.json | jq -r '.version')"
           echo "📦 OpenNext version: $(cat node_modules/open-next/package.json | jq -r '.version')"
 
-      # TEMPORARILY DISABLED FOR FAST DEPLOY
-      # - name: Preview SST infrastructure changes
-      #   env:
-      #     AWS_REGION: ${{ env.AWS_REGION }}
-      #     NODE_ENV: production
-      #   run: |
-      #     echo "🔍 Previewing infrastructure changes..."
-      #     npx sst diff --stage production || true
+      - name: Preview SST infrastructure changes
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          NODE_ENV: production
+        run: npx sst diff --stage production || true
 
       - name: Deploy to AWS with SST
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           NODE_ENV: production
+        run: npx sst deploy --stage production
+
+      - name: Post-deploy verification
+        if: success()
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
-          npx sst deploy --stage production
+          echo "⏳ Waiting for CloudFront propagation..."
+          sleep 30
 
-      # TEMPORARILY DISABLED FOR FAST DEPLOY - RE-ENABLE AFTER FIX
-      # - name: Verify CloudFront distribution
-      #   if: success()
-      #   run: |
-      #     echo "🌐 Checking CloudFront edge response..."
-      #     HEADERS=$(curl -sI https://www.esdeveniments.cat 2>/dev/null | head -20)
-      #     echo "$HEADERS"
-      #     if echo "$HEADERS" | grep -qi "x-cache"; then
-      #       echo "✅ CloudFront is serving requests"
-      #     else
-      #       echo "::warning::CloudFront cache header not found"
-      #     fi
+          # Smoke tests
+          echo "🧪 Running smoke tests..."
+          curl -sf --max-time 10 https://www.esdeveniments.cat/ > /dev/null && echo "✅ Homepage OK" || echo "::warning::Homepage slow/unavailable"
+          curl -sf --max-time 10 https://www.esdeveniments.cat/barcelona > /dev/null && echo "✅ Barcelona page OK" || echo "::warning::Barcelona page slow/unavailable"
+          curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:" && echo "✅ robots.txt OK" || echo "::warning::robots.txt issue"
 
-      # - name: Smoke test critical pages
-      #   if: success()
-      #   run: |
-      #     echo "🧪 Running smoke tests on critical pages..."
-      #     if curl -sf --max-time 10 https://www.esdeveniments.cat/ > /dev/null; then
-      #       echo "✅ Homepage OK"
-      #     else
-      #       echo "::error::Homepage failed to load"
-      #       exit 1
-      #     fi
-      #     if curl -sf --max-time 10 https://www.esdeveniments.cat/barcelona > /dev/null; then
-      #       echo "✅ Barcelona page OK"
-      #     else
-      #       echo "::warning::Barcelona page may be slow or unavailable"
-      #     fi
-      #     if curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:"; then
-      #       echo "✅ robots.txt OK"
-      #     else
-      #       echo "::warning::robots.txt may not be correctly configured"
-      #     fi
-      #     echo "✅ Smoke tests completed"
+          # CloudFront check
+          echo "🌐 Checking CloudFront..."
+          curl -sI https://www.esdeveniments.cat 2>/dev/null | grep -qi "x-cache" && echo "✅ CloudFront serving" || echo "::warning::CloudFront cache header not found"
 
-      # - name: Verify deployment health
-      #   if: success()
-      #   env:
-      #     REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
-      #   run: |
-      #     echo "⏳ Waiting for CloudFront propagation..."
-      #     sleep 30
-      #     echo "🔍 Checking deployment health..."
-      #     HTTP_CODE=$(curl -s -o /tmp/health_response.json -w "%{http_code}" "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
-      #     HEALTH_RESPONSE=$(cat /tmp/health_response.json 2>/dev/null || echo '{"status":"error","message":"curl failed"}')
-      #     echo "HTTP Status: $HTTP_CODE"
-      #     echo "Health response: $(echo "$HEALTH_RESPONSE" | jq 'del(.cache.s3.bucket, .cache.dynamodb.table)')"
-      #     S3_CONFIGURED=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.s3.configured // false')
-      #     DYNAMO_CONFIGURED=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.dynamodb.configured // false')
-      #     S3_ISSUE=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.s3.issue // "none"')
-      #     DYNAMO_ISSUE=$(echo "$HEALTH_RESPONSE" | jq -r '.cache.dynamodb.issue // "none"')
-      #     if [ "$S3_CONFIGURED" != "true" ] || [ "$DYNAMO_CONFIGURED" != "true" ]; then
-      #       echo "::warning::Cache infrastructure may not be properly configured!"
-      #       echo "::warning::S3: configured=$S3_CONFIGURED, issue=$S3_ISSUE"
-      #       echo "::warning::DynamoDB: configured=$DYNAMO_CONFIGURED, issue=$DYNAMO_ISSUE"
-      #       echo "::warning::This can cause ISR/fetch cache errors. Run: npx sst refresh --stage production"
-      #     else
-      #       echo "✅ Cache infrastructure is properly configured"
-      #     fi
+          # Health check
+          echo "🔍 Checking deployment health..."
+          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
+          echo "Health endpoint: HTTP $HTTP_CODE"
+          if [ -f /tmp/health.json ]; then
+            S3_OK=$(jq -r '.cache.s3.configured // false' /tmp/health.json)
+            DYNAMO_OK=$(jq -r '.cache.dynamodb.configured // false' /tmp/health.json)
+            [ "$S3_OK" = "true" ] && [ "$DYNAMO_OK" = "true" ] && echo "✅ Cache infrastructure OK" || echo "::warning::Cache may need: npx sst refresh --stage production"
+          fi
+
+          echo "✅ Post-deploy verification complete"
 
       - name: Deployment summary
         if: success()
