@@ -15,8 +15,9 @@ import {
 import { buildPictureSourceUrls } from "@utils/image-cache";
 
 /**
- * ClientImage with modern format support (AVIF > WebP > JPEG)
+ * ClientImage with modern format support (WebP > AVIF > JPEG)
  * Uses native <picture> element for proper format fallback.
+ * WebP is prioritized over AVIF for faster encoding and more reliable output.
  * Assumes a non-empty image URL is provided. Missing-image cases should be
  * short-circuited by the server wrapper (index.tsx) to avoid unnecessary hydration.
  */
@@ -149,8 +150,8 @@ function ClientImageInner({
   }
 
   // Use native <picture> element for proper format fallback:
-  // - Browser tries AVIF first (best compression, 95% support)
-  // - Falls back to WebP (97% support)
+  // - Browser tries WebP first (faster encoding, more reliable)
+  // - Falls back to AVIF (better compression but slower/riskier encoding)
   // - Falls back to JPEG (100% support)
   return (
     <div className={className} style={containerStyle}>
@@ -160,8 +161,8 @@ function ClientImageInner({
         </div>
       )}
       <picture key={imageKey}>
-        <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
         <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+        <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
         <img
           className="object-cover w-full h-full absolute inset-0"
           src={sources.fallback}

@@ -40,8 +40,8 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
       {sources ? (
         <div className="relative aspect-[16/9] w-full md:h-80">
           <picture>
-            <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
             <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+            <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
             <img
               src={sources.fallback}
               alt={event.title}

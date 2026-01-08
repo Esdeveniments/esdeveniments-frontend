@@ -128,8 +128,8 @@ export default async function NewsCard({
         <div className="relative overflow-hidden">
           {cardSources ? (
             <picture>
-              <source srcSet={cardSources.avif} type="image/avif" sizes={cardImageSizes} />
               <source srcSet={cardSources.webp} type="image/webp" sizes={cardImageSizes} />
+              <source srcSet={cardSources.avif} type="image/avif" sizes={cardImageSizes} />
               <img
                 src={cardSources.fallback}
                 alt={event.title}

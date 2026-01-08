@@ -58,8 +58,8 @@ export default async function NewsRichCard({
           <div className="md:flex-shrink-0">
             {sources ? (
               <picture>
-                <source srcSet={sources.avif} type="image/avif" sizes={horizontalSizes} />
                 <source srcSet={sources.webp} type="image/webp" sizes={horizontalSizes} />
+                <source srcSet={sources.avif} type="image/avif" sizes={horizontalSizes} />
                 <img
                   src={sources.fallback}
                   alt={event.title}
@@ -143,8 +143,8 @@ export default async function NewsRichCard({
       <div className="relative overflow-hidden">
         {sources ? (
           <picture>
-            <source srcSet={sources.avif} type="image/avif" sizes={defaultSizes} />
             <source srcSet={sources.webp} type="image/webp" sizes={defaultSizes} />
+            <source srcSet={sources.avif} type="image/avif" sizes={defaultSizes} />
             <img
               src={sources.fallback}
               alt={event.title}

@@ -246,14 +246,15 @@ export function buildOptimizedImageUrl(
 
 /**
  * Generate URLs for <picture> element sources with modern format fallbacks.
- * Returns AVIF, WebP, and JPEG URLs for progressive enhancement.
+ * Returns WebP, AVIF, and JPEG URLs for progressive enhancement.
+ * WebP is prioritized over AVIF for faster encoding and more reliable output.
  * 
  * Usage:
  * ```tsx
  * const sources = buildPictureSourceUrls(imageUrl, cacheKey, { width, quality });
  * <picture>
- *   <source srcSet={sources.avif} type="image/avif" />
  *   <source srcSet={sources.webp} type="image/webp" />
+ *   <source srcSet={sources.avif} type="image/avif" />
  *   <img src={sources.fallback} alt="..." />
  * </picture>
  * ```

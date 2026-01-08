@@ -344,12 +344,10 @@ export async function GET(request: Request) {
       }
 
       // Process image with Sharp
-      // Use eval("require") to completely bypass Turbopack's module resolution
-      // Turbopack mangles both import() and require() into hashed names that fail at runtime
-      // eval() prevents static analysis, forcing runtime resolution of the native module
+      // Lambda: eval("require") bypasses Turbopack's module mangling
       try {
          
-        const sharp: typeof import("sharp") = eval("require")("sharp");
+        const sharp = eval("require")("sharp") as typeof import("sharp");
         let sharpInstance: Sharp = sharp(imageBuffer);
 
         // Get image metadata to determine if resize is needed
@@ -385,15 +383,10 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (preferWebp) {
-          // WebP: excellent compression, universal modern browser support
-          // Note: AVIF disabled - Sharp in Lambda produces invalid AVIF output
-          outputBuffer = await sharpInstance
-            .webp({ quality, effort: 4 })
-            .toBuffer();
-          outputContentType = "image/webp";
-        } else if (preferAvif) {
-          // AVIF requested but we serve WebP instead (AVIF broken in Lambda)
+        if (preferAvif || preferWebp) {
+          // WebP: excellent compression, fast encoding, reliable output
+          // We always use WebP for modern formats - AVIF encoding is slower
+          // and has caused issues with certain source images
           outputBuffer = await sharpInstance
             .webp({ quality, effort: 4 })
             .toBuffer();

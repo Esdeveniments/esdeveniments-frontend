@@ -34,8 +34,8 @@ function EventHeroImage({
 
   return (
     <picture>
-      <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
       <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+      <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
       <img
         src={sources.fallback}
         alt={safeTitle}
