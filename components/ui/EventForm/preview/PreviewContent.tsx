@@ -99,7 +99,7 @@ export const PreviewContent = ({
       <div className="stack">
         {/* Event title section */}
         <div className="flex flex-col gap-1">
-          <p className="label text-foreground/70">
+          <p className="label text-muted-foreground">
             {tForm("reviewTitle")}
           </p>
           <h2 className="heading-2">{event.title || <span className="text-error/70">{tForm("previewNoTitle")}</span>}</h2>
@@ -110,7 +110,7 @@ export const PreviewContent = ({
           {/* Date & Time */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-foreground/70" />
+              <CalendarIcon className="w-5 h-5 text-muted-foreground" />
               <p className="body-normal font-medium text-foreground-strong">
                 {tForm("datesLabel")}
               </p>
@@ -121,7 +121,7 @@ export const PreviewContent = ({
                 {dateEndLabel ? ` · ${dateEndLabel}` : ""}
               </p>
               {timeLabel && (
-                <p className="body-normal text-foreground/70">{timeLabel}</p>
+                <p className="body-normal text-muted-foreground">{timeLabel}</p>
               )}
             </div>
           </div>
@@ -129,7 +129,7 @@ export const PreviewContent = ({
           {/* Location */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <LocationMarkerIcon className="w-5 h-5 text-foreground/70" />
+              <LocationMarkerIcon className="w-5 h-5 text-muted-foreground" />
               <p className="body-normal font-medium text-foreground-strong">
                 {tForm("location")}
               </p>
@@ -139,7 +139,7 @@ export const PreviewContent = ({
                 {event.location}
               </p>
             ) : (
-              <p className="body-small text-foreground/50 ml-6 italic">
+              <p className="body-small text-muted-foreground ml-6 italic">
                 {tForm("previewOptional")}
               </p>
             )}
@@ -148,7 +148,7 @@ export const PreviewContent = ({
           {/* City (mandatory) */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <LocationMarkerIcon className="w-5 h-5 text-foreground/70" />
+              <LocationMarkerIcon className="w-5 h-5 text-muted-foreground" />
               <p className="body-normal font-medium text-foreground-strong">
                 {tForm("town")}
               </p>
@@ -172,7 +172,7 @@ export const PreviewContent = ({
           {/* Categories */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <TagIcon className="w-5 h-5 text-foreground/70" />
+              <TagIcon className="w-5 h-5 text-muted-foreground" />
               <p className="body-normal font-medium text-foreground-strong">
                 {tForm("previewCategoriesLabel")}
               </p>
@@ -189,7 +189,7 @@ export const PreviewContent = ({
                 ))}
               </div>
             ) : (
-              <p className="body-small text-foreground/50 ml-6 italic">
+              <p className="body-small text-muted-foreground ml-6 italic">
                 {tForm("previewNoCategories")}
               </p>
             )}
@@ -198,7 +198,7 @@ export const PreviewContent = ({
           {/* URL */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <ExternalLinkIcon className="w-5 h-5 text-foreground/70" />
+              <ExternalLinkIcon className="w-5 h-5 text-muted-foreground" />
               <p className="body-normal font-medium text-foreground-strong">
                 {tForm("previewLinkLabel")}
               </p>
@@ -213,7 +213,7 @@ export const PreviewContent = ({
                 {event.url}
               </a>
             ) : (
-              <p className="body-small text-foreground/50 ml-6 italic">
+              <p className="body-small text-muted-foreground ml-6 italic">
                 {tForm("previewOptional")}
               </p>
             )}
@@ -222,7 +222,7 @@ export const PreviewContent = ({
           {/* Description */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <DocumentIcon className="w-5 h-5 text-foreground/70" />
+              <DocumentIcon className="w-5 h-5 text-muted-foreground" />
               <p className="body-normal font-medium text-foreground-strong">
                 {tForm("previewDescriptionLabel")}
               </p>
@@ -232,7 +232,7 @@ export const PreviewContent = ({
                 {event.description}
               </p>
             ) : (
-              <p className="body-small text-foreground/50 ml-6 italic">
+              <p className="body-small text-muted-foreground ml-6 italic">
                 {tForm("previewOptional")}
               </p>
             )}

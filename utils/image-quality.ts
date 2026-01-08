@@ -94,6 +94,27 @@ export function getQualityPreset(preset: QualityPreset): number {
 }
 
 /**
+ * Get optimal image width based on component usage context
+ * Used for server-side image resizing in the image proxy
+ */
+export const getOptimalImageWidth = (
+  context: "card" | "hero" | "list" | "detail" = "card"
+): number => {
+  const widthMap = {
+    // Event cards: max 700px covers typical 2-3 column layouts on desktop
+    card: 700,
+    // Hero/featured images: larger for full-width displays
+    hero: 1200,
+    // List view / horizontal cards
+    list: 500,
+    // Detail page images
+    detail: 1000,
+  };
+
+  return widthMap[context];
+};
+
+/**
  * Get optimized sizes attribute based on component usage context
  * Based on actual usage patterns from the Lighthouse analysis
  */

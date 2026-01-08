@@ -27,9 +27,9 @@
 | `text-gray-900`   | `text-foreground-strong` | Headings, high emphasis text               |
 | `text-gray-800`   | `text-foreground`        | Primary body text, strong labels           |
 | `text-gray-700`   | `text-foreground`        | Body text, default text color              |
-| `text-gray-600`   | `text-foreground/80`     | Secondary text, muted descriptions         |
-| `text-gray-500`   | `text-foreground/70`     | Tertiary text, placeholders                |
-| `text-gray-400`   | `text-foreground/60`     | Disabled text, icons                       |
+| `text-gray-600`   | `text-muted-foreground`  | Secondary text, muted descriptions         |
+| `text-gray-500`   | `text-muted-foreground`  | Tertiary text, placeholders                |
+| `text-gray-400`   | `text-muted-foreground`  | Disabled text, icons                       |
 | `text-gray-300`   | `text-foreground/40`     | Dividers, very subtle elements             |
 | `bg-gray-50`      | `bg-muted`               | Subtle backgrounds, light card backgrounds |
 | `bg-gray-100`     | `bg-muted`               | Input backgrounds, skeleton loaders        |
@@ -41,11 +41,11 @@
 #### Additional Notes
 
 - Prefer `text-foreground-strong` for headings/high emphasis; otherwise `text-foreground`.
-- For muted text, use opacity suffixes on `foreground` rather than lighter `gray-*`.
+- For muted/secondary text, use `text-muted-foreground` (WCAG AA compliant at 4.6:1 contrast).
 - Borders: default to `border-border`; use opacity variants (e.g., `border-border/30`) for subtle dividers.
 - Context-aware replacements:
-  - If `text-gray-600` is used for disabled or helper text → prefer `text-foreground/60`.
-  - If `text-gray-400` is used for icons with low emphasis → `text-foreground/60`; for very subtle dividers → `border-border/30`.
+  - If `text-gray-600` is used for disabled or helper text → prefer `text-muted-foreground`.
+  - If `text-gray-400` is used for icons with low emphasis → `text-muted-foreground`; for very subtle dividers → `border-border/30`.
   - If `bg-gray-100` is used as a container background → `bg-muted`; if it represents a skeleton shimmer layer → `bg-border/40`.
 
 ### High Priority Files (Week 3 Days 1-2)
@@ -54,9 +54,9 @@
 
 1. **RestaurantPromotionForm.tsx** (21 instances)
 
-   - `text-gray-600` → `text-foreground/80`
+   - `text-gray-600` → `text-muted-foreground`
    - `text-gray-700` → `text-foreground`
-   - `text-gray-500` → `text-foreground/70`
+   - `text-gray-500` → `text-muted-foreground`
    - `bg-gray-200` → `bg-border/40`
    - `border-gray-300` → `border-border`
    - `bg-gray-50` → `bg-muted`
@@ -65,9 +65,9 @@
 
    - `border-gray-200` → `border-border`
    - `bg-gray-100` → `bg-muted`
-   - `text-gray-400` → `text-foreground/60`
+   - `text-gray-400` → `text-muted-foreground`
    - `text-gray-900` → `text-foreground-strong`
-   - `text-gray-600` → `text-foreground/80`
+   - `text-gray-600` → `text-muted-foreground`
    - `text-gray-700` → `text-foreground`
 
 3. **locationDiscoveryWidget/index.tsx** (11 instances)

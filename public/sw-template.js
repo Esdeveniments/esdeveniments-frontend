@@ -190,12 +190,35 @@ if (!self.workbox) {
     })
   );
 
+  // Strategy for Image Proxy API - NetworkFirst with short cache
+  // Use NetworkFirst (not StaleWhileRevalidate) to avoid serving stale images
+  // when the upstream changes. CloudFront handles long-term caching via ?v= cache keys.
+  // SW cache provides offline support and reduces latency on slow networks.
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname.startsWith("/api/image-proxy"),
+    new workbox.strategies.NetworkFirst({
+      cacheName: "esdeveniments-image-proxy-cache",
+      networkTimeoutSeconds: 5, // Fall back to cache after 5s
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({
+          statuses: [0, 200],
+        }),
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 100,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days - matches images cache
+        }),
+      ],
+    })
+  );
+
   // Strategy for Other Local API Requests - Stale-While-Revalidate
   // This strategy serves a cached response immediately for speed,
   // then updates the cache in the background with a fresh network response for the next time.
   // It's a great balance of performance and data freshness.
   workbox.routing.registerRoute(
-    ({ url }) => url.pathname.startsWith("/api/"),
+    ({ url }) =>
+      url.pathname.startsWith("/api/") &&
+      !url.pathname.startsWith("/api/image-proxy"),
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: "esdeveniments-local-api-cache",
       plugins: [

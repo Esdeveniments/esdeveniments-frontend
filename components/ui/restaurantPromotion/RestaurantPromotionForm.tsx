@@ -393,7 +393,7 @@ export default function RestaurantPromotionForm({
           className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={t("placeIdPlaceholder")}
         />
-        <p className="mt-1 text-xs text-foreground/70">
+        <p className="mt-1 text-xs text-muted-foreground">
           {t("placeIdHelp")}
         </p>
       </div>
@@ -420,7 +420,7 @@ export default function RestaurantPromotionForm({
             {isLoadingPrice ? t("loading") : getPriceDisplay()}
           </span>
         </div>
-        <p className="text-xs text-foreground/70 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {t("priceNote")}
         </p>
       </div>

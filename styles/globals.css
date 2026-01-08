@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent deprecation warning for overflow:visible on replaced elements */
+/* See: https://github.com/WICG/shared-element-transitions/blob/main/debugging_overflow_on_images.md */
+img,
+video,
+canvas {
+  overflow: clip;
+}
+
 /* Optimize font loading - ensure text stays visible during webfont loading */
 @font-face {
   font-family: 'system-ui';
@@ -388,7 +396,7 @@ p {
   }
 
   .helper-text {
-    @apply body-small text-foreground/70 mt-1;
+    @apply body-small text-muted-foreground mt-1;
   }
 
   .helper-text-error {
@@ -401,7 +409,7 @@ p {
   }
 
   .form-helper {
-    @apply text-sm md:text-base text-foreground/70;
+    @apply text-sm md:text-base text-muted-foreground;
   }
 
   /* ===================================== */

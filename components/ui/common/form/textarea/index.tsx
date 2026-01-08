@@ -51,7 +51,7 @@ export default function TextArea({ id, value, onChange, error, onBlur }: TextAre
           <span
             className={`text-sm ${characterCount > maxLength * 0.9
               ? "text-orange-500"
-              : "text-foreground/70"
+              : "text-muted-foreground"
               }`}
           >
             {characterCount}/{maxLength}

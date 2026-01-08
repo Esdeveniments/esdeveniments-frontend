@@ -32,7 +32,11 @@ import {
   withLocalePath,
 } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
+import {
+  MONTHS_URL as DEFAULT_MONTHS_URL,
+  MIN_VALID_YEAR,
+  MAX_VALID_YEAR,
+} from "@utils/constants";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -51,7 +55,18 @@ export async function generateMetadata({
   });
   const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
   const { town, year, month } = await params;
-  if (!isValidPlace(town)) {
+  
+  // Validate required params
+  if (!town || !year || !month || !isValidPlace(town)) {
+    return {
+      title: tNotFound("title"),
+      description: tNotFound("description"),
+    };
+  }
+  
+  // Validate year is numeric and reasonable
+  const yearNum = Number(year);
+  if (!Number.isFinite(yearNum) || yearNum < MIN_VALID_YEAR || yearNum > MAX_VALID_YEAR) {
     return {
       title: tNotFound("title"),
       description: tNotFound("description"),
@@ -107,7 +122,14 @@ export default async function Page({
   });
   const withLocale = (path: string) => withLocalePath(path, locale);
 
-  if (!isValidPlace(town)) {
+  // Validate required params
+  if (!town || !year || !month || !isValidPlace(town)) {
+    notFound();
+  }
+  
+  // Validate year is numeric and reasonable
+  const yearNum = Number(year);
+  if (!Number.isFinite(yearNum) || yearNum < MIN_VALID_YEAR || yearNum > MAX_VALID_YEAR) {
     notFound();
   }
 

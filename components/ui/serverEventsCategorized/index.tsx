@@ -300,7 +300,7 @@ export async function ServerEventsCategorizedContent({
   // 2. Prepare Featured Places Promises
   const featuredSectionsPromise = featuredPlaces
     ? Promise.all(
-      featuredPlaces.map(async (placeConfig, index) => {
+      featuredPlaces.map(async (placeConfig) => {
         const placeSlug =
           placeConfig.filter.city ||
           placeConfig.filter.region ||
@@ -324,7 +324,8 @@ export async function ServerEventsCategorizedContent({
             ...placeConfig,
             events,
             placeSlug,
-            usePriority: index < 2,
+            // Homepage images are below the fold - don't use priority loading
+            usePriority: false,
           };
         } catch (error) {
           captureException(error, {
@@ -492,7 +493,7 @@ export async function ServerEventsCategorizedContent({
               categorySlug={section.categorySlug}
               categoryPhrase={categoryPhrase}
               categories={categories}
-              shouldUsePriority={index < 2}
+              shouldUsePriority={false}
               showAd={adPositions.has(index)}
               labels={{
                 heading:
@@ -514,7 +515,7 @@ export async function ServerEventsCategorizedContent({
 
       {/* CTA */}
       <section className="py-section-y container text-center">
-        <p className="body-large text-foreground/70 font-medium mb-element-gap">
+        <p className="body-large text-muted-foreground font-medium mb-element-gap">
           {tCta("cta")}
         </p>
         <PressableAnchor

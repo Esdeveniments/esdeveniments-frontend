@@ -1,4 +1,4 @@
-import Image from "next/image";
+import NextImage from "next/image";
 import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
@@ -6,7 +6,12 @@ import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
-import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-quality";
+import {
+  getOptimalImageQuality,
+  getOptimalImageSizes,
+  getOptimalImageWidth,
+} from "@utils/image-quality";
+import { buildOptimizedImageUrl } from "@utils/image-cache";
 
 export default async function NewsCard({
   event,
@@ -16,7 +21,7 @@ export default async function NewsCard({
 }: NewsCardProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
-  const image = event.imageUrl;
+  const rawImage = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
@@ -29,7 +34,16 @@ export default async function NewsCard({
       isPriority: true,
       isExternal: true,
     });
+    const heroImageWidth = getOptimalImageWidth("hero");
     const heroImageSizes = getOptimalImageSizes("hero");
+
+    // Optimize external images through proxy
+    const heroImage = rawImage
+      ? buildOptimizedImageUrl(rawImage, event.updatedAt, {
+        width: heroImageWidth,
+        quality: heroImageQuality,
+      })
+      : "";
 
     return (
       <PressableAnchor
@@ -40,14 +54,14 @@ export default async function NewsCard({
         aria-label={event.title}
       >
         <section className="relative w-full overflow-hidden rounded-xl">
-          {image ? (
+          {heroImage ? (
             <div className="relative aspect-[16/9] w-full">
-              <Image
-                src={image || "/placeholder.svg"}
+              <NextImage
+                src={heroImage}
                 alt={event.title}
                 fill
+                unoptimized
                 priority
-                quality={heroImageQuality}
                 sizes={heroImageSizes}
                 className="object-cover"
               />
@@ -88,7 +102,16 @@ export default async function NewsCard({
     isPriority: false,
     isExternal: true,
   });
+  const cardImageWidth = getOptimalImageWidth("card");
   const cardImageSizes = getOptimalImageSizes("card");
+
+  // Optimize external images through proxy
+  const cardImage = rawImage
+    ? buildOptimizedImageUrl(rawImage, event.updatedAt, {
+      width: cardImageWidth,
+      quality: cardImageQuality,
+    })
+    : "";
 
   return (
     <PressableAnchor
@@ -100,13 +123,13 @@ export default async function NewsCard({
     >
       <article className="card-elevated group w-full overflow-hidden">
         <div className="relative overflow-hidden">
-          {image ? (
-            <Image
-              src={image || "/placeholder.svg"}
+          {cardImage ? (
+            <NextImage
+              src={cardImage}
               alt={event.title}
               width={1200}
               height={675}
-              quality={cardImageQuality}
+              unoptimized
               sizes={cardImageSizes}
               className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
             />

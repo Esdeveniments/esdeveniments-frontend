@@ -1,16 +1,18 @@
 "use client";
 
-import { memo, useRef, useState, useCallback } from "react";
+import { memo, useState, useCallback } from "react";
 import NextImage from "next/image";
 import ImgDefault from "@components/ui/imgDefault";
 import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImageRetry } from "@components/hooks/useImageRetry";
 import { ImageComponentProps } from "types/common";
+import type { ClientImageInnerProps } from "types/props";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
   getServerImageQuality,
+  getOptimalImageWidth,
 } from "@utils/image-quality";
 import { buildOptimizedImageUrl } from "@utils/image-cache";
 
@@ -33,20 +35,7 @@ function ClientImage({
   region,
   date,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
-  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey);
-  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
-
-  // If URL normalization failed (e.g., overly long URL), treat as error to show fallback
-  const invalidSrc = !finalImageSrc;
-
-  const divRef = useRef<HTMLDivElement>(null);
-  const [forceUnoptimized, setForceUnoptimized] = useState(false);
-
-  const imageClassName = `${className}`;
   const networkQualityString = useNetworkSpeed();
-
-  const { hasError, isLoading, handleError, handleLoad, reset, getImageKey } =
-    useImageRetry(2);
 
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,
@@ -54,6 +43,75 @@ function ClientImage({
     networkQuality: getServerImageQuality(networkQualityString),
     customQuality,
   });
+
+  const imageWidth = getOptimalImageWidth(context);
+
+  // Pass width and quality to the proxy for server-side optimization
+  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey, {
+    width: imageWidth,
+    quality: imageQuality,
+  });
+
+  // If URL normalization failed (e.g., overly long URL), treat as error to show fallback
+  if (!finalImageSrc) {
+    return (
+      <div
+        className={className}
+        role="img"
+        aria-label={title || "Imatge no disponible"}
+        style={{
+          position: "relative",
+          aspectRatio: "500 / 260",
+          maxWidth: "100%",
+        }}
+      >
+        <ImgDefault title={title} location={location} region={region} date={date} />
+      </div>
+    );
+  }
+
+  // Key the inner component by finalImageSrc to reset all hook state on navigation
+  return (
+    <ClientImageInner
+      key={finalImageSrc}
+      finalImageSrc={finalImageSrc}
+      title={title}
+      className={className}
+      priority={priority}
+      fetchPriority={fetchPriority}
+      alt={alt}
+      imageQuality={imageQuality}
+      context={context}
+      location={location}
+      region={region}
+      date={date}
+    />
+  );
+}
+
+/**
+ * Inner component that handles loading state.
+ * Keyed by image URL so all state resets on navigation.
+ */
+function ClientImageInner({
+  finalImageSrc,
+  title,
+  className,
+  priority,
+  fetchPriority,
+  alt,
+  imageQuality,
+  context,
+  location,
+  region,
+  date,
+}: ClientImageInnerProps) {
+  const [forceUnoptimized, setForceUnoptimized] = useState(false);
+
+  const { hasError, imageLoaded, showSkeleton, handleError, handleLoad, reset, getImageKey } =
+    useImageRetry(2);
+
+  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
 
   const imageKey = getImageKey(`${finalImageSrc}-${forceUnoptimized ? "direct" : "opt"}`);
 
@@ -72,20 +130,18 @@ function ClientImage({
     position: "relative",
     ...(context === "card" || context === "list"
       ? {
-        aspectRatio: "500 / 260", // Stable card/list height; crop posters instead of expanding
+        aspectRatio: "500 / 260",
         overflow: "hidden",
       }
       : {}),
-    maxWidth: "100%", // Ensure image doesn't exceed container
+    maxWidth: "100%",
   };
 
-  // Error fallback: keep semantics (role="img") so accessibility & indexing remain consistent
-  // Show ImgDefault immediately when image fails or URL normalization failed
-  if (hasError || invalidSrc) {
+  // Error fallback
+  if (hasError) {
     return (
       <div
-        className={imageClassName}
-        ref={divRef}
+        className={className}
         role="img"
         aria-label={title || "Imatge no disponible"}
         style={containerStyle}
@@ -96,11 +152,8 @@ function ClientImage({
   }
 
   return (
-    <div
-      className={imageClassName}
-      style={containerStyle}
-    >
-      {isLoading && (
+    <div className={className} style={containerStyle}>
+      {showSkeleton && (
         <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
           <div className="w-full h-full bg-muted animate-fast-pulse"></div>
         </div>
@@ -118,17 +171,16 @@ function ClientImage({
         quality={imageQuality}
         style={{
           objectFit: "cover",
-          opacity: isLoading ? 0 : 1,
+          // Hide image until loaded to prevent broken image flash
+          opacity: imageLoaded ? 1 : 0,
           transition: "opacity 0.3s ease-in-out",
           width: "100%",
           height: "100%",
-          maxWidth: "100%", // Ensure image respects container constraints
+          maxWidth: "100%",
         }}
         priority={priority}
         fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
         sizes={getOptimalImageSizes(context)}
-        // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
-        // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
         unoptimized={forceUnoptimized || shouldBypassOptimizer || env === "dev"}
       />
     </div>

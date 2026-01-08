@@ -469,6 +469,17 @@ export interface ImageComponentProps {
   cacheKey?: string;
 }
 
+/**
+ * Image optimization options for the proxy
+ * Use getOptimalImageQuality() and getOptimalImageWidth() for context-appropriate values
+ */
+export interface ImageProxyOptions {
+  /** Target width in pixels */
+  width?: number;
+  /** Quality 1-100 (use getOptimalImageQuality() for recommended values) */
+  quality?: number;
+}
+
 export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   children: React.ReactNode;
   activeLinkClass?: string;

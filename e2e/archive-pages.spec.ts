@@ -10,7 +10,7 @@ test.describe("Location-based archive journey", () => {
       timeout: 60000,
     });
     // Header or NoEventsFound should render; assert page did not 500
-    await expect(page.locator("main, [role='main']")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId("app-content")).toBeVisible({ timeout: 30000 });
 
     const eventLink = page.locator('a[href^="/e/"]').first();
     if (await eventLink.isVisible({ timeout: 10000 }).catch(() => false)) {

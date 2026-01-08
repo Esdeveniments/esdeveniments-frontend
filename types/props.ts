@@ -5,6 +5,37 @@ export interface LatestNewsSectionProps {
   newsHref: string;
 }
 
+/**
+ * Return type for useImageRetry hook
+ */
+export interface UseImageRetryReturn {
+  retryCount: number;
+  hasError: boolean;
+  imageLoaded: boolean;
+  showSkeleton: boolean;
+  handleError: () => void;
+  handleLoad: () => void;
+  reset: () => void;
+  getImageKey: (baseSrc: string) => string;
+}
+
+/**
+ * Props for ClientImageInner component
+ */
+export interface ClientImageInnerProps {
+  finalImageSrc: string;
+  title: string;
+  className: string;
+  priority: boolean;
+  fetchPriority?: "high" | "low" | "auto";
+  alt: string;
+  imageQuality: number;
+  context: "card" | "hero" | "list" | "detail";
+  location?: string;
+  region?: string;
+  date?: string;
+}
+
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
 import {
   Option,

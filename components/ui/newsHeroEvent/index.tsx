@@ -1,15 +1,34 @@
-import Image from "next/image";
+import NextImage from "next/image";
 import { getTranslations } from "next-intl/server";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { buildOptimizedImageUrl } from "@utils/image-cache";
+import {
+  getOptimalImageQuality,
+  getOptimalImageWidth,
+} from "@utils/image-quality";
 
 export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
-  const image = event.imageUrl;
+  const rawImage = event.imageUrl;
+
+  // Optimize external images through proxy
+  const imageQuality = getOptimalImageQuality({
+    isPriority: true,
+    isExternal: true,
+  });
+  const imageWidth = getOptimalImageWidth("hero");
+  const image = rawImage
+    ? buildOptimizedImageUrl(rawImage, event.hash, {
+      width: imageWidth,
+      quality: imageQuality,
+    })
+    : "";
+
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
@@ -18,10 +37,11 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
     <section className="relative w-full overflow-hidden rounded-xl bg-foreground-strong shadow-lg">
       {image ? (
         <div className="relative aspect-[16/9] w-full md:h-80">
-          <Image
-            src={image || "/placeholder.svg"}
+          <NextImage
+            src={image}
             alt={event.title}
             fill
+            unoptimized
             priority
             sizes="(max-width: 768px) 82vw, (max-width: 1280px) 75vw, 1200px"
             className="object-cover"

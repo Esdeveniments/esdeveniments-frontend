@@ -1,4 +1,4 @@
-import Image from "next/image";
+import NextImage from "next/image";
 import { getTranslations } from "next-intl/server";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 import type { NewsRichCardProps } from "types/props";
@@ -6,6 +6,11 @@ import { getFormattedDate } from "@utils/date-helpers";
 import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import {
+  getOptimalImageQuality,
+  getOptimalImageWidth,
+} from "@utils/image-quality";
+import { buildOptimizedImageUrl } from "@utils/image-cache";
 
 export default async function NewsRichCard({
   event,
@@ -14,7 +19,7 @@ export default async function NewsRichCard({
 }: NewsRichCardProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
-  const image = event.imageUrl;
+  const rawImage = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
@@ -24,6 +29,19 @@ export default async function NewsRichCard({
       ? { name: event.categories[0].name, slug: event.categories[0].slug }
       : undefined;
   const plainDescription = stripHtmlTags(event.description || "");
+
+  // Optimize external images through proxy
+  const imageQuality = getOptimalImageQuality({
+    isPriority: false,
+    isExternal: true,
+  });
+  const imageWidth = getOptimalImageWidth(variant === "horizontal" ? "list" : "card");
+  const image = rawImage
+    ? buildOptimizedImageUrl(rawImage, event.hash, {
+      width: imageWidth,
+      quality: imageQuality,
+    })
+    : "";
 
   if (variant === "horizontal") {
     return (
@@ -39,11 +57,12 @@ export default async function NewsRichCard({
 
           <div className="md:flex-shrink-0">
             {image ? (
-              <Image
-                src={image || "/placeholder.svg"}
+              <NextImage
+                src={image}
                 alt={event.title}
                 width={200}
                 height={150}
+                unoptimized
                 className="aspect-[4/3] w-full md:w-48 object-cover rounded-lg transition-transform group-hover:scale-105"
               />
             ) : (
@@ -115,11 +134,12 @@ export default async function NewsRichCard({
     <article className="card-elevated group w-full overflow-hidden">
       <div className="relative overflow-hidden">
         {image ? (
-          <Image
-            src={image || "/placeholder.svg"}
+          <NextImage
+            src={image}
             alt={event.title}
             width={1200}
             height={675}
+            unoptimized
             sizes="(max-width: 768px) 88vw, (max-width: 1280px) 70vw, 800px"
             className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
           />

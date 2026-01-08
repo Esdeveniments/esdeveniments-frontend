@@ -64,6 +64,7 @@ module.exports = {
         background: "#ffffff",
         foreground: `rgb(${foregroundRgb} / <alpha-value>)`,
         "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
+        "muted-foreground": "#6B7280", // gray-500: WCAG AA compliant (~4.6:1 on white)
         muted: "#F7F7F7",
         border: "#CCCCCC",
         "primary-foreground": "#ffffff",
