@@ -348,7 +348,7 @@ export async function GET(request: Request) {
       // Turbopack mangles both import() and require() into hashed names that fail at runtime
       // eval() prevents static analysis, forcing runtime resolution of the native module
       try {
-        // eslint-disable-next-line no-eval
+         
         const sharp: typeof import("sharp") = eval("require")("sharp");
         let sharpInstance: Sharp = sharp(imageBuffer);
 
@@ -447,13 +447,19 @@ export async function GET(request: Request) {
 
         // Return original image without processing
         // Use short cache to allow retry after transient Sharp failures
+        // Sanitize error message for HTTP header (remove newlines, control chars, truncate)
+        const sanitizedError = errorMessage
+          .replace(/[\r\n\t]/g, " ")
+          .replace(/[^\x20-\x7E]/g, "")
+          .slice(0, 100);
+
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
             "Content-Type": sourceType,
             "Cache-Control": "public, max-age=300, s-maxage=300",
             "X-Image-Proxy-Optimized": "fallback-sharp-error",
-            "X-Image-Proxy-Error": errorMessage.slice(0, 200), // Truncate for header safety
+            "X-Image-Proxy-Error": sanitizedError || "unknown",
           },
         });
       }
