@@ -215,10 +215,10 @@ export function generateEventMetadata(
       ...(event.startDate && {
         "article:published_time": event.startDate,
       }),
-      // Use updatedAt if available, otherwise startDate
-      ...(event.updatedAt
-        ? { "article:modified_time": event.updatedAt }
-        : event.startDate && { "article:modified_time": event.startDate }),
+      // Use updatedAt if available, otherwise fall back to startDate
+      ...((event.updatedAt || event.startDate) && {
+        "article:modified_time": event.updatedAt || event.startDate,
+      }),
       // Article tags for better social media categorization
       ...(articleTags.length > 0 && {
         "article:tag": articleTags.join(","),
