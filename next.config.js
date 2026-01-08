@@ -20,6 +20,9 @@ const nextConfig = {
   // --- SST/OpenNext Configuration ---
   // Required for SST deployment (uses OpenNext adapter)
   output: "standalone",
+  // Mark sharp as external - required for SST/Lambda deployment
+  // Sharp has native binaries that must be bundled separately for the target platform
+  serverExternalPackages: ["sharp"],
   // Disable incremental cache while SST/OpenNext lacks __fetch bucket
   cacheHandler: undefined,
   cacheMaxMemorySize: 0,
