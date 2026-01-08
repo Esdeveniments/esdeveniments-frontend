@@ -61,6 +61,15 @@ jobs:
           rm -rf .sst .open-next
           echo "✅ Cleaned build artifacts"
 
+      - name: Remove system Pulumi (use SST bundled version)
+        run: |
+          # SST 3.17.25 requires a newer Pulumi that supports the -root flag.
+          # Remove any system-level Pulumi installation that might interfere.
+          # SST will use its own bundled Pulumi binaries.
+          sudo rm -f /usr/local/bin/pulumi* || true
+          rm -rf ~/.pulumi/bin || true
+          echo "✅ Removed system Pulumi to ensure SST uses its bundled version"
+
       - name: Cache Next.js build cache
         uses: actions/cache@v4 # Pin: 0c45773b623bea8c8e75f6c82b208c3cf94ea4f9
         with:
