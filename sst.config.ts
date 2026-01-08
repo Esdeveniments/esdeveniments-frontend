@@ -221,7 +221,9 @@ export default $config({
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
           args.memory = "1792 MB"; // Reduced from 3008 MB (1 vCPU equivalent) - saves ~$30/month
           args.timeout = "20 seconds";
-          args.architecture = "arm64";
+          // Using x64 architecture for better compatibility with native modules (sharp)
+          // CI builds on ubuntu-latest (x64), so Lambda must also be x64
+          args.architecture = "x86_64";
           // Sentry layer ARN - configurable per environment/region
           // Defaults to eu-west-3 version 283 if not specified
           args.layers = process.env.SENTRY_LAYER_ARN
