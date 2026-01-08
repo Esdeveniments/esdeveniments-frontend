@@ -162,10 +162,10 @@ export default function GoogleScripts() {
 
   return (
     <>
-      {/* Google Analytics - Consent Mode v2 */}
+      {/* Google Analytics - Consent Mode v2 (defaults set inline to avoid race conditions) */}
       {GA_MEASUREMENT_ID && !isE2ETestMode && (
         <>
-          <Script id="google-analytics-consent" strategy="afterInteractive">
+          <Script id="google-analytics-consent" strategy="lazyOnload">
             {`
               ${GTAG_SHIM}
               gtag('consent', 'default', {
@@ -199,8 +199,8 @@ export default function GoogleScripts() {
 
       {!isE2ETestMode && (
         <>
-          {/* AdBlock Detection - must run before Funding Choices */}
-          <Script id="google-adblock" strategy="afterInteractive">
+          {/* AdBlock Detection - defer with lazyOnload since consent manager handles this itself */}
+          <Script id="google-adblock" strategy="lazyOnload">
             {`
               (function() {
                 function signalGooglefcPresent() {
@@ -221,10 +221,10 @@ export default function GoogleScripts() {
             `}
           </Script>
 
-          {/* Funding Choices (CMP) - must load early for consent */}
+          {/* Funding Choices (CMP) - defer to lazyOnload to reduce TBT */}
           <Script
             src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
 
           {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
