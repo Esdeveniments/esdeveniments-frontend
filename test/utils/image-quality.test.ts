@@ -14,8 +14,8 @@ describe("image-quality utils", () => {
       expect(getOptimalImageQuality({})).toBe(50);
     });
 
-    it("returns 60 for priority external images (LCP)", () => {
-      expect(getOptimalImageQuality({ isPriority: true })).toBe(60);
+    it("returns 50 for priority external images (LCP)", () => {
+      expect(getOptimalImageQuality({ isPriority: true })).toBe(50);
     });
 
     it("returns custom quality when explicitly provided", () => {
@@ -138,7 +138,7 @@ describe("image-quality utils", () => {
     });
 
     it("verifies specific preset values", () => {
-      expect(QUALITY_PRESETS.LCP_EXTERNAL).toBe(60);
+      expect(QUALITY_PRESETS.LCP_EXTERNAL).toBe(50);
       expect(QUALITY_PRESETS.EXTERNAL_HIGH).toBe(50);
       expect(QUALITY_PRESETS.EXTERNAL_STANDARD).toBe(50);
       expect(QUALITY_PRESETS.EXTERNAL_MOBILE).toBe(35);
@@ -150,7 +150,7 @@ describe("image-quality utils", () => {
 
   describe("getQualityPreset", () => {
     it("returns correct preset values", () => {
-      expect(getQualityPreset("LCP_EXTERNAL")).toBe(60);
+      expect(getQualityPreset("LCP_EXTERNAL")).toBe(50);
       expect(getQualityPreset("EXTERNAL_HIGH")).toBe(50);
       expect(getQualityPreset("EXTERNAL_STANDARD")).toBe(50);
       expect(getQualityPreset("INTERNAL_HIGH")).toBe(85);
@@ -167,13 +167,13 @@ describe("image-quality utils", () => {
   });
 
   describe("getOptimalImageWidth", () => {
-    it("returns 700 for card context (default)", () => {
-      expect(getOptimalImageWidth()).toBe(700);
-      expect(getOptimalImageWidth("card")).toBe(700);
+    it("returns 500 for card context (default)", () => {
+      expect(getOptimalImageWidth()).toBe(500);
+      expect(getOptimalImageWidth("card")).toBe(500);
     });
 
-    it("returns 1200 for hero context", () => {
-      expect(getOptimalImageWidth("hero")).toBe(1200);
+    it("returns 1000 for hero context", () => {
+      expect(getOptimalImageWidth("hero")).toBe(1000);
     });
 
     it("returns 500 for list context", () => {
