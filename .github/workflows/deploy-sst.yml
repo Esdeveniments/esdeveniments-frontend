@@ -212,10 +212,10 @@ jobs:
         run: yarn prebuild
 
       # TEMPORARILY: Single build for fast deploy (skipping E2E)
-      - name: "Build Next.js application"
-        run: yarn build
-        env:
-          NODE_ENV: production
+      # - name: "Build Next.js application"
+      #   run: yarn build
+      #   env:
+      #     NODE_ENV: production
 
       # TEMPORARILY DISABLED FOR FAST DEPLOY - RE-ENABLE AFTER FIX
       # - name: Start Next.js server (background)

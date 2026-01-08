@@ -2,31 +2,27 @@
 
 import { EventImageProps } from "types/event";
 import { FC, useCallback, useMemo, useState } from "react";
-import NextImage from "next/image";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
 import {
-  buildOptimizedImageUrl,
+  buildPictureSourceUrls,
   normalizeExternalImageUrl,
 } from "@utils/image-cache";
 import { escapeXml } from "@utils/xml-escape";
 
 function EventHeroImage({
-  imageSrc,
+  sources,
   safeTitle,
   title,
-  imageQuality,
-  effectiveUnoptimized,
   onError,
 }: {
-  imageSrc: string;
+  sources: { avif: string; webp: string; fallback: string };
   safeTitle: string;
   title: string;
-  imageQuality: number;
-  effectiveUnoptimized: boolean;
-  onError: () => "retry" | "fail";
+  onError: () => void;
 }) {
   const [hasFailed, setHasFailed] = useState(false);
+  const sizes = "(max-width: 768px) 80vw, (max-width: 1280px) 70vw, 1200px";
 
   if (hasFailed) {
     return (
@@ -37,32 +33,29 @@ function EventHeroImage({
   }
 
   return (
-    <NextImage
-      src={imageSrc}
-      alt={safeTitle}
-      fill
-      sizes="(max-width: 768px) 80vw, (max-width: 1280px) 70vw, 1200px"
-      className="object-cover relative z-10"
-      priority={true}
-      quality={imageQuality}
-      loading="eager"
-      fetchPriority="high"
-      onError={() => {
-        const outcome = onError();
-        if (outcome === "fail") setHasFailed(true);
-      }}
-      // Bypass optimization for internal proxy URLs on SST/OpenNext.
-      // Note: Our image proxy now handles optimization (resize, format conversion, quality)
-      // so we don't lose quality by bypassing Next.js optimizer.
-      unoptimized={effectiveUnoptimized}
-    />
+    <picture>
+      <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+      <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+      <img
+        src={sources.fallback}
+        alt={safeTitle}
+        loading="eager"
+        decoding="sync"
+        fetchPriority="high"
+        sizes={sizes}
+        className="object-cover w-full h-full absolute inset-0 z-10"
+        onError={() => {
+          onError();
+          setHasFailed(true);
+        }}
+      />
+    </picture>
   );
 }
 
 const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   // Escape title for safe use in HTML attributes (React also escapes, but this is defensive)
   const safeTitle = escapeXml(title || "");
-  const [forceUnoptimized, setForceUnoptimized] = useState(false);
 
   const imageQuality = getOptimalImageQuality({
     isPriority: true,
@@ -76,33 +69,25 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
     [image]
   );
   
-  // Pass width and quality to the proxy for server-side optimization
-  const optimizedImage = useMemo(
-    () => (image ? buildOptimizedImageUrl(image, undefined, {
+  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  const sources = useMemo(
+    () => (image ? buildPictureSourceUrls(image, undefined, {
       width: imageWidth,
       quality: imageQuality,
-    }) : ""),
+    }) : null),
     [image, imageWidth, imageQuality]
   );
 
   // If URL normalization failed (e.g., overly long URL), treat as no image
-  const hasValidImage = Boolean(image && optimizedImage);
+  const hasValidImage = Boolean(image && sources);
 
   const anchorHref = normalizedImage || image || "";
-  const isInternalProxy = optimizedImage.startsWith("/api/");
-  const effectiveUnoptimized = forceUnoptimized || isInternalProxy;
-  const imageSrc = forceUnoptimized ? anchorHref : optimizedImage;
 
-  const handleImageError = useCallback((): "retry" | "fail" => {
-    // First fallback: bypass Next.js optimizer (can 500 on some platforms or bad TLS chains)
-    if (!forceUnoptimized && !isInternalProxy) {
-      setForceUnoptimized(true);
-      return "retry";
-    }
-    return "fail";
-  }, [forceUnoptimized, isInternalProxy]);
+  const handleImageError = useCallback(() => {
+    // Error handling - image failed to load, fallback UI will show
+  }, []);
 
-  if (!hasValidImage) {
+  if (!hasValidImage || !sources) {
     return (
       <div className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card">
         <ImgDefaultServer title={title} />
@@ -123,12 +108,9 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
         aria-label={`Veure imatge completa de ${safeTitle}`}
       >
         <EventHeroImage
-          key={imageSrc}
-          imageSrc={imageSrc}
+          sources={sources}
           safeTitle={safeTitle}
           title={title}
-          imageQuality={imageQuality}
-          effectiveUnoptimized={effectiveUnoptimized}
           onError={handleImageError}
         />
       </a>

@@ -1,15 +1,13 @@
-import NextImage from "next/image";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
-import { env } from "@utils/helpers";
 import { ImageComponentProps } from "types/common";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
   getOptimalImageWidth,
 } from "@utils/image-quality";
-import { buildOptimizedImageUrl } from "@utils/image-cache";
+import { buildPictureSourceUrls } from "@utils/image-cache";
 
-// Server-side compatible Image component
+// Server-side compatible Image component with modern format support (AVIF > WebP > JPEG)
 function ImageServer({
   title = "",
   image,
@@ -21,7 +19,7 @@ function ImageServer({
   region,
   date,
   quality,
-  context = "card", // Add context prop for size optimization
+  context = "card",
   cacheKey,
 }: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
   const imageQuality = getOptimalImageQuality({
@@ -32,15 +30,14 @@ function ImageServer({
 
   const imageWidth = getOptimalImageWidth(context);
 
-  // buildOptimizedImageUrl handles null/empty input and returns "" for invalid URLs (e.g., overly long)
-  // Pass width and quality to the proxy for server-side optimization
-  const finalImageSrc = buildOptimizedImageUrl(image ?? "", cacheKey, {
+  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  const sources = buildPictureSourceUrls(image ?? "", cacheKey, {
     width: imageWidth,
     quality: imageQuality,
   });
 
   // Show fallback if no image or URL normalization failed
-  if (!finalImageSrc) {
+  if (!sources.fallback) {
     return (
       <div
         className={className}
@@ -60,42 +57,37 @@ function ImageServer({
     );
   }
 
-  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
+  const sizes = getOptimalImageSizes(context);
 
-  // Since we're already doing server-side optimization in the proxy,
-  // we can skip the Next.js optimizer to avoid double-processing
+  // Use native <picture> element for proper format fallback:
+  // - Browser tries AVIF first (best compression, 95% support)
+  // - Falls back to WebP (97% support)
+  // - Falls back to JPEG (100% support)
+  // Our proxy handles all optimization, so we don't need Next.js Image optimizer
   return (
     <div
       className={className}
       style={{
         position: "relative",
-        aspectRatio: "500 / 260", // Prevent CLS by reserving space
-        maxWidth: "100%", // Ensure image doesn't exceed container
+        aspectRatio: "500 / 260",
+        maxWidth: "100%",
       }}
     >
-      <NextImage
-        className="object-cover w-full h-full"
-        src={finalImageSrc}
-        alt={alt}
-        width={500}
-        height={260}
-        loading={priority ? "eager" : "lazy"}
-        quality={imageQuality}
-        style={{
-          objectFit: "cover",
-          width: "100%",
-          height: "auto", // Maintain aspect ratio
-          maxWidth: "100%", // Ensure image respects container constraints
-        }}
-        priority={priority}
-        fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
-        sizes={getOptimalImageSizes(context)}
-        // On SST/OpenNext, internal /api/* image sources can cause the optimizer Lambda
-        // to attempt an S3 asset lookup and fail with AccessDenied. Bypass optimization.
-        // Note: Our image proxy now handles optimization (resize, format conversion, quality)
-        // so we don't lose quality by bypassing Next.js optimizer.
-        unoptimized={shouldBypassOptimizer || env === "dev"}
-      />
+      <picture>
+        <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+        <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+        <img
+          className="object-cover w-full h-full absolute inset-0"
+          src={sources.fallback}
+          alt={alt}
+          width={500}
+          height={260}
+          loading={priority ? "eager" : "lazy"}
+          decoding={priority ? "sync" : "async"}
+          fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
+          sizes={sizes}
+        />
+      </picture>
     </div>
   );
 }

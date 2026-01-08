@@ -478,6 +478,8 @@ export interface ImageProxyOptions {
   width?: number;
   /** Quality 1-100 (use getOptimalImageQuality() for recommended values) */
   quality?: number;
+  /** Output format override (avif, webp). Bypasses Accept header detection. */
+  format?: "avif" | "webp";
 }
 
 export interface ActiveLinkProps extends Omit<LinkProps, "href"> {

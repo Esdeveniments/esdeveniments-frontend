@@ -235,10 +235,16 @@ export async function GET(request: Request) {
     parseInt(url.searchParams.get("w") || "", 10) || CARD_WIDTH;
   const requestedQuality =
     parseInt(url.searchParams.get("q") || "", 10) || DEFAULT_QUALITY;
-  // Determine output format based on Accept header (prefer AVIF > WebP > original)
+  // Determine output format:
+  // 1. Explicit format param takes priority (avif, webp, jpeg, png)
+  // 2. Falls back to Accept header (but CloudFront may not forward it)
+  // 3. Defaults to source format or JPEG
+  const formatParam = url.searchParams.get("format")?.toLowerCase();
   const acceptHeader = request.headers.get("accept") || "";
-  const preferAvif = acceptHeader.includes("image/avif");
-  const preferWebp = acceptHeader.includes("image/webp");
+  const preferAvif =
+    formatParam === "avif" || (!formatParam && acceptHeader.includes("image/avif"));
+  const preferWebp =
+    formatParam === "webp" || (!formatParam && acceptHeader.includes("image/webp"));
 
   // Clamp values to reasonable limits
   const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);

@@ -214,6 +214,12 @@ export default $config({
         })(),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
+      server: {
+        // Install sharp in the server function bundle.
+        // OpenNext excludes sharp by default (only installs it for the image optimizer).
+        // Since we have a custom /api/image-proxy using sharp, we need to include it.
+        install: ["sharp"],
+      },
       transform: {
         server: (args) => {
           // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x
