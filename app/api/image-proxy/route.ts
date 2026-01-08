@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Agent } from "undici";
-import { normalizeExternalImageUrl } from "@utils/image-cache";
+import { normalizeExternalImageUrl, isLegacyFileHandler } from "@utils/image-cache";
 import sharp from "sharp";
 
 const MAX_BYTES = 5_000_000; // 5MB guard
@@ -33,7 +33,11 @@ function getCacheControl(hasCacheKey: boolean): string {
 // Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
 // Node's TLS verification rejects these, so we selectively bypass verification only for
 // known-bad hosts.
-const BROKEN_TLS_HOST_SUFFIXES = [".altanet.org", ".biguesiriells.cat"];
+const BROKEN_TLS_HOST_SUFFIXES = [
+  ".altanet.org",
+  ".biguesiriells.cat",
+  ".l-h.cat",
+];
 
 const insecureTlsDispatcher = new Agent({
   connect: {
@@ -75,15 +79,18 @@ async function fetchWithTimeout(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
+    const bypassTls = shouldBypassTlsVerification(url);
     const init: RequestInit & { dispatcher?: unknown } = {
       signal: controller.signal,
     };
 
-    if (shouldBypassTlsVerification(url)) {
+    if (bypassTls) {
       init.dispatcher = insecureTlsDispatcher;
     }
 
     return await fetch(url, init as RequestInit);
+  } catch {
+    throw new Error(`Fetch failed for ${url}`);
   } finally {
     clearTimeout(timeout);
   }
@@ -252,8 +259,12 @@ export async function GET(request: Request) {
   // Check if URL has cache key BEFORE stripping (for cache header logic later)
   const hasCacheKey = hasStrongCacheKey(normalized);
 
-  // Strip ?v= before fetching upstream - some servers reject unknown query params
-  const upstreamUrl = stripCacheKeyForUpstream(normalized);
+  // Strip ?v= before fetching upstream - some servers reject unknown query params.
+  // Skip for legacy file handlers (.ashx) which have non-standard query strings
+  // that get corrupted by URL object serialization (adds trailing "=").
+  const upstreamUrl = isLegacyFileHandler(normalized)
+    ? normalized
+    : stripCacheKeyForUpstream(normalized);
 
   const originalWasHttp = (() => {
     try {

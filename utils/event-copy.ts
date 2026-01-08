@@ -29,6 +29,19 @@ function isValidTime(t: string | null): t is string {
   return !!t && t !== "00:00";
 }
 
+/**
+ * Strip seconds from time string (e.g., "18:30:00" → "18:30")
+ * Handles HH:MM:SS and HH:MM formats
+ */
+function formatTimeWithoutSeconds(time: string): string {
+  // Match HH:MM:SS or HH:MM format
+  const match = time.match(/^(\d{1,2}:\d{2})(:\d{2})?$/);
+  if (match) {
+    return match[1]; // Return only HH:MM part
+  }
+  return time; // Return as-is if format doesn't match
+}
+
 function normalize(s: string): string {
   // remove accents and lowercase for robust matching
   return s
@@ -428,22 +441,28 @@ export async function buildEventIntroText(
       displayedTitle = `${article} ${romanNumeral} ${nextWord}${restOfTitle}`;
     } else {
       // attach article to title (L' + title vs El + ' ' + title)
-      // Keep first word of title lowercase
-      const firstWord = titleLower.split(/\s+/)[0] || "";
-      const restOfTitleLower = titleLower.split(/\s+/).slice(1).join(" ");
+      // Preserve original title casing for proper nouns (e.g., "Reis Mags d'Orient")
+      const firstWordOriginal = rawTitle.split(/\s+/)[0] || "";
+      const restOfTitleOriginal = rawTitle.split(/\s+/).slice(1).join(" ");
+      // Lowercase only the first letter of the first word (Catalan grammar)
+      const firstWordLower = firstWordOriginal.charAt(0).toLowerCase() + firstWordOriginal.slice(1);
       displayedTitle = article.endsWith("'")
-        ? `${article}${firstWord}${
-            restOfTitleLower ? " " + restOfTitleLower : ""
+        ? `${article}${firstWordLower}${
+            restOfTitleOriginal ? " " + restOfTitleOriginal : ""
           }`
-        : `${article} ${firstWord}${
-            restOfTitleLower ? " " + restOfTitleLower : ""
+        : `${article} ${firstWordLower}${
+            restOfTitleOriginal ? " " + restOfTitleOriginal : ""
           }`;
     }
   }
 
   const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
-  const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
-  const endTimeLabel = isValidTime(normalizedEndTime) ? normalizedEndTime : "";
+  const startTimeLabel = isValidTime(event.startTime)
+    ? formatTimeWithoutSeconds(event.startTime)
+    : "";
+  const endTimeLabel = isValidTime(normalizedEndTime)
+    ? formatTimeWithoutSeconds(normalizedEndTime)
+    : "";
 
   const timePart = startTimeLabel
     ? `${startTimeLabel}${endTimeLabel ? `–${endTimeLabel}` : ""}`
@@ -511,8 +530,12 @@ export async function buildFaqItems(
         .replace("{start}", formattedStart);
 
   const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
-  const startTimeLabel = isValidTime(event.startTime) ? event.startTime : "";
-  const endTimeLabel = isValidTime(normalizedEndTime) ? normalizedEndTime : "";
+  const startTimeLabel = isValidTime(event.startTime)
+    ? formatTimeWithoutSeconds(event.startTime)
+    : "";
+  const endTimeLabel = isValidTime(normalizedEndTime)
+    ? formatTimeWithoutSeconds(normalizedEndTime)
+    : "";
   const hasDistinctEndTime = Boolean(startTimeLabel) && Boolean(endTimeLabel);
   const timeLabel = startTimeLabel
     ? `${startTimeLabel}${hasDistinctEndTime ? ` - ${endTimeLabel}` : ""}`

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { parseISO, isValid, differenceInCalendarDays, format } from "date-fns";
 import { useTranslations } from "next-intl";
 import { computeTemporalStatus, buildEventStatusLabels } from "@utils/event-status";
+import { sendGoogleEvent } from "@utils/analytics";
 import {
   RestaurantPromotionSectionProps,
   PlacesResponse,
@@ -88,6 +89,16 @@ export default function RestaurantPromotionSection({
     return { eventIsWithinFetchWindow, eventIsInFuture };
   }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime, statusLabels]);
 
+  // Track section view when visible and places are loaded
+  useEffect(() => {
+    if (isVisible && placesResp && placesResp.results?.length > 0) {
+      sendGoogleEvent("restaurant_section_view", {
+        context: "event_detail",
+        places_count: placesResp.results.length,
+      });
+    }
+  }, [isVisible, placesResp]);
+
   // Fetch places when section becomes visible and event is in future and within the fetch window
   useEffect(() => {
     if (!isVisible || !eventStartDate || !eventLat || !eventLng || placesResp) {
@@ -149,7 +160,12 @@ export default function RestaurantPromotionSection({
       {isLoading && (
         <WhereToEatSkeleton
           items={2}
-          onPromoteClick={() => setOpenPromoInfo(true)}
+          onPromoteClick={() => {
+            sendGoogleEvent("restaurant_promote_click", {
+              context: "where_to_eat_skeleton",
+            });
+            setOpenPromoInfo(true);
+          }}
         />
       )}
 
@@ -170,7 +186,12 @@ export default function RestaurantPromotionSection({
         <WhereToEatSection
           places={placesResp.results}
           attribution={placesResp.attribution}
-          onPromoteClick={() => setOpenPromoInfo(true)}
+          onPromoteClick={() => {
+            sendGoogleEvent("restaurant_promote_click", {
+              context: "where_to_eat",
+            });
+            setOpenPromoInfo(true);
+          }}
         />
       )}
 
