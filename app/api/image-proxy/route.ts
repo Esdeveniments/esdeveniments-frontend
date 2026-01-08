@@ -8,7 +8,10 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Agent } from "undici";
-import { normalizeExternalImageUrl } from "@utils/image-cache";
+import {
+  normalizeExternalImageUrl,
+  isLegacyFileHandler,
+} from "@utils/image-cache";
 // Dynamic import to avoid Turbopack bundling issues with native modules in Lambda
 import type { Sharp } from "sharp";
 
