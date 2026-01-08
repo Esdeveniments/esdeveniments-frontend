@@ -385,14 +385,15 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (preferAvif) {
-          // AVIF: best compression, wide modern browser support
-          outputBuffer = await sharpInstance
-            .avif({ quality, effort: 4 })
-            .toBuffer();
-          outputContentType = "image/avif";
-        } else if (preferWebp) {
+        if (preferWebp) {
           // WebP: excellent compression, universal modern browser support
+          // Note: AVIF disabled - Sharp in Lambda produces invalid AVIF output
+          outputBuffer = await sharpInstance
+            .webp({ quality, effort: 4 })
+            .toBuffer();
+          outputContentType = "image/webp";
+        } else if (preferAvif) {
+          // AVIF requested but we serve WebP instead (AVIF broken in Lambda)
           outputBuffer = await sharpInstance
             .webp({ quality, effort: 4 })
             .toBuffer();
