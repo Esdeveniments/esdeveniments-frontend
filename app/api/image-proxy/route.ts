@@ -93,8 +93,8 @@ async function fetchWithTimeout(url: string) {
     }
 
     return await fetch(url, init as RequestInit);
-  } catch {
-    throw new Error(`Fetch failed for ${url}`);
+  } catch (error) {
+    throw new Error(`Fetch failed for ${url}`, { cause: error });
   } finally {
     clearTimeout(timeout);
   }

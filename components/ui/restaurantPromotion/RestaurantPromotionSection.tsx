@@ -89,15 +89,22 @@ export default function RestaurantPromotionSection({
     return { eventIsWithinFetchWindow, eventIsInFuture };
   }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime, statusLabels]);
 
-  // Track section view when visible and places are loaded
+  // Track section view when visible and places are loaded (fire only once)
+  const [hasTrackedView, setHasTrackedView] = useState(false);
   useEffect(() => {
-    if (isVisible && placesResp && placesResp.results?.length > 0) {
+    if (
+      !hasTrackedView &&
+      isVisible &&
+      placesResp &&
+      placesResp.results?.length > 0
+    ) {
       sendGoogleEvent("restaurant_section_view", {
         context: "event_detail",
         places_count: placesResp.results.length,
       });
+      setHasTrackedView(true);
     }
-  }, [isVisible, placesResp]);
+  }, [isVisible, placesResp, hasTrackedView]);
 
   // Fetch places when section becomes visible and event is in future and within the fetch window
   useEffect(() => {

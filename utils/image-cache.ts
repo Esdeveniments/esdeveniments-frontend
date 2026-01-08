@@ -64,7 +64,9 @@ export function normalizeExternalImageUrl(imageUrl: string): string {
     // Only do minimal normalization: lowercase protocol
     const protocolMatch = trimmed.match(/^(https?:\/\/)/i);
     if (protocolMatch) {
-      return protocolMatch[1].toLowerCase() + trimmed.slice(protocolMatch[1].length);
+      return (
+        protocolMatch[1].toLowerCase() + trimmed.slice(protocolMatch[1].length)
+      );
     }
     return trimmed;
   }
@@ -277,46 +279,9 @@ export function buildOptimizedImageUrl(
     trimmed.startsWith("//");
 
   if (shouldProxy) {
-    // Use string-based operations to avoid URL object serialization differences
-    // between Node.js and browser (hydration mismatch with special chars like commas)
-    let absolute = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
-
-    // For legacy handlers (.ashx), preserve URL structure exactly
-    // Other URLs: collapse duplicate slashes in pathname (after protocol)
-    if (!looksLikeLegacyHandler(absolute)) {
-      const protocolEnd = absolute.indexOf("://");
-      if (protocolEnd !== -1) {
-        const afterProtocol = absolute.slice(protocolEnd + 3);
-        const hostEnd = afterProtocol.indexOf("/");
-        if (hostEnd !== -1) {
-          const host = afterProtocol.slice(0, hostEnd);
-          const pathAndRest = afterProtocol.slice(hostEnd);
-          // Split path from query/hash
-          const queryIndex = pathAndRest.indexOf("?");
-          const hashIndex = pathAndRest.indexOf("#");
-          const pathEnd =
-            queryIndex !== -1
-              ? queryIndex
-              : hashIndex !== -1
-              ? hashIndex
-              : pathAndRest.length;
-          const pathname = pathAndRest
-            .slice(0, pathEnd)
-            .replace(/\/{2,}/g, "/");
-          const suffix = pathAndRest.slice(pathEnd);
-          absolute = `${absolute.slice(
-            0,
-            protocolEnd + 3
-          )}${host}${pathname}${suffix}`;
-        }
-      }
-    }
-
-    // Add cache key using string operations
-    const urlWithKey =
-      cacheKey !== undefined && cacheKey !== null
-        ? withImageCacheKey(absolute, cacheKey)
-        : absolute;
+    // withImageCacheKey already handles all normalization (protocol-relative,
+    // legacy handlers, slash collapsing) via normalizeExternalImageUrl
+    const urlWithKey = withImageCacheKey(trimmed, cacheKey);
 
     return toProxiedImageUrl(urlWithKey, options);
   }
@@ -333,7 +298,7 @@ export function buildOptimizedImageUrl(
  * Generate URLs for <picture> element sources with modern format fallbacks.
  * Returns WebP, AVIF, and JPEG URLs for progressive enhancement.
  * WebP is prioritized over AVIF for faster encoding and more reliable output.
- * 
+ *
  * Usage:
  * ```tsx
  * const sources = buildPictureSourceUrls(imageUrl, cacheKey, { width, quality });
@@ -350,10 +315,16 @@ export function buildPictureSourceUrls(
   options?: Omit<ImageProxyOptions, "format">
 ): { avif: string; webp: string; fallback: string } {
   const baseOptions = options ?? {};
-  
+
   return {
-    avif: buildOptimizedImageUrl(imageUrl, cacheKey, { ...baseOptions, format: "avif" }),
-    webp: buildOptimizedImageUrl(imageUrl, cacheKey, { ...baseOptions, format: "webp" }),
+    avif: buildOptimizedImageUrl(imageUrl, cacheKey, {
+      ...baseOptions,
+      format: "avif",
+    }),
+    webp: buildOptimizedImageUrl(imageUrl, cacheKey, {
+      ...baseOptions,
+      format: "webp",
+    }),
     fallback: buildOptimizedImageUrl(imageUrl, cacheKey, baseOptions), // JPEG (no format param)
   };
 }
