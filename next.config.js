@@ -170,7 +170,14 @@ module.exports = withSentryConfig(
     // Sentry configuration options (Next.js 16 / Sentry v10+)
     webpack: {
       treeshake: {
+        // Remove SDK debug logging code
         removeDebugLogging: true,
+        // Remove tracing code since tracesSampleRate is 0
+        removeTracing: true,
+        // Remove iframe capture code from Session Replay
+        excludeReplayIframe: true,
+        // Remove shadow DOM capture code from Session Replay
+        excludeReplayShadowDOM: true,
       },
       automaticVercelMonitors: true,
     },
