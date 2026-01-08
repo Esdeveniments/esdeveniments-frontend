@@ -2,7 +2,7 @@
 // The config you add here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import { init, replayIntegration, captureRouterTransitionStart } from "@sentry/nextjs";
+import { init, addIntegration, captureRouterTransitionStart } from "@sentry/nextjs";
 import type { BrowserOptions } from "@sentry/nextjs";
 import { beforeSendClient, beforeSendMetric } from "@utils/sentry-helpers";
 
@@ -30,13 +30,8 @@ if (process.env.NODE_ENV === "production") {
     // Privacy: explicitly disable sending PII by default
     sendDefaultPii: false,
     debug: false,
-    integrations: [
-      replayIntegration({
-        // Privacy defaults: avoid capturing typed content.
-        maskAllText: true,
-        blockAllMedia: false,
-      }),
-    ],
+    // Session Replay is lazy-loaded below for smaller initial bundle (~60KB savings)
+    integrations: [],
     // Errors-only: do not send console logs as Sentry logs.
     enableLogs: false,
     // Metrics: automatically enabled in v10.25.0+ (no explicit enableMetrics needed)
@@ -48,6 +43,18 @@ if (process.env.NODE_ENV === "production") {
   };
 
   init(config);
+
+  // Lazy-load Session Replay to reduce initial bundle size (~60KB savings)
+  // Replay is only loaded when needed (replaysOnErrorSampleRate: 1.0)
+  import("@sentry/nextjs").then((lazyLoadedSentry) => {
+    addIntegration(
+      lazyLoadedSentry.replayIntegration({
+        // Privacy defaults: avoid capturing typed content.
+        maskAllText: true,
+        blockAllMedia: false,
+      })
+    );
+  });
 }
 
 // Export router transition tracking for Next.js App Router navigation monitoring
