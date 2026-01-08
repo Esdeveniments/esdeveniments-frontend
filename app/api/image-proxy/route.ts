@@ -343,9 +343,11 @@ export async function GET(request: Request) {
         });
       }
 
-      // Process image with Sharp (dynamic import to avoid Turbopack bundling issues)
+      // Process image with Sharp
+      // Use require() instead of dynamic import() to work with serverExternalPackages
+      // Turbopack mangles dynamic imports into hashed names that fail at runtime in Lambda
       try {
-        const sharp = (await import("sharp")).default;
+        const sharp: typeof import("sharp") = require("sharp");
         let sharpInstance: Sharp = sharp(imageBuffer);
 
         // Get image metadata to determine if resize is needed
