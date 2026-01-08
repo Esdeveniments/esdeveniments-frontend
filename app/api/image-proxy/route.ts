@@ -431,6 +431,10 @@ export async function GET(request: Request) {
         });
       } catch (sharpError) {
         // If Sharp processing fails, fall back to original image
+        const errorMessage =
+          sharpError instanceof Error ? sharpError.message : String(sharpError);
+        console.error("[image-proxy] Sharp processing failed:", errorMessage);
+
         if (process.env.NODE_ENV === "production") {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
@@ -445,6 +449,7 @@ export async function GET(request: Request) {
             "Content-Type": sourceType,
             "Cache-Control": "public, max-age=300, s-maxage=300",
             "X-Image-Proxy-Optimized": "fallback-sharp-error",
+            "X-Image-Proxy-Error": errorMessage.slice(0, 200), // Truncate for header safety
           },
         });
       }
