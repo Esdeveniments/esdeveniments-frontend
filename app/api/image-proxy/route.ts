@@ -344,10 +344,12 @@ export async function GET(request: Request) {
       }
 
       // Process image with Sharp
-      // Use require() instead of dynamic import() to work with serverExternalPackages
-      // Turbopack mangles dynamic imports into hashed names that fail at runtime in Lambda
+      // Use eval("require") to completely bypass Turbopack's module resolution
+      // Turbopack mangles both import() and require() into hashed names that fail at runtime
+      // eval() prevents static analysis, forcing runtime resolution of the native module
       try {
-        const sharp: typeof import("sharp") = require("sharp");
+        // eslint-disable-next-line no-eval
+        const sharp: typeof import("sharp") = eval("require")("sharp");
         let sharpInstance: Sharp = sharp(imageBuffer);
 
         // Get image metadata to determine if resize is needed
