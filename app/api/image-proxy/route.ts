@@ -9,7 +9,8 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Agent } from "undici";
 import { normalizeExternalImageUrl } from "@utils/image-cache";
-import sharp from "sharp";
+// Dynamic import to avoid Turbopack bundling issues with native modules in Lambda
+import type { Sharp } from "sharp";
 
 const MAX_BYTES = 5_000_000; // 5MB guard
 const TIMEOUT_MS = 5000;
@@ -336,9 +337,10 @@ export async function GET(request: Request) {
         });
       }
 
-      // Process image with Sharp
+      // Process image with Sharp (dynamic import to avoid Turbopack bundling issues)
       try {
-        let sharpInstance = sharp(imageBuffer);
+        const sharp = (await import("sharp")).default;
+        let sharpInstance: Sharp = sharp(imageBuffer);
 
         // Get image metadata to determine if resize is needed
         const metadata = await sharpInstance.metadata();
