@@ -126,11 +126,11 @@
       "last 1 safari version"
     ],
     "production": [
-      "chrome >= 110",
-      "edge >= 110",
-      "firefox >= 115",
-      "safari >= 16",
-      "ios_saf >= 16.4"
+      "chrome >= 119",
+      "edge >= 119",
+      "firefox >= 121",
+      "safari >= 17",
+      "ios_saf >= 17"
     ]
   },
   "resolutions": {

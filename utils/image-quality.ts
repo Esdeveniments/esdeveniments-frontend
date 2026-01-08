@@ -33,8 +33,8 @@ export function getOptimalImageQuality({
   // NOTE: Return values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
   if (isExternal) {
     if (isPriority) {
-      // LCP external images: 60 quality for critical loading
-      return 60;
+      // LCP external images: 50 quality (reduced from 60 for faster LCP)
+      return 50;
     } else {
       // For regular external images, use capped quality for performance
       // Capped at 50 to reduce payload on listing cards
@@ -66,7 +66,7 @@ export function getServerImageQuality(networkQuality?: NetworkQuality): number {
  * NOTE: Values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
  */
 export const QUALITY_PRESETS = {
-  LCP_EXTERNAL: 60, // LCP external images
+  LCP_EXTERNAL: 50, // LCP external images (reduced from 60 for faster LCP)
   EXTERNAL_HIGH: 50, // High-quality external images
   EXTERNAL_STANDARD: 50, // Regular external images (mapped to allowed 50)
   EXTERNAL_MOBILE: 35, // Mobile/slow connections (mapped to allowed 35)
@@ -101,10 +101,10 @@ export const getOptimalImageWidth = (
   context: "card" | "hero" | "list" | "detail" = "card"
 ): number => {
   const widthMap = {
-    // Event cards: max 700px covers typical 2-3 column layouts on desktop
-    card: 700,
-    // Hero/featured images: larger for full-width displays
-    hero: 1200,
+    // Event cards: 500px covers ~280px display at 2x retina (matches CARD_WIDTH in image-proxy)
+    card: 500,
+    // Hero/featured images: reduced from 1200 to 1000 for faster LCP
+    hero: 1000,
     // List view / horizontal cards
     list: 500,
     // Detail page images

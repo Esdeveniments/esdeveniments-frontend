@@ -18,9 +18,9 @@ const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 
 // Image optimization defaults
-const DEFAULT_QUALITY = 50; // Matches QUALITY_PRESETS.EXTERNAL_STANDARD
+const DEFAULT_QUALITY = 40; // Reduced from 50 for better compression (WebP/JPEG handle this well)
 const MAX_WIDTH = 1920;
-const CARD_WIDTH = 700; // Default card image width
+const CARD_WIDTH = 500; // Reduced from 700 - cards display at ~280px, 500 covers 2x retina
 const MIN_SIZE_FOR_OPTIMIZATION = 10_000; // 10KB - skip optimization for tiny images
 const ANIMATED_GIF_FRAME_THRESHOLD = 1; // If GIF has more than 1 frame, skip optimization
 
@@ -249,9 +249,11 @@ export async function GET(request: Request) {
   const formatParam = url.searchParams.get("format")?.toLowerCase();
   const acceptHeader = request.headers.get("accept") || "";
   const preferAvif =
-    formatParam === "avif" || (!formatParam && acceptHeader.includes("image/avif"));
+    formatParam === "avif" ||
+    (!formatParam && acceptHeader.includes("image/avif"));
   const preferWebp =
-    formatParam === "webp" || (!formatParam && acceptHeader.includes("image/webp"));
+    formatParam === "webp" ||
+    (!formatParam && acceptHeader.includes("image/webp"));
 
   // Clamp values to reasonable limits
   const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
@@ -357,7 +359,6 @@ export async function GET(request: Request) {
       // Process image with Sharp
       // Lambda: eval("require") bypasses Turbopack's module mangling
       try {
-         
         const sharp = eval("require")("sharp") as typeof import("sharp");
         let sharpInstance: Sharp = sharp(imageBuffer);
 
