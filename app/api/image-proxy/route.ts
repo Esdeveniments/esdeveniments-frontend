@@ -8,8 +8,9 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Agent } from "undici";
-import { normalizeExternalImageUrl, isLegacyFileHandler } from "@utils/image-cache";
-import sharp from "sharp";
+import { normalizeExternalImageUrl } from "@utils/image-cache";
+// Dynamic import to avoid Turbopack bundling issues with native modules in Lambda
+import type { Sharp } from "sharp";
 
 const MAX_BYTES = 5_000_000; // 5MB guard
 const TIMEOUT_MS = 5000;
@@ -241,10 +242,16 @@ export async function GET(request: Request) {
     parseInt(url.searchParams.get("w") || "", 10) || CARD_WIDTH;
   const requestedQuality =
     parseInt(url.searchParams.get("q") || "", 10) || DEFAULT_QUALITY;
-  // Determine output format based on Accept header (prefer AVIF > WebP > original)
+  // Determine output format:
+  // 1. Explicit format param takes priority (avif, webp, jpeg, png)
+  // 2. Falls back to Accept header (but CloudFront may not forward it)
+  // 3. Defaults to source format or JPEG
+  const formatParam = url.searchParams.get("format")?.toLowerCase();
   const acceptHeader = request.headers.get("accept") || "";
-  const preferAvif = acceptHeader.includes("image/avif");
-  const preferWebp = acceptHeader.includes("image/webp");
+  const preferAvif =
+    formatParam === "avif" || (!formatParam && acceptHeader.includes("image/avif"));
+  const preferWebp =
+    formatParam === "webp" || (!formatParam && acceptHeader.includes("image/webp"));
 
   // Clamp values to reasonable limits
   const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
@@ -348,8 +355,11 @@ export async function GET(request: Request) {
       }
 
       // Process image with Sharp
+      // Lambda: eval("require") bypasses Turbopack's module mangling
       try {
-        let sharpInstance = sharp(imageBuffer);
+         
+        const sharp = eval("require")("sharp") as typeof import("sharp");
+        let sharpInstance: Sharp = sharp(imageBuffer);
 
         // Get image metadata to determine if resize is needed
         const metadata = await sharpInstance.metadata();
@@ -384,14 +394,10 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (preferAvif) {
-          // AVIF: best compression, wide modern browser support
-          outputBuffer = await sharpInstance
-            .avif({ quality, effort: 4 })
-            .toBuffer();
-          outputContentType = "image/avif";
-        } else if (preferWebp) {
-          // WebP: excellent compression, universal modern browser support
+        if (preferAvif || preferWebp) {
+          // WebP: excellent compression, fast encoding, reliable output
+          // We always use WebP for modern formats - AVIF encoding is slower
+          // and has caused issues with certain source images
           outputBuffer = await sharpInstance
             .webp({ quality, effort: 4 })
             .toBuffer();
@@ -434,6 +440,10 @@ export async function GET(request: Request) {
         });
       } catch (sharpError) {
         // If Sharp processing fails, fall back to original image
+        const errorMessage =
+          sharpError instanceof Error ? sharpError.message : String(sharpError);
+        console.error("[image-proxy] Sharp processing failed:", errorMessage);
+
         if (process.env.NODE_ENV === "production") {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
@@ -442,12 +452,19 @@ export async function GET(request: Request) {
 
         // Return original image without processing
         // Use short cache to allow retry after transient Sharp failures
+        // Sanitize error message for HTTP header (remove newlines, control chars, truncate)
+        const sanitizedError = errorMessage
+          .replace(/[\r\n\t]/g, " ")
+          .replace(/[^\x20-\x7E]/g, "")
+          .slice(0, 100);
+
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
             "Content-Type": sourceType,
             "Cache-Control": "public, max-age=300, s-maxage=300",
             "X-Image-Proxy-Optimized": "fallback-sharp-error",
+            "X-Image-Proxy-Error": sanitizedError || "unknown",
           },
         });
       }

@@ -20,6 +20,14 @@ const nextConfig = {
   // --- SST/OpenNext Configuration ---
   // Required for SST deployment (uses OpenNext adapter)
   output: "standalone",
+  // Mark sharp and its native dependencies as external - required for SST/Lambda deployment
+  // Sharp has native binaries that must be bundled separately for the target platform
+  // Include @img/* packages to ensure Turbopack doesn't mangle the module resolution
+  serverExternalPackages: [
+    "sharp",
+    "@img/sharp-linux-x64",
+    "@img/sharp-libvips-linux-x64",
+  ],
   // Disable incremental cache while SST/OpenNext lacks __fetch bucket
   cacheHandler: undefined,
   cacheMaxMemorySize: 0,

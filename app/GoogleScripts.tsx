@@ -199,7 +199,7 @@ export default function GoogleScripts() {
 
       {!isE2ETestMode && (
         <>
-          {/* AdBlock Detection - keep afterInteractive (UI logic) */}
+          {/* AdBlock Detection - must run before Funding Choices */}
           <Script id="google-adblock" strategy="afterInteractive">
             {`
               (function() {
@@ -221,7 +221,7 @@ export default function GoogleScripts() {
             `}
           </Script>
 
-          {/* Funding Choices (CMP) - keep afterInteractive */}
+          {/* Funding Choices (CMP) - must load early for consent */}
           <Script
             src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
             strategy="afterInteractive"

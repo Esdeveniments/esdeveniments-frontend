@@ -214,6 +214,17 @@ export default $config({
         })(),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
+      server: {
+        // Install sharp with linux-x64 binaries in the server function bundle.
+        // OpenNext excludes sharp by default (only installs it for the image optimizer).
+        // Since we have a custom /api/image-proxy using sharp, we need to include it.
+        // Include platform-specific packages explicitly for Lambda (linux-x64)
+        install: [
+          "sharp",
+          "@img/sharp-linux-x64",
+          "@img/sharp-libvips-linux-x64",
+        ],
+      },
       transform: {
         server: (args) => {
           // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x
@@ -221,7 +232,9 @@ export default $config({
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
           args.memory = "1792 MB"; // Reduced from 3008 MB (1 vCPU equivalent) - saves ~$30/month
           args.timeout = "20 seconds";
-          args.architecture = "arm64";
+          // Using x64 architecture for better compatibility with native modules (sharp)
+          // CI builds on ubuntu-latest (x64), so Lambda must also be x64
+          args.architecture = "x86_64";
           // Sentry layer ARN - configurable per environment/region
           // Defaults to eu-west-3 version 283 if not specified
           args.layers = process.env.SENTRY_LAYER_ARN

@@ -1,4 +1,3 @@
-import NextImage from "next/image";
 import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
@@ -11,7 +10,7 @@ import {
   getOptimalImageSizes,
   getOptimalImageWidth,
 } from "@utils/image-quality";
-import { buildOptimizedImageUrl } from "@utils/image-cache";
+import { buildPictureSourceUrls } from "@utils/image-cache";
 
 export default async function NewsCard({
   event,
@@ -37,13 +36,13 @@ export default async function NewsCard({
     const heroImageWidth = getOptimalImageWidth("hero");
     const heroImageSizes = getOptimalImageSizes("hero");
 
-    // Optimize external images through proxy
-    const heroImage = rawImage
-      ? buildOptimizedImageUrl(rawImage, event.updatedAt, {
+    // Generate AVIF, WebP, and JPEG URLs for <picture> element
+    const heroSources = rawImage
+      ? buildPictureSourceUrls(rawImage, event.updatedAt, {
         width: heroImageWidth,
         quality: heroImageQuality,
       })
-      : "";
+      : null;
 
     return (
       <PressableAnchor
@@ -54,17 +53,21 @@ export default async function NewsCard({
         aria-label={event.title}
       >
         <section className="relative w-full overflow-hidden rounded-xl">
-          {heroImage ? (
+          {heroSources ? (
             <div className="relative aspect-[16/9] w-full">
-              <NextImage
-                src={heroImage}
-                alt={event.title}
-                fill
-                unoptimized
-                priority
-                sizes={heroImageSizes}
-                className="object-cover"
-              />
+              <picture>
+                <source srcSet={heroSources.avif} type="image/avif" sizes={heroImageSizes} />
+                <source srcSet={heroSources.webp} type="image/webp" sizes={heroImageSizes} />
+                <img
+                  src={heroSources.fallback}
+                  alt={event.title}
+                  loading="eager"
+                  decoding="sync"
+                  fetchPriority="high"
+                  sizes={heroImageSizes}
+                  className="object-cover w-full h-full absolute inset-0"
+                />
+              </picture>
             </div>
           ) : (
             <div className="aspect-[16/9] w-full bg-gradient-to-br from-primary-soft to-primary" />
@@ -105,13 +108,13 @@ export default async function NewsCard({
   const cardImageWidth = getOptimalImageWidth("card");
   const cardImageSizes = getOptimalImageSizes("card");
 
-  // Optimize external images through proxy
-  const cardImage = rawImage
-    ? buildOptimizedImageUrl(rawImage, event.updatedAt, {
+  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  const cardSources = rawImage
+    ? buildPictureSourceUrls(rawImage, event.updatedAt, {
       width: cardImageWidth,
       quality: cardImageQuality,
     })
-    : "";
+    : null;
 
   return (
     <PressableAnchor
@@ -123,16 +126,21 @@ export default async function NewsCard({
     >
       <article className="card-elevated group w-full overflow-hidden">
         <div className="relative overflow-hidden">
-          {cardImage ? (
-            <NextImage
-              src={cardImage}
-              alt={event.title}
-              width={1200}
-              height={675}
-              unoptimized
-              sizes={cardImageSizes}
-              className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
-            />
+          {cardSources ? (
+            <picture>
+              <source srcSet={cardSources.webp} type="image/webp" sizes={cardImageSizes} />
+              <source srcSet={cardSources.avif} type="image/avif" sizes={cardImageSizes} />
+              <img
+                src={cardSources.fallback}
+                alt={event.title}
+                width={1200}
+                height={675}
+                loading="lazy"
+                decoding="async"
+                sizes={cardImageSizes}
+                className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
+              />
+            </picture>
           ) : (
             <div className="aspect-[16/9] w-full bg-gradient-to-br from-foreground-strong to-border" />
           )}

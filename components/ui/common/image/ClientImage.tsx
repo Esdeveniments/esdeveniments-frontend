@@ -1,9 +1,7 @@
 "use client";
 
 import { memo, useState, useCallback } from "react";
-import NextImage from "next/image";
 import ImgDefault from "@components/ui/imgDefault";
-import { env } from "@utils/helpers";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImageRetry } from "@components/hooks/useImageRetry";
 import { ImageComponentProps } from "types/common";
@@ -14,10 +12,12 @@ import {
   getServerImageQuality,
   getOptimalImageWidth,
 } from "@utils/image-quality";
-import { buildOptimizedImageUrl } from "@utils/image-cache";
+import { buildPictureSourceUrls } from "@utils/image-cache";
 
 /**
- * ClientImage
+ * ClientImage with modern format support (WebP > AVIF > JPEG)
+ * Uses native <picture> element for proper format fallback.
+ * WebP is prioritized over AVIF for faster encoding and more reliable output.
  * Assumes a non-empty image URL is provided. Missing-image cases should be
  * short-circuited by the server wrapper (index.tsx) to avoid unnecessary hydration.
  */
@@ -46,14 +46,14 @@ function ClientImage({
 
   const imageWidth = getOptimalImageWidth(context);
 
-  // Pass width and quality to the proxy for server-side optimization
-  const finalImageSrc = buildOptimizedImageUrl(image, cacheKey, {
+  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  const sources = buildPictureSourceUrls(image, cacheKey, {
     width: imageWidth,
     quality: imageQuality,
   });
 
   // If URL normalization failed (e.g., overly long URL), treat as error to show fallback
-  if (!finalImageSrc) {
+  if (!sources.fallback) {
     return (
       <div
         className={className}
@@ -70,17 +70,16 @@ function ClientImage({
     );
   }
 
-  // Key the inner component by finalImageSrc to reset all hook state on navigation
+  // Key the inner component by fallback URL to reset all hook state on navigation
   return (
     <ClientImageInner
-      key={finalImageSrc}
-      finalImageSrc={finalImageSrc}
+      key={sources.fallback}
+      sources={sources}
       title={title}
       className={className}
       priority={priority}
       fetchPriority={fetchPriority}
       alt={alt}
-      imageQuality={imageQuality}
       context={context}
       location={location}
       region={region}
@@ -90,41 +89,38 @@ function ClientImage({
 }
 
 /**
- * Inner component that handles loading state.
+ * Inner component that handles loading state with <picture> element.
  * Keyed by image URL so all state resets on navigation.
  */
 function ClientImageInner({
-  finalImageSrc,
+  sources,
   title,
   className,
   priority,
   fetchPriority,
   alt,
-  imageQuality,
   context,
   location,
   region,
   date,
-}: ClientImageInnerProps) {
-  const [forceUnoptimized, setForceUnoptimized] = useState(false);
+}: Omit<ClientImageInnerProps, "finalImageSrc" | "imageQuality"> & {
+  sources: { avif: string; webp: string; fallback: string };
+}) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(true);
 
-  const { hasError, imageLoaded, showSkeleton, handleError, handleLoad, reset, getImageKey } =
-    useImageRetry(2);
+  const { hasError, handleError, getImageKey } = useImageRetry(2);
 
-  const shouldBypassOptimizer = finalImageSrc.startsWith("/api/");
+  const imageKey = getImageKey(sources.fallback);
 
-  const imageKey = getImageKey(`${finalImageSrc}-${forceUnoptimized ? "direct" : "opt"}`);
+  const handleLoad = useCallback(() => {
+    setImageLoaded(true);
+    setShowSkeleton(false);
+  }, []);
 
   const handleImageError = useCallback(() => {
-    // If the Next.js image optimizer fails (common with TLS/cert issues or platform adapters),
-    // retry once by bypassing optimization and letting the browser fetch the image directly.
-    if (!forceUnoptimized) {
-      setForceUnoptimized(true);
-      reset();
-      return;
-    }
     handleError();
-  }, [forceUnoptimized, handleError, reset]);
+  }, [handleError]);
 
   const containerStyle: React.CSSProperties = {
     position: "relative",
@@ -136,6 +132,8 @@ function ClientImageInner({
       : {}),
     maxWidth: "100%",
   };
+
+  const sizes = getOptimalImageSizes(context);
 
   // Error fallback
   if (hasError) {
@@ -151,6 +149,10 @@ function ClientImageInner({
     );
   }
 
+  // Use native <picture> element for proper format fallback:
+  // - Browser tries WebP first (faster encoding, more reliable)
+  // - Falls back to AVIF (better compression but slower/riskier encoding)
+  // - Falls back to JPEG (100% support)
   return (
     <div className={className} style={containerStyle}>
       {showSkeleton && (
@@ -158,31 +160,28 @@ function ClientImageInner({
           <div className="w-full h-full bg-muted animate-fast-pulse"></div>
         </div>
       )}
-      <NextImage
-        key={imageKey}
-        className="object-cover w-full h-full"
-        src={finalImageSrc}
-        alt={alt}
-        width={500}
-        height={260}
-        loading={priority ? "eager" : "lazy"}
-        onError={handleImageError}
-        onLoad={handleLoad}
-        quality={imageQuality}
-        style={{
-          objectFit: "cover",
-          // Hide image until loaded to prevent broken image flash
-          opacity: imageLoaded ? 1 : 0,
-          transition: "opacity 0.3s ease-in-out",
-          width: "100%",
-          height: "100%",
-          maxWidth: "100%",
-        }}
-        priority={priority}
-        fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
-        sizes={getOptimalImageSizes(context)}
-        unoptimized={forceUnoptimized || shouldBypassOptimizer || env === "dev"}
-      />
+      <picture key={imageKey}>
+        <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+        <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+        <img
+          className="object-cover w-full h-full absolute inset-0"
+          src={sources.fallback}
+          alt={alt}
+          width={500}
+          height={260}
+          loading={priority ? "eager" : "lazy"}
+          decoding={priority ? "sync" : "async"}
+          onError={handleImageError}
+          onLoad={handleLoad}
+          fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
+          sizes={sizes}
+          style={{
+            objectFit: "cover",
+            opacity: imageLoaded ? 1 : 0,
+            transition: "opacity 0.3s ease-in-out",
+          }}
+        />
+      </picture>
     </div>
   );
 }

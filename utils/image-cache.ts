@@ -244,6 +244,10 @@ export function toProxiedImageUrl(
       proxyUrl += `&q=${options.quality}`;
     }
   }
+  // Format param bypasses Accept header detection (CloudFront may not forward Accept)
+  if (options?.format) {
+    proxyUrl += `&format=${options.format}`;
+  }
 
   return proxyUrl;
 }
@@ -254,7 +258,7 @@ export function toProxiedImageUrl(
  *
  * @param imageUrl - The image URL to optimize
  * @param cacheKey - Optional cache key for cache busting (e.g., event hash)
- * @param options - Optional width and quality parameters for optimization
+ * @param options - Optional width, quality, and format parameters for optimization
  */
 export function buildOptimizedImageUrl(
   imageUrl: string,
@@ -323,4 +327,33 @@ export function buildOptimizedImageUrl(
   return cacheKey !== undefined
     ? withImageCacheKey(normalized, cacheKey)
     : normalized;
+}
+
+/**
+ * Generate URLs for <picture> element sources with modern format fallbacks.
+ * Returns WebP, AVIF, and JPEG URLs for progressive enhancement.
+ * WebP is prioritized over AVIF for faster encoding and more reliable output.
+ * 
+ * Usage:
+ * ```tsx
+ * const sources = buildPictureSourceUrls(imageUrl, cacheKey, { width, quality });
+ * <picture>
+ *   <source srcSet={sources.webp} type="image/webp" />
+ *   <source srcSet={sources.avif} type="image/avif" />
+ *   <img src={sources.fallback} alt="..." />
+ * </picture>
+ * ```
+ */
+export function buildPictureSourceUrls(
+  imageUrl: string,
+  cacheKey?: string | number | null,
+  options?: Omit<ImageProxyOptions, "format">
+): { avif: string; webp: string; fallback: string } {
+  const baseOptions = options ?? {};
+  
+  return {
+    avif: buildOptimizedImageUrl(imageUrl, cacheKey, { ...baseOptions, format: "avif" }),
+    webp: buildOptimizedImageUrl(imageUrl, cacheKey, { ...baseOptions, format: "webp" }),
+    fallback: buildOptimizedImageUrl(imageUrl, cacheKey, baseOptions), // JPEG (no format param)
+  };
 }

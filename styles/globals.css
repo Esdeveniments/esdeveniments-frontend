@@ -4,10 +4,12 @@
 
 /* Prevent deprecation warning for overflow:visible on replaced elements */
 /* See: https://github.com/WICG/shared-element-transitions/blob/main/debugging_overflow_on_images.md */
-img,
-video,
-canvas {
-  overflow: clip;
+@layer base {
+  img,
+  video,
+  canvas {
+    overflow: clip;
+  }
 }
 
 /* Optimize font loading - ensure text stays visible during webfont loading */

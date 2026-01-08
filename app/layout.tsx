@@ -13,7 +13,6 @@ import GoogleScripts from "./GoogleScripts";
 import { AdProvider } from "../lib/context/AdContext";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
-import { getApiOrigin } from "../utils/api-helpers";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();
@@ -49,7 +48,6 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const apiOrigin = getApiOrigin();
   const locale = await getLocaleSafely();
 
   // Distribute the locale to all server components in this request
@@ -62,15 +60,15 @@ export default async function RootLayout({
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
-        {apiOrigin && (
-          <link rel="preconnect" href={apiOrigin} crossOrigin="anonymous" />
-        )}
+        {/* Google Ads/Funding Choices may load fonts - preconnect to reduce latency */}
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Ads load lazily via GoogleScriptsHeavy - use dns-prefetch instead of preconnect */}
+        <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
       </head>
       <body>
         <Script
           id="sw-register"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               try {
