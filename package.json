@@ -81,6 +81,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-ssm": "^3.940.0",
+    "@eslint-react/eslint-plugin": "^2.5.3",
     "@lhci/cli": "^0.15.1",
     "@lingual/i18n-check": "^0.8.15",
     "@next/bundle-analyzer": "^16.1.0",

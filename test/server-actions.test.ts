@@ -13,6 +13,16 @@ vi.mock("next/cache", () => ({
   refresh: () => mockRefresh(),
 }));
 
+// Mock next/server
+const mockAfter = vi.fn((callback: () => void | Promise<void>) => {
+  // In tests, execute callback synchronously
+  return callback();
+});
+
+vi.mock("next/server", () => ({
+  after: (callback: () => void | Promise<void>) => mockAfter(callback),
+}));
+
 // Mock lib/api/events
 const mockCreateEvent = vi.fn();
 const mockUpdateEventById = vi.fn();

@@ -22,10 +22,18 @@
 ## Coding Style & Naming Conventions
 
 - TypeScript strict; prefer server components by default. Add `"use client"` only when needed.
-- ESLint extends `next/core-web-vitals` + TS. Fix warnings before merge.
+- ESLint extends `next/core-web-vitals` + TS + `@eslint-react`. Fix warnings before merge.
 - Define all type aliases/interfaces in `types/` (ESLint‑enforced).
 - Components: PascalCase; hooks: `useXxx`; helpers: lowerCamelCase.
 - Indentation: 2 spaces; prefer path aliases; Tailwind utilities for styling; globals in `styles/`.
+
+## React Hooks Best Practices
+
+- **useRef vs useState for tracking flags**: Use `useRef` (not `useState`) for one-time tracking flags that don't affect rendering (e.g., analytics fired, effect ran). A ref update doesn't trigger a re-render.
+  - ✅ `const hasTracked = useRef(false)` - for analytics, one-time effects
+  - ❌ `const [hasTracked, setHasTracked] = useState(false)` - causes unnecessary re-render
+- **Dependency arrays**: Refs don't need to be in dependency arrays (they're stable). Only include values that should trigger the effect.
+- **Memoization**: Use `useMemo` for expensive computations, `useCallback` for callbacks passed to children. Don't over-optimize—profile first.
 
 ## Testing Guidelines
 
@@ -50,6 +58,7 @@
 - Yarn 4 workspace; prefer `yarn` over `npm`.
 - CSP: Relaxed policy with host allowlisting (see `proxy.ts`). Allows `'unsafe-inline'` for inline scripts/JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains are allowlisted. No nonce required.
 - API security: Internal API proxy layer (`app/api/*`) handles HMAC signing server-side via `*-external.ts` wrappers using `fetchWithHmac`. Client libraries call internal routes, never external API directly. Middleware enforces HMAC on most `/api/*` routes; public endpoints (GET events, news, categories, etc.) are allowlisted.
+- **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
 
 ## Agent-Specific Instructions
 
@@ -76,12 +85,14 @@
 Reading `searchParams` in a page component makes the page **dynamic**, causing OpenNext/SST to create a separate DynamoDB cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
 
 **Rules:**
+
 1. Listing pages (`app/[place]/*`) must NOT read `searchParams` - keep them static (ISR)
 2. Query params (`search`, `distance`, `lat`, `lon`) are handled **client-side only** via SWR
 3. SEO robots `noindex` for filtered URLs is handled via `X-Robots-Tag` header in `proxy.ts`
 4. CloudWatch alarm `DynamoDB-HighWriteCost-Alert` monitors for write spikes >100k/hour
 
 **If you need query-dependent behavior:**
+
 - Handle it in middleware (`proxy.ts`) for headers/redirects
 - Handle it client-side for data fetching
 - NEVER make the page component read `searchParams`
