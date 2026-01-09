@@ -60,11 +60,39 @@ export async function safeFetch<T = unknown>(
     }
 
     const contentType = response.headers.get("content-type");
-    const data = contentType?.includes("application/json")
-      ? ((await response.json()) as T)
-      : ((await response.text()) as unknown as T);
 
-    return { data, error: null, status: response.status };
+    if (!contentType?.includes("application/json")) {
+      const responseText = await response.text();
+      const error = new Error(
+        `Expected a JSON response but received content-type '${contentType}'.`
+      );
+      captureException(error, {
+        tags: { ...context?.tags, url: getHostname(url) },
+        extra: {
+          ...context?.extra,
+          status: response.status,
+          url,
+          responseBody: responseText.substring(0, 200),
+        },
+      });
+      return { data: null, error, status: response.status };
+    }
+
+    try {
+      const data = (await response.json()) as T;
+      return { data, error: null, status: response.status };
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      captureException(error, {
+        tags: {
+          ...context?.tags,
+          url: getHostname(url),
+          phase: "json-parse",
+        },
+        extra: { ...context?.extra, status: response.status, url },
+      });
+      return { data: null, error, status: response.status };
+    }
   } catch (error) {
     const isAbort = error instanceof Error && error.name === "AbortError";
     const errorMessage = isAbort

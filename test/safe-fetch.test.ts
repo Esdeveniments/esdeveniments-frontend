@@ -43,7 +43,7 @@ describe("utils/safe-fetch", () => {
       expect(captureException).not.toHaveBeenCalled();
     });
 
-    it("returns text data for non-JSON responses", async () => {
+    it("returns error for non-JSON responses", async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
@@ -53,9 +53,23 @@ describe("utils/safe-fetch", () => {
 
       const result = await safeFetch<string>("https://example.com/api");
 
-      expect(result.data).toBe("plain text response");
-      expect(result.error).toBeNull();
+      expect(result.data).toBeNull();
+      expect(result.error).toBeInstanceOf(Error);
+      expect(result.error?.message).toContain(
+        "Expected a JSON response but received content-type 'text/plain'"
+      );
       expect(result.status).toBe(200);
+      expect(captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          tags: expect.objectContaining({ url: "example.com" }),
+          extra: expect.objectContaining({
+            status: 200,
+            url: "https://example.com/api",
+            responseBody: "plain text response",
+          }),
+        })
+      );
     });
 
     it("returns error on non-OK response and logs to Sentry", async () => {

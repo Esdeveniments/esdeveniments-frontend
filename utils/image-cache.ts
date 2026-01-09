@@ -146,7 +146,7 @@ export function isLegacyFileHandler(url: string): boolean {
     const value = param.includes("=")
       ? param.substring(param.indexOf("=") + 1)
       : param;
-    if (/[a-zA-Z0-9]{20,}/.test(value)) {
+    if (/^[a-zA-Z0-9]{20,}$/.test(value)) {
       return true;
     }
   }

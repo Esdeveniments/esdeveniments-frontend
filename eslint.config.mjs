@@ -173,6 +173,37 @@ export default [
       "@eslint-react/no-unnecessary-use-prefix": "off",
     },
   },
+  // Warn about raw fetch() usage - prefer fetchWithHmac or safeFetch
+  // Raw fetch lacks timeout, response validation, and error handling
+  // This is a WARNING to flag new code for review - many existing uses are legitimate
+  // (internal API routes, SWR fetchers, API route handlers)
+  {
+    files: [
+      "app/**/*.ts",
+      "app/**/*.tsx",
+      "lib/**/*.ts",
+      "components/**/*.ts",
+      "components/**/*.tsx",
+    ],
+    ignores: [
+      "lib/api/fetch-wrapper.ts", // The wrapper itself
+      "utils/safe-fetch.ts", // The safe-fetch utility
+      "test/**/*", // Tests can mock fetch
+      "app/api/**/*", // API routes are the endpoints themselves
+      "lib/api/*.ts", // Internal API client calls (same-origin, Next.js handles)
+      "components/hooks/use*.ts", // SWR fetchers (same-origin)
+    ],
+    rules: {
+      "no-restricted-globals": [
+        "warn",
+        {
+          name: "fetch",
+          message:
+            "Review: prefer fetchWithHmac (internal API) or safeFetch (external webhooks) for timeout & error handling. Ignore if calling same-origin internal routes.",
+        },
+      ],
+    },
+  },
   // CRITICAL: Prevent searchParams in listing pages to avoid $300+ DynamoDB cost spikes
   // Reading searchParams makes pages dynamic, causing OpenNext/SST to create millions of cache entries
   // See: Dec 28, 2025 incident - 200M DynamoDB writes = $307 cost

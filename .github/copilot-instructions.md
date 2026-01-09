@@ -161,6 +161,10 @@ Adding a new filter:
 - Forgetting to use query builders (`buildEventsQuery`, `buildNewsQuery`) and manually constructing URLSearchParams.
 - Not setting appropriate cache headers (`s-maxage`, `stale-while-revalidate`) in internal API routes.
 - **⚠️ CRITICAL - Adding `searchParams` to listing pages**: Reading `searchParams` in `app/[place]/*` page components makes pages dynamic, causing OpenNext/SST to create millions of DynamoDB cache entries (one per unique URL+query). This caused a $300+ spike on Dec 28, 2025. Query-dependent behavior must be handled in middleware (`proxy.ts`) or client-side (SWR).
+- **Raw fetch() without timeout**: Always use `fetchWithHmac` (internal API, 10s timeout) or `safeFetch`/`fireAndForgetFetch` (external webhooks, 5s timeout). Raw `fetch()` can hang indefinitely in serverless. ESLint warns on raw `fetch()`.
+- **Custom implementations over stdlib**: Prefer built-in APIs (e.g., `AbortSignal.any()` over custom signal merging, `after()` from `next/server` over fire-and-forget promises).
+- **Swallowing stack traces**: Pass original error to `captureException(error)`, not `new Error(error.message)`.
+- **URL parsing in catch blocks**: Use try/catch when parsing URLs (e.g., `new URL(url).hostname`) to avoid exceptions in error handlers.
 
 ## 16. Quick Examples
 
