@@ -470,7 +470,9 @@ export async function ServerEventsCategorizedContent({
       {featuredSections.length > 0 && (
         <div className="container">
           {featuredSections.map((section) => (
-            <FeaturedPlaceSection key={section.slug} section={section} />
+            <div key={section.slug} className="content-auto-section">
+              <FeaturedPlaceSection section={section} />
+            </div>
           ))}
         </div>
       )}
@@ -486,29 +488,30 @@ export async function ServerEventsCategorizedContent({
           const categoryPhrase = formatCatalanDe(localizedCategoryName, true, true);
 
           return (
-            <CategoryEventsSection
-              key={section.key}
-              events={section.events}
-              categoryName={localizedCategoryName}
-              categorySlug={section.categorySlug}
-              categoryPhrase={categoryPhrase}
-              categories={categories}
-              shouldUsePriority={false}
-              showAd={adPositions.has(index)}
-              labels={{
-                heading:
-                  locale === DEFAULT_LOCALE
-                    ? tCategory("heading", {
-                      categoryPhrase,
-                    })
-                    : tCategory("headingNoArticle", {
-                      categoryName: localizedCategoryName,
-                    }),
-                seeMore: tCategory("seeMore"),
-                sponsored: tCategory("sponsored"),
-              }}
-              badgeLabels={badgeLabels}
-            />
+            <div key={section.key} className="content-auto-section">
+              <CategoryEventsSection
+                events={section.events}
+                categoryName={localizedCategoryName}
+                categorySlug={section.categorySlug}
+                categoryPhrase={categoryPhrase}
+                categories={categories}
+                shouldUsePriority={false}
+                showAd={adPositions.has(index)}
+                labels={{
+                  heading:
+                    locale === DEFAULT_LOCALE
+                      ? tCategory("heading", {
+                        categoryPhrase,
+                      })
+                      : tCategory("headingNoArticle", {
+                        categoryName: localizedCategoryName,
+                      }),
+                  seeMore: tCategory("seeMore"),
+                  sponsored: tCategory("sponsored"),
+                }}
+                badgeLabels={badgeLabels}
+              />
+            </div>
           );
         })}
       </div>

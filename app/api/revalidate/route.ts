@@ -171,7 +171,10 @@ async function invalidateCloudFrontCache(paths: string[]): Promise<{
       },
     });
 
-    const response = await client.send(command);
+    // Add timeout to prevent indefinite hangs in serverless
+    const response = await client.send(command, {
+      abortSignal: AbortSignal.timeout(10000), // 10 second timeout
+    });
     const invalidationId = response.Invalidation?.Id;
 
     return { success: true, invalidationId };

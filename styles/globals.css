@@ -653,3 +653,21 @@ video {
 ::view-transition-new(root) {
   animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fadeIn;
 }
+
+/* Content visibility optimization for off-screen elements */
+/* Skips rendering until element is near viewport - improves initial load and INP */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px; /* Estimated card height to prevent layout shift */
+}
+
+.content-auto-ad {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px; /* Estimated ad card height */
+}
+
+.content-auto-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px; /* Estimated section height (cards + header) */
+  width: 100%; /* Ensure wrapper doesn't collapse */
+}
