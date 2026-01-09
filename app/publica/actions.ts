@@ -29,9 +29,8 @@ async function sendNewEventEmail(title: string, slug: string): Promise<void> {
       body: JSON.stringify({ title, slug }),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error sending new event email: ${message}`);
-    captureException(new Error(`Error sending new event email: ${message}`), {
+    console.error("Error sending new event email:", error);
+    captureException(error, {
       tags: { section: "publica", action: "send-email" },
       extra: { title, slug },
     });
