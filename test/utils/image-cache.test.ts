@@ -44,8 +44,22 @@ describe("isLegacyFileHandler", () => {
   });
 
   describe("long inherent cache keys", () => {
-    it("returns true for URLs with long inherent cache keys", () => {
+    it("returns true for URLs with long inherent cache keys in value", () => {
       expect(isLegacyFileHandler("https://cdn.example.com/image.jpg?abc123def456ghi789jkl012mno")).toBe(true);
+      expect(isLegacyFileHandler("https://cdn.example.com/image.jpg?token=abc123def456ghi789jkl012mno")).toBe(true);
+    });
+
+    it("returns false for URLs with long parameter names but short values", () => {
+      // Long param name should NOT trigger detection - only long VALUES matter
+      expect(isLegacyFileHandler("https://example.com/image.jpg?someVeryLongParameterNameHere=short")).toBe(false);
+      expect(isLegacyFileHandler("https://example.com/image.jpg?abcdefghijklmnopqrstuvwxyz=123")).toBe(false);
+    });
+
+    it("returns true when any parameter value is long (20+ chars)", () => {
+      // Multiple params - one with long value
+      expect(isLegacyFileHandler("https://example.com/image.jpg?short=val&hash=abc123def456ghi789jkl012")).toBe(true);
+      // Long value is first param
+      expect(isLegacyFileHandler("https://example.com/image.jpg?token=abc123def456ghi789jkl012&size=large")).toBe(true);
     });
 
     it("returns false for URLs with short query params", () => {

@@ -18,12 +18,13 @@ const Maps: FC<EventMapsProps> = ({ location }) => {
     frame.allowFullscreen = true;
 
     const onLoad = () => {
-      frame.removeEventListener("load", onLoad);
+      // Frame loaded - could add additional logic here if needed
     };
     frame.addEventListener("load", onLoad);
     map.appendChild(frame);
 
     return () => {
+      frame.removeEventListener("load", onLoad);
       map.removeChild(frame);
     };
   }, [mapRef]);

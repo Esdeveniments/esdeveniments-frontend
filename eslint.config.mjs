@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
 import reactHooks from "eslint-plugin-react-hooks";
+import eslintReact from "@eslint-react/eslint-plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,9 +95,7 @@ export default [
       "utils/**/*.{ts,tsx,js,jsx}",
       "lib/**/*.{ts,tsx,js,jsx}",
     ],
-    ignores: [
-      "types/**/*.ts",
-    ],
+    ignores: ["types/**/*.ts"],
 
     rules: {
       "no-restricted-syntax": [
@@ -116,10 +115,7 @@ export default [
   },
   {
     files: ["types/**/*.ts"],
-    ignores: [
-      "types/common.ts",
-      "types/api/city.ts",
-    ],
+    ignores: ["types/common.ts", "types/api/city.ts"],
     rules: {
       "@typescript-eslint/no-unused-vars": "error",
       "no-restricted-syntax": [
@@ -154,14 +150,34 @@ export default [
       "import/no-anonymous-default-export": "off",
     },
   },
+  // @eslint-react: comprehensive React best practices and performance rules
+  {
+    files: ["**/*.tsx", "**/*.jsx"],
+    ...eslintReact.configs.recommended,
+    rules: {
+      ...eslintReact.configs.recommended.rules,
+      // Relax some rules that may be too strict or don't fit Next.js patterns
+      "@eslint-react/prefer-destructuring-assignment": "off",
+      // Common Next.js hydration pattern (setIsMounted, setIsHydrated, etc.)
+      "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "off",
+      // React 19 migration - can address gradually
+      "@eslint-react/no-context-provider": "off",
+      "@eslint-react/no-use-context": "off",
+      "@eslint-react/no-forward-ref": "off",
+    },
+  },
+  // Disable hook naming rules in test mocks (they need to match real hook names)
+  {
+    files: ["test/**/*.tsx", "test/**/*.ts"],
+    rules: {
+      "@eslint-react/no-unnecessary-use-prefix": "off",
+    },
+  },
   // CRITICAL: Prevent searchParams in listing pages to avoid $300+ DynamoDB cost spikes
   // Reading searchParams makes pages dynamic, causing OpenNext/SST to create millions of cache entries
   // See: Dec 28, 2025 incident - 200M DynamoDB writes = $307 cost
   {
-    files: [
-      "app/\\[place\\]/**/*.tsx",
-      "app/\\[place\\]/**/*.ts",
-    ],
+    files: ["app/\\[place\\]/**/*.tsx", "app/\\[place\\]/**/*.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",

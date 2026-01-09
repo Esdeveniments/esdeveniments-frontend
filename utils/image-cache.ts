@@ -140,7 +140,17 @@ export function isLegacyFileHandler(url: string): boolean {
   if (queryString.includes("v=")) return false;
 
   // Check for long query values that look like hashes/tokens (20+ chars of alphanumeric)
-  return /[a-zA-Z0-9]{20,}/.test(queryString);
+  const params = queryString.split("&");
+  for (const param of params) {
+    // A value can be the whole parameter if there's no '=', or the part after '='
+    const value = param.includes("=")
+      ? param.substring(param.indexOf("=") + 1)
+      : param;
+    if (/[a-zA-Z0-9]{20,}/.test(value)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

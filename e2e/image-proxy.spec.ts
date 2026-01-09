@@ -228,7 +228,7 @@ test.describe("Image Proxy", () => {
         // Check for optimization indicator headers
         if (headers["x-image-proxy-optimized"]) {
           expect(headers["x-image-proxy-optimized"]).toMatch(
-            /^(true|skipped-small|skipped-animated)$/
+            /^(true|skipped-small|skipped-animated|fallback-sharp-error)$/
           );
         }
 

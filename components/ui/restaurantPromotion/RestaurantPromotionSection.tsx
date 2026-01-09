@@ -90,10 +90,10 @@ export default function RestaurantPromotionSection({
   }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime, statusLabels]);
 
   // Track section view when visible and places are loaded (fire only once)
-  const [hasTrackedView, setHasTrackedView] = useState(false);
+  const hasTrackedViewRef = useRef(false);
   useEffect(() => {
     if (
-      !hasTrackedView &&
+      !hasTrackedViewRef.current &&
       isVisible &&
       placesResp &&
       placesResp.results?.length > 0
@@ -102,9 +102,9 @@ export default function RestaurantPromotionSection({
         context: "event_detail",
         places_count: placesResp.results.length,
       });
-      setHasTrackedView(true);
+      hasTrackedViewRef.current = true;
     }
-  }, [isVisible, placesResp, hasTrackedView]);
+  }, [isVisible, placesResp]);
 
   // Fetch places when section becomes visible and event is in future and within the fetch window
   useEffect(() => {
