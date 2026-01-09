@@ -10,6 +10,16 @@ function getHostname(url: string): string {
   }
 }
 
+/** Safely extract origin + pathname (no query params or hash) for logging */
+function getSafeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return "invalid-url";
+  }
+}
+
 /**
  * Safe fetch wrapper with timeout and response validation.
  * Use for external webhooks/services that don't need HMAC signing.
@@ -35,15 +45,25 @@ export async function safeFetch<T = unknown>(
   url: string,
   options: SafeFetchOptions = {}
 ): Promise<SafeFetchResult<T>> {
-  const { timeout = 5000, context, ...fetchOptions } = options;
+  const {
+    timeout = 5000,
+    context,
+    signal: externalSignal,
+    ...fetchOptions
+  } = options;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+  // Merge signals if caller provided one (AbortSignal.any available in Node 20+)
+  const signal = externalSignal
+    ? AbortSignal.any([externalSignal, controller.signal])
+    : controller.signal;
+
   try {
     const response = await fetch(url, {
       ...fetchOptions,
-      signal: controller.signal,
+      signal,
     });
 
     if (!response.ok) {
@@ -58,11 +78,11 @@ export async function safeFetch<T = unknown>(
 
       const errorMessage = `Fetch failed: ${response.status} ${response.statusText}`;
       captureException(new Error(errorMessage), {
-        tags: { ...context?.tags, url: getHostname(url) },
+        tags: { ...context?.tags, host: getHostname(url) },
         extra: {
           ...context?.extra,
           status: response.status,
-          url,
+          url: getSafeUrl(url), // Strip query params/hash to avoid leaking tokens
           ...(responseBody && { responseBody }),
         },
       });
@@ -73,6 +93,11 @@ export async function safeFetch<T = unknown>(
       };
     }
 
+    // Handle 204 No Content (common for webhooks) - no body to parse
+    if (response.status === 204) {
+      return { data: null as T, error: null, status: 204 };
+    }
+
     const contentType = response.headers.get("content-type");
 
     if (!contentType?.includes("application/json")) {
@@ -81,11 +106,11 @@ export async function safeFetch<T = unknown>(
         `Expected a JSON response but received content-type '${contentType}'.`
       );
       captureException(error, {
-        tags: { ...context?.tags, url: getHostname(url) },
+        tags: { ...context?.tags, host: getHostname(url) },
         extra: {
           ...context?.extra,
           status: response.status,
-          url,
+          url: getSafeUrl(url), // Strip query params/hash to avoid leaking tokens
           responseBody: responseText.substring(0, 200),
         },
       });
@@ -100,10 +125,14 @@ export async function safeFetch<T = unknown>(
       captureException(error, {
         tags: {
           ...context?.tags,
-          url: getHostname(url),
+          host: getHostname(url),
           phase: "json-parse",
         },
-        extra: { ...context?.extra, status: response.status, url },
+        extra: {
+          ...context?.extra,
+          status: response.status,
+          url: getSafeUrl(url), // Strip query params/hash to avoid leaking tokens
+        },
       });
       return { data: null, error, status: response.status };
     }
@@ -119,10 +148,13 @@ export async function safeFetch<T = unknown>(
       finalError = error instanceof Error ? error : new Error(String(error));
     }
 
-    console.error(finalError.message, finalError);
     captureException(finalError, {
-      tags: { ...context?.tags, url: getHostname(url) },
-      extra: { ...context?.extra, url, timeout },
+      tags: { ...context?.tags, host: getHostname(url) },
+      extra: {
+        ...context?.extra,
+        url: getSafeUrl(url), // Strip query params/hash to avoid leaking tokens
+        timeout,
+      },
     });
 
     return {
@@ -136,15 +168,21 @@ export async function safeFetch<T = unknown>(
 }
 
 /**
- * Fire-and-forget fetch for webhooks/notifications.
- * Logs errors but never throws or blocks.
+ * Safe fetch wrapper for webhooks/notifications that swallows errors.
+ * Always awaits the request but never throws - errors are only logged to Sentry.
+ *
+ * IMPORTANT: For serverless environments, wrap in Next.js `after()` to ensure
+ * the async work completes even after the response is sent:
  *
  * @example
- * await fireAndForgetFetch(webhookUrl, {
+ * // Server action with fire-and-forget notification
+ * import { after } from "next/server";
+ *
+ * after(() => fireAndForgetFetch(webhookUrl, {
  *   method: "POST",
  *   body: JSON.stringify({ event: "published" }),
  *   context: { tags: { action: "notify" } }
- * });
+ * }));
  */
 export async function fireAndForgetFetch(
   url: string,

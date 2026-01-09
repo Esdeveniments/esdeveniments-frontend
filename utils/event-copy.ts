@@ -1,10 +1,7 @@
 import type { EventDetailResponseDTO } from "types/api/event";
 import { getFormattedDate, normalizeEndTime } from "@utils/date-helpers";
 import type { FaqItem } from "types/faq";
-import {
-  capitalizeFirstLetter,
-  formatPlaceName,
-} from "./string-helpers";
+import { capitalizeFirstLetter, formatPlaceName } from "./string-helpers";
 import { formatPlacePreposition } from "@utils/helpers";
 import type { EventCopyLabels, StringHelperLabels } from "types/common";
 import caMessages from "../messages/ca.json";
@@ -445,14 +442,14 @@ export async function buildEventIntroText(
       const firstWordOriginal = rawTitle.split(/\s+/)[0] || "";
       const restOfTitleOriginal = rawTitle.split(/\s+/).slice(1).join(" ");
       // Lowercase only the first letter of the first word (Catalan grammar)
-      const firstWordLower = firstWordOriginal.charAt(0).toLowerCase() + firstWordOriginal.slice(1);
-      displayedTitle = article.endsWith("'")
-        ? `${article}${firstWordLower}${
-            restOfTitleOriginal ? " " + restOfTitleOriginal : ""
-          }`
-        : `${article} ${firstWordLower}${
-            restOfTitleOriginal ? " " + restOfTitleOriginal : ""
-          }`;
+      const firstWordLower =
+        firstWordOriginal.charAt(0).toLowerCase() + firstWordOriginal.slice(1);
+      const titleRemainder = `${firstWordLower}${
+        restOfTitleOriginal ? " " + restOfTitleOriginal : ""
+      }`;
+      displayedTitle = `${article}${
+        article.endsWith("'") ? "" : " "
+      }${titleRemainder}`;
     }
   }
 

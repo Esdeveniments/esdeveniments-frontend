@@ -215,8 +215,7 @@ export default $config({
         // Optional: Pipedream webhook URL for new event email notifications
         // If not set, email notifications will be silently skipped
         ...(process.env.NEW_EVENT_EMAIL_URL && {
-          NEW_EVENT_EMAIL_URL:
-            process.env.NEW_EVENT_EMAIL_URL,
+          NEW_EVENT_EMAIL_URL: process.env.NEW_EVENT_EMAIL_URL,
         }),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
