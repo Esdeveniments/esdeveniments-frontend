@@ -78,6 +78,7 @@ describe("utils/safe-fetch", () => {
         status: 500,
         statusText: "Internal Server Error",
         headers: new Headers(),
+        text: vi.fn().mockResolvedValue('{"error": "Database connection failed"}'),
       });
 
       const result = await safeFetch("https://example.com/api", {
@@ -91,7 +92,12 @@ describe("utils/safe-fetch", () => {
       expect(result.status).toBe(500);
       expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
         tags: { action: "test", url: "example.com" },
-        extra: { foo: "bar", status: 500, url: "https://example.com/api" },
+        extra: {
+          foo: "bar",
+          status: 500,
+          url: "https://example.com/api",
+          responseBody: '{"error": "Database connection failed"}',
+        },
       });
     });
 
@@ -101,6 +107,7 @@ describe("utils/safe-fetch", () => {
         status: 404,
         statusText: "Not Found",
         headers: new Headers(),
+        text: vi.fn().mockResolvedValue("Resource not found"),
       });
 
       const result = await safeFetch("https://example.com/missing");

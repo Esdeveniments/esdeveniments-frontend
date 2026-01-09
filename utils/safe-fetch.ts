@@ -47,10 +47,24 @@ export async function safeFetch<T = unknown>(
     });
 
     if (!response.ok) {
+      let responseBody = "";
+      try {
+        // Try to read body for better error context (many APIs return structured errors)
+        const text = await response.text();
+        responseBody = text.substring(0, 500); // Truncate to prevent huge logs
+      } catch {
+        // Ignore body read errors, we already have status/statusText
+      }
+
       const errorMessage = `Fetch failed: ${response.status} ${response.statusText}`;
       captureException(new Error(errorMessage), {
         tags: { ...context?.tags, url: getHostname(url) },
-        extra: { ...context?.extra, status: response.status, url },
+        extra: {
+          ...context?.extra,
+          status: response.status,
+          url,
+          ...(responseBody && { responseBody }),
+        },
       });
       return {
         data: null,
