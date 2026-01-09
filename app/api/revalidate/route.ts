@@ -1,6 +1,10 @@
-import { timingSafeEqual } from "crypto";
+import { timingSafeEqual, randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
+import {
+  CloudFrontClient,
+  CreateInvalidationCommand,
+} from "@aws-sdk/client-cloudfront";
 import { handleApiError } from "@utils/api-error-handler";
 import type { RevalidatableTag } from "types/cache";
 import { clearPlacesCaches } from "@lib/api/places";
@@ -135,10 +139,57 @@ async function purgeCloudflareCache(
 }
 
 /**
+ * Invalidate CloudFront cache for given paths.
+ * Uses AWS SDK with Lambda's IAM role credentials.
+ * Returns success status and any error message.
+ */
+async function invalidateCloudFrontCache(
+  paths: string[]
+): Promise<{
+  success: boolean;
+  error?: string;
+  skipped?: boolean;
+  invalidationId?: string;
+}> {
+  const distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
+
+  // Skip if CloudFront is not configured
+  if (!distributionId) {
+    return { success: true, skipped: true };
+  }
+
+  try {
+    // CloudFront client uses Lambda's IAM role credentials automatically
+    const client = new CloudFrontClient({ region: "us-east-1" });
+
+    const command = new CreateInvalidationCommand({
+      DistributionId: distributionId,
+      InvalidationBatch: {
+        CallerReference: `revalidate-${Date.now()}-${randomUUID().slice(0, 8)}`,
+        Paths: {
+          Quantity: paths.length,
+          Items: paths,
+        },
+      },
+    });
+
+    const response = await client.send(command);
+    const invalidationId = response.Invalidation?.Id;
+
+    return { success: true, invalidationId };
+  } catch (error) {
+    const errorMsg =
+      error instanceof Error ? error.message : "Unknown CloudFront error";
+    console.error("CloudFront invalidation error:", error);
+    return { success: false, error: errorMsg };
+  }
+}
+
+/**
  * POST /api/revalidate
  *
  * Secure endpoint to trigger Next.js cache revalidation for specific tags.
- * Also purges Cloudflare CDN cache if configured.
+ * Also purges Cloudflare and CloudFront CDN caches if configured.
  * Used when new towns/places are added to the backend.
  *
  * Headers:
@@ -262,14 +313,44 @@ export async function POST(request: Request) {
       cloudflareResult = { purged: false, skipped: true };
     }
 
-    // 6. Log successful revalidation
+    // 6. Invalidate CloudFront cache (AWS CDN in front of OpenNext/SST)
+    let cloudfrontResult: {
+      invalidated: boolean;
+      paths?: string[];
+      invalidationId?: string;
+      error?: string;
+      skipped?: boolean;
+    };
+    if (cfPrefixes.size > 0) {
+      const pathArray = Array.from(cfPrefixes);
+      const cfrontResult = await invalidateCloudFrontCache(pathArray);
+      cloudfrontResult = {
+        invalidated: cfrontResult.success && !cfrontResult.skipped,
+        paths: pathArray,
+        invalidationId: cfrontResult.invalidationId,
+        skipped: cfrontResult.skipped,
+        error: cfrontResult.error,
+      };
+    } else {
+      cloudfrontResult = { invalidated: false, skipped: true };
+    }
+
+    // 7. Log successful revalidation
     console.log(
       `[revalidate] Tags: ${revalidatedTags.join(", ")}${
-        failedTags.length > 0 ? ` (tag cache errors: ${failedTags.join(", ")})` : ""
+        failedTags.length > 0
+          ? ` (tag cache errors: ${failedTags.join(", ")})`
+          : ""
       } | Cloudflare: ${
         cloudflareResult.purged
           ? "purged"
           : cloudflareResult.skipped
+          ? "skipped"
+          : "failed"
+      } | CloudFront: ${
+        cloudfrontResult.invalidated
+          ? `invalidated (${cloudfrontResult.invalidationId})`
+          : cloudfrontResult.skipped
           ? "skipped"
           : "failed"
       }`
@@ -280,10 +361,13 @@ export async function POST(request: Request) {
         revalidated: true,
         tags: revalidatedTags,
         cloudflare: cloudflareResult,
+        cloudfront: cloudfrontResult,
         timestamp: new Date().toISOString(),
         // Include warning if any tag cache writes failed (transient DynamoDB errors)
         ...(failedTags.length > 0 && {
-          warning: `Tag cache write failed for: ${failedTags.join(", ")} (transient, revalidation still applied)`,
+          warning: `Tag cache write failed for: ${failedTags.join(
+            ", "
+          )} (transient, revalidation still applied)`,
         }),
       },
       { status: 200 }

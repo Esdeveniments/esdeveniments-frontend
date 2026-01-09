@@ -7,14 +7,8 @@ import type { CategoryQuicklinksProps } from "types/props";
 import { CATEGORY_CONFIG, PRIORITY_CATEGORY_SLUGS } from "@config/categories";
 
 /**
- * Maximum number of category quicklinks to display.
- * Keep this low to avoid decision paralysis.
- */
-const MAX_CATEGORIES = 6;
-
-/**
  * Server component that renders category quicklinks for SEO internal linking.
- * Shows top categories based on priority configuration.
+ * Shows all categories sorted by priority (priority categories first).
  */
 export default async function CategoryQuicklinks({
   place,
@@ -38,7 +32,7 @@ export default async function CategoryQuicklinks({
   }
 
   // Sort categories: priority first, then by API order
-  const sortedCategories = [...categories].sort((a, b) => {
+  const displayCategories = [...categories].sort((a, b) => {
     const aIsPriority = PRIORITY_CATEGORY_SLUGS.includes(a.slug);
     const bIsPriority = PRIORITY_CATEGORY_SLUGS.includes(b.slug);
 
@@ -48,9 +42,6 @@ export default async function CategoryQuicklinks({
     // Both priority or both non-priority: maintain original order
     return 0;
   });
-
-  // Take top N categories
-  const displayCategories = sortedCategories.slice(0, MAX_CATEGORIES);
 
   /**
    * Get localized category label from config, falling back to API name.

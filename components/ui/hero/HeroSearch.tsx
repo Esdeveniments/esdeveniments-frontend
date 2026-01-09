@@ -296,6 +296,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             onClick={handleSearchSubmit}
             className="absolute inset-y-1 right-1 px-4 flex items-center justify-center rounded-full"
             data-testid="search-button"
+            aria-label={t("search")}
           >
             <SearchIcon className="h-5 w-5" />
           </Button>

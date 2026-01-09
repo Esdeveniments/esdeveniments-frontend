@@ -8,11 +8,33 @@ import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
+const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
+// FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
+const FUNDING_CHOICES_PUB_ID = ADS_CLIENT?.replace(/^ca-/, "") ?? "";
+const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
+  ? `https://fundingchoicesmessages.google.com/i/${FUNDING_CHOICES_PUB_ID}?ers=1`
+  : "";
 
 // Google Analytics gtag shim - reused across multiple Script components
 // Conditionally defines gtag only if it doesn't already exist to avoid overwriting
 // the real gtag.js implementation if it has already loaded
 const GTAG_SHIM = 'window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};';
+
+/**
+ * Schedule a callback during browser idle time or fallback to setTimeout.
+ * Returns a cleanup function.
+ */
+function scheduleIdleCallback(
+  callback: () => void,
+  options?: { timeout?: number }
+): () => void {
+  if ("requestIdleCallback" in window) {
+    const id = window.requestIdleCallback(callback, options);
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = setTimeout(callback, options?.timeout ?? 100);
+  return () => clearTimeout(id);
+}
 
 const ensureGtag = (): WindowWithGtag | null => {
   if (typeof window === "undefined") return null;
@@ -125,18 +147,26 @@ export default function GoogleScripts() {
     if (lastConsentState === consentState) return;
     lastConsentState = consentState;
 
-    win.gtag("consent", "update", {
-      ad_user_data: consentState,
-      ad_personalization: consentState,
-      ad_storage: consentState,
-      analytics_storage: consentState,
-    });
+    // Use idle callback to avoid blocking main thread during consent updates
+    const cleanup = scheduleIdleCallback(
+      () => {
+        win.gtag("consent", "update", {
+          ad_user_data: consentState,
+          ad_personalization: consentState,
+          ad_storage: consentState,
+          analytics_storage: consentState,
+        });
 
-    win.dataLayer.push({
-      event: "consent_state_change",
-      consent_state: consentState,
-      consent_timestamp: Date.now(),
-    });
+        win.dataLayer.push({
+          event: "consent_state_change",
+          consent_state: consentState,
+          consent_timestamp: Date.now(),
+        });
+      },
+      { timeout: 1000 }
+    );
+
+    return cleanup;
   }, [adsAllowed]);
 
   // Load heavy tracking + Auto Ads only after hydration.
@@ -221,11 +251,10 @@ export default function GoogleScripts() {
             `}
           </Script>
 
-          {/* Funding Choices (CMP) - defer to lazyOnload to reduce TBT */}
-          <Script
-            src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
-            strategy="lazyOnload"
-          />
+          {/* Funding Choices (CMP) - loads with lazyOnload to reduce TBT while ensuring consent is available */}
+          {FUNDING_CHOICES_SRC && (
+            <Script src={FUNDING_CHOICES_SRC} strategy="lazyOnload" />
+          )}
 
           {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
           <Script id="ai-referrer-analytics" strategy="lazyOnload">

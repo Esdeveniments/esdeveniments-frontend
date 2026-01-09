@@ -56,9 +56,11 @@ module.exports = {
       // === COLORS === //
       colors: {
         // Brand colors
-        primary: "#FF0037",
-        "primary-dark": "#C8033F",
-        "primary-soft": "#FF003750",
+        // Note: primary adjusted from #FF0037 to #D6002F for WCAG AA compliance
+        // (#FF0037 had ~4.1:1 contrast on white, #D6002F has ~5.2:1)
+        primary: "#D6002F",
+        "primary-dark": "#A80025",
+        "primary-soft": "#D6002F50",
 
         // Semantic tokens (canonical)
         background: "#ffffff",

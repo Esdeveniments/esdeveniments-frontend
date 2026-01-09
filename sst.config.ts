@@ -58,6 +58,34 @@ export default $config({
             existingPermissions.push(listBucketPermission);
         }
       }
+
+      // Add CloudFront invalidation permission for revalidation endpoint
+      // This allows the Lambda to create cache invalidations when places/regions change
+      const cloudfrontDistributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
+      if (cloudfrontDistributionId) {
+        const cloudfrontPermission = {
+          actions: ["cloudfront:CreateInvalidation"],
+          resources: [
+            `arn:aws:cloudfront::304087922066:distribution/${cloudfrontDistributionId}`,
+          ],
+        };
+
+        const existingPerms = args.permissions;
+        if (!existingPerms) {
+          args.permissions = [cloudfrontPermission];
+        } else if (Array.isArray(existingPerms)) {
+          const alreadyHasCloudFront = existingPerms.some((p) => {
+            if (!p || typeof p !== "object") return false;
+            const actions = (p as { actions?: unknown }).actions;
+            return (
+              Array.isArray(actions) &&
+              actions.includes("cloudfront:CreateInvalidation")
+            );
+          });
+
+          if (!alreadyHasCloudFront) existingPerms.push(cloudfrontPermission);
+        }
+      }
     });
 
     // Helper function to get parameter from SSM Parameter Store

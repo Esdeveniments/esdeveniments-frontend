@@ -80,6 +80,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@aws-sdk/client-cloudfront": "^3.940.0",
     "@aws-sdk/client-ssm": "^3.940.0",
     "@eslint-react/eslint-plugin": "^2.5.3",
     "@lhci/cli": "^0.15.1",
@@ -127,11 +128,11 @@
       "last 1 safari version"
     ],
     "production": [
-      "chrome >= 119",
-      "edge >= 119",
-      "firefox >= 121",
-      "safari >= 17",
-      "ios_saf >= 17"
+      "chrome >= 122",
+      "edge >= 122",
+      "firefox >= 125",
+      "safari >= 17.4",
+      "ios_saf >= 17.4"
     ]
   },
   "resolutions": {

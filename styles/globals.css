@@ -87,7 +87,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #ff0037;
+  background: #D6002F;
   cursor: pointer;
   margin-top: -10.5px; /* (3px track - 24px thumb) / 2 */
 }
@@ -96,7 +96,7 @@ input[type="range"]::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #ff0037;
+  background: #D6002F;
   cursor: pointer;
 }
 
