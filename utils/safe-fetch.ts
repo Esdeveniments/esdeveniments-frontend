@@ -109,19 +109,25 @@ export async function safeFetch<T = unknown>(
     }
   } catch (error) {
     const isAbort = error instanceof Error && error.name === "AbortError";
-    const errorMessage = isAbort
-      ? `Request timeout after ${timeout}ms`
-      : "Fetch failed";
 
-    console.error(errorMessage, error);
-    captureException(error, {
+    let finalError: Error;
+    if (isAbort) {
+      finalError = new Error(`Request timeout after ${timeout}ms`, {
+        cause: error,
+      });
+    } else {
+      finalError = error instanceof Error ? error : new Error(String(error));
+    }
+
+    console.error(finalError.message, finalError);
+    captureException(finalError, {
       tags: { ...context?.tags, url: getHostname(url) },
       extra: { ...context?.extra, url, timeout },
     });
 
     return {
       data: null,
-      error: error instanceof Error ? error : new Error(String(error)),
+      error: finalError,
       status: null,
     };
   } finally {

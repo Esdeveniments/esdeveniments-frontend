@@ -170,9 +170,22 @@ describe("utils/safe-fetch", () => {
       const result = await fetchPromise;
 
       expect(result.data).toBeNull();
-      expect(result.error?.name).toBe("AbortError");
+      expect(result.error?.message).toBe("Request timeout after 1000ms");
+      expect(result.error?.cause).toBeInstanceOf(Error);
+      expect((result.error?.cause as Error).name).toBe("AbortError");
       expect(result.status).toBeNull();
-      expect(captureException).toHaveBeenCalled();
+      expect(captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Request timeout after 1000ms",
+        }),
+        expect.objectContaining({
+          tags: expect.objectContaining({ url: "example.com" }),
+          extra: expect.objectContaining({
+            url: "https://example.com/slow",
+            timeout: 1000,
+          }),
+        })
+      );
     });
 
     it("uses custom timeout when provided", async () => {
@@ -197,7 +210,7 @@ describe("utils/safe-fetch", () => {
       await vi.advanceTimersByTimeAsync(100);
 
       const result = await fetchPromise;
-      expect(result.error?.name).toBe("AbortError");
+      expect(result.error?.message).toBe("Request timeout after 500ms");
     });
 
     it("passes through fetch options", async () => {
