@@ -92,15 +92,11 @@ export default function RestaurantPromotionSection({
   // Track section view when visible and places are loaded (fire only once)
   const hasTrackedViewRef = useRef(false);
   useEffect(() => {
-    if (
-      !hasTrackedViewRef.current &&
-      isVisible &&
-      placesResp &&
-      placesResp.results?.length > 0
-    ) {
+    const placesCount = placesResp?.results?.length ?? 0;
+    if (!hasTrackedViewRef.current && isVisible && placesCount > 0) {
       sendGoogleEvent("restaurant_section_view", {
         context: "event_detail",
-        places_count: placesResp.results.length,
+        places_count: placesCount,
       });
       hasTrackedViewRef.current = true;
     }
