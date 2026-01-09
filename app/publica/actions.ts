@@ -1,5 +1,6 @@
 "use server";
 import { updateTag, refresh } from "next/cache";
+import { after } from "next/server";
 import { createEvent } from "@lib/api/events";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
@@ -41,10 +42,10 @@ export async function createEventAction(
   const created = await createEvent(data, e2eExtras);
 
   // 2. Send email notification (fire-and-forget, non-blocking)
+  // Uses `after` to ensure execution completes in serverless environments
   if (created?.slug && created?.title) {
-    sendNewEventEmail(created.title, created.slug).catch(() => {
-      // Silently ignore - error already logged in sendNewEventEmail
-    });
+    const { title, slug } = created;
+    after(() => sendNewEventEmail(title, slug));
   }
 
   // 3. Immediately expire cache tags for event lists and categorized collections

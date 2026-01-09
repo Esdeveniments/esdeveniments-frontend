@@ -1,6 +1,15 @@
 import { captureException } from "@sentry/nextjs";
 import type { SafeFetchOptions, SafeFetchResult } from "types/fetch";
 
+/** Safely extract hostname from URL, returns "unknown" for invalid/relative URLs */
+function getHostname(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "unknown";
+  }
+}
+
 /**
  * Safe fetch wrapper with timeout and response validation.
  * Use for external webhooks/services that don't need HMAC signing.
@@ -40,7 +49,7 @@ export async function safeFetch<T = unknown>(
     if (!response.ok) {
       const errorMessage = `Fetch failed: ${response.status} ${response.statusText}`;
       captureException(new Error(errorMessage), {
-        tags: { ...context?.tags, url: new URL(url).hostname },
+        tags: { ...context?.tags, url: getHostname(url) },
         extra: { ...context?.extra, status: response.status, url },
       });
       return {
@@ -64,7 +73,7 @@ export async function safeFetch<T = unknown>(
 
     console.error(errorMessage, error);
     captureException(error, {
-      tags: { ...context?.tags, url: new URL(url).hostname },
+      tags: { ...context?.tags, url: getHostname(url) },
       extra: { ...context?.extra, url, timeout },
     });
 

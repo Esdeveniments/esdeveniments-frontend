@@ -111,6 +111,21 @@ describe("utils/safe-fetch", () => {
       });
     });
 
+    it("handles invalid URLs gracefully without throwing", async () => {
+      const networkError = new Error("Invalid URL");
+      mockFetch.mockRejectedValue(networkError);
+
+      // Should not throw even with invalid URL
+      const result = await safeFetch("not-a-valid-url");
+
+      expect(result.data).toBeNull();
+      expect(result.error).toBe(networkError);
+      expect(captureException).toHaveBeenCalledWith(networkError, {
+        tags: { url: "unknown" },
+        extra: { url: "not-a-valid-url", timeout: 5000 },
+      });
+    });
+
     it("aborts request after timeout", async () => {
       // Create a fetch that never resolves until aborted
       mockFetch.mockImplementation(
