@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
 import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
+import { scheduleIdleCallback } from "@utils/browser";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -19,22 +20,6 @@ const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
 // Conditionally defines gtag only if it doesn't already exist to avoid overwriting
 // the real gtag.js implementation if it has already loaded
 const GTAG_SHIM = 'window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};';
-
-/**
- * Schedule a callback during browser idle time or fallback to setTimeout.
- * Returns a cleanup function.
- */
-function scheduleIdleCallback(
-  callback: () => void,
-  options?: { timeout?: number }
-): () => void {
-  if ("requestIdleCallback" in window) {
-    const id = window.requestIdleCallback(callback, options);
-    return () => window.cancelIdleCallback(id);
-  }
-  const id = setTimeout(callback, options?.timeout ?? 100);
-  return () => clearTimeout(id);
-}
 
 const ensureGtag = (): WindowWithGtag | null => {
   if (typeof window === "undefined") return null;

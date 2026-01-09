@@ -31,6 +31,7 @@ const ANIMATED_GIF_FRAME_THRESHOLD = 1; // If GIF has more than 1 frame, skip op
 // This doesn't affect mobile Lighthouse scores since mobile requests smaller widths
 const DESKTOP_WIDTH_THRESHOLD = 800; // Widths above this get quality boost
 const DESKTOP_QUALITY_BOOST = 15; // Add this to quality for desktop-sized requests
+const MAX_OPTIMIZED_QUALITY = 85; // Cap quality to avoid huge files
 
 /** Cache control header based on whether URL has cache-busting key */
 function getCacheControl(hasCacheKey: boolean): string {
@@ -255,7 +256,7 @@ export async function GET(request: Request) {
   // Mobile requests smaller widths, so their quality stays at base (preserves Lighthouse scores)
   const isDesktopRequest = requestedWidth >= DESKTOP_WIDTH_THRESHOLD;
   const requestedQuality = isDesktopRequest 
-    ? Math.min(baseQuality + DESKTOP_QUALITY_BOOST, 85) // Cap at 85 to avoid huge files
+    ? Math.min(baseQuality + DESKTOP_QUALITY_BOOST, MAX_OPTIMIZED_QUALITY)
     : baseQuality;
   // Determine output format:
   // 1. Explicit format param takes priority (avif, webp, jpeg, png)

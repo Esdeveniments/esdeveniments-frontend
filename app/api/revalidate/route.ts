@@ -12,6 +12,9 @@ import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
 import { clearCitiesCaches } from "@lib/api/cities";
 
+// CloudFront's control plane API is always in us-east-1, regardless of distribution region
+const CLOUDFRONT_API_REGION = "us-east-1";
+
 /**
  * Whitelist of cache tags that can be revalidated via this endpoint.
  * Only includes tags related to places/regions data (infrequently changing).
@@ -30,11 +33,11 @@ const ALLOWED_TAGS = [
  * These are the API route paths that should be purged when a tag is revalidated.
  */
 const TAG_TO_CF_PREFIXES: Record<RevalidatableTag, string[]> = {
-  places: ["/api/places"],
-  regions: ["/api/regions"],
+  places: ["/api/places", "/api/places/*"],
+  regions: ["/api/regions", "/api/regions/*"],
   "regions:options": ["/api/regions/options"],
-  cities: ["/api/cities"],
-  categories: ["/api/categories"],
+  cities: ["/api/cities", "/api/cities/*"],
+  categories: ["/api/categories", "/api/categories/*"],
 };
 
 /**
@@ -158,7 +161,7 @@ async function invalidateCloudFrontCache(paths: string[]): Promise<{
 
   try {
     // CloudFront client uses Lambda's IAM role credentials automatically
-    const client = new CloudFrontClient({ region: "us-east-1" });
+    const client = new CloudFrontClient({ region: CLOUDFRONT_API_REGION });
 
     const command = new CreateInvalidationCommand({
       DistributionId: distributionId,

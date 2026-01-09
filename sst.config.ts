@@ -66,7 +66,9 @@ export default $config({
         const cloudfrontPermission = {
           actions: ["cloudfront:CreateInvalidation"],
           resources: [
-            `arn:aws:cloudfront::${$app.account}:distribution/${cloudfrontDistributionId}`,
+            // CloudFront is a global service; use wildcard for account since
+            // the distribution ID already uniquely identifies the resource
+            `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`,
           ],
         };
 
@@ -74,12 +76,15 @@ export default $config({
         if (!existingPerms) {
           args.permissions = [cloudfrontPermission];
         } else if (Array.isArray(existingPerms)) {
+          const targetResource = `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`;
           const alreadyHasCloudFront = existingPerms.some((p) => {
             if (!p || typeof p !== "object") return false;
-            const actions = (p as { actions?: unknown }).actions;
+            const stmt = p as { actions?: unknown; resources?: unknown };
             return (
-              Array.isArray(actions) &&
-              actions.includes("cloudfront:CreateInvalidation")
+              Array.isArray(stmt.actions) &&
+              stmt.actions.includes("cloudfront:CreateInvalidation") &&
+              Array.isArray(stmt.resources) &&
+              stmt.resources.includes(targetResource)
             );
           });
 
