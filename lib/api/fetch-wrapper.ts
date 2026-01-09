@@ -2,7 +2,7 @@ import { generateHmac } from "@utils/hmac";
 
 export async function fetchWithHmac(
   url: string,
-  options: RequestInit & { skipBodySigning?: boolean } = {}
+  options: RequestInit & { skipBodySigning?: boolean; timeout?: number } = {}
 ): Promise<Response> {
   const timestamp = Date.now();
   let bodyToSign = "";
@@ -69,11 +69,47 @@ export async function fetchWithHmac(
   // This prevents caching of sensitive HMAC-signed requests
   const cacheOption = options.next ? undefined : "no-store";
 
-  return fetch(url, {
-    ...options,
-    cache: cacheOption,
-    method,
-    body: normalizedBody,
-    headers,
-  });
+  // Default 10s timeout for serverless environments (prevents hanging)
+  const timeoutMs = options.timeout ?? 10000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  // Merge signals if caller provided one
+  const signal = options.signal
+    ? mergeAbortSignals(options.signal, controller.signal)
+    : controller.signal;
+
+  try {
+    return await fetch(url, {
+      ...options,
+      cache: cacheOption,
+      method,
+      body: normalizedBody,
+      headers,
+      signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Merges two AbortSignals - aborts when either signal aborts
+ */
+function mergeAbortSignals(
+  signal1: AbortSignal,
+  signal2: AbortSignal
+): AbortSignal {
+  const controller = new AbortController();
+
+  const abort = () => controller.abort();
+
+  if (signal1.aborted || signal2.aborted) {
+    controller.abort();
+  } else {
+    signal1.addEventListener("abort", abort, { once: true });
+    signal2.addEventListener("abort", abort, { once: true });
+  }
+
+  return controller.signal;
 }

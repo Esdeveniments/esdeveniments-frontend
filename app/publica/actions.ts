@@ -1,10 +1,10 @@
 "use server";
 import { updateTag, refresh } from "next/cache";
-import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+import { fireAndForgetFetch } from "@utils/safe-fetch";
 
 /**
  * Sends email notification via Pipedream when a new event is published.
@@ -19,22 +19,18 @@ async function sendNewEventEmail(title: string, slug: string): Promise<void> {
     return;
   }
 
-  try {
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ title, slug }),
-    });
-  } catch (error) {
-    console.error("Error sending new event email:", error);
-    captureException(error, {
+  await fireAndForgetFetch(webhookUrl, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ title, slug }),
+    context: {
       tags: { section: "publica", action: "send-email" },
       extra: { title, slug },
-    });
-  }
+    },
+  });
 }
 
 export async function createEventAction(

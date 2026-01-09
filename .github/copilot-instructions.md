@@ -60,6 +60,7 @@ Adding a new filter:
   3. Create internal API route in `app/api/*` that calls external wrapper and sets cache headers
   4. Update client library in `lib/api/*.ts` to call internal route via `getInternalApiUrl` and query builders
   5. Use `next: { revalidate, tags }` for Next.js fetch caching
+- **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
 - Avoid: calling external API directly from pages/components (use internal routes), duplicating manual query string concatenation (use query builders), bypassing cache wrappers, throwing raw fetch errors without fallback object.
 
 ## 5. News Pages
