@@ -66,7 +66,7 @@ export default $config({
         const cloudfrontPermission = {
           actions: ["cloudfront:CreateInvalidation"],
           resources: [
-            `arn:aws:cloudfront::304087922066:distribution/${cloudfrontDistributionId}`,
+            `arn:aws:cloudfront::${$app.account}:distribution/${cloudfrontDistributionId}`,
           ],
         };
 

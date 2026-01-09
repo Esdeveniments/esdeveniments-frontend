@@ -143,9 +143,7 @@ async function purgeCloudflareCache(
  * Uses AWS SDK with Lambda's IAM role credentials.
  * Returns success status and any error message.
  */
-async function invalidateCloudFrontCache(
-  paths: string[]
-): Promise<{
+async function invalidateCloudFrontCache(paths: string[]): Promise<{
   success: boolean;
   error?: string;
   skipped?: boolean;
@@ -165,7 +163,7 @@ async function invalidateCloudFrontCache(
     const command = new CreateInvalidationCommand({
       DistributionId: distributionId,
       InvalidationBatch: {
-        CallerReference: `revalidate-${Date.now()}-${randomUUID().slice(0, 8)}`,
+        CallerReference: `revalidate-${randomUUID()}`,
         Paths: {
           Quantity: paths.length,
           Items: paths,
