@@ -6,6 +6,7 @@ import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
+import { env } from "@utils/misc-helpers";
 
 /**
  * Sends email notification via Pipedream when a new event is published.
@@ -13,8 +14,8 @@ import { fireAndForgetFetch } from "@utils/safe-fetch";
  * Failures are logged but don't block event creation.
  */
 async function sendNewEventEmail(title: string, slug: string): Promise<void> {
-  const webhookUrl = process.env.NEXT_PUBLIC_NEW_EVENT_EMAIL_URL;
-  const isProduction = process.env.NEXT_PUBLIC_VERCEL_ENV === "production";
+  const webhookUrl = process.env.NEW_EVENT_EMAIL_URL;
+  const isProduction = env === "prod";
 
   if (!webhookUrl || !isProduction) {
     return;
