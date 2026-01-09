@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
 import reactHooks from "eslint-plugin-react-hooks";
+import eslintReact from "@eslint-react/eslint-plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,9 +95,7 @@ export default [
       "utils/**/*.{ts,tsx,js,jsx}",
       "lib/**/*.{ts,tsx,js,jsx}",
     ],
-    ignores: [
-      "types/**/*.ts",
-    ],
+    ignores: ["types/**/*.ts"],
 
     rules: {
       "no-restricted-syntax": [
@@ -116,10 +115,7 @@ export default [
   },
   {
     files: ["types/**/*.ts"],
-    ignores: [
-      "types/common.ts",
-      "types/api/city.ts",
-    ],
+    ignores: ["types/common.ts", "types/api/city.ts"],
     rules: {
       "@typescript-eslint/no-unused-vars": "error",
       "no-restricted-syntax": [
@@ -154,14 +150,65 @@ export default [
       "import/no-anonymous-default-export": "off",
     },
   },
+  // @eslint-react: comprehensive React best practices and performance rules
+  {
+    files: ["**/*.tsx", "**/*.jsx"],
+    ...eslintReact.configs.recommended,
+    rules: {
+      ...eslintReact.configs.recommended.rules,
+      // Relax some rules that may be too strict or don't fit Next.js patterns
+      "@eslint-react/prefer-destructuring-assignment": "off",
+      // Common Next.js hydration pattern (setIsMounted, setIsHydrated, etc.)
+      "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "off",
+      // React 19 migration - can address gradually
+      "@eslint-react/no-context-provider": "off",
+      "@eslint-react/no-use-context": "off",
+      "@eslint-react/no-forward-ref": "off",
+    },
+  },
+  // Disable hook naming rules in test mocks (they need to match real hook names)
+  {
+    files: ["test/**/*.tsx", "test/**/*.ts"],
+    rules: {
+      "@eslint-react/no-unnecessary-use-prefix": "off",
+    },
+  },
+  // Warn about raw fetch() usage - prefer fetchWithHmac or safeFetch
+  // Raw fetch lacks timeout, response validation, and error handling
+  // This is a WARNING to flag new code for review - many existing uses are legitimate
+  // (internal API routes, SWR fetchers, API route handlers)
+  {
+    files: [
+      "app/**/*.ts",
+      "app/**/*.tsx",
+      "lib/**/*.ts",
+      "components/**/*.ts",
+      "components/**/*.tsx",
+    ],
+    ignores: [
+      "lib/api/fetch-wrapper.ts", // The wrapper itself
+      "utils/safe-fetch.ts", // The safe-fetch utility
+      "test/**/*", // Tests can mock fetch
+      "app/api/**/*", // API routes are the endpoints themselves
+      "lib/api/*.ts", // Internal API client calls (same-origin, Next.js handles)
+      "components/hooks/use*.ts", // SWR fetchers (same-origin)
+    ],
+    rules: {
+      "no-restricted-globals": [
+        "warn",
+        {
+          name: "fetch",
+          message:
+            "Review: prefer fetchWithHmac (internal API) or safeFetch (external webhooks) for timeout & error handling. Ignore if calling same-origin internal routes.",
+        },
+      ],
+    },
+  },
   // CRITICAL: Prevent searchParams in listing pages to avoid $300+ DynamoDB cost spikes
   // Reading searchParams makes pages dynamic, causing OpenNext/SST to create millions of cache entries
   // See: Dec 28, 2025 incident - 200M DynamoDB writes = $307 cost
   {
-    files: [
-      "app/\\[place\\]/**/*.tsx",
-      "app/\\[place\\]/**/*.ts",
-    ],
+    files: ["app/\\[place\\]/**/*.tsx", "app/\\[place\\]/**/*.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",

@@ -16,11 +16,6 @@ const Maps: FC<EventMapsProps> = ({ location }) => {
     frame.style.height = "400px";
     frame.style.border = "0";
     frame.allowFullscreen = true;
-
-    const onLoad = () => {
-      frame.removeEventListener("load", onLoad);
-    };
-    frame.addEventListener("load", onLoad);
     map.appendChild(frame);
 
     return () => {

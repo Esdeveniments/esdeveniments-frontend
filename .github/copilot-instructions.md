@@ -60,6 +60,7 @@ Adding a new filter:
   3. Create internal API route in `app/api/*` that calls external wrapper and sets cache headers
   4. Update client library in `lib/api/*.ts` to call internal route via `getInternalApiUrl` and query builders
   5. Use `next: { revalidate, tags }` for Next.js fetch caching
+- **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
 - Avoid: calling external API directly from pages/components (use internal routes), duplicating manual query string concatenation (use query builders), bypassing cache wrappers, throwing raw fetch errors without fallback object.
 
 ## 5. News Pages
@@ -160,6 +161,10 @@ Adding a new filter:
 - Forgetting to use query builders (`buildEventsQuery`, `buildNewsQuery`) and manually constructing URLSearchParams.
 - Not setting appropriate cache headers (`s-maxage`, `stale-while-revalidate`) in internal API routes.
 - **⚠️ CRITICAL - Adding `searchParams` to listing pages**: Reading `searchParams` in `app/[place]/*` page components makes pages dynamic, causing OpenNext/SST to create millions of DynamoDB cache entries (one per unique URL+query). This caused a $300+ spike on Dec 28, 2025. Query-dependent behavior must be handled in middleware (`proxy.ts`) or client-side (SWR).
+- **Raw fetch() without timeout**: Always use `fetchWithHmac` (internal API, 10s timeout) or `safeFetch`/`fireAndForgetFetch` (external webhooks, 5s timeout). Raw `fetch()` can hang indefinitely in serverless. ESLint warns on raw `fetch()`.
+- **Custom implementations over stdlib**: Prefer built-in APIs (e.g., `AbortSignal.any()` over custom signal merging, `after()` from `next/server` over fire-and-forget promises).
+- **Swallowing stack traces**: Pass original error to `captureException(error)`, not `new Error(error.message)`.
+- **URL parsing in catch blocks**: Use try/catch when parsing URLs (e.g., `new URL(url).hostname`) to avoid exceptions in error handlers.
 
 ## 16. Quick Examples
 
