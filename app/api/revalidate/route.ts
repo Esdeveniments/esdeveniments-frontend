@@ -7,6 +7,11 @@ import {
 } from "@aws-sdk/client-cloudfront";
 import { handleApiError } from "@utils/api-error-handler";
 import type { RevalidatableTag } from "types/cache";
+import type {
+  CloudflarePurgeResult,
+  CloudFrontInvalidationResult,
+  RevalidateResponseDTO,
+} from "types/api/revalidate";
 import { clearPlacesCaches } from "@lib/api/places";
 import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
@@ -30,15 +35,32 @@ const ALLOWED_TAGS = [
 
 /**
  * Maps cache tags to Cloudflare URL prefixes for cache purging.
- * These are the API route paths that should be purged when a tag is revalidated.
+ * Cloudflare prefixes are literal path prefixes (NO wildcards supported).
+ * @see https://developers.cloudflare.com/cache/how-to/purge-cache/purge-by-prefix/
  */
-const TAG_TO_CF_PREFIXES: Record<RevalidatableTag, string[]> = {
+const TAG_TO_CLOUDFLARE_PREFIXES: Record<RevalidatableTag, string[]> = {
+  places: ["/api/places"],
+  regions: ["/api/regions"],
+  "regions:options": ["/api/regions/options"],
+  cities: ["/api/cities"],
+  categories: ["/api/categories"],
+};
+
+/**
+ * Maps cache tags to CloudFront invalidation paths.
+ * CloudFront supports wildcard patterns (* at end of path).
+ * @see https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html
+ */
+const TAG_TO_CLOUDFRONT_PATHS: Record<RevalidatableTag, string[]> = {
   places: ["/api/places", "/api/places/*"],
   regions: ["/api/regions", "/api/regions/*"],
   "regions:options": ["/api/regions/options"],
   cities: ["/api/cities", "/api/cities/*"],
   categories: ["/api/categories", "/api/categories/*"],
 };
+
+/** CloudFront invalidation limits */
+const CLOUDFRONT_MAX_PATHS = 3000;
 
 /**
  * Maps cache tags to in-memory cache clear functions.
@@ -159,6 +181,28 @@ async function invalidateCloudFrontCache(paths: string[]): Promise<{
     return { success: true, skipped: true };
   }
 
+  // Normalize paths: ensure leading slash, non-empty, and de-duplicate
+  const normalizedPaths = [
+    ...new Set(
+      paths
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+        .map((p) => (p.startsWith("/") ? p : `/${p}`))
+    ),
+  ];
+
+  if (normalizedPaths.length === 0) {
+    return { success: true, skipped: true };
+  }
+
+  // CloudFront has a hard limit of 3000 paths per invalidation
+  if (normalizedPaths.length > CLOUDFRONT_MAX_PATHS) {
+    console.warn(
+      `CloudFront invalidation truncated: ${normalizedPaths.length} paths exceeds ${CLOUDFRONT_MAX_PATHS} limit`
+    );
+    normalizedPaths.length = CLOUDFRONT_MAX_PATHS;
+  }
+
   try {
     // CloudFront client uses Lambda's IAM role credentials automatically
     const client = new CloudFrontClient({ region: CLOUDFRONT_API_REGION });
@@ -168,8 +212,8 @@ async function invalidateCloudFrontCache(paths: string[]): Promise<{
       InvalidationBatch: {
         CallerReference: `revalidate-${randomUUID()}`,
         Paths: {
-          Quantity: paths.length,
-          Items: paths,
+          Quantity: normalizedPaths.length,
+          Items: normalizedPaths,
         },
       },
     });
@@ -292,18 +336,13 @@ export async function POST(request: Request) {
     // 5. Purge Cloudflare cache for corresponding URL prefixes
     const cfPrefixes = new Set<string>();
     for (const tag of tags) {
-      const prefixes = TAG_TO_CF_PREFIXES[tag];
+      const prefixes = TAG_TO_CLOUDFLARE_PREFIXES[tag];
       if (prefixes) {
         prefixes.forEach((p) => cfPrefixes.add(p));
       }
     }
 
-    let cloudflareResult: {
-      purged: boolean;
-      prefixes?: string[];
-      error?: string;
-      skipped?: boolean;
-    };
+    let cloudflareResult: CloudflarePurgeResult;
     if (cfPrefixes.size > 0) {
       const prefixArray = Array.from(cfPrefixes);
       const cfResult = await purgeCloudflareCache(prefixArray);
@@ -318,15 +357,18 @@ export async function POST(request: Request) {
     }
 
     // 6. Invalidate CloudFront cache (AWS CDN in front of OpenNext/SST)
-    let cloudfrontResult: {
-      invalidated: boolean;
-      paths?: string[];
-      invalidationId?: string;
-      error?: string;
-      skipped?: boolean;
-    };
-    if (cfPrefixes.size > 0) {
-      const pathArray = Array.from(cfPrefixes);
+    // Use CloudFront-specific paths (supports wildcards)
+    const cfrontPaths = new Set<string>();
+    for (const tag of tags) {
+      const paths = TAG_TO_CLOUDFRONT_PATHS[tag];
+      if (paths) {
+        paths.forEach((p) => cfrontPaths.add(p));
+      }
+    }
+
+    let cloudfrontResult: CloudFrontInvalidationResult;
+    if (cfrontPaths.size > 0) {
+      const pathArray = Array.from(cfrontPaths);
       const cfrontResult = await invalidateCloudFrontCache(pathArray);
       cloudfrontResult = {
         invalidated: cfrontResult.success && !cfrontResult.skipped,
@@ -340,6 +382,12 @@ export async function POST(request: Request) {
     }
 
     // 7. Log successful revalidation
+    const cloudfrontStatus = cloudfrontResult.invalidated
+      ? `invalidated${cloudfrontResult.invalidationId ? ` (${cloudfrontResult.invalidationId})` : ""}`
+      : cloudfrontResult.skipped
+      ? "skipped"
+      : "failed";
+
     console.log(
       `[revalidate] Tags: ${revalidatedTags.join(", ")}${
         failedTags.length > 0
@@ -351,31 +399,24 @@ export async function POST(request: Request) {
           : cloudflareResult.skipped
           ? "skipped"
           : "failed"
-      } | CloudFront: ${
-        cloudfrontResult.invalidated
-          ? `invalidated (${cloudfrontResult.invalidationId})`
-          : cloudfrontResult.skipped
-          ? "skipped"
-          : "failed"
-      }`
+      } | CloudFront: ${cloudfrontStatus}`
     );
 
-    return NextResponse.json(
-      {
-        revalidated: true,
-        tags: revalidatedTags,
-        cloudflare: cloudflareResult,
-        cloudfront: cloudfrontResult,
-        timestamp: new Date().toISOString(),
-        // Include warning if any tag cache writes failed (transient DynamoDB errors)
-        ...(failedTags.length > 0 && {
-          warning: `Tag cache write failed for: ${failedTags.join(
-            ", "
-          )} (transient, revalidation still applied)`,
-        }),
-      },
-      { status: 200 }
-    );
+    const response: RevalidateResponseDTO = {
+      revalidated: true,
+      tags: revalidatedTags as RevalidatableTag[],
+      cloudflare: cloudflareResult,
+      cloudfront: cloudfrontResult,
+      timestamp: new Date().toISOString(),
+      // Include warning if any tag cache writes failed (transient DynamoDB errors)
+      ...(failedTags.length > 0 && {
+        warning: `Tag cache write failed for: ${failedTags.join(
+          ", "
+        )} (transient, revalidation still applied)`,
+      }),
+    };
+
+    return NextResponse.json(response, { status: 200 });
   } catch (e) {
     return handleApiError(e, "/api/revalidate", {
       errorMessage: "Failed to revalidate cache",

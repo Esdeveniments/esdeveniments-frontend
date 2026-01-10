@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense, useMemo, useState } from "react";
+import { useEffect, Suspense, useMemo, useState, useRef } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
@@ -41,8 +41,6 @@ const ensureGtag = (): WindowWithGtag | null => {
 const pageViewTimestamps = new Map<string, number>();
 // Minimum ms between tracking same path (prevents duplicates from re-renders/strict mode)
 const DEBOUNCE_MS = 1000;
-// Track last consent state to avoid duplicate consent updates
-let lastConsentState: "granted" | "denied" | null = null;
 
 /**
  * Check if we should track this page view.
@@ -116,6 +114,9 @@ export default function GoogleScripts() {
   const [HeavyComponent, setHeavyComponent] = useState<
     React.ComponentType<{ adsAllowed: boolean }> | null
   >(null);
+  // Track last consent state to avoid duplicate consent updates
+  // Using useRef (not module-level) to handle React Strict Mode correctly
+  const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
 
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
   // Note: We use the same consent signal (adsAllowed) for both ads and analytics
@@ -129,12 +130,17 @@ export default function GoogleScripts() {
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
 
     // Skip if consent state hasn't actually changed (prevents duplicate events)
-    if (lastConsentState === consentState) return;
-    lastConsentState = consentState;
+    if (lastConsentStateRef.current === consentState) return;
 
     // Use idle callback to avoid blocking main thread during consent updates
+    // Note: We update lastConsentStateRef inside the callback to ensure it only
+    // updates when gtag is actually called (fixes React Strict Mode double-invoke)
     const cleanup = scheduleIdleCallback(
       () => {
+        // Double-check inside callback in case state changed during idle wait
+        if (lastConsentStateRef.current === consentState) return;
+        lastConsentStateRef.current = consentState;
+
         win.gtag("consent", "update", {
           ad_user_data: consentState,
           ad_personalization: consentState,

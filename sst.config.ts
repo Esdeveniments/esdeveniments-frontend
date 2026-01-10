@@ -250,6 +250,12 @@ export default $config({
         ...(process.env.NEW_EVENT_EMAIL_URL && {
           NEW_EVENT_EMAIL_URL: process.env.NEW_EVENT_EMAIL_URL,
         }),
+        // Optional: CloudFront distribution ID for cache invalidation
+        // Used by /api/revalidate to purge CDN cache when places/regions change
+        // If not set, CloudFront invalidation is skipped gracefully
+        ...(process.env.CLOUDFRONT_DISTRIBUTION_ID && {
+          CLOUDFRONT_DISTRIBUTION_ID: process.env.CLOUDFRONT_DISTRIBUTION_ID,
+        }),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
       server: {
@@ -509,6 +515,53 @@ export default $config({
     // which adds ~$0.01/1000 requests. Not enabled by default.
     // The Lambda and DynamoDB alarms cover the main cost drivers.
     // If you want S3 monitoring, enable request metrics in the S3 console first.
+
+    // =========================================================================
+    // CACHE CLEANUP LAMBDA
+    // Cleans up stale ISR cache entries from old deployments.
+    // Each deployment creates a new build ID prefix - old entries become orphaned.
+    // Runs weekly to keep the DynamoDB table size manageable.
+    // =========================================================================
+
+    const cacheCleanupLambda = new sst.aws.Function("CacheCleanupLambda", {
+      handler: "scripts/cleanup-dynamo-cache.handler",
+      runtime: "nodejs22.x",
+      timeout: "15 minutes",
+      memory: "256 MB",
+      environment: {
+        CACHE_DYNAMO_TABLE:
+          "esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf",
+        BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
+        DRY_RUN: "false",
+      },
+      permissions: [
+        {
+          actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
+          resources: [
+            "arn:aws:dynamodb:eu-west-3:*:table/esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf",
+          ],
+        },
+      ],
+    });
+
+    // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
+    new aws.cloudwatch.EventRule("CacheCleanupSchedule", {
+      scheduleExpression: "cron(0 3 ? * SUN *)",
+      description: "Weekly cleanup of stale ISR cache entries",
+    });
+
+    new aws.cloudwatch.EventTarget("CacheCleanupTarget", {
+      rule: "CacheCleanupSchedule",
+      arn: cacheCleanupLambda.arn,
+    });
+
+    // Allow CloudWatch Events to invoke the Lambda
+    new aws.lambda.Permission("CacheCleanupPermission", {
+      action: "lambda:InvokeFunction",
+      function: cacheCleanupLambda.name,
+      principal: "events.amazonaws.com",
+      sourceArn: $interpolate`arn:aws:events:eu-west-3:*:rule/CacheCleanupSchedule`,
+    });
 
     return {
       SiteUrl: site.url,

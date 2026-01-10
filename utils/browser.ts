@@ -11,7 +11,10 @@ export function scheduleIdleCallback(
   callback: () => void,
   options?: { timeout?: number }
 ): () => void {
-  if ("requestIdleCallback" in window) {
+  if (
+    typeof window !== "undefined" &&
+    typeof window.requestIdleCallback === "function"
+  ) {
     const id = window.requestIdleCallback(callback, options);
     return () => window.cancelIdleCallback(id);
   }
