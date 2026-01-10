@@ -22,17 +22,17 @@ import {
   BatchWriteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 
-import type { AttributeValue } from "@aws-sdk/client-dynamodb";
+import type { ScanCommandOutput } from "@aws-sdk/client-dynamodb";
 
-type ScanCommandOutput = {
-  Items?: Array<{ tag?: { S?: string }; path?: { S?: string } }>;
-  LastEvaluatedKey?: Record<string, AttributeValue>;
-};
+// Type for our table items (tag and path columns)
+interface CacheItem {
+  tag?: { S?: string };
+  path?: { S?: string };
+}
 
 const REGION = process.env.AWS_REGION || "eu-west-3";
-const TABLE_NAME =
-  process.env.CACHE_DYNAMO_TABLE ||
-  "esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf";
+// No fallback - fail explicitly if env var not set (SST provides it dynamically)
+const TABLE_NAME = process.env.CACHE_DYNAMO_TABLE;
 const BUILDS_TO_KEEP = parseInt(process.env.BUILDS_TO_KEEP || "3", 10);
 const DRY_RUN = process.env.DRY_RUN !== "false"; // Default to dry run for safety
 const BATCH_SIZE = 25; // DynamoDB BatchWriteItem limit
@@ -88,19 +88,22 @@ async function scanAndGroupByBuild(): Promise<
       },
     });
 
-    const response = (await client.send(command)) as ScanCommandOutput;
+    const response: ScanCommandOutput = await client.send(command);
     lastEvaluatedKey = response.LastEvaluatedKey;
 
-    for (const item of response.Items || []) {
+    for (const rawItem of response.Items || []) {
+      // Type narrow the item to our expected shape
+      const item = rawItem as CacheItem;
       const tag = item.tag?.S || "";
       const path = item.path?.S || "";
       const buildId = extractBuildId(tag);
 
-      if (!buildGroups.has(buildId)) {
-        buildGroups.set(buildId, { count: 0, items: [] });
+      let group = buildGroups.get(buildId);
+      if (!group) {
+        group = { count: 0, items: [] };
+        buildGroups.set(buildId, group);
       }
 
-      const group = buildGroups.get(buildId)!;
       group.count++;
       group.items.push({ tag, path });
     }
@@ -165,9 +168,11 @@ async function deleteItems(
         console.log(`[DRY RUN] Would delete batch of ${batch.length} items`);
         deleted += batch.length;
       } else {
+        // TABLE_NAME is validated at handler entry, safe to assert here
+        const tableName = TABLE_NAME as string;
         const command = new BatchWriteItemCommand({
           RequestItems: {
-            [TABLE_NAME]: deleteRequests,
+            [tableName]: deleteRequests,
           },
         });
 
@@ -175,7 +180,7 @@ async function deleteItems(
 
         // Check for unprocessed items
         const unprocessed =
-          response.UnprocessedItems?.[TABLE_NAME]?.length || 0;
+          response.UnprocessedItems?.[tableName]?.length || 0;
         deleted += batch.length - unprocessed;
 
         if (unprocessed > 0) {

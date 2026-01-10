@@ -307,8 +307,8 @@ export async function POST(request: Request) {
     // 4. Revalidate each tag (Next.js data cache)
     // Next 16 requires a profile; use "max" to force full invalidation
     // Wrapped in try-catch to handle transient DynamoDB tag cache errors in OpenNext
-    const revalidatedTags: string[] = [];
-    const failedTags: string[] = [];
+    const revalidatedTags: RevalidatableTag[] = [];
+    const failedTags: RevalidatableTag[] = [];
     for (const tag of tags) {
       try {
         revalidateTag(tag, "max");
@@ -383,7 +383,11 @@ export async function POST(request: Request) {
 
     // 7. Log successful revalidation
     const cloudfrontStatus = cloudfrontResult.invalidated
-      ? `invalidated${cloudfrontResult.invalidationId ? ` (${cloudfrontResult.invalidationId})` : ""}`
+      ? `invalidated${
+          cloudfrontResult.invalidationId
+            ? ` (${cloudfrontResult.invalidationId})`
+            : ""
+        }`
       : cloudfrontResult.skipped
       ? "skipped"
       : "failed";
@@ -404,7 +408,7 @@ export async function POST(request: Request) {
 
     const response: RevalidateResponseDTO = {
       revalidated: true,
-      tags: revalidatedTags as RevalidatableTag[],
+      tags: revalidatedTags,
       cloudflare: cloudflareResult,
       cloudfront: cloudfrontResult,
       timestamp: new Date().toISOString(),

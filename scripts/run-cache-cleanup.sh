@@ -6,11 +6,16 @@
 #   ./scripts/run-cache-cleanup.sh           # Dry run
 #   ./scripts/run-cache-cleanup.sh --execute # Actually delete items
 #
+# Environment variables:
+#   FUNCTION_NAME - Lambda function name (default: production)
+#   AWS_REGION    - AWS region (default: eu-west-3)
+#
 
 set -euo pipefail
 
-FUNCTION_NAME="esdeveniments-frontend-production-CacheCleanupLambda"
-REGION="eu-west-3"
+# Configurable via environment variables with production defaults
+FUNCTION_NAME="${FUNCTION_NAME:-esdeveniments-frontend-production-CacheCleanupLambda}"
+REGION="${AWS_REGION:-eu-west-3}"
 
 if [[ "${1:-}" == "--execute" ]]; then
   echo "🚀 Running cache cleanup (LIVE MODE - will delete items)"

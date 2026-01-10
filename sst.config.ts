@@ -62,13 +62,14 @@ export default $config({
       // Add CloudFront invalidation permission for revalidation endpoint
       // This allows the Lambda to create cache invalidations when places/regions change
       const cloudfrontDistributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
-      if (cloudfrontDistributionId) {
+      const awsAccountId = process.env.AWS_ACCOUNT_ID;
+      if (cloudfrontDistributionId && awsAccountId) {
         const cloudfrontPermission = {
           actions: ["cloudfront:CreateInvalidation"],
           resources: [
-            // CloudFront is a global service; use wildcard for account since
-            // the distribution ID already uniquely identifies the resource
-            `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`,
+            // CloudFront is a global service (no region), but we specify the account ID
+            // for least-privilege security
+            `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`,
           ],
         };
 
@@ -76,7 +77,7 @@ export default $config({
         if (!existingPerms) {
           args.permissions = [cloudfrontPermission];
         } else if (Array.isArray(existingPerms)) {
-          const targetResource = `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`;
+          const targetResource = `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`;
           const alreadyHasCloudFront = existingPerms.some((p) => {
             if (!p || typeof p !== "object") return false;
             const stmt = p as { actions?: unknown; resources?: unknown };
@@ -523,45 +524,60 @@ export default $config({
     // Runs weekly to keep the DynamoDB table size manageable.
     // =========================================================================
 
-    const cacheCleanupLambda = new sst.aws.Function("CacheCleanupLambda", {
-      handler: "scripts/cleanup-dynamo-cache.handler",
-      runtime: "nodejs22.x",
-      timeout: "15 minutes",
-      memory: "256 MB",
-      environment: {
-        CACHE_DYNAMO_TABLE:
-          "esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf",
-        BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
-        DRY_RUN: "false",
-      },
-      permissions: [
-        {
-          actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
-          resources: [
-            "arn:aws:dynamodb:eu-west-3:*:table/esdeveniments-frontend-production-siteRevalidationTable-wxcxteaf",
+    // Get the revalidation table from OpenNext - this is the ISR cache table
+    const revalidationTable = site.nodes.revalidationTable;
+
+    // Only set up cleanup if the revalidation table exists
+    // (it won't exist in dev mode or if ISR is not configured)
+    if (revalidationTable) {
+      revalidationTable.apply((table) => {
+        if (!table) return;
+
+        const cacheCleanupLambda = new sst.aws.Function("CacheCleanupLambda", {
+          handler: "scripts/cleanup-dynamo-cache.handler",
+          runtime: "nodejs22.x",
+          timeout: "15 minutes",
+          memory: "256 MB",
+          environment: {
+            // Dynamically resolve the table name from OpenNext
+            CACHE_DYNAMO_TABLE: table.name,
+            BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
+            DRY_RUN: "false",
+          },
+          permissions: [
+            {
+              actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
+              // Dynamically resolve the table ARN
+              resources: [table.arn],
+            },
           ],
-        },
-      ],
-    });
+        });
 
-    // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
-    new aws.cloudwatch.EventRule("CacheCleanupSchedule", {
-      scheduleExpression: "cron(0 3 ? * SUN *)",
-      description: "Weekly cleanup of stale ISR cache entries",
-    });
+        // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
+        const cacheCleanupSchedule = new aws.cloudwatch.EventRule(
+          "CacheCleanupSchedule",
+          {
+            scheduleExpression: "cron(0 3 ? * SUN *)",
+            description: "Weekly cleanup of stale ISR cache entries",
+          }
+        );
 
-    new aws.cloudwatch.EventTarget("CacheCleanupTarget", {
-      rule: "CacheCleanupSchedule",
-      arn: cacheCleanupLambda.arn,
-    });
+        new aws.cloudwatch.EventTarget("CacheCleanupTarget", {
+          // Use the actual rule name from the resource
+          rule: cacheCleanupSchedule.name,
+          arn: cacheCleanupLambda.arn,
+        });
 
-    // Allow CloudWatch Events to invoke the Lambda
-    new aws.lambda.Permission("CacheCleanupPermission", {
-      action: "lambda:InvokeFunction",
-      function: cacheCleanupLambda.name,
-      principal: "events.amazonaws.com",
-      sourceArn: $interpolate`arn:aws:events:eu-west-3:*:rule/CacheCleanupSchedule`,
-    });
+        // Allow CloudWatch Events to invoke the Lambda
+        new aws.lambda.Permission("CacheCleanupPermission", {
+          action: "lambda:InvokeFunction",
+          function: cacheCleanupLambda.name,
+          principal: "events.amazonaws.com",
+          // Use the actual rule ARN from the resource
+          sourceArn: cacheCleanupSchedule.arn,
+        });
+      });
+    }
 
     return {
       SiteUrl: site.url,
