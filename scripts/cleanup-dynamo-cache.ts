@@ -38,6 +38,7 @@ const DRY_RUN = process.env.DRY_RUN !== "false"; // Default to dry run for safet
 const BATCH_SIZE = 25; // DynamoDB BatchWriteItem limit
 const SCAN_LIMIT = 5000; // Items per scan
 const DELAY_BETWEEN_BATCHES_MS = 100; // Rate limiting
+const MAX_RETRIES = 3; // Retries for unprocessed items with exponential backoff
 
 const client = new DynamoDBClient({ region: REGION });
 
@@ -154,13 +155,10 @@ async function deleteItems(
   for (let i = 0; i < items.length; i += BATCH_SIZE) {
     const batch = items.slice(i, i + BATCH_SIZE);
 
-    const deleteRequests = batch.map((item) => ({
-      DeleteRequest: {
-        Key: {
-          tag: { S: item.tag },
-          path: { S: item.path },
-        },
-      },
+    // Use SDK's WriteRequest type for compatibility with UnprocessedItems
+    let pendingItems = batch.map((item) => ({
+      tag: item.tag,
+      path: item.path,
     }));
 
     try {
@@ -170,22 +168,62 @@ async function deleteItems(
       } else {
         // TABLE_NAME is validated at handler entry, safe to assert here
         const tableName = TABLE_NAME as string;
-        const command = new BatchWriteItemCommand({
-          RequestItems: {
-            [tableName]: deleteRequests,
-          },
-        });
 
-        const response = await client.send(command);
+        // Retry loop with exponential backoff for unprocessed items
+        let retryCount = 0;
+        while (pendingItems.length > 0 && retryCount <= MAX_RETRIES) {
+          if (retryCount > 0) {
+            // Exponential backoff: 200ms, 400ms, 800ms
+            const backoffMs = DELAY_BETWEEN_BATCHES_MS * Math.pow(2, retryCount);
+            console.log(
+              `Retrying ${pendingItems.length} unprocessed items (attempt ${retryCount}/${MAX_RETRIES}, waiting ${backoffMs}ms)`
+            );
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+          }
 
-        // Check for unprocessed items
-        const unprocessed =
-          response.UnprocessedItems?.[tableName]?.length || 0;
-        deleted += batch.length - unprocessed;
+          // Build delete requests from pending items
+          const deleteRequests = pendingItems.map((item) => ({
+            DeleteRequest: {
+              Key: {
+                tag: { S: item.tag },
+                path: { S: item.path },
+              },
+            },
+          }));
 
-        if (unprocessed > 0) {
+          const command = new BatchWriteItemCommand({
+            RequestItems: {
+              [tableName]: deleteRequests,
+            },
+          });
+
+          const response = await client.send(command);
+
+          // Check for unprocessed items
+          const unprocessedRequests =
+            response.UnprocessedItems?.[tableName] || [];
+          const processedCount =
+            pendingItems.length - unprocessedRequests.length;
+          deleted += processedCount;
+
+          if (unprocessedRequests.length > 0) {
+            // Extract keys from unprocessed requests for retry
+            pendingItems = unprocessedRequests
+              .filter((req) => req.DeleteRequest?.Key)
+              .map((req) => ({
+                tag: req.DeleteRequest!.Key!["tag"]?.S || "",
+                path: req.DeleteRequest!.Key!["path"]?.S || "",
+              }));
+            retryCount++;
+          } else {
+            pendingItems = [];
+          }
+        }
+
+        // If still unprocessed after all retries, log error
+        if (pendingItems.length > 0) {
           errors.push(
-            `${unprocessed} items unprocessed in batch ${Math.floor(
+            `${pendingItems.length} items still unprocessed after ${MAX_RETRIES} retries in batch ${Math.floor(
               i / BATCH_SIZE
             )}`
           );
