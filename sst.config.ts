@@ -62,8 +62,14 @@ export default $config({
       // Add CloudFront invalidation permission for revalidation endpoint
       // This allows the Lambda to create cache invalidations when places/regions change
       const cloudfrontDistributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
-      const awsAccountId = process.env.AWS_ACCOUNT_ID;
-      if (cloudfrontDistributionId && awsAccountId) {
+      if (cloudfrontDistributionId) {
+        const awsAccountId = process.env.AWS_ACCOUNT_ID;
+        if (!awsAccountId) {
+          throw new Error(
+            "AWS_ACCOUNT_ID environment variable must be set when CLOUDFRONT_DISTRIBUTION_ID is provided."
+          );
+        }
+
         const cloudfrontPermission = {
           actions: ["cloudfront:CreateInvalidation"],
           resources: [
