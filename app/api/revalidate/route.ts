@@ -166,19 +166,16 @@ async function purgeCloudflareCache(
 /**
  * Invalidate CloudFront cache for given paths.
  * Uses AWS SDK with Lambda's IAM role credentials.
- * Returns success status and any error message.
+ * Returns result aligned with CloudFrontInvalidationResult interface.
  */
-async function invalidateCloudFrontCache(paths: string[]): Promise<{
-  success: boolean;
-  error?: string;
-  skipped?: boolean;
-  invalidationId?: string;
-}> {
+async function invalidateCloudFrontCache(
+  paths: string[]
+): Promise<Omit<CloudFrontInvalidationResult, "paths"> & { error?: string }> {
   const distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
 
   // Skip if CloudFront is not configured
   if (!distributionId) {
-    return { success: true, skipped: true };
+    return { invalidated: false, skipped: true };
   }
 
   // Normalize paths: ensure leading slash, non-empty, and de-duplicate
@@ -192,7 +189,7 @@ async function invalidateCloudFrontCache(paths: string[]): Promise<{
   ];
 
   if (normalizedPaths.length === 0) {
-    return { success: true, skipped: true };
+    return { invalidated: false, skipped: true };
   }
 
   // CloudFront has a hard limit of 3000 paths per invalidation
@@ -224,12 +221,12 @@ async function invalidateCloudFrontCache(paths: string[]): Promise<{
     });
     const invalidationId = response.Invalidation?.Id;
 
-    return { success: true, invalidationId };
+    return { invalidated: true, invalidationId };
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Unknown CloudFront error";
     console.error("CloudFront invalidation error:", error);
-    return { success: false, error: errorMsg };
+    return { invalidated: false, error: errorMsg };
   }
 }
 
@@ -371,11 +368,8 @@ export async function POST(request: Request) {
       const pathArray = Array.from(cfrontPaths);
       const cfrontResult = await invalidateCloudFrontCache(pathArray);
       cloudfrontResult = {
-        invalidated: cfrontResult.success && !cfrontResult.skipped,
+        ...cfrontResult,
         paths: pathArray,
-        invalidationId: cfrontResult.invalidationId,
-        skipped: cfrontResult.skipped,
-        error: cfrontResult.error,
       };
     } else {
       cloudfrontResult = { invalidated: false, skipped: true };

@@ -62,14 +62,13 @@ export default $config({
       // Add CloudFront invalidation permission for revalidation endpoint
       // This allows the Lambda to create cache invalidations when places/regions change
       const cloudfrontDistributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
-      const awsAccountId = process.env.AWS_ACCOUNT_ID;
-      if (cloudfrontDistributionId && awsAccountId) {
+      if (cloudfrontDistributionId) {
         const cloudfrontPermission = {
           actions: ["cloudfront:CreateInvalidation"],
           resources: [
-            // CloudFront is a global service (no region), but we specify the account ID
-            // for least-privilege security
-            `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`,
+            // CloudFront is a global service; use wildcard for account since
+            // the distribution ID already uniquely identifies the resource
+            `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`,
           ],
         };
 
@@ -77,7 +76,7 @@ export default $config({
         if (!existingPerms) {
           args.permissions = [cloudfrontPermission];
         } else if (Array.isArray(existingPerms)) {
-          const targetResource = `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`;
+          const targetResource = `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`;
           const alreadyHasCloudFront = existingPerms.some((p) => {
             if (!p || typeof p !== "object") return false;
             const stmt = p as { actions?: unknown; resources?: unknown };
