@@ -62,13 +62,13 @@ export default $config({
       // Add CloudFront invalidation permission for revalidation endpoint
       // This allows the Lambda to create cache invalidations when places/regions change
       const cloudfrontDistributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
-      if (cloudfrontDistributionId) {
+      const awsAccountId = process.env.AWS_ACCOUNT_ID;
+      if (cloudfrontDistributionId && awsAccountId) {
         const cloudfrontPermission = {
           actions: ["cloudfront:CreateInvalidation"],
           resources: [
-            // CloudFront is a global service; use wildcard for account since
-            // the distribution ID already uniquely identifies the resource
-            `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`,
+            // CloudFront is a global service but ARN requires account ID for IAM
+            `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`,
           ],
         };
 
@@ -76,7 +76,7 @@ export default $config({
         if (!existingPerms) {
           args.permissions = [cloudfrontPermission];
         } else if (Array.isArray(existingPerms)) {
-          const targetResource = `arn:aws:cloudfront::*:distribution/${cloudfrontDistributionId}`;
+          const targetResource = `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`;
           const alreadyHasCloudFront = existingPerms.some((p) => {
             if (!p || typeof p !== "object") return false;
             const stmt = p as { actions?: unknown; resources?: unknown };
@@ -528,36 +528,34 @@ export default $config({
 
     // Only set up cleanup if the revalidation table exists
     // (it won't exist in dev mode or if ISR is not configured)
+    // Note: SST v3 handles Output<T> types natively in environment/permissions
     if (revalidationTable) {
-      revalidationTable.apply((table) => {
-        if (!table) return;
-
-        const cacheCleanupLambda = new sst.aws.Function("CacheCleanupLambda", {
-          handler: "scripts/cleanup-dynamo-cache.handler",
-          runtime: "nodejs22.x",
-          timeout: "15 minutes",
-          memory: "256 MB",
-          environment: {
-            // Dynamically resolve the table name from OpenNext
-            CACHE_DYNAMO_TABLE: table.name,
-            BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
-            DRY_RUN: "false",
+      const cacheCleanupLambda = new sst.aws.Function("CacheCleanupLambda", {
+        handler: "scripts/cleanup-dynamo-cache.handler",
+        runtime: "nodejs22.x",
+        timeout: "15 minutes",
+        memory: "256 MB",
+        environment: {
+          // SST resolves Output<string> at deploy time
+          CACHE_DYNAMO_TABLE: revalidationTable.name,
+          BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
+          // Allow override via deployment env for safe testing in production
+          DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
+        },
+        permissions: [
+          {
+            actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
+            // SST resolves Output<string> at deploy time
+            resources: [revalidationTable.arn],
           },
-          permissions: [
-            {
-              actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
-              // Dynamically resolve the table ARN
-              resources: [table.arn],
-            },
-          ],
-        });
+        ],
+      });
 
-        // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
-        // SST Cron handles EventRule, EventTarget, and Lambda permissions automatically
-        new sst.aws.Cron("CacheCleanupCron", {
-          schedule: "cron(0 3 ? * SUN *)",
-          job: cacheCleanupLambda,
-        });
+      // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
+      // SST Cron handles EventRule, EventTarget, and Lambda permissions automatically
+      new sst.aws.Cron("CacheCleanupCron", {
+        schedule: "cron(0 3 ? * SUN *)",
+        job: cacheCleanupLambda,
       });
     }
 
