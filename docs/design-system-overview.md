@@ -449,7 +449,7 @@ All implementation details are in **separate, focused documents**:
 
 ### Q: Why not just use Tailwind defaults?
 
-**A**: Project has custom brand colors (primary red `#FF0037`), custom fonts (Barlow, Roboto), and specific design language. Generic Tailwind doesn't capture these patterns.
+**A**: Project has custom brand colors (primary red `#D6002F`, WCAG AA compliant), custom fonts (system stack), and specific design language. Generic Tailwind doesn't capture these patterns.
 
 ### Q: Why semantic classes instead of inline Tailwind?
 

@@ -44,7 +44,7 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       // Prevent multiple consent state changes for the same value
       if (consentResolved && window.__adsConsentGranted === allowed) return;
       consentResolved = true;
-      
+
       // We can still dispatch the global event for backward compatibility or other scripts
       window.__adsConsentGranted = allowed;
       window.dispatchEvent(

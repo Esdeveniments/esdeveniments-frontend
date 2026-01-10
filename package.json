@@ -50,6 +50,8 @@
     ]
   },
   "dependencies": {
+    "@aws-sdk/client-cloudfront": "^3.940.0",
+    "@aws-sdk/client-dynamodb": "^3.966.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@img/sharp-libvips-linux-x64": "^1.2.4",
@@ -127,11 +129,11 @@
       "last 1 safari version"
     ],
     "production": [
-      "chrome >= 119",
-      "edge >= 119",
-      "firefox >= 121",
-      "safari >= 17",
-      "ios_saf >= 17"
+      "chrome >= 122",
+      "edge >= 122",
+      "firefox >= 125",
+      "safari >= 17.4",
+      "ios_saf >= 17.4"
     ]
   },
   "resolutions": {

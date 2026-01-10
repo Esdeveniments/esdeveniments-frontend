@@ -58,6 +58,45 @@ export default $config({
             existingPermissions.push(listBucketPermission);
         }
       }
+
+      // Add CloudFront invalidation permission for revalidation endpoint
+      // This allows the Lambda to create cache invalidations when places/regions change
+      const cloudfrontDistributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
+      if (cloudfrontDistributionId) {
+        const awsAccountId = process.env.AWS_ACCOUNT_ID;
+        if (!awsAccountId) {
+          throw new Error(
+            "AWS_ACCOUNT_ID environment variable must be set when CLOUDFRONT_DISTRIBUTION_ID is provided."
+          );
+        }
+
+        const cloudfrontPermission = {
+          actions: ["cloudfront:CreateInvalidation"],
+          resources: [
+            // CloudFront is a global service but ARN requires account ID for IAM
+            `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`,
+          ],
+        };
+
+        const existingPerms = args.permissions;
+        if (!existingPerms) {
+          args.permissions = [cloudfrontPermission];
+        } else if (Array.isArray(existingPerms)) {
+          const targetResource = `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`;
+          const alreadyHasCloudFront = existingPerms.some((p) => {
+            if (!p || typeof p !== "object") return false;
+            const stmt = p as { actions?: unknown; resources?: unknown };
+            return (
+              Array.isArray(stmt.actions) &&
+              stmt.actions.includes("cloudfront:CreateInvalidation") &&
+              Array.isArray(stmt.resources) &&
+              stmt.resources.includes(targetResource)
+            );
+          });
+
+          if (!alreadyHasCloudFront) existingPerms.push(cloudfrontPermission);
+        }
+      }
     });
 
     // Helper function to get parameter from SSM Parameter Store
@@ -216,6 +255,12 @@ export default $config({
         // If not set, email notifications will be silently skipped
         ...(process.env.NEW_EVENT_EMAIL_URL && {
           NEW_EVENT_EMAIL_URL: process.env.NEW_EVENT_EMAIL_URL,
+        }),
+        // Optional: CloudFront distribution ID for cache invalidation
+        // Used by /api/revalidate to purge CDN cache when places/regions change
+        // If not set, CloudFront invalidation is skipped gracefully
+        ...(process.env.CLOUDFRONT_DISTRIBUTION_ID && {
+          CLOUDFRONT_DISTRIBUTION_ID: process.env.CLOUDFRONT_DISTRIBUTION_ID,
         }),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
@@ -476,6 +521,49 @@ export default $config({
     // which adds ~$0.01/1000 requests. Not enabled by default.
     // The Lambda and DynamoDB alarms cover the main cost drivers.
     // If you want S3 monitoring, enable request metrics in the S3 console first.
+
+    // =========================================================================
+    // CACHE CLEANUP LAMBDA
+    // Cleans up stale ISR cache entries from old deployments.
+    // Each deployment creates a new build ID prefix - old entries become orphaned.
+    // Runs weekly to keep the DynamoDB table size manageable.
+    // =========================================================================
+
+    // Get the revalidation table from OpenNext - this is the ISR cache table
+    const revalidationTable = site.nodes.revalidationTable;
+
+    // Only set up cleanup if the revalidation table exists
+    // (it won't exist in dev mode or if ISR is not configured)
+    // Note: SST v3 handles Output<T> types natively in environment/permissions
+    if (revalidationTable) {
+      const cacheCleanupLambda = new sst.aws.Function("CacheCleanupLambda", {
+        handler: "scripts/cleanup-dynamo-cache.handler",
+        runtime: "nodejs22.x",
+        timeout: "15 minutes",
+        memory: "256 MB",
+        environment: {
+          // SST resolves Output<string> at deploy time
+          CACHE_DYNAMO_TABLE: revalidationTable.name,
+          BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
+          // Allow override via deployment env for safe testing in production
+          DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
+        },
+        permissions: [
+          {
+            actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
+            // SST resolves Output<string> at deploy time
+            resources: [revalidationTable.arn],
+          },
+        ],
+      });
+
+      // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
+      // SST Cron handles EventRule, EventTarget, and Lambda permissions automatically
+      new sst.aws.Cron("CacheCleanupCron", {
+        schedule: "cron(0 3 ? * SUN *)",
+        job: cacheCleanupLambda,
+      });
+    }
 
     return {
       SiteUrl: site.url,

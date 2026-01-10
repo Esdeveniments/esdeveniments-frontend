@@ -338,7 +338,8 @@
       "selectPlaceholder": "Search town or county...",
       "subtitleDefault": "Cultural agenda, festivals, and activities",
       "searchPlaceholder": "Search events in {location}...",
-      "clearSearch": "Clear search"
+      "clearSearch": "Clear search",
+      "search": "Search"
     },
     "HeroFilters": {
       "today": "Today",

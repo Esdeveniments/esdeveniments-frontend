@@ -35,7 +35,7 @@ const customStyles: StylesConfig<Option, false, GroupBase<Option>> = {
   option: (provided, state) => ({
     ...provided,
     fontSize: "16px",
-    background: state.isFocused ? "#FF0037" : "#FFF",
+    background: state.isFocused ? "#D6002F" : "#FFF",
     color: state.isFocused ? "#FFF" : "#454545",
   }),
   singleValue: (provided) => ({

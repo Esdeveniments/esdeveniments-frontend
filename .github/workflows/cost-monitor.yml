@@ -161,9 +161,12 @@ jobs:
             ANOMALY_DETECTED=true
           fi
 
-          # Alert if daily writes > 15,000 (healthy baseline is ~6,000/day based on Jan 8 data)
-          if (( $(echo "$TOTAL_WRITES > 15000" | bc -l) )); then
-            echo "⚠️ **Elevated DynamoDB writes:** $(printf "%'d" $TOTAL_WRITES) (baseline: ~6,000/day)" >> $GITHUB_STEP_SUMMARY
+          # Alert if daily writes > 60,000 (normal: 5-15K stable, 30-50K after deploys)
+          # Note: Each deployment creates new cache namespace, requiring full cache warm-up
+          if (( $(echo "$TOTAL_WRITES > 60000" | bc -l) )); then
+            echo "⚠️ **Elevated DynamoDB writes:** $(printf "%'d" $TOTAL_WRITES) (threshold: 60,000/day)" >> $GITHUB_STEP_SUMMARY
+            echo "  - Normal (stable cache): 5,000-15,000/day" >> $GITHUB_STEP_SUMMARY
+            echo "  - After deployment: 30,000-50,000/day (cache warming)" >> $GITHUB_STEP_SUMMARY
             ANOMALY_DETECTED=true
           fi
 
@@ -179,11 +182,14 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Frontend Baselines (Jan 2026)" >> $GITHUB_STEP_SUMMARY
-          echo "- DynamoDB (ISR cache): ~6,000/day = ~\$1.80/month" >> $GITHUB_STEP_SUMMARY
-          echo "- Lambda: ~\$0.03/month (very cheap!)" >> $GITHUB_STEP_SUMMARY
+          echo "- DynamoDB (ISR cache):" >> $GITHUB_STEP_SUMMARY
+          echo "  - Stable cache: 5,000-15,000 writes/day" >> $GITHUB_STEP_SUMMARY
+          echo "  - After deploy: 30,000-50,000 writes/day (cache warming)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Cost: ~\$1-3/month" >> $GITHUB_STEP_SUMMARY
+          echo "- Lambda: ~\$0.03/month" >> $GITHUB_STEP_SUMMARY
           echo "- CloudFront: ~\$0.30/month" >> $GITHUB_STEP_SUMMARY
           echo "- S3 assets: ~\$3-4/month" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total frontend: ~\$5-6/month**" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total frontend: ~\$5-8/month**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "_Note: Backend (Elastic Beanstalk in eu-west-1) costs ~\$54/month separately_" >> $GITHUB_STEP_SUMMARY
 
@@ -211,10 +217,10 @@ jobs:
           Status: $([ '${{ steps.analysis.outputs.anomaly }}' = 'true' ] && echo '⚠️ ANOMALY DETECTED' || echo '✅ Normal')
 
           Frontend Baselines (eu-west-3):
-          - DynamoDB: ~6,000/day (~\$1.80/month)
+          - DynamoDB: 5-15K/day stable, 30-50K after deploy (~\$1-3/month)
           - Lambda: ~\$0.03/month
           - CloudFront: ~\$0.30/month
-          - Total frontend: ~\$5-6/month
+          - Total frontend: ~\$5-8/month
 
           View full report: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
@@ -269,7 +275,7 @@ jobs:
             🔔 Status: ${{ steps.analysis.outputs.anomaly == 'true' && '⚠️ ANOMALY DETECTED' || '✅ Normal' }}
 
             Baselines:
-            - DynamoDB writes: ~38,000/day
-            - Monthly cost: ~$2-4/month
+            - DynamoDB writes: 5-15K/day stable, 30-50K/day after deploy
+            - Monthly cost: ~$5-8/month
 
             View full report: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

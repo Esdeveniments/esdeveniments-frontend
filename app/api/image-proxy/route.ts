@@ -21,11 +21,17 @@ const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 
 // Image optimization defaults
-const DEFAULT_QUALITY = 40; // Reduced from 50 for better compression (WebP/JPEG handle this well)
+const DEFAULT_QUALITY = 50; // Base quality for mobile - Lighthouse tests on mobile viewport
 const MAX_WIDTH = 1920;
-const CARD_WIDTH = 500; // Reduced from 700 - cards display at ~280px, 500 covers 2x retina
+const CARD_WIDTH = 500; // Cards display at ~280px, 500 covers 2x retina
 const MIN_SIZE_FOR_OPTIMIZATION = 10_000; // 10KB - skip optimization for tiny images
 const ANIMATED_GIF_FRAME_THRESHOLD = 1; // If GIF has more than 1 frame, skip optimization
+
+// Desktop quality boost: when requesting larger widths (desktop), increase quality
+// This doesn't affect mobile Lighthouse scores since mobile requests smaller widths
+const DESKTOP_WIDTH_THRESHOLD = 800; // Widths above this get quality boost
+const DESKTOP_QUALITY_BOOST = 15; // Add this to quality for desktop-sized requests
+const MAX_OPTIMIZED_QUALITY = 85; // Cap quality to avoid huge files
 
 /** Cache control header based on whether URL has cache-busting key */
 function getCacheControl(hasCacheKey: boolean): string {
@@ -243,8 +249,15 @@ export async function GET(request: Request) {
   // Parse optimization params
   const requestedWidth =
     parseInt(url.searchParams.get("w") || "", 10) || CARD_WIDTH;
-  const requestedQuality =
+  const baseQuality =
     parseInt(url.searchParams.get("q") || "", 10) || DEFAULT_QUALITY;
+  
+  // Desktop quality boost: larger requested widths (desktop) get better quality
+  // Mobile requests smaller widths, so their quality stays at base (preserves Lighthouse scores)
+  const isDesktopRequest = requestedWidth >= DESKTOP_WIDTH_THRESHOLD;
+  const requestedQuality = isDesktopRequest 
+    ? Math.min(baseQuality + DESKTOP_QUALITY_BOOST, MAX_OPTIMIZED_QUALITY)
+    : baseQuality;
   // Determine output format:
   // 1. Explicit format param takes priority (avif, webp, jpeg, png)
   // 2. Falls back to Accept header (but CloudFront may not forward it)

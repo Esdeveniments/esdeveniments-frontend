@@ -278,6 +278,8 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           NODE_ENV: production
+          # Required for CloudFront invalidation IAM permissions
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: npx sst deploy --stage production
 
       - name: Post-deploy verification

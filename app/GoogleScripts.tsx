@@ -1,13 +1,20 @@
 "use client";
 
-import { useEffect, Suspense, useMemo, useState } from "react";
+import { useEffect, Suspense, useMemo, useState, useRef } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
 import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
+import { scheduleIdleCallback } from "@utils/browser";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
+const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
+// FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
+const FUNDING_CHOICES_PUB_ID = ADS_CLIENT?.replace(/^ca-/, "") ?? "";
+const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
+  ? `https://fundingchoicesmessages.google.com/i/${FUNDING_CHOICES_PUB_ID}?ers=1`
+  : "";
 
 // Google Analytics gtag shim - reused across multiple Script components
 // Conditionally defines gtag only if it doesn't already exist to avoid overwriting
@@ -34,8 +41,8 @@ const ensureGtag = (): WindowWithGtag | null => {
 const pageViewTimestamps = new Map<string, number>();
 // Minimum ms between tracking same path (prevents duplicates from re-renders/strict mode)
 const DEBOUNCE_MS = 1000;
-// Track last consent state to avoid duplicate consent updates
-let lastConsentState: "granted" | "denied" | null = null;
+// Idle timeout for consent state updates (allows main thread work to complete first)
+const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
 
 /**
  * Check if we should track this page view.
@@ -109,6 +116,9 @@ export default function GoogleScripts() {
   const [HeavyComponent, setHeavyComponent] = useState<
     React.ComponentType<{ adsAllowed: boolean }> | null
   >(null);
+  // Track last consent state to avoid duplicate consent updates
+  // Using useRef (not module-level) to handle React Strict Mode correctly
+  const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
 
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
   // Note: We use the same consent signal (adsAllowed) for both ads and analytics
@@ -122,21 +132,34 @@ export default function GoogleScripts() {
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
 
     // Skip if consent state hasn't actually changed (prevents duplicate events)
-    if (lastConsentState === consentState) return;
-    lastConsentState = consentState;
+    if (lastConsentStateRef.current === consentState) return;
 
-    win.gtag("consent", "update", {
-      ad_user_data: consentState,
-      ad_personalization: consentState,
-      ad_storage: consentState,
-      analytics_storage: consentState,
-    });
+    // Use idle callback to avoid blocking main thread during consent updates
+    // Note: We update lastConsentStateRef inside the callback to ensure it only
+    // updates when gtag is actually called (fixes React Strict Mode double-invoke)
+    const cleanup = scheduleIdleCallback(
+      () => {
+        // Double-check inside callback in case state changed during idle wait
+        if (lastConsentStateRef.current === consentState) return;
+        lastConsentStateRef.current = consentState;
 
-    win.dataLayer.push({
-      event: "consent_state_change",
-      consent_state: consentState,
-      consent_timestamp: Date.now(),
-    });
+        win.gtag("consent", "update", {
+          ad_user_data: consentState,
+          ad_personalization: consentState,
+          ad_storage: consentState,
+          analytics_storage: consentState,
+        });
+
+        win.dataLayer.push({
+          event: "consent_state_change",
+          consent_state: consentState,
+          consent_timestamp: Date.now(),
+        });
+      },
+      { timeout: CONSENT_UPDATE_IDLE_TIMEOUT_MS }
+    );
+
+    return cleanup;
   }, [adsAllowed]);
 
   // Load heavy tracking + Auto Ads only after hydration.
@@ -221,11 +244,10 @@ export default function GoogleScripts() {
             `}
           </Script>
 
-          {/* Funding Choices (CMP) - defer to lazyOnload to reduce TBT */}
-          <Script
-            src="https://fundingchoicesmessages.google.com/i/pub-2456713018173238?ers=1"
-            strategy="lazyOnload"
-          />
+          {/* Funding Choices (CMP) - loads with lazyOnload to reduce TBT while ensuring consent is available */}
+          {FUNDING_CHOICES_SRC && (
+            <Script src={FUNDING_CHOICES_SRC} strategy="lazyOnload" />
+          )}
 
           {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
           <Script id="ai-referrer-analytics" strategy="lazyOnload">

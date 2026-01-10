@@ -338,7 +338,8 @@
       "selectPlaceholder": "Buscar población o comarca...",
       "subtitleDefault": "Agenda cultural, fiestas mayores y actividades",
       "searchPlaceholder": "Busca eventos en {location}...",
-      "clearSearch": "Limpiar búsqueda"
+      "clearSearch": "Limpiar búsqueda",
+      "search": "Buscar"
     },
     "HeroFilters": {
       "today": "Hoy",
