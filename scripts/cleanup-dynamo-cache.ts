@@ -208,12 +208,18 @@ async function deleteItems(
 
           if (unprocessedRequests.length > 0) {
             // Extract keys from unprocessed requests for retry
-            pendingItems = unprocessedRequests
-              .filter((req) => req.DeleteRequest?.Key)
-              .map((req) => ({
-                tag: req.DeleteRequest!.Key!["tag"]?.S || "",
-                path: req.DeleteRequest!.Key!["path"]?.S || "",
-              }));
+            pendingItems = unprocessedRequests.flatMap((req) => {
+              const key = req.DeleteRequest?.Key;
+              if (!key) {
+                return [];
+              }
+              return [
+                {
+                  tag: key["tag"]?.S ?? "",
+                  path: key["path"]?.S ?? "",
+                },
+              ];
+            });
             retryCount++;
           } else {
             pendingItems = [];
