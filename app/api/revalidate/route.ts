@@ -193,12 +193,13 @@ async function invalidateCloudFrontCache(
   }
 
   // CloudFront has a hard limit of 3000 paths per invalidation
-  if (normalizedPaths.length > CLOUDFRONT_MAX_PATHS) {
-    console.warn(
-      `CloudFront invalidation truncated: ${normalizedPaths.length} paths exceeds ${CLOUDFRONT_MAX_PATHS} limit`
-    );
-    normalizedPaths.length = CLOUDFRONT_MAX_PATHS;
-  }
+  const pathsToInvalidate =
+    normalizedPaths.length > CLOUDFRONT_MAX_PATHS
+      ? (console.warn(
+          `CloudFront invalidation truncated: ${normalizedPaths.length} paths exceeds ${CLOUDFRONT_MAX_PATHS} limit`
+        ),
+        normalizedPaths.slice(0, CLOUDFRONT_MAX_PATHS))
+      : normalizedPaths;
 
   try {
     // CloudFront client uses Lambda's IAM role credentials automatically
@@ -209,8 +210,8 @@ async function invalidateCloudFrontCache(
       InvalidationBatch: {
         CallerReference: `revalidate-${randomUUID()}`,
         Paths: {
-          Quantity: normalizedPaths.length,
-          Items: normalizedPaths,
+          Quantity: pathsToInvalidate.length,
+          Items: pathsToInvalidate,
         },
       },
     });
