@@ -167,15 +167,21 @@ async function purgeCloudflareCache(
  * Invalidate CloudFront cache for given paths.
  * Uses AWS SDK with Lambda's IAM role credentials.
  * Returns result aligned with CloudFrontInvalidationResult interface.
+ * Note: processedPaths may be fewer than input paths if truncated due to CloudFront limit.
  */
 async function invalidateCloudFrontCache(
   paths: string[]
-): Promise<Omit<CloudFrontInvalidationResult, "paths"> & { error?: string }> {
+): Promise<
+  Omit<CloudFrontInvalidationResult, "paths"> & {
+    processedPaths: string[];
+    error?: string;
+  }
+> {
   const distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
 
   // Skip if CloudFront is not configured
   if (!distributionId) {
-    return { invalidated: false, skipped: true };
+    return { invalidated: false, skipped: true, processedPaths: [] };
   }
 
   // Normalize paths: ensure leading slash, non-empty, and de-duplicate
@@ -189,7 +195,7 @@ async function invalidateCloudFrontCache(
   ];
 
   if (normalizedPaths.length === 0) {
-    return { invalidated: false, skipped: true };
+    return { invalidated: false, skipped: true, processedPaths: [] };
   }
 
   // CloudFront has a hard limit of 3000 paths per invalidation
@@ -222,12 +228,12 @@ async function invalidateCloudFrontCache(
     });
     const invalidationId = response.Invalidation?.Id;
 
-    return { invalidated: true, invalidationId };
+    return { invalidated: true, invalidationId, processedPaths: pathsToInvalidate };
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Unknown CloudFront error";
     console.error("CloudFront invalidation error:", error);
-    return { invalidated: false, error: errorMsg };
+    return { invalidated: false, error: errorMsg, processedPaths: [] };
   }
 }
 
@@ -367,10 +373,11 @@ export async function POST(request: Request) {
     let cloudfrontResult: CloudFrontInvalidationResult;
     if (cfrontPaths.size > 0) {
       const pathArray = Array.from(cfrontPaths);
-      const cfrontResult = await invalidateCloudFrontCache(pathArray);
+      const { processedPaths, ...cfrontResult } =
+        await invalidateCloudFrontCache(pathArray);
       cloudfrontResult = {
         ...cfrontResult,
-        paths: pathArray,
+        paths: processedPaths,
       };
     } else {
       cloudfrontResult = { invalidated: false, skipped: true };

@@ -127,19 +127,35 @@ function selectBuildsToKeep(
     { count: number; items: Array<{ tag: string; path: string }> }
   >
 ): Set<string> {
-  // Sort builds by item count (descending) - more items = more recent/active
-  const sortedBuilds = Array.from(buildGroups.entries())
-    .map(([buildId, data]) => ({ buildId, count: data.count }))
-    .sort((a, b) => b.count - a.count);
+  const builds = Array.from(buildGroups.entries()).map(([buildId, data]) => ({
+    buildId,
+    count: data.count,
+    timestamp: Number(buildId),
+  }));
 
-  console.log("\nBuild summary (sorted by item count):");
-  sortedBuilds.forEach((build, index) => {
+  // Check if build IDs look like timestamps (e.g., > Jan 1, 2023 in ms)
+  const allAreTimestamps = builds.every(
+    (b) => !isNaN(b.timestamp) && b.timestamp > 1672531200000
+  );
+
+  if (allAreTimestamps) {
+    console.log("\nSorting builds by timestamp (most recent first).");
+    builds.sort((a, b) => b.timestamp - a.timestamp);
+  } else {
+    console.log(
+      "\nSorting builds by item count (fallback: most active first)."
+    );
+    builds.sort((a, b) => b.count - a.count);
+  }
+
+  console.log("\nBuild summary (sorted):");
+  builds.forEach((build, index) => {
     const keepMarker = index < BUILDS_TO_KEEP ? "✅ KEEP" : "🗑️  DELETE";
     console.log(`  ${keepMarker} ${build.buildId}: ${build.count} items`);
   });
 
   // Keep the top N builds
-  return new Set(sortedBuilds.slice(0, BUILDS_TO_KEEP).map((b) => b.buildId));
+  return new Set(builds.slice(0, BUILDS_TO_KEEP).map((b) => b.buildId));
 }
 
 /**
