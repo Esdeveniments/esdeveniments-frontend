@@ -41,6 +41,8 @@ const ensureGtag = (): WindowWithGtag | null => {
 const pageViewTimestamps = new Map<string, number>();
 // Minimum ms between tracking same path (prevents duplicates from re-renders/strict mode)
 const DEBOUNCE_MS = 1000;
+// Idle timeout for consent state updates (allows main thread work to complete first)
+const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
 
 /**
  * Check if we should track this page view.
@@ -154,7 +156,7 @@ export default function GoogleScripts() {
           consent_timestamp: Date.now(),
         });
       },
-      { timeout: 1000 }
+      { timeout: CONSENT_UPDATE_IDLE_TIMEOUT_MS }
     );
 
     return cleanup;

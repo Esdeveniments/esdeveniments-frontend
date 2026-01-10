@@ -19,6 +19,8 @@ import { clearCitiesCaches } from "@lib/api/cities";
 
 // CloudFront's control plane API is always in us-east-1, regardless of distribution region
 const CLOUDFRONT_API_REGION = "us-east-1";
+// Timeout for CloudFront invalidation API calls (prevents indefinite hangs in serverless)
+const CLOUDFRONT_INVALIDATION_TIMEOUT_MS = 10_000;
 
 /**
  * Whitelist of cache tags that can be revalidated via this endpoint.
@@ -224,7 +226,7 @@ async function invalidateCloudFrontCache(
 
     // Add timeout to prevent indefinite hangs in serverless
     const response = await client.send(command, {
-      abortSignal: AbortSignal.timeout(10000), // 10 second timeout
+      abortSignal: AbortSignal.timeout(CLOUDFRONT_INVALIDATION_TIMEOUT_MS),
     });
     const invalidationId = response.Invalidation?.Id;
 

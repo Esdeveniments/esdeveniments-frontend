@@ -39,6 +39,8 @@ const BATCH_SIZE = 25; // DynamoDB BatchWriteItem limit
 const SCAN_LIMIT = 5000; // Items per scan
 const DELAY_BETWEEN_BATCHES_MS = 100; // Rate limiting
 const MAX_RETRIES = 3; // Retries for unprocessed items with exponential backoff
+// Threshold for validating timestamp-based build IDs (Jan 1, 2023 00:00:00 UTC)
+const TIMESTAMP_THRESHOLD_MS = new Date("2023-01-01T00:00:00Z").getTime();
 
 const client = new DynamoDBClient({ region: REGION });
 
@@ -135,7 +137,7 @@ function selectBuildsToKeep(
 
   // Check if build IDs look like timestamps (e.g., > Jan 1, 2023 in ms)
   const allAreTimestamps = builds.every(
-    (b) => !isNaN(b.timestamp) && b.timestamp > 1672531200000
+    (b) => !isNaN(b.timestamp) && b.timestamp > TIMESTAMP_THRESHOLD_MS
   );
 
   if (allAreTimestamps) {
