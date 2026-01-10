@@ -553,27 +553,10 @@ export default $config({
         });
 
         // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
-        const cacheCleanupSchedule = new aws.cloudwatch.EventRule(
-          "CacheCleanupSchedule",
-          {
-            scheduleExpression: "cron(0 3 ? * SUN *)",
-            description: "Weekly cleanup of stale ISR cache entries",
-          }
-        );
-
-        new aws.cloudwatch.EventTarget("CacheCleanupTarget", {
-          // Use the actual rule name from the resource
-          rule: cacheCleanupSchedule.name,
-          arn: cacheCleanupLambda.arn,
-        });
-
-        // Allow CloudWatch Events to invoke the Lambda
-        new aws.lambda.Permission("CacheCleanupPermission", {
-          action: "lambda:InvokeFunction",
-          function: cacheCleanupLambda.name,
-          principal: "events.amazonaws.com",
-          // Use the actual rule ARN from the resource
-          sourceArn: cacheCleanupSchedule.arn,
+        // SST Cron handles EventRule, EventTarget, and Lambda permissions automatically
+        new sst.aws.Cron("CacheCleanupCron", {
+          schedule: "cron(0 3 ? * SUN *)",
+          job: cacheCleanupLambda,
         });
       });
     }
