@@ -259,33 +259,55 @@ export default async function EventPage({
     return "Esdeveniment";
   })();
 
+  // Build breadcrumb items with region for cities (SEO: geographic hierarchy)
+  // Structure: Inici > Region > City > Event  OR  Inici > Region > Event (if no city)
+  const hasCity = Boolean(citySlug);
+  const hasRegion = Boolean(regionSlug);
+
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
+    itemListElement: (() => {
+      const items: Array<{ "@type": string; position: number; name: string; item: string }> = [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Inici",
+          item: siteUrl,
+        },
+      ];
+      let pos = 2;
+
+      // Add region (comarca) if available
+      if (hasRegion) {
+        items.push({
+          "@type": "ListItem",
+          position: pos++,
+          name: regionName,
+          item: `${siteUrl}/${regionSlug}`,
+        });
+      }
+
+      // Add city if different from region
+      if (hasCity) {
+        items.push({
+          "@type": "ListItem",
+          position: pos++,
+          name: cityName,
+          item: `${siteUrl}/${citySlug}`,
+        });
+      }
+
+      // Add event
+      items.push({
         "@type": "ListItem",
-        position: 1,
-        name: "Inici",
-        item: siteUrl,
-      },
-      ...(placeSlug
-        ? [
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: placeLabel,
-            item: `${siteUrl}/${placeSlug}`,
-          },
-        ]
-        : []),
-      {
-        "@type": "ListItem",
-        position: placeSlug ? 3 : 2,
+        position: pos,
         name: breadcrumbName,
         item: `${siteUrl}/e/${event.slug}`,
-      },
-    ],
+      });
+
+      return items;
+    })(),
   };
 
   return (
@@ -315,13 +337,19 @@ export default async function EventPage({
             <Breadcrumbs
               items={[
                 { label: tBreadcrumbs("home"), href: "/" },
-                ...(placeSlug !== "catalunya"
-                  ? [{ label: placeLabel, href: `/${placeSlug}` }]
+                // Add region (comarca) if available
+                ...(hasRegion
+                  ? [{ label: regionName, href: `/${regionSlug}` }]
                   : []),
+                // Add city if available (different from region)
+                ...(hasCity
+                  ? [{ label: cityName, href: `/${citySlug}` }]
+                  : []),
+                // Add category if available
                 ...(primaryCategorySlug
                   ? [{
                     label: primaryCategoryLabel,
-                    href: `/${placeSlug}/${primaryCategorySlug}`,
+                    href: `/${primaryPlaceSlug}/${primaryCategorySlug}`,
                   }]
                   : []),
                 { label: title },

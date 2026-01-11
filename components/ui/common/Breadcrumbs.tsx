@@ -8,9 +8,9 @@ export default function Breadcrumbs({ items, className = "" }: BreadcrumbsProps)
   return (
     <nav
       aria-label="Breadcrumb"
-      className={`flex items-center text-sm text-foreground-muted ${className}`}
+      className={`flex items-center text-xs text-foreground-muted/70 ${className}`}
     >
-      <ol className="flex items-center flex-wrap gap-1">
+      <ol className="flex items-center flex-wrap gap-0.5">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
 
@@ -18,13 +18,13 @@ export default function Breadcrumbs({ items, className = "" }: BreadcrumbsProps)
             <li key={item.label} className="flex items-center">
               {index > 0 && (
                 <ChevronRightIcon
-                  className="h-4 w-4 mx-1 text-foreground-muted/50 flex-shrink-0"
+                  className="h-3 w-3 mx-0.5 text-foreground-muted/40 flex-shrink-0"
                   aria-hidden="true"
                 />
               )}
               {isLast || !item.href ? (
                 <span
-                  className={isLast ? "text-foreground-strong font-medium truncate max-w-[200px]" : ""}
+                  className={isLast ? "text-foreground-muted font-medium truncate max-w-[200px]" : ""}
                   aria-current={isLast ? "page" : undefined}
                   title={item.label}
                 >

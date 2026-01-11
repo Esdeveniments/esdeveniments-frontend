@@ -139,12 +139,20 @@ export default async function Page({
       shellDataPromise={placeShellDataPromise}
       place={place}
       categories={categories}
-      webPageSchemaFactory={(pageData) =>
+      webPageSchemaFactory={({ placeTypeLabel, pageData }) =>
         generateWebPageSchema({
           title: pageData.title,
           description: pageData.metaDescription,
           url: pageData.canonical,
           locale,
+          // SEO: For city pages, include parent region (comarca) relationship
+          ...(placeTypeLabel.regionLabel &&
+            placeTypeLabel.regionSlug && {
+              containedInPlace: {
+                name: placeTypeLabel.regionLabel,
+                url: `${siteUrl}/${placeTypeLabel.regionSlug}`,
+              },
+            }),
         })
       }
     />
