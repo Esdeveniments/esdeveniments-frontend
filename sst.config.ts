@@ -59,44 +59,6 @@ export default $config({
         }
       }
 
-      // Add CloudFront invalidation permission for revalidation endpoint
-      // This allows the Lambda to create cache invalidations when places/regions change
-      const cloudfrontDistributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
-      if (cloudfrontDistributionId) {
-        const awsAccountId = process.env.AWS_ACCOUNT_ID;
-        if (!awsAccountId) {
-          throw new Error(
-            "AWS_ACCOUNT_ID environment variable must be set when CLOUDFRONT_DISTRIBUTION_ID is provided."
-          );
-        }
-
-        const cloudfrontPermission = {
-          actions: ["cloudfront:CreateInvalidation"],
-          resources: [
-            // CloudFront is a global service but ARN requires account ID for IAM
-            `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`,
-          ],
-        };
-
-        const existingPerms = args.permissions;
-        if (!existingPerms) {
-          args.permissions = [cloudfrontPermission];
-        } else if (Array.isArray(existingPerms)) {
-          const targetResource = `arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`;
-          const alreadyHasCloudFront = existingPerms.some((p) => {
-            if (!p || typeof p !== "object") return false;
-            const stmt = p as { actions?: unknown; resources?: unknown };
-            return (
-              Array.isArray(stmt.actions) &&
-              stmt.actions.includes("cloudfront:CreateInvalidation") &&
-              Array.isArray(stmt.resources) &&
-              stmt.resources.includes(targetResource)
-            );
-          });
-
-          if (!alreadyHasCloudFront) existingPerms.push(cloudfrontPermission);
-        }
-      }
     });
 
     // Helper function to get parameter from SSM Parameter Store
@@ -314,6 +276,29 @@ export default $config({
             // Security tradeoff: ideally these servers should fix their SSL config.
             NODE_TLS_REJECT_UNAUTHORIZED: "0",
           };
+
+          // Add CloudFront invalidation permission for /api/revalidate endpoint
+          // Only the server Lambda needs this permission (least-privilege)
+          const cloudfrontDistributionId =
+            process.env.CLOUDFRONT_DISTRIBUTION_ID;
+          if (cloudfrontDistributionId) {
+            // Get AWS account ID from SST context (no env var needed)
+            const awsAccountId = aws.getCallerIdentityOutput().accountId;
+
+            const cloudfrontPermission = {
+              actions: ["cloudfront:CreateInvalidation"],
+              resources: [
+                // CloudFront is a global service but ARN requires account ID for IAM
+                $interpolate`arn:aws:cloudfront::${awsAccountId}:distribution/${cloudfrontDistributionId}`,
+              ],
+            };
+
+            if (!args.permissions) {
+              args.permissions = [cloudfrontPermission];
+            } else if (Array.isArray(args.permissions)) {
+              args.permissions.push(cloudfrontPermission);
+            }
+          }
         },
       },
       imageOptimization: {
@@ -545,8 +530,9 @@ export default $config({
           // SST resolves Output<string> at deploy time
           CACHE_DYNAMO_TABLE: revalidationTable.name,
           BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
-          // Allow override via deployment env for safe testing in production
-          DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
+          // Safe-by-default: dry run unless explicitly disabled via CACHE_CLEANUP_DRY_RUN=false
+          // The handler also defaults to dry run if DRY_RUN !== "false"
+          DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "true",
         },
         permissions: [
           {

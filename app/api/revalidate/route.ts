@@ -168,22 +168,16 @@ async function purgeCloudflareCache(
 /**
  * Invalidate CloudFront cache for given paths.
  * Uses AWS SDK with Lambda's IAM role credentials.
- * Returns result aligned with CloudFrontInvalidationResult interface.
- * Note: processedPaths may be fewer than input paths if truncated due to CloudFront limit.
+ * Note: paths may be fewer than input if truncated due to CloudFront limit (3000 max).
  */
 async function invalidateCloudFrontCache(
   paths: string[]
-): Promise<
-  Omit<CloudFrontInvalidationResult, "paths"> & {
-    processedPaths: string[];
-    error?: string;
-  }
-> {
+): Promise<CloudFrontInvalidationResult> {
   const distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
 
   // Skip if CloudFront is not configured
   if (!distributionId) {
-    return { invalidated: false, skipped: true, processedPaths: [] };
+    return { invalidated: false, skipped: true };
   }
 
   // Normalize paths: ensure leading slash, non-empty, and de-duplicate
@@ -197,7 +191,7 @@ async function invalidateCloudFrontCache(
   ];
 
   if (normalizedPaths.length === 0) {
-    return { invalidated: false, skipped: true, processedPaths: [] };
+    return { invalidated: false, skipped: true };
   }
 
   // CloudFront has a hard limit of 3000 paths per invalidation
@@ -230,12 +224,12 @@ async function invalidateCloudFrontCache(
     });
     const invalidationId = response.Invalidation?.Id;
 
-    return { invalidated: true, invalidationId, processedPaths: pathsToInvalidate };
+    return { invalidated: true, invalidationId, paths: pathsToInvalidate };
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Unknown CloudFront error";
     console.error("CloudFront invalidation error:", error);
-    return { invalidated: false, error: errorMsg, processedPaths: [] };
+    return { invalidated: false, error: errorMsg };
   }
 }
 
@@ -372,18 +366,10 @@ export async function POST(request: Request) {
       }
     }
 
-    let cloudfrontResult: CloudFrontInvalidationResult;
-    if (cfrontPaths.size > 0) {
-      const pathArray = Array.from(cfrontPaths);
-      const { processedPaths, ...cfrontResult } =
-        await invalidateCloudFrontCache(pathArray);
-      cloudfrontResult = {
-        ...cfrontResult,
-        paths: processedPaths,
-      };
-    } else {
-      cloudfrontResult = { invalidated: false, skipped: true };
-    }
+    const cloudfrontResult: CloudFrontInvalidationResult =
+      cfrontPaths.size > 0
+        ? await invalidateCloudFrontCache(Array.from(cfrontPaths))
+        : { invalidated: false, skipped: true };
 
     // 7. Log successful revalidation
     const cloudfrontStatus = cloudfrontResult.invalidated
