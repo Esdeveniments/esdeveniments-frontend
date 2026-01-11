@@ -264,6 +264,7 @@ export default async function EventPage({
   const hasCity = Boolean(citySlug);
   const hasRegion = Boolean(regionSlug);
 
+  const homeLabel = tBreadcrumbs("home");
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -272,7 +273,7 @@ export default async function EventPage({
         {
           "@type": "ListItem",
           position: 1,
-          name: "Inici",
+          name: homeLabel,
           item: siteUrl,
         },
       ];

@@ -150,7 +150,7 @@ export default async function Page({
             placeTypeLabel.regionSlug && {
               containedInPlace: {
                 name: placeTypeLabel.regionLabel,
-                url: `${siteUrl}/${placeTypeLabel.regionSlug}`,
+                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
               },
             }),
         })

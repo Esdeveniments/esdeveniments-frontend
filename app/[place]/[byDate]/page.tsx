@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
 import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
@@ -354,7 +354,7 @@ export default async function ByDatePage({
             placeTypeLabel.regionSlug && {
               containedInPlace: {
                 name: placeTypeLabel.regionLabel,
-                url: `${siteUrl}/${placeTypeLabel.regionSlug}`,
+                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
               },
             }),
         })
