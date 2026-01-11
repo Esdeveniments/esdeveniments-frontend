@@ -40,13 +40,20 @@ if ! aws lambda get-function --function-name "$FUNCTION_NAME" --region "$REGION"
   exit 1
 fi
 
-# Invoke the function
-RESPONSE=$(aws lambda invoke \
+# Invoke the function with proper output handling
+OUTPUT_FILE=$(mktemp)
+trap 'rm -f "$OUTPUT_FILE"' EXIT
+
+if aws lambda invoke \
   --function-name "$FUNCTION_NAME" \
   --region "$REGION" \
   --payload "$PAYLOAD" \
   --cli-binary-format raw-in-base64-out \
-  /dev/stdout 2>/dev/null)
-
-echo "Response:"
-echo "$RESPONSE" | jq '.' 2>/dev/null || echo "$RESPONSE"
+  "$OUTPUT_FILE" >/dev/null 2>&1; then
+  echo "Response:"
+  jq '.' "$OUTPUT_FILE" 2>/dev/null || cat "$OUTPUT_FILE"
+else
+  echo "❌ Lambda invocation failed"
+  cat "$OUTPUT_FILE" 2>/dev/null
+  exit 1
+fi
