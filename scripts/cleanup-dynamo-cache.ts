@@ -24,10 +24,29 @@ import {
 
 import type { ScanCommandOutput } from "@aws-sdk/client-dynamodb";
 
-// Type for our table items (tag and path columns)
+// Types kept local (not in types/) for Lambda deployment simplicity - this script
+// is bundled and deployed independently, avoiding cross-file dependencies.
 interface CacheItem {
   tag?: { S?: string };
   path?: { S?: string };
+}
+
+/** Type guard to validate DynamoDB item has expected shape */
+function isCacheItem(
+  item: Record<string, unknown>
+): item is CacheItem {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    (item.tag === undefined ||
+      (typeof item.tag === "object" &&
+        item.tag !== null &&
+        "S" in item.tag)) &&
+    (item.path === undefined ||
+      (typeof item.path === "object" &&
+        item.path !== null &&
+        "S" in item.path))
+  );
 }
 
 const REGION = process.env.AWS_REGION || "eu-west-3";
@@ -41,6 +60,7 @@ const BATCH_SIZE = 25; // DynamoDB BatchWriteItem limit
 const SCAN_LIMIT = 5000; // Items per scan
 const DELAY_BETWEEN_BATCHES_MS = 100; // Rate limiting
 const MAX_RETRIES = 3; // Retries for unprocessed items with exponential backoff
+const PROGRESS_LOG_INTERVAL = 1000; // Log progress every N items
 // Threshold for validating timestamp-based build IDs (Jan 1, 2023 00:00:00 UTC)
 const TIMESTAMP_THRESHOLD_MS = new Date("2023-01-01T00:00:00Z").getTime();
 
@@ -97,10 +117,12 @@ async function scanAndGroupByBuild(): Promise<
     lastEvaluatedKey = response.LastEvaluatedKey;
 
     for (const rawItem of response.Items || []) {
-      // Type narrow the item to our expected shape
-      const item = rawItem as CacheItem;
-      const tag = item.tag?.S || "";
-      const path = item.path?.S || "";
+      // Skip items that don't match expected shape
+      if (!isCacheItem(rawItem)) {
+        continue;
+      }
+      const tag = rawItem.tag?.S || "";
+      const path = rawItem.path?.S || "";
       const buildId = extractBuildId(tag);
 
       let group = buildGroups.get(buildId);
@@ -269,8 +291,8 @@ async function deleteItems(
       );
     }
 
-    // Progress logging every 1000 items
-    if ((i + BATCH_SIZE) % 1000 === 0 || i + BATCH_SIZE >= items.length) {
+    // Progress logging every PROGRESS_LOG_INTERVAL items
+    if ((i + BATCH_SIZE) % PROGRESS_LOG_INTERVAL === 0 || i + BATCH_SIZE >= items.length) {
       console.log(
         `Delete progress: ${Math.min(i + BATCH_SIZE, items.length)}/${
           items.length
