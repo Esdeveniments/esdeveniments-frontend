@@ -288,17 +288,7 @@ async function deleteItems(
 export async function handler(event?: {
   dryRun?: boolean;
 }): Promise<CleanupResult> {
-  const isDryRun = event?.dryRun ?? DRY_RUN;
-
-  console.log("=== DynamoDB Cache Cleanup ===");
-  console.log(`Table: ${TABLE_NAME}`);
-  console.log(`Builds to keep: ${BUILDS_TO_KEEP}`);
-  console.log(`Dry run: ${isDryRun}`);
-  console.log(`Cleanup enabled: ${CLEANUP_ENABLED}`);
-  console.log("");
-
-  // Safety gate: cleanup must be explicitly enabled
-  // Prevents accidental deletions if misconfigured
+  // Validate required environment variables first (fail fast)
   if (!CLEANUP_ENABLED) {
     throw new Error(
       "CACHE_CLEANUP_ENABLED not set to 'true'; cleanup is disabled for safety"
@@ -308,6 +298,15 @@ export async function handler(event?: {
   if (!TABLE_NAME) {
     throw new Error("CACHE_DYNAMO_TABLE environment variable not set");
   }
+
+  const isDryRun = event?.dryRun ?? DRY_RUN;
+
+  console.log("=== DynamoDB Cache Cleanup ===");
+  console.log(`Table: ${TABLE_NAME}`);
+  console.log(`Builds to keep: ${BUILDS_TO_KEEP}`);
+  console.log(`Dry run: ${isDryRun}`);
+  console.log(`Cleanup enabled: ${CLEANUP_ENABLED}`);
+  console.log("");
 
   const result: CleanupResult = {
     totalItems: 0,
