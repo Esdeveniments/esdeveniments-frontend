@@ -342,13 +342,9 @@ export async function POST(request: Request) {
     }
 
     // 5. Purge Cloudflare cache for corresponding URL prefixes
-    const cfPrefixes = new Set<string>();
-    for (const tag of tags) {
-      const prefixes = TAG_TO_CLOUDFLARE_PREFIXES[tag];
-      if (prefixes) {
-        prefixes.forEach((p) => cfPrefixes.add(p));
-      }
-    }
+    const cfPrefixes = new Set(
+      tags.flatMap((tag) => TAG_TO_CLOUDFLARE_PREFIXES[tag] ?? [])
+    );
 
     let cloudflareResult: CloudflarePurgeResult;
     if (cfPrefixes.size > 0) {
@@ -366,13 +362,9 @@ export async function POST(request: Request) {
 
     // 6. Invalidate CloudFront cache (AWS CDN in front of OpenNext/SST)
     // Use CloudFront-specific paths (supports wildcards)
-    const cfrontPaths = new Set<string>();
-    for (const tag of tags) {
-      const paths = TAG_TO_CLOUDFRONT_PATHS[tag];
-      if (paths) {
-        paths.forEach((p) => cfrontPaths.add(p));
-      }
-    }
+    const cfrontPaths = new Set(
+      tags.flatMap((tag) => TAG_TO_CLOUDFRONT_PATHS[tag] ?? [])
+    );
 
     const cloudfrontResult: CloudFrontInvalidationResult =
       cfrontPaths.size > 0
