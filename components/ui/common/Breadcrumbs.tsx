@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@i18n/routing";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import type { BreadcrumbsProps } from "types/props";
 

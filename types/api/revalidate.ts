@@ -28,6 +28,10 @@ export interface CloudFrontInvalidationResult {
   skipped?: boolean;
   /** Error message if invalidation failed */
   error?: string;
+  /** Whether the paths were truncated due to CloudFront limit */
+  truncated?: boolean;
+  /** Original number of paths before truncation */
+  originalCount?: number;
 }
 
 /**

@@ -195,13 +195,15 @@ async function invalidateCloudFrontCache(
   }
 
   // CloudFront has a hard limit of 3000 paths per invalidation
-  if (normalizedPaths.length > CLOUDFRONT_MAX_PATHS) {
+  const truncated = normalizedPaths.length > CLOUDFRONT_MAX_PATHS;
+  if (truncated) {
     console.warn(
       `CloudFront invalidation truncated: ${normalizedPaths.length} paths exceeds ${CLOUDFRONT_MAX_PATHS} limit`
     );
   }
   // slice is a no-op when under the limit
   const pathsToInvalidate = normalizedPaths.slice(0, CLOUDFRONT_MAX_PATHS);
+  const originalCount = truncated ? normalizedPaths.length : undefined;
 
   try {
     // CloudFront client uses Lambda's IAM role credentials automatically
@@ -224,7 +226,13 @@ async function invalidateCloudFrontCache(
     });
     const invalidationId = response.Invalidation?.Id;
 
-    return { invalidated: true, invalidationId, paths: pathsToInvalidate };
+    return {
+      invalidated: true,
+      invalidationId,
+      paths: pathsToInvalidate,
+      truncated,
+      originalCount,
+    };
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Unknown CloudFront error";
@@ -396,18 +404,28 @@ export async function POST(request: Request) {
       } | CloudFront: ${cloudfrontStatus}`
     );
 
+    // Collect warnings for transient/partial failures
+    const warnings: string[] = [];
+    if (failedTags.length > 0) {
+      warnings.push(
+        `Tag cache write failed for: ${failedTags.join(
+          ", "
+        )} (transient, revalidation still applied)`
+      );
+    }
+    if (cloudfrontResult.truncated && cloudfrontResult.originalCount) {
+      warnings.push(
+        `CloudFront invalidation truncated: ${cloudfrontResult.originalCount} paths exceeds limit. Only first ${CLOUDFRONT_MAX_PATHS} were invalidated.`
+      );
+    }
+
     const response: RevalidateResponseDTO = {
       revalidated: true,
       tags: revalidatedTags,
       cloudflare: cloudflareResult,
       cloudfront: cloudfrontResult,
       timestamp: new Date().toISOString(),
-      // Include warning if any tag cache writes failed (transient DynamoDB errors)
-      ...(failedTags.length > 0 && {
-        warning: `Tag cache write failed for: ${failedTags.join(
-          ", "
-        )} (transient, revalidation still applied)`,
-      }),
+      ...(warnings.length > 0 && { warning: warnings.join(" | ") }),
     };
 
     return NextResponse.json(response, { status: 200 });

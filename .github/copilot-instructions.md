@@ -364,8 +364,10 @@ When modifying existing components:
 
 - Library: `next-intl` 4.5 with plugin enabled in `next.config.js` (`withNextIntl`).
 - Routing: `i18n/routing.ts` defines locales (`ca`, `es`, `en`), default `ca`, and `as-needed` prefix via `defineRouting`; use the exported `Link`, `redirect`, `usePathname`, `useRouter`, `getPathname` from `createNavigation`.
+- **Links: Always use `Link` from `@i18n/routing` for internal navigation** (not `next/link`). This ensures locale prefixes are automatically handled for non-default locales (`es`, `en`). ESLint will warn on `next/link` imports in components. Exceptions: primitives with manual locale handling, external-only links.
 - Requests/messages: `i18n/request.ts` uses `getRequestConfig` to load messages from `messages/{locale}.json`. Add locales by updating `types/i18n.ts` (supported locales, mappings), adding the JSON file, and extending the loader map.
 - App layout: `app/layout.tsx` wraps with `NextIntlClientProvider` using `getLocale`/`getMessages`. Server components should use `getTranslations` from `next-intl/server`; client components should use `useTranslations`/`useLocale` from `next-intl`. Don’t pass messages manually down the tree.
 - Locale header: `proxy.ts` sets `x-next-intl-locale`; `utils/i18n-seo.ts` reads it. Avoid rolling your own locale detection.
 - Strings: keep user-facing text in `messages/*.json`; prefer reuse of existing keys before adding new ones.
+- JSON-LD URLs: Use `toLocalizedUrl(path, locale)` from `@utils/i18n-seo` for all URLs in structured data to ensure locale prefixes are included.
 - Tests: Vitest mocks live in `test/mocks/next-intl.ts` and `test/mocks/next-intl-server.ts`; `vitest.config.ts` aliases `next-intl` and `next-intl/server` to these mocks.

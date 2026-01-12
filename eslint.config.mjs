@@ -220,4 +220,29 @@ export default [
       ],
     },
   },
+  // Warn about using next/link directly - prefer next-intl's Link for locale handling
+  // Allowed exceptions: primitives (have manual locale handling), types, tests, external-only links
+  {
+    files: ["components/**/*.tsx", "app/**/*.tsx"],
+    ignores: [
+      "components/ui/primitives/**", // Have manual locale handling
+      "components/ui/common/social/**", // External links only
+      "components/ui/common/staticShareButtons/**", // External share URLs only
+      "test/**/*", // Test mocks
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          paths: [
+            {
+              name: "next/link",
+              message:
+                "Prefer importing Link from '@i18n/routing' for automatic locale handling. Use next/link only for external URLs or in primitives with manual locale handling.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
