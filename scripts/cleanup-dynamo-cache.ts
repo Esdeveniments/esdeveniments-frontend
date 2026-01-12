@@ -166,7 +166,8 @@ function selectBuildsToKeep(
  * Delete items in batches with rate limiting
  */
 async function deleteItems(
-  items: Array<{ tag: string; path: string }>
+  items: Array<{ tag: string; path: string }>,
+  isDryRun: boolean
 ): Promise<{ deleted: number; errors: string[] }> {
   let deleted = 0;
   const errors: string[] = [];
@@ -182,7 +183,7 @@ async function deleteItems(
     }));
 
     try {
-      if (DRY_RUN) {
+      if (isDryRun) {
         console.log(`[DRY RUN] Would delete batch of ${batch.length} items`);
         deleted += batch.length;
       } else {
@@ -359,7 +360,7 @@ export async function handler(event?: {
     }
 
     // Step 4: Delete items
-    const { deleted, errors } = await deleteItems(itemsToDelete);
+    const { deleted, errors } = await deleteItems(itemsToDelete, isDryRun);
     result.itemsDeleted = deleted;
     result.errors = errors;
 
