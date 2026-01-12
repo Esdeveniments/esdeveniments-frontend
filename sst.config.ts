@@ -533,6 +533,9 @@ export default $config({
           // Safe-by-default: dry run unless explicitly disabled via CACHE_CLEANUP_DRY_RUN=false
           // The handler also defaults to dry run if DRY_RUN !== "false"
           DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "true",
+          // Double safety gate: cleanup must be explicitly enabled
+          // Set CACHE_CLEANUP_ENABLED=true in deployment env to allow actual deletions
+          CACHE_CLEANUP_ENABLED: process.env.CACHE_CLEANUP_ENABLED ?? "false",
         },
         permissions: [
           {

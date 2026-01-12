@@ -24,7 +24,7 @@ export default function Breadcrumbs({ items, className = "" }: BreadcrumbsProps)
               )}
               {isLast || !item.href ? (
                 <span
-                  className={isLast ? "text-foreground-muted font-medium truncate max-w-[200px]" : ""}
+                  className={isLast ? "text-foreground-strong font-medium truncate max-w-[200px]" : ""}
                   aria-current={isLast ? "page" : undefined}
                   title={item.label}
                 >

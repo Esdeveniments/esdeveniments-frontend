@@ -35,6 +35,8 @@ const REGION = process.env.AWS_REGION || "eu-west-3";
 const TABLE_NAME = process.env.CACHE_DYNAMO_TABLE;
 const BUILDS_TO_KEEP = parseInt(process.env.BUILDS_TO_KEEP || "3", 10);
 const DRY_RUN = process.env.DRY_RUN !== "false"; // Default to dry run for safety
+// Safety gate: cleanup must be explicitly enabled in production
+const CLEANUP_ENABLED = process.env.CACHE_CLEANUP_ENABLED === "true";
 const BATCH_SIZE = 25; // DynamoDB BatchWriteItem limit
 const SCAN_LIMIT = 5000; // Items per scan
 const DELAY_BETWEEN_BATCHES_MS = 100; // Rate limiting
@@ -291,7 +293,16 @@ export async function handler(event?: {
   console.log(`Table: ${TABLE_NAME}`);
   console.log(`Builds to keep: ${BUILDS_TO_KEEP}`);
   console.log(`Dry run: ${isDryRun}`);
+  console.log(`Cleanup enabled: ${CLEANUP_ENABLED}`);
   console.log("");
+
+  // Safety gate: cleanup must be explicitly enabled
+  // Prevents accidental deletions if misconfigured
+  if (!CLEANUP_ENABLED) {
+    throw new Error(
+      "CACHE_CLEANUP_ENABLED not set to 'true'; cleanup is disabled for safety"
+    );
+  }
 
   if (!TABLE_NAME) {
     throw new Error("CACHE_DYNAMO_TABLE environment variable not set");
