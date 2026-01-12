@@ -27,6 +27,15 @@
 - Components: PascalCase; hooks: `useXxx`; helpers: lowerCamelCase.
 - Indentation: 2 spaces; prefer path aliases; Tailwind utilities for styling; globals in `styles/`.
 
+## Internationalization (i18n) Rules
+
+- **Links: Always use `Link` from `@i18n/routing`** for internal navigation (not `next/link`). This ensures locale prefixes (`/es/`, `/en/`) are automatically handled. ESLint warns on `next/link` imports.
+  - ✅ `import { Link } from "@i18n/routing"` - auto locale handling
+  - ❌ `import Link from "next/link"` - loses locale on navigation
+  - Exceptions: primitives with manual locale handling, external-only links
+- **JSON-LD URLs: Use `toLocalizedUrl(path, locale)`** from `@utils/i18n-seo` for all URLs in structured data (breadcrumbs, events, etc.).
+- **Breadcrumbs**: Use `generateBreadcrumbList()` from `@components/partials/seo-meta` for JSON-LD breadcrumbs—it's tested and handles locale correctly.
+
 ## React Hooks Best Practices
 
 - **useRef vs useState for tracking flags**: Use `useRef` (not `useState`) for one-time tracking flags that don't affect rendering (e.g., analytics fired, effect ran). A ref update doesn't trigger a re-render.
