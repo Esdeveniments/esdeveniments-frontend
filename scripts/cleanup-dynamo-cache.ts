@@ -32,20 +32,20 @@ interface CacheItem {
 }
 
 /** Type guard to validate DynamoDB item has expected shape */
-function isCacheItem(
-  item: Record<string, unknown>
-): item is CacheItem {
+function isCacheItem(item: unknown): item is CacheItem {
+  if (typeof item !== "object" || item === null) {
+    return false;
+  }
+  const obj = item as Record<string, unknown>;
   return (
-    typeof item === "object" &&
-    item !== null &&
-    (item.tag === undefined ||
-      (typeof item.tag === "object" &&
-        item.tag !== null &&
-        "S" in item.tag)) &&
-    (item.path === undefined ||
-      (typeof item.path === "object" &&
-        item.path !== null &&
-        "S" in item.path))
+    (obj.tag === undefined ||
+      (typeof obj.tag === "object" &&
+        obj.tag !== null &&
+        "S" in obj.tag)) &&
+    (obj.path === undefined ||
+      (typeof obj.path === "object" &&
+        obj.path !== null &&
+        "S" in obj.path))
   );
 }
 
