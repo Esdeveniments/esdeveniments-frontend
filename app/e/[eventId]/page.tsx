@@ -37,11 +37,12 @@ import {
 import { generateHowToSchema } from "@utils/schema-helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import ClientEventClient from "./components/ClientEventClient";
 import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
@@ -264,52 +265,18 @@ export default async function EventPage({
   const hasCity = Boolean(citySlug);
   const hasRegion = Boolean(regionSlug);
 
+  // Build breadcrumb items array with localized URLs
   const homeLabel = tBreadcrumbs("home");
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: (() => {
-      const items: Array<{ "@type": string; position: number; name: string; item: string }> = [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: homeLabel,
-          item: siteUrl,
-        },
-      ];
-      let pos = 2;
-
-      // Add region (comarca) if available
-      if (hasRegion) {
-        items.push({
-          "@type": "ListItem",
-          position: pos++,
-          name: regionName,
-          item: `${siteUrl}/${regionSlug}`,
-        });
-      }
-
-      // Add city if different from region
-      if (hasCity) {
-        items.push({
-          "@type": "ListItem",
-          position: pos++,
-          name: cityName,
-          item: `${siteUrl}/${citySlug}`,
-        });
-      }
-
-      // Add event
-      items.push({
-        "@type": "ListItem",
-        position: pos,
-        name: breadcrumbName,
-        item: `${siteUrl}/e/${event.slug}`,
-      });
-
-      return items;
-    })(),
-  };
+  const breadcrumbItems = [
+    { name: homeLabel, url: toLocalizedUrl("/", locale) },
+    // Add region (comarca) if available
+    ...(hasRegion ? [{ name: regionName, url: toLocalizedUrl(`/${regionSlug}`, locale) }] : []),
+    // Add city if different from region
+    ...(hasCity ? [{ name: cityName, url: toLocalizedUrl(`/${citySlug}`, locale) }] : []),
+    // Add event
+    { name: breadcrumbName, url: toLocalizedUrl(`/e/${event.slug}`, locale) },
+  ];
+  const breadcrumbJsonLd = generateBreadcrumbList(breadcrumbItems);
 
   return (
     <>
@@ -330,7 +297,9 @@ export default async function EventPage({
         <JsonLdServer id={`howto-${event.id}`} data={howToJsonData} />
       )}
       {/* Breadcrumbs JSON-LD */}
-      <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
+      {breadcrumbJsonLd && (
+        <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
+      )}
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
