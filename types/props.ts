@@ -434,7 +434,8 @@ export interface PlacePageShellProps {
   category?: string;
   date?: string;
   categories?: CategorySummaryResponseDTO[];
-  webPageSchemaFactory?: (pageData: PageData) => Record<string, unknown>;
+  /** Factory receives PlaceShellData to access placeTypeLabel (with region info) and pageData */
+  webPageSchemaFactory?: (shellData: PlaceShellData) => Record<string, unknown>;
 }
 
 export interface FeaturedPlaceConfig {

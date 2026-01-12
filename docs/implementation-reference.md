@@ -64,10 +64,10 @@ module.exports = {
 
       // === COLORS === //
       colors: {
-        // Brand colors
-        primary: "#FF0037",
-        "primary-dark": "#C8033F",
-        "primary-soft": "#FF003750",
+        // Brand colors (WCAG AA compliant)
+        primary: "#D6002F",
+        "primary-dark": "#A80025",
+        "primary-soft": "#D6002F50",
 
         // Semantic tokens (canonical)
         background: "#ffffff",
@@ -95,8 +95,8 @@ module.exports = {
         // Aliases used during migration (deprecated; removal scheduled Week 7 Day 1)
         // Brand (deprecated): primarydark, primarySoft
         // Legacy neutrals (aliases): whiteCorp, darkCorp, blackCorp, fullBlackCorp, bColor
-        primarydark: "#C8033F",
-        primarySoft: "#FF003750",
+        primarydark: "#A80025",
+        primarySoft: "#D6002F50",
         whiteCorp: "#ffffff",
         darkCorp: "#F7F7F7",
         blackCorp: `rgb(${foregroundRgb} / <alpha-value>)`,
@@ -737,9 +737,9 @@ Guidelines:
 
 | Token          | Value       | Usage                     |
 | -------------- | ----------- | ------------------------- |
-| `primary`      | `#FF0037`   | Brand red, CTAs, links    |
-| `primary-dark` | `#C8033F`   | Hover states, pressed     |
-| `primary-soft` | `#FF003750` | Semi-transparent overlays |
+| `primary`      | `#D6002F`   | Brand red, CTAs, links    |
+| `primary-dark` | `#A80025`   | Hover states, pressed     |
+| `primary-soft` | `#D6002F50` | Semi-transparent overlays |
 
 ### Neutrals (reference-only)
 

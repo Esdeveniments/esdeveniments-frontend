@@ -346,7 +346,8 @@
       "selectPlaceholder": "Cercar població o comarca...",
       "subtitleDefault": "Agenda cultural, festes majors i activitats",
       "searchPlaceholder": "Cerca esdeveniments a {location}...",
-      "clearSearch": "Neteja la cerca"
+      "clearSearch": "Neteja la cerca",
+      "search": "Cerca"
     },
     "HeroFilters": {
       "today": "Avui",
