@@ -195,6 +195,12 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/revalidate",
   // Health check endpoint for monitoring cache infrastructure
   "/api/health",
+  // Sponsor checkout (browser-initiated Stripe checkout session creation)
+  "/api/sponsors/checkout",
+  // Sponsor paid-only image upload (browser-initiated; gated by Stripe session status)
+  "/api/sponsors/image-upload",
+  // Stripe webhook (signature verified by endpoint, not HMAC)
+  "/api/sponsors/webhook",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized

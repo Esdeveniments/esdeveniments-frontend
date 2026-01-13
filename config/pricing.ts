@@ -4,7 +4,7 @@
  * No hardcoded prices - all values must come from configuration
  */
 
-export type GeoScopeType = "town" | "region";
+export type GeoScopeType = "town" | "region" | "country";
 export type TaxMode = "automatic" | "manual";
 
 export interface PricingConfig {
@@ -23,31 +23,37 @@ export interface PricingMatrix {
 /**
  * Load pricing configuration from environment variables
  * In production, this should be loaded from a database or admin config
+ *
+ * Pricing based on Wallapop benchmark (€1.25-2.50 for 7 days)
+ * Slightly higher because our audience is intent-driven (actively searching for events)
  */
 function loadPricingFromEnv(): PricingMatrix {
   const matrix: PricingMatrix = {};
 
   // Duration options (configurable)
-  const durations = [1, 3, 5, 7, 14, 30]; // days
-  const geoScopes: GeoScopeType[] = ["town", "region"];
+  const durations = [3, 7, 14, 30]; // days
+  const geoScopes: GeoScopeType[] = ["town", "region", "country"];
 
-  // Base pricing (should come from environment or database)
+  // Base pricing - realistic MVP prices (in cents)
+  // Reference: Wallapop charges €1.25-2.50 for 7-day visibility
   const basePrices = {
     town: {
-      1: 500, // €5.00
-      3: 1200, // €12.00
-      5: 1800, // €18.00
-      7: 2400, // €24.00
-      14: 4000, // €40.00
-      30: 7000, // €70.00
+      3: 300, // €3.00
+      7: 500, // €5.00
+      14: 800, // €8.00
+      30: 1200, // €12.00
     },
     region: {
-      1: 1500, // €15.00
-      3: 3500, // €35.00
-      5: 5000, // €50.00
-      7: 6500, // €65.00
-      14: 10000, // €100.00
-      30: 18000, // €180.00
+      3: 500, // €5.00
+      7: 800, // €8.00
+      14: 1200, // €12.00
+      30: 2000, // €20.00
+    },
+    country: {
+      3: 800, // €8.00
+      7: 1200, // €12.00
+      14: 2000, // €20.00
+      30: 3500, // €35.00
     },
   };
 
@@ -96,14 +102,14 @@ export function getPricingConfig(
  * Get all available duration options
  */
 export function getAvailableDurations(): number[] {
-  return [1, 3, 5, 7, 14, 30]; // Should come from config
+  return [3, 7, 14, 30]; // Should come from config
 }
 
 /**
  * Get all available geo scope types
  */
 export function getAvailableGeoScopes(): GeoScopeType[] {
-  return ["town", "region"];
+  return ["town", "region", "country"];
 }
 
 /**

@@ -25,9 +25,11 @@ describe("Restaurant Promotion Pricing", () => {
     const durations = getAvailableDurations();
     expect(durations).toBeInstanceOf(Array);
     expect(durations.length).toBeGreaterThan(0);
-    expect(durations).toContain(1);
+    // Updated to match pricing.ts: [3, 7, 14, 30] days
     expect(durations).toContain(3);
-    expect(durations).toContain(5);
+    expect(durations).toContain(7);
+    expect(durations).toContain(14);
+    expect(durations).toContain(30);
   });
 
   it("should return available geo scopes", () => {
@@ -35,11 +37,15 @@ describe("Restaurant Promotion Pricing", () => {
     expect(geoScopes).toBeInstanceOf(Array);
     expect(geoScopes).toContain("town");
     expect(geoScopes).toContain("region");
+    expect(geoScopes).toContain("country");
   });
 
   it("should validate pricing availability", () => {
+    // Valid combinations from pricing.ts
     expect(isPricingAvailable(3, "town")).toBe(true);
-    expect(isPricingAvailable(5, "region")).toBe(true);
+    expect(isPricingAvailable(7, "region")).toBe(true);
+    expect(isPricingAvailable(30, "country")).toBe(true);
+    // Invalid duration
     expect(isPricingAvailable(999, "town")).toBe(false);
   });
 

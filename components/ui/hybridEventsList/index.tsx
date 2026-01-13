@@ -9,6 +9,7 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
+import { SponsorBannerSlot } from "@components/ui/sponsor";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -54,6 +55,10 @@ async function HybridEventsList({
             </Suspense>
           </>
         )}
+
+        {/* Sponsor banner slot - shows active sponsor or CTA to advertise */}
+        <SponsorBannerSlot place={place || "catalunya"} />
+
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
@@ -104,6 +109,9 @@ async function HybridEventsList({
           </Suspense>
         </>
       )}
+
+      {/* Sponsor banner slot - shows active sponsor or CTA to advertise */}
+      <SponsorBannerSlot place={place || "catalunya"} />
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
       {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}
