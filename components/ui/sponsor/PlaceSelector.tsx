@@ -15,12 +15,8 @@ import {
 // Re-export for convenience
 export type { PlaceOption };
 
-// Catalunya option - always available
-const CATALUNYA_OPTION: PlaceOption = {
-  slug: "catalunya",
-  name: "Tot Catalunya",
-  type: "country",
-};
+// Catalunya option slug - name is localized via translations
+const CATALUNYA_SLUG = "catalunya";
 
 // Popular places shown as quick-select chips
 const POPULAR_PLACES: PlaceOption[] = [
@@ -136,7 +132,12 @@ export default function PlaceSelector({
   };
 
   const handleCatalunyaSelect = () => {
-    onPlaceSelect(CATALUNYA_OPTION);
+    const catalunyaOption: PlaceOption = {
+      slug: CATALUNYA_SLUG,
+      name: t("placeSelector.catalunya.title"),
+      type: "country",
+    };
+    onPlaceSelect(catalunyaOption);
   };
 
   // Helper to get type label

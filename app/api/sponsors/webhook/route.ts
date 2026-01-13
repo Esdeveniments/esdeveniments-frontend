@@ -70,11 +70,15 @@ function verifyStripeSignature(
     .update(signedPayload)
     .digest("hex");
 
-  // Constant-time comparison
-  return crypto.timingSafeEqual(
-    Buffer.from(v1Signature),
-    Buffer.from(expectedSignature)
-  );
+  // Constant-time comparison (check lengths first to avoid RangeError)
+  const sigBuffer = Buffer.from(v1Signature);
+  const expectedBuffer = Buffer.from(expectedSignature);
+
+  if (sigBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 }
 
 /**
@@ -253,17 +257,25 @@ export async function POST(request: NextRequest) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
       // In development, process without verification
       if (process.env.NODE_ENV === "development") {
-        const event = JSON.parse(payload) as StripeWebhookEvent;
-        if (event.type === "checkout.session.completed") {
-          await handleCheckoutCompleted(
-            event.data.object as StripeWebhookCheckoutSession
-          );
-        } else if (event.type === "payment_intent.succeeded") {
-          handlePaymentIntentSucceeded(
-            event.data.object as StripeWebhookPaymentIntent
+        try {
+          const event = JSON.parse(payload) as StripeWebhookEvent;
+          if (event.type === "checkout.session.completed") {
+            await handleCheckoutCompleted(
+              event.data.object as StripeWebhookCheckoutSession
+            );
+          } else if (event.type === "payment_intent.succeeded") {
+            handlePaymentIntentSucceeded(
+              event.data.object as StripeWebhookPaymentIntent
+            );
+          }
+          return NextResponse.json({ received: true });
+        } catch (parseError) {
+          console.error("Failed to parse webhook payload in dev mode:", parseError);
+          return NextResponse.json(
+            { error: "Invalid JSON payload" },
+            { status: 400 }
           );
         }
-        return NextResponse.json({ received: true });
       }
       return NextResponse.json(
         { error: "Webhook secret not configured" },

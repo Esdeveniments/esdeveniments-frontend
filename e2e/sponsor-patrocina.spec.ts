@@ -69,9 +69,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
     ).toBeVisible();
 
     // Steps are visible (we expect at least 3-4 steps)
-    const stepIndicators = page.locator('[class*="rounded-full"]').filter({
-      hasText: /[1-4]/,
-    });
+    const stepIndicators = page.locator('[data-testid^="step-indicator-"]');
     const stepCount = await stepIndicators.count();
     expect(stepCount).toBeGreaterThanOrEqual(3);
   });

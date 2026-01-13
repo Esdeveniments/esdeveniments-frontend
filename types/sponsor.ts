@@ -71,7 +71,7 @@ export interface SponsorBannerSlotProps {
 export interface PlaceOption {
   slug: string;
   name: string;
-  type: "town" | "region" | "country";
+  type: GeoScope;
 }
 
 /**
@@ -88,6 +88,7 @@ export interface PlaceSelectorProps {
 export interface SponsorPlace {
   slug: string;
   name: string;
+  geoScope: GeoScope;
 }
 
 /**
@@ -107,6 +108,7 @@ export interface SponsorCheckoutRequest {
   locale?: string;
   place?: string;
   placeName?: string;
+  geoScope?: GeoScope;
 }
 
 /**
@@ -125,6 +127,7 @@ export interface SponsorImageUploadResult {
   url?: string;
   publicId?: string;
   metadataSaved?: boolean;
+  paymentIntentMetadataSaved?: boolean;
   error?: string;
 }
 

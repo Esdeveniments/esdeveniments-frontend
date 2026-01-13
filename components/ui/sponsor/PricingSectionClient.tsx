@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import PlaceSelector from "./PlaceSelector";
 import CheckoutButton from "./CheckoutButton";
 import { useTranslations } from "next-intl";
+import { DISPLAY_PRICES_EUR } from "@config/pricing";
 import type {
   PlaceOption,
   SponsorDuration,
@@ -11,28 +12,8 @@ import type {
   PricingPlan,
 } from "types/sponsor";
 
-// Pricing matrix: prices in EUR by geo scope
-// Reference: Wallapop charges €1.25-2.50 for 7-day visibility
-const PRICES_BY_SCOPE: Record<GeoScope, Record<SponsorDuration, number>> = {
-  town: {
-    "3days": 3,
-    "7days": 5,
-    "14days": 8,
-    "30days": 12,
-  },
-  region: {
-    "3days": 5,
-    "7days": 8,
-    "14days": 12,
-    "30days": 20,
-  },
-  country: {
-    "3days": 8,
-    "7days": 12,
-    "14days": 20,
-    "30days": 35,
-  },
-};
+// Use pricing from config (single source of truth)
+const PRICES_BY_SCOPE = DISPLAY_PRICES_EUR;
 
 // Default prices (town) as fallback
 const DEFAULT_PRICES = PRICES_BY_SCOPE.town;
@@ -121,7 +102,7 @@ export default function PricingSectionClient() {
                 {t(`pricing.plans.${plan.duration}.name`)}
               </h3>
               <div className="mb-4">
-                <span className="text-3xl font-bold">€{getPrice(plan.duration)}</span>
+                <span className="heading-2">€{getPrice(plan.duration)}</span>
               </div>
               <p className="body-small text-foreground/70 mb-6">
                 {t(`pricing.plans.${plan.duration}.description`)}
@@ -129,7 +110,11 @@ export default function PricingSectionClient() {
               <CheckoutButton
                 duration={plan.duration}
                 popular={plan.popular}
-                place={selectedPlace}
+                place={selectedPlace ? {
+                  slug: selectedPlace.slug,
+                  name: selectedPlace.name,
+                  geoScope: selectedPlace.type,
+                } : null}
               />
             </div>
           ))}

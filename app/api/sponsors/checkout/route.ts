@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { DISPLAY_PRICES_EUR } from "@config/pricing";
 import type {
   SponsorDuration,
   SponsorCheckoutRequest,
   StripeCheckoutSessionResponse,
 } from "types/sponsor";
 
+import type { GeoScope } from "types/sponsor";
+
 /**
- * Pricing configuration (in cents)
+ * Get pricing in cents from centralized config based on geoScope
  */
-const PRICING: Record<SponsorDuration, number> = {
-  "3days": 500, // €5.00
-  "7days": 1200, // €12.00
-  "14days": 2000, // €20.00
-  "30days": 3500, // €35.00
-};
+function getPriceInCents(duration: SponsorDuration, geoScope: GeoScope): number {
+  const priceEur = DISPLAY_PRICES_EUR[geoScope][duration];
+  return priceEur * 100; // Convert EUR to cents
+}
 
 const DURATION_DAYS: Record<SponsorDuration, number> = {
   "3days": 3,
@@ -70,6 +71,15 @@ const CUSTOM_FIELD_LABELS: Record<
 };
 
 /**
+ * Product descriptions by locale
+ */
+const PRODUCT_DESCRIPTIONS: Record<string, string> = {
+  ca: "dies de patrocini a Esdeveniments.cat",
+  es: "días de patrocinio en Esdeveniments.cat",
+  en: "days of sponsorship on Esdeveniments.cat",
+};
+
+/**
  * Create Stripe Checkout Session using REST API (no SDK needed)
  */
 async function createStripeCheckoutSession(
@@ -77,6 +87,7 @@ async function createStripeCheckoutSession(
   locale: string,
   place: string,
   placeName: string,
+  geoScope: GeoScope,
   idempotencyKey: string
 ): Promise<StripeCheckoutSessionResponse> {
   const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -106,19 +117,20 @@ async function createStripeCheckoutSession(
   );
   params.append("cancel_url", `${baseUrl}/patrocina?cancelled=true`);
 
-  // Line item with dynamic pricing
+  // Line item with dynamic pricing based on geoScope
   params.append("line_items[0][price_data][currency]", "eur");
   params.append(
     "line_items[0][price_data][unit_amount]",
-    String(PRICING[duration])
+    String(getPriceInCents(duration, geoScope))
   );
   params.append(
     "line_items[0][price_data][product_data][name]",
     productNames[duration]
   );
+  const descriptionSuffix = PRODUCT_DESCRIPTIONS[locale] || PRODUCT_DESCRIPTIONS.ca;
   params.append(
     "line_items[0][price_data][product_data][description]",
-    `${DURATION_DAYS[duration]} dies de patrocini a Esdeveniments.cat`
+    `${DURATION_DAYS[duration]} ${descriptionSuffix}`
   );
   params.append("line_items[0][quantity]", "1");
 
@@ -215,10 +227,10 @@ async function createStripeCheckoutSession(
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as SponsorCheckoutRequest;
-    const { duration, locale = "ca", place, placeName } = body;
+    const { duration, locale = "ca", place, placeName, geoScope = "town" } = body;
 
     // Validate duration
-    if (!duration || !PRICING[duration]) {
+    if (!duration || !DURATION_DAYS[duration]) {
       return NextResponse.json(
         {
           error:
@@ -236,10 +248,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate geoScope
+    if (!['town', 'region', 'country'].includes(geoScope)) {
+      return NextResponse.json(
+        { error: "Invalid geoScope. Must be one of: town, region, country" },
+        { status: 400 }
+      );
+    }
+
     // Generate idempotency key from request params to prevent duplicate sessions
+    // Uses visitor_id cookie (set by middleware) + params for deterministic key per user/request
+    const visitorId = request.cookies.get("visitor_id")?.value || "anonymous";
     const idempotencyKey = crypto
       .createHash("sha256")
-      .update(`${duration}-${place}-${Date.now()}`)
+      .update(`${visitorId}-${duration}-${place}-${placeName}`)
       .digest("hex")
       .slice(0, 32);
 
@@ -248,6 +270,7 @@ export async function POST(request: NextRequest) {
       locale,
       place,
       placeName,
+      geoScope,
       idempotencyKey
     );
 

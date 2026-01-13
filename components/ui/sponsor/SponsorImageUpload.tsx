@@ -59,6 +59,7 @@ export default function SponsorImageUpload({
               const parsed = JSON.parse(text) as SponsorImageUploadResult;
               if (
                 parsed &&
+                parsed.success === true &&
                 typeof parsed.url === "string" &&
                 typeof parsed.publicId === "string" &&
                 typeof parsed.metadataSaved === "boolean"

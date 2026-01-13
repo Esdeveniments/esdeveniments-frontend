@@ -7,8 +7,11 @@ import {
   CurrencyEuroIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocaleSafely();
+  setRequestLocale(locale);
   const t = await getTranslations("Patrocina");
 
   return {
@@ -22,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PatrocinaPage() {
-  const locale = "ca"; // Default locale for this page
+  const locale = await getLocaleSafely();
   setRequestLocale(locale);
 
   const t = await getTranslations("Patrocina");
@@ -106,7 +109,10 @@ export default async function PatrocinaPage() {
           <div className="space-y-8">
             {steps.map((step, index) => (
               <div key={step} className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex-center font-bold">
+                <div
+                  data-testid={`step-indicator-${index + 1}`}
+                  className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex-center font-bold"
+                >
                   {index + 1}
                 </div>
                 <div>

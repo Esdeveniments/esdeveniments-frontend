@@ -36,11 +36,14 @@ export default function CheckoutButton({
           locale,
           place: place.slug,
           placeName: place.name,
+          geoScope: place.geoScope,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create checkout session");
+        const errorBody = await response.text().catch(() => "");
+        console.error("Checkout API error:", response.status, errorBody);
+        throw new Error(`Failed to create checkout session: ${response.status}`);
       }
 
       const { url } = await response.json();

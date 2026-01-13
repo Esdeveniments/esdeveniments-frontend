@@ -39,25 +39,33 @@ async function fetchStripeSession(sessionId: string): Promise<unknown> {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
  
-  const response = await fetch(
-    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-      },
-    }
-  );
- 
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    console.error("Stripe session fetch error:", body);
-    throw new Error(`Stripe session fetch failed: ${response.status}`);
-  }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-  return (await response.json()) as unknown;
+  try {
+    const response = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+        },
+        signal: controller.signal,
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.error("Stripe session fetch error:", body);
+      throw new Error(`Stripe session fetch failed: ${response.status}`);
+    }
+
+    return (await response.json()) as unknown;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
- 
+
 async function updateStripeSessionMetadata(
   sessionId: string,
   metadata: Record<string, string>
@@ -72,31 +80,36 @@ async function updateStripeSessionMetadata(
     params.append(`metadata[${key}]`, value);
   }
  
-  const response = await fetch(
-    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Stripe-Version": STRIPE_API_VERSION,
-      },
-      body: params.toString(),
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+  try {
+    const response = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Stripe-Version": STRIPE_API_VERSION,
+        },
+        body: params.toString(),
+        signal: controller.signal,
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.error("Stripe session update error:", body);
+      return false;
     }
-  );
- 
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    console.error("Stripe session update error:", body);
-    return false;
+
+    return true;
+  } finally {
+    clearTimeout(timeoutId);
   }
- 
-  return true;
 }
 
-/**
- * Update Payment Intent metadata so image URL appears in Stripe Dashboard
- */
 async function updatePaymentIntentMetadata(
   paymentIntentId: string,
   metadata: Record<string, string>
@@ -208,6 +221,7 @@ export async function POST(request: Request) {
  
     return NextResponse.json(
       {
+        success: true,
         url,
         publicId,
         metadataSaved: sessionMetadataSaved,

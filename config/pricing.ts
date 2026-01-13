@@ -20,6 +20,10 @@ export interface PricingMatrix {
   [key: PricingKey]: PricingConfig;
 }
 
+// Centralized constants - single source of truth
+const AVAILABLE_DURATIONS = [3, 7, 14, 30] as const;
+const AVAILABLE_GEO_SCOPES: GeoScopeType[] = ["town", "region", "country"];
+
 /**
  * Load pricing configuration from environment variables
  * In production, this should be loaded from a database or admin config
@@ -30,9 +34,9 @@ export interface PricingMatrix {
 function loadPricingFromEnv(): PricingMatrix {
   const matrix: PricingMatrix = {};
 
-  // Duration options (configurable)
-  const durations = [3, 7, 14, 30]; // days
-  const geoScopes: GeoScopeType[] = ["town", "region", "country"];
+  // Use centralized constants
+  const durations = AVAILABLE_DURATIONS;
+  const geoScopes = AVAILABLE_GEO_SCOPES;
 
   // Base pricing - realistic MVP prices (in cents)
   // Reference: Wallapop charges €1.25-2.50 for 7-day visibility
@@ -101,15 +105,15 @@ export function getPricingConfig(
 /**
  * Get all available duration options
  */
-export function getAvailableDurations(): number[] {
-  return [3, 7, 14, 30]; // Should come from config
+export function getAvailableDurations(): readonly number[] {
+  return AVAILABLE_DURATIONS;
 }
 
 /**
  * Get all available geo scope types
  */
 export function getAvailableGeoScopes(): GeoScopeType[] {
-  return ["town", "region", "country"];
+  return [...AVAILABLE_GEO_SCOPES];
 }
 
 /**
@@ -128,3 +132,28 @@ export function isPricingAvailable(
 export function getPricingMatrix(): PricingMatrix {
   return loadPricingFromEnv();
 }
+
+/**
+ * Display prices in EUR (for client-side rendering)
+ * Single source of truth for UI display - derived from base prices above
+ */
+export const DISPLAY_PRICES_EUR = {
+  town: {
+    "3days": 3,
+    "7days": 5,
+    "14days": 8,
+    "30days": 12,
+  },
+  region: {
+    "3days": 5,
+    "7days": 8,
+    "14days": 12,
+    "30days": 20,
+  },
+  country: {
+    "3days": 8,
+    "7days": 12,
+    "14days": 20,
+    "30days": 35,
+  },
+} as const;
