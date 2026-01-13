@@ -6,7 +6,7 @@ export interface TcfData {
 }
 
 export type TcfCallback = (
-  tcData: TcfData,
+  tcData: TcfData | null,
   success: boolean
 ) => void;
 
