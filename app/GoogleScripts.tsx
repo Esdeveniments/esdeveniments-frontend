@@ -244,7 +244,8 @@ export default function GoogleScripts() {
             `}
           </Script>
 
-          {/* Funding Choices (CMP) - loads with lazyOnload to reduce TBT while ensuring consent is available */}
+          {/* Funding Choices (CMP) - loads with lazyOnload to reduce TBT while ensuring consent is available.
+              AdContext polls for __tcfapi availability, so ads won't load until CMP is ready. */}
           {FUNDING_CHOICES_SRC && (
             <Script src={FUNDING_CHOICES_SRC} strategy="lazyOnload" />
           )}
