@@ -30,6 +30,10 @@ export default function SponsorBanner({ sponsor }: SponsorBannerProps) {
         target="_blank"
         rel="sponsored noopener"
         className="group block w-full overflow-hidden rounded-lg border border-border bg-muted/20 transition-shadow hover:shadow-md"
+        data-analytics-event-name="sponsor_click"
+        data-analytics-sponsor-name={sponsor.businessName}
+        data-analytics-sponsor-place={sponsor.places[0]}
+        data-analytics-sponsor-geo-scope={sponsor.geoScope}
       >
         <div className="relative flex h-[100px] w-full items-center justify-center md:h-[120px]">
           <Image

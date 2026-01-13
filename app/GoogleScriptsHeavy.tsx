@@ -89,6 +89,10 @@ export default function GoogleScriptsHeavy({
           position: dataset.analyticsPosition || undefined,
           source_event_id: dataset.analyticsSourceEventId || undefined,
           source_event_slug: dataset.analyticsSourceEventSlug || undefined,
+          // Sponsor tracking
+          sponsor_name: dataset.analyticsSponsorName || undefined,
+          sponsor_place: dataset.analyticsSponsorPlace || undefined,
+          sponsor_geo_scope: dataset.analyticsSponsorGeoScope || undefined,
         });
       }
 

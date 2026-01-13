@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import SponsorUploadPageClient from "@components/ui/sponsor/SponsorUploadPageClient";
 
@@ -15,7 +16,9 @@ export default async function PatrocinaUploadPage() {
   return (
     <main className="min-h-screen bg-background py-section-y px-section-x">
       <div className="max-w-5xl mx-auto">
-        <SponsorUploadPageClient />
+        <Suspense fallback={null}>
+          <SponsorUploadPageClient />
+        </Suspense>
       </div>
     </main>
   );
