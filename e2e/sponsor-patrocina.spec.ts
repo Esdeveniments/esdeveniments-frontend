@@ -34,7 +34,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
     ).toBeVisible();
   });
 
-  test("pricing section has scope tabs (Població, Comarca, Catalunya)", async ({
+  test("pricing section has place selector for scope selection", async ({
     page,
   }) => {
     await page.goto("/patrocina", {
@@ -47,10 +47,11 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
       timeout: 30000,
     });
 
-    // Check for geo scope tabs
-    await expect(page.getByRole("tab", { name: /població/i })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /comarca/i })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /catalunya/i })).toBeVisible();
+    // Check for place selector (searchable dropdown for town/region/country)
+    // The UI uses a place selector instead of tabs
+    await expect(
+      page.getByPlaceholder(/cerca un poble|search/i)
+    ).toBeVisible();
   });
 
   test("how it works section displays steps", async ({ page }) => {
@@ -105,9 +106,13 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
       page.getByRole("heading", { name: /tens dubtes/i })
     ).toBeVisible();
 
-    // Email link is present
-    const emailLink = page.getByRole("link", { name: /@/i });
+    // Email link is present (button/link with mailto: href)
+    const emailLink = page.getByRole("link", { name: /contactar|email/i });
     await expect(emailLink).toBeVisible();
+    
+    // Verify it's a mailto link
+    const href = await emailLink.getAttribute("href");
+    expect(href).toContain("mailto:");
   });
 
   test("back to home link works", async ({ page }) => {
