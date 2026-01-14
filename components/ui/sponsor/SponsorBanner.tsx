@@ -19,7 +19,7 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
   }
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" data-testid="sponsor-banner">
       {/* EU Ad Transparency Label */}
       <span className="absolute -top-4 left-0 text-xs text-foreground/50">
         {t("label")}

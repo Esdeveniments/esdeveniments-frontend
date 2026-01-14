@@ -248,10 +248,13 @@ export async function POST(request: NextRequest) {
 
     // Generate idempotency key from request params to prevent duplicate sessions
     // Uses visitor_id cookie (set by middleware) + params for deterministic key per user/request
-    const visitorId = request.cookies.get("visitor_id")?.value || "anonymous";
+    // Includes geoScope to prevent collisions between different pricing tiers
+    const visitorId = request.cookies.get("visitor_id")?.value;
+    // Use timestamp suffix for anonymous users to allow retries
+    const userKey = visitorId || `anon-${Date.now()}`;
     const idempotencyKey = crypto
       .createHash("sha256")
-      .update(`${visitorId}-${duration}-${place}-${placeName}`)
+      .update(`${userKey}-${duration}-${geoScope}-${place}-${placeName}`)
       .digest("hex")
       .slice(0, 32);
 

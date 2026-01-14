@@ -24,6 +24,14 @@ export interface PricingMatrix {
 const AVAILABLE_DURATIONS = [3, 7, 14, 30] as const;
 const AVAILABLE_GEO_SCOPES: GeoScopeType[] = ["town", "region", "country"];
 
+// Base pricing in cents - single source of truth
+// Must be defined before loadPricingFromEnv to avoid TDZ error
+const BASE_PRICES_CENTS = {
+  town: { 3: 300, 7: 500, 14: 800, 30: 1200 },
+  region: { 3: 500, 7: 800, 14: 1200, 30: 2000 },
+  country: { 3: 800, 7: 1200, 14: 2000, 30: 3500 },
+} as const;
+
 /**
  * Load pricing configuration from environment variables
  * In production, this should be loaded from a database or admin config
@@ -109,13 +117,6 @@ export function isPricingAvailable(
 export function getPricingMatrix(): PricingMatrix {
   return loadPricingFromEnv();
 }
-
-// Base pricing in cents - single source of truth
-const BASE_PRICES_CENTS = {
-  town: { 3: 300, 7: 500, 14: 800, 30: 1200 },
-  region: { 3: 500, 7: 800, 14: 1200, 30: 2000 },
-  country: { 3: 800, 7: 1200, 14: 2000, 30: 3500 },
-} as const;
 
 /**
  * Display prices in EUR (for client-side rendering)

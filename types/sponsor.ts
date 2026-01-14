@@ -119,8 +119,10 @@ export interface CheckoutButtonProps {
 export interface SponsorCheckoutRequest {
   duration: SponsorDuration;
   locale?: string;
-  place?: string;
-  placeName?: string;
+  /** Place slug where sponsor will appear (required) */
+  place: string;
+  /** Human-readable place name (required) */
+  placeName: string;
   geoScope?: GeoScope;
 }
 

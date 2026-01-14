@@ -24,7 +24,7 @@ function SponsorBannerSlotContent({ place }: SponsorBannerSlotProps) {
  */
 export default function SponsorBannerSlot({ place }: SponsorBannerSlotProps) {
   return (
-    <div className="mb-4 mt-2">
+    <div className="mb-4 mt-2" data-testid="sponsor-slot">
       <Suspense fallback={null}>
         <SponsorBannerSlotContent place={place} />
       </Suspense>

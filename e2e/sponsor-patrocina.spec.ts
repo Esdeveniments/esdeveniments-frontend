@@ -124,17 +124,27 @@ test.describe("Sponsor Empty State CTA", () => {
       timeout: 30000,
     });
 
-    // Look for sponsor empty state CTA (links to /patrocina)
-    const sponsorCta = page.getByRole("link", { name: /anuncia/i });
+    // Look for sponsor slot container (always present on place pages)
+    const sponsorSlot = page.locator('[data-testid="sponsor-slot"]');
+    await expect(sponsorSlot).toBeVisible({ timeout: 10000 });
 
-    // This test verifies the empty state is shown when no sponsor is active
-    // If a sponsor IS active in production, this test will need adjustment
-    if (await sponsorCta.isVisible()) {
-      // Empty state is shown - verify it links to patrocina
+    // Within the slot, either empty state CTA or sponsor banner should be visible
+    const sponsorCta = sponsorSlot.getByRole("link", { name: /anuncia/i });
+    const sponsorBanner = sponsorSlot.locator('[data-testid="sponsor-banner"]');
+
+    // Assert: exactly one of these should be visible (mutually exclusive)
+    const ctaVisible = await sponsorCta.isVisible();
+    const bannerVisible = await sponsorBanner.isVisible();
+
+    expect(
+      ctaVisible || bannerVisible,
+      "Expected either sponsor CTA or sponsor banner to be visible"
+    ).toBe(true);
+
+    // If empty state CTA is shown, verify it links to patrocina
+    if (ctaVisible) {
       const href = await sponsorCta.getAttribute("href");
       expect(href).toContain("/patrocina");
     }
-    // Note: If a sponsor IS active, the banner would show instead of empty state
-    // This is expected behavior - test passes either way
   });
 });

@@ -37,12 +37,15 @@ export default function PlaceSelector({
 
   // Fetch places on mount
   useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     async function fetchPlaces() {
       try {
-        // Fetch regions and cities in parallel
+        // Fetch regions and cities in parallel with timeout
         const [regionsRes, citiesRes] = await Promise.all([
-          fetch("/api/regions"),
-          fetch("/api/cities"),
+          fetch("/api/regions", { signal: controller.signal }),
+          fetch("/api/cities", { signal: controller.signal }),
         ]);
 
         const regions = regionsRes.ok ? await regionsRes.json() : [];
@@ -69,13 +72,23 @@ export default function PlaceSelector({
 
         setPlaces(allPlaces);
       } catch (error) {
+        // Ignore abort errors (expected on unmount or timeout)
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
         console.error("Failed to fetch places:", error);
       } finally {
+        clearTimeout(timeoutId);
         setIsLoading(false);
       }
     }
 
     fetchPlaces();
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, []);
 
   // Filter places based on query
