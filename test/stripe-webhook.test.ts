@@ -176,7 +176,11 @@ describe("Stripe Webhook Signature Verification", () => {
 
     it("rejects missing timestamp", () => {
       const signature = "v1=abc123";
-      const result = verifyStripeSignature(TEST_PAYLOAD, signature, TEST_SECRET);
+      const result = verifyStripeSignature(
+        TEST_PAYLOAD,
+        signature,
+        TEST_SECRET
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Missing timestamp in signature");
@@ -184,7 +188,11 @@ describe("Stripe Webhook Signature Verification", () => {
 
     it("rejects missing v1 signature", () => {
       const signature = "t=1234567890";
-      const result = verifyStripeSignature(TEST_PAYLOAD, signature, TEST_SECRET);
+      const result = verifyStripeSignature(
+        TEST_PAYLOAD,
+        signature,
+        TEST_SECRET
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Missing v1 signature");
@@ -192,7 +200,11 @@ describe("Stripe Webhook Signature Verification", () => {
 
     it("rejects invalid timestamp format", () => {
       const signature = "t=invalid,v1=abc123";
-      const result = verifyStripeSignature(TEST_PAYLOAD, signature, TEST_SECRET);
+      const result = verifyStripeSignature(
+        TEST_PAYLOAD,
+        signature,
+        TEST_SECRET
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Invalid timestamp format");

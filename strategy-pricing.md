@@ -12,6 +12,7 @@ A self-service local advertising system allowing businesses to sponsor place pag
 ## Current Implementation Status
 
 ✅ **Fully Implemented:**
+
 - Dynamic Stripe Checkout Sessions via API (`/api/sponsors/checkout`)
 - Self-service image upload after payment (`/patrocina/upload`)
 - Stripe webhook handler for payment confirmation (`/api/sponsors/webhook`)
@@ -20,6 +21,7 @@ A self-service local advertising system allowing businesses to sponsor place pag
 - Place selector with search (towns, regions, Catalunya)
 
 🔄 **Semi-Automated Workflow:**
+
 1. Customer selects place + duration on `/patrocina`
 2. Stripe Checkout Session created dynamically
 3. After payment, customer uploads banner image on `/patrocina/upload`
@@ -205,17 +207,17 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 
 ## Technical Decisions
 
-| Decision                | Choice                          | Rationale                               |
-| ----------------------- | ------------------------------- | --------------------------------------- |
-| Image hosting           | S3 (self-service upload)        | Customer uploads after payment          |
-| Image dimensions        | Any aspect ratio                | Sponsors use existing assets            |
-| Payment provider        | Stripe Checkout API             | Dynamic sessions, custom fields, webhooks |
-| Data storage            | JSON config file                | No backend work, version controlled     |
-| Activation              | Semi-automated                  | Customer uploads, admin activates       |
-| Multiple sponsors/place | First match wins                | Simple, manual conflict resolution      |
-| Tracking                | None (MVP)                      | Add when scale justifies                |
-| Geo scope tiers         | Town / Region / Catalunya       | Matches user mental model (Wallapop)    |
-| Stripe SDK              | None (REST API only)            | Zero dependencies, smaller bundle       |
+| Decision                | Choice                    | Rationale                                 |
+| ----------------------- | ------------------------- | ----------------------------------------- |
+| Image hosting           | S3 (self-service upload)  | Customer uploads after payment            |
+| Image dimensions        | Any aspect ratio          | Sponsors use existing assets              |
+| Payment provider        | Stripe Checkout API       | Dynamic sessions, custom fields, webhooks |
+| Data storage            | JSON config file          | No backend work, version controlled       |
+| Activation              | Semi-automated            | Customer uploads, admin activates         |
+| Multiple sponsors/place | First match wins          | Simple, manual conflict resolution        |
+| Tracking                | None (MVP)                | Add when scale justifies                  |
+| Geo scope tiers         | Town / Region / Catalunya | Matches user mental model (Wallapop)      |
+| Stripe SDK              | None (REST API only)      | Zero dependencies, smaller bundle         |
 
 ---
 
@@ -316,30 +318,30 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 
 ## Files Created/Modified
 
-| File                                               | Status   |
-| -------------------------------------------------- | -------- |
-| `types/sponsor.ts`                                 | ✅ Created |
-| `config/sponsors.ts`                               | ✅ Created |
-| `config/pricing.ts`                                | ✅ Created |
-| `components/ui/sponsor/SponsorBannerSlot.tsx`      | ✅ Created |
-| `components/ui/sponsor/SponsorEmptyState.tsx`      | ✅ Created |
-| `components/ui/sponsor/PricingSectionClient.tsx`   | ✅ Created |
-| `components/ui/sponsor/PlaceSelector.tsx`          | ✅ Created |
-| `components/ui/sponsor/CheckoutButton.tsx`         | ✅ Created |
-| `components/ui/sponsor/SponsorUploadPageClient.tsx`| ✅ Created |
-| `components/ui/sponsor/index.ts`                   | ✅ Created |
-| `components/partials/PlacePageShell.tsx`           | ✅ Modified |
-| `messages/ca.json`                                 | ✅ Modified |
-| `messages/es.json`                                 | ✅ Modified |
-| `messages/en.json`                                 | ✅ Modified |
-| `components/ui/common/footer/index.tsx`            | ✅ Modified |
-| `app/patrocina/page.tsx`                           | ✅ Created |
-| `app/patrocina/upload/page.tsx`                    | ✅ Created |
-| `app/patrocina/success/page.tsx`                   | ✅ Created |
-| `app/patrocina/cancelled/page.tsx`                 | ✅ Created |
-| `app/api/sponsors/checkout/route.ts`               | ✅ Created |
-| `app/api/sponsors/webhook/route.ts`                | ✅ Created |
-| `app/api/sponsors/image-upload/route.ts`           | ✅ Created |
-| `lib/stripe/api.ts`                                | ✅ Created |
-| `lib/stripe/checkout-helpers.ts`                   | ✅ Created |
-| `lib/stripe/index.ts`                              | ✅ Created |
+| File                                                | Status      |
+| --------------------------------------------------- | ----------- |
+| `types/sponsor.ts`                                  | ✅ Created  |
+| `config/sponsors.ts`                                | ✅ Created  |
+| `config/pricing.ts`                                 | ✅ Created  |
+| `components/ui/sponsor/SponsorBannerSlot.tsx`       | ✅ Created  |
+| `components/ui/sponsor/SponsorEmptyState.tsx`       | ✅ Created  |
+| `components/ui/sponsor/PricingSectionClient.tsx`    | ✅ Created  |
+| `components/ui/sponsor/PlaceSelector.tsx`           | ✅ Created  |
+| `components/ui/sponsor/CheckoutButton.tsx`          | ✅ Created  |
+| `components/ui/sponsor/SponsorUploadPageClient.tsx` | ✅ Created  |
+| `components/ui/sponsor/index.ts`                    | ✅ Created  |
+| `components/partials/PlacePageShell.tsx`            | ✅ Modified |
+| `messages/ca.json`                                  | ✅ Modified |
+| `messages/es.json`                                  | ✅ Modified |
+| `messages/en.json`                                  | ✅ Modified |
+| `components/ui/common/footer/index.tsx`             | ✅ Modified |
+| `app/patrocina/page.tsx`                            | ✅ Created  |
+| `app/patrocina/upload/page.tsx`                     | ✅ Created  |
+| `app/patrocina/success/page.tsx`                    | ✅ Created  |
+| `app/patrocina/cancelled/page.tsx`                  | ✅ Created  |
+| `app/api/sponsors/checkout/route.ts`                | ✅ Created  |
+| `app/api/sponsors/webhook/route.ts`                 | ✅ Created  |
+| `app/api/sponsors/image-upload/route.ts`            | ✅ Created  |
+| `lib/stripe/api.ts`                                 | ✅ Created  |
+| `lib/stripe/checkout-helpers.ts`                    | ✅ Created  |
+| `lib/stripe/index.ts`                               | ✅ Created  |

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
-import { updatePaymentIntentMetadata, verifyStripeSignature } from "@lib/stripe";
+import {
+  updatePaymentIntentMetadata,
+  verifyStripeSignature,
+} from "@lib/stripe";
 import type {
   StripeWebhookEvent,
   StripeWebhookCheckoutSession,
@@ -224,7 +227,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify signature
-    const verificationResult = verifyStripeSignature(payload, signature, WEBHOOK_SECRET);
+    const verificationResult = verifyStripeSignature(
+      payload,
+      signature,
+      WEBHOOK_SECRET
+    );
     if (!verificationResult.valid) {
       console.error("Invalid webhook signature:", verificationResult.error);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });

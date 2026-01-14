@@ -65,7 +65,10 @@ export function computeSignature(
   secret: string
 ): string {
   const signedPayload = `${timestamp}.${payload}`;
-  return crypto.createHmac("sha256", secret).update(signedPayload).digest("hex");
+  return crypto
+    .createHmac("sha256", secret)
+    .update(signedPayload)
+    .digest("hex");
 }
 
 /**
@@ -144,7 +147,11 @@ export function verifyStripeSignature(
   const expectedSignature = computeSignature(payload, timestampNum, secret);
 
   if (!secureCompare(v1Signature, expectedSignature)) {
-    return { valid: false, error: "Signature mismatch", timestamp: timestampNum };
+    return {
+      valid: false,
+      error: "Signature mismatch",
+      timestamp: timestampNum,
+    };
   }
 
   return { valid: true, timestamp: timestampNum };
