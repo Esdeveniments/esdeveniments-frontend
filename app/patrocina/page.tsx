@@ -30,6 +30,7 @@ export default async function PatrocinaPage() {
   setRequestLocale(locale);
 
   const t = await getTranslations("Patrocina");
+  const tComponents = await getTranslations("Components");
 
   const steps = ["step1", "step2", "step3", "step4"] as const;
   const faqs = ["faq1", "faq2", "faq3", "faq4"] as const;
@@ -61,7 +62,7 @@ export default async function PatrocinaPage() {
         {
           "@type": "ListItem",
           position: 1,
-          name: "Inici",
+          name: tComponents("Breadcrumbs.home"),
           item: toLocalizedUrl("/", locale),
         },
         {

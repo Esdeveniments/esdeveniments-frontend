@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { captureException } from "@sentry/nextjs";
 import { updatePaymentIntentMetadata } from "@lib/stripe";
 import type {
   StripeWebhookEvent,
@@ -157,10 +158,23 @@ async function handleCheckoutCompleted(
     currency: session.currency,
   };
 
-  console.log(
-    "Sponsor checkout completed:",
-    JSON.stringify(sponsorData, null, 2)
-  );
+  // Log sponsor data with PII redacted for privacy
+  console.log("Sponsor checkout completed:", {
+    sessionId: sponsorData.sessionId,
+    paymentIntentId: sponsorData.paymentIntentId,
+    duration: sponsorData.duration,
+    durationDays: sponsorData.durationDays,
+    place: sponsorData.place,
+    placeName: sponsorData.placeName,
+    businessName: sponsorData.businessName,
+    targetUrl: sponsorData.targetUrl,
+    imageUrl: sponsorData.imageUrl ? "[set]" : null,
+    amountPaid: sponsorData.amountPaid,
+    currency: sponsorData.currency,
+    // PII redacted - do not log customer email/name
+    hasCustomerEmail: !!sponsorData.customerEmail,
+    hasCustomerName: !!sponsorData.customerName,
+  });
 
   // TODO: Add your business logic here:
   // - Save to database
@@ -199,39 +213,8 @@ export async function POST(request: NextRequest) {
 
     if (!WEBHOOK_SECRET) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
-      // In development only (localhost), process without verification for testing
-      // Additional checks prevent accidental bypass in staging/production
-      const isLocalDev =
-        process.env.NODE_ENV === "development" &&
-        !process.env.VERCEL_ENV && // Not on Vercel
-        !process.env.SST_STAGE; // Not on SST/AWS
-      if (isLocalDev) {
-        console.warn(
-          "⚠️ WEBHOOK SIGNATURE BYPASS: Processing unverified webhook in local dev mode"
-        );
-        try {
-          const event = JSON.parse(payload) as StripeWebhookEvent;
-          if (event.type === "checkout.session.completed") {
-            await handleCheckoutCompleted(
-              event.data.object as StripeWebhookCheckoutSession
-            );
-          } else if (event.type === "payment_intent.succeeded") {
-            handlePaymentIntentSucceeded(
-              event.data.object as StripeWebhookPaymentIntent
-            );
-          }
-          return NextResponse.json({ received: true });
-        } catch (parseError) {
-          console.error(
-            "Failed to parse webhook payload in dev mode:",
-            parseError
-          );
-          return NextResponse.json(
-            { error: "Invalid JSON payload" },
-            { status: 400 }
-          );
-        }
-      }
+      // For local testing, use Stripe CLI: stripe listen --forward-to localhost:3000/api/sponsors/webhook
+      // Then set STRIPE_WEBHOOK_SECRET in .env.local with the CLI's generated secret
       return NextResponse.json(
         { error: "Webhook secret not configured" },
         { status: 500 }
@@ -288,6 +271,12 @@ export async function POST(request: NextRequest) {
         stack: error instanceof Error ? error.stack : undefined,
       }),
     });
+
+    // Capture error in Sentry for monitoring/alerting
+    captureException(error, {
+      tags: { webhook: "stripe", handler: "sponsor" },
+    });
+
     // Return 200 anyway to prevent Stripe retries for parsing errors
     return NextResponse.json({ received: true, error: "Processing error" });
   }

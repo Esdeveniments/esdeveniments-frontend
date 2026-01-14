@@ -105,6 +105,9 @@ jobs:
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          # Stripe secrets (required for sponsor payments)
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           # Mask sensitive values in logs (defense in depth)
           echo "::add-mask::$HMAC_SECRET"
@@ -115,6 +118,8 @@ jobs:
           echo "::add-mask::$REVALIDATE_SECRET"
           echo "::add-mask::$CLOUDFLARE_API_TOKEN"
           echo "::add-mask::$GOOGLE_PLACES_API_KEY"
+          echo "::add-mask::$STRIPE_SECRET_KEY"
+          echo "::add-mask::$STRIPE_WEBHOOK_SECRET"
 
           # Create .env.production for Next.js build (NODE_ENV=production)
           # Next.js loads .env.production when NODE_ENV=production
@@ -149,6 +154,20 @@ jobs:
             exit 1
           fi
           echo "DEEPL_API_KEY=$DEEPL_API_KEY" >> .env.production
+
+          # 5. STRIPE_SECRET_KEY (required for sponsor checkout)
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "::error::STRIPE_SECRET_KEY secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
+
+          # 6. STRIPE_WEBHOOK_SECRET (required for secure webhook handling - prevents bypass)
+          if [ -z "$STRIPE_WEBHOOK_SECRET" ]; then
+            echo "::error::STRIPE_WEBHOOK_SECRET secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
 
           # --- Set Optional/Static Variables ---
 

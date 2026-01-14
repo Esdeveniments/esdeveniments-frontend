@@ -12,6 +12,16 @@
 export type GeoScope = "town" | "region" | "country";
 
 /**
+ * Valid geo scope values for runtime validation
+ * Co-located with GeoScope type for consistency
+ */
+export const VALID_GEO_SCOPES: readonly GeoScope[] = [
+  "town",
+  "region",
+  "country",
+] as const;
+
+/**
  * Duration options for sponsor packages
  */
 export type SponsorDuration = "3days" | "7days" | "14days" | "30days";

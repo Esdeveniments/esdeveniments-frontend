@@ -2,10 +2,29 @@
 
 ## Overview
 
-A self-service local advertising system allowing businesses to sponsor place pages for €2-3/day. Uses **Stripe Payment Links** (no-code) with **external image URLs** and **manual JSON activation**.
+A self-service local advertising system allowing businesses to sponsor place pages for €2-3/day. Uses **Stripe Checkout API** with **self-service image upload** and **webhook-based activation**.
 
 **Target**: Event organizers, cultural venues, festivals, and local businesses wanting visibility in specific towns/regions.
 **Scale**: 50,000+ visites anuals · 160,000+ sessions · Growing with SEO v2.
+
+---
+
+## Current Implementation Status
+
+✅ **Fully Implemented:**
+- Dynamic Stripe Checkout Sessions via API (`/api/sponsors/checkout`)
+- Self-service image upload after payment (`/patrocina/upload`)
+- Stripe webhook handler for payment confirmation (`/api/sponsors/webhook`)
+- Three-tier pricing (Town/Region/Catalunya)
+- Landing page with interactive pricing (`/patrocina`)
+- Place selector with search (towns, regions, Catalunya)
+
+🔄 **Semi-Automated Workflow:**
+1. Customer selects place + duration on `/patrocina`
+2. Stripe Checkout Session created dynamically
+3. After payment, customer uploads banner image on `/patrocina/upload`
+4. Webhook receives payment confirmation
+5. Manual activation in `config/sponsors.ts` (image URL from S3)
 
 ---
 
@@ -55,15 +74,21 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 
 ## Implementation Checklist
 
-### Phase 1: Core Components
+### Phase 1: Core Components ✅
 
-- [ ] **1. config/sponsors.ts** – Types + `getActiveSponsorForPlace(place)` helper
+- [x] **1. types/sponsor.ts** – Types + constants
 
-  - `SponsorConfig`: businessName, imageUrl, targetUrl, places[], startDate, endDate
+  - `GeoScope`, `SponsorDuration`, `PlaceOption`, `SponsorConfig`
+  - `DURATION_DAYS`, `VALID_GEO_SCOPES` constants
+  - Checkout request/response types
+
+- [x] **2. config/sponsors.ts** – Sponsor data + `getActiveSponsorForPlace(place)` helper
+
+  - `SponsorConfig`: businessName, imageUrl, targetUrl, places[], startDate, endDate, geoScope
   - Filter by date range (auto-expire) and place match
   - First match wins (no rotation)
 
-- [ ] **2. components/ui/sponsor/SponsorBannerSlot.tsx** – Server component
+- [x] **3. components/ui/sponsor/SponsorBannerSlot.tsx** – Server component
 
   - Calls `getActiveSponsorForPlace(place)`
   - Renders responsive banner (any aspect ratio, max-height ~120px mobile / ~150px desktop)
@@ -72,65 +97,100 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
   - "Publicitat" label (EU ad transparency compliance)
   - `onError` fallback for broken images
 
-- [ ] **3. components/ui/sponsor/SponsorEmptyState.tsx** – CTA component
+- [x] **4. components/ui/sponsor/SponsorEmptyState.tsx** – CTA component
 
   - "Anuncia't aquí" with exclusivity messaging
   - Links to `/patrocina`
   - Translated via i18n
   - Subtle, non-intrusive design
 
-- [ ] **4. Integrate in PlacePageShell.tsx**
+- [x] **5. Integrate in PlacePageShell.tsx**
 
   - Render `<SponsorBannerSlot place={place} />` below heading, above events
   - Wrap in `Suspense` with `null` fallback
 
-- [ ] **4b. Add `/patrocina` to footer navigation**
-  - Add entry: `{ name: t("navigation.advertise"), href: "/patrocina", kind: "internal", current: false }`
-  - Low-effort backup discoverability (1 line code, 1 translation)
+- [x] **5b. Add `/patrocina` to footer navigation**
+  - Added entry with translations
 
-### Phase 2: Landing Page & Payments
+### Phase 2: Landing Page & Payments ✅
 
-- [ ] **5. messages/\*.json** – Add translation keys
+- [x] **6. messages/\*.json** – Translation keys
 
   - `Sponsor.cta`, `Sponsor.label`, `Sponsor.emptyState`
-  - `Patrocina.title`, `Patrocina.benefits`, `Patrocina.pricing`, etc.
+  - `Patrocina.*` namespace with all landing page content
 
-- [ ] **6. app/patrocina/page.tsx** – Landing page
+- [x] **7. app/patrocina/page.tsx** – Landing page
 
-  - Benefits section (stats, local audience reach)
-  - Pricing table
-  - Stripe Payment Link buttons (external links)
-  - Instructions: "Després del pagament, envia'ns la imatge i l'enllaç"
-  - Contact: email/WhatsApp
+  - Benefits section with icons (audience, exclusivity, stats)
+  - Interactive pricing section with place selector
+  - Dynamic pricing based on geo scope (town/region/country)
+  - FAQ section with JSON-LD schema
+  - Step-by-step "How it works" section
 
-- [ ] **7. Stripe Dashboard** – Create Payment Links (no code)
-  - Products per tier (12 total):
-    - **Població**: "3 dies" €3, "7 dies" €5, "14 dies" €8, "30 dies" €12
-    - **Comarca**: "3 dies" €5, "7 dies" €8, "14 dies" €12, "30 dies" €20
-    - **Catalunya**: "3 dies" €8, "7 dies" €12, "14 dies" €20, "30 dies" €35
-  - Enable "Collect customer email"
-  - Add custom fields: "Nom del negoci" + "Població, comarca o Catalunya"
+- [x] **8. components/ui/sponsor/PricingSectionClient.tsx** – Client component
 
-### Phase 3: Testing
+  - Place selector integration
+  - Dynamic price display based on selected place
+  - Checkout button per duration
 
-- [ ] **8. Add test sponsor entry** in config/sponsors.ts
-- [ ] **9. Verify banner renders** on place pages
-- [ ] **10. Verify empty state CTA** when no sponsor
-- [ ] **11. Verify date filtering** (expired sponsors hidden)
-- [ ] **12. Test broken image fallback**
+- [x] **9. components/ui/sponsor/PlaceSelector.tsx** – Place search
+
+  - Search towns, regions, and Catalunya option
+  - Fetches from `/api/places` and `/api/regions`
+  - Displays geo scope badges
+
+- [x] **10. app/api/sponsors/checkout/route.ts** – Stripe Checkout API
+
+  - Creates dynamic Checkout Sessions (not Payment Links)
+  - Idempotency key from visitor_id + params
+  - Metadata for webhook processing
+  - Custom fields for business name
+
+- [x] **11. app/api/sponsors/webhook/route.ts** – Stripe webhook handler
+
+  - Verifies Stripe signature (timing-safe)
+  - Handles `checkout.session.completed`
+  - Handles `checkout.session.expired`
+  - Copies metadata to PaymentIntent for later retrieval
+
+- [x] **12. app/patrocina/upload/page.tsx** – Self-service image upload
+
+  - Validates Stripe session ID from URL
+  - Confirms payment status before allowing upload
+  - Uploads to S3 via existing event image infrastructure
+  - Success/error states with next steps
+
+- [x] **13. lib/stripe/** – Stripe utilities
+
+  - `api.ts`: REST API helpers (no SDK)
+  - `checkout-helpers.ts`: Line item, custom field, metadata builders
+  - Session fetching and metadata updates
+
+### Phase 3: Testing ✅
+
+- [x] **14. Test sponsor entry** in config/sponsors.ts
+- [x] **15. Banner renders** on place pages
+- [x] **16. Empty state CTA** when no sponsor
+- [x] **17. Date filtering** (expired sponsors hidden)
+- [x] **18. Broken image fallback**
+- [x] **19. Checkout flow** end-to-end
+- [x] **20. Webhook signature verification**
 
 ---
 
-## Manual Activation Workflow
+## Current Activation Workflow
 
-1. Receive Stripe payment notification (email + Dashboard)
-2. Get customer email + "Nom del negoci" + "Població/comarca/Catalunya" from Stripe
-3. Email customer requesting: image URL + target link URL (if not provided)
-4. Add entry to `config/sponsors.ts`:
+1. Customer completes purchase on `/patrocina` → Stripe Checkout
+2. After payment, redirected to `/patrocina/upload?session_id=...`
+3. Customer uploads banner image (validates paid session)
+4. Image uploaded to S3 via existing event image infrastructure
+5. Webhook logs payment details (business name, place, duration, email)
+6. Admin receives notification, retrieves S3 image URL
+7. Add entry to `config/sponsors.ts`:
    ```typescript
    {
      businessName: "Restaurant Example",
-     imageUrl: "https://example.com/banner.jpg",
+     imageUrl: "https://s3.amazonaws.com/bucket/sponsors/xxx.jpg",
      targetUrl: "https://example.com",
      places: ["mataro"],           // or ["maresme"] for comarca, or ["catalunya"] for country
      geoScope: "town",             // "town" | "region" | "country"
@@ -138,8 +198,8 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
      endDate: "2026-01-22",
    }
    ```
-5. `git commit && git push` → deploy (~2 min)
-6. Confirm to customer via email
+8. `git commit && git push` → deploy (~2 min)
+9. Confirm to customer via email
 
 ---
 
@@ -147,14 +207,15 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 
 | Decision                | Choice                          | Rationale                               |
 | ----------------------- | ------------------------------- | --------------------------------------- |
-| Image hosting           | External URL (sponsor provides) | Zero friction, no upload complexity     |
+| Image hosting           | S3 (self-service upload)        | Customer uploads after payment          |
 | Image dimensions        | Any aspect ratio                | Sponsors use existing assets            |
-| Payment provider        | Stripe Payment Links            | Cheapest (1.5% + €0.25), no-code        |
+| Payment provider        | Stripe Checkout API             | Dynamic sessions, custom fields, webhooks |
 | Data storage            | JSON config file                | No backend work, version controlled     |
-| Activation              | Manual                          | 2 min/activation, human quality control |
+| Activation              | Semi-automated                  | Customer uploads, admin activates       |
 | Multiple sponsors/place | First match wins                | Simple, manual conflict resolution      |
 | Tracking                | None (MVP)                      | Add when scale justifies                |
 | Geo scope tiers         | Town / Region / Catalunya       | Matches user mental model (Wallapop)    |
+| Stripe SDK              | None (REST API only)            | Zero dependencies, smaller bundle       |
 
 ---
 
@@ -242,29 +303,43 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 ## Future Improvements (Post-MVP)
 
 - [ ] Notion/Airtable integration for near-instant activation
-- [ ] Stripe webhook → auto-activation
+- [ ] Auto-activation from webhook (no manual config edit)
 - [ ] Click/impression tracking
 - [ ] Category-specific sponsorship (e.g., sponsor only "música" pages)
 - [ ] Sponsor rotation for same place
-- [ ] Self-service image upload
-- [ ] Admin dashboard
+- [ ] Admin dashboard for sponsor management
 - [ ] Event organizer bundle (publish + promote)
+- [ ] Target URL collection during checkout (custom field)
+- [ ] Email notifications to admin on new purchases
 
 ---
 
-## Files to Create/Modify
+## Files Created/Modified
 
-| File                                          | Action            |
-| --------------------------------------------- | ----------------- |
-| `config/sponsors.ts`                          | Create            |
-| `types/sponsor.ts`                            | Create            |
-| `components/ui/sponsor/SponsorBannerSlot.tsx` | Create            |
-| `components/ui/sponsor/SponsorEmptyState.tsx` | Create            |
-| `components/ui/sponsor/index.ts`              | Create            |
-| `components/partials/PlacePageShell.tsx`      | Modify            |
-| `messages/ca.json`                            | Modify            |
-| `messages/es.json`                            | Modify            |
-| `messages/en.json`                            | Modify            |
-| `components/ui/common/footer/index.tsx`       | Modify            |
-| `app/patrocina/page.tsx`                      | Create            |
-| `app/patrocina/layout.tsx`                    | Create (optional) |
+| File                                               | Status   |
+| -------------------------------------------------- | -------- |
+| `types/sponsor.ts`                                 | ✅ Created |
+| `config/sponsors.ts`                               | ✅ Created |
+| `config/pricing.ts`                                | ✅ Created |
+| `components/ui/sponsor/SponsorBannerSlot.tsx`      | ✅ Created |
+| `components/ui/sponsor/SponsorEmptyState.tsx`      | ✅ Created |
+| `components/ui/sponsor/PricingSectionClient.tsx`   | ✅ Created |
+| `components/ui/sponsor/PlaceSelector.tsx`          | ✅ Created |
+| `components/ui/sponsor/CheckoutButton.tsx`         | ✅ Created |
+| `components/ui/sponsor/SponsorUploadPageClient.tsx`| ✅ Created |
+| `components/ui/sponsor/index.ts`                   | ✅ Created |
+| `components/partials/PlacePageShell.tsx`           | ✅ Modified |
+| `messages/ca.json`                                 | ✅ Modified |
+| `messages/es.json`                                 | ✅ Modified |
+| `messages/en.json`                                 | ✅ Modified |
+| `components/ui/common/footer/index.tsx`            | ✅ Modified |
+| `app/patrocina/page.tsx`                           | ✅ Created |
+| `app/patrocina/upload/page.tsx`                    | ✅ Created |
+| `app/patrocina/success/page.tsx`                   | ✅ Created |
+| `app/patrocina/cancelled/page.tsx`                 | ✅ Created |
+| `app/api/sponsors/checkout/route.ts`               | ✅ Created |
+| `app/api/sponsors/webhook/route.ts`                | ✅ Created |
+| `app/api/sponsors/image-upload/route.ts`           | ✅ Created |
+| `lib/stripe/api.ts`                                | ✅ Created |
+| `lib/stripe/checkout-helpers.ts`                   | ✅ Created |
+| `lib/stripe/index.ts`                              | ✅ Created |

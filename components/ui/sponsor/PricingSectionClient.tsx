@@ -26,16 +26,11 @@ const DURATION_PLANS: PricingPlan[] = [
 ];
 
 /**
- * Get the geo scope from a place option, with validation
+ * Get the geo scope from a place option
  */
 function getGeoScope(place: PlaceOption | null): GeoScope {
   if (!place) return "town";
-  // Validate that the type is a valid geo scope
-  if (place.type === "town" || place.type === "region" || place.type === "country") {
-    return place.type;
-  }
-  // Fallback for any unexpected type
-  return "town";
+  return place.type;
 }
 
 /**
