@@ -202,3 +202,22 @@ export interface StripeWebhookPaymentIntent {
   currency: string;
   status: string;
 }
+
+/**
+ * Options for Stripe webhook signature verification
+ */
+export interface VerifySignatureOptions {
+  /** Tolerance in seconds for timestamp validation. Default: 300 (5 min) */
+  toleranceSeconds?: number;
+  /** Current timestamp for testing. Default: Date.now() / 1000 */
+  currentTimestamp?: number;
+}
+
+/**
+ * Result of Stripe webhook signature verification
+ */
+export interface SignatureVerificationResult {
+  valid: boolean;
+  error?: string;
+  timestamp?: number;
+}

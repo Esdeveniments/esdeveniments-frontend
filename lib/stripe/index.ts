@@ -22,4 +22,4 @@ export {
 export type {
   VerifySignatureOptions,
   SignatureVerificationResult,
-} from "./webhook";
+} from "types/sponsor";

@@ -11,23 +11,14 @@
  * 4. Compare computed signature with provided v1 signature (constant-time)
  */
 import crypto from "crypto";
-import type { StripeWebhookEvent } from "types/sponsor";
+import type {
+  StripeWebhookEvent,
+  VerifySignatureOptions,
+  SignatureVerificationResult,
+} from "types/sponsor";
 
 /** Default tolerance for timestamp validation (5 minutes) */
 const DEFAULT_TIMESTAMP_TOLERANCE_SECONDS = 300;
-
-export interface VerifySignatureOptions {
-  /** Tolerance in seconds for timestamp validation. Default: 300 (5 min) */
-  toleranceSeconds?: number;
-  /** Current timestamp for testing. Default: Date.now() / 1000 */
-  currentTimestamp?: number;
-}
-
-export interface SignatureVerificationResult {
-  valid: boolean;
-  error?: string;
-  timestamp?: number;
-}
 
 /**
  * Parse Stripe signature header into its components
