@@ -89,7 +89,7 @@ async function createStripeCheckoutSession(
   }
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://esdeveniments.cat";
+    process.env.SITE_URL || "https://esdeveniments.cat";
   const productNames = PRODUCT_NAMES[locale] || PRODUCT_NAMES.ca;
   const labels = CUSTOM_FIELD_LABELS[locale] || CUSTOM_FIELD_LABELS.ca;
 
@@ -250,8 +250,14 @@ export async function POST(request: NextRequest) {
     // Uses visitor_id cookie (set by middleware) + params for deterministic key per user/request
     // Includes geoScope to prevent collisions between different pricing tiers
     const visitorId = request.cookies.get("visitor_id")?.value;
-    // Use timestamp suffix for anonymous users to allow retries
-    const userKey = visitorId || `anon-${Date.now()}`;
+    if (!visitorId) {
+      // Middleware should always set visitor_id - log warning if missing
+      console.warn("Missing visitor_id cookie for checkout request");
+    }
+    // Use visitor_id for deterministic idempotency, fall back to IP for stability
+    // IP is not ideal but prevents duplicate sessions on network retries
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const userKey = visitorId || `anon-ip-${clientIp}`;
     const idempotencyKey = crypto
       .createHash("sha256")
       .update(`${userKey}-${duration}-${geoScope}-${place}-${placeName}`)

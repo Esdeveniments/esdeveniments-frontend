@@ -9,6 +9,21 @@ A self-service local advertising system allowing businesses to sponsor place pag
 
 ---
 
+## User Journey Analysis
+
+**Discovery paths to `/patrocina`:**
+
+| User State                   | Discovery Method  | Notes                               |
+| ---------------------------- | ----------------- | ----------------------------------- |
+| Visits place WITHOUT sponsor | Empty state CTA   | Primary path - prominent            |
+| Visits place WITH sponsor    | Footer navigation | Low-effort backup                   |
+| Any page                     | Footer navigation | Always accessible                   |
+| Direct search                | Google/URL        | SEO for "anunciar-se esdeveniments" |
+
+**Design decision:** When a sponsor is active, their banner is 100% theirs - no secondary "advertise here" links that would disrespect paying customers by advertising to their competitors. Discovery for sponsored places relies on footer link (low-effort backup) and direct outreach.
+
+---
+
 ## Pricing
 
 Three visibility tiers based on geographic scope:
@@ -65,8 +80,13 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
   - Subtle, non-intrusive design
 
 - [ ] **4. Integrate in PlacePageShell.tsx**
+
   - Render `<SponsorBannerSlot place={place} />` below heading, above events
   - Wrap in `Suspense` with `null` fallback
+
+- [ ] **4b. Add `/patrocina` to footer navigation**
+  - Add entry: `{ name: t("navigation.advertise"), href: "/patrocina", kind: "internal", current: false }`
+  - Low-effort backup discoverability (1 line code, 1 translation)
 
 ### Phase 2: Landing Page & Payments
 
@@ -245,6 +265,7 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 | `messages/ca.json`                            | Modify            |
 | `messages/es.json`                            | Modify            |
 | `messages/en.json`                            | Modify            |
+| `components/ui/common/footer/index.tsx`       | Modify            |
 | `app/patrocina/page.tsx`                      | Create            |
 | `app/patrocina/layout.tsx`                    | Create (optional) |
 

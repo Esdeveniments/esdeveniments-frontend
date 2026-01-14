@@ -4,7 +4,13 @@
  * No hardcoded prices - all values must come from configuration
  */
 
-export type GeoScopeType = "town" | "region" | "country";
+import type { GeoScope } from "types/sponsor";
+
+/**
+ * @deprecated Use GeoScope from types/sponsor.ts instead
+ * Kept for backward compatibility with existing code
+ */
+export type GeoScopeType = GeoScope;
 export type TaxMode = "automatic" | "manual";
 
 export interface PricingConfig {
@@ -22,7 +28,7 @@ export interface PricingMatrix {
 
 // Centralized constants - single source of truth
 const AVAILABLE_DURATIONS = [3, 7, 14, 30] as const;
-const AVAILABLE_GEO_SCOPES: GeoScopeType[] = ["town", "region", "country"];
+const AVAILABLE_GEO_SCOPES: GeoScope[] = ["town", "region", "country"];
 
 // Base pricing in cents - single source of truth
 // Must be defined before loadPricingFromEnv to avoid TDZ error
