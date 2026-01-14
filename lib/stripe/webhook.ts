@@ -11,6 +11,7 @@
  * 4. Compare computed signature with provided v1 signature (constant-time)
  */
 import crypto from "crypto";
+import { z } from "zod";
 import type {
   StripeWebhookEvent,
   VerifySignatureOptions,
@@ -21,7 +22,20 @@ import type {
 const DEFAULT_TIMESTAMP_TOLERANCE_SECONDS = 300;
 
 /**
- * Parse Stripe signature header into its components
+ * Zod schema for runtime validation of Stripe webhook events.
+ * Validates the minimal structure required for processing.
+ */
+const StripeWebhookEventSchema = z.object({
+  id: z.string().min(1),
+  type: z.string().min(1),
+  data: z.object({
+    object: z.record(z.unknown()),
+  }),
+});
+
+/**
+ * Parse Stripe signature header into its components.
+ * Handles values containing `=` by only splitting on the first `=`.
  */
 export function parseSignatureHeader(
   signature: string
@@ -29,9 +43,13 @@ export function parseSignatureHeader(
   const signatureMap: Record<string, string> = {};
 
   for (const element of signature.split(",")) {
-    const [key, value] = element.split("=");
-    if (key && value) {
-      signatureMap[key] = value;
+    const eqIndex = element.indexOf("=");
+    if (eqIndex > 0) {
+      const key = element.slice(0, eqIndex);
+      const value = element.slice(eqIndex + 1);
+      if (value) {
+        signatureMap[key] = value;
+      }
     }
   }
 
@@ -51,17 +69,27 @@ export function computeSignature(
 }
 
 /**
- * Constant-time comparison of two signatures
+ * Constant-time comparison of two signatures.
+ * Pads shorter string to avoid leaking length information via timing.
  */
 export function secureCompare(a: string, b: string): boolean {
   const aBuffer = Buffer.from(a);
   const bBuffer = Buffer.from(b);
 
-  if (aBuffer.length !== bBuffer.length) {
-    return false;
-  }
+  // Use the longer length to prevent length-based timing leaks
+  const maxLength = Math.max(aBuffer.length, bBuffer.length);
 
-  return crypto.timingSafeEqual(aBuffer, bBuffer);
+  // Pad buffers to equal length (padding with zeros)
+  const aPadded = Buffer.alloc(maxLength);
+  const bPadded = Buffer.alloc(maxLength);
+  aBuffer.copy(aPadded);
+  bBuffer.copy(bPadded);
+
+  // Constant-time comparison, then check lengths match
+  const signaturesEqual = crypto.timingSafeEqual(aPadded, bPadded);
+  const lengthsEqual = aBuffer.length === bBuffer.length;
+
+  return signaturesEqual && lengthsEqual;
 }
 
 /**
@@ -123,13 +151,13 @@ export function verifyStripeSignature(
 }
 
 /**
- * Verify and parse Stripe webhook event
+ * Verify and parse Stripe webhook event with runtime validation.
  *
  * @param payload - Raw request body as string
  * @param signature - Value of stripe-signature header
  * @param secret - Webhook signing secret
  * @param options - Optional configuration
- * @returns Parsed event if valid, throws on invalid signature
+ * @returns Parsed and validated event if valid, throws on invalid signature or payload
  */
 export function constructEvent(
   payload: string,
@@ -143,5 +171,21 @@ export function constructEvent(
     throw new Error(`Webhook signature verification failed: ${result.error}`);
   }
 
-  return JSON.parse(payload) as StripeWebhookEvent;
+  // Parse and validate JSON structure
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload);
+  } catch {
+    throw new Error("Webhook payload is not valid JSON");
+  }
+
+  const validation = StripeWebhookEventSchema.safeParse(parsed);
+  if (!validation.success) {
+    throw new Error(
+      `Webhook payload validation failed: ${validation.error.message}`
+    );
+  }
+
+  // Cast is safe after Zod validation
+  return parsed as StripeWebhookEvent;
 }

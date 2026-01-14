@@ -62,14 +62,11 @@ async function createStripeCheckoutSession(
   const expiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
   params.append("expires_at", String(expiresAt));
 
-  const response = await stripeRequest(
-    "/checkout/sessions",
-    {
-      method: "POST",
-      body: params,
-      headers: { "Idempotency-Key": idempotencyKey },
-    }
-  );
+  const response = await stripeRequest("/checkout/sessions", {
+    method: "POST",
+    body: params,
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
 
   if (!response.ok) {
     const error = await response.text();
@@ -88,13 +85,19 @@ async function createStripeCheckoutSession(
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as SponsorCheckoutRequest;
-    const {
-      duration,
-      locale = "ca",
-      place,
-      placeName,
-      geoScope = "town",
-    } = body;
+    const { duration, locale = "ca", place, placeName, geoScope } = body;
+
+    // Validate geoScope (required - no default to prevent silent pricing errors)
+    if (!geoScope || !VALID_GEO_SCOPES.includes(geoScope as GeoScope)) {
+      return NextResponse.json(
+        {
+          error: `geoScope is required and must be one of: ${VALID_GEO_SCOPES.join(
+            ", "
+          )}`,
+        },
+        { status: 400 }
+      );
+    }
 
     // Validate duration
     if (!duration || !(duration in DURATION_DAYS)) {
@@ -119,18 +122,6 @@ export async function POST(request: NextRequest) {
     if (!isValidSlugFormat(place)) {
       return NextResponse.json(
         { error: "Invalid place format" },
-        { status: 400 }
-      );
-    }
-
-    // Validate geoScope
-    if (!VALID_GEO_SCOPES.includes(geoScope as GeoScope)) {
-      return NextResponse.json(
-        {
-          error: `Invalid geoScope. Must be one of: ${VALID_GEO_SCOPES.join(
-            ", "
-          )}`,
-        },
         { status: 400 }
       );
     }
