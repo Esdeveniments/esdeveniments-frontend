@@ -154,24 +154,21 @@ async function createStripeCheckoutSession(
 
   // Metadata for our reference (includes pre-selected place)
   // Set on both session AND payment_intent so it shows in Dashboard transaction view
-  params.append("metadata[product]", "sponsor_banner");
-  params.append("metadata[duration]", duration);
-  params.append("metadata[duration_days]", String(DURATION_DAYS[duration]));
-  params.append("metadata[place]", place);
-  params.append("metadata[place_name]", placeName);
+  const metadata: Record<string, string> = {
+    product: "sponsor_banner",
+    duration,
+    duration_days: String(DURATION_DAYS[duration]),
+    place,
+    place_name: placeName,
+  };
 
-  // Copy metadata to payment_intent for Dashboard visibility
-  params.append("payment_intent_data[metadata][product]", "sponsor_banner");
-  params.append("payment_intent_data[metadata][duration]", duration);
-  params.append(
-    "payment_intent_data[metadata][duration_days]",
-    String(DURATION_DAYS[duration])
-  );
-  params.append("payment_intent_data[metadata][place]", place);
-  params.append("payment_intent_data[metadata][place_name]", placeName);
+  for (const [key, value] of Object.entries(metadata)) {
+    params.append(`metadata[${key}]`, value);
+    params.append(`payment_intent_data[metadata][${key}]`, value);
+  }
 
   // Locale for checkout page (Stripe doesn't support Catalan, use Spanish as fallback)
-  const stripeLocale = locale === "ca" ? "es" : locale === "es" ? "es" : "en";
+  const stripeLocale = locale === "ca" || locale === "es" ? "es" : "en";
   params.append("locale", stripeLocale);
 
   // Customer creation to get email

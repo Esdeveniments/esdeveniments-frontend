@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { uploadEventImage } from "@lib/api/events";
+import {
+  fetchCheckoutSession,
+  updateCheckoutSessionMetadata,
+  updatePaymentIntentMetadata,
+} from "@lib/stripe";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
-
-const STRIPE_API_VERSION = "2025-03-31.basil";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -33,130 +36,6 @@ function getPaymentIntentId(session: unknown): string | null {
   return getString(session.payment_intent);
 }
 
-async function fetchStripeSession(sessionId: string): Promise<unknown> {
-  const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-  if (!STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
- 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-  try {
-    const response = await fetch(
-      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-        },
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      console.error("Stripe session fetch error:", body);
-      throw new Error(`Stripe session fetch failed: ${response.status}`);
-    }
-
-    return (await response.json()) as unknown;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-async function updateStripeSessionMetadata(
-  sessionId: string,
-  metadata: Record<string, string>
-): Promise<boolean> {
-  const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-  if (!STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
- 
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(metadata)) {
-    params.append(`metadata[${key}]`, value);
-  }
- 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-  try {
-    const response = await fetch(
-      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Stripe-Version": STRIPE_API_VERSION,
-        },
-        body: params.toString(),
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      console.error("Stripe session update error:", body);
-      return false;
-    }
-
-    return true;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-async function updatePaymentIntentMetadata(
-  paymentIntentId: string,
-  metadata: Record<string, string>
-): Promise<boolean> {
-  const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-  if (!STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
-
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(metadata)) {
-    params.append(`metadata[${key}]`, value);
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const response = await fetch(
-      `https://api.stripe.com/v1/payment_intents/${encodeURIComponent(paymentIntentId)}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Stripe-Version": STRIPE_API_VERSION,
-        },
-        body: params.toString(),
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Failed to update payment intent metadata:", error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Error updating payment intent metadata:", error);
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
- 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -178,7 +57,7 @@ export async function POST(request: Request) {
     }
  
     // Gate the upload behind a paid Stripe session
-    const session = await fetchStripeSession(sessionIdRaw);
+    const session = await fetchCheckoutSession(sessionIdRaw);
     if (!isPaidSession(session)) {
       return NextResponse.json(
         { errorCode: "not_paid", error: "Checkout session is not paid." },
@@ -205,7 +84,7 @@ export async function POST(request: Request) {
     };
  
     // Update checkout session metadata
-    const sessionMetadataSaved = await updateStripeSessionMetadata(
+    const sessionMetadataSaved = await updateCheckoutSessionMetadata(
       sessionIdRaw,
       imageMetadata
     );

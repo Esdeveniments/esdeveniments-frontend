@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { updatePaymentIntentMetadata } from "@lib/stripe";
 import type {
   StripeWebhookEvent,
   StripeWebhookCheckoutSession,
@@ -27,8 +28,6 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-const STRIPE_API_VERSION = "2025-03-31.basil";
 
 /**
  * Verify Stripe webhook signature
@@ -97,61 +96,6 @@ function getCustomFieldValue(
   if (field.numeric?.value) return field.numeric.value;
 
   return null;
-}
-
-/**
- * Update Payment Intent metadata via Stripe API
- * This copies custom_fields to the payment intent so they show in Dashboard
- */
-async function updatePaymentIntentMetadata(
-  paymentIntentId: string,
-  metadata: Record<string, string>
-): Promise<boolean> {
-  if (!STRIPE_SECRET_KEY) {
-    console.error("STRIPE_SECRET_KEY not configured for metadata update");
-    return false;
-  }
-
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(metadata)) {
-    if (value) {
-      params.append(`metadata[${key}]`, value);
-    }
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const response = await fetch(
-      `https://api.stripe.com/v1/payment_intents/${encodeURIComponent(
-        paymentIntentId
-      )}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Stripe-Version": STRIPE_API_VERSION,
-        },
-        body: params.toString(),
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Failed to update payment intent metadata:", error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Error updating payment intent metadata:", error);
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }
 
 /**
