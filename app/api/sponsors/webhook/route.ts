@@ -199,8 +199,16 @@ export async function POST(request: NextRequest) {
 
     if (!WEBHOOK_SECRET) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
-      // In development, process without verification
-      if (process.env.NODE_ENV === "development") {
+      // In development only (localhost), process without verification for testing
+      // Additional checks prevent accidental bypass in staging/production
+      const isLocalDev =
+        process.env.NODE_ENV === "development" &&
+        !process.env.VERCEL_ENV && // Not on Vercel
+        !process.env.SST_STAGE; // Not on SST/AWS
+      if (isLocalDev) {
+        console.warn(
+          "⚠️ WEBHOOK SIGNATURE BYPASS: Processing unverified webhook in local dev mode"
+        );
         try {
           const event = JSON.parse(payload) as StripeWebhookEvent;
           if (event.type === "checkout.session.completed") {
@@ -214,7 +222,10 @@ export async function POST(request: NextRequest) {
           }
           return NextResponse.json({ received: true });
         } catch (parseError) {
-          console.error("Failed to parse webhook payload in dev mode:", parseError);
+          console.error(
+            "Failed to parse webhook payload in dev mode:",
+            parseError
+          );
           return NextResponse.json(
             { error: "Invalid JSON payload" },
             { status: 400 }

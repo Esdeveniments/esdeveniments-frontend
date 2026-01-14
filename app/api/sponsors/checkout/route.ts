@@ -12,7 +12,10 @@ import { DURATION_DAYS } from "types/sponsor";
 
 import type { GeoScope } from "types/sponsor";
 
-function getPriceInCents(duration: SponsorDuration, geoScope: GeoScope): number {
+function getPriceInCents(
+  duration: SponsorDuration,
+  geoScope: GeoScope
+): number {
   const priceEur = DISPLAY_PRICES_EUR[geoScope][duration];
   return priceEur * 100; // Convert EUR to cents
 }
@@ -119,7 +122,8 @@ async function createStripeCheckoutSession(
     "line_items[0][price_data][product_data][name]",
     productNames[duration]
   );
-  const descriptionSuffix = PRODUCT_DESCRIPTIONS[locale] || PRODUCT_DESCRIPTIONS.ca;
+  const descriptionSuffix =
+    PRODUCT_DESCRIPTIONS[locale] || PRODUCT_DESCRIPTIONS.ca;
   params.append(
     "line_items[0][price_data][product_data][description]",
     `${DURATION_DAYS[duration]} ${descriptionSuffix}`
@@ -217,7 +221,13 @@ async function createStripeCheckoutSession(
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as SponsorCheckoutRequest;
-    const { duration, locale = "ca", place, placeName, geoScope = "town" } = body;
+    const {
+      duration,
+      locale = "ca",
+      place,
+      placeName,
+      geoScope = "town",
+    } = body;
 
     // Validate duration
     if (!duration || !DURATION_DAYS[duration]) {
@@ -239,7 +249,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate geoScope
-    if (!['town', 'region', 'country'].includes(geoScope)) {
+    if (!["town", "region", "country"].includes(geoScope)) {
       return NextResponse.json(
         { error: "Invalid geoScope. Must be one of: town, region, country" },
         { status: 400 }
@@ -256,7 +266,9 @@ export async function POST(request: NextRequest) {
     }
     // Use visitor_id for deterministic idempotency, fall back to IP for stability
     // IP is not ideal but prevents duplicate sessions on network retries
-    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
     const userKey = visitorId || `anon-ip-${clientIp}`;
     const idempotencyKey = crypto
       .createHash("sha256")
