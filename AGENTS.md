@@ -76,11 +76,13 @@
 Before writing ANY new code, ALWAYS search first:
 
 1. **Search for existing patterns** using `grep_search` or `semantic_search`:
+
    - The concept name (e.g., "slug validation", "price formatting")
    - Function name patterns (`isValid*`, `format*`, `build*`, `use*`)
    - The literal value (regex pattern, constant)
 
 2. **Check canonical locations** based on what you're creating:
+
    - Type/interface → search `types/`
    - Validation function → search `utils/` for `isValid*`, `validate*`
    - Helper/utility → search `utils/`, `lib/`
@@ -89,6 +91,7 @@ Before writing ANY new code, ALWAYS search first:
    - Hook → search `components/hooks/`
 
 3. **Report findings** before proposing implementation:
+
    - "Found `isValidCategorySlugFormat` in `utils/category-mapping.ts` - will reuse"
    - "No existing pattern found - will create new utility in `utils/`"
 

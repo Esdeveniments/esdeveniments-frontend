@@ -13,8 +13,8 @@ import type {
   SponsorCheckoutRequest,
   StripeCheckoutSessionResponse,
   GeoScope,
-} from "@types/sponsor";
-import { DURATION_DAYS, VALID_GEO_SCOPES } from "@types/sponsor";
+} from "types/sponsor";
+import { DURATION_DAYS, VALID_GEO_SCOPES } from "types/sponsor";
 
 /**
  * Create Stripe Checkout Session using REST API (no SDK needed)
@@ -146,7 +146,11 @@ export async function POST(request: NextRequest) {
     // Validate geoScope
     if (!VALID_GEO_SCOPES.includes(geoScope as GeoScope)) {
       return NextResponse.json(
-        { error: `Invalid geoScope. Must be one of: ${VALID_GEO_SCOPES.join(", ")}` },
+        {
+          error: `Invalid geoScope. Must be one of: ${VALID_GEO_SCOPES.join(
+            ", "
+          )}`,
+        },
         { status: 400 }
       );
     }

@@ -3,8 +3,8 @@
  * These helpers build URLSearchParams for Stripe checkout sessions
  */
 import { DISPLAY_PRICES_EUR } from "@config/pricing";
-import type { SponsorDuration, GeoScope } from "@types/sponsor";
-import { DURATION_DAYS } from "@types/sponsor";
+import type { SponsorDuration, GeoScope } from "types/sponsor";
+import { DURATION_DAYS } from "types/sponsor";
 
 /**
  * Convert EUR price to cents for Stripe
