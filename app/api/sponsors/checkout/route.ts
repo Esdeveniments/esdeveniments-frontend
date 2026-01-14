@@ -1,79 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { DISPLAY_PRICES_EUR } from "@config/pricing";
 import { getSiteUrl } from "@config/index";
 import { STRIPE_API_VERSION } from "@lib/stripe/api";
+import {
+  buildLineItemParams,
+  buildCustomFieldParams,
+  buildMetadataParams,
+} from "@lib/stripe/checkout-helpers";
 import type {
   SponsorDuration,
   SponsorCheckoutRequest,
   StripeCheckoutSessionResponse,
+  GeoScope,
 } from "types/sponsor";
 import { DURATION_DAYS } from "types/sponsor";
-
-import type { GeoScope } from "types/sponsor";
-
-function getPriceInCents(
-  duration: SponsorDuration,
-  geoScope: GeoScope
-): number {
-  const priceEur = DISPLAY_PRICES_EUR[geoScope][duration];
-  return priceEur * 100; // Convert EUR to cents
-}
-
-/**
- * Product names by locale
- */
-const PRODUCT_NAMES: Record<string, Record<SponsorDuration, string>> = {
-  ca: {
-    "3days": "Patrocini 3 dies",
-    "7days": "Patrocini 7 dies",
-    "14days": "Patrocini 14 dies",
-    "30days": "Patrocini 30 dies",
-  },
-  es: {
-    "3days": "Patrocinio 3 días",
-    "7days": "Patrocinio 7 días",
-    "14days": "Patrocinio 14 días",
-    "30days": "Patrocinio 30 días",
-  },
-  en: {
-    "3days": "Sponsorship 3 days",
-    "7days": "Sponsorship 7 days",
-    "14days": "Sponsorship 14 days",
-    "30days": "Sponsorship 30 days",
-  },
-};
-
-/**
- * Custom field labels by locale (max 3 fields in Stripe Checkout)
- * Place is pre-selected on our site, so we only need business name and target URL
- */
-const CUSTOM_FIELD_LABELS: Record<
-  string,
-  { businessName: string; targetUrl: string }
-> = {
-  ca: {
-    businessName: "Nom del negoci",
-    targetUrl: "URL del teu web (opcional)",
-  },
-  es: {
-    businessName: "Nombre del negocio",
-    targetUrl: "URL de tu web (opcional)",
-  },
-  en: {
-    businessName: "Business name",
-    targetUrl: "Your website URL (optional)",
-  },
-};
-
-/**
- * Product descriptions by locale
- */
-const PRODUCT_DESCRIPTIONS: Record<string, string> = {
-  ca: "dies de patrocini a Esdeveniments.cat",
-  es: "días de patrocinio en Esdeveniments.cat",
-  en: "days of sponsorship on Esdeveniments.cat",
-};
 
 /**
  * Create Stripe Checkout Session using REST API (no SDK needed)
@@ -93,17 +33,10 @@ async function createStripeCheckoutSession(
   }
 
   const baseUrl = getSiteUrl();
-  const productNames = PRODUCT_NAMES[locale] || PRODUCT_NAMES.ca;
-  const labels = CUSTOM_FIELD_LABELS[locale] || CUSTOM_FIELD_LABELS.ca;
-
-  // Build form-urlencoded body
   const params = new URLSearchParams();
 
-  // Mode
+  // Mode and URLs
   params.append("mode", "payment");
-
-  // URLs - Stripe replaces {CHECKOUT_SESSION_ID} with actual session ID
-  // Include place info so upload page knows where the ad will appear
   params.append(
     "success_url",
     `${baseUrl}/patrocina/upload?session_id={CHECKOUT_SESSION_ID}&place=${encodeURIComponent(
@@ -112,57 +45,10 @@ async function createStripeCheckoutSession(
   );
   params.append("cancel_url", `${baseUrl}/patrocina/cancelled`);
 
-  // Line item with dynamic pricing based on geoScope
-  params.append("line_items[0][price_data][currency]", "eur");
-  params.append(
-    "line_items[0][price_data][unit_amount]",
-    String(getPriceInCents(duration, geoScope))
-  );
-  params.append(
-    "line_items[0][price_data][product_data][name]",
-    productNames[duration]
-  );
-  const descriptionSuffix =
-    PRODUCT_DESCRIPTIONS[locale] || PRODUCT_DESCRIPTIONS.ca;
-  params.append(
-    "line_items[0][price_data][product_data][description]",
-    `${DURATION_DAYS[duration]} ${descriptionSuffix}`
-  );
-  params.append("line_items[0][quantity]", "1");
-
-  // Custom fields to collect sponsor details (Stripe max: 3 fields)
-  // Place is pre-selected on our site, so only 2 fields needed
-
-  // Field 1: Business name (text) - required
-  params.append("custom_fields[0][key]", "business_name");
-  params.append("custom_fields[0][label][type]", "custom");
-  params.append("custom_fields[0][label][custom]", labels.businessName);
-  params.append("custom_fields[0][type]", "text");
-
-  // Field 2: Target URL (text) - optional, where clicks should go
-  params.append("custom_fields[1][key]", "target_url");
-  params.append("custom_fields[1][label][type]", "custom");
-  params.append("custom_fields[1][label][custom]", labels.targetUrl);
-  params.append("custom_fields[1][type]", "text");
-  params.append("custom_fields[1][optional]", "true");
-
-  // Note: Image URL collected via email follow-up
-
-  // Metadata for our reference (includes pre-selected place)
-  // Set on both session AND payment_intent so it shows in Dashboard transaction view
-  const metadata: Record<string, string> = {
-    product: "sponsor_banner",
-    duration,
-    duration_days: String(DURATION_DAYS[duration]),
-    place,
-    place_name: placeName,
-    geo_scope: geoScope,
-  };
-
-  for (const [key, value] of Object.entries(metadata)) {
-    params.append(`metadata[${key}]`, value);
-    params.append(`payment_intent_data[metadata][${key}]`, value);
-  }
+  // Compose checkout params from helpers
+  buildLineItemParams(params, duration, geoScope, locale);
+  buildCustomFieldParams(params, locale);
+  buildMetadataParams(params, duration, place, placeName, geoScope);
 
   // Locale for checkout page (Stripe doesn't support Catalan, use Spanish as fallback)
   const stripeLocale = ["ca", "es"].includes(locale) ? "es" : "en";

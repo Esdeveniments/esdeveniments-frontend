@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import type { PlaceOption, PlaceSelectorProps } from "types/sponsor";
 import { SPONSOR_POPULAR_PLACES } from "@utils/constants";
+import { normalizeForSearch } from "@utils/string-helpers";
 import {
   MapPinIcon,
   CheckIcon,
@@ -111,13 +112,15 @@ export default function PlaceSelector({
     };
   }, []);
 
-  // Filter places based on query
+  // Filter places based on query (accent-insensitive)
   const filteredPlaces = useMemo(() => {
     if (!query.trim()) return places.slice(0, 20); // Show first 20 by default
 
-    const normalizedQuery = query.toLowerCase().trim();
+    const normalizedQuery = normalizeForSearch(query);
     return places
-      .filter((place) => place.name.toLowerCase().includes(normalizedQuery))
+      .filter((place) =>
+        normalizeForSearch(place.name).includes(normalizedQuery)
+      )
       .slice(0, 20);
   }, [places, query]);
 

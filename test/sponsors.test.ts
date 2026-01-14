@@ -6,6 +6,11 @@
  */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import type { SponsorConfig } from "types/sponsor";
+import {
+  buildLineItemParams,
+  buildCustomFieldParams,
+  buildMetadataParams,
+} from "lib/stripe/checkout-helpers";
 
 // Mock the sponsors array to test the logic without affecting production data
 const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
@@ -502,6 +507,272 @@ describe("Sponsor System", () => {
           endDate: "2026-01-31",
         };
         expect(["town", "region", "country"]).toContain(sponsor.geoScope);
+      });
+    });
+  });
+});
+
+/**
+ * Tests for checkout helper functions
+ * These helpers build URLSearchParams for Stripe checkout sessions
+ */
+describe("Checkout Helpers", () => {
+  describe("buildLineItemParams", () => {
+    test("builds line item with correct currency and quantity", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "7days", "town", "ca");
+
+      expect(params.get("line_items[0][price_data][currency]")).toBe("eur");
+      expect(params.get("line_items[0][quantity]")).toBe("1");
+    });
+
+    test("sets correct product name for Catalan locale", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "7days", "town", "ca");
+
+      expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
+        "Patrocini 7 dies"
+      );
+    });
+
+    test("sets correct product name for Spanish locale", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "7days", "town", "es");
+
+      expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
+        "Patrocinio 7 días"
+      );
+    });
+
+    test("sets correct product name for English locale", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "7days", "town", "en");
+
+      expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
+        "Sponsorship 7 days"
+      );
+    });
+
+    test("falls back to Catalan for unknown locale", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "3days", "town", "fr");
+
+      expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
+        "Patrocini 3 dies"
+      );
+    });
+
+    test("includes duration days in description", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "14days", "town", "ca");
+
+      const description = params.get(
+        "line_items[0][price_data][product_data][description]"
+      );
+      expect(description).toContain("14");
+      expect(description).toContain("dies de patrocini");
+    });
+
+    test("sets unit_amount as integer (cents)", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "7days", "town", "ca");
+
+      const amount = params.get("line_items[0][price_data][unit_amount]");
+      expect(amount).toBeDefined();
+      expect(Number(amount)).toBeGreaterThan(0);
+      expect(Number(amount) % 1).toBe(0); // Should be integer
+    });
+
+    test("price varies by duration", () => {
+      const params3days = new URLSearchParams();
+      const params30days = new URLSearchParams();
+
+      buildLineItemParams(params3days, "3days", "town", "ca");
+      buildLineItemParams(params30days, "30days", "town", "ca");
+
+      const price3 = Number(
+        params3days.get("line_items[0][price_data][unit_amount]")
+      );
+      const price30 = Number(
+        params30days.get("line_items[0][price_data][unit_amount]")
+      );
+
+      expect(price30).toBeGreaterThan(price3);
+    });
+
+    test("price varies by geoScope", () => {
+      const paramsTown = new URLSearchParams();
+      const paramsRegion = new URLSearchParams();
+      const paramsCountry = new URLSearchParams();
+
+      buildLineItemParams(paramsTown, "7days", "town", "ca");
+      buildLineItemParams(paramsRegion, "7days", "region", "ca");
+      buildLineItemParams(paramsCountry, "7days", "country", "ca");
+
+      const priceTown = Number(
+        paramsTown.get("line_items[0][price_data][unit_amount]")
+      );
+      const priceRegion = Number(
+        paramsRegion.get("line_items[0][price_data][unit_amount]")
+      );
+      const priceCountry = Number(
+        paramsCountry.get("line_items[0][price_data][unit_amount]")
+      );
+
+      expect(priceRegion).toBeGreaterThan(priceTown);
+      expect(priceCountry).toBeGreaterThan(priceRegion);
+    });
+  });
+
+  describe("buildCustomFieldParams", () => {
+    test("creates two custom fields", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "ca");
+
+      expect(params.get("custom_fields[0][key]")).toBe("business_name");
+      expect(params.get("custom_fields[1][key]")).toBe("target_url");
+    });
+
+    test("business_name field is required (no optional flag)", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "ca");
+
+      expect(params.get("custom_fields[0][optional]")).toBeNull();
+    });
+
+    test("target_url field is optional", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "ca");
+
+      expect(params.get("custom_fields[1][optional]")).toBe("true");
+    });
+
+    test("sets Catalan labels for ca locale", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "ca");
+
+      expect(params.get("custom_fields[0][label][custom]")).toBe(
+        "Nom del negoci"
+      );
+      expect(params.get("custom_fields[1][label][custom]")).toBe(
+        "URL del teu web (opcional)"
+      );
+    });
+
+    test("sets Spanish labels for es locale", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "es");
+
+      expect(params.get("custom_fields[0][label][custom]")).toBe(
+        "Nombre del negocio"
+      );
+      expect(params.get("custom_fields[1][label][custom]")).toBe(
+        "URL de tu web (opcional)"
+      );
+    });
+
+    test("sets English labels for en locale", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "en");
+
+      expect(params.get("custom_fields[0][label][custom]")).toBe(
+        "Business name"
+      );
+      expect(params.get("custom_fields[1][label][custom]")).toBe(
+        "Your website URL (optional)"
+      );
+    });
+
+    test("falls back to Catalan labels for unknown locale", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "de");
+
+      expect(params.get("custom_fields[0][label][custom]")).toBe(
+        "Nom del negoci"
+      );
+    });
+
+    test("all fields use text type", () => {
+      const params = new URLSearchParams();
+      buildCustomFieldParams(params, "ca");
+
+      expect(params.get("custom_fields[0][type]")).toBe("text");
+      expect(params.get("custom_fields[1][type]")).toBe("text");
+    });
+  });
+
+  describe("buildMetadataParams", () => {
+    test("sets product type as sponsor_banner", () => {
+      const params = new URLSearchParams();
+      buildMetadataParams(params, "7days", "barcelona", "Barcelona", "town");
+
+      expect(params.get("metadata[product]")).toBe("sponsor_banner");
+    });
+
+    test("includes duration and duration_days", () => {
+      const params = new URLSearchParams();
+      buildMetadataParams(params, "14days", "barcelona", "Barcelona", "town");
+
+      expect(params.get("metadata[duration]")).toBe("14days");
+      expect(params.get("metadata[duration_days]")).toBe("14");
+    });
+
+    test("includes place information", () => {
+      const params = new URLSearchParams();
+      buildMetadataParams(params, "7days", "mataro", "Mataró", "town");
+
+      expect(params.get("metadata[place]")).toBe("mataro");
+      expect(params.get("metadata[place_name]")).toBe("Mataró");
+    });
+
+    test("includes geo_scope", () => {
+      const params = new URLSearchParams();
+      buildMetadataParams(params, "7days", "barcelona", "Barcelona", "region");
+
+      expect(params.get("metadata[geo_scope]")).toBe("region");
+    });
+
+    test("duplicates metadata to payment_intent_data for Dashboard visibility", () => {
+      const params = new URLSearchParams();
+      buildMetadataParams(
+        params,
+        "7days",
+        "barcelona",
+        "Barcelona",
+        "country"
+      );
+
+      // Check that all metadata is also set on payment_intent_data
+      expect(params.get("payment_intent_data[metadata][product]")).toBe(
+        "sponsor_banner"
+      );
+      expect(params.get("payment_intent_data[metadata][duration]")).toBe(
+        "7days"
+      );
+      expect(params.get("payment_intent_data[metadata][duration_days]")).toBe(
+        "7"
+      );
+      expect(params.get("payment_intent_data[metadata][place]")).toBe(
+        "barcelona"
+      );
+      expect(params.get("payment_intent_data[metadata][place_name]")).toBe(
+        "Barcelona"
+      );
+      expect(params.get("payment_intent_data[metadata][geo_scope]")).toBe(
+        "country"
+      );
+    });
+
+    test("handles all duration values correctly", () => {
+      const durations = ["3days", "7days", "14days", "30days"] as const;
+      const expectedDays = ["3", "7", "14", "30"];
+
+      durations.forEach((duration, index) => {
+        const params = new URLSearchParams();
+        buildMetadataParams(params, duration, "test", "Test", "town");
+
+        expect(params.get("metadata[duration]")).toBe(duration);
+        expect(params.get("metadata[duration_days]")).toBe(expectedDays[index]);
       });
     });
   });
