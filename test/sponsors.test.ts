@@ -14,20 +14,20 @@ import {
 
 // Mock the sponsors array to test the logic without affecting production data
 const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
-  // Replicate the exact logic from config/sponsors.ts
+  // Replicate the exact logic from config/sponsors.ts (UTC-based)
   function getActiveSponsorForPlace(place: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
 
     for (const sponsor of sponsors) {
       if (!sponsor.places.includes(place)) {
         continue;
       }
 
-      const startDate = new Date(sponsor.startDate);
-      const endDate = new Date(sponsor.endDate);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+      const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
+      const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
 
       if (today >= startDate && today <= endDate) {
         return sponsor;
@@ -42,14 +42,14 @@ const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
   }
 
   function getAllActiveSponsors() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
 
     return sponsors.filter((sponsor) => {
-      const startDate = new Date(sponsor.startDate);
-      const endDate = new Date(sponsor.endDate);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+      const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
+      const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
 
       return today >= startDate && today <= endDate;
     });
@@ -413,7 +413,8 @@ describe("Sponsor System", () => {
 
   describe("Date Edge Cases", () => {
     test("handles timezone correctly (start of day normalization)", () => {
-      // Test at different times of the day
+      // Test at different times of the day in UTC
+      // Since our logic is UTC-based, test times must also be UTC
       vi.useFakeTimers();
 
       const sponsor: SponsorConfig = {
@@ -427,12 +428,12 @@ describe("Sponsor System", () => {
       };
       const { getActiveSponsorForPlace } = createMockSponsorModule([sponsor]);
 
-      // Test at start of day
-      vi.setSystemTime(new Date("2026-01-15T00:00:01"));
+      // Test at start of day (UTC)
+      vi.setSystemTime(new Date("2026-01-15T00:00:01Z"));
       expect(getActiveSponsorForPlace("barcelona")).not.toBeNull();
 
-      // Test at end of day
-      vi.setSystemTime(new Date("2026-01-15T23:59:59"));
+      // Test at end of day (UTC)
+      vi.setSystemTime(new Date("2026-01-15T23:59:59Z"));
       expect(getActiveSponsorForPlace("barcelona")).not.toBeNull();
 
       vi.useRealTimers();

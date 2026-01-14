@@ -55,8 +55,11 @@ const sponsors: SponsorConfig[] = [
  * @returns The active sponsor or null if none found
  */
 export function getActiveSponsorForPlace(place: string): ActiveSponsor | null {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalize to start of day
+  const now = new Date();
+  // Get midnight of the current day in UTC for a reliable comparison point
+  const today = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
 
   for (const sponsor of sponsors) {
     // Check if place matches
@@ -64,11 +67,9 @@ export function getActiveSponsorForPlace(place: string): ActiveSponsor | null {
       continue;
     }
 
-    // Check date range
-    const startDate = new Date(sponsor.startDate);
-    const endDate = new Date(sponsor.endDate);
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999); // Include full end day
+    // Parse date strings as UTC to avoid timezone ambiguity
+    const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
+    const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
 
     if (today >= startDate && today <= endDate) {
       return sponsor;
@@ -90,14 +91,14 @@ export function hasSponsorConfigForPlace(place: string): boolean {
  * Get all active sponsors (for debugging/admin purposes).
  */
 export function getAllActiveSponsors(): ActiveSponsor[] {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
 
   return sponsors.filter((sponsor) => {
-    const startDate = new Date(sponsor.startDate);
-    const endDate = new Date(sponsor.endDate);
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
+    const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
+    const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
     return today >= startDate && today <= endDate;
   });
 }

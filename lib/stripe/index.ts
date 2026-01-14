@@ -10,3 +10,16 @@ export {
   updateCheckoutSessionMetadata,
   fetchCheckoutSession,
 } from "./api";
+
+export {
+  verifyStripeSignature,
+  constructEvent,
+  parseSignatureHeader,
+  computeSignature,
+  secureCompare,
+} from "./webhook";
+
+export type {
+  VerifySignatureOptions,
+  SignatureVerificationResult,
+} from "./webhook";

@@ -57,20 +57,20 @@ export default function SponsorImageUpload({
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const parsed = JSON.parse(text) as SponsorImageUploadResult;
-              if (
+              const isValid =
                 parsed &&
                 parsed.success === true &&
                 typeof parsed.url === "string" &&
                 typeof parsed.publicId === "string" &&
-                typeof parsed.metadataSaved === "boolean"
-              ) {
+                typeof parsed.metadataSaved === "boolean";
+              if (isValid) {
                 resolve(parsed);
-                return;
+              } else {
+                reject(new Error("invalid_response"));
               }
             } catch {
-              // fall through
+              reject(new Error("invalid_response"));
             }
-            reject(new Error("invalid_response"));
             return;
           }
 

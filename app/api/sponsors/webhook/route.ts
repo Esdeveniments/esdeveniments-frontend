@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { captureException } from "@sentry/nextjs";
-import { updatePaymentIntentMetadata } from "@lib/stripe";
+import { updatePaymentIntentMetadata, verifyStripeSignature } from "@lib/stripe";
 import type {
   StripeWebhookEvent,
   StripeWebhookCheckoutSession,
@@ -29,57 +28,6 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-
-/**
- * Verify Stripe webhook signature
- */
-function verifyStripeSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): boolean {
-  const elements = signature.split(",");
-  const signatureMap: Record<string, string> = {};
-
-  for (const element of elements) {
-    const [key, value] = element.split("=");
-    if (key && value) {
-      signatureMap[key] = value;
-    }
-  }
-
-  const timestamp = signatureMap["t"];
-  const v1Signature = signatureMap["v1"];
-
-  if (!timestamp || !v1Signature) {
-    return false;
-  }
-
-  // Check timestamp to prevent replay attacks (5 min tolerance)
-  const timestampNum = parseInt(timestamp, 10);
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - timestampNum) > 300) {
-    console.error("Webhook timestamp too old:", { timestamp, now });
-    return false;
-  }
-
-  // Compute expected signature
-  const signedPayload = `${timestamp}.${payload}`;
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(signedPayload)
-    .digest("hex");
-
-  // Constant-time comparison (check lengths first to avoid RangeError)
-  const sigBuffer = Buffer.from(v1Signature);
-  const expectedBuffer = Buffer.from(expectedSignature);
-
-  if (sigBuffer.length !== expectedBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
-}
 
 /**
  * Extract custom field value by key
@@ -276,8 +224,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify signature
-    if (!verifyStripeSignature(payload, signature, WEBHOOK_SECRET)) {
-      console.error("Invalid webhook signature");
+    const verificationResult = verifyStripeSignature(payload, signature, WEBHOOK_SECRET);
+    if (!verificationResult.valid) {
+      console.error("Invalid webhook signature:", verificationResult.error);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
@@ -287,22 +236,39 @@ export async function POST(request: NextRequest) {
     // Always return 200 to acknowledge receipt
     return NextResponse.json({ received: true });
   } catch (error) {
+    const isParsingError = error instanceof SyntaxError;
+
     // Enhanced logging for debugging while preventing sensitive data exposure
-    console.error("Webhook error:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      type: error instanceof Error ? error.name : typeof error,
-      // Only log stack in development for debugging
-      ...(process.env.NODE_ENV === "development" && {
-        stack: error instanceof Error ? error.stack : undefined,
-      }),
-    });
+    console.error(
+      `Webhook error (${isParsingError ? "fatal" : "potentially transient"}):`,
+      {
+        message: error instanceof Error ? error.message : "Unknown error",
+        type: error instanceof Error ? error.name : typeof error,
+        // Only log stack in development for debugging
+        ...(process.env.NODE_ENV === "development" && {
+          stack: error instanceof Error ? error.stack : undefined,
+        }),
+      }
+    );
 
     // Capture error in Sentry for monitoring/alerting
     captureException(error, {
       tags: { webhook: "stripe", handler: "sponsor" },
     });
 
-    // Return 200 anyway to prevent Stripe retries for parsing errors
-    return NextResponse.json({ received: true, error: "Processing error" });
+    // If it's a JSON parsing error, the payload is invalid. Acknowledge and stop retries.
+    if (isParsingError) {
+      return NextResponse.json(
+        { error: "Invalid JSON payload" },
+        { status: 400 }
+      );
+    }
+
+    // For other errors (e.g., network failures in updatePaymentIntentMetadata),
+    // returning 500 signals Stripe to retry, which is safer for transient issues.
+    return NextResponse.json(
+      { error: "Webhook handler failed. Please retry." },
+      { status: 500 }
+    );
   }
 }
