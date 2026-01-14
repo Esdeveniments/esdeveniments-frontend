@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { getSiteUrl } from "@config/index";
+import { getSiteUrlFromRequest } from "@config/index";
 import { stripeRequest } from "@lib/stripe/api";
 import {
   buildLineItemParams,
@@ -25,9 +25,9 @@ async function createStripeCheckoutSession(
   place: string,
   placeName: string,
   geoScope: GeoScope,
-  idempotencyKey: string
+  idempotencyKey: string,
+  baseUrl: string
 ): Promise<StripeCheckoutSessionResponse> {
-  const baseUrl = getSiteUrl();
   const params = new URLSearchParams();
 
   // Mode and URLs
@@ -142,13 +142,17 @@ export async function POST(request: NextRequest) {
       .digest("hex")
       .slice(0, 32);
 
+    // Get the actual request URL for redirects (important for preview deployments)
+    const baseUrl = getSiteUrlFromRequest(request);
+
     const session = await createStripeCheckoutSession(
       duration,
       locale,
       place,
       placeName,
       geoScope,
-      idempotencyKey
+      idempotencyKey,
+      baseUrl
     );
 
     return NextResponse.json({
