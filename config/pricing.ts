@@ -4,7 +4,7 @@
  * No hardcoded prices - all values must come from configuration
  */
 
-import type { GeoScope } from "types/sponsor";
+import { VALID_GEO_SCOPES, type GeoScope } from "types/sponsor";
 
 /**
  * @deprecated Use GeoScope from types/sponsor.ts instead
@@ -28,7 +28,6 @@ export interface PricingMatrix {
 
 // Centralized constants - single source of truth
 const AVAILABLE_DURATIONS = [3, 7, 14, 30] as const;
-const AVAILABLE_GEO_SCOPES: GeoScope[] = ["town", "region", "country"];
 
 // Base pricing in cents - single source of truth
 // Must be defined before loadPricingFromEnv to avoid TDZ error
@@ -50,7 +49,7 @@ function loadPricingFromEnv(): PricingMatrix {
 
   // Use centralized constants
   const durations = AVAILABLE_DURATIONS;
-  const geoScopes = AVAILABLE_GEO_SCOPES;
+  const geoScopes = VALID_GEO_SCOPES;
 
   // Tax configuration
   const taxMode = (process.env.STRIPE_TAX_MODE as TaxMode) || "automatic";
@@ -104,7 +103,7 @@ export function getAvailableDurations(): readonly number[] {
  * Get all available geo scope types
  */
 export function getAvailableGeoScopes(): GeoScopeType[] {
-  return [...AVAILABLE_GEO_SCOPES];
+  return [...VALID_GEO_SCOPES];
 }
 
 /**

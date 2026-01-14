@@ -224,16 +224,29 @@ export default async function proxy(request: NextRequest) {
       (pathname === "/api/visits" && request.method === "POST");
 
     if (isPublicApiRequest) {
-      // Special case: visits endpoint should receive/stamp visitor id
-      if (pathname === "/api/visits" && request.method === "POST") {
-        const apiReqHeaders = new Headers(request.headers);
+      // Endpoints that need visitor_id for idempotency/tracking
+      const needsVisitorId =
+        (pathname === "/api/visits" && request.method === "POST") ||
+        (pathname === "/api/sponsors/checkout" && request.method === "POST");
+
+      if (needsVisitorId) {
         const cookieVisitor = request.cookies?.get?.("visitor_id")?.value;
         const visitorId =
           cookieVisitor || crypto.randomUUID().replace(/-/g, "");
-        apiReqHeaders.set("x-visitor-id", visitorId);
-        const response = NextResponse.next({
-          request: { headers: apiReqHeaders },
-        });
+
+        // /api/visits needs visitor_id forwarded via header to backend
+        const isVisitsEndpoint =
+          pathname === "/api/visits" && request.method === "POST";
+        const apiReqHeaders = isVisitsEndpoint
+          ? new Headers(request.headers)
+          : undefined;
+        if (apiReqHeaders) {
+          apiReqHeaders.set("x-visitor-id", visitorId);
+        }
+
+        const response = NextResponse.next(
+          apiReqHeaders ? { request: { headers: apiReqHeaders } } : undefined
+        );
         if (!cookieVisitor) {
           response.cookies.set("visitor_id", visitorId, {
             path: "/",
@@ -389,7 +402,7 @@ export default async function proxy(request: NextRequest) {
     persistLocaleCookie(response, localeFromPath);
   }
 
-  // visitor_id cookie is set only when calling /api/visits if missing.
+  // visitor_id cookie is set for /api/visits and /api/sponsors/checkout if missing.
 
   // Use Report-Only in preview (or when explicitly requested), enforce otherwise
   const reportOnly =

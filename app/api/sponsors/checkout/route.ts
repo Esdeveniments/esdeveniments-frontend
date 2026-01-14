@@ -7,7 +7,7 @@ import {
   buildCustomFieldParams,
   buildMetadataParams,
 } from "@lib/stripe/checkout-helpers";
-import { isValidCategorySlugFormat as isValidSlugFormat } from "@utils/category-mapping";
+import { isValidPlace } from "@utils/route-validation";
 import type {
   SponsorDuration,
   SponsorCheckoutRequest,
@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate place format (slug pattern: lowercase letters, numbers, hyphens)
-    if (!isValidSlugFormat(place)) {
+    // Validate place (format + blocklist check for system paths)
+    if (!isValidPlace(place)) {
       return NextResponse.json(
         { error: "Invalid place format" },
         { status: 400 }
@@ -127,15 +127,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate idempotency key from request params to prevent duplicate sessions
-    // Uses visitor_id cookie (set by middleware) + params for deterministic key per user/request
+    // Uses visitor_id cookie (set by proxy.ts on first request) + params for deterministic key
     // Includes geoScope to prevent collisions between different pricing tiers
     const visitorId = request.cookies.get("visitor_id")?.value;
-    if (!visitorId) {
-      // Middleware should always set visitor_id - log warning if missing
-      console.warn("Missing visitor_id cookie for checkout request");
-    }
-    // Use visitor_id for deterministic idempotency, fall back to IP for stability
-    // IP is not ideal but prevents duplicate sessions on network retries
+    // Fall back to IP if visitor_id missing (e.g., cookies disabled)
+    // IP fallback has collision risk for users behind NAT/shared IPs
     const clientIp =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       "unknown";

@@ -75,6 +75,16 @@ describe("Stripe Webhook Signature Verification", () => {
         v1: "abc",
       });
     });
+
+    it("handles values containing = character", () => {
+      const header = "t=1234567890,v1=abc=def=ghi";
+      const result = parseSignatureHeader(header);
+
+      expect(result).toEqual({
+        t: "1234567890",
+        v1: "abc=def=ghi",
+      });
+    });
   });
 
   describe("computeSignature", () => {
@@ -126,6 +136,17 @@ describe("Stripe Webhook Signature Verification", () => {
 
     it("returns false for different lengths", () => {
       expect(secureCompare("abc", "abcd")).toBe(false);
+    });
+
+    it("returns false for same content but different lengths (prefix)", () => {
+      expect(secureCompare("abc", "abc0")).toBe(false);
+    });
+
+    it("handles significantly different lengths securely", () => {
+      // This tests that length differences don't cause early returns
+      // The comparison should still take constant time
+      expect(secureCompare("a", "abcdefghijklmnop")).toBe(false);
+      expect(secureCompare("abcdefghijklmnop", "a")).toBe(false);
     });
 
     it("returns true for empty strings", () => {
@@ -322,7 +343,38 @@ describe("Stripe Webhook Signature Verification", () => {
 
       expect(() =>
         constructEvent(invalidPayload, signature, TEST_SECRET)
-      ).toThrow();
+      ).toThrow("Webhook payload is not valid JSON");
+    });
+
+    it("throws on valid JSON but invalid event structure", () => {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const invalidEventPayload = JSON.stringify({ foo: "bar" });
+      const signature = generateTestSignature(
+        invalidEventPayload,
+        TEST_SECRET,
+        timestamp
+      );
+
+      expect(() =>
+        constructEvent(invalidEventPayload, signature, TEST_SECRET)
+      ).toThrow("Webhook payload validation failed");
+    });
+
+    it("throws on event missing required fields", () => {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const incompletePayload = JSON.stringify({
+        id: "evt_123",
+        // missing type and data
+      });
+      const signature = generateTestSignature(
+        incompletePayload,
+        TEST_SECRET,
+        timestamp
+      );
+
+      expect(() =>
+        constructEvent(incompletePayload, signature, TEST_SECRET)
+      ).toThrow("Webhook payload validation failed");
     });
   });
 });

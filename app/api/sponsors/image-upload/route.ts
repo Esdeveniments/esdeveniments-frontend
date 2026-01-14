@@ -83,19 +83,41 @@ export async function POST(request: Request) {
       sponsor_image_uploaded_at: new Date().toISOString(),
     };
  
-    // Update checkout session metadata
+    // Update checkout session metadata (critical for webhook to find the image)
     const sessionMetadataSaved = await updateCheckoutSessionMetadata(
       sessionIdRaw,
       imageMetadata
     );
 
-    // Also update payment intent metadata so it shows in Dashboard
+    // Fail if session metadata wasn't saved - webhook needs it to activate sponsor
+    if (!sessionMetadataSaved) {
+      console.error(
+        "sponsor image-upload: failed to save session metadata",
+        { sessionId: sessionIdRaw, url, publicId }
+      );
+      return NextResponse.json(
+        {
+          errorCode: "metadata_save_failed",
+          error: "Image uploaded but failed to link to payment session. Please contact support.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Also update payment intent metadata so it shows in Dashboard (non-critical)
     let paymentIntentMetadataSaved = false;
     if (paymentIntentId) {
       paymentIntentMetadataSaved = await updatePaymentIntentMetadata(
         paymentIntentId,
         imageMetadata
       );
+      if (!paymentIntentMetadataSaved) {
+        // Log but don't fail - session metadata is the critical one
+        console.warn(
+          "sponsor image-upload: payment intent metadata update failed",
+          { paymentIntentId }
+        );
+      }
     }
  
     return NextResponse.json(
