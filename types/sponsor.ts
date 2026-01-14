@@ -17,6 +17,17 @@ export type GeoScope = "town" | "region" | "country";
 export type SponsorDuration = "3days" | "7days" | "14days" | "30days";
 
 /**
+ * Mapping from SponsorDuration to number of days
+ * Co-located with SponsorDuration type for consistency
+ */
+export const DURATION_DAYS: Record<SponsorDuration, number> = {
+  "3days": 3,
+  "7days": 7,
+  "14days": 14,
+  "30days": 30,
+};
+
+/**
  * Pricing plan for display in UI
  */
 export interface PricingPlan {
@@ -56,6 +67,8 @@ export type ActiveSponsor = SponsorConfig;
  */
 export interface SponsorBannerProps {
   sponsor: ActiveSponsor;
+  /** Current place where banner is displayed (for accurate analytics) */
+  place: string;
 }
 
 /**

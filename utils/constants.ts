@@ -279,3 +279,16 @@ export const MAX_QUERY_PARAMS = 50; // Maximum number of query parameters
 export const MAX_PARAM_VALUE_LENGTH = 500; // Maximum length of individual parameter value
 export const MAX_PARAM_KEY_LENGTH = 100; // Maximum length of individual parameter key
 export const MAX_TOTAL_VALUE_LENGTH = 10000; // Maximum total length of all parameter values combined (for truncation scenarios)
+
+/**
+ * Popular places for sponsor place selector quick-select chips
+ * Centralized here for potential reuse in other sponsor-related components
+ */
+export const SPONSOR_POPULAR_PLACES = [
+  { slug: "barcelona", name: "Barcelona", type: "town" as const },
+  { slug: "girona", name: "Girona", type: "town" as const },
+  { slug: "tarragona", name: "Tarragona", type: "town" as const },
+  { slug: "lleida", name: "Lleida", type: "town" as const },
+  { slug: "mataro", name: "Mataró", type: "town" as const },
+  { slug: "sabadell", name: "Sabadell", type: "town" as const },
+] as const;

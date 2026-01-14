@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import type { PlaceOption, PlaceSelectorProps } from "types/sponsor";
+import { SPONSOR_POPULAR_PLACES } from "@utils/constants";
 import {
   MapPinIcon,
   CheckIcon,
@@ -17,16 +18,6 @@ export type { PlaceOption };
 
 // Catalunya option slug - name is localized via translations
 const CATALUNYA_SLUG = "catalunya";
-
-// Popular places shown as quick-select chips
-const POPULAR_PLACES: PlaceOption[] = [
-  { slug: "barcelona", name: "Barcelona", type: "town" },
-  { slug: "girona", name: "Girona", type: "town" },
-  { slug: "tarragona", name: "Tarragona", type: "town" },
-  { slug: "lleida", name: "Lleida", type: "town" },
-  { slug: "mataro", name: "Mataró", type: "town" },
-  { slug: "sabadell", name: "Sabadell", type: "town" },
-];
 
 /**
  * Searchable place selector with regions and cities.
@@ -271,7 +262,7 @@ export default function PlaceSelector({
                 {t("placeSelector.popular")}:{" "}
               </span>
               <div className="inline-flex flex-wrap gap-2 mt-1">
-                {POPULAR_PLACES.map((place) => (
+                {SPONSOR_POPULAR_PLACES.map((place) => (
                   <button
                     key={place.slug}
                     onClick={() => handlePopularClick(place)}

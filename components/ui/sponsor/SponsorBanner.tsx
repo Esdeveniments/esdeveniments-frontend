@@ -9,7 +9,7 @@ import type { SponsorBannerProps } from "types/sponsor";
  * Client component that renders the sponsor banner with image error handling.
  * Shows the sponsor image with proper SEO attributes and fallback on error.
  */
-export default function SponsorBanner({ sponsor }: SponsorBannerProps) {
+export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
   const t = useTranslations("Sponsor");
   const [hasError, setHasError] = useState(false);
 
@@ -32,7 +32,7 @@ export default function SponsorBanner({ sponsor }: SponsorBannerProps) {
         className="group block w-full overflow-hidden rounded-lg border border-border bg-muted/20 transition-shadow hover:shadow-md"
         data-analytics-event-name="sponsor_click"
         data-analytics-sponsor-name={sponsor.businessName}
-        data-analytics-sponsor-place={sponsor.places[0]}
+        data-analytics-sponsor-place={place}
         data-analytics-sponsor-geo-scope={sponsor.geoScope}
       >
         <div className="relative flex h-[100px] w-full items-center justify-center md:h-[120px]">

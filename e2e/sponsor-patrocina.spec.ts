@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 
 /**
  * E2E tests for the sponsor system.
@@ -9,17 +9,25 @@ import { test, expect } from "@playwright/test";
  *
  * @see /strategy-pricing.md for system documentation
  */
+
+/**
+ * Navigate to /patrocina and wait for page to be ready
+ */
+async function navigateToPatrocina(page: Page): Promise<void> {
+  await page.goto("/patrocina", {
+    waitUntil: "domcontentloaded",
+    timeout: 60000,
+  });
+
+  // Wait for page to be interactive
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
+    timeout: 30000,
+  });
+}
+
 test.describe("Sponsor Landing Page (/patrocina)", () => {
   test("renders the patrocina page with key sections", async ({ page }) => {
-    await page.goto("/patrocina", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-
-    // Hero section is visible
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
-      timeout: 30000,
-    });
+    await navigateToPatrocina(page);
 
     // Check for pricing CTA button
     await expect(page.getByRole("link", { name: /veure preus/i })).toBeVisible();
@@ -37,15 +45,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   test("pricing section has place selector for scope selection", async ({
     page,
   }) => {
-    await page.goto("/patrocina", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-
-    // Wait for page to be interactive
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
-      timeout: 30000,
-    });
+    await navigateToPatrocina(page);
 
     // Check for place selector (searchable dropdown for town/region/country)
     // The UI uses a place selector instead of tabs
@@ -55,14 +55,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   });
 
   test("how it works section displays steps", async ({ page }) => {
-    await page.goto("/patrocina", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
-      timeout: 30000,
-    });
+    await navigateToPatrocina(page);
 
     // How it works heading exists
     await expect(
@@ -76,14 +69,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   });
 
   test("FAQ section is present", async ({ page }) => {
-    await page.goto("/patrocina", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
-      timeout: 30000,
-    });
+    await navigateToPatrocina(page);
 
     // FAQ heading exists
     await expect(
@@ -92,14 +78,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   });
 
   test("contact section has email link", async ({ page }) => {
-    await page.goto("/patrocina", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
-      timeout: 30000,
-    });
+    await navigateToPatrocina(page);
 
     // Contact section exists
     await expect(
@@ -116,14 +95,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   });
 
   test("back to home link works", async ({ page }) => {
-    await page.goto("/patrocina", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
-      timeout: 30000,
-    });
+    await navigateToPatrocina(page);
 
     // Find and click the back link
     const backLink = page.getByRole("link", { name: /tornar/i });

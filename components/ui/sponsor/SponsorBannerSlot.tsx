@@ -12,7 +12,7 @@ function SponsorBannerSlotContent({ place }: SponsorBannerSlotProps) {
   const sponsor = getActiveSponsorForPlace(place);
 
   if (sponsor) {
-    return <SponsorBanner sponsor={sponsor} />;
+    return <SponsorBanner sponsor={sponsor} place={place} />;
   }
 
   return <SponsorEmptyState />;

@@ -268,7 +268,15 @@ export async function POST(request: NextRequest) {
     // Always return 200 to acknowledge receipt
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Webhook error:", error);
+    // Enhanced logging for debugging while preventing sensitive data exposure
+    console.error("Webhook error:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      type: error instanceof Error ? error.name : typeof error,
+      // Only log stack in development for debugging
+      ...(process.env.NODE_ENV === "development" && {
+        stack: error instanceof Error ? error.stack : undefined,
+      }),
+    });
     // Return 200 anyway to prevent Stripe retries for parsing errors
     return NextResponse.json({ received: true, error: "Processing error" });
   }

@@ -38,29 +38,6 @@ function loadPricingFromEnv(): PricingMatrix {
   const durations = AVAILABLE_DURATIONS;
   const geoScopes = AVAILABLE_GEO_SCOPES;
 
-  // Base pricing - realistic MVP prices (in cents)
-  // Reference: Wallapop charges €1.25-2.50 for 7-day visibility
-  const basePrices = {
-    town: {
-      3: 300, // €3.00
-      7: 500, // €5.00
-      14: 800, // €8.00
-      30: 1200, // €12.00
-    },
-    region: {
-      3: 500, // €5.00
-      7: 800, // €8.00
-      14: 1200, // €12.00
-      30: 2000, // €20.00
-    },
-    country: {
-      3: 800, // €8.00
-      7: 1200, // €12.00
-      14: 2000, // €20.00
-      30: 3500, // €35.00
-    },
-  };
-
   // Tax configuration
   const taxMode = (process.env.STRIPE_TAX_MODE as TaxMode) || "automatic";
   const manualTaxRateIds =
@@ -72,8 +49,8 @@ function loadPricingFromEnv(): PricingMatrix {
     geoScopes.forEach((geoScope) => {
       const key: PricingKey = `${duration}:${geoScope}`;
       const basePrice =
-        basePrices[geoScope][
-          duration as keyof (typeof basePrices)[typeof geoScope]
+        BASE_PRICES_CENTS[geoScope][
+          duration as keyof (typeof BASE_PRICES_CENTS)[typeof geoScope]
         ];
 
       if (basePrice) {
@@ -133,27 +110,34 @@ export function getPricingMatrix(): PricingMatrix {
   return loadPricingFromEnv();
 }
 
+// Base pricing in cents - single source of truth
+const BASE_PRICES_CENTS = {
+  town: { 3: 300, 7: 500, 14: 800, 30: 1200 },
+  region: { 3: 500, 7: 800, 14: 1200, 30: 2000 },
+  country: { 3: 800, 7: 1200, 14: 2000, 30: 3500 },
+} as const;
+
 /**
  * Display prices in EUR (for client-side rendering)
- * Single source of truth for UI display - derived from base prices above
+ * Derived programmatically from BASE_PRICES_CENTS to avoid duplication
  */
 export const DISPLAY_PRICES_EUR = {
   town: {
-    "3days": 3,
-    "7days": 5,
-    "14days": 8,
-    "30days": 12,
+    "3days": BASE_PRICES_CENTS.town[3] / 100,
+    "7days": BASE_PRICES_CENTS.town[7] / 100,
+    "14days": BASE_PRICES_CENTS.town[14] / 100,
+    "30days": BASE_PRICES_CENTS.town[30] / 100,
   },
   region: {
-    "3days": 5,
-    "7days": 8,
-    "14days": 12,
-    "30days": 20,
+    "3days": BASE_PRICES_CENTS.region[3] / 100,
+    "7days": BASE_PRICES_CENTS.region[7] / 100,
+    "14days": BASE_PRICES_CENTS.region[14] / 100,
+    "30days": BASE_PRICES_CENTS.region[30] / 100,
   },
   country: {
-    "3days": 8,
-    "7days": 12,
-    "14days": 20,
-    "30days": 35,
+    "3days": BASE_PRICES_CENTS.country[3] / 100,
+    "7days": BASE_PRICES_CENTS.country[7] / 100,
+    "14days": BASE_PRICES_CENTS.country[14] / 100,
+    "30days": BASE_PRICES_CENTS.country[30] / 100,
   },
 } as const;

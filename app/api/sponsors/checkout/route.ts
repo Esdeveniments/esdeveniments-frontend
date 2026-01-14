@@ -6,23 +6,14 @@ import type {
   SponsorCheckoutRequest,
   StripeCheckoutSessionResponse,
 } from "types/sponsor";
+import { DURATION_DAYS } from "types/sponsor";
 
 import type { GeoScope } from "types/sponsor";
 
-/**
- * Get pricing in cents from centralized config based on geoScope
- */
 function getPriceInCents(duration: SponsorDuration, geoScope: GeoScope): number {
   const priceEur = DISPLAY_PRICES_EUR[geoScope][duration];
   return priceEur * 100; // Convert EUR to cents
 }
-
-const DURATION_DAYS: Record<SponsorDuration, number> = {
-  "3days": 3,
-  "7days": 7,
-  "14days": 14,
-  "30days": 30,
-};
 
 /**
  * Product names by locale
@@ -115,7 +106,7 @@ async function createStripeCheckoutSession(
       place
     )}&placeName=${encodeURIComponent(placeName)}`
   );
-  params.append("cancel_url", `${baseUrl}/patrocina?cancelled=true`);
+  params.append("cancel_url", `${baseUrl}/patrocina/cancelled`);
 
   // Line item with dynamic pricing based on geoScope
   params.append("line_items[0][price_data][currency]", "eur");
@@ -160,6 +151,7 @@ async function createStripeCheckoutSession(
     duration_days: String(DURATION_DAYS[duration]),
     place,
     place_name: placeName,
+    geo_scope: geoScope,
   };
 
   for (const [key, value] of Object.entries(metadata)) {
@@ -168,7 +160,7 @@ async function createStripeCheckoutSession(
   }
 
   // Locale for checkout page (Stripe doesn't support Catalan, use Spanish as fallback)
-  const stripeLocale = locale === "ca" || locale === "es" ? "es" : "en";
+  const stripeLocale = ["ca", "es"].includes(locale) ? "es" : "en";
   params.append("locale", stripeLocale);
 
   // Customer creation to get email
@@ -276,7 +268,10 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Checkout error:", error);
+    console.error(
+      "Checkout error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

@@ -224,6 +224,36 @@ export default $config({
         ...(process.env.CLOUDFRONT_DISTRIBUTION_ID && {
           CLOUDFRONT_DISTRIBUTION_ID: process.env.CLOUDFRONT_DISTRIBUTION_ID,
         }),
+        // Stripe integration for sponsor payments
+        // Required for /patrocina checkout and webhook processing
+        STRIPE_SECRET_KEY: (() => {
+          const key = process.env.STRIPE_SECRET_KEY;
+          if (!key) {
+            throw new Error(
+              "STRIPE_SECRET_KEY environment variable must be set for SST deployment"
+            );
+          }
+          return key;
+        })(),
+        STRIPE_WEBHOOK_SECRET: (() => {
+          const secret = process.env.STRIPE_WEBHOOK_SECRET;
+          if (!secret) {
+            throw new Error(
+              "STRIPE_WEBHOOK_SECRET environment variable must be set for SST deployment"
+            );
+          }
+          return secret;
+        })(),
+        // Optional Stripe config - defaults are fine for most cases
+        ...(process.env.STRIPE_TAX_MODE && {
+          STRIPE_TAX_MODE: process.env.STRIPE_TAX_MODE,
+        }),
+        ...(process.env.STRIPE_CURRENCY && {
+          STRIPE_CURRENCY: process.env.STRIPE_CURRENCY,
+        }),
+        ...(process.env.STRIPE_MANUAL_TAX_RATE_IDS && {
+          STRIPE_MANUAL_TAX_RATE_IDS: process.env.STRIPE_MANUAL_TAX_RATE_IDS,
+        }),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
       server: {
