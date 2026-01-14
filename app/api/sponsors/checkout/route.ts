@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { DISPLAY_PRICES_EUR } from "@config/pricing";
+import { getSiteUrl } from "@config/index";
 import { STRIPE_API_VERSION } from "@lib/stripe/api";
 import type {
   SponsorDuration,
@@ -88,8 +89,7 @@ async function createStripeCheckoutSession(
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
 
-  const baseUrl =
-    process.env.SITE_URL || "https://esdeveniments.cat";
+  const baseUrl = getSiteUrl();
   const productNames = PRODUCT_NAMES[locale] || PRODUCT_NAMES.ca;
   const labels = CUSTOM_FIELD_LABELS[locale] || CUSTOM_FIELD_LABELS.ca;
 
