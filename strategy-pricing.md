@@ -268,7 +268,3 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 | `components/ui/common/footer/index.tsx`       | Modify            |
 | `app/patrocina/page.tsx`                      | Create            |
 | `app/patrocina/layout.tsx`                    | Create (optional) |
-
-```
-
-```

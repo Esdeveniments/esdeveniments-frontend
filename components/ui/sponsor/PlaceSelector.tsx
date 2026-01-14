@@ -20,6 +20,18 @@ export type { PlaceOption };
 const CATALUNYA_SLUG = "catalunya";
 
 /**
+ * Type guard to validate place data from API
+ */
+function isValidPlace(p: unknown): p is { slug: string; name: string } {
+  return (
+    typeof p === "object" &&
+    p !== null &&
+    typeof (p as Record<string, unknown>).slug === "string" &&
+    typeof (p as Record<string, unknown>).name === "string"
+  );
+}
+
+/**
  * Searchable place selector with regions and cities.
  * Fetches data from our API and provides autocomplete.
  */
@@ -48,13 +60,21 @@ export default function PlaceSelector({
           fetch("/api/cities", { signal: controller.signal }),
         ]);
 
-        const regions = regionsRes.ok ? await regionsRes.json() : [];
-        const cities = citiesRes.ok ? await citiesRes.json() : [];
+        const regionsData = regionsRes.ok ? await regionsRes.json() : [];
+        const citiesData = citiesRes.ok ? await citiesRes.json() : [];
+
+        // Filter and validate API responses
+        const regions = Array.isArray(regionsData)
+          ? regionsData.filter(isValidPlace)
+          : [];
+        const cities = Array.isArray(citiesData)
+          ? citiesData.filter(isValidPlace)
+          : [];
 
         const allPlaces: PlaceOption[] = [
           // Regions first (comarques)
           ...regions.map(
-            (r: { slug: string; name: string }): PlaceOption => ({
+            (r): PlaceOption => ({
               slug: r.slug,
               name: r.name,
               type: "region",
@@ -62,7 +82,7 @@ export default function PlaceSelector({
           ),
           // Then cities/towns
           ...cities.map(
-            (c: { slug: string; name: string }): PlaceOption => ({
+            (c): PlaceOption => ({
               slug: c.slug,
               name: c.name,
               type: "town",
