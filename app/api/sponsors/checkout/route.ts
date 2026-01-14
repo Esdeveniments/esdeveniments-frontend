@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getSiteUrl } from "@config/index";
-import { STRIPE_API_VERSION } from "@lib/stripe/api";
+import { stripeRequest } from "@lib/stripe/api";
 import {
   buildLineItemParams,
   buildCustomFieldParams,
@@ -27,12 +27,6 @@ async function createStripeCheckoutSession(
   geoScope: GeoScope,
   idempotencyKey: string
 ): Promise<StripeCheckoutSessionResponse> {
-  const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-
-  if (!STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
-
   const baseUrl = getSiteUrl();
   const params = new URLSearchParams();
 
@@ -68,37 +62,23 @@ async function createStripeCheckoutSession(
   const expiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
   params.append("expires_at", String(expiresAt));
 
-  // AbortController for timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-  try {
-    const response = await fetch(
-      "https://api.stripe.com/v1/checkout/sessions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Stripe-Version": STRIPE_API_VERSION,
-          "Idempotency-Key": idempotencyKey,
-        },
-        body: params.toString(),
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Stripe API error:", error);
-      throw new Error(`Stripe API error: ${response.status}`);
+  const response = await stripeRequest(
+    "/checkout/sessions",
+    {
+      method: "POST",
+      body: params,
+      headers: { "Idempotency-Key": idempotencyKey },
     }
+  );
 
-    const session = (await response.json()) as StripeCheckoutSessionResponse;
-    return session;
-  } finally {
-    clearTimeout(timeoutId);
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Stripe API error:", error);
+    throw new Error(`Stripe API error: ${response.status}`);
   }
+
+  const session = (await response.json()) as StripeCheckoutSessionResponse;
+  return session;
 }
 
 /**

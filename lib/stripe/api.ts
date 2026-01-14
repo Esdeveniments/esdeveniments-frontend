@@ -25,7 +25,7 @@ function getStripeSecretKey(): string {
  * Make an authenticated request to the Stripe API with timeout protection.
  *
  * @param path - API path (e.g., "/payment_intents/pi_xxx")
- * @param options - Fetch options (method, body, etc.)
+ * @param options - Fetch options (method, body, headers, etc.)
  * @param timeoutMs - Request timeout in milliseconds (default: 10s)
  * @returns Response object
  * @throws Error if request fails or times out
@@ -35,10 +35,11 @@ export async function stripeRequest(
   options: {
     method?: "GET" | "POST";
     body?: URLSearchParams;
+    headers?: Record<string, string>;
   } = {},
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<Response> {
-  const { method = "GET", body } = options;
+  const { method = "GET", body, headers: customHeaders } = options;
   const secretKey = getStripeSecretKey();
 
   const controller = new AbortController();
@@ -51,6 +52,7 @@ export async function stripeRequest(
         Authorization: `Bearer ${secretKey}`,
         ...(body && { "Content-Type": "application/x-www-form-urlencoded" }),
         "Stripe-Version": STRIPE_API_VERSION,
+        ...customHeaders,
       },
       ...(body && { body: body.toString() }),
       signal: controller.signal,
