@@ -73,26 +73,21 @@ export function computeSignature(
 
 /**
  * Constant-time comparison of two signatures.
- * Pads shorter string to avoid leaking length information via timing.
+ * Execution time is always proportional to the expected signature length (b),
+ * preventing DoS attacks via attacker-controlled long inputs.
  */
 export function secureCompare(a: string, b: string): boolean {
   const aBuffer = Buffer.from(a);
   const bBuffer = Buffer.from(b);
 
-  // Use the longer length to prevent length-based timing leaks
-  const maxLength = Math.max(aBuffer.length, bBuffer.length);
+  if (aBuffer.length !== bBuffer.length) {
+    // Perform a dummy comparison on the expected signature against itself
+    // to ensure constant execution time regardless of attacker input length
+    crypto.timingSafeEqual(bBuffer, bBuffer);
+    return false;
+  }
 
-  // Pad buffers to equal length (padding with zeros)
-  const aPadded = Buffer.alloc(maxLength);
-  const bPadded = Buffer.alloc(maxLength);
-  aBuffer.copy(aPadded);
-  bBuffer.copy(bPadded);
-
-  // Constant-time comparison, then check lengths match
-  const signaturesEqual = crypto.timingSafeEqual(aPadded, bPadded);
-  const lengthsEqual = aBuffer.length === bBuffer.length;
-
-  return signaturesEqual && lengthsEqual;
+  return crypto.timingSafeEqual(aBuffer, bBuffer);
 }
 
 /**
