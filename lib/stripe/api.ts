@@ -5,7 +5,7 @@
  * @see /strategy-pricing.md for sponsor system documentation
  */
 
-const STRIPE_API_VERSION = "2025-03-31.basil";
+export const STRIPE_API_VERSION = "2025-03-31.basil";
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 const DEFAULT_TIMEOUT_MS = 10000;
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { DISPLAY_PRICES_EUR } from "@config/pricing";
+import { STRIPE_API_VERSION } from "@lib/stripe/api";
 import type {
   SponsorDuration,
   SponsorCheckoutRequest,
@@ -188,7 +189,7 @@ async function createStripeCheckoutSession(
         headers: {
           Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
           "Content-Type": "application/x-www-form-urlencoded",
-          "Stripe-Version": "2025-03-31.basil", // Pin API version - must match Stripe dashboard
+          "Stripe-Version": STRIPE_API_VERSION,
           "Idempotency-Key": idempotencyKey,
         },
         body: params.toString(),
