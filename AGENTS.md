@@ -71,6 +71,33 @@
 
 ## Agent-Specific Instructions
 
+### Pre-Implementation Checklist (MANDATORY)
+
+Before writing ANY new code, ALWAYS search first:
+
+1. **Search for existing patterns** using `grep_search` or `semantic_search`:
+   - The concept name (e.g., "slug validation", "price formatting")
+   - Function name patterns (`isValid*`, `format*`, `build*`, `use*`)
+   - The literal value (regex pattern, constant)
+
+2. **Check canonical locations** based on what you're creating:
+   - Type/interface → search `types/`
+   - Validation function → search `utils/` for `isValid*`, `validate*`
+   - Helper/utility → search `utils/`, `lib/`
+   - Constant/config → search `utils/constants.ts`, `config/`
+   - Component → search `components/ui/`
+   - Hook → search `components/hooks/`
+
+3. **Report findings** before proposing implementation:
+   - "Found `isValidCategorySlugFormat` in `utils/category-mapping.ts` - will reuse"
+   - "No existing pattern found - will create new utility in `utils/`"
+
+4. **Wait for confirmation** before implementing (per copilot-instructions.md §19)
+
+**Anti-pattern**: Writing inline code first, then searching only when asked.
+
+### General Rules
+
 - Prefer surgical diffs; keep file moves/renames minimal and scoped.
 - Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
 - Types live only in `types/`; avoid redefining `NavigationItem`, `SocialLinks`, `EventProps`, `CitySummaryResponseDTO` (see `types/common.ts`, `types/api/city.ts`).

@@ -3,18 +3,19 @@
  * These helpers build URLSearchParams for Stripe checkout sessions
  */
 import { DISPLAY_PRICES_EUR } from "@config/pricing";
-import type { SponsorDuration, GeoScope } from "types/sponsor";
-import { DURATION_DAYS } from "types/sponsor";
+import type { SponsorDuration, GeoScope } from "@types/sponsor";
+import { DURATION_DAYS } from "@types/sponsor";
 
 /**
  * Convert EUR price to cents for Stripe
+ * Uses Math.round to avoid floating-point precision errors (e.g., 2.99 * 100 = 299.00000000000003)
  */
 export function getPriceInCents(
   duration: SponsorDuration,
   geoScope: GeoScope
 ): number {
   const priceEur = DISPLAY_PRICES_EUR[geoScope][duration];
-  return priceEur * 100;
+  return Math.round(priceEur * 100);
 }
 
 /**

@@ -205,16 +205,63 @@ function handlePaymentIntentSucceeded(
   // Useful for reconciliation or if you need payment_intent-level tracking
 }
 
+/**
+ * Unified event handler - single source of truth for all webhook event processing
+ */
+async function handleEvent(event: StripeWebhookEvent): Promise<void> {
+  switch (event.type) {
+    case "checkout.session.completed":
+      await handleCheckoutCompleted(
+        event.data.object as StripeWebhookCheckoutSession
+      );
+      break;
+
+    case "checkout.session.expired":
+      console.log("Checkout session expired:", event.data.object.id);
+      // Optionally clean up any pending data
+      break;
+
+    case "payment_intent.succeeded":
+      handlePaymentIntentSucceeded(
+        event.data.object as StripeWebhookPaymentIntent
+      );
+      break;
+
+    default:
+      console.log("Unhandled event type:", event.type);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get raw body for signature verification
     const payload = await request.text();
     const signature = request.headers.get("stripe-signature");
 
+    // Local dev bypass: allow unverified webhooks when no secret configured
+    // For production, always use Stripe CLI: stripe listen --forward-to localhost:3000/api/sponsors/webhook
+    const isLocalDev =
+      process.env.NODE_ENV === "development" && !WEBHOOK_SECRET;
+
+    if (isLocalDev) {
+      console.warn(
+        "⚠️ WEBHOOK SIGNATURE BYPASS: Processing unverified webhook in local dev mode"
+      );
+      try {
+        const event = JSON.parse(payload) as StripeWebhookEvent;
+        await handleEvent(event);
+        return NextResponse.json({ received: true });
+      } catch (parseError) {
+        console.error("Failed to parse webhook payload:", parseError);
+        return NextResponse.json(
+          { error: "Invalid JSON payload" },
+          { status: 400 }
+        );
+      }
+    }
+
     if (!WEBHOOK_SECRET) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
-      // For local testing, use Stripe CLI: stripe listen --forward-to localhost:3000/api/sponsors/webhook
-      // Then set STRIPE_WEBHOOK_SECRET in .env.local with the CLI's generated secret
       return NextResponse.json(
         { error: "Webhook secret not configured" },
         { status: 500 }
@@ -235,29 +282,7 @@ export async function POST(request: NextRequest) {
     }
 
     const event = JSON.parse(payload) as StripeWebhookEvent;
-
-    // Handle specific event types
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutCompleted(
-          event.data.object as StripeWebhookCheckoutSession
-        );
-        break;
-
-      case "checkout.session.expired":
-        console.log("Checkout session expired:", event.data.object.id);
-        // Optionally clean up any pending data
-        break;
-
-      case "payment_intent.succeeded":
-        handlePaymentIntentSucceeded(
-          event.data.object as StripeWebhookPaymentIntent
-        );
-        break;
-
-      default:
-        console.log("Unhandled event type:", event.type);
-    }
+    await handleEvent(event);
 
     // Always return 200 to acknowledge receipt
     return NextResponse.json({ received: true });

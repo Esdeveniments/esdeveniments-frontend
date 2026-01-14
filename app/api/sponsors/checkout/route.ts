@@ -7,13 +7,14 @@ import {
   buildCustomFieldParams,
   buildMetadataParams,
 } from "@lib/stripe/checkout-helpers";
+import { isValidCategorySlugFormat as isValidSlugFormat } from "@utils/category-mapping";
 import type {
   SponsorDuration,
   SponsorCheckoutRequest,
   StripeCheckoutSessionResponse,
   GeoScope,
-} from "types/sponsor";
-import { DURATION_DAYS, VALID_GEO_SCOPES } from "types/sponsor";
+} from "@types/sponsor";
+import { DURATION_DAYS, VALID_GEO_SCOPES } from "@types/sponsor";
 
 /**
  * Create Stripe Checkout Session using REST API (no SDK needed)
@@ -130,6 +131,14 @@ export async function POST(request: NextRequest) {
     if (!place || !placeName) {
       return NextResponse.json(
         { error: "Place selection is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate place format (slug pattern: lowercase letters, numbers, hyphens)
+    if (!isValidSlugFormat(place)) {
+      return NextResponse.json(
+        { error: "Invalid place format" },
         { status: 400 }
       );
     }
