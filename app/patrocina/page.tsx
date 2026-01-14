@@ -2,12 +2,13 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Metadata } from "next";
 import { Link } from "@i18n/routing";
 import { PricingSectionClient } from "@components/ui/sponsor";
+import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   UserGroupIcon,
   CurrencyEuroIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();
@@ -33,8 +34,51 @@ export default async function PatrocinaPage() {
   const steps = ["step1", "step2", "step3", "step4"] as const;
   const faqs = ["faq1", "faq2", "faq3", "faq4"] as const;
 
+  // Build FAQPage JSON-LD schema for rich snippets
+  const faqPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: t(`faq.items.${faq}.question`),
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: t(`faq.items.${faq}.answer`),
+      },
+    })),
+  };
+
+  // WebPage schema with breadcrumbs
+  const webPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: t("meta.title"),
+    description: t("meta.description"),
+    url: toLocalizedUrl("/patrocina", locale),
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Inici",
+          item: toLocalizedUrl("/", locale),
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: t("meta.title"),
+          item: toLocalizedUrl("/patrocina", locale),
+        },
+      ],
+    },
+  };
+
   return (
     <main className="min-h-screen bg-background">
+      {/* JSON-LD Structured Data */}
+      <JsonLdServer id="faq-schema" data={faqPageSchema} />
+      <JsonLdServer id="webpage-schema" data={webPageSchema} />
       {/* Hero Section */}
       <section className="py-section-y px-section-x bg-gradient-to-b from-primary/5 to-background">
         <div className="max-w-4xl mx-auto text-center">
