@@ -31,7 +31,7 @@ const AVAILABLE_DURATIONS = [3, 7, 14, 30] as const;
 
 // Base pricing in cents - single source of truth
 // Must be defined before loadPricingFromEnv to avoid TDZ error
-const BASE_PRICES_CENTS = {
+export const BASE_PRICES_CENTS = {
   town: { 3: 300, 7: 500, 14: 800, 30: 1200 },
   region: { 3: 500, 7: 800, 14: 1200, 30: 2000 },
   country: { 3: 800, 7: 1200, 14: 2000, 30: 3500 },

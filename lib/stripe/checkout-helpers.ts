@@ -2,20 +2,20 @@
  * Stripe Checkout parameter builders
  * These helpers build URLSearchParams for Stripe checkout sessions
  */
-import { DISPLAY_PRICES_EUR } from "@config/pricing";
+import { BASE_PRICES_CENTS } from "@config/pricing";
 import type { SponsorDuration, GeoScope } from "types/sponsor";
 import { DURATION_DAYS } from "types/sponsor";
 
 /**
- * Convert EUR price to cents for Stripe
- * Uses Math.round to avoid floating-point precision errors (e.g., 2.99 * 100 = 299.00000000000003)
+ * Get price in cents for Stripe
+ * Uses BASE_PRICES_CENTS directly to avoid EUR round-trip conversion
  */
 export function getPriceInCents(
   duration: SponsorDuration,
   geoScope: GeoScope
 ): number {
-  const priceEur = DISPLAY_PRICES_EUR[geoScope][duration];
-  return Math.round(priceEur * 100);
+  const days = DURATION_DAYS[duration];
+  return BASE_PRICES_CENTS[geoScope][days as keyof (typeof BASE_PRICES_CENTS)[typeof geoScope]];
 }
 
 /**
