@@ -96,12 +96,14 @@ export default function SponsorImageUpload({
       setProgress(100);
     } catch (e) {
       const code = e instanceof Error ? e.message : "upload_failed";
-      if (code === "not_paid") setError(t("upload.errors.notPaid"));
-      else if (code === "invalid_product") setError(t("upload.errors.invalidSession"));
-      else if (code === "missing_session" || code === "missing_image")
-        setError(t("upload.errors.missingFields"));
-      else if (code === "image_too_large") setError(t("upload.errors.tooLarge"));
-      else setError(t("upload.errors.generic"));
+      const errorMap: Record<string, string> = {
+        not_paid: t("upload.errors.notPaid"),
+        invalid_product: t("upload.errors.invalidSession"),
+        missing_session: t("upload.errors.missingFields"),
+        missing_image: t("upload.errors.missingFields"),
+        image_too_large: t("upload.errors.tooLarge"),
+      };
+      setError(errorMap[code] || t("upload.errors.generic"));
     } finally {
       setIsUploading(false);
     }

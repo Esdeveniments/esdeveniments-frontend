@@ -46,6 +46,19 @@ const sponsors: SponsorConfig[] = [
 ];
 
 /**
+ * Check if a sponsor is active on a given date.
+ * @param sponsor - The sponsor configuration
+ * @param date - The date to check against (should be midnight UTC)
+ * @returns true if the sponsor is active, false otherwise
+ */
+function isSponsorActive(sponsor: SponsorConfig, date: Date): boolean {
+  // Parse date strings as UTC to avoid timezone ambiguity
+  const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
+  const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
+  return date >= startDate && date <= endDate;
+}
+
+/**
  * Get the active sponsor for a specific place.
  * Returns the first matching sponsor that:
  * 1. Has the place in its places array
@@ -62,16 +75,7 @@ export function getActiveSponsorForPlace(place: string): ActiveSponsor | null {
   );
 
   for (const sponsor of sponsors) {
-    // Check if place matches
-    if (!sponsor.places.includes(place)) {
-      continue;
-    }
-
-    // Parse date strings as UTC to avoid timezone ambiguity
-    const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
-    const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
-
-    if (today >= startDate && today <= endDate) {
+    if (sponsor.places.includes(place) && isSponsorActive(sponsor, today)) {
       return sponsor;
     }
   }
@@ -96,9 +100,5 @@ export function getAllActiveSponsors(): ActiveSponsor[] {
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
   );
 
-  return sponsors.filter((sponsor) => {
-    const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
-    const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
-    return today >= startDate && today <= endDate;
-  });
+  return sponsors.filter((sponsor) => isSponsorActive(sponsor, today));
 }
