@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import {
@@ -96,6 +96,15 @@ export default function SponsorImageUpload({
   const [validation, setValidation] = useState<SponsorImageValidation | null>(
     null
   );
+
+  // Cleanup Object URL on component unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
   const placeLabel = useMemo(() => {
     // Only show slug in parentheses if it's meaningfully different from the name

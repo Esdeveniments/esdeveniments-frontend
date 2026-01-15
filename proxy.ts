@@ -234,19 +234,14 @@ export default async function proxy(request: NextRequest) {
         const visitorId =
           cookieVisitor || crypto.randomUUID().replace(/-/g, "");
 
-        // /api/visits needs visitor_id forwarded via header to backend
-        const isVisitsEndpoint =
-          pathname === "/api/visits" && request.method === "POST";
-        const apiReqHeaders = isVisitsEndpoint
-          ? new Headers(request.headers)
-          : undefined;
-        if (apiReqHeaders) {
-          apiReqHeaders.set("x-visitor-id", visitorId);
-        }
+        // Forward visitor_id via header so route handlers can access it in the same request cycle
+        // (cookie set on response won't be available to route handler until next request)
+        const apiReqHeaders = new Headers(request.headers);
+        apiReqHeaders.set("x-visitor-id", visitorId);
 
-        const response = NextResponse.next(
-          apiReqHeaders ? { request: { headers: apiReqHeaders } } : undefined
-        );
+        const response = NextResponse.next({
+          request: { headers: apiReqHeaders },
+        });
         if (!cookieVisitor) {
           response.cookies.set("visitor_id", visitorId, {
             path: "/",

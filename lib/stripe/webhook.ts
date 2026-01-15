@@ -44,10 +44,11 @@ export function parseSignatureHeader(signature: string): ParsedSignatureHeader {
   const v1Signatures: string[] = [];
 
   for (const element of signature.split(",")) {
-    const eqIndex = element.indexOf("=");
+    const trimmedElement = element.trim();
+    const eqIndex = trimmedElement.indexOf("=");
     if (eqIndex > 0) {
-      const key = element.slice(0, eqIndex);
-      const value = element.slice(eqIndex + 1);
+      const key = trimmedElement.slice(0, eqIndex).trim();
+      const value = trimmedElement.slice(eqIndex + 1).trim();
       if (value) {
         if (key === "t") {
           timestamp = value;
@@ -224,5 +225,7 @@ export function parseAndValidateEvent(payload: string): StripeWebhookEvent {
     );
   }
 
-  return parsed as StripeWebhookEvent;
+  // Cast is safe after Zod validation - we use validation.data (validated value)
+  // but must cast via unknown because Zod schema is less strict than TypeScript type
+  return validation.data as unknown as StripeWebhookEvent;
 }

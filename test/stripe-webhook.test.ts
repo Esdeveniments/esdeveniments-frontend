@@ -41,8 +41,8 @@ function generateTestSignature(
 
 describe("Stripe Webhook Signature Verification", () => {
   describe("parseSignatureHeader", () => {
-    it("parses valid signature header", () => {
-      const header = "t=1234567890,v1=abc123";
+    it("parses valid signature header with v0 (ignored)", () => {
+      const header = "t=1234567890,v1=abc123,v0=def456";
       const result = parseSignatureHeader(header);
 
       expect(result).toEqual({

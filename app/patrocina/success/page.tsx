@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { Link } from "@i18n/routing";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocaleSafely();
+  setRequestLocale(locale);
   const t = await getTranslations("Sponsorship");
   return {
     title: t("successPage.meta.title"),
@@ -13,6 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PatrocinaSuccessPage() {
+  const locale = await getLocaleSafely();
+  setRequestLocale(locale);
   const t = await getTranslations("Sponsorship");
 
   return (

@@ -1466,11 +1466,11 @@
       },
       "validation": {
         "warning": "Avís sobre la imatge:",
-        "tooSmall": "La imatge és massa petita (mínim {minWidth}x{minHeight}px). Pot sortir borrosa.",
+        "tooSmall": "La imatge és massa petita (mínim {minWidth}×{minHeight}px). Pot sortir borrosa.",
         "tooTall": "La imatge és massa alta. Apareixerà petita amb espai buit als costats.",
         "wrongRatio": "La proporció ({current}:1) no és ideal. Recomanem ~{recommended}:1 (horitzontal ample).",
         "canContinue": "Pots continuar igualment, però el resultat pot no ser l'òptim.",
-        "dimensions": "Dimensions: {width}x{height}px (proporció {ratio}:1)"
+        "dimensions": "Dimensions: {width}×{height}px (proporció {ratio}:1)"
       },
       "success": {
         "title": "Imatge pujada correctament.",

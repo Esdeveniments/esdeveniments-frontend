@@ -282,7 +282,8 @@ export default function PlaceSelector({
                       <button
                         key={`${place.type}-${place.slug}`}
                         onClick={() => handleSelect(place)}
-                        className="w-full px-4 py-2 text-left hover:bg-muted flex items-center justify-between gap-2"
+                        disabled={isOccupied}
+                        className={`w-full px-4 py-2 text-left flex items-center justify-between gap-2 ${isOccupied ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted'}`}
                       >
                         <span>{place.name}</span>
                         <span className="flex items-center gap-2">

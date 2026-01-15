@@ -130,11 +130,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate idempotency key from request params to prevent duplicate sessions
-    // Uses visitor_id cookie (set by proxy.ts on first request) + params for deterministic key
+    // Uses visitor_id from x-visitor-id header (set by proxy.ts middleware) for deterministic key
+    // Middleware ensures same visitor_id is used even on first request (before cookie is set)
     // Includes geoScope to prevent collisions between different pricing tiers
-    const visitorId = request.cookies.get("visitor_id")?.value;
-    // Fall back to UUID if visitor_id missing (e.g., cookies disabled)
-    // UUID avoids collision risk from IP-based fallbacks (NAT/shared IPs)
+    const visitorId = request.headers.get("x-visitor-id");
+    // Fall back to UUID if header missing (should not happen with middleware, but defensive)
     const userKey = visitorId || crypto.randomUUID();
     const idempotencyKey = crypto
       .createHash("sha256")

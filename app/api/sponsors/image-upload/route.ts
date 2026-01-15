@@ -7,6 +7,55 @@ import {
 } from "@lib/stripe";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
 
+// Image magic bytes for server-side content validation
+// Client-provided MIME types can be spoofed, so we verify actual file content
+const IMAGE_MAGIC_BYTES: { type: string; bytes: number[] }[] = [
+  { type: "image/jpeg", bytes: [0xff, 0xd8, 0xff] },
+  { type: "image/png", bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+  { type: "image/gif", bytes: [0x47, 0x49, 0x46, 0x38] }, // GIF8
+  { type: "image/webp", bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF (WebP starts with RIFF)
+];
+
+/**
+ * Validate file content by checking magic bytes.
+ * Returns true if the file starts with known image magic bytes.
+ */
+async function isValidImageContent(file: File): Promise<boolean> {
+  try {
+    // Read first 12 bytes (enough for all magic byte patterns)
+    const buffer = await file.slice(0, 12).arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    for (const { bytes: magicBytes } of IMAGE_MAGIC_BYTES) {
+      if (magicBytes.every((byte, index) => bytes[index] === byte)) {
+        return true;
+      }
+    }
+
+    // Special case for WebP: check for "WEBP" at offset 8 after RIFF
+    if (
+      bytes[0] === 0x52 &&
+      bytes[1] === 0x49 &&
+      bytes[2] === 0x46 &&
+      bytes[3] === 0x46
+    ) {
+      // Check if bytes 8-11 are "WEBP"
+      if (
+        bytes[8] === 0x57 &&
+        bytes[9] === 0x45 &&
+        bytes[10] === 0x42 &&
+        bytes[11] === 0x50
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -56,10 +105,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate file is actually an image
+    // Validate file is actually an image (client MIME type check)
     if (!imageFile.type.startsWith("image/")) {
       return NextResponse.json(
         { errorCode: "invalid_file_type", error: "File must be an image." },
+        { status: 400 }
+      );
+    }
+
+    // Server-side validation: check actual file content via magic bytes
+    // Client-provided MIME types can be spoofed by malicious clients
+    const isValidContent = await isValidImageContent(imageFile);
+    if (!isValidContent) {
+      return NextResponse.json(
+        { errorCode: "invalid_file_content", error: "File is not a valid image." },
         { status: 400 }
       );
     }
