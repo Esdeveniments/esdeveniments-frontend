@@ -24,7 +24,7 @@ export default async function PatrocinaSuccessPage() {
     <main className="min-h-screen bg-background py-section-y px-section-x">
       <div className="max-w-3xl mx-auto text-center space-y-6">
         <div className="flex justify-center">
-          <CheckCircleIcon className="h-16 w-16 text-green-500" />
+          <CheckCircleIcon className="h-16 w-16 text-success" />
         </div>
         <h1 className="heading-1">{t("successPage.title")}</h1>
         <p className="body-large text-foreground/80">{t("successPage.subtitle")}</p>

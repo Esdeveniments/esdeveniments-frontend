@@ -73,14 +73,12 @@ export default function CheckoutButton({
       <button
         onClick={handleCheckout}
         disabled={isDisabled}
-        className={`w-full text-center ${
-          popular ? "btn-primary" : "btn-outline"
-        } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`w-full ${popular ? "btn-primary" : "btn-outline"}`}
       >
         {isLoading ? t("checkout.processing") : t("pricing.cta")}
       </button>
       {error && (
-        <p className="text-sm text-red-500 mt-2 text-center">{error}</p>
+        <p className="text-sm text-error mt-2 text-center">{error}</p>
       )}
     </div>
   );

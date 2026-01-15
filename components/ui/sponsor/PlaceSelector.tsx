@@ -195,7 +195,7 @@ export default function PlaceSelector({
         <div className="card-bordered p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckIcon className="h-5 w-5 text-green-600" />
+              <CheckIcon className="h-5 w-5 text-success" />
               <span className="font-medium">{selectedPlace.name}</span>
               <span className="badge-default text-xs">
                 {getTypeLabel(selectedPlace.type)}
@@ -288,7 +288,7 @@ export default function PlaceSelector({
                         <span>{place.name}</span>
                         <span className="flex items-center gap-2">
                           {isOccupied && (
-                            <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
+                            <span className="text-xs px-1.5 py-0.5 bg-warning-muted text-warning-dark rounded">
                               {t("placeSelector.occupied")}
                             </span>
                           )}

@@ -438,7 +438,7 @@ export default function SponsorImageUpload({
                       {t("upload.dropzone.optimal")}
                     </span>
                     <span className="flex items-center gap-1">
-                      <CheckCircleIcon className="w-3.5 h-3.5 text-green-600" />
+                      <CheckCircleIcon className="w-3.5 h-3.5 text-success" />
                       {t("upload.dropzone.minimum")}
                     </span>
                   </div>
@@ -448,20 +448,20 @@ export default function SponsorImageUpload({
 
             {/* Validation warnings */}
             {validation && !validation.isOptimal && (
-              <div className="flex gap-3 p-3 bg-amber-50 border border-amber-200 rounded-card">
-                <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex gap-3 p-3 bg-warning-light border border-warning-border rounded-card">
+                <ExclamationTriangleIcon className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="body-small font-medium text-amber-800">
+                  <p className="body-small font-medium text-warning-dark">
                     {t("upload.validation.warning")}
                   </p>
-                  <ul className="body-small text-amber-700 space-y-0.5">
+                  <ul className="body-small text-warning-dark space-y-0.5">
                     {validation.warnings.map((w) => (
                       <li key={w.type}>
                         • {t(`upload.validation.${w.type}`, w.context)}
                       </li>
                     ))}
                   </ul>
-                  <p className="body-small text-amber-600">
+                  <p className="body-small text-warning">
                     {t("upload.validation.canContinue")}
                   </p>
                 </div>

@@ -106,8 +106,7 @@ export async function POST(request: NextRequest) {
     if (!duration || !(duration in DURATION_DAYS)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid duration. Must be one of: 3days, 7days, 14days, 30days",
+          error: `Invalid duration. Must be one of: ${Object.keys(DURATION_DAYS).join(", ")}`,
         },
         { status: 400 }
       );
