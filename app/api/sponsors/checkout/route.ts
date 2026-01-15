@@ -130,12 +130,9 @@ export async function POST(request: NextRequest) {
     // Uses visitor_id cookie (set by proxy.ts on first request) + params for deterministic key
     // Includes geoScope to prevent collisions between different pricing tiers
     const visitorId = request.cookies.get("visitor_id")?.value;
-    // Fall back to IP if visitor_id missing (e.g., cookies disabled)
-    // IP fallback has collision risk for users behind NAT/shared IPs
-    const clientIp =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      "unknown";
-    const userKey = visitorId || `anon-ip-${clientIp}`;
+    // Fall back to UUID if visitor_id missing (e.g., cookies disabled)
+    // UUID avoids collision risk from IP-based fallbacks (NAT/shared IPs)
+    const userKey = visitorId || crypto.randomUUID();
     const idempotencyKey = crypto
       .createHash("sha256")
       .update(`${userKey}-${duration}-${geoScope}-${place}-${placeName}`)

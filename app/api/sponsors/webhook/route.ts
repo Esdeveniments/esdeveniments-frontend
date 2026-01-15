@@ -42,12 +42,7 @@ function getCustomFieldValue(
   const field = session.custom_fields?.find((f) => f.key === key);
   if (!field) return null;
 
-  // Handle different field types
-  if (field.text?.value) return field.text.value;
-  if (field.dropdown?.value) return field.dropdown.value;
-  if (field.numeric?.value) return field.numeric.value;
-
-  return null;
+  return field.text?.value ?? field.dropdown?.value ?? field.numeric?.value ?? null;
 }
 
 /**
@@ -95,6 +90,7 @@ async function handleCheckoutCompleted(
     durationDays: session.metadata.duration_days,
     place: session.metadata.place,
     placeName: session.metadata.place_name,
+    geoScope: session.metadata.geo_scope,
     // From custom_fields (filled by customer)
     businessName,
     targetUrl,
@@ -117,6 +113,7 @@ async function handleCheckoutCompleted(
     durationDays: sponsorData.durationDays,
     place: sponsorData.place,
     placeName: sponsorData.placeName,
+    geoScope: sponsorData.geoScope,
     businessName: sponsorData.businessName,
     targetUrl: sponsorData.targetUrl,
     imageUrl: sponsorData.imageUrl ? "[set]" : null,
