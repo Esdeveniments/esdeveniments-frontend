@@ -21,6 +21,7 @@ import type { SponsorConfig, ActiveSponsor } from "types/sponsor";
  *   imageUrl: "https://example.com/banner.jpg",
  *   targetUrl: "https://example.com",
  *   places: ["barcelona", "gracia"],
+ *   geoScope: "town",
  *   startDate: "2026-01-15",
  *   endDate: "2026-01-22",
  * }
