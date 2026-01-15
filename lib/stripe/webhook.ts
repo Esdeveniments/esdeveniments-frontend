@@ -198,8 +198,9 @@ export function constructEvent(
     );
   }
 
-  // Cast is safe after Zod validation
-  return parsed as StripeWebhookEvent;
+  // Cast is safe after Zod validation - we use validation.data (validated value)
+  // but must cast via unknown because Zod schema is less strict than TypeScript type
+  return validation.data as unknown as StripeWebhookEvent;
 }
 
 /**

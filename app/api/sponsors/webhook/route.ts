@@ -39,6 +39,17 @@ export const maxDuration = 30;
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
+// Fail-fast: Prevent accidental misconfiguration in production
+// This check runs once at module load, crashing the app immediately on deploy
+if (
+  process.env.NODE_ENV === "production" &&
+  process.env.STRIPE_WEBHOOK_SKIP_VERIFY === "true"
+) {
+  throw new Error(
+    "FATAL: STRIPE_WEBHOOK_SKIP_VERIFY=true is forbidden in production"
+  );
+}
+
 /**
  * Extract custom field value by key
  */
