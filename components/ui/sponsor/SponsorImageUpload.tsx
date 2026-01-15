@@ -307,7 +307,7 @@ export default function SponsorImageUpload({
           /* Success state */
           <div className="space-y-6">
             <div className="flex items-center gap-3 p-4 bg-success-light border border-success-border rounded-card">
-              <div className="flex-shrink-0 w-10 h-10 bg-success-100 rounded-full flex items-center justify-center">
+              <div className="flex-shrink-0 w-10 h-10 bg-success-muted rounded-full flex items-center justify-center">
                 <CheckIcon className="w-6 h-6 text-success" />
               </div>
               <div>

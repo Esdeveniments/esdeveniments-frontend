@@ -62,6 +62,7 @@ export default function CheckoutButton({
       console.error("Checkout error:", err);
       setError(t("checkout.error"));
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
