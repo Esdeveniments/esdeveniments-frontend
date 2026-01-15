@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { CheckoutButtonProps } from "types/sponsor";
 
@@ -18,9 +18,13 @@ export default function CheckoutButton({
   const locale = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Ref-based guard prevents race condition where rapid clicks trigger multiple fetches
+  // before React re-renders with isLoading=true (per AGENTS.md React Hooks Best Practices)
+  const isSubmittingRef = useRef(false);
 
   const handleCheckout = async () => {
-    if (!place) return; // Safety check
+    if (isSubmittingRef.current || !place) return;
+    isSubmittingRef.current = true;
 
     setIsLoading(true);
     setError(null);

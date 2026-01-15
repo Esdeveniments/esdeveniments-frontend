@@ -306,15 +306,15 @@ export default function SponsorImageUpload({
         {result ? (
           /* Success state */
           <div className="space-y-6">
-            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-card">
-              <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckIcon className="w-6 h-6 text-green-600" />
+            <div className="flex items-center gap-3 p-4 bg-success-light border border-success-border rounded-card">
+              <div className="flex-shrink-0 w-10 h-10 bg-success-100 rounded-full flex items-center justify-center">
+                <CheckIcon className="w-6 h-6 text-success" />
               </div>
               <div>
-                <p className="body-normal font-medium text-green-800">
+                <p className="body-normal font-medium text-success-dark">
                   {t("upload.success.title")}
                 </p>
-                <p className="body-small text-green-700">
+                <p className="body-small text-success-dark">
                   {result.metadataSaved
                     ? t("upload.success.saved")
                     : t("upload.success.notSaved")}
@@ -365,7 +365,13 @@ export default function SponsorImageUpload({
               role="button"
               tabIndex={0}
               onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                // WAI-ARIA button pattern: activate on both Enter and Space
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault(); // Prevent page scroll on Space
+                  fileInputRef.current?.click();
+                }
+              }}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}

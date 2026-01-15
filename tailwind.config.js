@@ -79,6 +79,9 @@ module.exports = {
         // Semantic colors (NEW)
         success: "#10B981",
         "success-dark": "#059669",
+        "success-light": "#ECFDF5",
+        "success-100": "#D1FAE5",
+        "success-border": "#A7F3D0",
         error: "#EF4444",
         "error-dark": "#DC2626",
         warning: "#F59E0B",

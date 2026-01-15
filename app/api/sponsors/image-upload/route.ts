@@ -139,6 +139,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Prevent session replay: check if image was already uploaded for this session
+    // This also mitigates TOCTOU race conditions - first successful upload wins
+    if (isRecord(session)) {
+      const metadata = session.metadata;
+      if (isRecord(metadata) && getString(metadata.sponsor_image_url)) {
+        return NextResponse.json(
+          {
+            errorCode: "already_uploaded",
+            error: "Image already uploaded for this session.",
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     // Get payment intent ID to update its metadata too
     const paymentIntentId = getPaymentIntentId(session);
  
