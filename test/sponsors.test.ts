@@ -65,9 +65,9 @@ const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
 describe("Sponsor System", () => {
   describe("getActiveSponsorForPlace", () => {
     beforeEach(() => {
-      // Set a fixed date for consistent testing: 2026-01-15
+      // Set a fixed date for consistent testing: 2026-01-15 (UTC)
       vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-01-15T12:00:00"));
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
     });
 
     afterEach(() => {
@@ -233,7 +233,7 @@ describe("Sponsor System", () => {
   describe("Geo Scope Tiers", () => {
     beforeEach(() => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-01-15T12:00:00"));
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
     });
 
     afterEach(() => {
@@ -332,7 +332,7 @@ describe("Sponsor System", () => {
   describe("getAllActiveSponsors", () => {
     beforeEach(() => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-01-15T12:00:00"));
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
     });
 
     afterEach(() => {
@@ -441,7 +441,7 @@ describe("Sponsor System", () => {
 
     test("handles single-day sponsorship correctly", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-01-15T12:00:00"));
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
 
       const sponsor: SponsorConfig = {
         businessName: "One Day Sponsor",
@@ -457,11 +457,11 @@ describe("Sponsor System", () => {
       expect(getActiveSponsorForPlace("barcelona")).not.toBeNull();
 
       // Day before
-      vi.setSystemTime(new Date("2026-01-14T12:00:00"));
+      vi.setSystemTime(new Date("2026-01-14T12:00:00Z"));
       expect(getActiveSponsorForPlace("barcelona")).toBeNull();
 
       // Day after
-      vi.setSystemTime(new Date("2026-01-16T12:00:00"));
+      vi.setSystemTime(new Date("2026-01-16T12:00:00Z"));
       expect(getActiveSponsorForPlace("barcelona")).toBeNull();
 
       vi.useRealTimers();

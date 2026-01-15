@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Shared Stripe API utilities for server-side operations.
  * Provides low-level helpers for making authenticated Stripe API calls.
@@ -49,10 +51,12 @@ export async function stripeRequest(
     const response = await fetch(`${STRIPE_API_BASE}${path}`, {
       method,
       headers: {
+        // Spread customHeaders first so protected headers cannot be overridden
+        ...customHeaders,
+        // Protected headers - these must not be overridden by customHeaders
         Authorization: `Bearer ${secretKey}`,
         ...(body && { "Content-Type": "application/x-www-form-urlencoded" }),
         "Stripe-Version": STRIPE_API_VERSION,
-        ...customHeaders,
       },
       ...(body && { body: body.toString() }),
       signal: controller.signal,

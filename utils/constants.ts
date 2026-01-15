@@ -292,3 +292,29 @@ export const SPONSOR_POPULAR_PLACES = [
   { slug: "mataro", name: "Mataró", type: "town" as const },
   { slug: "sabadell", name: "Sabadell", type: "town" as const },
 ] as const;
+
+/**
+ * Sponsor banner image recommendations and validation thresholds.
+ * These are soft guidelines - we don't block uploads, just warn users.
+ * Banner displays at: mobile 100px height, desktop 120px height.
+ * Recommended aspect ratio ~5:1 (width:height) for best visual results.
+ */
+export const SPONSOR_BANNER_IMAGE = {
+  /** Recommended width in pixels for crisp display */
+  RECOMMENDED_WIDTH: 728,
+  /** Recommended height in pixels (5:1 aspect ratio) */
+  RECOMMENDED_HEIGHT: 150,
+  /** Minimum width before quality warning */
+  MIN_WIDTH: 400,
+  /** Minimum height before quality warning */
+  MIN_HEIGHT: 80,
+  /** Maximum width (larger is wasteful) */
+  MAX_WIDTH: 2000,
+  /** Maximum height (taller images waste space) */
+  MAX_HEIGHT: 600,
+  /** Ideal aspect ratio (width/height) */
+  IDEAL_ASPECT_RATIO: 5,
+  /** Acceptable aspect ratio range */
+  MIN_ASPECT_RATIO: 3,
+  MAX_ASPECT_RATIO: 8,
+} as const;

@@ -1319,7 +1319,7 @@
     "emptyState": "Anuncia el teu negoci aquí",
     "cta": "Patrocina aquesta pàgina"
   },
-  "Patrocina": {
+  "Sponsorship": {
     "meta": {
       "title": "Patrocina el teu poble | Esdeveniments.cat",
       "description": "Fes visible el teu negoci a la teva comarca. Arriba a milers de persones que busquen què fer al teu poble."
@@ -1395,7 +1395,7 @@
       "items": {
         "faq1": {
           "question": "Quina mida ha de tenir la imatge?",
-          "answer": "Qualsevol mida funciona. Recomanem imatges horitzontals (aprox. 800x400px) per millor visualització, però adaptarem qualsevol format."
+          "answer": "Mida òptima: 728×150px (proporció 5:1) per a màxima qualitat. Mida mínima: 400×80px (funciona bé, però menys nítida en pantalles grans). Les imatges altes o quadrades es veuran petites amb espai buit als costats."
         },
         "faq2": {
           "question": "Puc triar el poble o comarca?",
@@ -1426,6 +1426,7 @@
       "clear": "Esborrar selecció",
       "preview": "Apareixeràs a:",
       "noResults": "No s'han trobat resultats",
+      "occupied": "Ocupat",
       "selectFirst": "Primer selecciona on vols aparèixer",
       "orSpecific": "o escull una zona específica",
       "catalunya": {
@@ -1441,15 +1442,36 @@
       "successSubtitle": "Últim pas: puja la imatge del teu banner. Sense imatge no podem activar el patrocini."
     },
     "upload": {
-      "title": "Puja la imatge del teu anunci",
-      "subtitle": "Aquesta imatge es mostrarà a la pàgina del lloc seleccionat.",
+      "title": "Puja el teu bàner",
+      "subtitle": "Apareixerà a la pàgina del lloc que has triat.",
       "place": "Ubicació",
-      "previewAlt": "Previsualització de la imatge de l'anunci",
+      "previewAlt": "Previsualització de la imatge",
       "cta": "Pujar imatge",
       "uploading": "Pujant...",
       "progress": "{percent}% completat",
       "changeCta": "Canviar imatge",
       "doneCta": "Finalitzar",
+      "dropzone": {
+        "title": "Arrossega la imatge aquí o fes clic",
+        "formats": "Format horitzontal • JPG, PNG o WebP",
+        "optimal": "Òptim: 728×150px",
+        "minimum": "Mínim: 400×80px"
+      },
+      "guidelines": {
+        "title": "Recomanacions per a la imatge:",
+        "recommended": "Mida òptima: {width}×{height}px (proporció 5:1)",
+        "horizontal": "Format bàner horitzontal allargat",
+        "formats": "Formats: JPG, PNG o WebP",
+        "minimum": "Mínim acceptat: 400×80px"
+      },
+      "validation": {
+        "warning": "Avís sobre la imatge:",
+        "tooSmall": "La imatge és massa petita (mínim {minWidth}x{minHeight}px). Pot sortir borrosa.",
+        "tooTall": "La imatge és massa alta. Apareixerà petita amb espai buit als costats.",
+        "wrongRatio": "La proporció ({current}:1) no és ideal. Recomanem ~{recommended}:1 (horitzontal ample).",
+        "canContinue": "Pots continuar igualment, però el resultat pot no ser l'òptim.",
+        "dimensions": "Dimensions: {width}x{height}px (proporció {ratio}:1)"
+      },
       "success": {
         "title": "Imatge pujada correctament.",
         "saved": "Ja tenim la imatge associada al teu pagament. Ara revisarem i l'activarem.",
@@ -1461,7 +1483,8 @@
         "invalidSession": "No hem pogut verificar el teu pagament. Torna-ho a intentar o contacta'ns.",
         "missingFields": "Falten dades per pujar la imatge. Torna-ho a provar.",
         "tooLarge": "La imatge supera el límit permès. Redueix-la i torna-ho a intentar.",
-        "generic": "No s'ha pogut pujar la imatge. Torna-ho a intentar."
+        "generic": "No s'ha pogut pujar la imatge. Torna-ho a intentar.",
+        "invalidImage": "El fitxer no és una imatge vàlida."
       }
     },
     "uploadPage": {

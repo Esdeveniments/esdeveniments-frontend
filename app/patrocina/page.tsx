@@ -13,7 +13,7 @@ import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();
   setRequestLocale(locale);
-  const t = await getTranslations("Patrocina");
+  const t = await getTranslations("Sponsorship");
 
   return {
     title: t("meta.title"),
@@ -29,7 +29,7 @@ export default async function PatrocinaPage() {
   const locale = await getLocaleSafely();
   setRequestLocale(locale);
 
-  const t = await getTranslations("Patrocina");
+  const t = await getTranslations("Sponsorship");
   const tComponents = await getTranslations("Components");
 
   const steps = ["step1", "step2", "step3", "step4"] as const;

@@ -16,6 +16,7 @@ import type {
   StripeWebhookEvent,
   VerifySignatureOptions,
   SignatureVerificationResult,
+  ParsedSignatureHeader,
 } from "types/sponsor";
 
 /** Default tolerance for timestamp validation (5 minutes) */
@@ -36,11 +37,11 @@ const StripeWebhookEventSchema = z.object({
 /**
  * Parse Stripe signature header into its components.
  * Handles values containing `=` by only splitting on the first `=`.
+ * Collects all v1 signatures (Stripe may include multiple during secret rotation).
  */
-export function parseSignatureHeader(
-  signature: string
-): Record<string, string> {
-  const signatureMap: Record<string, string> = {};
+export function parseSignatureHeader(signature: string): ParsedSignatureHeader {
+  let timestamp: string | undefined;
+  const v1Signatures: string[] = [];
 
   for (const element of signature.split(",")) {
     const eqIndex = element.indexOf("=");
@@ -48,12 +49,16 @@ export function parseSignatureHeader(
       const key = element.slice(0, eqIndex);
       const value = element.slice(eqIndex + 1);
       if (value) {
-        signatureMap[key] = value;
+        if (key === "t") {
+          timestamp = value;
+        } else if (key === "v1") {
+          v1Signatures.push(value);
+        }
       }
     }
   }
 
-  return signatureMap;
+  return { timestamp, v1Signatures };
 }
 
 /**
@@ -110,15 +115,13 @@ export function verifyStripeSignature(
     currentTimestamp = Math.floor(Date.now() / 1000),
   } = options;
 
-  const signatureMap = parseSignatureHeader(signature);
-  const timestamp = signatureMap["t"];
-  const v1Signature = signatureMap["v1"];
+  const { timestamp, v1Signatures } = parseSignatureHeader(signature);
 
   if (!timestamp) {
     return { valid: false, error: "Missing timestamp in signature" };
   }
 
-  if (!v1Signature) {
+  if (v1Signatures.length === 0) {
     return { valid: false, error: "Missing v1 signature" };
   }
 
@@ -138,10 +141,16 @@ export function verifyStripeSignature(
     };
   }
 
-  // Compute and compare signature
+  // Compute expected signature
   const expectedSignature = computeSignature(payload, timestampNum, secret);
 
-  if (!secureCompare(v1Signature, expectedSignature)) {
+  // Verify against all v1 signatures - success if any matches
+  // (Stripe sends multiple signatures during secret rotation)
+  const signatureMatches = v1Signatures.some((v1Sig) =>
+    secureCompare(v1Sig, expectedSignature)
+  );
+
+  if (!signatureMatches) {
     return {
       valid: false,
       error: "Signature mismatch",
@@ -189,5 +198,31 @@ export function constructEvent(
   }
 
   // Cast is safe after Zod validation
+  return parsed as StripeWebhookEvent;
+}
+
+/**
+ * Parse and validate webhook payload without signature verification.
+ * Use ONLY for local development with STRIPE_WEBHOOK_SKIP_VERIFY=true.
+ *
+ * @param payload - Raw webhook body
+ * @returns Parsed and validated event
+ * @throws Error if payload is not valid JSON or fails schema validation
+ */
+export function parseAndValidateEvent(payload: string): StripeWebhookEvent {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload);
+  } catch {
+    throw new Error("Webhook payload is not valid JSON");
+  }
+
+  const validation = StripeWebhookEventSchema.safeParse(parsed);
+  if (!validation.success) {
+    throw new Error(
+      `Webhook payload validation failed: ${validation.error.message}`
+    );
+  }
+
   return parsed as StripeWebhookEvent;
 }

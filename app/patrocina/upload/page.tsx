@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import SponsorUploadPageClient from "@components/ui/sponsor/SponsorUploadPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Patrocina");
+  const t = await getTranslations("Sponsorship");
   return {
     title: t("uploadPage.meta.title"),
     description: t("uploadPage.meta.description"),

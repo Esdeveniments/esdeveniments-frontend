@@ -12,6 +12,7 @@ import {
   secureCompare,
   verifyStripeSignature,
   constructEvent,
+  parseAndValidateEvent,
 } from "@lib/stripe/webhook";
 
 // Test constants
@@ -41,13 +42,12 @@ function generateTestSignature(
 describe("Stripe Webhook Signature Verification", () => {
   describe("parseSignatureHeader", () => {
     it("parses valid signature header", () => {
-      const header = "t=1234567890,v1=abc123,v0=def456";
+      const header = "t=1234567890,v1=abc123";
       const result = parseSignatureHeader(header);
 
       expect(result).toEqual({
-        t: "1234567890",
-        v1: "abc123",
-        v0: "def456",
+        timestamp: "1234567890",
+        v1Signatures: ["abc123"],
       });
     });
 
@@ -56,14 +56,17 @@ describe("Stripe Webhook Signature Verification", () => {
       const result = parseSignatureHeader(header);
 
       expect(result).toEqual({
-        t: "1234567890",
-        v1: "abc123",
+        timestamp: "1234567890",
+        v1Signatures: ["abc123"],
       });
     });
 
     it("handles empty string", () => {
       const result = parseSignatureHeader("");
-      expect(result).toEqual({});
+      expect(result).toEqual({
+        timestamp: undefined,
+        v1Signatures: [],
+      });
     });
 
     it("handles malformed elements", () => {
@@ -71,8 +74,8 @@ describe("Stripe Webhook Signature Verification", () => {
       const result = parseSignatureHeader(header);
 
       expect(result).toEqual({
-        t: "123",
-        v1: "abc",
+        timestamp: "123",
+        v1Signatures: ["abc"],
       });
     });
 
@@ -81,8 +84,18 @@ describe("Stripe Webhook Signature Verification", () => {
       const result = parseSignatureHeader(header);
 
       expect(result).toEqual({
-        t: "1234567890",
-        v1: "abc=def=ghi",
+        timestamp: "1234567890",
+        v1Signatures: ["abc=def=ghi"],
+      });
+    });
+
+    it("collects multiple v1 signatures for secret rotation", () => {
+      const header = "t=1234567890,v1=sig_old,v1=sig_new";
+      const result = parseSignatureHeader(header);
+
+      expect(result).toEqual({
+        timestamp: "1234567890",
+        v1Signatures: ["sig_old", "sig_new"],
       });
     });
   });
@@ -172,6 +185,43 @@ describe("Stripe Webhook Signature Verification", () => {
       expect(result.valid).toBe(true);
       expect(result.timestamp).toBe(timestamp);
       expect(result.error).toBeUndefined();
+    });
+
+    it("validates when any of multiple v1 signatures matches (secret rotation)", () => {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signedPayload = `${timestamp}.${TEST_PAYLOAD}`;
+      const validSignature = crypto
+        .createHmac("sha256", TEST_SECRET)
+        .update(signedPayload)
+        .digest("hex");
+
+      // Simulate Stripe sending multiple signatures during secret rotation
+      // First signature is from old secret, second from current secret
+      const signature = `t=${timestamp},v1=invalid_old_sig,v1=${validSignature}`;
+
+      const result = verifyStripeSignature(
+        TEST_PAYLOAD,
+        signature,
+        TEST_SECRET
+      );
+
+      expect(result.valid).toBe(true);
+      expect(result.timestamp).toBe(timestamp);
+    });
+
+    it("rejects when none of multiple v1 signatures match", () => {
+      const timestamp = Math.floor(Date.now() / 1000);
+      // Simulate multiple signatures, none of which are valid
+      const signature = `t=${timestamp},v1=invalid_sig_1,v1=invalid_sig_2`;
+
+      const result = verifyStripeSignature(
+        TEST_PAYLOAD,
+        signature,
+        TEST_SECRET
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Signature mismatch");
     });
 
     it("rejects missing timestamp", () => {
@@ -387,6 +437,41 @@ describe("Stripe Webhook Signature Verification", () => {
       expect(() =>
         constructEvent(incompletePayload, signature, TEST_SECRET)
       ).toThrow("Webhook payload validation failed");
+    });
+  });
+
+  describe("parseAndValidateEvent", () => {
+    it("should parse and validate a valid webhook payload", () => {
+      const event = parseAndValidateEvent(TEST_PAYLOAD);
+
+      expect(event.id).toBe("evt_test_123");
+      expect(event.type).toBe("checkout.session.completed");
+      expect(event.data.object).toBeDefined();
+    });
+
+    it("should throw on invalid JSON", () => {
+      expect(() => parseAndValidateEvent("not valid json")).toThrow(
+        "Webhook payload is not valid JSON"
+      );
+    });
+
+    it("should throw on invalid event structure", () => {
+      const invalidPayload = JSON.stringify({ invalid: "structure" });
+
+      expect(() => parseAndValidateEvent(invalidPayload)).toThrow(
+        "Webhook payload validation failed"
+      );
+    });
+
+    it("should throw on missing required fields", () => {
+      const incompletePayload = JSON.stringify({
+        id: "evt_test_123",
+        // missing type and data
+      });
+
+      expect(() => parseAndValidateEvent(incompletePayload)).toThrow(
+        "Webhook payload validation failed"
+      );
     });
   });
 });

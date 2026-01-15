@@ -55,6 +55,14 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Validate file is actually an image
+    if (!imageFile.type.startsWith("image/")) {
+      return NextResponse.json(
+        { errorCode: "invalid_file_type", error: "File must be an image." },
+        { status: 400 }
+      );
+    }
  
     // Gate the upload behind a paid Stripe session
     const session = await fetchCheckoutSession(sessionIdRaw);

@@ -52,10 +52,13 @@ async function createStripeCheckoutSession(
   // Customer creation to get email
   params.append("customer_creation", "always");
 
-  // Statement descriptor - what customer sees on bank statement (max 22 chars)
+  // Statement descriptor suffix - what customer sees on bank statement after your business name
+  // Rules: max 22 chars for full descriptor, suffix typically 10 chars
+  // Allowed: alphanumeric, spaces, dashes. NOT allowed: . < > ' "
+  // Using suffix (not full descriptor) for card payment compatibility
   params.append(
-    "payment_intent_data[statement_descriptor]",
-    "ESDEVENIMENTS.CAT"
+    "payment_intent_data[statement_descriptor_suffix]",
+    "ESDEV-CAT"
   );
 
   // Session expiration - 30 minutes for better UX (default is 24h)

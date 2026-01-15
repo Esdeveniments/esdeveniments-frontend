@@ -14,6 +14,7 @@ export {
 export {
   verifyStripeSignature,
   constructEvent,
+  parseAndValidateEvent,
   parseSignatureHeader,
   computeSignature,
   secureCompare,
@@ -22,4 +23,5 @@ export {
 export type {
   VerifySignatureOptions,
   SignatureVerificationResult,
+  ParsedSignatureHeader,
 } from "types/sponsor";

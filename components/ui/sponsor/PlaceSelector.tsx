@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import type { PlaceOption, PlaceSelectorProps } from "types/sponsor";
 import { SPONSOR_POPULAR_PLACES } from "@utils/constants";
 import { normalizeForSearch } from "@utils/string-helpers";
+import { getOccupiedPlaceSlugs } from "@config/sponsors";
 import {
   MapPinIcon,
   CheckIcon,
@@ -40,13 +41,16 @@ export default function PlaceSelector({
   onPlaceSelect,
   selectedPlace,
 }: PlaceSelectorProps) {
-  const t = useTranslations("Patrocina");
+  const t = useTranslations("Sponsorship");
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [places, setPlaces] = useState<PlaceOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Get currently occupied places (computed once on mount)
+  const occupiedSlugs = useMemo(() => new Set(getOccupiedPlaceSlugs()), []);
 
   // Fetch places on mount
   useEffect(() => {
@@ -272,18 +276,28 @@ export default function PlaceSelector({
                 className="absolute z-50 w-full mt-1 bg-background border border-border rounded-card shadow-lg max-h-60 overflow-auto"
               >
                 {filteredPlaces.length > 0 ? (
-                  filteredPlaces.map((place) => (
-                    <button
-                      key={`${place.type}-${place.slug}`}
-                      onClick={() => handleSelect(place)}
-                      className="w-full px-4 py-2 text-left hover:bg-muted flex items-center justify-between gap-2"
-                    >
-                      <span>{place.name}</span>
-                      <span className="text-xs text-foreground/50">
-                        {getTypeLabel(place.type)}
-                      </span>
-                    </button>
-                  ))
+                  filteredPlaces.map((place) => {
+                    const isOccupied = occupiedSlugs.has(place.slug);
+                    return (
+                      <button
+                        key={`${place.type}-${place.slug}`}
+                        onClick={() => handleSelect(place)}
+                        className="w-full px-4 py-2 text-left hover:bg-muted flex items-center justify-between gap-2"
+                      >
+                        <span>{place.name}</span>
+                        <span className="flex items-center gap-2">
+                          {isOccupied && (
+                            <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
+                              {t("placeSelector.occupied")}
+                            </span>
+                          )}
+                          <span className="text-xs text-foreground/50">
+                            {getTypeLabel(place.type)}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })
                 ) : (
                   <div className="px-4 py-3 text-foreground/50 text-center">
                     {t("placeSelector.noResults")}

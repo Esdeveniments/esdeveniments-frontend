@@ -103,3 +103,18 @@ export function getAllActiveSponsors(): ActiveSponsor[] {
 
   return sponsors.filter((sponsor) => isSponsorActive(sponsor, today));
 }
+
+/**
+ * Get all place slugs that currently have active sponsors.
+ * Used by PlaceSelector to show availability status.
+ */
+export function getOccupiedPlaceSlugs(): string[] {
+  const activeSponsors = getAllActiveSponsors();
+  const slugs = new Set<string>();
+  for (const sponsor of activeSponsors) {
+    for (const place of sponsor.places) {
+      slugs.add(place);
+    }
+  }
+  return Array.from(slugs);
+}

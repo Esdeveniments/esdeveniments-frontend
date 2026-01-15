@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import {
   updatePaymentIntentMetadata,
-  verifyStripeSignature,
+  constructEvent,
+  parseAndValidateEvent,
 } from "@lib/stripe";
 import type {
   StripeWebhookEvent,
@@ -14,12 +15,18 @@ import type {
  * Stripe Webhook handler for sponsor payments.
  *
  * Listens for:
- * - checkout.session.completed: Confirm payment, extract custom_fields, copy to payment intent
+ * - checkout.session.completed: Confirm payment (only if payment_status === "paid")
+ * - checkout.session.async_payment_succeeded: Delayed payment confirmation (bank transfers, SEPA)
+ * - checkout.session.async_payment_failed: Handle failed async payments
  * - checkout.session.expired: Clean up abandoned sessions
  * - payment_intent.succeeded: Secondary confirmation (optional redundancy)
  *
+ * Note: checkout.session.completed can fire with payment_status "unpaid" for async
+ * payment methods. We guard against this to avoid premature sponsor activation.
+ *
  * @see https://stripe.com/docs/webhooks
  * @see https://stripe.com/docs/webhooks/best-practices
+ * @see https://stripe.com/docs/payments/checkout/fulfill-orders#delayed-notification
  */
 
 /**
@@ -47,6 +54,12 @@ function getCustomFieldValue(
 
 /**
  * Process completed checkout session
+ *
+ * Note: checkout.session.completed fires when checkout flow completes, but for async
+ * payment methods (bank transfers, SEPA, etc.) payment_status may be "unpaid".
+ * We only process when payment_status === "paid" to avoid premature business logic.
+ *
+ * @see https://stripe.com/docs/payments/checkout/fulfill-orders#delayed-notification
  */
 async function handleCheckoutCompleted(
   session: StripeWebhookCheckoutSession
@@ -54,6 +67,15 @@ async function handleCheckoutCompleted(
   // Only process sponsor_banner payments
   if (session.metadata?.product !== "sponsor_banner") {
     console.log("Skipping non-sponsor checkout:", session.id);
+    return;
+  }
+
+  // Guard: Only process when payment is actually completed
+  // For async payment methods, wait for checkout.session.async_payment_succeeded
+  if (session.payment_status !== "paid") {
+    console.log(
+      `Checkout ${session.id} completed but payment_status is "${session.payment_status}" - awaiting payment confirmation`
+    );
     return;
   }
 
@@ -164,6 +186,22 @@ async function handleEvent(event: StripeWebhookEvent): Promise<void> {
       );
       break;
 
+    case "checkout.session.async_payment_succeeded":
+      // Async payment completed (bank transfers, SEPA, etc.)
+      // Process same as completed - the payment_status will now be "paid"
+      await handleCheckoutCompleted(
+        event.data.object as StripeWebhookCheckoutSession
+      );
+      break;
+
+    case "checkout.session.async_payment_failed":
+      console.log(
+        "Async payment failed for checkout:",
+        event.data.object.id
+      );
+      // Optionally notify admin or clean up pending sponsor data
+      break;
+
     case "checkout.session.expired":
       console.log("Checkout session expired:", event.data.object.id);
       // Optionally clean up any pending data
@@ -186,23 +224,27 @@ export async function POST(request: NextRequest) {
     const payload = await request.text();
     const signature = request.headers.get("stripe-signature");
 
-    // Local dev bypass: allow unverified webhooks when no secret configured
-    // For production, always use Stripe CLI: stripe listen --forward-to localhost:3000/api/sponsors/webhook
-    const isLocalDev =
-      process.env.NODE_ENV === "development" && !WEBHOOK_SECRET;
+    // Local dev bypass: requires EXPLICIT opt-in via STRIPE_WEBHOOK_SKIP_VERIFY=true
+    // This prevents accidental bypass in misconfigured deployments
+    // For local dev with signature verification, use Stripe CLI:
+    //   stripe listen --forward-to localhost:3000/api/sponsors/webhook
+    const allowUnsafeBypass =
+      process.env.NODE_ENV === "development" &&
+      process.env.STRIPE_WEBHOOK_SKIP_VERIFY === "true" &&
+      !WEBHOOK_SECRET;
 
-    if (isLocalDev) {
+    if (allowUnsafeBypass) {
       console.warn(
-        "⚠️ WEBHOOK SIGNATURE BYPASS: Processing unverified webhook in local dev mode"
+        "⚠️ WEBHOOK SIGNATURE BYPASS: Processing unverified webhook (STRIPE_WEBHOOK_SKIP_VERIFY=true)"
       );
       try {
-        const event = JSON.parse(payload) as StripeWebhookEvent;
+        const event = parseAndValidateEvent(payload);
         await handleEvent(event);
         return NextResponse.json({ received: true });
       } catch (parseError) {
-        console.error("Failed to parse webhook payload:", parseError);
+        console.error("Failed to parse/validate webhook payload:", parseError);
         return NextResponse.json(
-          { error: "Invalid JSON payload" },
+          { error: "Invalid webhook payload" },
           { status: 400 }
         );
       }
@@ -223,18 +265,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify signature
-    const verificationResult = verifyStripeSignature(
-      payload,
-      signature,
-      WEBHOOK_SECRET
-    );
-    if (!verificationResult.valid) {
-      console.error("Invalid webhook signature:", verificationResult.error);
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    // Verify signature and validate payload with Zod schema
+    let event: StripeWebhookEvent;
+    try {
+      event = constructEvent(payload, signature, WEBHOOK_SECRET);
+    } catch (error) {
+      console.error(
+        "Webhook verification/validation failed:",
+        error instanceof Error ? error.message : error
+      );
+      return NextResponse.json(
+        { error: "Invalid signature or payload" },
+        { status: 400 }
+      );
     }
 
-    const event = JSON.parse(payload) as StripeWebhookEvent;
     await handleEvent(event);
 
     // Always return 200 to acknowledge receipt

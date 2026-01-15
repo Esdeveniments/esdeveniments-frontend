@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Patrocina");
+  const t = await getTranslations("Sponsorship");
   return {
     title: t("cancelPage.meta.title"),
     description: t("cancelPage.meta.description"),
@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PatrocinaCancelledPage() {
-  const t = await getTranslations("Patrocina");
+  const t = await getTranslations("Sponsorship");
 
   return (
     <main className="min-h-screen bg-background py-section-y px-section-x">

@@ -4,7 +4,7 @@ import { Link } from "@i18n/routing";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Patrocina");
+  const t = await getTranslations("Sponsorship");
   return {
     title: t("successPage.meta.title"),
     description: t("successPage.meta.description"),
@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PatrocinaSuccessPage() {
-  const t = await getTranslations("Patrocina");
+  const t = await getTranslations("Sponsorship");
 
   return (
     <main className="min-h-screen bg-background py-section-y px-section-x">

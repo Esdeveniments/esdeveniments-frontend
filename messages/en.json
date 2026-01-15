@@ -1217,10 +1217,7 @@
         "for the",
         "by the"
       ],
-      "feminineExceptions": [
-        "gent gran",
-        "dansa"
-      ],
+      "feminineExceptions": ["gent gran", "dansa"],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1319,7 +1316,7 @@
     "emptyState": "Advertise your business here",
     "cta": "Sponsor this page"
   },
-  "Patrocina": {
+  "Sponsorship": {
     "meta": {
       "title": "Sponsor Your Town | Esdeveniments.cat",
       "description": "Make your business visible in your region. Reach thousands of people looking for things to do in your area."
@@ -1395,7 +1392,7 @@
       "items": {
         "faq1": {
           "question": "What size should the image be?",
-          "answer": "Any size works. We recommend horizontal images (approx. 800x400px) for better display, but we'll adapt any format."
+          "answer": "Optimal size: 728×150px (5:1 ratio) for best quality. Minimum size: 400×80px (works well, but less sharp on large screens). Tall or square images will appear smaller with empty space on the sides."
         },
         "faq2": {
           "question": "Can I choose the town or region?",
@@ -1426,6 +1423,7 @@
       "clear": "Clear selection",
       "preview": "You'll appear at:",
       "noResults": "No results found",
+      "occupied": "Occupied",
       "selectFirst": "First select where you want to appear",
       "orSpecific": "or choose a specific area",
       "catalunya": {
@@ -1441,15 +1439,36 @@
       "successSubtitle": "Final step: upload your banner image. We can't activate the sponsorship without it."
     },
     "upload": {
-      "title": "Upload your ad image",
-      "subtitle": "This image will be shown on the selected place page.",
+      "title": "Upload your banner",
+      "subtitle": "It will appear on the place page you selected.",
       "place": "Location",
-      "previewAlt": "Ad image preview",
+      "previewAlt": "Image preview",
       "cta": "Upload image",
       "uploading": "Uploading...",
       "progress": "{percent}% completed",
       "changeCta": "Change image",
       "doneCta": "Finish",
+      "dropzone": {
+        "title": "Drag image here or click to select",
+        "formats": "Horizontal format • JPG, PNG or WebP",
+        "optimal": "Optimal: 728×150px",
+        "minimum": "Min: 400×80px"
+      },
+      "guidelines": {
+        "title": "Image recommendations:",
+        "recommended": "Optimal: {width}×{height}px (5:1 ratio)",
+        "horizontal": "Wide horizontal banner format",
+        "formats": "Formats: JPG, PNG or WebP",
+        "minimum": "Minimum accepted: 400×80px"
+      },
+      "validation": {
+        "warning": "Image warning:",
+        "tooSmall": "The image is too small (minimum {minWidth}x{minHeight}px). It may appear blurry.",
+        "tooTall": "The image is too tall. It will appear small with empty space on the sides.",
+        "wrongRatio": "The aspect ratio ({current}:1) is not ideal. We recommend ~{recommended}:1 (wide horizontal).",
+        "canContinue": "You can still continue, but the result may not be optimal.",
+        "dimensions": "Dimensions: {width}x{height}px (ratio {ratio}:1)"
+      },
       "success": {
         "title": "Image uploaded successfully.",
         "saved": "We’ve linked the image to your payment. We’ll review it and activate your ad.",
@@ -1461,7 +1480,8 @@
         "invalidSession": "We couldn’t verify your payment. Please try again or contact us.",
         "missingFields": "Missing information to upload the image. Please try again.",
         "tooLarge": "The image exceeds the allowed limit. Please reduce it and try again.",
-        "generic": "We couldn't upload the image. Please try again."
+        "generic": "We couldn't upload the image. Please try again.",
+        "invalidImage": "The file is not a valid image."
       }
     },
     "uploadPage": {

@@ -45,7 +45,7 @@ function getPricesForScope(scope: GeoScope): Record<SponsorDuration, number> {
  * Prices update dynamically based on selected place type.
  */
 export default function PricingSectionClient() {
-  const t = useTranslations("Patrocina");
+  const t = useTranslations("Sponsorship");
   const [selectedPlace, setSelectedPlace] = useState<PlaceOption | null>(null);
 
   // Get current geo scope and prices with safe fallbacks

@@ -157,6 +157,32 @@ export interface SponsorImageUploadResult {
 }
 
 /**
+ * Validation result for sponsor banner image dimensions.
+ * Used for client-side soft validation (warning, not blocking).
+ */
+export interface SponsorImageValidation {
+  /** Whether the image meets all recommendations */
+  isOptimal: boolean;
+  /** Specific warnings for the user */
+  warnings: SponsorImageWarning[];
+  /** Actual image dimensions */
+  width: number;
+  height: number;
+  /** Calculated aspect ratio */
+  aspectRatio: number;
+}
+
+/**
+ * Individual warning about sponsor image dimensions
+ */
+export interface SponsorImageWarning {
+  /** Warning type for translation key mapping */
+  type: "tooSmall" | "tooTall" | "tooWide" | "wrongRatio";
+  /** Additional context for the warning message */
+  context?: Record<string, string | number>;
+}
+
+/**
  * Stripe webhook event structure
  */
 export interface StripeWebhookEvent {
@@ -220,4 +246,13 @@ export interface SignatureVerificationResult {
   valid: boolean;
   error?: string;
   timestamp?: number;
+}
+
+/**
+ * Parsed components from the Stripe signature header.
+ * Supports multiple v1 signatures (Stripe sends multiple during secret rotation).
+ */
+export interface ParsedSignatureHeader {
+  timestamp: string | undefined;
+  v1Signatures: string[];
 }

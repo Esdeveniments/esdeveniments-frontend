@@ -1318,7 +1318,7 @@
     "emptyState": "Anuncia tu negocio aquí",
     "cta": "Patrocina esta página"
   },
-  "Patrocina": {
+  "Sponsorship": {
     "meta": {
       "title": "Patrocina tu pueblo | Esdeveniments.cat",
       "description": "Haz visible tu negocio en tu comarca. Llega a miles de personas que buscan qué hacer en tu pueblo."
@@ -1394,7 +1394,7 @@
       "items": {
         "faq1": {
           "question": "¿Qué tamaño debe tener la imagen?",
-          "answer": "Cualquier tamaño funciona. Recomendamos imágenes horizontales (aprox. 800x400px) para mejor visualización, pero adaptaremos cualquier formato."
+          "answer": "Tamaño óptimo: 728×150px (proporción 5:1) para máxima calidad. Tamaño mínimo: 400×80px (funciona bien, pero menos nítida en pantallas grandes). Las imágenes altas o cuadradas se verán pequeñas con espacio vacío a los lados."
         },
         "faq2": {
           "question": "¿Puedo elegir el pueblo o comarca?",
@@ -1425,6 +1425,7 @@
       "clear": "Borrar selección",
       "preview": "Aparecerás en:",
       "noResults": "No se han encontrado resultados",
+      "occupied": "Ocupado",
       "selectFirst": "Primero selecciona dónde quieres aparecer",
       "orSpecific": "o elige una zona específica",
       "catalunya": {
@@ -1440,15 +1441,36 @@
       "successSubtitle": "Último paso: sube la imagen de tu banner. Sin imagen no podemos activar el patrocinio."
     },
     "upload": {
-      "title": "Sube la imagen de tu anuncio",
-      "subtitle": "Esta imagen se mostrará en la página del lugar seleccionado.",
+      "title": "Sube tu banner",
+      "subtitle": "Aparecerá en la página del lugar que has elegido.",
       "place": "Ubicación",
-      "previewAlt": "Vista previa de la imagen del anuncio",
+      "previewAlt": "Vista previa de la imagen",
       "cta": "Subir imagen",
       "uploading": "Subiendo...",
       "progress": "{percent}% completado",
       "changeCta": "Cambiar imagen",
       "doneCta": "Finalizar",
+      "dropzone": {
+        "title": "Arrastra la imagen aquí o haz clic",
+        "formats": "Formato horizontal • JPG, PNG o WebP",
+        "optimal": "Óptimo: 728×150px",
+        "minimum": "Mínimo: 400×80px"
+      },
+      "guidelines": {
+        "title": "Recomendaciones para la imagen:",
+        "recommended": "Tamaño óptimo: {width}×{height}px (proporción 5:1)",
+        "horizontal": "Formato banner horizontal alargado",
+        "formats": "Formatos: JPG, PNG o WebP",
+        "minimum": "Mínimo aceptado: 400×80px"
+      },
+      "validation": {
+        "warning": "Aviso sobre la imagen:",
+        "tooSmall": "La imagen es demasiado pequeña (mínimo {minWidth}x{minHeight}px). Puede salir borrosa.",
+        "tooTall": "La imagen es demasiado alta. Aparecerá pequeña con espacio vacío a los lados.",
+        "wrongRatio": "La proporción ({current}:1) no es ideal. Recomendamos ~{recommended}:1 (horizontal ancho).",
+        "canContinue": "Puedes continuar igualmente, pero el resultado puede no ser óptimo.",
+        "dimensions": "Dimensiones: {width}x{height}px (proporción {ratio}:1)"
+      },
       "success": {
         "title": "Imagen subida correctamente.",
         "saved": "Ya tenemos la imagen asociada a tu pago. Ahora la revisaremos y la activaremos.",
@@ -1460,7 +1482,8 @@
         "invalidSession": "No hemos podido verificar tu pago. Inténtalo de nuevo o contáctanos.",
         "missingFields": "Faltan datos para subir la imagen. Inténtalo de nuevo.",
         "tooLarge": "La imagen supera el límite permitido. Redúcela e inténtalo de nuevo.",
-        "generic": "No se ha podido subir la imagen. Inténtalo de nuevo."
+        "generic": "No se ha podido subir la imagen. Inténtalo de nuevo.",
+        "invalidImage": "El archivo no es una imagen válida."
       }
     },
     "uploadPage": {

@@ -69,6 +69,9 @@ if (!self.workbox) {
   // If the page is not in the cache, it will fall back to the offline page.
   const pageStrategy = new workbox.strategies.NetworkFirst({
     cacheName: "esdeveniments-pages-cache",
+    matchOptions: {
+      ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
+    },
     plugins: [
       respectCacheControlPlugin, // Don't cache private/no-store responses
       new workbox.broadcastUpdate.BroadcastUpdatePlugin(),
@@ -119,6 +122,9 @@ if (!self.workbox) {
       request.destination === "font",
     new workbox.strategies.CacheFirst({
       cacheName: "esdeveniments-static-assets-cache",
+      matchOptions: {
+        ignoreVary: true, // Ignore Vary: Accept-Encoding header
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],
@@ -139,6 +145,9 @@ if (!self.workbox) {
     ({ request }) => request.destination === "image",
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: "esdeveniments-images-cache",
+      matchOptions: {
+        ignoreVary: true, // Ignore Vary: Accept-Encoding header
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],
@@ -159,6 +168,9 @@ if (!self.workbox) {
       url.pathname === "/api/events/categorized",
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: "esdeveniments-events-api-cache",
+      matchOptions: {
+        ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],
@@ -178,6 +190,9 @@ if (!self.workbox) {
       url.pathname === "/api/news" || url.pathname.startsWith("/api/news/"),
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: "esdeveniments-news-api-cache",
+      matchOptions: {
+        ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],
@@ -199,6 +214,9 @@ if (!self.workbox) {
     new workbox.strategies.NetworkFirst({
       cacheName: "esdeveniments-image-proxy-cache",
       networkTimeoutSeconds: 5, // Fall back to cache after 5s
+      matchOptions: {
+        ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],
@@ -221,6 +239,9 @@ if (!self.workbox) {
       !url.pathname.startsWith("/api/image-proxy"),
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: "esdeveniments-local-api-cache",
+      matchOptions: {
+        ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],
@@ -239,6 +260,9 @@ if (!self.workbox) {
     ({ url }) => url.origin === "{{API_ORIGIN}}",
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: "esdeveniments-external-api-cache",
+      matchOptions: {
+        ignoreVary: true, // Ignore Vary headers for consistent cache matching
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],
@@ -257,6 +281,9 @@ if (!self.workbox) {
   workbox.routing.setDefaultHandler(
     new workbox.strategies.NetworkFirst({
       cacheName: "esdeveniments-default-cache",
+      matchOptions: {
+        ignoreVary: true, // Ignore Vary headers for consistent cache matching
+      },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200],

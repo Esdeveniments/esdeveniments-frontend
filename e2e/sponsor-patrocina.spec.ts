@@ -132,17 +132,15 @@ test.describe("Sponsor Empty State CTA", () => {
     const sponsorCta = sponsorSlot.getByRole("link", { name: /anuncia/i });
     const sponsorBanner = sponsorSlot.locator('[data-testid="sponsor-banner"]');
 
-    // Assert: exactly one of these should be visible (mutually exclusive)
-    const ctaVisible = await sponsorCta.isVisible();
-    const bannerVisible = await sponsorBanner.isVisible();
-
-    expect(
-      ctaVisible || bannerVisible,
+    // Assert: at least one of these should be visible (use .or() for auto-waiting)
+    await expect(
+      sponsorCta.or(sponsorBanner).first(),
       "Expected either sponsor CTA or sponsor banner to be visible"
-    ).toBe(true);
+    ).toBeVisible({ timeout: 10000 });
 
     // If empty state CTA is shown, verify it links to patrocina
-    if (ctaVisible) {
+    // Use count() after the visibility wait above to avoid flakiness
+    if ((await sponsorCta.count()) > 0 && (await sponsorCta.isVisible())) {
       const href = await sponsorCta.getAttribute("href");
       expect(href).toContain("/patrocina");
     }

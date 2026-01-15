@@ -6,7 +6,7 @@ import { Link, useRouter } from "@i18n/routing";
 import SponsorImageUpload from "./SponsorImageUpload";
 
 export default function SponsorUploadPageClient() {
-  const t = useTranslations("Patrocina");
+  const t = useTranslations("Sponsorship");
   const router = useRouter();
   const searchParams = useSearchParams();
 

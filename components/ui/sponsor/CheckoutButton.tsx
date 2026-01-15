@@ -14,7 +14,7 @@ export default function CheckoutButton({
   popular = false,
   place,
 }: CheckoutButtonProps) {
-  const t = useTranslations("Patrocina");
+  const t = useTranslations("Sponsorship");
   const locale = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +47,10 @@ export default function CheckoutButton({
       }
 
       const { url } = await response.json();
+
+      if (!url || typeof url !== "string") {
+        throw new Error("Invalid checkout URL received from API");
+      }
 
       // Redirect to Stripe Checkout
       window.location.href = url;
