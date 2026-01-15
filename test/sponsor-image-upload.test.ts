@@ -29,8 +29,22 @@ import {
 // Cast to mocked functions for type safety
 const mockUploadEventImage = vi.mocked(uploadEventImage);
 const mockFetchCheckoutSession = vi.mocked(fetchCheckoutSession);
-const mockUpdateCheckoutSessionMetadata = vi.mocked(updateCheckoutSessionMetadata);
+const mockUpdateCheckoutSessionMetadata = vi.mocked(
+  updateCheckoutSessionMetadata
+);
 const mockUpdatePaymentIntentMetadata = vi.mocked(updatePaymentIntentMetadata);
+
+/**
+ * Create a mock file with valid JPEG magic bytes.
+ * The route validates actual file content via magic bytes using file.slice().arrayBuffer().
+ */
+function createMockJpegFile(name = "test.jpg"): File {
+  // JPEG magic bytes: 0xFF 0xD8 0xFF (SOI + APP0 marker)
+  const jpegMagicBytes = new Uint8Array([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+  ]);
+  return new File([jpegMagicBytes], name, { type: "image/jpeg" });
+}
 
 describe("Sponsor Image Upload Route", () => {
   const validSessionId = "cs_test_valid_session";
@@ -79,7 +93,7 @@ describe("Sponsor Image Upload Route", () => {
 
   describe("metadata save failure handling", () => {
     it("returns error when session metadata save fails", async () => {
-      const testFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const testFile = createMockJpegFile();
       const formData = createMockFormData(validSessionId, testFile);
       const request = createMockRequest(formData);
 
@@ -98,7 +112,7 @@ describe("Sponsor Image Upload Route", () => {
     });
 
     it("returns success when session metadata saves but payment intent fails", async () => {
-      const testFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const testFile = createMockJpegFile();
       const formData = createMockFormData(validSessionId, testFile);
       const request = createMockRequest(formData);
 
@@ -117,7 +131,7 @@ describe("Sponsor Image Upload Route", () => {
     });
 
     it("returns success when both metadata saves succeed", async () => {
-      const testFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const testFile = createMockJpegFile();
       const formData = createMockFormData(validSessionId, testFile);
       const request = createMockRequest(formData);
 
@@ -160,7 +174,7 @@ describe("Sponsor Image Upload Route", () => {
     });
 
     it("rejects unpaid session", async () => {
-      const testFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const testFile = createMockJpegFile();
       const formData = createMockFormData(validSessionId, testFile);
       const request = createMockRequest(formData);
 
@@ -177,7 +191,7 @@ describe("Sponsor Image Upload Route", () => {
     });
 
     it("rejects non-sponsor checkout session", async () => {
-      const testFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const testFile = createMockJpegFile();
       const formData = createMockFormData(validSessionId, testFile);
       const request = createMockRequest(formData);
 
