@@ -37,11 +37,12 @@ import {
 import { generateHowToSchema } from "@utils/schema-helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import ClientEventClient from "./components/ClientEventClient";
 import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
@@ -259,34 +260,23 @@ export default async function EventPage({
     return "Esdeveniment";
   })();
 
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Inici",
-        item: siteUrl,
-      },
-      ...(placeSlug
-        ? [
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: placeLabel,
-            item: `${siteUrl}/${placeSlug}`,
-          },
-        ]
-        : []),
-      {
-        "@type": "ListItem",
-        position: placeSlug ? 3 : 2,
-        name: breadcrumbName,
-        item: `${siteUrl}/e/${event.slug}`,
-      },
-    ],
-  };
+  // Build breadcrumb items with region for cities (SEO: geographic hierarchy)
+  // Structure: Inici > Region > City > Event  OR  Inici > Region > Event (if no city)
+  const hasCity = Boolean(citySlug);
+  const hasRegion = Boolean(regionSlug);
+
+  // Build breadcrumb items array with localized URLs
+  const homeLabel = tBreadcrumbs("home");
+  const breadcrumbItems = [
+    { name: homeLabel, url: toLocalizedUrl("/", locale) },
+    // Add region (comarca) if available
+    ...(hasRegion ? [{ name: regionName, url: toLocalizedUrl(`/${regionSlug}`, locale) }] : []),
+    // Add city if different from region
+    ...(hasCity ? [{ name: cityName, url: toLocalizedUrl(`/${citySlug}`, locale) }] : []),
+    // Add event
+    { name: breadcrumbName, url: toLocalizedUrl(`/e/${event.slug}`, locale) },
+  ];
+  const breadcrumbJsonLd = generateBreadcrumbList(breadcrumbItems);
 
   return (
     <>
@@ -307,7 +297,9 @@ export default async function EventPage({
         <JsonLdServer id={`howto-${event.id}`} data={howToJsonData} />
       )}
       {/* Breadcrumbs JSON-LD */}
-      <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
+      {breadcrumbJsonLd && (
+        <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
+      )}
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
@@ -315,13 +307,19 @@ export default async function EventPage({
             <Breadcrumbs
               items={[
                 { label: tBreadcrumbs("home"), href: "/" },
-                ...(placeSlug !== "catalunya"
-                  ? [{ label: placeLabel, href: `/${placeSlug}` }]
+                // Add region (comarca) if available
+                ...(hasRegion
+                  ? [{ label: regionName, href: `/${regionSlug}` }]
                   : []),
+                // Add city if available (different from region)
+                ...(hasCity
+                  ? [{ label: cityName, href: `/${citySlug}` }]
+                  : []),
+                // Add category if available
                 ...(primaryCategorySlug
                   ? [{
                     label: primaryCategoryLabel,
-                    href: `/${placeSlug}/${primaryCategorySlug}`,
+                    href: `/${primaryPlaceSlug}/${primaryCategorySlug}`,
                   }]
                   : []),
                 { label: title },

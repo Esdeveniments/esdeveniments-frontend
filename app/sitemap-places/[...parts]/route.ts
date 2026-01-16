@@ -5,7 +5,7 @@ import { VALID_DATES } from "@lib/dates";
 import { highPrioritySlugs } from "@utils/priority-places";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { DEFAULT_FILTER_VALUE, SITEMAP_PLACES_PER_CHUNK } from "@utils/constants";
 import type { SitemapField } from "types/sitemap";
 import type { SitemapPartsRouteContext } from "types/props";
 import { buildAlternateLinks } from "@utils/i18n-seo";
@@ -41,7 +41,6 @@ export async function GET(_request: Request, context: SitemapPartsRouteContext) 
   }
 
   const TOP_CATEGORIES_COUNT = 5;
-  const PLACES_PER_CHUNK = 100; // Adjust to keep under 6MB
 
   const [places, categories] = await Promise.all([
     fetchPlaces(),
@@ -54,8 +53,8 @@ export async function GET(_request: Request, context: SitemapPartsRouteContext) 
   );
 
   // Chunk places: chunk 1 → places 0-99, chunk 2 → places 100-199, etc.
-  const startIndex = (chunkNumber - 1) * PLACES_PER_CHUNK;
-  const endIndex = startIndex + PLACES_PER_CHUNK;
+  const startIndex = (chunkNumber - 1) * SITEMAP_PLACES_PER_CHUNK;
+  const endIndex = startIndex + SITEMAP_PLACES_PER_CHUNK;
   const chunkPlaces = places.slice(startIndex, endIndex);
 
   if (chunkPlaces.length === 0) {

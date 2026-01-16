@@ -1,14 +1,17 @@
 # AWS/Vercel Cost Optimization Analysis
 
 **Date:** December 30, 2025  
+**Updated:** January 8, 2026  
 **Status:** ✅ Implemented  
-**Environment:** SST/OpenNext on AWS (eu-west-3)
+**Environment:** SST/OpenNext on AWS (eu-west-3) + Backend API on Elastic Beanstalk (eu-west-1)
 
 ---
 
 ## Executive Summary
 
 This analysis identified **14 cost optimization opportunities** across Lambda, CloudFront, DynamoDB, and Image Optimization layers. **6 high-impact optimizations have been implemented**, with estimated savings of **$50-80/month**.
+
+**January 2026 Update:** Investigation revealed the **frontend costs only ~$5-6/month**. The majority of costs ($54/month) come from the **backend API** running on Elastic Beanstalk in eu-west-1.
 
 ---
 
@@ -380,11 +383,174 @@ export const topStaticGenerationPlaces = [
 
 ---
 
-## Measured Baseline Data (December 30, 2025)
+## Measured Baseline Data
 
 Real measurements from AWS CloudWatch and Cost Explorer to use as future reference.
 
-### Monthly Cost Forecast (Healthy State)
+### January 2026 Actual Usage (Pre-Optimization Deployment)
+
+**Period:** January 1-7, 2026 (7 days)  
+**Total Cost:** $15.56  
+**Daily Average:** $2.22  
+**Monthly Projection:** ~$66.60
+
+| Service                     | 7-Day Total | Daily Avg | Monthly Projection | Notes                                        |
+| --------------------------- | ----------- | --------- | ------------------ | -------------------------------------------- |
+| Elastic Load Balancing      | $4.51       | $0.64     | **$19.20**         | 🔴 Highest cost - fixed infrastructure       |
+| Relational Database Service | $3.47       | $0.50     | **$15.00**         | Database costs (drops to $0.37 on Jan-07)    |
+| VPC                         | $3.24       | $0.46     | **$13.80**         | Network costs (drops to $0.36 on Jan-07)     |
+| S3                          | $2.11       | $0.30     | **$9.00**          | Storage (peaks at $0.55 on Jan-05)           |
+| EC2-Instances               | $1.06       | $0.15     | **$4.50**          | Compute instances (drops to $0.11 on Jan-07) |
+| EC2-Other (NAT)             | $0.54       | $0.08     | **$2.40**          | NAT Gateway                                  |
+| DynamoDB                    | $0.45       | $0.06     | **$1.80**          | ✅ Healthy post-fix (peaks $0.12 on Jan-03)  |
+| Cost Explorer               | $0.12       | $0.02     | **$0.60**          | AWS Cost Explorer API calls                  |
+| CloudFront                  | $0.05       | $0.01     | **$0.30**          | CDN (mostly free tier)                       |
+| Lambda                      | $0.01       | $0.00     | **$0.03**          | ✅ Minimal after optimizations               |
+| **Other services**          | $0.00       | $0.00     | **$0.00**          | CloudWatch, SNS, SQS, KMS, etc.              |
+
+**Key Findings:**
+
+- 🔴 **Jan-07 drop to $1.59** suggests optimizations may have been deployed mid-period
+- ✅ **DynamoDB healthy** at $0.45/week (no spike incidents)
+- ✅ **Lambda minimal** at $0.01/week (cache optimizations working)
+- 🔴 **ELB + RDS + VPC** account for 71% of costs ($11.22 of $15.56)
+
+### Cost Breakdown by Category
+
+**⚠️ CORRECTED January 8, 2026:** AWS CLI investigation found the ALB (`awseb--AWSEB-pttf1n1OCxbq`) is in **eu-west-1** for Elastic Beanstalk (backend), NOT the frontend.
+
+#### Frontend vs Backend Split
+
+| Component | Region | Monthly Cost | Notes |
+| --------- | ------ | ------------ | ----- |
+| **Frontend (SST/OpenNext)** | eu-west-3 | **~$5-6** | Lambda + DynamoDB + CloudFront + S3 assets |
+| **Backend (Elastic Beanstalk)** | eu-west-1 | **~$54** | ALB + EC2 + RDS + VPC/NAT |
+| **Shared/Other** | - | **~$6** | Cost Explorer, misc |
+| **Total** | - | **~$66.60** | |
+
+#### Detailed Frontend Costs (SST/OpenNext - eu-west-3)
+
+| Service        | Monthly Cost | Status                                 |
+| -------------- | ------------ | -------------------------------------- |
+| **Lambda**     | $0.03        | ✅ Excellent - optimizations effective |
+| **DynamoDB**   | $1.80        | ✅ ISR cache working correctly         |
+| **CloudFront** | $0.30        | ✅ CDN caching working well            |
+| **S3** (assets)| ~$3-4        | Static assets, optimized images        |
+| **Total Frontend** | **~$5-6/month** | ✅ **Very cheap!** |
+
+#### Detailed Backend Costs (Elastic Beanstalk - eu-west-1)
+
+| Service                    | Monthly Cost | Optimization Options                    |
+| -------------------------- | ------------ | --------------------------------------- |
+| **ALB** (Elastic Beanstalk)| $19.20       | API Gateway (~$3.50/million requests)   |
+| **RDS**                    | $15.00       | Reserved Instance saves 30-40%          |
+| **VPC**                    | $13.80       | Required - cannot eliminate             |
+| **EC2**                    | $4.50        | Reserved Instance or Lambda migration   |
+| **NAT Gateway**            | $2.40        | NAT Instance (~$3/month) alternative    |
+| **Total Backend** | **~$54/month** | 🔴 **Most of your cost** |
+
+### What Can Be Optimized?
+
+#### ✅ Backend Services - MAIN OPPORTUNITY
+
+| Service | Monthly Cost | Optimization Options                     | Potential Savings       |
+| ------- | ------------ | ---------------------------------------- | ----------------------- |
+| **ALB** | $19.20       | API Gateway (pay-per-request)            | **$10-15/month**        |
+| **RDS** | $15.00       | Reserved Instance (1yr)                  | **$5-6/month (30-40%)** |
+| **RDS** | $15.00       | Aurora Serverless v2 (if traffic varies) | **$3-8/month**          |
+| **EC2** | $4.50        | Reserved Instance or Savings Plan        | **$1-2/month**          |
+| **EC2** | $4.50        | Move to Lambda/Fargate (if stateless)    | **$2-4/month**          |
+
+**Quick Win - RDS Reserved Instance:**
+
+- Current: On-demand ~$15/month
+- 1-year RI (no upfront): ~$10/month → **saves $5/month**
+- 1-year RI (all upfront): ~$9/month → **saves $6/month**
+
+**Biggest Opportunity - Replace ALB with API Gateway:**
+
+The ALB costs $19.20/month fixed. API Gateway costs ~$3.50 per million requests. If your backend handles < 5 million requests/month, API Gateway would be significantly cheaper. However, this requires architecture changes to the Elastic Beanstalk setup.
+
+#### ✅ Storage - Minor Optimizations
+
+| Service | Monthly Cost | Optimization Options                       |
+| ------- | ------------ | ------------------------------------------ |
+| **S3**  | $9.00        | S3 Intelligent-Tiering (auto lifecycle)    |
+| **S3**  | $9.00        | Delete old/unused objects                  |
+| **S3**  | $9.00        | Review if large objects can use S3 Glacier |
+
+#### ✅ Already Optimized (Frontend - No Action Needed)
+
+| Service        | Monthly Cost | Status                                 |
+| -------------- | ------------ | -------------------------------------- |
+| **DynamoDB**   | $1.80        | ✅ ISR cache working correctly         |
+| **Lambda**     | $0.03        | ✅ Excellent - optimizations effective |
+| **CloudFront** | $0.30        | ✅ CDN caching working well            |
+
+---
+
+## Actionable Cost Reduction Plan
+
+### Immediate (After merging image-improvements branch)
+
+| Action                    | Savings      | Effort   |
+| ------------------------- | ------------ | -------- |
+| Merge optimization branch | ~$5-15/month | ✅ Ready |
+
+### Short-term (This week)
+
+| Action                                           | Savings        | Effort                      |
+| ------------------------------------------------ | -------------- | --------------------------- |
+| Purchase RDS Reserved Instance (1yr, no upfront) | **$5-6/month** | Low - AWS Console           |
+| Review S3 bucket lifecycle policies              | $1-3/month     | Low                         |
+| Check EC2 right-sizing recommendations           | $1-2/month     | Low - AWS Compute Optimizer |
+
+### Medium-term (This month)
+
+| Action                                | Savings    | Effort                    |
+| ------------------------------------- | ---------- | ------------------------- |
+| Consider NAT Instance vs NAT Gateway  | $0-2/month | Medium                    |
+| Evaluate Aurora Serverless v2 for RDS | $3-8/month | Medium - requires testing |
+| Set up S3 Intelligent-Tiering         | $1-2/month | Low                       |
+
+### Realistic Monthly Savings
+
+| Scenario                          | Current | After | Savings | Notes |
+| --------------------------------- | ------- | ----- | ------- | ----- |
+| **Conservative** (RDS RI only)    | $66.60  | $60   | $6.60   | Quick win, no risk |
+| **Moderate** (RI + S3 cleanup)    | $66.60  | $52   | $14.60  | Low effort |
+| **Aggressive** (ALB → API GW)     | $66.60  | $40   | $26.60  | Requires backend changes |
+
+---
+
+### Key Insight: Frontend is Already Cheap!
+
+Your **frontend (SST/OpenNext) costs only ~$5-6/month** - this is excellent and already well-optimized.
+
+The **backend (Elastic Beanstalk) costs ~$54/month** and is where the real savings opportunities are:
+- The ALB alone costs $19.20/month (fixed)
+- RDS costs $15/month (can save 30-40% with Reserved Instance)
+
+---
+
+### Impact of Merging image-improvements Branch
+
+When you merge the optimization branch, expected changes:
+
+| Optimization    | Before Merge | After Merge | Monthly Savings        |
+| --------------- | ------------ | ----------- | ---------------------- |
+| Lambda memory   | 3008 MB      | 1792 MB     | ~$0.01 (already $0.03) |
+| Warm instances  | 5            | 3           | ~$5-10                 |
+| Cache TTLs      | 300s         | 600s        | Lambda reduction       |
+| Image optimizer | 3008 MB      | 1536 MB     | ~$1-2                  |
+
+**Realistic expectation:** $5-15/month savings (Lambda/warm instances already very cheap)
+
+**The big costs (ELB, VPC, RDS) won't change** - they're infrastructure minimums.
+
+---
+
+### December 2025 Baseline (Post-Incident Fix)
 
 Based on Dec 27, 2025 (pre-incident healthy day) and Dec 30, 2025 (post-optimization):
 
@@ -399,6 +565,14 @@ Based on Dec 27, 2025 (pre-incident healthy day) and Dec 30, 2025 (post-optimiza
 | **Total (gross)**      |                     | **~$3.78/month** |                                           |
 | Data Transfer Credits  | -$0.0713            | **-$2.14**       | Reserved instance credits                 |
 | **Total (net)**        |                     | **~$1.64/month** |                                           |
+
+**⚠️ DISCREPANCY ALERT:**  
+January 2026 data shows **significantly higher costs** ($66.60/month projected) vs December 2025 baseline ($1.64/month net). This suggests either:
+
+1. Different AWS account/environment being monitored
+2. Credits/discounts not yet applied to January data
+3. Additional infrastructure (RDS, larger ELB) not present in December baseline
+4. Optimizations not yet deployed (branch not merged as of Jan 8)
 
 ### Lambda Usage Comparison
 

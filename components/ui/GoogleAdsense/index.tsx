@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, CSSProperties, JSX } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  CSSProperties,
+  JSX,
+} from "react";
 import { AdStatus, GoogleAdsenseContainerProps } from "types/common";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import { useAdContext } from "../../../lib/context/AdContext";
@@ -22,7 +29,12 @@ const GoogleAdsenseContainer = ({
   } = useAdContext();
 
   const adRef = useRef<HTMLModElement>(null);
-  const callbackRef = useRef(setDisplayAd);
+
+  // useEffectEvent ensures we always call the latest setDisplayAd callback
+  // without needing to track it in a ref or add it to effect dependencies
+  const onDisplayAdChange = useEffectEvent((display: boolean) => {
+    setDisplayAd?.(display);
+  });
 
   // Initialize shouldRenderSlot based on environment
   const [shouldRenderSlot, setShouldRenderSlot] = useState<boolean>(() => {
@@ -35,14 +47,10 @@ const GoogleAdsenseContainer = ({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    callbackRef.current = setDisplayAd;
-  }, [setDisplayAd]);
-
   // If consent is revoked, hide ad
   useEffect(() => {
     if (!adsAllowed) {
-      callbackRef.current?.(false);
+      onDisplayAdChange(false);
     }
   }, [adsAllowed]);
 
@@ -90,7 +98,7 @@ const GoogleAdsenseContainer = ({
       slotPushed.current = true;
     } catch (err) {
       console.error("adsense error", getSanitizedErrorMessage(err));
-      callbackRef.current?.(false);
+      onDisplayAdChange(false);
     }
 
     // Fallback: if no status arrives within a few seconds, show fallback content
@@ -99,7 +107,7 @@ const GoogleAdsenseContainer = ({
       const hasChildren =
         !!adRef.current?.children && adRef.current.children.length > 0;
       if (status === "filled" || hasChildren) return;
-      callbackRef.current?.(false);
+      onDisplayAdChange(false);
     }, 6000);
   }, [adsAllowed, shouldRenderSlot]);
 
@@ -114,13 +122,13 @@ const GoogleAdsenseContainer = ({
         const targetEl = element.target as HTMLElement;
         const adStatus = targetEl.getAttribute("data-ad-status") as AdStatus;
         if (adStatus === "filled") {
-          callbackRef.current?.(true);
+          onDisplayAdChange(true);
           if (fallbackTimer.current) {
             clearTimeout(fallbackTimer.current);
             fallbackTimer.current = null;
           }
         } else if (adStatus === "unfilled") {
-          callbackRef.current?.(false);
+          onDisplayAdChange(false);
           if (fallbackTimer.current) {
             clearTimeout(fallbackTimer.current);
             fallbackTimer.current = null;

@@ -58,7 +58,7 @@ export default async function PromotedRestaurantCard({
               <p className="text-foreground/80 mt-1">{promotion.location}</p>
 
               {/* Expiry Info */}
-              <div className="mt-2 text-sm text-foreground/70">
+              <div className="mt-2 text-sm text-muted-foreground">
                 <span className="font-medium">
                   {t("activeUntil", { date: formatExpiryDate(promotion.expiresAt) })}
                 </span>

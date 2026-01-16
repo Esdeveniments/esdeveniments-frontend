@@ -1,5 +1,31 @@
 # Repository Guidelines
 
+## ⚠️ CRITICAL: Load Agent Skills FIRST
+
+**Before writing ANY code**, check `.github/skills/` for relevant skills:
+
+| Task                      | Skill                          | Key Rule                                  |
+| ------------------------- | ------------------------------ | ----------------------------------------- |
+| Any new code              | `pre-implementation-checklist` | Search existing patterns FIRST            |
+| Types/interfaces          | `type-system-governance`       | ALL types in `/types` directory           |
+| Components                | `react-nextjs-patterns`        | Server Component default                  |
+| Filters                   | `filter-system-dev`            | `config/filters.ts` only                  |
+| API calls                 | `api-layer-patterns`           | Three-layer proxy pattern                 |
+| URL/routing               | `url-canonicalization`         | NEVER add `searchParams` to listing pages |
+| i18n/translations         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`           |
+| Styling/UI                | `design-system-conventions`    | Semantic classes, no `gray-*`             |
+| Tests                     | `testing-patterns`             | Vitest for unit, Playwright for E2E       |
+| Security/CSP              | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains    |
+| Service worker            | `service-worker-updates`       | Edit `sw-template.js`, run `prebuild`     |
+| Performance/images        | `bundle-optimization`          | Quality caps, Server Components default   |
+| Env variables             | `env-variable-management`      | Update 4 locations: code, SST, workflow   |
+| API data validation       | `data-validation-patterns`     | Zod in `lib/validation/`, safe fallbacks  |
+| Evaluating PR suggestions | `code-review-evaluation`       | Cross-reference against project skills    |
+
+**Mandatory workflow**: Search → Plan → Confirm → Implement → Verify
+
+---
+
 ## Project Structure & Module Organization
 
 - `app/` Next.js App Router (layouts, routes, API under `app/api`). Example: `app/[place]/page.tsx`.
@@ -22,10 +48,27 @@
 ## Coding Style & Naming Conventions
 
 - TypeScript strict; prefer server components by default. Add `"use client"` only when needed.
-- ESLint extends `next/core-web-vitals` + TS. Fix warnings before merge.
+- ESLint extends `next/core-web-vitals` + TS + `@eslint-react`. Fix warnings before merge.
 - Define all type aliases/interfaces in `types/` (ESLint‑enforced).
 - Components: PascalCase; hooks: `useXxx`; helpers: lowerCamelCase.
 - Indentation: 2 spaces; prefer path aliases; Tailwind utilities for styling; globals in `styles/`.
+
+## Internationalization (i18n) Rules
+
+- **Links: Always use `Link` from `@i18n/routing`** for internal navigation (not `next/link`). This ensures locale prefixes (`/es/`, `/en/`) are automatically handled. ESLint warns on `next/link` imports.
+  - ✅ `import { Link } from "@i18n/routing"` - auto locale handling
+  - ❌ `import Link from "next/link"` - loses locale on navigation
+  - Exceptions: primitives with manual locale handling, external-only links
+- **JSON-LD URLs: Use `toLocalizedUrl(path, locale)`** from `@utils/i18n-seo` for all URLs in structured data (breadcrumbs, events, etc.).
+- **Breadcrumbs**: Use `generateBreadcrumbList()` from `@components/partials/seo-meta` for JSON-LD breadcrumbs—it's tested and handles locale correctly.
+
+## React Hooks Best Practices
+
+- **useRef vs useState for tracking flags**: Use `useRef` (not `useState`) for one-time tracking flags that don't affect rendering (e.g., analytics fired, effect ran). A ref update doesn't trigger a re-render.
+  - ✅ `const hasTracked = useRef(false)` - for analytics, one-time effects
+  - ❌ `const [hasTracked, setHasTracked] = useState(false)` - causes unnecessary re-render
+- **Dependency arrays**: Refs don't need to be in dependency arrays (they're stable). Only include values that should trigger the effect.
+- **Memoization**: Use `useMemo` for expensive computations, `useCallback` for callbacks passed to children. Don't over-optimize—profile first.
 
 ## Testing Guidelines
 
@@ -50,8 +93,39 @@
 - Yarn 4 workspace; prefer `yarn` over `npm`.
 - CSP: Relaxed policy with host allowlisting (see `proxy.ts`). Allows `'unsafe-inline'` for inline scripts/JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains are allowlisted. No nonce required.
 - API security: Internal API proxy layer (`app/api/*`) handles HMAC signing server-side via `*-external.ts` wrappers using `fetchWithHmac`. Client libraries call internal routes, never external API directly. Middleware enforces HMAC on most `/api/*` routes; public endpoints (GET events, news, categories, etc.) are allowlisted.
+- **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
 
 ## Agent-Specific Instructions
+
+### Pre-Implementation Checklist (MANDATORY)
+
+Before writing ANY new code, ALWAYS search first:
+
+1. **Search for existing patterns** using `grep_search` or `semantic_search`:
+
+   - The concept name (e.g., "slug validation", "price formatting")
+   - Function name patterns (`isValid*`, `format*`, `build*`, `use*`)
+   - The literal value (regex pattern, constant)
+
+2. **Check canonical locations** based on what you're creating:
+
+   - Type/interface → search `types/`
+   - Validation function → search `utils/` for `isValid*`, `validate*`
+   - Helper/utility → search `utils/`, `lib/`
+   - Constant/config → search `utils/constants.ts`, `config/`
+   - Component → search `components/ui/`
+   - Hook → search `components/hooks/`
+
+3. **Report findings** before proposing implementation:
+
+   - "Found `isValidCategorySlugFormat` in `utils/category-mapping.ts` - will reuse"
+   - "No existing pattern found - will create new utility in `utils/`"
+
+4. **Wait for confirmation** before implementing (per copilot-instructions.md §19)
+
+**Anti-pattern**: Writing inline code first, then searching only when asked.
+
+### General Rules
 
 - Prefer surgical diffs; keep file moves/renames minimal and scoped.
 - Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
@@ -76,12 +150,14 @@
 Reading `searchParams` in a page component makes the page **dynamic**, causing OpenNext/SST to create a separate DynamoDB cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
 
 **Rules:**
+
 1. Listing pages (`app/[place]/*`) must NOT read `searchParams` - keep them static (ISR)
 2. Query params (`search`, `distance`, `lat`, `lon`) are handled **client-side only** via SWR
 3. SEO robots `noindex` for filtered URLs is handled via `X-Robots-Tag` header in `proxy.ts`
 4. CloudWatch alarm `DynamoDB-HighWriteCost-Alert` monitors for write spikes >100k/hour
 
 **If you need query-dependent behavior:**
+
 - Handle it in middleware (`proxy.ts`) for headers/redirects
 - Handle it client-side for data fetching
 - NEVER make the page component read `searchParams`

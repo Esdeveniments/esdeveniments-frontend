@@ -56,14 +56,17 @@ module.exports = {
       // === COLORS === //
       colors: {
         // Brand colors
-        primary: "#FF0037",
-        "primary-dark": "#C8033F",
-        "primary-soft": "#FF003750",
+        // Note: primary adjusted from #FF0037 to #D6002F for WCAG AA compliance
+        // (#FF0037 had ~4.1:1 contrast on white, #D6002F has ~5.2:1)
+        primary: "#D6002F",
+        "primary-dark": "#A80025",
+        "primary-soft": "#D6002F50",
 
         // Semantic tokens (canonical)
         background: "#ffffff",
         foreground: `rgb(${foregroundRgb} / <alpha-value>)`,
         "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
+        "muted-foreground": "#6B7280", // gray-500: WCAG AA compliant (~4.6:1 on white)
         muted: "#F7F7F7",
         border: "#CCCCCC",
         "primary-foreground": "#ffffff",
@@ -76,10 +79,16 @@ module.exports = {
         // Semantic colors (NEW)
         success: "#10B981",
         "success-dark": "#059669",
+        "success-light": "#ECFDF5",
+        "success-muted": "#D1FAE5",
+        "success-border": "#A7F3D0",
         error: "#EF4444",
         "error-dark": "#DC2626",
         warning: "#F59E0B",
         "warning-dark": "#D97706",
+        "warning-light": "#FFFBEB",
+        "warning-muted": "#FEF3C7",
+        "warning-border": "#FDE68A",
         info: "#3B82F6",
         "info-dark": "#2563EB",
       },

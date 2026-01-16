@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   addPlaceBreadcrumb,
+  addRegionBreadcrumb,
   addIntermediateDateBreadcrumb,
   addCurrentPageBreadcrumb,
   handleCatalunyaHomepage,
@@ -62,6 +63,56 @@ describe("breadcrumb-helpers", () => {
       ];
       addPlaceBreadcrumb(breadcrumbsEn, "barcelona", "Barcelona", "en");
       expect(breadcrumbsEn[1].url).toBe(`${siteUrl}/en/barcelona`);
+    });
+  });
+
+  describe("addRegionBreadcrumb", () => {
+    it("adds region breadcrumb with correct name and URL", () => {
+      const breadcrumbs: BreadcrumbItem[] = [
+        { name: "Home", url: "/" },
+      ];
+      const locale: AppLocale = "ca";
+
+      addRegionBreadcrumb(breadcrumbs, "Barcelonès", "barcelones", locale);
+
+      expect(breadcrumbs).toHaveLength(2);
+      expect(breadcrumbs[1]).toEqual({
+        name: "Barcelonès",
+        url: `${siteUrl}/barcelones`,
+      });
+    });
+
+    it("handles different locales correctly", () => {
+      const breadcrumbsEs: BreadcrumbItem[] = [
+        { name: "Home", url: "/" },
+      ];
+      addRegionBreadcrumb(breadcrumbsEs, "Baix Camp", "baix-camp", "es");
+      expect(breadcrumbsEs[1].url).toBe(`${siteUrl}/es/baix-camp`);
+
+      const breadcrumbsEn: BreadcrumbItem[] = [
+        { name: "Home", url: "/" },
+      ];
+      addRegionBreadcrumb(breadcrumbsEn, "Baix Camp", "baix-camp", "en");
+      expect(breadcrumbsEn[1].url).toBe(`${siteUrl}/en/baix-camp`);
+    });
+
+    it("creates correct hierarchy: Home > Region > City", () => {
+      const breadcrumbs: BreadcrumbItem[] = [
+        { name: "Inici", url: "/" },
+      ];
+      const locale: AppLocale = "ca";
+
+      // Add region first (between Home and City)
+      addRegionBreadcrumb(breadcrumbs, "Barcelonès", "barcelones", locale);
+      // Then add city
+      addPlaceBreadcrumb(breadcrumbs, "barcelona", "Barcelona", locale);
+
+      expect(breadcrumbs).toHaveLength(3);
+      expect(breadcrumbs[0].name).toBe("Inici");
+      expect(breadcrumbs[1].name).toBe("Barcelonès");
+      expect(breadcrumbs[1].url).toBe(`${siteUrl}/barcelones`);
+      expect(breadcrumbs[2].name).toBe("Barcelona");
+      expect(breadcrumbs[2].url).toBe(`${siteUrl}/barcelona`);
     });
   });
 

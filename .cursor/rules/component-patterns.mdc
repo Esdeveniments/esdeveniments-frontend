@@ -1,0 +1,59 @@
+---
+description: React and Next.js component patterns. Apply when creating or modifying components.
+globs:
+  - "components/**/*.tsx"
+  - "app/**/*.tsx"
+---
+
+# Component Patterns
+
+## Server-First Architecture
+
+- **Default to Server Components** - No directive needed
+- **Add `"use client"` only at leaf components** that need:
+  - React hooks (useState, useEffect, etc.)
+  - Browser APIs (window, document, localStorage)
+  - Event handlers (onClick, onChange, etc.)
+  - Third-party client libraries
+
+## Type Location
+
+**NEVER define types inline in components.** All types go in `/types`:
+
+```typescript
+// ❌ Bad - inline type
+interface CardProps {
+  title: string;
+}
+
+// ✅ Good - import from types/
+import type { CardProps } from "types/props";
+```
+
+## Styling
+
+Use semantic design system classes:
+
+```typescript
+// ❌ Bad
+<p className="text-gray-600">Text</p>
+
+// ✅ Good
+<p className="text-foreground/80">Text</p>
+```
+
+## Links
+
+Always use Link from i18n routing:
+
+```typescript
+// ❌ Bad
+import Link from "next/link";
+
+// ✅ Good
+import { Link } from "@i18n/routing";
+```
+
+## Full Details
+
+See `.github/skills/react-nextjs-patterns/SKILL.md` for complete guide.

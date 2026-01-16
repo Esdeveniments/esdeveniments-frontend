@@ -2,13 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent deprecation warning for overflow:visible on replaced elements */
+/* See: https://github.com/WICG/shared-element-transitions/blob/main/debugging_overflow_on_images.md */
+@layer base {
+  img,
+  video,
+  canvas {
+    overflow: clip;
+  }
+}
+
 /* Optimize font loading - ensure text stays visible during webfont loading */
 @font-face {
-  font-family: 'system-ui';
+  font-family: "system-ui";
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont');
+  src: local("system-ui"), local("-apple-system"), local("BlinkMacSystemFont");
 }
 
 html {
@@ -77,7 +87,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #ff0037;
+  background: #D6002F;
   cursor: pointer;
   margin-top: -10.5px; /* (3px track - 24px thumb) / 2 */
 }
@@ -86,7 +96,7 @@ input[type="range"]::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #ff0037;
+  background: #D6002F;
   cursor: pointer;
 }
 
@@ -150,7 +160,7 @@ p {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-neutral {
@@ -158,7 +168,7 @@ p {
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-muted {
@@ -388,7 +398,7 @@ p {
   }
 
   .helper-text {
-    @apply body-small text-foreground/70 mt-1;
+    @apply body-small text-muted-foreground mt-1;
   }
 
   .helper-text-error {
@@ -401,7 +411,7 @@ p {
   }
 
   .form-helper {
-    @apply text-sm md:text-base text-foreground/70;
+    @apply text-sm md:text-base text-muted-foreground;
   }
 
   /* ===================================== */
@@ -642,4 +652,22 @@ video {
 /* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
 ::view-transition-new(root) {
   animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fadeIn;
+}
+
+/* Content visibility optimization for off-screen elements */
+/* Skips rendering until element is near viewport - improves initial load and INP */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px; /* Estimated card height to prevent layout shift */
+}
+
+.content-auto-ad {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px; /* Estimated ad card height */
+}
+
+.content-auto-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px; /* Estimated section height (cards + header) */
+  width: 100%; /* Ensure wrapper doesn't collapse */
 }

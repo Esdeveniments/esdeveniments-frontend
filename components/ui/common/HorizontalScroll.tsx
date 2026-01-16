@@ -97,6 +97,7 @@ export default function HorizontalScroll({
     // Optional one-time nudge to hint scroll on touch devices
     let forward: number | undefined;
     let backward: number | undefined;
+    let hintTimeout: number | undefined;
     try {
       const storageKey =
         hintStorageKey ||
@@ -121,7 +122,8 @@ export default function HorizontalScroll({
       ) {
         sessionStorage.setItem(storageKey, "1");
         // Make the hint a bit stronger while nudging (defer to avoid direct setState in effect)
-        window.setTimeout(() => setShowHint(true), 0);
+        // Note: This 0ms timeout is just to defer out of the effect - cleared in cleanup
+        hintTimeout = window.setTimeout(() => setShowHint(true), 0);
         // small delayed nudge then reset
         const nudgePx = 16;
         const nudgeDelay = 250;
@@ -159,6 +161,7 @@ export default function HorizontalScroll({
 
     return () => {
       window.clearTimeout(t);
+      if (hintTimeout) window.clearTimeout(hintTimeout);
       if (forward) window.clearTimeout(forward);
       if (backward) window.clearTimeout(backward);
       if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
@@ -205,7 +208,7 @@ export default function HorizontalScroll({
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 h-full w-10 sm:w-12 bg-gradient-to-r from-background to-transparent z-0"
         >
-          <div className="h-full w-full flex items-center justify-start pl-1 text-foreground/50">
+          <div className="h-full w-full flex items-center justify-start pl-1 text-muted-foreground">
             {!(isFinePointer && showDesktopArrows) && (
               <ChevronLeftIcon className="h-4 w-4" />
             )}
@@ -225,7 +228,7 @@ export default function HorizontalScroll({
           <div
             className={[
               "h-full w-full flex items-center justify-end pr-1",
-              showHint ? "text-foreground/70" : "text-foreground/40",
+              showHint ? "text-muted-foreground" : "text-foreground/40",
             ].join(" ")}
           >
             {!(isFinePointer && showDesktopArrows) && (

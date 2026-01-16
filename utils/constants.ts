@@ -9,8 +9,14 @@ import enMessages from "../messages/en.json";
 
 export const MAX_RESULTS = 15;
 export const MAX_FAVORITES = 10;
+
+// Year range for sitemap/archive pages validation
+export const MIN_VALID_YEAR = 2000;
+export const MAX_VALID_YEAR = 2100;
 // Keep safely under Lambda's 6MB cap and common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
+// Sitemap chunking: places per chunk to stay under Lambda 6MB payload limit
+export const SITEMAP_PLACES_PER_CHUNK = 100;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";
 export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads
@@ -273,3 +279,42 @@ export const MAX_QUERY_PARAMS = 50; // Maximum number of query parameters
 export const MAX_PARAM_VALUE_LENGTH = 500; // Maximum length of individual parameter value
 export const MAX_PARAM_KEY_LENGTH = 100; // Maximum length of individual parameter key
 export const MAX_TOTAL_VALUE_LENGTH = 10000; // Maximum total length of all parameter values combined (for truncation scenarios)
+
+/**
+ * Popular places for sponsor place selector quick-select chips
+ * Centralized here for potential reuse in other sponsor-related components
+ */
+export const SPONSOR_POPULAR_PLACES = [
+  { slug: "barcelona", name: "Barcelona", type: "town" as const },
+  { slug: "girona", name: "Girona", type: "town" as const },
+  { slug: "tarragona", name: "Tarragona", type: "town" as const },
+  { slug: "lleida", name: "Lleida", type: "town" as const },
+  { slug: "mataro", name: "Mataró", type: "town" as const },
+  { slug: "sabadell", name: "Sabadell", type: "town" as const },
+] as const;
+
+/**
+ * Sponsor banner image recommendations and validation thresholds.
+ * These are soft guidelines - we don't block uploads, just warn users.
+ * Banner displays at: mobile 100px height, desktop 120px height.
+ * Recommended aspect ratio ~5:1 (width:height) for best visual results.
+ */
+export const SPONSOR_BANNER_IMAGE = {
+  /** Recommended width in pixels for crisp display */
+  RECOMMENDED_WIDTH: 728,
+  /** Recommended height in pixels (5:1 aspect ratio) */
+  RECOMMENDED_HEIGHT: 150,
+  /** Minimum width before quality warning */
+  MIN_WIDTH: 400,
+  /** Minimum height before quality warning */
+  MIN_HEIGHT: 80,
+  /** Maximum width (larger is wasteful) */
+  MAX_WIDTH: 2000,
+  /** Maximum height (taller images waste space) */
+  MAX_HEIGHT: 600,
+  /** Ideal aspect ratio (width/height) */
+  IDEAL_ASPECT_RATIO: 5,
+  /** Acceptable aspect ratio range */
+  MIN_ASPECT_RATIO: 3,
+  MAX_ASPECT_RATIO: 8,
+} as const;

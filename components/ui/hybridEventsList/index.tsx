@@ -9,6 +9,7 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
+import { SponsorBannerSlot } from "@components/ui/sponsor";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -23,6 +24,31 @@ async function HybridEventsList({
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
 
+  // Common heading section rendered for all cases
+  const headingSection = pageData && (
+    <>
+      <div data-server-heading>
+        <HeadingLayout
+          title={pageData.title}
+          subtitle={pageData.subTitle}
+          titleClass={titleClass}
+          subtitleClass={subtitleClass}
+        />
+      </div>
+      <Suspense fallback={null}>
+        <SearchAwareHeading
+          pageData={pageData}
+          categories={categories}
+          titleClass={titleClass}
+          subtitleClass={subtitleClass}
+        />
+      </Suspense>
+    </>
+  );
+
+  // Sponsor banner slot - shows active sponsor or CTA to advertise
+  const sponsorSlot = <SponsorBannerSlot place={place || "catalunya"} />;
+
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
@@ -34,26 +60,8 @@ async function HybridEventsList({
         data-analytics-category-slug={category || undefined}
         data-analytics-date-slug={date || undefined}
       >
-        {pageData && (
-          <>
-            <div data-server-heading>
-              <HeadingLayout
-                title={pageData.title}
-                subtitle={pageData.subTitle}
-                titleClass={titleClass}
-                subtitleClass={subtitleClass}
-              />
-            </div>
-            <Suspense fallback={null}>
-              <SearchAwareHeading
-                pageData={pageData}
-                categories={categories}
-                titleClass={titleClass}
-                subtitleClass={subtitleClass}
-              />
-            </Suspense>
-          </>
-        )}
+        {headingSection}
+        {sponsorSlot}
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
@@ -81,29 +89,8 @@ async function HybridEventsList({
       data-analytics-category-slug={category || undefined}
       data-analytics-date-slug={date || undefined}
     >
-      {pageData && (
-        <>
-          {/* Always render H1 directly in server component for SEO - ensures it's in initial HTML */}
-          {/* aria-hidden will be set by SearchAwareHeading when search query is present */}
-          <div data-server-heading>
-            <HeadingLayout
-              title={pageData.title}
-              subtitle={pageData.subTitle}
-              titleClass={titleClass}
-              subtitleClass={subtitleClass}
-            />
-          </div>
-          {/* Client-side enhancement: conditionally replace heading when search query is present */}
-          <Suspense fallback={null}>
-            <SearchAwareHeading
-              pageData={pageData}
-              categories={categories}
-              titleClass={titleClass}
-              subtitleClass={subtitleClass}
-            />
-          </Suspense>
-        </>
-      )}
+      {headingSection}
+      {sponsorSlot}
 
       {/* Initial SSR list with ads (no hydration beyond card internals) */}
       {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}

@@ -2,7 +2,7 @@ import { generateHmac } from "@utils/hmac";
 
 export async function fetchWithHmac(
   url: string,
-  options: RequestInit & { skipBodySigning?: boolean } = {}
+  options: RequestInit & { skipBodySigning?: boolean; timeout?: number } = {}
 ): Promise<Response> {
   const timestamp = Date.now();
   let bodyToSign = "";
@@ -69,11 +69,26 @@ export async function fetchWithHmac(
   // This prevents caching of sensitive HMAC-signed requests
   const cacheOption = options.next ? undefined : "no-store";
 
-  return fetch(url, {
-    ...options,
-    cache: cacheOption,
-    method,
-    body: normalizedBody,
-    headers,
-  });
+  // Default 10s timeout for serverless environments (prevents hanging)
+  const timeoutMs = options.timeout ?? 10000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  // Merge signals if caller provided one (AbortSignal.any available in Node 20+)
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, controller.signal])
+    : controller.signal;
+
+  try {
+    return await fetch(url, {
+      ...options,
+      cache: cacheOption,
+      method,
+      body: normalizedBody,
+      headers,
+      signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }

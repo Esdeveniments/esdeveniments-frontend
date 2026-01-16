@@ -11,6 +11,7 @@ import {
   PhotoIcon as PhotographIcon,
 } from "@heroicons/react/24/outline";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import { SponsorBannerSlot } from "@components/ui/sponsor";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
@@ -203,6 +204,11 @@ async function ServerEventsCategorized({
         </div>
       </div>
 
+      {/* SPONSOR BANNER - Catalunya tier appears on homepage */}
+      <div className="container py-section-y">
+        <SponsorBannerSlot place="catalunya" />
+      </div>
+
       {/* 2. SEO LINK SECTIONS (weekend, today, tomorrow, agendas) */}
       {seoLinkSectionsWithAnalytics.length > 0 && (
         <div className="container py-8 border-b border-border/40 space-y-8">
@@ -300,7 +306,7 @@ export async function ServerEventsCategorizedContent({
   // 2. Prepare Featured Places Promises
   const featuredSectionsPromise = featuredPlaces
     ? Promise.all(
-      featuredPlaces.map(async (placeConfig, index) => {
+      featuredPlaces.map(async (placeConfig) => {
         const placeSlug =
           placeConfig.filter.city ||
           placeConfig.filter.region ||
@@ -324,7 +330,8 @@ export async function ServerEventsCategorizedContent({
             ...placeConfig,
             events,
             placeSlug,
-            usePriority: index < 2,
+            // Homepage images are below the fold - don't use priority loading
+            usePriority: false,
           };
         } catch (error) {
           captureException(error, {
@@ -469,7 +476,9 @@ export async function ServerEventsCategorizedContent({
       {featuredSections.length > 0 && (
         <div className="container">
           {featuredSections.map((section) => (
-            <FeaturedPlaceSection key={section.slug} section={section} />
+            <div key={section.slug} className="content-auto-section">
+              <FeaturedPlaceSection section={section} />
+            </div>
           ))}
         </div>
       )}
@@ -485,36 +494,37 @@ export async function ServerEventsCategorizedContent({
           const categoryPhrase = formatCatalanDe(localizedCategoryName, true, true);
 
           return (
-            <CategoryEventsSection
-              key={section.key}
-              events={section.events}
-              categoryName={localizedCategoryName}
-              categorySlug={section.categorySlug}
-              categoryPhrase={categoryPhrase}
-              categories={categories}
-              shouldUsePriority={index < 2}
-              showAd={adPositions.has(index)}
-              labels={{
-                heading:
-                  locale === DEFAULT_LOCALE
-                    ? tCategory("heading", {
-                      categoryPhrase,
-                    })
-                    : tCategory("headingNoArticle", {
-                      categoryName: localizedCategoryName,
-                    }),
-                seeMore: tCategory("seeMore"),
-                sponsored: tCategory("sponsored"),
-              }}
-              badgeLabels={badgeLabels}
-            />
+            <div key={section.key} className="content-auto-section">
+              <CategoryEventsSection
+                events={section.events}
+                categoryName={localizedCategoryName}
+                categorySlug={section.categorySlug}
+                categoryPhrase={categoryPhrase}
+                categories={categories}
+                shouldUsePriority={false}
+                showAd={adPositions.has(index)}
+                labels={{
+                  heading:
+                    locale === DEFAULT_LOCALE
+                      ? tCategory("heading", {
+                        categoryPhrase,
+                      })
+                      : tCategory("headingNoArticle", {
+                        categoryName: localizedCategoryName,
+                      }),
+                  seeMore: tCategory("seeMore"),
+                  sponsored: tCategory("sponsored"),
+                }}
+                badgeLabels={badgeLabels}
+              />
+            </div>
           );
         })}
       </div>
 
       {/* CTA */}
       <section className="py-section-y container text-center">
-        <p className="body-large text-foreground/70 font-medium mb-element-gap">
+        <p className="body-large text-muted-foreground font-medium mb-element-gap">
           {tCta("cta")}
         </p>
         <PressableAnchor

@@ -4,7 +4,18 @@
  * No hardcoded prices - all values must come from configuration
  */
 
-export type GeoScopeType = "town" | "region";
+import {
+  VALID_GEO_SCOPES,
+  DURATION_DAYS,
+  type GeoScope,
+  type SponsorDuration,
+} from "types/sponsor";
+
+/**
+ * @deprecated Use GeoScope from types/sponsor.ts instead
+ * Kept for backward compatibility with existing code
+ */
+export type GeoScopeType = GeoScope;
 export type TaxMode = "automatic" | "manual";
 
 export interface PricingConfig {
@@ -20,36 +31,31 @@ export interface PricingMatrix {
   [key: PricingKey]: PricingConfig;
 }
 
+// Derived from DURATION_DAYS (single source of truth in types/sponsor.ts)
+const AVAILABLE_DURATIONS = Object.values(DURATION_DAYS) as readonly number[];
+
+// Base pricing in cents - single source of truth
+// Must be defined before loadPricingFromEnv to avoid TDZ error
+// MVP pricing: €5-40 range, focused on exclusivity value
+export const BASE_PRICES_CENTS = {
+  town: { 7: 500, 14: 800, 30: 1500 },
+  region: { 7: 1000, 14: 1500, 30: 2500 },
+  country: { 7: 1500, 14: 2500, 30: 4000 },
+} as const;
+
 /**
  * Load pricing configuration from environment variables
  * In production, this should be loaded from a database or admin config
+ *
+ * Pricing based on Wallapop benchmark (€1.25-2.50 for 7 days)
+ * Slightly higher because our audience is intent-driven (actively searching for events)
  */
 function loadPricingFromEnv(): PricingMatrix {
   const matrix: PricingMatrix = {};
 
-  // Duration options (configurable)
-  const durations = [1, 3, 5, 7, 14, 30]; // days
-  const geoScopes: GeoScopeType[] = ["town", "region"];
-
-  // Base pricing (should come from environment or database)
-  const basePrices = {
-    town: {
-      1: 500, // €5.00
-      3: 1200, // €12.00
-      5: 1800, // €18.00
-      7: 2400, // €24.00
-      14: 4000, // €40.00
-      30: 7000, // €70.00
-    },
-    region: {
-      1: 1500, // €15.00
-      3: 3500, // €35.00
-      5: 5000, // €50.00
-      7: 6500, // €65.00
-      14: 10000, // €100.00
-      30: 18000, // €180.00
-    },
-  };
+  // Use centralized constants
+  const durations = AVAILABLE_DURATIONS;
+  const geoScopes = VALID_GEO_SCOPES;
 
   // Tax configuration
   const taxMode = (process.env.STRIPE_TAX_MODE as TaxMode) || "automatic";
@@ -62,8 +68,8 @@ function loadPricingFromEnv(): PricingMatrix {
     geoScopes.forEach((geoScope) => {
       const key: PricingKey = `${duration}:${geoScope}`;
       const basePrice =
-        basePrices[geoScope][
-          duration as keyof (typeof basePrices)[typeof geoScope]
+        BASE_PRICES_CENTS[geoScope][
+          duration as keyof (typeof BASE_PRICES_CENTS)[typeof geoScope]
         ];
 
       if (basePrice) {
@@ -95,15 +101,15 @@ export function getPricingConfig(
 /**
  * Get all available duration options
  */
-export function getAvailableDurations(): number[] {
-  return [1, 3, 5, 7, 14, 30]; // Should come from config
+export function getAvailableDurations(): readonly number[] {
+  return AVAILABLE_DURATIONS;
 }
 
 /**
  * Get all available geo scope types
  */
 export function getAvailableGeoScopes(): GeoScopeType[] {
-  return ["town", "region"];
+  return [...VALID_GEO_SCOPES];
 }
 
 /**
@@ -122,3 +128,35 @@ export function isPricingAvailable(
 export function getPricingMatrix(): PricingMatrix {
   return loadPricingFromEnv();
 }
+
+/**
+ * Build display prices for a geo scope from BASE_PRICES_CENTS
+ */
+function buildDisplayPricesForScope(
+  scope: GeoScope
+): Record<SponsorDuration, number> {
+  const result = {} as Record<SponsorDuration, number>;
+  for (const [durationKey, days] of Object.entries(DURATION_DAYS)) {
+    const cents =
+      BASE_PRICES_CENTS[scope][
+        days as keyof (typeof BASE_PRICES_CENTS)[typeof scope]
+      ];
+    if (cents !== undefined) {
+      result[durationKey as SponsorDuration] = cents / 100;
+    }
+  }
+  return result;
+}
+
+/**
+ * Display prices in EUR (for client-side rendering)
+ * Auto-generated from DURATION_DAYS and BASE_PRICES_CENTS
+ */
+export const DISPLAY_PRICES_EUR: Record<
+  GeoScope,
+  Record<SponsorDuration, number>
+> = {
+  town: buildDisplayPricesForScope("town"),
+  region: buildDisplayPricesForScope("region"),
+  country: buildDisplayPricesForScope("country"),
+};

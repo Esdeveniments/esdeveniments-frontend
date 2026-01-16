@@ -250,7 +250,7 @@ export interface ActivePromotion {
 }
 
 export interface PromotionsConfigResponse {
-  durations: number[];
+  durations: readonly number[];
   geoScopes: GeoScopeType[];
   currency: string;
   taxMode: TaxMode;

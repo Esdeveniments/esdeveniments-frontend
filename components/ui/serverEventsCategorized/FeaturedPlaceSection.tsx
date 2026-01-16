@@ -28,7 +28,7 @@ export async function FeaturedPlaceSection({
         <div className="stack gap-1">
           <h2 className="heading-2">{section.title}</h2>
           {section.subtitle && (
-            <p className="body-small text-foreground/70">{section.subtitle}</p>
+            <p className="body-small text-muted-foreground">{section.subtitle}</p>
           )}
         </div>
         <PressableAnchor

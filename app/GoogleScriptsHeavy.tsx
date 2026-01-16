@@ -1,4 +1,7 @@
 "use client";
+/* eslint-disable @eslint-react/web-api/no-leaked-timeout -- 
+   Timeouts in this file are tracked in timeoutIds array and cleared on cleanup.
+   The ESLint rule can't detect this pattern with nested async callbacks. */
 
 import { useEffect, useRef } from "react";
 
@@ -86,6 +89,10 @@ export default function GoogleScriptsHeavy({
           position: dataset.analyticsPosition || undefined,
           source_event_id: dataset.analyticsSourceEventId || undefined,
           source_event_slug: dataset.analyticsSourceEventSlug || undefined,
+          // Sponsor tracking
+          sponsor_name: dataset.analyticsSponsorName || undefined,
+          sponsor_place: dataset.analyticsSponsorPlace || undefined,
+          sponsor_geo_scope: dataset.analyticsSponsorGeoScope || undefined,
         });
       }
 
@@ -137,6 +144,9 @@ export default function GoogleScriptsHeavy({
     if (isE2ETestMode) return;
     if (!adsAllowed || !ADS_CLIENT) return;
 
+    // Track all timeouts for cleanup
+    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
+
     const setPendingToken = () => {
       const token = Symbol("auto-ads-init");
       autoAdsPendingToken.current = token;
@@ -177,7 +187,8 @@ export default function GoogleScriptsHeavy({
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(() => injectAdsScript(), { timeout: 4000 });
     } else {
-      setTimeout(injectAdsScript, 2000);
+      const id = setTimeout(injectAdsScript, 2000);
+      timeoutIds.push(id);
     }
 
     const pushAutoAds = () => {
@@ -201,7 +212,7 @@ export default function GoogleScriptsHeavy({
           window.__autoAdsInitialized = true;
           clearPendingToken(pendingToken);
         } catch {
-          setTimeout(() => {
+          const retryId = setTimeout(() => {
             if (autoAdsInitRef.current || window.__autoAdsInitialized) {
               clearPendingToken(pendingToken);
               return;
@@ -219,19 +230,22 @@ export default function GoogleScriptsHeavy({
               clearPendingToken(pendingToken);
             }
           }, 1000);
+          timeoutIds.push(retryId);
         }
       };
 
       if ("requestIdleCallback" in window) {
         window.requestIdleCallback(() => initAds(), { timeout: 2000 });
       } else {
-        setTimeout(initAds, 500);
+        const fallbackId = setTimeout(initAds, 500);
+        timeoutIds.push(fallbackId);
       }
     };
 
     const timer = setTimeout(pushAutoAds, 1000);
+    timeoutIds.push(timer);
     return () => {
-      clearTimeout(timer);
+      timeoutIds.forEach((id) => clearTimeout(id));
       if (autoAdsPendingToken.current === pendingToken) {
         autoAdsPendingToken.current = null;
       }

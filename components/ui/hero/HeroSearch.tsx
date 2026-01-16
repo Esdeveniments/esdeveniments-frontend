@@ -261,7 +261,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             </Modal>
           </div>
         </h1>
-        <p className="body-large text-foreground/70 max-w-xl mx-auto">
+        <p className="body-large text-muted-foreground max-w-xl mx-auto">
           {subTitle || t("subtitleDefault")}
         </p>
       </div>
@@ -296,6 +296,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             onClick={handleSearchSubmit}
             className="absolute inset-y-1 right-1 px-4 flex items-center justify-center rounded-full"
             data-testid="search-button"
+            aria-label={t("search")}
           >
             <SearchIcon className="h-5 w-5" />
           </Button>

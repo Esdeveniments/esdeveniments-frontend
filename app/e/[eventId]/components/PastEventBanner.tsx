@@ -32,7 +32,7 @@ export default function PastEventBanner({
               <h3 className="heading-5 sm:heading-4 text-foreground-strong mb-1 sm:mb-1.5">
                 {t("title")}
               </h3>
-              <p className="body-small text-foreground/70 leading-snug">
+              <p className="body-small text-muted-foreground leading-snug">
                 {t("subtitle", { timeWindow, placeLabel })}
               </p>
               {/* Hidden readable state for screen readers */}

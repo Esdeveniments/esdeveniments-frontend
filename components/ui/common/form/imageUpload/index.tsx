@@ -257,18 +257,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           <div className="flex-center flex-col gap-3 p-8 text-center">
             {progress === 0 ? (
               <>
-                <UploadIcon className="w-10 h-10 text-foreground/50" />
-                <p className="body-normal text-foreground/70">
+                <UploadIcon className="w-10 h-10 text-muted-foreground" />
+                <p className="body-normal text-muted-foreground">
                   {t("uploadDropCta")}
                 </p>
-                <p className="body-small text-foreground/50">
+                <p className="body-small text-muted-foreground">
                   {t("uploadDropHelper")}
                 </p>
                 {/* Clear CTA Button */}
                 <span className="inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-primary-foreground min-h-[44px]">
                   {t("selectButton")}
                 </span>
-                <p className="body-small text-foreground/50 mt-1">
+                <p className="body-small text-muted-foreground mt-1">
                   {t("formatHelper")}
                 </p>
               </>
@@ -314,7 +314,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         </div>
       )}
       {isOptimizing && (
-        <p className="text-sm text-foreground/70 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           {t("optimizing", { limit: MAX_UPLOAD_LIMIT_LABEL })}
         </p>
       )}
@@ -326,7 +326,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
-          <p className="text-xs text-foreground/70 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {progress >= 100
               ? t("uploadSuccess")
               : t("uploading", { progress })}

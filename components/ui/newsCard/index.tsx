@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
@@ -6,7 +5,12 @@ import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
-import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-quality";
+import {
+  getOptimalImageQuality,
+  getOptimalImageSizes,
+  getOptimalImageWidth,
+} from "@utils/image-quality";
+import { buildPictureSourceUrls } from "@utils/image-cache";
 
 export default async function NewsCard({
   event,
@@ -16,7 +20,7 @@ export default async function NewsCard({
 }: NewsCardProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
-  const image = event.imageUrl;
+  const rawImage = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
@@ -29,7 +33,16 @@ export default async function NewsCard({
       isPriority: true,
       isExternal: true,
     });
+    const heroImageWidth = getOptimalImageWidth("hero");
     const heroImageSizes = getOptimalImageSizes("hero");
+
+    // Generate AVIF, WebP, and JPEG URLs for <picture> element
+    const heroSources = rawImage
+      ? buildPictureSourceUrls(rawImage, event.updatedAt, {
+        width: heroImageWidth,
+        quality: heroImageQuality,
+      })
+      : null;
 
     return (
       <PressableAnchor
@@ -40,17 +53,21 @@ export default async function NewsCard({
         aria-label={event.title}
       >
         <section className="relative w-full overflow-hidden rounded-xl">
-          {image ? (
+          {heroSources ? (
             <div className="relative aspect-[16/9] w-full">
-              <Image
-                src={image || "/placeholder.svg"}
-                alt={event.title}
-                fill
-                priority
-                quality={heroImageQuality}
-                sizes={heroImageSizes}
-                className="object-cover"
-              />
+              <picture>
+                <source srcSet={heroSources.avif} type="image/avif" sizes={heroImageSizes} />
+                <source srcSet={heroSources.webp} type="image/webp" sizes={heroImageSizes} />
+                <img
+                  src={heroSources.fallback}
+                  alt={event.title}
+                  loading="eager"
+                  decoding="sync"
+                  fetchPriority="high"
+                  sizes={heroImageSizes}
+                  className="object-cover w-full h-full absolute inset-0"
+                />
+              </picture>
             </div>
           ) : (
             <div className="aspect-[16/9] w-full bg-gradient-to-br from-primary-soft to-primary" />
@@ -88,7 +105,16 @@ export default async function NewsCard({
     isPriority: false,
     isExternal: true,
   });
+  const cardImageWidth = getOptimalImageWidth("card");
   const cardImageSizes = getOptimalImageSizes("card");
+
+  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  const cardSources = rawImage
+    ? buildPictureSourceUrls(rawImage, event.updatedAt, {
+      width: cardImageWidth,
+      quality: cardImageQuality,
+    })
+    : null;
 
   return (
     <PressableAnchor
@@ -100,16 +126,21 @@ export default async function NewsCard({
     >
       <article className="card-elevated group w-full overflow-hidden">
         <div className="relative overflow-hidden">
-          {image ? (
-            <Image
-              src={image || "/placeholder.svg"}
-              alt={event.title}
-              width={1200}
-              height={675}
-              quality={cardImageQuality}
-              sizes={cardImageSizes}
-              className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
-            />
+          {cardSources ? (
+            <picture>
+              <source srcSet={cardSources.webp} type="image/webp" sizes={cardImageSizes} />
+              <source srcSet={cardSources.avif} type="image/avif" sizes={cardImageSizes} />
+              <img
+                src={cardSources.fallback}
+                alt={event.title}
+                width={1200}
+                height={675}
+                loading="lazy"
+                decoding="async"
+                sizes={cardImageSizes}
+                className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
+              />
+            </picture>
           ) : (
             <div className="aspect-[16/9] w-full bg-gradient-to-br from-foreground-strong to-border" />
           )}

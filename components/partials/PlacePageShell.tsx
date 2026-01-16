@@ -18,6 +18,7 @@ import {
 } from "@utils/constants";
 import {
   addPlaceBreadcrumb,
+  addRegionBreadcrumb,
   addIntermediateDateBreadcrumb,
   addCurrentPageBreadcrumb,
   handleCatalunyaHomepage,
@@ -37,11 +38,19 @@ const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"
   loading: () => null, // FAQ section is below the fold
 });
 
+// Lazy load explore navigation - below the fold, server component
+const PlacePageExploreNav = dynamic(
+  () => import("@components/ui/placePageExploreNav"),
+  { loading: () => null }
+);
+
 
 function buildPlaceBreadcrumbs({
   homeLabel,
   place,
   placeLabel,
+  regionLabel,
+  regionSlug,
   date,
   category,
   categoryLabel,
@@ -52,6 +61,8 @@ function buildPlaceBreadcrumbs({
   homeLabel: string;
   place: string;
   placeLabel: string;
+  regionLabel?: string;
+  regionSlug?: string;
   date?: string;
   category?: string;
   categoryLabel?: string;
@@ -62,6 +73,11 @@ function buildPlaceBreadcrumbs({
   const breadcrumbs: BreadcrumbItem[] = [
     { name: homeLabel, url: toLocalizedUrl("/", locale) },
   ];
+
+  // For cities, add parent region breadcrumb first (SEO: geographic hierarchy)
+  if (regionLabel && regionSlug && place !== "catalunya") {
+    addRegionBreadcrumb(breadcrumbs, regionLabel, regionSlug, locale);
+  }
 
   // Add place breadcrumb if not catalunya
   addPlaceBreadcrumb(breadcrumbs, place, placeLabel, locale);
@@ -235,7 +251,7 @@ async function PlacePageContent({
 
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
-    ? webPageSchemaFactory(pageData)
+    ? webPageSchemaFactory({ placeTypeLabel, pageData })
     : null;
 
   const faqItems = buildListPageFaqItems({
@@ -296,6 +312,8 @@ async function PlacePageContent({
     homeLabel: tBreadcrumbs("home"),
     place,
     placeLabel: placeTypeLabel.label || place,
+    regionLabel: placeTypeLabel.regionLabel,
+    regionSlug: placeTypeLabel.regionSlug,
     date,
     category,
     categoryLabel: categoryName,
@@ -340,6 +358,17 @@ async function PlacePageContent({
           categories={categories}
         />
       </FilterLoadingGate>
+
+      {/* Explore Navigation - SEO internal links (below events, above FAQ) */}
+      <Suspense fallback={null}>
+        <PlacePageExploreNav
+          place={place}
+          date={date}
+          category={category}
+          categories={categories}
+          placeLabel={placeTypeLabel.label || place}
+        />
+      </Suspense>
 
       {/* FAQ Section - Lazy loaded (below the fold, server component) */}
       <Suspense fallback={null}>

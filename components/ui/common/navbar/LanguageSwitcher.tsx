@@ -108,7 +108,7 @@ export default function LanguageSwitcher() {
           viewBox="0 0 20 20"
           fill="currentColor"
           aria-hidden="true"
-          className={`w-5 h-5 text-foreground/50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         >
           <path
             fillRule="evenodd"

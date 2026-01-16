@@ -3,24 +3,51 @@
  * - HTTPS-first; retries HTTP if original was HTTP-only.
  * - Validates protocol and URL length to reduce SSRF risk.
  * - Enforces timeouts and size guard; falls back to 1x1 PNG.
+ * - Supports image optimization: resizing, format conversion (WebP/AVIF), quality control
  */
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Agent } from "undici";
-import { normalizeExternalImageUrl } from "@utils/image-cache";
+import {
+  normalizeExternalImageUrl,
+  isLegacyFileHandler,
+} from "@utils/image-cache";
+// Dynamic import to avoid Turbopack bundling issues with native modules in Lambda
+import type { Sharp } from "sharp";
 
-const TRANSPARENT_PNG_BASE64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
-const FALLBACK_BUFFER = Buffer.from(TRANSPARENT_PNG_BASE64, "base64");
 const MAX_BYTES = 5_000_000; // 5MB guard
 const TIMEOUT_MS = 5000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 
+// Image optimization defaults
+const DEFAULT_QUALITY = 50; // Base quality for mobile - Lighthouse tests on mobile viewport
+const MAX_WIDTH = 1920;
+const CARD_WIDTH = 500; // Cards display at ~280px, 500 covers 2x retina
+const MIN_SIZE_FOR_OPTIMIZATION = 10_000; // 10KB - skip optimization for tiny images
+const ANIMATED_GIF_FRAME_THRESHOLD = 1; // If GIF has more than 1 frame, skip optimization
+
+// Desktop quality boost: when requesting larger widths (desktop), increase quality
+// This doesn't affect mobile Lighthouse scores since mobile requests smaller widths
+const DESKTOP_WIDTH_THRESHOLD = 800; // Widths above this get quality boost
+const DESKTOP_QUALITY_BOOST = 15; // Add this to quality for desktop-sized requests
+const MAX_OPTIMIZED_QUALITY = 85; // Cap quality to avoid huge files
+
+/** Cache control header based on whether URL has cache-busting key */
+function getCacheControl(hasCacheKey: boolean): string {
+  return hasCacheKey
+    ? `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
+    : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+}
+
 // Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
 // Node's TLS verification rejects these, so we selectively bypass verification only for
 // known-bad hosts.
-const BROKEN_TLS_HOST_SUFFIXES = [".altanet.org", ".biguesiriells.cat"];
+const BROKEN_TLS_HOST_SUFFIXES = [
+  ".altanet.org",
+  ".biguesiriells.cat",
+  ".l-h.cat",
+];
 
 const insecureTlsDispatcher = new Agent({
   connect: {
@@ -41,11 +68,12 @@ function shouldBypassTlsVerification(candidateUrl: string): boolean {
 }
 
 function buildPlaceholder(status = 502) {
-  return new NextResponse(FALLBACK_BUFFER, {
+  // Return empty response (not valid image data) so browser triggers onerror
+  // This allows ClientImage to show ImgDefault fallback
+  return new NextResponse(null, {
     status,
     headers: {
-      "Content-Type": "image/png",
-      // Do not cache fallbacks: if we return the transparent pixel once, we don't want
+      // Do not cache fallbacks: if we return an error once, we don't want
       // CloudFront/Service Worker to keep serving it after the upstream recovers.
       "Cache-Control": "no-store, max-age=0",
       "X-Image-Proxy-Fallback": "1",
@@ -61,15 +89,18 @@ async function fetchWithTimeout(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
+    const bypassTls = shouldBypassTlsVerification(url);
     const init: RequestInit & { dispatcher?: unknown } = {
       signal: controller.signal,
     };
 
-    if (shouldBypassTlsVerification(url)) {
+    if (bypassTls) {
       init.dispatcher = insecureTlsDispatcher;
     }
 
     return await fetch(url, init as RequestInit);
+  } catch (error) {
+    throw new Error(`Fetch failed for ${url}`, { cause: error });
   } finally {
     clearTimeout(timeout);
   }
@@ -215,6 +246,35 @@ export async function GET(request: Request) {
   const rawTarget = url.searchParams.get("url") || "";
   if (!rawTarget) return buildPlaceholder(400);
 
+  // Parse optimization params
+  const requestedWidth =
+    parseInt(url.searchParams.get("w") || "", 10) || CARD_WIDTH;
+  const baseQuality =
+    parseInt(url.searchParams.get("q") || "", 10) || DEFAULT_QUALITY;
+  
+  // Desktop quality boost: larger requested widths (desktop) get better quality
+  // Mobile requests smaller widths, so their quality stays at base (preserves Lighthouse scores)
+  const isDesktopRequest = requestedWidth >= DESKTOP_WIDTH_THRESHOLD;
+  const requestedQuality = isDesktopRequest 
+    ? Math.min(baseQuality + DESKTOP_QUALITY_BOOST, MAX_OPTIMIZED_QUALITY)
+    : baseQuality;
+  // Determine output format:
+  // 1. Explicit format param takes priority (avif, webp, jpeg, png)
+  // 2. Falls back to Accept header (but CloudFront may not forward it)
+  // 3. Defaults to source format or JPEG
+  const formatParam = url.searchParams.get("format")?.toLowerCase();
+  const acceptHeader = request.headers.get("accept") || "";
+  const preferAvif =
+    formatParam === "avif" ||
+    (!formatParam && acceptHeader.includes("image/avif"));
+  const preferWebp =
+    formatParam === "webp" ||
+    (!formatParam && acceptHeader.includes("image/webp"));
+
+  // Clamp values to reasonable limits
+  const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
+  const quality = Math.min(Math.max(requestedQuality, 1), 100);
+
   // Normalize and validate
   const normalized = normalizeExternalImageUrl(rawTarget);
   if (!normalized || !isAbsoluteHttpUrl(normalized)) {
@@ -224,8 +284,12 @@ export async function GET(request: Request) {
   // Check if URL has cache key BEFORE stripping (for cache header logic later)
   const hasCacheKey = hasStrongCacheKey(normalized);
 
-  // Strip ?v= before fetching upstream - some servers reject unknown query params
-  const upstreamUrl = stripCacheKeyForUpstream(normalized);
+  // Strip ?v= before fetching upstream - some servers reject unknown query params.
+  // Skip for legacy file handlers (.ashx) which have non-standard query strings
+  // that get corrupted by URL object serialization (adds trailing "=").
+  const upstreamUrl = isLegacyFileHandler(normalized)
+    ? normalized
+    : stripCacheKeyForUpstream(normalized);
 
   const originalWasHttp = (() => {
     try {
@@ -254,102 +318,173 @@ export async function GET(request: Request) {
         response.headers.get("content-type")
       );
 
-      // Stream the image instead of buffering it: read a small prefix to sniff type,
-      // then pipe the rest while enforcing an upper byte limit.
+      // Buffer the entire image for Sharp processing
       const body = response.body;
       if (!body) continue;
 
+      const chunks: Uint8Array[] = [];
       const reader = body.getReader();
-      const firstRead = await reader.read();
-      if (firstRead.done) continue;
+      let totalBytes = 0;
+      let imageTooLarge = false;
 
-      const firstChunk = Buffer.from(firstRead.value);
-      if (firstChunk.length === 0) continue;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.byteLength;
+        if (totalBytes > MAX_BYTES) {
+          await reader.cancel();
+          imageTooLarge = true;
+          break; // Exit the while loop
+        }
+        chunks.push(value);
+      }
 
-      // Sniff only the first bytes (avoid large allocations)
-      const sniffBuffer =
-        firstChunk.length > SNIFF_BYTES
-          ? firstChunk.subarray(0, SNIFF_BYTES)
-          : firstChunk;
+      if (imageTooLarge) {
+        continue; // Continue to the next fetch candidate
+      }
+
+      const imageBuffer = Buffer.concat(chunks);
+      if (imageBuffer.length === 0) continue;
+
+      // Sniff content type
+      const sniffBuffer = imageBuffer.subarray(
+        0,
+        Math.min(imageBuffer.length, SNIFF_BYTES)
+      );
       const sniffedType = sniffImageContentType(sniffBuffer);
 
-      const finalType =
+      const sourceType =
         (isAllowedRasterContentType(headerType) && headerType) ||
         (isAllowedRasterContentType(sniffedType) && sniffedType) ||
         "";
-      if (!finalType) {
-        // Not a valid raster image (or missing type). Cancel upstream stream.
-        try {
-          await reader.cancel();
-        } catch {
-          // ignore
-        }
-        continue;
+      if (!sourceType) continue;
+
+      // Skip optimization for very small images (already optimized or icons)
+      // and serve them directly - avoids overhead and potential size increase
+      if (imageBuffer.length < MIN_SIZE_FOR_OPTIMIZATION) {
+        return new NextResponse(new Uint8Array(imageBuffer), {
+          status: 200,
+          headers: {
+            "Content-Type": sourceType,
+            "Cache-Control": getCacheControl(hasCacheKey),
+            "X-Image-Proxy-Optimized": "skipped-small",
+          },
+        });
       }
 
-      let bytesSent = firstChunk.length;
-      if (bytesSent > MAX_BYTES) {
-        try {
-          await reader.cancel();
-        } catch {
-          // ignore
+      // Process image with Sharp
+      // Lambda: eval("require") bypasses Turbopack's module mangling
+      try {
+        const sharp = eval("require")("sharp") as typeof import("sharp");
+        let sharpInstance: Sharp = sharp(imageBuffer);
+
+        // Get image metadata to determine if resize is needed
+        const metadata = await sharpInstance.metadata();
+        const originalWidth = metadata.width || 0;
+
+        // Skip optimization for animated GIFs to preserve animation
+        const isAnimatedGif =
+          sourceType === "image/gif" &&
+          (metadata.pages ?? 1) > ANIMATED_GIF_FRAME_THRESHOLD;
+
+        if (isAnimatedGif) {
+          return new NextResponse(new Uint8Array(imageBuffer), {
+            status: 200,
+            headers: {
+              "Content-Type": sourceType,
+              "Cache-Control": getCacheControl(hasCacheKey),
+              "X-Image-Proxy-Optimized": "skipped-animated",
+            },
+          });
         }
-        continue;
+
+        // Only resize if image is larger than requested width
+        if (originalWidth > width) {
+          sharpInstance = sharpInstance.resize({
+            width,
+            withoutEnlargement: true,
+            fit: "inside",
+          });
+        }
+
+        // Determine output format and process
+        let outputBuffer: Buffer;
+        let outputContentType: string;
+
+        if (preferAvif || preferWebp) {
+          // WebP: excellent compression, fast encoding, reliable output
+          // We always use WebP for modern formats - AVIF encoding is slower
+          // and has caused issues with certain source images
+          outputBuffer = await sharpInstance
+            .webp({ quality, effort: 4 })
+            .toBuffer();
+          outputContentType = "image/webp";
+        } else if (sourceType === "image/png") {
+          // Keep PNG format for transparency (use default compressionLevel for speed)
+          outputBuffer = await sharpInstance.png({ quality }).toBuffer();
+          outputContentType = "image/png";
+        } else if (sourceType === "image/gif") {
+          // Keep GIF format if AVIF/WebP not preferred (legacy browsers)
+          outputBuffer = await sharpInstance.gif().toBuffer();
+          outputContentType = "image/gif";
+        } else {
+          // Default to JPEG for everything else
+          outputBuffer = await sharpInstance
+            .jpeg({ quality, mozjpeg: true })
+            .toBuffer();
+          outputContentType = "image/jpeg";
+        }
+
+        // Convert Buffer to Uint8Array for NextResponse compatibility
+        const responseBody = new Uint8Array(outputBuffer);
+
+        // Calculate savings for debugging
+        const savingsPercent = Math.round(
+          (1 - outputBuffer.length / imageBuffer.length) * 100
+        );
+
+        return new NextResponse(responseBody, {
+          status: 200,
+          headers: {
+            "Content-Type": outputContentType,
+            "Cache-Control": getCacheControl(hasCacheKey),
+            Vary: "Accept", // Cache different formats separately
+            "X-Image-Proxy-Optimized": "true",
+            "X-Image-Proxy-Savings": `${savingsPercent}%`,
+            "X-Image-Proxy-Original-Size": String(imageBuffer.length),
+            "X-Image-Proxy-Final-Size": String(outputBuffer.length),
+          },
+        });
+      } catch (sharpError) {
+        // If Sharp processing fails, fall back to original image
+        const errorMessage =
+          sharpError instanceof Error ? sharpError.message : String(sharpError);
+        console.error("[image-proxy] Sharp processing failed:", errorMessage);
+
+        if (process.env.NODE_ENV === "production") {
+          Sentry.captureException(sharpError, {
+            tags: { route: "/api/image-proxy", stage: "sharp-processing" },
+          });
+        }
+
+        // Return original image without processing
+        // Use short cache to allow retry after transient Sharp failures
+        // Sanitize error message for HTTP header (remove newlines, control chars, truncate)
+        const sanitizedError = errorMessage
+          .replace(/[\r\n\t]/g, " ")
+          .replace(/[^\x20-\x7E]/g, "")
+          .slice(0, 100);
+
+        return new NextResponse(new Uint8Array(imageBuffer), {
+          status: 200,
+          headers: {
+            "Content-Type": sourceType,
+            "Cache-Control": "public, max-age=300, s-maxage=300",
+            "X-Image-Proxy-Optimized": "fallback-sharp-error",
+            "X-Image-Proxy-Error": sanitizedError || "unknown",
+          },
+        });
       }
-
-      const stream = new ReadableStream<Uint8Array>({
-        start(controller) {
-          controller.enqueue(firstChunk);
-        },
-        async pull(controller) {
-          try {
-            const next = await reader.read();
-            if (next.done) {
-              controller.close();
-              return;
-            }
-
-            const chunk = next.value;
-            bytesSent += chunk.byteLength;
-            if (bytesSent > MAX_BYTES) {
-              try {
-                await reader.cancel();
-              } catch {
-                // ignore
-              }
-              // Terminate the stream: Next/Image will treat it as a failed image,
-              // and our server-rendered fallback will remain visible.
-              controller.error(new Error("Image too large"));
-              return;
-            }
-
-            controller.enqueue(chunk);
-          } catch (err) {
-            controller.error(err);
-          }
-        },
-        async cancel() {
-          try {
-            await reader.cancel();
-          } catch {
-            // ignore
-          }
-        },
-      });
-
-      const cacheControl = hasCacheKey
-        ? // Align with infra strategy: long TTL + cache-busting via ?v=
-          `public, max-age=${ONE_YEAR}, s-maxage=${ONE_YEAR}, immutable`
-        : // Conservative default for unversioned upstream URLs
-          "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
-
-      return new NextResponse(stream, {
-        status: 200,
-        headers: {
-          "Content-Type": finalType,
-          "Cache-Control": cacheControl,
-        },
-      });
     } catch (error) {
       if (process.env.NODE_ENV === "production") {
         Sentry.captureException(error, {

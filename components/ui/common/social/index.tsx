@@ -110,7 +110,7 @@ export default async function Social({ links }: SocialProps): Promise<JSX.Elemen
   const t = await getTranslations("Components.Social");
   return (
     <div className="flex flex-col items-center gap-element-gap-sm">
-      <h3 className="body-small font-semibold text-foreground/70 uppercase tracking-wider">
+      <h3 className="body-small font-semibold text-muted-foreground uppercase tracking-wider">
         {t("followUs")}
       </h3>
       <div className="flex justify-center items-center gap-3">

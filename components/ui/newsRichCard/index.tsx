@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 import type { NewsRichCardProps } from "types/props";
@@ -6,6 +5,11 @@ import { getFormattedDate } from "@utils/date-helpers";
 import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import {
+  getOptimalImageQuality,
+  getOptimalImageWidth,
+} from "@utils/image-quality";
+import { buildPictureSourceUrls } from "@utils/image-cache";
 
 export default async function NewsRichCard({
   event,
@@ -14,7 +18,7 @@ export default async function NewsRichCard({
 }: NewsRichCardProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
-  const image = event.imageUrl;
+  const rawImage = event.imageUrl;
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
@@ -25,7 +29,21 @@ export default async function NewsRichCard({
       : undefined;
   const plainDescription = stripHtmlTags(event.description || "");
 
+  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  const imageQuality = getOptimalImageQuality({
+    isPriority: false,
+    isExternal: true,
+  });
+  const imageWidth = getOptimalImageWidth(variant === "horizontal" ? "list" : "card");
+  const sources = rawImage
+    ? buildPictureSourceUrls(rawImage, event.hash, {
+      width: imageWidth,
+      quality: imageQuality,
+    })
+    : null;
+
   if (variant === "horizontal") {
+    const horizontalSizes = "(max-width: 768px) 88vw, 192px";
     return (
       <article className="card-elevated group w-full overflow-hidden">
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 p-4 sm:p-6 relative z-[1]">
@@ -38,14 +56,21 @@ export default async function NewsRichCard({
           )}
 
           <div className="md:flex-shrink-0">
-            {image ? (
-              <Image
-                src={image || "/placeholder.svg"}
-                alt={event.title}
-                width={200}
-                height={150}
-                className="aspect-[4/3] w-full md:w-48 object-cover rounded-lg transition-transform group-hover:scale-105"
-              />
+            {sources ? (
+              <picture>
+                <source srcSet={sources.webp} type="image/webp" sizes={horizontalSizes} />
+                <source srcSet={sources.avif} type="image/avif" sizes={horizontalSizes} />
+                <img
+                  src={sources.fallback}
+                  alt={event.title}
+                  width={200}
+                  height={150}
+                  loading="lazy"
+                  decoding="async"
+                  sizes={horizontalSizes}
+                  className="aspect-[4/3] w-full md:w-48 object-cover rounded-lg transition-transform group-hover:scale-105"
+                />
+              </picture>
             ) : (
               <div className="aspect-[4/3] w-full md:w-48 bg-gradient-to-br from-foreground-strong to-border rounded-lg" />
             )}
@@ -111,18 +136,26 @@ export default async function NewsRichCard({
     );
   }
 
+  const defaultSizes = "(max-width: 768px) 88vw, (max-width: 1280px) 70vw, 800px";
+
   return (
     <article className="card-elevated group w-full overflow-hidden">
       <div className="relative overflow-hidden">
-        {image ? (
-          <Image
-            src={image || "/placeholder.svg"}
-            alt={event.title}
-            width={1200}
-            height={675}
-            sizes="(max-width: 768px) 88vw, (max-width: 1280px) 70vw, 800px"
-            className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
-          />
+        {sources ? (
+          <picture>
+            <source srcSet={sources.webp} type="image/webp" sizes={defaultSizes} />
+            <source srcSet={sources.avif} type="image/avif" sizes={defaultSizes} />
+            <img
+              src={sources.fallback}
+              alt={event.title}
+              width={1200}
+              height={675}
+              loading="lazy"
+              decoding="async"
+              sizes={defaultSizes}
+              className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
+            />
+          </picture>
         ) : (
           <div className="aspect-[16/9] w-full bg-gradient-to-br from-foreground-strong to-border" />
         )}
