@@ -1322,27 +1322,27 @@
   "Sponsorship": {
     "meta": {
       "title": "Patrocina el teu poble | Esdeveniments.cat",
-      "description": "Fes visible el teu negoci a la teva comarca. Arriba a milers de persones que busquen què fer al teu poble."
+      "description": "El teu negoci, destacat a l'agenda d'esdeveniments del teu poble. Espai exclusiu sense competidors."
     },
     "hero": {
-      "title": "Fes visible el teu negoci a la teva comarca",
-      "subtitle": "Arriba a milers de persones que busquen què fer al teu poble. El teu anunci apareixerà a la pàgina de la teva població.",
-      "stats": "50.000+ visites anuals · Posicionament SEO · Audiència local",
+      "title": "El teu negoci, destacat al teu poble",
+      "subtitle": "Apareix a l'agenda d'esdeveniments de la teva zona. Espai 100% exclusiu: cap altre negoci competeix amb tu.",
+      "stats": "Espai exclusiu · Sense competidors · Audiència local",
       "cta": "Veure preus"
     },
     "benefits": {
-      "title": "Per què anunciar-te amb nosaltres?",
+      "title": "Per què patrocinar amb nosaltres?",
       "targeted": {
-        "title": "Persones del teu poble",
-        "description": "El teu anunci el veuen persones que busquen què fer a la teva zona. Gent real, prop de tu."
+        "title": "Gent que busca què fer",
+        "description": "El teu anunci el veuen persones que busquen activament què fer a la teva zona. Públic amb intenció."
       },
       "affordable": {
-        "title": "Prova sense risc",
-        "description": "Des de 3€ per 3 dies. Prova-ho per a una festa major o un esdeveniment i comprova els resultats."
+        "title": "Accessible per a tothom",
+        "description": "Des de 5€ per 7 dies. Ideal per a festes majors, fires o esdeveniments locals."
       },
       "visibility": {
-        "title": "Tot l'espai per a tu",
-        "description": "Només hi ha un patrocinador per població. Cap altre negoci competeix amb tu."
+        "title": "100% exclusiu",
+        "description": "Només hi ha un patrocinador per població. Tot l'espai és teu, sense competència."
       }
     },
     "pricing": {
@@ -1351,10 +1351,6 @@
       "popular": "Més popular",
       "cta": "Contractar",
       "plans": {
-        "3days": {
-          "name": "3 dies",
-          "description": "Ideal per provar el servei i veure com funciona"
-        },
         "7days": {
           "name": "7 dies",
           "description": "Perfecte per a caps de setmana llargs o ponts festius"
@@ -1406,8 +1402,8 @@
           "answer": "En menys de 24h laborables després de rebre el pagament i que hagis pujat la imatge."
         },
         "faq4": {
-          "question": "Puc cancel·lar o modificar?",
-          "answer": "Un cop activat no oferim reemborsaments, però pots contactar-nos per modificar la imatge o l'enllaç sense cost addicional."
+          "question": "I si no estic satisfet?",
+          "answer": "Oferim garantia de satisfacció: si durant els primers 7 dies no estàs content amb el servei, et retornem l'import. També pots contactar-nos per modificar la imatge o l'enllaç sense cost addicional."
         }
       }
     },

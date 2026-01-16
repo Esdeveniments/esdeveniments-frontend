@@ -1319,27 +1319,27 @@
   "Sponsorship": {
     "meta": {
       "title": "Sponsor Your Town | Esdeveniments.cat",
-      "description": "Make your business visible in your region. Reach thousands of people looking for things to do in your area."
+      "description": "Your business, featured on your town's events page. Exclusive space with no competitors."
     },
     "hero": {
-      "title": "Make your business visible in your region",
-      "subtitle": "Reach thousands of people looking for things to do in your area. Your ad will appear on your town's page.",
-      "stats": "50,000+ annual visits · SEO positioning · Local audience",
+      "title": "Your business, featured in your town",
+      "subtitle": "Appear on your area's events page. 100% exclusive space: no other business competes with you.",
+      "stats": "Exclusive space · No competitors · Local audience",
       "cta": "See prices"
     },
     "benefits": {
-      "title": "Why advertise with us?",
+      "title": "Why sponsor with us?",
       "targeted": {
-        "title": "People from your town",
-        "description": "Your ad is seen by people searching for things to do in your area. Real people, near you."
+        "title": "People looking for things to do",
+        "description": "Your ad is seen by people actively searching for activities in your area. Intent-driven audience."
       },
       "affordable": {
-        "title": "Try it risk-free",
-        "description": "From €3 for 3 days. Test it for a local festival or event and see the results."
+        "title": "Affordable for everyone",
+        "description": "From €5 for 7 days. Ideal for local festivals, fairs or events."
       },
       "visibility": {
-        "title": "The whole space is yours",
-        "description": "There's only one sponsor per town. No other business competes with you."
+        "title": "100% exclusive",
+        "description": "There's only one sponsor per town. The whole space is yours, no competition."
       }
     },
     "pricing": {
@@ -1348,10 +1348,6 @@
       "popular": "Most popular",
       "cta": "Get started",
       "plans": {
-        "3days": {
-          "name": "3 days",
-          "description": "Ideal to try the service and see how it works"
-        },
         "7days": {
           "name": "7 days",
           "description": "Perfect for long weekends or holiday periods"
@@ -1403,8 +1399,8 @@
           "answer": "Within 24 business hours after receiving payment and after you've uploaded the image."
         },
         "faq4": {
-          "question": "Can I cancel or modify?",
-          "answer": "Once activated we don't offer refunds, but you can contact us to modify the image or link at no extra cost."
+          "question": "What if I'm not satisfied?",
+          "answer": "We offer a satisfaction guarantee: if within the first 7 days you're not happy with the service, we'll refund your payment. You can also contact us to modify the image or link at no extra cost."
         }
       }
     },

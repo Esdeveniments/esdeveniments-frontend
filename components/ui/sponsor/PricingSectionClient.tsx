@@ -5,12 +5,8 @@ import PlaceSelector from "./PlaceSelector";
 import CheckoutButton from "./CheckoutButton";
 import { useTranslations } from "next-intl";
 import { DISPLAY_PRICES_EUR } from "@config/pricing";
-import type {
-  PlaceOption,
-  SponsorDuration,
-  GeoScope,
-  PricingPlan,
-} from "types/sponsor";
+import type { PlaceOption, SponsorDuration, GeoScope } from "types/sponsor";
+import { SPONSOR_DURATIONS, POPULAR_DURATION } from "types/sponsor";
 
 // Use pricing from config (single source of truth)
 const PRICES_BY_SCOPE = DISPLAY_PRICES_EUR;
@@ -18,12 +14,11 @@ const PRICES_BY_SCOPE = DISPLAY_PRICES_EUR;
 // Default prices (town) as fallback
 const DEFAULT_PRICES = PRICES_BY_SCOPE.town;
 
-const DURATION_PLANS: PricingPlan[] = [
-  { duration: "3days", popular: false },
-  { duration: "7days", popular: true },
-  { duration: "14days", popular: false },
-  { duration: "30days", popular: false },
-];
+// Derived from SPONSOR_DURATIONS (single source of truth)
+const DURATION_PLANS = SPONSOR_DURATIONS.map((duration) => ({
+  duration,
+  popular: duration === POPULAR_DURATION,
+}));
 
 /**
  * Get the geo scope from a place option

@@ -1321,27 +1321,27 @@
   "Sponsorship": {
     "meta": {
       "title": "Patrocina tu pueblo | Esdeveniments.cat",
-      "description": "Haz visible tu negocio en tu comarca. Llega a miles de personas que buscan qué hacer en tu pueblo."
+      "description": "Tu negocio, destacado en la agenda de eventos de tu pueblo. Espacio exclusivo sin competidores."
     },
     "hero": {
-      "title": "Haz visible tu negocio en tu comarca",
-      "subtitle": "Llega a miles de personas que buscan qué hacer en tu pueblo. Tu anuncio aparecerá en la página de tu población.",
-      "stats": "50.000+ visitas anuales · Posicionamiento SEO · Audiencia local",
+      "title": "Tu negocio, destacado en tu pueblo",
+      "subtitle": "Aparece en la agenda de eventos de tu zona. Espacio 100% exclusivo: ningún otro negocio compite contigo.",
+      "stats": "Espacio exclusivo · Sin competidores · Audiencia local",
       "cta": "Ver precios"
     },
     "benefits": {
-      "title": "¿Por qué anunciarte con nosotros?",
+      "title": "¿Por qué patrocinar con nosotros?",
       "targeted": {
-        "title": "Personas de tu pueblo",
-        "description": "Tu anuncio lo ven personas que buscan qué hacer en tu zona. Gente real, cerca de ti."
+        "title": "Gente que busca qué hacer",
+        "description": "Tu anuncio lo ven personas que buscan activamente qué hacer en tu zona. Público con intención."
       },
       "affordable": {
-        "title": "Prueba sin riesgo",
-        "description": "Desde 3€ por 3 días. Pruébalo para una fiesta local o un evento y comprueba los resultados."
+        "title": "Accesible para todos",
+        "description": "Desde 5€ por 7 días. Ideal para fiestas locales, ferias o eventos."
       },
       "visibility": {
-        "title": "Todo el espacio para ti",
-        "description": "Solo hay un patrocinador por población. Ningún otro negocio compite contigo."
+        "title": "100% exclusivo",
+        "description": "Solo hay un patrocinador por población. Todo el espacio es tuyo, sin competencia."
       }
     },
     "pricing": {
@@ -1350,10 +1350,6 @@
       "popular": "Más popular",
       "cta": "Contratar",
       "plans": {
-        "3days": {
-          "name": "3 días",
-          "description": "Ideal para probar el servicio y ver cómo funciona"
-        },
         "7days": {
           "name": "7 días",
           "description": "Perfecto para fines de semana largos o puentes festivos"
@@ -1405,8 +1401,8 @@
           "answer": "En menos de 24h laborables después de recibir el pago y de que hayas subido la imagen."
         },
         "faq4": {
-          "question": "¿Puedo cancelar o modificar?",
-          "answer": "Una vez activado no ofrecemos reembolsos, pero puedes contactarnos para modificar la imagen o el enlace sin coste adicional."
+          "question": "¿Y si no estoy satisfecho?",
+          "answer": "Ofrecemos garantía de satisfacción: si durante los primeros 7 días no estás contento con el servicio, te devolvemos el importe. También puedes contactarnos para modificar la imagen o el enlace sin coste adicional."
         }
       }
     },

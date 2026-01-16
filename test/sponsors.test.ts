@@ -556,10 +556,10 @@ describe("Checkout Helpers", () => {
 
     test("falls back to Catalan for unknown locale", () => {
       const params = new URLSearchParams();
-      buildLineItemParams(params, "3days", "town", "fr");
+      buildLineItemParams(params, "7days", "town", "fr");
 
       expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
-        "Patrocini 3 dies"
+        "Patrocini 7 dies"
       );
     });
 
@@ -585,20 +585,20 @@ describe("Checkout Helpers", () => {
     });
 
     test("price varies by duration", () => {
-      const params3days = new URLSearchParams();
+      const params7days = new URLSearchParams();
       const params30days = new URLSearchParams();
 
-      buildLineItemParams(params3days, "3days", "town", "ca");
+      buildLineItemParams(params7days, "7days", "town", "ca");
       buildLineItemParams(params30days, "30days", "town", "ca");
 
-      const price3 = Number(
-        params3days.get("line_items[0][price_data][unit_amount]")
+      const price7 = Number(
+        params7days.get("line_items[0][price_data][unit_amount]")
       );
       const price30 = Number(
         params30days.get("line_items[0][price_data][unit_amount]")
       );
 
-      expect(price30).toBeGreaterThan(price3);
+      expect(price30).toBeGreaterThan(price7);
     });
 
     test("price varies by geoScope", () => {
@@ -765,8 +765,8 @@ describe("Checkout Helpers", () => {
     });
 
     test("handles all duration values correctly", () => {
-      const durations = ["3days", "7days", "14days", "30days"] as const;
-      const expectedDays = ["3", "7", "14", "30"];
+      const durations = ["7days", "14days", "30days"] as const;
+      const expectedDays = ["7", "14", "30"];
 
       durations.forEach((duration, index) => {
         const params = new URLSearchParams();

@@ -51,26 +51,25 @@ Three visibility tiers based on geographic scope:
 
 | Duration | Població (Town) | Comarca (Region) | Catalunya (Country) |
 | -------- | --------------- | ---------------- | ------------------- |
-| 3 days   | €3              | €5               | €8                  |
-| 7 days   | €5              | €8               | €12                 |
-| 14 days  | €8              | €12              | €20                 |
-| 30 days  | €12             | €20              | €35                 |
+| 7 days   | €5              | €10              | €15                 |
+| 14 days  | €8              | €15              | €25                 |
+| 30 days  | €15             | €25              | €40                 |
 
-**Reference benchmark**: Wallapop charges €1.25-2.50 for 7-day visibility boosts. We're slightly higher because our audience is intent-driven (actively searching for local events).
+**MVP Pricing Rationale**: After analysis of traffic data and competitive landscape, we removed the €3/3-day option (high transaction cost ratio, low margin) and set floor at €5. Ceiling at €40 leaves room to grow as traffic increases.
 
 **Tier logic**:
 
-- **Població**: Single town page (e.g., `/mataro`) — smallest, most targeted audience
+- **Població**: Single town page (e.g., `/mataro`) — exclusive local presence
 - **Comarca**: Region page (e.g., `/maresme`) — covers 10-30 towns
-- **Catalunya**: Homepage (`/`) — entire site traffic, maximum visibility
+- **Catalunya**: Homepage (`/`) + `/catalunya` page — entire site traffic, maximum visibility
 
-Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shorter durations match sponsor needs.
+**Value proposition**: Exclusivity (only 1 sponsor per location), not impressions. Minimum €5 covers Stripe fees and signals quality.
 
 **Stripe fees impact** (1.5% + €0.25):
 
-- €3 sale → €0.30 fee (9.8%) → you keep €2.70
 - €5 sale → €0.33 fee (6.5%) → you keep €4.67
-- €35 sale → €0.78 fee (2.2%) → you keep €34.22
+- €15 sale → €0.48 fee (3.1%) → you keep €14.52
+- €40 sale → €0.85 fee (2.1%) → you keep €39.15
 
 ---
 
@@ -236,7 +235,7 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 - "50,000+ visites anuals" – impressive, true
 - "Espai exclusiu – només 1 patrocinador per zona" – scarcity/exclusivity
 - "Arriba al teu públic local exacte" – precise targeting
-- "Des de 3€" – ultra-low barrier impulse buy
+- "Des de 5€" – low barrier, covers Stripe fees
 - "Tria el teu abast: població, comarca o tot Catalunya" – control over reach
 - "Sense contractes – paga només quan vulguis" – no commitment
 
@@ -266,35 +265,43 @@ Minimum €3 (impulse-buy friendly). Cultural events are time-sensitive – shor
 
 ### Hero
 
-- **Headline:** "Fes visible el teu negoci a la teva comarca"
-- **Subhead:** "Arriba a milers de persones que busquen què fer al teu poble"
+- **Headline:** "El teu negoci, destacat al teu poble"
+- **Subhead:** "Apareix a l'agenda d'esdeveniments de la teva zona. Espai 100% exclusiu."
+- **Stats:** "Espai exclusiu · Sense competidors · Audiència local"
 - **CTA:** "Veure preus"
 
 ### Benefits Section
 
-1. **Audiència local exacta** – "Els teus clients potencials, buscant activitats al teu poble"
-2. **Espai exclusiu** – "Només 1 patrocinador per població – sense competència"
-3. **Sense complicacions** – "Envia'ns la imatge i nosaltres ho fem tot"
-4. **Flexible** – "Des de 3 dies – ideal per events puntuals"
+1. **Gent que busca què fer** – "Públic amb intenció, buscant activament què fer a la teva zona"
+2. **100% exclusiu** – "Només 1 patrocinador per població – tot l'espai és teu"
+3. **Accessible** – "Des de 5€ per 7 dies – ideal per a festes majors i fires"
 
 ### Pricing Table
 
 - Show 3 scope tabs (Població / Comarca / Catalunya)
-- 4 duration options per scope with "Més popular" badge on 7 days
-- Each with Stripe Payment Link button
+- 3 duration options per scope (7/14/30 days) with "Més popular" badge on 7 days
+- Each with Stripe Checkout button
 
 ### How It Works
 
-1. Tria la durada i paga
-2. Envia'ns la imatge i l'enllaç
-3. Activem el teu anunci en 24h
+1. Tria on vols aparèixer (poble o comarca)
+2. Completa el pagament
+3. Puja la imatge del teu anunci
+4. Activem el teu anunci en 24h
 
 ### FAQ
 
-- "Quina mida ha de tenir la imatge?" → Qualsevol, recomanem horitzontal
+- "Quina mida ha de tenir la imatge?" → Qualsevol, recomanem horitzontal (728×150px òptim)
 - "Puc triar el poble?" → Sí, tria entre població, comarca o tot Catalunya
 - "Quan s'activa?" → En menys de 24h laborables
-- "Quina diferència hi ha entre els 3 nivells?" → Població = 1 poble, Comarca = ~20 pobles, Catalunya = tot el web
+- "I si no estic satisfet?" → **Garantia de satisfacció: reemborsament en 7 dies**
+
+### Refund Policy (Guardrails)
+
+- **7-day satisfaction guarantee**: Full refund if not satisfied within first 7 days
+- **One refund per business**: Prevents abuse
+- **Banner must be live**: Refund only after activation (not for failed uploads)
+- **Modifications free**: Image or link changes at no extra cost
 
 ### Contact
 

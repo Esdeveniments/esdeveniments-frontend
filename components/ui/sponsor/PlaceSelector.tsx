@@ -10,7 +10,6 @@ import {
   MapPinIcon,
   CheckIcon,
   XMarkIcon,
-  EyeIcon,
   GlobeAltIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
@@ -209,39 +208,47 @@ export default function PlaceSelector({
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
-          <p className="body-small text-foreground/60 mt-2 flex items-center gap-1">
-            <EyeIcon className="h-4 w-4" />
-            {t("placeSelector.preview")}{" "}
-            <span className="text-primary font-medium">
-              esdeveniments.cat/{selectedPlace.slug}
-            </span>
-          </p>
         </div>
       ) : (
         // Search state
         <div className="space-y-4">
           {/* Catalunya option - Maximum visibility */}
-          <button
-            onClick={handleCatalunyaSelect}
-            className="w-full text-left card-bordered p-4 hover:border-primary hover:bg-primary/5 transition-colors group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <GlobeAltIcon className="h-8 w-8 text-primary" />
-                <div>
-                  <div className="font-medium text-foreground group-hover:text-primary">
-                    {t("placeSelector.catalunya.title")}
+          {(() => {
+            const isCatalunyaOccupied = occupiedSlugs.has(CATALUNYA_SLUG);
+            return (
+              <button
+                onClick={handleCatalunyaSelect}
+                disabled={isCatalunyaOccupied}
+                className={`w-full text-left card-bordered p-4 transition-colors group ${isCatalunyaOccupied
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:border-primary hover:bg-primary/5"
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <GlobeAltIcon className="h-8 w-8 text-primary" />
+                    <div>
+                      <div className={`font-medium text-foreground ${!isCatalunyaOccupied ? "group-hover:text-primary" : ""}`}>
+                        {t("placeSelector.catalunya.title")}
+                      </div>
+                      <div className="body-small text-foreground/60">
+                        {t("placeSelector.catalunya.subtitle")}
+                      </div>
+                    </div>
                   </div>
-                  <div className="body-small text-foreground/60">
-                    {t("placeSelector.catalunya.subtitle")}
-                  </div>
+                  {isCatalunyaOccupied ? (
+                    <span className="text-xs px-1.5 py-0.5 bg-warning-muted text-warning-dark rounded">
+                      {t("placeSelector.occupied")}
+                    </span>
+                  ) : (
+                    <span className="badge-primary text-xs">
+                      {t("placeSelector.catalunya.badge")}
+                    </span>
+                  )}
                 </div>
-              </div>
-              <span className="badge-primary text-xs">
-                {t("placeSelector.catalunya.badge")}
-              </span>
-            </div>
-          </button>
+              </button>
+            );
+          })()}
 
           {/* Divider with "or" */}
           <div className="flex items-center gap-3 text-foreground/50">
