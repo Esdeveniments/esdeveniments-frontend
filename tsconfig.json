@@ -29,7 +29,6 @@
       "@lib/*": ["./lib/*"],
       "@config/*": ["./config/*"],
       "@public/*": ["./public/*"],
-      "@types/*": ["./types/*"],
       "@i18n/*": ["./i18n/*"],
       "react": ["./node_modules/@types/react"],
       "types/*": ["./types/*"],
