@@ -113,7 +113,7 @@ export const exampleFilterConfig = {
       DEFAULT_VALUE: "LABEL_FOR_DEFAULT",
       // Add more value → label mappings
     };
-    const value = state.filters.searchTerm; // Replace with your filter key
+    const value = state.filters.YOUR_FILTER_KEY; // Replace YOUR_FILTER_KEY with your filter key
     return value ? labels[value] || value : undefined;
   },
 
@@ -136,7 +136,7 @@ export const exampleFilterConfig = {
    * })
    */
   getRemovalChanges: (): Partial<URLFilterState> => ({
-    searchTerm: undefined, // Replace with your filter key
+    YOUR_FILTER_KEY: undefined, // Replace YOUR_FILTER_KEY with your filter key
   }),
 
   /**

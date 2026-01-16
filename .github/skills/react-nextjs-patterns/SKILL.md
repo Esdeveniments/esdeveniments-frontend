@@ -101,7 +101,7 @@ export function EventPage({ events }) {
 // components/ui/filters/FilterSelect.tsx
 "use client";
 
-import type { FilterSelectProps } from "@types/props";
+import type { FilterSelectProps } from "types/props";
 
 export function FilterSelect({ value, onChange }: FilterSelectProps) {
   return (
@@ -309,7 +309,7 @@ export default async function Page() {
 "use client";
 
 // 2. Imports (grouped)
-import type { MyComponentProps } from "@types/props";
+import type { MyComponentProps } from "types/props";
 import { useCallback, useState } from "react";
 import { Link } from "@i18n/routing";
 import { formatDate } from "@utils/date-helpers";

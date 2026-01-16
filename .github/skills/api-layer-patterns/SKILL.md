@@ -226,15 +226,16 @@ lib/api/
 ```typescript
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { z } from "zod";
-import type { YourResourceDTO } from "@types/api/your-resource";
+import type { YourResourceDTO, PagedYourResourceDTO } from "types/api/your-resource";
 
-// Zod schema for runtime validation
+// Zod schema for runtime validation (single item)
 const YourResourceSchema = z.object({
   id: z.number(),
   name: z.string(),
   // ... other fields
 });
 
+// Paged response schema
 const PagedResponseSchema = z.object({
   content: z.array(YourResourceSchema),
   currentPage: z.number(),
@@ -246,7 +247,7 @@ const PagedResponseSchema = z.object({
 
 export async function fetchYourResourceExternal(
   query?: URLSearchParams
-): Promise<YourResourceDTO> {
+): Promise<PagedYourResourceDTO> {
   // 1. ENV GUARD (critical for preview environments)
   if (!process.env.NEXT_PUBLIC_API_URL) {
     console.warn(
@@ -360,7 +361,7 @@ if (filters.searchTerm) {
 **API** expects `radius` + `lat` + `lon`.
 
 ```typescript
-import { distanceToRadius } from "@types/event";
+import { distanceToRadius } from "types/event";
 
 if (filters.distance && filters.lat && filters.lon) {
   params.set("radius", distanceToRadius(filters.distance).toString());

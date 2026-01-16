@@ -52,7 +52,7 @@ export async function fetchEvents(
     return await response.json();
   } catch (error) {
     console.error("[fetchEvents] Error:", error);
-    return { content: [], totalElements: 0, totalPages: 0, last: true };
+    return { content: [], currentPage: 0, pageSize: 20, totalElements: 0, totalPages: 0, last: true };
   }
 }
 */
@@ -109,7 +109,7 @@ interface EventsExternalParams {
 export async function fetchEventsExternal(params: EventsExternalParams = {}) {
   // Environment guard
   if (!API_URL) {
-    return { content: [], totalElements: 0, totalPages: 0, last: true };
+    return { content: [], currentPage: 0, pageSize: 20, totalElements: 0, totalPages: 0, last: true };
   }
 
   try {
@@ -129,7 +129,7 @@ export async function fetchEventsExternal(params: EventsExternalParams = {}) {
     return await response.json();
   } catch (error) {
     captureException(error, { tags: { api: "events" }, extra: { params } });
-    return { content: [], totalElements: 0, totalPages: 0, last: true };
+    return { content: [], currentPage: 0, pageSize: 20, totalElements: 0, totalPages: 0, last: true };
   }
 }
 */

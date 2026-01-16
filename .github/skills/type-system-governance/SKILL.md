@@ -25,7 +25,7 @@ export interface ButtonProps {
 }
 
 // File: components/ui/Button.tsx
-import type { ButtonProps } from "@types/props";
+import type { ButtonProps } from "types/props";
 ```
 
 **ESLint enforces this rule** - you will get lint errors for inline types.
@@ -109,7 +109,7 @@ export interface NewComponentProps {
 
 ```typescript
 // components/ui/NewComponent.tsx
-import type { NewComponentProps } from "@types/props";
+import type { NewComponentProps } from "types/props";
 
 export function NewComponent({
   variant,
@@ -149,7 +149,7 @@ export interface CardProps {
 }
 
 // components/ui/Card.tsx
-import type { CardProps } from "@types/props";
+import type { CardProps } from "types/props";
 
 export function Card({ title, description }: CardProps) {
   /* ... */
@@ -183,7 +183,7 @@ export interface Event {
 }
 
 // Both components import from same source
-import type { Event } from "@types/event";
+import type { Event } from "types/event";
 ```
 
 ### ❌ Violation 3: API DTO Not in /types/api
@@ -209,7 +209,7 @@ export interface EventResponseDTO {
 }
 
 // lib/api/events.ts
-import type { EventResponseDTO } from "@types/api/event";
+import type { EventResponseDTO } from "types/api/event";
 ```
 
 ### ❌ Violation 4: Using `any`
@@ -232,7 +232,7 @@ const handleData = (data: unknown) => {
 };
 
 // Or define proper type
-import type { EventData } from "@types/event";
+import type { EventData } from "types/event";
 const handleData = (data: EventData) => {
   /* ... */
 };
@@ -278,7 +278,7 @@ export interface ConsolidatedType {
 grep -rn "ConsolidatedType" --include="*.ts" --include="*.tsx"
 
 # Update imports in each file
-import type { ConsolidatedType } from '@types/common';
+import type { ConsolidatedType } from 'types/common';
 ```
 
 ### Step 5: Verify
@@ -291,15 +291,15 @@ yarn typecheck && yarn lint
 
 ## 🔧 Quick Reference: Canonical Sources
 
-| Type                     | Canonical File       | Import Path        |
-| ------------------------ | -------------------- | ------------------ |
-| `NavigationItem`         | `types/common.ts`    | `@types/common`    |
-| `SocialLinks`            | `types/common.ts`    | `@types/common`    |
-| `ButtonProps`            | `types/props.ts`     | `@types/props`     |
-| `EventDTO`               | `types/api/event.ts` | `@types/api/event` |
-| `FilterConfig`           | `types/filters.ts`   | `@types/filters`   |
-| `CitySummaryResponseDTO` | `types/api/city.ts`  | `@types/api/city`  |
-| `Locale`                 | `types/i18n.ts`      | `@types/i18n`      |
+| Type                     | Canonical File       | Import Path       |
+| ------------------------ | -------------------- | ----------------- |
+| `NavigationItem`         | `types/common.ts`    | `types/common`    |
+| `SocialLinks`            | `types/common.ts`    | `types/common`    |
+| `ButtonProps`            | `types/props.ts`     | `types/props`     |
+| `EventDTO`               | `types/api/event.ts` | `types/api/event` |
+| `FilterConfig`           | `types/filters.ts`   | `types/filters`   |
+| `CitySummaryResponseDTO` | `types/api/city.ts`  | `types/api/city`  |
+| `Locale`                 | `types/i18n.ts`      | `types/i18n`      |
 
 ---
 
@@ -352,7 +352,7 @@ This project has ESLint rules that **block** type definitions outside `/types`:
 
 ```typescript
 // ✅ Good: Use path alias
-import type { Event } from "@types/event";
+import type { Event } from "types/event";
 
 // ❌ Avoid: Relative paths
 import type { Event } from "../../../types/event";

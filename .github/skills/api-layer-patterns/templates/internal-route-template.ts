@@ -27,6 +27,8 @@ declare function fetchRESOURCE_NAME(params: {
   size: number;
 }): Promise<{
   content: unknown[];
+  currentPage: number;
+  pageSize: number;
   totalElements: number;
   totalPages: number;
   last: boolean;
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // Return safe fallback for read endpoints
     return NextResponse.json(
-      { content: [], totalElements: 0, totalPages: 0, last: true },
+      { content: [], currentPage: 0, pageSize: 20, totalElements: 0, totalPages: 0, last: true },
       { status: 200 } // Don't fail - return empty data
     );
   }
