@@ -4,7 +4,12 @@
  * No hardcoded prices - all values must come from configuration
  */
 
-import { VALID_GEO_SCOPES, type GeoScope } from "types/sponsor";
+import {
+  VALID_GEO_SCOPES,
+  DURATION_DAYS,
+  type GeoScope,
+  type SponsorDuration,
+} from "types/sponsor";
 
 /**
  * @deprecated Use GeoScope from types/sponsor.ts instead
@@ -26,15 +31,16 @@ export interface PricingMatrix {
   [key: PricingKey]: PricingConfig;
 }
 
-// Centralized constants - single source of truth
-const AVAILABLE_DURATIONS = [3, 7, 14, 30] as const;
+// Derived from DURATION_DAYS (single source of truth in types/sponsor.ts)
+const AVAILABLE_DURATIONS = Object.values(DURATION_DAYS) as readonly number[];
 
 // Base pricing in cents - single source of truth
 // Must be defined before loadPricingFromEnv to avoid TDZ error
+// MVP pricing: €5-40 range, focused on exclusivity value
 export const BASE_PRICES_CENTS = {
-  town: { 3: 300, 7: 500, 14: 800, 30: 1200 },
-  region: { 3: 500, 7: 800, 14: 1200, 30: 2000 },
-  country: { 3: 800, 7: 1200, 14: 2000, 30: 3500 },
+  town: { 7: 500, 14: 800, 30: 1500 },
+  region: { 7: 1000, 14: 1500, 30: 2500 },
+  country: { 7: 1500, 14: 2500, 30: 4000 },
 } as const;
 
 /**
@@ -124,26 +130,33 @@ export function getPricingMatrix(): PricingMatrix {
 }
 
 /**
- * Display prices in EUR (for client-side rendering)
- * Derived programmatically from BASE_PRICES_CENTS to avoid duplication
+ * Build display prices for a geo scope from BASE_PRICES_CENTS
  */
-export const DISPLAY_PRICES_EUR = {
-  town: {
-    "3days": BASE_PRICES_CENTS.town[3] / 100,
-    "7days": BASE_PRICES_CENTS.town[7] / 100,
-    "14days": BASE_PRICES_CENTS.town[14] / 100,
-    "30days": BASE_PRICES_CENTS.town[30] / 100,
-  },
-  region: {
-    "3days": BASE_PRICES_CENTS.region[3] / 100,
-    "7days": BASE_PRICES_CENTS.region[7] / 100,
-    "14days": BASE_PRICES_CENTS.region[14] / 100,
-    "30days": BASE_PRICES_CENTS.region[30] / 100,
-  },
-  country: {
-    "3days": BASE_PRICES_CENTS.country[3] / 100,
-    "7days": BASE_PRICES_CENTS.country[7] / 100,
-    "14days": BASE_PRICES_CENTS.country[14] / 100,
-    "30days": BASE_PRICES_CENTS.country[30] / 100,
-  },
-} as const;
+function buildDisplayPricesForScope(
+  scope: GeoScope
+): Record<SponsorDuration, number> {
+  const result = {} as Record<SponsorDuration, number>;
+  for (const [durationKey, days] of Object.entries(DURATION_DAYS)) {
+    const cents =
+      BASE_PRICES_CENTS[scope][
+        days as keyof (typeof BASE_PRICES_CENTS)[typeof scope]
+      ];
+    if (cents !== undefined) {
+      result[durationKey as SponsorDuration] = cents / 100;
+    }
+  }
+  return result;
+}
+
+/**
+ * Display prices in EUR (for client-side rendering)
+ * Auto-generated from DURATION_DAYS and BASE_PRICES_CENTS
+ */
+export const DISPLAY_PRICES_EUR: Record<
+  GeoScope,
+  Record<SponsorDuration, number>
+> = {
+  town: buildDisplayPricesForScope("town"),
+  region: buildDisplayPricesForScope("region"),
+  country: buildDisplayPricesForScope("country"),
+};

@@ -13,7 +13,7 @@ alwaysApply: false
 - Error handling: For reads, return safe fallbacks; for writes, surface backend error text before throwing.
 - DRY: Before adding helpers/components, search existing utils/hooks/components (filters, URLs, i18n, images, forms). Reuse `next-intl` patterns (`getTranslations`/`useTranslations`, `i18n/routing`, `i18n/request`) and design-system primitives instead of introducing new ones.
 - **Links: Always use `Link` from `@i18n/routing`** for internal navigation (not `next/link`). This ensures locale prefixes (`/es/`, `/en/`) are automatically handled. ESLint warns on `next/link` imports. Exceptions: primitives with manual locale handling, external-only links.
-- Path aliases: Use `@app/*`, `@components/*`, `@utils/*`, `@lib/*`, `@config/*`, `@types/*`.
+- Path aliases: Use `@app/*`, `@components/*`, `@utils/*`, `@lib/*`, `@config/*`, `types/*` (note: `types/*` without `@` to avoid collision with TypeScript's `@types` packages).
 - Date formatting: Use `@utils/date-helpers.ts` (and `@lib/dates.ts` where applicable) instead of ad-hoc formatting.
 - ESLint overrides: Do not fight rules—no `no-undef` in TS files, no inline type/interface declarations.
 - Formatting: Preserve existing indentation and className patterns; avoid reformatting unrelated code.

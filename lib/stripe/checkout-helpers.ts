@@ -4,7 +4,7 @@
  */
 import { BASE_PRICES_CENTS } from "@config/pricing";
 import type { SponsorDuration, GeoScope } from "types/sponsor";
-import { DURATION_DAYS } from "types/sponsor";
+import { DURATION_DAYS, SPONSOR_DURATIONS } from "types/sponsor";
 
 /**
  * Get price in cents for Stripe
@@ -15,31 +15,47 @@ export function getPriceInCents(
   geoScope: GeoScope
 ): number {
   const days = DURATION_DAYS[duration];
-  return BASE_PRICES_CENTS[geoScope][days as keyof (typeof BASE_PRICES_CENTS)[typeof geoScope]];
+  return BASE_PRICES_CENTS[geoScope][
+    days as keyof (typeof BASE_PRICES_CENTS)[typeof geoScope]
+  ];
 }
 
 /**
- * Product names by locale
+ * Product name templates by locale
+ * Uses DURATION_DAYS to auto-generate names for all durations
+ */
+const PRODUCT_NAME_TEMPLATES: Record<
+  string,
+  { prefix: string; suffix: string }
+> = {
+  ca: { prefix: "Patrocini", suffix: "dies" },
+  es: { prefix: "Patrocinio", suffix: "días" },
+  en: { prefix: "Sponsorship", suffix: "days" },
+};
+
+/**
+ * Generate product names for all durations from templates
+ */
+function buildProductNames(template: {
+  prefix: string;
+  suffix: string;
+}): Record<SponsorDuration, string> {
+  const result = {} as Record<SponsorDuration, string>;
+  for (const duration of SPONSOR_DURATIONS) {
+    result[
+      duration
+    ] = `${template.prefix} ${DURATION_DAYS[duration]} ${template.suffix}`;
+  }
+  return result;
+}
+
+/**
+ * Product names by locale (auto-generated from DURATION_DAYS)
  */
 export const PRODUCT_NAMES: Record<string, Record<SponsorDuration, string>> = {
-  ca: {
-    "3days": "Patrocini 3 dies",
-    "7days": "Patrocini 7 dies",
-    "14days": "Patrocini 14 dies",
-    "30days": "Patrocini 30 dies",
-  },
-  es: {
-    "3days": "Patrocinio 3 días",
-    "7days": "Patrocinio 7 días",
-    "14days": "Patrocinio 14 días",
-    "30days": "Patrocinio 30 días",
-  },
-  en: {
-    "3days": "Sponsorship 3 days",
-    "7days": "Sponsorship 7 days",
-    "14days": "Sponsorship 14 days",
-    "30days": "Sponsorship 30 days",
-  },
+  ca: buildProductNames(PRODUCT_NAME_TEMPLATES.ca),
+  es: buildProductNames(PRODUCT_NAME_TEMPLATES.es),
+  en: buildProductNames(PRODUCT_NAME_TEMPLATES.en),
 };
 
 /**

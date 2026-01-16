@@ -22,20 +22,32 @@ export const VALID_GEO_SCOPES: readonly GeoScope[] = [
 ] as const;
 
 /**
- * Duration options for sponsor packages
+ * Duration options for sponsor packages - SINGLE SOURCE OF TRUTH
+ * To add/remove durations: edit this object only (+ BASE_PRICES_CENTS + translations)
+ * MVP: Removed 3-day option (low margin, high friction)
  */
-export type SponsorDuration = "3days" | "7days" | "14days" | "30days";
-
-/**
- * Mapping from SponsorDuration to number of days
- * Co-located with SponsorDuration type for consistency
- */
-export const DURATION_DAYS: Record<SponsorDuration, number> = {
-  "3days": 3,
+export const DURATION_DAYS = {
   "7days": 7,
   "14days": 14,
   "30days": 30,
-};
+} as const;
+
+/**
+ * Duration type derived from DURATION_DAYS keys
+ */
+export type SponsorDuration = keyof typeof DURATION_DAYS;
+
+/**
+ * Get all available duration keys (for iteration)
+ */
+export const SPONSOR_DURATIONS = Object.keys(
+  DURATION_DAYS
+) as SponsorDuration[];
+
+/**
+ * Which duration is marked as "popular" in the UI
+ */
+export const POPULAR_DURATION: SponsorDuration = "7days";
 
 /**
  * Pricing plan for display in UI

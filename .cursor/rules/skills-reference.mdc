@@ -1,0 +1,36 @@
+---
+description: Reference to Agent Skills for specific tasks. Load the appropriate skill from .github/skills/ based on what you're working on.
+alwaysApply: false
+---
+
+# Agent Skills Reference
+
+Load the appropriate skill from `.github/skills/*/SKILL.md` based on your task:
+
+| Task              | Skill File                     | Key Rule                               |
+| ----------------- | ------------------------------ | -------------------------------------- |
+| Any new code      | `pre-implementation-checklist` | Search existing patterns FIRST         |
+| Types/interfaces  | `type-system-governance`       | ALL types in `/types` directory        |
+| Components        | `react-nextjs-patterns`        | Server Component default               |
+| Filters           | `filter-system-dev`            | `config/filters.ts` only               |
+| API calls         | `api-layer-patterns`           | Three-layer proxy pattern              |
+| URL/routing       | `url-canonicalization`         | NEVER `searchParams` in listing pages  |
+| i18n/translations | `i18n-best-practices`          | Use `Link` from `@i18n/routing`        |
+| Styling/UI        | `design-system-conventions`    | Semantic classes, no `gray-*`          |
+| Tests             | `testing-patterns`             | Vitest for unit, Playwright for E2E    |
+| Security/CSP      | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains |
+| Service worker    | `service-worker-updates`       | Edit `sw-template.js`, run `prebuild`  |
+| Performance       | `bundle-optimization`          | Quality caps, Server Components        |
+| Env variables     | `env-variable-management`      | Update 4 locations                     |
+| API validation    | `data-validation-patterns`     | Zod in `lib/validation/`               |
+| PR review         | `code-review-evaluation`       | Cross-reference against skills         |
+
+## How to Use
+
+When starting a task, read the corresponding skill:
+
+```text
+.github/skills/<skill-name>/SKILL.md
+```
+
+Skills contain detailed checklists, templates, and examples.

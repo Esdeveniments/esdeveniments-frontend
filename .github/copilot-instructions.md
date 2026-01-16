@@ -2,6 +2,41 @@
 
 Purpose: Catalan events discovery web app (Next.js 16.1 App Router + React 19 + TypeScript) focused on SEO, performance (service worker + image optimization), and a configuration‑driven URL-first filtering system. Tooling: Node >=22, Yarn 4.12 (per package.json).
 
+---
+
+## ⚠️ CRITICAL: Agent Skills (ALWAYS CHECK FIRST)
+
+**Before writing ANY code**, load and follow the relevant Agent Skills in `.github/skills/`:
+
+| Task                          | Required Skill                 | Key Rule                                                    |
+| ----------------------------- | ------------------------------ | ----------------------------------------------------------- |
+| **Any new code**              | `pre-implementation-checklist` | Search for existing patterns FIRST                          |
+| **Creating types/interfaces** | `type-system-governance`       | ALL types must go in `/types` directory                     |
+| **Creating components**       | `react-nextjs-patterns`        | Server Component by default, `"use client"` only at leaves  |
+| **Adding filters**            | `filter-system-dev`            | Add to `config/filters.ts` only                             |
+| **API endpoints**             | `api-layer-patterns`           | Three-layer proxy pattern required                          |
+| **URL/routing changes**       | `url-canonicalization`         | NEVER add `searchParams` to listing pages                   |
+| **i18n/translations**         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`, not `next/link`            |
+| **Styling/UI**                | `design-system-conventions`    | Use semantic classes, NEVER `gray-*` colors                 |
+| **Writing tests**             | `testing-patterns`             | Vitest for unit, Playwright for E2E                         |
+| **Security/CSP/scripts**      | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains in CSP               |
+| **Service worker**            | `service-worker-updates`       | Edit `sw-template.js`, run `yarn prebuild`                  |
+| **Performance/images**        | `bundle-optimization`          | Use quality caps, Server Components by default              |
+| **Adding env variables**      | `env-variable-management`      | Update 4 locations: code, SST, workflow, GitHub secrets     |
+| **Validating API data**       | `data-validation-patterns`     | Use Zod schemas in `lib/validation/`, safe fallbacks        |
+| **Evaluating PR suggestions** | `code-review-evaluation`       | Cross-reference external suggestions against project skills |
+
+**Workflow:**
+
+1. **Search first** → Report findings before coding
+2. **Propose plan** → Wait for confirmation
+3. **Implement** → Follow skill checklists
+4. **Verify** → `yarn typecheck && yarn lint`
+
+**If unsure**: Ask "Did I follow the skills?"
+
+---
+
 ## 1. Core Architecture
 
 - Next.js App Router in `app/` with canonical URL structure: `/place(/date)?(/category)?` omitting default `tots` date & category.

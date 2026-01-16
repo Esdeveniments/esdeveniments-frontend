@@ -1,5 +1,31 @@
 # Repository Guidelines
 
+## ⚠️ CRITICAL: Load Agent Skills FIRST
+
+**Before writing ANY code**, check `.github/skills/` for relevant skills:
+
+| Task                      | Skill                          | Key Rule                                  |
+| ------------------------- | ------------------------------ | ----------------------------------------- |
+| Any new code              | `pre-implementation-checklist` | Search existing patterns FIRST            |
+| Types/interfaces          | `type-system-governance`       | ALL types in `/types` directory           |
+| Components                | `react-nextjs-patterns`        | Server Component default                  |
+| Filters                   | `filter-system-dev`            | `config/filters.ts` only                  |
+| API calls                 | `api-layer-patterns`           | Three-layer proxy pattern                 |
+| URL/routing               | `url-canonicalization`         | NEVER add `searchParams` to listing pages |
+| i18n/translations         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`           |
+| Styling/UI                | `design-system-conventions`    | Semantic classes, no `gray-*`             |
+| Tests                     | `testing-patterns`             | Vitest for unit, Playwright for E2E       |
+| Security/CSP              | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains    |
+| Service worker            | `service-worker-updates`       | Edit `sw-template.js`, run `prebuild`     |
+| Performance/images        | `bundle-optimization`          | Quality caps, Server Components default   |
+| Env variables             | `env-variable-management`      | Update 4 locations: code, SST, workflow   |
+| API data validation       | `data-validation-patterns`     | Zod in `lib/validation/`, safe fallbacks  |
+| Evaluating PR suggestions | `code-review-evaluation`       | Cross-reference against project skills    |
+
+**Mandatory workflow**: Search → Plan → Confirm → Implement → Verify
+
+---
+
 ## Project Structure & Module Organization
 
 - `app/` Next.js App Router (layouts, routes, API under `app/api`). Example: `app/[place]/page.tsx`.

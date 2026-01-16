@@ -36,8 +36,8 @@ const sponsors: SponsorConfig[] = [
   //   imageUrl:
   //     "https://placehold.co/800x200/dc2626/ffffff?text=🎉+Patrocinador+de+prova+•+Restaurant+Example",
   //   targetUrl: "https://esdeveniments.cat/patrocina",
-  //   places: ["mataro"],           // or ["maresme"] for region, or ["catalunya"] for country
-  //   geoScope: "town",             // "town" | "region" | "country"
+  //   places: ["catalunya"], // or ["maresme"] for region, or ["catalunya"] for country
+  //   geoScope: "country", // "town" | "region" | "country"
   //   startDate: "2026-01-01",
   //   endDate: "2026-12-31",
   // },
