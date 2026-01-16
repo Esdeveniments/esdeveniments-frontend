@@ -226,7 +226,10 @@ lib/api/
 ```typescript
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { z } from "zod";
-import type { YourResourceDTO, PagedYourResourceDTO } from "types/api/your-resource";
+import type {
+  YourResourceDTO,
+  PagedYourResourceDTO,
+} from "types/api/your-resource";
 
 // Zod schema for runtime validation (single item)
 const YourResourceSchema = z.object({

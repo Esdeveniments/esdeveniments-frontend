@@ -270,7 +270,7 @@ export default async function PlacePage({
 }
 
 // components/EventsPageClient.tsx
-"use client";
+("use client");
 
 export function EventsPageClient({ initialEvents }) {
   const searchParams = useSearchParams();
