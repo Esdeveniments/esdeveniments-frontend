@@ -196,7 +196,7 @@ When modifying existing components:
 
 ## Files to Reference
 
-- [styles/globals.css](styles/globals.css) - Design system classes
-- [tailwind.config.js](tailwind.config.js) - Theme tokens
-- [docs/design-system-overview.md](docs/design-system-overview.md) - Full documentation
-- [docs/implementation-reference.md](docs/implementation-reference.md) - Code examples
+- [styles/globals.css](../../../styles/globals.css) - Design system classes
+- [tailwind.config.js](../../../tailwind.config.js) - Theme tokens
+- [docs/design-system-overview.md](../../../docs/design-system-overview.md) - Full documentation
+- [docs/implementation-reference.md](../../../docs/implementation-reference.md) - Code examples

@@ -54,7 +54,7 @@ export function MyComponent() {
 
 | Aspect          | Configuration                            |
 | --------------- | ---------------------------------------- |
-| Library         | `next-intl` 4.5                          |
+| Library         | `next-intl` ^4.6.1                       |
 | Locales         | `ca` (default), `es`, `en`               |
 | Prefix Strategy | `as-needed` (no prefix for default `ca`) |
 | Routing Config  | `i18n/routing.ts`                        |

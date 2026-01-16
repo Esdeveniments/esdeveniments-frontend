@@ -88,16 +88,22 @@ export function parseMyResourceArray(data: unknown): MyResource[] {
 }
 ```
 
-### 3. Use in API Client
+### 3. Use in API Client (External Wrapper - Layer 3)
 
 ```typescript
-// lib/api/my-resource.ts
+// lib/api/my-resource-external.ts
+// NOTE: fetchWithHmac is ONLY used in external wrappers (Layer 3)
 import { captureException } from "@sentry/nextjs";
+import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { parseMyResource } from "@lib/validation/my-resource";
 
-export async function fetchMyResource(id: string): Promise<MyResource | null> {
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export async function fetchMyResourceExternal(id: string): Promise<MyResource | null> {
+  if (!API_URL) return null; // Environment guard
+
   try {
-    const response = await fetchWithHmac(`/api/my-resource/${id}`);
+    const response = await fetchWithHmac(`${API_URL}/api/my-resource/${id}`);
     const data = await response.json();
 
     const validated = parseMyResource(data);
@@ -273,6 +279,8 @@ const StripeWebhookEventSchema = z.object({
   }),
 });
 
+export type StripeWebhookEvent = z.infer<typeof StripeWebhookEventSchema>;
+
 export function validateWebhookEvent(
   payload: unknown
 ): StripeWebhookEvent | null {
@@ -304,7 +312,7 @@ export function validateWebhookEvent(
 
 ## Files to Reference
 
-- [lib/validation/event.ts](lib/validation/event.ts) - Complete example
-- [lib/validation/city.ts](lib/validation/city.ts) - Simple schema
-- [lib/api/events.ts](lib/api/events.ts) - Usage pattern
-- [lib/stripe/webhook.ts](lib/stripe/webhook.ts) - Webhook validation
+- [lib/validation/event.ts](../../../lib/validation/event.ts) - Complete example
+- [lib/validation/city.ts](../../../lib/validation/city.ts) - Simple schema
+- [lib/api/events.ts](../../../lib/api/events.ts) - Usage pattern
+- [lib/stripe/webhook.ts](../../../lib/stripe/webhook.ts) - Webhook validation

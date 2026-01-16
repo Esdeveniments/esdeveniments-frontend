@@ -94,12 +94,19 @@ export async function GET(request: NextRequest) {
 // =============================================================================
 
 /*
-import { fetchWithHmac } from "@utils/api";
+import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { captureException } from "@sentry/nextjs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function fetchEventsExternal(params) {
+interface EventsExternalParams {
+  page?: number;
+  size?: number;
+  place?: string;
+  category?: string;
+}
+
+export async function fetchEventsExternal(params: EventsExternalParams = {}) {
   // Environment guard
   if (!API_URL) {
     return { content: [], totalElements: 0, totalPages: 0, last: true };
@@ -107,8 +114,8 @@ export async function fetchEventsExternal(params) {
 
   try {
     const searchParams = new URLSearchParams();
-    if (params.page) searchParams.set("page", String(params.page));
-    if (params.size) searchParams.set("size", String(params.size));
+    if (params.page != null) searchParams.set("page", String(params.page));
+    if (params.size != null) searchParams.set("size", String(params.size));
     if (params.place) searchParams.set("place", params.place);
     if (params.category) searchParams.set("category", params.category);
 

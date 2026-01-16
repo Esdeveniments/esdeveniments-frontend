@@ -80,6 +80,7 @@ export function PriceFilter() {
     <div className="price-filter">
       <label className="label">Preu</label>
       <select
+        name="price"
         value={filters.price || config.defaultValue}
         onChange={(e) => handleChange(e.target.value)}
       >

@@ -33,7 +33,7 @@ All filter logic flows through `FilterOperations` class which auto-integrates an
 - **`utils/url-parsing.ts`** - URL parsing (uses FilterOperations)
 - **`test/filter-system.test.ts`** - Validation tests
 
-**IMPORTANT**: `utils/filter-config.ts` is LEGACY (backward compatibility only). Never extend it.
+**IMPORTANT**: Do NOT create a `utils/filter-config.ts` file. All filter logic must go through `config/filters.ts`.
 
 ---
 

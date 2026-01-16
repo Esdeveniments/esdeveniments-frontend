@@ -43,13 +43,14 @@ When user asks "Do you agree with this suggestion?":
 
 ### Step 1: Categorize the Suggestion
 
-| Category           | Examples                              | Default Response  |
-| ------------------ | ------------------------------------- | ----------------- |
-| **Bug/Error fix**  | Missing field, type error, null check | Usually **AGREE** |
-| **Documentation**  | Missing JSDoc, outdated example       | Usually **AGREE** |
-| **Code quality**   | Unused code, simplification           | Usually **AGREE** |
-| **Pattern change** | Different import, new abstraction     | **CHECK SKILLS**  |
-| **Architecture**   | Component structure, API calls        | **CHECK SKILLS**  |
+| Category            | Examples                                   | Default Response  |
+| ------------------- | ------------------------------------------ | ----------------- |
+| **Bug/Error fix**   | Missing field, type error, null check      | Usually **AGREE** |
+| **Documentation**   | Missing JSDoc, outdated example            | Usually **AGREE** |
+| **Code quality**    | Unused code, simplification                | Usually **AGREE** |
+| **Code complexity** | >100 lines/function, >10 props, >3 nesting | Usually **AGREE** |
+| **Pattern change**  | Different import, new abstraction          | **CHECK SKILLS**  |
+| **Architecture**    | Component structure, API calls             | **CHECK SKILLS**  |
 
 ### Step 2: If Pattern/Architecture → Cross-Reference Skills
 

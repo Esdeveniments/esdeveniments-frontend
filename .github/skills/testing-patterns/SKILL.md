@@ -124,8 +124,9 @@ describe("myFunction", () => {
 ### Testing React Components
 
 ```typescript
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MyComponent } from "@components/ui/MyComponent";
 
 describe("MyComponent", () => {
@@ -400,8 +401,8 @@ The `test/setup.ts` file:
 
 ## Files to Reference
 
-- [vitest.config.ts](vitest.config.ts) - Unit test configuration
-- [playwright.config.ts](playwright.config.ts) - E2E configuration
-- [test/setup.ts](test/setup.ts) - Test bootstrap
-- [test/mocks/](test/mocks/) - Mock implementations
-- [test/filter-system.test.ts](test/filter-system.test.ts) - Example unit tests
+- [vitest.config.ts](../../../vitest.config.ts) - Unit test configuration
+- [playwright.config.ts](../../../playwright.config.ts) - E2E configuration
+- [test/setup.ts](../../../test/setup.ts) - Test bootstrap
+- [test/mocks/](../../../test/mocks/) - Mock implementations
+- [test/filter-system.test.ts](../../../test/filter-system.test.ts) - Example unit tests

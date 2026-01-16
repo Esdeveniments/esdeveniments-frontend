@@ -7,7 +7,7 @@
  * Location: lib/api/RESOURCE_NAME-external.ts
  *
  * NOTE: This is a documentation template. When implementing, use these imports:
- * - import { fetchWithHmac } from "@utils/api";
+ * - import { fetchWithHmac } from "@lib/api/fetch-wrapper";
  * - import { captureException } from "@sentry/nextjs";
  * - import { RESOURCE_NAMEResponseSchema } from "@lib/validation/RESOURCE_NAME"; // Optional Zod schema
  */
@@ -66,7 +66,9 @@ export async function fetchRESOURCE_NAME(
   }
 
   try {
-    // Build query string
+    // Build query string using shared query builder
+    // Prefer using centralized query builders like buildEventsQuery, buildNewsQuery
+    // from utils/api-helpers.ts to ensure consistent parameter handling
     const searchParams = new URLSearchParams();
     if (params.page !== undefined)
       searchParams.set("page", String(params.page));
@@ -80,7 +82,13 @@ export async function fetchRESOURCE_NAME(
     }`;
 
     // Fetch with HMAC signing and timeout
-    const response = await fetchWithHmac(url);
+    // Include ISR cache options for Next.js caching
+    const response = await fetchWithHmac(url, {
+      next: {
+        revalidate: 600, // ISR: revalidate every 10 minutes
+        tags: ["RESOURCE_NAME"], // For on-demand revalidation
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);

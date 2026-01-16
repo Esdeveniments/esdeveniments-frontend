@@ -52,8 +52,6 @@ How to prompt AI to actually follow your rules (not just read them).
 
 #### **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
 
-### 1. **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
-
 ### WHAT & WHY
 
 Quick overview of the project:

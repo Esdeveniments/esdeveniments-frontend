@@ -212,8 +212,8 @@ HMAC_SECRET=dev-secret-for-testing
 
 ## Files to Reference
 
-- [sst.config.ts](sst.config.ts) - Lambda environment (~line 165)
-- [.github/workflows/deploy-sst.yml](.github/workflows/deploy-sst.yml) - CI/CD (~line 89)
+- [sst.config.ts](../../../sst.config.ts) - Lambda environment (~line 165)
+- [.github/workflows/deploy-sst.yml](../../workflows/deploy-sst.yml) - CI/CD (~line 89)
 - GitHub repo → Settings → Secrets → Actions
 
 ## Testing Your Changes

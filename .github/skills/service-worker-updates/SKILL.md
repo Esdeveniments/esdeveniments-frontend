@@ -83,6 +83,7 @@ registerRoute(
   ({ url }) => url.pathname.startsWith("/new-feature/"),
   new StaleWhileRevalidate({
     cacheName: "new-feature-cache",
+    matchOptions: { ignoreVary: true }, // REQUIRED for Next.js App Router
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 50,
@@ -116,6 +117,7 @@ registerRoute(
   new NetworkFirst({
     cacheName: "events-cache",
     networkTimeoutSeconds: 3,
+    matchOptions: { ignoreVary: true }, // REQUIRED for Next.js App Router
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 100,
@@ -133,6 +135,7 @@ registerRoute(
   ({ request }) => request.destination === "image",
   new CacheFirst({
     cacheName: "images-cache",
+    matchOptions: { ignoreVary: true }, // REQUIRED for Next.js App Router
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 60,
@@ -176,7 +179,9 @@ const API_ORIGIN = "https://api.example.com";
 
 ## ⚠️ CRITICAL: Always Use `ignoreVary: true`
 
-Next.js App Router adds `Vary` headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, etc.) to responses. Without `ignoreVary: true`, cache matching fails because these headers differ between request types (RSC navigation vs client fetch vs direct load).
+Next.js App Router adds `Vary` headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, etc.) to responses. Without `ignoreVary: true`, **service worker cache matching** fails because these headers differ between request types (RSC navigation vs client fetch vs direct load).
+
+**Note**: This addresses Workbox service worker cache matching, not the underlying Next.js dynamic route issue (which relates to `Cache-Control: private/no-store` when Server Components call `headers()` or `cookies()`). The `ignoreVary: true` option allows the SW to treat the same URL as one cache entry regardless of Vary header differences.
 
 **Always add `matchOptions` with `ignoreVary: true`:**
 

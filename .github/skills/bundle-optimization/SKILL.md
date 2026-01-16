@@ -35,11 +35,11 @@ External images use quality caps to reduce bandwidth:
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
-} from "@utils/image-helpers";
+} from "@utils/image-quality";
 
-// Get quality based on context
-const quality = getOptimalImageQuality("hero"); // 60
-const quality = getOptimalImageQuality("card"); // 50
+// Get quality based on context (uses options object)
+const heroQuality = getOptimalImageQuality({ isPriority: true }); // 50 (LCP external)
+const cardQuality = getOptimalImageQuality({ isPriority: false }); // 50 (standard external)
 
 // Get responsive sizes
 const sizes = getOptimalImageSizes("card");
@@ -50,15 +50,15 @@ const sizes = getOptimalImageSizes("card");
 
 ```tsx
 import Image from "next/image";
-import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-helpers";
+import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-quality";
 
-// ✅ CORRECT - Using helpers
+// ✅ CORRECT - Using helpers with options object
 <Image
   src={event.imageUrl}
   alt={event.title}
   width={400}
   height={300}
-  quality={getOptimalImageQuality("card")}
+  quality={getOptimalImageQuality({ isPriority: false })}
   sizes={getOptimalImageSizes("card")}
   loading="lazy"
 />
@@ -69,7 +69,7 @@ import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-helpe
   alt={event.title}
   fill
   priority
-  quality={getOptimalImageQuality("hero")}
+  quality={getOptimalImageQuality({ isPriority: true })}
   sizes={getOptimalImageSizes("hero")}
 />
 ```
@@ -79,18 +79,19 @@ import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-helpe
 For unreliable image sources:
 
 ```typescript
-import { useImageRetry, getImageKey } from "@hooks/useImageRetry";
+import { useImageRetry } from "@hooks/useImageRetry";
 
 function EventImage({ src, alt }) {
-  const { key, handleError, retryCount } = useImageRetry(src);
+  // useImageRetry takes optional maxRetries (default: 2)
+  const { retryCount, hasError, imageLoaded, showSkeleton, handleError, getImageKey } = useImageRetry();
 
   return (
     <Image
-      key={key}
+      key={getImageKey(src)} // Forces re-render on retry
       src={src}
       alt={alt}
       onError={handleError}
-      // Exponential backoff on retry
+      // Exponential backoff on retry (1s, 2s, 4s...)
     />
   );
 }
@@ -99,7 +100,7 @@ function EventImage({ src, alt }) {
 ### Preloading Critical Images
 
 ```typescript
-import { preloadImage } from "@utils/image-helpers";
+import { preloadImage } from "@utils/image-preload";
 
 // Preload LCP image
 preloadImage(heroImageUrl);
@@ -111,10 +112,18 @@ preloadImage(heroImageUrl);
 
 ### Versioned URLs
 
-```typescript
-import { getVersionedUrl } from "@utils/version-helpers";
+For static assets that need cache busting, add a version query parameter:
 
-// Add cache-busting version param
+```typescript
+// Pattern: Add version param for cache busting
+// BUILD_VERSION is available via scripts/generate-sw.mjs
+const buildVersion = process.env.BUILD_VERSION || Date.now().toString();
+
+function getVersionedUrl(path: string): string {
+  return `${path}?v=${buildVersion}`;
+}
+
+// Usage
 const url = getVersionedUrl("/static/data.json");
 // "/static/data.json?v=1234567890"
 ```
@@ -122,7 +131,7 @@ const url = getVersionedUrl("/static/data.json");
 `BUILD_VERSION` resolves to:
 
 - Development: timestamp
-- Production: build ID or package version
+- Production: git SHA (set in CI workflows)
 
 ## Code Splitting Best Practices
 
@@ -210,8 +219,8 @@ Monitor these in bundle analysis:
 
 ## Files to Reference
 
-- [utils/image-helpers.ts](utils/image-helpers.ts) - Image optimization helpers
-- [components/hooks/useImageRetry.ts](components/hooks/useImageRetry.ts) - Retry logic
-- [utils/version-helpers.ts](utils/version-helpers.ts) - Cache busting
-- [next.config.js](next.config.js) - Image domains, optimization config
-- [bundle-size-baseline.json](bundle-size-baseline.json) - Size tracking
+- [utils/image-quality.ts](../../../utils/image-quality.ts) - Image quality helpers
+- [utils/image-preload.ts](../../../utils/image-preload.ts) - Image preloading
+- [components/hooks/useImageRetry.ts](../../../components/hooks/useImageRetry.ts) - Retry logic
+- [next.config.js](../../../next.config.js) - Image domains, optimization config
+- [bundle-size-baseline.json](../../../bundle-size-baseline.json) - Size tracking

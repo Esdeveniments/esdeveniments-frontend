@@ -269,8 +269,8 @@ export default async function PlacePage({
   return <EventsPageClient initialEvents={events} />;
 }
 
-// components/EventsPageClient.tsx ("use client")
-("use client");
+// components/EventsPageClient.tsx
+"use client";
 
 export function EventsPageClient({ initialEvents }) {
   const searchParams = useSearchParams();

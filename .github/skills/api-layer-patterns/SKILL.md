@@ -128,8 +128,8 @@ const url = `/api/events?${params.toString()}`;
 // ❌ WRONG: Manual URLSearchParams construction
 const params = new URLSearchParams();
 params.set("place", "barcelona");
-params.set("term", "jazz"); // Wrong key! Should be 'term' not 'searchTerm'
-// This duplicates logic and is error-prone
+params.set("searchTerm", "jazz"); // Wrong! API expects 'term' not 'searchTerm'
+// Manual construction duplicates logic and is error-prone - use query builders
 ```
 
 ---
@@ -224,7 +224,7 @@ lib/api/
 **File**: `lib/api/your-resource-external.ts`
 
 ```typescript
-import { fetchWithHmac } from "@utils/fetch-with-hmac";
+import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { z } from "zod";
 import type { YourResourceDTO } from "@types/api/your-resource";
 
@@ -394,7 +394,7 @@ if (filters.byDate) {
 
 ```typescript
 // In external wrapper
-import { fetchWithHmac } from "@utils/fetch-with-hmac";
+import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 
 const response = await fetchWithHmac(url, {
   method: "GET",
@@ -442,7 +442,7 @@ const signature = crypto.createHmac("sha256", secret).update(url).digest("hex");
 
 ```typescript
 // For internal API calls (Layer 3)
-import { fetchWithHmac } from "@utils/fetch-with-hmac";
+import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 const response = await fetchWithHmac(url, {
   /* options */
 });

@@ -38,16 +38,21 @@ const STALE_WHILE_REVALIDATE = 300; // 5 minutes
 
 export async function GET(request: NextRequest) {
   try {
-    // Extract query parameters
+    // Extract query parameters with safe parsing
+    // Note: Number("abc") returns NaN, so || 0 provides fallback
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get("page") || "0";
-    const size = searchParams.get("size") || "20";
+    const rawPage = searchParams.get("page");
+    const rawSize = searchParams.get("size");
+    
+    // Parse with fallbacks - Number(null) = 0, Number("abc") = NaN
+    const page = rawPage ? (Number(rawPage) || 0) : 0;
+    const size = rawSize ? (Number(rawSize) || 20) : 20;
     // Add more params as needed
 
     // Call external wrapper (handles HMAC signing)
     const data = await fetchRESOURCE_NAME({
-      page: parseInt(page, 10),
-      size: parseInt(size, 10),
+      page,
+      size,
       // Pass other params
     });
 

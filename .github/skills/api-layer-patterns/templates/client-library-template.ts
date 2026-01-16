@@ -73,11 +73,13 @@ export namespace ClientLibraryTemplate {
         queryString ? `?${queryString}` : ""
       }`;
 
-      // In actual Next.js code, use the `next` option for ISR:
-      // const response = await fetch(url, {
-      //   next: { revalidate: 600, tags: ["RESOURCE_NAME"] },
-      // });
-      const response = await fetch(url);
+      // IMPORTANT: In production code, use safe fetch with timeout:
+      // - For internal API calls: use fetchWithHmac (10s timeout built-in)
+      // - For external services: use safeFetch from utils/safe-fetch.ts (5s timeout)
+      // Raw fetch() can hang indefinitely in serverless environments
+      const response = await fetch(url, {
+        next: { revalidate: 600, tags: ["RESOURCE_NAME"] },
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch RESOURCE_NAME: ${response.status}`);

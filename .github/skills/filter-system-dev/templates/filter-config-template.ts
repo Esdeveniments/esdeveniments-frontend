@@ -12,10 +12,14 @@
  */
 
 // =============================================================================
-// Type definitions (for reference - use imports from types/ in actual code)
+// Type definitions (SIMPLIFIED for reference only)
+// In actual code, import canonical types from:
+// - types/filters.ts (FilterState, FilterConfig, FilterDisplayState)
+// - types/url-filters.ts (URLFilterState, URLQueryParams, RouteSegments)
+// These reference types may not include all fields (e.g., extraData, computed)
 // =============================================================================
 
-/** Filter state from URL parsing */
+/** Filter state from URL parsing (simplified) */
 interface URLFilterState {
   place: string;
   byDate: string;

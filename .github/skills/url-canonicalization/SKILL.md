@@ -116,10 +116,10 @@ Filtered URLs (with `search`, `distance`) should have `noindex`:
 
 ## Files to Reference
 
-- [proxy.ts](proxy.ts) - Canonical redirect logic
-- [utils/url-filters.ts](utils/url-filters.ts) - URL building helpers
-- [utils/url-parsing.ts](utils/url-parsing.ts) - URL parsing helpers
-- [utils/middleware-redirects.ts](utils/middleware-redirects.ts) - Redirect handlers
+- [proxy.ts](../../../proxy.ts) - Canonical redirect logic
+- [utils/url-filters.ts](../../../utils/url-filters.ts) - URL building helpers
+- [utils/url-parsing.ts](../../../utils/url-parsing.ts) - URL parsing helpers
+- [utils/middleware-redirects.ts](../../../utils/middleware-redirects.ts) - Redirect handlers
 
 ## Common Mistakes
 

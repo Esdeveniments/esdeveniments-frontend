@@ -108,6 +108,5 @@ description: > # 1-2 sentences describing triggers
 
 ## Related Documentation
 
-- [Agent Skills Strategy](../../docs/agent-skills-strategy.md) - Full implementation plan
-- [Quick Start Guide](../../docs/agent-skills-quickstart.md) - 5-minute setup
-- [How to Make AI Follow Rules](../../docs/how-to-make-ai-follow-rules.md) - Prompt tips
+- [Main Project Documentation](../../docs/README.md) - Project overview and guides
+- [Copilot Instructions](../copilot-instructions.md) - AI coding agent guidelines

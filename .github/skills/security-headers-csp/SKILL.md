@@ -127,7 +127,7 @@ If you need to add a new external service:
 All internal API calls use HMAC signing:
 
 ```typescript
-import { fetchWithHmac } from "@utils/api-helpers";
+import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 
 // ✅ CORRECT - Uses HMAC signing with timeout
 const data = await fetchWithHmac("/api/events");
@@ -187,8 +187,8 @@ Relaxed CSP enables better performance while maintaining security through host a
 
 ## Files to Reference
 
-- [proxy.ts](proxy.ts) - CSP and security headers
-- [utils/api-helpers.ts](utils/api-helpers.ts) - `fetchWithHmac`
-- [utils/safe-fetch.ts](utils/safe-fetch.ts) - Safe fetch utilities
-- [components/partials/JsonLdServer.tsx](components/partials/JsonLdServer.tsx) - JSON-LD component
-- [app/GoogleScripts.tsx](app/GoogleScripts.tsx) - Analytics script loading
+- [proxy.ts](../../../proxy.ts) - CSP and security headers
+- [utils/api-helpers.ts](../../../utils/api-helpers.ts) - `fetchWithHmac`
+- [utils/safe-fetch.ts](../../../utils/safe-fetch.ts) - Safe fetch utilities
+- [components/partials/JsonLdServer.tsx](../../../components/partials/JsonLdServer.tsx) - JSON-LD component
+- [app/GoogleScripts.tsx](../../../app/GoogleScripts.tsx) - Analytics script loading
