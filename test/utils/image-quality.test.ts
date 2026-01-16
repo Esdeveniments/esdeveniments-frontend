@@ -172,16 +172,16 @@ describe("image-quality utils", () => {
       expect(getOptimalImageWidth("card")).toBe(500);
     });
 
-    it("returns 1000 for hero context", () => {
-      expect(getOptimalImageWidth("hero")).toBe(1000);
+    it("returns 1200 for hero context", () => {
+      expect(getOptimalImageWidth("hero")).toBe(1200);
     });
 
     it("returns 500 for list context", () => {
       expect(getOptimalImageWidth("list")).toBe(500);
     });
 
-    it("returns 1000 for detail context", () => {
-      expect(getOptimalImageWidth("detail")).toBe(1000);
+    it("returns 1200 for detail context", () => {
+      expect(getOptimalImageWidth("detail")).toBe(1200);
     });
   });
 
@@ -195,7 +195,7 @@ describe("image-quality utils", () => {
     it("returns responsive sizes string for hero context", () => {
       const sizes = getOptimalImageSizes("hero");
       expect(sizes).toContain("100vw");
-      expect(sizes).toContain("50vw");
+      expect(sizes).toContain("1200px"); // Desktop gets larger images for quality boost
     });
 
     it("returns responsive sizes string for list context", () => {
@@ -207,7 +207,7 @@ describe("image-quality utils", () => {
     it("returns responsive sizes string for detail context", () => {
       const sizes = getOptimalImageSizes("detail");
       expect(sizes).toContain("100vw");
-      expect(sizes).toContain("40vw");
+      expect(sizes).toContain("1200px"); // Desktop gets larger images for quality boost
     });
 
     it("includes proper breakpoint structure", () => {

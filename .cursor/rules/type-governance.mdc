@@ -1,0 +1,36 @@
+---
+description: TypeScript type organization rules. Apply when creating types, interfaces, or DTOs.
+globs:
+  - "types/**/*.ts"
+  - "**/*.ts"
+  - "**/*.tsx"
+---
+
+# Type System Governance
+
+⚠️ **ALL types and interfaces MUST be defined in the `/types` directory.**
+
+## Canonical Locations
+
+| Type Category   | Location                             | Examples                         |
+| --------------- | ------------------------------------ | -------------------------------- |
+| Shared UI types | `types/common.ts`                    | NavigationItem, SocialLinks      |
+| Component props | `types/props.ts`                     | ButtonProps, CardProps           |
+| API DTOs        | `types/api/*.ts`                     | EventDTO, CitySummaryResponseDTO |
+| Domain types    | `types/event.ts`, `types/filters.ts` | FilterState, EventFilters        |
+| URL types       | `types/url-filters.ts`               | URLFilterState, RouteSegments    |
+
+## Before Creating a Type
+
+1. Search `types/` for existing types
+2. Check `types/README.md` for organization patterns
+3. If extending, use `Pick`, `Omit`, or `extends`
+4. Place in the most appropriate canonical file
+
+## ESLint Enforces This
+
+You will get lint errors for inline types outside `/types`.
+
+## Full Details
+
+See `.github/skills/type-system-governance/SKILL.md` for complete guide.

@@ -285,6 +285,7 @@ export function generateWebPageSchema(options: WebPageOptions) {
     isPartOf,
     mainContentOfPage,
     locale,
+    containedInPlace,
   } = options;
 
   const localeToUse = locale ?? DEFAULT_LOCALE;
@@ -313,6 +314,13 @@ export function generateWebPageSchema(options: WebPageOptions) {
     },
     ...(breadcrumbs && { breadcrumb: generateBreadcrumbList(breadcrumbs) }),
     ...(mainContentOfPage && { mainContentOfPage }),
+    ...(containedInPlace && {
+      containedInPlace: {
+        "@type": "AdministrativeArea",
+        name: containedInPlace.name,
+        url: containedInPlace.url,
+      },
+    }),
   };
 }
 

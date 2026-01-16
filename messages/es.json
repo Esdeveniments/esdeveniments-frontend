@@ -257,6 +257,7 @@
         "publish": "Publicar",
         "news": "Noticias",
         "about": "Quiénes somos",
+        "advertise": "Patrocina",
         "contact": "Contacto",
         "archive": "Archivo"
       },
@@ -338,7 +339,8 @@
       "selectPlaceholder": "Buscar población o comarca...",
       "subtitleDefault": "Agenda cultural, fiestas mayores y actividades",
       "searchPlaceholder": "Busca eventos en {location}...",
-      "clearSearch": "Limpiar búsqueda"
+      "clearSearch": "Limpiar búsqueda",
+      "search": "Buscar"
     },
     "HeroFilters": {
       "today": "Hoy",
@@ -1310,5 +1312,211 @@
       "weekend": "Fin de semana",
       "week": "Esta semana"
     }
+  },
+  "Sponsor": {
+    "label": "Publicidad",
+    "emptyState": "Anuncia tu negocio aquí",
+    "cta": "Patrocina esta página"
+  },
+  "Sponsorship": {
+    "meta": {
+      "title": "Patrocina tu pueblo | Esdeveniments.cat",
+      "description": "Tu negocio, destacado en la agenda de eventos de tu pueblo. Espacio exclusivo sin competidores."
+    },
+    "hero": {
+      "title": "Tu negocio, destacado en tu pueblo",
+      "subtitle": "Aparece en la agenda de eventos de tu zona. Espacio 100% exclusivo: ningún otro negocio compite contigo.",
+      "stats": "Espacio exclusivo · Sin competidores · Audiencia local",
+      "cta": "Ver precios"
+    },
+    "benefits": {
+      "title": "¿Por qué patrocinar con nosotros?",
+      "targeted": {
+        "title": "Gente que busca qué hacer",
+        "description": "Tu anuncio lo ven personas que buscan activamente qué hacer en tu zona. Público con intención."
+      },
+      "affordable": {
+        "title": "Accesible para todos",
+        "description": "Desde 5€ por 7 días. Ideal para fiestas locales, ferias o eventos."
+      },
+      "visibility": {
+        "title": "100% exclusivo",
+        "description": "Solo hay un patrocinador por población. Todo el espacio es tuyo, sin competencia."
+      }
+    },
+    "pricing": {
+      "title": "Precios simples y transparentes",
+      "subtitle": "Elige la duración que mejor se adapte a tus necesidades. Sin compromisos ni renovaciones automáticas.",
+      "popular": "Más popular",
+      "cta": "Contratar",
+      "plans": {
+        "7days": {
+          "name": "7 días",
+          "description": "Perfecto para fines de semana largos o puentes festivos"
+        },
+        "14days": {
+          "name": "14 días",
+          "description": "Buena visibilidad durante épocas de alta actividad"
+        },
+        "30days": {
+          "name": "30 días",
+          "description": "Máxima exposición para tu negocio local"
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "¿Cómo funciona?",
+      "steps": {
+        "step1": {
+          "title": "Elige dónde aparecer",
+          "description": "Selecciona el pueblo o comarca y la duración que necesitas"
+        },
+        "step2": {
+          "title": "Completa el pago",
+          "description": "Introduce los datos de tu negocio y paga de forma segura con Stripe"
+        },
+        "step3": {
+          "title": "Sube la imagen del banner",
+          "description": "Después del pago, podrás subir la imagen de tu anuncio"
+        },
+        "step4": {
+          "title": "Revisamos y activamos",
+          "description": "En menos de 24h laborables aparecerás en la página del lugar seleccionado"
+        }
+      }
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "items": {
+        "faq1": {
+          "question": "¿Qué tamaño debe tener la imagen?",
+          "answer": "Tamaño óptimo: 728×150px (proporción 5:1) para máxima calidad. Tamaño mínimo: 400×80px (funciona bien, pero menos nítida en pantallas grandes). Las imágenes altas o cuadradas se verán pequeñas con espacio vacío a los lados."
+        },
+        "faq2": {
+          "question": "¿Puedo elegir el pueblo o comarca?",
+          "answer": "¡Sí! Lo eliges antes de pagar, así te aseguras de que el anuncio aparezca exactamente donde quieres."
+        },
+        "faq3": {
+          "question": "¿Cuándo se activa mi anuncio?",
+          "answer": "En menos de 24h laborables después de recibir el pago y de que hayas subido la imagen."
+        },
+        "faq4": {
+          "question": "¿Y si no estoy satisfecho?",
+          "answer": "Ofrecemos garantía de satisfacción: si durante los primeros 7 días no estás contento con el servicio, te devolvemos el importe. También puedes contactarnos para modificar la imagen o el enlace sin coste adicional."
+        }
+      }
+    },
+    "contact": {
+      "title": "¿Tienes dudas?",
+      "description": "Escríbenos y te ayudaremos a elegir la mejor opción para tu negocio.",
+      "cta": "Contactar por email"
+    },
+    "placeSelector": {
+      "label": "¿Dónde quieres que aparezca tu anuncio?",
+      "placeholder": "Busca un pueblo o comarca...",
+      "popular": "Popular",
+      "country": "Cataluña",
+      "region": "Comarca",
+      "city": "Pueblo",
+      "clear": "Borrar selección",
+      "preview": "Aparecerás en:",
+      "noResults": "No se han encontrado resultados",
+      "occupied": "Ocupado",
+      "selectFirst": "Primero selecciona dónde quieres aparecer",
+      "orSpecific": "o elige una zona específica",
+      "catalunya": {
+        "title": "Toda Cataluña",
+        "subtitle": "Página de inicio · Máxima visibilidad",
+        "badge": "Máx. alcance"
+      }
+    },
+    "checkout": {
+      "processing": "Procesando...",
+      "error": "Error al procesar. Inténtalo de nuevo.",
+      "successTitle": "¡Pago completado!",
+      "successSubtitle": "Último paso: sube la imagen de tu banner. Sin imagen no podemos activar el patrocinio."
+    },
+    "upload": {
+      "title": "Sube tu banner",
+      "subtitle": "Aparecerá en la página del lugar que has elegido.",
+      "place": "Ubicación",
+      "previewAlt": "Vista previa de la imagen",
+      "cta": "Subir imagen",
+      "uploading": "Subiendo...",
+      "progress": "{percent}% completado",
+      "changeCta": "Cambiar imagen",
+      "doneCta": "Finalizar",
+      "dropzone": {
+        "title": "Arrastra la imagen aquí o haz clic",
+        "formats": "Formato horizontal • JPG, PNG o WebP",
+        "optimal": "Óptimo: 728×150px",
+        "minimum": "Mínimo: 400×80px"
+      },
+      "guidelines": {
+        "title": "Recomendaciones para la imagen:",
+        "recommended": "Tamaño óptimo: {width}×{height}px (proporción 5:1)",
+        "horizontal": "Formato banner horizontal alargado",
+        "formats": "Formatos: JPG, PNG o WebP",
+        "minimum": "Mínimo aceptado: 400×80px"
+      },
+      "validation": {
+        "warning": "Aviso sobre la imagen:",
+        "tooSmall": "La imagen es demasiado pequeña (mínimo {minWidth}x{minHeight}px). Puede salir borrosa.",
+        "tooTall": "La imagen es demasiado alta. Aparecerá pequeña con espacio vacío a los lados.",
+        "wrongRatio": "La proporción ({current}:1) no es ideal. Recomendamos ~{recommended}:1 (horizontal ancho).",
+        "canContinue": "Puedes continuar igualmente, pero el resultado puede no ser óptimo.",
+        "dimensions": "Dimensiones: {width}x{height}px (proporción {ratio}:1)"
+      },
+      "success": {
+        "title": "Imagen subida correctamente.",
+        "saved": "Ya tenemos la imagen asociada a tu pago. Ahora la revisaremos y la activaremos.",
+        "notSaved": "Hemos subido la imagen, pero hubo un problema guardándola. Por favor, contáctanos con este enlace.",
+        "imageUrl": "Enlace de la imagen"
+      },
+      "errors": {
+        "notPaid": "No podemos subir la imagen porque el pago no consta como completado.",
+        "invalidSession": "No hemos podido verificar tu pago. Inténtalo de nuevo o contáctanos.",
+        "missingFields": "Faltan datos para subir la imagen. Inténtalo de nuevo.",
+        "tooLarge": "La imagen supera el límite permitido. Redúcela e inténtalo de nuevo.",
+        "generic": "No se ha podido subir la imagen. Inténtalo de nuevo.",
+        "invalidImage": "El archivo no es una imagen válida."
+      }
+    },
+    "uploadPage": {
+      "meta": {
+        "title": "Sube el banner | Esdeveniments.cat",
+        "description": "Sube la imagen de tu banner para completar el patrocinio."
+      },
+      "missingSessionTitle": "No hemos encontrado tu pago",
+      "missingSessionSubtitle": "Vuelve a la página de precios e inicia el proceso de nuevo.",
+      "backToPricing": "Volver a precios",
+      "goBack": "Atrás"
+    },
+    "successPage": {
+      "meta": {
+        "title": "Patrocinio completado | Esdeveniments.cat",
+        "description": "Hemos recibido tu información y la imagen del banner."
+      },
+      "title": "¡Listo!",
+      "subtitle": "Hemos recibido tu imagen correctamente. Ahora nosotros nos encargamos del resto.",
+      "nextTitle": "¿Qué pasa ahora?",
+      "next1": "1. Revisaremos el banner y el enlace para asegurar que todo esté correcto.",
+      "next2": "2. En menos de 24h laborables tu anuncio aparecerá en la página del lugar seleccionado.",
+      "backHome": "Volver al inicio",
+      "backPatrocina": "Volver a Patrocina"
+    },
+    "cancelPage": {
+      "meta": {
+        "title": "Pago cancelado | Esdeveniments.cat",
+        "description": "El pago no se ha completado."
+      },
+      "title": "Pago cancelado",
+      "subtitle": "No se ha completado el pago. Puedes intentarlo de nuevo cuando quieras.",
+      "note1": "No se te ha realizado ningún cargo.",
+      "note2": "Si tienes cualquier duda, escríbenos y te ayudaremos.",
+      "tryAgain": "Intentarlo de nuevo",
+      "backHome": "Volver al inicio"
+    },
+    "backToHome": "Volver al inicio"
   }
 }

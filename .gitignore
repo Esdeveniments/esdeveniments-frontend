@@ -74,6 +74,10 @@ yarn-error.log*
 
 .aider*
 
+# AI Tool Local Files (personal preferences, not committed)
+CLAUDE.local.md
+.claude/CLAUDE.local.md
+
 .early.coverage
 
 .ts-migration*

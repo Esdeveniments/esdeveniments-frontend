@@ -229,6 +229,28 @@ export const getPlaceTypeAndLabel = async (
           : placeInfo.type === "PROVINCE"
           ? "region"
           : "town";
+
+      // For cities, look up parent region from cached data for SEO breadcrumbs
+      if (type === "town") {
+        try {
+          const regionsWithCities = await fetchRegionsWithCities();
+          for (const region of regionsWithCities) {
+            const city = region.cities.find((c) => c.value === place);
+            if (city) {
+              const regionSlug = sanitize(region.name);
+              return {
+                type,
+                label: formattedLabel,
+                regionLabel: formatPlaceName(region.name),
+                regionSlug,
+              };
+            }
+          }
+        } catch {
+          // Region lookup failed, return without region info
+        }
+      }
+
       return { type, label: formattedLabel };
     }
   } catch (error) {
@@ -249,7 +271,14 @@ export const getPlaceTypeAndLabel = async (
     for (const region of regionsWithCities) {
       const city = region.cities.find((c) => c.value === place);
       if (city) {
-        return { type: "town", label: formatPlaceName(city.label) };
+        // City found - include parent region info for SEO breadcrumbs
+        const regionSlug = sanitize(region.name);
+        return {
+          type: "town",
+          label: formatPlaceName(city.label),
+          regionLabel: formatPlaceName(region.name),
+          regionSlug,
+        };
       }
     }
   } catch (error) {

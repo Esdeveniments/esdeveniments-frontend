@@ -10,7 +10,7 @@
       "@lib/*": ["./lib/*"],
       "@config/*": ["./config/*"],
       "@public/*": ["./public/*"],
-      "@types/*": ["./types/*"]
+      "types/*": ["./types/*"]
     },
     "types": ["./types/react-datepicker.d.ts", "./types/navigator.d.ts"]
   }

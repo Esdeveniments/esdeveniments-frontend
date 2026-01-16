@@ -195,6 +195,12 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/revalidate",
   // Health check endpoint for monitoring cache infrastructure
   "/api/health",
+  // Sponsor checkout (browser-initiated Stripe checkout session creation)
+  "/api/sponsors/checkout",
+  // Sponsor paid-only image upload (browser-initiated; gated by Stripe session status)
+  "/api/sponsors/image-upload",
+  // Stripe webhook (signature verified by endpoint, not HMAC)
+  "/api/sponsors/webhook",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -218,13 +224,21 @@ export default async function proxy(request: NextRequest) {
       (pathname === "/api/visits" && request.method === "POST");
 
     if (isPublicApiRequest) {
-      // Special case: visits endpoint should receive/stamp visitor id
-      if (pathname === "/api/visits" && request.method === "POST") {
-        const apiReqHeaders = new Headers(request.headers);
+      // Endpoints that need visitor_id for idempotency/tracking
+      const needsVisitorId =
+        (pathname === "/api/visits" && request.method === "POST") ||
+        (pathname === "/api/sponsors/checkout" && request.method === "POST");
+
+      if (needsVisitorId) {
         const cookieVisitor = request.cookies?.get?.("visitor_id")?.value;
         const visitorId =
           cookieVisitor || crypto.randomUUID().replace(/-/g, "");
+
+        // Forward visitor_id via header so route handlers can access it in the same request cycle
+        // (cookie set on response won't be available to route handler until next request)
+        const apiReqHeaders = new Headers(request.headers);
         apiReqHeaders.set("x-visitor-id", visitorId);
+
         const response = NextResponse.next({
           request: { headers: apiReqHeaders },
         });
@@ -383,7 +397,7 @@ export default async function proxy(request: NextRequest) {
     persistLocaleCookie(response, localeFromPath);
   }
 
-  // visitor_id cookie is set only when calling /api/visits if missing.
+  // visitor_id cookie is set for /api/visits and /api/sponsors/checkout if missing.
 
   // Use Report-Only in preview (or when explicitly requested), enforce otherwise
   const reportOnly =

@@ -11,6 +11,8 @@ alwaysApply: false
   ```tsx
   <JsonLdServer id="event-123" data={jsonLdData} />
   ```
+- **JSON-LD URLs**: Use `toLocalizedUrl(path, locale)` from `@utils/i18n-seo` for all URLs in structured data to ensure locale prefixes are included.
+- **Breadcrumbs JSON-LD**: Use `generateBreadcrumbList()` from `@components/partials/seo-meta` for breadcrumb structured data—it's tested and handles locale correctly.
 - **Lists**: Use `generateItemListStructuredData` for event collections; limit to ≤20 items.
 - **Event detail**: Use `generateEventMetadata` to generate full Metadata including OG/Twitter and keywords.
 - **Sitemaps/RSS**: Managed by `next-sitemap` and app routes in `app/server-*.xml/` and `app/rss.xml/`.

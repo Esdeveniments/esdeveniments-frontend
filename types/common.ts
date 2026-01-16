@@ -94,7 +94,10 @@ export interface GeneratePagesDataProps {
 export interface PlaceTypeAndLabel {
   type: PlaceType;
   label: string;
+  /** Parent region label (only for cities) */
   regionLabel?: string;
+  /** Parent region slug (only for cities) - used for breadcrumb URLs */
+  regionSlug?: string;
 }
 
 export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
@@ -569,6 +572,11 @@ export interface WebPageOptions {
   isPartOf?: string;
   mainContentOfPage?: Record<string, unknown>;
   locale?: AppLocale;
+  /** SEO: For city pages, the parent region (comarca) this place is contained in */
+  containedInPlace?: {
+    name: string;
+    url: string;
+  };
 }
 
 export interface CollectionPageOptions {

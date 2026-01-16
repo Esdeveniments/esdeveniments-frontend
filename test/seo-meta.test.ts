@@ -247,6 +247,38 @@ describe("generateWebPageSchema with breadcrumbs", () => {
 
     expect(schema.breadcrumb).toBeUndefined();
   });
+
+  it("includes containedInPlace for city pages with region info", () => {
+    const schema = generateWebPageSchema({
+      title: "Esdeveniments a Barcelona",
+      description: "Descobreix esdeveniments a Barcelona",
+      url: `${siteUrl}/barcelona`,
+      containedInPlace: {
+        name: "Barcelonès",
+        url: `${siteUrl}/barcelones`,
+      },
+    });
+
+    expect(schema.containedInPlace).toBeDefined();
+    const containedInPlace = schema.containedInPlace as {
+      "@type": string;
+      name: string;
+      url: string;
+    };
+    expect(containedInPlace["@type"]).toBe("AdministrativeArea");
+    expect(containedInPlace.name).toBe("Barcelonès");
+    expect(containedInPlace.url).toBe(`${siteUrl}/barcelones`);
+  });
+
+  it("does not include containedInPlace when not provided", () => {
+    const schema = generateWebPageSchema({
+      title: "Esdeveniments a Catalunya",
+      description: "Descobreix esdeveniments",
+      url: `${siteUrl}/catalunya`,
+    });
+
+    expect(schema.containedInPlace).toBeUndefined();
+  });
 });
 
 describe("generateCollectionPageSchema with breadcrumbs", () => {
