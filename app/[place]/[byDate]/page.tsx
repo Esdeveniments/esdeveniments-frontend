@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
 import { getCategories, fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
@@ -343,12 +343,20 @@ export default async function ByDatePage({
       category={finalCategory}
       date={actualDate}
       categories={categories}
-      webPageSchemaFactory={(pageData) =>
+      webPageSchemaFactory={({ placeTypeLabel, pageData }) =>
         generateWebPageSchema({
           title: pageData.title,
           description: pageData.metaDescription,
           url: pageData.canonical,
           locale,
+          // SEO: For city pages, include parent region (comarca) relationship
+          ...(placeTypeLabel.regionLabel &&
+            placeTypeLabel.regionSlug && {
+              containedInPlace: {
+                name: placeTypeLabel.regionLabel,
+                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
+              },
+            }),
         })
       }
     />

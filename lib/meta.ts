@@ -210,6 +210,15 @@ export function generateEventMetadata(
       "twitter:image:alt": pageTitle,
       "twitter:url": canonical,
       "twitter:domain": siteUrl,
+      // Article time metadata for freshness signals
+      // Use startDate as published time (when the event was created/announced)
+      ...(event.startDate && {
+        "article:published_time": event.startDate,
+      }),
+      // Use updatedAt if available, otherwise fall back to startDate
+      ...((event.updatedAt || event.startDate) && {
+        "article:modified_time": event.updatedAt || event.startDate,
+      }),
       // Article tags for better social media categorization
       ...(articleTags.length > 0 && {
         "article:tag": articleTags.join(","),

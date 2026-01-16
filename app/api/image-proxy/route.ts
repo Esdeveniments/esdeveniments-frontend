@@ -8,7 +8,10 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Agent } from "undici";
-import { normalizeExternalImageUrl } from "@utils/image-cache";
+import {
+  normalizeExternalImageUrl,
+  isLegacyFileHandler,
+} from "@utils/image-cache";
 // Dynamic import to avoid Turbopack bundling issues with native modules in Lambda
 import type { Sharp } from "sharp";
 
@@ -18,11 +21,17 @@ const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 
 // Image optimization defaults
-const DEFAULT_QUALITY = 50; // Matches QUALITY_PRESETS.EXTERNAL_STANDARD
+const DEFAULT_QUALITY = 50; // Base quality for mobile - Lighthouse tests on mobile viewport
 const MAX_WIDTH = 1920;
-const CARD_WIDTH = 700; // Default card image width
+const CARD_WIDTH = 500; // Cards display at ~280px, 500 covers 2x retina
 const MIN_SIZE_FOR_OPTIMIZATION = 10_000; // 10KB - skip optimization for tiny images
 const ANIMATED_GIF_FRAME_THRESHOLD = 1; // If GIF has more than 1 frame, skip optimization
+
+// Desktop quality boost: when requesting larger widths (desktop), increase quality
+// This doesn't affect mobile Lighthouse scores since mobile requests smaller widths
+const DESKTOP_WIDTH_THRESHOLD = 800; // Widths above this get quality boost
+const DESKTOP_QUALITY_BOOST = 15; // Add this to quality for desktop-sized requests
+const MAX_OPTIMIZED_QUALITY = 85; // Cap quality to avoid huge files
 
 /** Cache control header based on whether URL has cache-busting key */
 function getCacheControl(hasCacheKey: boolean): string {
@@ -34,7 +43,11 @@ function getCacheControl(hasCacheKey: boolean): string {
 // Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
 // Node's TLS verification rejects these, so we selectively bypass verification only for
 // known-bad hosts.
-const BROKEN_TLS_HOST_SUFFIXES = [".altanet.org", ".biguesiriells.cat"];
+const BROKEN_TLS_HOST_SUFFIXES = [
+  ".altanet.org",
+  ".biguesiriells.cat",
+  ".l-h.cat",
+];
 
 const insecureTlsDispatcher = new Agent({
   connect: {
@@ -76,15 +89,18 @@ async function fetchWithTimeout(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
+    const bypassTls = shouldBypassTlsVerification(url);
     const init: RequestInit & { dispatcher?: unknown } = {
       signal: controller.signal,
     };
 
-    if (shouldBypassTlsVerification(url)) {
+    if (bypassTls) {
       init.dispatcher = insecureTlsDispatcher;
     }
 
     return await fetch(url, init as RequestInit);
+  } catch (error) {
+    throw new Error(`Fetch failed for ${url}`, { cause: error });
   } finally {
     clearTimeout(timeout);
   }
@@ -233,8 +249,15 @@ export async function GET(request: Request) {
   // Parse optimization params
   const requestedWidth =
     parseInt(url.searchParams.get("w") || "", 10) || CARD_WIDTH;
-  const requestedQuality =
+  const baseQuality =
     parseInt(url.searchParams.get("q") || "", 10) || DEFAULT_QUALITY;
+  
+  // Desktop quality boost: larger requested widths (desktop) get better quality
+  // Mobile requests smaller widths, so their quality stays at base (preserves Lighthouse scores)
+  const isDesktopRequest = requestedWidth >= DESKTOP_WIDTH_THRESHOLD;
+  const requestedQuality = isDesktopRequest 
+    ? Math.min(baseQuality + DESKTOP_QUALITY_BOOST, MAX_OPTIMIZED_QUALITY)
+    : baseQuality;
   // Determine output format:
   // 1. Explicit format param takes priority (avif, webp, jpeg, png)
   // 2. Falls back to Accept header (but CloudFront may not forward it)
@@ -242,9 +265,11 @@ export async function GET(request: Request) {
   const formatParam = url.searchParams.get("format")?.toLowerCase();
   const acceptHeader = request.headers.get("accept") || "";
   const preferAvif =
-    formatParam === "avif" || (!formatParam && acceptHeader.includes("image/avif"));
+    formatParam === "avif" ||
+    (!formatParam && acceptHeader.includes("image/avif"));
   const preferWebp =
-    formatParam === "webp" || (!formatParam && acceptHeader.includes("image/webp"));
+    formatParam === "webp" ||
+    (!formatParam && acceptHeader.includes("image/webp"));
 
   // Clamp values to reasonable limits
   const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
@@ -259,8 +284,12 @@ export async function GET(request: Request) {
   // Check if URL has cache key BEFORE stripping (for cache header logic later)
   const hasCacheKey = hasStrongCacheKey(normalized);
 
-  // Strip ?v= before fetching upstream - some servers reject unknown query params
-  const upstreamUrl = stripCacheKeyForUpstream(normalized);
+  // Strip ?v= before fetching upstream - some servers reject unknown query params.
+  // Skip for legacy file handlers (.ashx) which have non-standard query strings
+  // that get corrupted by URL object serialization (adds trailing "=").
+  const upstreamUrl = isLegacyFileHandler(normalized)
+    ? normalized
+    : stripCacheKeyForUpstream(normalized);
 
   const originalWasHttp = (() => {
     try {
@@ -346,7 +375,6 @@ export async function GET(request: Request) {
       // Process image with Sharp
       // Lambda: eval("require") bypasses Turbopack's module mangling
       try {
-         
         const sharp = eval("require")("sharp") as typeof import("sharp");
         let sharpInstance: Sharp = sharp(imageBuffer);
 

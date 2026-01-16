@@ -36,7 +36,7 @@ import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { getTranslations } from "next-intl/server";
 import { redirect, notFound } from "next/navigation";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
@@ -302,12 +302,20 @@ export default async function FilteredPage({
       category={filters.category}
       date={filters.byDate}
       categories={categories}
-      webPageSchemaFactory={(pageData) =>
+      webPageSchemaFactory={({ placeTypeLabel, pageData }) =>
         generateWebPageSchema({
           title: pageData.title,
           description: pageData.metaDescription,
           url: pageData.canonical,
           locale,
+          // SEO: For city pages, include parent region (comarca) relationship
+          ...(placeTypeLabel.regionLabel &&
+            placeTypeLabel.regionSlug && {
+              containedInPlace: {
+                name: placeTypeLabel.regionLabel,
+                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
+              },
+            }),
         })
       }
     />

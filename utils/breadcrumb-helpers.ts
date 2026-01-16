@@ -3,6 +3,27 @@ import type { AppLocale } from "types/i18n";
 import { toLocalizedUrl } from "./i18n-seo";
 
 /**
+ * Adds the region breadcrumb for city pages (SEO: city containedInPlace region).
+ * Inserted between Home and City to show geographic hierarchy.
+ *
+ * @param breadcrumbs - The breadcrumbs array to modify
+ * @param regionLabel - The display label for the region (comarca)
+ * @param regionSlug - The URL slug for the region
+ * @param locale - The current locale
+ */
+export function addRegionBreadcrumb(
+  breadcrumbs: BreadcrumbItem[],
+  regionLabel: string,
+  regionSlug: string,
+  locale: AppLocale
+): void {
+  breadcrumbs.push({
+    name: regionLabel,
+    url: toLocalizedUrl(`/${regionSlug}`, locale),
+  });
+}
+
+/**
  * Adds the place breadcrumb if it's not the catalunya homepage.
  * 
  * @param breadcrumbs - The breadcrumbs array to modify

@@ -2,6 +2,41 @@
 
 Purpose: Catalan events discovery web app (Next.js 16.1 App Router + React 19 + TypeScript) focused on SEO, performance (service worker + image optimization), and a configuration‑driven URL-first filtering system. Tooling: Node >=22, Yarn 4.12 (per package.json).
 
+---
+
+## ⚠️ CRITICAL: Agent Skills (ALWAYS CHECK FIRST)
+
+**Before writing ANY code**, load and follow the relevant Agent Skills in `.github/skills/`:
+
+| Task                          | Required Skill                 | Key Rule                                                    |
+| ----------------------------- | ------------------------------ | ----------------------------------------------------------- |
+| **Any new code**              | `pre-implementation-checklist` | Search for existing patterns FIRST                          |
+| **Creating types/interfaces** | `type-system-governance`       | ALL types must go in `/types` directory                     |
+| **Creating components**       | `react-nextjs-patterns`        | Server Component by default, `"use client"` only at leaves  |
+| **Adding filters**            | `filter-system-dev`            | Add to `config/filters.ts` only                             |
+| **API endpoints**             | `api-layer-patterns`           | Three-layer proxy pattern required                          |
+| **URL/routing changes**       | `url-canonicalization`         | NEVER add `searchParams` to listing pages                   |
+| **i18n/translations**         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`, not `next/link`            |
+| **Styling/UI**                | `design-system-conventions`    | Use semantic classes, NEVER `gray-*` colors                 |
+| **Writing tests**             | `testing-patterns`             | Vitest for unit, Playwright for E2E                         |
+| **Security/CSP/scripts**      | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains in CSP               |
+| **Service worker**            | `service-worker-updates`       | Edit `sw-template.js`, run `yarn prebuild`                  |
+| **Performance/images**        | `bundle-optimization`          | Use quality caps, Server Components by default              |
+| **Adding env variables**      | `env-variable-management`      | Update 4 locations: code, SST, workflow, GitHub secrets     |
+| **Validating API data**       | `data-validation-patterns`     | Use Zod schemas in `lib/validation/`, safe fallbacks        |
+| **Evaluating PR suggestions** | `code-review-evaluation`       | Cross-reference external suggestions against project skills |
+
+**Workflow:**
+
+1. **Search first** → Report findings before coding
+2. **Propose plan** → Wait for confirmation
+3. **Implement** → Follow skill checklists
+4. **Verify** → `yarn typecheck && yarn lint`
+
+**If unsure**: Ask "Did I follow the skills?"
+
+---
+
 ## 1. Core Architecture
 
 - Next.js App Router in `app/` with canonical URL structure: `/place(/date)?(/category)?` omitting default `tots` date & category.
@@ -60,6 +95,7 @@ Adding a new filter:
   3. Create internal API route in `app/api/*` that calls external wrapper and sets cache headers
   4. Update client library in `lib/api/*.ts` to call internal route via `getInternalApiUrl` and query builders
   5. Use `next: { revalidate, tags }` for Next.js fetch caching
+- **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
 - Avoid: calling external API directly from pages/components (use internal routes), duplicating manual query string concatenation (use query builders), bypassing cache wrappers, throwing raw fetch errors without fallback object.
 
 ## 5. News Pages
@@ -160,6 +196,10 @@ Adding a new filter:
 - Forgetting to use query builders (`buildEventsQuery`, `buildNewsQuery`) and manually constructing URLSearchParams.
 - Not setting appropriate cache headers (`s-maxage`, `stale-while-revalidate`) in internal API routes.
 - **⚠️ CRITICAL - Adding `searchParams` to listing pages**: Reading `searchParams` in `app/[place]/*` page components makes pages dynamic, causing OpenNext/SST to create millions of DynamoDB cache entries (one per unique URL+query). This caused a $300+ spike on Dec 28, 2025. Query-dependent behavior must be handled in middleware (`proxy.ts`) or client-side (SWR).
+- **Raw fetch() without timeout**: Always use `fetchWithHmac` (internal API, 10s timeout) or `safeFetch`/`fireAndForgetFetch` (external webhooks, 5s timeout). Raw `fetch()` can hang indefinitely in serverless. ESLint warns on raw `fetch()`.
+- **Custom implementations over stdlib**: Prefer built-in APIs (e.g., `AbortSignal.any()` over custom signal merging, `after()` from `next/server` over fire-and-forget promises).
+- **Swallowing stack traces**: Pass original error to `captureException(error)`, not `new Error(error.message)`.
+- **URL parsing in catch blocks**: Use try/catch when parsing URLs (e.g., `new URL(url).hostname`) to avoid exceptions in error handlers.
 
 ## 16. Quick Examples
 
@@ -359,8 +399,10 @@ When modifying existing components:
 
 - Library: `next-intl` 4.5 with plugin enabled in `next.config.js` (`withNextIntl`).
 - Routing: `i18n/routing.ts` defines locales (`ca`, `es`, `en`), default `ca`, and `as-needed` prefix via `defineRouting`; use the exported `Link`, `redirect`, `usePathname`, `useRouter`, `getPathname` from `createNavigation`.
+- **Links: Always use `Link` from `@i18n/routing` for internal navigation** (not `next/link`). This ensures locale prefixes are automatically handled for non-default locales (`es`, `en`). ESLint will warn on `next/link` imports in components. Exceptions: primitives with manual locale handling, external-only links.
 - Requests/messages: `i18n/request.ts` uses `getRequestConfig` to load messages from `messages/{locale}.json`. Add locales by updating `types/i18n.ts` (supported locales, mappings), adding the JSON file, and extending the loader map.
 - App layout: `app/layout.tsx` wraps with `NextIntlClientProvider` using `getLocale`/`getMessages`. Server components should use `getTranslations` from `next-intl/server`; client components should use `useTranslations`/`useLocale` from `next-intl`. Don’t pass messages manually down the tree.
 - Locale header: `proxy.ts` sets `x-next-intl-locale`; `utils/i18n-seo.ts` reads it. Avoid rolling your own locale detection.
 - Strings: keep user-facing text in `messages/*.json`; prefer reuse of existing keys before adding new ones.
+- JSON-LD URLs: Use `toLocalizedUrl(path, locale)` from `@utils/i18n-seo` for all URLs in structured data to ensure locale prefixes are included.
 - Tests: Vitest mocks live in `test/mocks/next-intl.ts` and `test/mocks/next-intl-server.ts`; `vitest.config.ts` aliases `next-intl` and `next-intl/server` to these mocks.

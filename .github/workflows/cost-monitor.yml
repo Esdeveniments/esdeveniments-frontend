@@ -161,15 +161,18 @@ jobs:
             ANOMALY_DETECTED=true
           fi
 
-          # Alert if daily writes > 50,000 (healthy baseline is ~38,000)
-          if (( $(echo "$TOTAL_WRITES > 50000" | bc -l) )); then
-            echo "⚠️ **Elevated DynamoDB writes:** $(printf "%'d" $TOTAL_WRITES) (baseline: ~38,000/day)" >> $GITHUB_STEP_SUMMARY
+          # Alert if daily writes > 60,000 (normal: 5-15K stable, 30-50K after deploys)
+          # Note: Each deployment creates new cache namespace, requiring full cache warm-up
+          if (( $(echo "$TOTAL_WRITES > 60000" | bc -l) )); then
+            echo "⚠️ **Elevated DynamoDB writes:** $(printf "%'d" $TOTAL_WRITES) (threshold: 60,000/day)" >> $GITHUB_STEP_SUMMARY
+            echo "  - Normal (stable cache): 5,000-15,000/day" >> $GITHUB_STEP_SUMMARY
+            echo "  - After deployment: 30,000-50,000/day (cache warming)" >> $GITHUB_STEP_SUMMARY
             ANOMALY_DETECTED=true
           fi
 
-          # Alert if monthly cost > $10 (healthy baseline is ~$2-4)
-          if (( $(echo "$TOTAL_COST > 10" | bc -l) )); then
-            echo "⚠️ **Elevated monthly cost:** \$${TOTAL_FORMATTED} (baseline: ~\$2-4/month)" >> $GITHUB_STEP_SUMMARY
+          # Alert if monthly cost > $15 (healthy frontend baseline is ~$5-6/month)
+          if (( $(echo "$TOTAL_COST > 15" | bc -l) )); then
+            echo "⚠️ **Elevated monthly cost:** \$${TOTAL_FORMATTED} (baseline: ~\$5-6/month)" >> $GITHUB_STEP_SUMMARY
             ANOMALY_DETECTED=true
           fi
 
@@ -178,10 +181,17 @@ jobs:
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Baselines (Dec 30, 2025)" >> $GITHUB_STEP_SUMMARY
-          echo "- DynamoDB writes: ~38,000/day = \$1.64/month" >> $GITHUB_STEP_SUMMARY
-          echo "- Lambda invocations: ~66,000/day = \$0.08/month" >> $GITHUB_STEP_SUMMARY
-          echo "- Total healthy cost: ~\$2-4/month" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend Baselines (Jan 2026)" >> $GITHUB_STEP_SUMMARY
+          echo "- DynamoDB (ISR cache):" >> $GITHUB_STEP_SUMMARY
+          echo "  - Stable cache: 5,000-15,000 writes/day" >> $GITHUB_STEP_SUMMARY
+          echo "  - After deploy: 30,000-50,000 writes/day (cache warming)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Cost: ~\$1-3/month" >> $GITHUB_STEP_SUMMARY
+          echo "- Lambda: ~\$0.03/month" >> $GITHUB_STEP_SUMMARY
+          echo "- CloudFront: ~\$0.30/month" >> $GITHUB_STEP_SUMMARY
+          echo "- S3 assets: ~\$3-4/month" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total frontend: ~\$5-8/month**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Note: Backend (Elastic Beanstalk in eu-west-1) costs ~\$54/month separately_" >> $GITHUB_STEP_SUMMARY
 
           # Set output for potential Slack/email notification
           echo "anomaly=$ANOMALY_DETECTED" >> $GITHUB_OUTPUT
@@ -190,31 +200,82 @@ jobs:
 
       - name: Send daily report via SNS
         if: always()
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
           # Build email message
           if [ "${{ steps.analysis.outputs.anomaly }}" = "true" ]; then
             SUBJECT="⚠️ AWS Cost Alert - Anomaly Detected"
-            URGENCY="HIGH"
           else
             SUBJECT="✅ AWS Daily Cost Report - ${{ steps.date.outputs.today }}"
-            URGENCY="normal"
           fi
 
-          MESSAGE="AWS Cost Report - ${{ steps.date.outputs.today }}
+          MESSAGE="AWS Frontend Cost Report - ${{ steps.date.outputs.today }}
 
           Monthly Cost: \$${{ steps.analysis.outputs.total_cost }}
           DynamoDB Writes (24h): ${{ steps.analysis.outputs.total_writes }}
           Status: $([ '${{ steps.analysis.outputs.anomaly }}' = 'true' ] && echo '⚠️ ANOMALY DETECTED' || echo '✅ Normal')
 
-          Baselines:
-          - DynamoDB writes: ~38,000/day
-          - Monthly cost: ~\$2-4/month
+          Frontend Baselines (eu-west-3):
+          - DynamoDB: 5-15K/day stable, 30-50K after deploy (~\$1-3/month)
+          - Lambda: ~\$0.03/month
+          - CloudFront: ~\$0.30/month
+          - Total frontend: ~\$5-8/month
 
           View full report: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          # Send via SNS (uses same topic as CloudWatch alarms)
-          aws sns publish \
-            --topic-arn "arn:aws:sns:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:esdeveniments-frontend-production-SiteAlarms" \
+          # Check if AWS_ACCOUNT_ID is set
+          if [ -z "$AWS_ACCOUNT_ID" ]; then
+            echo "❌ AWS_ACCOUNT_ID secret is not set. Please add it to repository secrets."
+            echo "   Go to: Settings > Secrets and variables > Actions > New repository secret"
+            exit 0
+          fi
+
+          TOPIC_ARN="arn:aws:sns:${{ env.AWS_REGION }}:${AWS_ACCOUNT_ID}:esdeveniments-frontend-production-SiteAlarms"
+          echo "📧 Sending to SNS topic: $TOPIC_ARN"
+
+          # Check if topic exists
+          if ! aws sns get-topic-attributes --topic-arn "$TOPIC_ARN" --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
+            echo "❌ SNS topic does not exist: $TOPIC_ARN"
+            echo "   Create it with: aws sns create-topic --name esdeveniments-frontend-production-SiteAlarms"
+            echo "   Then subscribe: aws sns subscribe --topic-arn <ARN> --protocol email --notification-endpoint your@email.com"
+            exit 0
+          fi
+
+          # Send via SNS
+          if aws sns publish \
+            --topic-arn "$TOPIC_ARN" \
             --subject "$SUBJECT" \
             --message "$MESSAGE" \
-            --region ${{ env.AWS_REGION }} || echo "SNS publish failed - topic may not exist yet"
+            --region ${{ env.AWS_REGION }}; then
+            echo "✅ Email sent successfully via SNS"
+          else
+            echo "❌ Failed to publish to SNS. Check IAM permissions for sns:Publish"
+          fi
+
+      # Fallback: Send email via GitHub Action (works without AWS SNS)
+      - name: Send email via SMTP (fallback)
+        if: always() && env.SMTP_PASSWORD != ''
+        env:
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: ${{ steps.analysis.outputs.anomaly == 'true' && '⚠️ AWS Cost Alert - Anomaly Detected' || format('✅ AWS Daily Cost Report - {0}', steps.date.outputs.today) }}
+          to: ${{ secrets.ALERT_EMAIL }}
+          from: GitHub Actions <${{ secrets.SMTP_USERNAME }}>
+          body: |
+            AWS Cost Report - ${{ steps.date.outputs.today }}
+
+            📊 Monthly Cost: $${{ steps.analysis.outputs.total_cost }}
+            📝 DynamoDB Writes (24h): ${{ steps.analysis.outputs.total_writes }}
+            🔔 Status: ${{ steps.analysis.outputs.anomaly == 'true' && '⚠️ ANOMALY DETECTED' || '✅ Normal' }}
+
+            Baselines:
+            - DynamoDB writes: 5-15K/day stable, 30-50K/day after deploy
+            - Monthly cost: ~$5-8/month
+
+            View full report: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -34,6 +34,7 @@ export default async function Footer(): Promise<JSX.Element> {
     },
     { name: t("navigation.news"), href: "/noticies", kind: "internal", current: false },
     { name: t("navigation.about"), href: "/qui-som", kind: "internal", current: false },
+    { name: t("navigation.advertise"), href: "/patrocina", kind: "internal", current: false },
     {
       name: t("navigation.contact"),
       href: `mailto:${contactEmail}`,
