@@ -1,0 +1,38 @@
+---
+description: API layer patterns for data fetching. Apply when working with API calls, fetch, or lib/api/*.
+globs:
+  - "lib/api/**/*.ts"
+  - "app/api/**/*.ts"
+---
+
+# API Layer Patterns
+
+**CRITICAL**: Never call external API directly from pages/components. Use the three-layer proxy pattern.
+
+## The Three Layers
+
+1. **Client Library** (`lib/api/*.ts`) - Called by pages/components
+2. **Internal API Route** (`app/api/*/route.ts`) - Sets cache headers
+3. **External Wrapper** (`lib/api/*-external.ts`) - HMAC signing, Sentry logging
+
+## Required Patterns
+
+- Use `fetchWithHmac` for external API calls (has 10s timeout)
+- Use `getInternalApiUrl()` for internal route URLs
+- Use query builders (`buildEventsQuery`, `buildNewsQuery`)
+- Always return safe fallbacks on error (never throw for read endpoints)
+- Set appropriate cache headers (`s-maxage`, `stale-while-revalidate`)
+
+## Environment Guard (Required for External Wrappers)
+
+```typescript
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL) {
+  return { content: [], totalElements: 0, totalPages: 0, last: true };
+}
+```
+
+## Full Details
+
+See `.github/skills/api-layer-patterns/SKILL.md` for complete guide and templates.

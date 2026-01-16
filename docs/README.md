@@ -1,12 +1,56 @@
-# Design System Documentation
+# Project Documentation
 
 ## 📚 Navigation
 
-This folder contains complete design system documentation for the Tailwind CSS migration project.
+This folder contains documentation for the design system migration and AI agent skills implementation.
 
 ---
 
-## 🗂️ Document Index (4 Documents)
+## 🗂️ Document Index
+
+### AI Agent Skills (NEW)
+
+#### **[`agent-skills-strategy.md`](./agent-skills-strategy.md)** 🤖 DEEP DIVE
+
+Complete strategy for leveraging GitHub Copilot Agent Skills in this codebase.
+
+- What are Agent Skills and how they work (progressive disclosure)
+- 12 recommended skills (filter system, API layer, type governance, etc.)
+- Implementation roadmap with success metrics
+- Skills vs. custom instructions division of labor
+
+**Audience**: Tech leads, senior developers  
+**Time to Read**: 30-40 minutes
+
+#### **[`agent-skills-quickstart.md`](./agent-skills-quickstart.md)** ⚡ START HERE
+
+Quick start guide to enable and use Agent Skills immediately.
+
+- 2-minute setup instructions
+- Test prompts for existing skills
+- How skills work behind the scenes
+- Troubleshooting and common issues
+
+**Audience**: All developers  
+**Time to Read**: 5 minutes
+
+#### **[`how-to-make-ai-follow-rules.md`](./how-to-make-ai-follow-rules.md)** 🎯 PRACTICAL TIPS
+
+How to prompt AI to actually follow your rules (not just read them).
+
+- Two-phase prompts (plan then implement)
+- Verification loops (ask AI to check its own work)
+- Copy-paste prompt templates
+- Common AI mistakes and prevention
+
+**Audience**: All developers  
+**Time to Read**: 5 minutes
+
+---
+
+### Design System Migration
+
+#### **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
 
 ### 1. **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
 
