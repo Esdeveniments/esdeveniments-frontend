@@ -9,7 +9,7 @@ import {
 
 describe("Restaurant Promotion Pricing", () => {
   it("should return pricing config for valid combinations", () => {
-    const pricing = getPricingConfig(3, "town");
+    const pricing = getPricingConfig(7, "town");
     expect(pricing).toBeDefined();
     expect(pricing?.currency).toBe("eur");
     expect(pricing?.unitAmount).toBeGreaterThan(0);
@@ -25,8 +25,7 @@ describe("Restaurant Promotion Pricing", () => {
     const durations = getAvailableDurations();
     expect(durations).toBeInstanceOf(Array);
     expect(durations.length).toBeGreaterThan(0);
-    // Updated to match pricing.ts: [3, 7, 14, 30] days
-    expect(durations).toContain(3);
+    // Updated to match pricing.ts: [7, 14, 30] days (3-day removed)
     expect(durations).toContain(7);
     expect(durations).toContain(14);
     expect(durations).toContain(30);
@@ -42,8 +41,8 @@ describe("Restaurant Promotion Pricing", () => {
 
   it("should validate pricing availability", () => {
     // Valid combinations from pricing.ts
-    expect(isPricingAvailable(3, "town")).toBe(true);
-    expect(isPricingAvailable(7, "region")).toBe(true);
+    expect(isPricingAvailable(7, "town")).toBe(true);
+    expect(isPricingAvailable(14, "region")).toBe(true);
     expect(isPricingAvailable(30, "country")).toBe(true);
     // Invalid duration
     expect(isPricingAvailable(999, "town")).toBe(false);

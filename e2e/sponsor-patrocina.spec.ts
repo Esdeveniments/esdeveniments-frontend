@@ -37,9 +37,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
     await expect(pricingSection).toBeVisible();
 
     // Benefits section exists
-    await expect(
-      page.getByRole("heading", { name: /anunciar-te/i })
-    ).toBeVisible();
+    await expect(page.getByTestId("benefits-section")).toBeVisible();
   });
 
   test("pricing section has place selector for scope selection", async ({
@@ -57,10 +55,8 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   test("how it works section displays steps", async ({ page }) => {
     await navigateToPatrocina(page);
 
-    // How it works heading exists
-    await expect(
-      page.getByRole("heading", { name: /com funciona/i })
-    ).toBeVisible();
+    // How it works section exists
+    await expect(page.getByTestId("how-it-works-section")).toBeVisible();
 
     // Steps are visible (we expect at least 3-4 steps)
     const stepIndicators = page.locator('[data-testid^="step-indicator-"]');
@@ -71,10 +67,8 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   test("FAQ section is present", async ({ page }) => {
     await navigateToPatrocina(page);
 
-    // FAQ heading exists
-    await expect(
-      page.getByRole("heading", { name: /preguntes freq/i })
-    ).toBeVisible();
+    // FAQ section exists
+    await expect(page.getByTestId("faq-section")).toBeVisible();
   });
 
   test("contact section has email link", async ({ page }) => {

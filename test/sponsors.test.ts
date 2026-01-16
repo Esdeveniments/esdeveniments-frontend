@@ -123,8 +123,9 @@ describe("Sponsor System", () => {
         startDate: "2026-01-01",
         endDate: "2026-01-10", // Before the fixed date of 2026-01-15
       };
-      const { getActiveSponsorForPlace } =
-        createMockSponsorModule([expiredSponsor]);
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        expiredSponsor,
+      ]);
 
       expect(getActiveSponsorForPlace("barcelona")).toBeNull();
     });
@@ -139,8 +140,9 @@ describe("Sponsor System", () => {
         startDate: "2026-01-20", // After the fixed date of 2026-01-15
         endDate: "2026-01-31",
       };
-      const { getActiveSponsorForPlace } =
-        createMockSponsorModule([futureSponsor]);
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        futureSponsor,
+      ]);
 
       expect(getActiveSponsorForPlace("barcelona")).toBeNull();
     });
@@ -306,8 +308,9 @@ describe("Sponsor System", () => {
         startDate: "2020-01-01",
         endDate: "2020-01-31", // Long expired
       };
-      const { hasSponsorConfigForPlace } =
-        createMockSponsorModule([expiredSponsor]);
+      const { hasSponsorConfigForPlace } = createMockSponsorModule([
+        expiredSponsor,
+      ]);
 
       // Should return true even for expired sponsors (for analytics/debugging)
       expect(hasSponsorConfigForPlace("barcelona")).toBe(true);
@@ -556,10 +559,10 @@ describe("Checkout Helpers", () => {
 
     test("falls back to Catalan for unknown locale", () => {
       const params = new URLSearchParams();
-      buildLineItemParams(params, "3days", "town", "fr");
+      buildLineItemParams(params, "7days", "town", "fr");
 
       expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
-        "Patrocini 3 dies"
+        "Patrocini 7 dies"
       );
     });
 
@@ -585,20 +588,20 @@ describe("Checkout Helpers", () => {
     });
 
     test("price varies by duration", () => {
-      const params3days = new URLSearchParams();
+      const params7days = new URLSearchParams();
       const params30days = new URLSearchParams();
 
-      buildLineItemParams(params3days, "3days", "town", "ca");
+      buildLineItemParams(params7days, "7days", "town", "ca");
       buildLineItemParams(params30days, "30days", "town", "ca");
 
-      const price3 = Number(
-        params3days.get("line_items[0][price_data][unit_amount]")
+      const price7 = Number(
+        params7days.get("line_items[0][price_data][unit_amount]")
       );
       const price30 = Number(
         params30days.get("line_items[0][price_data][unit_amount]")
       );
 
-      expect(price30).toBeGreaterThan(price3);
+      expect(price30).toBeGreaterThan(price7);
     });
 
     test("price varies by geoScope", () => {
@@ -735,13 +738,7 @@ describe("Checkout Helpers", () => {
 
     test("duplicates metadata to payment_intent_data for Dashboard visibility", () => {
       const params = new URLSearchParams();
-      buildMetadataParams(
-        params,
-        "7days",
-        "barcelona",
-        "Barcelona",
-        "country"
-      );
+      buildMetadataParams(params, "7days", "barcelona", "Barcelona", "country");
 
       // Check that all metadata is also set on payment_intent_data
       expect(params.get("payment_intent_data[metadata][product]")).toBe(
@@ -765,8 +762,8 @@ describe("Checkout Helpers", () => {
     });
 
     test("handles all duration values correctly", () => {
-      const durations = ["3days", "7days", "14days", "30days"] as const;
-      const expectedDays = ["3", "7", "14", "30"];
+      const durations = ["7days", "14days", "30days"] as const;
+      const expectedDays = ["7", "14", "30"];
 
       durations.forEach((duration, index) => {
         const params = new URLSearchParams();

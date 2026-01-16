@@ -100,7 +100,7 @@ export default async function PatrocinaPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-section-y px-section-x">
+      <section data-testid="benefits-section" className="py-section-y px-section-x">
         <div className="max-w-5xl mx-auto">
           <h2 className="heading-2 text-center mb-12">{t("benefits.title")}</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -148,7 +148,7 @@ export default async function PatrocinaPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-section-y px-section-x">
+      <section data-testid="how-it-works-section" className="py-section-y px-section-x">
         <div className="max-w-4xl mx-auto">
           <h2 className="heading-2 text-center mb-12">{t("howItWorks.title")}</h2>
           <div className="space-y-8">
@@ -175,7 +175,7 @@ export default async function PatrocinaPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-section-y px-section-x bg-muted/30">
+      <section data-testid="faq-section" className="py-section-y px-section-x bg-muted/30">
         <div className="max-w-3xl mx-auto">
           <h2 className="heading-2 text-center mb-12">{t("faq.title")}</h2>
           <div className="space-y-6">
