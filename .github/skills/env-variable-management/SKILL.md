@@ -171,7 +171,7 @@ Find "Create .env.production file" step (~line 89):
 
 Add to the tables in this skill file.
 
-## NEXT*PUBLIC* Prefix Rules
+## `NEXT_PUBLIC_` Prefix Rules
 
 | Prefix          | Visibility      | Use Case                   |
 | --------------- | --------------- | -------------------------- |

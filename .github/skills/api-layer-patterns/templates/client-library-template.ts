@@ -77,6 +77,9 @@ export namespace ClientLibraryTemplate {
       // - For internal API calls: use fetchWithHmac (10s timeout built-in)
       // - For external services: use safeFetch from utils/safe-fetch.ts (5s timeout)
       // Raw fetch() can hang indefinitely in serverless environments
+      //
+      // NOTE: This template uses raw fetch() for simplicity.
+      // TODO: Replace with appropriate fetch wrapper when copying this template.
       const response = await fetch(url, {
         next: { revalidate: 600, tags: ["RESOURCE_NAME"] },
       });

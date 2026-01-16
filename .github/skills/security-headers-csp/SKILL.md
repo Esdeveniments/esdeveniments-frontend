@@ -188,7 +188,7 @@ Relaxed CSP enables better performance while maintaining security through host a
 ## Files to Reference
 
 - [proxy.ts](../../../proxy.ts) - CSP and security headers
-- [utils/api-helpers.ts](../../../utils/api-helpers.ts) - `fetchWithHmac`
+- [lib/api/fetch-wrapper.ts](../../../lib/api/fetch-wrapper.ts) - `fetchWithHmac`
 - [utils/safe-fetch.ts](../../../utils/safe-fetch.ts) - Safe fetch utilities
 - [components/partials/JsonLdServer.tsx](../../../components/partials/JsonLdServer.tsx) - JSON-LD component
 - [app/GoogleScripts.tsx](../../../app/GoogleScripts.tsx) - Analytics script loading

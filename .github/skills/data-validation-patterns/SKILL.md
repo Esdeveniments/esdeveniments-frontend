@@ -88,11 +88,12 @@ export function parseMyResourceArray(data: unknown): MyResource[] {
 }
 ```
 
-### 3. Use in API Client (External Wrapper - Layer 3)
+### 3. Use in External Wrapper (Layer 3 - Calls External API)
 
 ```typescript
 // lib/api/my-resource-external.ts
 // NOTE: fetchWithHmac is ONLY used in external wrappers (Layer 3)
+// See api-layer-patterns skill for the three-layer architecture
 import { captureException } from "@sentry/nextjs";
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { parseMyResource } from "@lib/validation/my-resource";
@@ -158,7 +159,13 @@ export function parseWithSentry<T>(
       result.error.format()
     );
 
-    captureException(new Error(`${context.section} validation failed`), {
+    // Create error with validation details for better Sentry context
+    const validationError = new Error(
+      `${context.section} validation failed: ${result.error.message}`
+    );
+    validationError.cause = result.error; // Preserve original Zod error
+
+    captureException(validationError, {
       tags: {
         section: context.section,
         type: "validation-failed",

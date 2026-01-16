@@ -27,7 +27,10 @@ External images use quality caps to reduce bandwidth:
 | Context      | Quality | Use Case              |
 | ------------ | ------- | --------------------- |
 | Default      | 50      | Standard images       |
-| Priority/LCP | 60      | Above-the-fold images |
+| Priority/LCP | 50      | Above-the-fold images |
+
+> **Note**: LCP quality was reduced from 60 to 50 based on Lighthouse analysis
+> showing 159 KiB potential savings. See `utils/image-quality.ts` for details.
 
 ### Helper Functions
 

@@ -224,10 +224,11 @@ getRemovalChanges: (value, segments, queryParams) => ({
 
 **Single source of truth**: `config/filters.ts` → everything else reads from it.
 
-### ❌ Using Legacy `filter-config.ts`
+### ❌ Using Legacy Filter Patterns
 
 ```typescript
-// WRONG: Extending legacy file
+// WRONG: Creating separate filter config files
+// (Legacy pattern you may encounter in older code)
 // File: utils/filter-config.ts
 export const PRICE_FILTER = { ... }
 
@@ -238,7 +239,7 @@ export const FILTER_CONFIGURATIONS = [
 ]
 ```
 
-**Migration note**: `filter-config.ts` exists only for backward compatibility. New filters go in `config/filters.ts`.
+**Note**: If you encounter a `filter-config.ts` file, it's a legacy pattern. All new filters should go in `config/filters.ts`.
 
 ### ❌ Creating /tots/ URLs
 
