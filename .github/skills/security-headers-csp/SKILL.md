@@ -97,10 +97,12 @@ The proxy middleware (`proxy.ts`) injects these headers:
 // Key security headers
 "X-Content-Type-Options": "nosniff"
 "X-Frame-Options": "DENY"
-"X-XSS-Protection": "1; mode=block"
+"X-XSS-Protection": "1; mode=block"  // Deprecated but harmless - see note below
 "Referrer-Policy": "strict-origin-when-cross-origin"
 "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)"
 ```
+
+> **Note**: `X-XSS-Protection` is deprecated. Chrome removed XSS Auditor in 2019, and modern browsers ignore this header. It's kept for legacy browser compatibility but provides no security benefit in current browsers. The real XSS protection comes from CSP and proper output escaping.
 
 ## Adding New External Domains
 

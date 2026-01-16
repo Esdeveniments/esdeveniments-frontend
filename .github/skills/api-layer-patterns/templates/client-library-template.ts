@@ -113,11 +113,10 @@ export namespace ClientLibraryTemplate {
         slug
       )}`;
 
-      // In actual Next.js code, use the `next` option for ISR:
-      // const response = await fetch(url, {
-      //   next: { revalidate: 600, tags: ["RESOURCE_NAME", `RESOURCE_NAME-${slug}`] },
-      // });
-      const response = await fetch(url);
+      // Include ISR cache options for Next.js caching
+      const response = await fetch(url, {
+        next: { revalidate: 600, tags: ["RESOURCE_NAME", `RESOURCE_NAME-${slug}`] },
+      });
 
       if (!response.ok) {
         if (response.status === 404) return null;
