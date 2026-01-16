@@ -257,6 +257,7 @@
         "publish": "Publish",
         "news": "News",
         "about": "About us",
+        "advertise": "Advertise",
         "contact": "Contact",
         "archive": "Archive"
       },
@@ -1309,5 +1310,215 @@
       "weekend": "Weekend",
       "week": "This week"
     }
+  },
+  "Sponsor": {
+    "label": "Advertisement",
+    "emptyState": "Advertise your business here",
+    "cta": "Sponsor this page"
+  },
+  "Sponsorship": {
+    "meta": {
+      "title": "Sponsor Your Town | Esdeveniments.cat",
+      "description": "Make your business visible in your region. Reach thousands of people looking for things to do in your area."
+    },
+    "hero": {
+      "title": "Make your business visible in your region",
+      "subtitle": "Reach thousands of people looking for things to do in your area. Your ad will appear on your town's page.",
+      "stats": "50,000+ annual visits · SEO positioning · Local audience",
+      "cta": "See prices"
+    },
+    "benefits": {
+      "title": "Why advertise with us?",
+      "targeted": {
+        "title": "People from your town",
+        "description": "Your ad is seen by people searching for things to do in your area. Real people, near you."
+      },
+      "affordable": {
+        "title": "Try it risk-free",
+        "description": "From €3 for 3 days. Test it for a local festival or event and see the results."
+      },
+      "visibility": {
+        "title": "The whole space is yours",
+        "description": "There's only one sponsor per town. No other business competes with you."
+      }
+    },
+    "pricing": {
+      "title": "Simple and transparent pricing",
+      "subtitle": "Choose the duration that best fits your needs. No commitments or automatic renewals.",
+      "popular": "Most popular",
+      "cta": "Get started",
+      "plans": {
+        "3days": {
+          "name": "3 days",
+          "description": "Ideal to try the service and see how it works"
+        },
+        "7days": {
+          "name": "7 days",
+          "description": "Perfect for long weekends or holiday periods"
+        },
+        "14days": {
+          "name": "14 days",
+          "description": "Good visibility during high-activity seasons"
+        },
+        "30days": {
+          "name": "30 days",
+          "description": "Maximum exposure for your local business"
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "steps": {
+        "step1": {
+          "title": "Choose where to appear",
+          "description": "Select the town/region and the duration you need"
+        },
+        "step2": {
+          "title": "Complete checkout",
+          "description": "Enter your business details and pay securely with Stripe"
+        },
+        "step3": {
+          "title": "Upload your banner image",
+          "description": "After payment, you can upload your ad image"
+        },
+        "step4": {
+          "title": "We review and activate",
+          "description": "Within 24 business hours you'll appear on the selected place page"
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": {
+        "faq1": {
+          "question": "What size should the image be?",
+          "answer": "Optimal size: 728×150px (5:1 ratio) for best quality. Minimum size: 400×80px (works well, but less sharp on large screens). Tall or square images will appear smaller with empty space on the sides."
+        },
+        "faq2": {
+          "question": "Can I choose the town or region?",
+          "answer": "Yes! You choose it before paying, so you know exactly where your ad will appear."
+        },
+        "faq3": {
+          "question": "When is my ad activated?",
+          "answer": "Within 24 business hours after receiving payment and after you've uploaded the image."
+        },
+        "faq4": {
+          "question": "Can I cancel or modify?",
+          "answer": "Once activated we don't offer refunds, but you can contact us to modify the image or link at no extra cost."
+        }
+      }
+    },
+    "contact": {
+      "title": "Have questions?",
+      "description": "Write to us and we'll help you choose the best option for your business.",
+      "cta": "Contact by email"
+    },
+    "placeSelector": {
+      "label": "Where do you want your ad to appear?",
+      "placeholder": "Search for a town or region...",
+      "popular": "Popular",
+      "country": "Catalonia",
+      "region": "Region",
+      "city": "Town",
+      "clear": "Clear selection",
+      "preview": "You'll appear at:",
+      "noResults": "No results found",
+      "occupied": "Occupied",
+      "selectFirst": "First select where you want to appear",
+      "orSpecific": "or choose a specific area",
+      "catalunya": {
+        "title": "All of Catalonia",
+        "subtitle": "Appear across the ENTIRE site · Maximum visibility",
+        "badge": "Max. reach"
+      }
+    },
+    "checkout": {
+      "processing": "Processing...",
+      "error": "Error processing. Please try again.",
+      "successTitle": "Payment completed!",
+      "successSubtitle": "Final step: upload your banner image. We can't activate the sponsorship without it."
+    },
+    "upload": {
+      "title": "Upload your banner",
+      "subtitle": "It will appear on the place page you selected.",
+      "place": "Location",
+      "previewAlt": "Image preview",
+      "cta": "Upload image",
+      "uploading": "Uploading...",
+      "progress": "{percent}% completed",
+      "changeCta": "Change image",
+      "doneCta": "Finish",
+      "dropzone": {
+        "title": "Drag image here or click to select",
+        "formats": "Horizontal format • JPG, PNG or WebP",
+        "optimal": "Optimal: 728×150px",
+        "minimum": "Min: 400×80px"
+      },
+      "guidelines": {
+        "title": "Image recommendations:",
+        "recommended": "Optimal: {width}×{height}px (5:1 ratio)",
+        "horizontal": "Wide horizontal banner format",
+        "formats": "Formats: JPG, PNG or WebP",
+        "minimum": "Minimum accepted: 400×80px"
+      },
+      "validation": {
+        "warning": "Image warning:",
+        "tooSmall": "The image is too small (minimum {minWidth}x{minHeight}px). It may appear blurry.",
+        "tooTall": "The image is too tall. It will appear small with empty space on the sides.",
+        "wrongRatio": "The aspect ratio ({current}:1) is not ideal. We recommend ~{recommended}:1 (wide horizontal).",
+        "canContinue": "You can still continue, but the result may not be optimal.",
+        "dimensions": "Dimensions: {width}x{height}px (ratio {ratio}:1)"
+      },
+      "success": {
+        "title": "Image uploaded successfully.",
+        "saved": "We’ve linked the image to your payment. We’ll review it and activate your ad.",
+        "notSaved": "We uploaded the image, but couldn’t save it. Please contact us with this link.",
+        "imageUrl": "Image link"
+      },
+      "errors": {
+        "notPaid": "We can’t upload the image because the payment is not marked as completed.",
+        "invalidSession": "We couldn’t verify your payment. Please try again or contact us.",
+        "missingFields": "Missing information to upload the image. Please try again.",
+        "tooLarge": "The image exceeds the allowed limit. Please reduce it and try again.",
+        "generic": "We couldn't upload the image. Please try again.",
+        "invalidImage": "The file is not a valid image."
+      }
+    },
+    "uploadPage": {
+      "meta": {
+        "title": "Upload banner | Esdeveniments.cat",
+        "description": "Upload your banner image to complete the sponsorship."
+      },
+      "missingSessionTitle": "We couldn’t find your payment",
+      "missingSessionSubtitle": "Go back to pricing and start the process again.",
+      "backToPricing": "Back to pricing",
+      "goBack": "Go back"
+    },
+    "successPage": {
+      "meta": {
+        "title": "Sponsorship completed | Esdeveniments.cat",
+        "description": "We’ve received your details and banner image."
+      },
+      "title": "All set!",
+      "subtitle": "We've received your image successfully. Now we'll take care of the rest.",
+      "nextTitle": "What happens next?",
+      "next1": "1. We'll review the banner and the link to make sure everything is correct.",
+      "next2": "2. Within 24 business hours your ad will appear on the selected place page.",
+      "backHome": "Back to home",
+      "backPatrocina": "Back to Patrocina"
+    },
+    "cancelPage": {
+      "meta": {
+        "title": "Payment cancelled | Esdeveniments.cat",
+        "description": "The payment wasn’t completed."
+      },
+      "title": "Payment cancelled",
+      "subtitle": "Your payment wasn’t completed. You can try again anytime.",
+      "note1": "No charge was made.",
+      "note2": "If you have any questions, email us and we’ll help.",
+      "tryAgain": "Try again",
+      "backHome": "Back to home"
+    },
+    "backToHome": "Back to home"
   }
 }

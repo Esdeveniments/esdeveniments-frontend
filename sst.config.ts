@@ -1,5 +1,19 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
+/**
+ * Helper to require an environment variable for SST deployment.
+ * Throws a descriptive error if the variable is not set.
+ */
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `${name} environment variable must be set for SST deployment`
+    );
+  }
+  return value;
+}
+
 export default $config({
   app(_input) {
     return {
@@ -171,48 +185,16 @@ export default $config({
         cert: certArn,
       },
       environment: {
-        NEXT_PUBLIC_API_URL: (() => {
-          const url = process.env.NEXT_PUBLIC_API_URL;
-          if (!url) {
-            throw new Error(
-              "NEXT_PUBLIC_API_URL environment variable must be set for SST deployment"
-            );
-          }
-          return url;
-        })(),
+        NEXT_PUBLIC_API_URL: requireEnv("NEXT_PUBLIC_API_URL"),
         // Public site URL for SEO, metadata, canonical URLs
         // This should always be the production domain for proper SEO
         NEXT_PUBLIC_SITE_URL: "https://www.esdeveniments.cat",
         // Note: INTERNAL_SITE_URL cannot be set here as it references site.url
         // which isn't available during resource creation. The code will fall back
         // to NEXT_PUBLIC_SITE_URL if INTERNAL_SITE_URL is not set.
-        HMAC_SECRET: (() => {
-          const secret = process.env.HMAC_SECRET;
-          if (!secret) {
-            throw new Error(
-              "HMAC_SECRET environment variable must be set for SST deployment"
-            );
-          }
-          return secret;
-        })(),
-        REVALIDATE_SECRET: (() => {
-          const secret = process.env.REVALIDATE_SECRET;
-          if (!secret) {
-            throw new Error(
-              "REVALIDATE_SECRET environment variable must be set for SST deployment"
-            );
-          }
-          return secret;
-        })(),
-        DEEPL_API_KEY: (() => {
-          const key = process.env.DEEPL_API_KEY;
-          if (!key) {
-            throw new Error(
-              "DEEPL_API_KEY environment variable must be set for SST deployment"
-            );
-          }
-          return key;
-        })(),
+        HMAC_SECRET: requireEnv("HMAC_SECRET"),
+        REVALIDATE_SECRET: requireEnv("REVALIDATE_SECRET"),
+        DEEPL_API_KEY: requireEnv("DEEPL_API_KEY"),
         // Optional: Pipedream webhook URL for new event email notifications
         // If not set, email notifications will be silently skipped
         ...(process.env.NEW_EVENT_EMAIL_URL && {
@@ -223,6 +205,20 @@ export default $config({
         // If not set, CloudFront invalidation is skipped gracefully
         ...(process.env.CLOUDFRONT_DISTRIBUTION_ID && {
           CLOUDFRONT_DISTRIBUTION_ID: process.env.CLOUDFRONT_DISTRIBUTION_ID,
+        }),
+        // Stripe integration for sponsor payments
+        // Required for /patrocina checkout and webhook processing
+        STRIPE_SECRET_KEY: requireEnv("STRIPE_SECRET_KEY"),
+        STRIPE_WEBHOOK_SECRET: requireEnv("STRIPE_WEBHOOK_SECRET"),
+        // Optional Stripe config - defaults are fine for most cases
+        ...(process.env.STRIPE_TAX_MODE && {
+          STRIPE_TAX_MODE: process.env.STRIPE_TAX_MODE,
+        }),
+        ...(process.env.STRIPE_CURRENCY && {
+          STRIPE_CURRENCY: process.env.STRIPE_CURRENCY,
+        }),
+        ...(process.env.STRIPE_MANUAL_TAX_RATE_IDS && {
+          STRIPE_MANUAL_TAX_RATE_IDS: process.env.STRIPE_MANUAL_TAX_RATE_IDS,
         }),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
@@ -259,15 +255,7 @@ export default $config({
           // for OpenNext ISR/fetch caching. Overwriting environment loses these.
           args.environment = {
             ...args.environment,
-            SENTRY_DSN: (() => {
-              const dsn = process.env.SENTRY_DSN;
-              if (!dsn) {
-                throw new Error(
-                  "SENTRY_DSN environment variable must be set for SST deployment"
-                );
-              }
-              return dsn;
-            })(),
+            SENTRY_DSN: requireEnv("SENTRY_DSN"),
             SENTRY_TRACES_SAMPLE_RATE:
               process.env.SENTRY_TRACES_SAMPLE_RATE || "0.1",
             // Bypass strict SSL verification for external images with incomplete certificate

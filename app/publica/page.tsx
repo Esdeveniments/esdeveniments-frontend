@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
