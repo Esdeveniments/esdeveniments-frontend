@@ -228,8 +228,7 @@ getRemovalChanges: (value, segments, queryParams) => ({
 
 ```typescript
 // WRONG: Creating separate filter config files
-// (Legacy pattern you may encounter in older code)
-// File: utils/filter-config.ts
+// Do NOT create files like: utils/filter-config.ts
 export const PRICE_FILTER = { ... }
 
 // CORRECT: Add to canonical config
@@ -239,7 +238,7 @@ export const FILTER_CONFIGURATIONS = [
 ]
 ```
 
-**Note**: If you encounter a `filter-config.ts` file, it's a legacy pattern. All new filters should go in `config/filters.ts`.
+**Note**: Never create standalone filter config files. All filter configurations must go in `config/filters.ts`.
 
 ### ❌ Creating /tots/ URLs
 

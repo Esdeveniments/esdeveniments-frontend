@@ -189,7 +189,7 @@ describe("Price Filter", () => {
   });
 
   it("should build removal URL correctly", () => {
-    const segments = { place: "barcelona", byDate: "tots", category: "tots" };
+    const segments = { place: "barcelona", date: "tots", category: "tots" };
     const queryParams = { price: "free" };
 
     const removalUrl = FilterOperations.getRemovalUrl(

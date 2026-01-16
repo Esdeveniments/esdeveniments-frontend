@@ -73,13 +73,11 @@ export namespace ClientLibraryTemplate {
         queryString ? `?${queryString}` : ""
       }`;
 
-      // IMPORTANT: In production code, use safe fetch with timeout:
-      // - For internal API calls: use fetchWithHmac (10s timeout built-in)
-      // - For external services: use safeFetch from utils/safe-fetch.ts (5s timeout)
-      // Raw fetch() can hang indefinitely in serverless environments
+      // IMPORTANT: When calling the internal API from a Server Component, use the standard `fetch` API.
+      // You can include Next.js caching options like `next: { revalidate, tags }`.
+      // For fetching within Client Components, a library like SWR is recommended.
       //
-      // NOTE: This template uses raw fetch() for simplicity.
-      // TODO: Replace with appropriate fetch wrapper when copying this template.
+      // This template uses raw `fetch()` as it assumes a Server Component context.
       const response = await fetch(url, {
         next: { revalidate: 600, tags: ["RESOURCE_NAME"] },
       });

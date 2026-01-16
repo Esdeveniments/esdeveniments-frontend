@@ -83,11 +83,13 @@ The proxy (`proxy.ts`) handles canonical redirects via `handleCanonicalRedirects
 ### Always Use These Helpers
 
 ```typescript
-import { buildCanonicalUrlDynamic } from "@utils/url-filters";
-import { buildFilterUrl } from "@utils/url-filters";
+import { buildCanonicalUrl, buildFilterUrl } from "@utils/url-filters";
 
 // ✅ Correct - uses helper that enforces rules
-const url = buildCanonicalUrlDynamic(place, date, category);
+const url = buildCanonicalUrl(filters);
+
+// Alternative for dynamic categories:
+// buildCanonicalUrlDynamic(filters, dynamicCategories)
 
 // ❌ Wrong - manual string concatenation
 const url = `/${place}/${date}/${category}`;

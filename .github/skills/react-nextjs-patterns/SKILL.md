@@ -305,14 +305,14 @@ export default async function Page() {
 ```typescript
 // components/ui/feature/MyComponent.tsx
 
-// 1. Imports (grouped)
+// 1. Client directive FIRST (only if needed - must be before any imports)
+"use client";
+
+// 2. Imports (grouped)
 import type { MyComponentProps } from "@types/props";
 import { useCallback, useState } from "react";
 import { Link } from "@i18n/routing";
 import { formatDate } from "@utils/date-helpers";
-
-// 2. Client directive (only if needed)
-("use client");
 
 // 3. Component
 export function MyComponent({ title, items, onSelect }: MyComponentProps) {

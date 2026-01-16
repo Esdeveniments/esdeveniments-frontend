@@ -173,10 +173,10 @@ Add to the tables in this skill file.
 
 ## `NEXT_PUBLIC_` Prefix Rules
 
-| Prefix          | Visibility      | Use Case                   |
-| --------------- | --------------- | -------------------------- |
-| `NEXT_PUBLIC_*` | Client + Server | Analytics IDs, public URLs |
-| No prefix       | Server only     | API keys, secrets, tokens  |
+| Prefix            | Visibility      | Use Case                   |
+| ----------------- | --------------- | -------------------------- |
+| `NEXT_PUBLIC_*`   | Client + Server | Analytics IDs, public URLs |
+| No prefix         | Server only     | API keys, secrets, tokens  |
 
 **Security**: Never expose secrets to the client. API keys like `STRIPE_SECRET_KEY` must NOT have `NEXT_PUBLIC_` prefix.
 

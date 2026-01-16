@@ -17,15 +17,15 @@ Enforce consistent styling using semantic design system classes. Prevent arbitra
 
 ## Color Token Reference
 
-| Purpose             | Token                    | Example         |
-| ------------------- | ------------------------ | --------------- |
-| Primary text        | `text-foreground`        | Main content    |
-| Strong text         | `text-foreground-strong` | Headings        |
-| Muted text          | `text-foreground/80`     | Secondary       |
-| Background          | `bg-background`          | Page background |
-| Muted background    | `bg-muted`               | Cards, sections |
-| Border              | `border-border`          | All borders     |
-| Primary button text | `primary-foreground`     | Button labels   |
+| Purpose             | Token                      | Example         |
+| ------------------- | -------------------------- | --------------- |
+| Primary text        | `text-foreground`          | Main content    |
+| Strong text         | `text-foreground-strong`   | Headings        |
+| Muted text          | `text-foreground/80`       | Secondary       |
+| Background          | `bg-background`            | Page background |
+| Muted background    | `bg-muted`                 | Cards, sections |
+| Border              | `border-border`            | All borders     |
+| Primary button text | `text-primary-foreground`  | Button labels   |
 
 ### Opacity Variants
 
