@@ -73,10 +73,11 @@ export default function PricingSectionClient() {
 
       {/* Pricing cards */}
       <div
-        className={`transition-opacity duration-200 ${selectedPlace ? "opacity-100" : "opacity-50 pointer-events-none"
-          }`}
+        className={`transition-opacity duration-200 ${
+          selectedPlace ? "opacity-100" : "opacity-50 pointer-events-none"
+        }`}
       >
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-3xl mx-auto">
           {DURATION_PLANS.map((plan) => (
             <div
               key={plan.duration}

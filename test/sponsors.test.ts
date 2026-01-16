@@ -123,8 +123,9 @@ describe("Sponsor System", () => {
         startDate: "2026-01-01",
         endDate: "2026-01-10", // Before the fixed date of 2026-01-15
       };
-      const { getActiveSponsorForPlace } =
-        createMockSponsorModule([expiredSponsor]);
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        expiredSponsor,
+      ]);
 
       expect(getActiveSponsorForPlace("barcelona")).toBeNull();
     });
@@ -139,8 +140,9 @@ describe("Sponsor System", () => {
         startDate: "2026-01-20", // After the fixed date of 2026-01-15
         endDate: "2026-01-31",
       };
-      const { getActiveSponsorForPlace } =
-        createMockSponsorModule([futureSponsor]);
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        futureSponsor,
+      ]);
 
       expect(getActiveSponsorForPlace("barcelona")).toBeNull();
     });
@@ -306,8 +308,9 @@ describe("Sponsor System", () => {
         startDate: "2020-01-01",
         endDate: "2020-01-31", // Long expired
       };
-      const { hasSponsorConfigForPlace } =
-        createMockSponsorModule([expiredSponsor]);
+      const { hasSponsorConfigForPlace } = createMockSponsorModule([
+        expiredSponsor,
+      ]);
 
       // Should return true even for expired sponsors (for analytics/debugging)
       expect(hasSponsorConfigForPlace("barcelona")).toBe(true);
@@ -735,13 +738,7 @@ describe("Checkout Helpers", () => {
 
     test("duplicates metadata to payment_intent_data for Dashboard visibility", () => {
       const params = new URLSearchParams();
-      buildMetadataParams(
-        params,
-        "7days",
-        "barcelona",
-        "Barcelona",
-        "country"
-      );
+      buildMetadataParams(params, "7days", "barcelona", "Barcelona", "country");
 
       // Check that all metadata is also set on payment_intent_data
       expect(params.get("payment_intent_data[metadata][product]")).toBe(

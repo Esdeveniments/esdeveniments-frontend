@@ -31,16 +31,16 @@ const sponsors: SponsorConfig[] = [
   // TEST SPONSOR - Uncomment to test the banner system
   // After testing, comment out again before committing
   // ═══════════════════════════════════════════════════════════════════
-  {
-    businessName: "Test Sponsor",
-    imageUrl:
-      "https://placehold.co/800x200/dc2626/ffffff?text=🎉+Patrocinador+de+prova+•+Restaurant+Example",
-    targetUrl: "https://esdeveniments.cat/patrocina",
-    places: ["catalunya"], // or ["maresme"] for region, or ["catalunya"] for country
-    geoScope: "country", // "town" | "region" | "country"
-    startDate: "2026-01-01",
-    endDate: "2026-12-31",
-  },
+  // {
+  //   businessName: "Test Sponsor",
+  //   imageUrl:
+  //     "https://placehold.co/800x200/dc2626/ffffff?text=🎉+Patrocinador+de+prova+•+Restaurant+Example",
+  //   targetUrl: "https://esdeveniments.cat/patrocina",
+  //   places: ["catalunya"], // or ["maresme"] for region, or ["catalunya"] for country
+  //   geoScope: "country", // "town" | "region" | "country"
+  //   startDate: "2026-01-01",
+  //   endDate: "2026-12-31",
+  // },
   // ═══════════════════════════════════════════════════════════════════
   // ACTIVE SPONSORS - Add new sponsors below after payment confirmation
   // ═══════════════════════════════════════════════════════════════════
