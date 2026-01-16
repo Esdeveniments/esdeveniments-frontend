@@ -1,14 +1,49 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import type { UseImageRetryReturn } from "types/props";
+
+// Delay before showing loading skeleton (ms)
+// Prevents skeleton flash for cached/fast images
+const LOADING_DELAY_MS = 150;
 
 /**
  * Hook for handling image loading retry logic
  * Provides state management and handlers for image loading with retry functionality
+ * @param maxRetries - Maximum retry attempts (default: 2)
  */
-export function useImageRetry(maxRetries: number = 2) {
+export function useImageRetry(maxRetries: number = 2): UseImageRetryReturn {
   const [retryCount, setRetryCount] = useState(0);
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Track if image has successfully loaded (for opacity control)
+  // Uses retryCount in key to auto-reset when retry happens
+  const [imageLoaded, setImageLoaded] = useState(false);
+  // Track which retryCount the imageLoaded state corresponds to
+  const [loadedForRetry, setLoadedForRetry] = useState(-1);
+  // Skeleton shows after delay if image hasn't loaded yet
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadingDelayRef = useRef<NodeJS.Timeout | null>(null);
+  const imageLoadedRef = useRef(false);
+
+  // Derive actual loaded state - only true if loaded for current retry
+  const isImageLoaded = imageLoaded && loadedForRetry === retryCount;
+
+  // Start a delayed skeleton timer when component mounts or retryCount changes
+  useEffect(() => {
+    imageLoadedRef.current = false;
+    // Note: imageLoaded state is derived via loadedForRetry comparison
+    loadingDelayRef.current = setTimeout(() => {
+      // Only show skeleton if image hasn't loaded yet
+      if (!imageLoadedRef.current) {
+        setShowSkeleton(true);
+      }
+    }, LOADING_DELAY_MS);
+
+    return () => {
+      if (loadingDelayRef.current) {
+        clearTimeout(loadingDelayRef.current);
+      }
+    };
+  }, [retryCount]); // Re-run on retry
 
   /**
    * Handle image load error with exponential backoff retry
@@ -26,11 +61,9 @@ export function useImageRetry(maxRetries: number = 2) {
       const delay = 1000 * 2 ** retryCount;
       retryTimeoutRef.current = setTimeout(() => {
         setRetryCount((prev) => prev + 1);
-        setIsLoading(true);
       }, delay);
     } else {
       setHasError(true);
-      setIsLoading(false);
     }
   }, [retryCount, maxRetries]);
 
@@ -38,27 +71,42 @@ export function useImageRetry(maxRetries: number = 2) {
    * Handle successful image load
    */
   const handleLoad = useCallback(() => {
-    // Clear any pending retry timeout on successful load
+    // Mark as loaded to prevent delayed skeleton from showing
+    imageLoadedRef.current = true;
+    // Clear any pending timeouts
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
-    setIsLoading(false);
+    if (loadingDelayRef.current) {
+      clearTimeout(loadingDelayRef.current);
+      loadingDelayRef.current = null;
+    }
+    setImageLoaded(true);
+    setLoadedForRetry(retryCount);
+    setShowSkeleton(false);
     setHasError(false);
-  }, []);
+  }, [retryCount]);
 
   /**
    * Reset retry state (useful for new image sources)
    */
   const reset = useCallback(() => {
-    // Clear any pending timeout when resetting
+    // Clear any pending timeouts when resetting
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
+    if (loadingDelayRef.current) {
+      clearTimeout(loadingDelayRef.current);
+      loadingDelayRef.current = null;
+    }
+    imageLoadedRef.current = false;
     setRetryCount(0);
     setHasError(false);
-    setIsLoading(true);
+    setImageLoaded(false);
+    setLoadedForRetry(-1);
+    setShowSkeleton(false);
   }, []);
 
   /**
@@ -71,11 +119,14 @@ export function useImageRetry(maxRetries: number = 2) {
     [retryCount]
   );
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
+      }
+      if (loadingDelayRef.current) {
+        clearTimeout(loadingDelayRef.current);
       }
     };
   }, []);
@@ -83,7 +134,8 @@ export function useImageRetry(maxRetries: number = 2) {
   return {
     retryCount,
     hasError,
-    isLoading,
+    imageLoaded: isImageLoaded,
+    showSkeleton,
     handleError,
     handleLoad,
     reset,

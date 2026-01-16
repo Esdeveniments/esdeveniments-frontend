@@ -33,12 +33,12 @@ const customStyles: StylesConfig<Option, true, GroupBase<Option>> = {
   option: (provided, state) => ({
     ...provided,
     fontSize: "16px",
-    background: state.isFocused ? "#FF0037" : "#FFF",
+    background: state.isFocused ? "#D6002F" : "#FFF",
     color: state.isFocused ? "#FFF" : "#454545",
   }),
   multiValue: (provided) => ({
     ...provided,
-    backgroundColor: "#FF0037",
+    backgroundColor: "#D6002F",
     borderRadius: "4px",
   }),
   multiValueLabel: (provided) => ({

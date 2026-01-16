@@ -4,7 +4,13 @@
  * No hardcoded prices - all values must come from configuration
  */
 
-export type GeoScopeType = "town" | "region";
+import { VALID_GEO_SCOPES, type GeoScope } from "types/sponsor";
+
+/**
+ * @deprecated Use GeoScope from types/sponsor.ts instead
+ * Kept for backward compatibility with existing code
+ */
+export type GeoScopeType = GeoScope;
 export type TaxMode = "automatic" | "manual";
 
 export interface PricingConfig {
@@ -20,36 +26,30 @@ export interface PricingMatrix {
   [key: PricingKey]: PricingConfig;
 }
 
+// Centralized constants - single source of truth
+const AVAILABLE_DURATIONS = [3, 7, 14, 30] as const;
+
+// Base pricing in cents - single source of truth
+// Must be defined before loadPricingFromEnv to avoid TDZ error
+export const BASE_PRICES_CENTS = {
+  town: { 3: 300, 7: 500, 14: 800, 30: 1200 },
+  region: { 3: 500, 7: 800, 14: 1200, 30: 2000 },
+  country: { 3: 800, 7: 1200, 14: 2000, 30: 3500 },
+} as const;
+
 /**
  * Load pricing configuration from environment variables
  * In production, this should be loaded from a database or admin config
+ *
+ * Pricing based on Wallapop benchmark (€1.25-2.50 for 7 days)
+ * Slightly higher because our audience is intent-driven (actively searching for events)
  */
 function loadPricingFromEnv(): PricingMatrix {
   const matrix: PricingMatrix = {};
 
-  // Duration options (configurable)
-  const durations = [1, 3, 5, 7, 14, 30]; // days
-  const geoScopes: GeoScopeType[] = ["town", "region"];
-
-  // Base pricing (should come from environment or database)
-  const basePrices = {
-    town: {
-      1: 500, // €5.00
-      3: 1200, // €12.00
-      5: 1800, // €18.00
-      7: 2400, // €24.00
-      14: 4000, // €40.00
-      30: 7000, // €70.00
-    },
-    region: {
-      1: 1500, // €15.00
-      3: 3500, // €35.00
-      5: 5000, // €50.00
-      7: 6500, // €65.00
-      14: 10000, // €100.00
-      30: 18000, // €180.00
-    },
-  };
+  // Use centralized constants
+  const durations = AVAILABLE_DURATIONS;
+  const geoScopes = VALID_GEO_SCOPES;
 
   // Tax configuration
   const taxMode = (process.env.STRIPE_TAX_MODE as TaxMode) || "automatic";
@@ -62,8 +62,8 @@ function loadPricingFromEnv(): PricingMatrix {
     geoScopes.forEach((geoScope) => {
       const key: PricingKey = `${duration}:${geoScope}`;
       const basePrice =
-        basePrices[geoScope][
-          duration as keyof (typeof basePrices)[typeof geoScope]
+        BASE_PRICES_CENTS[geoScope][
+          duration as keyof (typeof BASE_PRICES_CENTS)[typeof geoScope]
         ];
 
       if (basePrice) {
@@ -95,15 +95,15 @@ export function getPricingConfig(
 /**
  * Get all available duration options
  */
-export function getAvailableDurations(): number[] {
-  return [1, 3, 5, 7, 14, 30]; // Should come from config
+export function getAvailableDurations(): readonly number[] {
+  return AVAILABLE_DURATIONS;
 }
 
 /**
  * Get all available geo scope types
  */
 export function getAvailableGeoScopes(): GeoScopeType[] {
-  return ["town", "region"];
+  return [...VALID_GEO_SCOPES];
 }
 
 /**
@@ -122,3 +122,28 @@ export function isPricingAvailable(
 export function getPricingMatrix(): PricingMatrix {
   return loadPricingFromEnv();
 }
+
+/**
+ * Display prices in EUR (for client-side rendering)
+ * Derived programmatically from BASE_PRICES_CENTS to avoid duplication
+ */
+export const DISPLAY_PRICES_EUR = {
+  town: {
+    "3days": BASE_PRICES_CENTS.town[3] / 100,
+    "7days": BASE_PRICES_CENTS.town[7] / 100,
+    "14days": BASE_PRICES_CENTS.town[14] / 100,
+    "30days": BASE_PRICES_CENTS.town[30] / 100,
+  },
+  region: {
+    "3days": BASE_PRICES_CENTS.region[3] / 100,
+    "7days": BASE_PRICES_CENTS.region[7] / 100,
+    "14days": BASE_PRICES_CENTS.region[14] / 100,
+    "30days": BASE_PRICES_CENTS.region[30] / 100,
+  },
+  country: {
+    "3days": BASE_PRICES_CENTS.country[3] / 100,
+    "7days": BASE_PRICES_CENTS.country[7] / 100,
+    "14days": BASE_PRICES_CENTS.country[14] / 100,
+    "30days": BASE_PRICES_CENTS.country[30] / 100,
+  },
+} as const;

@@ -37,15 +37,14 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
     let listenerId: number | undefined;
-    let consentResolved = false; // Track if we've already resolved consent
+    let pollIntervalId: ReturnType<typeof setInterval> | undefined;
+    let cmpListenerRegistered = false;
 
     const setConsent = (allowed: boolean) => {
       if (!isMounted) return;
-      // Prevent multiple consent state changes for the same value
-      if (consentResolved && window.__adsConsentGranted === allowed) return;
-      consentResolved = true;
-      
-      // We can still dispatch the global event for backward compatibility or other scripts
+      // Always update if value changed (important for consent revocation)
+      if (window.__adsConsentGranted === allowed) return;
+
       window.__adsConsentGranted = allowed;
       window.dispatchEvent(
         new CustomEvent("ads-consent-changed", { detail: { allowed } })
@@ -76,18 +75,68 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    if (typeof window !== "undefined") {
+    const registerCmpListeners = () => {
+      if (cmpListenerRegistered) return;
+      if (typeof window.__tcfapi !== "function") return;
+      
+      cmpListenerRegistered = true;
+      window.__tcfapi("getTCData", 2, maybeHandleTcData);
+      window.__tcfapi("addEventListener", 2, maybeHandleTcData);
+    };
+
+    const initConsent = () => {
+      if (!isMounted) return;
+      if (typeof window === "undefined") return;
+
+      // If CMP already available, register immediately
       if (typeof window.__tcfapi === "function") {
-        window.__tcfapi("getTCData", 2, maybeHandleTcData);
-        window.__tcfapi("addEventListener", 2, maybeHandleTcData);
-      } else {
-        // Fallback: behave like previous behavior (ads allowed) if CMP is missing
-        setConsent(true);
+        registerCmpListeners();
+        return;
       }
-    }
+
+      // CMP not loaded yet - poll for it
+      // Key insight: We ALWAYS want to register listeners when CMP appears,
+      // even if we've already fallen back to default consent.
+      // This ensures consent revocation is detected.
+      let attempts = 0;
+      const maxAttemptsBeforeFallback = 20; // 5s before showing ads
+      const maxAttemptsTotal = 60; // 15s total polling (CMP might be slow)
+
+      pollIntervalId = setInterval(() => {
+        if (!isMounted) {
+          if (pollIntervalId) clearInterval(pollIntervalId);
+          return;
+        }
+
+        attempts++;
+
+        if (typeof window.__tcfapi === "function") {
+          // CMP loaded! Register listeners (this handles consent revocation too)
+          if (pollIntervalId) clearInterval(pollIntervalId);
+          registerCmpListeners();
+          return;
+        }
+
+        if (attempts === maxAttemptsBeforeFallback) {
+          // After 5s: Enable ads with default consent (user can still revoke later)
+          // This is safe because we CONTINUE polling for CMP
+          setConsent(true);
+          // Don't clear interval - keep polling for CMP to handle revocation
+        }
+
+        if (attempts >= maxAttemptsTotal) {
+          // After 15s: Stop polling. CMP is likely blocked or failed.
+          // Ads are already running with default consent.
+          if (pollIntervalId) clearInterval(pollIntervalId);
+        }
+      }, 250);
+    };
+
+    initConsent();
 
     return () => {
       isMounted = false;
+      if (pollIntervalId) clearInterval(pollIntervalId);
       if (
         listenerId &&
         typeof window !== "undefined" &&

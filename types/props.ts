@@ -5,6 +5,37 @@ export interface LatestNewsSectionProps {
   newsHref: string;
 }
 
+/**
+ * Return type for useImageRetry hook
+ */
+export interface UseImageRetryReturn {
+  retryCount: number;
+  hasError: boolean;
+  imageLoaded: boolean;
+  showSkeleton: boolean;
+  handleError: () => void;
+  handleLoad: () => void;
+  reset: () => void;
+  getImageKey: (baseSrc: string) => string;
+}
+
+/**
+ * Props for ClientImageInner component
+ */
+export interface ClientImageInnerProps {
+  finalImageSrc: string;
+  title: string;
+  className: string;
+  priority: boolean;
+  fetchPriority?: "high" | "low" | "auto";
+  alt: string;
+  imageQuality: number;
+  context: "card" | "hero" | "list" | "detail";
+  location?: string;
+  region?: string;
+  date?: string;
+}
+
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
 import {
   Option,
@@ -403,7 +434,8 @@ export interface PlacePageShellProps {
   category?: string;
   date?: string;
   categories?: CategorySummaryResponseDTO[];
-  webPageSchemaFactory?: (pageData: PageData) => Record<string, unknown>;
+  /** Factory receives PlaceShellData to access placeTypeLabel (with region info) and pageData */
+  webPageSchemaFactory?: (shellData: PlaceShellData) => Record<string, unknown>;
 }
 
 export interface FeaturedPlaceConfig {
@@ -641,4 +673,20 @@ export interface EventStatusDetailsProps {
   nameDay?: string | null;
   timeDisplay?: string;
   className?: string;
+}
+
+// Place page explore navigation components
+export interface PlacePageExploreNavProps {
+  place: string;
+  date?: string;
+  category?: string;
+  categories?: CategorySummaryResponseDTO[];
+  placeLabel: string;
+}
+
+export interface CategoryQuicklinksProps {
+  place: string;
+  date?: string;
+  categories?: CategorySummaryResponseDTO[];
+  placeLabel: string;
 }

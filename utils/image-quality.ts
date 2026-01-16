@@ -33,8 +33,8 @@ export function getOptimalImageQuality({
   // NOTE: Return values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
   if (isExternal) {
     if (isPriority) {
-      // LCP external images: 60 quality for critical loading
-      return 60;
+      // LCP external images: 50 quality (reduced from 60 for faster LCP)
+      return 50;
     } else {
       // For regular external images, use capped quality for performance
       // Capped at 50 to reduce payload on listing cards
@@ -66,7 +66,7 @@ export function getServerImageQuality(networkQuality?: NetworkQuality): number {
  * NOTE: Values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
  */
 export const QUALITY_PRESETS = {
-  LCP_EXTERNAL: 60, // LCP external images
+  LCP_EXTERNAL: 50, // LCP external images (reduced from 60 for faster LCP)
   EXTERNAL_HIGH: 50, // High-quality external images
   EXTERNAL_STANDARD: 50, // Regular external images (mapped to allowed 50)
   EXTERNAL_MOBILE: 35, // Mobile/slow connections (mapped to allowed 35)
@@ -94,22 +94,58 @@ export function getQualityPreset(preset: QualityPreset): number {
 }
 
 /**
+ * Get optimal image width based on component usage context
+ * Used for server-side image resizing in the image proxy
+ * 
+ * Note: These widths are maximums - the `sizes` attribute tells the browser
+ * which actual size to request based on viewport. Mobile gets smaller widths,
+ * desktop gets these full widths. This preserves mobile Lighthouse scores.
+ */
+export const getOptimalImageWidth = (
+  context: "card" | "hero" | "list" | "detail" = "card"
+): number => {
+  const widthMap = {
+    // Event cards: 500px covers ~280px display at 2x retina (matches CARD_WIDTH in image-proxy)
+    card: 500,
+    // Hero/featured images: 1200px for crisp desktop display
+    // Mobile will request smaller via sizes attribute, preserving LCP
+    hero: 1200,
+    // List view / horizontal cards
+    list: 500,
+    // Detail page images: 1200px for crisp desktop display
+    detail: 1200,
+  };
+
+  return widthMap[context];
+};
+
+/**
  * Get optimized sizes attribute based on component usage context
  * Based on actual usage patterns from the Lighthouse analysis
+ * 
+ * IMPORTANT: These sizes control which image width the browser requests.
+ * Mobile viewports request smaller widths (fast LCP, quality 50).
+ * Desktop viewports request larger widths (crisp images, quality 65 via proxy boost).
+ * This preserves mobile Lighthouse scores while improving desktop quality.
  */
 export const getOptimalImageSizes = (
   context: "card" | "hero" | "list" | "detail" = "card"
 ): string => {
   const sizesMap = {
     // Event cards in listings (most common usage)
-    // Constrained to max-w-2xl (672px) on desktop, so cap at 672px
+    // Mobile: 92vw (~350px on typical phone) - fast LCP
+    // Desktop: capped at 672px (max-w-2xl container)
     card: "(max-width: 540px) 92vw, (max-width: 768px) 45vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 672px",
     // Hero/featured images
-    hero: "(max-width: 768px) 100vw, (max-width: 1024px) 75vw, 50vw",
-    // List view / horizontal cards: tighter sizes to avoid over-downloading on desktop
+    // Mobile: 100vw (~400px) - fast LCP, quality 50
+    // Desktop: larger sizes trigger quality boost in proxy
+    hero: "(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px",
+    // List view / horizontal cards
     list: "(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 22vw",
-    // Detail page images
-    detail: "(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 40vw",
+    // Detail page images (event detail page /e/[eventId])
+    // Mobile: 100vw (~400px) - fast LCP, quality 50
+    // Desktop: 1200px triggers quality boost for crisp display
+    detail: "(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px",
   };
 
   return sizesMap[context];

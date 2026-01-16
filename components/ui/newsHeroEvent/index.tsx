@@ -1,31 +1,57 @@
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { buildPictureSourceUrls } from "@utils/image-cache";
+import {
+  getOptimalImageQuality,
+  getOptimalImageWidth,
+} from "@utils/image-quality";
 
 export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
-  const image = event.imageUrl;
+  const rawImage = event.imageUrl;
+
+  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  const imageQuality = getOptimalImageQuality({
+    isPriority: true,
+    isExternal: true,
+  });
+  const imageWidth = getOptimalImageWidth("hero");
+  const sources = rawImage
+    ? buildPictureSourceUrls(rawImage, event.hash, {
+      width: imageWidth,
+      quality: imageQuality,
+    })
+    : null;
+
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;
+  
+  const sizes = "(max-width: 768px) 82vw, (max-width: 1280px) 75vw, 1200px";
+  
   return (
     <section className="relative w-full overflow-hidden rounded-xl bg-foreground-strong shadow-lg">
-      {image ? (
+      {sources ? (
         <div className="relative aspect-[16/9] w-full md:h-80">
-          <Image
-            src={image || "/placeholder.svg"}
-            alt={event.title}
-            fill
-            priority
-            sizes="(max-width: 768px) 82vw, (max-width: 1280px) 75vw, 1200px"
-            className="object-cover"
-          />
+          <picture>
+            <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+            <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+            <img
+              src={sources.fallback}
+              alt={event.title}
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
+              sizes={sizes}
+              className="object-cover w-full h-full absolute inset-0"
+            />
+          </picture>
         </div>
       ) : (
         <div className="aspect-[16/9] w-full bg-gradient-to-br from-primary-soft to-primary md:h-80" />

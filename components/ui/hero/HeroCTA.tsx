@@ -71,7 +71,7 @@ export default function HeroCTA() {
           {getButtonText()}
         </span>
       </Button>
-      <p className="text-xs text-foreground/50 mt-3 text-center">
+      <p className="text-xs text-muted-foreground mt-3 text-center">
         {t("helper")}
       </p>
     </div>

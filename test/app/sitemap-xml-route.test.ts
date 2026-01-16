@@ -74,9 +74,8 @@ describe("app/sitemap.xml/route", () => {
     // Chunked event sitemaps (no longer /server-sitemap.xml which is now an index)
     expect(text).toContain("/sitemap-events/1.xml");
     expect(text).toContain("/sitemap-events/5.xml");
-    // Chunked place sitemaps (no longer /server-place-sitemap.xml which is now an index)
+    // Chunked place sitemaps - dynamically generated based on place count
     expect(text).toContain("/sitemap-places/1.xml");
-    expect(text).toContain("/sitemap-places/5.xml");
     // News sitemaps
     expect(text).toContain("/server-news-sitemap.xml");
     expect(text).toContain("/server-google-news-sitemap.xml");

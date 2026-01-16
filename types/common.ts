@@ -94,7 +94,10 @@ export interface GeneratePagesDataProps {
 export interface PlaceTypeAndLabel {
   type: PlaceType;
   label: string;
+  /** Parent region label (only for cities) */
   regionLabel?: string;
+  /** Parent region slug (only for cities) - used for breadcrumb URLs */
+  regionSlug?: string;
 }
 
 export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
@@ -469,6 +472,19 @@ export interface ImageComponentProps {
   cacheKey?: string;
 }
 
+/**
+ * Image optimization options for the proxy
+ * Use getOptimalImageQuality() and getOptimalImageWidth() for context-appropriate values
+ */
+export interface ImageProxyOptions {
+  /** Target width in pixels */
+  width?: number;
+  /** Quality 1-100 (use getOptimalImageQuality() for recommended values) */
+  quality?: number;
+  /** Output format override (avif, webp). Bypasses Accept header detection. */
+  format?: "avif" | "webp";
+}
+
 export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   children: React.ReactNode;
   activeLinkClass?: string;
@@ -556,6 +572,11 @@ export interface WebPageOptions {
   isPartOf?: string;
   mainContentOfPage?: Record<string, unknown>;
   locale?: AppLocale;
+  /** SEO: For city pages, the parent region (comarca) this place is contained in */
+  containedInPlace?: {
+    name: string;
+    url: string;
+  };
 }
 
 export interface CollectionPageOptions {

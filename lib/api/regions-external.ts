@@ -2,7 +2,9 @@ import { fetchWithHmac } from "./fetch-wrapper";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
-export async function fetchRegionsExternal(): Promise<RegionSummaryResponseDTO[]> {
+export async function fetchRegionsExternal(): Promise<
+  RegionSummaryResponseDTO[]
+> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
@@ -50,4 +52,3 @@ export async function fetchRegionByIdExternal(
     return null;
   }
 }
-
