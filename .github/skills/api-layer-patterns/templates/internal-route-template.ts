@@ -43,10 +43,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const rawPage = searchParams.get("page");
     const rawSize = searchParams.get("size");
-    
+
     // Parse with fallbacks - Number(null) = 0, Number("abc") = NaN
-    const page = rawPage ? (Number(rawPage) || 0) : 0;
-    const size = rawSize ? (Number(rawSize) || 20) : 20;
+    const page = rawPage ? Number(rawPage) || 0 : 0;
+    const size = rawSize ? Number(rawSize) || 20 : 20;
     // Add more params as needed
 
     // Call external wrapper (handles HMAC signing)

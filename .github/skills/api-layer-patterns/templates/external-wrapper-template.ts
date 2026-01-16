@@ -13,7 +13,15 @@
  */
 
 // Mock functions for template validation
-declare function fetchWithHmac(url: string): Promise<Response>;
+declare function fetchWithHmac(
+  url: string,
+  options?: RequestInit & {
+    next?: {
+      revalidate?: number;
+      tags?: string[];
+    };
+  }
+): Promise<Response>;
 declare function captureException(
   error: unknown,
   context?: { tags?: Record<string, string>; extra?: Record<string, unknown> }

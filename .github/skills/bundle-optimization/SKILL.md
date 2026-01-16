@@ -83,7 +83,14 @@ import { useImageRetry } from "@hooks/useImageRetry";
 
 function EventImage({ src, alt }) {
   // useImageRetry takes optional maxRetries (default: 2)
-  const { retryCount, hasError, imageLoaded, showSkeleton, handleError, getImageKey } = useImageRetry();
+  const {
+    retryCount,
+    hasError,
+    imageLoaded,
+    showSkeleton,
+    handleError,
+    getImageKey,
+  } = useImageRetry();
 
   return (
     <Image

@@ -191,11 +191,14 @@ new workbox.strategies.StaleWhileRevalidate({
   matchOptions: {
     ignoreVary: true, // REQUIRED for Next.js App Router compatibility
   },
-  plugins: [/* ... */],
-})
+  plugins: [
+    /* ... */
+  ],
+});
 ```
 
 **Without this**, the same URL may be fetched multiple times and cached as separate entries, causing:
+
 - Wasted bandwidth
 - Slower navigation (false cache misses)
 - Unreliable offline behavior
