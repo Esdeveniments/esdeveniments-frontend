@@ -69,7 +69,7 @@ jobs:
           echo "✅ Removed system Pulumi to ensure SST uses its bundled version"
 
       - name: Cache Next.js build cache
-        uses: actions/cache@v4 # Pin: 0c45773b623bea8c8e75f6c82b208c3cf94ea4f9
+        uses: actions/cache@v5 # Pin: 0c45773b623bea8c8e75f6c82b208c3cf94ea4f9
         with:
           path: |
             ${{ github.workspace }}/.next/cache
@@ -80,7 +80,7 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4 # Pin: e3dd6a429d7300a6a4c196c26e071d42e0343502
+        uses: aws-actions/configure-aws-credentials@v5 # Pin: e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
