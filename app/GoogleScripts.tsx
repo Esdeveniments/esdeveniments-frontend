@@ -8,6 +8,15 @@ import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
 import { scheduleIdleCallback } from "@utils/browser";
 
+// Debug logging for production investigation - remove after debugging
+// Uses console.warn because console.log is stripped in production (see next.config.js removeConsole)
+const DEBUG_ADS = true; // Set to false to disable
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_ADS && typeof window !== 'undefined') {
+    console.warn('[GoogleScripts]', ...args);
+  }
+};
+
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
 // FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
@@ -113,6 +122,8 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
+  debugLog('Component mounted, adsAllowed:', adsAllowed, 'isE2ETestMode:', isE2ETestMode);
+
   const [HeavyComponent, setHeavyComponent] = useState<
     React.ComponentType<{ adsAllowed: boolean }> | null
   >(null);
@@ -222,30 +233,32 @@ export default function GoogleScripts() {
 
       {!isE2ETestMode && (
         <>
-          {/* AdBlock Detection - defer with lazyOnload since consent manager handles this itself */}
-          <Script id="google-adblock" strategy="lazyOnload">
+          {/* googlefcPresent iframe - MUST exist BEFORE Funding Choices loads (Google requirement).
+              Uses beforeInteractive to guarantee ordering. This is a tiny inline script with
+              zero performance impact - it just creates a hidden iframe. */}
+          <Script id="google-fc-present" strategy="beforeInteractive">
             {`
               (function() {
-                function signalGooglefcPresent() {
-                  if (!window.frames['googlefcPresent']) {
-                    if (document.body) {
-                     const iframe = document.createElement('iframe');
-                     iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;';
-                     iframe.style.display = 'none';
-                     iframe.name = 'googlefcPresent';
-                     document.body.appendChild(iframe);
-                    } else {
-                     setTimeout(signalGooglefcPresent, 0);
-                    }
+                if (window.frames['googlefcPresent']) return;
+                var createIframe = function() {
+                  if (!document.body) {
+                    setTimeout(createIframe, 0);
+                    return;
                   }
-                }
-                signalGooglefcPresent();
+                  var i = document.createElement('iframe');
+                  i.style.cssText = 'width:0;height:0;border:none;z-index:-1000;position:absolute;left:-1000px;top:-1000px';
+                  i.style.display = 'none';
+                  i.name = 'googlefcPresent';
+                  document.body.appendChild(i);
+                };
+                createIframe();
               })();
             `}
           </Script>
 
-          {/* Funding Choices (CMP) - loads with lazyOnload to reduce TBT while ensuring consent is available.
-              AdContext polls for __tcfapi availability, so ads won't load until CMP is ready. */}
+          {/* Funding Choices (CMP) - loads with lazyOnload for PageSpeed.
+              Since googlefcPresent uses beforeInteractive, ordering is guaranteed.
+              AdContext polls for __tcfapi and falls back after 5s. */}
           {FUNDING_CHOICES_SRC && (
             <Script src={FUNDING_CHOICES_SRC} strategy="lazyOnload" />
           )}
