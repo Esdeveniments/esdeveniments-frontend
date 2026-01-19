@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { captureException } from "@sentry/nextjs";
 import { getSiteUrlFromRequest } from "@config/index";
 import { stripeRequest } from "@lib/stripe/api";
 import {
@@ -184,6 +185,9 @@ export async function POST(request: NextRequest) {
       "Checkout error:",
       error instanceof Error ? error.message : "Unknown error"
     );
+    captureException(error, {
+      tags: { api: "sponsors-checkout" },
+    });
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

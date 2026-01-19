@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { captureException } from "@sentry/nextjs";
 import { uploadEventImage } from "@lib/api/events";
 import {
   fetchCheckoutSession,
@@ -227,6 +228,9 @@ export async function POST(request: Request) {
     }
  
     console.error("sponsor image-upload route error:", error);
+    captureException(error, {
+      tags: { api: "sponsors-image-upload" },
+    });
     return NextResponse.json(
       { errorCode: "upload_failed", error: "Failed to upload image." },
       { status: 500 }
