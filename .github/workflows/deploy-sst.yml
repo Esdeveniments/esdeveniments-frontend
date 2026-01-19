@@ -79,6 +79,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
 
+      - name: Clear fetch cache (prevent OpenNext JSON parse errors)
+        run: |
+          # Remove fetch cache to prevent corrupted cached API responses
+          # that can cause "Unexpected non-whitespace character after JSON" errors
+          # during OpenNext build. Keep webpack cache for faster builds.
+          rm -rf .next/cache/fetch-cache
+          echo "✅ Cleared fetch cache (webpack cache preserved)"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5 # Pin: e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
