@@ -79,12 +79,19 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const maybeHandleTcData: TcfCallback = (tcData, success) => {
-      if (!success || !tcData) return;
+      debugLog('maybeHandleTcData called:', { success, eventStatus: tcData?.eventStatus, listenerId: tcData?.listenerId });
+      if (!success || !tcData) {
+        debugLog('maybeHandleTcData: early return - success:', success, 'tcData:', !!tcData);
+        return;
+      }
       if (
         tcData.eventStatus === "useractioncomplete" ||
         tcData.eventStatus === "tcloaded"
       ) {
+        debugLog('maybeHandleTcData: valid eventStatus, calling setConsent with hasAdConsent:', hasAdConsent(tcData));
         setConsent(hasAdConsent(tcData));
+      } else {
+        debugLog('maybeHandleTcData: eventStatus not actionable:', tcData.eventStatus);
       }
       if (typeof tcData.listenerId === "number") {
         listenerId = tcData.listenerId;
@@ -96,8 +103,11 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       if (typeof window.__tcfapi !== "function") return;
 
       cmpListenerRegistered = true;
+      debugLog('registerCmpListeners: calling getTCData');
       window.__tcfapi("getTCData", 2, maybeHandleTcData);
+      debugLog('registerCmpListeners: calling addEventListener');
       window.__tcfapi("addEventListener", 2, maybeHandleTcData);
+      debugLog('registerCmpListeners: done');
     };
 
     const initConsent = () => {

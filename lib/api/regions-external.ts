@@ -2,13 +2,19 @@ import { fetchWithHmac } from "./fetch-wrapper";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
+// External fetches use `next: { revalidate }` to allow static generation during build.
+// Without this, fetchWithHmac defaults to `cache: "no-store"` which makes routes dynamic.
+const REGIONS_REVALIDATE = 86400; // 24 hours
+
 export async function fetchRegionsExternal(): Promise<
   RegionSummaryResponseDTO[]
 > {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/places/regions`);
+    const res = await fetchWithHmac(`${api}/places/regions`, {
+      next: { revalidate: REGIONS_REVALIDATE, tags: ["regions"] },
+    });
     if (!res.ok) {
       console.error(`fetchRegionsExternal: HTTP ${res.status}`);
       return [];
@@ -26,7 +32,9 @@ export async function fetchRegionsOptionsExternal(): Promise<
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/places/regions/options`);
+    const res = await fetchWithHmac(`${api}/places/regions/options`, {
+      next: { revalidate: REGIONS_REVALIDATE, tags: ["regions", "regions:options"] },
+    });
     if (!res.ok) {
       console.error(`fetchRegionsOptionsExternal: HTTP ${res.status}`);
       return [];
@@ -44,7 +52,9 @@ export async function fetchRegionByIdExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/places/regions/${id}`);
+    const res = await fetchWithHmac(`${api}/places/regions/${id}`, {
+      next: { revalidate: REGIONS_REVALIDATE, tags: ["regions", `region:${id}`] },
+    });
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
