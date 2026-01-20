@@ -74,6 +74,7 @@ jobs:
       - name: Build application
         env:
           NODE_ENV: production
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
         run: yarn build
 
       - name: Analyze bundle sizes (JSON)

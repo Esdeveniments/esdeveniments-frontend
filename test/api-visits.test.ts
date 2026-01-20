@@ -7,6 +7,18 @@ vi.mock("@lib/api/fetch-wrapper", () => ({
   fetchWithHmac: vi.fn().mockResolvedValue({ ok: true, status: 204 }),
 }));
 
+// Mock next/server's after() function which requires request context
+vi.mock("next/server", async (importOriginal) => {
+  const original = await importOriginal<typeof import("next/server")>();
+  return {
+    ...original,
+    after: vi.fn((fn: () => void | Promise<void>) => {
+      // Execute the callback immediately in tests (no request context needed)
+      fn();
+    }),
+  };
+});
+
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 
 const originalEnv = { ...process.env };

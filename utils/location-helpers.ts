@@ -211,6 +211,12 @@ export const buildEventListLocationLabels = ({
 export const getPlaceTypeAndLabel = async (
   place: string
 ): Promise<PlaceTypeAndLabel> => {
+  // Empty place means home page or Catalunya-wide view
+  // Return default without making API calls
+  if (!place || place === "") {
+    return { type: "region", label: "Catalunya" };
+  }
+
   // "catalunya" is a frontend-only SEO concept, not a real place in the backend
   // Return early without making API calls
   if (place === "catalunya") {

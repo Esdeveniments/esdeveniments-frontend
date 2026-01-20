@@ -1,6 +1,9 @@
 import { CitySummaryResponseDTO } from "types/api/city";
 import { createCache, createKeyedCache } from "lib/api/cache";
-import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
+import {
+  getInternalApiUrl,
+  getVercelProtectionBypassHeaders,
+} from "@utils/api-helpers";
 import { fetchCitiesExternal } from "./cities-external";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
@@ -26,9 +29,11 @@ async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
     next: { revalidate: 86400, tags: ["cities"] },
   });
   if (!response.ok) {
-    const errorText = await response.text().catch(() => "Unable to read error response");
+    const errorText = await response
+      .text()
+      .catch(() => "Unable to read error response");
     console.error(
-      `fetchCitiesFromApi: HTTP error! status: ${response.status}, url: ${url}, error: ${errorText}`
+      `fetchCitiesFromApi: HTTP error! status: ${response.status}, url: ${url}, error: ${errorText}`,
     );
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -43,14 +48,18 @@ async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
 export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
-    console.warn("fetchCities: NEXT_PUBLIC_API_URL not set, returning empty array");
+    console.warn(
+      "fetchCities: NEXT_PUBLIC_API_URL not set, returning empty array",
+    );
     return [];
   }
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (sitemap) can fetch data during next build
-  // IMPORTANT: Only use NEXT_PHASE - the VERCEL_URL check was wrong for SST/Lambda
-  const isBuildPhase = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD;
+  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
+  const isBuildPhase =
+    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
+    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
 
   if (isBuildPhase) {
     try {
@@ -58,7 +67,10 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
     } catch (e) {
       // Sanitize error logging to prevent information disclosure
       const errorMessage = getSanitizedErrorMessage(e);
-      console.error("fetchCities: Build phase external fetch failed:", errorMessage);
+      console.error(
+        "fetchCities: Build phase external fetch failed:",
+        errorMessage,
+      );
       return [];
     }
   }
@@ -76,7 +88,7 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
       const errorMessage = getSanitizedErrorMessage(fallbackError);
       console.error(
         "fetchCities: Both internal and external API failed:",
-        errorMessage
+        errorMessage,
       );
       return [];
     }
@@ -84,7 +96,7 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 }
 
 async function fetchCityByIdApi(
-  id: string | number
+  id: string | number,
 ): Promise<CitySummaryResponseDTO | null> {
   const url = await getInternalApiUrl(`/api/cities/${id}`);
   const response = await fetch(url, {
@@ -96,7 +108,7 @@ async function fetchCityByIdApi(
 }
 
 export async function fetchCityById(
-  id: string | number
+  id: string | number,
 ): Promise<CitySummaryResponseDTO | null> {
   try {
     return await cityByIdCache(id, fetchCityByIdApi);
