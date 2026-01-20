@@ -270,7 +270,11 @@ export default function GoogleScripts() {
                 
                 // Log googlefc state after a short delay to let it initialize
                 setTimeout(() => {
-                  const win = window as unknown as { googlefc?: unknown; __tcfapi?: unknown };
+                  const win = window as unknown as { 
+                    googlefc?: { showRevocationMessage?: () => void }; 
+                    __tcfapi?: unknown;
+                    frames?: Record<string, unknown>;
+                  };
                   debugLog('googlefc object:', win.googlefc);
                   debugLog('__tcfapi available:', typeof win.__tcfapi);
                   
@@ -278,6 +282,28 @@ export default function GoogleScripts() {
                   const fcCookies = document.cookie.split(';')
                     .filter(c => c.includes('__gfc') || c.includes('__gpi') || c.includes('FCCDCF'));
                   debugLog('Funding Choices cookies:', fcCookies.length > 0 ? fcCookies : 'none');
+                  
+                  // WORKAROUND: Google FC sometimes marks the page as "inactive" on root paths
+                  // due to script loading order issues from performance optimizations.
+                  // When this happens, googlefcInactive iframe exists but consent banner doesn't show.
+                  // Detect this condition and manually trigger the consent UI.
+                  const hasInactiveFrame = Boolean(window.frames && 'googlefcInactive' in window.frames);
+                  const hasNoConsent = !fcCookies.some(c => c.includes('FCCDCF'));
+                  // Check if consent UI is already visible (Google FC uses .fc-consent-root)
+                  const consentUIAlreadyVisible = Boolean(document.querySelector('.fc-consent-root'));
+                  
+                  debugLog('googlefcInactive frame detected:', hasInactiveFrame);
+                  debugLog('No prior consent cookie:', hasNoConsent);
+                  debugLog('Consent UI already visible:', consentUIAlreadyVisible);
+                  
+                  if (hasInactiveFrame && hasNoConsent && !consentUIAlreadyVisible && win.googlefc?.showRevocationMessage) {
+                    debugLog('Triggering consent UI manually due to googlefcInactive condition');
+                    try {
+                      win.googlefc.showRevocationMessage();
+                    } catch (e) {
+                      debugLog('Failed to show consent UI:', e);
+                    }
+                  }
                 }, 500);
               }}
             />

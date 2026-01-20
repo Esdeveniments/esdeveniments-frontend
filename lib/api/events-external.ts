@@ -9,6 +9,11 @@ import type {
 } from "types/api/event";
 import type { FetchEventsParams } from "types/event";
 
+// External fetches use `next: { revalidate }` to allow static generation during build.
+// Without this, fetchWithHmac defaults to `cache: "no-store"` which makes routes dynamic.
+const EVENTS_REVALIDATE = 600; // 10 minutes (same as internal API)
+const EVENT_DETAIL_REVALIDATE = 1800; // 30 minutes
+
 export async function fetchEventBySlug(slug: string): Promise<EventDetailResponseDTO | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -16,7 +21,9 @@ export async function fetchEventBySlug(slug: string): Promise<EventDetailRespons
     return null;
   }
   try {
-    const response = await fetchWithHmac(`${apiUrl}/events/${slug}`);
+    const response = await fetchWithHmac(`${apiUrl}/events/${slug}`, {
+      next: { revalidate: EVENT_DETAIL_REVALIDATE, tags: ["events", `event:${slug}`] },
+    });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const json = await response.json();
@@ -43,7 +50,9 @@ export async function fetchEventsExternal(
   }
   try {
     const qs = buildEventsQuery(params);
-    const res = await fetchWithHmac(`${api}/events?${qs.toString()}`);
+    const res = await fetchWithHmac(`${api}/events?${qs.toString()}`, {
+      next: { revalidate: EVENTS_REVALIDATE, tags: ["events"] },
+    });
     if (!res.ok) {
       console.error(`fetchEventsExternal: HTTP ${res.status}`);
       return {
@@ -80,7 +89,9 @@ export async function fetchCategorizedEventsExternal(
       params.append("maxEventsPerCategory", String(maxEventsPerCategory));
     }
     const url = `${api}/events/categorized${params.toString() ? `?${params}` : ""}`;
-    const res = await fetchWithHmac(url);
+    const res = await fetchWithHmac(url, {
+      next: { revalidate: EVENTS_REVALIDATE, tags: ["events", "events:categorized"] },
+    });
     if (!res.ok) {
       console.error(`fetchCategorizedEventsExternal: HTTP ${res.status}`);
       return {};

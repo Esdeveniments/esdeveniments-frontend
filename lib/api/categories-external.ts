@@ -5,11 +5,17 @@ import {
 import { fetchWithHmac } from "lib/api/fetch-wrapper";
 import { parseCategories, parseCategoryDetail } from "lib/validation/category";
 
+// External fetches use `next: { revalidate }` to allow static generation during build.
+// Without this, fetchWithHmac defaults to `cache: "no-store"` which makes routes dynamic.
+const CATEGORIES_REVALIDATE = 86400; // 24 hours
+
 export async function fetchCategoriesExternal(): Promise<CategorySummaryResponseDTO[]> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/categories`);
+    const res = await fetchWithHmac(`${api}/categories`, {
+      next: { revalidate: CATEGORIES_REVALIDATE, tags: ["categories"] },
+    });
     if (!res.ok) {
       console.error(`Failed to fetch categories: HTTP ${res.status}`);
       return [];
@@ -28,7 +34,9 @@ export async function fetchCategoryByIdExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/categories/${id}`);
+    const res = await fetchWithHmac(`${api}/categories/${id}`, {
+      next: { revalidate: CATEGORIES_REVALIDATE, tags: ["categories", `category:${id}`] },
+    });
     if (!res.ok) {
       console.error("fetchCategoryByIdExternal:", id, "HTTP", res.status);
       return null;

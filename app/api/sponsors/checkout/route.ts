@@ -27,7 +27,7 @@ async function createStripeCheckoutSession(
   placeName: string,
   geoScope: GeoScope,
   idempotencyKey: string,
-  baseUrl: string
+  baseUrl: string,
 ): Promise<StripeCheckoutSessionResponse> {
   const params = new URLSearchParams();
 
@@ -36,8 +36,8 @@ async function createStripeCheckoutSession(
   params.append(
     "success_url",
     `${baseUrl}/patrocina/upload?session_id={CHECKOUT_SESSION_ID}&place=${encodeURIComponent(
-      place
-    )}&placeName=${encodeURIComponent(placeName)}`
+      place,
+    )}&placeName=${encodeURIComponent(placeName)}`,
   );
   params.append("cancel_url", `${baseUrl}/patrocina/cancelled`);
 
@@ -59,7 +59,7 @@ async function createStripeCheckoutSession(
   // Using suffix (not full descriptor) for card payment compatibility
   params.append(
     "payment_intent_data[statement_descriptor_suffix]",
-    "ESDEV-CAT"
+    "ESDEV-CAT",
   );
 
   // Session expiration - 30 minutes for better UX (default is 24h)
@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: `geoScope is required and must be one of: ${VALID_GEO_SCOPES.join(
-            ", "
+            ", ",
           )}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         {
           error: `Invalid duration. Must be one of: ${Object.keys(DURATION_DAYS).join(", ")}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     if (!place || !placeName) {
       return NextResponse.json(
         { error: "Place selection is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     if (!isValidPlace(place)) {
       return NextResponse.json(
         { error: "Invalid place format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
     if (!visitorId) {
       console.warn(
         "[checkout] Missing x-visitor-id header - using IP fallback. " +
-          `IP: ${clientIp}, place: ${place}. Investigate proxy.ts middleware.`
+          `IP: ${clientIp}, place: ${place}. Investigate proxy.ts middleware.`,
       );
     }
 
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
       placeName,
       geoScope,
       idempotencyKey,
-      baseUrl
+      baseUrl,
     );
 
     return NextResponse.json({
@@ -183,14 +183,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error(
       "Checkout error:",
-      error instanceof Error ? error.message : "Unknown error"
+      error instanceof Error ? error.message : "Unknown error",
     );
     captureException(error, {
       tags: { api: "sponsors-checkout" },
     });
     return NextResponse.json(
       { error: "Failed to create checkout session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

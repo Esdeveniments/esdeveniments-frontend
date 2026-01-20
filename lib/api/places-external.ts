@@ -2,6 +2,10 @@ import { fetchWithHmac } from "./fetch-wrapper";
 import type { PlaceResponseDTO } from "types/api/place";
 import { parsePlace, parsePlaces } from "lib/validation/place";
 
+// External fetches use `next: { revalidate }` to allow static generation during build.
+// Without this, fetchWithHmac defaults to `cache: "no-store"` which makes routes dynamic.
+const PLACES_REVALIDATE = 86400; // 24 hours
+
 export async function fetchPlaceBySlugExternal(
   slug: string
 ): Promise<PlaceResponseDTO | null> {
@@ -15,7 +19,9 @@ export async function fetchPlaceBySlugExternal(
   if (!api) return null;
   try {
     const encodedSlug = encodeURIComponent(slug);
-    const res = await fetchWithHmac(`${api}/places/${encodedSlug}`);
+    const res = await fetchWithHmac(`${api}/places/${encodedSlug}`, {
+      next: { revalidate: PLACES_REVALIDATE, tags: ["places", `place:${slug}`] },
+    });
     if (res.status === 404) {
       // Place definitively doesn't exist - return null to signal not found
       return null;
@@ -51,7 +57,9 @@ export async function fetchPlacesAggregatedExternal(): Promise<
     endpoints.map(async ({ path, type }) => {
       const endpoint = `${api}${path}`;
       try {
-        const response = await fetchWithHmac(endpoint);
+        const response = await fetchWithHmac(endpoint, {
+          next: { revalidate: PLACES_REVALIDATE, tags: ["places"] },
+        });
         if (!response.ok) {
           console.error(
             "fetchPlacesAggregatedExternal:",

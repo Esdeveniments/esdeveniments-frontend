@@ -111,18 +111,27 @@ export default async function EventPage({
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event }, locale);
-  const tStatus = await getTranslations({ locale, namespace: "Utils.EventStatus" });
-  const tEvent = await getTranslations({ locale, namespace: "Components.EventPage" });
-  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
-  const tCopy = await getTranslations({ locale, namespace: "Utils.EventCopy" });
-  const tCategories = await getTranslations({
-    locale,
-    namespace: "Config.Categories",
-  });
-  const tEventsAround = await getTranslations({
-    locale,
-    namespace: "Components.EventsAround",
-  });
+
+  // Parallelize all translation fetches to eliminate waterfall (8 calls → 1 round trip)
+  const [
+    tStatus,
+    tEvent,
+    tCard,
+    tCopy,
+    tCategories,
+    tEventsAround,
+    tHowTo,
+    tBreadcrumbs,
+  ] = await Promise.all([
+    getTranslations({ locale, namespace: "Utils.EventStatus" }),
+    getTranslations({ locale, namespace: "Components.EventPage" }),
+    getTranslations({ locale, namespace: "Components.CardContent" }),
+    getTranslations({ locale, namespace: "Utils.EventCopy" }),
+    getTranslations({ locale, namespace: "Config.Categories" }),
+    getTranslations({ locale, namespace: "Components.EventsAround" }),
+    getTranslations({ locale, namespace: "Components.HowTo" }),
+    getTranslations({ locale, namespace: "Components.Breadcrumbs" }),
+  ]);
   const primaryCategoryLabel = primaryCategorySlug
     ? getLocalizedCategoryLabelFromConfig(
       primaryCategorySlug,
@@ -240,8 +249,6 @@ export default async function EventPage({
       }
       : null;
 
-  const tHowTo = await getTranslations("Components.HowTo");
-  const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
   const howToSteps = [
     tHowTo("step1"),
     tHowTo("step2"),

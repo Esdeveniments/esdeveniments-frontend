@@ -187,10 +187,21 @@ export default async function ByDatePage({
 }) {
   const { place, byDate } = await params;
   const locale: AppLocale = await getLocaleSafely();
-  const tFallback = await getTranslations({
-    locale,
-    namespace: "App.PlaceByDate",
-  });
+
+  // Parallelize independent operations: translations and categories fetch
+  const [tFallback, categoriesResult] = await Promise.all([
+    getTranslations({
+      locale,
+      namespace: "App.PlaceByDate",
+    }),
+    getCategories().catch((error) => {
+      console.error(
+        "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
+        error
+      );
+      return [] as CategorySummaryResponseDTO[];
+    }),
+  ]);
 
   try {
     validatePlaceOrThrow(place);
@@ -201,16 +212,7 @@ export default async function ByDatePage({
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await getCategories();
-  } catch (error) {
-    console.error(
-      "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
-      error
-    );
-    categories = [];
-  }
+  let categories: CategorySummaryResponseDTO[] = categoriesResult;
 
   // Use empty searchParams to keep pages static (ISR-compatible)
   // Query params (search, distance, lat, lon) are handled client-side

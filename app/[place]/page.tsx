@@ -58,6 +58,9 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
+  // Start locale fetch early (runs in parallel with placeTypeLabel)
+  const localePromise = getLocaleSafely();
+
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
     place
   );
@@ -66,7 +69,7 @@ export async function generateMetadata({
     byDate: "",
     placeTypeLabel,
   });
-  const locale = await getLocaleSafely();
+  const locale = await localePromise;
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -94,7 +97,6 @@ export default async function Page({
     return [] as CategorySummaryResponseDTO[];
   });
   const placeShellDataPromise = (async () => {
-    const t = await getTranslations({ locale, namespace: "App.Publish" });
     try {
       const placeTypeLabel: PlaceTypeAndLabel =
         await getPlaceTypeAndLabelCached(place);
@@ -106,6 +108,8 @@ export default async function Page({
       return { placeTypeLabel, pageData };
     } catch (error) {
       console.error("Place page: unable to build shell data", error);
+      // Fetch translations only on error path (avoids blocking happy path)
+      const t = await getTranslations({ locale, namespace: "App.Publish" });
       return await buildFallbackPlaceShellData(place, t("noEventsFound"));
     }
   })();

@@ -30,11 +30,11 @@ export const formatMegabytes = (bytes: number): string =>
   (bytes / (1024 * 1024)).toFixed(2);
 
 export const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(
-  MAX_TOTAL_UPLOAD_BYTES
+  MAX_TOTAL_UPLOAD_BYTES,
 );
 
 export const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(
-  MAX_ORIGINAL_FILE_BYTES
+  MAX_ORIGINAL_FILE_BYTES,
 );
 
 /**
@@ -78,14 +78,17 @@ export const NEARBY_PLACES_BY_HUB: Record<
   string,
   { slug: string; name: string }[]
 > = Object.entries(
-  defaultConstantsLabels.nearbyHubs as Record<string, Record<string, string>>
-).reduce((acc, [hub, places]) => {
-  acc[hub] = Object.entries(places).map(([slug, name]) => ({
-    slug,
-    name,
-  }));
-  return acc;
-}, {} as Record<string, { slug: string; name: string }[]>);
+  defaultConstantsLabels.nearbyHubs as Record<string, Record<string, string>>,
+).reduce(
+  (acc, [hub, places]) => {
+    acc[hub] = Object.entries(places).map(([slug, name]) => ({
+      slug,
+      name,
+    }));
+    return acc;
+  },
+  {} as Record<string, { slug: string; name: string }[]>,
+);
 
 export function getDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
   return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
@@ -127,7 +130,7 @@ export const dateFunctions: { [key: string]: string } = {
  * Reuses dateFunctions to avoid duplication.
  */
 export function getDateLabelKey(
-  slug: string
+  slug: string,
 ): "today" | "tomorrow" | "week" | "weekend" | undefined {
   const key = dateFunctions[slug];
   if (
@@ -160,14 +163,17 @@ export const DEFAULT_FILTER_VALUE = "tots";
  * @returns Record mapping category slugs to display names
  */
 export function getDynamicCategoryNamesMap(
-  categories?: CategorySummaryResponseDTO[]
+  categories?: CategorySummaryResponseDTO[],
 ): Record<string, string> {
   if (categories && categories.length > 0) {
     // Create mapping from dynamic categories: slug -> name
-    return categories.reduce((acc, category) => {
-      acc[category.slug] = category.name;
-      return acc;
-    }, {} as Record<string, string>);
+    return categories.reduce(
+      (acc, category) => {
+        acc[category.slug] = category.name;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
   }
 
   // Return empty object if no categories available
@@ -180,7 +186,7 @@ export function getDynamicCategoryNamesMap(
  * @returns Array of category names for search
  */
 export function getDynamicSearchTermsSubset(
-  categories?: CategorySummaryResponseDTO[]
+  categories?: CategorySummaryResponseDTO[],
 ): string[] {
   if (categories && categories.length > 0) {
     // Return first 4 category names for search subset
@@ -209,7 +215,7 @@ export function shouldUseDynamicCategories(): boolean {
  */
 export function getCategoryDisplayName(
   categorySlug: string,
-  categories?: CategorySummaryResponseDTO[]
+  categories?: CategorySummaryResponseDTO[],
 ): string {
   if (categories && categories.length > 0) {
     const dynamicCategory = categories.find((cat) => cat.slug === categorySlug);
@@ -243,14 +249,14 @@ export async function getNearbyPlacesByHub(): Promise<
       defaultConstantsLabels.nearbyHubs as Record<
         string,
         Record<string, string>
-      >
+      >,
     ).map(([hub, places]) => [
       hub,
       Object.entries(places).map(([slug]) => ({
         slug,
         name: t(`${hub}.${slug}`),
       })),
-    ])
+    ]),
   );
 }
 
@@ -258,11 +264,11 @@ export async function getNearbyPlacesByHub(): Promise<
 // Configurable timestamp tolerances via environment variablesexport
 export const FIVE_MINUTES_IN_MS = parseInt(
   process.env.HMAC_PAST_TOLERANCE_MS || "300000",
-  10
+  10,
 ); // 5 minutes tolerance for past timestamps
 export const ONE_MINUTE_IN_MS = parseInt(
   process.env.HMAC_FUTURE_TOLERANCE_MS || "60000",
-  10
+  10,
 ); // 1 minute tolerance for future timestamps to account for clock skew
 
 /**

@@ -39,17 +39,14 @@ export default async function Page(): Promise<JSX.Element> {
   const locale: AppLocale = await getLocaleSafely();
   const categorizedEventsPromise = getCategorizedEvents(5);
   const categoriesPromise = fetchCategories();
-  const t = await getTranslations({ locale, namespace: "App.Home" });
-  const tTopAgenda = await getTranslations({
-    locale,
-    namespace: "Config.TopAgenda",
-  });
-  const agendaLabel = tTopAgenda("agenda");
 
-  const pageData: PageData = await generatePagesData({
-    place: "",
-    byDate: "",
-  });
+  // Parallelize independent operations to eliminate waterfall (3 calls → 1 round trip)
+  const [t, tTopAgenda, pageData] = await Promise.all([
+    getTranslations({ locale, namespace: "App.Home" }),
+    getTranslations({ locale, namespace: "Config.TopAgenda" }),
+    generatePagesData({ place: "", byDate: "" }),
+  ]);
+  const agendaLabel = tTopAgenda("agenda");
 
   const homeSeoLinkSections: SeoLinkSection[] = [
     {

@@ -33,7 +33,7 @@ function parseAcceptLanguage(header: string | null): AppLocale | null {
     })
     .filter(
       (entry): entry is { base: string; quality: number } =>
-        Boolean(entry.base) && entry.quality > 0
+        Boolean(entry.base) && entry.quality > 0,
     )
     .sort((a, b) => b.quality - a.quality);
 
@@ -280,7 +280,7 @@ export default async function proxy(request: NextRequest) {
         { error: "Unauthorized" },
         {
           status: 401,
-        }
+        },
       );
     }
 
@@ -289,7 +289,7 @@ export default async function proxy(request: NextRequest) {
         { error: "Unauthorized" },
         {
           status: 401,
-        }
+        },
       );
     }
 
@@ -297,7 +297,7 @@ export default async function proxy(request: NextRequest) {
       requestBody,
       timestamp,
       pathname + request.nextUrl.search,
-      request.method
+      request.method,
     );
     const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
 
@@ -306,7 +306,7 @@ export default async function proxy(request: NextRequest) {
         { error: "Unauthorized" },
         {
           status: 401,
-        }
+        },
       );
     }
 
@@ -318,7 +318,7 @@ export default async function proxy(request: NextRequest) {
     // Avoid no-store here so bfcache isn't blocked by this request
     response.headers.set(
       "Cache-Control",
-      "no-cache, max-age=0, must-revalidate"
+      "no-cache, max-age=0, must-revalidate",
     );
     response.headers.set("Service-Worker-Allowed", "/");
     return response;
@@ -331,7 +331,7 @@ export default async function proxy(request: NextRequest) {
   if (localeFromPath === DEFAULT_LOCALE) {
     const redirectUrl = new URL(
       `${pathnameWithoutLocale}${search || ""}`,
-      request.url
+      request.url,
     );
     const response = NextResponse.redirect(redirectUrl, 308);
     persistLocaleCookie(response, DEFAULT_LOCALE);
@@ -345,7 +345,7 @@ export default async function proxy(request: NextRequest) {
     if (preferredLocale && preferredLocale !== DEFAULT_LOCALE) {
       const redirectUrl = new URL(
         `/${preferredLocale}${search || ""}`,
-        request.url
+        request.url,
       );
       const response = NextResponse.redirect(redirectUrl, 302);
       persistLocaleCookie(response, preferredLocale);
@@ -411,14 +411,14 @@ export default async function proxy(request: NextRequest) {
   }
   response.headers.set(
     "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload"
+    "max-age=63072000; includeSubDomains; preload",
   );
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self)"
+    "camera=(), microphone=(), geolocation=(self)",
   );
 
   // Cache-Control for public HTML pages (excluding API and Next assets).
@@ -438,7 +438,7 @@ export default async function proxy(request: NextRequest) {
       "Cache-Control",
       isPersonalizedHtml
         ? "private, no-store"
-        : "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
+        : "public, max-age=0, s-maxage=300, stale-while-revalidate=300",
     );
   }
 

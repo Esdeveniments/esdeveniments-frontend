@@ -83,14 +83,18 @@ export async function generatePagesData({
   placeTypeLabel?: PlaceTypeAndLabel;
 }): Promise<PageData> {
   const resolvedLocale = (await getLocaleSafely()) || DEFAULT_LOCALE;
-  const t = await getTranslations({
-    locale: resolvedLocale,
-    namespace: "Partials.GeneratePagesData",
-  });
-  const tConstants = await getTranslations({
-    locale: resolvedLocale,
-    namespace: "Components.Constants",
-  });
+
+  // Parallelize translation fetches to eliminate waterfall (2 calls → 1 round trip)
+  const [t, tConstants] = await Promise.all([
+    getTranslations({
+      locale: resolvedLocale,
+      namespace: "Partials.GeneratePagesData",
+    }),
+    getTranslations({
+      locale: resolvedLocale,
+      namespace: "Components.Constants",
+    }),
+  ]);
 
   const now = new Date();
 

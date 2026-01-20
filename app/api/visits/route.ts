@@ -1,34 +1,37 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
-import { handleApiError } from "@utils/api-error-handler";
 import * as Sentry from "@sentry/nextjs";
 
 export async function POST(request: Request) {
-  try {
-    const { eventId, slug } = (await request.json().catch(() => ({}))) as {
-      eventId?: string | number;
-      slug?: string;
-    };
+  // Parse body early (must be done before response is sent)
+  const { eventId, slug } = (await request.json().catch(() => ({}))) as {
+    eventId?: string | number;
+    slug?: string;
+  };
 
-    // Require at least one identifier; if missing, no-op 204
-    if (!eventId && !slug) {
-      return new NextResponse(null, { status: 204 });
-    }
+  // Require at least one identifier; if missing, no-op 204
+  if (!eventId && !slug) {
+    return new NextResponse(null, { status: 204 });
+  }
 
-    const apiBase = process.env.NEXT_PUBLIC_API_URL;
-    const visitsEndpoint = process.env.VISITS_ENDPOINT; // optional override
+  const apiBase = process.env.NEXT_PUBLIC_API_URL;
+  const visitsEndpoint = process.env.VISITS_ENDPOINT; // optional override
 
-    if (!apiBase || !visitsEndpoint) {
-      // Backend endpoint not configured; accept and return
-      return new NextResponse(null, { status: 204 });
-    }
+  if (!apiBase || !visitsEndpoint) {
+    // Backend endpoint not configured; accept and return
+    return new NextResponse(null, { status: 204 });
+  }
 
-    const url = visitsEndpoint.startsWith("http")
-      ? visitsEndpoint
-      : `${apiBase}${visitsEndpoint}`;
+  const url = visitsEndpoint.startsWith("http")
+    ? visitsEndpoint
+    : `${apiBase}${visitsEndpoint}`;
 
-    // Forward visitor id from middleware (if present)
-    const incomingVisitorId = request.headers.get("x-visitor-id") || undefined;
+  // Forward visitor id from middleware (if present)
+  const incomingVisitorId = request.headers.get("x-visitor-id") || undefined;
+
+  // Use after() to send visit tracking without blocking response
+  // This improves response time since tracking doesn't need to complete before responding
+  after(async () => {
     const headers: HeadersInit = {
       Accept: "application/json",
       "Content-Type": "application/json",
@@ -48,12 +51,7 @@ export async function POST(request: Request) {
         });
       }
     });
+  });
 
-    return new NextResponse(null, { status: 204 });
-  } catch (e) {
-    return handleApiError(e, "/api/visits", {
-      fallbackData: null,
-    });
-  }
+  return new NextResponse(null, { status: 204 });
 }
-

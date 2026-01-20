@@ -49,10 +49,8 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (sitemap) can fetch data during next build
-  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
-  const isBuildPhase =
-    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
+  // IMPORTANT: Only use NEXT_PHASE - the VERCEL_URL check was wrong for SST/Lambda
+  const isBuildPhase = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD;
 
   if (isBuildPhase) {
     try {

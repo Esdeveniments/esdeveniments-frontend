@@ -12,7 +12,10 @@ import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
 // Client-provided MIME types can be spoofed, so we verify actual file content
 const IMAGE_MAGIC_BYTES: { type: string; bytes: number[] }[] = [
   { type: "image/jpeg", bytes: [0xff, 0xd8, 0xff] },
-  { type: "image/png", bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+  {
+    type: "image/png",
+    bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  },
   { type: "image/gif", bytes: [0x47, 0x49, 0x46, 0x38] }, // GIF8
   // WebP handled separately below (RIFF header is shared with WAV, AVI, etc.)
 ];
@@ -91,18 +94,18 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const sessionIdRaw = formData.get("sessionId");
     const imageFile = formData.get("imageFile");
- 
+
     if (typeof sessionIdRaw !== "string" || sessionIdRaw.trim() === "") {
       return NextResponse.json(
         { errorCode: "missing_session", error: "Missing session id." },
-        { status: 400 }
+        { status: 400 },
       );
     }
- 
+
     if (!(imageFile instanceof File)) {
       return NextResponse.json(
         { errorCode: "missing_image", error: "Missing image file." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -110,7 +113,7 @@ export async function POST(request: Request) {
     if (!imageFile.type.startsWith("image/")) {
       return NextResponse.json(
         { errorCode: "invalid_file_type", error: "File must be an image." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -119,24 +122,27 @@ export async function POST(request: Request) {
     const isValidContent = await isValidImageContent(imageFile);
     if (!isValidContent) {
       return NextResponse.json(
-        { errorCode: "invalid_file_content", error: "File is not a valid image." },
-        { status: 400 }
+        {
+          errorCode: "invalid_file_content",
+          error: "File is not a valid image.",
+        },
+        { status: 400 },
       );
     }
- 
+
     // Gate the upload behind a paid Stripe session
     const session = await fetchCheckoutSession(sessionIdRaw);
     if (!isPaidSession(session)) {
       return NextResponse.json(
         { errorCode: "not_paid", error: "Checkout session is not paid." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (!isSponsorCheckoutSession(session)) {
       return NextResponse.json(
         { errorCode: "invalid_product", error: "Invalid checkout session." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -150,14 +156,14 @@ export async function POST(request: Request) {
             errorCode: "already_uploaded",
             error: "Image already uploaded for this session.",
           },
-          { status: 409 }
+          { status: 409 },
         );
       }
     }
 
     // Get payment intent ID to update its metadata too
     const paymentIntentId = getPaymentIntentId(session);
- 
+
     const { url, publicId } = await uploadEventImage(imageFile);
 
     const imageMetadata = {
@@ -165,25 +171,27 @@ export async function POST(request: Request) {
       sponsor_image_public_id: publicId,
       sponsor_image_uploaded_at: new Date().toISOString(),
     };
- 
+
     // Update checkout session metadata (critical for webhook to find the image)
     const sessionMetadataSaved = await updateCheckoutSessionMetadata(
       sessionIdRaw,
-      imageMetadata
+      imageMetadata,
     );
 
     // Fail if session metadata wasn't saved - webhook needs it to activate sponsor
     if (!sessionMetadataSaved) {
-      console.error(
-        "sponsor image-upload: failed to save session metadata",
-        { sessionId: sessionIdRaw, url, publicId }
-      );
+      console.error("sponsor image-upload: failed to save session metadata", {
+        sessionId: sessionIdRaw,
+        url,
+        publicId,
+      });
       return NextResponse.json(
         {
           errorCode: "metadata_save_failed",
-          error: "Image uploaded but failed to link to payment session. Please contact support.",
+          error:
+            "Image uploaded but failed to link to payment session. Please contact support.",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -192,17 +200,17 @@ export async function POST(request: Request) {
     if (paymentIntentId) {
       paymentIntentMetadataSaved = await updatePaymentIntentMetadata(
         paymentIntentId,
-        imageMetadata
+        imageMetadata,
       );
       if (!paymentIntentMetadataSaved) {
         // Log but don't fail - session metadata is the critical one
         console.warn(
           "sponsor image-upload: payment intent metadata update failed",
-          { paymentIntentId }
+          { paymentIntentId },
         );
       }
     }
- 
+
     return NextResponse.json(
       {
         success: true,
@@ -215,26 +223,28 @@ export async function POST(request: Request) {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
         },
-      }
+      },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed";
- 
+
     if (message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
       return NextResponse.json(
-        { errorCode: "image_too_large", error: EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR },
-        { status: 413 }
+        {
+          errorCode: "image_too_large",
+          error: EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+        },
+        { status: 413 },
       );
     }
- 
+
     console.error("sponsor image-upload route error:", error);
     captureException(error, {
       tags: { api: "sponsors-image-upload" },
     });
     return NextResponse.json(
       { errorCode: "upload_failed", error: "Failed to upload image." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-
