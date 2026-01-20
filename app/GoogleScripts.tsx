@@ -288,15 +288,15 @@ export default function GoogleScripts() {
                   // When this happens, googlefcInactive iframe exists but consent banner doesn't show.
                   // Detect this condition and manually trigger the consent UI.
                   const hasInactiveFrame = Boolean(window.frames && 'googlefcInactive' in window.frames);
-                  const hasNoConsent = !fcCookies.some(c => c.includes('FCCDCF'));
                   // Check if consent UI is already visible (Google FC uses .fc-consent-root)
                   const consentUIAlreadyVisible = Boolean(document.querySelector('.fc-consent-root'));
                   
                   debugLog('googlefcInactive frame detected:', hasInactiveFrame);
-                  debugLog('No prior consent cookie:', hasNoConsent);
                   debugLog('Consent UI already visible:', consentUIAlreadyVisible);
                   
-                  if (hasInactiveFrame && hasNoConsent && !consentUIAlreadyVisible && win.googlefc?.showRevocationMessage) {
+                  // Only trigger if: inactive frame exists AND consent UI is not showing
+                  // Note: We removed the cookie check because FCCDCF stores session state, not consent decision
+                  if (hasInactiveFrame && !consentUIAlreadyVisible && win.googlefc?.showRevocationMessage) {
                     debugLog('Triggering consent UI manually due to googlefcInactive condition');
                     try {
                       win.googlefc.showRevocationMessage();

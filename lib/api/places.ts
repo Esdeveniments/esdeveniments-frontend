@@ -2,6 +2,11 @@ import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache, createCache } from "@lib/api/cache";
 import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache } from "react";
+import { isBuildPhase } from "@utils/constants";
+import {
+  fetchPlaceBySlugExternal,
+  fetchPlacesAggregatedExternal,
+} from "./places-external";
 
 const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
   createKeyedCache<PlaceResponseDTO | null>(86400000);
@@ -47,6 +52,15 @@ async function fetchPlaceBySlugApi(
 export async function fetchPlaceBySlug(
   slug: string
 ): Promise<PlaceResponseDTO | null> {
+  // During build, bypass internal API (server not running) and call external directly
+  if (isBuildPhase) {
+    try {
+      return await fetchPlaceBySlugExternal(slug);
+    } catch (error) {
+      console.error("fetchPlaceBySlug: external fetch failed during build", error);
+      return null;
+    }
+  }
   return placeBySlugCache(slug, fetchPlaceBySlugApi);
 }
 
@@ -70,6 +84,15 @@ async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
 export async function fetchPlaces(): Promise<PlaceResponseDTO[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return [];
+  // During build, bypass internal API (server not running) and call external directly
+  if (isBuildPhase) {
+    try {
+      return await fetchPlacesAggregatedExternal();
+    } catch (error) {
+      console.error("fetchPlaces: external fetch failed during build", error);
+      return [];
+    }
+  }
   try {
     return await placesCache(fetchPlacesFromApi);
   } catch (e) {
