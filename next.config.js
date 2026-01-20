@@ -60,7 +60,7 @@ const nextConfig = {
 
   // --- Optimizations ---
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    removeConsole: false,
   },
 
   // --- Image Optimization ---
@@ -209,5 +209,5 @@ module.exports = withSentryConfig(
       }
       // Don't throw - allow build to continue even if source map upload fails
     },
-  }
+  },
 );
