@@ -260,7 +260,27 @@ export default function GoogleScripts() {
               Since googlefcPresent uses beforeInteractive, ordering is guaranteed.
               AdContext polls for __tcfapi and falls back after 5s. */}
           {FUNDING_CHOICES_SRC && (
-            <Script src={FUNDING_CHOICES_SRC} strategy="lazyOnload" />
+            <Script 
+              src={FUNDING_CHOICES_SRC} 
+              strategy="lazyOnload"
+              onLoad={() => {
+                debugLog('Funding Choices script loaded, checking googlefc state...');
+                debugLog('Current URL:', window.location.href);
+                debugLog('Document readyState:', document.readyState);
+                
+                // Log googlefc state after a short delay to let it initialize
+                setTimeout(() => {
+                  const win = window as unknown as { googlefc?: unknown; __tcfapi?: unknown };
+                  debugLog('googlefc object:', win.googlefc);
+                  debugLog('__tcfapi available:', typeof win.__tcfapi);
+                  
+                  // Check if there are any cookies that might affect consent
+                  const fcCookies = document.cookie.split(';')
+                    .filter(c => c.includes('__gfc') || c.includes('__gpi') || c.includes('FCCDCF'));
+                  debugLog('Funding Choices cookies:', fcCookies.length > 0 ? fcCookies : 'none');
+                }, 500);
+              }}
+            />
           )}
 
           {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
