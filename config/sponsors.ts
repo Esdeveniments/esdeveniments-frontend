@@ -44,7 +44,36 @@ const sponsors: SponsorConfig[] = [
   // ═══════════════════════════════════════════════════════════════════
   // ACTIVE SPONSORS - Add new sponsors below after payment confirmation
   // ═══════════════════════════════════════════════════════════════════
+  {
+    businessName: "Tastautors",
+    imageUrl: "https://i.ibb.co/DfXFVNXr/Cartell-Tastautors-5-scaled-1-1.webp",
+    targetUrl: "https://www.tastautors.cat/",
+    places: ["catalunya"],
+    geoScope: "country",
+    startDate: "2026-01-21",
+    endDate: "2026-01-30",
+  },
+  {
+    businessName: "Tastautors",
+    imageUrl: "https://i.ibb.co/DfXFVNXr/Cartell-Tastautors-5-scaled-1-1.webp",
+    targetUrl: "https://www.tastautors.cat/",
+    places: ["valles-oriental"],
+    geoScope: "region",
+    startDate: "2026-01-21",
+    endDate: "2026-01-30",
+  },
+  {
+    businessName: "Tastautors",
+    imageUrl: "https://i.ibb.co/DfXFVNXr/Cartell-Tastautors-5-scaled-1-1.webp",
+    targetUrl: "https://www.tastautors.cat/",
+    places: ["cardedeu"],
+    geoScope: "town",
+    startDate: "2026-01-21",
+    endDate: "2026-01-30",
+  },
 ];
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /**
  * Check if a sponsor is active on a given date.
@@ -57,6 +86,20 @@ function isSponsorActive(sponsor: SponsorConfig, date: Date): boolean {
   const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
   const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
   return date >= startDate && date <= endDate;
+}
+
+/**
+ * Get remaining days for an active sponsor (inclusive of end date).
+ * @param sponsor - The sponsor configuration
+ * @param todayUtc - Current day at UTC midnight
+ * @returns Remaining days (minimum 1)
+ */
+function getRemainingDays(sponsor: SponsorConfig, todayUtc: Date): number {
+  const endDateUtc = new Date(`${sponsor.endDate}T00:00:00.000Z`);
+  const diffDays = Math.floor(
+    (endDateUtc.getTime() - todayUtc.getTime()) / MS_PER_DAY
+  );
+  return Math.max(1, diffDays + 1);
 }
 
 /**
@@ -117,4 +160,31 @@ export function getOccupiedPlaceSlugs(): string[] {
     }
   }
   return Array.from(slugs);
+}
+
+/**
+ * Get occupied places and their remaining days (inclusive of end date).
+ * Used by PlaceSelector to display availability countdown.
+ */
+export function getOccupiedPlaceStatus(): Map<string, number> {
+  const now = new Date();
+  const today = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+
+  const status = new Map<string, number>();
+  for (const sponsor of sponsors) {
+    if (!isSponsorActive(sponsor, today)) {
+      continue;
+    }
+
+    const remainingDays = getRemainingDays(sponsor, today);
+    for (const place of sponsor.places) {
+      if (!status.has(place)) {
+        status.set(place, remainingDays);
+      }
+    }
+  }
+
+  return status;
 }

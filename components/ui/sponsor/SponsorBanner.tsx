@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { SPONSOR_BANNER_IMAGE } from "@utils/constants";
 import type { SponsorBannerProps } from "types/sponsor";
 
 /**
@@ -12,6 +13,10 @@ import type { SponsorBannerProps } from "types/sponsor";
 export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
   const t = useTranslations("Sponsor");
   const [hasError, setHasError] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number>(
+    SPONSOR_BANNER_IMAGE.IDEAL_ASPECT_RATIO
+  );
 
   if (hasError) {
     // Hide banner if image fails to load
@@ -29,13 +34,18 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
         href={sponsor.targetUrl}
         target="_blank"
         rel="sponsored noopener"
-        className="group block w-full overflow-hidden rounded-lg border border-border bg-muted/20 transition-shadow hover:shadow-md"
+        className={`group block w-full overflow-hidden rounded-lg bg-muted/20 transition-shadow hover:shadow-md ${
+          hasLoaded ? "border border-transparent" : "border border-border"
+        }`}
         data-analytics-event-name="sponsor_click"
         data-analytics-sponsor-name={sponsor.businessName}
         data-analytics-sponsor-place={place}
         data-analytics-sponsor-geo-scope={sponsor.geoScope}
       >
-        <div className="relative flex h-[100px] w-full items-center justify-center md:h-[120px]">
+        <div
+          className="relative w-full min-h-[80px] max-h-[160px] md:min-h-[100px] md:max-h-[180px]"
+          style={{ aspectRatio }}
+        >
           <Image
             src={sponsor.imageUrl}
             alt={sponsor.businessName}
@@ -44,6 +54,18 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
             className="object-contain"
             unoptimized
             onError={() => setHasError(true)}
+            onLoadingComplete={(img) => {
+              setHasLoaded(true);
+              if (!img.naturalWidth || !img.naturalHeight) return;
+              const ratio = img.naturalWidth / img.naturalHeight;
+              const clampedRatio = Math.min(
+                SPONSOR_BANNER_IMAGE.MAX_ASPECT_RATIO,
+                Math.max(SPONSOR_BANNER_IMAGE.MIN_ASPECT_RATIO, ratio)
+              );
+              setAspectRatio((current) =>
+                Math.abs(current - clampedRatio) < 0.01 ? current : clampedRatio
+              );
+            }}
           />
         </div>
       </a>

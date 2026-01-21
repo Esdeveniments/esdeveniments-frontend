@@ -177,6 +177,9 @@ Three visibility tiers based on geographic scope:
 - [x] **19. Checkout flow** end-to-end
 - [x] **20. Webhook signature verification**
 
+**Testing sponsor (visual proof)**  
+Add a temporary entry in `config/sponsors.ts` so the banner clearly shows a paid sponsor during demos. Use a fake business name and a banner that looks like an ad, so people immediately understand the slot is sponsored (e.g., "Patrocinat · Prova" in the image). For the click-through, use a real site like `https://www.tastautors.cat/` so the banner feels credible.
+
 ---
 
 ## Current Activation Workflow
@@ -281,6 +284,7 @@ Three visibility tiers based on geographic scope:
 - Show 3 scope tabs (Població / Comarca / Catalunya)
 - 3 duration options per scope (7/14/30 days) with "Més popular" badge on 7 days
 - Each with Stripe Checkout button
+- Availability note: if a place is occupied, show a countdown with days left until it unlocks (inclusive of end date, UTC-based).
 
 ### How It Works
 
