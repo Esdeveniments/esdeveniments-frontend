@@ -1,0 +1,13 @@
+{
+  "name": "que-fer-remotion",
+  "private": true,
+  "packageManager": "yarn@4.12.0",
+  "scripts": {
+    "studio": "remotion studio src/Root.tsx",
+    "render:weekly": "remotion render src/Root.tsx WeeklyHighlights out/weekly-highlights.mp4 --props=./data/weekly-highlights.sample.json",
+    "render:city": "remotion render src/Root.tsx CitySpotlight out/city-spotlight.mp4 --props=./data/city-spotlight.sample.json"
+  },
+  "dependencies": {
+    "remotion": "latest"
+  }
+}

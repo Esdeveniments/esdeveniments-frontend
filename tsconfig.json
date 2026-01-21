@@ -58,5 +58,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next", "sst.config.ts"]
+  "exclude": ["node_modules", ".next", "sst.config.ts", "remotion/**"]
 }

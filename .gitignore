@@ -23,6 +23,7 @@ blob-report/
 # next.js
 /.next/
 /out/
+/remotion/out/
 next-env.d.ts
 tsconfig.tsbuildinfo
 

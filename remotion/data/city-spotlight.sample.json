@@ -1,0 +1,25 @@
+{
+  "cityName": "Girona",
+  "dateRangeText": "Del 12 al 18 d'agost",
+  "events": [
+    {
+      "title": "Ruta gastronomica",
+      "dateText": "Tot el cap de setmana",
+      "locationText": "Barri Vell",
+      "imageUrl": ""
+    },
+    {
+      "title": "Teatre a la placa",
+      "dateText": "Dissabte, 19:00",
+      "locationText": "Placa del Vi",
+      "imageUrl": ""
+    },
+    {
+      "title": "Concerts al riu",
+      "dateText": "Diumenge, 20:00",
+      "locationText": "Devesa",
+      "imageUrl": ""
+    }
+  ],
+  "ctaText": "Guarda la data i comparteix"
+}

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2021",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "strict": true,
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "baseUrl": "..",
+    "paths": {
+      "types/*": ["./types/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "data/**/*.json"]
+}
