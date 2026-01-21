@@ -13,10 +13,8 @@ import {
 } from "@heroicons/react/24/outline";
 const PlusSmIcon = PlusIcon;
 import Image from "next/image";
-
 import ActiveLink from "@components/ui/common/link";
 import PressableLink from "@components/ui/primitives/PressableLink";
-import logo from "@public/static/images/logo-esdeveniments.webp";
 import type { NavbarClientProps } from "types/props";
 
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -24,6 +22,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const logoAlt = labels.logoAlt?.trim() || "Esdeveniments";
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
 
@@ -52,14 +51,14 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 prefetch={false}
                 variant="inline"
                 className="transition-transform duration-normal hover:scale-105"
+                aria-label={logoAlt}
               >
                 <Image
-                  src={logo}
+                  src="/static/images/logo-esdeveniments.webp"
                   className="bg-background flex justify-center items-center cursor-pointer"
-                  alt={labels.logoAlt}
+                  alt={logoAlt}
                   width={190}
                   height={18}
-                  priority={true}
                 />
               </PressableLink>
             </div>

@@ -60,7 +60,7 @@ const nextConfig = {
 
   // --- Optimizations ---
   compiler: {
-    removeConsole: false,
+    removeConsole: process.env.NODE_ENV === "production",
   },
 
   // --- Image Optimization ---

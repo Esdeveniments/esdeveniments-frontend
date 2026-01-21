@@ -77,7 +77,7 @@ if (!self.workbox) {
       new workbox.broadcastUpdate.BroadcastUpdatePlugin(),
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 50, // Don't cache more than 50 pages.
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 Days
       }),
     ],
   });

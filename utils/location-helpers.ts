@@ -24,7 +24,7 @@ const isDistinctLabel = (candidate: string, ...others: string[]): boolean => {
   if (!candidate) return false;
   const normalizedCandidate = normalize(candidate);
   return !others.some(
-    (other) => other && normalize(other) === normalizedCandidate
+    (other) => other && normalize(other) === normalizedCandidate,
   );
 };
 
@@ -59,7 +59,7 @@ export const buildDisplayLocation = ({
   if (
     formattedCityName &&
     !uniqueSegments.some(
-      (segment) => normalize(segment) === normalize(formattedCityName)
+      (segment) => normalize(segment) === normalize(formattedCityName),
     )
   ) {
     uniqueSegments.push(formattedCityName);
@@ -68,7 +68,7 @@ export const buildDisplayLocation = ({
   if (
     formattedRegionName &&
     !uniqueSegments.some(
-      (segment) => normalize(segment) === normalize(formattedRegionName)
+      (segment) => normalize(segment) === normalize(formattedRegionName),
     )
   ) {
     uniqueSegments.push(formattedRegionName);
@@ -209,7 +209,7 @@ export const buildEventListLocationLabels = ({
 };
 
 export const getPlaceTypeAndLabel = async (
-  place: string
+  place: string,
 ): Promise<PlaceTypeAndLabel> => {
   // Empty place means home page or Catalunya-wide view
   // Return default without making API calls
@@ -231,10 +231,10 @@ export const getPlaceTypeAndLabel = async (
         placeInfo.type === "CITY"
           ? "town"
           : placeInfo.type === "REGION"
-          ? "region"
-          : placeInfo.type === "PROVINCE"
-          ? "region"
-          : "town";
+            ? "region"
+            : placeInfo.type === "PROVINCE"
+              ? "region"
+              : "town";
 
       // For cities, look up parent region from cached data for SEO breadcrumbs
       if (type === "town") {
@@ -268,7 +268,8 @@ export const getPlaceTypeAndLabel = async (
 
     const region = regionsWithCities.find(
       (r) =>
-        sanitize(r.name) === place || sanitizeLegacyApostrophe(r.name) === place
+        sanitize(r.name) === place ||
+        sanitizeLegacyApostrophe(r.name) === place,
     );
     if (region) {
       return { type: "region", label: formatPlaceName(region.name) };
@@ -299,7 +300,7 @@ export const getPlaceTypeAndLabelCached = cache(getPlaceTypeAndLabel);
 
 export const getDistance = (
   location1: Location,
-  location2: Location
+  location2: Location,
 ): number => {
   const R = 6371;
   const dLat = deg2rad(location2.lat - location1.lat);

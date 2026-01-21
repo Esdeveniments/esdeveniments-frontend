@@ -693,6 +693,86 @@ return NextResponse.json(data, {
 
 ---
 
+## ⚠️ CRITICAL: Build-Time vs Runtime Behavior
+
+### The Problem: Internal Routes Don't Exist During Build
+
+During `next build` (static generation), internal API routes (`/api/*`) are **not available** because the Next.js server isn't running yet. This causes a **chicken-and-egg problem**:
+
+1. Build tries to generate static pages
+2. Pages call client libraries (`lib/api/events.ts`, `lib/api/places.ts`, etc.)
+3. Client libraries call internal routes via `getInternalApiUrl("/api/...")`
+4. Internal routes don't exist yet → returns HTML error page
+5. JSON parse fails: `"<!DOCTYPE "... is not valid JSON`
+
+### Environment-Specific Behavior
+
+| Environment | `isBuildPhase` | Behavior |
+|-------------|----------------|----------|
+| **SST/AWS** | `true` (no `VERCEL_URL`) | Bypasses internal routes ✅ |
+| **Vercel** | Depends on `NEXT_PHASE` | May try internal routes → fail ❌ |
+| **Local dev** | `false` | Uses internal routes (server running) ✅ |
+
+### The Solution: `isBuildPhase` Bypass Pattern
+
+Every client library in `lib/api/*.ts` MUST check `isBuildPhase` and call external wrappers directly during build:
+
+```typescript
+import { isBuildPhase } from "@utils/constants";
+import { fetchYourResourceExternal } from "./your-resource-external";
+
+export async function fetchYourResource(): Promise<YourDTO[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return [];
+
+  // ⚠️ CRITICAL: During build, bypass internal API (server not running)
+  if (isBuildPhase) {
+    try {
+      return await fetchYourResourceExternal();
+    } catch (error) {
+      console.error("fetchYourResource: external fetch failed during build", error);
+      return []; // Safe fallback
+    }
+  }
+
+  // Runtime: use internal API route (with caching benefits)
+  try {
+    return await resourceCache(fetchFromInternalApi);
+  } catch (e) {
+    console.error("Error fetching resource:", e);
+    return [];
+  }
+}
+```
+
+### Files That MUST Have This Pattern
+
+| File | Functions | Status |
+|------|-----------|--------|
+| `lib/api/events.ts` | `fetchEvents`, `getCategorizedEvents` | ✅ Has pattern |
+| `lib/api/regions.ts` | `fetchRegionsWithCities`, `fetchRegionsOptions` | ✅ Has pattern |
+| `lib/api/cities.ts` | `fetchCities` | ✅ Has pattern |
+| `lib/api/places.ts` | `fetchPlaceBySlug`, `fetchPlaces` | ✅ Has pattern |
+| `lib/api/categories.ts` | `fetchCategories`, `fetchCategoryById` | ✅ Has pattern |
+| `lib/api/news.ts` | Check if needed | Verify |
+
+### How to Verify
+
+```bash
+# Check all client libraries have the pattern
+grep -l "isBuildPhase" lib/api/*.ts | grep -v external
+
+# Expected: events.ts, regions.ts, cities.ts, places.ts, categories.ts
+```
+
+### Symptoms of Missing Pattern
+
+- Build error: `SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON`
+- Build error: `Error fetching X by slug: HTTP 401` (if HMAC secret missing)
+- Error only appears when Next.js cache is cleared or on fresh deploy
+
+---
+
 ## Resources
 
 ### Templates
