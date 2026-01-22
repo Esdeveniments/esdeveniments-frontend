@@ -14,22 +14,37 @@ import {
 
 // Mock the sponsors array to test the logic without affecting production data
 const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+  function getTodayUtc() {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  }
+
+  function isSponsorActive(sponsor: SponsorConfig, date: Date) {
+    const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
+    const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
+    return date >= startDate && date <= endDate;
+  }
+
+  function getRemainingDays(sponsor: SponsorConfig, todayUtc: Date) {
+    const endDateUtc = new Date(`${sponsor.endDate}T00:00:00.000Z`);
+    const diffDays = Math.floor(
+      (endDateUtc.getTime() - todayUtc.getTime()) / MS_PER_DAY
+    );
+    return Math.max(1, diffDays + 1);
+  }
+
   // Replicate the exact logic from config/sponsors.ts (UTC-based)
   function getActiveSponsorForPlace(place: string) {
-    const now = new Date();
-    const today = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-    );
+    const today = getTodayUtc();
 
     for (const sponsor of sponsors) {
       if (!sponsor.places.includes(place)) {
         continue;
       }
 
-      const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
-      const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
-
-      if (today >= startDate && today <= endDate) {
+      if (isSponsorActive(sponsor, today)) {
         return sponsor;
       }
     }
@@ -42,23 +57,37 @@ const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
   }
 
   function getAllActiveSponsors() {
-    const now = new Date();
-    const today = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-    );
+    const today = getTodayUtc();
 
-    return sponsors.filter((sponsor) => {
-      const startDate = new Date(`${sponsor.startDate}T00:00:00.000Z`);
-      const endDate = new Date(`${sponsor.endDate}T23:59:59.999Z`);
+    return sponsors.filter((sponsor) => isSponsorActive(sponsor, today));
+  }
 
-      return today >= startDate && today <= endDate;
-    });
+  function getOccupiedPlaceStatus() {
+    const today = getTodayUtc();
+    const status = new Map<string, number>();
+
+    for (const sponsor of sponsors) {
+      if (!isSponsorActive(sponsor, today)) {
+        continue;
+      }
+
+      const remainingDays = getRemainingDays(sponsor, today);
+      for (const place of sponsor.places) {
+        if (!status.has(place)) {
+          status.set(place, remainingDays);
+        }
+      }
+    }
+
+    return status;
   }
 
   return {
     getActiveSponsorForPlace,
     hasSponsorConfigForPlace,
     getAllActiveSponsors,
+    getRemainingDays,
+    getOccupiedPlaceStatus,
   };
 };
 
@@ -411,6 +440,107 @@ describe("Sponsor System", () => {
       expect(active).toHaveLength(2);
       expect(active.map((s) => s.businessName)).toContain("Sponsor A");
       expect(active.map((s) => s.businessName)).toContain("Sponsor B");
+    });
+  });
+
+  describe("getRemainingDays", () => {
+    test("counts remaining days inclusive of end date", () => {
+      const sponsor: SponsorConfig = {
+        businessName: "Remaining Days Sponsor",
+        imageUrl: "https://example.com/banner.jpg",
+        targetUrl: "https://example.com",
+        places: ["barcelona"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-20",
+      };
+      const { getRemainingDays } = createMockSponsorModule([sponsor]);
+
+      const todayUtc = new Date(Date.UTC(2026, 0, 15));
+      expect(getRemainingDays(sponsor, todayUtc)).toBe(6);
+    });
+
+    test("returns 1 on the last active day", () => {
+      const sponsor: SponsorConfig = {
+        businessName: "Last Day Sponsor",
+        imageUrl: "https://example.com/banner.jpg",
+        targetUrl: "https://example.com",
+        places: ["barcelona"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-15",
+      };
+      const { getRemainingDays } = createMockSponsorModule([sponsor]);
+
+      const todayUtc = new Date(Date.UTC(2026, 0, 15));
+      expect(getRemainingDays(sponsor, todayUtc)).toBe(1);
+    });
+  });
+
+  describe("getOccupiedPlaceStatus", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("returns remaining days for active places", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "Active Sponsor",
+          imageUrl: "https://example.com/banner.jpg",
+          targetUrl: "https://example.com",
+          places: ["barcelona", "gracia"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-20",
+        },
+        {
+          businessName: "Expired Sponsor",
+          imageUrl: "https://example.com/banner.jpg",
+          targetUrl: "https://example.com",
+          places: ["mataro"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-10",
+        },
+      ];
+      const { getOccupiedPlaceStatus } = createMockSponsorModule(sponsors);
+
+      const status = getOccupiedPlaceStatus();
+      expect(status.get("barcelona")).toBe(6);
+      expect(status.get("gracia")).toBe(6);
+      expect(status.has("mataro")).toBe(false);
+    });
+
+    test("keeps first match when multiple sponsors cover same place", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "First Sponsor",
+          imageUrl: "https://example.com/first.jpg",
+          targetUrl: "https://first.example.com",
+          places: ["barcelona"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-20",
+        },
+        {
+          businessName: "Second Sponsor",
+          imageUrl: "https://example.com/second.jpg",
+          targetUrl: "https://second.example.com",
+          places: ["barcelona"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-25",
+        },
+      ];
+      const { getOccupiedPlaceStatus } = createMockSponsorModule(sponsors);
+
+      const status = getOccupiedPlaceStatus();
+      expect(status.get("barcelona")).toBe(6);
     });
   });
 

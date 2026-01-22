@@ -58,14 +58,13 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
         {/* Google Fonts: preconnect to both CSS origin and font files origin */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Google Ads tracking - preconnect to reduce LCP latency (~300ms saving) */}
-        <link rel="preconnect" href="https://stats.g.doubleclick.net" />
-        {/* Ads load lazily via GoogleScriptsHeavy - use dns-prefetch instead of preconnect */}
+        {/* Analytics/ads load lazily - use dns-prefetch instead of preconnect */}
+        <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="//www.google-analytics.com" />
+        <link rel="dns-prefetch" href="//stats.g.doubleclick.net" />
         <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
       </head>
       <body>

@@ -1422,6 +1422,7 @@
       "preview": "Aparecerás en:",
       "noResults": "No se han encontrado resultados",
       "occupied": "Ocupado",
+      "occupiedWithDays": "Ocupado · {count, plural, one {# día restante} other {# días restantes}}",
       "selectFirst": "Primero selecciona dónde quieres aparecer",
       "orSpecific": "o elige una zona específica",
       "catalunya": {

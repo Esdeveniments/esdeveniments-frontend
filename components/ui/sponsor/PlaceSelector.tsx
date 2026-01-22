@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import type { PlaceOption, PlaceSelectorProps } from "types/sponsor";
 import { SPONSOR_POPULAR_PLACES } from "@utils/constants";
 import { normalizeForSearch } from "@utils/string-helpers";
-import { getOccupiedPlaceSlugs } from "@config/sponsors";
+import { getOccupiedPlaceStatus } from "@config/sponsors";
+import { useHydration } from "@components/hooks/useHydration";
 import {
   MapPinIcon,
   CheckIcon,
@@ -47,9 +48,13 @@ export default function PlaceSelector({
   const [isLoading, setIsLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const hydrated = useHydration();
 
-  // Get currently occupied places (computed once on mount)
-  const occupiedSlugs = useMemo(() => new Set(getOccupiedPlaceSlugs()), []);
+  // Get currently occupied places with remaining days (computed once on mount)
+  const occupiedStatus = useMemo(
+    () => (hydrated ? getOccupiedPlaceStatus() : new Map<string, number>()),
+    [hydrated]
+  );
 
   // Fetch places on mount
   useEffect(() => {
@@ -182,8 +187,16 @@ export default function PlaceSelector({
     }
   };
 
+  const getOccupiedLabel = (daysLeft?: number) => {
+    if (typeof daysLeft === "number") {
+      return t("placeSelector.occupiedWithDays", { count: daysLeft });
+    }
+    return t("placeSelector.occupied");
+  };
+
   // Computed once - avoids IIFE in JSX
-  const isCatalunyaOccupied = occupiedSlugs.has(CATALUNYA_SLUG);
+  const catalunyaDaysLeft = occupiedStatus.get(CATALUNYA_SLUG);
+  const isCatalunyaOccupied = typeof catalunyaDaysLeft === "number";
 
   return (
     <div className="w-full">
@@ -241,7 +254,7 @@ export default function PlaceSelector({
               </div>
               {isCatalunyaOccupied ? (
                 <span className="text-xs px-1.5 py-0.5 bg-warning-muted text-warning-dark rounded">
-                  {t("placeSelector.occupied")}
+                  {getOccupiedLabel(catalunyaDaysLeft)}
                 </span>
               ) : (
                 <span className="badge-primary text-xs">
@@ -285,7 +298,8 @@ export default function PlaceSelector({
               >
                 {filteredPlaces.length > 0 ? (
                   filteredPlaces.map((place) => {
-                    const isOccupied = occupiedSlugs.has(place.slug);
+                    const daysLeft = occupiedStatus.get(place.slug);
+                    const isOccupied = typeof daysLeft === "number";
                     return (
                       <button
                         key={`${place.type}-${place.slug}`}
@@ -297,7 +311,7 @@ export default function PlaceSelector({
                         <span className="flex items-center gap-2">
                           {isOccupied && (
                             <span className="text-xs px-1.5 py-0.5 bg-warning-muted text-warning-dark rounded">
-                              {t("placeSelector.occupied")}
+                              {getOccupiedLabel(daysLeft)}
                             </span>
                           )}
                           <span className="text-xs text-foreground/50">

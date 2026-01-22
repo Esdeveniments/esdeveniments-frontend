@@ -211,7 +211,7 @@ async function ServerEventsCategorized({
 
       {/* 2. SEO LINK SECTIONS (weekend, today, tomorrow, agendas) */}
       {seoLinkSectionsWithAnalytics.length > 0 && (
-        <div className="container py-8 border-b border-border/40 space-y-8">
+        <div className="container-page py-section-y border-b border-border/40 space-y-8">
           {seoLinkSectionsWithAnalytics.map((section) => (
             <div key={section.id} className="flex flex-col gap-4">
               <SectionHeading
