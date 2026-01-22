@@ -1,10 +1,16 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { SPONSOR_BANNER_IMAGE } from "@utils/constants";
 import type { SponsorBannerProps } from "types/sponsor";
+import { SPONSOR_BANNER_IMAGE } from "@utils/constants";
+import { useImageRetry } from "@components/hooks/useImageRetry";
+import {
+  getOptimalImageQuality,
+  getOptimalImageSizes,
+  getOptimalImageWidth,
+} from "@utils/image-quality";
+import { buildPictureSourceUrls } from "@utils/image-cache";
 
 /**
  * Client component that renders the sponsor banner with image error handling.
@@ -12,13 +18,41 @@ import type { SponsorBannerProps } from "types/sponsor";
  */
 export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
   const t = useTranslations("Sponsor");
-  const [hasError, setHasError] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<number>(
     SPONSOR_BANNER_IMAGE.IDEAL_ASPECT_RATIO
   );
+  const { hasError, handleError, handleLoad, showSkeleton, imageLoaded, getImageKey } =
+    useImageRetry(2);
 
-  if (hasError) {
+  const imageQuality = getOptimalImageQuality({
+    isPriority: false,
+    isExternal: true,
+  });
+  const imageWidth = getOptimalImageWidth("hero");
+  const sizes = getOptimalImageSizes("hero");
+  const sources = buildPictureSourceUrls(sponsor.imageUrl, undefined, {
+    width: imageWidth,
+    quality: imageQuality,
+  });
+
+  const handleImageLoad = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      handleLoad();
+      const img = event.currentTarget;
+      if (!img.naturalWidth || !img.naturalHeight) return;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const clampedRatio = Math.min(
+        SPONSOR_BANNER_IMAGE.MAX_ASPECT_RATIO,
+        Math.max(SPONSOR_BANNER_IMAGE.MIN_ASPECT_RATIO, ratio)
+      );
+      setAspectRatio((current) =>
+        Math.abs(current - clampedRatio) < 0.01 ? current : clampedRatio
+      );
+    },
+    [handleLoad]
+  );
+
+  if (hasError || !sources.fallback) {
     // Hide banner if image fails to load
     return null;
   }
@@ -35,7 +69,7 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
         target="_blank"
         rel="sponsored noopener"
         className={`group block w-full overflow-hidden rounded-lg bg-muted/20 transition-shadow hover:shadow-md ${
-          hasLoaded ? "border border-transparent" : "border border-border"
+          imageLoaded ? "border border-transparent" : "border border-border"
         }`}
         data-analytics-event-name="sponsor_click"
         data-analytics-sponsor-name={sponsor.businessName}
@@ -46,27 +80,29 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
           className="relative w-full min-h-[80px] max-h-[160px] md:min-h-[100px] md:max-h-[180px]"
           style={{ aspectRatio }}
         >
-          <Image
-            src={sponsor.imageUrl}
-            alt={sponsor.businessName}
-            fill
-            sizes="(max-width: 768px) 100vw, 728px"
-            className="object-contain"
-            unoptimized
-            onError={() => setHasError(true)}
-            onLoadingComplete={(img) => {
-              setHasLoaded(true);
-              if (!img.naturalWidth || !img.naturalHeight) return;
-              const ratio = img.naturalWidth / img.naturalHeight;
-              const clampedRatio = Math.min(
-                SPONSOR_BANNER_IMAGE.MAX_ASPECT_RATIO,
-                Math.max(SPONSOR_BANNER_IMAGE.MIN_ASPECT_RATIO, ratio)
-              );
-              setAspectRatio((current) =>
-                Math.abs(current - clampedRatio) < 0.01 ? current : clampedRatio
-              );
-            }}
-          />
+          {showSkeleton && (
+            <div className="absolute inset-0 bg-muted animate-fast-pulse" />
+          )}
+          <picture key={getImageKey(sources.fallback)}>
+            <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+            <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+            <img
+              className="object-contain w-full h-full absolute inset-0"
+              src={sources.fallback}
+              alt={sponsor.businessName}
+              width={imageWidth}
+              height={Math.round(imageWidth / SPONSOR_BANNER_IMAGE.IDEAL_ASPECT_RATIO)}
+              loading="lazy"
+              decoding="async"
+              onError={handleError}
+              onLoad={handleImageLoad}
+              sizes={sizes}
+              style={{
+                opacity: imageLoaded ? 1 : 0,
+                transition: "opacity 0.3s ease-in-out",
+              }}
+            />
+          </picture>
         </div>
       </a>
     </div>

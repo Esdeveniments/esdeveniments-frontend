@@ -6,6 +6,7 @@ import type { PlaceOption, PlaceSelectorProps } from "types/sponsor";
 import { SPONSOR_POPULAR_PLACES } from "@utils/constants";
 import { normalizeForSearch } from "@utils/string-helpers";
 import { getOccupiedPlaceStatus } from "@config/sponsors";
+import { useHydration } from "@components/hooks/useHydration";
 import {
   MapPinIcon,
   CheckIcon,
@@ -47,9 +48,13 @@ export default function PlaceSelector({
   const [isLoading, setIsLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const hydrated = useHydration();
 
   // Get currently occupied places with remaining days (computed once on mount)
-  const occupiedStatus = useMemo(() => getOccupiedPlaceStatus(), []);
+  const occupiedStatus = useMemo(
+    () => (hydrated ? getOccupiedPlaceStatus() : new Map<string, number>()),
+    [hydrated]
+  );
 
   // Fetch places on mount
   useEffect(() => {
