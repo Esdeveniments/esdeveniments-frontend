@@ -195,6 +195,10 @@ export default $config({
         HMAC_SECRET: requireEnv("HMAC_SECRET"),
         REVALIDATE_SECRET: requireEnv("REVALIDATE_SECRET"),
         DEEPL_API_KEY: requireEnv("DEEPL_API_KEY"),
+        // Optional: Redis shared cache for multi-instance deployments
+        ...(process.env.REDIS_URL && {
+          REDIS_URL: process.env.REDIS_URL,
+        }),
         // Optional: Pipedream webhook URL for new event email notifications
         // If not set, email notifications will be silently skipped
         ...(process.env.NEW_EVENT_EMAIL_URL && {

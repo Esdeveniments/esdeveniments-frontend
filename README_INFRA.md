@@ -308,6 +308,32 @@ For automatic deployment to work, configure these secrets in GitHub:
 | `NEXT_PUBLIC_GOOGLE_ADS`             | Google Ads conversion tracking ID          | Ads tracking        |
 | `NEXT_PUBLIC_GOOGLE_MAPS`            | Google Maps API key (client-side)          | Maps integration    |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console verification meta tag | SEO verification    |
+| `REDIS_URL`                          | Redis connection URL for shared cache      | Multi-instance cache |
+
+### Coolify Deployment (Docker)
+
+For containerized deployments (Coolify), use the provided `Dockerfile` and set:
+
+- Build Pack: `Dockerfile`
+- Exposed Port: `3000`
+- Required runtime env vars: `NEXT_PUBLIC_API_URL`, `HMAC_SECRET`, `REVALIDATE_SECRET`, `DEEPL_API_KEY`, `SENTRY_DSN`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- Optional: `REDIS_URL` for shared cache in multi-instance setups (set before build)
+
+### Coolify Auto-Deploy (GitHub App)
+
+Use the Coolify GitHub App for automatic production deploys on `main`:
+
+1. Install the Coolify GitHub App for this repo.
+2. In Coolify app settings → **Advanced** → enable **Auto Deploy**.
+3. Ensure the deploy branch is set to `main`.
+
+This is the recommended approach in Coolify’s docs.
+
+### Cloudflare Cache Guidelines
+
+- Cache static assets aggressively (`/_next/static/*`, `/static/*`) with long TTL.
+- Respect app-provided HTML caching headers (short `s-maxage` + `stale-while-revalidate`).
+- Keep `/api/*` dynamic; rely on cache headers from the app.
 
 ### Infrastructure Secrets (Optional)
 

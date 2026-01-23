@@ -116,6 +116,7 @@ jobs:
           # Stripe secrets (required for sponsor payments)
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
         run: |
           # Mask sensitive values in logs (defense in depth)
           echo "::add-mask::$HMAC_SECRET"
@@ -224,6 +225,11 @@ jobs:
 
           if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
             echo "CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN" >> .env.production
+          fi
+
+          if [ -n "$REDIS_URL" ]; then
+            echo "REDIS_URL=$REDIS_URL" >> .env.production
+            echo "✅ REDIS_URL configured"
           fi
 
       - name: Install Playwright browsers
