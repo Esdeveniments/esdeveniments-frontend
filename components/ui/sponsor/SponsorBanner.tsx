@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import type { SponsorBannerProps } from "types/sponsor";
 import { SPONSOR_BANNER_IMAGE } from "@utils/constants";
 import { useImageRetry } from "@components/hooks/useImageRetry";
+import { useHydration } from "@components/hooks/useHydration";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
@@ -21,6 +22,8 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
   const [aspectRatio, setAspectRatio] = useState<number>(
     SPONSOR_BANNER_IMAGE.IDEAL_ASPECT_RATIO
   );
+  // Track hydration state to avoid SSR/client mismatch with opacity
+  const isHydrated = useHydration();
   const { hasError, handleError, handleLoad, showSkeleton, imageLoaded, getImageKey } =
     useImageRetry(2);
 
@@ -59,23 +62,22 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
 
   return (
     <div className="relative w-full mt-6" data-testid="sponsor-banner">
-      {/* EU Ad Transparency Label - WCAG accessible contrast */}
-      <span className="absolute -top-5 left-0 text-xs text-foreground/70">
-        {t("label")}
-      </span>
-
       <a
         href={sponsor.targetUrl}
         target="_blank"
         rel="sponsored noopener"
-        className={`group block w-full overflow-hidden rounded-lg bg-muted/20 transition-shadow hover:shadow-md ${
+        className={`group block w-full overflow-hidden rounded-lg bg-muted/20 transition-shadow hover:shadow-md focus-ring ${
           imageLoaded ? "border border-transparent" : "border border-border"
         }`}
         data-analytics-event-name="sponsor_click"
         data-analytics-sponsor-name={sponsor.businessName}
         data-analytics-sponsor-place={place}
         data-analytics-sponsor-geo-scope={sponsor.geoScope}
+        data-analytics-sponsor-url={sponsor.targetUrl}
       >
+        <div className="flex-start px-card-padding-sm pt-card-padding-sm pb-element-gap-sm">
+          <span className="badge-default">{t("label")}</span>
+        </div>
         <div
           className="relative w-full min-h-[80px] max-h-[160px] md:min-h-[100px] md:max-h-[180px]"
           style={{ aspectRatio }}
@@ -98,8 +100,10 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
               onLoad={handleImageLoad}
               sizes={sizes}
               style={{
-                opacity: imageLoaded ? 1 : 0,
-                transition: "opacity 0.3s ease-in-out",
+                // Before hydration: show image immediately (SSR-friendly)
+                // After hydration: fade-in effect when image loads
+                opacity: !isHydrated || imageLoaded ? 1 : 0,
+                transition: isHydrated ? "opacity 0.3s ease-in-out" : "none",
               }}
             />
           </picture>

@@ -46,6 +46,7 @@ import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
+import { SponsorBannerSlot } from "@components/ui/sponsor";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -102,6 +103,7 @@ export default async function EventPage({
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
+  const placeSlug = primaryPlaceSlug;
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
@@ -208,7 +210,6 @@ export default async function EventPage({
   const faqJsonLd = buildFaqJsonLd(faqItems);
 
   // Prepare place data for LatestNewsSection (streamed separately)
-  const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
   const placeLabel = cityName || regionName || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref = withLocalePath(
@@ -367,6 +368,8 @@ export default async function EventPage({
             </div>{" "}
             {/* Event Header with status pill - Server-side rendered */}
             <EventHeader title={title} statusMeta={statusMeta} />
+            {/* Sponsor banner slot - near top for visibility */}
+            <SponsorBannerSlot place={placeSlug} />
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
             {/* Event Description - bring core info immediately */}
