@@ -18,8 +18,8 @@ import { buildPictureSourceUrls } from "@utils/image-cache";
  * 
  * Image loading strategy (flicker-free):
  * - Banner container is always visible (no hydration-dependent visibility)
- * - Image starts with opacity 1 for SSR compatibility
- * - Smooth fade-in transition only applies after first load event
+ * - Image starts fully visible for SSR compatibility (no opacity transitions)
+ * - Skeleton indicates loading state while image loads
  * - Only hides on persistent error (after retries exhausted)
  */
 export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
