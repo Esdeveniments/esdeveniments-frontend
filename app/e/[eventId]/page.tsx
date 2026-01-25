@@ -103,7 +103,6 @@ export default async function EventPage({
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
-  const placeSlug = primaryPlaceSlug;
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
@@ -213,7 +212,7 @@ export default async function EventPage({
   const placeLabel = cityName || regionName || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref = withLocalePath(
-    placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`,
+    primaryPlaceSlug === "catalunya" ? "/noticies" : `/noticies/${primaryPlaceSlug}`,
     locale
   );
 
@@ -369,7 +368,16 @@ export default async function EventPage({
             {/* Event Header with status pill - Server-side rendered */}
             <EventHeader title={title} statusMeta={statusMeta} />
             {/* Sponsor banner slot - near top for visibility */}
-            <SponsorBannerSlot place={placeSlug} />
+            {/* Cascade: town → region → country (specificity wins) */}
+            <SponsorBannerSlot
+              place={primaryPlaceSlug}
+              fallbackPlaces={[
+                // If primaryPlaceSlug is city, add region as first fallback
+                ...(citySlug && regionSlug ? [regionSlug] : []),
+                // Catalunya as ultimate fallback
+                "catalunya",
+              ].filter((p) => p !== primaryPlaceSlug)}
+            />
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
             {/* Event Description - bring core info immediately */}
@@ -405,7 +413,7 @@ export default async function EventPage({
               </div>
             )}
             {/* Event Categories - Server-side rendered for SEO */}
-            <EventCategories categories={event.categories} place={placeSlug} />
+            <EventCategories categories={event.categories} place={primaryPlaceSlug} />
             {/* Event details (status, duration, external url) - server-rendered */}
             <EventDetailsSection
               event={event}
@@ -492,7 +500,7 @@ export default async function EventPage({
       {/* Latest News Section - Streamed separately to improve TTFB */}
       <Suspense fallback={null}>
         <LatestNewsSection
-          placeSlug={placeSlug}
+          placeSlug={primaryPlaceSlug}
           placeLabel={placeLabel}
           placeType={placeType}
           newsHref={newsHref}

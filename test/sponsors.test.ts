@@ -36,16 +36,30 @@ const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
   }
 
   // Replicate the exact logic from config/sponsors.ts (UTC-based)
-  function getActiveSponsorForPlace(place: string) {
+  // Now supports fallback cascade for event pages
+  function getActiveSponsorForPlace(
+    place: string,
+    fallbackPlaces?: string[]
+  ): { sponsor: SponsorConfig; matchedPlace: string } | null {
     const today = getTodayUtc();
 
+    // Try primary place first
     for (const sponsor of sponsors) {
-      if (!sponsor.places.includes(place)) {
-        continue;
+      if (sponsor.places.includes(place) && isSponsorActive(sponsor, today)) {
+        return { sponsor, matchedPlace: place };
       }
+    }
 
-      if (isSponsorActive(sponsor, today)) {
-        return sponsor;
+    // Try fallback places in order (region → country)
+    if (fallbackPlaces) {
+      for (const fallback of fallbackPlaces) {
+        if (fallback) {
+          for (const sponsor of sponsors) {
+            if (sponsor.places.includes(fallback) && isSponsorActive(sponsor, today)) {
+              return { sponsor, matchedPlace: fallback };
+            }
+          }
+        }
       }
     }
 
@@ -139,7 +153,8 @@ describe("Sponsor System", () => {
 
       const result = getActiveSponsorForPlace("barcelona");
       expect(result).not.toBeNull();
-      expect(result?.businessName).toBe("Matching Business");
+      expect(result?.sponsor.businessName).toBe("Matching Business");
+      expect(result?.matchedPlace).toBe("barcelona");
     });
 
     test("returns null when sponsor is expired (end date passed)", () => {
@@ -190,7 +205,7 @@ describe("Sponsor System", () => {
 
       const result = getActiveSponsorForPlace("barcelona");
       expect(result).not.toBeNull();
-      expect(result?.businessName).toBe("Start Day Sponsor");
+      expect(result?.sponsor.businessName).toBe("Start Day Sponsor");
     });
 
     test("includes sponsor on exact end date", () => {
@@ -207,7 +222,7 @@ describe("Sponsor System", () => {
 
       const result = getActiveSponsorForPlace("barcelona");
       expect(result).not.toBeNull();
-      expect(result?.businessName).toBe("End Day Sponsor");
+      expect(result?.sponsor.businessName).toBe("End Day Sponsor");
     });
 
     test("returns first matching sponsor when multiple match (first-match-wins)", () => {
@@ -234,7 +249,7 @@ describe("Sponsor System", () => {
       const { getActiveSponsorForPlace } = createMockSponsorModule(sponsors);
 
       const result = getActiveSponsorForPlace("barcelona");
-      expect(result?.businessName).toBe("First Sponsor");
+      expect(result?.sponsor.businessName).toBe("First Sponsor");
     });
 
     test("matches place from multiple places array", () => {
@@ -249,15 +264,183 @@ describe("Sponsor System", () => {
       };
       const { getActiveSponsorForPlace } = createMockSponsorModule([sponsor]);
 
-      expect(getActiveSponsorForPlace("gracia")?.businessName).toBe(
+      expect(getActiveSponsorForPlace("gracia")?.sponsor.businessName).toBe(
         "Multi-place Sponsor"
       );
-      expect(getActiveSponsorForPlace("sants")?.businessName).toBe(
+      expect(getActiveSponsorForPlace("sants")?.sponsor.businessName).toBe(
         "Multi-place Sponsor"
       );
-      expect(getActiveSponsorForPlace("barcelona")?.businessName).toBe(
+      expect(getActiveSponsorForPlace("barcelona")?.sponsor.businessName).toBe(
         "Multi-place Sponsor"
       );
+    });
+  });
+
+  describe("Cascade Logic (Event Pages)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("returns town sponsor when town has sponsor (no fallback needed)", () => {
+      const townSponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/town.jpg",
+        targetUrl: "https://town.example.com",
+        places: ["cardedeu"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const regionSponsor: SponsorConfig = {
+        businessName: "Region Sponsor",
+        imageUrl: "https://example.com/region.jpg",
+        targetUrl: "https://region.example.com",
+        places: ["valles-oriental"],
+        geoScope: "region",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        townSponsor,
+        regionSponsor,
+      ]);
+
+      // Town sponsor wins even with fallbacks
+      const result = getActiveSponsorForPlace("cardedeu", ["valles-oriental", "catalunya"]);
+      expect(result?.sponsor.businessName).toBe("Town Sponsor");
+      expect(result?.matchedPlace).toBe("cardedeu");
+    });
+
+    test("falls back to region when town has no sponsor", () => {
+      const regionSponsor: SponsorConfig = {
+        businessName: "Region Sponsor",
+        imageUrl: "https://example.com/region.jpg",
+        targetUrl: "https://region.example.com",
+        places: ["valles-oriental"],
+        geoScope: "region",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([regionSponsor]);
+
+      // No town sponsor for cardedeu, falls back to region
+      const result = getActiveSponsorForPlace("cardedeu", ["valles-oriental", "catalunya"]);
+      expect(result?.sponsor.businessName).toBe("Region Sponsor");
+      expect(result?.matchedPlace).toBe("valles-oriental");
+    });
+
+    test("falls back to country when neither town nor region has sponsor", () => {
+      const countrySponsor: SponsorConfig = {
+        businessName: "Country Sponsor",
+        imageUrl: "https://example.com/country.jpg",
+        targetUrl: "https://country.example.com",
+        places: ["catalunya"],
+        geoScope: "country",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([countrySponsor]);
+
+      // No town or region sponsor, falls back to country
+      const result = getActiveSponsorForPlace("cardedeu", ["valles-oriental", "catalunya"]);
+      expect(result?.sponsor.businessName).toBe("Country Sponsor");
+      expect(result?.matchedPlace).toBe("catalunya");
+    });
+
+    test("returns null when no sponsors at any level", () => {
+      const { getActiveSponsorForPlace } = createMockSponsorModule([]);
+
+      const result = getActiveSponsorForPlace("cardedeu", ["valles-oriental", "catalunya"]);
+      expect(result).toBeNull();
+    });
+
+    test("respects cascade order: town → region → country", () => {
+      const townSponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/town.jpg",
+        targetUrl: "https://town.example.com",
+        places: ["cardedeu"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const regionSponsor: SponsorConfig = {
+        businessName: "Region Sponsor",
+        imageUrl: "https://example.com/region.jpg",
+        targetUrl: "https://region.example.com",
+        places: ["valles-oriental"],
+        geoScope: "region",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const countrySponsor: SponsorConfig = {
+        businessName: "Country Sponsor",
+        imageUrl: "https://example.com/country.jpg",
+        targetUrl: "https://country.example.com",
+        places: ["catalunya"],
+        geoScope: "country",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        townSponsor,
+        regionSponsor,
+        countrySponsor,
+      ]);
+
+      // All three active: town wins
+      expect(
+        getActiveSponsorForPlace("cardedeu", ["valles-oriental", "catalunya"])?.sponsor.businessName
+      ).toBe("Town Sponsor");
+
+      // No town sponsor for different town: region wins
+      expect(
+        getActiveSponsorForPlace("la-garriga", ["valles-oriental", "catalunya"])?.sponsor.businessName
+      ).toBe("Region Sponsor");
+
+      // No town or region sponsor: country wins
+      expect(
+        getActiveSponsorForPlace("girona", ["girones", "catalunya"])?.sponsor.businessName
+      ).toBe("Country Sponsor");
+    });
+
+    test("handles empty fallbackPlaces array", () => {
+      const sponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/banner.jpg",
+        targetUrl: "https://example.com",
+        places: ["barcelona"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([sponsor]);
+
+      // With empty fallbacks, behaves like no fallbacks
+      expect(getActiveSponsorForPlace("barcelona", [])?.sponsor.businessName).toBe("Town Sponsor");
+      expect(getActiveSponsorForPlace("girona", [])).toBeNull();
+    });
+
+    test("handles undefined fallbackPlaces", () => {
+      const sponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/banner.jpg",
+        targetUrl: "https://example.com",
+        places: ["barcelona"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([sponsor]);
+
+      // Without fallbacks, only checks primary place
+      expect(getActiveSponsorForPlace("barcelona")?.sponsor.businessName).toBe("Town Sponsor");
+      expect(getActiveSponsorForPlace("girona")).toBeNull();
     });
   });
 
