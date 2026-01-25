@@ -46,6 +46,7 @@ import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
+import { SponsorBannerSlot } from "@components/ui/sponsor";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -208,11 +209,10 @@ export default async function EventPage({
   const faqJsonLd = buildFaqJsonLd(faqItems);
 
   // Prepare place data for LatestNewsSection (streamed separately)
-  const placeSlug = event.city?.slug || event.region?.slug || "catalunya";
   const placeLabel = cityName || regionName || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref = withLocalePath(
-    placeSlug === "catalunya" ? "/noticies" : `/noticies/${placeSlug}`,
+    primaryPlaceSlug === "catalunya" ? "/noticies" : `/noticies/${primaryPlaceSlug}`,
     locale
   );
 
@@ -367,6 +367,17 @@ export default async function EventPage({
             </div>{" "}
             {/* Event Header with status pill - Server-side rendered */}
             <EventHeader title={title} statusMeta={statusMeta} />
+            {/* Sponsor banner slot - near top for visibility */}
+            {/* Cascade: town → region → country (specificity wins) */}
+            <SponsorBannerSlot
+              place={primaryPlaceSlug}
+              fallbackPlaces={[
+                // If primaryPlaceSlug is city, add region as first fallback
+                ...(citySlug && regionSlug ? [regionSlug] : []),
+                // Catalunya as ultimate fallback
+                "catalunya",
+              ].filter((p) => p !== primaryPlaceSlug)}
+            />
             {/* Event Calendar - Server-side rendered */}
             <EventCalendar event={event} />
             {/* Event Description - bring core info immediately */}
@@ -402,7 +413,7 @@ export default async function EventPage({
               </div>
             )}
             {/* Event Categories - Server-side rendered for SEO */}
-            <EventCategories categories={event.categories} place={placeSlug} />
+            <EventCategories categories={event.categories} place={primaryPlaceSlug} />
             {/* Event details (status, duration, external url) - server-rendered */}
             <EventDetailsSection
               event={event}
@@ -489,7 +500,7 @@ export default async function EventPage({
       {/* Latest News Section - Streamed separately to improve TTFB */}
       <Suspense fallback={null}>
         <LatestNewsSection
-          placeSlug={placeSlug}
+          placeSlug={primaryPlaceSlug}
           placeLabel={placeLabel}
           placeType={placeType}
           newsHref={newsHref}

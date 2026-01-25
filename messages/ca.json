@@ -163,6 +163,8 @@
     "Publish": {
       "heading": "Publica el teu esdeveniment a Catalunya",
       "subheading": "Afegeix el teu concert, exposició, teatre, taller o activitat cultural a l'agenda més gran de Catalunya. És gratuït!",
+      "sponsorTitle": "Tens un negoci local?",
+      "sponsorLink": "Veure opcions de patrocini",
       "benefits": {
         "title": "Per què publicar a Esdeveniments.cat?",
         "free": "100% gratuït - sense costos ocults",
@@ -260,6 +262,10 @@
         "advertise": "Patrocina",
         "contact": "Contacte",
         "archive": "Arxiu"
+      },
+      "sponsorCta": {
+        "title": "Fes visible el teu negoci local",
+        "description": "Patrocina un espai exclusiu a la teva zona. Només un anunci per població."
       },
       "featuredAgendas": "Agendes destacades",
       "copyright": "© {year} Esdeveniments.cat",
@@ -1317,7 +1323,7 @@
   "Sponsor": {
     "label": "Publicitat",
     "emptyState": "Anuncia el teu negoci aquí",
-    "cta": "Patrocina aquesta pàgina"
+    "cta": "Patrocina aquest espai"
   },
   "Sponsorship": {
     "meta": {

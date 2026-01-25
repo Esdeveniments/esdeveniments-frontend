@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "@i18n/routing";
+import { Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
@@ -707,6 +707,17 @@ const Publica = () => {
               onPreview={handlePreview}
               canPreview={true}
             />
+          </div>
+          <div className="flex-center pt-2 text-center">
+            <p className="body-small text-foreground/70">
+              {t("sponsorTitle")}{" "}
+              <Link
+                href="/patrocina"
+                className="body-small text-primary hover:text-primary/80 transition-interactive pressable-inline focus-ring"
+              >
+                {t("sponsorLink")}
+              </Link>
+            </p>
           </div>
         </div>
       </div>

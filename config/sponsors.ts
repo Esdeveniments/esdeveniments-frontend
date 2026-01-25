@@ -103,24 +103,61 @@ function getRemainingDays(sponsor: SponsorConfig, todayUtc: Date): number {
 }
 
 /**
- * Get the active sponsor for a specific place.
- * Returns the first matching sponsor that:
- * 1. Has the place in its places array
- * 2. Is within the date range (startDate <= today <= endDate)
- *
- * @param place - The place slug (e.g., "barcelona", "gracia")
- * @returns The active sponsor or null if none found
+ * Find an active sponsor for a single place (internal helper).
  */
-export function getActiveSponsorForPlace(place: string): ActiveSponsor | null {
+function findActiveSponsorForSinglePlace(
+  place: string,
+  today: Date
+): ActiveSponsor | null {
+  for (const sponsor of sponsors) {
+    if (sponsor.places.includes(place) && isSponsorActive(sponsor, today)) {
+      return sponsor;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get the active sponsor for a specific place with optional cascade fallbacks.
+ *
+ * Cascade logic (specificity wins):
+ * 1. Check primary place (e.g., town "cardedeu")
+ * 2. If no sponsor, check fallbacks in order (e.g., region "valles-oriental", then "catalunya")
+ *
+ * This ensures:
+ * - Town sponsors appear on their town's events
+ * - Region sponsors fill gaps where no town sponsor exists
+ * - Country sponsors are the ultimate fallback
+ *
+ * @param place - The primary place slug (e.g., "cardedeu")
+ * @param fallbackPlaces - Optional cascade fallbacks (e.g., ["valles-oriental", "catalunya"])
+ * @returns The active sponsor and which place matched, or null if none found
+ */
+export function getActiveSponsorForPlace(
+  place: string,
+  fallbackPlaces?: string[]
+): { sponsor: ActiveSponsor; matchedPlace: string } | null {
   const now = new Date();
   // Get midnight of the current day in UTC for a reliable comparison point
   const today = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
   );
 
-  for (const sponsor of sponsors) {
-    if (sponsor.places.includes(place) && isSponsorActive(sponsor, today)) {
-      return sponsor;
+  // Try primary place first
+  const primarySponsor = findActiveSponsorForSinglePlace(place, today);
+  if (primarySponsor) {
+    return { sponsor: primarySponsor, matchedPlace: place };
+  }
+
+  // Try fallback places in order (region → country)
+  if (fallbackPlaces) {
+    for (const fallback of fallbackPlaces) {
+      if (fallback) {
+        const fallbackSponsor = findActiveSponsorForSinglePlace(fallback, today);
+        if (fallbackSponsor) {
+          return { sponsor: fallbackSponsor, matchedPlace: fallback };
+        }
+      }
     }
   }
 

@@ -163,6 +163,8 @@
     "Publish": {
       "heading": "Publica tu evento en Cataluña",
       "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
+      "sponsorTitle": "¿Tienes un negocio local?",
+      "sponsorLink": "Ver opciones de patrocinio",
       "benefits": {
         "title": "¿Por qué publicar en Esdeveniments.cat?",
         "free": "100% gratuito - sin costes ocultos",
@@ -260,6 +262,10 @@
         "advertise": "Patrocina",
         "contact": "Contacto",
         "archive": "Archivo"
+      },
+      "sponsorCta": {
+        "title": "Da visibilidad a tu negocio local",
+        "description": "Patrocina un espacio exclusivo en tu zona. Solo un anuncio por población."
       },
       "featuredAgendas": "Agendas destacadas",
       "copyright": "© {year} Esdeveniments.cat",
@@ -1316,7 +1322,7 @@
   "Sponsor": {
     "label": "Publicidad",
     "emptyState": "Anuncia tu negocio aquí",
-    "cta": "Patrocina esta página"
+    "cta": "Patrocina este espacio"
   },
   "Sponsorship": {
     "meta": {

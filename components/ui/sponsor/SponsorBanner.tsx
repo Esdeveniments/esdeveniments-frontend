@@ -15,6 +15,12 @@ import { buildPictureSourceUrls } from "@utils/image-cache";
 /**
  * Client component that renders the sponsor banner with image error handling.
  * Shows the sponsor image with proper SEO attributes and fallback on error.
+ * 
+ * Image loading strategy (flicker-free):
+ * - Banner container is always visible (no hydration-dependent visibility)
+ * - Image starts fully visible for SSR compatibility (no opacity transitions)
+ * - Skeleton indicates loading state while image loads
+ * - Only hides on persistent error (after retries exhausted)
  */
 export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
   const t = useTranslations("Sponsor");
@@ -59,28 +65,27 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
 
   return (
     <div className="relative w-full mt-6" data-testid="sponsor-banner">
-      {/* EU Ad Transparency Label - WCAG accessible contrast */}
-      <span className="absolute -top-5 left-0 text-xs text-foreground/70">
-        {t("label")}
-      </span>
-
       <a
         href={sponsor.targetUrl}
         target="_blank"
         rel="sponsored noopener"
-        className={`group block w-full overflow-hidden rounded-lg bg-muted/20 transition-shadow hover:shadow-md ${
+        className={`group block w-full overflow-hidden rounded-card bg-muted/20 transition-shadow hover:shadow-md focus-ring ${
           imageLoaded ? "border border-transparent" : "border border-border"
         }`}
         data-analytics-event-name="sponsor_click"
         data-analytics-sponsor-name={sponsor.businessName}
         data-analytics-sponsor-place={place}
         data-analytics-sponsor-geo-scope={sponsor.geoScope}
+        data-analytics-sponsor-url={sponsor.targetUrl}
       >
+        <div className="flex-start px-card-padding-sm pt-card-padding-sm pb-element-gap-sm">
+          <span className="badge-default">{t("label")}</span>
+        </div>
         <div
           className="relative w-full min-h-[80px] max-h-[160px] md:min-h-[100px] md:max-h-[180px]"
           style={{ aspectRatio }}
         >
-          {showSkeleton && (
+          {showSkeleton && !imageLoaded && (
             <div className="absolute inset-0 bg-muted animate-fast-pulse" />
           )}
           <picture key={getImageKey(sources.fallback)}>
@@ -97,10 +102,8 @@ export default function SponsorBanner({ sponsor, place }: SponsorBannerProps) {
               onError={handleError}
               onLoad={handleImageLoad}
               sizes={sizes}
-              style={{
-                opacity: imageLoaded ? 1 : 0,
-                transition: "opacity 0.3s ease-in-out",
-              }}
+              // Always visible - no opacity transitions that cause flicker
+              // The skeleton behind handles loading state visually
             />
           </picture>
         </div>

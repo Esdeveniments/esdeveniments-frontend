@@ -9,6 +9,7 @@ import { contactEmail } from "@config/index";
 
 export default async function Footer(): Promise<JSX.Element> {
   const t = await getTranslations("Components.Footer");
+  const tSponsor = await getTranslations("Sponsor");
   const tTopAgenda = await getTranslations("Config.TopAgenda");
   const agendaLabel = tTopAgenda("agenda");
 
@@ -100,6 +101,29 @@ export default async function Footer(): Promise<JSX.Element> {
             )
           )}
         </nav>
+
+        {/* Horizontal Divider */}
+        <hr className="w-full max-w-4xl border-t border-border/50" />
+
+        {/* Sponsor CTA Section */}
+        <section
+          className="w-full flex flex-col items-center gap-element-gap"
+          aria-labelledby="footer-sponsor-cta"
+        >
+          <div className="card-bordered w-full max-w-4xl bg-background/60">
+            <div className="card-body flex flex-col items-center gap-element-gap text-center">
+              <h2 id="footer-sponsor-cta" className="heading-4 text-foreground-strong">
+                {t("sponsorCta.title")}
+              </h2>
+              <p className="body-small text-foreground/70 max-w-2xl">
+                {t("sponsorCta.description")}
+              </p>
+              <PressableAnchor href="/patrocina" className="btn-primary" variant="plain">
+                {tSponsor("cta")}
+              </PressableAnchor>
+            </div>
+          </div>
+        </section>
 
         {/* Horizontal Divider */}
         <hr className="w-full max-w-4xl border-t border-border/50" />

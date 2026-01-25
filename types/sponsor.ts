@@ -98,6 +98,13 @@ export interface SponsorBannerProps {
  */
 export interface SponsorBannerSlotProps {
   place: string;
+  /**
+   * Fallback places to check if primary place has no sponsor.
+   * Used for cascade logic: town → region → country.
+   * On event pages: [regionSlug, "catalunya"] allows region/country sponsors
+   * to appear when no town sponsor exists.
+   */
+  fallbackPlaces?: string[];
 }
 
 /**

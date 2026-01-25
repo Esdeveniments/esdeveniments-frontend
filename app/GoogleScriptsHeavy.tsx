@@ -93,6 +93,7 @@ export default function GoogleScriptsHeavy({
           sponsor_name: dataset.analyticsSponsorName || undefined,
           sponsor_place: dataset.analyticsSponsorPlace || undefined,
           sponsor_geo_scope: dataset.analyticsSponsorGeoScope || undefined,
+          sponsor_url: dataset.analyticsSponsorUrl || undefined,
         });
       }
 

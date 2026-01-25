@@ -163,6 +163,8 @@
     "Publish": {
       "heading": "Publish your event in Catalonia",
       "subheading": "Add your concert, exhibition, theatre, workshop or cultural activity to Catalonia's largest agenda. It's free!",
+      "sponsorTitle": "Have a local business?",
+      "sponsorLink": "See sponsorship options",
       "benefits": {
         "title": "Why publish on Esdeveniments.cat?",
         "free": "100% free - no hidden costs",
@@ -260,6 +262,10 @@
         "advertise": "Advertise",
         "contact": "Contact",
         "archive": "Archive"
+      },
+      "sponsorCta": {
+        "title": "Make your local business visible",
+        "description": "Sponsor an exclusive space in your area. Only one sponsor per town."
       },
       "featuredAgendas": "Featured agendas",
       "copyright": "© {year} Esdeveniments.cat",
@@ -1314,7 +1320,7 @@
   "Sponsor": {
     "label": "Advertisement",
     "emptyState": "Advertise your business here",
-    "cta": "Sponsor this page"
+    "cta": "Sponsor this space"
   },
   "Sponsorship": {
     "meta": {
