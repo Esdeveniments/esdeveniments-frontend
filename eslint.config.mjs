@@ -220,6 +220,23 @@ export default [
       ],
     },
   },
+  // CRITICAL: Prevent fetch cache explosion in external API wrappers
+  // Adding `next: { revalidate }` to fetchWithHmac enables unbounded S3+DynamoDB cache
+  // See: Jan 20, 2026 incident - 146K cache entries per build, 1.46M S3 objects
+  {
+    files: ["lib/api/*-external.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Property[key.name='next'] > ObjectExpression > Property[key.name='revalidate']",
+          message:
+            "⚠️ COST ALERT: Do NOT use `next: { revalidate }` in external wrappers! This enables unbounded fetch cache (146K entries per build, $300+ cost spike on Jan 20, 2026). External wrappers must use default no-store. Handle caching via Cache-Control headers in internal API routes instead.",
+        },
+      ],
+    },
+  },
   // Warn about using next/link directly - prefer next-intl's Link for locale handling
   // Allowed exceptions: primitives (have manual locale handling), types, tests, external-only links
   {

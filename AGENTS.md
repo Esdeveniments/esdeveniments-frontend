@@ -145,6 +145,8 @@ Before writing ANY new code, ALWAYS search first:
 
 ## ⚠️ CRITICAL: ISR/Caching Cost Prevention
 
+### Issue 1: Dynamic Pages from `searchParams`
+
 **NEVER add `searchParams` to page components in `app/[place]/` routes.**
 
 Reading `searchParams` in a page component makes the page **dynamic**, causing OpenNext/SST to create a separate DynamoDB cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
@@ -155,6 +157,31 @@ Reading `searchParams` in a page component makes the page **dynamic**, causing O
 2. Query params (`search`, `distance`, `lat`, `lon`) are handled **client-side only** via SWR
 3. SEO robots `noindex` for filtered URLs is handled via `X-Robots-Tag` header in `proxy.ts`
 4. CloudWatch alarm `DynamoDB-HighWriteCost-Alert` monitors for write spikes >100k/hour
+
+**If you need query-dependent behavior:**
+
+- Handle it in middleware (`proxy.ts`) for headers/redirects
+- Handle it client-side for data fetching
+- NEVER make the page component read `searchParams`
+
+### Issue 2: Fetch Cache Explosion from `next: { revalidate }`
+
+**NEVER add `next: { revalidate, tags }` to external API fetches in `lib/api/*-external.ts` files.**
+
+This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL as a separate entry in **both S3 and DynamoDB**. With high-cardinality APIs (100+ places × categories × dates × pages), this caused a cost spike on Jan 20, 2026 (146K cache entries per build vs baseline 150).
+
+**Rules:**
+
+1. External wrappers (`*-external.ts`) must use `fetchWithHmac` WITHOUT `next:` option
+2. This defaults to `cache: "no-store"` which prevents unbounded cache growth
+3. Internal API routes handle caching via `Cache-Control` headers instead
+4. See incident: `docs/incidents/2026-01-20-fetch-cache-explosion.md`
+
+**If you want to improve API caching:**
+
+- Add/adjust `Cache-Control` headers in internal API routes (`app/api/*`)
+- Use in-memory TTL caches (`createCache`/`createKeyedCache`) in client libraries
+- NEVER use `next: { revalidate }` on external fetches
 
 **If you need query-dependent behavior:**
 

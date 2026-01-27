@@ -2,9 +2,10 @@ import { fetchWithHmac } from "./fetch-wrapper";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
-// External fetches use `next: { revalidate }` to allow static generation during build.
-// Without this, fetchWithHmac defaults to `cache: "no-store"` which makes routes dynamic.
-const REGIONS_REVALIDATE = 86400; // 24 hours
+// IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
+// This causes OpenNext/SST to create a separate S3+DynamoDB cache entry for every unique URL.
+// Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
+// Internal API routes handle caching via Cache-Control headers instead.
 
 export async function fetchRegionsExternal(): Promise<
   RegionSummaryResponseDTO[]
@@ -12,9 +13,8 @@ export async function fetchRegionsExternal(): Promise<
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/places/regions`, {
-      next: { revalidate: REGIONS_REVALIDATE, tags: ["regions"] },
-    });
+    // No `next: { revalidate }` - uses no-store to avoid cache explosion
+    const res = await fetchWithHmac(`${api}/places/regions`);
     if (!res.ok) {
       console.error(`fetchRegionsExternal: HTTP ${res.status}`);
       return [];
@@ -32,9 +32,8 @@ export async function fetchRegionsOptionsExternal(): Promise<
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return [];
   try {
-    const res = await fetchWithHmac(`${api}/places/regions/options`, {
-      next: { revalidate: REGIONS_REVALIDATE, tags: ["regions", "regions:options"] },
-    });
+    // No `next: { revalidate }` - uses no-store to avoid cache explosion
+    const res = await fetchWithHmac(`${api}/places/regions/options`);
     if (!res.ok) {
       console.error(`fetchRegionsOptionsExternal: HTTP ${res.status}`);
       return [];
@@ -52,9 +51,8 @@ export async function fetchRegionByIdExternal(
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return null;
   try {
-    const res = await fetchWithHmac(`${api}/places/regions/${id}`, {
-      next: { revalidate: REGIONS_REVALIDATE, tags: ["regions", `region:${id}`] },
-    });
+    // No `next: { revalidate }` - uses no-store to avoid cache explosion
+    const res = await fetchWithHmac(`${api}/places/regions/${id}`);
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
