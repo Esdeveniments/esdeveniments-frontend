@@ -1,13 +1,11 @@
 name: AWS Cost Monitor
 
 on:
-  # Run twice daily to catch issues:
-  # - 8 AM UTC: Morning cost report
-  # - 10 AM UTC: Secondary check (catches overnight deploys)
+  # Run once daily at 8 AM UTC - only sends email if anomaly detected
+  # (CloudWatch alarms handle immediate alerting for spikes)
   schedule:
     - cron: "0 8 * * *"
-    - cron: "0 10 * * *"
-  # Allow manual trigger
+  # Allow manual trigger (always sends report regardless of anomaly)
   workflow_dispatch:
 
 # Note: Post-deploy monitoring is handled by CloudWatch alarms (immediate, 24/7)
@@ -198,8 +196,8 @@ jobs:
           echo "total_cost=$TOTAL_FORMATTED" >> $GITHUB_OUTPUT
           echo "total_writes=$TOTAL_WRITES" >> $GITHUB_OUTPUT
 
-      - name: Send daily report via SNS
-        if: always()
+      - name: Send alert via SNS (only on anomaly or manual trigger)
+        if: steps.analysis.outputs.anomaly == 'true' || github.event_name == 'workflow_dispatch'
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
@@ -207,7 +205,7 @@ jobs:
           if [ "${{ steps.analysis.outputs.anomaly }}" = "true" ]; then
             SUBJECT="⚠️ AWS Cost Alert - Anomaly Detected"
           else
-            SUBJECT="✅ AWS Daily Cost Report - ${{ steps.date.outputs.today }}"
+            SUBJECT="✅ AWS Cost Report (Manual) - ${{ steps.date.outputs.today }}"
           fi
 
           MESSAGE="AWS Frontend Cost Report - ${{ steps.date.outputs.today }}
@@ -254,8 +252,8 @@ jobs:
           fi
 
       # Fallback: Send email via GitHub Action (works without AWS SNS)
-      - name: Send email via SMTP (fallback)
-        if: always() && env.SMTP_PASSWORD != ''
+      - name: Send email via SMTP (fallback, only on anomaly or manual trigger)
+        if: (steps.analysis.outputs.anomaly == 'true' || github.event_name == 'workflow_dispatch') && env.SMTP_PASSWORD != ''
         env:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         uses: dawidd6/action-send-mail@v7
