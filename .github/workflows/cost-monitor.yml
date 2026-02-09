@@ -5,7 +5,7 @@ on:
   # (CloudWatch alarms handle immediate alerting for spikes)
   schedule:
     - cron: "0 8 * * *"
-  # Allow manual trigger (always sends report regardless of anomaly)
+  # Manual trigger - check Actions page for report (no email unless anomaly)
   workflow_dispatch:
 
 # Note: Post-deploy monitoring is handled by CloudWatch alarms (immediate, 24/7)
@@ -196,23 +196,19 @@ jobs:
           echo "total_cost=$TOTAL_FORMATTED" >> $GITHUB_OUTPUT
           echo "total_writes=$TOTAL_WRITES" >> $GITHUB_OUTPUT
 
-      - name: Send alert via SNS (only on anomaly or manual trigger)
-        if: steps.analysis.outputs.anomaly == 'true' || github.event_name == 'workflow_dispatch'
+      - name: Send alert via SNS (only on anomaly)
+        if: steps.analysis.outputs.anomaly == 'true'
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
-          # Build email message
-          if [ "${{ steps.analysis.outputs.anomaly }}" = "true" ]; then
-            SUBJECT="⚠️ AWS Cost Alert - Anomaly Detected"
-          else
-            SUBJECT="✅ AWS Cost Report (Manual) - ${{ steps.date.outputs.today }}"
-          fi
+          # Only gets here if anomaly detected
+          SUBJECT="⚠️ AWS Cost Alert - ${{ steps.date.outputs.today }}"
 
           MESSAGE="AWS Frontend Cost Report - ${{ steps.date.outputs.today }}
 
           Monthly Cost: \$${{ steps.analysis.outputs.total_cost }}
           DynamoDB Writes (24h): ${{ steps.analysis.outputs.total_writes }}
-          Status: $([ '${{ steps.analysis.outputs.anomaly }}' = 'true' ] && echo '⚠️ ANOMALY DETECTED' || echo '✅ Normal')
+          Status: ⚠️ ANOMALY DETECTED
 
           Frontend Baselines (eu-west-3):
           - DynamoDB: 5-15K/day stable, 30-50K after deploy (~\$1-3/month)
@@ -252,8 +248,8 @@ jobs:
           fi
 
       # Fallback: Send email via GitHub Action (works without AWS SNS)
-      - name: Send email via SMTP (fallback, only on anomaly or manual trigger)
-        if: (steps.analysis.outputs.anomaly == 'true' || github.event_name == 'workflow_dispatch') && env.SMTP_PASSWORD != ''
+      - name: Send email via SMTP (fallback, only on anomaly)
+        if: steps.analysis.outputs.anomaly == 'true' && env.SMTP_PASSWORD != ''
         env:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         uses: dawidd6/action-send-mail@v7
@@ -262,7 +258,7 @@ jobs:
           server_port: 587
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: ${{ steps.analysis.outputs.anomaly == 'true' && '⚠️ AWS Cost Alert - Anomaly Detected' || format('✅ AWS Daily Cost Report - {0}', steps.date.outputs.today) }}
+          subject: ⚠️ AWS Cost Alert - ${{ steps.date.outputs.today }}
           to: ${{ secrets.ALERT_EMAIL }}
           from: GitHub Actions <${{ secrets.SMTP_USERNAME }}>
           body: |
@@ -270,7 +266,7 @@ jobs:
 
             📊 Monthly Cost: $${{ steps.analysis.outputs.total_cost }}
             📝 DynamoDB Writes (24h): ${{ steps.analysis.outputs.total_writes }}
-            🔔 Status: ${{ steps.analysis.outputs.anomaly == 'true' && '⚠️ ANOMALY DETECTED' || '✅ Normal' }}
+            🔔 Status: ⚠️ ANOMALY DETECTED
 
             Baselines:
             - DynamoDB writes: 5-15K/day stable, 30-50K/day after deploy
