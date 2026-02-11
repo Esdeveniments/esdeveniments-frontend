@@ -86,6 +86,10 @@ export function handleCanonicalRedirects(
     "server-static-sitemap.xml",
     "preferits",
     "llms.txt",
+    "callback",
+    "patrocina",
+    "politica-privacitat",
+    "termes-servei",
   ]);
 
   // Only process redirects for place routes
