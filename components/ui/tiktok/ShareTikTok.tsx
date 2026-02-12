@@ -93,7 +93,15 @@ export default function ShareTikTok() {
   // Listen for OAuth callback from popup window
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
+      // Accept messages from same origin or from the redirect URI origin
+      // (needed when redirect goes to production but opener is localhost)
+      const redirectOrigin = new URL(redirectUri).origin;
+      if (
+        event.origin !== window.location.origin &&
+        event.origin !== redirectOrigin
+      ) {
+        return;
+      }
       const data = event.data as { type?: string; code?: string } | undefined;
       if (data?.type === "tiktok-auth" && data.code) {
         void exchangeCode(data.code);
@@ -101,7 +109,7 @@ export default function ShareTikTok() {
     }
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [exchangeCode]);
+  }, [exchangeCode, redirectUri]);
 
   const handleLogin = useCallback(async () => {
     if (!clientKey) {
