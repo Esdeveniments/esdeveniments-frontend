@@ -144,6 +144,7 @@ function getCsp() {
     // In development, also allow HTTP to ease testing against non-TLS sources
     "img-src": ["'self'", "data:", "https:", "blob:", isDev ? "http:" : ""],
     "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
+    "media-src": ["'self'", "blob:"],
     "frame-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],
     "object-src": ["'none'"],

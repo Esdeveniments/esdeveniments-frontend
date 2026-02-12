@@ -126,19 +126,21 @@ export default function TikTokPostForm({
       const uploadUrl = initData.data?.upload_url;
       if (!uploadUrl) throw new Error("No upload URL received");
 
-      // Step 2: Upload video via proxy
-      const uploadRes = await fetch("/api/tiktok/upload", {
-        method: "POST",
+      // Step 2: Upload video directly to TikTok's upload URL
+      // (bypasses Lambda 6MB payload limit by going browser → TikTok)
+      const totalSize = videoFile.size;
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
         headers: {
-          "Content-Type": "application/octet-stream",
-          "x-tiktok-upload-url": uploadUrl,
-          "x-tiktok-content-type": videoFile.type || "video/mp4",
+          "Content-Type": videoFile.type || "video/mp4",
+          "Content-Length": String(totalSize),
+          "Content-Range": `bytes 0-${totalSize - 1}/${totalSize}`,
         },
-        body: await videoFile.arrayBuffer(),
+        body: videoFile,
       });
       if (!uploadRes.ok) {
-        const uploadData = (await uploadRes.json()) as { error?: string };
-        throw new Error(uploadData.error || "Video upload failed");
+        const errText = await uploadRes.text().catch(() => "Unknown error");
+        throw new Error(`Upload failed: ${uploadRes.status} ${errText}`);
       }
       onPublished({ publish_id: initData.data?.publish_id || "" });
     } catch (e) {
