@@ -116,6 +116,10 @@ jobs:
           # Stripe secrets (required for sponsor payments)
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          # TikTok integration (optional - for /compartir-tiktok share page)
+          NEXT_PUBLIC_TIKTOK_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_TIKTOK_CLIENT_KEY }}
+          NEXT_PUBLIC_TIKTOK_REDIRECT_URI: ${{ secrets.NEXT_PUBLIC_TIKTOK_REDIRECT_URI }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
         run: |
           # Mask sensitive values in logs (defense in depth)
           echo "::add-mask::$HMAC_SECRET"
@@ -128,6 +132,7 @@ jobs:
           echo "::add-mask::$GOOGLE_PLACES_API_KEY"
           echo "::add-mask::$STRIPE_SECRET_KEY"
           echo "::add-mask::$STRIPE_WEBHOOK_SECRET"
+          echo "::add-mask::$TIKTOK_CLIENT_SECRET"
 
           # Create .env.production for Next.js build (NODE_ENV=production)
           # Next.js loads .env.production when NODE_ENV=production
@@ -224,6 +229,21 @@ jobs:
 
           if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
             echo "CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN" >> .env.production
+          fi
+
+          # TikTok integration (optional - for /compartir-tiktok share page)
+          if [ -n "$NEXT_PUBLIC_TIKTOK_CLIENT_KEY" ]; then
+            echo "NEXT_PUBLIC_TIKTOK_CLIENT_KEY=$NEXT_PUBLIC_TIKTOK_CLIENT_KEY" >> .env.production
+            echo "✅ NEXT_PUBLIC_TIKTOK_CLIENT_KEY configured"
+          fi
+
+          if [ -n "$NEXT_PUBLIC_TIKTOK_REDIRECT_URI" ]; then
+            echo "NEXT_PUBLIC_TIKTOK_REDIRECT_URI=$NEXT_PUBLIC_TIKTOK_REDIRECT_URI" >> .env.production
+          fi
+
+          if [ -n "$TIKTOK_CLIENT_SECRET" ]; then
+            echo "TIKTOK_CLIENT_SECRET=$TIKTOK_CLIENT_SECRET" >> .env.production
+            echo "✅ TIKTOK_CLIENT_SECRET configured"
           fi
 
       - name: Install Playwright browsers
