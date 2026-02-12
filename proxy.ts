@@ -201,6 +201,12 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/sponsors/image-upload",
   // Stripe webhook (signature verified by endpoint, not HMAC)
   "/api/sponsors/webhook",
+  // TikTok share page API routes (browser-initiated, proxies to TikTok API)
+  "/api/tiktok/token",
+  "/api/tiktok/creator-info",
+  "/api/tiktok/publish",
+  "/api/tiktok/upload",
+  "/api/tiktok/status",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -452,8 +458,13 @@ export default async function proxy(request: NextRequest) {
     const value = request.nextUrl.searchParams.get(param);
     return value !== null && value.trim().length > 0;
   });
-  if (hasNonCanonicalParams) {
-    response.headers.set("X-Robots-Tag", "noindex, follow");
+
+  // Hidden tool pages that should never be indexed by crawlers
+  const NOINDEX_PATHS = ["/compartir-tiktok", "/callback"];
+  const isNoindexPath = NOINDEX_PATHS.some((p) => pathname.startsWith(p));
+
+  if (hasNonCanonicalParams || isNoindexPath) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
 
   return response;
