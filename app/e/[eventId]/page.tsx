@@ -46,7 +46,7 @@ import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
-import { SponsorBannerSlot } from "@components/ui/sponsor";
+import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)

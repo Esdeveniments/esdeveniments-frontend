@@ -9,7 +9,7 @@ import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
-import { SponsorBannerSlot } from "@components/ui/sponsor";
+import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 
 async function HybridEventsList({
   initialEvents = [],
