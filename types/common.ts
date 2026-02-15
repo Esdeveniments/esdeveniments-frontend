@@ -126,6 +126,12 @@ export interface SocialLinks {
   [key: string]: string;
 }
 
+/** SVG icon data for a social platform (viewBox + path). */
+export interface SocialIconData {
+  viewBox: string;
+  path: string;
+}
+
 export interface FetchedData {
   content?: ListEvent[];
   noEventsFound?: boolean;

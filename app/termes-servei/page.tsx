@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { contactEmail, siteUrl } from "@config/index";
 import type { NextPage } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
@@ -13,6 +13,7 @@ export async function generateMetadata() {
     description: t("metaDescription"),
     canonical: `${siteUrl}/termes-servei`,
     locale,
+    robotsOverride: "noindex, follow",
   });
 }
 
@@ -27,7 +28,7 @@ const TermesServei: NextPage = async () => {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: t("heading"),
-    url: `${siteUrl}/termes-servei`,
+    url: toLocalizedUrl("/termes-servei", locale),
     description: t("metaDescription"),
     isPartOf: { "@id": `${siteUrl}#website` },
   };

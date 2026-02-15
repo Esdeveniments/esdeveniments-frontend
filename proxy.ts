@@ -462,7 +462,9 @@ export default async function proxy(request: NextRequest) {
 
   // Hidden tool pages that should never be indexed by crawlers
   const NOINDEX_PATHS = ["/compartir-tiktok", "/callback"];
-  const isNoindexPath = NOINDEX_PATHS.some((p) => pathname.startsWith(p));
+  const isNoindexPath = NOINDEX_PATHS.some((p) =>
+    (pathnameWithoutLocale || pathname).startsWith(p),
+  );
 
   if (hasNonCanonicalParams || isNoindexPath) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
