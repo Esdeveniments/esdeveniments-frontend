@@ -1431,7 +1431,7 @@
       "title": "¿Por qué patrocinar con nosotros?",
       "targeted": {
         "title": "Público que ya quiere salir",
-        "description": "Apareces cuando buscan dónde comer, comprar o salir. No interrumpes: llegas a gente con intención de compra."
+        "description": "Apareces cuando buscan qué hacer en su pueblo. Llegas a gente que ya quiere salir y busca planes."
       },
       "affordable": {
         "title": "Menos de 1€ al día por pueblo",
@@ -1453,7 +1453,7 @@
       "plans": {
         "7days": {
           "name": "7 días",
-          "description": "Perfecto para fines de semana largos o puentes festivos"
+          "description": "Perfecto para fines de semana largos o puentes"
         },
         "14days": {
           "name": "14 días",
@@ -1461,7 +1461,7 @@
         },
         "30days": {
           "name": "30 días",
-          "description": "Máxima exposición para tu negocio local"
+          "description": "Máxima visibilidad para tu negocio local"
         }
       }
     },
@@ -1482,7 +1482,7 @@
         },
         "step4": {
           "title": "Revisamos y activamos",
-          "description": "En menos de 24h laborables aparecerás en la página del lugar seleccionado"
+          "description": "En menos de 24h laborables aparecerás en la página del pueblo o comarca que has elegido"
         }
       }
     },

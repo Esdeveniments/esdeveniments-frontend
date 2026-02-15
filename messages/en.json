@@ -1429,7 +1429,7 @@
       "title": "Why sponsor with us?",
       "targeted": {
         "title": "People ready to go out",
-        "description": "You appear when they search where to eat, shop, or go out. No interruption: you reach people with buying intent."
+        "description": "You appear when they search what to do in their town. You reach people who already want to go out and are looking for plans."
       },
       "affordable": {
         "title": "Less than €1 a day per town",
@@ -1459,7 +1459,7 @@
         },
         "30days": {
           "name": "30 days",
-          "description": "Maximum exposure for your local business"
+          "description": "Maximum visibility for your local business"
         }
       }
     },
@@ -1480,7 +1480,7 @@
         },
         "step4": {
           "title": "We review and activate",
-          "description": "Within 24 business hours you'll appear on the selected place page"
+          "description": "Within 24 business hours you'll appear on the town or region page you chose"
         }
       }
     },

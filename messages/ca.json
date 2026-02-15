@@ -1432,7 +1432,7 @@
       "title": "Per què patrocinar amb nosaltres?",
       "targeted": {
         "title": "Públic que ja vol sortir",
-        "description": "Apareixes quan busquen on menjar, comprar o sortir. No interromps: arribes a gent amb intenció de compra."
+        "description": "Apareixes quan busquen què fer al seu poble. Arribes a gent que ja vol sortir i busca plans."
       },
       "affordable": {
         "title": "Menys d'1€ al dia per poble",
@@ -1445,7 +1445,7 @@
     },
     "pricing": {
       "title": "Preus senzills i transparents",
-      "subtitle": "Sense compromisos ni renovacions. No satisfet en 7 dies? Et retornem l'import.",
+      "subtitle": "Sense compromisos ni renovacions. Si en 7 dies no estàs content, et retornem l'import.",
       "popular": "Més popular",
       "cta": "Contracta",
       "perDay": "{price}/dia",
@@ -1458,11 +1458,11 @@
         },
         "14days": {
           "name": "14 dies",
-          "description": "Bona visibilitat durant èpoques d'alta activitat"
+          "description": "Bona visibilitat durant temporades d'alta activitat"
         },
         "30days": {
           "name": "30 dies",
-          "description": "Màxima exposició per al teu negoci local"
+          "description": "Màxima visibilitat per al teu negoci local"
         }
       }
     },
@@ -1483,7 +1483,7 @@
         },
         "step4": {
           "title": "Revisem i activem",
-          "description": "En menys de 24h laborables apareixeràs a la pàgina del lloc seleccionat"
+          "description": "En menys de 24h laborables apareixeràs a la pàgina del poble o comarca que has triat"
         }
       }
     },
@@ -1544,11 +1544,11 @@
       "subtitle": "Apareixerà a la pàgina del lloc que has triat.",
       "place": "Ubicació",
       "previewAlt": "Previsualització de la imatge",
-      "cta": "Pujar imatge",
+      "cta": "Puja la imatge",
       "uploading": "Pujant...",
       "progress": "{percent}% completat",
-      "changeCta": "Canviar imatge",
-      "doneCta": "Finalitzar",
+      "changeCta": "Canvia la imatge",
+      "doneCta": "Fet",
       "dropzone": {
         "title": "Arrossega la imatge aquí o fes clic",
         "formats": "Format horitzontal • JPG, PNG o WebP",
@@ -1592,7 +1592,7 @@
       },
       "missingSessionTitle": "No hem trobat el teu pagament",
       "missingSessionSubtitle": "Torna a la pàgina de preus i inicia el procés de nou.",
-      "backToPricing": "Tornar als preus",
+      "backToPricing": "Torna als preus",
       "goBack": "Enrere"
     },
     "successPage": {
@@ -1604,9 +1604,9 @@
       "subtitle": "Hem rebut la teva imatge correctament. Ara nosaltres ens encarreguem de la resta.",
       "nextTitle": "Què passa ara?",
       "next1": "1. Revisarem el bàner i l'enllaç per assegurar que tot és correcte.",
-      "next2": "2. En menys de 24h laborables el teu anunci apareixerà a la pàgina del lloc seleccionat.",
-      "backHome": "Tornar a l'inici",
-      "backPatrocina": "Tornar a Patrocina"
+      "next2": "2. En menys de 24h laborables el teu anunci apareixerà a la pàgina del poble o comarca que has triat.",
+      "backHome": "Torna a l'inici",
+      "backPatrocina": "Torna a Patrocina"
     },
     "cancelPage": {
       "meta": {
@@ -1617,9 +1617,9 @@
       "subtitle": "No s'ha completat el pagament. Pots tornar-ho a provar quan vulguis.",
       "note1": "No se t'ha fet cap càrrec.",
       "note2": "Si tens qualsevol dubte, escriu-nos i t'ajudarem.",
-      "tryAgain": "Tornar-ho a provar",
-      "backHome": "Tornar a l'inici"
+      "tryAgain": "Torna-ho a provar",
+      "backHome": "Torna a l'inici"
     },
-    "backToHome": "Tornar a l'inici"
+    "backToHome": "Torna a l'inici"
   }
 }
