@@ -11,14 +11,13 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act, cleanup } from "@testing-library/react";
-import SocialFollowPopup from "@components/ui/common/social/SocialFollowPopup";
-
-// ── Constants (mirror the component) ────────────────────────────────
-const STORAGE_KEY = "social-follow-popup";
-const PAGE_VIEW_KEY = "social-popup-views";
-const DELAY_MS = 10_000;
-const COOLDOWN_DAYS = 30;
-const MAX_DISMISSALS = 3;
+import SocialFollowPopup, {
+  STORAGE_KEY,
+  PAGE_VIEW_KEY,
+  DELAY_MS,
+  COOLDOWN_DAYS,
+  MAX_DISMISSALS,
+} from "@components/ui/common/social/SocialFollowPopup";
 
 // ── Mocks ───────────────────────────────────────────────────────────
 vi.mock("@components/hooks/useCheckMobileScreen", () => ({

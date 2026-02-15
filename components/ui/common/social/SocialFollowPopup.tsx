@@ -7,13 +7,13 @@ import { SocialIcon } from "./icons";
 import type { SocialPopupState } from "types/props";
 import { socialLinks } from "@config/index";
 
-const STORAGE_KEY = "social-follow-popup";
-const PAGE_VIEW_KEY = "social-popup-views";
-const SCROLL_PERCENT = 0.35;
-const DELAY_MS = 10_000;
-const COOLDOWN_DAYS = 30;
-const MAX_DISMISSALS = 3;
-const MIN_PAGE_VIEWS = 2;
+export const STORAGE_KEY = "social-follow-popup";
+export const PAGE_VIEW_KEY = "social-popup-views";
+export const SCROLL_PERCENT = 0.35;
+export const DELAY_MS = 10_000;
+export const COOLDOWN_DAYS = 30;
+export const MAX_DISMISSALS = 3;
+export const MIN_PAGE_VIEWS = 2;
 
 function getPopupState(): SocialPopupState | null {
   try {
