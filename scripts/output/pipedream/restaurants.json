@@ -1,0 +1,1066 @@
+{
+  "0": {
+    "email": "elcobert@hotmail.com",
+    "name": "Bar-Restaurant Cobert de Puigcercós",
+    "town": "Borredà",
+    "citySlug": "borreda",
+    "category": "",
+    "region": "Berguedà"
+  },
+  "1": {
+    "email": "info@baixpirineu.com",
+    "name": "Restaurant Baix Pirineu",
+    "town": "Borredà",
+    "citySlug": "borreda",
+    "category": "",
+    "region": "Berguedà"
+  },
+  "2": {
+    "email": "info@campingrieramerles.com",
+    "name": "Restaurant Riera de Merlès",
+    "town": "Borredà",
+    "citySlug": "borreda",
+    "category": "",
+    "region": "Berguedà"
+  },
+  "3": {
+    "email": "info@hortus.cat",
+    "name": "Hortus",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "Granja Escola i Horts de lloguer a Samalús. Visites per famílies amb reserva prèvia.",
+    "region": "Vallès Oriental"
+  },
+  "4": {
+    "email": "info@restaurantcangarriga.com",
+    "name": "Restaurant Can Garriga",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "5": {
+    "email": "alamielmueden@gmail.com",
+    "name": "Estanc - bar - restaurant La Múnia",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "6": {
+    "email": "info@calpadri.com",
+    "name": "Restaurant Cal Padrí",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "7": {
+    "email": "estanyclar@estanyclar.com",
+    "name": "Restaurant L’Estany Clar",
+    "town": "Cercs",
+    "citySlug": "cercs",
+    "category": "",
+    "region": "Berguedà"
+  },
+  "8": {
+    "email": "info@calpuo.cat",
+    "name": "Cal Puó Turisme Rural",
+    "town": "Collsuspina",
+    "citySlug": "collsuspina",
+    "category": "Cal Puó és una casa de poble al bell mig de Collsuspina, just davant l'església, on s'hi poden trobar 3 apartaments de turisme rural independents, totalment equipats, per passar uns dies en un entorn tranquil i privilegiat.",
+    "region": "Moianès"
+  },
+  "9": {
+    "email": "info@labufa.cat",
+    "name": "La Bufa",
+    "town": "Collsuspina",
+    "citySlug": "collsuspina",
+    "category": "El restaurant ofereix una cuina catalana casolana elaborada amb productes de proximitat i especialitzada en carns a la brasa i calçotades.",
+    "region": "Moianès"
+  },
+  "10": {
+    "email": "chechu4144@hotmail.com",
+    "name": "Bar El Comú",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Bar plats combinats",
+    "region": "Maresme"
+  },
+  "11": {
+    "email": "canparral@hotmail.com",
+    "name": "Bar Restaurant Can Parral",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Bar restaurant",
+    "region": "Maresme"
+  },
+  "12": {
+    "email": "zonacanbatlle@hotmail.com",
+    "name": "Bar Restaurant Centre Esportiu Can Batlle",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Zona d'oci i recreativa, als afores del municipi de Dosrius, en plena natura Disposa de Camp de futbol municipal, piscina.",
+    "region": "Maresme"
+  },
+  "13": {
+    "email": "info@dramarsa.com",
+    "name": "Petrològic Oil",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Estació de Servei Dramarsa RED SL. Benzinera-botiga, tren de rentat i Restaurant/Bar",
+    "region": "Maresme"
+  },
+  "14": {
+    "email": "calvictor@hotmail.es",
+    "name": "Restaurant Cal Víctor",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Bar restaurant",
+    "region": "Maresme"
+  },
+  "15": {
+    "email": "masiacancarreras@hotmail.com",
+    "name": "Restaurant Can Carreras",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "16": {
+    "email": "jaumetotal@hotmail.com",
+    "name": "Restaurant Can Rimblas",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Restaurant",
+    "region": "Maresme"
+  },
+  "17": {
+    "email": "mpp_2011@hotmail.com",
+    "name": "Restaurant Can Terrades del Molí",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Restaurant",
+    "region": "Maresme"
+  },
+  "18": {
+    "email": "canguinart@hotmail.com",
+    "name": "Restaurant Masia Can Guinart",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "19": {
+    "email": "supermercatelfar@hotmail.es",
+    "name": "Supermercat El Far",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Venda d'aliments, drogueria, basar, pa i rebosteria, cafeteria de degustació. venda de butà, i pollastres a l'ast",
+    "region": "Maresme"
+  },
+  "20": {
+    "email": "barnoufi@gmail.com",
+    "name": "Bar Granada",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Bar - Restaurant",
+    "region": "Anoia"
+  },
+  "21": {
+    "email": "info@eselbruc.es",
+    "name": "Cafeteria Queralt",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Bar - Restaurant",
+    "region": "Anoia"
+  },
+  "22": {
+    "email": "julio.carrique.ruiz@gmail.com",
+    "name": "Cal Chuli",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Bar - Restaurant",
+    "region": "Anoia"
+  },
+  "23": {
+    "email": "info@calnoio.com",
+    "name": "Cal Noio",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Restaurant",
+    "region": "Anoia"
+  },
+  "24": {
+    "email": "elcellerdelaguardia@hotmail.es",
+    "name": "El Celler de la Guàrdia",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Bar - Restaurant - Hotel",
+    "region": "Anoia"
+  },
+  "25": {
+    "email": "info@restaurantvinyanova.com",
+    "name": "La Vinyanova",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Restaurant",
+    "region": "Anoia"
+  },
+  "26": {
+    "email": "wmarquinar@gmail.com",
+    "name": "Restaurant Montserrat Parc",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Bar - Restaurant",
+    "region": "Anoia"
+  },
+  "27": {
+    "email": "hola@varovito.es",
+    "name": "Varovito Bistró",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Restaurant",
+    "region": "Anoia"
+  },
+  "28": {
+    "email": "info@cansous.com",
+    "name": "Bar Restaurant Can Sous",
+    "town": "Figaró-Montmany",
+    "citySlug": "figaro-montmany",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "29": {
+    "email": "infoavetblau@gmail.com",
+    "name": "L'Avet Blau hostal restaurant",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "30": {
+    "email": "restaurantcalrei@hotmail.com",
+    "name": "Restaurant Cal Rei",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "31": {
+    "email": "restaurantcarbonell@hotmail.com",
+    "name": "Restaurant Can Carbonell",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "32": {
+    "email": "restaurantlacosta@gmail.com",
+    "name": "Restaurant La Costa",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "33": {
+    "email": "lafontdecalguardia@hotmail.com",
+    "name": "Restaurant La Font de cal Guardià",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "34": {
+    "email": "restaurantsantroc@gmail.com",
+    "name": "Sant Roc restaurant",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "\"La cuina de un lloc és el seu paissatge a la cassola\". Per això amb la reapertura del Restaurant Sant Roc em volgut donar una nova visió als plats a la vegada que conservem l'essencia de la terra i els productes que ens ofereix el Parc natural del Montseny.",
+    "region": "Vallès Oriental"
+  },
+  "35": {
+    "email": "lespai2000@gmail.com",
+    "name": "Restaurant L'Espai",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "36": {
+    "email": "martamateiosola@hotmail.com",
+    "name": "Bar Restaurant \"El Racó\"",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Esmorzars, sopars, dinars, bar, cafeteria, etc.",
+    "region": "Vallès Oriental"
+  },
+  "37": {
+    "email": "info@jocadi.net",
+    "name": "Jocadi, S.L - El Petit Gourmet",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Llibreria, papereria, impremta, copisteria, gourmet, cafeteria, bar, etc.",
+    "region": "Vallès Oriental"
+  },
+  "38": {
+    "email": "gemarome26@gmail.com",
+    "name": "Restauració l'Ametlla Park, S.L.",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Restaurant, Bar, Cafeteria. Serveis d'esmorzar i dinars.",
+    "region": "Vallès Oriental"
+  },
+  "39": {
+    "email": "sergio@maximomor.com",
+    "name": "Campus Bar",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Serveis de restauració - Lloc de trobada del jovent i de la gent que fa esport al poble.",
+    "region": "Vallès Oriental"
+  },
+  "40": {
+    "email": "elsifonet@elsifonet.com",
+    "name": "El Sifonet / Can Quico",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Bar, vermuteria, restaurant, degustació.",
+    "region": "Vallès Oriental"
+  },
+  "41": {
+    "email": "informacio@lamasiadelametlla.com",
+    "name": "La Masia",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Restaurant familiar amb capacitat per fer menjars diaris i celebracions.",
+    "region": "Vallès Oriental"
+  },
+  "42": {
+    "email": "monguitr@gmail.com",
+    "name": "Restaurant Montguit",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Restaurant, Bar, Cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "43": {
+    "email": "jordi@roviracafes.com",
+    "name": "Rovira Cafès",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Distribuïdors de cafè per a hostaleria i també distribuïm monodosi pel mercat domèstic.",
+    "region": "Vallès Oriental"
+  },
+  "44": {
+    "email": "barresrestauranteacuarium@gmail.com",
+    "name": "Acuarium",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "45": {
+    "email": "marijou13@hotmail.com",
+    "name": "Bar Big Tony's",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "46": {
+    "email": "eltimbalcanginesta@hotmail.com",
+    "name": "Bar El Timbal",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "47": {
+    "email": "bar_restaurante_cordoba@hotmail.com",
+    "name": "Bar-restaurant Cordoba",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "48": {
+    "email": "cafedelluna@gmail.com",
+    "name": "Cafè de Lluna",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "49": {
+    "email": "cafeteriatrebol.87@gmail.com",
+    "name": "Cafeteria restaurant Trèbol",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Restaurants i establiments de menjar",
+    "region": "Vallès Oriental"
+  },
+  "50": {
+    "email": "cantaulats1903@gmail.com",
+    "name": "Can Taulats",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "51": {
+    "email": "sala@elracodelesportiu.com",
+    "name": "El Racó de l'Esportiu",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Restaurants i establiments de menjar",
+    "region": "Vallès Oriental"
+  },
+  "52": {
+    "email": "info@lanitdellinars.com",
+    "name": "La Nit de Llinars",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Restaurants i establiments de menjars",
+    "region": "Vallès Oriental"
+  },
+  "53": {
+    "email": "elvermutetdelcarrermajor@gmail.com",
+    "name": "La terrassa del vermutet",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria, cafè",
+    "region": "Vallès Oriental"
+  },
+  "54": {
+    "email": "juanatalia@hotmail.es",
+    "name": "Llinars Sabor Kebab Pizzeria",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant",
+    "region": "Vallès Oriental"
+  },
+  "55": {
+    "email": "moncook2017@gmail.com",
+    "name": "Mim",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Restaurants i establiments de menjars",
+    "region": "Vallès Oriental"
+  },
+  "56": {
+    "email": "pickupllinarssl@gmail.com",
+    "name": "Pick-up",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "57": {
+    "email": "castelldols@hotmail.es",
+    "name": "Pizzeria la Gombola",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "58": {
+    "email": "puntdetrobada08450@gmail.com",
+    "name": "Punt de Trobada",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Bar, Bar-restaurant, cafeteria",
+    "region": "Vallès Oriental"
+  },
+  "59": {
+    "email": "info@canbiel.com",
+    "name": "Restaurant Can Biel",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Restaurants i establiments de menjars",
+    "region": "Vallès Oriental"
+  },
+  "60": {
+    "email": "canpedragosa@hotmail.es",
+    "name": "Restaurant Can Pedragosa",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Restaurants i establiments de menjars",
+    "region": "Vallès Oriental"
+  },
+  "61": {
+    "email": "mad@madllinars.com",
+    "name": "Restaurant El Cau",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Restaurants i establiments de menjars",
+    "region": "Vallès Oriental"
+  },
+  "62": {
+    "email": "indiavic@hotmail.com",
+    "name": "L'Indià",
+    "town": "Malla",
+    "citySlug": "malla",
+    "category": "Bar cafeteria.",
+    "region": "Osona"
+  },
+  "63": {
+    "email": "joan.boronat@hotmail.com",
+    "name": "Bar Restaurant Boronat",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "64": {
+    "email": "albertchimi@hotmail.com",
+    "name": "Bar Restaurant Can Chimi",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "65": {
+    "email": "barlaplacetamontgat@gmail.com",
+    "name": "Bar Restaurant La Placeta",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "Restaurant bar de cuina mediterrània amb producte local, cuina casolana i ànima familiar ubicat al vell mig del barri de Monsolis i Casc Antic. El restaurant compta amb una amplia terrassa situada a la plaça Sant Joan, un menjador interior al pis superior i una petita terrassa amb vistes al mar on degustar bons plats de cuina mediterrània.",
+    "region": "Maresme"
+  },
+  "66": {
+    "email": "info@elmirall.es",
+    "name": "Restaurant El Mirall",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "67": {
+    "email": "info@fondamarina.com",
+    "name": "Restaurant La Fonda Marina",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "68": {
+    "email": "info@stazionepizzeria.com",
+    "name": "Restaurant Pizzeria Stazione",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "69": {
+    "email": "info@restaurantcanbesa.com",
+    "name": "Restaurant Can Besa",
+    "town": "Montseny",
+    "citySlug": "montseny",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "70": {
+    "email": "canmanelmontseny@gmail.com",
+    "name": "Restaurant Can Manel",
+    "town": "Montseny",
+    "citySlug": "montseny",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "71": {
+    "email": "masiacannena@yahoo.es",
+    "name": "Restaurant Can Nena",
+    "town": "Montseny",
+    "citySlug": "montseny",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "72": {
+    "email": "fondamontseny@hotmail.es",
+    "name": "Restaurant la Fonda del Montseny",
+    "town": "Montseny",
+    "citySlug": "montseny",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "73": {
+    "email": "hostal_muntane@hotmail.com",
+    "name": "Bar / Restaurant / Hostal Muntané",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "74": {
+    "email": "clepisada@gmail.com",
+    "name": "Bar Frankfurt Navarcles",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "75": {
+    "email": "sanau554@gmail.com",
+    "name": "Bar Kebab Navarcles",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "76": {
+    "email": "yeralevan@hotmail.com",
+    "name": "Bar La Bona Tapa",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "77": {
+    "email": "18677779312@163.com",
+    "name": "Bar La Llesqueria",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "78": {
+    "email": "e.moral.se@cdc.cat",
+    "name": "Bar Los Arcos",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "79": {
+    "email": "bar9sport@gmail.com",
+    "name": "Bar Nou Sport",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "80": {
+    "email": "restaurantpatoi@hotmail.com",
+    "name": "Restaurant Can Patoi",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "81": {
+    "email": "info@restaurant-elceller.com",
+    "name": "Restaurant El Celler",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "82": {
+    "email": "info@restaurantlacosta.net",
+    "name": "Restaurant La Costa",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "83": {
+    "email": "hola@caltrumfo.cat",
+    "name": "Bar restaurant Cal Trumfo",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "84": {
+    "email": "canparera@canparera.com",
+    "name": "Hotel Restaurant Can Parera",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "85": {
+    "email": "info@restaurantlanauparets.com",
+    "name": "Restaurant La Nau",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "86": {
+    "email": "restaurantelring@gmail.com",
+    "name": "BAR - RESTAURANT EL RING",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "87": {
+    "email": "barelrubio@hotmail.com",
+    "name": "BAR EL RUBIO",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "88": {
+    "email": "angelarivera6453@gmail.com",
+    "name": "Bar Ba’s",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "89": {
+    "email": "canmartri@canmartri.com",
+    "name": "Bar Restaurant Can Martri",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "90": {
+    "email": "jtorrent@santcebriapitchadnputt.cat",
+    "name": "Cafeteria Golf Sant Cebrià",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "91": {
+    "email": "joanetgirl@gmail.com",
+    "name": "La Pizzeria",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "92": {
+    "email": "adriansosasilva@gmail.com",
+    "name": "Restaurant Ca l'Adri",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "93": {
+    "email": "restaurantcalafina@gmail.com",
+    "name": "Restaurant Ca La Fina",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "94": {
+    "email": "comercial@lahacienda.cat",
+    "name": "Restaurant La Hacienda",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "95": {
+    "email": "tinallis@hotmail.com",
+    "name": "Restaurant La Vinya",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "96": {
+    "email": "lhernandezjimenez25@gmail.com",
+    "name": "Bar El Raconet de Cal Luís",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "97": {
+    "email": "divi_net663@hotmail.com",
+    "name": "Bar Granja Diví",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "98": {
+    "email": "silvio8125@gmail.com",
+    "name": "Pizzeria Cal Sastre - Luna Rossa",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "99": {
+    "email": "info@restaurantelraco.com",
+    "name": "Restaurant el Racó",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "100": {
+    "email": "taulacasolana@taulacasolana.es",
+    "name": "Lider Tempo Development, SLU (Restaurant Ca N' Amat)",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "101": {
+    "email": "oakrestaurante@golfbarcelona.com",
+    "name": "OAK, Restaurant",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "102": {
+    "email": "xavicasinero@gmail.com",
+    "name": "Bar El Casino",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "103": {
+    "email": "samanthaesperanza8@gmail.com",
+    "name": "Bar Restaurant la Trobada",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "104": {
+    "email": "info@santornemhi.com",
+    "name": "Bar Restaurant Santornem Hi Estació",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "105": {
+    "email": "thejaulabeach@gmail.com",
+    "name": "Bar Restaurant The Jaula Beach",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "106": {
+    "email": "aldiwan@aldiwan.es",
+    "name": "Bar Restaurante Aldiwan",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "107": {
+    "email": "cyntia@telefonica.net",
+    "name": "Bar Restaurante Casa Campo",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "108": {
+    "email": "johnyling@icloud.com",
+    "name": "Bar \"Can Cuka\"",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "En Johny, La Mei i l'Adrià, una família xinesa regenta el bar-restaurant.",
+    "region": "Osona"
+  },
+  "109": {
+    "email": "jvictori477@gmail.com",
+    "name": "Bar Núria",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "",
+    "region": "Osona"
+  },
+  "110": {
+    "email": "lanau2005@gmail.com",
+    "name": "Bar-Restaurant La Nau",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "",
+    "region": "Osona"
+  },
+  "111": {
+    "email": "lateliersjv@gmail.com",
+    "name": "Llibreria l'Atelier",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Hi podreu trobar llibres, papereria, plantes, joguines educatives, copisteria i regals.",
+    "region": "Osona"
+  },
+  "112": {
+    "email": "calteixidor@hotmail.com",
+    "name": "Restaurant Cal Teixidor",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "",
+    "region": "Osona"
+  },
+  "113": {
+    "email": "octavianbaroianu@yahoo.com",
+    "name": "Restaurant de Puig-l'Agulla",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "",
+    "region": "Osona"
+  },
+  "114": {
+    "email": "comaguiu@gmail.com",
+    "name": "Restaurant Set Fonts",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "",
+    "region": "Osona"
+  },
+  "115": {
+    "email": "ecogranjalaroca@gmail.com",
+    "name": "Granja La Roca",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "116": {
+    "email": "bardonpaco@gmail.com",
+    "name": "Bar Don Paco",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "",
+    "region": "Anoia"
+  },
+  "117": {
+    "email": "eucariatous@gmail.com",
+    "name": "Restaurant l’Eucaria",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "",
+    "region": "Anoia"
+  },
+  "118": {
+    "email": "santacana52@gmail.com",
+    "name": "Braseria Magust",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "119": {
+    "email": "elcafedelalaia@yahoo.es",
+    "name": "El Cafè de la Carme",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "120": {
+    "email": "closdenpep@closdenpep.cat",
+    "name": "Restaurant Clos d'en Pep",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "121": {
+    "email": "calamontseim@gmail.com",
+    "name": "Bar Ca La Montse",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "122": {
+    "email": "info@restaurantsalelles.com",
+    "name": "Bar Restaurant Braseria Salelles",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "123": {
+    "email": "calaiaiascp@gmail.com",
+    "name": "Bar Restaurant Ca La Iaia",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "124": {
+    "email": "maralardel@gmail.com",
+    "name": "Bar Rock'n'raola Street Food",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "125": {
+    "email": "info@cafesdelbages.com",
+    "name": "Cafès Del Bages",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "126": {
+    "email": "l.estoneta.2016@gmail.com",
+    "name": "Cafeteria L'Estoneta",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "CAFETERIA L'ESTONETA Ofereix una varietat de plats i begudes en un ambient acollidor i familiar. Els clients poden gaudir de bons entrepans i begudes en un entorn agradable. Servei d'esmorzars, berenars i venda de pa i pastisseria.",
+    "region": "Bages"
+  },
+  "127": {
+    "email": "1998.ingrid@gmail.com",
+    "name": "Restaurant el Racó de'n Paco",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "128": {
+    "email": "elsaraelsara@hotmail.com",
+    "name": "Bar Restaurant Elsara",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "129": {
+    "email": "restaurantegalisteo@hotmail.com",
+    "name": "Bar Restaurant Galisteo",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "130": {
+    "email": "calescola1996hotmail.com",
+    "name": "Ca L’Escolà, Restaurant-Masia",
+    "town": "Santa Maria de Miralles",
+    "citySlug": "santa-maria-de-miralles",
+    "category": "",
+    "region": "Anoia"
+  },
+  "131": {
+    "email": "yonibigut@hotmail.com",
+    "name": "Restaurant La Cantina de Balenyà",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "132": {
+    "email": "club.petanca.nou@hotmail.com",
+    "name": "Club Petanca Restaurant Nou",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  }
+}

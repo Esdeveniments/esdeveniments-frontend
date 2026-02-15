@@ -1,0 +1,1402 @@
+{
+  "0": {
+    "email": "cdtn.pavello@calldetenes.cat",
+    "name": "Pavelló municipal poliesportiu \"El Torrental\"",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "",
+    "region": "Osona"
+  },
+  "1": {
+    "email": "info@teatrecalldetenes.cat",
+    "name": "Auditori Teatre Calldetenes",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "L'Auditori Teatre de Calldetenes, construït a la plaça Onze de Setembre al costat de l'Ajuntament, va ser inaugurat el 22 de setembre de 2007 amb la presència al conseller de Cultura de la Generalitat, Josep Manuel Tresserras.",
+    "region": "Osona"
+  },
+  "2": {
+    "email": "cris.boixeda@gmail.com",
+    "name": "LA RUTLLA LLEURE",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "Una mirada conscient al lleure educatiu.",
+    "region": "Osona"
+  },
+  "3": {
+    "email": "info@samdance.cat",
+    "name": "SAMDANCE- SamFit Club",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "Nutrició i esport.",
+    "region": "Osona"
+  },
+  "4": {
+    "email": "ccandelich@yahoo.es",
+    "name": "Associació Cultural Xavier Flaquer Juvany",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "5": {
+    "email": "info@triescicling.es",
+    "name": "Associació Esportiva Triescicling",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "Entitat al servei de l'esport: Cronometratge de curses, plataforma d'inscripcions, app's de seguiment online de corredors, tot el que es necesita pels events.",
+    "region": "Vallès Oriental"
+  },
+  "6": {
+    "email": "triescicling@gmail.com",
+    "name": "Associació Esportiva Triescicling",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "L'Associació Esportiva Triescicling es una entitat esportiva, de caràcter Ciclista, i és la encarregada d'Organitzar el Trail de Vallforners.",
+    "region": "Vallès Oriental"
+  },
+  "7": {
+    "email": "grauoj@canovesisamalus.cat",
+    "name": "Centre Cívic Xavier Flaquer i Juvany de Samalús",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "8": {
+    "email": "parrammr@canovesisamalus.com",
+    "name": "Pista poliesportiva JM Jiménez Tortosa",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "9": {
+    "email": "mrafols@torres.es",
+    "name": "Ball de Gitanes",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "10": {
+    "email": "balldepastoretsdelamunia@hotmail.com",
+    "name": "Ball de Pastorets",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "11": {
+    "email": "esbartlamunia@gmail.com",
+    "name": "Esbart Dansaire de la Múnia",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "12": {
+    "email": "ctvm.esports@castellvidelamarca.cat",
+    "name": "Pedro Garcia",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "Coordinador entre l'Ajuntament de Castellví de la Marca i l'Escola Esportiva Municipal",
+    "region": "Alt Penedès"
+  },
+  "13": {
+    "email": "7arts.canyamars@gmail.com",
+    "name": "ASSOCIACIÓ CULTURAL 7ARTS",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "14": {
+    "email": "ivan@lameva.net",
+    "name": "ASSOCIACIÓ MÚSICA NATURA I COLORS",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Entitat dedicada a l'ensenyament musical, producció d'esdeveniments i desenvolupament artístic.",
+    "region": "Maresme"
+  },
+  "15": {
+    "email": "salafutdos@hotmail.com",
+    "name": "Club Esportiu Dosrius del Maresme",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "16": {
+    "email": "dequeriusdosrius@gmail.com",
+    "name": "Cultural de Que Rius (Associació)",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "17": {
+    "email": "pepperonis@gmail.com",
+    "name": "Handbol Platja Pepperonis Club Esportiu",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "18": {
+    "email": "info@monkeypaintball.com",
+    "name": "Monkey Paintball",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Paintball Dosrius",
+    "region": "Maresme"
+  },
+  "19": {
+    "email": "info@spwear.es",
+    "name": "Sportwear",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Fabricació i desenvolupament de teixits tècnics per a esport.",
+    "region": "Maresme"
+  },
+  "20": {
+    "email": "museubruc@gmail.com",
+    "name": "Amics del Museu de la Muntanya de Montserrat del Bruc",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "21": {
+    "email": "asociacionlabanyera@gmail.com",
+    "name": "Associació Cultural La Banyera",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "22": {
+    "email": "dansaestudi@gmail.com",
+    "name": "Associació Dansaestudi",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "23": {
+    "email": "vegantrailclub@gmail.com",
+    "name": "Club esportiu Vegantrail Ventola",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "24": {
+    "email": "marc.comas@liceubarcelona.cat",
+    "name": "Consorci Gran Teatre del Liceu (Magatzem)",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "25": {
+    "email": "comunicacio@bruc.cat",
+    "name": "Museu de la muntanya de Montserrat del Bruc",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "26": {
+    "email": "pilarferrec@gmail.com",
+    "name": "Per Què No? Teatre del Bruc",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "27": {
+    "email": "fds.ajuntament@fogarsdelaselva.cat",
+    "name": "Centre Cívic",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva",
+    "category": "",
+    "region": "La Selva"
+  },
+  "28": {
+    "email": "bitllesfogars@gmail.com",
+    "name": "Club de Bitlles Fogars",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva",
+    "category": "El “Club de Bitlles Fogars” en constitució , es presenten com un grup de jugadors a les bitlles catalanes i com a Club obert a tothom que vulgui gaudir d'aquests antic esport, per a poder jugar només cal tenir més de vuit anys.",
+    "region": "La Selva"
+  },
+  "29": {
+    "email": "fds.museu@fogarsdelaselva.cat",
+    "name": "Museu de la Pagesia",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva",
+    "category": "",
+    "region": "La Selva"
+  },
+  "30": {
+    "email": "germandatdemunt@gmail.com",
+    "name": "Associació social cultural Nostra Senyora de la Damunt",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "31": {
+    "email": "info@verdaguer.cat",
+    "name": "Casa Museu Verdaguer",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "32": {
+    "email": "vilasecamontse3@gmail.com",
+    "name": "Grup de teatre Atlàntida",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "33": {
+    "email": "folgueroles@folgueroles.cat",
+    "name": "Pavelló poliesportiu municipal Les Alzines",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "34": {
+    "email": "frecafrec@frecafrec.com",
+    "name": "Frec a frec, teatre",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Frec a frec és una companyia de teatre creada el 1995 amb el propòsit d'utilitzar l'experiència teatral com a eina per a l'educació en valors i la transformació social i personal.",
+    "region": "Vallès Oriental"
+  },
+  "35": {
+    "email": "agrupaciodones@gmail.com",
+    "name": "Agrupació Cultural de Dones de l'Ametlla",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "36": {
+    "email": "amindola@live.com",
+    "name": "Amíndola",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "La Revista Amíndola a néixer el 1989, de la mà de mossèn Joan Bellavista, en forma de revista d'informació general substituint el Butlletí Municipal que havia desaparegut com a publicació de l'Ajuntament. Amb el temps, la revista va anar derivant cap a temes culturals i de reflexió.",
+    "region": "Vallès Oriental"
+  },
+  "37": {
+    "email": "aeametlla@hotmail.com",
+    "name": "Associació Esportiva de l'Ametlla (AEA)",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Fou fundada el 2 de juliol de 2005 amb els colors verd i groc com els de la bandera del poble, i com a fruit de les il·lusions de molts joves i no tant joves amb un pensament comú: \"sóc de l'Ametlla i vull fer esport a l'Ametlla\". La junta directiva està formada per joves del poble que també són jugadors de l'equip. A la resta de jugadors els hem de donar les gràcies, ja que entre tots es va fer possible començar un projecte que a molts de nosaltres ens va fer tornar a creure en el poble i demostrar així que encara es poden fer moltes coses per seguir millorant el lloc on vivim. Només cal empenta i confiar en que si volem, podem!",
+    "region": "Vallès Oriental"
+  },
+  "38": {
+    "email": "lametllaencomu@gmail.com",
+    "name": "Associació l'Ametlla en Comú",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "L'objectiu d'aquesta associació és la defensa i la promoció de les activitats socials, culturals, educatives, esportives, econòmiques i de participació política dels ciutadans i ciutadanes, d'acord amb la Delcaració Universal dels Drets Humans.",
+    "region": "Vallès Oriental"
+  },
+  "39": {
+    "email": "ateneu.cinglesdeberti@gmail.com",
+    "name": "Ateneu Cingles de Bertí",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "40": {
+    "email": "esports@ametlla.cat",
+    "name": "Camp de Futbol Municipal Josep Costa",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Entitats que en fan ús: Club de Futbol l'Ametlla, Associació Esportiva l'Ametlla i Associació de Veterans de l'Ametlla.",
+    "region": "Vallès Oriental"
+  },
+  "41": {
+    "email": "cultura@ametlla.cat",
+    "name": "Casa dels Mestres",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "La Casa dels Mestres és un equipament multifuncional, actualment seu de l'Agrupació Cultural de Dones de l'Ametlla, l'Associació d'Artistes de l'Ametlla i el Grup d'Esplai del Principat de l'Ametlla (G.E.P.A.).",
+    "region": "Vallès Oriental"
+  },
+  "42": {
+    "email": "cbametlla@gmail.com",
+    "name": "Club Bàsquet l'Ametlla",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Entitat esportiva dedicada a la difusió i pràctica del bàsquet, amb la il&bull;lusió dels més petits i la competitivitat dels jugadors més grans. Amb grups des de l'escola (5 anys) fins a veterans i veteranes. Obert a tothom qui vulgui gaudir del nostre esport. Treball del bàsquet des dels fonaments de la tècnica individual fins a la complexitat del joc tàctic. El Club organitza al llarg de la temporada diverses activitats, a part dels entrenaments i la competició regular, tals com: Campus poliesportiu d'estiu, Torneig 3x3 de la Festa Major, i altres.",
+    "region": "Vallès Oriental"
+  },
+  "43": {
+    "email": "pedro_loras@yahoo.es",
+    "name": "Club hípic la Quaranya",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "El Club Hípic La Quaranya, amb més de 18 anys d'experiència, és un dels centres homologats per la Federació Catalana de Hípica. Ofereix més de 3 hectàrees de plena naturalesa per a gaudir del món del cavall i d'aquest meravellós art: l'equitació. Disposa de diferents pistes: pista de doma de 40x20, pista de doma de 60x20, pista de 120x80, pista de salt i un circuit 1 km. Esports: Especialitzat en les disciplines de doma clàssica, vaquera, salt i alta escola. Les activitats que es realitzen: - Classes teòriques i pràctiques particulars (dies i hores a concertar). - Classes teòriques i pràctiques en grup (dies i hores a concertar). - Casal d'estiu (s'inicia a finals de juny fins a finals de juliol). - Curs (s'inicia a principis de setembre i finalitza a mitjans de juny, coincidint amb el curs escolar). *Els grups s'organitzen en funció dels nivells dels alumnes: iniciació per a principiants, els iniciats i els avançats.",
+    "region": "Vallès Oriental"
+  },
+  "44": {
+    "email": "pilar.torca@diagroup.com",
+    "name": "Dia Market",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "El motor que mou DIA és oferir als consumidors qualitat el millor preu i per fer-ho els objectius principals i bàsics d'actuació són l'eficàcia, la iniciativa, el respecte, el treball en equip i el tracte al client.",
+    "region": "Vallès Oriental"
+  },
+  "45": {
+    "email": "escolamusica@ametlla.cat",
+    "name": "Escola Municipal de Música de l'Ametlla del Vallès",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "46": {
+    "email": "info@nyoca.cat",
+    "name": "Grup de Teatre Nyoca",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "47": {
+    "email": "info@acath.org",
+    "name": "Associació Canina de Treball Humanitari",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "48": {
+    "email": "rosertorruellaturro@yahoo.es",
+    "name": "Associació cultural Catarsi Teatre",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "49": {
+    "email": "lrodriguez79@hotmail.com",
+    "name": "Associació de balls de saló de Llinars",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Ball de saló i llatins. Estils socials i de competició. Ball en línia i sevillanes.",
+    "region": "Vallès Oriental"
+  },
+  "50": {
+    "email": "el.tercer.element@gmail.com",
+    "name": "Aventura i lleure el tercer element",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "51": {
+    "email": "info@cellinars.cat",
+    "name": "Centre d'Esports Llinars",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Club de futbol formatiu a partir dels 4 anys. Entrenaments de qualitat on aprendre els valors de l'esport i progressió en l'àmbit futbolístic. Vine, gaudeix i aprèn!",
+    "region": "Vallès Oriental"
+  },
+  "52": {
+    "email": "cellv@cellv.cat",
+    "name": "Centre Excursionista de Llinars del Vallès",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Fomentant l'excursionisme i el lleure a Llinars.",
+    "region": "Vallès Oriental"
+  },
+  "53": {
+    "email": "patinatgellinars@hotmail.com",
+    "name": "Club Patinatge Artístic Llinars del Vallès",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Patinatge artístic de 4 rodes, dansa i preparació física.",
+    "region": "Vallès Oriental"
+  },
+  "54": {
+    "email": "clubpetancallinars@gmail.com",
+    "name": "Club Petanca Llinars Atlètic",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Club esportiu de petanca.",
+    "region": "Vallès Oriental"
+  },
+  "55": {
+    "email": "esbartllinars@gmail.com",
+    "name": "Esbart Dansaire de Llinars del Vallès",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "56": {
+    "email": "emmllinars@amicsdelaunio.cat",
+    "name": "Escola Municipal de Música",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Escola de música on es realitzen cursos d'infants i d'adults. Es realitzen de setembre a juny, i durant el mes de juliol.",
+    "region": "Vallès Oriental"
+  },
+  "57": {
+    "email": "fsllinars@hotmail.com",
+    "name": "Futbol Sala Llinars",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Pràctica esportiva de futbol sala.",
+    "region": "Vallès Oriental"
+  },
+  "58": {
+    "email": "info@lesportiudellinars.cat",
+    "name": "L'Esportiu",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "59": {
+    "email": "frankieanrosser@hotmail.com",
+    "name": "La clau màgica del teatre",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "60": {
+    "email": "llinars@tilltall-teatre.cat",
+    "name": "Till-Tall grup de teatre",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "61": {
+    "email": "escoladansavocacions@gmail.com",
+    "name": "Vocacions Escola de dansa",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Educació relacionada amb l'esport i les activitats recreatives",
+    "region": "Vallès Oriental"
+  },
+  "62": {
+    "email": "http://monestirlluca.cat/",
+    "name": "Museu Santa Maria de Lluçà",
+    "town": "Lluçà",
+    "citySlug": "lluca",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "63": {
+    "email": "yesaecam@gmail.com",
+    "name": "AECAM Agrupació Esportiva Clubs Alt Maresme",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "64": {
+    "email": "ateneuelrovell@gmail.com",
+    "name": "Associació Ateneu Popular El Rovell Malgrat",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "65": {
+    "email": "lleuremaresme@hotmail.com",
+    "name": "Associació de Lleure infantil i juvenil Maresme",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "66": {
+    "email": "basquetmalgrat2000@hotmail.com",
+    "name": "Associació Esportiva Basquetbol Malgrat 2000",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "67": {
+    "email": "grupkaliudeteatre@gmail.com",
+    "name": "Associació Grup Kaliu de Teatre",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "68": {
+    "email": "clubundediez@gmail.com",
+    "name": "Associació sociocultural Undediez",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "69": {
+    "email": "ccm@ajmalgrat.cat",
+    "name": "Centre Cívic Malgrat",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "70": {
+    "email": "clubkitemalgrat@gmail.com",
+    "name": "Club esportiu Kitesurf Malgrat de Mar",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "71": {
+    "email": "cem.pa@hotmail.com",
+    "name": "Club Esportiu Malgratenc Patinatge Artístic",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "72": {
+    "email": "esportciclistamalgrat@gmail.com",
+    "name": "Esport Ciclista Malgrat",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "73": {
+    "email": "grupteatregermanor@gmail.com",
+    "name": "Grup de teatre Germanor",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "74": {
+    "email": "interesportiumalgrat@gmail.com",
+    "name": "Interesportiu Malgrat F.S.",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "75": {
+    "email": "najmadansa@gmail.com",
+    "name": "Najma Dansa",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "76": {
+    "email": "info@labarretinavermella.com",
+    "name": "Societat Cultural i Recreativa La Barretina Vermella",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar",
+    "category": "",
+    "region": "Maresme"
+  },
+  "77": {
+    "email": "montsenyactiu@gmail.com",
+    "name": "Associació Cultural Montseny Actiu",
+    "town": "Montseny",
+    "citySlug": "montseny",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "78": {
+    "email": "bcurriusfeliu@gmail.com",
+    "name": "Club Esportiu Jarto-Jartorius",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "79": {
+    "email": "esbartdansairenavarcli@gmail.com",
+    "name": "Esbart Dansaire Navarclí",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "80": {
+    "email": "info@clamfestival.org",
+    "name": "FICNA (Festival Internacional de Cinema de Navarcles)",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "81": {
+    "email": "grupteatrenavarcles@gmail.com",
+    "name": "Grup de Teatre Navarcles",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "82": {
+    "email": "info@lacreueta.cat",
+    "name": "La Creueta Centre Cultural",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "83": {
+    "email": "el-llac@el-llac.com",
+    "name": "Més Mingu Esports (La Cabana del Llac)",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "84": {
+    "email": "lleureiculturaolesa@gmail.com",
+    "name": "Associació Lleure i Cultura",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "85": {
+    "email": "latributeatre@gmail.com",
+    "name": "La Tribu Teatre",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "86": {
+    "email": "cdeandaluciaparets@gmail.com",
+    "name": "Associació cultural Casa de Andalucía de Parets del Vallès",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "87": {
+    "email": "associacio.dones.parets@gmail.com",
+    "name": "Associació Cultural de dones de Parets",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "88": {
+    "email": "jcc@jcc.cat",
+    "name": "Associació cultural dels i les joves comunistes",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "89": {
+    "email": "loopingesportilleure@gmail.com",
+    "name": "Associació Looping Esport i Lleure",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "90": {
+    "email": "associacio.rodola@gmail.com",
+    "name": "Associació Lúdico-Educativa Rodola",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "91": {
+    "email": "ateneulateixidora@gmail.com",
+    "name": "Ateneu Popular la Teixidora (ATP)",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "92": {
+    "email": "gitanesparets@gmail.com",
+    "name": "Colla del Ball de Gitanes de Parets",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "93": {
+    "email": "escola.musica@parets.cat",
+    "name": "Escola Municipal de Música",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "94": {
+    "email": "vallesoriental@omnium.cat",
+    "name": "Òmnium Cultural",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "95": {
+    "email": "esports@parets.cat",
+    "name": "Poliesportiu municipal Joaquim Rodríguez Oliver",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "96": {
+    "email": "prodansavalles@gmail.com",
+    "name": "PROdansa",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "97": {
+    "email": "laminesouane786@gmail.com",
+    "name": "Associació Cultural i Esportiva Baranima",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "98": {
+    "email": "polinyastones@hotmail.com",
+    "name": "Associació cultural Polinyà Stones",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "99": {
+    "email": "maricarmen@bailalostudio.com",
+    "name": "Club de ball esportiu Báilalo Studio",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "100": {
+    "email": "miraboira@sbg.cat",
+    "name": "Club Esportiu Miraboira",
+    "town": "Sant Bartomeu del Grau",
+    "citySlug": "sant-bartomeu-del-grau",
+    "category": "",
+    "region": "Osona"
+  },
+  "101": {
+    "email": "extraescolars.getip@gmail.com",
+    "name": "Getip",
+    "town": "Sant Bartomeu del Grau",
+    "citySlug": "sant-bartomeu-del-grau",
+    "category": "Activitats de lleure i llengua de signes",
+    "region": "Osona"
+  },
+  "102": {
+    "email": "angelmondejar@gmail.com",
+    "name": "Associació Cultural Recreativa Gent de Sant Cebrià",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "103": {
+    "email": "sofocusteatre@gmail.com",
+    "name": "Associació Sofocus Teatre",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "104": {
+    "email": "aesc2099@gmail.com",
+    "name": "Associació Esportiva Sant Climent",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "105": {
+    "email": "labonaconfiturateatre@gmail.com",
+    "name": "Associació cultural La Bona Confitura",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "106": {
+    "email": "sexesfoc@gmail.com",
+    "name": "Ball de diables Sexes Foc",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "107": {
+    "email": "esportbasesantcugat@hotmail.com",
+    "name": "Esport Base Sant Cugat",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "108": {
+    "email": "secretaria@aulamusicasesrovires.cat",
+    "name": "Associació Musical de Sant Esteve Sesrovires",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Associació per la difusió i formació musical. La seva principal activitat és la gestió l'Aula Municipal de Música de Sant Esteve Sesrovires.",
+    "region": "Baix Llobregat"
+  },
+  "109": {
+    "email": "info@arcdesantmarti.cat",
+    "name": "Associació Pro-Disminuïts Arc de Sant Martí Martorell",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Vetlla per l'educació, l'activitat laboral, l'oci i l'atenció residencial, sanitària, cultural i social de les persones amb discapacitat intel·lectual.",
+    "region": "Baix Llobregat"
+  },
+  "110": {
+    "email": "sesdansa@gmail.com",
+    "name": "Associació Ses Dansa",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Associació per la difusió i formació de la dansa i en especial la dansa-jazz . Gestiona l'Aula Municipal de Dansa de Sant Esteve.",
+    "region": "Baix Llobregat"
+  },
+  "111": {
+    "email": "pbsescf@gmail.com",
+    "name": "Club de Futbol Sant Esteve Sesrovires",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Club més antic de la població que té com a objectiu, la pràctica, la difusió i la formació en aquest esport. Gestiona l'Escola Esportiva Municipal de Futbol. Fa competició Federativa.",
+    "region": "Baix Llobregat"
+  },
+  "112": {
+    "email": "cheses@chses.net",
+    "name": "Club Handbol Sant Esteve Sesrovires",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Té com a objectiu, la pràctica, la difusió i la formació de l'handbol. Gestiona l'Escola Esportiva Municipal d'Handbol. Fa competició federativa.",
+    "region": "Baix Llobregat"
+  },
+  "113": {
+    "email": "clubpadel.sesrovires@hotmail.es",
+    "name": "Club Pàdel Sesrovires",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Té com a objectiu, la pràctica, la difusió i la formació del Pàdel. Gestiona l'Escola Esportiva Municipal de Pàdel. Fa competició Federativa.",
+    "region": "Baix Llobregat"
+  },
+  "114": {
+    "email": "info@clubpatinatgeses.org",
+    "name": "Club Patinatge Artístic Sant Esteve Sesrovires",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Té com a objectiu, la pràctica, la difusió i la formació del patinatge artístic. Gestiona l'Escola Esportiva Municipal de Patinatge.",
+    "region": "Baix Llobregat"
+  },
+  "115": {
+    "email": "fsses@hotmail.com",
+    "name": "Club Sant Esteve Sesrovires Futbol Sala",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Té com a objectiu, la pràctica, la difusió i la formació del futbol-sala. Gestiona l'Escola Esportiva Muncipal de futbol-sala. Entitat promotora de l'esport Femení en equip. Fa competició Federativa.",
+    "region": "Baix Llobregat"
+  },
+  "116": {
+    "email": "santestevevolei@gmail.com",
+    "name": "Club Vòlei Sant Esteve Sesrovires",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Té com a objectiu, la pràctica, la difusió i la formació del Vòlei. Gestiona l'Escola Esportiva Municipal de Vòlei i organitza activitats de Vòlei Platja durant l'esti. Fa competició Federativa.",
+    "region": "Baix Llobregat"
+  },
+  "117": {
+    "email": "esplaitrapella@gmail.com",
+    "name": "Esplai Trapella",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Entitat local que duu a terme, setmanalment, activitats de lleure infantil i juvenil. Organitza colònies en el període estival.",
+    "region": "Baix Llobregat"
+  },
+  "118": {
+    "email": "lulldebou@lulldebou.cat",
+    "name": "Grup de teatre L'Ull de Bou",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Grup local de teatre amateur que fa actuacions arreu del Principat.",
+    "region": "Baix Llobregat"
+  },
+  "119": {
+    "email": "flamencoamoralarte@gmail.com",
+    "name": "Grupo Flamenco Amor al Arte",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Col·lectiu el qual vol participar en la vida cultural del poble amb la seva proposta de ball i art escènic arrelada en el flamenc com art visual. L'objectiu és continuar ballant i assajant per poder oferir espectacles de qualitat que mostrin la diversitat del flamenc.",
+    "region": "Baix Llobregat"
+  },
+  "120": {
+    "email": "futbolcellorenca@gmail.com",
+    "name": "Centre d'Esports Llorençà",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "121": {
+    "email": "teatrenu@teatrenu.com",
+    "name": "La Casa del Teatre Nu",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "- Companyia de teatre -",
+    "region": "Anoia"
+  },
+  "122": {
+    "email": "uetous@gmail.com",
+    "name": "Unió Esportiva Tous",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "",
+    "region": "Anoia"
+  },
+  "123": {
+    "email": "lacivica@rostoll.cat",
+    "name": "Agrupació Cívica i Cultural Bisaura",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "Organitzadors del Cicle de Música i Dansa Tradicionals \"BallaBisaura\".",
+    "region": "Vallès Occidental"
+  },
+  "124": {
+    "email": "bisaurasona@gmail.com",
+    "name": "Associació Cultural Bisaura Sona",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "Els fins de l'associació són promoure activitats culturals i artístiques , oferir suport i desenvolupar projectes artístics adreçats o realitzats per qualsevol persona interessada recolzant i facilitant, en tot el possible la realització d'aquests projectes.",
+    "region": "Vallès Occidental"
+  },
+  "125": {
+    "email": "revistael855@gmail.com",
+    "name": "Associació Cultural Gombau Besora",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "Associació que té per objectiu fomentar la cultura a tot el territori del Bisaura.",
+    "region": "Vallès Occidental"
+  },
+  "126": {
+    "email": "esplaifotos@gmail.com",
+    "name": "Associació l'Esplai de la gent gran",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "Associació que disposa de l'objectiu d'acollir i donar activitats i lleure a les persones de més edat de Sant Quirze de Besora.",
+    "region": "Vallès Occidental"
+  },
+  "127": {
+    "email": "bisauradards10@gmail.com",
+    "name": "Club dards Bisaura",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "Club esportiu fundat al 2021 per pràctica esportiva dels dards.",
+    "region": "Vallès Occidental"
+  },
+  "128": {
+    "email": "info@ctsantquirze.cat",
+    "name": "Club Tennis Sant Quirze",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "Aquesta entitat té l'objectiu de fomentar la pràctica esportiva del tenis i del pàdel al nostre municipi.",
+    "region": "Vallès Occidental"
+  },
+  "129": {
+    "email": "esports@ccosona.cat",
+    "name": "Esports",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "130": {
+    "email": "elcentresantquirze@gmail.com",
+    "name": "Teatre El Centre",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "El Centre de Sant Quirze de Besora és l'entitat del Bisaura més antiga amb més d'un segle d'història, dedicada a fomentar el teatre.",
+    "region": "Vallès Occidental"
+  },
+  "131": {
+    "email": "aesantlluis@aesantlluis.cat",
+    "name": "Associació Esportiva Sant Lluís",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "132": {
+    "email": "ateneuunio@gmail.com",
+    "name": "Ateneu Unió",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "133": {
+    "email": "scc.regidoriacultura@santacolomadecervello.cat",
+    "name": "Centre Cívic Can Baruta",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "134": {
+    "email": "futsalmontpedros@gmail.com",
+    "name": "Club Esportiu Futsal Montpedrós",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "135": {
+    "email": "ritmica.mediterrania@gmail.com",
+    "name": "Club Esportiu Rítmica Mediterrània",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "136": {
+    "email": "teatresorec@gmail.com",
+    "name": "Grup de Teatre de la Societat Recreativa",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "137": {
+    "email": "scc.regidoriaesports@santacolomadecervello.cat",
+    "name": "Pavelló Poliesportiu Municipal",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "138": {
+    "email": "dinamitzemculturailleure@gmail.com",
+    "name": "Associació Dinamitzem Cultura i lleure",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "139": {
+    "email": "andalotodo@hotmail.com",
+    "name": "ASOCIACIÓN CULTURAL ANDALUZA DE TONA",
+    "town": "Tona",
+    "citySlug": "tona",
+    "category": "Dóna a conèixer la cultura andalusa a través de les activitats següents:",
+    "region": "Osona"
+  },
+  "140": {
+    "email": "abt.lacanal@gmail.com",
+    "name": "ASSOCIACIÓ AMICS DEL BALL DE TONA",
+    "town": "Tona",
+    "citySlug": "tona",
+    "category": "Promoció del ball.",
+    "region": "Osona"
+  },
+  "141": {
+    "email": "c_i_tona@hotmail.com",
+    "name": "ASSOCIACIÓ CULTURAL SALAM DE TONA",
+    "town": "Tona",
+    "citySlug": "tona",
+    "category": "Associació cultural i educativa de marroquins per donar a conèixer la cultura i les tradicions del Marroc.",
+    "region": "Osona"
+  },
+  "142": {
+    "email": "hipicacen@gmail.com",
+    "name": "Club Hípic 'Cavall, esport i natura'",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "143": {
+    "email": "casalcultura@torrelavit.cat",
+    "name": "Agrupació dansaire de Torrelavit",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "144": {
+    "email": "vendrell@moli-cube.com",
+    "name": "Molí Cubé (Museu paperer)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "145": {
+    "email": "sensedrama@gmail.com",
+    "name": "Ateneu - Sensedrama Aula de Teatre",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "146": {
+    "email": "esports@torrelles.cat",
+    "name": "Centre d'Esports Municipal de Can Coll",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "147": {
+    "email": "ateneutorrellenc@gmail.com",
+    "name": "L'Ateneu Torrellenc",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "148": {
+    "email": "uetorrelles@gmail.com",
+    "name": "Unió Esportiva Torrelles",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "149": {
+    "email": "info@aevallirana.com",
+    "name": "Associació Esportiva Vallirana",
+    "town": "Vallirana",
+    "citySlug": "vallirana",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "150": {
+    "email": "valligrans@gmail.com",
+    "name": "Associació Lúdica-Cultural de la Gent Gran de Vallirana",
+    "town": "Vallirana",
+    "citySlug": "vallirana",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "151": {
+    "email": "info@gimnas-koun.com",
+    "name": "Club Esportiu Koun",
+    "town": "Vallirana",
+    "citySlug": "vallirana",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "152": {
+    "email": "info@cemvallirana.cat",
+    "name": "Complex Esportiu Municipal",
+    "town": "Vallirana",
+    "citySlug": "vallirana",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "153": {
+    "email": "vlrn.cultura@vallirana.cat",
+    "name": "Cultura i Esports",
+    "town": "Vallirana",
+    "citySlug": "vallirana",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "154": {
+    "email": "emm.aurelivila@gmail.com",
+    "name": "Escola Municipal de Música Aureli Vila",
+    "town": "Vallirana",
+    "citySlug": "vallirana",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "155": {
+    "email": "vilalba@vilalbasasserra.cat",
+    "name": "Ateneu",
+    "town": "Vilalba Sasserra",
+    "citySlug": "vilalba-sasserra",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "156": {
+    "email": "assoc.ballainhoa@hotmail.es",
+    "name": "Ball esportiu, saló i social Ainhoa, Associació",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "157": {
+    "email": "cescmonclus@gmail.com",
+    "name": "AEE Pla de les Moreres",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "Associació Esportiva Escolar",
+    "region": "Anoia"
+  },
+  "158": {
+    "email": "manuel4400@hotmail.es",
+    "name": "Agrupació Cultural i Recreativa",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "159": {
+    "email": "mlora38@gmail.com",
+    "name": "Amics del ball La Torre",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "160": {
+    "email": "artisticvilanova2006@gmail.com",
+    "name": "Artístic - Associació de ball esportiu",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "161": {
+    "email": "arrabie2014@gmail.com",
+    "name": "Associació Cultural Arrabie",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "162": {
+    "email": "canom@telefonica.net",
+    "name": "Associació Cultural Camp del Rei",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "163": {
+    "email": "en_din_sa’t@fundesplai.org",
+    "name": "Associació de lleure infantil i juvenil Endinsa’t",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "164": {
+    "email": "centrecivicbarrilapau@vilanovadelcami.cat",
+    "name": "Centre Cívic del Barri de La Pau",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "165": {
+    "email": "andaluciaenvilanova@gmail.com",
+    "name": "Centro Cultural Casa de Andalucía de l’Anoia",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "166": {
+    "email": "japarito2006@gmail.com",
+    "name": "Club Esportiu Anoia",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "167": {
+    "email": "pere@budokan.es",
+    "name": "Club Esportiu Budokan",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "168": {
+    "email": "immaguma@gmail.com",
+    "name": "Esbart Dansaire Vilanova del Camí",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "169": {
+    "email": "uceanoia@gmail.com",
+    "name": "Unión Cultural Extremeña Anoia",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "170": {
+    "email": "focerrats@gmail.com",
+    "name": "Associació Cultural FocErrats",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "171": {
+    "email": "ccvv@vilanovadelvalles.cat",
+    "name": "Centre Cultural Vilanova del Vallès - CCVV",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "172": {
+    "email": "esbartrosadelsvents@gmail.com",
+    "name": "Esbart dansaire Rosa dels Vents",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "173": {
+    "email": "panicteatre@gmail.com",
+    "name": "Pànic teatre",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "174": {
+    "email": "esports@vilanovadelvalles.cat",
+    "name": "Pista Poliesportiva Coberta",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  }
+}

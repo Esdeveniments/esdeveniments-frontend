@@ -1,0 +1,178 @@
+{
+  "0": {
+    "email": "aina.gobern@gmail.com",
+    "name": "El Celler de Cal Cordero",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "1": {
+    "email": "cellercanpascual@gmail.com",
+    "name": "Vins i Caves Cellers Can Pascual",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "2": {
+    "email": "etmcl@hotmail.com",
+    "name": "Euro Transmisiones Montcada, S.L.",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Taller especialitzat en la reparació de caixes de canvi automàtiques de vehicles, turismes i comercials lleugeres.",
+    "region": "Vallès Oriental"
+  },
+  "3": {
+    "email": "xavimotos@hotmail.es",
+    "name": "Xavi Motos",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "4": {
+    "email": "info@avencdelgarraf.com",
+    "name": "Celler Avenc del Garraf",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "5": {
+    "email": "info@valldolina.com",
+    "name": "Celler Valldolina",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "6": {
+    "email": "salvi.associacio@gmail.com",
+    "name": "Associació Suport al dol SALVI (Somriu a la vida)",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "7": {
+    "email": "info@mascodina.com",
+    "name": "Caves Mas Codina",
+    "town": "Puigdàlber",
+    "citySlug": "puigdalber",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "8": {
+    "email": "x.ricart@coac.net",
+    "name": "Celler Laietà S.L.",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "9": {
+    "email": "visits@fincacanestella.com",
+    "name": "Bodegas Ca n'Estella, S.L.",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "10": {
+    "email": "logtravi@logtravi.com",
+    "name": "Logtravi S.L.",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "11": {
+    "email": "movidetous@escoltesiguies.cat",
+    "name": "AEiG Movi de Tous",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "Agrupament Escolta i Guia Movi de Tous formen part de Minyons Escoltes i Guies de Catalunya",
+    "region": "Anoia"
+  },
+  "12": {
+    "email": "celler@fargas-fargas.com",
+    "name": "Celler Fargas Fargas",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "13": {
+    "email": "firavins@gmail.com",
+    "name": "Comissió FiraVins",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "La Comissió Firavins va néixer l'any 2015, sota el paraigua de la Societat Recreativa. Des d'aleshores programa a l'abril el FiraVins, i el Projecte Orígens.",
+    "region": "Baix Llobregat"
+  },
+  "14": {
+    "email": "visitas@jeanleon.com",
+    "name": "Bodegues Jean Leon (Vins i caves)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "15": {
+    "email": "info@agustitorellomata.com",
+    "name": "Caves Agustí Torelló Mata",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "16": {
+    "email": "info@marquesrigol.com",
+    "name": "Caves Àngela Marquès Rigol (Vins i caves)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "17": {
+    "email": "visita@nadal.com",
+    "name": "Caves Nadal (Vins i caves)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "18": {
+    "email": "sadeve@naveran.com",
+    "name": "Caves Naveran (Vins i caves)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "19": {
+    "email": "info@moliparellada.com",
+    "name": "Celler 'Molí Parellada'",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "20": {
+    "email": "pardas@cancomas.com",
+    "name": "Celler Pardas",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "21": {
+    "email": "visita@seguraviudas.com",
+    "name": "Segura Viudas (Vins i caves)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  }
+}

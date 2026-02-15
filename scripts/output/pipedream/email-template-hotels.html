@@ -1,0 +1,67 @@
+<!--
+  EMAIL TEMPLATE: Hotels & Allotjament
+  Pipedream variables: {{name}}, {{town}}, {{citySlug}}
+  Subject: {{name}} — visitants que busquen on dormir a {{town}}
+-->
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 550px;
+        margin: 0 auto;
+        padding: 20px;
+        font-size: 15px;
+      }
+      a {
+        color: #d63347;
+      }
+      .sig {
+        margin-top: 24px;
+        border-top: 1px solid #eee;
+        padding-top: 12px;
+        font-size: 13px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Hola,</p>
+
+    <p>Sóc l'Albert, d'<strong>esdeveniments.cat</strong>.</p>
+
+    <p>
+      Cada setmana centenars de persones busquen activitats a
+      <strong>{{town}}</strong> al nostre portal — fires, concerts, festes
+      majors. Molta d'aquesta gent ve de fora i busca on allotjar-se.
+    </p>
+
+    <p>
+      Estem obrint un espai de publicitat local: un banner que apareix quan algú
+      mira els esdeveniments de la vostra zona. Directe al públic que ja té
+      previst desplaçar-se.
+    </p>
+
+    <p>
+      Podeu veure-ho aquí:
+      <a href="https://esdeveniments.cat/{{citySlug}}"
+        >esdeveniments.cat/{{citySlug}}</a
+      >
+    </p>
+
+    <p>Si us interessa, responeu aquest correu. Sense compromís.</p>
+
+    <p>Salut,</p>
+
+    <div class="sig">
+      Albert Olivé<br />
+      <a href="https://esdeveniments.cat">esdeveniments.cat</a><br />
+      <a href="mailto:hola@esdeveniments.cat">hola@esdeveniments.cat</a>
+    </div>
+  </body>
+</html>

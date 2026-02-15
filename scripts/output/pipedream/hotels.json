@@ -1,0 +1,386 @@
+{
+  "0": {
+    "email": "info@lesoliveres.cat",
+    "name": "Turisme rural Les Oliveres",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "1": {
+    "email": "info@valltr.com",
+    "name": "Casa Vall Llòbrega - Turisme rural",
+    "town": "Cercs",
+    "citySlug": "cercs",
+    "category": "",
+    "region": "Berguedà"
+  },
+  "2": {
+    "email": "reserves@hotelbergapark.com",
+    "name": "Hotel Berga Park",
+    "town": "Cercs",
+    "citySlug": "cercs",
+    "category": "",
+    "region": "Berguedà"
+  },
+  "3": {
+    "email": "info@hotelsanta-barbara.com",
+    "name": "Hotel Santa Bàrbara **",
+    "town": "Cercs",
+    "citySlug": "cercs",
+    "category": "",
+    "region": "Berguedà"
+  },
+  "4": {
+    "email": "info@rclamasia.com",
+    "name": "Residència Canina La Masia",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Hotel-guarderia per a gossos.",
+    "region": "Maresme"
+  },
+  "5": {
+    "email": "info@villamazzara.com",
+    "name": "Turisme Rural Villa Mazzara",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Casa rural.",
+    "region": "Maresme"
+  },
+  "6": {
+    "email": "elena@conjunts.cat",
+    "name": "Casa Rural al Parc Natural de Montserrat",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "7": {
+    "email": "info@hotel-bruc.com",
+    "name": "Hotel Bruc",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "8": {
+    "email": "info@hotelcanfarres.com",
+    "name": "Hotel Can Farrés",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "9": {
+    "email": "hotel@hotel-bruc.es",
+    "name": "Hotel El Bruc",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "Allotjament - Restauració",
+    "region": "Anoia"
+  },
+  "10": {
+    "email": "reserves@ruralmasvila.com",
+    "name": "Can Mas Vila",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva",
+    "category": "Casa Rural",
+    "region": "La Selva"
+  },
+  "11": {
+    "email": "candolca@montsenynatural.com",
+    "name": "Can Dolça casa rural",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "Can Dolça és una masia del segle XIII situada al Parc Natural del Montseny. La casa fou ,restaurada l'any 1975 conservant els elements característics de la masia catalana i ofereix totes les comoditats per allotjament de grups en règim d'Allotjament Rural Independent (ARI) en un ambient rústic i relaxant.",
+    "region": "Vallès Oriental"
+  },
+  "12": {
+    "email": "info@rieradeciuret.com",
+    "name": "Can Riera de Ciuret casa de colònies",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "Casa de colònies, càmping i casa de turisme rural",
+    "region": "Vallès Oriental"
+  },
+  "13": {
+    "email": "fontmartina@fontmartina.com",
+    "name": "Fontmartina càmping",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "Zona d'acampada al Montseny, espai natural i tranquil, on fer excursions i senderisme.",
+    "region": "Vallès Oriental"
+  },
+  "14": {
+    "email": "info@cangual.net",
+    "name": "Can Gual",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "A Can Gual Agroturisme oferim tres allotjaments independents en règim de masoveria i sala polivalent per reunions i celebracions familiars. Turisme rural amb activitat agrària. Productes d'horta de temporada amb varietats recuperades i sostenibles, ous de gallines criades a terra en corral. Avicultura, horta i turisme rural. Venta directa de proximitat en mercats locals.",
+    "region": "Vallès Oriental"
+  },
+  "15": {
+    "email": "canmestres@hotmail.com",
+    "name": "Can Mestres",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Turisme rural.",
+    "region": "Vallès Oriental"
+  },
+  "16": {
+    "email": "info@topludi.cat",
+    "name": "Topludi",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Botiga virtual de jocs d'exterior: gronxadors, parcs infantils, balancins, llits elàstics, cotxes de pedals, porteries de futbol, cistelles de bàsquet, sorrals, etc. Tant per ús domèstic com per a ús professional (escoles, hotels, comunitats, ajuntaments, etc.)",
+    "region": "Vallès Oriental"
+  },
+  "17": {
+    "email": "calmasoverxic@gmail.com",
+    "name": "Turisme Rural Cal Masover Xic",
+    "town": "Lluçà",
+    "citySlug": "lluca",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "18": {
+    "email": "hola@maslestrada.com",
+    "name": "Turisme Rural Mas L'Estrada",
+    "town": "Lluçà",
+    "citySlug": "lluca",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "19": {
+    "email": "puigoriol19@hotmail.com",
+    "name": "Turisme Rural Mas Puig-oriol",
+    "town": "Lluçà",
+    "citySlug": "lluca",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "20": {
+    "email": "info@hostalbaviera.es",
+    "name": "Hostal Baviera",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "21": {
+    "email": "canbicicleta@yahoo.es",
+    "name": "Allotjament Rural Can Bicicleta",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "22": {
+    "email": "calborrasca@gmail.com",
+    "name": "Casa Rural Cal Borrasca",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "23": {
+    "email": "calcuretvell@yahoo.es",
+    "name": "Casa Rural Cal Curet i Cal Curet Vell 2",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "24": {
+    "email": "info@elsola.cat",
+    "name": "Casa Rural El Solà",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "25": {
+    "email": "info@lacasetaipallissa.com",
+    "name": "Casa Rural La Caseta del Coll de l'Arc - La Pallisa de la Caseta",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "26": {
+    "email": "info@planoguera.cat",
+    "name": "Casa Rural Mas Planoguera",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "27": {
+    "email": "mariabellmunt4632hotmail.com",
+    "name": "Casa Rural Masia Sansalvador",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "28": {
+    "email": "info@plademoixons.com",
+    "name": "Casa Rural Pla de Moixons",
+    "town": "Oristà",
+    "citySlug": "orista",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "29": {
+    "email": "info@hotelparets.com",
+    "name": "Hotel Parets-Els Pins",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "30": {
+    "email": "verneda50@hotmail.com",
+    "name": "Camping La Verneda",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "31": {
+    "email": "info@campinglaverneda.com",
+    "name": "Càmping la Verneda",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "32": {
+    "email": "esclopersantjulia@gmail.com",
+    "name": "Escloper Bed & Breakfast",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Allotjament cèntric, disposa d'una habitació doble amb bany privat i serveix esmorzar continental.",
+    "region": "Osona"
+  },
+  "33": {
+    "email": "info@masalbereda.com",
+    "name": "Hotel Mas Albereda",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "HCC- 004234. Mas Albereda és un d'aquells espais on deixar volar la imaginació i desconnectar de la rutina és fàcil. Un hotel gastronòmic amb encant situat a Sant Julià de Vilatorta, entre el Pirineu i el Montseny, al cor de la Plana de Vic, en una masia que amaga set segles d'història entre els seus murs.",
+    "region": "Osona"
+  },
+  "34": {
+    "email": "cor@hoteltorremarti.com",
+    "name": "Hotel Torre Martí",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "HCC-004142. Al peu de les Guilleries, al pre-pirineu català, terra de bandolers, es troba aquesta encantadora casa senyorial construïda el 1945 per l'arquitecte Riera Clariana. En l'hotel Torre Martí la pintura, l'escultura, la música, la literatura s'uneixen a l'hosteleria. La família Morral ha transformat aquesta mansió d'estil rivière francesa en un íntim i acollidor hotel. La pau de la biblioteca, un menjador modernista, la decoració singular de les habitacions i la cuidada selecció gastronòmica desperten els sentits del viatger.",
+    "region": "Osona"
+  },
+  "35": {
+    "email": "hostalcalpla@yahoo.es",
+    "name": "Hostal Cal Pla",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "36": {
+    "email": "joanvallh@eresmas.net",
+    "name": "L'Armengol - Turisme rural",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "37": {
+    "email": "afonseca@resipack.com",
+    "name": "Habitatge d'Ús Turístic La Serra",
+    "town": "Sant Martí d'Albars",
+    "citySlug": "sant-marti-d-albars",
+    "category": "Casa rural independent, de pedra del s. XVIII, rehabilitada amb encant i molt acollidora, ideal per escapades i desconnectar en un entorn immillorable per fer excursions, passejades o sortides en bici, per gaudir de la natura.",
+    "region": "Osona"
+  },
+  "38": {
+    "email": "fuster@calfusterdetous.com",
+    "name": "Allotjament rural · Cal fuster de la Plaça",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "",
+    "region": "Anoia"
+  },
+  "39": {
+    "email": "info@hotelbesora.com",
+    "name": "Hotel Sant Quirze de Besora",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "40": {
+    "email": "info@hortdelariera.com",
+    "name": "Casa Rural. L'Hort De La Riera",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "41": {
+    "email": "info@set-rengs.com",
+    "name": "Mas Set-Rengs Casa Rural",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "42": {
+    "email": "holatipicamp@gmail.com",
+    "name": "Allotjament Rural/Cabanyes Tipi Camp",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "43": {
+    "email": "info@hotelseva.com",
+    "name": "Hotel Seva",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "44": {
+    "email": "info@montanyahotel.com",
+    "name": "Montanyà Hotel & Lodge",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "45": {
+    "email": "info@lamasiasora.com",
+    "name": "La Masia - Allotjament turístic (HUTCC 000121)",
+    "town": "Sora",
+    "citySlug": "sora",
+    "category": "",
+    "region": "Osona"
+  },
+  "46": {
+    "email": "hola@elmoliblanc.com",
+    "name": "Allotjament rural 'Molí Blanc'",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "47": {
+    "email": "info@cancardus.com",
+    "name": "Allotjament Rural Can Cardús",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  }
+}

@@ -1,0 +1,5362 @@
+{
+  "0": {
+    "email": "enricpla@gmail.com",
+    "town": "Alpens",
+    "citySlug": "alpens"
+  },
+  "1": {
+    "email": "embutidos@arumicastells.com",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "2": {
+    "email": "info@fashionperruquers.com",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "3": {
+    "email": "flikflak@balenya.cat",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "4": {
+    "email": "collfreixanet@yahoo.es",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "5": {
+    "email": "info@fusteriasayos.com",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "6": {
+    "email": "maricarmenyjorge@gmail.com",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "7": {
+    "email": "matea.pere@hotmail.com",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "8": {
+    "email": "recienllovido@gmail.com",
+    "town": "Balenyà",
+    "citySlug": "balenya"
+  },
+  "9": {
+    "email": "elcobert@hotmail.com",
+    "town": "Borredà",
+    "citySlug": "borreda"
+  },
+  "10": {
+    "email": "info@baixpirineu.com",
+    "town": "Borredà",
+    "citySlug": "borreda"
+  },
+  "11": {
+    "email": "info@campingrieramerles.com",
+    "town": "Borredà",
+    "citySlug": "borreda"
+  },
+  "12": {
+    "email": "dolorscomerma@economistes.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "13": {
+    "email": "info@ferreteriaeuman.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "14": {
+    "email": "cdtn.pavello@calldetenes.cat",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "15": {
+    "email": "info@teatrecalldetenes.cat",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "16": {
+    "email": "info@carnisseriasaborit.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "17": {
+    "email": "creariam369@gmail.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "18": {
+    "email": "espardenyatcalldetenes@gmail.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "19": {
+    "email": "cris.boixeda@gmail.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "20": {
+    "email": "nuria.nafa68@gmail.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "21": {
+    "email": "peixateriacalldetenes@gmail.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "22": {
+    "email": "info@samdance.cat",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "23": {
+    "email": "valvi@valvi.com",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes"
+  },
+  "24": {
+    "email": "ccandelich@yahoo.es",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "25": {
+    "email": "info@triescicling.es",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "26": {
+    "email": "triescicling@gmail.com",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "27": {
+    "email": "grauoj@canovesisamalus.cat",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "28": {
+    "email": "vetovallesveterinaria@gmail.com",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "29": {
+    "email": "info@hortus.cat",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "30": {
+    "email": "info@jardineriadelvalles.com",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "31": {
+    "email": "parrammr@canovesisamalus.com",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "32": {
+    "email": "info@restaurantcangarriga.com",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "33": {
+    "email": "info@lesoliveres.cat",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus"
+  },
+  "34": {
+    "email": "mencar.26@hotmail.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "35": {
+    "email": "mrafols@torres.es",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "36": {
+    "email": "balldepastoretsdelamunia@hotmail.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "37": {
+    "email": "calpaupujolbotiga@gmail.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "38": {
+    "email": "carlesfortunyfotograf@gmail.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "39": {
+    "email": "tutuscoll@gmail.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "40": {
+    "email": "esbartlamunia@gmail.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "41": {
+    "email": "joventut03@ccapenedes.cat",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "42": {
+    "email": "alamielmueden@gmail.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "43": {
+    "email": "ctvm.esports@castellvidelamarca.cat",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "44": {
+    "email": "info@calpadri.com",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca"
+  },
+  "45": {
+    "email": "info@valltr.com",
+    "town": "Cercs",
+    "citySlug": "cercs"
+  },
+  "46": {
+    "email": "reserves@hotelbergapark.com",
+    "town": "Cercs",
+    "citySlug": "cercs"
+  },
+  "47": {
+    "email": "info@hotelsanta-barbara.com",
+    "town": "Cercs",
+    "citySlug": "cercs"
+  },
+  "48": {
+    "email": "estanyclar@estanyclar.com",
+    "town": "Cercs",
+    "citySlug": "cercs"
+  },
+  "49": {
+    "email": "info@calpuo.cat",
+    "town": "Collsuspina",
+    "citySlug": "collsuspina"
+  },
+  "50": {
+    "email": "info@canxarina.com",
+    "town": "Collsuspina",
+    "citySlug": "collsuspina"
+  },
+  "51": {
+    "email": "info@labufa.cat",
+    "town": "Collsuspina",
+    "citySlug": "collsuspina"
+  },
+  "52": {
+    "email": "7arts.canyamars@gmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "53": {
+    "email": "ivan@lameva.net",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "54": {
+    "email": "autoescolatramvia@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "55": {
+    "email": "chechu4144@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "56": {
+    "email": "canparral@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "57": {
+    "email": "zonacanbatlle@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "58": {
+    "email": "consulta@cvetdosrius.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "59": {
+    "email": "salafutdos@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "60": {
+    "email": "dequeriusdosrius@gmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "61": {
+    "email": "joves@dosrius.cat",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "62": {
+    "email": "estancdosrius@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "63": {
+    "email": "info@interinmobiliaria.es",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "64": {
+    "email": "familiajuanguell@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "65": {
+    "email": "pepperonis@gmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "66": {
+    "email": "info@monkeypaintball.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "67": {
+    "email": "info@dramarsa.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "68": {
+    "email": "info@rclamasia.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "69": {
+    "email": "calvictor@hotmail.es",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "70": {
+    "email": "masiacancarreras@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "71": {
+    "email": "jaumetotal@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "72": {
+    "email": "mpp_2011@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "73": {
+    "email": "canguinart@hotmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "74": {
+    "email": "info@spwear.es",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "75": {
+    "email": "jordi.f.valera@hotmail.es",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "76": {
+    "email": "supermercatelfar@hotmail.es",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "77": {
+    "email": "sonu.suma58@yahoo.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "78": {
+    "email": "taxi.dosrius@gmail.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "79": {
+    "email": "info@villamazzara.com",
+    "town": "Dosrius",
+    "citySlug": "dosrius"
+  },
+  "80": {
+    "email": "carlets.elbruc@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "81": {
+    "email": "fdalemany@hotmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "82": {
+    "email": "museubruc@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "83": {
+    "email": "asociacionlabanyera@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "84": {
+    "email": "dansaestudi@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "85": {
+    "email": "barnoufi@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "86": {
+    "email": "brucgest@economistes.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "87": {
+    "email": "info@eselbruc.es",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "88": {
+    "email": "julio.carrique.ruiz@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "89": {
+    "email": "info@calnoio.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "90": {
+    "email": "elena@conjunts.cat",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "91": {
+    "email": "sublimbruc@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "92": {
+    "email": "vegantrailclub@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "93": {
+    "email": "marc.comas@liceubarcelona.cat",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "94": {
+    "email": "aina.gobern@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "95": {
+    "email": "elcellerdelaguardia@hotmail.es",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "96": {
+    "email": "farmacia.elbruc@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "97": {
+    "email": "info@fornalemany.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "98": {
+    "email": "info@hotel-bruc.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "99": {
+    "email": "info@hotelcanfarres.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "100": {
+    "email": "hotel@hotel-bruc.es",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "101": {
+    "email": "joanmarcpelfort@telefonica.net",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "102": {
+    "email": "info@restaurantvinyanova.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "103": {
+    "email": "comunicacio@bruc.cat",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "104": {
+    "email": "josepcamtenysp@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "105": {
+    "email": "povillpeixaters@yahoo.es",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "106": {
+    "email": "pilarferrec@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "107": {
+    "email": "wmarquinar@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "108": {
+    "email": "ruthperruqueria@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "109": {
+    "email": "hola@varovito.es",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "110": {
+    "email": "cellercanpascual@gmail.com",
+    "town": "El Bruc",
+    "citySlug": "el-bruc"
+  },
+  "111": {
+    "email": "info@cansous.com",
+    "town": "Figaró-Montmany",
+    "citySlug": "figaro-montmany"
+  },
+  "112": {
+    "email": "forncalantich@gmail.com",
+    "town": "Figaró-Montmany",
+    "citySlug": "figaro-montmany"
+  },
+  "113": {
+    "email": "tallergenis@gmail.com",
+    "town": "Figaró-Montmany",
+    "citySlug": "figaro-montmany"
+  },
+  "114": {
+    "email": "hola@enaespaciossanos.com",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva"
+  },
+  "115": {
+    "email": "arrelsdelmontnegre@gmail.com",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva"
+  },
+  "116": {
+    "email": "reserves@ruralmasvila.com",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva"
+  },
+  "117": {
+    "email": "fds.ajuntament@fogarsdelaselva.cat",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva"
+  },
+  "118": {
+    "email": "bitllesfogars@gmail.com",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva"
+  },
+  "119": {
+    "email": "fds.museu@fogarsdelaselva.cat",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva"
+  },
+  "120": {
+    "email": "fds.urbanisme@fogarsdelaselva.cat",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva"
+  },
+  "121": {
+    "email": "candolca@montsenynatural.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "122": {
+    "email": "info@rieradeciuret.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "123": {
+    "email": "fontmartina@fontmartina.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "124": {
+    "email": "infoavetblau@gmail.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "125": {
+    "email": "restaurantcalrei@hotmail.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "126": {
+    "email": "restaurantcarbonell@hotmail.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "127": {
+    "email": "restaurantlacosta@gmail.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "128": {
+    "email": "lafontdecalguardia@hotmail.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "129": {
+    "email": "restaurantsantroc@gmail.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "130": {
+    "email": "taxifogarsdemontclus@gmail.com",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus"
+  },
+  "131": {
+    "email": "germandatdemunt@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "132": {
+    "email": "botiga@lacocadefolgueroles.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "133": {
+    "email": "calmossen@calmossen.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "134": {
+    "email": "carnisseria.suriñach@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "135": {
+    "email": "info@verdaguer.cat",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "136": {
+    "email": "fuguetraquel3@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "137": {
+    "email": "info@clinicadentalfolgueroles.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "138": {
+    "email": "info@cocadelmossen.cat",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "139": {
+    "email": "info@fornricardera.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "140": {
+    "email": "fruiteria@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "141": {
+    "email": "fusteriamanya@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "142": {
+    "email": "vilasecamontse3@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "143": {
+    "email": "isabelolle47@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "144": {
+    "email": "llucjardiner@hotmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "145": {
+    "email": "folgueroles@folgueroles.cat",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "146": {
+    "email": "perruqueriaesterbarcons@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "147": {
+    "email": "gemmaparramon1978@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "148": {
+    "email": "inmasaza@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "149": {
+    "email": "tupinot22@hotmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "150": {
+    "email": "lespai2000@gmail.com",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles"
+  },
+  "151": {
+    "email": "martamateiosola@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "152": {
+    "email": "csi@csi-informatica.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "153": {
+    "email": "info@espaiformas.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "154": {
+    "email": "etmcl@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "155": {
+    "email": "maspor@maspor.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "156": {
+    "email": "frecafrec@frecafrec.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "157": {
+    "email": "instal.canudas@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "158": {
+    "email": "jadeco@jabonera.es",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "159": {
+    "email": "info@jocadi.net",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "160": {
+    "email": "mudanzasgb@mudanzasgb.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "161": {
+    "email": "info@ortoplast.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "162": {
+    "email": "gemarome26@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "163": {
+    "email": "urbisnau@urbisnau.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "164": {
+    "email": "agrupaciodones@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "165": {
+    "email": "amindola@live.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "166": {
+    "email": "asalametlla@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "167": {
+    "email": "aca@aca-ametlla.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "168": {
+    "email": "donesdavui@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "169": {
+    "email": "aeametlla@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "170": {
+    "email": "lametllaencomu@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "171": {
+    "email": "ateneu.cinglesdeberti@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "172": {
+    "email": "info@triatloametlla.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "173": {
+    "email": "colmonicarc@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "174": {
+    "email": "joventut@ametlla.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "175": {
+    "email": "esports@ametlla.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "176": {
+    "email": "sergio@maximomor.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "177": {
+    "email": "info@cangual.net",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "178": {
+    "email": "canmestres@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "179": {
+    "email": "quimbyeuropeasl@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "180": {
+    "email": "parroquiasantgenis@santgenis.org",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "181": {
+    "email": "cultura@ametlla.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "182": {
+    "email": "robertomorteib@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "183": {
+    "email": "info@citysports.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "184": {
+    "email": "cbametlla@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "185": {
+    "email": "pedro_loras@yahoo.es",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "186": {
+    "email": "info@concentre.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "187": {
+    "email": "pilar.torca@diagroup.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "188": {
+    "email": "elsifonet@elsifonet.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "189": {
+    "email": "escolamusica@ametlla.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "190": {
+    "email": "estancametlla1@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "191": {
+    "email": "farmacia@farmaciavalls.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "192": {
+    "email": "info@finquesferro.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "193": {
+    "email": "info@finqueslametlla.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "194": {
+    "email": "info@finquesterranova.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "195": {
+    "email": "cristian@fisiofunes.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "196": {
+    "email": "font@fontgrup.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "197": {
+    "email": "fornmoncau@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "198": {
+    "email": "info@fusteriahispania.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "199": {
+    "email": "grupesplaigepa@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "200": {
+    "email": "info@nyoca.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "201": {
+    "email": "io@humana-spain.org",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "202": {
+    "email": "jipametlla@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "203": {
+    "email": "ssaperas@laltell.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "204": {
+    "email": "crisborrell@hotmail.es",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "205": {
+    "email": "informacio@lamasiadelametlla.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "206": {
+    "email": "lamerceria.ametlla@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "207": {
+    "email": "lasala@ametlla.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "208": {
+    "email": "lolayangel1966@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "209": {
+    "email": "matagalls@matagalls.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "210": {
+    "email": "info@miranius.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "211": {
+    "email": "comercial@mobimark.es",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "212": {
+    "email": "geor_bcn@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "213": {
+    "email": "ferlovi.3@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "214": {
+    "email": "info@onllarimmobiliaria.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "215": {
+    "email": "pattysdogs3@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "216": {
+    "email": "pilu-333-@hotmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "217": {
+    "email": "mobles@pratdesaba.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "218": {
+    "email": "maria@regalsmaria.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "219": {
+    "email": "monguitr@gmail.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "220": {
+    "email": "jordi@roviracafes.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "221": {
+    "email": "info@sbautomocio.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "222": {
+    "email": "info@topludi.cat",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "223": {
+    "email": "info@ypyogapilates.com",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles"
+  },
+  "224": {
+    "email": "barresrestauranteacuarium@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "225": {
+    "email": "info@agervalles.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "226": {
+    "email": "admin@ferreteriaandreu.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "227": {
+    "email": "info@acath.org",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "228": {
+    "email": "rosertorruellaturro@yahoo.es",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "229": {
+    "email": "lrodriguez79@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "230": {
+    "email": "el.tercer.element@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "231": {
+    "email": "marijou13@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "232": {
+    "email": "eltimbalcanginesta@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "233": {
+    "email": "bar_restaurante_cordoba@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "234": {
+    "email": "www.bonarea.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "235": {
+    "email": "cafedelluna@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "236": {
+    "email": "cafeteriatrebol.87@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "237": {
+    "email": "info@masuet.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "238": {
+    "email": "info@finquescanfont.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "239": {
+    "email": "info@cannogueras.cat",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "240": {
+    "email": "cantaulats1903@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "241": {
+    "email": "info@cellinars.cat",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "242": {
+    "email": "cellv@cellv.cat",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "243": {
+    "email": "patinatgellinars@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "244": {
+    "email": "clubpetancallinars@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "245": {
+    "email": "llinars@elcorredorbicis.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "246": {
+    "email": "sala@elracodelesportiu.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "247": {
+    "email": "esbartllinars@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "248": {
+    "email": "emmllinars@amicsdelaunio.cat",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "249": {
+    "email": "cofac.073@cofac.es",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "250": {
+    "email": "info@fusteriavila.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "251": {
+    "email": "fsllinars@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "252": {
+    "email": "illacrous@illacrous.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "253": {
+    "email": "info@lesportiudellinars.cat",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "254": {
+    "email": "frankieanrosser@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "255": {
+    "email": "lamasoveria@llinarsdelvalles.cat",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "256": {
+    "email": "info@lanitdellinars.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "257": {
+    "email": "elvermutetdelcarrermajor@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "258": {
+    "email": "hola@lemonyoga.es",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "259": {
+    "email": "juanatalia@hotmail.es",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "260": {
+    "email": "info@mariarocaoptica.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "261": {
+    "email": "moncook2017@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "262": {
+    "email": "quiro-maria@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "263": {
+    "email": "naturalperruqueria@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "264": {
+    "email": "optica@opticallinars.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "265": {
+    "email": "pickupllinarssl@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "266": {
+    "email": "castelldols@hotmail.es",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "267": {
+    "email": "montseyquique_@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "268": {
+    "email": "puntdetrobada08450@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "269": {
+    "email": "info@canbiel.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "270": {
+    "email": "canpedragosa@hotmail.es",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "271": {
+    "email": "mad@madllinars.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "272": {
+    "email": "ritmicacel@hotmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "273": {
+    "email": "sabaidillinars@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "274": {
+    "email": "llinars@tilltall-teatre.cat",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "275": {
+    "email": "escoladansavocacions@gmail.com",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles"
+  },
+  "276": {
+    "email": "carmesalada@gmail.com",
+    "town": "Lluçà",
+    "citySlug": "lluca"
+  },
+  "277": {
+    "email": "http://monestirlluca.cat/",
+    "town": "Lluçà",
+    "citySlug": "lluca"
+  },
+  "278": {
+    "email": "calmasoverxic@gmail.com",
+    "town": "Lluçà",
+    "citySlug": "lluca"
+  },
+  "279": {
+    "email": "hola@maslestrada.com",
+    "town": "Lluçà",
+    "citySlug": "lluca"
+  },
+  "280": {
+    "email": "puigoriol19@hotmail.com",
+    "town": "Lluçà",
+    "citySlug": "lluca"
+  },
+  "281": {
+    "email": "yesaecam@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "282": {
+    "email": "ateneuelrovell@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "283": {
+    "email": "lleuremaresme@hotmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "284": {
+    "email": "basquetmalgrat2000@hotmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "285": {
+    "email": "grupkaliudeteatre@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "286": {
+    "email": "clubundediez@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "287": {
+    "email": "ccm@ajmalgrat.cat",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "288": {
+    "email": "clubkitemalgrat@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "289": {
+    "email": "cem.pa@hotmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "290": {
+    "email": "esportciclistamalgrat@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "291": {
+    "email": "grupteatregermanor@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "292": {
+    "email": "interesportiumalgrat@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "293": {
+    "email": "najmadansa@gmail.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "294": {
+    "email": "info@labarretinavermella.com",
+    "town": "Malgrat de Mar",
+    "citySlug": "malgrat-de-mar"
+  },
+  "295": {
+    "email": "esentmarti@gmail.com",
+    "town": "Malla",
+    "citySlug": "malla"
+  },
+  "296": {
+    "email": "indiavic@hotmail.com",
+    "town": "Malla",
+    "citySlug": "malla"
+  },
+  "297": {
+    "email": "p.babia@babia.cat",
+    "town": "Monistrol de Montserrat",
+    "citySlug": "monistrol-de-montserrat"
+  },
+  "298": {
+    "email": "promera@lcpackaging.es",
+    "town": "Monistrol de Montserrat",
+    "citySlug": "monistrol-de-montserrat"
+  },
+  "299": {
+    "email": "info.es@mosca.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "300": {
+    "email": "info@mari.cat",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "301": {
+    "email": "jbmqasesor@terra.es",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "302": {
+    "email": "autoescolamontgat@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "303": {
+    "email": "montgat2@vialserveis.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "304": {
+    "email": "joan.boronat@hotmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "305": {
+    "email": "albertchimi@hotmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "306": {
+    "email": "barlaplacetamontgat@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "307": {
+    "email": "dentalgaudi@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "308": {
+    "email": "farmaciacirici@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "309": {
+    "email": "farmaciaespinas@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "310": {
+    "email": "pbrufau001@cofb.net",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "311": {
+    "email": "florsmainada@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "312": {
+    "email": "labotiguetarostisseria@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "313": {
+    "email": "emesthetic@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "314": {
+    "email": "info@peibe.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "315": {
+    "email": "perruqueriadelpasseig@hotmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "316": {
+    "email": "m.angelsalon@hotmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "317": {
+    "email": "info@elmirall.es",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "318": {
+    "email": "info@fondamarina.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "319": {
+    "email": "info@stazionepizzeria.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "320": {
+    "email": "compimotors@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "321": {
+    "email": "taximontgat@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "322": {
+    "email": "info@napuplant.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "323": {
+    "email": "1masfamilia@gmail.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "324": {
+    "email": "xarcuteriesbosch@xarcuteriesbosch.com",
+    "town": "Montgat",
+    "citySlug": "montgat"
+  },
+  "325": {
+    "email": "montsenyactiu@gmail.com",
+    "town": "Montseny",
+    "citySlug": "montseny"
+  },
+  "326": {
+    "email": "lesflorsdelmontseny@gmail.com",
+    "town": "Montseny",
+    "citySlug": "montseny"
+  },
+  "327": {
+    "email": "info@restaurantcanbesa.com",
+    "town": "Montseny",
+    "citySlug": "montseny"
+  },
+  "328": {
+    "email": "canmanelmontseny@gmail.com",
+    "town": "Montseny",
+    "citySlug": "montseny"
+  },
+  "329": {
+    "email": "masiacannena@yahoo.es",
+    "town": "Montseny",
+    "citySlug": "montseny"
+  },
+  "330": {
+    "email": "fondamontseny@hotmail.es",
+    "town": "Montseny",
+    "citySlug": "montseny"
+  },
+  "331": {
+    "email": "mangelsrp@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "332": {
+    "email": "navarcles@aecc.es",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "333": {
+    "email": "navarcles@assessoriadelbages.cat",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "334": {
+    "email": "autoescolainnova@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "335": {
+    "email": "hostal_muntane@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "336": {
+    "email": "clepisada@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "337": {
+    "email": "sanau554@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "338": {
+    "email": "yeralevan@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "339": {
+    "email": "18677779312@163.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "340": {
+    "email": "e.moral.se@cdc.cat",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "341": {
+    "email": "bar9sport@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "342": {
+    "email": "veterinari.navarcles@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "343": {
+    "email": "dentistanavarcles@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "344": {
+    "email": "aiborrafisio@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "345": {
+    "email": "bcurriusfeliu@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "346": {
+    "email": "esbartdansairenavarcli@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "347": {
+    "email": "info@espaisalutroser.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "348": {
+    "email": "info@trespins.cat",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "349": {
+    "email": "maricruzfg@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "350": {
+    "email": "meduseta@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "351": {
+    "email": "farmaciaestercarne@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "352": {
+    "email": "vverge001@cofb.net",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "353": {
+    "email": "rosado.conejo@cofb.net",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "354": {
+    "email": "ramatamalaro@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "355": {
+    "email": "ferreteriavila@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "356": {
+    "email": "info@clamfestival.org",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "357": {
+    "email": "forncabrianes@forncabrianes.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "358": {
+    "email": "mayangie5@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "359": {
+    "email": "rosaritotomate@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "360": {
+    "email": "n233156@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "361": {
+    "email": "grupteatrenavarcles@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "362": {
+    "email": "montserrat.herboristeria@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "363": {
+    "email": "info@hostalbaviera.es",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "364": {
+    "email": "miri_guga@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "365": {
+    "email": "saragangonells@i-veo.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "366": {
+    "email": "info@lacreueta.cat",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "367": {
+    "email": "jchuecos64@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "368": {
+    "email": "el-llac@el-llac.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "369": {
+    "email": "nouburjons@hotmail.es",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "370": {
+    "email": "peixaterianova@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "371": {
+    "email": "manoloinlove@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "372": {
+    "email": "sonia2121978@hotmail.es",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "373": {
+    "email": "miriam232010.myr@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "374": {
+    "email": "nereaperruqueria@gmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "375": {
+    "email": "sangalperruquers@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "376": {
+    "email": "restaurantpatoi@hotmail.com",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "377": {
+    "email": "c0518@condis.es",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "378": {
+    "email": "xavimotos@hotmail.es",
+    "town": "Navarcles",
+    "citySlug": "navarcles"
+  },
+  "379": {
+    "email": "canbicicleta@yahoo.es",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "380": {
+    "email": "lleureiculturaolesa@gmail.com",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "381": {
+    "email": "info@avencdelgarraf.com",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "382": {
+    "email": "info@valldolina.com",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "383": {
+    "email": "cvmontau@cvmontau.cat",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "384": {
+    "email": "latributeatre@gmail.com",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "385": {
+    "email": "mfmfisioterapia@gmail.com",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "386": {
+    "email": "danielliginfer@hotmail.com",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "387": {
+    "email": "info@restaurant-elceller.com",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "388": {
+    "email": "info@restaurantlacosta.net",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls"
+  },
+  "389": {
+    "email": "hola@caltrumfo.cat",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "390": {
+    "email": "calborrasca@gmail.com",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "391": {
+    "email": "calcuretvell@yahoo.es",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "392": {
+    "email": "info@elsola.cat",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "393": {
+    "email": "info@lacasetaipallissa.com",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "394": {
+    "email": "info@planoguera.cat",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "395": {
+    "email": "mariabellmunt4632hotmail.com",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "396": {
+    "email": "info@plademoixons.com",
+    "town": "Oristà",
+    "citySlug": "orista"
+  },
+  "397": {
+    "email": "info@absfincas.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "398": {
+    "email": "info.lauro@anicura.es",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "399": {
+    "email": "cdeandaluciaparets@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "400": {
+    "email": "associacio.dones.parets@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "401": {
+    "email": "jcc@jcc.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "402": {
+    "email": "administracion@asicparets.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "403": {
+    "email": "loopingesportilleure@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "404": {
+    "email": "associacio.rodola@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "405": {
+    "email": "salvi.associacio@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "406": {
+    "email": "ateneulateixidora@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "407": {
+    "email": "info@aespar.e.telefonica.net",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "408": {
+    "email": "cascantic@autoescolasanglas.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "409": {
+    "email": "eixample@autoescolasanglas.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "410": {
+    "email": "bastet.pv@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "411": {
+    "email": "caljardiner@parets.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "412": {
+    "email": "cmdparets@cmdparets.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "413": {
+    "email": "xaribcn@hotmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "414": {
+    "email": "gros_sergio@hotmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "415": {
+    "email": "bikersparets@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "416": {
+    "email": "gitanesparets@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "417": {
+    "email": "creixement.espaipsicologic@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "418": {
+    "email": "ememobles@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "419": {
+    "email": "promocio.economica@parets.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "420": {
+    "email": "escola.musica@parets.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "421": {
+    "email": "llarangelina@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "422": {
+    "email": "farmaciadelpoble@live.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "423": {
+    "email": "farmaciaisern@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "424": {
+    "email": "alegria@farmaciaortopedialegria.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "425": {
+    "email": "cofac.210@cofac.es",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "426": {
+    "email": "tinram72@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "427": {
+    "email": "info@gestoriamartinezparets.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "428": {
+    "email": "gymrobert@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "429": {
+    "email": "info@gyconsultors.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "430": {
+    "email": "info@hotelparets.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "431": {
+    "email": "canparera@canparera.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "432": {
+    "email": "joieriamirall@sf-inter.net",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "433": {
+    "email": "vallesoriental@omnium.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "434": {
+    "email": "info@optica90.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "435": {
+    "email": "paquitaurtusol@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "436": {
+    "email": "info.dyedry@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "437": {
+    "email": "esports@parets.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "438": {
+    "email": "prodansavalles@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "439": {
+    "email": "info@restaurantlanauparets.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "440": {
+    "email": "merche.valles.ribas@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "441": {
+    "email": "infocomerc@parets.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "442": {
+    "email": "info@asdimores.org",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "443": {
+    "email": "canrajoler@parets.cat",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "444": {
+    "email": "alba@thenomadyoga.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "445": {
+    "email": "vinclesparets@gmail.com",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles"
+  },
+  "446": {
+    "email": "aiv@telefonica.net",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "447": {
+    "email": "astralpool@astralpool.es",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "448": {
+    "email": "bufatec@bufatec.es",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "449": {
+    "email": "cecopi@cecopi.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "450": {
+    "email": "hispanox@hispanox.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "451": {
+    "email": "jallut@jallut.es",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "452": {
+    "email": "info@maillis.es",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "453": {
+    "email": "assessoriapolinya@stl.logiccontrol.es",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "454": {
+    "email": "laminesouane786@gmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "455": {
+    "email": "polinyastones@hotmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "456": {
+    "email": "mariporras@live.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "457": {
+    "email": "restaurantelring@gmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "458": {
+    "email": "barelrubio@hotmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "459": {
+    "email": "cfisiop@gmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "460": {
+    "email": "jaumeavellaneda@hotmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "461": {
+    "email": "maricarmen@bailalostudio.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "462": {
+    "email": "cvs.polinya@gmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "463": {
+    "email": "polinyajove@ajpolinya.cat",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "464": {
+    "email": "espartanospolinya@hotmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "465": {
+    "email": "alicia@ferrali.es",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "466": {
+    "email": "lopticadelavila@gmail.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "467": {
+    "email": "juanjo@real-hardware.com",
+    "town": "Polinyà",
+    "citySlug": "polinya"
+  },
+  "468": {
+    "email": "iogaimassatge@therra.cat",
+    "town": "Puigdàlber",
+    "citySlug": "puigdalber"
+  },
+  "469": {
+    "email": "info@mascodina.com",
+    "town": "Puigdàlber",
+    "citySlug": "puigdalber"
+  },
+  "470": {
+    "email": "miraboira@sbg.cat",
+    "town": "Sant Bartomeu del Grau",
+    "citySlug": "sant-bartomeu-del-grau"
+  },
+  "471": {
+    "email": "casacuberta.tor@coft.net",
+    "town": "Sant Bartomeu del Grau",
+    "citySlug": "sant-bartomeu-del-grau"
+  },
+  "472": {
+    "email": "extraescolars.getip@gmail.com",
+    "town": "Sant Bartomeu del Grau",
+    "citySlug": "sant-bartomeu-del-grau"
+  },
+  "473": {
+    "email": "aidaeg.1985@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "474": {
+    "email": "angelmondejar@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "475": {
+    "email": "sofocusteatre@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "476": {
+    "email": "angelarivera6453@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "477": {
+    "email": "canmartri@canmartri.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "478": {
+    "email": "jtorrent@santcebriapitchadnputt.cat",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "479": {
+    "email": "verneda50@hotmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "480": {
+    "email": "info@campinglaverneda.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "481": {
+    "email": "x.ricart@coac.net",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "482": {
+    "email": "info@clinicavallalta.org",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "483": {
+    "email": "isabel@belestetica.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "484": {
+    "email": "ctfarmacia@telefonica.net",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "485": {
+    "email": "pol.riera92@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "486": {
+    "email": "came.m.b@hotmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "487": {
+    "email": "inespa@hotmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "488": {
+    "email": "jufreixa@hotmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "489": {
+    "email": "joanetgirl@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "490": {
+    "email": "llibreriaserratsalicru@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "491": {
+    "email": "alkimia32010@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "492": {
+    "email": "ecarrerasrocosa@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "493": {
+    "email": "miguel.morenosa@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "494": {
+    "email": "piscinasvallalta@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "495": {
+    "email": "adriansosasilva@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "496": {
+    "email": "restaurantcalafina@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "497": {
+    "email": "comercial@lahacienda.cat",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "498": {
+    "email": "tinallis@hotmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "499": {
+    "email": "coalimentstcebria@gmail.com",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta"
+  },
+  "500": {
+    "email": "gmesl@gmesl.net",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "501": {
+    "email": "info@andreupimentel.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "502": {
+    "email": "aesc2099@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "503": {
+    "email": "penyaculesantcli@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "504": {
+    "email": "lhernandezjimenez25@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "505": {
+    "email": "divi_net663@hotmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "506": {
+    "email": "evamj1994@hotmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "507": {
+    "email": "santclident@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "508": {
+    "email": "condis3011@condis.es",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "509": {
+    "email": "ejovesantcliment@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "510": {
+    "email": "estancsantcliment@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "511": {
+    "email": "ferchin@live.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "512": {
+    "email": "jardineriasantcliment@hotmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "513": {
+    "email": "soniasandalinas@hotmail.es",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "514": {
+    "email": "climentona@hotmail.es",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "515": {
+    "email": "rinxolsdor@icloud.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "516": {
+    "email": "silvio8125@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "517": {
+    "email": "realycasanas@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "518": {
+    "email": "info@restaurantelraco.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "519": {
+    "email": "pkthala2012sl@gmail.com",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat"
+  },
+  "520": {
+    "email": "labonaconfiturateatre@gmail.com",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues"
+  },
+  "521": {
+    "email": "sexesfoc@gmail.com",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues"
+  },
+  "522": {
+    "email": "esportbasesantcugat@hotmail.com",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues"
+  },
+  "523": {
+    "email": "anna@latorredelgall.com",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues"
+  },
+  "524": {
+    "email": "comercial@imsesa.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "525": {
+    "email": "visits@fincacanestella.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "526": {
+    "email": "beatriz.gonzalez@hbpogroup.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "527": {
+    "email": "comercial@informatica-activa.es",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "528": {
+    "email": "taulacasolana@taulacasolana.es",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "529": {
+    "email": "oakrestaurante@golfbarcelona.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "530": {
+    "email": "secretaria@aulamusicasesrovires.cat",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "531": {
+    "email": "pinzells@hotmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "532": {
+    "email": "info@arcdesantmarti.cat",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "533": {
+    "email": "sesdansa@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "534": {
+    "email": "aevirtual.cat@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "535": {
+    "email": "autoescolasanes@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "536": {
+    "email": "xavicasinero@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "537": {
+    "email": "samanthaesperanza8@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "538": {
+    "email": "info@santornemhi.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "539": {
+    "email": "thejaulabeach@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "540": {
+    "email": "aldiwan@aldiwan.es",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "541": {
+    "email": "cyntia@telefonica.net",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "542": {
+    "email": "info@canamatespacios.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "543": {
+    "email": "ana_estetika@hotmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "544": {
+    "email": "mestruga@telefonica.net",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "545": {
+    "email": "clinicamartident@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "546": {
+    "email": "clinicalarca@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "547": {
+    "email": "pbsescf@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "548": {
+    "email": "cheses@chses.net",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "549": {
+    "email": "clubpadel.sesrovires@hotmail.es",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "550": {
+    "email": "info@clubpatinatgeses.org",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "551": {
+    "email": "fsses@hotmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "552": {
+    "email": "santestevevolei@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "553": {
+    "email": "coralsantesteve@hotmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "554": {
+    "email": "diablosmc.baixllobregat@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "555": {
+    "email": "ochimanikia@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "556": {
+    "email": "esplaitrapella@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "557": {
+    "email": "estanc.ses@telefonica.net",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "558": {
+    "email": "fciamarce@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "559": {
+    "email": "farmaciarojas@telefonica.net",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "560": {
+    "email": "ferreteriasesrovires@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "561": {
+    "email": "666846650",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "562": {
+    "email": "floristeriaegea@hotmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "563": {
+    "email": "artviu@sesrovires.info",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "564": {
+    "email": "lulldebou@lulldebou.cat",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "565": {
+    "email": "flamencoamoralarte@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "566": {
+    "email": "info@assessorshg.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "567": {
+    "email": "llibreriasesrovires@outlook.es",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "568": {
+    "email": "logtravi@logtravi.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "569": {
+    "email": "lluislafusta@hotmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "570": {
+    "email": "moblessantesteve@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "571": {
+    "email": "info@mypro.cat",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "572": {
+    "email": "cnblook@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "573": {
+    "email": "carmenam1@hotmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "574": {
+    "email": "imsensenom@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "575": {
+    "email": "info@sesvet.cat",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "576": {
+    "email": "orientalses@gmail.com",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires"
+  },
+  "577": {
+    "email": "mofodo.932@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "578": {
+    "email": "johnyling@icloud.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "579": {
+    "email": "supervoltrega28@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "580": {
+    "email": "info@ausagel.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "581": {
+    "email": "jvictori477@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "582": {
+    "email": "lanau2005@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "583": {
+    "email": "jvf_vila@hotmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "584": {
+    "email": "c.dentalsantjulia@hotmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "585": {
+    "email": "criscmestilistes@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "586": {
+    "email": "eccasanovas@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "587": {
+    "email": "esclopersantjulia@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "588": {
+    "email": "fornsantjulia@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "589": {
+    "email": "info@masalbereda.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "590": {
+    "email": "cor@hoteltorremarti.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "591": {
+    "email": "lateliersjv@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "592": {
+    "email": "pavic@pavic.cat",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "593": {
+    "email": "carmevilamala@yahoo.es",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "594": {
+    "email": "judithfperruqueria@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "595": {
+    "email": "calteixidor@hotmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "596": {
+    "email": "octavianbaroianu@yahoo.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "597": {
+    "email": "comaguiu@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "598": {
+    "email": "taxisantjulia@hotmail.es",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "599": {
+    "email": "elrebostjosep@gmail.com",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta"
+  },
+  "600": {
+    "email": "admin@mirapeix.cat",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "601": {
+    "email": "calquicocarnisseria@hotmail.com",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "602": {
+    "email": "futbolcellorenca@gmail.com",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "603": {
+    "email": "ecogranjalaroca@gmail.com",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "604": {
+    "email": "hostalcalpla@yahoo.es",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "605": {
+    "email": "info@immosavall.com",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "606": {
+    "email": "joanvallh@eresmas.net",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "607": {
+    "email": "info@pastisseriadomenec.com",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall"
+  },
+  "608": {
+    "email": "afonseca@resipack.com",
+    "town": "Sant Martí d'Albars",
+    "citySlug": "sant-marti-d-albars"
+  },
+  "609": {
+    "email": "rosa@fuina.net",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "610": {
+    "email": "movidetous@escoltesiguies.cat",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "611": {
+    "email": "fuster@calfusterdetous.com",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "612": {
+    "email": "bardonpaco@gmail.com",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "613": {
+    "email": "domenech.fabregat@cofb.net",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "614": {
+    "email": "jardineriamorera@hotmail.com",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "615": {
+    "email": "teatrenu@teatrenu.com",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "616": {
+    "email": "abenito@anoiajove.cat",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "617": {
+    "email": "peluraquel@gmail.com",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "618": {
+    "email": "eucariatous@gmail.com",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "619": {
+    "email": "uetous@gmail.com",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous"
+  },
+  "620": {
+    "email": "ariestetica@gmail.com",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles"
+  },
+  "621": {
+    "email": "santacana52@gmail.com",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles"
+  },
+  "622": {
+    "email": "elcafedelalaia@yahoo.es",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles"
+  },
+  "623": {
+    "email": "farmaciasantpere@gmail.com",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles"
+  },
+  "624": {
+    "email": "hillsa@hillsabus.com",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles"
+  },
+  "625": {
+    "email": "closdenpep@closdenpep.cat",
+    "town": "Sant Pere de Riudebitlles",
+    "citySlug": "sant-pere-de-riudebitlles"
+  },
+  "626": {
+    "email": "rubiopujals@gmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "627": {
+    "email": "lacivica@rostoll.cat",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "628": {
+    "email": "ocupacio@gesbisaura.cat",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "629": {
+    "email": "bisaurasona@gmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "630": {
+    "email": "revistael855@gmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "631": {
+    "email": "administracio@collectiuargelaga.org",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "632": {
+    "email": "esplaifotos@gmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "633": {
+    "email": "bisauradards10@gmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "634": {
+    "email": "info@ctsantquirze.cat",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "635": {
+    "email": "electrogaja3g@hotmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "636": {
+    "email": "esports@ccosona.cat",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "637": {
+    "email": "ericbesora@loptica.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "638": {
+    "email": "info@farres.cat",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "639": {
+    "email": "info@fisiobisaura.cat",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "640": {
+    "email": "florisfotomontse@hotmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "641": {
+    "email": "vigilant@ajsantquirze.cat",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "642": {
+    "email": "info@hotelbesora.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "643": {
+    "email": "guohuavtcbcn@gmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "644": {
+    "email": "elcentresantquirze@gmail.com",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles"
+  },
+  "645": {
+    "email": "info@abrasteel.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "646": {
+    "email": "info@serveismes.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "647": {
+    "email": "tallerscalvo@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "648": {
+    "email": "finanzas@aerobicyfitness.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "649": {
+    "email": "calamontseim@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "650": {
+    "email": "info@restaurantsalelles.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "651": {
+    "email": "calaiaiascp@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "652": {
+    "email": "maralardel@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "653": {
+    "email": "info@cafesdelbages.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "654": {
+    "email": "l.estoneta.2016@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "655": {
+    "email": "ssg.ajuntament@santsalvadordeguardiola.cat",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "656": {
+    "email": "canpelutcentreveterinari@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "657": {
+    "email": "info@hortdelariera.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "658": {
+    "email": "ssg.joventut@santsalvadordeguardiola.cat",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "659": {
+    "email": "celler@fargas-fargas.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "660": {
+    "email": "a8017992@xtec.net",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "661": {
+    "email": "jcortes001@cofb.net",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "662": {
+    "email": "forndellenyapecona@hotmail.com <forndellenyapecona@hotmail.com>",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "663": {
+    "email": "kodigo@kodigofisioterapia.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "664": {
+    "email": "admin@alaponsa.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "665": {
+    "email": "info@set-rengs.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "666": {
+    "email": "mernari@hotmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "667": {
+    "email": "estancsantsalvador@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "668": {
+    "email": "1998.ingrid@gmail.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "669": {
+    "email": "contacte@grupllobet.com",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "670": {
+    "email": "ssg.cultura@santsalvadordeguardiola.cat",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola"
+  },
+  "671": {
+    "email": "teresa@sitja-gestio.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "672": {
+    "email": "aesantlluis@aesantlluis.cat",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "673": {
+    "email": "ateneuunio@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "674": {
+    "email": "elsaraelsara@hotmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "675": {
+    "email": "restaurantegalisteo@hotmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "676": {
+    "email": "scc.regidoriacultura@santacolomadecervello.cat",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "677": {
+    "email": "futsalmontpedros@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "678": {
+    "email": "ritmica.mediterrania@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "679": {
+    "email": "firavins@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "680": {
+    "email": "espaisfamiliars.stc@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "681": {
+    "email": "quioscosantacoloma@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "682": {
+    "email": "farmaciacoloniaguell@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "683": {
+    "email": "jtura001@cofb.net",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "684": {
+    "email": "ferreteria-hogar@telefonica.net",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "685": {
+    "email": "fusteriajpau@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "686": {
+    "email": "viky@lallarblava.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "687": {
+    "email": "teatresorec@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "688": {
+    "email": "info@vitalargent.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "689": {
+    "email": "recepcio.centrefisio@gmail.com",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "690": {
+    "email": "scc.regidoriaesports@santacolomadecervello.cat",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello"
+  },
+  "691": {
+    "email": "calescola1996hotmail.com",
+    "town": "Santa Maria de Miralles",
+    "citySlug": "santa-maria-de-miralles"
+  },
+  "692": {
+    "email": "atencionclientes@giacomini.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "693": {
+    "email": "sc_24@hotmail.es",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "694": {
+    "email": "holatipicamp@gmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "695": {
+    "email": "dinamitzemculturailleure@gmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "696": {
+    "email": "oscarcolompol@hotmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "697": {
+    "email": "gomez.mundo@cofb.net",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "698": {
+    "email": "lidiapujadas@hotmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "699": {
+    "email": "canvilaseva@gmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "700": {
+    "email": "gestoria@solergirvent.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "701": {
+    "email": "info@hotelseva.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "702": {
+    "email": "juanuix@gmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "703": {
+    "email": "info@montanyahotel.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "704": {
+    "email": "oxigenbb@gmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "705": {
+    "email": "yonibigut@hotmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "706": {
+    "email": "comercial@setup.cat",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "707": {
+    "email": "rafelcc@gmail.com",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "708": {
+    "email": "info@vetseva.cat",
+    "town": "Seva",
+    "citySlug": "seva"
+  },
+  "709": {
+    "email": "info@lamasiasora.com",
+    "town": "Sora",
+    "citySlug": "sora"
+  },
+  "710": {
+    "email": "9lookperruqueria@gmail.com",
+    "town": "Tona",
+    "citySlug": "tona"
+  },
+  "711": {
+    "email": "admin@acjsystems.com",
+    "town": "Tona",
+    "citySlug": "tona"
+  },
+  "712": {
+    "email": "afotona15@gmail.com",
+    "town": "Tona",
+    "citySlug": "tona"
+  },
+  "713": {
+    "email": "andalotodo@hotmail.com",
+    "town": "Tona",
+    "citySlug": "tona"
+  },
+  "714": {
+    "email": "abt.lacanal@gmail.com",
+    "town": "Tona",
+    "citySlug": "tona"
+  },
+  "715": {
+    "email": "c_i_tona@hotmail.com",
+    "town": "Tona",
+    "citySlug": "tona"
+  },
+  "716": {
+    "email": "hipicacen@gmail.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "717": {
+    "email": "casalcultura@torrelavit.cat",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "718": {
+    "email": "albert_junque@hotmail.es",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "719": {
+    "email": "hola@elmoliblanc.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "720": {
+    "email": "info@cancardus.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "721": {
+    "email": "autovernet@gmail.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "722": {
+    "email": "autoplanxatorrelavit@hotmail.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "723": {
+    "email": "visitas@jeanleon.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "724": {
+    "email": "paulaohlin@gmail.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "725": {
+    "email": "carnsesteve@movistar.es",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "726": {
+    "email": "info@agustitorellomata.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "727": {
+    "email": "info@marquesrigol.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "728": {
+    "email": "visita@nadal.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "729": {
+    "email": "sadeve@naveran.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "730": {
+    "email": "info@moliparellada.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "731": {
+    "email": "pardas@cancomas.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "732": {
+    "email": "calcamilo@torrelavit.cat",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "733": {
+    "email": "roviranuria@torrelavit.cat",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "734": {
+    "email": "vendrell@moli-cube.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "735": {
+    "email": "bosch.gibert@cofb.net",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "736": {
+    "email": "reformespenedes@torrelavit.cat",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "737": {
+    "email": "visita@seguraviudas.com",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit"
+  },
+  "738": {
+    "email": "torrellesdellobregat@aeces",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat"
+  },
+  "739": {
+    "email": "sensedrama@gmail.com",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat"
+  },
+  "740": {
+    "email": "esports@torrelles.cat",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat"
+  },
+  "741": {
+    "email": "ateneutorrellenc@gmail.com",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat"
+  },
+  "742": {
+    "email": "totgimnastica@gmail.com",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat"
+  },
+  "743": {
+    "email": "uetorrelles@gmail.com",
+    "town": "Torrelles de Llobregat",
+    "citySlug": "torrelles-de-llobregat"
+  },
+  "744": {
+    "email": "info@aevallirana.com",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "745": {
+    "email": "valligrans@gmail.com",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "746": {
+    "email": "info@gimnas-koun.com",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "747": {
+    "email": "info@cemvallirana.cat",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "748": {
+    "email": "vlrn.cultura@vallirana.cat",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "749": {
+    "email": "emm.aurelivila@gmail.com",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "750": {
+    "email": "vlrn.escoltajove@vallirana.cat",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "751": {
+    "email": "farmaciajorda@gmail.com",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "752": {
+    "email": "fmunoz001@cofb.net",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "753": {
+    "email": "farmacianovelia@gmail.com",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "754": {
+    "email": "rolivella001@cofb.net",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "755": {
+    "email": "farmaciavallirana@gmail.com",
+    "town": "Vallirana",
+    "citySlug": "vallirana"
+  },
+  "756": {
+    "email": "jcarosmateo@yahoo.es",
+    "town": "Vilalba Sasserra",
+    "citySlug": "vilalba-sasserra"
+  },
+  "757": {
+    "email": "vilalba@vilalbasasserra.cat",
+    "town": "Vilalba Sasserra",
+    "citySlug": "vilalba-sasserra"
+  },
+  "758": {
+    "email": "jmasaguep@gmail.com",
+    "town": "Vilalba Sasserra",
+    "citySlug": "vilalba-sasserra"
+  },
+  "759": {
+    "email": "assoc.ballainhoa@hotmail.es",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "760": {
+    "email": "cescmonclus@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "761": {
+    "email": "manuel4400@hotmail.es",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "762": {
+    "email": "mlora38@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "763": {
+    "email": "artisticvilanova2006@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "764": {
+    "email": "arrabie2014@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "765": {
+    "email": "canom@telefonica.net",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "766": {
+    "email": "en_din_sa’t@fundesplai.org",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "767": {
+    "email": "info@biorenovables.cat",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "768": {
+    "email": "igualada@mail.cambrabcn.es",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "769": {
+    "email": "centrecivicbarrilapau@vilanovadelcami.cat",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "770": {
+    "email": "andaluciaenvilanova@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "771": {
+    "email": "japarito2006@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "772": {
+    "email": "pere@budokan.es",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "773": {
+    "email": "clubgimnastiballerina@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "774": {
+    "email": "club.petanca.nou@hotmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "775": {
+    "email": "https://danalux.es/",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "776": {
+    "email": "immaguma@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "777": {
+    "email": "xaviersoriano@fotografiaibooks.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "778": {
+    "email": "hola@kunectors.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "779": {
+    "email": "atencioalclient@hispanoigualadina.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "780": {
+    "email": "hola@societatempresa.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "781": {
+    "email": "uceanoia@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "782": {
+    "email": "hello@databis.net",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "783": {
+    "email": "xarcuteria.maricarmen@gmail.com",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami"
+  },
+  "784": {
+    "email": "focerrats@gmail.com",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "785": {
+    "email": "ccvv@vilanovadelvalles.cat",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "786": {
+    "email": "esbartrosadelsvents@gmail.com",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "787": {
+    "email": "mclluch001@cofb.net",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "788": {
+    "email": "panicteatre@gmail.com",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "789": {
+    "email": "esports@vilanovadelvalles.cat",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "790": {
+    "email": "spaijove@vilanovadelvalles.cat",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "791": {
+    "email": "tonimartingarciasp@gmail.com",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles"
+  },
+  "792": {
+    "email": "5gramsomes@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "793": {
+    "email": "elisabetalvarez81@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "794": {
+    "email": "reginaiberic@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "795": {
+    "email": "xavier.castellvi@assolim.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "796": {
+    "email": "fesmarats61@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "797": {
+    "email": "calateresina63@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "798": {
+    "email": "davidjulianat@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "799": {
+    "email": "dolores_ortiz_serrano@carrefour.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "800": {
+    "email": "info@cervesasantjordi.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "801": {
+    "email": "closcodina@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "802": {
+    "email": "coalimentpoblesec@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "803": {
+    "email": "comercial@restoda.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "804": {
+    "email": "cuinaoberta@hotmail.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "805": {
+    "email": "info@delagranjaataula.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "806": {
+    "email": "salviaflor@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "807": {
+    "email": "nuria@aplicard.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "808": {
+    "email": "spain@impress.biz",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "809": {
+    "email": "info@kokopellibcn.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "810": {
+    "email": "cdumultiserveis@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "811": {
+    "email": "vivelloc@vivelloc.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "812": {
+    "email": "comercial@servei2.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "813": {
+    "email": "autocardedeu@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "814": {
+    "email": "team@avintiaracing.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "815": {
+    "email": "joan.cmitjorn@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "816": {
+    "email": "drivercars@drivercarsbcn.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "817": {
+    "email": "oscar_gasch@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "818": {
+    "email": "info@kartingcardedeu.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "819": {
+    "email": "info@planxisteria-girbau.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "820": {
+    "email": "info@isantscp.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "821": {
+    "email": "tallerlaroca@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "822": {
+    "email": "cr@admarina.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "823": {
+    "email": "agora.cardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "824": {
+    "email": "dorota@aloges.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "825": {
+    "email": "alsi-iluminacio@ya.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "826": {
+    "email": "hola.anuska@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "827": {
+    "email": "arcom.cardedeu@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "828": {
+    "email": "botiga@artijoc.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "829": {
+    "email": "artimarc.cardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "830": {
+    "email": "badallibres@badallibres.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "831": {
+    "email": "jardicardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "832": {
+    "email": "bricmobel@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "833": {
+    "email": "info@bricotechonline.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "834": {
+    "email": "hanqianzhou@qq.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "835": {
+    "email": "catmusic@catmusic.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "836": {
+    "email": "info@cavaletti.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "837": {
+    "email": "avinguda17@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "838": {
+    "email": "ciclesruaix@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "839": {
+    "email": "botiga@ofimatcoderch.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "840": {
+    "email": "monica.perales@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "841": {
+    "email": "info@arquer.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "842": {
+    "email": "riquelmearanda@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "843": {
+    "email": "sabateriacarlescanovas@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "844": {
+    "email": "cmc@artifecs.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "845": {
+    "email": "ddual.dual@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "846": {
+    "email": "cristina.diaz.pena@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "847": {
+    "email": "elsomni.cardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "848": {
+    "email": "esports10@esports10.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "849": {
+    "email": "paulahierrogaza@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "850": {
+    "email": "lluisasabateries@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "851": {
+    "email": "mimat.cardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "852": {
+    "email": "oliviabarcelona.2012@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "853": {
+    "email": "palmacardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "854": {
+    "email": "pepaterron@outlook.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "855": {
+    "email": "peuxic@terra.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "856": {
+    "email": "b15@b15.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "857": {
+    "email": "info@criteri.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "858": {
+    "email": "info@comunicasottovoce.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "859": {
+    "email": "catalunya@canalum.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "860": {
+    "email": "deumal@deumal.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "861": {
+    "email": "info@funcasta.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "862": {
+    "email": "alberto.villaluenga@guttersystem.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "863": {
+    "email": "iccanbrunetsl@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "864": {
+    "email": "info@maneig.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "865": {
+    "email": "gerard.alejandro@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "866": {
+    "email": "novanausl@novanausl.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "867": {
+    "email": "info@piscinescarde10.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "868": {
+    "email": "prycsa@prycsa.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "869": {
+    "email": "info@resifloor.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "870": {
+    "email": "del.valles@wash-int.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "871": {
+    "email": "academia.ateneu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "872": {
+    "email": "elracodelalumne@aulacreativa.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "873": {
+    "email": "cardedeu@autoescolasantceloni.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "874": {
+    "email": "aecardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "875": {
+    "email": "info@autoescolesmollet.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "876": {
+    "email": "parcinfantilbugui@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "877": {
+    "email": "cardedeu@cambridgeschool.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "878": {
+    "email": "cancanturri.cardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "879": {
+    "email": "cardedeu@chaplins.org",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "880": {
+    "email": "havefun@englishandco.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "881": {
+    "email": "rosa@petitsartistes.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "882": {
+    "email": "edvanefernandez@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "883": {
+    "email": "totsona@totsona.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "884": {
+    "email": "mail@guarderia-tipis.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "885": {
+    "email": "info@headlanguages.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "886": {
+    "email": "azulmartapolo@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "887": {
+    "email": "bcnsem@bcnsem.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "888": {
+    "email": "info@bloque8.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "889": {
+    "email": "info@bover.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "890": {
+    "email": "administracion@cordrich.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "891": {
+    "email": "daniruva@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "892": {
+    "email": "dimatic@dimatic.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "893": {
+    "email": "info@diteico.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "894": {
+    "email": "fenoplastica@fenoplastica.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "895": {
+    "email": "gacoelectric@gacoelectric.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "896": {
+    "email": "info@jjbcn.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "897": {
+    "email": "conta@tecnotrafo.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "898": {
+    "email": "info@gabrielbrau.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "899": {
+    "email": "marilozanofotografia@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "900": {
+    "email": "serveisambientals@savosa.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "901": {
+    "email": "info@100setze.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "902": {
+    "email": "nasirtik@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "903": {
+    "email": "barbopas130@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "904": {
+    "email": "acinom073@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "905": {
+    "email": "quatreelements@hotmail.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "906": {
+    "email": "santadepaulasierra@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "907": {
+    "email": "rafalulu@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "908": {
+    "email": "calacarmeta@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "909": {
+    "email": "restaurantcansuay@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "910": {
+    "email": "zuly00@hotmail.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "911": {
+    "email": "josuconj@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "912": {
+    "email": "vicentetalaveramartinez23@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "913": {
+    "email": "cafecentral1999@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "914": {
+    "email": "jesusborro@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "915": {
+    "email": "sebascv@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "916": {
+    "email": "afisa@fincasafisa.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "917": {
+    "email": "recepcio@caviambit.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "918": {
+    "email": "info@habitatgeselsui.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "919": {
+    "email": "merce@immo10.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "920": {
+    "email": "nivell@nivell.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "921": {
+    "email": "picsa@picsa.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "922": {
+    "email": "joan@riergal.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "923": {
+    "email": "info@dgtic.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "924": {
+    "email": "agerba@agerba.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "925": {
+    "email": "camposfachadas@terra.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "926": {
+    "email": "aluminisrico@yahoo.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "927": {
+    "email": "info@corpcld.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "928": {
+    "email": "busnaque@busnaque.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "929": {
+    "email": "francesc@comunicaciocreativa.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "930": {
+    "email": "ddecoris@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "931": {
+    "email": "immasafont@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "932": {
+    "email": "esteve@electricafortuny.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "933": {
+    "email": "info@electronicaciudad.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "934": {
+    "email": "info@elecsaboya.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "935": {
+    "email": "info@elicsia.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "936": {
+    "email": "espaidedoca@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "937": {
+    "email": "josep.mariateresa@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "938": {
+    "email": "marbres.bertran@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "939": {
+    "email": "fortunymiquel@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "940": {
+    "email": "info@orugarobots.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "941": {
+    "email": "support@juanashop.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "942": {
+    "email": "info@aboschl.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "943": {
+    "email": "mariaangels.rangil@es.abb.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "944": {
+    "email": "bionets@telefonica.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "945": {
+    "email": "magatzemscardedeu@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "946": {
+    "email": "info@souldpark.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "947": {
+    "email": "info@stocksindustria.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "948": {
+    "email": "info@stockstienda.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "949": {
+    "email": "antoni@afortuny.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "950": {
+    "email": "aplec@aplecgroup.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "951": {
+    "email": "info@asetec-soldi.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "952": {
+    "email": "sales@control-ing.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "953": {
+    "email": "daniel@danmix.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "954": {
+    "email": "comercial@dpis.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "955": {
+    "email": "garme@garme.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "956": {
+    "email": "info@mecaniquesbalmes.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "957": {
+    "email": "mecanitzats@al-gar.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "958": {
+    "email": "guicarsl@yahoo.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "959": {
+    "email": "pintuc@pintuccompresores.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "960": {
+    "email": "puig@puigexcavacions.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "961": {
+    "email": "seinec@seinec.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "962": {
+    "email": "jordi@talleresestrany.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "963": {
+    "email": "info@matachana.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "964": {
+    "email": "info@vypsl.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "965": {
+    "email": "aluminioscricar@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "966": {
+    "email": "climavent@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "967": {
+    "email": "aluvicardedeu@hotmail.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "968": {
+    "email": "os.tecnica@apm-moldes.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "969": {
+    "email": "avixandri@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "970": {
+    "email": "joan@bisansl.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "971": {
+    "email": "comaspartners@comaspartners.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "972": {
+    "email": "cmcardedeu@cmcplastics.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "973": {
+    "email": "cmlozano@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "974": {
+    "email": "ferrosreverter@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "975": {
+    "email": "info@induka.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "976": {
+    "email": "llamada@cm-llamada.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "977": {
+    "email": "metrikal@metrikal.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "978": {
+    "email": "persitot@persitot.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "979": {
+    "email": "asm.735@asmred.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "980": {
+    "email": "emartinez@gestilen.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "981": {
+    "email": "andreu@indapak.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "982": {
+    "email": "raulsola@jcano.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "983": {
+    "email": "comercial@jomarclogistic.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "984": {
+    "email": "s.ejarque@negottrafic.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "985": {
+    "email": "info@reciclatgesvalls.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "986": {
+    "email": "barnizadosserrano@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "987": {
+    "email": "marmundi@kibuc.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "988": {
+    "email": "sercuina@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "989": {
+    "email": "rodisamoble@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "990": {
+    "email": "info@sampayo-interiorisme.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "991": {
+    "email": "info@santacole.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "992": {
+    "email": "unidadpractica@unidadpractica.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "993": {
+    "email": "info@demco.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "994": {
+    "email": "info@fastflute.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "995": {
+    "email": "info@protectpackat.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "996": {
+    "email": "m.tottall@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "997": {
+    "email": "alfiba@alfiba.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "998": {
+    "email": "esquim@esquim.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "999": {
+    "email": "plastics.castells@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1000": {
+    "email": "info@prolutec.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1001": {
+    "email": "quermany@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1002": {
+    "email": "administracion@vdf.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1003": {
+    "email": "00750298@bancopopular.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1004": {
+    "email": "elsantos@gruposantander.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1005": {
+    "email": "mvmorcillo@bbva.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1006": {
+    "email": "empleats-oficina.0652@catalunyacaixa.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1007": {
+    "email": "deharoassegurances@yahoo.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1008": {
+    "email": "4968@lacaixa.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1009": {
+    "email": "ricardo.cabiscol@cc.racc.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1010": {
+    "email": "cgs@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1011": {
+    "email": "info@psittacus.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1012": {
+    "email": "info@terrasimcos.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1013": {
+    "email": "sirocco@sirocco.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1014": {
+    "email": "terranova2@dewandas.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1015": {
+    "email": "f.jurado@agentes.catalanaoccidente.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1016": {
+    "email": "finques@qam.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1017": {
+    "email": "info@assessoriagamma.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1018": {
+    "email": "torrasprat@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1019": {
+    "email": "buizamotors@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1020": {
+    "email": "raquel@comunicaciocreativa.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1021": {
+    "email": "cardedeuadvocats@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1022": {
+    "email": "consultoria@cardedeulegal.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1023": {
+    "email": "info@cataigua.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1024": {
+    "email": "cardedeu@gestoriacoll.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1025": {
+    "email": "assessoria@consultingcardedeu.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1026": {
+    "email": "controlsui@controlsui.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1027": {
+    "email": "cronique@cronique.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1028": {
+    "email": "segarraolive@icab.cat",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1029": {
+    "email": "ellocalestudi@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1030": {
+    "email": "ullalull@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1031": {
+    "email": "myrna@coac.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1032": {
+    "email": "info@espinola.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1033": {
+    "email": "mase.4puntades@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1034": {
+    "email": "angladaestetica@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1035": {
+    "email": "argent@estilistes.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1036": {
+    "email": "angels67@telefonica.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1037": {
+    "email": "camaguey.at@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1038": {
+    "email": "lolimarin1323@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1039": {
+    "email": "cardedeu@bdepil.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1040": {
+    "email": "manuela_275@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1041": {
+    "email": "floreta21@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1042": {
+    "email": "carmen.costuracardedeu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1043": {
+    "email": "diandsi@hotmail.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1044": {
+    "email": "e.puig2012@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1045": {
+    "email": "esq16@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1046": {
+    "email": "espaiconnecta@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1047": {
+    "email": "amicspeluts@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1048": {
+    "email": "info@doctor-klein.net",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1049": {
+    "email": "fugarolas.podologia@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1050": {
+    "email": "cvcardedeu@yahoo.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1051": {
+    "email": "clinicadentalcardedeu@clinicadentalcardedeu.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1052": {
+    "email": "luislozano39@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1053": {
+    "email": "emilce.longo@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1054": {
+    "email": "poblesec.dental@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1055": {
+    "email": "mcamps.riu@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1056": {
+    "email": "illa_veterinaria@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1057": {
+    "email": "moglar.clinicadental@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1058": {
+    "email": "dentvital@hotmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1059": {
+    "email": "xavi@eudog.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1060": {
+    "email": "anabelhvc@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1061": {
+    "email": "soniaveterinaria@gmail.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1062": {
+    "email": "belen@dactilix.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1063": {
+    "email": "info@dismarina.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1064": {
+    "email": "maria@estampadossanmar.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1065": {
+    "email": "puntiblond@puntiblond.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1066": {
+    "email": "info@lolacasademunt.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1067": {
+    "email": "normatex@normatex.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1068": {
+    "email": "persentili@persentili.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1069": {
+    "email": "pfdk28@terra.es",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1070": {
+    "email": "info@puntiblond.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  },
+  "1071": {
+    "email": "info.maissa@sefar.com",
+    "town": "Cardedeu",
+    "citySlug": "cardedeu"
+  }
+}

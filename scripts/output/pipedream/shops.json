@@ -1,0 +1,1250 @@
+{
+  "0": {
+    "email": "embutidos@arumicastells.com",
+    "name": "Embotits Arumí Castells SL",
+    "town": "Balenyà",
+    "citySlug": "balenya",
+    "category": "Carnisseria i cansaladeria",
+    "region": "Osona"
+  },
+  "1": {
+    "email": "collfreixanet@yahoo.es",
+    "name": "Forn Nou",
+    "town": "Balenyà",
+    "citySlug": "balenya",
+    "category": "Pa i pastisseria",
+    "region": "Osona"
+  },
+  "2": {
+    "email": "info@fusteriasayos.com",
+    "name": "Fusteria Sayós de Josep Carbonell Sayós",
+    "town": "Balenyà",
+    "citySlug": "balenya",
+    "category": "Decoració i mobles, fusteria en general, tancaments PVC K&ouml;mmerling, alumini mixta, sistemes de tancament.",
+    "region": "Osona"
+  },
+  "3": {
+    "email": "maricarmenyjorge@gmail.com",
+    "name": "L'Estanc de la Mari",
+    "town": "Balenyà",
+    "citySlug": "balenya",
+    "category": "Tabac, articles de fumador i regals",
+    "region": "Osona"
+  },
+  "4": {
+    "email": "recienllovido@gmail.com",
+    "name": "Recien llovido",
+    "town": "Balenyà",
+    "citySlug": "balenya",
+    "category": "Disseny i producció de joieria, venda de roba i complements",
+    "region": "Osona"
+  },
+  "5": {
+    "email": "info@ferreteriaeuman.com",
+    "name": "FERRETERIA EUMAN, S.L.",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "Ferreteria, jardineria, bricolatge, eines, pintures, maquinària, parament, drogueria, servei de reparació propi, lloguer de màquinaria.",
+    "region": "Osona"
+  },
+  "6": {
+    "email": "info@carnisseriasaborit.com",
+    "name": "CARNISSERIES XARCUTERIA SABORIT",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "Carnisseria i xarcuteria.",
+    "region": "Osona"
+  },
+  "7": {
+    "email": "nuria.nafa68@gmail.com",
+    "name": "LLIBRERIA EL CLIP",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "Llibreria, papereria, diaris, joguines, articles de rebal, fotocòpies i molt més.",
+    "region": "Osona"
+  },
+  "8": {
+    "email": "peixateriacalldetenes@gmail.com",
+    "name": "PEIXATERIA MARIA DOLORS",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "Venta al detall de peix i marisc fresc comprat directament a la Confraria de Palamós i altres productes de la pesca com ara productes congelats. A més, d'un assortiment variat de productes alimentaris.",
+    "region": "Osona"
+  },
+  "9": {
+    "email": "valvi@valvi.com",
+    "name": "SPAR",
+    "town": "Calldetenes",
+    "citySlug": "calldetenes",
+    "category": "Supermercat.",
+    "region": "Osona"
+  },
+  "10": {
+    "email": "calpaupujolbotiga@gmail.com",
+    "name": "Cal Pau Pujol",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "Sabateria, calçats especials per plantilles, espardenyes per balls populars.",
+    "region": "Alt Penedès"
+  },
+  "11": {
+    "email": "tutuscoll@gmail.com",
+    "name": "Carnisseria i xarcuteria Montse Coll",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "Carnisseria d'àmbit familiar amb xarcuteria, làctics i congelats",
+    "region": "Alt Penedès"
+  },
+  "12": {
+    "email": "info@canxarina.com",
+    "name": "Can Xarina",
+    "town": "Collsuspina",
+    "citySlug": "collsuspina",
+    "category": "Cuina tradicional catalana i de mercat.",
+    "region": "Moianès"
+  },
+  "13": {
+    "email": "consulta@cvetdosrius.com",
+    "name": "Centre Veterinari Dosrius",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Centre veterinari amb perruqueria canina i felina, alimentació i accesoris.",
+    "region": "Maresme"
+  },
+  "14": {
+    "email": "estancdosrius@hotmail.com",
+    "name": "Estanc de Dosrius",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "15": {
+    "email": "familiajuanguell@hotmail.com",
+    "name": "Forn de Pa Dosrius",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Forn de pa - bar",
+    "region": "Maresme"
+  },
+  "16": {
+    "email": "jordi.f.valera@hotmail.es",
+    "name": "Supermercat Canyamars",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "17": {
+    "email": "sonu.suma58@yahoo.com",
+    "name": "Supermercat Forn de Pa Dosrius",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "18": {
+    "email": "carlets.elbruc@gmail.com",
+    "name": "Estanc del Bruc \"Carlets\"",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "19": {
+    "email": "fdalemany@hotmail.com",
+    "name": "Fusteria Decoració Alemany, S.C.P.",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "20": {
+    "email": "info@fornalemany.com",
+    "name": "Forn Alemany",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "21": {
+    "email": "josepcamtenysp@gmail.com",
+    "name": "Pastisseria El Timbaler",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "22": {
+    "email": "povillpeixaters@yahoo.es",
+    "name": "Peixateria Povill",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "23": {
+    "email": "forncalantich@gmail.com",
+    "name": "Forn de Ca l'Antich",
+    "town": "Figaró-Montmany",
+    "citySlug": "figaro-montmany",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "24": {
+    "email": "hola@enaespaciossanos.com",
+    "name": "Ena \"Espacios Sanos\"",
+    "town": "Fogars de la Selva",
+    "citySlug": "fogars-de-la-selva",
+    "category": "Creació d'espais sans. Interiorisme i Decoració.",
+    "region": "La Selva"
+  },
+  "25": {
+    "email": "botiga@lacocadefolgueroles.com",
+    "name": "Botiga & Degustació - La Coca de Folgueroles",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "26": {
+    "email": "calmossen@calmossen.com",
+    "name": "Cal Mossèn",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "Forn de pa.",
+    "region": "Osona"
+  },
+  "27": {
+    "email": "carnisseria.suriñach@gmail.com",
+    "name": "Carnisseria Suriñach",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "Carnisseria- Cansaladeria.",
+    "region": "Osona"
+  },
+  "28": {
+    "email": "info@cocadelmossen.cat",
+    "name": "Coca del Mossèn - Forn Sant Jordi",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "Forn i pastisseria. especialitat: la Coca del Mossèn.",
+    "region": "Osona"
+  },
+  "29": {
+    "email": "info@fornricardera.com",
+    "name": "Forn Ricardera S.L.",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "Fabricació de productes artesans de pa i bolleria sense gluten.",
+    "region": "Osona"
+  },
+  "30": {
+    "email": "fruiteria@gmail.com",
+    "name": "Fruiteria i celler Jordi Bayés",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "31": {
+    "email": "fusteriamanya@gmail.com",
+    "name": "Fusteria Manya S.L.",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "Mobles.",
+    "region": "Osona"
+  },
+  "32": {
+    "email": "isabelolle47@gmail.com",
+    "name": "Isabel Ollé",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "Envernissats i lacats. Artesania creativa. Agulles de cabells. Restaurancions de moble antic.",
+    "region": "Osona"
+  },
+  "33": {
+    "email": "maspor@maspor.com",
+    "name": "Ferreteria Maspor, S.L.",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda al menor d'articles de ferreteria, parament, jardineria i coses vàries per la llar.",
+    "region": "Vallès Oriental"
+  },
+  "34": {
+    "email": "instal.canudas@gmail.com",
+    "name": "Instal·lacions Canudas, S.C.P",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda d'electrodomèstics i ferreteria.",
+    "region": "Vallès Oriental"
+  },
+  "35": {
+    "email": "jadeco@jabonera.es",
+    "name": "Jaboneria Distribuciones Ecológicas, S.L.",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Comerç a l'engròs de productes de perfumeria i drogueria, higiene i bellesa.",
+    "region": "Vallès Oriental"
+  },
+  "36": {
+    "email": "mudanzasgb@mudanzasgb.com",
+    "name": "Mudanzas GB, S.L.",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Mudances, transports, guardamobles, desmuntatges i muntatges, embalatges.",
+    "region": "Vallès Oriental"
+  },
+  "37": {
+    "email": "info@ortoplast.com",
+    "name": "Ortoplast, S.L.U.",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Empresa especialitzada en plàstics i espumes tècniques. Subministrament de materials per ortopèdia i podologia. Espumes tècniques i plàstics per ortopèdia. Per a mercat nacional i internacional",
+    "region": "Vallès Oriental"
+  },
+  "38": {
+    "email": "asalametlla@gmail.com",
+    "name": "Artistic Skating Academy l'Ametlla del Vallès (ASA L'Ametlla)",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "L'Artistic Skating Academy l'Ametlla del Vallès (ASA L'Ametlla) és un club esportiu federat de patinatge artístic que té com a finalitat promoure el patinatge artístic de competició i lúdic a l'Ametlla del Vallès. El nostre objectiu és ensenyar l'esport que tan ens apassiona d'una manera pluridisciplinar, oferint un ampli ventall de complements que permetran formar els patinadors/es de la millor manera.",
+    "region": "Vallès Oriental"
+  },
+  "39": {
+    "email": "aca@aca-ametlla.cat",
+    "name": "Associació Ametlla Comerç Actiu",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "40": {
+    "email": "donesdavui@gmail.com",
+    "name": "Associació Dones d'Avui de l'Ametlla del Vallès",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "L'Associació Dones d'Avui de l'Ametlla del Vallès neix amb la il·lusió d'un grup de dones per crear un espai de trobada i potenciar la sororitat entre les dones de l'Ametlla (o rodalia) afavorint la participació a les activitats que se'n derivin. És una associació sense ànim de lucre que vol donar l'oportunitat de conèixer i realitzar activitats aptes per a totes les butxaques.",
+    "region": "Vallès Oriental"
+  },
+  "41": {
+    "email": "info@triatloametlla.cat",
+    "name": "BB Triatló l\\'Ametlla",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Entitat que agrupa esportistes de l\\'àmbit de la Triatló. Té el seu origen en l\\'organització de la Duatló de Muntanya de l\\'Ametlla del Vallès, i ha anat creixent en capital humà i esportiu amb la incorporacíó de triatletes i duatletes de l\\'Ametlla i del voltant, que participen en diverses modalitats.El BB triatló l\\'Ametlla té un lloc destacat en el Rànking de Catalunya de duatlons de Muntanya i ha obtingut el primer lloc a la LLIGA CATALANA DE DUATLÓ DE MUNTANYA 2009 - 1era DIVISÓ així com el CAMPIONAT DE CATALUNYA ABSOLUT 200. Participa en triatlons internacionals, Ironmans, curses de resistència de BTT, marxes... i tot allò que el cos humà sigui capaç de resistir.",
+    "region": "Vallès Oriental"
+  },
+  "42": {
+    "email": "colmonicarc@hotmail.com",
+    "name": "Boho west",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda de roba i complements de dona.",
+    "region": "Vallès Oriental"
+  },
+  "43": {
+    "email": "quimbyeuropeasl@gmail.com",
+    "name": "Can Roca Alimentació",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Carnisseria, xarcuteria, verduleria, vins i queviures. Elaboració pròpia.",
+    "region": "Vallès Oriental"
+  },
+  "44": {
+    "email": "parroquiasantgenis@santgenis.org",
+    "name": "Càritas Sant Genís",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Càritas Sant Genís és una organització depenent de la Parròquia de Sant Genís i Genís dedicada a satisfer les necessitats bàsiques de persones en situació social desfavorable: menjar, roba, assistència i integració laboral, principalment.",
+    "region": "Vallès Oriental"
+  },
+  "45": {
+    "email": "robertomorteib@gmail.com",
+    "name": "Ceràmiques Morte",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Fabricació i venda ceràmiques, decoració, utilitari, ceràmica artística i bisuteria",
+    "region": "Vallès Oriental"
+  },
+  "46": {
+    "email": "estancametlla1@gmail.com",
+    "name": "Estanc l'Ametlla del Vallès",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Tabac i articles per a persones fumadores.",
+    "region": "Vallès Oriental"
+  },
+  "47": {
+    "email": "info@finquesferro.com",
+    "name": "Finques Ferro",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Compra venda d'immobles. Immobiliària",
+    "region": "Vallès Oriental"
+  },
+  "48": {
+    "email": "fornmoncau@gmail.com",
+    "name": "Forn de Pa Pastisseria Moncau",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Pa artesà fet amb massa mare i forn de llenya, així com productes de brioixeria, pastisseria i bomboneria, elaborats amb materials de primera qualitat.",
+    "region": "Vallès Oriental"
+  },
+  "49": {
+    "email": "info@fusteriahispania.com",
+    "name": "Fusteria Hispania",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Porta d'entrada i d'interiors, armaris de roba i bany, finestres, balcons, parquets massissos, sintètics, baranes d'escala, persianes enrotllables d'alumini, fusta, etc. Mosquiteres, tenalles, filtres solars, cortines Bandalux, finestres d'alumini, motors de persianes i mosquiteres, vidres, tractaments de termites, tarimes exteriors, mallorquines, gelosies. Mampares de bany i cuines.",
+    "region": "Vallès Oriental"
+  },
+  "50": {
+    "email": "grupesplaigepa@gmail.com",
+    "name": "Grup d'Esplai del Principat GEPA",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "L'esplai GEPA porta funcionant des del novembre del 1986, quan uns joves de l'Ametlla van decidir obrir un esplai al poble per poder fer activitats els dissabtes a la tarda, anar de colònies, fer trobades amb altres esplais de Catalunya, etc.",
+    "region": "Vallès Oriental"
+  },
+  "51": {
+    "email": "io@humana-spain.org",
+    "name": "Humana (Fundación Pueblo para Pueblo)",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Gestor de residus no perillosos. Reciclatge i venda de roba usada.",
+    "region": "Vallès Oriental"
+  },
+  "52": {
+    "email": "jipametlla@gmail.com",
+    "name": "Jip Moda a Bon Preu",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda de roba.",
+    "region": "Vallès Oriental"
+  },
+  "53": {
+    "email": "ssaperas@laltell.com",
+    "name": "L'Altell",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Gestió immobiliària. Gestió compra-venda d'immobles, lloguer, gestió de certificats energètics i cèdula d'habitabilitat i gestió d'hipoteques.",
+    "region": "Vallès Oriental"
+  },
+  "54": {
+    "email": "crisborrell@hotmail.es",
+    "name": "La Cocó",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda de roba i complements",
+    "region": "Vallès Oriental"
+  },
+  "55": {
+    "email": "lamerceria.ametlla@gmail.com",
+    "name": "La Merceria",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda de tot tipus d'agulles, fils, llana, roba interior, botons, etc. També cosim i descosim tot el que es precisi.",
+    "region": "Vallès Oriental"
+  },
+  "56": {
+    "email": "matagalls@matagalls.com",
+    "name": "Matagalls Consulting",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Compravenda, lloguer, administració i gestió d'immobles. Advocats.",
+    "region": "Vallès Oriental"
+  },
+  "57": {
+    "email": "info@miranius.cat",
+    "name": "Miranius",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda al detall. Papereria, llibreria, jocs, regals, etc.",
+    "region": "Vallès Oriental"
+  },
+  "58": {
+    "email": "comercial@mobimark.es",
+    "name": "Mobimark",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda al detall de sofàs, matalassos, mobiliari i complements de la llar.",
+    "region": "Vallès Oriental"
+  },
+  "59": {
+    "email": "pilu-333-@hotmail.com",
+    "name": "Peixos Pilar",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda de peix",
+    "region": "Vallès Oriental"
+  },
+  "60": {
+    "email": "mobles@pratdesaba.com",
+    "name": "Pratdesaba Mobles",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Empresa de fabricació i comercialització de mobles, i tot tipus d'article necessari per a la decoració de la llar. Subministrament sofà, matalassos i també moble juvenil.",
+    "region": "Vallès Oriental"
+  },
+  "61": {
+    "email": "maria@regalsmaria.cat",
+    "name": "Regals Maria",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Venda d'articles de regal i jocs educatius.",
+    "region": "Vallès Oriental"
+  },
+  "62": {
+    "email": "admin@ferreteriaandreu.com",
+    "name": "Andreu. Ferreteria i subministraments- Cadena 88",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall de ferreteria, pintures i vidre en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "63": {
+    "email": "www.bonarea.com",
+    "name": "Bon Àrea",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Supermercat",
+    "region": "Vallès Oriental"
+  },
+  "64": {
+    "email": "info@masuet.com",
+    "name": "CALÇATS MASUET. Ca l'Espardenyera",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall de calçat, complements, cadires de boga i joguines",
+    "region": "Vallès Oriental"
+  },
+  "65": {
+    "email": "info@cannogueras.cat",
+    "name": "Can Nogueras",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Moda, perfumeria, joguines, merceria, objectes de regal",
+    "region": "Vallès Oriental"
+  },
+  "66": {
+    "email": "llinars@elcorredorbicis.com",
+    "name": "El Corredor",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall d'articles d'esport en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "67": {
+    "email": "cofac.073@cofac.es",
+    "name": "Ferreteria Carbonell",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall de ferreteria, pintures i vidre en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "68": {
+    "email": "info@fusteriavila.com",
+    "name": "Fusteria Vilà",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall de mobles, aparells d'il·luminació i d'altres articles d'ús domèstic en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "69": {
+    "email": "illacrous@illacrous.com",
+    "name": "Illa Crous-Estació Servei Llinars",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall de combustibles per a l'automoció en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "70": {
+    "email": "info@mariarocaoptica.com",
+    "name": "Maria Roca Òptica",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall d'altres tipus d'articles nous en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "71": {
+    "email": "optica@opticallinars.com",
+    "name": "Òptica Llinars",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall d'altres tipus d'articles nous en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "72": {
+    "email": "sabaidillinars@gmail.com",
+    "name": "Sabaidï",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Comerç al detall de mobles, aparells d'il·luminació i d'altres articles d'ús domèstic en establiments especialitzats",
+    "region": "Vallès Oriental"
+  },
+  "73": {
+    "email": "carmesalada@gmail.com",
+    "name": "Carnisseria Can Salada",
+    "town": "Lluçà",
+    "citySlug": "lluca",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "74": {
+    "email": "info@mari.cat",
+    "name": "A i A Marí Immobles",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "75": {
+    "email": "florsmainada@gmail.com",
+    "name": "Floristeria Mainada",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "76": {
+    "email": "labotiguetarostisseria@gmail.com",
+    "name": "La Botigueta - cuina de mercat",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "77": {
+    "email": "xarcuteriesbosch@xarcuteriesbosch.com",
+    "name": "Xarcuteria Bosch",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "78": {
+    "email": "lesflorsdelmontseny@gmail.com",
+    "name": "Les Flors del Montseny",
+    "town": "Montseny",
+    "citySlug": "montseny",
+    "category": "Sector d'activitat: Alimentació, degustació i regals",
+    "region": "Vallès Oriental"
+  },
+  "79": {
+    "email": "meduseta@gmail.com",
+    "name": "Estil Personal: Roba i complements",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "80": {
+    "email": "ramatamalaro@gmail.com",
+    "name": "Ferreteria M. Rochés",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "81": {
+    "email": "ferreteriavila@hotmail.com",
+    "name": "Ferreteria Vila",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "82": {
+    "email": "forncabrianes@forncabrianes.com",
+    "name": "Forn de Cabrianes",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "83": {
+    "email": "mayangie5@gmail.com",
+    "name": "Forn de pa Ca l'Amador",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "84": {
+    "email": "rosaritotomate@gmail.com",
+    "name": "Forn de pa i Degustació Roser",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "85": {
+    "email": "n233156@gmail.com",
+    "name": "Fruiteria Nadia Zahid",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "86": {
+    "email": "montserrat.herboristeria@gmail.com",
+    "name": "Herboristeria Montserrat",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "87": {
+    "email": "jchuecos64@gmail.com",
+    "name": "Llibreria La Plaça",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "88": {
+    "email": "nouburjons@hotmail.es",
+    "name": "Pastisseria Nou Burjons",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "89": {
+    "email": "peixaterianova@gmail.com",
+    "name": "Peixateria Nova",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "90": {
+    "email": "c0518@condis.es",
+    "name": "Supermercat Condis",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "91": {
+    "email": "administracion@asicparets.com",
+    "name": "Associació de serveis i comerços de Parets del Vallès. ASIC",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "92": {
+    "email": "ememobles@gmail.com",
+    "name": "Eme Mobles",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "93": {
+    "email": "promocio.economica@parets.cat",
+    "name": "Empreses i comerços",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "94": {
+    "email": "cofac.210@cofac.es",
+    "name": "Ferreteria Marti-Gasch",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "95": {
+    "email": "tinram72@gmail.com",
+    "name": "Floristeria Tin Ram",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "96": {
+    "email": "joieriamirall@sf-inter.net",
+    "name": "Joieria el Mirall",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "97": {
+    "email": "info@optica90.com",
+    "name": "Optica90",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "98": {
+    "email": "infocomerc@parets.cat",
+    "name": "Servei de Comerç",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "99": {
+    "email": "cecopi@cecopi.com",
+    "name": "CECOPI DROGUERIA INDUSTRIAL, SL",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "100": {
+    "email": "alicia@ferrali.es",
+    "name": "FERRETERIA FERRALI",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "101": {
+    "email": "lopticadelavila@gmail.com",
+    "name": "L'OPTICA DE LA VILA",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "102": {
+    "email": "aidaeg.1985@gmail.com",
+    "name": "Va de Peix \" Cal Federal\"",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "103": {
+    "email": "came.m.b@hotmail.com",
+    "name": "Forn de pa Ca l'Andreu",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "104": {
+    "email": "llibreriaserratsalicru@gmail.com",
+    "name": "Llibreria M. Salicrú",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "105": {
+    "email": "coalimentstcebria@gmail.com",
+    "name": "Supermercat Coaliment",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "106": {
+    "email": "penyaculesantcli@gmail.com",
+    "name": "Associació Penya Culé Sant Climent",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "Les finalitats de l'Associació són: La reunió i trobada de simpatitzants climentons/es del FC Barcelona.",
+    "region": "Baix Llobregat"
+  },
+  "107": {
+    "email": "condis3011@condis.es",
+    "name": "CONDIS (Belpi Alimentació S.L)",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "108": {
+    "email": "estancsantcliment@gmail.com",
+    "name": "Estanc",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "109": {
+    "email": "pkthala2012sl@gmail.com",
+    "name": "Supermercat Noor",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "110": {
+    "email": "anna@latorredelgall.com",
+    "name": "La Torre del Gall",
+    "town": "Sant Cugat Sesgarrigues",
+    "citySlug": "sant-cugat-sesgarrigues",
+    "category": "La Torre del Gall es troba entre vinyes, amb una espectacular avinguda d'arbres, envoltada de jardins i amb una olivera.",
+    "region": "Alt Penedès"
+  },
+  "111": {
+    "email": "coralsantesteve@hotmail.com",
+    "name": "Coral Sant Esteve",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Entitat coral que recull la llarga tradició coral del municipi, hereva del l'antiga Coral Aplo i Orfeó Sant Esteve. Realitza concerts arreu del país i ha organitzat estades i concerts a nivell internacional, en especial per Europa i l'Amèrica Llatina. Habitualment organitza un concert per Nadal i un altre als volts de la Festa Major. Organitza, també, trobades corals a Sant Esteve",
+    "region": "Baix Llobregat"
+  },
+  "112": {
+    "email": "estanc.ses@telefonica.net",
+    "name": "Estanc Papereria Garriga",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "113": {
+    "email": "ferreteriasesrovires@gmail.com",
+    "name": "Ferreteria Sesrovires",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "114": {
+    "email": "666846650",
+    "name": "Fina Moda",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "115": {
+    "email": "floristeriaegea@hotmail.com",
+    "name": "Floristeria I Jardineria Joan Carles",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "116": {
+    "email": "artviu@sesrovires.info",
+    "name": "Grup d'art Artviu",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Col·lectiu d'artistes locals que organitzen i gestionen l'activitat plàstica local com exposicions, trobades...",
+    "region": "Baix Llobregat"
+  },
+  "117": {
+    "email": "llibreriasesrovires@outlook.es",
+    "name": "Llibreria Sant Esteve",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "118": {
+    "email": "lluislafusta@hotmail.com",
+    "name": "Mobles de cuine La Fuste S.L.",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "119": {
+    "email": "moblessantesteve@gmail.com",
+    "name": "Mobles Sant Esteve",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "120": {
+    "email": "supervoltrega28@gmail.com",
+    "name": "Supervilatorta, autoservei d'alimentació",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "",
+    "region": "Osona"
+  },
+  "121": {
+    "email": "info@ausagel.com",
+    "name": "Ausa Gel SL - Aliments Congelats",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Peixateria i congelats.",
+    "region": "Osona"
+  },
+  "122": {
+    "email": "jvf_vila@hotmail.com",
+    "name": "Can Fil - Alimentació Fiter",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Supermercat amb fruiteria, drogueria i xarcuteria d'elaboració pròpia. Tenim tot el que necessites per el teu dia a dia!",
+    "region": "Osona"
+  },
+  "123": {
+    "email": "criscmestilistes@gmail.com",
+    "name": "CM Estilistes",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Estudi del color, tints i tractaments vegans, estudi pentitat i maquillatge núvies, maquillatge, estilisme, assessorament per a books, tractaments capil·lars i tricologia avançada visagisme, tendències i complements de cabell natural.",
+    "region": "Osona"
+  },
+  "124": {
+    "email": "fornsantjulia@gmail.com",
+    "name": "Forn de Pa Sant Julià",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Pa cuit en forn de llenya, coca de forner, croissants i ensaïmades, entre d'altres productes.",
+    "region": "Osona"
+  },
+  "125": {
+    "email": "pavic@pavic.cat",
+    "name": "Pastisseria Crossandra",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Pastisseria, forn de pa, bomboneria, càterings per a les teves celebracions, festes familiars, batejos, comunions, aniversaris, etc.",
+    "region": "Osona"
+  },
+  "126": {
+    "email": "elrebostjosep@gmail.com",
+    "name": "Xarcuteria-carnisseria El Rebost",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "El teu rebost a Sant Julià. Carnisseria, xarcuteria i alimentació. Proveu la nostra varietat de productes d'elaboració pròpies de qualitat i sense gluten.",
+    "region": "Osona"
+  },
+  "127": {
+    "email": "admin@mirapeix.cat",
+    "name": "A. Mirapeix - Electricitat",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "128": {
+    "email": "calquicocarnisseria@hotmail.com",
+    "name": "Cal Quico - Carnisseria",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "129": {
+    "email": "info@pastisseriadomenec.com",
+    "name": "Pastisseria Domènec - Forn de pa i pastisseria",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "130": {
+    "email": "rosa@fuina.net",
+    "name": "Cal Ton · Papereria, Quiosc i Estanc",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "",
+    "region": "Anoia"
+  },
+  "131": {
+    "email": "rubiopujals@gmail.com",
+    "name": "Forn de pa \"El Fornet\"",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "132": {
+    "email": "electrogaja3g@hotmail.com",
+    "name": "Electrodomèstics Ferreteria Gaja",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "133": {
+    "email": "info@farres.cat",
+    "name": "Farrés fusteria i mobles",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "134": {
+    "email": "florisfotomontse@hotmail.com",
+    "name": "Floristeria el Roser",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "135": {
+    "email": "vigilant@ajsantquirze.cat",
+    "name": "Guàrdia Municipal",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "La seu de la Guàrdia Municipal de Sant Quirze de Besora es troba a l'edifici de serveis auxiliars municipals (just davant de l'Ajuntament), a la Plaça Major numero 14 del mateix municipi.",
+    "region": "Vallès Occidental"
+  },
+  "136": {
+    "email": "ssg.ajuntament@santsalvadordeguardiola.cat",
+    "name": "Camp de futbol",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "El camp es troba en el nucli ludicoesportiu del municipi, situat entre l'escola i el poliesportiu i prop de l'Ajuntament. El nou camp de futbol compta amb una superfície de gespa artificial, vestuaris, enllumenat i marcador electrònic. També disposa de desfibril·lador, un gran pàrquing i una pista de pàdel al costat.",
+    "region": "Bages"
+  },
+  "137": {
+    "email": "forndellenyapecona@hotmail.com <forndellenyapecona@hotmail.com>",
+    "name": "Forn de llenya PE.CO.NA",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "138": {
+    "email": "admin@alaponsa.com",
+    "name": "Llocteu Immobles S.L.",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "139": {
+    "email": "estancsantsalvador@gmail.com",
+    "name": "Plantes Tabacs Timbre Regals",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "140": {
+    "email": "contacte@grupllobet.com",
+    "name": "Supermercat Grup Llobet",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "141": {
+    "email": "ssg.cultura@santsalvadordeguardiola.cat",
+    "name": "Teatre La Sala",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "El municipi disposa d'un equipament cultural polivalent anomenat \"La Sala\". És un espai municipal situat al centre de Guardiola (carrer de la Creu, 8) que, des del 2016, es dedica a la promoció i difusió de la cultura amb una programació artística familiar anual. Aquest equipament es troba en un dels edificis més rellevants del nucli urbà de Sant Salvador de Guardiola, seguint un estil que es pot considerar dins del cànon modernista.",
+    "region": "Bages"
+  },
+  "142": {
+    "email": "espaisfamiliars.stc@gmail.com",
+    "name": "Espais Familiars La Masieta",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "La Masieta és un espai de trobada per a famílies amb infants de 0 a 6 anys.",
+    "region": "Baix Llobregat"
+  },
+  "143": {
+    "email": "quioscosantacoloma@gmail.com",
+    "name": "Estanc i Quiosc de la Chari",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "144": {
+    "email": "ferreteria-hogar@telefonica.net",
+    "name": "Ferreteria y Hogar",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "145": {
+    "email": "fusteriajpau@gmail.com",
+    "name": "Fusteria i Decoració J. Pau SL",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "146": {
+    "email": "info@vitalargent.com",
+    "name": "Joieria d'Argent",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "147": {
+    "email": "sc_24@hotmail.es",
+    "name": "Solasegalés Decoració i Pintura, SL",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "148": {
+    "email": "lidiapujadas@hotmail.com",
+    "name": "Fleca Pujadas",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "149": {
+    "email": "canvilaseva@gmail.com",
+    "name": "Forn Can Vila",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "150": {
+    "email": "admin@acjsystems.com",
+    "name": "ACJ Systems",
+    "town": "Tona",
+    "citySlug": "tona",
+    "category": "Maquinària per a bugaderia industrial. Botiga online de recanvis",
+    "region": "Osona"
+  },
+  "151": {
+    "email": "carnsesteve@movistar.es",
+    "name": "Carnisseria Esteve",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "152": {
+    "email": "calcamilo@torrelavit.cat",
+    "name": "Fleca-Pastisseria Cal Camilo",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "153": {
+    "email": "roviranuria@torrelavit.cat",
+    "name": "L'Estanc de la Nuri",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "154": {
+    "email": "igualada@mail.cambrabcn.es",
+    "name": "Cambra Oficial de Comerç",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "155": {
+    "email": "xarcuteria.maricarmen@gmail.com",
+    "name": "Xarcuteria Mari Carmen",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  }
+}

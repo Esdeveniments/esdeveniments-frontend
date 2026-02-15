@@ -1,0 +1,634 @@
+{
+  "0": {
+    "email": "enricpla@gmail.com",
+    "name": "Taller de forja i escultura Montferrer",
+    "town": "Alpens",
+    "citySlug": "alpens",
+    "category": "",
+    "region": "Lluçanès"
+  },
+  "1": {
+    "email": "info@jardineriadelvalles.com",
+    "name": "Jardinería del Vallés",
+    "town": "Cànoves i Samalús",
+    "citySlug": "canoves-i-samalus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "2": {
+    "email": "carlesfortunyfotograf@gmail.com",
+    "name": "Carles Fortuny Fotògraf",
+    "town": "Castellví de la Marca",
+    "citySlug": "castellvi-de-la-marca",
+    "category": "Estudi de fotografia especialitzat en fotografia de producte, reportatge social, retrat, interiorisme, publicitat i qualsevol encàrrec fotogràfic.",
+    "region": "Alt Penedès"
+  },
+  "3": {
+    "email": "autoescolatramvia@hotmail.com",
+    "name": "Autoescola Beltrán",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "",
+    "region": "Maresme"
+  },
+  "4": {
+    "email": "info@interinmobiliaria.es",
+    "name": "Finques Inter",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Serveis d'assessorament immobiliari",
+    "region": "Maresme"
+  },
+  "5": {
+    "email": "taxi.dosrius@gmail.com",
+    "name": "TAXI Dosrius - Andreu",
+    "town": "Dosrius",
+    "citySlug": "dosrius",
+    "category": "Servei de taxi.",
+    "region": "Maresme"
+  },
+  "6": {
+    "email": "brucgest@economistes.com",
+    "name": "Brucgest Assessors",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "7": {
+    "email": "joanmarcpelfort@telefonica.net",
+    "name": "J. M . Serveis de Jardineria",
+    "town": "El Bruc",
+    "citySlug": "el-bruc",
+    "category": "",
+    "region": "Anoia"
+  },
+  "8": {
+    "email": "tallergenis@gmail.com",
+    "name": "Taller mecànic Genís Mateu",
+    "town": "Figaró-Montmany",
+    "citySlug": "figaro-montmany",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "9": {
+    "email": "taxifogarsdemontclus@gmail.com",
+    "name": "Taxi Aureli 24 h.",
+    "town": "Fogars de Montclús",
+    "citySlug": "fogars-de-montclus",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "10": {
+    "email": "llucjardiner@hotmail.com",
+    "name": "Lluc Canela- Jardiner",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "11": {
+    "email": "tupinot22@hotmail.com",
+    "name": "Pintura Decorativa Jordi Solà",
+    "town": "Folgueroles",
+    "citySlug": "folgueroles",
+    "category": "",
+    "region": "Osona"
+  },
+  "12": {
+    "email": "csi@csi-informatica.com",
+    "name": "Consultora i Serveis Informàtics, S.C.P",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Ofereix a particulars i empreses de l'Ametlla els serveis necessaris per a cobrir les seves necessitats informàtiques amb un alt nivell de qualitat i personalització.",
+    "region": "Vallès Oriental"
+  },
+  "13": {
+    "email": "urbisnau@urbisnau.com",
+    "name": "Urbis Nau, S.A.",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Immobiliària",
+    "region": "Vallès Oriental"
+  },
+  "14": {
+    "email": "info@finqueslametlla.com",
+    "name": "Finques L'Ametlla",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Immobiliària i assessorament.",
+    "region": "Vallès Oriental"
+  },
+  "15": {
+    "email": "info@finquesterranova.com",
+    "name": "Finques Terranova",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Administració de lloguers d'habitatges, locals comercials, places d'aparcament, naus industrials i solars. Gestions de compra i venda d'habitatges, locals comercials, places d'aparcament, naus industrials i solars. Valoracions i taxacions immobiliàries, consultoria immobiliària i assessorament per inversions",
+    "region": "Vallès Oriental"
+  },
+  "16": {
+    "email": "font@fontgrup.cat",
+    "name": "Font Enginyeria Grup",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Projectes d'enginyeria (construcció i instal·lacions). Legalització d'activitats industrials i comercials. Promoció immobiliària d'àmbit industrial.",
+    "region": "Vallès Oriental"
+  },
+  "17": {
+    "email": "ferlovi.3@gmail.com",
+    "name": "Obres i Edificacions Ferlovi S.L",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Reformes en general, construcció de cases, tot tipus de treballs de paleteria, excavacions i moviments de terra, murs de contenció de terres.",
+    "region": "Vallès Oriental"
+  },
+  "18": {
+    "email": "info@onllarimmobiliaria.com",
+    "name": "ON LLAR IMMOBILIÀRIA SCP",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Gestió immobiliària de compra venda i lloguer amb els honoraris més reduïts de la zona.",
+    "region": "Vallès Oriental"
+  },
+  "19": {
+    "email": "info@sbautomocio.com",
+    "name": "SB AUTOMOCIÓ",
+    "town": "L'Ametlla del Vallès",
+    "citySlug": "l-ametlla-del-valles",
+    "category": "Reparació i manteniment de turismes i furgonetes. Planxa i pintura.",
+    "region": "Vallès Oriental"
+  },
+  "20": {
+    "email": "info@agervalles.com",
+    "name": "Ager Vallès",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Compravenda de béns immobiliaris per compte propi",
+    "region": "Vallès Oriental"
+  },
+  "21": {
+    "email": "info@finquescanfont.com",
+    "name": "Can Font. Serveis Immobiliaris",
+    "town": "Llinars del Vallès",
+    "citySlug": "llinars-del-valles",
+    "category": "Compravenda de béns immobiliaris per compte propi",
+    "region": "Vallès Oriental"
+  },
+  "22": {
+    "email": "p.babia@babia.cat",
+    "name": "Gestoria i assessoria Babià",
+    "town": "Monistrol de Montserrat",
+    "citySlug": "monistrol-de-montserrat",
+    "category": "",
+    "region": "Bages"
+  },
+  "23": {
+    "email": "jbmqasesor@terra.es",
+    "name": "Assessoria JB",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "24": {
+    "email": "autoescolamontgat@gmail.com",
+    "name": "Autoescola Montgat",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "25": {
+    "email": "montgat2@vialserveis.com",
+    "name": "Autoescola Montgat Vial Serveis (Plaça de la Vila)",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "26": {
+    "email": "info@peibe.com",
+    "name": "Peibe Assessors i Advocats",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "27": {
+    "email": "compimotors@gmail.com",
+    "name": "Taller mecànic Compi Motors",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "28": {
+    "email": "taximontgat@gmail.com",
+    "name": "Taxis de Montgat",
+    "town": "Montgat",
+    "citySlug": "montgat",
+    "category": "",
+    "region": "Maresme"
+  },
+  "29": {
+    "email": "navarcles@assessoriadelbages.cat",
+    "name": "Assessoria del Bages",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "30": {
+    "email": "autoescolainnova@gmail.com",
+    "name": "Autoescola Innova",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "31": {
+    "email": "saragangonells@i-veo.com",
+    "name": "Immobiliària Sara Gangonells",
+    "town": "Navarcles",
+    "citySlug": "navarcles",
+    "category": "",
+    "region": "Bages"
+  },
+  "32": {
+    "email": "danielliginfer@hotmail.com",
+    "name": "Reformes i construccions Liginfer",
+    "town": "Olesa de Bonesvalls",
+    "citySlug": "olesa-de-bonesvalls",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "33": {
+    "email": "info@absfincas.com",
+    "name": "ABS Serveis Immobiliaris",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "34": {
+    "email": "info@aespar.e.telefonica.net",
+    "name": "Autoescola Parets",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "35": {
+    "email": "cascantic@autoescolasanglas.com",
+    "name": "Autoescola Sanglas - Casc antic",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "36": {
+    "email": "eixample@autoescolasanglas.com",
+    "name": "Autoescola Sanglas - Eixample",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "37": {
+    "email": "caljardiner@parets.cat",
+    "name": "Casal de Joves Cal Jardiner",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "38": {
+    "email": "info@gestoriamartinezparets.com",
+    "name": "Gestoria Martínez",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "39": {
+    "email": "info@gyconsultors.com",
+    "name": "Granados gestoria",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "40": {
+    "email": "paquitaurtusol@gmail.com",
+    "name": "Paquita Urtusol Assegurança",
+    "town": "Parets del Vallès",
+    "citySlug": "parets-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "41": {
+    "email": "aiv@telefonica.net",
+    "name": "AIV, ASSESSORIA INTEGRAL DEL VALLES",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "42": {
+    "email": "jallut@jallut.es",
+    "name": "JALLUT PINTURAS, SL",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "43": {
+    "email": "assessoriapolinya@stl.logiccontrol.es",
+    "name": "ASSESSORIA POLINYA",
+    "town": "Polinyà",
+    "citySlug": "polinya",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "44": {
+    "email": "jufreixa@hotmail.com",
+    "name": "Jardineria Joan Serra",
+    "town": "Sant Cebrià de Vallalta",
+    "citySlug": "sant-cebria-de-vallalta",
+    "category": "",
+    "region": "Maresme"
+  },
+  "45": {
+    "email": "gmesl@gmesl.net",
+    "name": "GME Sant Climent, S.L.(General de Montatges Elèctrics)",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "46": {
+    "email": "info@andreupimentel.com",
+    "name": "Andreu Pimentel Fotografia",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "47": {
+    "email": "jardineriasantcliment@hotmail.com",
+    "name": "Jardineria Sant Climent",
+    "town": "Sant Climent de Llobregat",
+    "citySlug": "sant-climent-de-llobregat",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "48": {
+    "email": "comercial@imsesa.com",
+    "name": "Bimpro Gestió Immobiliària, S.L.",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "49": {
+    "email": "comercial@informatica-activa.es",
+    "name": "Informàtica Activa, SL",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "50": {
+    "email": "pinzells@hotmail.com",
+    "name": "Associació Pinzells",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Associació per la difusió i formació de la pintura i el dibuix. Organitza cursos de dibuix i pintura durant tot l'any.",
+    "region": "Baix Llobregat"
+  },
+  "51": {
+    "email": "aevirtual.cat@gmail.com",
+    "name": "Autoescola Aevirtual.Cat",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "52": {
+    "email": "autoescolasanes@gmail.com",
+    "name": "Autoescola Sanes",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "53": {
+    "email": "diablosmc.baixllobregat@gmail.com",
+    "name": "Diablos MC Baix Llobregat",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "Associació amb fins de promoure i difondre tot el relacionat amb el mon de la motocicleta, i per aconseguir les seves finalitats, organitzen activitats periòdicament, conjuntament amb l'ajuntament i les entitats veïnals consistents amb xerrades, exposicions de motos, cursets de mecànica, etc.",
+    "region": "Baix Llobregat"
+  },
+  "54": {
+    "email": "info@assessorshg.com",
+    "name": "HG assessors",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "55": {
+    "email": "info@mypro.cat",
+    "name": "Mypro Serveis Informàtics",
+    "town": "Sant Esteve Sesrovires",
+    "citySlug": "sant-esteve-sesrovires",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "56": {
+    "email": "taxisantjulia@hotmail.es",
+    "name": "Taxi Sant Julià de Vilatorta",
+    "town": "Sant Julià de Vilatorta",
+    "citySlug": "sant-julia-de-vilatorta",
+    "category": "Taxi fins a 7 places",
+    "region": "Osona"
+  },
+  "57": {
+    "email": "info@immosavall.com",
+    "name": "Immobiliària Immosavall",
+    "town": "Sant Llorenç Savall",
+    "citySlug": "sant-llorenc-savall",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "58": {
+    "email": "jardineriamorera@hotmail.com",
+    "name": "Jardineria Morera",
+    "town": "Sant Martí de Tous",
+    "citySlug": "sant-marti-de-tous",
+    "category": "",
+    "region": "Anoia"
+  },
+  "59": {
+    "email": "ocupacio@gesbisaura.cat",
+    "name": "Assessora Laboral",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "60": {
+    "email": "administracio@collectiuargelaga.org",
+    "name": "Associació educativa Intersecciona't",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "Ens dediquem a la intervenció social i la millora de la qualitat de vida de les persones LGTBIQA+ i neurodivergents. Fem tallers a escoles i instituts, formacions a professionals o empreses, assessories a ajuntaments, acompanyaments a familiars o a persones individuals, entre d'altres.",
+    "region": "Vallès Occidental"
+  },
+  "61": {
+    "email": "guohuavtcbcn@gmail.com",
+    "name": "Taxi Guohua An",
+    "town": "Sant Quirze del Vallès",
+    "citySlug": "sant-quirze-del-valles",
+    "category": "",
+    "region": "Vallès Occidental"
+  },
+  "62": {
+    "email": "tallerscalvo@gmail.com",
+    "name": "Tallers Mecànics Calvo, S.L.",
+    "town": "Sant Salvador de Guardiola",
+    "citySlug": "sant-salvador-de-guardiola",
+    "category": "",
+    "region": "Bages"
+  },
+  "63": {
+    "email": "teresa@sitja-gestio.com",
+    "name": "ASGECO. Assessoria i Gestió Santa Coloma, S.L",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "64": {
+    "email": "viky@lallarblava.com",
+    "name": "Gestió Immobiliària La Llar",
+    "town": "Santa Coloma de Cervelló",
+    "citySlug": "santa-coloma-de-cervello",
+    "category": "",
+    "region": "Baix Llobregat"
+  },
+  "65": {
+    "email": "oscarcolompol@hotmail.com",
+    "name": "Elèctric Colom Balenyà",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "66": {
+    "email": "gestoria@solergirvent.com",
+    "name": "Gestoria Soler Girvent",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "67": {
+    "email": "juanuix@gmail.com",
+    "name": "Jardineria Juanuix Malet",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "68": {
+    "email": "comercial@setup.cat",
+    "name": "Setup informàtica",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "69": {
+    "email": "rafelcc@gmail.com",
+    "name": "Taller Mecànic Rafel Casanovas Codina",
+    "town": "Seva",
+    "citySlug": "seva",
+    "category": "",
+    "region": "Osona"
+  },
+  "70": {
+    "email": "afotona15@gmail.com",
+    "name": "AGRUPACIÓ FOTOGRÀFICA TONA",
+    "town": "Tona",
+    "citySlug": "tona",
+    "category": "Organització anual del concurs de fotografia Castell d'or.",
+    "region": "Osona"
+  },
+  "71": {
+    "email": "albert_junque@hotmail.es",
+    "name": "Albert Junqué Rius (Pintura)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "72": {
+    "email": "autovernet@gmail.com",
+    "name": "Auto Vernet (Mecànica)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "73": {
+    "email": "autoplanxatorrelavit@hotmail.com",
+    "name": "Autoplanxa Torrelavit (Mecànica)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "74": {
+    "email": "reformespenedes@torrelavit.cat",
+    "name": "Reformes Penedès (Construcció)",
+    "town": "Torrelavit",
+    "citySlug": "torrelavit",
+    "category": "",
+    "region": "Alt Penedès"
+  },
+  "75": {
+    "email": "jcarosmateo@yahoo.es",
+    "name": "Assessors Vilalba",
+    "town": "Vilalba Sasserra",
+    "citySlug": "vilalba-sasserra",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "76": {
+    "email": "jmasaguep@gmail.com",
+    "name": "Construcció i reformes",
+    "town": "Vilalba Sasserra",
+    "citySlug": "vilalba-sasserra",
+    "category": "",
+    "region": "Vallès Oriental"
+  },
+  "77": {
+    "email": "xaviersoriano@fotografiaibooks.com",
+    "name": "Fotografia i Books",
+    "town": "Vilanova del Camí",
+    "citySlug": "vilanova-del-cami",
+    "category": "",
+    "region": "Anoia"
+  },
+  "78": {
+    "email": "tonimartingarciasp@gmail.com",
+    "name": "Taxi Vilanova (Toni Martín)",
+    "town": "Vilanova del Vallès",
+    "citySlug": "vilanova-del-valles",
+    "category": "",
+    "region": "Vallès Oriental"
+  }
+}
