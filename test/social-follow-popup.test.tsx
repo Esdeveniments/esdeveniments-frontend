@@ -25,9 +25,6 @@ vi.mock("@components/hooks/useCheckMobileScreen", () => ({
   default: vi.fn(() => false), // desktop by default
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const useCheckMobileScreen = () => require("@components/hooks/useCheckMobileScreen").default;
-
 // ── Helpers ─────────────────────────────────────────────────────────
 function clearStorage() {
   localStorage.clear();
