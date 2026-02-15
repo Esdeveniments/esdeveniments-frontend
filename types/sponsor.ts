@@ -41,7 +41,7 @@ export type SponsorDuration = keyof typeof DURATION_DAYS;
  * Get all available duration keys (for iteration)
  */
 export const SPONSOR_DURATIONS = Object.keys(
-  DURATION_DAYS
+  DURATION_DAYS,
 ) as SponsorDuration[];
 
 /**
@@ -85,7 +85,61 @@ export interface SponsorConfig {
 export type ActiveSponsor = SponsorConfig;
 
 /**
- * Props for SponsorBanner client component
+ * Configuration for a self-promotional house ad.
+ * Shown when no paid sponsor exists to demonstrate the ad slot.
+ *
+ * Currently only "text" type: CSS-rendered banner with i18n headline/subtitle,
+ * links to /patrocina.
+ */
+export type HouseAdType = "text";
+
+/**
+ * Base fields shared by all house ad types.
+ */
+interface HouseAdBase {
+  /** Unique identifier for analytics tracking */
+  id: string;
+  /** House ad type */
+  type: HouseAdType;
+}
+
+/**
+ * Text-based house ad — rendered with CSS, no image required.
+ * Always links to /patrocina.
+ */
+export interface TextHouseAdConfig extends HouseAdBase {
+  type: "text";
+  /** i18n key suffix for headline (resolved via Sponsor.houseAd.{headlineKey}) */
+  headlineKey: string;
+  /** i18n key suffix for subtitle (resolved via Sponsor.houseAd.{subtitleKey}) */
+  subtitleKey: string;
+}
+
+
+
+/** Union type for all house ad configurations */
+export type HouseAdConfig = TextHouseAdConfig;
+
+/**
+ * Result from getHouseAdForSlot — either a house ad or null (show empty state CTA).
+ */
+export interface HouseAdResult {
+  houseAd: HouseAdConfig;
+}
+
+/**
+ * Props for TextHouseAd client component
+ */
+export interface TextHouseAdProps {
+  /** The text house ad configuration */
+  houseAd: TextHouseAdConfig;
+  /** Current place for analytics */
+  place: string;
+}
+
+/**
+ * Props for SponsorBanner client component.
+ * Used for both paid sponsors and venue house ads (visually identical).
  */
 export interface SponsorBannerProps {
   sponsor: ActiveSponsor;

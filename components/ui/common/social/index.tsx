@@ -106,6 +106,106 @@ const renderTelegram = (link: string | undefined): JSX.Element | null =>
     </Link>
   ) : null;
 
+const renderThreads = (link: string | undefined): JSX.Element | null =>
+  link ? (
+    <Link
+      href={link}
+      className="no-underline"
+      rel="noopener noreferrer"
+      target="_blank"
+      aria-label="Threads"
+    >
+      <button
+        className={SOCIAL_BUTTON_CLASS}
+        aria-label="Threads"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 fill-primary transition-colors"
+          role="img"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.187.408-2.264 1.33-3.03.858-.712 2.04-1.133 3.408-1.209 1.199-.066 2.295.048 3.27.378a5.591 5.591 0 0 0-.02-.593c-.122-1.463-.596-2.507-1.416-3.104-.893-.65-2.105-.975-3.61-.966l-.027.001c-1.542.06-2.756.544-3.61 1.44-.772.81-1.263 1.904-1.46 3.248l-2.04-.272c.258-1.726.905-3.153 1.926-4.222C7.625 3.17 9.257 2.504 11.259 2.42c1.949-.038 3.568.408 4.811 1.315 1.347.982 2.082 2.426 2.248 4.287l.012.148c.01.091.016.18.022.27 1.11.585 1.98 1.418 2.529 2.438.752 1.4 1.02 3.346.024 5.336-1.089 2.18-3.053 3.393-5.703 3.558a7.458 7.458 0 0 1-.391.011v.001ZM11.29 15.65c-.04 0-.082 0-.123.002-.856.047-1.54.303-1.975.639-.367.283-.515.622-.487 1.095.044.709.761 1.564 2.534 1.467 1.09-.06 1.886-.426 2.499-1.188.474-.59.787-1.375.935-2.334-.843-.28-1.81-.44-2.898-.44a7.035 7.035 0 0 0-.485.018v-.001l.001.742h-.001v-.742Z" />
+        </svg>
+      </button>
+    </Link>
+  ) : null;
+
+const renderLinkedIn = (link: string | undefined): JSX.Element | null =>
+  link ? (
+    <Link
+      href={link}
+      className="no-underline"
+      rel="noopener noreferrer"
+      target="_blank"
+      aria-label="LinkedIn"
+    >
+      <button
+        className={SOCIAL_BUTTON_CLASS}
+        aria-label="LinkedIn"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 fill-primary transition-colors"
+          role="img"
+          viewBox="0 0 24 24"
+        >
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+        </svg>
+      </button>
+    </Link>
+  ) : null;
+
+const renderTikTok = (link: string | undefined): JSX.Element | null =>
+  link ? (
+    <Link
+      href={link}
+      className="no-underline"
+      rel="noopener noreferrer"
+      target="_blank"
+      aria-label="TikTok"
+    >
+      <button
+        className={SOCIAL_BUTTON_CLASS}
+        aria-label="TikTok"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 fill-primary transition-colors"
+          role="img"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+        </svg>
+      </button>
+    </Link>
+  ) : null;
+
+const renderMastodon = (link: string | undefined): JSX.Element | null =>
+  link ? (
+    <Link
+      href={link}
+      className="no-underline"
+      rel="me noopener noreferrer"
+      target="_blank"
+      aria-label="Mastodon"
+    >
+      <button
+        className={SOCIAL_BUTTON_CLASS}
+        aria-label="Mastodon"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 fill-primary transition-colors"
+          role="img"
+          viewBox="0 0 24 24"
+        >
+          <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054 19.998 19.998 0 0 0 4.636.528c.564 0 1.128-.019 1.69-.056 2.006-.12 4.142-.365 5.492-.946 1.758-.757 3.248-2.484 3.387-6.514.052-1.502.063-3.206.063-4.753 0-.963-.025-1.93-.075-2.893z" />
+        </svg>
+      </button>
+    </Link>
+  ) : null;
+
 export default async function Social({ links }: SocialProps): Promise<JSX.Element> {
   const t = await getTranslations("Components.Social");
   return (
@@ -113,11 +213,15 @@ export default async function Social({ links }: SocialProps): Promise<JSX.Elemen
       <h3 className="body-small font-semibold text-muted-foreground uppercase tracking-wider">
         {t("followUs")}
       </h3>
-      <div className="flex justify-center items-center gap-3">
-        {renderTwitter(links.twitter)}
+      <div className="flex justify-center items-center gap-3 flex-wrap">
         {renderInstagram(links.instagram)}
-        {renderTelegram(links.telegram)}
         {renderFacebook(links.facebook)}
+        {renderTwitter(links.twitter)}
+        {renderThreads(links.threads)}
+        {renderTikTok(links.tiktok)}
+        {renderMastodon(links.mastodon)}
+        {renderLinkedIn(links.linkedin)}
+        {renderTelegram(links.telegram)}
       </div>
     </div>
   );

@@ -519,6 +519,12 @@
     "Social": {
       "followUs": "Segueix-nos"
     },
+    "SocialFollowPopup": {
+      "headline": "Que els plans et trobin a tu",
+      "subtext": "Cada dia compartim els millors esdeveniments a les xarxes. Segueix-nos i no et perdis res.",
+      "close": "Ara no",
+      "aria": "Segueix-nos a les xarxes socials"
+    },
     "ListPageFaq": {
       "title": "Preguntes freqüents"
     },
@@ -1389,8 +1395,27 @@
   },
   "Sponsor": {
     "label": "Publicitat",
+    "houseAdLabel": "Patrocina aquest espai",
     "emptyState": "Anuncia el teu negoci aquí",
-    "cta": "Patrocina aquest espai"
+    "cta": "Patrocina aquest espai",
+    "houseAd": {
+      "pricing": "El teu negoci aquí · Des de 5€/setmana",
+      "pricingSub": "Espai exclusiu a l'agenda d'esdeveniments del teu poble",
+      "reach": "Gent del teu poble, buscant plans",
+      "reachSub": "Busquen on menjar, comprar i sortir. Tu els dones la resposta.",
+      "exclusive": "Només tu. Sense competència.",
+      "exclusiveSub": "Cap altre anunci competeix amb el teu. L'espai és tot per a tu.",
+      "local": "L'únic anunci al teu poble",
+      "localSub": "Apareix quan busquen on menjar, comprar o sortir",
+      "intent": "Gent que ja vol sortir de casa",
+      "intentSub": "Busquen què fer i on anar. Tu els dones la resposta.",
+      "simple": "Sense complicacions",
+      "simpleSub": "Un bàner, el teu poble, una setmana. Des de 5€",
+      "results": "On et troben els clients?",
+      "resultsSub": "Aquí mateix. Quan busquen què fer al teu poble",
+      "seasonal": "Hi ha festa al poble?",
+      "seasonalSub": "Anuncia't quan la gent surt de casa"
+    }
   },
   "Sponsorship": {
     "meta": {
@@ -1398,31 +1423,34 @@
       "description": "El teu negoci, destacat a l'agenda d'esdeveniments del teu poble. Espai exclusiu sense competidors."
     },
     "hero": {
-      "title": "El teu negoci, destacat al teu poble",
-      "subtitle": "Apareix a l'agenda d'esdeveniments de la teva zona. Espai 100% exclusiu: cap altre negoci competeix amb tu.",
-      "stats": "Espai exclusiu · Sense competidors · Audiència local",
-      "cta": "Veure preus"
+      "title": "Apareix quan busquen què fer al teu poble",
+      "subtitle": "Cada dia, gent de la teva zona consulta l'agenda d'esdeveniments per decidir on anar. Un espai exclusiu per al teu negoci, sense competidors.",
+      "stats": "Un sol anunciant per poble · Des de 0,71€/dia · Garantia de satisfacció",
+      "cta": "Comença per 5€"
     },
     "benefits": {
       "title": "Per què patrocinar amb nosaltres?",
       "targeted": {
-        "title": "Gent que busca què fer",
-        "description": "El teu anunci el veuen persones que busquen activament què fer a la teva zona. Públic amb intenció."
+        "title": "Públic que ja vol sortir",
+        "description": "Aparèixes quan busquen on menjar, comprar o sortir. No interromps: arribes a gent amb intenció de compra."
       },
       "affordable": {
-        "title": "Accessible per a tothom",
-        "description": "Des de 5€ per 7 dies. Ideal per a festes majors, fires o esdeveniments locals."
+        "title": "Menys d'1€ al dia",
+        "description": "Un anunci local a Google costa 50€+/mes i apareix al costat dels teus competidors. Aquí, des de 0,71€ al dia i tot l'espai és teu."
       },
       "visibility": {
-        "title": "100% exclusiu",
-        "description": "Només hi ha un patrocinador per població. Tot l'espai és teu, sense competència."
+        "title": "Només un anunci per poble",
+        "description": "Tot l'espai publicitari és per al teu negoci. Cap competidor apareix al costat. Quan busquen què fer, et veuen a tu."
       }
     },
     "pricing": {
-      "title": "Preus simples i transparents",
-      "subtitle": "Tria la durada que més s'adapti a les teves necessitats. Sense compromisos ni renovacions automàtiques.",
+      "title": "Preus senzills i transparents",
+      "subtitle": "Sense compromisos ni renovacions. No satisfet en 7 dies? Et retornem l'import.",
       "popular": "Més popular",
       "cta": "Contractar",
+      "perDay": "{price}/dia",
+      "savings": "Estalvia {percent}%",
+      "guarantee": "Garantia de satisfacció de 7 dies · Sense renovació automàtica · Pagament segur amb Stripe",
       "plans": {
         "7days": {
           "name": "7 dies",
@@ -1450,7 +1478,7 @@
           "description": "Introdueix les dades del teu negoci i paga de forma segura amb Stripe"
         },
         "step3": {
-          "title": "Puja la imatge del banner",
+          "title": "Puja la imatge del bàner",
           "description": "Després del pagament, podràs pujar la imatge del teu anunci"
         },
         "step4": {
@@ -1509,7 +1537,7 @@
       "processing": "Processant...",
       "error": "Error al processar. Torna-ho a provar.",
       "successTitle": "Pagament completat!",
-      "successSubtitle": "Últim pas: puja la imatge del teu banner. Sense imatge no podem activar el patrocini."
+      "successSubtitle": "Últim pas: puja la imatge del teu bàner. Sense imatge no podem activar el patrocini."
     },
     "upload": {
       "title": "Puja el teu bàner",
@@ -1559,8 +1587,8 @@
     },
     "uploadPage": {
       "meta": {
-        "title": "Puja el banner | Esdeveniments.cat",
-        "description": "Puja la imatge del teu banner per completar el patrocini."
+        "title": "Puja el bàner | Esdeveniments.cat",
+        "description": "Puja la imatge del teu bàner per completar el patrocini."
       },
       "missingSessionTitle": "No hem trobat el teu pagament",
       "missingSessionSubtitle": "Torna a la pàgina de preus i inicia el procés de nou.",
@@ -1570,12 +1598,12 @@
     "successPage": {
       "meta": {
         "title": "Patrocini completat | Esdeveniments.cat",
-        "description": "Hem rebut la teva informació i la imatge del banner."
+        "description": "Hem rebut la teva informació i la imatge del bàner."
       },
       "title": "Tot llest!",
       "subtitle": "Hem rebut la teva imatge correctament. Ara nosaltres ens encarreguem de la resta.",
       "nextTitle": "Què passa ara?",
-      "next1": "1. Revisarem el banner i l'enllaç per assegurar que tot és correcte.",
+      "next1": "1. Revisarem el bàner i l'enllaç per assegurar que tot és correcte.",
       "next2": "2. En menys de 24h laborables el teu anunci apareixerà a la pàgina del lloc seleccionat.",
       "backHome": "Tornar a l'inici",
       "backPatrocina": "Tornar a Patrocina"

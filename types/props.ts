@@ -147,7 +147,16 @@ export interface SocialProps {
     instagram?: string;
     telegram?: string;
     facebook?: string;
+    threads?: string;
+    linkedin?: string;
+    tiktok?: string;
+    mastodon?: string;
   };
+}
+
+export interface SocialPopupState {
+  dismissCount: number;
+  lastDismissedAt: number;
 }
 
 // Removed EventsListProps - no longer needed with server-side architecture
@@ -246,7 +255,7 @@ export interface RangeInputProps {
   max: number;
   value: number;
   onChange: (
-    e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } }
+    e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } },
   ) => void;
   label: string;
   disabled?: boolean;
@@ -334,8 +343,7 @@ export interface ClientInteractiveLayerProps {
   filterLabels: FilterLabels;
 }
 
-export interface ClientInteractiveLayerContentProps
-  extends ClientInteractiveLayerProps {
+export interface ClientInteractiveLayerContentProps extends ClientInteractiveLayerProps {
   isNavbarVisible: boolean;
   isHydrated: boolean;
   isModalOpen: boolean;
@@ -536,7 +544,7 @@ export interface UseGeolocationReturn {
   isLoading: boolean;
   error: string | null;
   requestLocation: (
-    regions: RegionsGroupedByCitiesResponseDTO[]
+    regions: RegionsGroupedByCitiesResponseDTO[],
   ) => Promise<Option | null>;
   clearLocation: () => void;
 }
@@ -625,7 +633,7 @@ export interface DateFilterBadgesProps {
 
 export type TranslationFn = (
   key: string,
-  values?: Record<string, any>
+  values?: Record<string, any>,
 ) => string;
 
 export type DateFilterBadgeLabels = {

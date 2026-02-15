@@ -1,13 +1,19 @@
 import { Suspense } from "react";
-import { getActiveSponsorForPlace } from "@config/sponsors";
+import { getActiveSponsorForPlace, getHouseAdForSlot } from "@config/sponsors";
 import type { SponsorBannerSlotProps } from "types/sponsor";
 import SponsorBanner from "./SponsorBanner";
 import SponsorEmptyState from "./SponsorEmptyState";
+import TextHouseAd from "./TextHouseAd";
 
 /**
  * Server component that fetches sponsor data and renders the appropriate banner.
  * Uses cascade logic: tries primary place first, then fallbacks (region → country).
- * Shows SponsorBanner if active sponsor exists, otherwise SponsorEmptyState CTA.
+ *
+ * Priority order:
+ * 1. Paid sponsor (always wins)
+ * 2. House ad (~70% when no paid sponsor):
+ *    - "text": CSS-rendered banner linking to /patrocina (no image needed)
+ * 3. Empty state CTA (~30% when no paid sponsor)
  */
 function SponsorBannerSlotContent({
   place,
@@ -16,8 +22,18 @@ function SponsorBannerSlotContent({
   const result = getActiveSponsorForPlace(place, fallbackPlaces);
 
   if (result) {
-    // Use matchedPlace for analytics (shows which tier actually displayed)
     return <SponsorBanner sponsor={result.sponsor} place={result.matchedPlace} />;
+  }
+
+  // No paid sponsor — try house ad
+  const houseAdResult = getHouseAdForSlot();
+  if (houseAdResult) {
+    const { houseAd } = houseAdResult;
+
+    // Text house ad — CSS-rendered, no image
+    if (houseAd.type === "text") {
+      return <TextHouseAd houseAd={houseAd} place={place} />;
+    }
   }
 
   return <SponsorEmptyState />;

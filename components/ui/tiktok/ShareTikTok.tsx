@@ -82,7 +82,18 @@ export default function ShareTikTok() {
           infoData.error.message || "Failed to fetch creator info",
         );
       }
-      setCreatorInfo(infoData.data ?? null);
+      const info = infoData.data ?? null;
+      // UX 1b: Block posting when creator can't post (empty privacy options)
+      if (
+        !info ||
+        !info.privacy_level_options ||
+        info.privacy_level_options.length === 0
+      ) {
+        throw new Error(
+          "You cannot post to TikTok right now. You may have reached your daily posting limit. Please try again later.",
+        );
+      }
+      setCreatorInfo(info);
       setState("authenticated");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Authentication failed");

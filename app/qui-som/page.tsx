@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { contactEmail, siteUrl } from "@config/index";
+import { contactEmail, siteUrl, socialLinksSameAs } from "@config/index";
 import Image from "next/image";
 import type { NextPage } from "next";
 import type { TeamMember as TeamMemberType } from "types/common";
@@ -78,12 +78,7 @@ const QuiSom: NextPage = async () => {
           availableLanguage: ["ca", "es", "en"],
         },
       ],
-      sameAs: [
-        "https://www.facebook.com/esdevenimentscat",
-        "https://www.instagram.com/esdevenimentscat",
-        "https://www.tiktok.com/@esdevenimentscat",
-        "https://x.com/esdeveniments",
-      ],
+      sameAs: socialLinksSameAs,
       member: teamMembers.map((member) => ({
         "@type": "Person",
         name: member.name,

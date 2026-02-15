@@ -4,8 +4,7 @@ import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
-import { SocialLinks } from "types/common";
-import { contactEmail } from "@config/index";
+import { contactEmail, socialLinks } from "@config/index";
 
 export default async function Footer(): Promise<JSX.Element> {
   const t = await getTranslations("Components.Footer");
@@ -59,13 +58,7 @@ export default async function Footer(): Promise<JSX.Element> {
       current: boolean;
     }
   >;
-  const links: SocialLinks = {
-    web: "https://www.esdeveniments.cat",
-    twitter: "https://twitter.com/esdeveniments_",
-    instagram: "https://www.instagram.com/esdevenimentscat/",
-    telegram: "https://t.me/esdeveniments",
-    facebook: "https://www.facebook.com/esdeveniments.cat/",
-  };
+  const links = socialLinks;
 
   return (
     <footer className="w-full border-t border-border bg-gradient-to-b from-background to-muted/30">

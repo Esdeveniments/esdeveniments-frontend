@@ -82,3 +82,29 @@ export const siteUrl = getSiteUrl();
 // Central contact email used across UI (defaults to esdeveniments inbox)
 export const contactEmail =
   process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hola@esdeveniments.cat";
+
+import type { SocialLinks } from "types/common";
+
+/** Canonical social media links — single source of truth for footer, schema, popups. */
+export const socialLinks: SocialLinks = {
+  web: "https://www.esdeveniments.cat",
+  twitter: "https://x.com/esdeveniments_",
+  instagram: "https://www.instagram.com/esdeveniments.cat",
+  telegram: "https://t.me/esdeveniments",
+  facebook: "https://www.facebook.com/esdeveniments.cat",
+  threads: "https://www.threads.com/@esdeveniments.cat",
+  linkedin: "https://www.linkedin.com/company/esdeveniments-cat",
+  tiktok: "https://www.tiktok.com/@esdeveniments",
+  mastodon: "https://mastodon.social/@esdeveniments",
+};
+
+/** Social links for JSON-LD sameAs (excludes web, telegram). */
+export const socialLinksSameAs: string[] = [
+  socialLinks.facebook,
+  socialLinks.instagram,
+  socialLinks.tiktok,
+  socialLinks.twitter,
+  socialLinks.threads,
+  socialLinks.mastodon,
+  socialLinks.linkedin,
+];

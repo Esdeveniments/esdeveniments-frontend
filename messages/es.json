@@ -511,6 +511,12 @@
     "Social": {
       "followUs": "Síguenos"
     },
+    "SocialFollowPopup": {
+      "headline": "Que los planes te encuentren a ti",
+      "subtext": "Cada día compartimos los mejores eventos en redes. Síguenos y no te pierdas nada.",
+      "close": "Ahora no",
+      "aria": "Síguenos en las redes sociales"
+    },
     "ListPageFaq": {
       "title": "Preguntas frecuentes"
     },
@@ -1388,8 +1394,27 @@
   },
   "Sponsor": {
     "label": "Publicidad",
+    "houseAdLabel": "Patrocina este espacio",
     "emptyState": "Anuncia tu negocio aquí",
-    "cta": "Patrocina este espacio"
+    "cta": "Patrocina este espacio",
+    "houseAd": {
+      "pricing": "Tu negocio aquí · Desde 5€/semana",
+      "pricingSub": "Espacio exclusivo en la agenda de eventos de tu pueblo",
+      "reach": "Gente de tu pueblo, buscando planes",
+      "reachSub": "Buscan dónde comer, comprar y salir. Tú les das la respuesta.",
+      "exclusive": "Solo tú. Sin competencia.",
+      "exclusiveSub": "Ningún otro anuncio compite con el tuyo. El espacio es todo para ti.",
+      "local": "El único anuncio en tu pueblo",
+      "localSub": "Aparece cuando buscan dónde comer, comprar o salir",
+      "intent": "Gente que ya quiere salir de casa",
+      "intentSub": "Buscan qué hacer y adónde ir. Tú les das la respuesta.",
+      "simple": "Sin complicaciones",
+      "simpleSub": "Un banner, tu pueblo, una semana. Desde 5€",
+      "results": "¿Dónde te encuentran los clientes?",
+      "resultsSub": "Aquí mismo. Cuando buscan qué hacer en tu pueblo",
+      "seasonal": "¿Hay fiesta en el pueblo?",
+      "seasonalSub": "Anúnciate cuando la gente sale de casa"
+    }
   },
   "Sponsorship": {
     "meta": {
@@ -1397,31 +1422,34 @@
       "description": "Tu negocio, destacado en la agenda de eventos de tu pueblo. Espacio exclusivo sin competidores."
     },
     "hero": {
-      "title": "Tu negocio, destacado en tu pueblo",
-      "subtitle": "Aparece en la agenda de eventos de tu zona. Espacio 100% exclusivo: ningún otro negocio compite contigo.",
-      "stats": "Espacio exclusivo · Sin competidores · Audiencia local",
-      "cta": "Ver precios"
+      "title": "Aparece cuando buscan qué hacer en tu pueblo",
+      "subtitle": "Cada día, gente de tu zona consulta la agenda de eventos para decidir dónde ir. Un espacio exclusivo para tu negocio, sin competidores.",
+      "stats": "Un solo anunciante por pueblo · Desde 0,71€/día · Garantía de satisfacción",
+      "cta": "Empieza por 5€"
     },
     "benefits": {
       "title": "¿Por qué patrocinar con nosotros?",
       "targeted": {
-        "title": "Gente que busca qué hacer",
-        "description": "Tu anuncio lo ven personas que buscan activamente qué hacer en tu zona. Público con intención."
+        "title": "Público que ya quiere salir",
+        "description": "Apareces cuando buscan dónde comer, comprar o salir. No interrumpes: llegas a gente con intención de compra."
       },
       "affordable": {
-        "title": "Accesible para todos",
-        "description": "Desde 5€ por 7 días. Ideal para fiestas locales, ferias o eventos."
+        "title": "Menos de 1€ al día",
+        "description": "Un anuncio local en Google cuesta 50€+/mes y aparece junto a tus competidores. Aquí, desde 0,71€ al día y todo el espacio es tuyo."
       },
       "visibility": {
-        "title": "100% exclusivo",
-        "description": "Solo hay un patrocinador por población. Todo el espacio es tuyo, sin competencia."
+        "title": "Solo un anuncio por pueblo",
+        "description": "Todo el espacio publicitario es para tu negocio. Ningún competidor aparece al lado. Cuando buscan qué hacer, te ven a ti."
       }
     },
     "pricing": {
       "title": "Precios simples y transparentes",
-      "subtitle": "Elige la duración que mejor se adapte a tus necesidades. Sin compromisos ni renovaciones automáticas.",
+      "subtitle": "Sin compromisos ni renovaciones. ¿No satisfecho en 7 días? Te devolvemos el importe.",
       "popular": "Más popular",
       "cta": "Contratar",
+      "perDay": "{price}/día",
+      "savings": "Ahorra {percent}%",
+      "guarantee": "Garantía de satisfacción de 7 días · Sin renovación automática · Pago seguro con Stripe",
       "plans": {
         "7days": {
           "name": "7 días",
