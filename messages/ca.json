@@ -1447,14 +1447,14 @@
       "title": "Preus senzills i transparents",
       "subtitle": "Sense compromisos ni renovacions. No satisfet en 7 dies? Et retornem l'import.",
       "popular": "Més popular",
-      "cta": "Contractar",
+      "cta": "Contracta",
       "perDay": "{price}/dia",
-      "savings": "Estalvia {percent}%",
+      "savings": "T'estalvies un {percent}%",
       "guarantee": "Garantia de satisfacció de 7 dies · Sense renovació automàtica · Pagament segur amb Stripe",
       "plans": {
         "7days": {
           "name": "7 dies",
-          "description": "Perfecte per a caps de setmana llargs o ponts festius"
+          "description": "Perfecte per a caps de setmana llargs o ponts"
         },
         "14days": {
           "name": "14 dies",
@@ -1511,7 +1511,7 @@
     "contact": {
       "title": "Tens dubtes?",
       "description": "Escriu-nos i t'ajudarem a triar la millor opció per al teu negoci.",
-      "cta": "Contactar per email"
+      "cta": "Escriu-nos"
     },
     "placeSelector": {
       "label": "On vols que aparegui el teu anunci?",
@@ -1520,7 +1520,7 @@
       "country": "Catalunya",
       "region": "Comarca",
       "city": "Poble",
-      "clear": "Esborrar selecció",
+      "clear": "Neteja la selecció",
       "preview": "Apareixeràs a:",
       "noResults": "No s'han trobat resultats",
       "occupied": "Ocupat",
@@ -1535,7 +1535,7 @@
     },
     "checkout": {
       "processing": "Processant...",
-      "error": "Error al processar. Torna-ho a provar.",
+      "error": "Hi ha hagut un error. Torna-ho a provar.",
       "successTitle": "Pagament completat!",
       "successSubtitle": "Últim pas: puja la imatge del teu bàner. Sense imatge no podem activar el patrocini."
     },
