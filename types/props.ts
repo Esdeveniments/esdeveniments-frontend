@@ -633,7 +633,7 @@ export interface DateFilterBadgesProps {
 
 export type TranslationFn = (
   key: string,
-  values?: Record<string, unknown>,
+  values?: Record<string, string | number | Date>,
 ) => string;
 
 export type DateFilterBadgeLabels = {
