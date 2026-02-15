@@ -9,8 +9,8 @@ import { socialLinks } from "@config/index";
 
 const STORAGE_KEY = "social-follow-popup";
 const PAGE_VIEW_KEY = "social-popup-views";
-const SCROLL_PERCENT = 0.5;
-const DELAY_MS = 18_000;
+const SCROLL_PERCENT = 0.35;
+const DELAY_MS = 10_000;
 const COOLDOWN_DAYS = 30;
 const MAX_DISMISSALS = 3;
 const MIN_PAGE_VIEWS = 2;
@@ -33,11 +33,18 @@ function savePopupState(state: SocialPopupState): void {
   }
 }
 
-/** Increment and return the session page-view count. */
-function trackPageView(): number {
+/** Increment and return the session page-view count.
+ *  Deduplicates by pathname so Strict-Mode double-invocations
+ *  and staying on the same page don't inflate the counter. */
+function trackPageView(pathname: string): number {
   try {
+    const lastPath = sessionStorage.getItem(PAGE_VIEW_KEY + "-path");
+    if (lastPath === pathname) {
+      return Number(sessionStorage.getItem(PAGE_VIEW_KEY) ?? "1");
+    }
     const count = Number(sessionStorage.getItem(PAGE_VIEW_KEY) ?? "0") + 1;
     sessionStorage.setItem(PAGE_VIEW_KEY, String(count));
+    sessionStorage.setItem(PAGE_VIEW_KEY + "-path", pathname);
     return count;
   } catch {
     return 1;
@@ -78,7 +85,7 @@ const SOCIAL_LINKS = [
 const LINK_CLASS =
   "flex-center gap-2 px-4 py-2.5 rounded-full border border-border/60 bg-muted/40 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline";
 
-export default function SocialFollowPopup() {
+export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const t = useTranslations("Components.SocialFollowPopup");
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -111,10 +118,13 @@ export default function SocialFollowPopup() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!shouldShow()) return;
 
-    // Gate: require ≥ MIN_PAGE_VIEWS in this session before showing
-    const views = trackPageView();
+    // Always count page views so the counter increments on every
+    // route change, even when other guards prevent the popup.
+    const views = trackPageView(pathname);
+
+    if (hasTriggeredRef.current) return;
+    if (!shouldShow()) return;
     if (views < MIN_PAGE_VIEWS) return;
 
     const getScrollY = () =>
@@ -127,19 +137,16 @@ export default function SocialFollowPopup() {
     let timerFired = false;
 
     const tryShow = () => {
-      const threshold = getScrollThreshold();
-      if (getScrollY() >= threshold) {
-        scrolled = true;
-      }
-      if (scrolled && timerFired && !hasTriggeredRef.current) {
+      if (hasTriggeredRef.current) return;
+      // OR logic: either signal alone proves engagement
+      if (scrolled || timerFired) {
         hasTriggeredRef.current = true;
         setIsVisible(true);
       }
     };
 
     const handleScroll = () => {
-      const threshold = getScrollThreshold();
-      if (getScrollY() >= threshold) {
+      if (getScrollY() >= getScrollThreshold()) {
         scrolled = true;
         tryShow();
       }
@@ -156,7 +163,9 @@ export default function SocialFollowPopup() {
       document.removeEventListener("scroll", handleScroll);
       clearTimeout(timerId);
     };
-  }, []);
+    // Re-evaluate on route change so page-view count can reach MIN_PAGE_VIEWS
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   if (!isVisible) return null;
 
@@ -167,9 +176,8 @@ export default function SocialFollowPopup() {
   if (isMobile) {
     return (
       <div
-        className={`fixed bottom-0 inset-x-0 z-modal p-4 pb-safe ${
-          isClosing ? "animate-slide-down" : "animate-slide-up"
-        }`}
+        className={`fixed bottom-0 inset-x-0 z-modal p-4 pb-safe ${isClosing ? "animate-slide-down" : "animate-slide-up"
+          }`}
         role="complementary"
         aria-label={t("aria")}
       >
@@ -231,9 +239,8 @@ export default function SocialFollowPopup() {
   /* ------------------------------------------------------------------ */
   return (
     <div
-      className={`fixed inset-0 z-modal flex-center p-4 ${
-        isClosing ? "animate-disappear" : "animate-appear"
-      }`}
+      className={`fixed inset-0 z-modal flex-center p-4 ${isClosing ? "animate-disappear" : "animate-appear"
+        }`}
       role="dialog"
       aria-modal="true"
       aria-label={t("aria")}
@@ -247,9 +254,8 @@ export default function SocialFollowPopup() {
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-md bg-background rounded-card border border-border shadow-2xl p-card-padding transition-transform duration-slower ${
-          isClosing ? "scale-95" : "scale-100"
-        }`}
+        className={`relative w-full max-w-md bg-background rounded-card border border-border shadow-2xl p-card-padding transition-transform duration-slower ${isClosing ? "scale-95" : "scale-100"
+          }`}
       >
         {/* Close button */}
         <button
