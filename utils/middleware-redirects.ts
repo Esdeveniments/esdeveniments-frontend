@@ -87,6 +87,7 @@ export function handleCanonicalRedirects(
     "preferits",
     "llms.txt",
     "callback",
+    "compartir-tiktok",
     "patrocina",
     "politica-privacitat",
     "termes-servei",

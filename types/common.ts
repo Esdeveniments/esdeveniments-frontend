@@ -132,6 +132,12 @@ export interface SocialIconData {
   path: string;
 }
 
+/** Props for the SocialIcon component. */
+export interface SocialIconProps {
+  platform: string;
+  className?: string;
+}
+
 export interface FetchedData {
   content?: ListEvent[];
   noEventsFound?: boolean;

@@ -466,8 +466,10 @@ export default async function proxy(request: NextRequest) {
     (pathnameWithoutLocale || pathname).startsWith(p),
   );
 
-  if (hasNonCanonicalParams || isNoindexPath) {
+  if (isNoindexPath) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  } else if (hasNonCanonicalParams) {
+    response.headers.set("X-Robots-Tag", "noindex, follow");
   }
 
   return response;

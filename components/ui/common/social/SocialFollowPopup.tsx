@@ -99,6 +99,16 @@ export default function SocialFollowPopup() {
     }, 300);
   }, []);
 
+  // Dismiss on Escape key (WAI-ARIA modal pattern)
+  useEffect(() => {
+    if (!isVisible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isVisible, dismiss]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!shouldShow()) return;
@@ -163,7 +173,7 @@ export default function SocialFollowPopup() {
         role="complementary"
         aria-label={t("aria")}
       >
-        <div className="w-full bg-background rounded-card border border-border shadow-2xl p-card-padding">
+        <div className="relative w-full bg-background rounded-card border border-border shadow-2xl p-card-padding">
           {/* Close button */}
           <button
             onClick={dismiss}

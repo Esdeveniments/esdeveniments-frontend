@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { contactEmail, siteUrl } from "@config/index";
@@ -5,13 +6,13 @@ import type { NextPage } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 
-export async function generateMetadata() {
+export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "App.TermsOfService" });
   return buildPageMeta({
     title: t("metaTitle"),
     description: t("metaDescription"),
-    canonical: `${siteUrl}/termes-servei`,
+    canonical: toLocalizedUrl("/termes-servei", locale),
     locale,
     robotsOverride: "noindex, follow",
   });

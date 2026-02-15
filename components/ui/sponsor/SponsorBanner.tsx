@@ -88,8 +88,8 @@ export default function SponsorBanner({
           <div className="absolute inset-0 bg-muted animate-fast-pulse" />
         )}
         <picture key={getImageKey(sources.fallback)}>
-          <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
           <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+          <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
           <img
             className="object-contain w-full h-full absolute inset-0"
             src={sources.fallback}
