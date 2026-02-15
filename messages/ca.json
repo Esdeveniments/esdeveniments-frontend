@@ -1425,7 +1425,7 @@
     "hero": {
       "title": "Apareix quan busquen què fer al teu poble",
       "subtitle": "Cada dia, gent de la teva zona consulta l'agenda d'esdeveniments per decidir on anar. Un espai exclusiu per al teu negoci, sense competidors.",
-      "stats": "Un sol anunciant per poble · Des de 0,71€/dia · Garantia de satisfacció",
+      "stats": "Un sol anunciant per poble · Des de 0,50€/dia · Garantia de satisfacció",
       "cta": "Comença per 5€"
     },
     "benefits": {
@@ -1435,8 +1435,8 @@
         "description": "Apareixes quan busquen on menjar, comprar o sortir. No interromps: arribes a gent amb intenció de compra."
       },
       "affordable": {
-        "title": "Menys d'1€ al dia",
-        "description": "Un anunci local a Google costa 50€+/mes i apareix al costat dels teus competidors. Aquí, des de 0,71€ al dia i tot l'espai és teu."
+        "title": "Menys d'1€ al dia per poble",
+        "description": "Un anunci local a Google costa 50€+/mes i apareix al costat dels teus competidors. Aquí, des de 0,50€ al dia i tot l'espai és teu."
       },
       "visibility": {
         "title": "Només un anunci per poble",

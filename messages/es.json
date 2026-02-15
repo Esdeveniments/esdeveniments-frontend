@@ -1424,7 +1424,7 @@
     "hero": {
       "title": "Aparece cuando buscan qué hacer en tu pueblo",
       "subtitle": "Cada día, gente de tu zona consulta la agenda de eventos para decidir dónde ir. Un espacio exclusivo para tu negocio, sin competidores.",
-      "stats": "Un solo anunciante por pueblo · Desde 0,71€/día · Garantía de satisfacción",
+      "stats": "Un solo anunciante por pueblo · Desde 0,50€/día · Garantía de satisfacción",
       "cta": "Empieza por 5€"
     },
     "benefits": {
@@ -1434,8 +1434,8 @@
         "description": "Apareces cuando buscan dónde comer, comprar o salir. No interrumpes: llegas a gente con intención de compra."
       },
       "affordable": {
-        "title": "Menos de 1€ al día",
-        "description": "Un anuncio local en Google cuesta 50€+/mes y aparece junto a tus competidores. Aquí, desde 0,71€ al día y todo el espacio es tuyo."
+        "title": "Menos de 1€ al día por pueblo",
+        "description": "Un anuncio local en Google cuesta 50€+/mes y aparece junto a tus competidores. Aquí, desde 0,50€ al día y todo el espacio es tuyo."
       },
       "visibility": {
         "title": "Solo un anuncio por pueblo",

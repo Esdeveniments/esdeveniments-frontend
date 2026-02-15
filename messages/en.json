@@ -1422,7 +1422,7 @@
     "hero": {
       "title": "Show up when they search what to do in your town",
       "subtitle": "Every day, people in your area check the events page to decide where to go. An exclusive space for your business, with zero competitors.",
-      "stats": "One advertiser per town · From €0.71/day · Satisfaction guarantee",
+      "stats": "One advertiser per town · From €0.50/day · Satisfaction guarantee",
       "cta": "Start for €5"
     },
     "benefits": {
@@ -1432,8 +1432,8 @@
         "description": "You appear when they search where to eat, shop, or go out. No interruption: you reach people with buying intent."
       },
       "affordable": {
-        "title": "Less than €1 a day",
-        "description": "A local Google ad costs €50+/month and appears next to your competitors. Here, from €0.71/day and the entire space is yours."
+        "title": "Less than €1 a day per town",
+        "description": "A local Google ad costs €50+/month and appears next to your competitors. Here, from €0.50/day and the entire space is yours."
       },
       "visibility": {
         "title": "Only one ad per town",
