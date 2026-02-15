@@ -111,6 +111,8 @@ Adding a new filter:
 - Do not use `next/dynamic` with `ssr: false` inside Server Components. If a subpart must be client-only, move it into its own client component and import it directly from the server component.
 - Keep links, list rendering, and content display server-rendered whenever possible. Client hydration should be minimal and scoped.
 - This project tracks the latest Next.js App Router conventions; avoid legacy patterns from pages router.
+- **⚠️ NEVER use barrel files (`index.ts` re-exports) that mix components from different route contexts.** In Next.js RSC, every `"use client"` module re-exported from a barrel gets registered in the `client-reference-manifest` of every route that imports from that barrel — even if the component is never used. This silently inflates server bundles. Always use direct file imports (e.g., `from "@components/ui/sponsor/SponsorBannerSlot"` not `from "@components/ui/sponsor"`).
+- `optimizePackageImports` in `next.config.js` only applies to npm packages, not local barrel files. Local barrels must be avoided manually.
 
 ## 7. TypeScript Strictness & Type Organization
 
@@ -204,6 +206,7 @@ Adding a new filter:
 - **Custom implementations over stdlib**: Prefer built-in APIs (e.g., `AbortSignal.any()` over custom signal merging, `after()` from `next/server` over fire-and-forget promises).
 - **Swallowing stack traces**: Pass original error to `captureException(error)`, not `new Error(error.message)`.
 - **URL parsing in catch blocks**: Use try/catch when parsing URLs (e.g., `new URL(url).hostname`) to avoid exceptions in error handlers.
+- **⚠️ CRITICAL - Barrel file imports leaking `"use client"` modules**: NEVER create or import from local barrel files (`index.ts`) that re-export `"use client"` components from different route contexts. In Next.js RSC, every `"use client"` module re-exported from a barrel is registered in the `client-reference-manifest` of **every route** that imports from that barrel — even if the imported route only uses one export. This caused a 24 KB manifest bloat on `/[place]` when `CheckoutButton`, `PlaceSelector`, and `PricingSectionClient` (only used on `/patrocina`) leaked via `components/ui/sponsor/index.ts`. Fix: always use direct file imports (e.g., `from "./SponsorBannerSlot"` not `from "@components/ui/sponsor"`).
 
 ## 16. Quick Examples
 

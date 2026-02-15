@@ -129,6 +129,25 @@ const formatEventTitle = (title: string) => title.trim();
 <h1>{event.title.trim()}</h1>;
 ```
 
+### ❌ Creating Barrel Files (`index.ts`) for Component Folders
+
+```typescript
+// WRONG: Barrel re-exports "use client" components from different routes
+// components/ui/sponsor/index.ts
+export { default as SponsorBannerSlot } from "./SponsorBannerSlot";
+export { default as CheckoutButton } from "./CheckoutButton";
+export { default as PricingSectionClient } from "./PricingSectionClient";
+
+// Any route importing SponsorBannerSlot from the barrel
+// also leaks CheckoutButton + PricingSectionClient into its manifest!
+import { SponsorBannerSlot } from "@components/ui/sponsor";
+
+// CORRECT: Always use direct file imports
+import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+```
+
+**Why**: In Next.js RSC, every `"use client"` module re-exported from a barrel gets registered in the `client-reference-manifest` of every route that imports from that barrel. This caused 24 KB of bloat on `/[place]` (Feb 2026). `optimizePackageImports` only works for npm packages.
+
 ---
 
 ## 📋 Decision Tree: Should I Create New Code?
@@ -220,6 +239,8 @@ components/
 - [ ] Constants imported from `utils/constants.ts`
 - [ ] Reused existing utilities where possible
 - [ ] No helper functions used only once
+- [ ] **No barrel files (`index.ts`) re-exporting `"use client"` components from different routes**
+- [ ] All component imports use direct file paths (not barrel re-exports)
 - [ ] Followed canonical location for new files
 - [ ] Ran `yarn typecheck && yarn lint && yarn test`
 

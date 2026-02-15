@@ -52,6 +52,7 @@
 - Define all type aliases/interfaces in `types/` (ESLint‑enforced).
 - Components: PascalCase; hooks: `useXxx`; helpers: lowerCamelCase.
 - Indentation: 2 spaces; prefer path aliases; Tailwind utilities for styling; globals in `styles/`.
+- **No barrel files (`index.ts` re-exports) that mix components from different routes.** Local barrels leak all `"use client"` re-exports into every importing route's `client-reference-manifest`, inflating server bundles. Always use direct file imports (e.g., `from "@components/ui/sponsor/SponsorBannerSlot"` not `from "@components/ui/sponsor"`).
 
 ## Internationalization (i18n) Rules
 
@@ -133,6 +134,7 @@ Before writing ANY new code, ALWAYS search first:
 - Any reusable/derived props types (e.g., Picks of an existing props interface) must be declared in `types/` (typically `types/props.ts`) rather than inline within components.
 - Before introducing a new type/interface, search `types/` (and related feature folders) for existing candidates to reuse/extend, and place additions in the most appropriate shared file (e.g., `types/props.ts` for UI props, `types/api/*` for DTOs).
 - Server-first by default; mark client components with `"use client"` only when necessary. Avoid exposing secrets in client code.
+- **No local barrel files** that re-export `"use client"` components from different route contexts. Use direct file imports to prevent manifest bloat (see Feb 2026 incident: `components/ui/sponsor/index.ts` leaked 3 `/patrocina`-only components into `/[place]` manifest, adding 24 KB).
 - API security: Internal API routes (`app/api/*`) handle HMAC signing server-side via `*-external.ts` wrappers. Middleware enforces HMAC on most `/api/*` routes; public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Never sign requests in the browser—always use internal API routes.
 - Use Yarn 4 commands and Node 20 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
 

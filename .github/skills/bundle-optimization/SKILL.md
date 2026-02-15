@@ -205,6 +205,22 @@ Monitor these in bundle analysis:
 2. **Full icon libraries** → Import specific icons only
 3. **Unused dependencies** → Audit with `yarn analyze`
 4. **Client-side only code in shared** → Move to client components
+5. **⚠️ Local barrel files (`index.ts` re-exports)** → NEVER create barrel files that re-export `"use client"` components from different route contexts. In Next.js RSC, every `"use client"` module re-exported from a barrel gets registered in the `client-reference-manifest` of **every route** that imports from that barrel — even if the component is never used. `optimizePackageImports` only applies to npm packages, not local barrels. Always use direct file imports.
+
+### ⚠️ Barrel File Incident (Feb 2026)
+
+`components/ui/sponsor/index.ts` re-exported 7 components. Routes like `/[place]` only needed `SponsorBannerSlot`, but importing from the barrel also pulled `CheckoutButton`, `PlaceSelector`, and `PricingSectionClient` (all `"use client"`) into the manifest — adding **24 KB** of bloat.
+
+```typescript
+// ❌ WRONG: Barrel import pulls ALL exports into manifest
+import { SponsorBannerSlot } from "@components/ui/sponsor";
+// → Also registers CheckoutButton, PlaceSelector, PricingSectionClient
+
+// ✅ CORRECT: Direct import only registers what's needed
+import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+```
+
+**Fix**: Always use direct file imports for local components. Reserve barrels only for npm-published packages.
 
 ## Optimization Checklist
 
@@ -221,6 +237,8 @@ Monitor these in bundle analysis:
 - [ ] Dynamic import for heavy components?
 - [ ] Running `yarn analyze` for new dependencies?
 - [ ] Checking First Load JS size?
+- [ ] **No local barrel files (`index.ts`) re-exporting `"use client"` components from different routes?**
+- [ ] All component imports use direct file paths (not barrel re-exports)?
 
 ### Caching
 
