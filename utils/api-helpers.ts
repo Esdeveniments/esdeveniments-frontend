@@ -4,10 +4,14 @@
  */
 
 import { getSiteUrl } from "@config/index";
+import apiDefaults from "@config/api-defaults.json";
 import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
+
+/** Default API origin used as fallback when NEXT_PUBLIC_API_URL is not set. */
+const DEFAULT_API_ORIGIN = new URL(apiDefaults.apiUrl).origin;
 
 // Conditionally import headers - only available in server components/route handlers
 // Using dynamic require to avoid build-time errors when headers() is not available
@@ -37,14 +41,8 @@ export function getApiOrigin(): string {
     }
   }
 
-  // Strategy 2: Fallback based on NODE_ENV
-  const nodeEnv = process.env.NODE_ENV;
-  if (nodeEnv === "production") {
-    return "https://api-pre.esdeveniments.cat"; // Production API
-  }
-
-  // Strategy 3: Default fallback (development/staging)
-  return "https://api-pre.esdeveniments.cat";
+  // Strategy 2: Default fallback (single source of truth: config/api-defaults.json)
+  return DEFAULT_API_ORIGIN;
 }
 
 /**

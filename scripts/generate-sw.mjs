@@ -5,9 +5,12 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Get the API URL from environment variables
-const apiUrl =
-  process.env.NEXT_PUBLIC_API_URL || "https://api-pre.esdeveniments.cat";
+// Read default API URL from shared config (single source of truth)
+const apiDefaultsPath = path.join(__dirname, "..", "config", "api-defaults.json");
+const apiDefaults = JSON.parse(fs.readFileSync(apiDefaultsPath, "utf8"));
+
+// Get the API URL from environment variables, fallback to shared config
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || apiDefaults.apiUrl;
 
 // Extract just the origin (protocol + hostname) for service worker matching
 const apiOrigin = new URL(apiUrl).origin;

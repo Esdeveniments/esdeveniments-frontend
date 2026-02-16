@@ -12,7 +12,8 @@ concurrency:
 
 env:
   NODE_VERSION: "22"
-  NEXT_PUBLIC_API_URL: "https://api-pre.esdeveniments.cat/api"
+  # Single source of truth for CI: set in GitHub Settings > Variables > Repository variables
+  NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api.esdeveniments.cat/api' }}
 
 jobs:
   quality:
@@ -207,7 +208,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
           # Provide server-only secret to the preview deployment so server HMAC signing works
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           # Vercel Deployment Protection bypass secret (optional but required for CI E2E against protected previews)
@@ -276,7 +277,7 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
-          NEXT_PUBLIC_API_URL: https://api-pre.esdeveniments.cat/api
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: yarn test:e2e -c playwright.remote.config.ts --workers=2
 
