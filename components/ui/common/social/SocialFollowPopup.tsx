@@ -61,7 +61,7 @@ function shouldShow(): boolean {
   return elapsed >= cooldownMs;
 }
 
-/** Document scroll height that must be reached (50 % of scrollable area). */
+/** Document scroll height that must be reached (35 % of scrollable area). */
 function getScrollThreshold(): number {
   const docHeight = Math.max(
     document.body.scrollHeight,
@@ -90,6 +90,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const hasTriggeredRef = useRef(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const isMobile = useCheckMobileScreen();
 
   const dismiss = useCallback(() => {
@@ -106,15 +107,49 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     }, 300);
   }, []);
 
-  // Dismiss on Escape key (WAI-ARIA modal pattern)
+  // Escape key + focus trap for desktop modal (WAI-ARIA dialog pattern)
   useEffect(() => {
     if (!isVisible) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dismiss();
+      if (e.key === "Escape") {
+        dismiss();
+        return;
+      }
+
+      // Focus trap only applies to desktop modal
+      if (e.key !== "Tab" || isMobile) return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
+
+    // Move focus into the dialog on open (desktop only)
+    if (!isMobile) {
+      const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled])',
+      );
+      firstFocusable?.focus();
+    }
+
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isVisible, dismiss]);
+  }, [isVisible, isMobile, dismiss]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -164,7 +199,6 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       clearTimeout(timerId);
     };
     // Re-evaluate on route change so page-view count can reach MIN_PAGE_VIEWS
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   if (!isVisible) return null;
@@ -239,6 +273,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   /* ------------------------------------------------------------------ */
   return (
     <div
+      ref={dialogRef}
       className={`fixed inset-0 z-modal flex-center p-4 ${isClosing ? "animate-disappear" : "animate-appear"
         }`}
       role="dialog"

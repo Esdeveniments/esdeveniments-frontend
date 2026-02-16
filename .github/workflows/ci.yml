@@ -235,6 +235,7 @@ jobs:
             --env VERCEL_AUTOMATION_BYPASS_SECRET="$VERCEL_AUTOMATION_BYPASS_SECRET" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --build-env HMAC_SECRET="$HMAC_SECRET" \
+            --build-env NEXT_PUBLIC_E2E_TEST_MODE="1" \
             --confirm | tee "$LOG"
           # Extract the last vercel.app URL (alias line usually printed last)
           URL=$(grep -Eo 'https?://[^ ]+vercel\.app' "$LOG" | tail -n1)

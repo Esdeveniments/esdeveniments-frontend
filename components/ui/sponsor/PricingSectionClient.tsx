@@ -68,6 +68,7 @@ export default function PricingSectionClient() {
   const getSavingsPercent = (duration: SponsorDuration): number | null => {
     if (duration === "7days") return null;
     const basePerDay = getPrice("7days") / DURATION_DAYS["7days"];
+    if (basePerDay === 0) return null;
     const currentPerDay = getPrice(duration) / DURATION_DAYS[duration];
     const savings = Math.round(
       ((basePerDay - currentPerDay) / basePerDay) * 100
