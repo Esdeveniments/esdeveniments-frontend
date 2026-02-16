@@ -3,6 +3,7 @@ import type { BaseLayoutProps } from "types/common";
 import Footer from "@components/ui/common/footer";
 import Navbar from "@components/ui/common/navbar";
 import NavigationProgress from "./NavigationProgress";
+import LazySocialFollowPopup from "@components/ui/common/social/LazySocialFollowPopup";
 
 export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
   return (
@@ -20,6 +21,7 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
       <Suspense fallback={null}>
         <Footer />
       </Suspense>
+      <LazySocialFollowPopup />
     </>
   );
 }

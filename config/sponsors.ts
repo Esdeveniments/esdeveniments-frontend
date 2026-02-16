@@ -9,7 +9,12 @@
  * Sponsors are automatically hidden when endDate passes.
  */
 
-import type { SponsorConfig, ActiveSponsor } from "types/sponsor";
+import type {
+  SponsorConfig,
+  ActiveSponsor,
+  HouseAdConfig,
+  HouseAdResult,
+} from "types/sponsor";
 
 /**
  * Active sponsors list.
@@ -97,7 +102,7 @@ function isSponsorActive(sponsor: SponsorConfig, date: Date): boolean {
 function getRemainingDays(sponsor: SponsorConfig, todayUtc: Date): number {
   const endDateUtc = new Date(`${sponsor.endDate}T00:00:00.000Z`);
   const diffDays = Math.floor(
-    (endDateUtc.getTime() - todayUtc.getTime()) / MS_PER_DAY
+    (endDateUtc.getTime() - todayUtc.getTime()) / MS_PER_DAY,
   );
   return Math.max(1, diffDays + 1);
 }
@@ -107,7 +112,7 @@ function getRemainingDays(sponsor: SponsorConfig, todayUtc: Date): number {
  */
 function findActiveSponsorForSinglePlace(
   place: string,
-  today: Date
+  today: Date,
 ): ActiveSponsor | null {
   for (const sponsor of sponsors) {
     if (sponsor.places.includes(place) && isSponsorActive(sponsor, today)) {
@@ -135,12 +140,12 @@ function findActiveSponsorForSinglePlace(
  */
 export function getActiveSponsorForPlace(
   place: string,
-  fallbackPlaces?: string[]
+  fallbackPlaces?: string[],
 ): { sponsor: ActiveSponsor; matchedPlace: string } | null {
   const now = new Date();
   // Get midnight of the current day in UTC for a reliable comparison point
   const today = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
   );
 
   // Try primary place first
@@ -153,7 +158,10 @@ export function getActiveSponsorForPlace(
   if (fallbackPlaces) {
     for (const fallback of fallbackPlaces) {
       if (fallback) {
-        const fallbackSponsor = findActiveSponsorForSinglePlace(fallback, today);
+        const fallbackSponsor = findActiveSponsorForSinglePlace(
+          fallback,
+          today,
+        );
         if (fallbackSponsor) {
           return { sponsor: fallbackSponsor, matchedPlace: fallback };
         }
@@ -178,7 +186,7 @@ export function hasSponsorConfigForPlace(place: string): boolean {
 export function getAllActiveSponsors(): ActiveSponsor[] {
   const now = new Date();
   const today = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
   );
 
   return sponsors.filter((sponsor) => isSponsorActive(sponsor, today));
@@ -206,7 +214,7 @@ export function getOccupiedPlaceSlugs(): string[] {
 export function getOccupiedPlaceStatus(): Map<string, number> {
   const now = new Date();
   const today = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
   );
 
   const status = new Map<string, number>();
@@ -224,4 +232,115 @@ export function getOccupiedPlaceStatus(): Map<string, number> {
   }
 
   return status;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HOUSE ADS — Shown when no paid sponsor exists
+// Text CTAs linking to /patrocina with varied messaging.
+//
+// STRATEGY: Demonstrate the ad slot value with persuasive CTAs.
+// - Each variant highlights a different value prop
+// - Different pages show different CTAs (ISR caching = variety)
+// - Empty state shows ~30% of the time ("slot is available!")
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * House ads configuration.
+ *
+ * Text ads: CSS-rendered banners, no images needed. Link to /patrocina.
+ *   Headline/subtitle use i18n keys from Sponsor.houseAd.{key}.
+ *   More variants = more variety across pages = feels less repetitive.
+ */
+const houseAds: HouseAdConfig[] = [
+  {
+    id: "house-pricing",
+    type: "text",
+    headlineKey: "pricing",
+    subtitleKey: "pricingSub",
+  },
+  {
+    id: "house-reach",
+    type: "text",
+    headlineKey: "reach",
+    subtitleKey: "reachSub",
+  },
+  {
+    id: "house-exclusive",
+    type: "text",
+    headlineKey: "exclusive",
+    subtitleKey: "exclusiveSub",
+  },
+  {
+    id: "house-local",
+    type: "text",
+    headlineKey: "local",
+    subtitleKey: "localSub",
+  },
+  {
+    id: "house-intent",
+    type: "text",
+    headlineKey: "intent",
+    subtitleKey: "intentSub",
+  },
+  {
+    id: "house-simple",
+    type: "text",
+    headlineKey: "simple",
+    subtitleKey: "simpleSub",
+  },
+  {
+    id: "house-results",
+    type: "text",
+    headlineKey: "results",
+    subtitleKey: "resultsSub",
+  },
+  {
+    id: "house-seasonal",
+    type: "text",
+    headlineKey: "seasonal",
+    subtitleKey: "seasonalSub",
+  },
+];
+
+/** Probability of showing a house ad vs empty state CTA (0-1) */
+const HOUSE_AD_SHOW_PROBABILITY = 0.7;
+
+/**
+ * Get all available house ads (text CTAs only).
+ */
+function getAllHouseAds(): HouseAdConfig[] {
+  return houseAds;
+}
+
+/**
+ * Get a house ad for the slot, or null to show the empty state CTA.
+ *
+ * Selection logic:
+ * - 70% chance of showing a text house ad, 30% shows empty state CTA
+ * - When multiple house ads exist, picks one randomly
+ * - ISR caching means the same page shows the same ad for a while
+ *
+ * Called server-side; randomness per request is acceptable since
+ * pages are ISR-cached and the variation adds freshness.
+ */
+export function getHouseAdForSlot(): HouseAdResult | null {
+  const allAds = getAllHouseAds();
+
+  if (allAds.length === 0) {
+    return null;
+  }
+
+  // Probabilistic: show house ad ~70% of the time
+  if (Math.random() > HOUSE_AD_SHOW_PROBABILITY) {
+    return null;
+  }
+
+  // Pick a random house ad
+  const index = Math.floor(Math.random() * allAds.length);
+  const houseAd = allAds[index];
+  if (!houseAd) {
+    return null;
+  }
+
+  return { houseAd };
 }

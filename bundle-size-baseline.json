@@ -1,16 +1,337 @@
 {
-  "version": 1,
-  "lastUpdated": "2025-12-25",
+  "version": "1.0",
+  "lastUpdated": "2026-02-15T10:40:50.871Z",
+  "clientTotalBytes": 2274666,
   "thresholds": {
-    "warning": { "ratio": 0.05, "bytes": 51200 },
-    "error": { "ratio": 0.1, "bytes": 102400 }
+    "warning": {
+      "ratio": 0.05,
+      "bytes": 51200
+    },
+    "error": {
+      "ratio": 0.1,
+      "bytes": 102400
+    }
   },
-  "clientTotalBytes": 2939061,
   "routes": {
-    "/": { "serverBytes": 22950 },
-    "/[place]": { "serverBytes": 1310410 },
-    "/e/[eventId]": { "serverBytes": 1094728 },
-    "/noticies": { "serverBytes": 1389103 },
-    "/publica": { "serverBytes": 454637 }
+    "/patrocina": {
+      "serverBytes": 1675035,
+      "fileCount": 32
+    },
+    "/sitemap": {
+      "serverBytes": 1600835,
+      "fileCount": 32
+    },
+    "/[place]": {
+      "serverBytes": 1395019,
+      "fileCount": 24
+    },
+    "/noticies": {
+      "serverBytes": 1277468,
+      "fileCount": 36
+    },
+    "/sitemap/[town]": {
+      "serverBytes": 1184218,
+      "fileCount": 24
+    },
+    "/e/[eventId]": {
+      "serverBytes": 1033788,
+      "fileCount": 16
+    },
+    "/[place]/[byDate]": {
+      "serverBytes": 930930,
+      "fileCount": 16
+    },
+    "/noticies/[place]": {
+      "serverBytes": 848566,
+      "fileCount": 22
+    },
+    "/sitemap/[town]/[year]": {
+      "serverBytes": 766685,
+      "fileCount": 16
+    },
+    "/e/[eventId]/edita": {
+      "serverBytes": 498467,
+      "fileCount": 8
+    },
+    "/[place]/[byDate]/[category]": {
+      "serverBytes": 465929,
+      "fileCount": 8
+    },
+    "/preferits": {
+      "serverBytes": 428062,
+      "fileCount": 8
+    },
+    "/sitemap/[town]/[year]/[month]": {
+      "serverBytes": 423827,
+      "fileCount": 8
+    },
+    "/publica": {
+      "serverBytes": 421149,
+      "fileCount": 8
+    },
+    "/noticies/[place]/[article]": {
+      "serverBytes": 420565,
+      "fileCount": 8
+    },
+    "/e2e/load-more": {
+      "serverBytes": 419667,
+      "fileCount": 8
+    },
+    "/patrocina/upload": {
+      "serverBytes": 419062,
+      "fileCount": 8
+    },
+    "/patrocina/cancelled": {
+      "serverBytes": 418085,
+      "fileCount": 8
+    },
+    "/patrocina/success": {
+      "serverBytes": 418069,
+      "fileCount": 8
+    },
+    "/compartir-tiktok": {
+      "serverBytes": 417512,
+      "fileCount": 8
+    },
+    "/callback": {
+      "serverBytes": 417432,
+      "fileCount": 8
+    },
+    "/qui-som": {
+      "serverBytes": 417201,
+      "fileCount": 8
+    },
+    "/offline": {
+      "serverBytes": 416345,
+      "fileCount": 8
+    },
+    "/politica-privacitat": {
+      "serverBytes": 341358,
+      "fileCount": 8
+    },
+    "/termes-servei": {
+      "serverBytes": 341320,
+      "fileCount": 8
+    },
+    "/_not-found": {
+      "serverBytes": 341210,
+      "fileCount": 8
+    },
+    "/api/places": {
+      "serverBytes": 81930,
+      "fileCount": 24
+    },
+    "/api/events": {
+      "serverBytes": 62016,
+      "fileCount": 18
+    },
+    "/api/news": {
+      "serverBytes": 61950,
+      "fileCount": 18
+    },
+    "/api/regions": {
+      "serverBytes": 61077,
+      "fileCount": 18
+    },
+    "/api/favorites": {
+      "serverBytes": 40975,
+      "fileCount": 12
+    },
+    "/api/categories": {
+      "serverBytes": 40913,
+      "fileCount": 12
+    },
+    "/api/cities": {
+      "serverBytes": 40865,
+      "fileCount": 12
+    },
+    "/": {
+      "serverBytes": 23082,
+      "fileCount": 7
+    },
+    "/api/revalidate": {
+      "serverBytes": 21936,
+      "fileCount": 6
+    },
+    "/api/sponsors/image-upload": {
+      "serverBytes": 21018,
+      "fileCount": 6
+    },
+    "/api/publica/image-upload": {
+      "serverBytes": 21012,
+      "fileCount": 6
+    },
+    "/api/events/categorized": {
+      "serverBytes": 20930,
+      "fileCount": 6
+    },
+    "/api/places/nearby": {
+      "serverBytes": 20922,
+      "fileCount": 6
+    },
+    "/api/events/[slug]": {
+      "serverBytes": 20900,
+      "fileCount": 6
+    },
+    "/api/news/[slug]": {
+      "serverBytes": 20888,
+      "fileCount": 6
+    },
+    "/api/news/cities": {
+      "serverBytes": 20888,
+      "fileCount": 6
+    },
+    "/api/favorites/prune": {
+      "serverBytes": 20840,
+      "fileCount": 6
+    },
+    "/api/categories/[id]": {
+      "serverBytes": 20806,
+      "fileCount": 6
+    },
+    "/api/cities/[id]": {
+      "serverBytes": 20782,
+      "fileCount": 6
+    },
+    "/api/places/[slug]": {
+      "serverBytes": 20722,
+      "fileCount": 6
+    },
+    "/sitemap-places/[...parts]": {
+      "serverBytes": 20615,
+      "fileCount": 6
+    },
+    "/api/regions/options": {
+      "serverBytes": 20602,
+      "fileCount": 6
+    },
+    "/api/regions/[id]": {
+      "serverBytes": 20584,
+      "fileCount": 6
+    },
+    "/api/sponsors/checkout": {
+      "serverBytes": 20474,
+      "fileCount": 6
+    },
+    "/api/sponsors/webhook": {
+      "serverBytes": 20428,
+      "fileCount": 6
+    },
+    "/sitemap-events/[...parts]": {
+      "serverBytes": 20414,
+      "fileCount": 6
+    },
+    "/api/promotions/price-preview": {
+      "serverBytes": 20344,
+      "fileCount": 6
+    },
+    "/api/leads/restaurant": {
+      "serverBytes": 20296,
+      "fileCount": 6
+    },
+    "/api/places/photo": {
+      "serverBytes": 20272,
+      "fileCount": 6
+    },
+    "/rss.xml": {
+      "serverBytes": 20038,
+      "fileCount": 6
+    },
+    "/api/visits": {
+      "serverBytes": 19885,
+      "fileCount": 6
+    },
+    "/api/image-proxy": {
+      "serverBytes": 19723,
+      "fileCount": 6
+    },
+    "/_global-error": {
+      "serverBytes": 15868,
+      "fileCount": 8
+    },
+    "/noticies/[place]/rss.xml": {
+      "serverBytes": 10363,
+      "fileCount": 6
+    },
+    "/noticies/rss.xml": {
+      "serverBytes": 9985,
+      "fileCount": 6
+    },
+    "/api/tiktok/creator-info": {
+      "serverBytes": 9673,
+      "fileCount": 6
+    },
+    "/api/promotions/active": {
+      "serverBytes": 9661,
+      "fileCount": 6
+    },
+    "/api/promotions/config": {
+      "serverBytes": 9661,
+      "fileCount": 6
+    },
+    "/api/cloudinary/sign": {
+      "serverBytes": 9649,
+      "fileCount": 6
+    },
+    "/server-google-news-sitemap.xml": {
+      "serverBytes": 9649,
+      "fileCount": 6
+    },
+    "/api/tiktok/publish": {
+      "serverBytes": 9643,
+      "fileCount": 6
+    },
+    "/api/tiktok/status": {
+      "serverBytes": 9637,
+      "fileCount": 6
+    },
+    "/api/tiktok/upload": {
+      "serverBytes": 9637,
+      "fileCount": 6
+    },
+    "/api/tiktok/token": {
+      "serverBytes": 9629,
+      "fileCount": 6
+    },
+    "/server-place-sitemap.xml": {
+      "serverBytes": 9613,
+      "fileCount": 6
+    },
+    "/server-news-sitemap.xml": {
+      "serverBytes": 9607,
+      "fileCount": 6
+    },
+    "/api/health": {
+      "serverBytes": 9286,
+      "fileCount": 6
+    },
+    "/manifest.webmanifest": {
+      "serverBytes": 9147,
+      "fileCount": 6
+    },
+    "/.well-known/[...slug]": {
+      "serverBytes": 9136,
+      "fileCount": 6
+    },
+    "/server-static-sitemap.xml": {
+      "serverBytes": 9051,
+      "fileCount": 6
+    },
+    "/robots.txt": {
+      "serverBytes": 8977,
+      "fileCount": 6
+    },
+    "/llms.txt": {
+      "serverBytes": 8965,
+      "fileCount": 6
+    },
+    "/server-sitemap.xml": {
+      "serverBytes": 8815,
+      "fileCount": 6
+    },
+    "/sitemap.xml": {
+      "serverBytes": 8771,
+      "fileCount": 6
+    }
   }
 }

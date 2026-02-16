@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Metadata } from "next";
 import { Link } from "@i18n/routing";
-import { PricingSectionClient } from "@components/ui/sponsor";
+import PricingSectionClient from "@components/ui/sponsor/PricingSectionClient";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import {
   UserGroupIcon,

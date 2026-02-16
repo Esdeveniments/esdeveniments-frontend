@@ -119,7 +119,23 @@ export interface SocialLinks {
   instagram: string;
   telegram: string;
   facebook: string;
+  threads: string;
+  linkedin: string;
+  tiktok: string;
+  mastodon: string;
   [key: string]: string;
+}
+
+/** SVG icon data for a social platform (viewBox + path). */
+export interface SocialIconData {
+  viewBox: string;
+  path: string;
+}
+
+/** Props for the SocialIcon component. */
+export interface SocialIconProps {
+  platform: string;
+  className?: string;
 }
 
 export interface FetchedData {
@@ -448,7 +464,7 @@ export interface SearchState {
 export function makePlaceTypeAndLabel(
   type: string,
   label: string,
-  regionLabel?: string
+  regionLabel?: string,
 ): PlaceTypeAndLabel {
   const allowedTypes: PlaceType[] = ["region", "town", ""];
   return {
@@ -501,8 +517,7 @@ export interface BadgeProps {
   ariaLabel?: string;
 }
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "neutral" | "primary" | "muted" | "outline" | "solid";
 }
 

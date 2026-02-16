@@ -25,7 +25,7 @@ const ALLOWED_QUERY_PARAMS = new Set(["search", "distance", "lat", "lon"]);
  */
 function validateQueryParams(
   searchParams: URLSearchParams,
-  queryString: string
+  queryString: string,
 ): boolean {
   // Check total query string length (use raw query string to avoid toString() overhead)
   if (queryString.length > MAX_QUERY_STRING_LENGTH) {
@@ -56,7 +56,7 @@ function validateQueryParams(
  * Returns a redirect response if the URL needs to be canonicalized, null otherwise
  */
 export function handleCanonicalRedirects(
-  request: NextRequest
+  request: NextRequest,
 ): NextResponse | null {
   const { pathname } = request.nextUrl;
   const { locale: localePrefix, pathnameWithoutLocale } =
@@ -87,6 +87,7 @@ export function handleCanonicalRedirects(
     "preferits",
     "llms.txt",
     "callback",
+    "compartir-tiktok",
     "patrocina",
     "politica-privacitat",
     "termes-servei",

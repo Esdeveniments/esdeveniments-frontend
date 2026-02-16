@@ -100,7 +100,7 @@
       "metaTitle": "Terms of Service - Esdeveniments.cat",
       "metaDescription": "Terms of use for the Esdeveniments.cat website. Review the rules, responsibilities and rights regarding the content of the cultural agenda of Catalonia.",
       "heading": "Terms of Service",
-      "lastUpdated": "Last updated: February 2025",
+      "lastUpdated": "Last updated: February 2026",
       "introTitle": "1. Acceptance of terms",
       "introBody": "By accessing and using Esdeveniments.cat (hereinafter, the \"Site\"), you agree to comply with these terms of service. If you disagree with any part of these terms, do not use the Site.",
       "descriptionTitle": "2. Description of the service",
@@ -122,7 +122,7 @@
       "metaTitle": "Privacy Policy - Esdeveniments.cat",
       "metaDescription": "Privacy policy of Esdeveniments.cat. Information about the collection, use and protection of your personal data on the cultural agenda of Catalonia.",
       "heading": "Privacy Policy",
-      "lastUpdated": "Last updated: February 2025",
+      "lastUpdated": "Last updated: February 2026",
       "introTitle": "1. Introduction",
       "introBody": "At Esdeveniments.cat (hereinafter, the \"Site\") we are committed to protecting your privacy. This policy describes what data we collect, how we use it and what your rights are.",
       "dataCollectedTitle": "2. Data we collect",
@@ -510,6 +510,12 @@
     },
     "Social": {
       "followUs": "Follow us"
+    },
+    "SocialFollowPopup": {
+      "headline": "Let the plans find you",
+      "subtext": "Every day we share the best events on social media. Follow us and never miss out!",
+      "close": "Not now",
+      "aria": "Follow us on social media"
     },
     "ListPageFaq": {
       "title": "Frequently asked questions"
@@ -1386,8 +1392,27 @@
   },
   "Sponsor": {
     "label": "Advertisement",
+    "houseAdLabel": "Sponsor this space",
     "emptyState": "Advertise your business here",
-    "cta": "Sponsor this space"
+    "cta": "Sponsor this space",
+    "houseAd": {
+      "pricing": "Your business here · From €5/week",
+      "pricingSub": "Exclusive space on your town's events page",
+      "reach": "People in your town, looking for plans",
+      "reachSub": "Looking for where to eat, shop and go out. You give them the answer.",
+      "exclusive": "Just you. No competition.",
+      "exclusiveSub": "No other ad competes with yours. The space is all yours.",
+      "local": "The only ad in your town",
+      "localSub": "Appear when they search where to eat, shop or go out",
+      "intent": "People ready to go out",
+      "intentSub": "They're looking for what to do and where to go. You give them the answer.",
+      "simple": "No hassle",
+      "simpleSub": "One banner, your town, one week. From €5",
+      "results": "Where do customers find you?",
+      "resultsSub": "Right here. When they search what to do in your town",
+      "seasonal": "Festival in town?",
+      "seasonalSub": "Advertise when people are heading out"
+    }
   },
   "Sponsorship": {
     "meta": {
@@ -1395,31 +1420,34 @@
       "description": "Your business, featured on your town's events page. Exclusive space with no competitors."
     },
     "hero": {
-      "title": "Your business, featured in your town",
-      "subtitle": "Appear on your area's events page. 100% exclusive space: no other business competes with you.",
-      "stats": "Exclusive space · No competitors · Local audience",
-      "cta": "See prices"
+      "title": "Show up when they search what to do in your town",
+      "subtitle": "Every day, people in your area check the events page to decide where to go. An exclusive space for your business, with zero competitors.",
+      "stats": "One advertiser per town · From €0.50/day · Satisfaction guarantee",
+      "cta": "Start for €5"
     },
     "benefits": {
       "title": "Why sponsor with us?",
       "targeted": {
-        "title": "People looking for things to do",
-        "description": "Your ad is seen by people actively searching for activities in your area. Intent-driven audience."
+        "title": "People ready to go out",
+        "description": "You appear when they search what to do in their town. You reach people who already want to go out and are looking for plans."
       },
       "affordable": {
-        "title": "Affordable for everyone",
-        "description": "From €5 for 7 days. Ideal for local festivals, fairs or events."
+        "title": "Less than €1 a day per town",
+        "description": "A local Google ad costs €50+/month and appears next to your competitors. Here, from €0.50/day and the entire space is yours."
       },
       "visibility": {
-        "title": "100% exclusive",
-        "description": "There's only one sponsor per town. The whole space is yours, no competition."
+        "title": "Only one ad per town",
+        "description": "All the ad space is for your business. No competitor appears next to you. When they search what to do, they see you."
       }
     },
     "pricing": {
       "title": "Simple and transparent pricing",
-      "subtitle": "Choose the duration that best fits your needs. No commitments or automatic renewals.",
+      "subtitle": "No commitments or auto-renewals. Not satisfied within 7 days? Full refund.",
       "popular": "Most popular",
       "cta": "Get started",
+      "perDay": "{price}/day",
+      "savings": "Save {percent}%",
+      "guarantee": "7-day satisfaction guarantee · No auto-renewal · Secure payment with Stripe",
       "plans": {
         "7days": {
           "name": "7 days",
@@ -1431,7 +1459,7 @@
         },
         "30days": {
           "name": "30 days",
-          "description": "Maximum exposure for your local business"
+          "description": "Maximum visibility for your local business"
         }
       }
     },
@@ -1452,7 +1480,7 @@
         },
         "step4": {
           "title": "We review and activate",
-          "description": "Within 24 business hours you'll appear on the selected place page"
+          "description": "Within 24 business hours you'll appear on the town or region page you chose"
         }
       }
     },

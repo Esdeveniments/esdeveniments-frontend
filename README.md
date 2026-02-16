@@ -18,7 +18,7 @@ yarn install --immutable
 Create `.env.development` (and set in CI/hosting for others):
 
 - HMAC_SECRET=your-server-secret
-- NEXT_PUBLIC_API_URL=`https://api-pre.esdeveniments.cat` (or prod)
+- NEXT_PUBLIC_API_URL=`https://api.esdeveniments.cat`
 - Optional: NEXT_PUBLIC_GOOGLE_ANALYTICS, NEXT_PUBLIC_GOOGLE_ADS, SENTRY_DSN
 
 1. Run

@@ -100,7 +100,7 @@
       "metaTitle": "Términos de servicio - Esdeveniments.cat",
       "metaDescription": "Condiciones de uso del sitio web Esdeveniments.cat. Consulta las normas de uso, responsabilidades y derechos sobre el contenido de la agenda cultural de Cataluña.",
       "heading": "Términos de servicio",
-      "lastUpdated": "Última actualización: febrero 2025",
+      "lastUpdated": "Última actualización: febrero 2026",
       "introTitle": "1. Aceptación de los términos",
       "introBody": "Al acceder y utilizar Esdeveniments.cat (en adelante, el \"Sitio\"), aceptas cumplir con estos términos de servicio. Si no estás de acuerdo con alguna parte de estos términos, no utilices el Sitio.",
       "descriptionTitle": "2. Descripción del servicio",
@@ -122,7 +122,7 @@
       "metaTitle": "Política de privacidad - Esdeveniments.cat",
       "metaDescription": "Política de privacidad de Esdeveniments.cat. Información sobre la recogida, el uso y la protección de tus datos personales en la agenda cultural de Cataluña.",
       "heading": "Política de privacidad",
-      "lastUpdated": "Última actualización: febrero 2025",
+      "lastUpdated": "Última actualización: febrero 2026",
       "introTitle": "1. Introducción",
       "introBody": "En Esdeveniments.cat (en adelante, el \"Sitio\") nos comprometemos a proteger tu privacidad. Esta política describe qué datos recogemos, cómo los utilizamos y cuáles son tus derechos.",
       "dataCollectedTitle": "2. Datos que recogemos",
@@ -510,6 +510,12 @@
     },
     "Social": {
       "followUs": "Síguenos"
+    },
+    "SocialFollowPopup": {
+      "headline": "Que los planes te encuentren a ti",
+      "subtext": "Cada día compartimos los mejores eventos en redes. ¡Síguenos y no te pierdas nada!",
+      "close": "Ahora no",
+      "aria": "Síguenos en las redes sociales"
     },
     "ListPageFaq": {
       "title": "Preguntas frecuentes"
@@ -1388,8 +1394,27 @@
   },
   "Sponsor": {
     "label": "Publicidad",
+    "houseAdLabel": "Patrocina este espacio",
     "emptyState": "Anuncia tu negocio aquí",
-    "cta": "Patrocina este espacio"
+    "cta": "Patrocina este espacio",
+    "houseAd": {
+      "pricing": "Tu negocio aquí · Desde 5€/semana",
+      "pricingSub": "Espacio exclusivo en la agenda de eventos de tu pueblo",
+      "reach": "Gente de tu pueblo, buscando planes",
+      "reachSub": "Buscan dónde comer, comprar y salir. Tú les das la respuesta.",
+      "exclusive": "Solo tú. Sin competencia.",
+      "exclusiveSub": "Ningún otro anuncio compite con el tuyo. El espacio es todo para ti.",
+      "local": "El único anuncio en tu pueblo",
+      "localSub": "Aparece cuando buscan dónde comer, comprar o salir",
+      "intent": "Gente que ya quiere salir de casa",
+      "intentSub": "Buscan qué hacer y adónde ir. Tú les das la respuesta.",
+      "simple": "Sin complicaciones",
+      "simpleSub": "Un banner, tu pueblo, una semana. Desde 5€",
+      "results": "¿Dónde te encuentran los clientes?",
+      "resultsSub": "Aquí mismo. Cuando buscan qué hacer en tu pueblo",
+      "seasonal": "¿Hay fiesta en el pueblo?",
+      "seasonalSub": "Anúnciate cuando la gente sale de casa"
+    }
   },
   "Sponsorship": {
     "meta": {
@@ -1397,35 +1422,38 @@
       "description": "Tu negocio, destacado en la agenda de eventos de tu pueblo. Espacio exclusivo sin competidores."
     },
     "hero": {
-      "title": "Tu negocio, destacado en tu pueblo",
-      "subtitle": "Aparece en la agenda de eventos de tu zona. Espacio 100% exclusivo: ningún otro negocio compite contigo.",
-      "stats": "Espacio exclusivo · Sin competidores · Audiencia local",
-      "cta": "Ver precios"
+      "title": "Aparece cuando buscan qué hacer en tu pueblo",
+      "subtitle": "Cada día, gente de tu zona consulta la agenda de eventos para decidir dónde ir. Un espacio exclusivo para tu negocio, sin competidores.",
+      "stats": "Un solo anunciante por pueblo · Desde 0,50€/día · Garantía de satisfacción",
+      "cta": "Empieza por 5€"
     },
     "benefits": {
       "title": "¿Por qué patrocinar con nosotros?",
       "targeted": {
-        "title": "Gente que busca qué hacer",
-        "description": "Tu anuncio lo ven personas que buscan activamente qué hacer en tu zona. Público con intención."
+        "title": "Público que ya quiere salir",
+        "description": "Apareces cuando buscan qué hacer en su pueblo. Llegas a gente que ya quiere salir y busca planes."
       },
       "affordable": {
-        "title": "Accesible para todos",
-        "description": "Desde 5€ por 7 días. Ideal para fiestas locales, ferias o eventos."
+        "title": "Menos de 1€ al día por pueblo",
+        "description": "Un anuncio local en Google cuesta 50€+/mes y aparece junto a tus competidores. Aquí, desde 0,50€ al día y todo el espacio es tuyo."
       },
       "visibility": {
-        "title": "100% exclusivo",
-        "description": "Solo hay un patrocinador por población. Todo el espacio es tuyo, sin competencia."
+        "title": "Solo un anuncio por pueblo",
+        "description": "Todo el espacio publicitario es para tu negocio. Ningún competidor aparece al lado. Cuando buscan qué hacer, te ven a ti."
       }
     },
     "pricing": {
       "title": "Precios simples y transparentes",
-      "subtitle": "Elige la duración que mejor se adapte a tus necesidades. Sin compromisos ni renovaciones automáticas.",
+      "subtitle": "Sin compromisos ni renovaciones. ¿No satisfecho en 7 días? Te devolvemos el importe.",
       "popular": "Más popular",
       "cta": "Contratar",
+      "perDay": "{price}/día",
+      "savings": "Ahorra {percent}%",
+      "guarantee": "Garantía de satisfacción de 7 días · Sin renovación automática · Pago seguro con Stripe",
       "plans": {
         "7days": {
           "name": "7 días",
-          "description": "Perfecto para fines de semana largos o puentes festivos"
+          "description": "Perfecto para fines de semana largos o puentes"
         },
         "14days": {
           "name": "14 días",
@@ -1433,7 +1461,7 @@
         },
         "30days": {
           "name": "30 días",
-          "description": "Máxima exposición para tu negocio local"
+          "description": "Máxima visibilidad para tu negocio local"
         }
       }
     },
@@ -1454,7 +1482,7 @@
         },
         "step4": {
           "title": "Revisamos y activamos",
-          "description": "En menos de 24h laborables aparecerás en la página del lugar seleccionado"
+          "description": "En menos de 24h laborables aparecerás en la página del pueblo o comarca que has elegido"
         }
       }
     },

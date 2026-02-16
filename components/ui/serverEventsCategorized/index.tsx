@@ -11,7 +11,7 @@ import {
   PhotoIcon as PhotographIcon,
 } from "@heroicons/react/24/outline";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { SponsorBannerSlot } from "@components/ui/sponsor";
+import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";

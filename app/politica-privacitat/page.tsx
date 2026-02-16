@@ -1,11 +1,12 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { contactEmail, siteUrl } from "@config/index";
 import type { NextPage } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 
-export async function generateMetadata() {
+export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleSafely();
   const t = await getTranslations({
     locale,
@@ -14,8 +15,9 @@ export async function generateMetadata() {
   return buildPageMeta({
     title: t("metaTitle"),
     description: t("metaDescription"),
-    canonical: `${siteUrl}/politica-privacitat`,
+    canonical: toLocalizedUrl("/politica-privacitat", locale),
     locale,
+    robotsOverride: "noindex, follow",
   });
 }
 
@@ -30,7 +32,7 @@ const PoliticaPrivacitat: NextPage = async () => {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: t("heading"),
-    url: `${siteUrl}/politica-privacitat`,
+    url: toLocalizedUrl("/politica-privacitat", locale),
     description: t("metaDescription"),
     isPartOf: { "@id": `${siteUrl}#website` },
   };
