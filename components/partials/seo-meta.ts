@@ -61,7 +61,7 @@ export function generateItemListStructuredData(
   listName: string,
   description?: string,
   locale?: AppLocale,
-  pageUrl?: string
+  pageUrl?: string,
 ) {
   if (!events || events.length === 0) return null;
 
@@ -185,7 +185,7 @@ export function buildPageMeta({
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : robotsOverride ?? "index, follow",
+        : (robotsOverride ?? "index, follow"),
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,
@@ -262,7 +262,7 @@ export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
           breadcrumb.url,
           derivedName
             ? `derived name from URL: "${derivedName}"`
-            : "using generic fallback for empty breadcrumb name"
+            : "using generic fallback for empty breadcrumb name",
         );
       }
       return {
@@ -365,7 +365,7 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
 }
 
 export function generateSiteNavigationElementSchema(
-  navigationItems: NavigationItem[]
+  navigationItems: NavigationItem[],
 ) {
   if (!navigationItems || navigationItems.length === 0) return null;
 

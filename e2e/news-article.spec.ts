@@ -19,8 +19,12 @@ test.describe("News article pages", () => {
         await expect(page).toHaveURL(expectedUrl);
       }
       // Basic SEO tags (use .first() — Next.js 16 streaming may render duplicate head tags)
-      await expect(page.locator('link[rel="canonical"]').first()).toBeAttached();
-      await expect(page.locator('meta[property="og:title"]').first()).toBeAttached();
+      await expect(
+        page.locator('link[rel="canonical"]').first(),
+      ).toBeAttached();
+      await expect(
+        page.locator('meta[property="og:title"]').first(),
+      ).toBeAttached();
     } else {
       // If no articles exist, ensure page still renders
       await expect(page).toHaveTitle(/notícies/i);

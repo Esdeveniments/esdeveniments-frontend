@@ -78,7 +78,7 @@ const SOCIAL_LINKS = [
   { platform: "threads", label: "Threads", href: socialLinks.threads },
   { platform: "linkedin", label: "LinkedIn", href: socialLinks.linkedin },
   { platform: "telegram", label: "Telegram", href: socialLinks.telegram },
-  { platform: "tiktok", label: "TikTok", href: socialLinks.tiktok },
+  // { platform: "tiktok", label: "TikTok", href: socialLinks.tiktok },
   { platform: "mastodon", label: "Mastodon", href: socialLinks.mastodon },
 ] as const;
 

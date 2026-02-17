@@ -22,8 +22,7 @@ test.describe("Listing robots directives", () => {
       timeout: process.env.CI ? 60000 : 30000,
     });
 
-    const canonicalHref =
-      (await canonical.first().getAttribute("href")) ?? "";
+    const canonicalHref = (await canonical.first().getAttribute("href")) ?? "";
     expect(canonicalHref).not.toContain("?");
 
     // Be tolerant of absolute vs relative canonicals.
@@ -37,7 +36,7 @@ test.describe("Listing robots directives", () => {
     // Capture the response to check headers
     const responsePromise = page.waitForResponse(
       (resp) =>
-        resp.url().includes("/barcelona") && resp.url().includes("search=")
+        resp.url().includes("/barcelona") && resp.url().includes("search="),
     );
 
     await page.goto("/barcelona?search=castellers", {
@@ -59,7 +58,8 @@ test.describe("Listing robots directives", () => {
   }) => {
     const responsePromise = page.waitForResponse(
       (resp) =>
-        resp.url().includes("/barcelona/avui") && resp.url().includes("search=")
+        resp.url().includes("/barcelona/avui") &&
+        resp.url().includes("search="),
     );
 
     await page.goto("/barcelona/avui?search=castellers", {
@@ -82,7 +82,7 @@ test.describe("Listing robots directives", () => {
     const responsePromise = page.waitForResponse(
       (resp) =>
         resp.url().includes("/barcelona/avui/musica") &&
-        resp.url().includes("search=")
+        resp.url().includes("search="),
     );
 
     await page.goto("/barcelona/avui/musica?search=concert", {
@@ -104,7 +104,7 @@ test.describe("Listing robots directives", () => {
   }) => {
     const responsePromise = page.waitForResponse(
       (resp) =>
-        resp.url().includes("/barcelona") && resp.url().includes("distance=")
+        resp.url().includes("/barcelona") && resp.url().includes("distance="),
     );
 
     await page.goto("/barcelona?distance=10&lat=41.387&lon=2.17", {
