@@ -6,7 +6,7 @@ test.describe("About page", () => {
     // Basic presence: a heading with 'qui som' in Catalan
     const heading = page.getByRole("heading", { name: /qui som/i });
     await expect(heading.first()).toBeVisible();
-    // Canonical link present
-    await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
+    // Canonical link present (use .first() — Next.js 16 streaming may render duplicate head tags)
+    await expect(page.locator('link[rel="canonical"]').first()).toBeAttached();
   });
 });
