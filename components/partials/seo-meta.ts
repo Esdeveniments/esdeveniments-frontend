@@ -193,7 +193,6 @@ export function buildPageMeta({
       "twitter:image:src": image,
       "twitter:image:alt": title,
     },
-    languages: languageAlternates,
   };
 
   return baseMeta;
