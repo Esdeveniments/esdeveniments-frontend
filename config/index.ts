@@ -94,7 +94,7 @@ export const socialLinks: SocialLinks = {
   facebook: "https://www.facebook.com/esdeveniments.cat",
   threads: "https://www.threads.com/@esdeveniments.cat",
   linkedin: "https://www.linkedin.com/company/esdeveniments-cat",
-  tiktok: "https://www.tiktok.com/@esdeveniments",
+  // tiktok: "https://www.tiktok.com/@esdeveniments",
   mastodon: "https://mastodon.social/@esdeveniments",
 };
 
@@ -102,7 +102,7 @@ export const socialLinks: SocialLinks = {
 export const socialLinksSameAs: string[] = [
   socialLinks.facebook,
   socialLinks.instagram,
-  socialLinks.tiktok,
+  // socialLinks.tiktok,
   socialLinks.twitter,
   socialLinks.threads,
   socialLinks.mastodon,

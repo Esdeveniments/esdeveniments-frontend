@@ -121,9 +121,9 @@ export interface SocialLinks {
   facebook: string;
   threads: string;
   linkedin: string;
-  tiktok: string;
+  tiktok?: string;
   mastodon: string;
-  [key: string]: string;
+  [key: string]: string | undefined;
 }
 
 /** SVG icon data for a social platform (viewBox + path). */
