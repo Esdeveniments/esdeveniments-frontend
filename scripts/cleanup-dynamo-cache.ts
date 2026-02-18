@@ -1,19 +1,22 @@
 /**
- * DynamoDB Cache Cleanup Lambda
+ * Cache Cleanup Lambda
  *
- * Cleans up stale ISR cache entries from old deployments.
+ * Cleans up stale ISR cache entries from old deployments:
+ * 1. DynamoDB: Removes orphaned cache entries from old build IDs
+ * 2. S3: Removes stale __fetch/ cache objects that accumulate over time
+ *
  * OpenNext creates cache entries prefixed with a build ID - each deployment
  * creates a new namespace, leaving old entries orphaned.
  *
  * Safety:
  * - Keeps entries from the most recent N builds (default: 3) for rollback safety
- * - Rate-limited to avoid DynamoDB throttling
+ * - Rate-limited to avoid DynamoDB/S3 throttling
  * - Dry-run mode for testing
  *
  * Schedule: Weekly via CloudWatch Events (configured in sst.config.ts)
  *
  * Local testing:
- *   CACHE_DYNAMO_TABLE=<table-name> DRY_RUN=true npx tsx scripts/cleanup-dynamo-cache.ts
+ *   CACHE_DYNAMO_TABLE=<table-name> CACHE_S3_BUCKET=<bucket-name> DRY_RUN=true npx tsx scripts/cleanup-dynamo-cache.ts
  */
 
 import {
@@ -21,6 +24,12 @@ import {
   ScanCommand,
   BatchWriteItemCommand,
 } from "@aws-sdk/client-dynamodb";
+import {
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+} from "@aws-sdk/client-s3";
+import type { _Object } from "@aws-sdk/client-s3";
 
 import type { ScanCommandOutput } from "@aws-sdk/client-dynamodb";
 
@@ -52,6 +61,10 @@ function isCacheItem(item: unknown): item is CacheItem {
 const REGION = process.env.AWS_REGION || "eu-west-3";
 // No fallback - fail explicitly if env var not set (SST provides it dynamically)
 const TABLE_NAME = process.env.CACHE_DYNAMO_TABLE;
+// Optional: S3 bucket for fetch cache cleanup (set by SST from site.nodes.assets)
+const S3_BUCKET_NAME = process.env.CACHE_S3_BUCKET;
+const S3_FETCH_PREFIX = "_cache/__fetch/";
+const S3_DELETE_BATCH_SIZE = 1000; // S3 DeleteObjects limit
 const BUILDS_TO_KEEP = parseInt(process.env.BUILDS_TO_KEEP || "3", 10);
 const DRY_RUN = process.env.DRY_RUN !== "false"; // Default to dry run for safety
 // Safety gate: cleanup must be explicitly enabled in production
@@ -64,7 +77,13 @@ const PROGRESS_LOG_INTERVAL = 1000; // Log progress every N items
 // Threshold for validating timestamp-based build IDs (Jan 1, 2023 00:00:00 UTC)
 const TIMESTAMP_THRESHOLD_MS = new Date("2023-01-01T00:00:00Z").getTime();
 
-const client = new DynamoDBClient({ region: REGION });
+const dynamoClient = new DynamoDBClient({ region: REGION });
+const s3Client = new S3Client({ region: REGION });
+
+interface S3CleanupResult {
+  objectsDeleted: number;
+  errors: string[];
+}
 
 interface CleanupResult {
   totalItems: number;
@@ -75,6 +94,7 @@ interface CleanupResult {
   dryRun: boolean;
   keptBuilds: string[];
   deletedBuilds: string[];
+  s3FetchCacheDeleted: number;
   errors: string[];
 }
 
@@ -113,7 +133,7 @@ async function scanAndGroupByBuild(): Promise<
       },
     });
 
-    const response: ScanCommandOutput = await client.send(command);
+    const response: ScanCommandOutput = await dynamoClient.send(command);
     lastEvaluatedKey = response.LastEvaluatedKey;
 
     for (const rawItem of response.Items || []) {
@@ -240,7 +260,7 @@ async function deleteItems(
             },
           });
 
-          const response = await client.send(command);
+          const response = await dynamoClient.send(command);
 
           // Check for unprocessed items
           const unprocessedRequests =
@@ -305,6 +325,90 @@ async function deleteItems(
 }
 
 /**
+ * Delete stale S3 fetch cache objects (_cache/__fetch/ prefix).
+ * These accumulate from Next.js fetch caching and are not cleaned up on deploy.
+ * Lists all objects under the prefix and deletes them in batches of 1000.
+ */
+async function cleanupS3FetchCache(
+  isDryRun: boolean,
+): Promise<S3CleanupResult> {
+  if (!S3_BUCKET_NAME) {
+    console.log("S3 cleanup skipped: CACHE_S3_BUCKET not set");
+    return { objectsDeleted: 0, errors: [] };
+  }
+
+  console.log("\n=== S3 Fetch Cache Cleanup ===");
+  console.log(`Bucket: ${S3_BUCKET_NAME}`);
+  console.log(`Prefix: ${S3_FETCH_PREFIX}`);
+
+  let totalDeleted = 0;
+  const errors: string[] = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const listCommand = new ListObjectsV2Command({
+      Bucket: S3_BUCKET_NAME,
+      Prefix: S3_FETCH_PREFIX,
+      MaxKeys: S3_DELETE_BATCH_SIZE,
+      ContinuationToken: continuationToken,
+    });
+
+    const listResponse = await s3Client.send(listCommand);
+    const objects = listResponse.Contents;
+
+    if (!objects || objects.length === 0) {
+      break;
+    }
+
+    if (isDryRun) {
+      console.log(`[DRY RUN] Would delete ${objects.length} S3 objects`);
+      totalDeleted += objects.length;
+    } else {
+      try {
+        const deleteCommand = new DeleteObjectsCommand({
+          Bucket: S3_BUCKET_NAME,
+          Delete: {
+            Objects: objects
+              .filter((obj: _Object): obj is _Object & { Key: string } => obj.Key !== undefined)
+              .map((obj) => ({ Key: obj.Key })),
+            Quiet: true,
+          },
+        });
+
+        const deleteResponse = await s3Client.send(deleteCommand);
+        const errCount = deleteResponse.Errors?.length ?? 0;
+
+        totalDeleted += objects.length - errCount;
+        if (errCount > 0) {
+          errors.push(`${errCount} S3 objects failed to delete in batch`);
+        }
+      } catch (error) {
+        const errorMsg =
+          error instanceof Error ? error.message : String(error);
+        errors.push(`S3 delete batch failed: ${errorMsg}`);
+        console.error(`S3 delete error: ${errorMsg}`);
+      }
+
+      // Rate limiting between S3 batches
+      await new Promise((resolve) =>
+        setTimeout(resolve, DELAY_BETWEEN_BATCHES_MS),
+      );
+    }
+
+    if (totalDeleted % 10000 === 0 && totalDeleted > 0) {
+      console.log(`S3 delete progress: ${totalDeleted} objects`);
+    }
+
+    continuationToken = listResponse.IsTruncated
+      ? listResponse.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
+
+  console.log(`S3 fetch cache: ${totalDeleted} objects deleted`);
+  return { objectsDeleted: totalDeleted, errors };
+}
+
+/**
  * Main cleanup handler
  */
 export async function handler(event?: {
@@ -323,8 +427,9 @@ export async function handler(event?: {
 
   const isDryRun = event?.dryRun ?? DRY_RUN;
 
-  console.log("=== DynamoDB Cache Cleanup ===");
-  console.log(`Table: ${TABLE_NAME}`);
+  console.log("=== Cache Cleanup ===");
+  console.log(`DynamoDB Table: ${TABLE_NAME}`);
+  console.log(`S3 Bucket: ${S3_BUCKET_NAME || "(not configured)"}`);
   console.log(`Builds to keep: ${BUILDS_TO_KEEP}`);
   console.log(`Dry run: ${isDryRun}`);
   console.log(`Cleanup enabled: ${CLEANUP_ENABLED}`);
@@ -339,6 +444,7 @@ export async function handler(event?: {
     dryRun: isDryRun,
     keptBuilds: [],
     deletedBuilds: [],
+    s3FetchCacheDeleted: 0,
     errors: [],
   };
 
@@ -352,7 +458,11 @@ export async function handler(event?: {
     );
 
     if (buildGroups.size === 0) {
-      console.log("No items found in table");
+      console.log("No DynamoDB items found in table");
+      // Still run S3 cleanup even if DynamoDB is empty
+      const s3Result = await cleanupS3FetchCache(isDryRun);
+      result.s3FetchCacheDeleted = s3Result.objectsDeleted;
+      result.errors.push(...s3Result.errors);
       return result;
     }
 
@@ -376,23 +486,33 @@ export async function handler(event?: {
     console.log(`\nItems to delete: ${itemsToDelete.length}`);
 
     if (itemsToDelete.length === 0) {
-      console.log("No items to delete");
+      console.log("No DynamoDB items to delete");
+      // Still run S3 cleanup even if no DynamoDB items to delete
+      const s3Result = await cleanupS3FetchCache(isDryRun);
+      result.s3FetchCacheDeleted = s3Result.objectsDeleted;
+      result.errors.push(...s3Result.errors);
       return result;
     }
 
-    // Step 4: Delete items
+    // Step 4: Delete DynamoDB items
     const { deleted, errors } = await deleteItems(itemsToDelete, isDryRun);
     result.itemsDeleted = deleted;
     result.errors = errors;
 
+    // Step 5: Clean up stale S3 fetch cache objects
+    const s3Result = await cleanupS3FetchCache(isDryRun);
+    result.s3FetchCacheDeleted = s3Result.objectsDeleted;
+    result.errors.push(...s3Result.errors);
+
     console.log("\n=== Cleanup Complete ===");
-    console.log(`Total items: ${result.totalItems}`);
-    console.log(`Builds found: ${result.buildsFound}`);
+    console.log(`DynamoDB - Total items: ${result.totalItems}`);
+    console.log(`DynamoDB - Builds found: ${result.buildsFound}`);
     console.log(
-      `Builds kept: ${result.buildsKept} (${result.keptBuilds.join(", ")})`
+      `DynamoDB - Builds kept: ${result.buildsKept} (${result.keptBuilds.join(", ")})`,
     );
-    console.log(`Builds deleted: ${result.buildsDeleted}`);
-    console.log(`Items deleted: ${result.itemsDeleted}`);
+    console.log(`DynamoDB - Builds deleted: ${result.buildsDeleted}`);
+    console.log(`DynamoDB - Items deleted: ${result.itemsDeleted}`);
+    console.log(`S3 - Fetch cache objects deleted: ${result.s3FetchCacheDeleted}`);
     if (result.errors.length > 0) {
       console.log(`Errors: ${result.errors.length}`);
     }

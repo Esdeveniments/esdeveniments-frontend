@@ -8,7 +8,7 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
     throw new Error(
-      `${name} environment variable must be set for SST deployment`
+      `${name} environment variable must be set for SST deployment`,
     );
   }
   return value;
@@ -63,7 +63,7 @@ export default $config({
             return (
               actions.includes("s3:ListBucket") &&
               resources.some(
-                (r) => String(r) === String(listBucketPermission.resources[0])
+                (r) => String(r) === String(listBucketPermission.resources[0]),
               )
             );
           });
@@ -72,15 +72,13 @@ export default $config({
             existingPermissions.push(listBucketPermission);
         }
       }
-
     });
 
     // Helper function to get parameter from SSM Parameter Store
     async function getSsmParameter(parameterName: string): Promise<string> {
       // Dynamic import to avoid top-level imports
-      const { SSMClient, GetParameterCommand } = await import(
-        "@aws-sdk/client-ssm"
-      );
+      const { SSMClient, GetParameterCommand } =
+        await import("@aws-sdk/client-ssm");
 
       const client = new SSMClient({
         region: process.env.AWS_REGION || "eu-west-3",
@@ -107,12 +105,12 @@ export default $config({
     const certArn =
       process.env.ACM_CERTIFICATE_ARN ||
       (await getSsmParameter(
-        "/esdeveniments-frontend/acm-certificate-arn"
+        "/esdeveniments-frontend/acm-certificate-arn",
       ).catch(() => process.env.ACM_CERTIFICATE_ARN || ""));
 
     if (!certArn) {
       throw new Error(
-        "ACM_CERTIFICATE_ARN must be set either as environment variable or SSM parameter at /esdeveniments-frontend/acm-certificate-arn"
+        "ACM_CERTIFICATE_ARN must be set either as environment variable or SSM parameter at /esdeveniments-frontend/acm-certificate-arn",
       );
     }
 
@@ -139,8 +137,8 @@ export default $config({
         typeof environment === "object" &&
         "variables" in environment &&
         typeof (environment as { variables?: unknown }).variables === "object"
-          ? (environment as { variables?: Record<string, unknown> })
-              .variables ?? undefined
+          ? ((environment as { variables?: Record<string, unknown> })
+              .variables ?? undefined)
           : undefined;
 
       const bucketKeyPrefix = variables?.["BUCKET_KEY_PREFIX"];
@@ -173,7 +171,7 @@ export default $config({
           },
           alarmActions: [alarmsTopic.arn],
         },
-        { parent: alarmsTopic }
+        { parent: alarmsTopic },
       );
     });
 
@@ -223,14 +221,14 @@ export default $config({
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
       server: {
-        // Install sharp with linux-x64 binaries in the server function bundle.
+        // Install sharp with linux-arm64 binaries in the server function bundle.
         // OpenNext excludes sharp by default (only installs it for the image optimizer).
         // Since we have a custom /api/image-proxy using sharp, we need to include it.
-        // Include platform-specific packages explicitly for Lambda (linux-x64)
+        // Include platform-specific packages explicitly for Lambda (linux-arm64)
         install: [
           "sharp",
-          "@img/sharp-linux-x64",
-          "@img/sharp-libvips-linux-x64",
+          "@img/sharp-linux-arm64",
+          "@img/sharp-libvips-linux-arm64",
         ],
       },
       transform: {
@@ -240,9 +238,9 @@ export default $config({
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
           args.memory = "1792 MB"; // Reduced from 3008 MB (1 vCPU equivalent) - saves ~$30/month
           args.timeout = "20 seconds";
-          // Using x64 architecture for better compatibility with native modules (sharp)
-          // CI builds on ubuntu-latest (x64), so Lambda must also be x64
-          args.architecture = "x86_64";
+          // Using ARM64 architecture: 20% cheaper per GB-second + separate 400K GB-s free tier
+          // SST server.install bundles platform-specific Sharp binaries independently of CI arch
+          args.architecture = "arm64";
           // Sentry layer ARN - configurable per environment/region
           // Defaults to eu-west-3 version 283 if not specified
           args.layers = process.env.SENTRY_LAYER_ARN
@@ -497,13 +495,15 @@ export default $config({
 
     // =========================================================================
     // CACHE CLEANUP LAMBDA
-    // Cleans up stale ISR cache entries from old deployments.
-    // Each deployment creates a new build ID prefix - old entries become orphaned.
-    // Runs weekly to keep the DynamoDB table size manageable.
+    // Cleans up stale cache entries from old deployments:
+    // 1. DynamoDB: Removes orphaned ISR cache entries from old build IDs
+    // 2. S3: Removes stale __fetch/ cache objects that accumulate over time
+    // Runs weekly to keep storage costs manageable.
     // =========================================================================
 
-    // Get the revalidation table from OpenNext - this is the ISR cache table
+    // Get the revalidation table and assets bucket from OpenNext
     const revalidationTable = site.nodes.revalidationTable;
+    const assetsBucket = site.nodes.assets;
 
     // Only set up cleanup if the revalidation table exists
     // (it won't exist in dev mode or if ISR is not configured)
@@ -517,20 +517,32 @@ export default $config({
         environment: {
           // SST resolves Output<string> at deploy time
           CACHE_DYNAMO_TABLE: revalidationTable.name,
+          // S3 bucket for fetch cache cleanup (from site.nodes.assets)
+          ...(assetsBucket && { CACHE_S3_BUCKET: assetsBucket.name }),
           BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
-          // Safe-by-default: dry run unless explicitly disabled via CACHE_CLEANUP_DRY_RUN=false
-          // The handler also defaults to dry run if DRY_RUN !== "false"
-          DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "true",
-          // Double safety gate: cleanup must be explicitly enabled
-          // Set CACHE_CLEANUP_ENABLED=true in deployment env to allow actual deletions
-          CACHE_CLEANUP_ENABLED: process.env.CACHE_CLEANUP_ENABLED ?? "false",
+          // Cleanup is enabled by default. Override with env vars if needed:
+          // CACHE_CLEANUP_DRY_RUN=true to simulate without deleting
+          // CACHE_CLEANUP_ENABLED=false to disable cleanup entirely
+          DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
+          CACHE_CLEANUP_ENABLED: process.env.CACHE_CLEANUP_ENABLED ?? "true",
         },
         permissions: [
           {
             actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
-            // SST resolves Output<string> at deploy time
             resources: [revalidationTable.arn],
           },
+          // S3 permissions for fetch cache cleanup
+          ...(assetsBucket
+            ? [
+                {
+                  actions: [
+                    "s3:ListBucket",
+                    "s3:DeleteObject",
+                  ],
+                  resources: [assetsBucket.arn, $interpolate`${assetsBucket.arn}/*`],
+                },
+              ]
+            : []),
         ],
       });
 
