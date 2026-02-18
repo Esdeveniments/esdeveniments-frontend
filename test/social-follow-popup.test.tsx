@@ -351,7 +351,7 @@ describe("SocialFollowPopup – mobile vs desktop", () => {
 // 6. SOCIAL LINKS
 // =====================================================================
 describe("SocialFollowPopup – social links", () => {
-  it("should render all 8 social platform links", () => {
+  it("should render all 7 social platform links", () => {
     seedPageViews(1, "/other");
 
     render(<SocialFollowPopup pathname="/page-b" />);
@@ -366,7 +366,6 @@ describe("SocialFollowPopup – social links", () => {
       "Threads",
       "LinkedIn",
       "Telegram",
-      "TikTok",
       "Mastodon",
     ];
 
