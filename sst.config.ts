@@ -502,55 +502,52 @@ export default $config({
     // =========================================================================
 
     // Get the revalidation table and assets bucket from OpenNext
+    // site.nodes.revalidationTable is Output<Table | undefined>
     const revalidationTable = site.nodes.revalidationTable;
     const assetsBucket = site.nodes.assets;
 
-    // Only set up cleanup if the revalidation table exists
-    // (it won't exist in dev mode or if ISR is not configured)
-    // Note: SST v3 handles Output<T> types natively in environment/permissions
-    if (revalidationTable) {
-      const cacheCleanupLambda = new sst.aws.Function("CacheCleanupLambda", {
-        handler: "scripts/cleanup-dynamo-cache.handler",
-        runtime: "nodejs22.x",
-        timeout: "15 minutes",
-        memory: "256 MB",
-        environment: {
-          // SST resolves Output<string> at deploy time
-          CACHE_DYNAMO_TABLE: revalidationTable.name,
-          // S3 bucket for fetch cache cleanup (from site.nodes.assets)
-          ...(assetsBucket && { CACHE_S3_BUCKET: assetsBucket.name }),
-          BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
-          // Cleanup is enabled by default. Override with env vars if needed:
-          // CACHE_CLEANUP_DRY_RUN=true to simulate without deleting
-          // CACHE_CLEANUP_ENABLED=false to disable cleanup entirely
-          DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
-          CACHE_CLEANUP_ENABLED: process.env.CACHE_CLEANUP_ENABLED ?? "true",
-        },
-        permissions: [
-          {
-            actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
-            resources: [revalidationTable.arn],
-          },
-          // S3 permissions for fetch cache cleanup
-          ...(assetsBucket
-            ? [
-                {
-                  actions: [
-                    "s3:ListBucket",
-                    "s3:DeleteObject",
-                  ],
-                  resources: [assetsBucket.arn, $interpolate`${assetsBucket.arn}/*`],
-                },
-              ]
-            : []),
-        ],
-      });
+    // Only set up cleanup if the revalidation table and assets bucket exist
+    // (they won't exist in dev mode or if ISR is not configured)
+    if (revalidationTable && assetsBucket) {
+      // Use .apply() to extract resolved name/ARN from Output<Table | undefined>
+      const tableName = revalidationTable.apply((t) => t!.name);
+      const tableArn = revalidationTable.apply((t) => t!.arn);
 
       // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
-      // SST Cron handles EventRule, EventTarget, and Lambda permissions automatically
+      // IMPORTANT: Cron.job accepts string | FunctionArgs | FunctionArn — NOT a Function instance.
+      // Passing a Function instance causes functionBuilder to throw at runtime because
+      // Function class has no .handler property (only name, arn, url, nodes getters).
       new sst.aws.Cron("CacheCleanupCron", {
         schedule: "cron(0 3 ? * SUN *)",
-        job: cacheCleanupLambda,
+        job: {
+          handler: "scripts/cleanup-dynamo-cache.handler",
+          runtime: "nodejs22.x",
+          timeout: "15 minutes",
+          memory: "256 MB",
+          environment: {
+            CACHE_DYNAMO_TABLE: tableName,
+            CACHE_S3_BUCKET: assetsBucket.name,
+            BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
+            // Cleanup is enabled by default. Override with env vars if needed:
+            // CACHE_CLEANUP_DRY_RUN=true to simulate without deleting
+            // CACHE_CLEANUP_ENABLED=false to disable cleanup entirely
+            DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
+            CACHE_CLEANUP_ENABLED: process.env.CACHE_CLEANUP_ENABLED ?? "true",
+          },
+          permissions: [
+            {
+              actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
+              resources: [tableArn],
+            },
+            {
+              actions: ["s3:ListBucket", "s3:DeleteObject"],
+              resources: [
+                assetsBucket.arn,
+                $interpolate`${assetsBucket.arn}/*`,
+              ],
+            },
+          ],
+        },
       });
     }
 
