@@ -501,29 +501,38 @@ export default $config({
     // Runs weekly to keep storage costs manageable.
     // =========================================================================
 
-    // Get the revalidation table and assets bucket from OpenNext
-    // site.nodes.revalidationTable is Output<Table | undefined>
-    const revalidationTable = site.nodes.revalidationTable;
+    // WORKAROUND for SST v3 Nextjs component bug:
+    // site.nodes.revalidationTable returns undefined because the Nextjs class
+    // declares `private revalidationTable?: Output<Table | undefined>` as a
+    // class field. In JavaScript, class fields are initialized AFTER super()
+    // returns, overwriting any value set during super()'s call to buildPlan()
+    // (which does this.revalidationTable = ret.revalidationTable). This is a
+    // known JS class field initialization ordering issue (TC39 §15.7.14).
+    //
+    // Workaround: Capture the table name via the server function's environment
+    // variable CACHE_DYNAMO_TABLE, which SST sets correctly inside buildPlan().
+    // site.nodes.server IS correct (defined in SsrSite base class, not overwritten).
+    // site.nodes.assets IS correct (same — defined in SsrSite base class).
+    const serverFunction = site.nodes.server;
     const assetsBucket = site.nodes.assets;
 
-    console.log("[CacheCleanup] revalidationTable type:", typeof revalidationTable, "truthy:", !!revalidationTable);
-    console.log("[CacheCleanup] assetsBucket type:", typeof assetsBucket, "truthy:", !!assetsBucket);
+    if (serverFunction && assetsBucket) {
+      // Extract the DynamoDB table name from the server function's env vars.
+      // SST sets CACHE_DYNAMO_TABLE inside buildPlan() on the server Lambda.
+      // Pulumi's lifted property access chains Output values automatically.
+      const tableName = serverFunction.nodes.function.environment.apply(
+        (env) => env?.variables?.CACHE_DYNAMO_TABLE ?? "",
+      );
 
-    // Only set up cleanup if the revalidation table and assets bucket exist
-    // (they won't exist in dev mode or if ISR is not configured)
-    if (revalidationTable && assetsBucket) {
-      console.log("[CacheCleanup] Inside if block — creating CacheCleanupCron");
-      // Use .apply() to extract resolved name/ARN from Output<Table | undefined>
-      const tableName = revalidationTable.apply((t) => {
-        console.log("[CacheCleanup] revalidationTable resolved, t:", typeof t, !!t);
-        return t!.name;
-      });
-      const tableArn = revalidationTable.apply((t) => t!.arn);
+      // Construct the table ARN from AWS context + table name
+      const accountId = aws.getCallerIdentityOutput({}).accountId;
+      const region = aws.getRegionOutput({}).name;
+      const tableArn = $interpolate`arn:aws:dynamodb:${region}:${accountId}:table/${tableName}`;
 
       // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
-      // IMPORTANT: Cron.job accepts string | FunctionArgs | FunctionArn — NOT a Function instance.
-      // Passing a Function instance causes functionBuilder to throw at runtime because
-      // Function class has no .handler property (only name, arn, url, nodes getters).
+      // IMPORTANT: Cron.job accepts string | FunctionArgs | FunctionArn — NOT
+      // a Function instance. Passing a Function instance causes functionBuilder
+      // to throw because Function class has no .handler property.
       new sst.aws.Cron("CacheCleanupCron", {
         schedule: "cron(0 3 ? * SUN *)",
         job: {
@@ -534,10 +543,7 @@ export default $config({
           environment: {
             CACHE_DYNAMO_TABLE: tableName,
             CACHE_S3_BUCKET: assetsBucket.name,
-            BUILDS_TO_KEEP: "3", // Keep last 3 builds for rollback safety
-            // Cleanup is enabled by default. Override with env vars if needed:
-            // CACHE_CLEANUP_DRY_RUN=true to simulate without deleting
-            // CACHE_CLEANUP_ENABLED=false to disable cleanup entirely
+            BUILDS_TO_KEEP: "3",
             DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
             CACHE_CLEANUP_ENABLED: process.env.CACHE_CLEANUP_ENABLED ?? "true",
           },
