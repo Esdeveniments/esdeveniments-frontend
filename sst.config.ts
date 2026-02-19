@@ -506,11 +506,18 @@ export default $config({
     const revalidationTable = site.nodes.revalidationTable;
     const assetsBucket = site.nodes.assets;
 
+    console.log("[CacheCleanup] revalidationTable type:", typeof revalidationTable, "truthy:", !!revalidationTable);
+    console.log("[CacheCleanup] assetsBucket type:", typeof assetsBucket, "truthy:", !!assetsBucket);
+
     // Only set up cleanup if the revalidation table and assets bucket exist
     // (they won't exist in dev mode or if ISR is not configured)
     if (revalidationTable && assetsBucket) {
+      console.log("[CacheCleanup] Inside if block — creating CacheCleanupCron");
       // Use .apply() to extract resolved name/ARN from Output<Table | undefined>
-      const tableName = revalidationTable.apply((t) => t!.name);
+      const tableName = revalidationTable.apply((t) => {
+        console.log("[CacheCleanup] revalidationTable resolved, t:", typeof t, !!t);
+        return t!.name;
+      });
       const tableArn = revalidationTable.apply((t) => t!.arn);
 
       // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
