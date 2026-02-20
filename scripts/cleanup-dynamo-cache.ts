@@ -67,9 +67,11 @@ const DRY_RUN = process.env.DRY_RUN !== "false"; // Default to dry run for safet
 const CLEANUP_ENABLED = process.env.CACHE_CLEANUP_ENABLED === "true";
 const BATCH_SIZE = 25; // DynamoDB BatchWriteItem limit
 const SCAN_LIMIT = 5000; // Items per scan
-const DELAY_BETWEEN_BATCHES_MS = 100; // Rate limiting
-const MAX_RETRIES = 3; // Retries for unprocessed items with exponential backoff
-const PROGRESS_LOG_INTERVAL = 1000; // Log progress every N items
+// No artificial delay between DynamoDB batches. On-demand tables auto-scale
+// write capacity, and we rely on retry with exponential backoff for throttling.
+// This allows deleting 3M+ items within the 15-minute Lambda timeout.
+const MAX_RETRIES = 5; // Retries for unprocessed items with exponential backoff
+const PROGRESS_LOG_INTERVAL = 10000; // Log progress every N items
 // Cap errors in response to avoid exceeding Lambda's 6MB response payload limit.
 // With 3.3M items (132K batches), throttling can generate thousands of error strings.
 // All errors are logged to CloudWatch regardless; this only limits the return payload.
@@ -308,9 +310,8 @@ async function deleteItems(
         let retryCount = 0;
         while (pendingItems.length > 0 && retryCount <= MAX_RETRIES) {
           if (retryCount > 0) {
-            // Exponential backoff: 200ms, 400ms, 800ms
-            const backoffMs =
-              DELAY_BETWEEN_BATCHES_MS * Math.pow(2, retryCount);
+            // Exponential backoff: 200ms, 400ms, 800ms, 1600ms, 3200ms
+            const backoffMs = 200 * Math.pow(2, retryCount - 1);
             console.log(
               `Retrying ${pendingItems.length} unprocessed items (attempt ${retryCount}/${MAX_RETRIES}, waiting ${backoffMs}ms)`,
             );
@@ -375,13 +376,6 @@ async function deleteItems(
       const errorMsg = error instanceof Error ? error.message : String(error);
       errors.push(`Batch ${Math.floor(i / BATCH_SIZE)} failed: ${errorMsg}`);
       console.error(`Error deleting batch: ${errorMsg}`);
-    }
-
-    // Rate limiting
-    if (i + BATCH_SIZE < items.length) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, DELAY_BETWEEN_BATCHES_MS),
-      );
     }
 
     // Progress logging every PROGRESS_LOG_INTERVAL items
@@ -467,10 +461,8 @@ async function cleanupS3FetchCache(
         console.error(`S3 delete error: ${errorMsg}`);
       }
 
-      // Rate limiting between S3 batches
-      await new Promise((resolve) =>
-        setTimeout(resolve, DELAY_BETWEEN_BATCHES_MS),
-      );
+      // Minimal delay between S3 batches (S3 handles 3,500 DELETE/s per prefix)
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
     if (totalDeleted % 10000 === 0 && totalDeleted > 0) {
