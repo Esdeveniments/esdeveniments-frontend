@@ -125,19 +125,70 @@ function extractBuildId(tag: string): string {
 }
 
 /**
- * Scan entire table and group by build ID
+ * Pass 1: Scan entire table and count items per build ID.
+ * Only stores build ID → count (no item data) to stay within Lambda memory limits.
+ * With 3.3M items, storing all {tag, path} pairs would require ~660MB.
  */
-async function scanAndGroupByBuild(): Promise<
-  Map<string, { count: number; items: Array<{ tag: string; path: string }> }>
-> {
-  const buildGroups = new Map<
-    string,
-    { count: number; items: Array<{ tag: string; path: string }> }
-  >();
+async function scanAndCountByBuild(): Promise<{
+  buildCounts: Map<string, number>;
+  totalScanned: number;
+}> {
+  const buildCounts = new Map<string, number>();
   let lastEvaluatedKey: ScanCommandOutput["LastEvaluatedKey"] = undefined;
   let totalScanned = 0;
 
-  console.log(`Scanning table: ${TABLE_NAME}`);
+  console.log(`Pass 1: Counting items per build in table: ${TABLE_NAME}`);
+
+  do {
+    const command = new ScanCommand({
+      TableName: TABLE_NAME,
+      Limit: SCAN_LIMIT,
+      ExclusiveStartKey: lastEvaluatedKey,
+      // Only need tag to extract build ID (path not needed for counting)
+      ProjectionExpression: "#t",
+      ExpressionAttributeNames: { "#t": "tag" },
+    });
+
+    const response: ScanCommandOutput = await dynamoClient.send(command);
+    lastEvaluatedKey = response.LastEvaluatedKey;
+
+    for (const rawItem of response.Items || []) {
+      if (!isCacheItem(rawItem)) continue;
+      const tag = rawItem.tag?.S || "";
+      const buildId = extractBuildId(tag);
+      buildCounts.set(buildId, (buildCounts.get(buildId) || 0) + 1);
+    }
+
+    totalScanned += response.Items?.length || 0;
+    if (totalScanned % 50000 === 0 || !lastEvaluatedKey) {
+      console.log(
+        `  Counted ${totalScanned} items, ${buildCounts.size} unique builds`,
+      );
+    }
+  } while (lastEvaluatedKey);
+
+  console.log(
+    `Pass 1 complete: ${totalScanned} items, ${buildCounts.size} builds`,
+  );
+  return { buildCounts, totalScanned };
+}
+
+/**
+ * Pass 2: Scan table again and stream-delete items belonging to stale builds.
+ * Processes items in scan-page-sized chunks — never accumulates all items in memory.
+ */
+async function scanAndDeleteStaleItems(
+  buildsToDelete: Set<string>,
+  isDryRun: boolean,
+): Promise<{ deleted: number; errors: string[] }> {
+  let lastEvaluatedKey: ScanCommandOutput["LastEvaluatedKey"] = undefined;
+  let totalDeleted = 0;
+  let totalScanned = 0;
+  const errors: string[] = [];
+
+  console.log(
+    `\nPass 2: Scanning and deleting items from ${buildsToDelete.size} stale builds`,
+  );
 
   do {
     const command = new ScanCommand({
@@ -145,55 +196,58 @@ async function scanAndGroupByBuild(): Promise<
       Limit: SCAN_LIMIT,
       ExclusiveStartKey: lastEvaluatedKey,
       ProjectionExpression: "#t, #p",
-      ExpressionAttributeNames: {
-        "#t": "tag",
-        "#p": "path",
-      },
+      ExpressionAttributeNames: { "#t": "tag", "#p": "path" },
     });
 
     const response: ScanCommandOutput = await dynamoClient.send(command);
     lastEvaluatedKey = response.LastEvaluatedKey;
 
+    // Collect items from this scan page that belong to stale builds
+    const itemsToDelete: Array<{ tag: string; path: string }> = [];
     for (const rawItem of response.Items || []) {
-      // Skip items that don't match expected shape
-      if (!isCacheItem(rawItem)) {
-        continue;
-      }
+      if (!isCacheItem(rawItem)) continue;
       const tag = rawItem.tag?.S || "";
       const path = rawItem.path?.S || "";
       const buildId = extractBuildId(tag);
-
-      let group = buildGroups.get(buildId);
-      if (!group) {
-        group = { count: 0, items: [] };
-        buildGroups.set(buildId, group);
+      if (buildsToDelete.has(buildId)) {
+        itemsToDelete.push({ tag, path });
       }
-
-      group.count++;
-      group.items.push({ tag, path });
     }
 
     totalScanned += response.Items?.length || 0;
-    console.log(
-      `Scanned ${totalScanned} items, ${buildGroups.size} unique builds found`,
-    );
+
+    // Delete this page's stale items immediately (streaming — no accumulation)
+    if (itemsToDelete.length > 0) {
+      const { deleted, errors: batchErrors } = await deleteItems(
+        itemsToDelete,
+        isDryRun,
+      );
+      totalDeleted += deleted;
+      errors.push(...batchErrors);
+    }
+
+    if (totalScanned % 50000 === 0 || !lastEvaluatedKey) {
+      console.log(
+        `  Pass 2 progress: scanned ${totalScanned}, deleted ${totalDeleted}`,
+      );
+    }
   } while (lastEvaluatedKey);
 
-  return buildGroups;
+  console.log(
+    `Pass 2 complete: scanned ${totalScanned}, deleted ${totalDeleted}`,
+  );
+  return { deleted: totalDeleted, errors };
 }
 
 /**
  * Determine which builds to keep (most entries = most recent/active)
  */
 function selectBuildsToKeep(
-  buildGroups: Map<
-    string,
-    { count: number; items: Array<{ tag: string; path: string }> }
-  >,
+  buildCounts: Map<string, number>,
 ): Set<string> {
-  const builds = Array.from(buildGroups.entries()).map(([buildId, data]) => ({
+  const builds = Array.from(buildCounts.entries()).map(([buildId, count]) => ({
     buildId,
-    count: data.count,
+    count,
     timestamp: Number(buildId),
   }));
 
@@ -474,17 +528,13 @@ export async function handler(event?: {
   };
 
   try {
-    // Step 1: Scan and group by build
-    const buildGroups = await scanAndGroupByBuild();
-    result.buildsFound = buildGroups.size;
-    result.totalItems = Array.from(buildGroups.values()).reduce(
-      (sum, g) => sum + g.count,
-      0,
-    );
+    // Step 1: Count items per build (memory-efficient — no item storage)
+    const { buildCounts, totalScanned } = await scanAndCountByBuild();
+    result.buildsFound = buildCounts.size;
+    result.totalItems = totalScanned;
 
-    if (buildGroups.size === 0) {
+    if (buildCounts.size === 0) {
       console.log("No DynamoDB items found in table");
-      // Still run S3 cleanup even if DynamoDB is empty
       const s3Result = await cleanupS3FetchCache(isDryRun);
       result.s3FetchCacheDeleted = s3Result.objectsDeleted;
       result.errors.push(...s3Result.errors);
@@ -492,35 +542,33 @@ export async function handler(event?: {
     }
 
     // Step 2: Determine which builds to keep
-    const buildsToKeep = selectBuildsToKeep(buildGroups);
+    const buildsToKeep = selectBuildsToKeep(buildCounts);
     result.buildsKept = buildsToKeep.size;
     result.keptBuilds = Array.from(buildsToKeep);
 
-    // Step 3: Collect items to delete
-    const itemsToDelete: Array<{ tag: string; path: string }> = [];
-
-    for (const [buildId, data] of buildGroups.entries()) {
+    // Step 3: Identify builds to delete
+    const buildsToDelete = new Set<string>();
+    for (const [buildId] of buildCounts.entries()) {
       if (!buildsToKeep.has(buildId)) {
+        buildsToDelete.add(buildId);
         result.deletedBuilds.push(buildId);
-        itemsToDelete.push(...data.items);
       }
     }
+    result.buildsDeleted = buildsToDelete.size;
 
-    result.buildsDeleted = result.deletedBuilds.length;
-
-    console.log(`\nItems to delete: ${itemsToDelete.length}`);
-
-    if (itemsToDelete.length === 0) {
-      console.log("No DynamoDB items to delete");
-      // Still run S3 cleanup even if no DynamoDB items to delete
+    if (buildsToDelete.size === 0) {
+      console.log("No builds to delete");
       const s3Result = await cleanupS3FetchCache(isDryRun);
       result.s3FetchCacheDeleted = s3Result.objectsDeleted;
       result.errors.push(...s3Result.errors);
       return truncateResult(result);
     }
 
-    // Step 4: Delete DynamoDB items
-    const { deleted, errors } = await deleteItems(itemsToDelete, isDryRun);
+    // Step 4: Stream-delete stale items (second scan, no bulk memory)
+    const { deleted, errors } = await scanAndDeleteStaleItems(
+      buildsToDelete,
+      isDryRun,
+    );
     result.itemsDeleted = deleted;
     result.errors = errors;
 
