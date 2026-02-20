@@ -48,13 +48,9 @@ function isCacheItem(item: unknown): item is CacheItem {
   const obj = item as Record<string, unknown>;
   return (
     (obj.tag === undefined ||
-      (typeof obj.tag === "object" &&
-        obj.tag !== null &&
-        "S" in obj.tag)) &&
+      (typeof obj.tag === "object" && obj.tag !== null && "S" in obj.tag)) &&
     (obj.path === undefined ||
-      (typeof obj.path === "object" &&
-        obj.path !== null &&
-        "S" in obj.path))
+      (typeof obj.path === "object" && obj.path !== null && "S" in obj.path))
   );
 }
 
@@ -157,7 +153,7 @@ async function scanAndGroupByBuild(): Promise<
 
     totalScanned += response.Items?.length || 0;
     console.log(
-      `Scanned ${totalScanned} items, ${buildGroups.size} unique builds found`
+      `Scanned ${totalScanned} items, ${buildGroups.size} unique builds found`,
     );
   } while (lastEvaluatedKey);
 
@@ -171,7 +167,7 @@ function selectBuildsToKeep(
   buildGroups: Map<
     string,
     { count: number; items: Array<{ tag: string; path: string }> }
-  >
+  >,
 ): Set<string> {
   const builds = Array.from(buildGroups.entries()).map(([buildId, data]) => ({
     buildId,
@@ -181,7 +177,7 @@ function selectBuildsToKeep(
 
   // Check if build IDs look like timestamps (e.g., > Jan 1, 2023 in ms)
   const allAreTimestamps = builds.every(
-    (b) => !isNaN(b.timestamp) && b.timestamp > TIMESTAMP_THRESHOLD_MS
+    (b) => !isNaN(b.timestamp) && b.timestamp > TIMESTAMP_THRESHOLD_MS,
   );
 
   if (allAreTimestamps) {
@@ -189,7 +185,7 @@ function selectBuildsToKeep(
     builds.sort((a, b) => b.timestamp - a.timestamp);
   } else {
     console.log(
-      "\nSorting builds by item count (fallback: most active first)."
+      "\nSorting builds by item count (fallback: most active first).",
     );
     builds.sort((a, b) => b.count - a.count);
   }
@@ -209,7 +205,7 @@ function selectBuildsToKeep(
  */
 async function deleteItems(
   items: Array<{ tag: string; path: string }>,
-  isDryRun: boolean
+  isDryRun: boolean,
 ): Promise<{ deleted: number; errors: string[] }> {
   let deleted = 0;
   const errors: string[] = [];
@@ -237,9 +233,10 @@ async function deleteItems(
         while (pendingItems.length > 0 && retryCount <= MAX_RETRIES) {
           if (retryCount > 0) {
             // Exponential backoff: 200ms, 400ms, 800ms
-            const backoffMs = DELAY_BETWEEN_BATCHES_MS * Math.pow(2, retryCount);
+            const backoffMs =
+              DELAY_BETWEEN_BATCHES_MS * Math.pow(2, retryCount);
             console.log(
-              `Retrying ${pendingItems.length} unprocessed items (attempt ${retryCount}/${MAX_RETRIES}, waiting ${backoffMs}ms)`
+              `Retrying ${pendingItems.length} unprocessed items (attempt ${retryCount}/${MAX_RETRIES}, waiting ${backoffMs}ms)`,
             );
             await new Promise((resolve) => setTimeout(resolve, backoffMs));
           }
@@ -293,8 +290,8 @@ async function deleteItems(
         if (pendingItems.length > 0) {
           errors.push(
             `${pendingItems.length} items still unprocessed after ${MAX_RETRIES} retries in batch ${Math.floor(
-              i / BATCH_SIZE
-            )}`
+              i / BATCH_SIZE,
+            )}`,
           );
         }
       }
@@ -307,16 +304,19 @@ async function deleteItems(
     // Rate limiting
     if (i + BATCH_SIZE < items.length) {
       await new Promise((resolve) =>
-        setTimeout(resolve, DELAY_BETWEEN_BATCHES_MS)
+        setTimeout(resolve, DELAY_BETWEEN_BATCHES_MS),
       );
     }
 
     // Progress logging every PROGRESS_LOG_INTERVAL items
-    if ((i + BATCH_SIZE) % PROGRESS_LOG_INTERVAL === 0 || i + BATCH_SIZE >= items.length) {
+    if (
+      (i + BATCH_SIZE) % PROGRESS_LOG_INTERVAL === 0 ||
+      i + BATCH_SIZE >= items.length
+    ) {
       console.log(
         `Delete progress: ${Math.min(i + BATCH_SIZE, items.length)}/${
           items.length
-        } items`
+        } items`,
       );
     }
   }
@@ -369,7 +369,10 @@ async function cleanupS3FetchCache(
           Bucket: S3_BUCKET_NAME,
           Delete: {
             Objects: objects
-              .filter((obj: _Object): obj is _Object & { Key: string } => obj.Key !== undefined)
+              .filter(
+                (obj: _Object): obj is _Object & { Key: string } =>
+                  obj.Key !== undefined,
+              )
               .map((obj) => ({ Key: obj.Key })),
             Quiet: true,
           },
@@ -383,8 +386,7 @@ async function cleanupS3FetchCache(
           errors.push(`${errCount} S3 objects failed to delete in batch`);
         }
       } catch (error) {
-        const errorMsg =
-          error instanceof Error ? error.message : String(error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
         errors.push(`S3 delete batch failed: ${errorMsg}`);
         console.error(`S3 delete error: ${errorMsg}`);
       }
@@ -417,7 +419,7 @@ export async function handler(event?: {
   // Validate required environment variables first (fail fast)
   if (!CLEANUP_ENABLED) {
     throw new Error(
-      "CACHE_CLEANUP_ENABLED not set to 'true'; cleanup is disabled for safety"
+      "CACHE_CLEANUP_ENABLED not set to 'true'; cleanup is disabled for safety",
     );
   }
 
@@ -454,7 +456,7 @@ export async function handler(event?: {
     result.buildsFound = buildGroups.size;
     result.totalItems = Array.from(buildGroups.values()).reduce(
       (sum, g) => sum + g.count,
-      0
+      0,
     );
 
     if (buildGroups.size === 0) {
@@ -512,7 +514,9 @@ export async function handler(event?: {
     );
     console.log(`DynamoDB - Builds deleted: ${result.buildsDeleted}`);
     console.log(`DynamoDB - Items deleted: ${result.itemsDeleted}`);
-    console.log(`S3 - Fetch cache objects deleted: ${result.s3FetchCacheDeleted}`);
+    console.log(
+      `S3 - Fetch cache objects deleted: ${result.s3FetchCacheDeleted}`,
+    );
     if (result.errors.length > 0) {
       console.log(`Errors: ${result.errors.length}`);
     }
@@ -528,10 +532,8 @@ export async function handler(event?: {
 
 // Allow running directly with: npx tsx scripts/cleanup-dynamo-cache.ts
 // Default is DRY_RUN=true for safety
-if (
-  require.main === module ||
-  process.argv[1]?.includes("cleanup-dynamo-cache")
-) {
+// Uses ESM-compatible check (SST bundles as .mjs so `module` is undefined in ESM scope)
+if (process.argv[1]?.includes("cleanup-dynamo-cache")) {
   handler()
     .then((result) => {
       console.log("\nResult:", JSON.stringify(result, null, 2));

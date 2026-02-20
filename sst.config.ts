@@ -236,7 +236,7 @@ export default $config({
           // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x
           // OpenNext applies this runtime to all Lambda functions it creates
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
-          args.memory = "1792 MB"; // Reduced from 3008 MB (1 vCPU equivalent) - saves ~$30/month
+          args.memory = "768 MB"; // Actual peak: 436 MB (43% headroom). Was 1792 MB → saves ~$6/month
           args.timeout = "20 seconds";
           // Using ARM64 architecture: 20% cheaper per GB-second + separate 400K GB-s free tier
           // SST server.install bundles platform-specific Sharp binaries independently of CI arch
@@ -288,7 +288,7 @@ export default $config({
         },
       },
       imageOptimization: {
-        memory: "2048 MB", // Increased from 1536 MB - large external images need more RAM for Sharp processing
+        memory: "512 MB", // Actual peak: 149 MB (243% headroom). Was 2048 MB.
         staticEtag: true, // Enable stronger caching for optimized images
       },
       // Explicitly invalidate robots.txt on deploy to ensure route handler changes take effect
@@ -300,6 +300,22 @@ export default $config({
         paths: ["/robots.txt"],
         wait: true, // Wait for invalidation to complete before deployment finishes
       },
+    });
+
+    // S3 lifecycle: auto-expire fetch cache objects after 7 days.
+    // The __fetch/ prefix accumulates objects from every build (81K+ objects, 1.4 GB).
+    // These are ephemeral Next.js fetch cache entries that become stale quickly.
+    // Lifecycle rules handle cleanup automatically without needing the cleanup Lambda.
+    new aws.s3.BucketLifecycleConfigurationV2("FetchCacheLifecycle", {
+      bucket: site.nodes.assets.name,
+      rules: [
+        {
+          id: "expire-fetch-cache",
+          filter: { prefix: "_cache/__fetch/" },
+          expiration: { days: 7 },
+          status: "Enabled",
+        },
+      ],
     });
 
     // Validate that server node exists before creating alarms
