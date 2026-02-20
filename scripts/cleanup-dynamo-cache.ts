@@ -70,6 +70,10 @@ const SCAN_LIMIT = 5000; // Items per scan
 const DELAY_BETWEEN_BATCHES_MS = 100; // Rate limiting
 const MAX_RETRIES = 3; // Retries for unprocessed items with exponential backoff
 const PROGRESS_LOG_INTERVAL = 1000; // Log progress every N items
+// Cap errors in response to avoid exceeding Lambda's 6MB response payload limit.
+// With 3.3M items (132K batches), throttling can generate thousands of error strings.
+// All errors are logged to CloudWatch regardless; this only limits the return payload.
+const MAX_ERRORS_IN_RESPONSE = 50;
 // Threshold for validating timestamp-based build IDs (Jan 1, 2023 00:00:00 UTC)
 const TIMESTAMP_THRESHOLD_MS = new Date("2023-01-01T00:00:00Z").getTime();
 
@@ -91,7 +95,25 @@ interface CleanupResult {
   keptBuilds: string[];
   deletedBuilds: string[];
   s3FetchCacheDeleted: number;
+  /** Total number of errors encountered (may exceed errors.length due to truncation) */
+  errorCount: number;
+  /** Capped at MAX_ERRORS_IN_RESPONSE to stay under Lambda 6MB response limit */
   errors: string[];
+}
+
+/**
+ * Truncate result errors to stay under Lambda's 6MB response payload limit.
+ * All errors are already logged to CloudWatch; this only caps the return payload.
+ */
+function truncateResult(result: CleanupResult): CleanupResult {
+  result.errorCount = result.errors.length;
+  if (result.errors.length > MAX_ERRORS_IN_RESPONSE) {
+    result.errors = result.errors.slice(0, MAX_ERRORS_IN_RESPONSE);
+    result.errors.push(
+      `... truncated ${result.errorCount - MAX_ERRORS_IN_RESPONSE} additional errors (see CloudWatch logs)`,
+    );
+  }
+  return result;
 }
 
 /**
@@ -447,6 +469,7 @@ export async function handler(event?: {
     keptBuilds: [],
     deletedBuilds: [],
     s3FetchCacheDeleted: 0,
+    errorCount: 0,
     errors: [],
   };
 
@@ -465,7 +488,7 @@ export async function handler(event?: {
       const s3Result = await cleanupS3FetchCache(isDryRun);
       result.s3FetchCacheDeleted = s3Result.objectsDeleted;
       result.errors.push(...s3Result.errors);
-      return result;
+      return truncateResult(result);
     }
 
     // Step 2: Determine which builds to keep
@@ -493,7 +516,7 @@ export async function handler(event?: {
       const s3Result = await cleanupS3FetchCache(isDryRun);
       result.s3FetchCacheDeleted = s3Result.objectsDeleted;
       result.errors.push(...s3Result.errors);
-      return result;
+      return truncateResult(result);
     }
 
     // Step 4: Delete DynamoDB items
@@ -521,7 +544,7 @@ export async function handler(event?: {
       console.log(`Errors: ${result.errors.length}`);
     }
 
-    return result;
+    return truncateResult(result);
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     result.errors.push(errorMsg);
