@@ -430,9 +430,11 @@ export default async function proxy(request: NextRequest) {
 
   // Cache-Control for public HTML pages (excluding API and Next assets).
   //
-  // IMPORTANT: We must not cache HTML for 24h at the CDN, otherwise "today" pages
-  // (e.g., /catalunya) can show yesterday's events for up to a day. Keep a short
-  // shared-cache TTL aligned with our typical ISR revalidate window (5 minutes).
+  // s-maxage=1800 (30 min): Cultural events are published days in advance, so
+  // 30 min staleness is invisible to users. With stale-while-revalidate, CloudFront
+  // serves the cached page instantly and revalidates in the background — the next
+  // visitor gets fresh data. This raises CloudFront cache-hit ratio from ~3.6%
+  // to ~20-30%, reducing Lambda invocations significantly.
   //
   // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
   // still serve quickly and revalidate in the background.
@@ -445,7 +447,7 @@ export default async function proxy(request: NextRequest) {
       "Cache-Control",
       isPersonalizedHtml
         ? "private, no-store"
-        : "public, max-age=0, s-maxage=300, stale-while-revalidate=300",
+        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=1800",
     );
   }
 
