@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import type {
+  RateLimitEntry,
+  RateLimiterOptions,
+  RateLimiter,
+} from "types/rate-limit";
 
 /**
  * Lightweight in-memory rate limiter for API routes.
@@ -18,31 +23,25 @@ import { NextResponse } from "next/server";
 
 const PRUNE_INTERVAL_MS = 60_000;
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-interface RateLimiterOptions {
-  /** Maximum requests allowed within the window */
-  maxRequests: number;
-  /** Time window in milliseconds */
-  windowMs: number;
-}
-
-interface RateLimiter {
-  /**
-   * Check if the request should be rate-limited.
-   * Returns a 429 NextResponse if blocked, or null if allowed.
-   */
-  check: (request: Request) => NextResponse | null;
-}
-
+/**
+ * Extract client IP from request headers.
+ *
+ * Prefer x-real-ip (set by trusted proxy like CloudFront/ALB).
+ * Fall back to the LAST entry in x-forwarded-for, which is the one
+ * appended by the outermost trusted proxy (the first entry is
+ * client-controlled and can be spoofed to bypass rate limiting).
+ */
 function getClientIp(request: Request): string {
-  const forwarded =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip");
-  return forwarded || "unknown";
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const ips = forwarded.split(",");
+    return ips[ips.length - 1]?.trim() || "unknown";
+  }
+
+  return "unknown";
 }
 
 export function createRateLimiter({

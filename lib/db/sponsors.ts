@@ -13,6 +13,7 @@ import "server-only";
 import { captureException } from "@sentry/nextjs";
 import { isDbConfigured, execute, ensureSchema } from "./turso";
 import { createCache, createKeyedCache } from "@lib/api/cache";
+import { MS_PER_DAY } from "@utils/constants";
 import type {
   SponsorConfig,
   ActiveSponsor,
@@ -22,8 +23,6 @@ import type {
   SponsorStatus,
 } from "types/sponsor";
 import { VALID_GEO_SCOPES } from "types/sponsor";
-
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 // In-memory TTL caches — consistent with categories/cities/regions pattern.
 // 10 min for sponsor lookups (hot path on every page render).

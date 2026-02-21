@@ -14,8 +14,7 @@ import type {
   SponsorStatus,
 } from "types/sponsor";
 import { VALID_GEO_SCOPES, DURATION_DAYS } from "types/sponsor";
-
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
+import { MS_PER_DAY } from "@utils/constants";
 
 /**
  * Stripe Webhook handler for sponsor payments.

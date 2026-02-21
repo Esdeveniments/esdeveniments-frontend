@@ -183,7 +183,7 @@ export const PUBLIC_API_PATTERNS = [
 ];
 
 // Routes that require exact match
-const PUBLIC_API_EXACT_PATHS = [
+export const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/config",
   "/api/promotions/price-preview",
   "/api/promotions/active",
@@ -220,7 +220,7 @@ export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
 
 // Routes exempt from Origin check (server-to-server callbacks that won't have
 // a browser Origin header):
-const ORIGIN_CHECK_EXEMPT = new Set([
+export const ORIGIN_CHECK_EXEMPT = new Set([
   "/api/sponsors/webhook", // Stripe webhook (server-to-server)
   "/api/revalidate", // External revalidation trigger (has own secret)
   "/api/health", // Monitoring probes
@@ -231,7 +231,7 @@ const ORIGIN_CHECK_EXEMPT = new Set([
  * site's domain. This blocks casual abuse (curl, bots, cross-site requests)
  * but won't stop sophisticated attackers who spoof headers.
  */
-function isOriginAllowed(request: NextRequest): boolean {
+export function isOriginAllowed(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
 
   // No Origin header → block (curl, scripts, server-to-server without exemption)
@@ -239,9 +239,17 @@ function isOriginAllowed(request: NextRequest): boolean {
 
   try {
     const originHost = new URL(origin).host;
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const siteHost = new URL(siteUrl).host;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+    // Warn if NEXT_PUBLIC_SITE_URL is missing in production — all non-GET
+    // public routes will silently 403 because localhost:3000 won't match.
+    if (!siteUrl && !isDev) {
+      console.warn(
+        "[proxy] NEXT_PUBLIC_SITE_URL is not set in production — Origin checks will fail",
+      );
+    }
+
+    const siteHost = new URL(siteUrl || "http://localhost:3000").host;
 
     // Allow exact host match
     if (originHost === siteHost) return true;

@@ -10,6 +10,9 @@ import enMessages from "../messages/en.json";
 export const MAX_RESULTS = 15;
 export const MAX_FAVORITES = 10;
 
+/** Milliseconds in one day (24 * 60 * 60 * 1000). */
+export const MS_PER_DAY = 86_400_000;
+
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;
