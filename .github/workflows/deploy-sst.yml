@@ -120,6 +120,9 @@ jobs:
           NEXT_PUBLIC_TIKTOK_CLIENT_KEY: ${{ secrets.NEXT_PUBLIC_TIKTOK_CLIENT_KEY }}
           NEXT_PUBLIC_TIKTOK_REDIRECT_URI: ${{ secrets.NEXT_PUBLIC_TIKTOK_REDIRECT_URI }}
           TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          # Turso database (required for sponsor persistence)
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           # Mask sensitive values in logs (defense in depth)
           echo "::add-mask::$HMAC_SECRET"
@@ -133,6 +136,7 @@ jobs:
           echo "::add-mask::$STRIPE_SECRET_KEY"
           echo "::add-mask::$STRIPE_WEBHOOK_SECRET"
           echo "::add-mask::$TIKTOK_CLIENT_SECRET"
+          echo "::add-mask::$TURSO_AUTH_TOKEN"
 
           # Create .env.production for Next.js build (NODE_ENV=production)
           # Next.js loads .env.production when NODE_ENV=production
@@ -245,6 +249,20 @@ jobs:
             echo "TIKTOK_CLIENT_SECRET=$TIKTOK_CLIENT_SECRET" >> .env.production
             echo "✅ TIKTOK_CLIENT_SECRET configured"
           fi
+
+          # 7. TURSO_DATABASE_URL (required for sponsor DB)
+          if [ -z "$TURSO_DATABASE_URL" ]; then
+            echo "::error::TURSO_DATABASE_URL secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "TURSO_DATABASE_URL=$TURSO_DATABASE_URL" >> .env.production
+
+          # 8. TURSO_AUTH_TOKEN (required for sponsor DB)
+          if [ -z "$TURSO_AUTH_TOKEN" ]; then
+            echo "::error::TURSO_AUTH_TOKEN secret is required but not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN" >> .env.production
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps

@@ -6,6 +6,7 @@ import {
   updateCheckoutSessionMetadata,
   updatePaymentIntentMetadata,
 } from "@lib/stripe";
+import { activateSponsorImage } from "@lib/db/sponsors";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
 
 // Image magic bytes for server-side content validation
@@ -209,6 +210,21 @@ export async function POST(request: Request) {
           { paymentIntentId },
         );
       }
+    }
+
+    // Activate sponsor in database (sets status from 'pending_image' to 'active')
+    const dbActivated = await activateSponsorImage(sessionIdRaw, url);
+    if (dbActivated) {
+      console.log("sponsor image-upload: sponsor activated in DB", {
+        sessionId: sessionIdRaw,
+      });
+    } else {
+      // Non-critical: webhook may not have fired yet, or DB may be unavailable.
+      // The webhook will pick up the image from Stripe session metadata later.
+      console.warn(
+        "sponsor image-upload: DB activation skipped (sponsor not found or DB unavailable)",
+        { sessionId: sessionIdRaw },
+      );
     }
 
     return NextResponse.json(

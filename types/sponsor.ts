@@ -115,8 +115,6 @@ export interface TextHouseAdConfig extends HouseAdBase {
   subtitleKey: string;
 }
 
-
-
 /** Union type for all house ad configurations */
 export type HouseAdConfig = TextHouseAdConfig;
 
@@ -328,4 +326,68 @@ export interface SignatureVerificationResult {
 export interface ParsedSignatureHeader {
   timestamp: string | undefined;
   v1Signatures: string[];
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DATABASE TYPES — Turso/libSQL sponsor persistence
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Sponsor status in the database.
+ * - pending_image: Payment confirmed, waiting for image upload
+ * - active: Fully configured and visible to users
+ * - expired: Past end date (auto-expired by query filters)
+ * - cancelled: Manually cancelled or refunded
+ */
+export type SponsorStatus =
+  | "pending_image"
+  | "active"
+  | "expired"
+  | "cancelled";
+
+/**
+ * Raw sponsor row from the database.
+ * Column names use snake_case matching the SQL schema.
+ */
+export interface DbSponsorRow {
+  id: string;
+  business_name: string;
+  image_url: string | null;
+  target_url: string | null;
+  places: string; // JSON array string, e.g. '["barcelona","gracia"]'
+  geo_scope: string;
+  start_date: string; // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
+  status: string;
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  customer_email: string | null;
+  amount_paid: number | null;
+  currency: string | null;
+  duration: string | null;
+  duration_days: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Input for creating a new sponsor in the database.
+ * Used by the Stripe webhook handler after successful payment.
+ */
+export interface CreateSponsorInput {
+  businessName: string;
+  imageUrl?: string | null;
+  targetUrl?: string | null;
+  places: string[];
+  geoScope: GeoScope;
+  startDate: string;
+  endDate: string;
+  status?: SponsorStatus;
+  stripeSessionId?: string | null;
+  stripePaymentIntentId?: string | null;
+  customerEmail?: string | null;
+  amountPaid?: number | null;
+  currency?: string | null;
+  duration?: string | null;
+  durationDays?: number | null;
 }
