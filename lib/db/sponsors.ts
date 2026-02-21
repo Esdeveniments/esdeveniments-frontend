@@ -10,6 +10,7 @@ import "server-only";
  * @see /docs/strategy-pricing.md for system documentation
  */
 
+import { captureException } from "@sentry/nextjs";
 import { isDbConfigured, execute, ensureSchema } from "./turso";
 import { createCache, createKeyedCache } from "@lib/api/cache";
 import type {
@@ -247,8 +248,11 @@ export async function getActiveSponsorForPlace(
       }
 
       return null;
-    } catch {
-      // Sponsors are non-critical — fail silently, show house ad or CTA instead
+    } catch (error) {
+      // Sponsors are non-critical — show house ad or CTA instead
+      captureException(error, {
+        tags: { db: "sponsors", operation: "getActiveSponsorForPlace" },
+      });
       return null;
     }
   });
@@ -275,7 +279,10 @@ export async function getAllActiveSponsors(): Promise<ActiveSponsor[]> {
 
       const rows = result.rows as unknown as DbSponsorRow[];
       return rows.map(rowToSponsorConfig).filter(Boolean) as ActiveSponsor[];
-    } catch {
+    } catch (error) {
+      captureException(error, {
+        tags: { db: "sponsors", operation: "getAllActiveSponsors" },
+      });
       return [];
     }
   });
@@ -312,14 +319,16 @@ export async function getOccupiedPlaceStatus(): Promise<Map<string, number>> {
         const remainingDays = getRemainingDays(row.end_date);
 
         for (const place of places) {
-          if (!status.has(place)) {
-            status.set(place, remainingDays);
-          }
+          const existing = status.get(place) ?? 0;
+          status.set(place, Math.max(existing, remainingDays));
         }
       }
 
       return status;
-    } catch {
+    } catch (error) {
+      captureException(error, {
+        tags: { db: "sponsors", operation: "getOccupiedPlaceStatus" },
+      });
       return new Map();
     }
   });
@@ -348,7 +357,10 @@ export async function findSponsorBySessionId(
     );
 
     return result.rows.length > 0;
-  } catch {
+  } catch (error) {
+    captureException(error, {
+      tags: { db: "sponsors", operation: "findSponsorBySessionId" },
+    });
     return false;
   }
 }

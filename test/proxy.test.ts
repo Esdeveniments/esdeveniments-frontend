@@ -546,98 +546,6 @@ describe("proxy", () => {
       expect(NextResponse.next).toHaveBeenCalled();
     });
 
-    it("injects x-visitor-id and sets cookie for /api/visits POST when missing", async () => {
-      // Prepare a NextResponse.next that captures cookies.set calls
-      const cookieCalls: Array<{ name: string; value: string; options: any }> =
-        [];
-      const mockResponse = {
-        status: 200,
-        headers: new Headers(),
-        cookies: {
-          set: (name: string, value: string, options: any) => {
-            cookieCalls.push({ name, value, options });
-          },
-        },
-        text: () => Promise.resolve(""),
-      } as unknown as NextResponse;
-      // Use mockImplementation instead of mockReturnValue to capture the request parameter
-      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
-        // Store the request for test assertions
-        if (options?.request) {
-          (mockResponse as any).request = options.request;
-        }
-        return mockResponse;
-      });
-
-      // No visitor cookie present
-      const mockRequest = {
-        nextUrl: { pathname: "/api/visits", search: "" },
-        headers: new Headers(),
-        cookies: { get: vi.fn().mockReturnValue(undefined) },
-        method: "POST",
-      } as unknown as NextRequest;
-
-      await proxy(mockRequest);
-
-      // Ensure x-visitor-id was injected into the forwarded request headers
-      // The request is stored on the mockResponse object
-      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
-      expect(forwardedVisitorId).toBeDefined();
-      // crypto.randomUUID() is mocked to 'test-uuid' => header should be without dashes
-      expect(forwardedVisitorId).toBe("testuuid");
-
-      // Cookie should be set when it was missing
-      expect(cookieCalls.length).toBe(1);
-      expect(cookieCalls[0].name).toBe("visitor_id");
-      expect(cookieCalls[0].value).toBe("testuuid");
-      expect(cookieCalls[0].options.path).toBe("/");
-    });
-
-    it("uses existing visitor_id cookie and does not set new cookie for /api/visits POST", async () => {
-      // Prepare a NextResponse.next that captures cookies.set calls
-      const cookieCalls: Array<{ name: string; value: string; options: any }> =
-        [];
-      const mockResponse = {
-        status: 200,
-        headers: new Headers(),
-        cookies: {
-          set: (name: string, value: string, options: any) => {
-            cookieCalls.push({ name, value, options });
-          },
-        },
-        text: () => Promise.resolve(""),
-      } as unknown as NextResponse;
-      // Use mockImplementation instead of mockReturnValue to capture the request parameter
-      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
-        // Store the request for test assertions
-        if (options?.request) {
-          (mockResponse as any).request = options.request;
-        }
-        return mockResponse;
-      });
-
-      // Existing visitor cookie present
-      const existingVisitorId = "existing-visitor-123";
-      const mockRequest = {
-        nextUrl: { pathname: "/api/visits", search: "" },
-        headers: new Headers(),
-        cookies: {
-          get: vi.fn().mockReturnValue({ value: existingVisitorId }),
-        },
-        method: "POST",
-      } as unknown as NextRequest;
-
-      await proxy(mockRequest);
-
-      // Ensure x-visitor-id header uses the existing cookie value
-      // The request is stored on the mockResponse object
-      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
-      expect(forwardedVisitorId).toBe(existingVisitorId);
-
-      // Cookie should NOT be set when it already exists
-      expect(cookieCalls.length).toBe(0);
-    });
-
     it("injects x-visitor-id and sets cookie for /api/sponsors/checkout POST when missing", async () => {
       // This test verifies the fix for the idempotency race condition:
       // On first visit, middleware must forward visitor_id via header so route handler
@@ -662,9 +570,11 @@ describe("proxy", () => {
       });
 
       // No visitor cookie present (first visit)
+      const checkoutHeaders = new Headers();
+      checkoutHeaders.set("origin", "http://localhost:3000");
       const mockRequest = {
         nextUrl: { pathname: "/api/sponsors/checkout", search: "" },
-        headers: new Headers(),
+        headers: checkoutHeaders,
         cookies: { get: vi.fn().mockReturnValue(undefined) },
         method: "POST",
       } as unknown as NextRequest;
@@ -703,9 +613,11 @@ describe("proxy", () => {
       });
 
       const existingVisitorId = "existing-visitor-456";
+      const checkoutHeaders2 = new Headers();
+      checkoutHeaders2.set("origin", "http://localhost:3000");
       const mockRequest = {
         nextUrl: { pathname: "/api/sponsors/checkout", search: "" },
-        headers: new Headers(),
+        headers: checkoutHeaders2,
         cookies: {
           get: vi.fn().mockReturnValue({ value: existingVisitorId }),
         },

@@ -15,6 +15,8 @@ import type {
 } from "types/sponsor";
 import { VALID_GEO_SCOPES, DURATION_DAYS } from "types/sponsor";
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
 /**
  * Stripe Webhook handler for sponsor payments.
  *
@@ -176,7 +178,7 @@ async function handleCheckoutCompleted(
     7;
   const now = new Date();
   const startDate = now.toISOString().slice(0, 10);
-  const endDateObj = new Date(now.getTime() + (durationDays - 1) * 86_400_000);
+  const endDateObj = new Date(now.getTime() + (durationDays - 1) * MS_PER_DAY);
   const endDate = endDateObj.toISOString().slice(0, 10);
 
   // Determine status: if image already uploaded, activate immediately

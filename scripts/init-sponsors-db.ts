@@ -6,7 +6,7 @@
  *   TURSO_DATABASE_URL=libsql://your-db.turso.io TURSO_AUTH_TOKEN=your-token npx tsx scripts/init-sponsors-db.ts
  *
  * Options:
- *   --seed    Seed with example data (use for initial migration from static config)
+ *   --seed    Seed with example data (use with --reset to avoid duplicates)
  *   --reset   Drop and recreate the table (DESTRUCTIVE)
  *
  * @see lib/db/turso.ts for schema definition

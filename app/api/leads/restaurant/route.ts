@@ -5,12 +5,19 @@ import {
 } from "types/api/restaurant";
 import { isPricingAvailable } from "config/pricing";
 import { handleApiError } from "@utils/api-error-handler";
+import { createRateLimiter } from "@utils/rate-limit";
+
+// 5 leads per minute per IP — prevents spam submissions
+const limiter = createRateLimiter({ maxRequests: 5, windowMs: 60_000 });
 
 /**
  * Create a restaurant promotion lead
  * Validates input and creates a pending lead for Stripe checkout
  */
 export async function POST(request: NextRequest) {
+  const blocked = limiter.check(request);
+  if (blocked) return blocked;
+
   try {
     const body: CreateRestaurantLeadRequest = await request.json();
 

@@ -135,11 +135,16 @@ export async function ensureSchema(): Promise<void> {
   if (schemaInitialized) return;
   if (!schemaPromise) {
     schemaPromise = (async () => {
-      await execute(SPONSORS_SCHEMA);
-      for (const idx of SPONSORS_INDEXES) {
-        await execute(idx);
+      try {
+        await execute(SPONSORS_SCHEMA);
+        for (const idx of SPONSORS_INDEXES) {
+          await execute(idx);
+        }
+        schemaInitialized = true;
+      } catch (err) {
+        schemaPromise = null;
+        throw err;
       }
-      schemaInitialized = true;
     })();
   }
   return schemaPromise;
