@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { uploadEventImage } from "@lib/api/events";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
+import { createRateLimiter } from "@utils/rate-limit";
+
+// 10 uploads per minute per IP — prevents abuse of the public image upload
+const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
 
 export async function POST(request: Request) {
+  const blocked = limiter.check(request);
+  if (blocked) return blocked;
+
   try {
     const formData = await request.formData();
     const imageFile = formData.get("imageFile");

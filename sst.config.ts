@@ -218,6 +218,10 @@ export default $config({
         ...(process.env.STRIPE_MANUAL_TAX_RATE_IDS && {
           STRIPE_MANUAL_TAX_RATE_IDS: process.env.STRIPE_MANUAL_TAX_RATE_IDS,
         }),
+        // Turso database for sponsor persistence (replaces static config)
+        // Required for sponsor banner display and Stripe webhook automation
+        TURSO_DATABASE_URL: requireEnv("TURSO_DATABASE_URL"),
+        TURSO_AUTH_TOKEN: requireEnv("TURSO_AUTH_TOKEN"),
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
       server: {

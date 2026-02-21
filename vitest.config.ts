@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   resolve: {
     alias: [
+      { find: /^server-only$/, replacement: resolve(__dirname, "./test/mocks/server-only.ts") },
       { find: /^next-intl\/server$/, replacement: resolve(__dirname, "./test/mocks/next-intl-server.ts") },
       { find: /^next-intl$/, replacement: resolve(__dirname, "./test/mocks/next-intl.ts") },
       { find: /^next-intl\/navigation$/, replacement: resolve(__dirname, "./test/mocks/next-intl-navigation.tsx") },

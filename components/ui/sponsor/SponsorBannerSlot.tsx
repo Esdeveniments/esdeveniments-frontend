@@ -15,11 +15,11 @@ import TextHouseAd from "./TextHouseAd";
  *    - "text": CSS-rendered banner linking to /patrocina (no image needed)
  * 3. Empty state CTA (~30% when no paid sponsor)
  */
-function SponsorBannerSlotContent({
+async function SponsorBannerSlotContent({
   place,
   fallbackPlaces,
 }: SponsorBannerSlotProps) {
-  const result = getActiveSponsorForPlace(place, fallbackPlaces);
+  const result = await getActiveSponsorForPlace(place, fallbackPlaces);
 
   if (result) {
     return <SponsorBanner sponsor={result.sponsor} place={result.matchedPlace} />;

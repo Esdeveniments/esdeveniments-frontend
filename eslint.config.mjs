@@ -187,6 +187,7 @@ export default [
     ],
     ignores: [
       "lib/api/fetch-wrapper.ts", // The wrapper itself
+      "lib/db/turso.ts", // Raw fetch to Turso HTTP API (our DB client)
       "utils/safe-fetch.ts", // The safe-fetch utility
       "test/**/*", // Tests can mock fetch
       "app/api/**/*", // API routes are the endpoints themselves
