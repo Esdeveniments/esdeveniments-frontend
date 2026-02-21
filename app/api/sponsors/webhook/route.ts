@@ -175,9 +175,9 @@ async function handleCheckoutCompleted(
     DURATION_DAYS[sponsorData.duration as keyof typeof DURATION_DAYS] ||
     7;
   const now = new Date();
-  const startDate = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
-  const endDateObj = new Date(now.getTime() + (durationDays - 1) * 86400000);
-  const endDate = `${endDateObj.getUTCFullYear()}-${String(endDateObj.getUTCMonth() + 1).padStart(2, "0")}-${String(endDateObj.getUTCDate()).padStart(2, "0")}`;
+  const startDate = now.toISOString().slice(0, 10);
+  const endDateObj = new Date(now.getTime() + (durationDays - 1) * 86_400_000);
+  const endDate = endDateObj.toISOString().slice(0, 10);
 
   // Determine status: if image already uploaded, activate immediately
   const hasImage = !!sponsorData.imageUrl;
@@ -188,13 +188,21 @@ async function handleCheckoutCompleted(
     ? (sponsorData.geoScope as GeoScope)
     : "town";
 
+  // Validate place is present — without it the sponsor row is useless
+  const places = sponsorData.place ? [sponsorData.place] : [];
+  if (places.length === 0) {
+    throw new Error(
+      `Sponsor checkout missing place for session ${session.id}`,
+    );
+  }
+
   // Save sponsor to Turso database
   const sponsorId = await createSponsor({
     businessName:
       sponsorData.businessName || sponsorData.placeName || "Sponsor",
     imageUrl: sponsorData.imageUrl,
     targetUrl: sponsorData.targetUrl,
-    places: sponsorData.place ? [sponsorData.place] : [],
+    places,
     geoScope,
     startDate,
     endDate,
@@ -207,6 +215,13 @@ async function handleCheckoutCompleted(
     duration: sponsorData.duration,
     durationDays,
   });
+
+  // Treat DB write failure as a hard error so Stripe retries the webhook
+  if (!sponsorId) {
+    throw new Error(
+      `Failed to save sponsor to database for session ${session.id} (DB unavailable)`,
+    );
+  }
 
   console.log(
     `Sponsor ${status === "active" ? "activated" : "created (pending image)"}:`,

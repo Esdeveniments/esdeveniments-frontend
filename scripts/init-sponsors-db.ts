@@ -12,6 +12,8 @@
  * @see lib/db/turso.ts for schema definition
  */
 
+import { SPONSORS_SCHEMA, SPONSORS_INDEXES } from "../lib/db/sponsors-schema";
+
 const rawUrl = process.env.TURSO_DATABASE_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
 
@@ -94,38 +96,11 @@ async function initSchema() {
     await dbExecute("DROP TABLE IF EXISTS sponsors");
   }
 
-  await dbExecute(`
-    CREATE TABLE IF NOT EXISTS sponsors (
-      id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-      business_name TEXT NOT NULL,
-      image_url TEXT,
-      target_url TEXT,
-      places TEXT NOT NULL,
-      geo_scope TEXT NOT NULL CHECK (geo_scope IN ('town','region','country')),
-      start_date TEXT NOT NULL,
-      end_date TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending_image' CHECK (status IN ('pending_image','active','expired','cancelled')),
-      stripe_session_id TEXT UNIQUE,
-      stripe_payment_intent_id TEXT,
-      customer_email TEXT,
-      amount_paid INTEGER,
-      currency TEXT,
-      duration TEXT,
-      duration_days INTEGER,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )
-  `);
+  await dbExecute(SPONSORS_SCHEMA);
 
-  await dbExecute(
-    "CREATE INDEX IF NOT EXISTS idx_sponsors_status ON sponsors(status)",
-  );
-  await dbExecute(
-    "CREATE INDEX IF NOT EXISTS idx_sponsors_dates ON sponsors(start_date, end_date)",
-  );
-  await dbExecute(
-    "CREATE INDEX IF NOT EXISTS idx_sponsors_session ON sponsors(stripe_session_id)",
-  );
+  for (const idx of SPONSORS_INDEXES) {
+    await dbExecute(idx);
+  }
 
   console.log("✅ Schema initialized");
 }

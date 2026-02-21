@@ -213,18 +213,31 @@ export async function POST(request: Request) {
     }
 
     // Activate sponsor in database (sets status from 'pending_image' to 'active')
-    const dbActivated = await activateSponsorImage(sessionIdRaw, url);
-    if (dbActivated) {
-      console.log("sponsor image-upload: sponsor activated in DB", {
+    // Non-critical: wrap in try/catch to avoid failing the request after image + Stripe
+    // metadata are already saved. If this fails, later reconciliation or webhook retry
+    // will pick it up.
+    try {
+      const dbActivated = await activateSponsorImage(sessionIdRaw, url);
+      if (dbActivated) {
+        console.log("sponsor image-upload: sponsor activated in DB", {
+          sessionId: sessionIdRaw,
+        });
+      } else {
+        // Non-critical: webhook may not have fired yet, or DB may be unavailable.
+        // The webhook will pick up the image from Stripe session metadata later.
+        console.warn(
+          "sponsor image-upload: DB activation skipped (sponsor not found or DB unavailable)",
+          { sessionId: sessionIdRaw },
+        );
+      }
+    } catch (dbError) {
+      console.warn("sponsor image-upload: DB activation threw an error", {
         sessionId: sessionIdRaw,
+        error: dbError,
       });
-    } else {
-      // Non-critical: webhook may not have fired yet, or DB may be unavailable.
-      // The webhook will pick up the image from Stripe session metadata later.
-      console.warn(
-        "sponsor image-upload: DB activation skipped (sponsor not found or DB unavailable)",
-        { sessionId: sessionIdRaw },
-      );
+      captureException(dbError, {
+        tags: { api: "sponsors-image-upload", stage: "db-activation" },
+      });
     }
 
     return NextResponse.json(

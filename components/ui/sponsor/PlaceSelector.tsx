@@ -55,13 +55,30 @@ export default function PlaceSelector({
   useEffect(() => {
     if (!hydrated) return;
     const controller = new AbortController();
-    fetch("/api/sponsors/availability", { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : { occupied: {} }))
-      .then((data: { occupied: Record<string, number> }) => {
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    async function fetchAvailability() {
+      try {
+        const res = await fetch("/api/sponsors/availability", {
+          signal: controller.signal,
+        });
+        const data: { occupied: Record<string, number> } = res.ok
+          ? await res.json()
+          : { occupied: {} };
         setOccupiedStatus(new Map(Object.entries(data.occupied)));
-      })
-      .catch(() => { });
-    return () => controller.abort();
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Failed to fetch sponsor availability:", error);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    fetchAvailability();
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [hydrated]);
 
   // Fetch places on mount

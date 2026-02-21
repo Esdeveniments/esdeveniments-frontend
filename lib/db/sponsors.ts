@@ -58,8 +58,7 @@ function invalidateCaches(): void {
  * Get today's date as YYYY-MM-DD in UTC.
  */
 function todayUtcString(): string {
-  const now = new Date();
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
+  return new Date().toISOString().slice(0, 10);
 }
 
 /**
@@ -138,7 +137,14 @@ export async function createSponsor(
   await ensureSchema();
 
   const id = crypto.randomUUID();
-  const placesJson = JSON.stringify(input.places);
+  const normalizedPlaces = Array.isArray(input.places)
+    ? input.places.filter(Boolean)
+    : [];
+  if (normalizedPlaces.length === 0) {
+    throw new Error("createSponsor: 'places' must contain at least one entry.");
+  }
+
+  const placesJson = JSON.stringify(normalizedPlaces);
   const status: SponsorStatus = input.status ?? "pending_image";
 
   await execute(
@@ -225,30 +231,17 @@ export async function getActiveSponsorForPlace(
     if (!isDbConfigured()) return null;
 
     try {
-      const today = todayUtcString();
-
-      const result = await execute(
-        `SELECT * FROM sponsors
-         WHERE status = 'active'
-           AND start_date <= ?
-           AND end_date >= ?
-         ORDER BY created_at DESC`,
-        [today, today],
-      );
-
-      const rows = result.rows as unknown as DbSponsorRow[];
+      // Reuse the cached list of all active sponsors to avoid redundant DB reads
+      const sponsors = await getAllActiveSponsors();
+      if (!sponsors.length) return null;
 
       // Check primary place first, then fallbacks (same cascade logic as before)
       const placesToCheck = [place, ...(fallbackPlaces ?? [])].filter(Boolean);
 
       for (const checkPlace of placesToCheck) {
-        for (const row of rows) {
-          const places = parsePlaces(row.places);
-          if (places.includes(checkPlace)) {
-            const sponsor = rowToSponsorConfig(row);
-            if (sponsor) {
-              return { sponsor, matchedPlace: checkPlace };
-            }
+        for (const sponsor of sponsors) {
+          if (sponsor.places.includes(checkPlace)) {
+            return { sponsor, matchedPlace: checkPlace };
           }
         }
       }

@@ -88,18 +88,18 @@ async function main() {
   const cat = rows.filter((r) => JSON.parse(r.places).includes("catalunya"));
   console.log(`✅ Test 3: catalunya fallback = ${cat.length > 0}`);
 
-  // Test 4: INSERT + SELECT (write path)
+  // Test 4: INSERT + SELECT (write path — insert as pending_image to test activation flow)
   const id = crypto.randomUUID();
   await execute(
     "INSERT INTO sponsors (id, business_name, image_url, target_url, places, geo_scope, start_date, end_date, status, stripe_session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id, "Test Sponsor", "https://example.com/img.jpg", "https://example.com", '["barcelona"]', "town", today, today, "active", `test-session-${id}`],
+    [id, "Test Sponsor", null, "https://example.com", '["barcelona"]', "town", today, today, "pending_image", `test-session-${id}`],
   );
   const { rows: check } = await execute("SELECT * FROM sponsors WHERE id = ?", [id]);
   console.log(`\n✅ Test 4: INSERT + SELECT = ${check.length === 1 && check[0].business_name === "Test Sponsor"}`);
 
-  // Test 5: UPDATE (activate image path)
+  // Test 5: UPDATE (activate image — transitions pending_image → active, matching production flow)
   const { rowsAffected } = await execute(
-    "UPDATE sponsors SET image_url = ?, status = 'active', updated_at = datetime('now') WHERE stripe_session_id = ? AND status = 'active'",
+    "UPDATE sponsors SET image_url = ?, status = 'active', updated_at = datetime('now') WHERE stripe_session_id = ? AND status = 'pending_image'",
     ["https://example.com/new.jpg", `test-session-${id}`],
   );
   console.log(`✅ Test 5: UPDATE rowsAffected = ${rowsAffected}`);

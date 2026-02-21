@@ -355,10 +355,10 @@ export interface DbSponsorRow {
   image_url: string | null;
   target_url: string | null;
   places: string; // JSON array string, e.g. '["barcelona","gracia"]'
-  geo_scope: string;
+  geo_scope: GeoScope; // Matches CHECK constraint: 'town' | 'region' | 'country'
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
-  status: string;
+  status: SponsorStatus; // Matches CHECK constraint: 'pending_image' | 'active' | 'expired' | 'cancelled'
   stripe_session_id: string | null;
   stripe_payment_intent_id: string | null;
   customer_email: string | null;

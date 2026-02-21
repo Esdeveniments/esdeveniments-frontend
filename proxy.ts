@@ -198,6 +198,8 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/health",
   // Sponsor checkout (browser-initiated Stripe checkout session creation)
   "/api/sponsors/checkout",
+  // Sponsor availability check (browser-initiated from PlaceSelector)
+  "/api/sponsors/availability",
   // Sponsor paid-only image upload (browser-initiated; gated by Stripe session status)
   "/api/sponsors/image-upload",
   // Stripe webhook (signature verified by endpoint, not HMAC)

@@ -13,10 +13,7 @@ import { getOccupiedPlaceStatus } from "@lib/db/sponsors";
 export async function GET() {
   try {
     const status = await getOccupiedPlaceStatus();
-    const occupied: Record<string, number> = {};
-    for (const [place, days] of status) {
-      occupied[place] = days;
-    }
+    const occupied = Object.fromEntries(status);
 
     return NextResponse.json(
       { occupied },

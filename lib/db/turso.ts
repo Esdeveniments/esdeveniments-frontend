@@ -118,49 +118,29 @@ export async function execute(
 
 // ── Schema management ────────────────────────────────────────────
 
-export const SPONSORS_SCHEMA = `
-CREATE TABLE IF NOT EXISTS sponsors (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-  business_name TEXT NOT NULL,
-  image_url TEXT,
-  target_url TEXT,
-  places TEXT NOT NULL,
-  geo_scope TEXT NOT NULL CHECK (geo_scope IN ('town','region','country')),
-  start_date TEXT NOT NULL,
-  end_date TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending_image' CHECK (status IN ('pending_image','active','expired','cancelled')),
-  stripe_session_id TEXT UNIQUE,
-  stripe_payment_intent_id TEXT,
-  customer_email TEXT,
-  amount_paid INTEGER,
-  currency TEXT,
-  duration TEXT,
-  duration_days INTEGER,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-`;
-
-export const SPONSORS_INDEXES = [
-  "CREATE INDEX IF NOT EXISTS idx_sponsors_status ON sponsors(status);",
-  "CREATE INDEX IF NOT EXISTS idx_sponsors_dates ON sponsors(start_date, end_date);",
-  "CREATE INDEX IF NOT EXISTS idx_sponsors_session ON sponsors(stripe_session_id);",
-];
+export { SPONSORS_SCHEMA, SPONSORS_INDEXES } from "./sponsors-schema";
+import { SPONSORS_SCHEMA, SPONSORS_INDEXES } from "./sponsors-schema";
 
 let schemaInitialized = false;
+let schemaPromise: Promise<void> | null = null;
 
 /**
  * Ensure the sponsors table and indexes exist.
  * Call on write paths only (webhook, image-upload, seed script).
  * Read paths skip this — the table already exists after first setup.
+ *
+ * Uses a shared promise to deduplicate concurrent calls on the same Lambda.
  */
 export async function ensureSchema(): Promise<void> {
   if (schemaInitialized) return;
-
-  await execute(SPONSORS_SCHEMA);
-  for (const idx of SPONSORS_INDEXES) {
-    await execute(idx);
+  if (!schemaPromise) {
+    schemaPromise = (async () => {
+      await execute(SPONSORS_SCHEMA);
+      for (const idx of SPONSORS_INDEXES) {
+        await execute(idx);
+      }
+      schemaInitialized = true;
+    })();
   }
-
-  schemaInitialized = true;
+  return schemaPromise;
 }
