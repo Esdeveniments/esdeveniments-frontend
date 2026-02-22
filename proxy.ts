@@ -170,6 +170,9 @@ const CACHED_CSP = getCsp();
 // created as files in the codebase.
 // Allow percent-encoded slugs (accents, spaces, etc.) by matching any non-slash
 // segment for dynamic route parts.
+// IMPORTANT: These pattern-based routes are restricted to GET-only in the
+// isPublicApiRequest check below for defense-in-depth. If a POST/PUT/DELETE
+// handler is accidentally added to one of these routes, it will still require HMAC.
 export const PUBLIC_API_PATTERNS = [
   // Regions: base, [id], or /options
   /^\/api\/regions(\/(options|[^/]+))?$/,
@@ -180,7 +183,7 @@ export const PUBLIC_API_PATTERNS = [
 ];
 
 // Routes that require exact match
-const PUBLIC_API_EXACT_PATHS = [
+export const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/config",
   "/api/promotions/price-preview",
   "/api/promotions/active",
@@ -198,6 +201,8 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/health",
   // Sponsor checkout (browser-initiated Stripe checkout session creation)
   "/api/sponsors/checkout",
+  // Sponsor availability check (browser-initiated from PlaceSelector)
+  "/api/sponsors/availability",
   // Sponsor paid-only image upload (browser-initiated; gated by Stripe session status)
   "/api/sponsors/image-upload",
   // Stripe webhook (signature verified by endpoint, not HMAC)
@@ -213,28 +218,96 @@ const PUBLIC_API_EXACT_PATHS = [
 // Event routes pattern (GET only): base, [slug], or /categorized
 export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
 
+// Routes exempt from Origin check (server-to-server callbacks that won't have
+// a browser Origin header):
+export const ORIGIN_CHECK_EXEMPT = new Set([
+  "/api/sponsors/webhook", // Stripe webhook (server-to-server)
+  "/api/revalidate", // External revalidation trigger (has own secret)
+  "/api/health", // Monitoring probes
+]);
+
+/**
+ * For public POST/PUT/DELETE routes, verify the Origin header matches the
+ * site's domain. This blocks casual abuse (curl, bots, cross-site requests)
+ * but won't stop sophisticated attackers who spoof headers.
+ */
+export function isOriginAllowed(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+
+  // No Origin header → block (curl, scripts, server-to-server without exemption)
+  if (!origin) return false;
+
+  try {
+    const originHost = new URL(origin).host;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+    // Warn if NEXT_PUBLIC_SITE_URL is missing in production — all non-GET
+    // public routes will silently 403 because localhost:3000 won't match.
+    if (!siteUrl && !isDev) {
+      console.warn(
+        "[proxy] NEXT_PUBLIC_SITE_URL is not set in production — Origin checks will fail",
+      );
+    }
+
+    const siteHost = new URL(siteUrl || "http://localhost:3000").host;
+
+    // Allow exact host match against configured SITE_URL
+    if (originHost === siteHost) return true;
+
+    // Also allow when Origin matches the request's own Host header.
+    // This handles preview/staging deployments where the URL differs
+    // from NEXT_PUBLIC_SITE_URL (e.g. Amplify preview branches).
+    const requestHost = request.headers.get("host");
+    if (requestHost && originHost === requestHost) return true;
+
+    // In development, also allow localhost variants
+    if (isDev && (originHost.startsWith("localhost") || originHost.startsWith("127.0.0.1"))) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const search = request.nextUrl.search;
 
   if (pathname.startsWith("/api/")) {
     const isPublicApiRequest =
-      // Pattern-based routes (base path, dynamic segments, or specific sub-paths)
-      PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname)) ||
+      // Pattern-based routes (GET only): these only export GET handlers;
+      // restricting at middleware level prevents accidental exposure if a
+      // POST/PUT/DELETE handler is added later without adding HMAC.
+      (request.method === "GET" &&
+        PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname))) ||
       // Exact match routes
       PUBLIC_API_EXACT_PATHS.includes(pathname) ||
       // Event routes (GET only): base, [slug], or /categorized
       (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
       // Image proxy (GET only): used by Next/Image to safely load external images
-      (pathname === "/api/image-proxy" && request.method === "GET") ||
-      // Visit counter endpoint (POST only)
-      (pathname === "/api/visits" && request.method === "POST");
+      (pathname === "/api/image-proxy" && request.method === "GET");
 
     if (isPublicApiRequest) {
+      // For non-GET public routes, verify Origin header matches the site domain.
+      // This blocks casual abuse (scripts, bots, cross-site requests) while
+      // allowing legitimate browser requests from our frontend.
+      // Exempt: webhooks, revalidation, and health checks (server-to-server).
+      if (
+        request.method !== "GET" &&
+        !ORIGIN_CHECK_EXEMPT.has(pathname) &&
+        !isOriginAllowed(request)
+      ) {
+        return NextResponse.json(
+          { error: "Forbidden" },
+          { status: 403 },
+        );
+      }
+
       // Endpoints that need visitor_id for idempotency/tracking
       const needsVisitorId =
-        (pathname === "/api/visits" && request.method === "POST") ||
-        (pathname === "/api/sponsors/checkout" && request.method === "POST");
+        pathname === "/api/sponsors/checkout" && request.method === "POST";
 
       if (needsVisitorId) {
         const cookieVisitor = request.cookies?.get?.("visitor_id")?.value;
@@ -377,7 +450,7 @@ export default async function proxy(request: NextRequest) {
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
 
-  // No per-page visitor id injection; handled only for /api/visits.
+  // No per-page visitor id injection; handled only for /api/sponsors/checkout.
 
   const baseResponseInit = {
     request: {
@@ -404,7 +477,7 @@ export default async function proxy(request: NextRequest) {
     persistLocaleCookie(response, localeFromPath);
   }
 
-  // visitor_id cookie is set for /api/visits and /api/sponsors/checkout if missing.
+  // visitor_id cookie is set for /api/sponsors/checkout if missing.
 
   // Use Report-Only in preview (or when explicitly requested), enforce otherwise
   const reportOnly =

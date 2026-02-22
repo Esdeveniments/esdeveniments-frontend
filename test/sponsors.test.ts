@@ -11,10 +11,10 @@ import {
   buildCustomFieldParams,
   buildMetadataParams,
 } from "lib/stripe/checkout-helpers";
+import { MS_PER_DAY } from "utils/constants";
 
 // Mock the sponsors array to test the logic without affecting production data
 const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
   function getTodayUtc() {
     const now = new Date();
