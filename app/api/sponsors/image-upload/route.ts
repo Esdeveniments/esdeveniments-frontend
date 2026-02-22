@@ -6,7 +6,12 @@ import {
   updateCheckoutSessionMetadata,
   updatePaymentIntentMetadata,
 } from "@lib/stripe";
+import { activateSponsorImage } from "@lib/db/sponsors";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
+import { createRateLimiter } from "@utils/rate-limit";
+
+// 10 uploads per minute per IP — prevents abuse of the public image upload
+const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
 
 // Image magic bytes for server-side content validation
 // Client-provided MIME types can be spoofed, so we verify actual file content
@@ -90,6 +95,9 @@ function getPaymentIntentId(session: unknown): string | null {
 }
 
 export async function POST(request: Request) {
+  const blocked = limiter.check(request);
+  if (blocked) return blocked;
+
   try {
     const formData = await request.formData();
     const sessionIdRaw = formData.get("sessionId");
@@ -209,6 +217,34 @@ export async function POST(request: Request) {
           { paymentIntentId },
         );
       }
+    }
+
+    // Activate sponsor in database (sets status from 'pending_image' to 'active')
+    // Non-critical: wrap in try/catch to avoid failing the request after image + Stripe
+    // metadata are already saved. If this fails, later reconciliation or webhook retry
+    // will pick it up.
+    try {
+      const dbActivated = await activateSponsorImage(sessionIdRaw, url);
+      if (dbActivated) {
+        console.log("sponsor image-upload: sponsor activated in DB", {
+          sessionId: sessionIdRaw,
+        });
+      } else {
+        // Non-critical: webhook may not have fired yet, or DB may be unavailable.
+        // The webhook will pick up the image from Stripe session metadata later.
+        console.warn(
+          "sponsor image-upload: DB activation skipped (sponsor not found or DB unavailable)",
+          { sessionId: sessionIdRaw },
+        );
+      }
+    } catch (dbError) {
+      console.warn("sponsor image-upload: DB activation threw an error", {
+        sessionId: sessionIdRaw,
+        error: dbError,
+      });
+      captureException(dbError, {
+        tags: { api: "sponsors-image-upload", stage: "db-activation" },
+      });
     }
 
     return NextResponse.json(

@@ -5,11 +5,16 @@ import {
   constructEvent,
   parseAndValidateEvent,
 } from "@lib/stripe";
+import { createSponsor, findSponsorBySessionId } from "@lib/db/sponsors";
 import type {
   StripeWebhookEvent,
   StripeWebhookCheckoutSession,
   StripeWebhookPaymentIntent,
+  GeoScope,
+  SponsorStatus,
 } from "types/sponsor";
+import { VALID_GEO_SCOPES, DURATION_DAYS } from "types/sponsor";
+import { MS_PER_DAY } from "@utils/constants";
 
 /**
  * Stripe Webhook handler for sponsor payments.
@@ -46,7 +51,7 @@ if (
   process.env.STRIPE_WEBHOOK_SKIP_VERIFY === "true"
 ) {
   throw new Error(
-    "FATAL: STRIPE_WEBHOOK_SKIP_VERIFY=true is forbidden in production"
+    "FATAL: STRIPE_WEBHOOK_SKIP_VERIFY=true is forbidden in production",
   );
 }
 
@@ -55,12 +60,14 @@ if (
  */
 function getCustomFieldValue(
   session: StripeWebhookCheckoutSession,
-  key: string
+  key: string,
 ): string | null {
   const field = session.custom_fields?.find((f) => f.key === key);
   if (!field) return null;
 
-  return field.text?.value ?? field.dropdown?.value ?? field.numeric?.value ?? null;
+  return (
+    field.text?.value ?? field.dropdown?.value ?? field.numeric?.value ?? null
+  );
 }
 
 /**
@@ -73,7 +80,7 @@ function getCustomFieldValue(
  * @see https://stripe.com/docs/payments/checkout/fulfill-orders#delayed-notification
  */
 async function handleCheckoutCompleted(
-  session: StripeWebhookCheckoutSession
+  session: StripeWebhookCheckoutSession,
 ): Promise<void> {
   // Only process sponsor_banner payments
   if (session.metadata?.product !== "sponsor_banner") {
@@ -85,7 +92,7 @@ async function handleCheckoutCompleted(
   // For async payment methods, wait for checkout.session.async_payment_succeeded
   if (session.payment_status !== "paid") {
     console.log(
-      `Checkout ${session.id} completed but payment_status is "${session.payment_status}" - awaiting payment confirmation`
+      `Checkout ${session.id} completed but payment_status is "${session.payment_status}" - awaiting payment confirmation`,
     );
     return;
   }
@@ -106,11 +113,11 @@ async function handleCheckoutCompleted(
 
     const updated = await updatePaymentIntentMetadata(
       session.payment_intent,
-      metadataUpdate
+      metadataUpdate,
     );
     console.log(
       `Payment intent ${session.payment_intent} metadata update:`,
-      updated ? "success" : "failed"
+      updated ? "success" : "failed",
     );
   }
 
@@ -152,23 +159,80 @@ async function handleCheckoutCompleted(
     imageUrl: sponsorData.imageUrl ? "[set]" : null,
     amountPaid: sponsorData.amountPaid,
     currency: sponsorData.currency,
-    // PII redacted - do not log customer email/name
     hasCustomerEmail: !!sponsorData.customerEmail,
     hasCustomerName: !!sponsorData.customerName,
   });
 
-  // TODO: Add your business logic here:
-  // - Save to database
-  // - Send confirmation email
-  // - Notify admin (e.g., Slack, email)
-  // - Activate sponsor if image already uploaded
+  // Idempotency: skip if already processed (Stripe may retry webhooks)
+  const alreadyExists = await findSponsorBySessionId(session.id);
+  if (alreadyExists) {
+    console.log(`Sponsor already exists for session ${session.id} — skipping`);
+    return;
+  }
+
+  // Calculate start/end dates from payment date
+  const durationDays =
+    Number(sponsorData.durationDays) ||
+    DURATION_DAYS[sponsorData.duration as keyof typeof DURATION_DAYS] ||
+    7;
+  const now = new Date();
+  const startDate = now.toISOString().slice(0, 10);
+  const endDateObj = new Date(now.getTime() + (durationDays - 1) * MS_PER_DAY);
+  const endDate = endDateObj.toISOString().slice(0, 10);
+
+  // Determine status: if image already uploaded, activate immediately
+  const hasImage = !!sponsorData.imageUrl;
+  const status: SponsorStatus = hasImage ? "active" : "pending_image";
+
+  // Validate geoScope from metadata
+  const geoScope = VALID_GEO_SCOPES.includes(sponsorData.geoScope as GeoScope)
+    ? (sponsorData.geoScope as GeoScope)
+    : "town";
+
+  // Validate place is present — without it the sponsor row is useless
+  const places = sponsorData.place ? [sponsorData.place] : [];
+  if (places.length === 0) {
+    throw new Error(`Sponsor checkout missing place for session ${session.id}`);
+  }
+
+  // Save sponsor to Turso database
+  const sponsorId = await createSponsor({
+    businessName:
+      sponsorData.businessName || sponsorData.placeName || "Sponsor",
+    imageUrl: sponsorData.imageUrl,
+    targetUrl: sponsorData.targetUrl,
+    places,
+    geoScope,
+    startDate,
+    endDate,
+    status,
+    stripeSessionId: sponsorData.sessionId,
+    stripePaymentIntentId: sponsorData.paymentIntentId,
+    customerEmail: sponsorData.customerEmail,
+    amountPaid: sponsorData.amountPaid,
+    currency: sponsorData.currency,
+    duration: sponsorData.duration,
+    durationDays,
+  });
+
+  // Treat DB write failure as a hard error so Stripe retries the webhook
+  if (!sponsorId) {
+    throw new Error(
+      `Failed to save sponsor to database for session ${session.id} (DB unavailable)`,
+    );
+  }
+
+  console.log(
+    `Sponsor ${status === "active" ? "activated" : "created (pending image)"}:`,
+    { sponsorId, sessionId: session.id, status, startDate, endDate },
+  );
 }
 
 /**
  * Process successful payment intent (secondary confirmation)
  */
 function handlePaymentIntentSucceeded(
-  paymentIntent: StripeWebhookPaymentIntent
+  paymentIntent: StripeWebhookPaymentIntent,
 ): void {
   // Only log sponsor payments
   if (paymentIntent.metadata?.product !== "sponsor_banner") {
@@ -193,7 +257,7 @@ async function handleEvent(event: StripeWebhookEvent): Promise<void> {
   switch (event.type) {
     case "checkout.session.completed":
       await handleCheckoutCompleted(
-        event.data.object as StripeWebhookCheckoutSession
+        event.data.object as StripeWebhookCheckoutSession,
       );
       break;
 
@@ -201,15 +265,12 @@ async function handleEvent(event: StripeWebhookEvent): Promise<void> {
       // Async payment completed (bank transfers, SEPA, etc.)
       // Process same as completed - the payment_status will now be "paid"
       await handleCheckoutCompleted(
-        event.data.object as StripeWebhookCheckoutSession
+        event.data.object as StripeWebhookCheckoutSession,
       );
       break;
 
     case "checkout.session.async_payment_failed":
-      console.log(
-        "Async payment failed for checkout:",
-        event.data.object.id
-      );
+      console.log("Async payment failed for checkout:", event.data.object.id);
       // Optionally notify admin or clean up pending sponsor data
       break;
 
@@ -220,7 +281,7 @@ async function handleEvent(event: StripeWebhookEvent): Promise<void> {
 
     case "payment_intent.succeeded":
       handlePaymentIntentSucceeded(
-        event.data.object as StripeWebhookPaymentIntent
+        event.data.object as StripeWebhookPaymentIntent,
       );
       break;
 
@@ -246,7 +307,7 @@ export async function POST(request: NextRequest) {
 
     if (allowUnsafeBypass) {
       console.warn(
-        "⚠️ WEBHOOK SIGNATURE BYPASS: Processing unverified webhook (STRIPE_WEBHOOK_SKIP_VERIFY=true)"
+        "⚠️ WEBHOOK SIGNATURE BYPASS: Processing unverified webhook (STRIPE_WEBHOOK_SKIP_VERIFY=true)",
       );
       try {
         const event = parseAndValidateEvent(payload);
@@ -256,7 +317,7 @@ export async function POST(request: NextRequest) {
         console.error("Failed to parse/validate webhook payload:", parseError);
         return NextResponse.json(
           { error: "Invalid webhook payload" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -265,14 +326,14 @@ export async function POST(request: NextRequest) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
       return NextResponse.json(
         { error: "Webhook secret not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!signature) {
       return NextResponse.json(
         { error: "Missing stripe-signature header" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -283,11 +344,11 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error(
         "Webhook verification/validation failed:",
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : error,
       );
       return NextResponse.json(
         { error: "Invalid signature or payload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -308,7 +369,7 @@ export async function POST(request: NextRequest) {
         ...(process.env.NODE_ENV === "development" && {
           stack: error instanceof Error ? error.stack : undefined,
         }),
-      }
+      },
     );
 
     // Capture error in Sentry for monitoring/alerting
@@ -320,7 +381,7 @@ export async function POST(request: NextRequest) {
     if (isParsingError) {
       return NextResponse.json(
         { error: "Invalid JSON payload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -328,7 +389,7 @@ export async function POST(request: NextRequest) {
     // returning 500 signals Stripe to retry, which is safer for transient issues.
     return NextResponse.json(
       { error: "Webhook handler failed. Please retry." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

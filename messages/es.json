@@ -513,7 +513,7 @@
     },
     "SocialFollowPopup": {
       "headline": "Que los planes te encuentren a ti",
-      "subtext": "Cada día compartimos los mejores eventos en redes. ¡Síguenos y no te pierdas nada!",
+      "subtext": "Cada día compartimos los mejores eventos en redes. Síguenos y no te pierdas nada.",
       "close": "Ahora no",
       "aria": "Síguenos en las redes sociales"
     },
@@ -694,6 +694,16 @@
       "categoryTitle": "Explorar categorías",
       "categoryAriaLabel": "Navegar por categorías",
       "categoryLinkAria": "Ver {category} en {place}"
+    },
+    "ExploreNearby": {
+      "sectionAriaLabel": "Explorar lugares cercanos",
+      "regionsTitle": "Comarcas de Cataluña",
+      "regionsAriaLabel": "Navegar por comarcas",
+      "citiesTitle": "Pueblos y ciudades de {region}",
+      "citiesAriaLabel": "Navegar por pueblos y ciudades",
+      "nearbyTitle": "Pueblos cercanos",
+      "nearbyAriaLabel": "Descubre eventos en pueblos cercanos",
+      "linkAria": "Ver eventos en {place}"
     },
     "SearchBar": {
       "placeholder": "¿Qué estás buscando?",

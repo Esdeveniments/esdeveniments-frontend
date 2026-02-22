@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import type { PlaceOption, PlaceSelectorProps } from "types/sponsor";
 import { SPONSOR_POPULAR_PLACES } from "@utils/constants";
 import { normalizeForSearch } from "@utils/string-helpers";
-import { getOccupiedPlaceStatus } from "@config/sponsors";
 import { useHydration } from "@components/hooks/useHydration";
 import {
   MapPinIcon,
@@ -50,11 +49,37 @@ export default function PlaceSelector({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const hydrated = useHydration();
 
-  // Get currently occupied places with remaining days (computed once on mount)
-  const occupiedStatus = useMemo(
-    () => (hydrated ? getOccupiedPlaceStatus() : new Map<string, number>()),
-    [hydrated]
-  );
+  // Fetch occupied places from API (replaces static config import)
+  const [occupiedStatus, setOccupiedStatus] = useState<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    async function fetchAvailability() {
+      try {
+        const res = await fetch("/api/sponsors/availability", {
+          signal: controller.signal,
+        });
+        const data: { occupied: Record<string, number> } = res.ok
+          ? await res.json()
+          : { occupied: {} };
+        setOccupiedStatus(new Map(Object.entries(data.occupied)));
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Failed to fetch sponsor availability:", error);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    fetchAvailability();
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [hydrated]);
 
   // Fetch places on mount
   useEffect(() => {
@@ -233,8 +258,8 @@ export default function PlaceSelector({
             onClick={handleCatalunyaSelect}
             disabled={isCatalunyaOccupied}
             className={`w-full text-left card-bordered p-4 transition-colors group ${isCatalunyaOccupied
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:border-primary hover:bg-primary/5"
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:border-primary hover:bg-primary/5"
               }`}
           >
             <div className="flex items-center justify-between">
@@ -335,7 +360,7 @@ export default function PlaceSelector({
                 {t("placeSelector.popular")}:{" "}
               </span>
               <div className="inline-flex flex-wrap gap-2 mt-1">
-                {SPONSOR_POPULAR_PLACES.map((place) => (
+                {SPONSOR_POPULAR_PLACES.map((place: PlaceOption) => (
                   <button
                     key={place.slug}
                     onClick={() => handlePopularClick(place)}

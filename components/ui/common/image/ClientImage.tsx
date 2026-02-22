@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useRef } from "react";
 import ImgDefault from "@components/ui/imgDefault";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImageRetry } from "@components/hooks/useImageRetry";
@@ -108,6 +108,7 @@ function ClientImageInner({
 }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(true);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const { hasError, handleError, getImageKey } = useImageRetry(2);
 
@@ -121,6 +122,20 @@ function ClientImageInner({
   const handleImageError = useCallback(() => {
     handleError();
   }, [handleError]);
+
+  // Fix SSR hydration race: if the image loaded before React hydrated
+  // and attached onLoad, the event never fires and the image stays at
+  // opacity:0. A callback ref fires when the DOM node is attached during
+  // hydration, letting us check img.complete to catch already-loaded images.
+  const imgCallbackRef = useCallback(
+    (img: HTMLImageElement | null) => {
+      imgRef.current = img;
+      if (img?.complete && img.naturalWidth > 0) {
+        handleLoad();
+      }
+    },
+    [handleLoad],
+  );
 
   const containerStyle: React.CSSProperties = {
     position: "relative",
@@ -164,6 +179,7 @@ function ClientImageInner({
         <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
         <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
         <img
+          ref={imgCallbackRef}
           className="object-cover w-full h-full absolute inset-0"
           src={sources.fallback}
           alt={alt}

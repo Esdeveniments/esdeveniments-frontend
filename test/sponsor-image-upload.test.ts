@@ -17,6 +17,12 @@ vi.mock("lib/stripe", () => ({
   updatePaymentIntentMetadata: vi.fn(),
 }));
 
+// Mock rate limiter to avoid in-memory counter accumulating across watch-mode
+// re-runs (shared 127.0.0.1 key could hit 10/min threshold → flaky 429s)
+vi.mock("utils/rate-limit", () => ({
+  createRateLimiter: () => ({ check: () => null }),
+}));
+
 // Import after mocks are set up
 import { POST } from "app/api/sponsors/image-upload/route";
 import { uploadEventImage } from "lib/api/events";
@@ -30,7 +36,7 @@ import {
 const mockUploadEventImage = vi.mocked(uploadEventImage);
 const mockFetchCheckoutSession = vi.mocked(fetchCheckoutSession);
 const mockUpdateCheckoutSessionMetadata = vi.mocked(
-  updateCheckoutSessionMetadata
+  updateCheckoutSessionMetadata,
 );
 const mockUpdatePaymentIntentMetadata = vi.mocked(updatePaymentIntentMetadata);
 
@@ -62,6 +68,7 @@ describe("Sponsor Image Upload Route", () => {
   const createMockRequest = (formData: FormData) => {
     return {
       formData: () => Promise.resolve(formData),
+      headers: new Headers({ "x-real-ip": "127.0.0.1" }),
     } as unknown as Request;
   };
 

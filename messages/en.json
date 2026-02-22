@@ -513,7 +513,7 @@
     },
     "SocialFollowPopup": {
       "headline": "Let the plans find you",
-      "subtext": "Every day we share the best events on social media. Follow us and never miss out!",
+      "subtext": "Every day we share the best events on social media. Follow us and never miss out.",
       "close": "Not now",
       "aria": "Follow us on social media"
     },
@@ -694,6 +694,16 @@
       "categoryTitle": "Explore categories",
       "categoryAriaLabel": "Browse by category",
       "categoryLinkAria": "View {category} in {place}"
+    },
+    "ExploreNearby": {
+      "sectionAriaLabel": "Explore nearby places",
+      "regionsTitle": "Regions of Catalonia",
+      "regionsAriaLabel": "Browse by region",
+      "citiesTitle": "Towns and cities in {region}",
+      "citiesAriaLabel": "Browse towns and cities",
+      "nearbyTitle": "Nearby towns",
+      "nearbyAriaLabel": "Discover events in nearby towns",
+      "linkAria": "View events in {place}"
     },
     "SearchBar": {
       "placeholder": "What are you looking for?",

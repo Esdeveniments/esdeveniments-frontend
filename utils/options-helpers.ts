@@ -1,4 +1,3 @@
-import { sanitize } from "./string-helpers";
 import type { Option, GroupedOption } from "types/common";
 import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
@@ -12,7 +11,7 @@ export function generateRegionsOptions(
 ): Option[] {
   return regionsWithCities
     .map((region) => ({
-      value: sanitize(region.name),
+      value: region.slug,
       label: region.name,
       placeType: "region" as const,
     }))
