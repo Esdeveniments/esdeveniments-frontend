@@ -44,6 +44,12 @@ const PlacePageExploreNav = dynamic(
   { loading: () => null }
 );
 
+// Lazy load nearby places cross-links - below the fold, server component
+const ExploreNearby = dynamic(
+  () => import("@components/ui/exploreNearby/ExploreNearby"),
+  { loading: () => null }
+);
+
 
 function buildPlaceBreadcrumbs({
   homeLabel,
@@ -367,6 +373,14 @@ async function PlacePageContent({
           category={category}
           categories={categories}
           placeLabel={placeTypeLabel.label || place}
+        />
+      </Suspense>
+
+      {/* Explore Nearby - SEO cross-links to related places */}
+      <Suspense fallback={null}>
+        <ExploreNearby
+          place={place}
+          placeType={placeTypeLabel.type}
         />
       </Suspense>
 

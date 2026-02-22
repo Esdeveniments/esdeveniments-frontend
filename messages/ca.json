@@ -702,6 +702,16 @@
       "categoryAriaLabel": "Navega per categories",
       "categoryLinkAria": "Veure {category} a {place}"
     },
+    "ExploreNearby": {
+      "sectionAriaLabel": "Explora llocs propers",
+      "regionsTitle": "Comarques de Catalunya",
+      "regionsAriaLabel": "Navega per comarques",
+      "citiesTitle": "Pobles i ciutats de {region}",
+      "citiesAriaLabel": "Navega per pobles i ciutats",
+      "nearbyTitle": "Pobles propers",
+      "nearbyAriaLabel": "Descobreix esdeveniments a pobles propers",
+      "linkAria": "Veure esdeveniments a {place}"
+    },
     "SearchBar": {
       "placeholder": "Què estàs buscant?",
       "clear": "Neteja la cerca",

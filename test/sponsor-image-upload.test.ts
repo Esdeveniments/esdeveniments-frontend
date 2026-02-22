@@ -36,7 +36,7 @@ import {
 const mockUploadEventImage = vi.mocked(uploadEventImage);
 const mockFetchCheckoutSession = vi.mocked(fetchCheckoutSession);
 const mockUpdateCheckoutSessionMetadata = vi.mocked(
-  updateCheckoutSessionMetadata
+  updateCheckoutSessionMetadata,
 );
 const mockUpdatePaymentIntentMetadata = vi.mocked(updatePaymentIntentMetadata);
 

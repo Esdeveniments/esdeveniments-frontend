@@ -192,9 +192,7 @@ async function handleCheckoutCompleted(
   // Validate place is present — without it the sponsor row is useless
   const places = sponsorData.place ? [sponsorData.place] : [];
   if (places.length === 0) {
-    throw new Error(
-      `Sponsor checkout missing place for session ${session.id}`,
-    );
+    throw new Error(`Sponsor checkout missing place for session ${session.id}`);
   }
 
   // Save sponsor to Turso database

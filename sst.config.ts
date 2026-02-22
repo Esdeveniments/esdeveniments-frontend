@@ -225,14 +225,18 @@ export default $config({
       },
       warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
       server: {
-        // Install sharp with linux-arm64 binaries in the server function bundle.
+        // Install sharp with linux-x64 binaries in the server function bundle.
         // OpenNext excludes sharp by default (only installs it for the image optimizer).
         // Since we have a custom /api/image-proxy using sharp, we need to include it.
-        // Include platform-specific packages explicitly for Lambda (linux-arm64)
+        // ⚠️ CRITICAL: server.install packages MUST match args.architecture below.
+        // SST 3.17.25 runs `npm install` on CI (x64 Linux) WITHOUT --arch flags,
+        // so platform-specific optional deps resolve to the CI host arch.
+        // Using x86_64 Lambda to match. See: incident Feb 18-22, 2026.
+        // TODO: Switch to arm64 when SST supports cross-platform npm install.
         install: [
           "sharp",
-          "@img/sharp-linux-arm64",
-          "@img/sharp-libvips-linux-arm64",
+          "@img/sharp-linux-x64",
+          "@img/sharp-libvips-linux-x64",
         ],
       },
       transform: {
@@ -242,9 +246,11 @@ export default $config({
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
           args.memory = "768 MB"; // Actual peak: 436 MB (43% headroom). Was 1792 MB → saves ~$6/month
           args.timeout = "20 seconds";
-          // Using ARM64 architecture: 20% cheaper per GB-second + separate 400K GB-s free tier
-          // SST server.install bundles platform-specific Sharp binaries independently of CI arch
-          args.architecture = "arm64";
+          // ⚠️ MUST match server.install Sharp binary arch above.
+          // Using x86_64: SST 3.17.25 doesn't pass --arch to npm install,
+          // so Sharp binaries are always x64 (matching CI host).
+          // TODO: Switch to arm64 when SST supports cross-arch npm install.
+          args.architecture = "x86_64";
           // Sentry layer ARN - configurable per environment/region
           // Defaults to eu-west-3 version 283 if not specified
           args.layers = process.env.SENTRY_LAYER_ARN

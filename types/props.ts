@@ -698,3 +698,9 @@ export interface CategoryQuicklinksProps {
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
 }
+
+// Explore nearby places navigation
+export interface ExploreNearbyProps {
+  place: string;
+  placeType: "town" | "region" | "";
+}
