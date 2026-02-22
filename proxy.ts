@@ -251,8 +251,14 @@ export function isOriginAllowed(request: NextRequest): boolean {
 
     const siteHost = new URL(siteUrl || "http://localhost:3000").host;
 
-    // Allow exact host match
+    // Allow exact host match against configured SITE_URL
     if (originHost === siteHost) return true;
+
+    // Also allow when Origin matches the request's own Host header.
+    // This handles preview/staging deployments where the URL differs
+    // from NEXT_PUBLIC_SITE_URL (e.g. Amplify preview branches).
+    const requestHost = request.headers.get("host");
+    if (requestHost && originHost === requestHost) return true;
 
     // In development, also allow localhost variants
     if (isDev && (originHost.startsWith("localhost") || originHost.startsWith("127.0.0.1"))) {

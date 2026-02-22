@@ -8,6 +8,10 @@ import {
 } from "@lib/stripe";
 import { activateSponsorImage } from "@lib/db/sponsors";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
+import { createRateLimiter } from "@utils/rate-limit";
+
+// 10 uploads per minute per IP — prevents abuse of the public image upload
+const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
 
 // Image magic bytes for server-side content validation
 // Client-provided MIME types can be spoofed, so we verify actual file content
@@ -91,6 +95,9 @@ function getPaymentIntentId(session: unknown): string | null {
 }
 
 export async function POST(request: Request) {
+  const blocked = limiter.check(request);
+  if (blocked) return blocked;
+
   try {
     const formData = await request.formData();
     const sessionIdRaw = formData.get("sessionId");
