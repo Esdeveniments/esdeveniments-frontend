@@ -41,6 +41,7 @@ import {
   Option,
   GroupedOption,
   PageData,
+  PlaceType,
   PlaceTypeAndLabel,
   JsonLdScript,
   Href,
@@ -702,5 +703,5 @@ export interface CategoryQuicklinksProps {
 // Explore nearby places navigation
 export interface ExploreNearbyProps {
   place: string;
-  placeType: "town" | "region" | "";
+  placeType: PlaceType;
 }

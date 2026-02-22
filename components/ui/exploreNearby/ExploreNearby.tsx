@@ -125,7 +125,7 @@ export default async function ExploreNearby({
         };
         siblingCities = region.cities
           .filter((c) => c.value !== place)
-          .slice(0, MAX_LINKS)
+          .slice(0, MAX_LINKS - 1)
           .map((c) => ({
             slug: c.value,
             label: formatPlaceName(c.label),
