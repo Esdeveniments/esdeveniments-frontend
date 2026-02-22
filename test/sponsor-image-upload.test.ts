@@ -62,6 +62,7 @@ describe("Sponsor Image Upload Route", () => {
   const createMockRequest = (formData: FormData) => {
     return {
       formData: () => Promise.resolve(formData),
+      headers: new Headers({ "x-real-ip": "127.0.0.1" }),
     } as unknown as Request;
   };
 
