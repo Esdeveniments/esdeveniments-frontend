@@ -1,6 +1,5 @@
 import { Option } from "types/common";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
-import { sanitize } from "@utils/helpers";
 
 /**
  * Transform regions data to flat Option[] for searchable select
@@ -12,9 +11,9 @@ export function transformRegionsToOptions(
   const options: Option[] = [];
 
   regions.forEach((region) => {
-    // Add region itself as option using existing sanitize function
+    // Add region itself as option using API-provided slug
     options.push({
-      value: sanitize(region.name),
+      value: region.slug,
       label: region.name,
     });
 

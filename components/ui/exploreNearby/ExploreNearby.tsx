@@ -1,5 +1,5 @@
 import { fetchRegionsWithCities } from "@lib/api/regions";
-import { sanitize, formatPlaceName } from "@utils/string-helpers";
+import { formatPlaceName } from "@utils/string-helpers";
 import Badge from "@components/ui/common/badge";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
@@ -37,7 +37,7 @@ export default async function ExploreNearby({
     const regionLinks = regionsWithCities
       .slice(0, MAX_LINKS)
       .map((r) => ({
-        slug: sanitize(r.name),
+        slug: r.slug,
         label: formatPlaceName(r.name),
       }));
 
@@ -72,7 +72,7 @@ export default async function ExploreNearby({
   // Region → show child cities
   if (placeType === "region") {
     const region = regionsWithCities.find(
-      (r) => sanitize(r.name) === place,
+      (r) => r.slug === place,
     );
 
     if (!region || region.cities.length === 0) return null;
@@ -118,9 +118,8 @@ export default async function ExploreNearby({
     for (const region of regionsWithCities) {
       const city = region.cities.find((c) => c.value === place);
       if (city) {
-        const regionSlug = sanitize(region.name);
         parentRegion = {
-          slug: regionSlug,
+          slug: region.slug,
           label: formatPlaceName(region.name),
         };
         siblingCities = region.cities
