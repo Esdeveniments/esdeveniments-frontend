@@ -9,5 +9,6 @@ export interface CityDropdownResponseDTO {
 export interface RegionsGroupedByCitiesResponseDTO {
   id: number;
   name: string;
+  slug: string;
   cities: CityDropdownResponseDTO[];
 }

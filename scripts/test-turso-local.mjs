@@ -6,8 +6,9 @@
  * Usage: TURSO_DATABASE_URL=http://127.0.0.1:8080 node scripts/test-turso-local.mjs
  */
 
-const baseUrl = (process.env.TURSO_DATABASE_URL || "http://127.0.0.1:8080")
-  .replace(/^libsql:\/\//, "https://");
+const baseUrl = (
+  process.env.TURSO_DATABASE_URL || "http://127.0.0.1:8080"
+).replace(/^libsql:\/\//, "https://");
 const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
 
 const today = new Date().toISOString().slice(0, 10);
@@ -58,7 +59,7 @@ async function execute(sql, args = []) {
           ? null
           : cell.type === "integer"
             ? Number(cell.value)
-            : cell.value ?? null;
+            : (cell.value ?? null);
     }
     return obj;
   });
@@ -77,11 +78,15 @@ async function main() {
   );
   console.log(`✅ Test 1: Found ${rows.length} active sponsors`);
   for (const r of rows) {
-    console.log(`   ${r.business_name} | ${r.geo_scope} | ${r.places} | ${r.start_date} → ${r.end_date}`);
+    console.log(
+      `   ${r.business_name} | ${r.geo_scope} | ${r.places} | ${r.start_date} → ${r.end_date}`,
+    );
   }
 
   // Test 2: Cascade — cardedeu match
-  const cardedeu = rows.filter((r) => JSON.parse(r.places).includes("cardedeu"));
+  const cardedeu = rows.filter((r) =>
+    JSON.parse(r.places).includes("cardedeu"),
+  );
   console.log(`\n✅ Test 2: cardedeu match = ${cardedeu.length > 0}`);
 
   // Test 3: Catalunya fallback
@@ -92,10 +97,25 @@ async function main() {
   const id = crypto.randomUUID();
   await execute(
     "INSERT INTO sponsors (id, business_name, image_url, target_url, places, geo_scope, start_date, end_date, status, stripe_session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id, "Test Sponsor", null, "https://example.com", '["barcelona"]', "town", today, today, "pending_image", `test-session-${id}`],
+    [
+      id,
+      "Test Sponsor",
+      null,
+      "https://example.com",
+      '["barcelona"]',
+      "town",
+      today,
+      today,
+      "pending_image",
+      `test-session-${id}`,
+    ],
   );
-  const { rows: check } = await execute("SELECT * FROM sponsors WHERE id = ?", [id]);
-  console.log(`\n✅ Test 4: INSERT + SELECT = ${check.length === 1 && check[0].business_name === "Test Sponsor"}`);
+  const { rows: check } = await execute("SELECT * FROM sponsors WHERE id = ?", [
+    id,
+  ]);
+  console.log(
+    `\n✅ Test 4: INSERT + SELECT = ${check.length === 1 && check[0].business_name === "Test Sponsor"}`,
+  );
 
   // Test 5: UPDATE (activate image — transitions pending_image → active, matching production flow)
   const { rowsAffected } = await execute(
@@ -105,7 +125,10 @@ async function main() {
   console.log(`✅ Test 5: UPDATE rowsAffected = ${rowsAffected}`);
 
   // Test 6: Idempotency check (findSponsorBySessionId)
-  const { rows: found } = await execute("SELECT id FROM sponsors WHERE stripe_session_id = ? LIMIT 1", [`test-session-${id}`]);
+  const { rows: found } = await execute(
+    "SELECT id FROM sponsors WHERE stripe_session_id = ? LIMIT 1",
+    [`test-session-${id}`],
+  );
   console.log(`✅ Test 6: findBySession = ${found.length > 0}`);
 
   // Cleanup test sponsor
@@ -121,7 +144,9 @@ async function main() {
     console.log(`   ${r.places} → expires ${r.end_date}`);
   }
 
-  console.log("\n🎉 All tests passed! Raw fetch /v2/pipeline protocol works correctly.");
+  console.log(
+    "\n🎉 All tests passed! Raw fetch /v2/pipeline protocol works correctly.",
+  );
 }
 
 main().catch((e) => {

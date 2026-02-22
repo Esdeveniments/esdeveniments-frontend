@@ -261,7 +261,10 @@ export function isOriginAllowed(request: NextRequest): boolean {
     if (requestHost && originHost === requestHost) return true;
 
     // In development, also allow localhost variants
-    if (isDev && (originHost.startsWith("localhost") || originHost.startsWith("127.0.0.1"))) {
+    if (
+      isDev &&
+      (originHost.startsWith("localhost") || originHost.startsWith("127.0.0.1"))
+    ) {
       return true;
     }
 
@@ -299,10 +302,7 @@ export default async function proxy(request: NextRequest) {
         !ORIGIN_CHECK_EXEMPT.has(pathname) &&
         !isOriginAllowed(request)
       ) {
-        return NextResponse.json(
-          { error: "Forbidden" },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
       // Endpoints that need visitor_id for idempotency/tracking

@@ -41,6 +41,7 @@ import {
   Option,
   GroupedOption,
   PageData,
+  PlaceType,
   PlaceTypeAndLabel,
   JsonLdScript,
   Href,
@@ -697,4 +698,10 @@ export interface CategoryQuicklinksProps {
   date?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
+}
+
+// Explore nearby places navigation
+export interface ExploreNearbyProps {
+  place: string;
+  placeType: PlaceType;
 }

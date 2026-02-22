@@ -695,6 +695,16 @@
       "categoryAriaLabel": "Browse by category",
       "categoryLinkAria": "View {category} in {place}"
     },
+    "ExploreNearby": {
+      "sectionAriaLabel": "Explore nearby places",
+      "regionsTitle": "Regions of Catalonia",
+      "regionsAriaLabel": "Browse by region",
+      "citiesTitle": "Towns and cities in {region}",
+      "citiesAriaLabel": "Browse towns and cities",
+      "nearbyTitle": "Nearby towns",
+      "nearbyAriaLabel": "Discover events in nearby towns",
+      "linkAria": "View events in {place}"
+    },
     "SearchBar": {
       "placeholder": "What are you looking for?",
       "clear": "Clear search",

@@ -75,7 +75,7 @@ async function dbExecute(
             ? null
             : cell.type === "integer"
               ? Number(cell.value)
-              : cell.value ?? null;
+              : (cell.value ?? null);
       }
       return obj;
     },
@@ -174,9 +174,7 @@ async function seedData() {
 }
 
 async function showStatus() {
-  const result = await dbExecute(
-    "SELECT COUNT(*) as count FROM sponsors",
-  );
+  const result = await dbExecute("SELECT COUNT(*) as count FROM sponsors");
   const count = result.rows[0]?.count ?? 0;
   console.log(`\n📊 Total sponsors in database: ${String(count)}`);
 
