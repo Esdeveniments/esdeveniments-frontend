@@ -120,7 +120,7 @@ describe("proxy", () => {
       const result = await proxy(mockRequest);
 
       expect(result.headers.get("Cache-Control")).toBe(
-        "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
+        "public, max-age=0, s-maxage=1800, stale-while-revalidate=1800"
       );
     });
 
