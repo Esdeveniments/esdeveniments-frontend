@@ -3357,10 +3357,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@img/sharp-libvips-linux-arm64@npm:1.2.4, @img/sharp-libvips-linux-arm64@npm:^1.2.4":
+"@img/sharp-libvips-linux-arm64@npm:1.2.4":
   version: 1.2.4
   resolution: "@img/sharp-libvips-linux-arm64@npm:1.2.4"
-  checksum: 10c0/ba975b5a40574829c7216fa788f8eb0f452d7d24477833363dd6208beffba7224d248d11d233a2264046259c65155c6194134918f490dc646de50197d34564d6
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
@@ -3393,9 +3392,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@img/sharp-libvips-linux-x64@npm:1.2.4":
+"@img/sharp-libvips-linux-x64@npm:1.2.4, @img/sharp-libvips-linux-x64@npm:^1.2.4":
   version: 1.2.4
   resolution: "@img/sharp-libvips-linux-x64@npm:1.2.4"
+  checksum: 10c0/ad9cbec6158b308893cd0fb38f6b5a7c74b8110c7e52ee7bf0f4442ffb05b9eb9c7e54e0f8ef1ee301b0b039a8937519845d2874b72916062309f15137b47d9a
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
@@ -3414,7 +3414,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@img/sharp-linux-arm64@npm:0.34.5, @img/sharp-linux-arm64@npm:^0.34.5":
+"@img/sharp-linux-arm64@npm:0.34.5":
   version: 0.34.5
   resolution: "@img/sharp-linux-arm64@npm:0.34.5"
   dependencies:
@@ -3422,7 +3422,6 @@ __metadata:
   dependenciesMeta:
     "@img/sharp-libvips-linux-arm64":
       optional: true
-  checksum: 10c0/a7bf9b8127340ac9ae87a347a83643cfdb2302bb577e3a34aff952b3f9229432755921ea2262294385cdb6fef689711b58b11b77adc0be7de43f8e9d6ee7ea0e
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
@@ -3475,7 +3474,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@img/sharp-linux-x64@npm:0.34.5":
+"@img/sharp-linux-x64@npm:0.34.5, @img/sharp-linux-x64@npm:^0.34.5":
   version: 0.34.5
   resolution: "@img/sharp-linux-x64@npm:0.34.5"
   dependencies:
@@ -3483,6 +3482,7 @@ __metadata:
   dependenciesMeta:
     "@img/sharp-libvips-linux-x64":
       optional: true
+  checksum: 10c0/eaeb7a303c973fc8de9ff17bb00328725b348ccf7ba110f35ecd663f51c565bf8379c917496b9d48a866caf0bef075f84e84271145d87e9e3ee7e34ae438b302
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
@@ -15833,8 +15833,8 @@ __metadata:
     "@eslint-react/eslint-plugin": "npm:^2.5.3"
     "@headlessui/react": "npm:^2.2.9"
     "@heroicons/react": "npm:^2.2.0"
-    "@img/sharp-libvips-linux-arm64": "npm:^1.2.4"
-    "@img/sharp-linux-arm64": "npm:^0.34.5"
+    "@img/sharp-libvips-linux-x64": "npm:^1.2.4"
+    "@img/sharp-linux-x64": "npm:^0.34.5"
     "@lhci/cli": "npm:^0.15.1"
     "@lingual/i18n-check": "npm:^0.8.15"
     "@next/bundle-analyzer": "npm:^16.1.0"
