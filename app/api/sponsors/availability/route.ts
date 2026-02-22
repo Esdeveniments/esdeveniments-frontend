@@ -25,6 +25,9 @@ export async function GET() {
     );
   } catch (error) {
     console.error("Failed to fetch sponsor availability:", error);
-    return NextResponse.json({ occupied: {} }, { status: 200 });
+    return NextResponse.json(
+      { occupied: {} },
+      { status: 200, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }
