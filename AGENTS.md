@@ -207,3 +207,28 @@ This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL 
 - Tests: add unit tests under `test/` and E2E flows under `e2e/` when user‑visible.
 - SW/Caching: if adding external API usage or offline behavior, edit `public/sw-template.js` and re‑run prebuild/dev.
 - Pre‑PR: `yarn lint && yarn typecheck && yarn test` (and E2E if applicable); include screenshots for UI.
+
+## Cursor Cloud specific instructions
+
+### Environment
+
+- **Node 22** and **Yarn 4.12.0** (via Corepack) are required. The VM ships with both pre-installed via nvm.
+- Dependencies: `corepack enable && yarn install --immutable` from the repo root.
+- A `.env.development` file must exist with at least `HMAC_SECRET=<any-value>`. The app falls back to the default API URL in `config/api-defaults.json` when `NEXT_PUBLIC_API_URL` is not set.
+- Without the production `HMAC_SECRET`, the external backend returns HTTP 401. The app still renders (pages return 200) but with empty event/news data. Unit tests are unaffected (test setup seeds its own `HMAC_SECRET`).
+
+### Running services
+
+| Command | Purpose | Notes |
+|---|---|---|
+| `yarn dev` | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack. |
+| `yarn lint` | ESLint | 0 errors expected; warnings are pre-existing and acceptable. |
+| `yarn typecheck` | `tsc --noEmit` | Must pass cleanly. |
+| `yarn test` | Vitest unit/integration tests | All 100 test files / 1401 tests should pass with no external dependencies. |
+| `yarn test:e2e` | Playwright E2E | Requires a running app and valid API credentials. |
+
+### Gotchas
+
+- The `yarn dev` command is `next dev` (no env-cmd wrapper). To load `.env.development`, Next.js reads it automatically. For build variants, use `yarn build:development` which explicitly sources it via `env-cmd`.
+- `public/sw.js` is generated, not committed. `yarn dev` runs prebuild automatically, but a standalone `yarn build` does **not** — use `yarn build:development` (or run `yarn prebuild` manually first).
+- The pre-push hook runs `yarn typecheck && yarn test --run && yarn i18n:check`. Ensure these pass before pushing.
