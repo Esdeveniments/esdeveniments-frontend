@@ -232,3 +232,5 @@ This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL 
 - The `yarn dev` command is `next dev` (no env-cmd wrapper). To load `.env.development`, Next.js reads it automatically. For build variants, use `yarn build:development` which explicitly sources it via `env-cmd`.
 - `public/sw.js` is generated, not committed. `yarn dev` runs prebuild automatically, but a standalone `yarn build` does **not** — use `yarn build:development` (or run `yarn prebuild` manually first).
 - The pre-push hook runs `yarn typecheck && yarn test --run && yarn i18n:check`. Ensure these pass before pushing.
+- Port 3000 may be occupied by Chrome's network service in the Cloud VM. If `yarn dev` fails with `EADDRINUSE`, use `--port 3001` or kill the conflicting process first. Also remove `/workspace/.next/dev/lock` if a stale lock file blocks startup.
+- The `HMAC_SECRET` environment variable is injected via Cursor Secrets. When writing `.env.development`, populate it from `$HMAC_SECRET` so Next.js picks it up: `echo "HMAC_SECRET=$HMAC_SECRET" > .env.development`.
