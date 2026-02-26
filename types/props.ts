@@ -330,6 +330,9 @@ export interface NavbarLabels {
   publish: string;
   news: string;
   mobilePublishLabel: string;
+  login: string;
+  logout: string;
+  userMenu: string;
 }
 
 export interface NavbarClientProps {

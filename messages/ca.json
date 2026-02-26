@@ -342,7 +342,8 @@
         "contact": "Contacte",
         "archive": "Arxiu",
         "terms": "Termes de servei",
-        "privacy": "Privacitat"
+        "privacy": "Privacitat",
+        "login": "Iniciar sessió"
       },
       "sponsorCta": {
         "title": "Fes visible el teu negoci local",
@@ -382,7 +383,12 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publica"
+      "mobilePublishLabel": "Publica",
+      "auth": {
+        "login": "Iniciar sessió",
+        "logout": "Tanca sessió",
+        "userMenu": "Menú d'usuari"
+      }
     },
     "NoEventsFound": {
       "cta": "Afegeix un esdeveniment",

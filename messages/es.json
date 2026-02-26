@@ -342,7 +342,8 @@
         "contact": "Contacto",
         "archive": "Archivo",
         "terms": "Términos de servicio",
-        "privacy": "Privacidad"
+        "privacy": "Privacidad",
+        "login": "Iniciar sesión"
       },
       "sponsorCta": {
         "title": "Da visibilidad a tu negocio local",
@@ -382,7 +383,12 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publicar"
+      "mobilePublishLabel": "Publicar",
+      "auth": {
+        "login": "Iniciar sesión",
+        "logout": "Cerrar sesión",
+        "userMenu": "Menú de usuario"
+      }
     },
     "NoEventsFound": {
       "cta": "Añade un evento",

@@ -342,7 +342,8 @@
         "contact": "Contact",
         "archive": "Archive",
         "terms": "Terms",
-        "privacy": "Privacy"
+        "privacy": "Privacy",
+        "login": "Log in"
       },
       "sponsorCta": {
         "title": "Make your local business visible",
@@ -382,7 +383,12 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publish"
+      "mobilePublishLabel": "Publish",
+      "auth": {
+        "login": "Log in",
+        "logout": "Log out",
+        "userMenu": "User menu"
+      }
     },
     "NoEventsFound": {
       "cta": "Add an event",
