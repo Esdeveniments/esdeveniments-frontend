@@ -333,6 +333,7 @@ export interface NavbarLabels {
   login: string;
   logout: string;
   userMenu: string;
+  myProfile: string;
 }
 
 export interface NavbarClientProps {

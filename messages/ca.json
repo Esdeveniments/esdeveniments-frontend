@@ -387,7 +387,8 @@
       "auth": {
         "login": "Iniciar sessió",
         "logout": "Tanca sessió",
-        "userMenu": "Menú d'usuari"
+        "userMenu": "Menú d'usuari",
+        "myProfile": "El meu perfil"
       }
     },
     "NoEventsFound": {

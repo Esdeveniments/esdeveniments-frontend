@@ -387,7 +387,8 @@
       "auth": {
         "login": "Iniciar sesión",
         "logout": "Cerrar sesión",
-        "userMenu": "Menú de usuario"
+        "userMenu": "Menú de usuario",
+        "myProfile": "Mi perfil"
       }
     },
     "NoEventsFound": {

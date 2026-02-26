@@ -29,6 +29,7 @@ export function createMockAdapter(
         id: crypto.randomUUID(),
         email: u.email,
         displayName: u.displayName,
+        profileSlug: u.profileSlug,
       },
     });
   }

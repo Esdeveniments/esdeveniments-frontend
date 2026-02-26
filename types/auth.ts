@@ -10,6 +10,7 @@ export interface AuthUser {
   email: string;
   displayName?: string;
   avatarUrl?: string;
+  profileSlug?: string;
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -72,6 +73,7 @@ export interface MockAdapterOptions {
     email: string;
     password: string;
     displayName?: string;
+    profileSlug?: string;
   }>;
 }
 
