@@ -190,6 +190,94 @@ test.describe("Auth → Profile flow", () => {
     });
   });
 
+  test("profile page shows claim CTA when not authenticated", async ({
+    page,
+  }) => {
+    await page.goto("/en/perfil/razzmatazz", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    await expect(page.getByTestId("profile-header")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    // Dismiss social follow popup if present
+    const dismissButton = page.getByRole("button", { name: /not now/i }).first();
+    if (await dismissButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await dismissButton.click();
+    }
+
+    // Claim CTA should be visible for unauthenticated users
+    await expect(
+      page.getByText(/is this your venue|és el teu local/i)
+    ).toBeVisible({
+      timeout: process.env.CI ? 30000 : 15000,
+    });
+
+    // The CTA login link should point to login with redirect
+    const claimLink = page.locator('a[href*="iniciar-sessio"][href*="redirect"]').first();
+    await expect(claimLink).toBeVisible();
+    const href = await claimLink.getAttribute("href");
+    expect(href).toContain("perfil/razzmatazz");
+  });
+
+  test("profile page shows edit button after login as owner", async ({
+    page,
+  }) => {
+    // Login first
+    await page.goto("/en/iniciar-sessio", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    await expect(page.getByTestId("login-form")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    await page.getByLabel(/email/i).fill("dev@test.com");
+    await page.getByLabel(/password/i).fill("dev");
+    await page.getByTestId("login-form").getByRole("button", { name: /log in/i }).click();
+
+    // Should redirect to home and show avatar
+    await page.waitForURL("**/en", { timeout: process.env.CI ? 30000 : 15000 });
+    await expect(page.getByTestId("user-avatar-button")).toBeVisible({
+      timeout: process.env.CI ? 30000 : 15000,
+    });
+
+    // Navigate to profile via avatar dropdown (client-side nav preserves auth state)
+    await page.getByTestId("user-avatar-button").click();
+    await expect(page.getByTestId("user-dropdown-menu")).toBeVisible({ timeout: 5000 });
+    const profileLink = page.getByTestId("user-dropdown-menu").getByRole("link", { name: /profile|perfil/i });
+    await profileLink.click();
+
+    await page.waitForURL("**/perfil/razzmatazz", {
+      timeout: process.env.CI ? 30000 : 15000,
+    });
+
+    await expect(page.getByTestId("profile-header")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    // Dismiss social follow popup if present
+    const dismissButton = page.getByRole("button", { name: /not now/i }).first();
+    if (await dismissButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await dismissButton.click();
+    }
+
+    // Owner should see the disabled "Edit profile" button
+    await expect(
+      page.getByRole("button", { name: /edit profile|editar perfil/i })
+    ).toBeVisible({
+      timeout: process.env.CI ? 30000 : 15000,
+    });
+
+    // Claim CTA should NOT be visible (user is authenticated)
+    await expect(
+      page.getByText(/is this your venue/i)
+    ).not.toBeVisible();
+  });
+
   test("profile page renders with i18n in Spanish", async ({ page }) => {
     await page.goto("/es/perfil/razzmatazz", {
       waitUntil: "domcontentloaded",
