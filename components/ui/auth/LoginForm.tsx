@@ -54,7 +54,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card-bordered card-body stack">
+    <form onSubmit={handleSubmit} className="card-bordered card-body stack" data-testid="login-form">
       <h1 className="heading-2 text-foreground">{t("login.title")}</h1>
       <p className="body-normal text-foreground/80">{t("login.subtitle")}</p>
 

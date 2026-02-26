@@ -120,6 +120,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive"
                       aria-label={labels.userMenu}
                       aria-expanded={isUserMenuOpen}
+                      data-testid="user-avatar-button"
                     >
                       {user.avatarUrl ? (
                         <img
@@ -132,7 +133,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       )}
                     </button>
                     {isUserMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 card-bordered card-body shadow-md bg-background z-50 rounded-lg">
+                      <div className="absolute right-0 mt-2 w-48 card-bordered card-body shadow-md bg-background z-50 rounded-lg" data-testid="user-dropdown-menu">
                         <p className="body-small text-foreground/60 truncate mb-2">
                           {user.displayName || user.email}
                         </p>

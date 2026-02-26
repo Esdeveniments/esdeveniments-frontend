@@ -22,6 +22,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
     <section
       className="card-bordered rounded-lg overflow-hidden mb-section-y"
       aria-label={t("title", { name: profile.name })}
+      data-testid="profile-header"
     >
       {/* Cover image — decorative, empty alt */}
       {profile.coverUrl ? (

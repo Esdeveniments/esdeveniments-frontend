@@ -51,7 +51,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card-bordered card-body stack">
+    <form onSubmit={handleSubmit} className="card-bordered card-body stack" data-testid="register-form">
       <h1 className="heading-2 text-foreground">{t("register.title")}</h1>
       <p className="body-normal text-foreground/80">{t("register.subtitle")}</p>
 
