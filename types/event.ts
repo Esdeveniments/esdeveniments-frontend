@@ -305,6 +305,7 @@ export interface EventLocationProps {
   regionName: string;
   citySlug?: string;
   regionSlug?: string;
+  profile?: import("types/api/profile").ProfileSummaryResponseDTO;
 }
 
 export interface EventFormProps {

@@ -397,6 +397,7 @@ export default async function EventPage({
               regionName={regionName}
               citySlug={event.city?.slug}
               regionSlug={event.region?.slug}
+              profile={event.profile}
             />
             {/* Related Events - Server-side rendered for SEO */}
             {event.relatedEvents && event.relatedEvents.length > 0 && (

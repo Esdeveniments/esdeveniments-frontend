@@ -812,7 +812,8 @@
     "EventLocation": {
       "title": "Ubicación",
       "showMap": "Mostrar mapa",
-      "getDirections": "Cómo llegar"
+      "getDirections": "Cómo llegar",
+      "profileLink": "Perfil de {name}"
     },
     "EventCalendar": {
       "title": "Fecha y hora"

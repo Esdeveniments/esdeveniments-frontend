@@ -812,7 +812,8 @@
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
-      "getDirections": "Get directions"
+      "getDirections": "Get directions",
+      "profileLink": "Profile of {name}"
     },
     "EventCalendar": {
       "title": "Date and time"
