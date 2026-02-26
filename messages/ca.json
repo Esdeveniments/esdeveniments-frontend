@@ -328,7 +328,11 @@
       "totalEvents": "{count} esdeveniments",
       "notFound": "Perfil no trobat",
       "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
-      "backHome": "Tornar a l'inici"
+      "backHome": "Tornar a l'inici",
+      "editProfile": "Editar perfil",
+      "comingSoon": "(properament)",
+      "claimQuestion": "És el teu local?",
+      "claimLogin": "Iniciar sessió"
     },
     "Footer": {
       "navigation": {

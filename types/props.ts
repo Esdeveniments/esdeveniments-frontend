@@ -731,3 +731,13 @@ export interface LoginFormProps {
 export interface RegisterFormProps {
   redirectTo?: string;
 }
+
+// Profile owner actions client island props
+export interface ProfileOwnerActionsProps {
+  profileSlug: string;
+}
+
+// Profile claim CTA client island props
+export interface ProfileClaimCtaProps {
+  profileSlug: string;
+}

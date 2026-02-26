@@ -1,4 +1,5 @@
 import Badge from "@components/ui/common/badge";
+import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
 import { getTranslations } from "next-intl/server";
 import type { ProfileHeaderProps } from "types/props";
 
@@ -51,13 +52,14 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
           <h1 className="heading-1 text-foreground">{profile.name}</h1>
           {profile.verified && (
             <Badge className="bg-primary/10 text-primary border-primary/30">
               {t("verified")}
             </Badge>
           )}
+          <ProfileOwnerActions profileSlug={profile.slug} />
         </div>
 
         {profile.bio && (

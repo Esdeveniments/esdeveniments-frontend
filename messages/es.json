@@ -328,7 +328,11 @@
       "totalEvents": "{count} eventos",
       "notFound": "Perfil no encontrado",
       "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",
-      "backHome": "Volver al inicio"
+      "backHome": "Volver al inicio",
+      "editProfile": "Editar perfil",
+      "comingSoon": "(próximamente)",
+      "claimQuestion": "¿Es tu local?",
+      "claimLogin": "Iniciar sesión"
     },
     "Footer": {
       "navigation": {
