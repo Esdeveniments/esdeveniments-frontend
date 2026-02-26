@@ -330,6 +330,10 @@ export interface NavbarLabels {
   publish: string;
   news: string;
   mobilePublishLabel: string;
+  login: string;
+  logout: string;
+  userMenu: string;
+  myProfile: string;
 }
 
 export interface NavbarClientProps {
@@ -401,6 +405,18 @@ export interface NavigationFiltersModalProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
+export interface ProfileHeaderProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+}
+
+export interface ProfilePageShellProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+  initialEvents: ListEvent[];
+  noEventsFound: boolean;
+  serverHasMore: boolean;
+  pageData: PageData;
+}
+
 export interface HybridEventsListProps {
   initialEvents: ListEvent[];
   placeTypeLabel?: PlaceTypeAndLabel;
@@ -409,6 +425,7 @@ export interface HybridEventsListProps {
   place: string;
   category?: string;
   date?: string;
+  profileSlug?: string; // Filter events by profile/venue slug
   serverHasMore?: boolean; // Add server pagination info
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
@@ -704,4 +721,13 @@ export interface CategoryQuicklinksProps {
 export interface ExploreNearbyProps {
   place: string;
   placeType: PlaceType;
+}
+
+// Auth form props
+export interface LoginFormProps {
+  redirectTo?: string;
+}
+
+export interface RegisterFormProps {
+  redirectTo?: string;
 }

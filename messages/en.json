@@ -316,6 +316,20 @@
     "Breadcrumbs": {
       "home": "Home"
     },
+    "Profile": {
+      "title": "{name} — Profile",
+      "metaDescription": "Discover events by {name}. Browse their upcoming events, concerts, exhibitions and more.",
+      "events": "Events",
+      "verified": "Verified",
+      "joinedDate": "Joined {date}",
+      "noEvents": "No events yet",
+      "website": "Website",
+      "breadcrumbProfiles": "Profiles",
+      "totalEvents": "{count} events",
+      "notFound": "Profile not found",
+      "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
+      "backHome": "Back to home"
+    },
     "Footer": {
       "navigation": {
         "home": "Home",
@@ -328,7 +342,8 @@
         "contact": "Contact",
         "archive": "Archive",
         "terms": "Terms",
-        "privacy": "Privacy"
+        "privacy": "Privacy",
+        "login": "Log in"
       },
       "sponsorCta": {
         "title": "Make your local business visible",
@@ -368,7 +383,13 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publish"
+      "mobilePublishLabel": "Publish",
+      "auth": {
+        "login": "Log in",
+        "logout": "Log out",
+        "userMenu": "User menu",
+        "myProfile": "My profile"
+      }
     },
     "NoEventsFound": {
       "cta": "Add an event",
@@ -801,7 +822,8 @@
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
-      "getDirections": "Get directions"
+      "getDirections": "Get directions",
+      "profileLink": "Profile of {name}"
     },
     "EventCalendar": {
       "title": "Date and time"
@@ -1628,5 +1650,43 @@
       "backHome": "Back to home"
     },
     "backToHome": "Back to home"
+  },
+  "Auth": {
+    "login": {
+      "title": "Log in",
+      "subtitle": "Access your account to manage your events",
+      "submit": "Log in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one",
+      "magicLinkSent": "Check your email for the login link"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Join the community and publish your events",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "passwordHint": "At least 8 characters"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "displayName": "Name (optional)"
+    },
+    "errors": {
+      "invalid-credentials": "Incorrect email or password",
+      "email-taken": "An account with this email already exists",
+      "weak-password": "Password must be at least 8 characters",
+      "network-error": "Connection error. Please try again.",
+      "not-configured": "Authentication is not configured yet",
+      "rate-limited": "Too many attempts. Please wait a moment.",
+      "unknown": "Something went wrong. Please try again."
+    },
+    "meta": {
+      "loginTitle": "Log in | Esdeveniments.cat",
+      "loginDescription": "Log in to your Esdeveniments.cat account",
+      "registerTitle": "Create account | Esdeveniments.cat",
+      "registerDescription": "Create your Esdeveniments.cat account to publish events"
+    }
   }
 }

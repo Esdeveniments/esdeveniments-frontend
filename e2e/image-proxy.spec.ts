@@ -240,6 +240,44 @@ test.describe("Image Proxy", () => {
         }
       }
     });
+
+    test("Sharp module is installed and working (not fallback)", async ({
+      request,
+    }) => {
+      // CRITICAL: This test catches the Feb 18-22 2026 incident where Sharp was
+      // missing from the Lambda bundle. Without Sharp, image-proxy silently falls
+      // back to serving unoptimized images (4.3 MB vs ~50 KB), wasting bandwidth.
+      // See: docs/incidents/2026-02-18-sharp-architecture-mismatch.md
+      const testImageUrl = "https://picsum.photos/800/600.jpg";
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
+        testImageUrl
+      )}&w=400&q=50`;
+
+      const response = await request.get(proxyUrl, {
+        headers: { Accept: "image/webp,image/*" },
+      });
+
+      if (response.status() === 502) {
+        test.skip(true, "Test image service unavailable");
+        return;
+      }
+
+      expect(response.status()).toBe(200);
+
+      const optimized = response.headers()["x-image-proxy-optimized"];
+      const error = response.headers()["x-image-proxy-error"];
+
+      // MUST NOT be fallback-sharp-error — that means Sharp is missing/broken
+      expect(
+        optimized,
+        `Sharp is broken! x-image-proxy-error: ${error || "none"}. ` +
+          "Check open-next.config.ts exists and arch matches sst.config.ts. " +
+          "See: docs/incidents/2026-02-18-sharp-architecture-mismatch.md"
+      ).not.toBe("fallback-sharp-error");
+
+      // Should be truly optimized (or skipped for valid reasons)
+      expect(optimized).toMatch(/^(true|skipped-small|skipped-animated)$/);
+    });
   });
 
   test.describe("Related events images", () => {
