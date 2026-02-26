@@ -1,4 +1,4 @@
-import Badge from "@components/ui/common/badge/index.tsx";
+import Badge from "@components/ui/common/badge";
 import { getTranslations } from "next-intl/server";
 import type { ProfileDetailResponseDTO } from "types/api/profile";
 

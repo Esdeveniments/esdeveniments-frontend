@@ -1,12 +1,13 @@
 import EventStatusGroup from "./EventStatusGroup";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { GlobeAltIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { GlobeAltIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { EventTemporalStatus } from "types/event-status";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import { useTranslations } from "next-intl";
+import { Link } from "@i18n/routing";
 
 const EventDetailsSection: React.FC<{
   event: EventDetailResponseDTO;
@@ -72,6 +73,18 @@ const EventDetailsSection: React.FC<{
               >
                 {event.title}
               </PressableAnchor>
+            </div>
+          )}
+
+          {event.profile && (
+            <div className="body-normal flex items-center gap-2 text-foreground-strong">
+              <UserIcon className="w-4 h-4 flex-shrink-0" />
+              <Link
+                href={`/perfil/${event.profile.slug}` as `/${string}`}
+                className="text-primary hover:underline"
+              >
+                {event.profile.name}
+              </Link>
             </div>
           )}
         </div>
