@@ -1643,5 +1643,43 @@
       "backHome": "Back to home"
     },
     "backToHome": "Back to home"
+  },
+  "Auth": {
+    "login": {
+      "title": "Log in",
+      "subtitle": "Access your account to manage your events",
+      "submit": "Log in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one",
+      "magicLinkSent": "Check your email for the login link"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Join the community and publish your events",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "passwordHint": "At least 8 characters"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "displayName": "Name (optional)"
+    },
+    "errors": {
+      "invalid-credentials": "Incorrect email or password",
+      "email-taken": "An account with this email already exists",
+      "weak-password": "Password must be at least 8 characters",
+      "network-error": "Connection error. Please try again.",
+      "not-configured": "Authentication is not configured yet",
+      "rate-limited": "Too many attempts. Please wait a moment.",
+      "unknown": "Something went wrong. Please try again."
+    },
+    "meta": {
+      "loginTitle": "Log in | Esdeveniments.cat",
+      "loginDescription": "Log in to your Esdeveniments.cat account",
+      "registerTitle": "Create account | Esdeveniments.cat",
+      "registerDescription": "Create your Esdeveniments.cat account to publish events"
+    }
   }
 }

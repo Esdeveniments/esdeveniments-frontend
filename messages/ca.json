@@ -1646,5 +1646,43 @@
       "backHome": "Torna a l'inici"
     },
     "backToHome": "Torna a l'inici"
+  },
+  "Auth": {
+    "login": {
+      "title": "Iniciar sessió",
+      "subtitle": "Accedeix al teu compte per gestionar els teus esdeveniments",
+      "submit": "Iniciar sessió",
+      "noAccount": "No tens compte?",
+      "registerLink": "Crea'n un",
+      "magicLinkSent": "Revisa el teu correu per al link d'accés"
+    },
+    "register": {
+      "title": "Crear compte",
+      "subtitle": "Uneix-te a la comunitat i publica els teus esdeveniments",
+      "submit": "Crear compte",
+      "hasAccount": "Ja tens compte?",
+      "loginLink": "Inicia sessió",
+      "passwordHint": "Mínim 8 caràcters"
+    },
+    "fields": {
+      "email": "Correu electrònic",
+      "password": "Contrasenya",
+      "displayName": "Nom (opcional)"
+    },
+    "errors": {
+      "invalid-credentials": "Correu o contrasenya incorrectes",
+      "email-taken": "Ja existeix un compte amb aquest correu",
+      "weak-password": "La contrasenya ha de tenir mínim 8 caràcters",
+      "network-error": "Error de connexió. Torna-ho a provar.",
+      "not-configured": "L'autenticació encara no està configurada",
+      "rate-limited": "Massa intents. Espera un moment.",
+      "unknown": "Alguna cosa ha anat malament. Torna-ho a provar."
+    },
+    "meta": {
+      "loginTitle": "Iniciar sessió | Esdeveniments.cat",
+      "loginDescription": "Inicia sessió al teu compte d'Esdeveniments.cat",
+      "registerTitle": "Crear compte | Esdeveniments.cat",
+      "registerDescription": "Crea el teu compte a Esdeveniments.cat per publicar esdeveniments"
+    }
   }
 }

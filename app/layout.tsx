@@ -11,6 +11,7 @@ import Script from "next/script";
 import { getLocaleSafely } from "../utils/i18n-seo";
 import GoogleScripts from "./GoogleScripts";
 import { AdProvider } from "../lib/context/AdContext";
+import { AuthProvider } from "../lib/auth/AuthProvider";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 
@@ -101,11 +102,13 @@ export default async function RootLayout({
           locale={locale}
         >
           <AdProvider>
-            <WebsiteSchema locale={locale} />
-            <Suspense fallback={null}>
-              <GoogleScripts />
-            </Suspense>
-            <BaseLayout>{children}</BaseLayout>
+            <AuthProvider>
+              <WebsiteSchema locale={locale} />
+              <Suspense fallback={null}>
+                <GoogleScripts />
+              </Suspense>
+              <BaseLayout>{children}</BaseLayout>
+            </AuthProvider>
           </AdProvider>
         </NextIntlClientProvider>
       </body>

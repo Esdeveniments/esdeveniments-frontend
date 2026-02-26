@@ -90,6 +90,8 @@ export function handleCanonicalRedirects(
     "compartir-tiktok",
     "patrocina",
     "perfil",
+    "iniciar-sessio",
+    "registre",
     "politica-privacitat",
     "termes-servei",
   ]);

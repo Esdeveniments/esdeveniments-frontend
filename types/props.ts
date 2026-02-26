@@ -718,3 +718,12 @@ export interface ExploreNearbyProps {
   place: string;
   placeType: PlaceType;
 }
+
+// Auth form props
+export interface LoginFormProps {
+  redirectTo?: string;
+}
+
+export interface RegisterFormProps {
+  redirectTo?: string;
+}
