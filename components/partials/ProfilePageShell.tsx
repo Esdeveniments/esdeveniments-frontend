@@ -6,17 +6,8 @@ import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
-import type { ProfileDetailResponseDTO } from "types/api/profile";
-import type { ListEvent } from "types/api/event";
-import type { BreadcrumbItem, PageData } from "types/common";
-
-interface ProfilePageShellProps {
-  profile: ProfileDetailResponseDTO;
-  initialEvents: ListEvent[];
-  noEventsFound: boolean;
-  serverHasMore: boolean;
-  pageData: PageData;
-}
+import type { BreadcrumbItem } from "types/common";
+import type { ProfilePageShellProps } from "types/props";
 
 export default async function ProfilePageShell({
   profile,

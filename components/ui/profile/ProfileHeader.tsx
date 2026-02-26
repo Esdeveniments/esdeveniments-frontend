@@ -1,10 +1,6 @@
 import Badge from "@components/ui/common/badge";
 import { getTranslations } from "next-intl/server";
-import type { ProfileDetailResponseDTO } from "types/api/profile";
-
-interface ProfileHeaderProps {
-  profile: ProfileDetailResponseDTO;
-}
+import type { ProfileHeaderProps } from "types/props";
 
 function AvatarFallback({ name }: { name: string }) {
   const initial = name.charAt(0).toUpperCase();
