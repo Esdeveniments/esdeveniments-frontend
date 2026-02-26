@@ -401,6 +401,18 @@ export interface NavigationFiltersModalProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
+export interface ProfileHeaderProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+}
+
+export interface ProfilePageShellProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+  initialEvents: ListEvent[];
+  noEventsFound: boolean;
+  serverHasMore: boolean;
+  pageData: PageData;
+}
+
 export interface HybridEventsListProps {
   initialEvents: ListEvent[];
   placeTypeLabel?: PlaceTypeAndLabel;
@@ -409,6 +421,7 @@ export interface HybridEventsListProps {
   place: string;
   category?: string;
   date?: string;
+  profileSlug?: string; // Filter events by profile/venue slug
   serverHasMore?: boolean; // Add server pagination info
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response

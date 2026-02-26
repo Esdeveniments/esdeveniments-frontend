@@ -316,6 +316,20 @@
     "Breadcrumbs": {
       "home": "Inici"
     },
+    "Profile": {
+      "title": "{name} — Perfil",
+      "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "events": "Esdeveniments",
+      "verified": "Verificat",
+      "joinedDate": "Des de {date}",
+      "noEvents": "Encara no hi ha esdeveniments",
+      "website": "Lloc web",
+      "breadcrumbProfiles": "Perfils",
+      "totalEvents": "{count} esdeveniments",
+      "notFound": "Perfil no trobat",
+      "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
+      "backHome": "Tornar a l'inici"
+    },
     "Footer": {
       "navigation": {
         "home": "Inici",
@@ -808,7 +822,8 @@
     "EventLocation": {
       "title": "Ubicació",
       "showMap": "Mostrar mapa",
-      "getDirections": "Com arribar"
+      "getDirections": "Com arribar",
+      "profileLink": "Perfil de {name}"
     },
     "EventCalendar": {
       "title": "Data i hora"
