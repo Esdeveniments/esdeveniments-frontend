@@ -58,11 +58,13 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       <h1 className="heading-2 text-foreground">{t("login.title")}</h1>
       <p className="body-normal text-foreground/80">{t("login.subtitle")}</p>
 
-      {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
-          {t(`errors.${error}`)}
-        </div>
-      )}
+      <div aria-live="polite" aria-atomic="true">
+        {error && (
+          <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
+            {t(`errors.${error}`)}
+          </div>
+        )}
+      </div>
 
       <label className="label" htmlFor="login-email">
         {t("fields.email")}

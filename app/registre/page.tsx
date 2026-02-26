@@ -21,14 +21,17 @@ export async function generateMetadata() {
 export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string }>;
+  searchParams: Promise<{ redirect?: string; profile?: string }>;
 }) {
   const params = await searchParams;
 
   return (
     <div className="container flex-center pt-[6rem] pb-section-y">
       <div className="w-full max-w-md">
-        <RegisterForm redirectTo={params.redirect} />
+        <RegisterForm
+          redirectTo={params.redirect}
+          suggestedName={params.profile}
+        />
       </div>
     </div>
   );

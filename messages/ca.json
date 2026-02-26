@@ -326,6 +326,10 @@
       "website": "Lloc web",
       "breadcrumbProfiles": "Perfils",
       "totalEvents": "{count} esdeveniments",
+      "editProfile": "Editar perfil",
+      "comingSoon": "(properament)",
+      "claimQuestion": "És el teu local?",
+      "claimLogin": "Iniciar sessió",
       "notFound": "Perfil no trobat",
       "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
       "backHome": "Tornar a l'inici"

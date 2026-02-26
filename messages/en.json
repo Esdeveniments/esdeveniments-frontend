@@ -326,6 +326,10 @@
       "website": "Website",
       "breadcrumbProfiles": "Profiles",
       "totalEvents": "{count} events",
+      "editProfile": "Edit profile",
+      "comingSoon": "(coming soon)",
+      "claimQuestion": "Is this your venue?",
+      "claimLogin": "Log in",
       "notFound": "Profile not found",
       "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
       "backHome": "Back to home"

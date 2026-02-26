@@ -723,6 +723,15 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+// Profile ownership props
+export interface ProfileOwnerActionsProps {
+  profileSlug: string;
+}
+
+export interface ProfileClaimCtaProps {
+  profileSlug: string;
+}
+
 // Auth form props
 export interface LoginFormProps {
   redirectTo?: string;
@@ -730,4 +739,5 @@ export interface LoginFormProps {
 
 export interface RegisterFormProps {
   redirectTo?: string;
+  suggestedName?: string;
 }

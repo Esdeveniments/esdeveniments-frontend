@@ -326,6 +326,10 @@
       "website": "Sitio web",
       "breadcrumbProfiles": "Perfiles",
       "totalEvents": "{count} eventos",
+      "editProfile": "Editar perfil",
+      "comingSoon": "(próximamente)",
+      "claimQuestion": "¿Es tu local?",
+      "claimLogin": "Iniciar sesión",
       "notFound": "Perfil no encontrado",
       "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",
       "backHome": "Volver al inicio"

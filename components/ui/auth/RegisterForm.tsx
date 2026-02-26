@@ -7,14 +7,14 @@ import { useAuth } from "@components/hooks/useAuth";
 import type { RegisterFormProps } from "types/props";
 import type { AuthErrorCode } from "types/auth";
 
-export default function RegisterForm({ redirectTo }: RegisterFormProps) {
+export default function RegisterForm({ redirectTo, suggestedName }: RegisterFormProps) {
   const t = useTranslations("Auth");
   const { register, supportedMethods, isLoading } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState(suggestedName || "");
   const [error, setError] = useState<AuthErrorCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -55,11 +55,13 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       <h1 className="heading-2 text-foreground">{t("register.title")}</h1>
       <p className="body-normal text-foreground/80">{t("register.subtitle")}</p>
 
-      {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
-          {t(`errors.${error}`)}
-        </div>
-      )}
+      <div aria-live="polite" aria-atomic="true">
+        {error && (
+          <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
+            {t(`errors.${error}`)}
+          </div>
+        )}
+      </div>
 
       <label className="label" htmlFor="register-email">
         {t("fields.email")}

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import JsonLdServer from "./JsonLdServer";
 import ProfileHeader from "@components/ui/profile/ProfileHeader";
+import ProfileClaimCta from "@components/ui/profile/ProfileClaimCta";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import { getTranslations } from "next-intl/server";
@@ -50,6 +51,7 @@ export default async function ProfilePageShell({
 
       <div className="container flex-col justify-center items-center pt-[6rem]">
         <ProfileHeader profile={profile} />
+        <ProfileClaimCta profileSlug={profile.slug} />
 
         <Suspense fallback={<EventsListSkeleton />}>
           <HybridEventsList
