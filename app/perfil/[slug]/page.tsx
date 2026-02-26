@@ -41,6 +41,7 @@ export async function generateMetadata({
     canonical,
     image: profile.avatarUrl || `${siteUrl}/static/images/logo-seo-meta.webp`,
     locale,
+    openGraphType: "profile",
   });
 }
 
