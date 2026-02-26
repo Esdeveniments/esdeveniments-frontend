@@ -60,6 +60,21 @@ export interface AuthAdapter {
   ): AuthUnsubscribe;
 }
 
+export interface MockAuthUser {
+  password: string;
+  user: AuthUser;
+}
+
+export interface MockAdapterOptions {
+  supportedMethods?: AuthMethod[];
+  delay?: number;
+  preloadUsers?: Array<{
+    email: string;
+    password: string;
+    displayName?: string;
+  }>;
+}
+
 export interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;

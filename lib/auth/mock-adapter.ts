@@ -1,27 +1,13 @@
 import type {
   AuthAdapter,
-  AuthMethod,
   AuthResult,
   AuthUser,
   AuthUnsubscribe,
   LoginCredentials,
   RegisterCredentials,
+  MockAuthUser,
+  MockAdapterOptions,
 } from "types/auth";
-
-interface MockUser {
-  password: string;
-  user: AuthUser;
-}
-
-interface MockAdapterOptions {
-  supportedMethods?: AuthMethod[];
-  delay?: number;
-  preloadUsers?: Array<{
-    email: string;
-    password: string;
-    displayName?: string;
-  }>;
-}
 
 export function createMockAdapter(
   options: MockAdapterOptions = {}
@@ -32,7 +18,7 @@ export function createMockAdapter(
     preloadUsers = [],
   } = options;
 
-  const users = new Map<string, MockUser>();
+  const users = new Map<string, MockAuthUser>();
   const listeners = new Set<(user: AuthUser | null) => void>();
   let currentUser: AuthUser | null = null;
 
