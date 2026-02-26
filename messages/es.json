@@ -325,7 +325,10 @@
       "noEvents": "Aún no hay eventos",
       "website": "Sitio web",
       "breadcrumbProfiles": "Perfiles",
-      "totalEvents": "{count} eventos"
+      "totalEvents": "{count} eventos",
+      "notFound": "Perfil no encontrado",
+      "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",
+      "backHome": "Volver al inicio"
     },
     "Footer": {
       "navigation": {

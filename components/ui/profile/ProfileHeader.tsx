@@ -5,7 +5,11 @@ import type { ProfileHeaderProps } from "types/props";
 function AvatarFallback({ name }: { name: string }) {
   const initial = name.charAt(0).toUpperCase();
   return (
-    <div className="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold">
+    <div
+      className="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold"
+      role="img"
+      aria-label={name}
+    >
       {initial}
     </div>
   );
@@ -15,8 +19,11 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
   const t = await getTranslations("Components.Profile");
 
   return (
-    <section className="card-bordered rounded-lg overflow-hidden mb-section-y">
-      {/* Cover image */}
+    <section
+      className="card-bordered rounded-lg overflow-hidden mb-section-y"
+      aria-label={t("title", { name: profile.name })}
+    >
+      {/* Cover image — decorative, empty alt */}
       {profile.coverUrl ? (
         <div className="h-40 sm:h-52 w-full overflow-hidden">
           <img
@@ -35,7 +42,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
           {profile.avatarUrl ? (
             <img
               src={profile.avatarUrl}
-              alt={profile.name}
+              alt={t("title", { name: profile.name })}
               className="w-20 h-20 rounded-full border-4 border-background object-cover"
             />
           ) : (
