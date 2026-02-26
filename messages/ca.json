@@ -316,6 +316,17 @@
     "Breadcrumbs": {
       "home": "Inici"
     },
+    "Profile": {
+      "title": "{name} — Perfil",
+      "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "events": "Esdeveniments",
+      "verified": "Verificat",
+      "joinedDate": "Des de {date}",
+      "noEvents": "Encara no hi ha esdeveniments",
+      "website": "Lloc web",
+      "breadcrumbProfiles": "Perfils",
+      "totalEvents": "{count} esdeveniments"
+    },
     "Footer": {
       "navigation": {
         "home": "Inici",

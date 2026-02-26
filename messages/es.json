@@ -316,6 +316,17 @@
     "Breadcrumbs": {
       "home": "Inicio"
     },
+    "Profile": {
+      "title": "{name} — Perfil",
+      "metaDescription": "Descubre los eventos de {name}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
+      "events": "Eventos",
+      "verified": "Verificado",
+      "joinedDate": "Desde {date}",
+      "noEvents": "Aún no hay eventos",
+      "website": "Sitio web",
+      "breadcrumbProfiles": "Perfiles",
+      "totalEvents": "{count} eventos"
+    },
     "Footer": {
       "navigation": {
         "home": "Inicio",
