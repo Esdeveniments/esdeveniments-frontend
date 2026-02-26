@@ -173,6 +173,7 @@ export interface FetchEventsParams {
   from?: string; // Start date
   to?: string; // End date
   isToday?: boolean;
+  profileSlug?: string; // Filter events by profile/venue slug
   // Note: API expects 'term' for search queries
 }
 
@@ -350,6 +351,7 @@ export interface UseEventsOptions {
   distance?: string; // Client-side distance filter
   lat?: string; // Client-side latitude filter
   lon?: string; // Client-side longitude filter
+  profileSlug?: string; // Filter events by profile/venue slug
   initialSize?: number;
   fallbackData?: EventSummaryResponseDTO[];
   serverHasMore?: boolean; // Add server pagination info

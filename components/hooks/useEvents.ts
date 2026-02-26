@@ -27,6 +27,7 @@ const pageFetcher = async (
   if (params.byDate) qs.set("byDate", params.byDate);
   if (params.from) qs.set("from", params.from);
   if (params.to) qs.set("to", params.to);
+  if (params.profileSlug) qs.set("profile", params.profileSlug);
 
   const res = await fetch(`/api/events?${qs.toString()}`);
   if (!res.ok) {
@@ -43,6 +44,7 @@ export const useEvents = ({
   distance,
   lat,
   lon,
+  profileSlug,
   initialSize = 10,
   fallbackData = [],
   serverHasMore = false,
@@ -52,8 +54,8 @@ export const useEvents = ({
 
   const currentKey = useMemo(
     () =>
-      `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${initialSize}`,
-    [place, category, date, search, distance, lat, lon, initialSize]
+      `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${profileSlug}|${initialSize}`,
+    [place, category, date, search, distance, lat, lon, profileSlug, initialSize]
   );
 
   const hasClientFilters = !!(search || distance || lat || lon);
@@ -94,6 +96,7 @@ export const useEvents = ({
     radius: hasCoords && hasValidRadius ? radius : undefined,
     lat: hasCoords && hasValidRadius ? latNumber : undefined,
     lon: hasCoords && hasValidRadius ? lonNumber : undefined,
+    profileSlug,
   };
 
   const getKey = (
@@ -112,6 +115,7 @@ export const useEvents = ({
       baseParams.radius,
       baseParams.lat,
       baseParams.lon,
+      baseParams.profileSlug,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -134,6 +138,7 @@ export const useEvents = ({
       radiusParam,
       latParam,
       lonParam,
+      profileSlugParam,
       pageIndex,
       sizeParam,
     ]) =>
@@ -149,6 +154,7 @@ export const useEvents = ({
         radius: radiusParam as number | undefined,
         lat: latParam as number | undefined,
         lon: lonParam as number | undefined,
+        profileSlug: profileSlugParam as string | undefined,
       }),
     {
       fallbackData:
