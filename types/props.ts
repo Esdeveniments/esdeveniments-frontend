@@ -53,6 +53,7 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
 import type { FaqItem } from "types/faq";
+import type { AppLocale } from "types/i18n";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -96,6 +97,15 @@ export interface CardContentProps {
   isPriority?: boolean;
   isHorizontal?: boolean;
   initialIsFavorite?: boolean;
+}
+
+export interface CompactCardProps {
+  event: EventSummaryResponseDTO;
+  locale: AppLocale;
+  tCard: (key: string, values?: Record<string, string>) => string;
+  tTime: (key: string, values?: Record<string, string>) => string;
+  index: number;
+  analyticsEventName?: string;
 }
 
 export interface FavoriteButtonLabels {

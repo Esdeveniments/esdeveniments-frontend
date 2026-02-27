@@ -12,7 +12,7 @@ const CardHorizontal: React.FC<CardHorizontalProps> = ({
   if (isLoading) return <CardLoading />;
   if (event.isAd) return <AdCardClient />;
   return (
-    <CardContentServer event={event} isPriority={isPriority} isHorizontal />
+    <CardContentServer event={event} isPriority={isPriority} />
   );
 };
 

@@ -439,6 +439,29 @@
         "Divendres",
         "Dissabte"
       ],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
+      "monthsShort": [
+        "gen.",
+        "feb.",
+        "març",
+        "abr.",
+        "maig",
+        "juny",
+        "jul.",
+        "ag.",
+        "set.",
+        "oct.",
+        "nov.",
+        "des."
+      ],
       "months": [
         "gener",
         "febrer",

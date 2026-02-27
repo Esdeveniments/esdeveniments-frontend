@@ -1,4 +1,4 @@
-import { getDayNames, getMonthNames } from "./constants";
+import { getDayNames, getMonthNames, getShortDayNames, getShortMonthNames } from "./constants";
 import type {
   DateObject,
   FormattedDateResult,
@@ -366,4 +366,76 @@ export const formatEventTimeDisplayDetail = (
     start: cleanStart,
     end: normalizedEndTime,
   });
+};
+
+/**
+ * Format a date for card display: abbreviated weekday + day + abbreviated month.
+ * Omits year when the event is in the current year.
+ * Examples:
+ *   ca: "Ds. 28 feb." | "Ds. 28 feb. 2027"
+ *   en: "Sat, Feb 28" | "Sat, Feb 28, 2027"
+ *   es: "Sáb. 28 feb." | "Sáb. 28 feb. 2027"
+ */
+export const formatCardDate = (
+  start: string,
+  end?: string,
+  locale: AppLocale = DEFAULT_LOCALE
+): { cardDate: string; isMultiDay: boolean } => {
+  const shortDays = getShortDayNames(locale);
+  const shortMonths = getShortMonthNames(locale);
+
+  const startDate = convertTZ(new Date(start), "Europe/Madrid");
+  const endDate = end ? convertTZ(new Date(end), "Europe/Madrid") : startDate;
+
+  const startDay = startDate.getDate();
+  const endDay = endDate.getDate();
+  const isMultiDay =
+    startDay !== endDay ||
+    startDate.getMonth() !== endDate.getMonth() ||
+    startDate.getFullYear() !== endDate.getFullYear();
+
+  const currentYear = new Date().getFullYear();
+  const startYear = startDate.getFullYear();
+  const endYear = endDate.getFullYear();
+  const showStartYear = startYear !== currentYear;
+  const showEndYear = endYear !== currentYear;
+
+  const weekDay = shortDays[startDate.getDay()];
+  const monthName = shortMonths[startDate.getMonth()];
+
+  const formatSingleDate = (
+    day: number,
+    month: string,
+    year: number,
+    showYear: boolean,
+    dayName?: string
+  ): string => {
+    const yearSuffix = showYear ? ` ${year}` : "";
+    if (locale === "en") {
+      const prefix = dayName ? `${dayName}, ` : "";
+      return `${prefix}${month} ${day}${yearSuffix}`;
+    }
+    const prefix = dayName ? `${dayName} ` : "";
+    return `${prefix}${day} ${month}${yearSuffix}`;
+  };
+
+  if (!isMultiDay) {
+    return {
+      cardDate: formatSingleDate(startDay, monthName, startYear, showStartYear, weekDay),
+      isMultiDay: false,
+    };
+  }
+
+  const endMonthName = shortMonths[endDate.getMonth()];
+  const sameMonth = startDate.getMonth() === endDate.getMonth() && startYear === endYear;
+
+  const startPart = sameMonth && locale !== "en"
+    ? `${startDay}`
+    : formatSingleDate(startDay, monthName, startYear, showStartYear);
+  const endPart = formatSingleDate(endDay, endMonthName, endYear, showEndYear);
+
+  return {
+    cardDate: `${startPart} – ${endPart}`,
+    isMultiDay: true,
+  };
 };

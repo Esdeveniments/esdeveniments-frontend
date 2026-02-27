@@ -8,36 +8,37 @@ import { CardContentProps } from "types/props";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
+import CategoryBadge from "./CategoryBadge";
 import { prepareCardContentData } from "./prepareCardContentData";
 
 async function CardContentServer({
   event,
   isPriority = false,
-  isHorizontal = false,
   initialIsFavorite,
 }: CardContentProps) {
   const locale = await getLocaleSafely();
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
+  const tCategories = await getTranslations({ locale, namespace: "Config.Categories" });
   const {
     title,
     primaryLocation,
     image,
-    eventDate,
+    cardDate,
     timeDisplay,
     favoriteLabels,
     shouldShowFavoriteButton,
+    categoryLabel,
   } = prepareCardContentData({
     event,
-    isHorizontal,
+    variant: "standard",
     locale,
     tCard,
     tTime,
-    preferPreformattedDates: false,
+    tCategories,
   });
 
   const isFavorite = Boolean(event.slug && initialIsFavorite);
-  const firstCategory = event.categories?.[0];
 
   return (
     <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
@@ -52,7 +53,6 @@ async function CardContentServer({
         <span className="sr-only">{title}</span>
       </CardLink>
 
-      {/* Image — clean, with category badge + favorite */}
       <div className="relative aspect-[3/2] overflow-hidden bg-muted">
         <Image
           className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
@@ -62,21 +62,13 @@ async function CardContentServer({
           alt={event.title}
           location={event.city?.name || event.location}
           region={event.region?.name || event.city?.name}
-          date={eventDate}
+          date={cardDate}
           context="list"
           cacheKey={event.hash || event.updatedAt}
         />
 
-        {/* Category badge — top left */}
-        {firstCategory && (
-          <div className="absolute top-2.5 left-2.5 z-[2] pointer-events-none">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-badge text-xs font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
-              {firstCategory.name}
-            </span>
-          </div>
-        )}
+        <CategoryBadge label={categoryLabel} />
 
-        {/* Favorite — top right */}
         {shouldShowFavoriteButton && (
           <FavoriteButtonOverlay
             eventSlug={event.slug}
@@ -89,20 +81,16 @@ async function CardContentServer({
         )}
       </div>
 
-      {/* Content */}
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 pointer-events-none">
-        {/* Date + time — muted, scannable */}
         <p className="body-small text-muted-foreground mb-1 truncate">
-          {eventDate}
+          {cardDate}
           {timeDisplay && <> · {timeDisplay}</>}
         </p>
 
-        {/* Title — bold, prominent */}
         <h3 className="text-base font-semibold leading-snug line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary transition-colors">
           {title}
         </h3>
 
-        {/* Location + views — pushed to bottom */}
         <div className="mt-auto flex items-center justify-between gap-2">
           {primaryLocation && (
             <div className="flex items-center gap-1 body-small text-foreground/60 min-w-0">

@@ -1,14 +1,11 @@
-import Image from "@components/ui/common/image";
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
+import CompactCard from "@components/ui/common/cardContent/CompactCard";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
-import { truncateString, getFormattedDate } from "@utils/helpers";
-import { buildEventPlaceLabels } from "@utils/location-helpers";
 import { generateJsonData } from "@utils/schema-helpers";
 import type { SchemaOrgEvent } from "types/schema";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import CardLink from "@components/ui/common/cardContent/CardLink";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 
@@ -46,7 +43,7 @@ async function EventsAroundServer({
   showJsonLd = false,
   jsonLdId,
   title,
-  useDetailTimeFormat = false,
+  useDetailTimeFormat: _useDetailTimeFormat = false,
 }: EventsAroundServerProps) {
   const locale = await getLocaleSafely();
   const uniqueEvents = dedupeEvents(events);
@@ -104,26 +101,29 @@ async function EventsAroundServer({
 
   const t = await getTranslations("Components.EventsAround");
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
+  const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const tScroll = await getTranslations({
     locale,
     namespace: "Components.HorizontalScroll",
   });
   const carouselSuffix = t("carouselSuffix");
 
+  const jsonLdBlock = jsonLdData ? (
+    <JsonLdServer
+      id={
+        jsonLdId ||
+        (title
+          ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
+          : "events-around")
+      }
+      data={jsonLdData}
+    />
+  ) : null;
+
   if (layout === "horizontal") {
     return (
       <>
-        {jsonLdData && (
-          <JsonLdServer
-            id={
-              jsonLdId ||
-              (title
-                ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
-                : "events-around")
-            }
-            data={jsonLdData}
-          />
-        )}
+        {jsonLdBlock}
         <HorizontalScroll
           className="py-element-gap px-section-x"
           ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
@@ -142,7 +142,6 @@ async function EventsAroundServer({
                 <CardHorizontalServer
                   event={event}
                   isPriority={usePriority && index <= 2}
-                  useDetailTimeFormat={useDetailTimeFormat}
                 />
               </div>
             ))}
@@ -152,83 +151,24 @@ async function EventsAroundServer({
     );
   }
 
-  // Compact layout — related events on detail pages
   return (
     <>
-      {jsonLdData && (
-        <JsonLdServer
-          id={
-            jsonLdId ||
-            (title
-              ? `events-around-${title.toLowerCase().replace(/\s+/g, "-")}`
-              : "events-around")
-          }
-          data={jsonLdData}
-        />
-      )}
+      {jsonLdBlock}
       <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-3 min-w-0">
-        {uniqueEvents.map((event, index) => {
-          const eventTitle = truncateString(event.title || "", 50);
-          const image = event.imageUrl;
-
-          const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
-            event.startDate,
-            event.endDate,
-            locale
-          );
-          const eventDate = formattedEnd
-            ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
-            : tCard("dateSingle", { nameDay, start: formattedStart });
-          const { primaryLabel } = buildEventPlaceLabels({
-            cityName: event.city?.name,
-            regionName: event.region?.name,
-            location: event.location,
-          });
-
-          return (
-            <div
-              key={event.id ?? event.slug ?? index}
-              className="flex-none w-40 min-w-[10rem]"
-            >
-              <CardLink
-                href={`/e/${event.slug}`}
-                className="block rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full"
-                data-analytics-event-name="related_event_click"
-                data-analytics-event-id={event.id ? String(event.id) : ""}
-                data-analytics-event-slug={event.slug || ""}
-                data-analytics-position={String(index + 1)}
-              >
-                {/* Image */}
-                <div className="aspect-[4/3] overflow-hidden bg-muted">
-                  <Image
-                    className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
-                    title={event.title}
-                    alt={event.title}
-                    image={image}
-                    priority={false}
-                    fetchPriority="low"
-                    location={primaryLabel}
-                    date={eventDate}
-                    context="card"
-                    cacheKey={event.hash || event.updatedAt}
-                  />
-                </div>
-                {/* Content */}
-                <div className="px-2.5 pt-2 pb-2.5">
-                  <p className="text-[11px] font-semibold text-primary mb-0.5 truncate">{eventDate}</p>
-                  <h3 className="text-sm font-medium leading-snug line-clamp-2 text-foreground-strong group-hover:text-primary transition-colors mb-1">
-                    {eventTitle}
-                  </h3>
-                  <p className="text-xs text-foreground/60 truncate">{primaryLabel}</p>
-                </div>
-              </CardLink>
-            </div>
-          );
-        })}
+        {uniqueEvents.map((event, index) => (
+          <CompactCard
+            key={event.id ?? event.slug ?? index}
+            event={event}
+            locale={locale}
+            tCard={tCard}
+            tTime={tTime}
+            index={index}
+          />
+        ))}
       </div>
     </>
   );
-};
+}
 
 EventsAroundServer.displayName = "EventsAroundServer";
 

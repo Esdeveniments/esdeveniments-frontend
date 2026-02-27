@@ -77,6 +77,13 @@ export interface PressableLinkProps extends PressableLinkBaseProps {}
 
 export interface PressableAnchorProps extends PressableLinkBaseProps {}
 
+export type CardVariant = "standard" | "carousel" | "compact";
+
+export interface CategoryBadgeProps {
+  label: string | undefined;
+  size?: "sm" | "default";
+}
+
 export interface HeroContextType {
   place: string;
   label: string;

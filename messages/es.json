@@ -431,6 +431,29 @@
         "Viernes",
         "Sábado"
       ],
+      "daysShort": [
+        "Dom.",
+        "Lun.",
+        "Mar.",
+        "Mié.",
+        "Jue.",
+        "Vie.",
+        "Sáb."
+      ],
+      "monthsShort": [
+        "ene.",
+        "feb.",
+        "mar.",
+        "abr.",
+        "may.",
+        "jun.",
+        "jul.",
+        "ago.",
+        "sep.",
+        "oct.",
+        "nov.",
+        "dic."
+      ],
       "months": [
         "enero",
         "febrero",

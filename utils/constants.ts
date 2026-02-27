@@ -103,6 +103,16 @@ export function getMonthNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
     .months as string[];
 }
 
+export function getShortDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
+  return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
+    .daysShort as string[];
+}
+
+export function getShortMonthNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
+  return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
+    .monthsShort as string[];
+}
+
 export function getMonthUrlNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
   return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
     .monthsUrl as string[];
