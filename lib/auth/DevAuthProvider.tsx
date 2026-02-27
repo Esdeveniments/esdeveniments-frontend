@@ -5,7 +5,9 @@ import { AuthProvider } from "./AuthProvider";
 import { createMockAdapter } from "./mock-adapter";
 import { noopAdapter } from "./adapter";
 
-const isDev = process.env.NODE_ENV === "development";
+const isDev =
+  process.env.NODE_ENV === "development" ||
+  process.env.NEXT_PUBLIC_MOCK_AUTH === "true";
 
 export function DevAuthProvider({ children }: { children: ReactNode }) {
   const adapter = useMemo(
