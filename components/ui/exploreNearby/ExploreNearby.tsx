@@ -77,12 +77,16 @@ export default async function ExploreNearby({
 
     if (!region || region.cities.length === 0) return null;
 
+    const seenCities = new Set<string>();
     const cityLinks = region.cities
-      .slice(0, MAX_LINKS)
-      .map((c) => ({
-        slug: c.value,
-        label: formatPlaceName(c.label),
-      }));
+      .reduce<{ slug: string; label: string }[]>((acc, c) => {
+        if (!seenCities.has(c.value)) {
+          seenCities.add(c.value);
+          acc.push({ slug: c.value, label: formatPlaceName(c.label) });
+        }
+        return acc;
+      }, [])
+      .slice(0, MAX_LINKS);
 
     return (
       <section
@@ -122,13 +126,17 @@ export default async function ExploreNearby({
           slug: region.slug,
           label: formatPlaceName(region.name),
         };
+        const seenSiblings = new Set<string>();
         siblingCities = region.cities
           .filter((c) => c.value !== place)
-          .slice(0, MAX_LINKS - 1)
-          .map((c) => ({
-            slug: c.value,
-            label: formatPlaceName(c.label),
-          }));
+          .reduce<{ slug: string; label: string }[]>((acc, c) => {
+            if (!seenSiblings.has(c.value)) {
+              seenSiblings.add(c.value);
+              acc.push({ slug: c.value, label: formatPlaceName(c.label) });
+            }
+            return acc;
+          }, [])
+          .slice(0, MAX_LINKS - 1);
         break;
       }
     }

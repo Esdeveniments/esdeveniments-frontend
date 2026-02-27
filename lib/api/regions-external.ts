@@ -1,6 +1,7 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
+import { parseRegionsGrouped } from "@lib/validation/region";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
 // This causes OpenNext/SST to create a separate S3+DynamoDB cache entry for every unique URL.
@@ -38,7 +39,10 @@ export async function fetchRegionsOptionsExternal(): Promise<
       console.error(`fetchRegionsOptionsExternal: HTTP ${res.status}`);
       return [];
     }
-    return res.json();
+    const raw: unknown = await res.json();
+    // Validate with Zod and enrich with computed slug (API omits it).
+    // parseRegionsGrouped returns [] on validation failure (safe fallback).
+    return parseRegionsGrouped(raw);
   } catch (error) {
     console.error("fetchRegionsOptionsExternal: failed", error);
     return [];

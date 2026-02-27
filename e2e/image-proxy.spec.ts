@@ -248,6 +248,15 @@ test.describe("Image Proxy", () => {
       // missing from the Lambda bundle. Without Sharp, image-proxy silently falls
       // back to serving unoptimized images (4.3 MB vs ~50 KB), wasting bandwidth.
       // See: docs/incidents/2026-02-18-sharp-architecture-mismatch.md
+      //
+      // Skip on Vercel preview deployments: Sharp is only installed on AWS Lambda
+      // via open-next.config.ts. Vercel excludes it (serverExternalPackages) and
+      // doesn't provide it at runtime. This test is meaningful only on AWS (SST).
+      const baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL ?? "";
+      if (baseUrl.includes("vercel.app")) {
+        test.skip(true, "Sharp not available on Vercel previews — only on AWS Lambda (SST)");
+        return;
+      }
       const testImageUrl = "https://picsum.photos/800/600.jpg";
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
         testImageUrl
