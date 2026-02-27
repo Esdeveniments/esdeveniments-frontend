@@ -56,7 +56,7 @@ const CardHorizontalServer = async ({
     remove: tCard("favoriteRemoveAria"),
   };
 
-  const isFree = event.type === "FREE";
+  const firstCategory = event.categories?.[0];
 
   return (
     <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
@@ -71,7 +71,7 @@ const CardHorizontalServer = async ({
         <span className="sr-only">{title}</span>
       </CardLink>
 
-      {/* Image — clean */}
+      {/* Image */}
       <div className="relative aspect-[3/2] overflow-hidden bg-muted">
         <Image
           className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
@@ -86,6 +86,15 @@ const CardHorizontalServer = async ({
           cacheKey={event.hash || event.updatedAt}
         />
 
+        {/* Category badge */}
+        {firstCategory && (
+          <div className="absolute top-2 left-2 z-[2] pointer-events-none">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[11px] font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
+              {firstCategory.name}
+            </span>
+          </div>
+        )}
+
         {shouldShowFavoriteButton && (
           <FavoriteButtonOverlay
             eventSlug={event.slug}
@@ -96,22 +105,14 @@ const CardHorizontalServer = async ({
             wrapperClassName="pointer-events-auto z-[2]"
           />
         )}
-
-        {isFree && (
-          <div className="absolute bottom-2 left-2 z-[2] pointer-events-none">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[11px] font-bold uppercase tracking-wide bg-success text-white shadow-xs">
-              Free
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col px-3 pt-2.5 pb-3 pointer-events-none">
-        {/* Date — colored */}
-        <p className="text-xs font-semibold text-primary mb-1 truncate">
+        {/* Date — muted */}
+        <p className="text-xs text-muted-foreground mb-1 truncate">
           {eventDate}
-          {timeDisplay && <span className="text-foreground/50 font-normal"> · {timeDisplay}</span>}
+          {timeDisplay && <> · {timeDisplay}</>}
         </p>
 
         {/* Title */}

@@ -37,7 +37,7 @@ export default function CardContentClient({
     preferPreformattedDates: true,
   });
 
-  const isFree = event.type === "FREE";
+  const firstCategory = event.categories?.[0];
 
   return (
     <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
@@ -52,7 +52,7 @@ export default function CardContentClient({
         <span className="sr-only">{title}</span>
       </CardLinkClient>
 
-      {/* Image — clean, no overlays except favorite + badges */}
+      {/* Image — clean, with category badge + favorite */}
       <div
         className="relative aspect-[3/2] overflow-hidden bg-muted"
         style={{ viewTransitionName: `event-image-${event.id}` }}
@@ -70,6 +70,15 @@ export default function CardContentClient({
           cacheKey={event.hash || event.updatedAt}
         />
 
+        {/* Category badge — top left */}
+        {firstCategory && (
+          <div className="absolute top-2.5 left-2.5 z-[2] pointer-events-none">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-badge text-xs font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
+              {firstCategory.name}
+            </span>
+          </div>
+        )}
+
         {/* Favorite — top right */}
         {shouldShowFavoriteButton && (
           <FavoriteButtonOverlay
@@ -81,26 +90,17 @@ export default function CardContentClient({
             wrapperClassName="pointer-events-auto z-[2]"
           />
         )}
-
-        {/* FREE badge — bottom left */}
-        {isFree && (
-          <div className="absolute bottom-2 left-2 z-[2] pointer-events-none">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[11px] font-bold uppercase tracking-wide bg-success text-white shadow-xs">
-              Free
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col px-3 pt-3 pb-3 pointer-events-none">
-        {/* Date — colored, prominent */}
-        <p className="text-sm font-semibold text-primary mb-1 truncate">
+        {/* Date + time — muted, scannable */}
+        <p className="body-small text-muted-foreground mb-1 truncate">
           {eventDate}
-          {timeDisplay && <span className="text-foreground/50 font-normal"> · {timeDisplay}</span>}
+          {timeDisplay && <> · {timeDisplay}</>}
         </p>
 
-        {/* Title — bold */}
+        {/* Title — bold, prominent */}
         <h3 className="text-base font-semibold leading-snug line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary transition-colors">
           {title}
         </h3>
