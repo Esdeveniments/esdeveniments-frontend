@@ -11,17 +11,16 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import { CalendarIcon } from "@heroicons/react/24/outline";
 
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const isHorizontal = layout === "horizontal";
   return (
     <div className={`rounded-card overflow-hidden bg-background shadow-sm flex flex-col ${isHorizontal ? "w-full" : "w-44 min-w-[11rem]"}`}>
-      <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "aspect-[16/10]" : "aspect-[4/3]"}`} />
-      <div className="p-3 flex flex-col gap-2">
+      <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "aspect-[3/2]" : "aspect-[4/3]"}`} />
+      <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1.5">
+        <div className="w-2/3 h-3 bg-border/40 rounded animate-fast-pulse" />
         <div className="w-3/4 h-4 bg-border/40 rounded animate-fast-pulse" />
         <div className="w-1/2 h-3 bg-border/40 rounded animate-fast-pulse" />
-        <div className="w-2/3 h-3 bg-border/40 rounded animate-fast-pulse" />
       </div>
     </div>
   );
@@ -91,7 +90,7 @@ async function EventsAroundServer({
 
   if (loading) {
     return (
-      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
+      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-3 min-w-0">
         <EventCardLoading layout={layout} />
         <EventCardLoading layout={layout} />
         <EventCardLoading layout={layout} />
@@ -133,12 +132,12 @@ async function EventsAroundServer({
           hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
           labels={{ previous: tScroll("previous"), next: tScroll("next") }}
         >
-          <div className="flex gap-element-gap">
+          <div className="flex gap-3">
             {uniqueEvents.map((event, index) => (
               <div
                 role="listitem"
                 key={event.id ?? event.slug ?? index}
-                className="snap-start flex-none w-[80vw] min-w-[80vw] sm:w-72 sm:min-w-[18rem]"
+                className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
               >
                 <CardHorizontalServer
                   event={event}
@@ -167,7 +166,7 @@ async function EventsAroundServer({
           data={jsonLdData}
         />
       )}
-      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
+      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-3 min-w-0">
         {uniqueEvents.map((event, index) => {
           const eventTitle = truncateString(event.title || "", 50);
           const image = event.imageUrl;
@@ -189,7 +188,7 @@ async function EventsAroundServer({
           return (
             <div
               key={event.id ?? event.slug ?? index}
-              className="flex-none w-44 min-w-[11rem]"
+              className="flex-none w-40 min-w-[10rem]"
             >
               <CardLink
                 href={`/e/${event.slug}`}
@@ -200,9 +199,9 @@ async function EventsAroundServer({
                 data-analytics-position={String(index + 1)}
               >
                 {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                <div className="aspect-[4/3] overflow-hidden bg-muted">
                   <Image
-                    className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
                     title={event.title}
                     alt={event.title}
                     image={image}
@@ -213,17 +212,11 @@ async function EventsAroundServer({
                     context="card"
                     cacheKey={event.hash || event.updatedAt}
                   />
-                  {/* Date pill */}
-                  <div className="absolute bottom-2 left-2 pointer-events-none">
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-badge text-[10px] font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm">
-                      <CalendarIcon className="w-2.5 h-2.5" />
-                      {eventDate}
-                    </span>
-                  </div>
                 </div>
                 {/* Content */}
-                <div className="p-2.5">
-                  <h3 className="text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-1">
+                <div className="px-2.5 pt-2 pb-2.5">
+                  <p className="text-[11px] font-semibold text-primary mb-0.5 truncate">{eventDate}</p>
+                  <h3 className="text-sm font-medium leading-snug line-clamp-2 text-foreground-strong group-hover:text-primary transition-colors mb-1">
                     {eventTitle}
                   </h3>
                   <p className="text-xs text-foreground/60 truncate">{primaryLabel}</p>

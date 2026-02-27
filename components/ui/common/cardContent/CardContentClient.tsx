@@ -1,7 +1,6 @@
 "use client";
 import {
   MapPinIcon as LocationMarkerIcon,
-  CalendarIcon,
 } from "@heroicons/react/24/outline";
 import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
@@ -38,7 +37,7 @@ export default function CardContentClient({
     preferPreformattedDates: true,
   });
 
-  const firstCategory = event.categories?.[0];
+  const isFree = event.type === "FREE";
 
   return (
     <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
@@ -53,13 +52,13 @@ export default function CardContentClient({
         <span className="sr-only">{title}</span>
       </CardLinkClient>
 
-      {/* Image with overlay elements */}
+      {/* Image — clean, no overlays except favorite + badges */}
       <div
-        className="relative aspect-[2/1] overflow-hidden bg-muted"
+        className="relative aspect-[3/2] overflow-hidden bg-muted"
         style={{ viewTransitionName: `event-image-${event.id}` }}
       >
         <Image
-          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
           title={event.title}
           image={image}
           priority={isPriority}
@@ -70,18 +69,6 @@ export default function CardContentClient({
           context="list"
           cacheKey={event.hash || event.updatedAt}
         />
-
-        {/* Bottom gradient */}
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-
-        {/* Category badge — top left */}
-        {firstCategory && (
-          <div className="absolute top-3 left-3 z-[2] pointer-events-none">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-badge text-xs font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
-              {firstCategory.name}
-            </span>
-          </div>
-        )}
 
         {/* Favorite — top right */}
         {shouldShowFavoriteButton && (
@@ -95,45 +82,45 @@ export default function CardContentClient({
           />
         )}
 
-        {/* Date overlay — bottom left */}
-        <div className="absolute bottom-3 left-3 z-[2] pointer-events-none">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-badge text-xs font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
-            <CalendarIcon className="w-3.5 h-3.5" />
-            {eventDate}
-          </span>
-        </div>
+        {/* FREE badge — bottom left */}
+        {isFree && (
+          <div className="absolute bottom-2 left-2 z-[2] pointer-events-none">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[11px] font-bold uppercase tracking-wide bg-success text-white shadow-xs">
+              Free
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col p-card-padding-sm pointer-events-none">
-        {/* Title */}
-        <h3 className="heading-4 line-clamp-2 mb-1.5 group-hover:text-primary transition-colors">
+      <div className="flex-1 flex flex-col px-3 pt-3 pb-3 pointer-events-none">
+        {/* Date — colored, prominent */}
+        <p className="text-sm font-semibold text-primary mb-1 truncate">
+          {eventDate}
+          {timeDisplay && <span className="text-foreground/50 font-normal"> · {timeDisplay}</span>}
+        </p>
+
+        {/* Title — bold */}
+        <h3 className="text-base font-semibold leading-snug line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary transition-colors">
           {title}
         </h3>
 
-        {/* Metadata */}
-        <div className="flex flex-col gap-1 mt-auto">
-          {timeDisplay && (
-            <p className="body-small text-foreground/70 truncate">{timeDisplay}</p>
-          )}
+        {/* Location + views — pushed to bottom */}
+        <div className="mt-auto flex items-center justify-between gap-2">
           {primaryLocation && (
-            <div className="flex items-center gap-1.5 body-small text-foreground/70">
+            <div className="flex items-center gap-1 body-small text-foreground/60 min-w-0">
               <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="truncate">{primaryLocation}</span>
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        {event.visits > 0 && (
-          <div className="flex items-center justify-end mt-2 pt-2 border-t border-border/20">
+          {event.visits > 0 && (
             <ViewCounterIsland
               visits={event.visits}
               hideText
-              className="flex items-center"
+              className="flex items-center flex-shrink-0"
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </article>
   );

@@ -11,11 +11,7 @@ import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
-import {
-  CalendarIcon,
-  ClockIcon,
-  MapPinIcon as LocationMarkerIcon,
-} from "@heroicons/react/24/outline";
+import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 
 const CardHorizontalServer = async ({
   event,
@@ -60,7 +56,7 @@ const CardHorizontalServer = async ({
     remove: tCard("favoriteRemoveAria"),
   };
 
-  const firstCategory = event.categories?.[0];
+  const isFree = event.type === "FREE";
 
   return (
     <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
@@ -75,10 +71,10 @@ const CardHorizontalServer = async ({
         <span className="sr-only">{title}</span>
       </CardLink>
 
-      {/* Image */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+      {/* Image — clean */}
+      <div className="relative aspect-[3/2] overflow-hidden bg-muted">
         <Image
-          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
           title={event.title}
           alt={event.title}
           image={event.imageUrl}
@@ -90,19 +86,6 @@ const CardHorizontalServer = async ({
           cacheKey={event.hash || event.updatedAt}
         />
 
-        {/* Bottom gradient */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-
-        {/* Category badge */}
-        {firstCategory && (
-          <div className="absolute top-2.5 left-2.5 z-[2] pointer-events-none">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[11px] font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
-              {firstCategory.name}
-            </span>
-          </div>
-        )}
-
-        {/* Favorite */}
         {shouldShowFavoriteButton && (
           <FavoriteButtonOverlay
             eventSlug={event.slug}
@@ -114,40 +97,42 @@ const CardHorizontalServer = async ({
           />
         )}
 
-        {/* Date overlay */}
-        <div className="absolute bottom-2.5 left-2.5 z-[2] pointer-events-none">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-badge text-[11px] font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
-            <CalendarIcon className="w-3 h-3" />
-            {eventDate}
-          </span>
-        </div>
+        {isFree && (
+          <div className="absolute bottom-2 left-2 z-[2] pointer-events-none">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[11px] font-bold uppercase tracking-wide bg-success text-white shadow-xs">
+              Free
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col p-3 pointer-events-none">
-        {/* Title + view count */}
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h3 className="heading-4 line-clamp-2 flex-1 min-w-0 group-hover:text-primary transition-colors">
-            {title}
-          </h3>
-          <div className="flex-shrink-0 pointer-events-auto">
-            <ViewCounter visits={event.visits} hideText />
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col px-3 pt-2.5 pb-3 pointer-events-none">
+        {/* Date — colored */}
+        <p className="text-xs font-semibold text-primary mb-1 truncate">
+          {eventDate}
+          {timeDisplay && <span className="text-foreground/50 font-normal"> · {timeDisplay}</span>}
+        </p>
 
-        {/* Metadata — pushed to bottom */}
-        <div className="flex flex-col gap-1 mt-auto">
-          <div className="flex items-center gap-1.5 body-small text-foreground/70">
-            <ClockIcon className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">{timeDisplay}</span>
-          </div>
-          <div className="flex items-center gap-1.5 body-small text-foreground/70">
-            <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
+        {/* Title */}
+        <h3 className="text-sm font-semibold leading-snug line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary transition-colors">
+          {title}
+        </h3>
+
+        {/* Location + views */}
+        <div className="mt-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 text-xs text-foreground/60 min-w-0">
+            <LocationMarkerIcon className="w-3 h-3 flex-shrink-0" />
             <span className="truncate">
               {primaryLabel}
               {secondaryLabel && `, ${secondaryLabel}`}
             </span>
           </div>
+          {event.visits > 0 && (
+            <div className="flex-shrink-0 pointer-events-auto">
+              <ViewCounter visits={event.visits} hideText />
+            </div>
+          )}
         </div>
       </div>
     </article>
