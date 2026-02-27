@@ -1,5 +1,6 @@
 import { truncateString, getFormattedDate } from "@utils/helpers";
 import { buildDisplayLocation } from "@utils/location-helpers";
+import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import type { CardContentProps, FavoriteButtonLabels } from "types/props";
 import type { AppLocale } from "types/i18n";
 
@@ -50,6 +51,12 @@ export function prepareCardContentData({
     ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
     : tCard("dateSingle", { nameDay, start: formattedStart });
 
+  const timeDisplay = formatEventTimeDisplayDetail(
+    event.startTime,
+    event.endTime,
+    timeLabels
+  );
+
   const favoriteLabels: FavoriteButtonLabels = {
     add: tCard("favoriteAddAria"),
     remove: tCard("favoriteRemoveAria"),
@@ -63,6 +70,7 @@ export function prepareCardContentData({
     primaryLocation,
     image,
     eventDate,
+    timeDisplay,
     favoriteLabels,
     shouldShowFavoriteButton,
   };

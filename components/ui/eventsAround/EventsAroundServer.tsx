@@ -13,33 +13,17 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
-  const cardClass =
-    layout === "horizontal"
-      ? "flex-none w-96 min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
-      : "flex-none w-40 min-w-[10rem] flex flex-col bg-background overflow-hidden cursor-pointer";
-
-  const imageClass = layout === "horizontal" ? "w-full h-64" : "w-full h-32";
-
+  const isHorizontal = layout === "horizontal";
   return (
-    <div className={cardClass}>
-      {/* Image Placeholder */}
-      <div
-        className={`${imageClass} flex justify-center items-center overflow-hidden animate-fast-pulse`}
-      >
-        <div className="w-full h-full bg-muted"></div>
-      </div>
-      {/* Title Placeholder */}
-      <div className="p-1 pt-4">
-        <div className="w-2/3 h-5 bg-foreground-strong rounded-xl animate-fast-pulse"></div>
-      </div>
-      {/* Location Placeholder */}
-      <div className="p-1">
-        <div className="w-full h-full flex items-start animate-fast-pulse">
-          <div className="h-4 w-4 bg-foreground-strong rounded-xl"></div>
-          <div className="w-full h-full flex flex-col justify-center items-start px-2 gap-2">
-            <div className="w-2/3 my-1 bg-foreground-strong h-3 rounded-xl"></div>
-          </div>
+    <div className={`card-bordered overflow-hidden flex flex-col ${isHorizontal ? "w-full" : "w-40 min-w-[10rem]"}`}>
+      <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "h-48" : "aspect-[4/3]"}`} />
+      <div className="p-card-padding-sm flex flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <div className="w-1 h-4 bg-border/40 rounded-full flex-shrink-0" />
+          <div className="w-2/3 h-4 bg-border/40 rounded animate-fast-pulse" />
         </div>
+        <div className="w-1/2 h-3 bg-border/40 rounded animate-fast-pulse" />
+        <div className="w-2/3 h-3 bg-border/40 rounded animate-fast-pulse" />
       </div>
     </div>
   );
@@ -68,16 +52,13 @@ async function EventsAroundServer({
   useDetailTimeFormat = false,
 }: EventsAroundServerProps) {
   const locale = await getLocaleSafely();
-  // Deduplicate events defensively to avoid React key collisions when backend returns duplicates
-  // Keep first occurrence order-stable. Key used: id fallback to slug.
   const uniqueEvents = dedupeEvents(events);
 
-  // Generate JSON-LD data for SEO
   const generateJsonLdData = () => {
     if (!showJsonLd || uniqueEvents.length === 0) return null;
 
     const eventSchemas: SchemaOrgEvent[] = uniqueEvents
-      .slice(0, 10) // Limit to first 10 events for performance
+      .slice(0, 10)
       .map((event) => {
         try {
           return generateJsonData(event);
@@ -112,9 +93,7 @@ async function EventsAroundServer({
 
   if (loading) {
     const containerClass =
-      layout === "horizontal"
-        ? "w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0"
-        : "w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0";
+      "w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0";
 
     return (
       <div className={containerClass}>
@@ -136,7 +115,7 @@ async function EventsAroundServer({
     namespace: "Components.HorizontalScroll",
   });
   const carouselSuffix = t("carouselSuffix");
-  // Render different layouts
+
   if (layout === "horizontal") {
     return (
       <>
@@ -163,9 +142,8 @@ async function EventsAroundServer({
             {uniqueEvents.map((event, index) => (
               <div
                 role="listitem"
-                // key uses id or slug; index fallback should never be needed due to dedup above
                 key={event.id ?? event.slug ?? index}
-                className="snap-start flex-none w-[85vw] min-w-[85vw] sm:w-96 sm:min-w-[24rem] flex flex-col bg-background overflow-hidden cursor-pointer"
+                className="snap-start flex-none w-[85vw] min-w-[85vw] sm:w-80 sm:min-w-[20rem]"
               >
                 <CardHorizontalServer
                   event={event}
@@ -180,7 +158,6 @@ async function EventsAroundServer({
     );
   }
 
-  // Default compact layout - for related events on individual pages (no priority)
   return (
     <>
       {jsonLdData && (
@@ -199,7 +176,6 @@ async function EventsAroundServer({
           const eventTitle = truncateString(event.title || "", 60);
           const image = event.imageUrl;
 
-          // Format the date
           const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
             event.startDate,
             event.endDate,
@@ -217,20 +193,20 @@ async function EventsAroundServer({
           return (
             <div
               key={event.id ?? event.slug ?? index}
-              className="flex-none w-40 min-w-[10rem] flex flex-col bg-background overflow-hidden cursor-pointer"
+              className="flex-none w-44 min-w-[11rem]"
             >
               <CardLink
                 href={`/e/${event.slug}`}
-                className="block pressable-card transition-card"
+                className="block card-bordered overflow-hidden group transition-card hover-lift"
                 data-analytics-event-name="related_event_click"
                 data-analytics-event-id={event.id ? String(event.id) : ""}
                 data-analytics-event-slug={event.slug || ""}
                 data-analytics-position={String(index + 1)}
               >
-                {/* ImageEvent */}
-                <div className="w-full h-32 flex justify-center items-center overflow-hidden">
+                {/* Image */}
+                <div className="aspect-[4/3] overflow-hidden bg-muted">
                   <Image
-                    className="w-full object-cover"
+                    className="w-full h-full object-cover"
                     title={event.title}
                     alt={event.title}
                     image={image}
@@ -243,32 +219,27 @@ async function EventsAroundServer({
                     cacheKey={event.hash || event.updatedAt}
                   />
                 </div>
-                {/* Title */}
-                <div className="flex pt-2">
-                  <div className="pt-[2px] pr-2">
-                    <div className="w-2 h-4 bg-gradient-to-r from-primary to-primary-dark"></div>
+                {/* Content */}
+                <div className="p-2">
+                  {/* Title */}
+                  <div className="flex items-start gap-1.5 mb-1">
+                    <div className="w-1 h-4 bg-gradient-to-b from-primary to-primary-dark flex-shrink-0 mt-0.5 rounded-full" />
+                    <h3 className="heading-4 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 group-hover:text-primary transition-colors">
+                      {eventTitle}
+                    </h3>
                   </div>
-                  <h3 className="heading-4 text-ellipsis overflow-hidden whitespace-nowrap">
-                    {eventTitle}
-                  </h3>
-                </div>
-                {/* Location - city primary, venue optional */}
-                <div className="pt-1">
-                  <div className="body-small font-normal text-ellipsis overflow-hidden whitespace-nowrap flex flex-col text-foreground">
-                    <span className="truncate font-semibold">
-                      {primaryLabel}
-                    </span>
-                    {secondaryLabel && (
-                      <span className="truncate text-muted-foreground">
-                        {secondaryLabel}
-                      </span>
-                    )}
+                  {/* Location */}
+                  <div className="body-small text-foreground truncate">
+                    <span className="font-semibold">{primaryLabel}</span>
                   </div>
-                </div>
-                {/* Date */}
-                <div className="pt-1">
-                  <div className="body-small font-normal text-foreground/80 text-ellipsis overflow-hidden whitespace-nowrap">
-                    <span>{eventDate}</span>
+                  {secondaryLabel && (
+                    <div className="body-small text-muted-foreground truncate">
+                      {secondaryLabel}
+                    </div>
+                  )}
+                  {/* Date */}
+                  <div className="body-small text-foreground/80 truncate mt-0.5">
+                    {eventDate}
                   </div>
                 </div>
               </CardLink>
