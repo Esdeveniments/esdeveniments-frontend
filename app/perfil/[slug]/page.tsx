@@ -9,6 +9,29 @@ import { siteUrl } from "@config/index";
 import type { PageData } from "types/common";
 import type { FetchEventsParams } from "types/event";
 
+// --- ISR MIGRATION GUIDE ---
+// Currently: fully dynamic/SSR (no generateStaticParams).
+// Reason: getLocaleSafely() and getTranslations() call headers(), which is
+// incompatible with static generation (causes DYNAMIC_SERVER_USAGE on Vercel).
+//
+// When the backend has a real /profiles endpoint:
+// 1. Move locale/translations resolution OUT of the page component and into
+//    a layout or middleware (so the page body doesn't call headers() directly).
+// 2. Or use next-intl's static rendering mode (setRequestLocale) like
+//    app/[place]/page.tsx does — but this requires the locale to be in the
+//    route segment (e.g., /[locale]/perfil/[slug]).
+// 3. Re-add generateStaticParams to pre-render top profiles at build time:
+//    export async function generateStaticParams() {
+//      const profiles = await fetchTopProfiles(); // new API endpoint
+//      return profiles.map((p) => ({ slug: p.slug }));
+//    }
+//    export const dynamicParams = true; // allow on-demand ISR for others
+// 4. Add "profiles" to ALLOWED_TAGS in app/api/revalidate/route.ts
+//    for cache invalidation when profiles are updated.
+//
+// Cost analysis: /perfil/[slug] is flat (no searchParams), so ISR is safe.
+// Expected: ~500 profiles × 3 locales = 1,500 DynamoDB entries max.
+
 export async function generateMetadata({
   params,
 }: {
