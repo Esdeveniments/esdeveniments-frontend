@@ -265,10 +265,8 @@ test.describe("Auth → Profile flow", () => {
       await dismissButton.click();
     }
 
-    // Owner should see the disabled "Edit profile" button
-    await expect(
-      page.getByRole("button", { name: /edit profile|editar perfil/i })
-    ).toBeVisible({
+    // Owner should see the "Edit profile" link
+    await expect(page.getByTestId("profile-edit-button")).toBeVisible({
       timeout: process.env.CI ? 30000 : 15000,
     });
 
@@ -333,6 +331,101 @@ test.describe("Auth → Profile flow", () => {
     await expect(
       page.getByRole("button", { name: /edit profile|editar perfil/i })
     ).not.toBeVisible();
+  });
+
+  test("RequireAuth: /publica shows login prompt when not authenticated", async ({
+    page,
+  }) => {
+    await page.goto("/en/publica", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    await expect(page.getByTestId("require-auth-prompt")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    // Should show login button with redirect back to /publica
+    const loginLink = page.getByTestId("require-auth-prompt").getByRole("link", { name: /log in/i });
+    await expect(loginLink).toBeVisible();
+    const href = await loginLink.getAttribute("href");
+    expect(href).toContain("iniciar-sessio");
+    expect(href).toContain("publica");
+  });
+
+  test("RequireAuth: /publica shows form after login", async ({ page }) => {
+    // Login first
+    await page.goto("/en/iniciar-sessio", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+    await page.getByLabel(/email/i).fill("user@test.com");
+    await page.getByLabel(/password/i).fill("user");
+    await page.getByTestId("login-form").getByRole("button", { name: /log in/i }).click();
+    await page.waitForURL("**/en", { timeout: process.env.CI ? 30000 : 15000 });
+
+    // Navigate to /publica — should show the form, not the auth prompt
+    await page.goto("/en/publica", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    // Auth prompt should NOT be visible
+    await expect(page.getByTestId("require-auth-prompt")).not.toBeVisible({
+      timeout: 5000,
+    });
+  });
+
+  test("profile edit page: organizer can access edit form via profile link", async ({ page }) => {
+    // Login as organizer
+    await page.goto("/en/iniciar-sessio", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+    await page.getByLabel(/email/i).fill("dev@test.com");
+    await page.getByLabel(/password/i).fill("dev");
+    await page.getByTestId("login-form").getByRole("button", { name: /log in/i }).click();
+    await page.waitForURL("**/en", { timeout: process.env.CI ? 30000 : 15000 });
+
+    // Navigate to profile via dropdown (client-side preserves mock auth state)
+    await page.getByTestId("user-avatar-button").click();
+    await expect(page.getByTestId("user-dropdown-menu")).toBeVisible({ timeout: 5000 });
+    await page.getByTestId("user-dropdown-menu").getByRole("link", { name: /profile|perfil/i }).click();
+    await page.waitForURL("**/perfil/razzmatazz", { timeout: process.env.CI ? 30000 : 15000 });
+
+    // Dismiss popup if present
+    const dismissBtn = page.getByRole("button", { name: /not now/i }).first();
+    if (await dismissBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await dismissBtn.click();
+    }
+
+    // Click "Edit profile" button on profile page
+    const editLink = page.getByTestId("profile-edit-button");
+    await expect(editLink).toBeVisible({ timeout: process.env.CI ? 30000 : 15000 });
+    await editLink.click();
+
+    await page.waitForURL("**/perfil/razzmatazz/edita", {
+      timeout: process.env.CI ? 30000 : 15000,
+    });
+
+    await expect(page.getByTestId("profile-edit-form")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    // Form should have pre-filled name
+    await expect(page.getByLabel(/name|nom/i).first()).toHaveValue("Razzmatazz");
+  });
+
+  test("profile edit page: unauthenticated user sees login prompt", async ({ page }) => {
+    await page.goto("/en/perfil/razzmatazz/edita", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    // RequireAuth should show login prompt
+    await expect(page.getByTestId("require-auth-prompt")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
   });
 
   test("profile page renders with i18n in Spanish", async ({ page }) => {
