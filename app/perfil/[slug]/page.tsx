@@ -80,7 +80,7 @@ export default async function ProfilePage({
     metaDescription: t("metaDescription", { name: profile.name }),
     canonical: toLocalizedUrl(`/perfil/${slug}`, locale),
     notFoundTitle: t("noEvents"),
-    notFoundDescription: t("noEvents"),
+    notFoundDescription: t("noEventsDescription"),
   };
 
   return (

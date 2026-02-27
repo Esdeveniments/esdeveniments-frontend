@@ -323,6 +323,7 @@
       "verified": "Verificat",
       "joinedDate": "Des de {date}",
       "noEvents": "Encara no hi ha esdeveniments",
+      "noEventsDescription": "Aquest perfil encara no ha publicat cap esdeveniment. Torna-hi més endavant!",
       "website": "Lloc web",
       "breadcrumbProfiles": "Perfils",
       "totalEvents": "{count} esdeveniments",

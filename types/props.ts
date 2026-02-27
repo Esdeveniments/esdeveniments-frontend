@@ -723,6 +723,11 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+// Profile avatar fallback props
+export interface AvatarFallbackProps {
+  name: string;
+}
+
 // Profile edit props
 export interface ProfileEditFormProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;

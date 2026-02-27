@@ -34,13 +34,14 @@ describe("lib/api/profiles-external", () => {
 });
 
 describe("buildEventsQuery with profileSlug", () => {
-  it("includes profileSlug param when set", () => {
+  it("includes profile param when profileSlug is set", () => {
     const qs = buildEventsQuery({
       page: 0,
       size: 10,
       profileSlug: "razzmatazz",
     });
-    expect(qs.get("profileSlug")).toBe("razzmatazz");
+    expect(qs.get("profile")).toBe("razzmatazz");
+    expect(qs.has("profileSlug")).toBe(false);
   });
 
   it("omits profileSlug param when undefined", () => {

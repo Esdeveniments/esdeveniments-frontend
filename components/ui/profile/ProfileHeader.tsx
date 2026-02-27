@@ -2,9 +2,9 @@ import Badge from "@components/ui/common/badge";
 import { SocialIcon } from "@components/ui/common/social/icons";
 import { getTranslations } from "next-intl/server";
 import ProfileOwnerActions from "./ProfileOwnerActions";
-import type { ProfileHeaderProps } from "types/props";
+import type { ProfileHeaderProps, AvatarFallbackProps } from "types/props";
 
-function AvatarFallback({ name }: { name: string }) {
+function AvatarFallback({ name }: AvatarFallbackProps) {
   const initial = name.charAt(0).toUpperCase();
   return (
     <div
@@ -78,7 +78,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
               {[profile.city, profile.region].filter(Boolean).join(", ")}
             </span>
           )}
-          {profile.website && (
+          {profile.website && /^https?:\/\//i.test(profile.website) && (
             <a
               href={profile.website}
               target="_blank"

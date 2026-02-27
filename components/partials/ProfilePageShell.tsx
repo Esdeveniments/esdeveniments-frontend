@@ -49,7 +49,7 @@ export default async function ProfilePageShell({
         data={organizationSchema}
       />
 
-      <div className="container flex-col justify-center items-center pt-[6rem]">
+      <div className="container flex flex-col justify-center items-center pt-[6rem]">
         <ProfileHeader profile={profile} />
         <ProfileClaimCta profileSlug={profile.slug} />
 

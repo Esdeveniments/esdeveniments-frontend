@@ -163,7 +163,7 @@ export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   if (params.byDate) query.byDate = params.byDate;
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;
-  if (params.profileSlug) query.profileSlug = params.profileSlug;
+  if (params.profileSlug) (query as Record<string, unknown>).profile = params.profileSlug;
 
   return new URLSearchParams(
     Object.fromEntries(
