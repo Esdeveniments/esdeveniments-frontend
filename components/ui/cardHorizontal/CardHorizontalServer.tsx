@@ -60,8 +60,10 @@ const CardHorizontalServer = async ({
     remove: tCard("favoriteRemoveAria"),
   };
 
+  const firstCategory = event.categories?.[0];
+
   return (
-    <article className="relative card-bordered overflow-hidden group h-full flex flex-col">
+    <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
       <CardLink
         href={`/e/${event.slug}`}
         className="absolute inset-0 z-[1]"
@@ -74,19 +76,9 @@ const CardHorizontalServer = async ({
       </CardLink>
 
       {/* Image */}
-      <div className="relative h-48 overflow-hidden bg-muted">
-        {shouldShowFavoriteButton && (
-          <FavoriteButtonOverlay
-            eventSlug={event.slug}
-            eventId={event.id ? String(event.id) : undefined}
-            eventTitle={event.title}
-            initialIsFavorite={isFavorite}
-            labels={favoriteLabels}
-            wrapperClassName="pointer-events-auto z-[2]"
-          />
-        )}
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
         <Image
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-105"
           title={event.title}
           alt={event.title}
           image={event.imageUrl}
@@ -97,13 +89,44 @@ const CardHorizontalServer = async ({
           context="list"
           cacheKey={event.hash || event.updatedAt}
         />
+
+        {/* Bottom gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+
+        {/* Category badge */}
+        {firstCategory && (
+          <div className="absolute top-2.5 left-2.5 z-[2] pointer-events-none">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[11px] font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
+              {firstCategory.name}
+            </span>
+          </div>
+        )}
+
+        {/* Favorite */}
+        {shouldShowFavoriteButton && (
+          <FavoriteButtonOverlay
+            eventSlug={event.slug}
+            eventId={event.id ? String(event.id) : undefined}
+            eventTitle={event.title}
+            initialIsFavorite={isFavorite}
+            labels={favoriteLabels}
+            wrapperClassName="pointer-events-auto z-[2]"
+          />
+        )}
+
+        {/* Date overlay */}
+        <div className="absolute bottom-2.5 left-2.5 z-[2] pointer-events-none">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-badge text-[11px] font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
+            <CalendarIcon className="w-3 h-3" />
+            {eventDate}
+          </span>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="p-card-padding-sm flex-1 flex flex-col pointer-events-none">
-        {/* Title with red accent */}
-        <div className="flex items-start gap-2 mb-element-gap-sm">
-          <div className="w-1 h-5 bg-gradient-to-b from-primary to-primary-dark flex-shrink-0 mt-0.5 rounded-full" />
+      <div className="flex-1 flex flex-col p-3 pointer-events-none">
+        {/* Title + view count */}
+        <div className="flex items-start justify-between gap-2 mb-1.5">
           <h3 className="heading-4 line-clamp-2 flex-1 min-w-0 group-hover:text-primary transition-colors">
             {title}
           </h3>
@@ -112,26 +135,18 @@ const CardHorizontalServer = async ({
           </div>
         </div>
 
-        {/* Metadata — consolidated, pushed to bottom */}
-        <div className="flex flex-col gap-1.5 mt-auto">
-          <div className="flex items-center gap-2 body-small text-foreground">
-            <CalendarIcon className="w-4 h-4 flex-shrink-0 text-foreground/60" />
-            <span className="truncate">{eventDate}</span>
-          </div>
-          <div className="flex items-center gap-2 body-small text-foreground">
-            <ClockIcon className="w-4 h-4 flex-shrink-0 text-foreground/60" />
+        {/* Metadata — pushed to bottom */}
+        <div className="flex flex-col gap-1 mt-auto">
+          <div className="flex items-center gap-1.5 body-small text-foreground/70">
+            <ClockIcon className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="truncate">{timeDisplay}</span>
           </div>
-          <div className="flex items-center gap-2 body-small text-foreground">
-            <LocationMarkerIcon className="w-4 h-4 flex-shrink-0 text-foreground/60" />
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="truncate">{primaryLabel}</span>
-              {secondaryLabel && (
-                <span className="truncate text-muted-foreground">
-                  {secondaryLabel}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-1.5 body-small text-foreground/70">
+            <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">
+              {primaryLabel}
+              {secondaryLabel && `, ${secondaryLabel}`}
+            </span>
           </div>
         </div>
       </div>

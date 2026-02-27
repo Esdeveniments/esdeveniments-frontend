@@ -5,8 +5,6 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "@components/ui/common/image";
 import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
-import MobileShareIsland from "./MobileShareIsland";
-import DesktopShareIsland from "./DesktopShareIsland";
 import CardLinkClient from "./CardLinkClient";
 import { CardContentProps } from "types/props";
 import { useTranslations, useLocale } from "next-intl";
@@ -40,8 +38,10 @@ export default function CardContentClient({
     preferPreformattedDates: true,
   });
 
+  const firstCategory = event.categories?.[0];
+
   return (
-    <article className="relative card-bordered overflow-hidden group">
+    <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
       <CardLinkClient
         href={`/e/${event.slug}`}
         className="absolute inset-0 z-[1]"
@@ -53,23 +53,13 @@ export default function CardContentClient({
         <span className="sr-only">{title}</span>
       </CardLinkClient>
 
-      {/* Image — fixed aspect ratio, image-first */}
+      {/* Image with overlay elements */}
       <div
-        className="relative aspect-[16/9] overflow-hidden bg-muted"
+        className="relative aspect-[2/1] overflow-hidden bg-muted"
         style={{ viewTransitionName: `event-image-${event.id}` }}
       >
-        {shouldShowFavoriteButton && (
-          <FavoriteButtonOverlay
-            eventSlug={event.slug}
-            eventId={event.id ? String(event.id) : undefined}
-            eventTitle={event.title}
-            initialIsFavorite={initialIsFavorite}
-            labels={favoriteLabels}
-            wrapperClassName="pointer-events-auto z-[2]"
-          />
-        )}
         <Image
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-105"
           title={event.title}
           image={image}
           priority={isPriority}
@@ -80,52 +70,70 @@ export default function CardContentClient({
           context="list"
           cacheKey={event.hash || event.updatedAt}
         />
+
+        {/* Bottom gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+
+        {/* Category badge — top left */}
+        {firstCategory && (
+          <div className="absolute top-3 left-3 z-[2] pointer-events-none">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-badge text-xs font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
+              {firstCategory.name}
+            </span>
+          </div>
+        )}
+
+        {/* Favorite — top right */}
+        {shouldShowFavoriteButton && (
+          <FavoriteButtonOverlay
+            eventSlug={event.slug}
+            eventId={event.id ? String(event.id) : undefined}
+            eventTitle={event.title}
+            initialIsFavorite={initialIsFavorite}
+            labels={favoriteLabels}
+            wrapperClassName="pointer-events-auto z-[2]"
+          />
+        )}
+
+        {/* Date overlay — bottom left */}
+        <div className="absolute bottom-3 left-3 z-[2] pointer-events-none">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-badge text-xs font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs">
+            <CalendarIcon className="w-3.5 h-3.5" />
+            {eventDate}
+          </span>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="p-card-padding-sm md:p-card-padding pointer-events-none">
-        {/* Title with red accent */}
-        <div className="flex items-start gap-2 mb-element-gap-sm">
-          <div className="w-1 h-5 bg-gradient-to-b from-primary to-primary-dark flex-shrink-0 mt-0.5 rounded-full" />
-          <h3 className="heading-4 line-clamp-2 flex-1 min-w-0 group-hover:text-primary transition-colors">
-            {title}
-          </h3>
-        </div>
+      <div className="flex-1 flex flex-col p-card-padding-sm pointer-events-none">
+        {/* Title */}
+        <h3 className="heading-4 line-clamp-2 mb-1.5 group-hover:text-primary transition-colors">
+          {title}
+        </h3>
 
-        {/* Metadata — consolidated */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2 body-small text-foreground">
-            <CalendarIcon className="w-4 h-4 flex-shrink-0 text-foreground/60" />
-            <span className="truncate">
-              {eventDate}
-              {timeDisplay && <> · {timeDisplay}</>}
-            </span>
-          </div>
+        {/* Metadata */}
+        <div className="flex flex-col gap-1 mt-auto">
+          {timeDisplay && (
+            <p className="body-small text-foreground/70 truncate">{timeDisplay}</p>
+          )}
           {primaryLocation && (
-            <div className="flex items-center gap-2 body-small text-foreground">
-              <LocationMarkerIcon className="w-4 h-4 flex-shrink-0 text-foreground/60" />
+            <div className="flex items-center gap-1.5 body-small text-foreground/70">
+              <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="truncate">{primaryLocation}</span>
             </div>
           )}
         </div>
 
-        {/* Footer: share + views — share hidden until hover */}
-        <div className="flex justify-between items-center mt-element-gap-sm pt-element-gap-sm border-t border-border/30">
-          <div className="flex items-center pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity duration-normal max-sm:opacity-100">
-            <MobileShareIsland
-              title={event.title}
-              slug={event.slug}
-              eventDate={eventDate}
-              location={primaryLocation}
+        {/* Footer */}
+        {event.visits > 0 && (
+          <div className="flex items-center justify-end mt-2 pt-2 border-t border-border/20">
+            <ViewCounterIsland
+              visits={event.visits}
+              hideText
+              className="flex items-center"
             />
-            <DesktopShareIsland slug={event.slug} />
           </div>
-          <ViewCounterIsland
-            visits={event.visits}
-            hideText
-            className="flex items-center"
-          />
-        </div>
+        )}
       </div>
     </article>
   );

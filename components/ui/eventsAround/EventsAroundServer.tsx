@@ -11,17 +11,15 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { CalendarIcon } from "@heroicons/react/24/outline";
 
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const isHorizontal = layout === "horizontal";
   return (
-    <div className={`card-bordered overflow-hidden flex flex-col ${isHorizontal ? "w-full" : "w-40 min-w-[10rem]"}`}>
-      <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "h-48" : "aspect-[4/3]"}`} />
-      <div className="p-card-padding-sm flex flex-col gap-2">
-        <div className="flex items-start gap-2">
-          <div className="w-1 h-4 bg-border/40 rounded-full flex-shrink-0" />
-          <div className="w-2/3 h-4 bg-border/40 rounded animate-fast-pulse" />
-        </div>
+    <div className={`rounded-card overflow-hidden bg-background shadow-sm flex flex-col ${isHorizontal ? "w-full" : "w-44 min-w-[11rem]"}`}>
+      <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "aspect-[16/10]" : "aspect-[4/3]"}`} />
+      <div className="p-3 flex flex-col gap-2">
+        <div className="w-3/4 h-4 bg-border/40 rounded animate-fast-pulse" />
         <div className="w-1/2 h-3 bg-border/40 rounded animate-fast-pulse" />
         <div className="w-2/3 h-3 bg-border/40 rounded animate-fast-pulse" />
       </div>
@@ -92,11 +90,8 @@ async function EventsAroundServer({
   const jsonLdData = generateJsonLdData();
 
   if (loading) {
-    const containerClass =
-      "w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0";
-
     return (
-      <div className={containerClass}>
+      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
         <EventCardLoading layout={layout} />
         <EventCardLoading layout={layout} />
         <EventCardLoading layout={layout} />
@@ -143,7 +138,7 @@ async function EventsAroundServer({
               <div
                 role="listitem"
                 key={event.id ?? event.slug ?? index}
-                className="snap-start flex-none w-[85vw] min-w-[85vw] sm:w-80 sm:min-w-[20rem]"
+                className="snap-start flex-none w-[80vw] min-w-[80vw] sm:w-72 sm:min-w-[18rem]"
               >
                 <CardHorizontalServer
                   event={event}
@@ -158,6 +153,7 @@ async function EventsAroundServer({
     );
   }
 
+  // Compact layout — related events on detail pages
   return (
     <>
       {jsonLdData && (
@@ -173,7 +169,7 @@ async function EventsAroundServer({
       )}
       <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
         {uniqueEvents.map((event, index) => {
-          const eventTitle = truncateString(event.title || "", 60);
+          const eventTitle = truncateString(event.title || "", 50);
           const image = event.imageUrl;
 
           const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
@@ -184,7 +180,7 @@ async function EventsAroundServer({
           const eventDate = formattedEnd
             ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
             : tCard("dateSingle", { nameDay, start: formattedStart });
-          const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
+          const { primaryLabel } = buildEventPlaceLabels({
             cityName: event.city?.name,
             regionName: event.region?.name,
             location: event.location,
@@ -197,50 +193,40 @@ async function EventsAroundServer({
             >
               <CardLink
                 href={`/e/${event.slug}`}
-                className="block card-bordered overflow-hidden group transition-card hover-lift"
+                className="block rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full"
                 data-analytics-event-name="related_event_click"
                 data-analytics-event-id={event.id ? String(event.id) : ""}
                 data-analytics-event-slug={event.slug || ""}
                 data-analytics-position={String(index + 1)}
               >
                 {/* Image */}
-                <div className="aspect-[4/3] overflow-hidden bg-muted">
+                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                   <Image
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-105"
                     title={event.title}
                     alt={event.title}
                     image={image}
                     priority={false}
                     fetchPriority="low"
                     location={primaryLabel}
-                    region={secondaryLabel}
                     date={eventDate}
                     context="card"
                     cacheKey={event.hash || event.updatedAt}
                   />
+                  {/* Date pill */}
+                  <div className="absolute bottom-2 left-2 pointer-events-none">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-badge text-[10px] font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm">
+                      <CalendarIcon className="w-2.5 h-2.5" />
+                      {eventDate}
+                    </span>
+                  </div>
                 </div>
                 {/* Content */}
-                <div className="p-2">
-                  {/* Title */}
-                  <div className="flex items-start gap-1.5 mb-1">
-                    <div className="w-1 h-4 bg-gradient-to-b from-primary to-primary-dark flex-shrink-0 mt-0.5 rounded-full" />
-                    <h3 className="heading-4 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 group-hover:text-primary transition-colors">
-                      {eventTitle}
-                    </h3>
-                  </div>
-                  {/* Location */}
-                  <div className="body-small text-foreground truncate">
-                    <span className="font-semibold">{primaryLabel}</span>
-                  </div>
-                  {secondaryLabel && (
-                    <div className="body-small text-muted-foreground truncate">
-                      {secondaryLabel}
-                    </div>
-                  )}
-                  {/* Date */}
-                  <div className="body-small text-foreground/80 truncate mt-0.5">
-                    {eventDate}
-                  </div>
+                <div className="p-2.5">
+                  <h3 className="text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-1">
+                    {eventTitle}
+                  </h3>
+                  <p className="text-xs text-foreground/60 truncate">{primaryLabel}</p>
                 </div>
               </CardLink>
             </div>
