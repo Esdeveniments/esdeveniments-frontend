@@ -326,6 +326,15 @@
       "website": "Website",
       "breadcrumbProfiles": "Profiles",
       "totalEvents": "{count} events",
+      "editPageTitle": "Edit {name}",
+      "editPageDescription": "Edit the profile of {name}",
+      "editName": "Name",
+      "editBio": "Bio",
+      "editWebsite": "Website",
+      "editSave": "Save changes",
+      "editSaved": "Changes saved!",
+      "editNotOwner": "You don't have permission to edit this profile.",
+      "backToProfile": "Back to profile",
       "editProfile": "Edit profile",
       "comingSoon": "(coming soon)",
       "claimQuestion": "Is this your venue?",
@@ -1686,6 +1695,14 @@
       "rate-limited": "Too many attempts. Please wait a moment.",
       "unknown": "Something went wrong. Please try again."
     },
+    "guard": {
+      "title": "Login required",
+      "description": "You need to log in to access this feature.",
+      "loginButton": "Log in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one"
+    },
+    "favoritePrompt": "Log in to save favorites",
     "editEvent": "Edit event",
     "meta": {
       "loginTitle": "Log in | Esdeveniments.cat",

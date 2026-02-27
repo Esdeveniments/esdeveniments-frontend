@@ -326,6 +326,15 @@
       "website": "Lloc web",
       "breadcrumbProfiles": "Perfils",
       "totalEvents": "{count} esdeveniments",
+      "editPageTitle": "Editar {name}",
+      "editPageDescription": "Edita el perfil de {name}",
+      "editName": "Nom",
+      "editBio": "Bio",
+      "editWebsite": "Lloc web",
+      "editSave": "Desar canvis",
+      "editSaved": "Canvis desats!",
+      "editNotOwner": "No tens permís per editar aquest perfil.",
+      "backToProfile": "Tornar al perfil",
       "editProfile": "Editar perfil",
       "comingSoon": "(properament)",
       "claimQuestion": "És el teu local?",
@@ -1689,6 +1698,14 @@
       "rate-limited": "Massa intents. Espera un moment.",
       "unknown": "Alguna cosa ha anat malament. Torna-ho a provar."
     },
+    "guard": {
+      "title": "Cal iniciar sessió",
+      "description": "Has d'iniciar sessió per accedir a aquesta funcionalitat.",
+      "loginButton": "Iniciar sessió",
+      "noAccount": "No tens compte?",
+      "registerLink": "Crea'n un"
+    },
+    "favoritePrompt": "Inicia sessió per desar preferits",
     "editEvent": "Editar esdeveniment",
     "meta": {
       "loginTitle": "Iniciar sessió | Esdeveniments.cat",

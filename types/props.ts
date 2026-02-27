@@ -723,6 +723,11 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+// Profile edit props
+export interface ProfileEditFormProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+}
+
 // Profile ownership props
 export interface ProfileOwnerActionsProps {
   profileSlug: string;
@@ -730,6 +735,12 @@ export interface ProfileOwnerActionsProps {
 
 export interface ProfileClaimCtaProps {
   profileSlug: string;
+}
+
+// Auth guard props
+export interface RequireAuthProps {
+  children: import("react").ReactNode;
+  fallbackMessage?: string;
 }
 
 // Event ownership props

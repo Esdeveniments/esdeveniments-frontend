@@ -1,4 +1,5 @@
 import Badge from "@components/ui/common/badge";
+import { SocialIcon } from "@components/ui/common/social/icons";
 import { getTranslations } from "next-intl/server";
 import ProfileOwnerActions from "./ProfileOwnerActions";
 import type { ProfileHeaderProps } from "types/props";
@@ -88,6 +89,26 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
             </a>
           )}
         </div>
+
+        {/* Social links — reuses SocialIcon from design system */}
+        {profile.socialLinks && Object.keys(profile.socialLinks).length > 0 && (
+          <div className="flex items-center gap-2 mt-element-gap">
+            {Object.entries(profile.socialLinks).map(([platform, url]) =>
+              url ? (
+                <a
+                  key={platform}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-full hover:bg-muted transition-interactive"
+                  aria-label={platform}
+                >
+                  <SocialIcon platform={platform} className="w-4 h-4 fill-foreground/60 hover:fill-primary transition-colors" />
+                </a>
+              ) : null
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

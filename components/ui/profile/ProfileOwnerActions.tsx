@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@components/hooks/useAuth";
+import { Link } from "@i18n/routing";
 import { useTranslations } from "next-intl";
 import type { ProfileOwnerActionsProps } from "types/props";
 
@@ -13,13 +14,12 @@ export default function ProfileOwnerActions({
   if (!isAuthenticated || user?.profileSlug !== profileSlug) return null;
 
   return (
-    <button
-      type="button"
-      disabled
-      className="btn-outline text-sm opacity-60 cursor-not-allowed"
-      title={t("comingSoon")}
+    <Link
+      href={`/perfil/${profileSlug}/edita` as `/${string}`}
+      className="btn-outline text-sm"
+      data-testid="profile-edit-button"
     >
-      {t("editProfile")} {t("comingSoon")}
-    </button>
+      {t("editProfile")}
+    </Link>
   );
 }

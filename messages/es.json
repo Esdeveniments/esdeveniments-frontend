@@ -326,6 +326,15 @@
       "website": "Sitio web",
       "breadcrumbProfiles": "Perfiles",
       "totalEvents": "{count} eventos",
+      "editPageTitle": "Editar {name}",
+      "editPageDescription": "Edita el perfil de {name}",
+      "editName": "Nombre",
+      "editBio": "Bio",
+      "editWebsite": "Sitio web",
+      "editSave": "Guardar cambios",
+      "editSaved": "¡Cambios guardados!",
+      "editNotOwner": "No tienes permiso para editar este perfil.",
+      "backToProfile": "Volver al perfil",
       "editProfile": "Editar perfil",
       "comingSoon": "(próximamente)",
       "claimQuestion": "¿Es tu local?",
@@ -1688,6 +1697,14 @@
       "rate-limited": "Demasiados intentos. Espera un momento.",
       "unknown": "Algo ha salido mal. Inténtalo de nuevo."
     },
+    "guard": {
+      "title": "Inicio de sesión requerido",
+      "description": "Necesitas iniciar sesión para acceder a esta funcionalidad.",
+      "loginButton": "Iniciar sesión",
+      "noAccount": "¿No tienes cuenta?",
+      "registerLink": "Crea una"
+    },
+    "favoritePrompt": "Inicia sesión para guardar favoritos",
     "editEvent": "Editar evento",
     "meta": {
       "loginTitle": "Iniciar sesión | Esdeveniments.cat",

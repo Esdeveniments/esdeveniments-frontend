@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition, useCallback } from "react";
 import dynamic from "next/dynamic";
+import RequireAuth from "@components/ui/auth/RequireAuth";
 import { Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
@@ -628,6 +629,7 @@ const Publica = () => {
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
 
   return (
+    <RequireAuth>
     <>
       {showPreview && previewEvent && (
         <Modal
@@ -722,6 +724,7 @@ const Publica = () => {
         </div>
       </div>
     </>
+    </RequireAuth>
   );
 };
 
