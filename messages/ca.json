@@ -1689,6 +1689,7 @@
       "rate-limited": "Massa intents. Espera un moment.",
       "unknown": "Alguna cosa ha anat malament. Torna-ho a provar."
     },
+    "editEvent": "Editar esdeveniment",
     "meta": {
       "loginTitle": "Iniciar sessió | Esdeveniments.cat",
       "loginDescription": "Inicia sessió al teu compte d'Esdeveniments.cat",

@@ -39,6 +39,7 @@ export interface EventSummaryResponseDTO {
   province?: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
   profile?: ProfileSummaryResponseDTO;
+  creatorId?: string; // UUID of the user who created this event
   updatedAt?: string; // ISO date string for last update
   weather?: {
     temperature: string;

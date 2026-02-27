@@ -5,11 +5,14 @@ export type AuthMethod =
   | "oauth-github"
   | "passwordless";
 
+export type UserRole = "user" | "organizer";
+
 export interface AuthUser {
   id: string;
   email: string;
   displayName?: string;
   avatarUrl?: string;
+  role: UserRole;
   profileSlug?: string;
 }
 
@@ -73,6 +76,7 @@ export interface MockAdapterOptions {
     email: string;
     password: string;
     displayName?: string;
+    role?: UserRole;
     profileSlug?: string;
   }>;
 }

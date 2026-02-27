@@ -46,6 +46,7 @@ import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
+import EventOwnerActions from "@components/ui/auth/EventOwnerActions";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 
 // Lazy load below-the-fold client components via client component wrappers
@@ -367,6 +368,11 @@ export default async function EventPage({
             </div>{" "}
             {/* Event Header with status pill - Server-side rendered */}
             <EventHeader title={title} statusMeta={statusMeta} />
+            <EventOwnerActions
+              eventSlug={event.slug}
+              eventCreatorId={event.creatorId}
+              eventProfileSlug={event.profile?.slug}
+            />
             {/* Sponsor banner slot - near top for visibility */}
             {/* Cascade: town → region → country (specificity wins) */}
             <SponsorBannerSlot

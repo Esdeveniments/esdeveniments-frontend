@@ -29,6 +29,7 @@ export function createMockAdapter(
         id: crypto.randomUUID(),
         email: u.email,
         displayName: u.displayName,
+        role: u.role ?? "user",
         profileSlug: u.profileSlug,
       },
     });
@@ -63,6 +64,7 @@ export function createMockAdapter(
         id: crypto.randomUUID(),
         email: credentials.email,
         displayName: credentials.displayName,
+        role: "user",
       };
       users.set(credentials.email, {
         password: credentials.password ?? "",

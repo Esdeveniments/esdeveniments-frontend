@@ -732,6 +732,13 @@ export interface ProfileClaimCtaProps {
   profileSlug: string;
 }
 
+// Event ownership props
+export interface EventOwnerActionsProps {
+  eventSlug: string;
+  eventCreatorId?: string;
+  eventProfileSlug?: string;
+}
+
 // Auth form props
 export interface LoginFormProps {
   redirectTo?: string;

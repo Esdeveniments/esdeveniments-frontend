@@ -1688,6 +1688,7 @@
       "rate-limited": "Demasiados intentos. Espera un momento.",
       "unknown": "Algo ha salido mal. Inténtalo de nuevo."
     },
+    "editEvent": "Editar evento",
     "meta": {
       "loginTitle": "Iniciar sesión | Esdeveniments.cat",
       "loginDescription": "Inicia sesión en tu cuenta de Esdeveniments.cat",

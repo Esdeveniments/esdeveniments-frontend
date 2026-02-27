@@ -278,6 +278,63 @@ test.describe("Auth → Profile flow", () => {
     ).not.toBeVisible();
   });
 
+  test("regular user: no 'My profile' in dropdown, no edit button on profile", async ({
+    page,
+  }) => {
+    // Login as regular user (user@test.com / user)
+    await page.goto("/en/iniciar-sessio", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    await expect(page.getByTestId("login-form")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    await page.getByLabel(/email/i).fill("user@test.com");
+    await page.getByLabel(/password/i).fill("user");
+    await page.getByTestId("login-form").getByRole("button", { name: /log in/i }).click();
+
+    await page.waitForURL("**/en", { timeout: process.env.CI ? 30000 : 15000 });
+
+    // Avatar should show "M" for Maria
+    await expect(page.getByTestId("user-avatar-button")).toBeVisible({
+      timeout: process.env.CI ? 30000 : 15000,
+    });
+
+    // Open dropdown — should NOT contain "My profile"
+    await page.getByTestId("user-avatar-button").click();
+    await expect(page.getByTestId("user-dropdown-menu")).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByTestId("user-dropdown-menu").getByText("Maria")
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("user-dropdown-menu").getByRole("link", { name: /profile|perfil/i })
+    ).not.toBeVisible();
+
+    // Close dropdown and navigate to a profile page
+    await page.keyboard.press("Escape");
+    await page.goto("/en/perfil/razzmatazz", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    await expect(page.getByTestId("profile-header")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    // Dismiss social popup if present
+    const dismissButton = page.getByRole("button", { name: /not now/i }).first();
+    if (await dismissButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await dismissButton.click();
+    }
+
+    // Regular user should NOT see edit button on someone else's profile
+    await expect(
+      page.getByRole("button", { name: /edit profile|editar perfil/i })
+    ).not.toBeVisible();
+  });
+
   test("profile page renders with i18n in Spanish", async ({ page }) => {
     await page.goto("/es/perfil/razzmatazz", {
       waitUntil: "domcontentloaded",
