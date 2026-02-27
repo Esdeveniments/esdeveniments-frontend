@@ -37,12 +37,14 @@ export async function fetchProfileBySlugExternal(
     if (response.status === 404) return null;
     if (!response.ok) {
       console.error(`fetchProfileBySlugExternal: HTTP ${response.status}`);
-      return null;
+      // Fall back to mock while backend profiles endpoint is not yet implemented.
+      // Once backend has /profiles/{slug}, change this to: return null;
+      return MOCK_PROFILES[slug] ?? null;
     }
     const json = await response.json();
     return parseProfileDetail(json);
   } catch (error) {
     console.error("fetchProfileBySlugExternal: failed", error);
-    return null;
+    return MOCK_PROFILES[slug] ?? null;
   }
 }
