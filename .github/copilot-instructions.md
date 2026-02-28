@@ -207,6 +207,7 @@ Adding a new filter:
 - **Swallowing stack traces**: Pass original error to `captureException(error)`, not `new Error(error.message)`.
 - **URL parsing in catch blocks**: Use try/catch when parsing URLs (e.g., `new URL(url).hostname`) to avoid exceptions in error handlers.
 - **⚠️ CRITICAL - Barrel file imports leaking `"use client"` modules**: NEVER create or import from local barrel files (`index.ts`) that re-export `"use client"` components from different route contexts. In Next.js RSC, every `"use client"` module re-exported from a barrel is registered in the `client-reference-manifest` of **every route** that imports from that barrel — even if the imported route only uses one export. This caused a 24 KB manifest bloat on `/[place]` when `CheckoutButton`, `PlaceSelector`, and `PricingSectionClient` (only used on `/patrocina`) leaked via `components/ui/sponsor/index.ts`. Fix: always use direct file imports (e.g., `from "./SponsorBannerSlot"` not `from "@components/ui/sponsor"`).
+- **⚠️ CRITICAL - Deleting or modifying `open-next.config.ts`**: This file is the **primary** mechanism that installs Sharp into the Lambda bundle via OpenNext's `install.packages` + `arch` config. Deleting it removes Sharp entirely (Lambda ZIP drops from 28 MB to 20 MB), causing `/api/image-proxy` to silently serve unoptimized images. SST's `server.install` alone is NOT sufficient. The `arch` in `open-next.config.ts` MUST match `args.architecture` in `sst.config.ts`. See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
 
 ## 16. Quick Examples
 
