@@ -100,10 +100,12 @@ const CardHorizontalServer = async ({
           {title}
         </h3>
 
-        <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0">
-          <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">{primaryLocation}</span>
-        </div>
+        {primaryLocation && (
+          <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+            <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">{primaryLocation}</span>
+          </div>
+        )}
       </div>
     </article>
   );

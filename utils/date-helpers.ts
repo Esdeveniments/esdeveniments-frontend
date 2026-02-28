@@ -410,7 +410,7 @@ export const formatCardDate = (
     showYear: boolean,
     dayName?: string
   ): string => {
-    const yearSuffix = showYear ? ` ${year}` : "";
+    const yearSuffix = showYear ? (locale === "en" ? `, ${year}` : ` ${year}`) : "";
     if (locale === "en") {
       const prefix = dayName ? `${dayName}, ` : "";
       return `${prefix}${month} ${day}${yearSuffix}`;

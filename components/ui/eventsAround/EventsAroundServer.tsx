@@ -43,7 +43,6 @@ async function EventsAroundServer({
   showJsonLd = false,
   jsonLdId,
   title,
-  useDetailTimeFormat: _useDetailTimeFormat = false,
 }: EventsAroundServerProps) {
   const locale = await getLocaleSafely();
   const uniqueEvents = dedupeEvents(events);
