@@ -1,216 +1,113 @@
 import Image from "@components/ui/common/image";
-import ViewCounter from "@components/ui/viewCounter";
-import { truncateString, getFormattedDate } from "@utils/helpers";
-import { buildEventPlaceLabels } from "@utils/location-helpers";
-import {
-  formatEventTimeDisplay,
-  formatEventTimeDisplayDetail,
-} from "@utils/date-helpers";
 import { getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
+import CategoryBadge from "@components/ui/common/cardContent/CategoryBadge";
+import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
+import { prepareCardContentData } from "@components/ui/common/cardContent/prepareCardContentData";
 
 const CardHorizontalServer = async ({
   event,
   isPriority = false,
-  useDetailTimeFormat = false,
   initialIsFavorite,
 }: CardHorizontalServerProps) => {
   const locale = await getLocaleSafely();
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
-  const timeLabels = {
-    consult: tTime("consult"),
-    startsAt: tTime("startsAt", { time: "{time}" }),
-    range: tTime("range", { start: "{start}", end: "{end}" }),
-    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
-  };
-  const title = truncateString(event.title || "", 60);
-  // const description = truncateString(event.description || "", 60);
+  const tCategories = await getTranslations({ locale, namespace: "Config.Categories" });
 
-  // For categorized events: prefer city and region, but fall back to location if they're missing
-  // This handles cases where the API doesn't include city/region in the response
-  const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
-    cityName: event.city?.name,
-    regionName: event.region?.name,
-    location: event.location,
+  const {
+    title,
+    primaryLocation,
+    cardDate,
+    timeDisplay,
+    favoriteLabels,
+    shouldShowFavoriteButton,
+    categoryLabel,
+    priceLabel,
+    urgencyLabel,
+    urgencyType,
+    multiDayLabel,
+  } = prepareCardContentData({
+    event,
+    variant: "carousel",
+    locale,
+    tCard,
+    tTime,
+    tCategories,
   });
 
-  // Format the date
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
-    event.startDate,
-    event.endDate,
-    locale
-  );
-  const eventDate = formattedEnd
-    ? tCard("dateRange", { start: formattedStart, end: formattedEnd })
-    : tCard("dateSingle", { nameDay, start: formattedStart });
-
   const isFavorite = Boolean(event.slug && initialIsFavorite);
-  const shouldShowFavoriteButton = Boolean(event.slug);
-  const favoriteLabels = {
-    add: tCard("favoriteAddAria"),
-    remove: tCard("favoriteRemoveAria"),
-  };
 
   return (
-    <div className="w-full relative">
+    <article className="relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col">
       <CardLink
         href={`/e/${event.slug}`}
-        className="block group relative h-full pressable-card transition-card"
+        className="absolute inset-0 z-[1]"
+        aria-label={title}
         data-analytics-event-name="select_event"
         data-analytics-event-id={event.id ? String(event.id) : ""}
         data-analytics-event-slug={event.slug || ""}
       >
-        <article className="w-full h-full bg-background overflow-hidden cursor-pointer rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200 relative z-10 flex flex-col">
-          {/* Image */}
-          <div className="w-full h-48 overflow-hidden">
-            <Image
-              className="w-full h-full"
-              title={event.title}
-              alt={event.title}
-              image={event.imageUrl}
-              priority={isPriority}
-              location={event.city?.name}
-              region={event.region?.name}
-              date={eventDate}
-              context="list"
-              cacheKey={event.hash || event.updatedAt}
-            />
-          </div>
-
-          {/* Content */}
-          <div className="py-2 flex-1 flex flex-col justify-between">
-            {/* Title and ViewCounter */}
-            <div>
-              <div className="flex justify-between items-start mb-2 gap-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="w-1 h-6 bg-gradient-to-b from-primary to-primary-dark flex-shrink-0"></div>
-                  <h3 className="heading-4 text-foreground-strong line-clamp-2 flex-1 group-hover:underline transition-all duration-200">
-                    {title}
-                  </h3>
-                </div>
-                <div className="flex-shrink-0">
-                  <ViewCounter visits={event.visits} hideText />
-                </div>
-              </div>
-            </div>
-
-            {/* Date and Location - Bottom Section */}
-            <div>
-              {/* Date */}
-              <div className="flex items-center body-small text-foreground mb-2">
-                <svg
-                  className="w-4 h-4 mr-2 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span>{eventDate}</span>
-              </div>
-
-              {/* Time */}
-              <div className="flex items-center body-small text-foreground mb-2">
-                <svg
-                  className="w-4 h-4 mr-2 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span>
-                  {useDetailTimeFormat
-                    ? formatEventTimeDisplayDetail(
-                      event.startTime,
-                      event.endTime,
-                      timeLabels
-                    )
-                    : formatEventTimeDisplay(
-                      event.startTime,
-                      event.endTime,
-                      timeLabels
-                    )}
-                </span>
-              </div>
-
-              {/* Location - City as primary, venue optional as secondary */}
-              <div className="flex items-center body-small text-foreground mb-2">
-                <svg
-                  className="w-4 h-4 mr-2 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="truncate">{primaryLabel}</span>
-                  {secondaryLabel && (
-                    <span className="truncate text-muted-foreground">
-                      {secondaryLabel}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            {/* {description && (
-            <p className="text-sm text-foreground line-clamp-3">{description}</p>
-          )} */}
-
-            {/* Categories */}
-            {/* {event.categories && event.categories.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-3">
-              {event.categories.slice(0, 3).map((category) => (
-                <span
-                  key={category.id}
-                  className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
-                >
-                  {category.name}
-                </span>
-              ))}
-            </div>
-          )} */}
-          </div>
-        </article>
+        <span className="sr-only">{title}</span>
       </CardLink>
-      {shouldShowFavoriteButton && (
-        <FavoriteButtonOverlay
-          eventSlug={event.slug}
-          eventId={event.id ? String(event.id) : undefined}
-          eventTitle={event.title}
-          initialIsFavorite={isFavorite}
-          labels={favoriteLabels}
+
+      <div className="relative aspect-[3/2] overflow-hidden bg-muted">
+        <Image
+          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
+          title={event.title}
+          alt={event.title}
+          image={event.imageUrl}
+          priority={isPriority}
+          location={event.city?.name}
+          region={event.region?.name}
+          date={cardDate}
+          context="list"
+          cacheKey={event.hash || event.updatedAt}
         />
-      )}
-    </div>
+
+        {shouldShowFavoriteButton && (
+          <FavoriteButtonOverlay
+            eventSlug={event.slug}
+            eventId={event.id ? String(event.id) : undefined}
+            eventTitle={event.title}
+            initialIsFavorite={isFavorite}
+            labels={favoriteLabels}
+            wrapperClassName="pointer-events-auto z-[2]"
+          />
+        )}
+      </div>
+
+      <div className="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5 pointer-events-none">
+        <CategoryBadge label={categoryLabel} />
+
+        <p className="text-xs text-muted-foreground mb-1 truncate">
+          {urgencyLabel ? (
+            <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
+              {urgencyLabel}
+            </span>
+          ) : (
+            cardDate
+          )}
+          {timeDisplay && <> · {timeDisplay}</>}
+          {priceLabel && <> · <span className="text-success font-medium">{priceLabel}</span></>}
+          {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
+        </p>
+
+        <h3 className="text-sm font-semibold leading-normal line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary/85 transition-colors">
+          {title}
+        </h3>
+
+        {primaryLocation && (
+          <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+            <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">{primaryLocation}</span>
+          </div>
+        )}
+      </div>
+    </article>
   );
 };
 

@@ -53,6 +53,7 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
 import type { FaqItem } from "types/faq";
+import type { AppLocale } from "types/i18n";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -94,8 +95,75 @@ export interface ReportViewProps {
 export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
-  isHorizontal?: boolean;
   initialIsFavorite?: boolean;
+}
+
+export interface CardLayoutProps {
+  /** Event slug for links and analytics */
+  slug: string;
+  /** Event ID for analytics */
+  eventId?: string;
+  /** Prepared title text */
+  title: string;
+  /** Original (un-truncated) title for alt text */
+  originalTitle: string;
+  /** Prepared image URL */
+  image: string;
+  /** Whether this card's image should be priority-loaded */
+  isPriority: boolean;
+  /** Formatted card date string */
+  cardDate: string;
+  /** Formatted time display (empty string if no time) */
+  timeDisplay: string;
+  /** City/region location text */
+  primaryLocation: string;
+  /** Localized category label */
+  categoryLabel?: string;
+  /** Category slug for analytics/URL building */
+  categorySlug?: string;
+  /** Localized price label (e.g., "Gratuït" for free events) */
+  priceLabel?: string;
+  /** Urgency label ("Today" / "Tomorrow") */
+  urgencyLabel?: string;
+  /** Urgency type for styling */
+  urgencyType?: "today" | "tomorrow";
+  /** Multi-day label suffix */
+  multiDayLabel?: string;
+  /** Whether to show favorite button */
+  shouldShowFavoriteButton: boolean;
+  /** Whether this event is favorited */
+  isFavorite: boolean;
+  /** Favorite button labels */
+  favoriteLabels: FavoriteButtonLabels;
+  /** Image location/region/date for alt-text context */
+  imageContext?: {
+    location?: string;
+    region?: string;
+    date?: string;
+  };
+  /** Cache key for image optimization */
+  imageCacheKey?: string;
+  /** Optional view transition name for the image container */
+  imageViewTransitionName?: string;
+  /** Render the card link wrapper. Receives children (sr-only label) and props */
+  renderLink: (props: {
+    href: string;
+    className: string;
+    "aria-label": string;
+    "data-analytics-event-name": string;
+    "data-analytics-event-id": string;
+    "data-analytics-event-slug": string;
+    children: ReactNode;
+  }) => ReactNode;
+}
+
+export interface CompactCardProps {
+  event: EventSummaryResponseDTO;
+  locale: AppLocale;
+  tCard: (key: string, values?: Record<string, string>) => string;
+  tTime: (key: string, values?: Record<string, string>) => string;
+  index: number;
+  analyticsEventName?: string;
 }
 
 export interface FavoriteButtonLabels {

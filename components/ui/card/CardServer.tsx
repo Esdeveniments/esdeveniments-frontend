@@ -20,7 +20,6 @@ export default async function CardServer({
     <CardContentServer
       event={event}
       isPriority={isPriority}
-      isHorizontal={false}
       initialIsFavorite={initialIsFavoriteSafe}
     />
   );

@@ -55,7 +55,6 @@ export function CategoryEventsSection({
         showJsonLd
         title={categoryName}
         jsonLdId={`category-events-${categorySlug}`}
-        useDetailTimeFormat={true}
       />
 
       {showAd && (

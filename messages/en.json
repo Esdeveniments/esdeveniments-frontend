@@ -175,6 +175,7 @@
       "sectionWeekend": "Weekend",
       "sectionWeek": "Week",
       "readingTime": "{minutes} min read",
+      "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "mustSee": "MUST-SEE",
       "moreProposals": "MORE IDEAS"
     },
@@ -430,6 +431,21 @@
         "Thursday",
         "Friday",
         "Saturday"
+      ],
+      "daysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      "monthsShort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
       ],
       "months": [
         "January",
@@ -733,13 +749,19 @@
     },
     "EventPage": {
       "faqTitle": "Frequently asked questions",
-      "sponsored": "Sponsored content"
+      "sponsored": "Sponsored content",
+      "visitsCount": "{count, plural, one {{count} view} other {{count} views}}"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Add to favorites",
-      "favoriteRemoveAria": "Remove from favorites"
+      "favoriteRemoveAria": "Remove from favorites",
+      "free": "Free",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "multipleDates": "Multiple dates",
+      "viewCountAria": "{count} views"
     },
     "EventForm": {
       "title": "Title *",

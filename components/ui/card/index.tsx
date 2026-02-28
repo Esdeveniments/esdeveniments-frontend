@@ -14,7 +14,6 @@ export default function Card({
     <CardContentClient
       event={event}
       isPriority={isPriority}
-      isHorizontal={false}
     />
   );
 }

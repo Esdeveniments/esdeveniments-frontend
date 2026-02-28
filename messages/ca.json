@@ -175,6 +175,7 @@
       "sectionWeekend": "Cap de setmana",
       "sectionWeek": "Setmana",
       "readingTime": "{minutes} min lectura",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "mustSee": "ELS IMPRESCINDIBLES",
       "moreProposals": "MÉS PROPOSTES"
     },
@@ -438,6 +439,21 @@
         "Dijous",
         "Divendres",
         "Dissabte"
+      ],
+      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
+      "monthsShort": [
+        "gen.",
+        "feb.",
+        "març",
+        "abr.",
+        "maig",
+        "juny",
+        "jul.",
+        "ag.",
+        "set.",
+        "oct.",
+        "nov.",
+        "des."
       ],
       "months": [
         "gener",
@@ -740,13 +756,19 @@
     },
     "EventPage": {
       "faqTitle": "Preguntes freqüents",
-      "sponsored": "Contingut patrocinat"
+      "sponsored": "Contingut patrocinat",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Afegeix a preferits",
-      "favoriteRemoveAria": "Elimina de preferits"
+      "favoriteRemoveAria": "Elimina de preferits",
+      "free": "Gratuït",
+      "today": "Avui",
+      "tomorrow": "Demà",
+      "multipleDates": "Diversos dies",
+      "viewCountAria": "{count} visualitzacions"
     },
     "EventForm": {
       "title": "Títol *",

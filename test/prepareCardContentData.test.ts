@@ -1,52 +1,70 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { EventSummaryResponseDTO } from "types/api/event";
-import type { AppLocale } from "types/i18n";
 import type { CitySummaryResponseDTO } from "types/api/city";
 
 const truncateStringMock =
   vi.fn<(value: string, maxLength: number) => string>();
-const getFormattedDateMock = vi.fn<
-  (
-    startDate: string,
-    endDate: string,
-    locale: AppLocale
-  ) => {
-    formattedStart: string;
-    formattedEnd: string | null;
-    nameDay: string;
-  }
->();
 
-const buildDisplayLocationMock =
+const formatCardDateMock =
   vi.fn<
-    (args: {
-      location: string;
-      cityName: string;
-      regionName: string;
-      hidePlaceSegments: boolean;
-    }) => string
+    (
+      start: string,
+      end?: string,
+      locale?: string,
+    ) => { cardDate: string; isMultiDay: boolean }
+  >();
+
+const buildEventPlaceLabelsMock =
+  vi.fn<
+    (args: { cityName?: string; regionName?: string; location?: string }) => {
+      primaryLabel: string;
+      secondaryLabel: string;
+      cityLabel: string;
+      regionLabel: string;
+    }
   >();
 
 vi.mock("@utils/helpers", () => ({
   truncateString: (value: string, maxLength: number) =>
     truncateStringMock(value, maxLength),
-  getFormattedDate: (startDate: string, endDate: string, locale: AppLocale) =>
-    getFormattedDateMock(startDate, endDate, locale),
 }));
 
 vi.mock("@utils/location-helpers", () => ({
-  buildDisplayLocation: (args: {
-    location: string;
-    cityName: string;
-    regionName: string;
-    hidePlaceSegments: boolean;
-  }) => buildDisplayLocationMock(args),
+  buildEventPlaceLabels: (args: {
+    cityName?: string;
+    regionName?: string;
+    location?: string;
+  }) => buildEventPlaceLabelsMock(args),
+}));
+
+vi.mock("@utils/date-helpers", () => ({
+  formatCardDate: (start: string, end?: string, locale?: string) =>
+    formatCardDateMock(start, end, locale),
+  normalizeEndTime: (start: string | null, end: string | null) => {
+    if (!end) return null;
+    return start && start === end ? null : end;
+  },
+  formatTimeForAPI: (time: string) => {
+    if (!time || !time.includes(":")) return "";
+    const [hour, minute] = time.split(":");
+    return `${hour}:${minute}`;
+  },
+  convertTZ: (date: Date | string, _tz: string) =>
+    typeof date === "string" ? new Date(date) : date,
+}));
+
+vi.mock("@utils/category-helpers", () => ({
+  getLocalizedCategoryLabelFromConfig: (
+    slug: string,
+    fallback: string,
+    _t: unknown,
+  ) => `localized:${slug || fallback}`,
 }));
 
 import { prepareCardContentData } from "@components/ui/common/cardContent/prepareCardContentData";
 
 function makeEvent(
-  overrides: Partial<EventSummaryResponseDTO> = {}
+  overrides: Partial<EventSummaryResponseDTO> = {},
 ): EventSummaryResponseDTO {
   const city: CitySummaryResponseDTO = {
     id: 1,
@@ -88,120 +106,192 @@ describe("prepareCardContentData", () => {
     vi.clearAllMocks();
 
     truncateStringMock.mockImplementation(
-      (value: string, maxLength: number) => `${value}__${maxLength}`
+      (value: string, _maxLength: number) => value,
     );
 
-    buildDisplayLocationMock.mockImplementation(
-      ({ location, cityName, regionName }) =>
-        `LOC:${location}|${cityName}|${regionName}`
+    buildEventPlaceLabelsMock.mockImplementation(
+      ({ cityName, regionName }) => ({
+        primaryLabel: cityName || "",
+        secondaryLabel: regionName || "",
+        cityLabel: cityName || "",
+        regionLabel: regionName || "",
+      }),
     );
 
-    getFormattedDateMock.mockReturnValue({
-      formattedStart: "FS",
-      formattedEnd: null,
-      nameDay: "ND",
+    formatCardDateMock.mockReturnValue({
+      cardDate: "Dj. 1 gen.",
+      isMultiDay: false,
     });
   });
 
-  it("uses preformatted event dates when preferred and available", () => {
-    const tCard = vi.fn((key: string, values?: Record<string, string>) =>
-      values ? `${key}:${JSON.stringify(values)}` : key
-    );
+  it("uses abbreviated card date format", () => {
+    const tCard = vi.fn((key: string) => key);
     const tTime = vi.fn((key: string) => `time:${key}`);
 
-    const event = makeEvent({
-      formattedStart: "PRE_START",
-      formattedEnd: null,
-      nameDay: "PRE_DAY",
-    });
+    const event = makeEvent();
 
     const result = prepareCardContentData({
       event,
-      isHorizontal: true,
+      variant: "standard",
       locale: "ca",
       tCard,
       tTime,
-      preferPreformattedDates: true,
     });
 
-    expect(getFormattedDateMock).not.toHaveBeenCalled();
-
-    expect(truncateStringMock).toHaveBeenCalledWith("Event Title", 30);
-    expect(buildDisplayLocationMock).toHaveBeenCalledWith({
-      location: "Location",
-      cityName: "Barcelona",
-      regionName: "Barcelonès",
-      hidePlaceSegments: false,
-    });
-    expect(truncateStringMock).toHaveBeenCalledWith(
-      "LOC:Location|Barcelona|Barcelonès",
-      80
-    );
-
-    expect(tCard).toHaveBeenCalledWith("dateSingle", {
-      nameDay: "PRE_DAY",
-      start: "PRE_START",
-    });
-
-    expect(tTime).toHaveBeenCalledWith("consult");
-    expect(tTime).toHaveBeenCalledWith("startsAt", { time: "{time}" });
-    expect(tTime).toHaveBeenCalledWith("range", {
-      start: "{start}",
-      end: "{end}",
-    });
-    expect(tTime).toHaveBeenCalledWith("simpleRange", {
-      start: "{start}",
-      end: "{end}",
-    });
-
-    expect(result.shouldShowFavoriteButton).toBe(true);
-    expect(result.favoriteLabels).toEqual({
-      add: "favoriteAddAria",
-      remove: "favoriteRemoveAria",
-    });
-  });
-
-  it("falls back to getFormattedDate when preformatted dates are not preferred", () => {
-    const tCard = vi.fn((key: string, values?: Record<string, string>) =>
-      values ? `${key}:${JSON.stringify(values)}` : key
-    );
-    const tTime = vi.fn((key: string) => `time:${key}`);
-
-    getFormattedDateMock.mockReturnValue({
-      formattedStart: "FROM_HELPER",
-      formattedEnd: "TO_HELPER",
-      nameDay: "DAY_HELPER",
-    });
-
-    const event = makeEvent({
-      formattedStart: "PRE_START",
-      formattedEnd: "PRE_END",
-      nameDay: "PRE_DAY",
-    });
-
-    const result = prepareCardContentData({
-      event,
-      isHorizontal: false,
-      locale: "ca",
-      tCard,
-      tTime,
-      preferPreformattedDates: false,
-    });
-
-    expect(getFormattedDateMock).toHaveBeenCalledWith(
+    expect(formatCardDateMock).toHaveBeenCalledWith(
       "2025-01-01",
       "2025-01-02",
-      "ca"
+      "ca",
     );
+    expect(result.cardDate).toBe("Dj. 1 gen.");
+  });
 
-    expect(truncateStringMock).toHaveBeenCalledWith("Event Title", 75);
+  it("uses buildEventPlaceLabels for location with city + region", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
 
-    expect(tCard).toHaveBeenCalledWith("dateRange", {
-      start: "FROM_HELPER",
-      end: "TO_HELPER",
+    const event = makeEvent();
+
+    prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
     });
 
-    expect(result.eventDate).toContain("dateRange");
+    expect(buildEventPlaceLabelsMock).toHaveBeenCalledWith({
+      cityName: "Barcelona",
+      regionName: "Barcelonès",
+      location: "Location",
+    });
+  });
+
+  it("passes through title without truncation (CSS line-clamp handles it)", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+    const event = makeEvent({
+      title:
+        "A very long event title that should not be truncated by data prep",
+    });
+
+    const result = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+
+    expect(result.title).toBe(
+      "A very long event title that should not be truncated by data prep",
+    );
+  });
+
+  it("omits time display when startTime is null (no 'Check schedules' filler)", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+
+    const event = makeEvent({ startTime: null, endTime: null });
+
+    const result = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+
+    expect(result.timeDisplay).toBe("");
+  });
+
+  it("shows time when startTime is valid", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+
+    const event = makeEvent({ startTime: "14:30", endTime: "16:00" });
+
+    const result = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+
+    expect(result.timeDisplay).toBe("14:30 – 16:00");
+  });
+
+  it("shows only start time when endTime equals startTime", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+
+    const event = makeEvent({ startTime: "19:00", endTime: "19:00" });
+
+    const result = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+
+    expect(result.timeDisplay).toBe("19:00");
+  });
+
+  it("localizes category when tCategories is provided", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+    const tCategories = vi.fn((key: string) => `cat:${key}`);
+
+    const event = makeEvent();
+
+    const result = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+      tCategories,
+    });
+
+    expect(result.categoryLabel).toBe("localized:music");
+  });
+
+  it("falls back to raw category name without tCategories", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+
+    const event = makeEvent();
+
+    const result = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+
+    expect(result.categoryLabel).toBe("Music");
+  });
+
+  it("skips category resolution for compact variant", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+    const tCategories = vi.fn((key: string) => `cat:${key}`);
+
+    const event = makeEvent();
+
+    const result = prepareCardContentData({
+      event,
+      variant: "compact",
+      locale: "ca",
+      tCard,
+      tTime,
+      tCategories,
+    });
+
+    expect(result.categoryLabel).toBeUndefined();
   });
 
   it("hides favorite button when slug is empty", () => {
@@ -212,13 +302,45 @@ describe("prepareCardContentData", () => {
 
     const result = prepareCardContentData({
       event,
-      isHorizontal: false,
+      variant: "standard",
       locale: "ca",
       tCard,
       tTime,
-      preferPreformattedDates: true,
     });
 
     expect(result.shouldShowFavoriteButton).toBe(false);
+  });
+
+  it("returns the variant passed in", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+    const event = makeEvent();
+
+    const standard = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+    expect(standard.variant).toBe("standard");
+
+    const carousel = prepareCardContentData({
+      event,
+      variant: "carousel",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+    expect(carousel.variant).toBe("carousel");
+
+    const compact = prepareCardContentData({
+      event,
+      variant: "compact",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
+    expect(compact.variant).toBe("compact");
   });
 });

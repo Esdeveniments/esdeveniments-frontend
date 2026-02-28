@@ -1,26 +1,19 @@
 export default function EventCardSkeleton() {
   return (
-    <div className="w-full flex flex-col justify-center bg-background overflow-hidden">
-      {/* Title bar with gradient line - simplified */}
-      <div className="bg-background h-fit flex justify-start items-start gap-element-gap-sm pr-card-padding-sm">
-        <div className="w-2 h-6 bg-border/40 animate-pulse" />
-        <div className="h-6 bg-border/40 rounded flex-1 animate-pulse" />
-        <div className="w-8 h-8 bg-border/40 rounded-full animate-pulse flex-shrink-0" />
-      </div>
-      {/* Image - largest element, critical for layout */}
-      <div className="p-card-padding-sm">
-        <div className="w-full h-64 bg-border/40 rounded animate-pulse" />
-      </div>
-      {/* Share and view counter - simplified */}
-      <div className="w-full flex justify-between items-center mb-element-gap-sm">
-        <div className="w-20 h-4 bg-border/40 rounded animate-pulse" />
-        <div className="w-16 h-4 bg-border/40 rounded animate-pulse" />
-      </div>
-      {/* Event details - simplified to 2 items for faster render */}
-      <div className="w-full flex flex-col gap-element-gap">
-        <div className="h-4 bg-border/40 rounded w-3/4 animate-pulse" />
-        <div className="h-4 bg-border/40 rounded w-2/3 animate-pulse" />
-        <div className="mb-element-gap" />
+    <div className="rounded-card overflow-hidden bg-background shadow h-full flex flex-col">
+      <div className="aspect-[3/2] bg-border/40 animate-pulse" />
+      <div className="px-4 pt-3 pb-4 flex-1 flex flex-col">
+        {/* Category badge skeleton */}
+        <div className="w-16 h-4 bg-border/40 rounded-badge animate-pulse mb-1" />
+        {/* Date line skeleton */}
+        <div className="w-2/3 h-3.5 bg-border/40 rounded animate-pulse mb-1" />
+        {/* Title skeleton (min-h matches real card) */}
+        <div className="min-h-[2.75rem] mb-1.5">
+          <div className="w-full h-4 bg-border/40 rounded animate-pulse mb-1" />
+          <div className="w-3/4 h-4 bg-border/40 rounded animate-pulse" />
+        </div>
+        {/* Location skeleton */}
+        <div className="mt-auto w-1/2 h-3.5 bg-border/40 rounded animate-pulse" />
       </div>
     </div>
   );

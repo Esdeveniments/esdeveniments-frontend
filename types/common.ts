@@ -181,11 +181,6 @@ export interface GeolocationError {
   message: string;
 }
 
-export interface Gradient {
-  gradient: string;
-  color: string;
-}
-
 export interface ImgDefaultProps {
   title: string;
   location?: string;
@@ -356,7 +351,6 @@ export interface CardHorizontalProps {
 export interface CardHorizontalServerProps {
   event: EventSummaryResponseDTO;
   isPriority?: boolean;
-  useDetailTimeFormat?: boolean; // Use phrase format for times (e.g., "De 9.00 a 11.30") instead of numeric format
   initialIsFavorite?: boolean;
 }
 
@@ -386,7 +380,6 @@ export interface EventsAroundServerProps extends EventsAroundProps {
   showJsonLd?: boolean;
   jsonLdId?: string;
   analyticsCategory?: string;
-  useDetailTimeFormat?: boolean; // Use phrase format for times in detail pages
 }
 
 export interface BaseLayoutProps {
@@ -406,6 +399,8 @@ export interface TooltipComponentProps {
 export interface ViewCounterProps {
   visits: number;
   hideText?: boolean;
+  /** Localized label for full-text mode (e.g. "10 visites"). Required when hideText is false. */
+  visitsLabel?: string;
 }
 
 // Removed unused MyErrorProps based on current app error boundaries
