@@ -2,9 +2,18 @@
 // The config you add here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import { init, addIntegration, captureRouterTransitionStart } from "@sentry/nextjs";
+import {
+  init,
+  addIntegration,
+  captureRouterTransitionStart,
+} from "@sentry/nextjs";
 import type { BrowserOptions } from "@sentry/nextjs";
-import { beforeSendClient, beforeSendMetric } from "@utils/sentry-helpers";
+import {
+  beforeSendClient,
+  beforeSendMetric,
+  SENTRY_IGNORE_ERRORS,
+  SENTRY_DENY_URLS,
+} from "@utils/sentry-helpers";
 
 const sentryClientConfig = {
   // Add your Sentry client config here
@@ -30,6 +39,10 @@ if (process.env.NODE_ENV === "production") {
     // Privacy: explicitly disable sending PII by default
     sendDefaultPii: false,
     debug: false,
+    // SDK-level filtering: drop well-known noise before serialization (more performant than beforeSend)
+    ignoreErrors: SENTRY_IGNORE_ERRORS,
+    // Don't report errors from browser extension scripts
+    denyUrls: SENTRY_DENY_URLS,
     // Session Replay is lazy-loaded below for smaller initial bundle (~60KB savings)
     integrations: [],
     // Errors-only: do not send console logs as Sentry logs.
@@ -52,7 +65,7 @@ if (process.env.NODE_ENV === "production") {
         // Privacy defaults: avoid capturing typed content.
         maskAllText: true,
         blockAllMedia: false,
-      })
+      }),
     );
   });
 }
