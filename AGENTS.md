@@ -225,7 +225,7 @@ This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL 
 | `yarn dev` | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack. |
 | `yarn lint` | ESLint | 0 errors expected; warnings are pre-existing and acceptable. |
 | `yarn typecheck` | `tsc --noEmit` | Must pass cleanly. |
-| `yarn test` | Vitest unit/integration tests | All 100 test files / 1401 tests should pass with no external dependencies. |
+| `yarn test` | Vitest unit/integration tests | All 102 test files / 1420 tests should pass with no external dependencies. |
 | `yarn test:e2e` | Playwright E2E | Requires a running app and valid API credentials. |
 
 ### Gotchas
