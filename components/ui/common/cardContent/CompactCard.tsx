@@ -30,7 +30,7 @@ export default function CompactCard({
     <div className="flex-none w-44 min-w-[11rem]">
       <CardLink
         href={`/e/${event.slug}`}
-        className="block rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full"
+        className="block rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full"
         data-analytics-event-name={analyticsEventName}
         data-analytics-event-id={event.id ? String(event.id) : ""}
         data-analytics-event-slug={event.slug || ""}
@@ -55,11 +55,11 @@ export default function CompactCard({
             {cardDate}
             {timeDisplay && <> · {timeDisplay}</>}
           </p>
-          <h3 className="text-sm font-medium leading-snug line-clamp-2 text-foreground-strong group-hover:text-primary transition-colors mb-1">
+          <h3 className="text-sm font-medium leading-normal line-clamp-2 text-foreground-strong group-hover:text-primary/85 transition-colors mb-1">
             {title}
           </h3>
           {primaryLocation && (
-            <div className="flex items-center gap-1 text-xs text-foreground/60">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <LocationMarkerIcon className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{primaryLocation}</span>
             </div>

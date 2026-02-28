@@ -119,16 +119,22 @@ export interface CardLayoutProps {
   primaryLocation: string;
   /** Localized category label */
   categoryLabel?: string;
-  /** Category badge size */
-  categoryBadgeSize?: "sm" | "default";
+  /** Category slug for analytics/URL building */
+  categorySlug?: string;
+  /** Localized price label (e.g., "Gratuït" for free events) */
+  priceLabel?: string;
+  /** Urgency label ("Today" / "Tomorrow") */
+  urgencyLabel?: string;
+  /** Urgency type for styling */
+  urgencyType?: "today" | "tomorrow";
+  /** Multi-day label suffix */
+  multiDayLabel?: string;
   /** Whether to show favorite button */
   shouldShowFavoriteButton: boolean;
   /** Whether this event is favorited */
   isFavorite: boolean;
   /** Favorite button labels */
   favoriteLabels: FavoriteButtonLabels;
-  /** Visit count */
-  visits: number;
   /** Image location/region/date for alt-text context */
   imageContext?: {
     location?: string;
@@ -149,8 +155,6 @@ export interface CardLayoutProps {
     "data-analytics-event-slug": string;
     children: ReactNode;
   }) => ReactNode;
-  /** Render the view counter element */
-  renderCounter?: (visits: number) => ReactNode;
 }
 
 export interface CompactCardProps {

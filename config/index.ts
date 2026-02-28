@@ -18,7 +18,8 @@ export function getSiteUrl(): string {
 
   // Priority 3: Development (non-production)
   if (process.env.NODE_ENV !== "production") {
-    return "http://localhost:3000";
+    const port = process.env.PORT || "3000";
+    return `http://localhost:${port}`;
   }
 
   // Priority 4: Production fallback

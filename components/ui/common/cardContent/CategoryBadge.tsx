@@ -1,15 +1,11 @@
 import type { CategoryBadgeProps } from "types/ui";
+import { CATEGORY_BADGE_COLOR } from "@utils/constants";
 
-export default function CategoryBadge({ label, size = "default" }: CategoryBadgeProps) {
+export default function CategoryBadge({ label }: CategoryBadgeProps) {
   if (!label) return null;
 
-  const sizeClasses =
-    size === "sm"
-      ? "top-2 left-2 px-2 py-0.5 text-[11px]"
-      : "top-2.5 left-2.5 px-2.5 py-1 text-xs";
-
   return (
-    <span className={`absolute ${sizeClasses} z-[2] pointer-events-none inline-flex items-center rounded-badge font-semibold bg-background/90 text-foreground-strong backdrop-blur-sm shadow-xs`}>
+    <span className={`inline-block text-[11px] font-semibold rounded-badge px-2 py-0.5 mb-1 w-fit ${CATEGORY_BADGE_COLOR}`}>
       {label}
     </span>
   );

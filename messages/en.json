@@ -432,15 +432,7 @@
         "Friday",
         "Saturday"
       ],
-      "daysShort": [
-        "Sun",
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat"
-      ],
+      "daysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
       "monthsShort": [
         "Jan",
         "Feb",
@@ -763,7 +755,12 @@
       "dateRange": "{start} – {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Add to favorites",
-      "favoriteRemoveAria": "Remove from favorites"
+      "favoriteRemoveAria": "Remove from favorites",
+      "free": "Free",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "multipleDates": "Multiple dates",
+      "viewCountAria": "{count} views"
     },
     "EventForm": {
       "title": "Title *",

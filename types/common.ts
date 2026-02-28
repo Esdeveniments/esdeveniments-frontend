@@ -181,11 +181,6 @@ export interface GeolocationError {
   message: string;
 }
 
-export interface Gradient {
-  gradient: string;
-  color: string;
-}
-
 export interface ImgDefaultProps {
   title: string;
   location?: string;

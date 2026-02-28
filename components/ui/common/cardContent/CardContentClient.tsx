@@ -1,5 +1,4 @@
 "use client";
-import ViewCounterIsland from "@components/ui/viewCounter/ViewCounterIsland";
 import CardLinkClient from "./CardLinkClient";
 import { CardContentProps } from "types/props";
 import { useTranslations, useLocale } from "next-intl";
@@ -24,6 +23,11 @@ export default function CardContentClient({
     favoriteLabels,
     shouldShowFavoriteButton,
     categoryLabel,
+    categorySlug,
+    priceLabel,
+    urgencyLabel,
+    urgencyType,
+    multiDayLabel,
   } = prepareCardContentData({
     event,
     variant: "standard",
@@ -44,10 +48,14 @@ export default function CardContentClient({
       timeDisplay={timeDisplay}
       primaryLocation={primaryLocation}
       categoryLabel={categoryLabel}
+      categorySlug={categorySlug}
+      priceLabel={priceLabel}
+      urgencyLabel={urgencyLabel}
+      urgencyType={urgencyType}
+      multiDayLabel={multiDayLabel}
       shouldShowFavoriteButton={shouldShowFavoriteButton}
       isFavorite={initialIsFavorite}
       favoriteLabels={favoriteLabels}
-      visits={event.visits}
       imageContext={{
         location: event.city?.name || event.location,
         region: event.region?.name || event.city?.name,
@@ -56,13 +64,6 @@ export default function CardContentClient({
       imageCacheKey={event.hash || event.updatedAt}
       imageViewTransitionName={`event-image-${event.id}`}
       renderLink={(props) => <CardLinkClient {...props} />}
-      renderCounter={(visits) => (
-        <ViewCounterIsland
-          visits={visits}
-          hideText
-          className="flex items-center flex-shrink-0"
-        />
-      )}
     />
   );
 }

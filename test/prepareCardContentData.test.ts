@@ -5,17 +5,24 @@ import type { CitySummaryResponseDTO } from "types/api/city";
 const truncateStringMock =
   vi.fn<(value: string, maxLength: number) => string>();
 
-const formatCardDateMock = vi.fn<
-  (start: string, end?: string, locale?: string) => { cardDate: string; isMultiDay: boolean }
->();
+const formatCardDateMock =
+  vi.fn<
+    (
+      start: string,
+      end?: string,
+      locale?: string,
+    ) => { cardDate: string; isMultiDay: boolean }
+  >();
 
-const buildEventPlaceLabelsMock = vi.fn<
-  (args: {
-    cityName?: string;
-    regionName?: string;
-    location?: string;
-  }) => { primaryLabel: string; secondaryLabel: string; cityLabel: string; regionLabel: string }
->();
+const buildEventPlaceLabelsMock =
+  vi.fn<
+    (args: { cityName?: string; regionName?: string; location?: string }) => {
+      primaryLabel: string;
+      secondaryLabel: string;
+      cityLabel: string;
+      regionLabel: string;
+    }
+  >();
 
 vi.mock("@utils/helpers", () => ({
   truncateString: (value: string, maxLength: number) =>
@@ -42,17 +49,22 @@ vi.mock("@utils/date-helpers", () => ({
     const [hour, minute] = time.split(":");
     return `${hour}:${minute}`;
   },
+  convertTZ: (date: Date | string, _tz: string) =>
+    typeof date === "string" ? new Date(date) : date,
 }));
 
 vi.mock("@utils/category-helpers", () => ({
-  getLocalizedCategoryLabelFromConfig: (slug: string, fallback: string, _t: unknown) =>
-    `localized:${slug || fallback}`,
+  getLocalizedCategoryLabelFromConfig: (
+    slug: string,
+    fallback: string,
+    _t: unknown,
+  ) => `localized:${slug || fallback}`,
 }));
 
 import { prepareCardContentData } from "@components/ui/common/cardContent/prepareCardContentData";
 
 function makeEvent(
-  overrides: Partial<EventSummaryResponseDTO> = {}
+  overrides: Partial<EventSummaryResponseDTO> = {},
 ): EventSummaryResponseDTO {
   const city: CitySummaryResponseDTO = {
     id: 1,
@@ -94,7 +106,7 @@ describe("prepareCardContentData", () => {
     vi.clearAllMocks();
 
     truncateStringMock.mockImplementation(
-      (value: string, _maxLength: number) => value
+      (value: string, _maxLength: number) => value,
     );
 
     buildEventPlaceLabelsMock.mockImplementation(
@@ -103,7 +115,7 @@ describe("prepareCardContentData", () => {
         secondaryLabel: regionName || "",
         cityLabel: cityName || "",
         regionLabel: regionName || "",
-      })
+      }),
     );
 
     formatCardDateMock.mockReturnValue({
@@ -129,7 +141,7 @@ describe("prepareCardContentData", () => {
     expect(formatCardDateMock).toHaveBeenCalledWith(
       "2025-01-01",
       "2025-01-02",
-      "ca"
+      "ca",
     );
     expect(result.cardDate).toBe("Dj. 1 gen.");
   });
@@ -158,7 +170,10 @@ describe("prepareCardContentData", () => {
   it("passes through title without truncation (CSS line-clamp handles it)", () => {
     const tCard = vi.fn((key: string) => key);
     const tTime = vi.fn((key: string) => `time:${key}`);
-    const event = makeEvent({ title: "A very long event title that should not be truncated by data prep" });
+    const event = makeEvent({
+      title:
+        "A very long event title that should not be truncated by data prep",
+    });
 
     const result = prepareCardContentData({
       event,
@@ -168,7 +183,9 @@ describe("prepareCardContentData", () => {
       tTime,
     });
 
-    expect(result.title).toBe("A very long event title that should not be truncated by data prep");
+    expect(result.title).toBe(
+      "A very long event title that should not be truncated by data prep",
+    );
   });
 
   it("omits time display when startTime is null (no 'Check schedules' filler)", () => {
@@ -299,13 +316,31 @@ describe("prepareCardContentData", () => {
     const tTime = vi.fn((key: string) => `time:${key}`);
     const event = makeEvent();
 
-    const standard = prepareCardContentData({ event, variant: "standard", locale: "ca", tCard, tTime });
+    const standard = prepareCardContentData({
+      event,
+      variant: "standard",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
     expect(standard.variant).toBe("standard");
 
-    const carousel = prepareCardContentData({ event, variant: "carousel", locale: "ca", tCard, tTime });
+    const carousel = prepareCardContentData({
+      event,
+      variant: "carousel",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
     expect(carousel.variant).toBe("carousel");
 
-    const compact = prepareCardContentData({ event, variant: "compact", locale: "ca", tCard, tTime });
+    const compact = prepareCardContentData({
+      event,
+      variant: "compact",
+      locale: "ca",
+      tCard,
+      tTime,
+    });
     expect(compact.variant).toBe("compact");
   });
 });

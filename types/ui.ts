@@ -24,7 +24,7 @@ export interface PressFeedbackResult {
 export type NavigationFeedbackEvent = "start" | "complete";
 
 export type NavigationFeedbackListener = (
-  event: NavigationFeedbackEvent
+  event: NavigationFeedbackEvent,
 ) => void;
 
 export interface NavigationProgressState {
@@ -59,13 +59,16 @@ export interface HorizontalScrollProps {
   labels?: HorizontalScrollLabels;
 }
 
-export interface CardLinkProps
-  extends Omit<PressableLinkBaseProps, "variant" | "disableNavigationSignal"> {}
+export interface CardLinkProps extends Omit<
+  PressableLinkBaseProps,
+  "variant" | "disableNavigationSignal"
+> {}
 
 export type PressableLinkVariant = "inline" | "card" | "chip" | "plain";
 
 export interface PressableLinkBaseProps
-  extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps>,
+  extends
+    Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps>,
     LinkProps {
   className?: string;
   children: React.ReactNode;
@@ -81,7 +84,6 @@ export type CardVariant = "standard" | "carousel" | "compact";
 
 export interface CategoryBadgeProps {
   label: string | undefined;
-  size?: "sm" | "default";
 }
 
 export interface HeroContextType {

@@ -440,15 +440,7 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": [
-        "Dg.",
-        "Dl.",
-        "Dt.",
-        "Dc.",
-        "Dj.",
-        "Dv.",
-        "Ds."
-      ],
+      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -770,7 +762,12 @@
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Afegeix a preferits",
-      "favoriteRemoveAria": "Elimina de preferits"
+      "favoriteRemoveAria": "Elimina de preferits",
+      "free": "Gratuït",
+      "today": "Avui",
+      "tomorrow": "Demà",
+      "multipleDates": "Diversos dies",
+      "viewCountAria": "{count} visualitzacions"
     },
     "EventForm": {
       "title": "Títol *",

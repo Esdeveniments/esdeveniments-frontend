@@ -19,19 +19,20 @@ export default function CardLayout({
   timeDisplay,
   primaryLocation,
   categoryLabel,
-  categoryBadgeSize = "default",
+  priceLabel,
+  urgencyLabel,
+  urgencyType,
+  multiDayLabel,
   shouldShowFavoriteButton,
   isFavorite,
   favoriteLabels,
-  visits,
   imageContext,
   imageCacheKey,
   imageViewTransitionName,
   renderLink,
-  renderCounter,
 }: CardLayoutProps) {
   return (
-    <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
+    <article className="relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col">
       {renderLink({
         href: `/e/${slug}`,
         className: "absolute inset-0 z-[1]",
@@ -59,8 +60,6 @@ export default function CardLayout({
           cacheKey={imageCacheKey}
         />
 
-        <CategoryBadge label={categoryLabel} size={categoryBadgeSize} />
-
         {shouldShowFavoriteButton && (
           <FavoriteButtonOverlay
             eventSlug={slug}
@@ -73,29 +72,32 @@ export default function CardLayout({
         )}
       </div>
 
-      <div className="flex-1 flex flex-col px-3 pt-3 pb-3 pointer-events-none">
-        <p className="body-small text-muted-foreground mb-1 truncate">
-          {cardDate}
+      <div className="flex-1 flex flex-col px-4 pt-3 pb-4 pointer-events-none">
+        <CategoryBadge label={categoryLabel} />
+
+        <p className="text-sm text-muted-foreground mb-1 truncate">
+          {urgencyLabel ? (
+            <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
+              {urgencyLabel}
+            </span>
+          ) : (
+            cardDate
+          )}
           {timeDisplay && <> · {timeDisplay}</>}
+          {priceLabel && <> · <span className="text-success font-medium">{priceLabel}</span></>}
+          {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 
-        <h3 className="text-base font-semibold leading-snug line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary transition-colors">
+        <h3 className="text-base font-semibold leading-normal line-clamp-2 text-foreground-strong mb-1.5 min-h-[2.75rem] group-hover:text-primary/85 transition-colors">
           {title}
         </h3>
 
-        <div className="mt-auto flex items-center justify-between gap-2">
-          {primaryLocation && (
-            <div className="flex items-center gap-1 body-small text-foreground/60 min-w-0">
-              <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="truncate">{primaryLocation}</span>
-            </div>
-          )}
-          {visits > 0 && renderCounter && (
-            <div className="flex-shrink-0">
-              {renderCounter(visits)}
-            </div>
-          )}
-        </div>
+        {primaryLocation && (
+          <div className="mt-auto flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+            <LocationMarkerIcon className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{primaryLocation}</span>
+          </div>
+        )}
       </div>
     </article>
   );

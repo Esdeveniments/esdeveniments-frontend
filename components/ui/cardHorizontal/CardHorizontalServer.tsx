@@ -1,5 +1,4 @@
 import Image from "@components/ui/common/image";
-import ViewCounter from "@components/ui/viewCounter";
 import { getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
@@ -27,6 +26,10 @@ const CardHorizontalServer = async ({
     favoriteLabels,
     shouldShowFavoriteButton,
     categoryLabel,
+    priceLabel,
+    urgencyLabel,
+    urgencyType,
+    multiDayLabel,
   } = prepareCardContentData({
     event,
     variant: "carousel",
@@ -39,7 +42,7 @@ const CardHorizontalServer = async ({
   const isFavorite = Boolean(event.slug && initialIsFavorite);
 
   return (
-    <article className="relative rounded-card overflow-hidden bg-background shadow-sm hover:shadow-md transition-all duration-normal group h-full flex flex-col">
+    <article className="relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col">
       <CardLink
         href={`/e/${event.slug}`}
         className="absolute inset-0 z-[1]"
@@ -65,8 +68,6 @@ const CardHorizontalServer = async ({
           cacheKey={event.hash || event.updatedAt}
         />
 
-        <CategoryBadge label={categoryLabel} size="sm" />
-
         {shouldShowFavoriteButton && (
           <FavoriteButtonOverlay
             eventSlug={event.slug}
@@ -79,26 +80,29 @@ const CardHorizontalServer = async ({
         )}
       </div>
 
-      <div className="flex-1 flex flex-col px-3 pt-2.5 pb-3 pointer-events-none">
+      <div className="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5 pointer-events-none">
+        <CategoryBadge label={categoryLabel} />
+
         <p className="text-xs text-muted-foreground mb-1 truncate">
-          {cardDate}
+          {urgencyLabel ? (
+            <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
+              {urgencyLabel}
+            </span>
+          ) : (
+            cardDate
+          )}
           {timeDisplay && <> · {timeDisplay}</>}
+          {priceLabel && <> · <span className="text-success font-medium">{priceLabel}</span></>}
+          {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 
-        <h3 className="text-sm font-semibold leading-snug line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary transition-colors">
+        <h3 className="text-sm font-semibold leading-normal line-clamp-2 text-foreground-strong mb-1.5 group-hover:text-primary/85 transition-colors">
           {title}
         </h3>
 
-        <div className="mt-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 text-xs text-foreground/60 min-w-0">
-            <LocationMarkerIcon className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate">{primaryLocation}</span>
-          </div>
-          {event.visits > 0 && (
-            <div className="flex-shrink-0 pointer-events-auto">
-              <ViewCounter visits={event.visits} hideText />
-            </div>
-          )}
+        <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+          <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="truncate">{primaryLocation}</span>
         </div>
       </div>
     </article>

@@ -1,5 +1,4 @@
 import CardLink from "./CardLink";
-import ViewCounter from "@components/ui/viewCounter";
 import { CardContentProps } from "types/props";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
@@ -24,6 +23,11 @@ async function CardContentServer({
     favoriteLabels,
     shouldShowFavoriteButton,
     categoryLabel,
+    categorySlug,
+    priceLabel,
+    urgencyLabel,
+    urgencyType,
+    multiDayLabel,
   } = prepareCardContentData({
     event,
     variant: "standard",
@@ -47,10 +51,14 @@ async function CardContentServer({
       timeDisplay={timeDisplay}
       primaryLocation={primaryLocation}
       categoryLabel={categoryLabel}
+      categorySlug={categorySlug}
+      priceLabel={priceLabel}
+      urgencyLabel={urgencyLabel}
+      urgencyType={urgencyType}
+      multiDayLabel={multiDayLabel}
       shouldShowFavoriteButton={shouldShowFavoriteButton}
       isFavorite={isFavorite}
       favoriteLabels={favoriteLabels}
-      visits={event.visits}
       imageContext={{
         location: event.city?.name || event.location,
         region: event.region?.name || event.city?.name,
@@ -58,7 +66,6 @@ async function CardContentServer({
       }}
       imageCacheKey={event.hash || event.updatedAt}
       renderLink={(props) => <CardLink {...props} />}
-      renderCounter={(visits) => <ViewCounter visits={visits} hideText />}
     />
   );
 }

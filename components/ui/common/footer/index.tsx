@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { JSX } from "react";
 import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { contactEmail, socialLinks } from "@config/index";
 
@@ -113,9 +113,9 @@ export default async function Footer(): Promise<JSX.Element> {
               <p className="body-small text-foreground/70 max-w-2xl">
                 {t("sponsorCta.description")}
               </p>
-              <PressableAnchor href="/patrocina" className="btn-primary" variant="plain">
+              <PressableAnchorClient href="/patrocina" className="btn-primary">
                 {tSponsor("cta")}
-              </PressableAnchor>
+              </PressableAnchorClient>
             </div>
           </div>
         </section>
@@ -134,15 +134,14 @@ export default async function Footer(): Promise<JSX.Element> {
           <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-sm border border-border/40">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
               {TOP_AGENDA_LINKS.map((item) => (
-                <PressableAnchor
+                <PressableAnchorClient
                   key={item.href}
                   href={item.href}
                   prefetch={false}
                   className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1"
-                  variant="inline"
                 >
                   {`${agendaLabel} ${item.name}`}
-                </PressableAnchor>
+                </PressableAnchorClient>
               ))}
             </div>
           </div>
