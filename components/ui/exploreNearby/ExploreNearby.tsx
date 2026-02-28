@@ -1,5 +1,5 @@
 import { fetchRegionsWithCities } from "@lib/api/regions";
-import { formatPlaceName } from "@utils/string-helpers";
+import { formatPlaceName, sanitize } from "@utils/string-helpers";
 import Badge from "@components/ui/common/badge";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
@@ -37,7 +37,7 @@ export default async function ExploreNearby({
     const regionLinks = regionsWithCities
       .slice(0, MAX_LINKS)
       .map((r) => ({
-        slug: r.slug,
+        slug: r.slug ?? sanitize(r.name),
         label: formatPlaceName(r.name),
       }));
 
@@ -72,17 +72,21 @@ export default async function ExploreNearby({
   // Region → show child cities
   if (placeType === "region") {
     const region = regionsWithCities.find(
-      (r) => r.slug === place,
+      (r) => (r.slug ?? sanitize(r.name)) === place,
     );
 
     if (!region || region.cities.length === 0) return null;
 
+    const seenCities = new Set<string>();
     const cityLinks = region.cities
-      .slice(0, MAX_LINKS)
-      .map((c) => ({
-        slug: c.value,
-        label: formatPlaceName(c.label),
-      }));
+      .reduce<{ slug: string; label: string }[]>((acc, c) => {
+        if (!seenCities.has(c.value)) {
+          seenCities.add(c.value);
+          acc.push({ slug: c.value, label: formatPlaceName(c.label) });
+        }
+        return acc;
+      }, [])
+      .slice(0, MAX_LINKS);
 
     return (
       <section
@@ -119,16 +123,20 @@ export default async function ExploreNearby({
       const city = region.cities.find((c) => c.value === place);
       if (city) {
         parentRegion = {
-          slug: region.slug,
+          slug: region.slug ?? sanitize(region.name),
           label: formatPlaceName(region.name),
         };
+        const seenSiblings = new Set<string>();
         siblingCities = region.cities
           .filter((c) => c.value !== place)
-          .slice(0, MAX_LINKS - 1)
-          .map((c) => ({
-            slug: c.value,
-            label: formatPlaceName(c.label),
-          }));
+          .reduce<{ slug: string; label: string }[]>((acc, c) => {
+            if (!seenSiblings.has(c.value)) {
+              seenSiblings.add(c.value);
+              acc.push({ slug: c.value, label: formatPlaceName(c.label) });
+            }
+            return acc;
+          }, [])
+          .slice(0, MAX_LINKS - 1);
         break;
       }
     }

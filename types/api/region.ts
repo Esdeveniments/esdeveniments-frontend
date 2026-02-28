@@ -9,6 +9,7 @@ export interface CityDropdownResponseDTO {
 export interface RegionsGroupedByCitiesResponseDTO {
   id: number;
   name: string;
-  slug: string;
+  /** May be absent from `/places/regions/options` — callers should fall back to slugifying `name`. */
+  slug?: string;
   cities: CityDropdownResponseDTO[];
 }

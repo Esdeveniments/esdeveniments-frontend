@@ -121,7 +121,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       setPlace("catalunya", "Catalunya", "region");
     }
     setIsModalOpen(false);
-  }, [localPlaceValue, allLocations, setPlace]);
+  }, [allLocations, localPlaceValue, setPlace]);
 
   const handlePlaceChange = useCallback((option: Option | null) => {
     setLocalPlaceValue(option?.value || "");

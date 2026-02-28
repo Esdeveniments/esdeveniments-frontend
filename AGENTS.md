@@ -130,6 +130,7 @@ Before writing ANY new code, ALWAYS search first:
 
 - Prefer surgical diffs; keep file moves/renames minimal and scoped.
 - Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
+- **⚠️ NEVER delete `open-next.config.ts`** — it's the primary mechanism that installs Sharp into the Lambda bundle. SST's `server.install` alone is NOT sufficient. Its `arch` must match `args.architecture` in `sst.config.ts`. See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
 - Types live only in `types/`; avoid redefining `NavigationItem`, `SocialLinks`, `EventProps`, `CitySummaryResponseDTO` (see `types/common.ts`, `types/api/city.ts`).
 - Any reusable/derived props types (e.g., Picks of an existing props interface) must be declared in `types/` (typically `types/props.ts`) rather than inline within components.
 - Before introducing a new type/interface, search `types/` (and related feature folders) for existing candidates to reuse/extend, and place additions in the most appropriate shared file (e.g., `types/props.ts` for UI props, `types/api/*` for DTOs).
