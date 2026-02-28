@@ -175,6 +175,7 @@
       "sectionWeekend": "Cap de setmana",
       "sectionWeek": "Setmana",
       "readingTime": "{minutes} min lectura",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "mustSee": "ELS IMPRESCINDIBLES",
       "moreProposals": "MÉS PROPOSTES"
     },

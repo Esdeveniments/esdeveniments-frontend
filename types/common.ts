@@ -406,6 +406,8 @@ export interface TooltipComponentProps {
 export interface ViewCounterProps {
   visits: number;
   hideText?: boolean;
+  /** Localized label for full-text mode (e.g. "10 visites"). Required when hideText is false. */
+  visitsLabel?: string;
 }
 
 // Removed unused MyErrorProps based on current app error boundaries

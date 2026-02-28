@@ -226,7 +226,7 @@ export default async function NewsArticleDetail({
             </div>
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
               <span className="whitespace-nowrap">{t("readingTime", { minutes: detail.readingTime })}</span>
-              <ViewCounter visits={detail.visits} hideText={false} />
+              <ViewCounter visits={detail.visits} hideText={false} visitsLabel={t("visitsCount", { count: detail.visits })} />
             </div>
           </div>
           {plainDescription && (

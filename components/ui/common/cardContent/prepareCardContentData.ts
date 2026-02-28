@@ -6,12 +6,6 @@ import type { CardContentProps, FavoriteButtonLabels } from "types/props";
 import type { AppLocale } from "types/i18n";
 import type { CardVariant } from "types/ui";
 
-const TITLE_MAX_LENGTH: Record<CardVariant, number> = {
-  standard: 75,
-  carousel: 60,
-  compact: 50,
-};
-
 export function prepareCardContentData({
   event,
   variant = "standard",
@@ -20,8 +14,6 @@ export function prepareCardContentData({
   tTime,
   preferPreformattedDates: _preferPreformattedDates,
   tCategories,
-  // Legacy compat: isHorizontal maps to "carousel"
-  isHorizontal,
 }: {
   event: CardContentProps["event"];
   variant?: CardVariant;
@@ -30,11 +22,7 @@ export function prepareCardContentData({
   tTime: (key: string, values?: Record<string, string>) => string;
   preferPreformattedDates?: boolean;
   tCategories?: (key: string) => string;
-  /** @deprecated Use `variant` instead */
-  isHorizontal?: boolean;
 }) {
-  const resolvedVariant = isHorizontal ? "carousel" : variant;
-  const titleMaxLen = TITLE_MAX_LENGTH[resolvedVariant];
 
   const timeLabels = {
     consult: tTime("consult"),
@@ -43,7 +31,7 @@ export function prepareCardContentData({
     simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
   };
 
-  const title = truncateString(event.title || "", titleMaxLen);
+  const title = event.title || "";
 
   const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
     cityName: event.city?.name,
@@ -87,14 +75,14 @@ export function prepareCardContentData({
 
   const firstCategory = event.categories?.[0];
   let categoryLabel: string | undefined;
-  if (firstCategory) {
+  if (firstCategory && variant !== "compact") {
     categoryLabel = tCategories
       ? getLocalizedCategoryLabelFromConfig(firstCategory.slug, firstCategory.name, tCategories)
       : firstCategory.name;
   }
 
   return {
-    variant: resolvedVariant,
+    variant,
     timeLabels,
     title,
     primaryLocation,

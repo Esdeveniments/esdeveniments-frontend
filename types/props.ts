@@ -95,8 +95,62 @@ export interface ReportViewProps {
 export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
-  isHorizontal?: boolean;
   initialIsFavorite?: boolean;
+}
+
+export interface CardLayoutProps {
+  /** Event slug for links and analytics */
+  slug: string;
+  /** Event ID for analytics */
+  eventId?: string;
+  /** Prepared title text */
+  title: string;
+  /** Original (un-truncated) title for alt text */
+  originalTitle: string;
+  /** Prepared image URL */
+  image: string;
+  /** Whether this card's image should be priority-loaded */
+  isPriority: boolean;
+  /** Formatted card date string */
+  cardDate: string;
+  /** Formatted time display (empty string if no time) */
+  timeDisplay: string;
+  /** City/region location text */
+  primaryLocation: string;
+  /** Localized category label */
+  categoryLabel?: string;
+  /** Category badge size */
+  categoryBadgeSize?: "sm" | "default";
+  /** Whether to show favorite button */
+  shouldShowFavoriteButton: boolean;
+  /** Whether this event is favorited */
+  isFavorite: boolean;
+  /** Favorite button labels */
+  favoriteLabels: FavoriteButtonLabels;
+  /** Visit count */
+  visits: number;
+  /** Image location/region/date for alt-text context */
+  imageContext?: {
+    location?: string;
+    region?: string;
+    date?: string;
+  };
+  /** Cache key for image optimization */
+  imageCacheKey?: string;
+  /** Optional view transition name for the image container */
+  imageViewTransitionName?: string;
+  /** Render the card link wrapper. Receives children (sr-only label) and props */
+  renderLink: (props: {
+    href: string;
+    className: string;
+    "aria-label": string;
+    "data-analytics-event-name": string;
+    "data-analytics-event-id": string;
+    "data-analytics-event-slug": string;
+    children: ReactNode;
+  }) => ReactNode;
+  /** Render the view counter element */
+  renderCounter?: (visits: number) => ReactNode;
 }
 
 export interface CompactCardProps {

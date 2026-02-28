@@ -175,6 +175,7 @@
       "sectionWeekend": "Weekend",
       "sectionWeek": "Week",
       "readingTime": "{minutes} min read",
+      "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "mustSee": "MUST-SEE",
       "moreProposals": "MORE IDEAS"
     },

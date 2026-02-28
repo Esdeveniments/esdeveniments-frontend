@@ -427,11 +427,8 @@ export const formatCardDate = (
   }
 
   const endMonthName = shortMonths[endDate.getMonth()];
-  const sameMonth = startDate.getMonth() === endDate.getMonth() && startYear === endYear;
 
-  const startPart = sameMonth && locale !== "en"
-    ? `${startDay}`
-    : formatSingleDate(startDay, monthName, startYear, showStartYear);
+  const startPart = formatSingleDate(startDay, monthName, startYear, showStartYear);
   const endPart = formatSingleDate(endDay, endMonthName, endYear, showEndYear);
 
   return {

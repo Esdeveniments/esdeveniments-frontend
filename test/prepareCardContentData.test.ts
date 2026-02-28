@@ -94,7 +94,7 @@ describe("prepareCardContentData", () => {
     vi.clearAllMocks();
 
     truncateStringMock.mockImplementation(
-      (value: string, maxLength: number) => `${value}__${maxLength}`
+      (value: string, _maxLength: number) => value
     );
 
     buildEventPlaceLabelsMock.mockImplementation(
@@ -155,40 +155,20 @@ describe("prepareCardContentData", () => {
     });
   });
 
-  it("resolves variant from isHorizontal for backward compat", () => {
+  it("passes through title without truncation (CSS line-clamp handles it)", () => {
     const tCard = vi.fn((key: string) => key);
     const tTime = vi.fn((key: string) => `time:${key}`);
-
-    const event = makeEvent();
+    const event = makeEvent({ title: "A very long event title that should not be truncated by data prep" });
 
     const result = prepareCardContentData({
       event,
-      isHorizontal: true,
+      variant: "standard",
       locale: "ca",
       tCard,
       tTime,
     });
 
-    // carousel variant uses 60 char title truncation
-    expect(truncateStringMock).toHaveBeenCalledWith("Event Title", 60);
-    expect(result.variant).toBe("carousel");
-  });
-
-  it("uses correct title truncation per variant", () => {
-    const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
-    const event = makeEvent();
-
-    prepareCardContentData({ event, variant: "standard", locale: "ca", tCard, tTime });
-    expect(truncateStringMock).toHaveBeenCalledWith("Event Title", 75);
-
-    truncateStringMock.mockClear();
-    prepareCardContentData({ event, variant: "carousel", locale: "ca", tCard, tTime });
-    expect(truncateStringMock).toHaveBeenCalledWith("Event Title", 60);
-
-    truncateStringMock.mockClear();
-    prepareCardContentData({ event, variant: "compact", locale: "ca", tCard, tTime });
-    expect(truncateStringMock).toHaveBeenCalledWith("Event Title", 50);
+    expect(result.title).toBe("A very long event title that should not be truncated by data prep");
   });
 
   it("omits time display when startTime is null (no 'Check schedules' filler)", () => {
@@ -278,6 +258,25 @@ describe("prepareCardContentData", () => {
     expect(result.categoryLabel).toBe("Music");
   });
 
+  it("skips category resolution for compact variant", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+    const tCategories = vi.fn((key: string) => `cat:${key}`);
+
+    const event = makeEvent();
+
+    const result = prepareCardContentData({
+      event,
+      variant: "compact",
+      locale: "ca",
+      tCard,
+      tTime,
+      tCategories,
+    });
+
+    expect(result.categoryLabel).toBeUndefined();
+  });
+
   it("hides favorite button when slug is empty", () => {
     const tCard = vi.fn((key: string) => key);
     const tTime = vi.fn((key: string) => key);
@@ -293,5 +292,20 @@ describe("prepareCardContentData", () => {
     });
 
     expect(result.shouldShowFavoriteButton).toBe(false);
+  });
+
+  it("returns the variant passed in", () => {
+    const tCard = vi.fn((key: string) => key);
+    const tTime = vi.fn((key: string) => `time:${key}`);
+    const event = makeEvent();
+
+    const standard = prepareCardContentData({ event, variant: "standard", locale: "ca", tCard, tTime });
+    expect(standard.variant).toBe("standard");
+
+    const carousel = prepareCardContentData({ event, variant: "carousel", locale: "ca", tCard, tTime });
+    expect(carousel.variant).toBe("carousel");
+
+    const compact = prepareCardContentData({ event, variant: "compact", locale: "ca", tCard, tTime });
+    expect(compact.variant).toBe("compact");
   });
 });
