@@ -749,7 +749,8 @@
     },
     "EventPage": {
       "faqTitle": "Preguntas frecuentes",
-      "sponsored": "Contenido patrocinado"
+      "sponsored": "Contenido patrocinado",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

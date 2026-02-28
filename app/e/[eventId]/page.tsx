@@ -361,7 +361,7 @@ export default async function EventPage({
                       labels={favoriteLabels}
                     />
                   )}
-                  <ViewCounter visits={event.visits} />
+                  <ViewCounter visits={event.visits} hideText />
                 </div>
               </div>
             </div>{" "}
