@@ -14,7 +14,6 @@ import EventCalendar from "./components/EventCalendar";
 import { buildEventStatusLabels, computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
-import { getFormattedDate } from "@utils/helpers";
 import PastEventBanner from "./components/PastEventBanner";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import type { BreadcrumbNavItem } from "types/props";
@@ -47,6 +46,7 @@ import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+import EventStickyCTA from "./components/EventStickyCTA";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -185,17 +185,6 @@ export default async function EventPage({
     event.endTime,
     statusLabels
   );
-
-  const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
-    event.startDate,
-    event.endDate,
-    locale
-  );
-
-  const statusMeta = {
-    state: temporalStatus.state,
-    label: temporalStatus.label,
-  };
 
   const shouldShowFavoriteButton = Boolean(event.slug);
   const favoriteLabels = {
@@ -366,8 +355,12 @@ export default async function EventPage({
               </div>
             </div>{" "}
             {/* Event Header with status pill - Server-side rendered */}
-            <EventHeader title={title} statusMeta={statusMeta} />
-            {/* Sponsor banner slot - near top for visibility */}
+            <EventHeader title={title} temporalStatus={temporalStatus} />
+            {/* Event Calendar - Server-side rendered */}
+            <div data-calendar-section>
+              <EventCalendar event={event} />
+            </div>
+            {/* Sponsor banner slot - below calendar to avoid disrupting info flow */}
             {/* Cascade: town → region → country (specificity wins) */}
             <SponsorBannerSlot
               place={primaryPlaceSlug}
@@ -378,8 +371,6 @@ export default async function EventPage({
                 "catalunya",
               ].filter((p) => p !== primaryPlaceSlug)}
             />
-            {/* Event Calendar - Server-side rendered */}
-            <EventCalendar event={event} />
             {/* Event Description - bring core info immediately */}
             <EventDescription
               description={event.description}
@@ -417,10 +408,6 @@ export default async function EventPage({
             {/* Event details (status, duration, external url) - server-rendered */}
             <EventDetailsSection
               event={event}
-              temporalStatus={temporalStatus}
-              formattedStart={formattedStart}
-              formattedEnd={formattedEnd}
-              nameDay={nameDay}
             />
             {/* Weather - Server component (converted from client for better performance) */}
             {temporalStatus.state !== "past" && (
@@ -509,6 +496,21 @@ export default async function EventPage({
 
       {/* FAQ JSON-LD (only when we have 2+ items) */}
       {faqJsonLd && <JsonLdServer id={`faq-${event.id}`} data={faqJsonLd} />}
+
+      {/* Sticky CTA bar for mobile — sits above bottom nav */}
+      {temporalStatus.state !== "past" && (
+        <EventStickyCTA
+          eventUrl={event.url}
+          eventSlug={event.slug}
+          labels={{
+            moreInfo: tEvent("stickyMoreInfo"),
+            calendar: tEvent("stickyCalendar"),
+            save: tEvent("stickySave"),
+            favoriteAdd: tCard("favoriteAddAria"),
+            favoriteRemove: tCard("favoriteRemoveAria"),
+          }}
+        />
+      )}
     </>
   );
 }

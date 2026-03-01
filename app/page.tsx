@@ -169,7 +169,15 @@ async function HomeStructuredData({
   locale: AppLocale;
 }): Promise<JSX.Element> {
   const categorizedEvents = await categorizedEventsPromise;
-  const homepageEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
+  const allEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
+
+  // Deduplicate: the same event can appear in multiple categories
+  const seen = new Set<string>();
+  const homepageEvents = allEvents.filter((e) => {
+    if (seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+  });
 
   const itemListSchema =
     homepageEvents.length > 0

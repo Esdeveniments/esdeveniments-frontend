@@ -773,3 +773,16 @@ export interface ExploreNearbyProps {
   place: string;
   placeType: PlaceType;
 }
+
+// Sticky CTA bar for event detail page (mobile)
+export interface EventStickyCTAProps {
+  eventUrl?: string;
+  eventSlug: string;
+  labels: {
+    moreInfo: string;
+    calendar: string;
+    save: string;
+    favoriteAdd: string;
+    favoriteRemove: string;
+  };
+}

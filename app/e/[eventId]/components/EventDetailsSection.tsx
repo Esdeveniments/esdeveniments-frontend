@@ -1,34 +1,22 @@
-import EventStatusGroup from "./EventStatusGroup";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { GlobeAltIcon, ClockIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
 import type { EventDetailResponseDTO } from "types/api/event";
-import type { EventTemporalStatus } from "types/event-status";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
 import { useTranslations } from "next-intl";
 
+/**
+ * Renders ancillary event details: duration + external link.
+ * Status badge and date/time info are intentionally NOT shown here
+ * to avoid duplication (they already appear in EventHeader and EventCalendar).
+ */
 const EventDetailsSection: React.FC<{
   event: EventDetailResponseDTO;
-  temporalStatus: EventTemporalStatus;
-  formattedStart?: string | null;
-  formattedEnd?: string | null;
-  nameDay?: string | null;
-}> = ({ event, temporalStatus, formattedStart, formattedEnd, nameDay }) => {
+}> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
-  const tTime = useTranslations("Utils.EventTime");
-  const timeLabels = {
-    consult: tTime("consult"),
-    startsAt: tTime("startsAt", { time: "{time}" }),
-    range: tTime("range", { start: "{start}", end: "{end}" }),
-    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
-  };
 
-  const timeDisplay = formatEventTimeDisplayDetail(
-    event.startTime,
-    event.endTime,
-    timeLabels
-  );
+  // Only render if there's something to show
+  if (!event.duration && !event.url) return null;
 
   return (
     <div className="w-full">
@@ -40,14 +28,6 @@ const EventDetailsSection: React.FC<{
           titleClassName="heading-2"
         />
         <div className="flex flex-col px-section-x gap-element-gap">
-          <EventStatusGroup
-            temporalStatus={temporalStatus}
-            formattedStart={formattedStart}
-            formattedEnd={formattedEnd}
-            nameDay={nameDay}
-            timeDisplay={timeDisplay}
-          />
-
           {event.duration && (
             <div className="body-small flex items-center gap-element-gap text-foreground-strong/70">
               <ClockIcon className="w-4 h-4" />

@@ -79,6 +79,7 @@ export default function FavoriteButton({
         aria-label={ariaLabel}
         aria-pressed={isFavorite}
         disabled={isPending}
+        data-favorite-button
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

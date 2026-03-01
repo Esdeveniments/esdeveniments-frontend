@@ -3,9 +3,25 @@ import type { EventStatusMeta, EventTemporalStatus } from "types/event-status";
 
 const stateStyles: Record<EventStatusMeta["state"], string> = {
   past: "bg-foreground-strong/10 text-foreground-strong border border-foreground-strong/20",
-  live: "bg-success text-background border border-success-dark animate-pulse",
-  upcoming: "bg-info text-background border border-info-dark",
+  live: "bg-primary-dark text-primary-foreground border border-primary-dark animate-pulse",
+  upcoming: "bg-primary text-primary-foreground border border-primary-dark",
 };
+
+/**
+ * Extract countdown detail from full EventTemporalStatus (discriminated union).
+ * Returns `startsIn` for upcoming, `endsIn` for live, nothing for past.
+ */
+function getCountdown(
+  status: EventStatusMeta | EventTemporalStatus
+): string | undefined {
+  if (status.state === "upcoming" && "startsIn" in status) {
+    return status.startsIn;
+  }
+  if (status.state === "live" && "endsIn" in status) {
+    return status.endsIn;
+  }
+  return undefined;
+}
 
 const EventStatusBadge: React.FC<{
   status?: EventStatusMeta | EventTemporalStatus | null;
@@ -22,15 +38,19 @@ const EventStatusBadge: React.FC<{
         ? t("live")
         : status.label;
 
+  const countdown = getCountdown(status);
   const ariaPrefix = ariaLabelPrefix ?? t("ariaLabelPrefix");
 
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-1 label font-semibold ${stateStyles[status.state]
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 label font-semibold ${stateStyles[status.state]
         } ${className}`}
-      aria-label={`${ariaPrefix} ${status.label}`}
+      aria-label={`${ariaPrefix} ${status.label}${countdown ? ` — ${countdown}` : ""}`}
     >
       {displayText}
+      {countdown && (
+        <span className="font-normal opacity-90">· {countdown}</span>
+      )}
     </span>
   );
 };

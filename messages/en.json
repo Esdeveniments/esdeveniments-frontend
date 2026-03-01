@@ -648,7 +648,7 @@
     "HeroCTA": {
       "buttonBase": "See events",
       "dateWeekend": "this weekend",
-      "helper": "Select the town and dates, then click 'See events'"
+      "helper": "Discover the best plans near you"
     },
     "PromotionInfoModal": {
       "title": "Promote your restaurant",
@@ -750,7 +750,12 @@
     "EventPage": {
       "faqTitle": "Frequently asked questions",
       "sponsored": "Sponsored content",
-      "visitsCount": "{count, plural, one {{count} view} other {{count} views}}"
+      "visitsCount": "{count, plural, one {{count} view} other {{count} views}}",
+      "stickyMoreInfo": "More info",
+      "stickyCalendar": "Calendar",
+      "stickySave": "Save",
+      "free": "Free",
+      "paid": "Paid"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",

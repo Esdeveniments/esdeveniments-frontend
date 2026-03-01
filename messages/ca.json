@@ -656,7 +656,7 @@
     "HeroCTA": {
       "buttonBase": "Veure esdeveniments",
       "dateWeekend": "aquest cap de setmana",
-      "helper": "Selecciona la població i les dates, i prem 'Veure esdeveniments'"
+      "helper": "Descobreix els millors plans a prop teu"
     },
     "PromotionInfoModal": {
       "title": "Promociona el teu restaurant",
@@ -757,7 +757,12 @@
     "EventPage": {
       "faqTitle": "Preguntes freqüents",
       "sponsored": "Contingut patrocinat",
-      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}"
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
+      "stickyMoreInfo": "Més info",
+      "stickyCalendar": "Calendari",
+      "stickySave": "Desa",
+      "free": "Gratuït",
+      "paid": "De pagament"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

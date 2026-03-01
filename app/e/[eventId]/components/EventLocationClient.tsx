@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   XMarkIcon as XIcon,
   ChevronDownIcon,
@@ -21,9 +21,33 @@ export default function EventLocationClient({
   const t = useTranslations("Components.EventLocation");
   const [showMap, setShowMap] = useState(false);
   const [isMapsVisible, setIsMapsVisible] = useState(false);
-  const mapsDivRef = useRef<HTMLDivElement | null>(null);
+  const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
 
-  const handleShowMap = () => {
+  // Auto-expand map when the location section scrolls into view.
+  // Uses the free Maps Embed API (no usage limits / cost).
+  // The iframe only loads once visible, so no impact on initial page load.
+  useEffect(() => {
+    if (hasAutoExpanded) return;
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShowMap(true);
+          setHasAutoExpanded(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAutoExpanded]);
+
+  const handleShowMap = useCallback(() => {
     setShowMap((prev) => {
       const next = !prev;
       if (!next) {
@@ -31,7 +55,7 @@ export default function EventLocationClient({
       }
       return next;
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (showMap) {
@@ -58,7 +82,7 @@ export default function EventLocationClient({
   };
 
   return (
-    <>
+    <div ref={sectionRef}>
       <div
         className="w-fit flex justify-start items-center gap-element-gap border-b-2 border-background hover:border-foreground-strong transition-interactive cursor-pointer"
         onClick={handleShowMap}
@@ -73,10 +97,7 @@ export default function EventLocationClient({
         </button>
       </div>
       {showMap && (
-        <div
-          className="w-full flex flex-col justify-center items-end gap-card-padding"
-          ref={mapsDivRef}
-        >
+        <div className="w-full flex flex-col justify-center items-end gap-card-padding">
           {isMapsVisible && <Maps location={location} />}
           <div className="w-fit flex justify-end items-center gap-element-gap-sm px-section-x border-b-2 border-background hover:border-b-2 hover:border-foreground-strong ease-in-out duration-300 cursor-pointer">
             <button
@@ -89,6 +110,6 @@ export default function EventLocationClient({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
