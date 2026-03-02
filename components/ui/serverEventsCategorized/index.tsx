@@ -9,10 +9,7 @@ import {
   MusicalNoteIcon as MusicNoteIcon,
   TicketIcon,
   PhotoIcon as PhotographIcon,
-  CalendarDaysIcon,
-  MapPinIcon,
 } from "@heroicons/react/24/outline";
-import { FireIcon } from "@heroicons/react/24/solid";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { fetchEvents } from "@lib/api/events";
@@ -60,17 +57,6 @@ const CATEGORY_ICONS: Record<string, typeof SparklesIcon> = {
   musica: MusicNoteIcon,
   teatre: TicketIcon,
   exposicions: PhotographIcon,
-} as const;
-
-/**
- * Icon mapping for SEO link sections.
- * Adds visual distinction to each section heading.
- */
-const SEO_SECTION_ICONS: Record<string, typeof SparklesIcon> = {
-  weekend: SparklesIcon,
-  today: CalendarDaysIcon,
-  tomorrow: CalendarDaysIcon,
-  "local-agendas": MapPinIcon,
 } as const;
 
 /**
@@ -235,9 +221,7 @@ async function ServerEventsCategorized({
             <div key={section.id} className="flex flex-col gap-4">
               <SectionHeading
                 title={section.title}
-                Icon={SEO_SECTION_ICONS[section.id]}
                 titleClassName="heading-2 text-foreground"
-                iconClassName="h-6 w-6 text-primary flex-shrink-0"
               />
               <div className="flex flex-wrap gap-2">
                 {section.links.map((link) => (
@@ -525,9 +509,7 @@ export async function ServerEventsCategorizedContent({
           <section className="py-section-y border-b">
             <SectionHeading
               title={tCta("popularTitle")}
-              Icon={FireIcon}
               titleClassName="heading-2 text-foreground"
-              iconClassName="h-6 w-6 text-primary flex-shrink-0"
             />
             <EventsAroundServer
               events={popularEvents}
@@ -597,9 +579,7 @@ export async function ServerEventsCategorizedContent({
           <div className="flex flex-col gap-4">
             <SectionHeading
               title={localAgendasSection.title}
-              Icon={MapPinIcon}
               titleClassName="heading-2 text-foreground"
-              iconClassName="h-6 w-6 text-primary flex-shrink-0"
             />
             <div className="flex flex-wrap gap-2">
               {localAgendasSection.links.map((link) => (

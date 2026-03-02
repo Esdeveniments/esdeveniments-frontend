@@ -86,10 +86,13 @@ export default async function Page(): Promise<JSX.Element> {
       title: t("seoSections.tomorrow.title"),
       links: [
         { href: "/barcelona/dema", label: t("seoSections.tomorrow.links.barcelona") },
-        { href: "/maresme/dema", label: t("seoSections.tomorrow.links.maresme") },
         {
-          href: "/valles-occidental/dema",
-          label: t("seoSections.tomorrow.links.vallesOccidental"),
+          href: "/baix-llobregat/dema",
+          label: t("seoSections.tomorrow.links.baixLlobregat"),
+        },
+        {
+          href: "/valles-oriental/dema",
+          label: t("seoSections.tomorrow.links.vallesOriental"),
         },
       ],
     },

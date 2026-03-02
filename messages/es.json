@@ -24,8 +24,8 @@
           "title": "Qué hacer mañana",
           "links": {
             "barcelona": "Qué hacer mañana en Barcelona",
-            "maresme": "Qué hacer mañana en el Maresme",
-            "vallesOccidental": "Qué hacer mañana en el Vallès Occidental"
+            "baixLlobregat": "Qué hacer mañana en el Baix Llobregat",
+            "vallesOriental": "Qué hacer mañana en el Vallès Oriental"
           }
         },
         "localAgendas": {
