@@ -238,10 +238,7 @@ export interface CulturalMessageProps {
 
 export interface DescriptionProps {
   description?: string;
-  location?: string;
-  locationValue?: string;
   introText?: string;
-  locationType?: "region" | "town" | "general";
   /**
    * Optional actions rendered next to the section title (e.g. a client island button).
    * Must remain serializable/ReactNode compatible with server rendering.

@@ -755,7 +755,16 @@
       "stickyCalendar": "Calendario",
       "stickySave": "Guardar",
       "free": "Gratis",
-      "paid": "De pago"
+      "paid": "De pago",
+      "sidebarMoreInfo": "Más información",
+      "sidebarVisitWebsite": "Visita la web",
+      "sidebarSource": "Fuente",
+      "sidebarOpenInMaps": "Abrir en Maps",
+      "interested": "{count} interesados",
+      "popular": "Popular",
+      "readMore": "Leer más",
+      "readLess": "Leer menos",
+      "durationLabel": "Duración: {duration}"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

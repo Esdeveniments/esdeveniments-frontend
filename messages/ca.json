@@ -762,7 +762,16 @@
       "stickyCalendar": "Calendari",
       "stickySave": "Desa",
       "free": "Gratuït",
-      "paid": "De pagament"
+      "paid": "De pagament",
+      "sidebarMoreInfo": "Més informació",
+      "sidebarVisitWebsite": "Visita el web",
+      "sidebarSource": "Font",
+      "sidebarOpenInMaps": "Obre a Maps",
+      "interested": "{count} interessats",
+      "popular": "Popular",
+      "readMore": "Llegir més",
+      "readLess": "Llegir menys",
+      "durationLabel": "Durada: {duration}"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

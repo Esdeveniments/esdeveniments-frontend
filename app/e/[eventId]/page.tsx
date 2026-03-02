@@ -8,7 +8,6 @@ import { generateEventMetadata } from "../../../lib/meta";
 import { redirect, notFound } from "next/navigation";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
-import ViewCounter from "@components/ui/viewCounter";
 import EventHeader from "./components/EventHeader";
 import EventCalendar from "./components/EventCalendar";
 import { buildEventStatusLabels, computeTemporalStatus } from "@utils/event-status";
@@ -21,11 +20,9 @@ import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import {
-  MegaphoneIcon as SpeakerphoneIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 const InfoIcon = InformationCircleIcon;
-import EventDetailsSection from "./components/EventDetailsSection";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import {
   buildEventIntroText,
@@ -47,11 +44,14 @@ import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import EventStickyCTA from "./components/EventStickyCTA";
+import EventSidebar from "./components/EventSidebar";
+import SocialProofCounter from "./components/SocialProofCounter";
+import CollapsibleDescription from "./components/CollapsibleDescription";
+import CulturalMessage from "@components/ui/common/culturalMessage";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
 import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
-import LazyAdArticleIsland from "./components/LazyAdArticleIsland";
 
 export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
@@ -299,19 +299,16 @@ export default async function EventPage({
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
-            {/* Visible Breadcrumbs for internal linking */}
+            {/* Visible Breadcrumbs for internal linking — full width */}
             <Breadcrumbs
               items={[
                 { label: tBreadcrumbs("home"), href: "/" },
-                // Add region (comarca) if available
                 ...(hasRegion
                   ? [{ label: regionName, href: `/${regionSlug}` }]
                   : []),
-                // Add city if available (different from region)
                 ...(hasCity
                   ? [{ label: cityName, href: `/${citySlug}` }]
                   : []),
-                // Add category if available
                 ...(primaryCategorySlug
                   ? [{
                     label: primaryCategoryLabel,
@@ -322,163 +319,185 @@ export default async function EventPage({
               ] as BreadcrumbNavItem[]}
               className="px-section-x pt-4"
             />
-            {/* Event Media Hero + Share cluster */}
-            <div className="w-full flex flex-col">
-              <div className="w-full">
-                <EventMedia event={event} title={title} />
-              </div>
-              {/* Share bar and view counter */}
-              <div className="w-full flex justify-between items-center mt-element-gap-sm">
-                <EventShareBar
-                  slug={eventSlug}
-                  title={title}
-                  description={event.description}
-                  eventDateString={eventDateString}
-                  location={event.location}
-                  initialIsMobile={initialIsMobile}
-                  cityName={cityName}
-                  regionName={regionName}
-                  postalCode={event.city?.postalCode || ""}
-                />
-                <div className="ml-element-gap-sm flex items-center gap-2">
-                  {shouldShowFavoriteButton && (
-                    <FavoriteButton
-                      eventSlug={event.slug}
-                      eventId={event.id ? String(event.id) : undefined}
-                      eventTitle={event.title}
-                      initialIsFavorite={false}
-                      labels={favoriteLabels}
+
+            {/* Two-column layout: Main content + Sticky sidebar (desktop) */}
+            <div className="flex flex-col lg:flex-row lg:gap-8">
+              {/* ========== MAIN CONTENT (left column) ========== */}
+              <div className="flex-1 min-w-0 flex flex-col gap-section-y">
+                {/* Event Media Hero */}
+                <div className="w-full flex flex-col">
+                  <div className="w-full">
+                    <EventMedia event={event} title={title} />
+                  </div>
+                  {/* Share bar + favorite + social proof */}
+                  <div className="w-full flex justify-between items-center mt-element-gap-sm">
+                    <EventShareBar
+                      slug={eventSlug}
+                      title={title}
+                      description={event.description}
+                      eventDateString={eventDateString}
+                      location={event.location}
+                      initialIsMobile={initialIsMobile}
+                      cityName={cityName}
+                      regionName={regionName}
+                      postalCode={event.city?.postalCode || ""}
                     />
-                  )}
-                  <ViewCounter visits={event.visits} hideText />
+                    <div className="ml-element-gap-sm flex items-center gap-2">
+                      {shouldShowFavoriteButton && (
+                        <FavoriteButton
+                          eventSlug={event.slug}
+                          eventId={event.id ? String(event.id) : undefined}
+                          eventTitle={event.title}
+                          initialIsFavorite={false}
+                          labels={favoriteLabels}
+                        />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>{" "}
-            {/* Event Header with status pill - Server-side rendered */}
-            <EventHeader title={title} temporalStatus={temporalStatus} />
-            {/* Event Calendar - Server-side rendered */}
-            <div data-calendar-section>
-              <EventCalendar event={event} />
-            </div>
-            {/* Sponsor banner slot - below calendar to avoid disrupting info flow */}
-            {/* Cascade: town → region → country (specificity wins) */}
-            <SponsorBannerSlot
-              place={primaryPlaceSlug}
-              fallbackPlaces={[
-                // If primaryPlaceSlug is city, add region as first fallback
-                ...(citySlug && regionSlug ? [regionSlug] : []),
-                // Catalunya as ultimate fallback
-                "catalunya",
-              ].filter((p) => p !== primaryPlaceSlug)}
-            />
-            {/* Event Description - bring core info immediately */}
-            <EventDescription
-              description={event.description}
-              locationValue={event.city?.slug || event.region?.slug || ""}
-              location={cityName || regionName}
-              introText={introText}
-              locationType="town"
-              locale={locale as AppLocale}
-              showTranslate={temporalStatus.state !== "past"}
-            />
-            {/* Location (SSR for SEO) with client map toggle */}
-            <EventLocation
-              location={event.location}
-              cityName={cityName}
-              regionName={regionName}
-              citySlug={event.city?.slug}
-              regionSlug={event.region?.slug}
-            />
-            {/* Related Events - Server-side rendered for SEO */}
-            {event.relatedEvents && event.relatedEvents.length > 0 && (
-              <div
-                data-analytics-container="true"
-                data-analytics-context="related_events"
-                data-analytics-source-event-id={event.id ? String(event.id) : ""}
-                data-analytics-source-event-slug={event.slug || ""}
-              >
-                <EventsAroundSection
-                  events={event.relatedEvents}
-                  title={tEventsAround("relatedEvents")}
+
+                {/* Event Header with status pill + social proof */}
+                <div className="flex flex-col gap-1">
+                  <EventHeader title={title} temporalStatus={temporalStatus} />
+                  <SocialProofCounter
+                    visits={event.visits}
+                    interestedLabel={tEvent("interested", { count: event.visits })}
+                  />
+                </div>
+
+                {/* Calendar — mobile only (between title and description) */}
+                <div className="lg:hidden" data-calendar-section>
+                  <EventCalendar event={event} compact />
+                </div>
+
+                {/* Description with collapsible on mobile */}
+                <CollapsibleDescription>
+                  <EventDescription
+                    description={event.description}
+                    introText={introText}
+                    locale={locale as AppLocale}
+                    showTranslate={temporalStatus.state !== "past"}
+                  />
+                </CollapsibleDescription>
+
+                {/* Explore more plans — always visible (not inside collapsible) */}
+                <CulturalMessage
+                  location={cityName || regionName}
+                  locationValue={event.city?.slug || event.region?.slug || ""}
+                  locationType="town"
                 />
+
+                {/* Location — mobile only (between description and related events) */}
+                <div className="lg:hidden">
+                  <EventLocation
+                    location={event.location}
+                    cityName={cityName}
+                    regionName={regionName}
+                    citySlug={event.city?.slug}
+                    regionSlug={event.region?.slug}
+                  />
+                </div>
+
+                {/* Sponsor — mobile only (between location and related events) */}
+                <div className="lg:hidden">
+                  <SponsorBannerSlot
+                    place={primaryPlaceSlug}
+                    fallbackPlaces={[
+                      ...(citySlug && regionSlug ? [regionSlug] : []),
+                      "catalunya",
+                    ].filter((p) => p !== primaryPlaceSlug)}
+                  />
+                </div>
+
+                {/* Related Events */}
+                {event.relatedEvents && event.relatedEvents.length > 0 && (
+                  <div
+                    data-analytics-container="true"
+                    data-analytics-context="related_events"
+                    data-analytics-source-event-id={event.id ? String(event.id) : ""}
+                    data-analytics-source-event-slug={event.slug || ""}
+                  >
+                    <EventsAroundSection
+                      events={event.relatedEvents}
+                      title={tEventsAround("relatedEvents")}
+                    />
+                  </div>
+                )}
+
+                {/* Event Categories */}
+                <EventCategories categories={event.categories} place={primaryPlaceSlug} />
+
+                {/* Weather */}
+                {temporalStatus.state !== "past" && (
+                  <EventWeather weather={event.weather} />
+                )}
+
+                {/* Past Event Banner */}
+                {temporalStatus.state === "past" && (
+                  <PastEventBanner
+                    temporalStatus={temporalStatus}
+                    cityName={cityName}
+                    regionName={regionName}
+                    explorePlaceHref={explorePlaceHref}
+                    exploreCategoryHref={exploreCategoryHref}
+                    primaryCategorySlug={primaryCategorySlug}
+                  />
+                )}
+
+                {/* FAQ Section */}
+                {faqItems.length >= 2 && (
+                  <section className="w-full" aria-labelledby="event-faq">
+                    <div className="w-full flex flex-col gap-element-gap">
+                      <SectionHeading
+                        headingId="event-faq"
+                        Icon={InfoIcon}
+                        iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
+                        title={tEvent("faqTitle")}
+                        titleClassName="heading-2"
+                      />
+                      <dl className="space-y-element-gap px-section-x">
+                        {faqItems.map((item) => (
+                          <div key={item.q}>
+                            <dt className="body-normal font-semibold text-foreground-strong">
+                              {item.q}
+                            </dt>
+                            <dd className="body-normal text-foreground-strong/70">
+                              {item.a}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  </section>
+                )}
+
+                {/* Restaurant Promotion */}
+                <Suspense fallback={null}>
+                  <LazyRestaurantPromotion
+                    eventId={event.id}
+                    eventLocation={event.location}
+                    eventLat={event.city?.latitude}
+                    eventLng={event.city?.longitude}
+                    eventStartDate={event.startDate}
+                    eventEndDate={event.endDate}
+                    eventStartTime={event.startTime}
+                    eventEndTime={event.endTime}
+                  />
+                </Suspense>
+
+                {/* Client-side ad + notifications */}
+                <ClientEventClient event={event} />
               </div>
-            )}
-            {/* Event Categories - Server-side rendered for SEO */}
-            <EventCategories categories={event.categories} place={primaryPlaceSlug} />
-            {/* Event details (status, duration, external url) - server-rendered */}
-            <EventDetailsSection
-              event={event}
-            />
-            {/* Weather - Server component (converted from client for better performance) */}
-            {temporalStatus.state !== "past" && (
-              <EventWeather weather={event.weather} />
-            )}
-            {/* Past Event Banner (high visibility) - server component */}
-            {temporalStatus.state === "past" && (
-              <PastEventBanner
-                temporalStatus={temporalStatus}
+
+              {/* ========== STICKY SIDEBAR (desktop only) ========== */}
+              <EventSidebar
+                event={event}
                 cityName={cityName}
                 regionName={regionName}
-                explorePlaceHref={explorePlaceHref}
-                exploreCategoryHref={exploreCategoryHref}
-                primaryCategorySlug={primaryCategorySlug}
+                primaryPlaceSlug={primaryPlaceSlug}
+                citySlug={citySlug}
+                regionSlug={regionSlug}
               />
-            )}
-            <ClientEventClient event={event} />
-            {/* Dynamic FAQ Section (SSR, gated by data) */}
-            {faqItems.length >= 2 && (
-              <section className="w-full" aria-labelledby="event-faq">
-                <div className="w-full flex flex-col gap-element-gap">
-                  <SectionHeading
-                    headingId="event-faq"
-                    Icon={InfoIcon}
-                    iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-                    title={tEvent("faqTitle")}
-                    titleClassName="heading-2"
-                  />
-                  <dl className="space-y-element-gap px-section-x">
-                    {faqItems.map((item) => (
-                      <div key={item.q}>
-                        <dt className="body-normal font-semibold text-foreground-strong">
-                          {item.q}
-                        </dt>
-                        <dd className="body-normal text-foreground-strong/70">
-                          {item.a}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              </section>
-            )}
-            {/* Restaurant Promotion Section - Lazy loaded (below fold, uses intersection observer) */}
-            <Suspense fallback={null}>
-              <LazyRestaurantPromotion
-                eventId={event.id}
-                eventLocation={event.location}
-                eventLat={event.city?.latitude}
-                eventLng={event.city?.longitude}
-                eventStartDate={event.startDate}
-                eventEndDate={event.endDate}
-                eventStartTime={event.startTime}
-                eventEndTime={event.endTime}
-              />
-            </Suspense>
-            {/* Final Ad Section - Lazy loaded (ads should not block initial render) */}
-            <div className="w-full h-full min-h-[250px]">
-              <div className="w-full flex flex-col gap-element-gap">
-                <SectionHeading
-                  Icon={SpeakerphoneIcon}
-                  iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-                  title={tEvent("sponsored")}
-                  titleClassName="heading-2"
-                />
-                <div className="px-section-x">
-                  <Suspense fallback={<div className="w-full h-[250px] bg-muted animate-pulse rounded" />}>
-                    <LazyAdArticleIsland slot="9643657007" />
-                  </Suspense>
-                </div>
-              </div>
             </div>
           </article>
         </div>

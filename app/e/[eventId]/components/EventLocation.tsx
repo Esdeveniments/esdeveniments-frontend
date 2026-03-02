@@ -16,6 +16,7 @@ export default function EventLocation({
   regionName,
   citySlug,
   regionSlug,
+  compact = false,
 }: EventLocationProps) {
   const t = useTranslations("Components.EventLocation");
   const cityHref = citySlug ? `/${citySlug}` : null;
@@ -38,6 +39,52 @@ export default function EventLocation({
     regionName: regionLabel,
     hidePlaceSegments: showPlaceLinks, // Hide city/region from the string if we show them as links below
   });
+
+  if (compact) {
+    return (
+      <div className="w-full flex flex-col gap-2">
+        {fullLocation && (
+          <div className="flex items-start gap-2">
+            <LocationIcon className="h-4 w-4 text-foreground-strong flex-shrink-0 mt-0.5" />
+            <p className="body-normal text-foreground">{fullLocation}</p>
+          </div>
+        )}
+        {/* Inline map for sidebar */}
+        <EventLocationClient
+          location={location}
+          cityName={cityLabel}
+          regionName={regionLabel}
+          compact
+        />
+        {/* Clickable city and region links */}
+        {showPlaceLinks && (
+          <div className="flex flex-wrap items-center gap-element-gap-sm">
+            {cityHref && cityLabel && (
+              <PressableAnchor
+                href={cityHref}
+                className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+                variant="inline"
+              >
+                {cityLabel}
+              </PressableAnchor>
+            )}
+            {cityHref && regionHref && cityLabel && regionLabel && (
+              <span className="text-foreground/40">|</span>
+            )}
+            {regionHref && regionLabel && (
+              <PressableAnchor
+                href={regionHref}
+                className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+                variant="inline"
+              >
+                {regionLabel}
+              </PressableAnchor>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

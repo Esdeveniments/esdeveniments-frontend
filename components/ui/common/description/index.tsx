@@ -1,6 +1,5 @@
 import { sanitizeHtml } from "@utils/sanitize";
 import { DocumentIcon } from "@heroicons/react/24/outline";
-import CulturalMessage from "../culturalMessage";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { JSX } from "react";
 import { getTranslations } from "next-intl/server";
@@ -9,10 +8,7 @@ import { processDescription } from "utils/text-processing";
 
 export default async function Description({
   description,
-  location,
-  locationValue,
   introText,
-  locationType = "general",
   headerActions,
   descriptionHtmlId = "event-description-body",
 }: DescriptionProps): Promise<JSX.Element> {
@@ -43,13 +39,6 @@ export default async function Description({
             className="body-normal text-foreground-strong [&>*]:body-normal [&>*]:text-foreground-strong"
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
-          <div className="body-normal text-foreground-strong">
-            <CulturalMessage
-              location={location || ""}
-              locationValue={locationValue || ""}
-              locationType={locationType}
-            />
-          </div>
         </div>
       </div>
     </section>

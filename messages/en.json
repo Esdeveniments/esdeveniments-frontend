@@ -755,7 +755,16 @@
       "stickyCalendar": "Calendar",
       "stickySave": "Save",
       "free": "Free",
-      "paid": "Paid"
+      "paid": "Paid",
+      "sidebarMoreInfo": "More information",
+      "sidebarVisitWebsite": "Visit website",
+      "sidebarSource": "Source",
+      "sidebarOpenInMaps": "Open in Maps",
+      "interested": "{count} interested",
+      "popular": "Popular",
+      "readMore": "Read more",
+      "readLess": "Read less",
+      "durationLabel": "Duration: {duration}"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",

@@ -5,6 +5,7 @@ import {
   XMarkIcon as XIcon,
   ChevronDownIcon,
   ArrowRightIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
@@ -17,11 +18,13 @@ export default function EventLocationClient({
   location,
   cityName,
   regionName,
-}: Pick<EventLocationProps, "location" | "cityName" | "regionName">) {
+  compact = false,
+}: Pick<EventLocationProps, "location" | "cityName" | "regionName" | "compact">) {
   const t = useTranslations("Components.EventLocation");
-  const [showMap, setShowMap] = useState(false);
+  const tPage = useTranslations("Components.EventPage");
+  const [showMap, setShowMap] = useState(compact); // Auto-show in compact mode
   const [isMapsVisible, setIsMapsVisible] = useState(false);
-  const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
+  const [hasAutoExpanded, setHasAutoExpanded] = useState(compact);
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-expand map when the location section scrolls into view.
@@ -80,6 +83,43 @@ export default function EventLocationClient({
       "_blank"
     );
   };
+
+  const handleOpenInMaps = () => {
+    const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
+
+    sendGoogleEvent("outbound_click", {
+      link_domain: "www.google.com",
+      link_path: "/maps/search/",
+      link_type: "maps_open",
+      context: "event_location",
+    });
+
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${query}`,
+      "_blank"
+    );
+  };
+
+  // Compact mode: auto-show map, no toggle, just map + "Open in Maps" link
+  if (compact) {
+    return (
+      <div ref={sectionRef} className="w-full flex flex-col gap-2">
+        {isMapsVisible && (
+          <div className="w-full rounded-card overflow-hidden">
+            <Maps location={location} />
+          </div>
+        )}
+        <button
+          onClick={handleOpenInMaps}
+          className="inline-flex items-center gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
+          type="button"
+        >
+          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+          {tPage("sidebarOpenInMaps")}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div ref={sectionRef}>
