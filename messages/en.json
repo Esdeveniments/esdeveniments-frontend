@@ -1151,7 +1151,7 @@
         "capDeSetmana": {
           "title": "What to do this weekend {label}",
           "subTitle": "Discover what to do this weekend {label}: concerts, festivals, family activities, and outdoor plans. Find your plan and make the most of the weekend.",
-          "metaTitle": "Plans for this weekend {label} - Agenda",
+          "metaTitle": "What to do this weekend {label} - Plans and agenda",
           "metaDescription": "Discover the best plans for this weekend {label}. Check concerts, popular festivals, activities with kids, routes, and other cultural proposals to make the most of the weekend.",
           "notFound": "Sorry, there are no events this weekend {label}. Check other dates, explore different categories, or see what's on in the rest of Catalonia to find new plans."
         }
@@ -1443,8 +1443,8 @@
     "emptyState": "Advertise your business here",
     "cta": "Sponsor this space",
     "houseAd": {
-      "pricing": "Your business here · From €5/week",
-      "pricingSub": "Exclusive space on your town's events page",
+      "pricing": "If you see this, so does your competition",
+      "pricingSub": "Reserve the only ad space in your town",
       "reach": "People in your town, looking for plans",
       "reachSub": "Looking for where to eat, shop and go out. You give them the answer.",
       "exclusive": "Just you. No competition.",
@@ -1453,8 +1453,8 @@
       "localSub": "Appear when they search where to eat, shop or go out",
       "intent": "People ready to go out",
       "intentSub": "They're looking for what to do and where to go. You give them the answer.",
-      "simple": "No hassle",
-      "simpleSub": "One banner, your town, one week. From €5",
+      "simple": "Whoever shows up here wins customers",
+      "simpleSub": "Your town's events page, seen by people looking for places to go",
       "results": "Where do customers find you?",
       "resultsSub": "Right here. When they search what to do in your town",
       "seasonal": "Festival in town?",

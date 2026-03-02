@@ -1151,7 +1151,7 @@
         "capDeSetmana": {
           "title": "Qué hacer este fin de semana {label}",
           "subTitle": "Descubre qué hacer este fin de semana {label}: conciertos, fiestas, actividades familiares y propuestas al aire libre. Encuentra tu plan y aprovecha el fin de semana.",
-          "metaTitle": "Planes para este fin de semana {label} - Agenda",
+          "metaTitle": "Qué hacer este fin de semana {label} - Planes y agenda",
           "metaDescription": "Descubre los mejores planes para este fin de semana {label}. Consulta conciertos, fiestas populares, actividades con niños, rutas y otras propuestas culturales para aprovechar al máximo el fin de semana.",
           "notFound": "Lo sentimos, pero no hay eventos este fin de semana {label}. Consulta otras fechas, explora categorías diferentes o mira qué se hace en el resto de Cataluña para encontrar nuevos planes."
         }
@@ -1445,8 +1445,8 @@
     "emptyState": "Anuncia tu negocio aquí",
     "cta": "Patrocina este espacio",
     "houseAd": {
-      "pricing": "Tu negocio aquí · Desde 5€/semana",
-      "pricingSub": "Espacio exclusivo en la agenda de eventos de tu pueblo",
+      "pricing": "Si tú lo ves, tu competencia también",
+      "pricingSub": "Reserva el único espacio publicitario en tu pueblo",
       "reach": "Gente de tu pueblo, buscando planes",
       "reachSub": "Buscan dónde comer, comprar y salir. Tú les das la respuesta.",
       "exclusive": "Solo tú. Sin competencia.",
@@ -1455,8 +1455,8 @@
       "localSub": "Aparece cuando buscan dónde comer, comprar o salir",
       "intent": "Gente que ya quiere salir de casa",
       "intentSub": "Buscan qué hacer y adónde ir. Tú les das la respuesta.",
-      "simple": "Sin complicaciones",
-      "simpleSub": "Un banner, tu pueblo, una semana. Desde 5€",
+      "simple": "Quien aparece aquí, gana clientes",
+      "simpleSub": "La agenda de tu pueblo, vista por quien busca adónde ir",
       "results": "¿Dónde te encuentran los clientes?",
       "resultsSub": "Aquí mismo. Cuando buscan qué hacer en tu pueblo",
       "seasonal": "¿Hay fiesta en el pueblo?",
