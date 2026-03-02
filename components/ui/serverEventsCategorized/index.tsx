@@ -213,7 +213,7 @@ async function ServerEventsCategorized({
         {/* Hero background image */}
         <div
           className="absolute inset-0 bg-cover bg-[center_60%] bg-no-repeat"
-          style={{ backgroundImage: "url('/static/images/hero-castellers.jpg')" }}
+          style={{ backgroundImage: "url('/static/images/hero-castellers.webp')" }}
           aria-hidden="true"
         />
         {/* Dark overlay for text readability */}
