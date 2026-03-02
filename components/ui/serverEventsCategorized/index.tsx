@@ -12,6 +12,7 @@ import {
   CalendarDaysIcon,
   MapPinIcon,
 } from "@heroicons/react/24/outline";
+import { FireIcon } from "@heroicons/react/24/solid";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { fetchEvents } from "@lib/api/events";
@@ -35,6 +36,7 @@ import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import { createDateFilterBadgeLabels } from "./DateFilterBadges";
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
@@ -153,6 +155,7 @@ const resolveCategoryDetails = (
 async function ServerEventsCategorized({
   pageData,
   seoLinkSections = [],
+  localAgendasSection,
   ...contentProps
 }: ServerEventsCategorizedProps) {
   const locale = await getLocaleSafely();
@@ -299,6 +302,7 @@ async function ServerEventsCategorized({
       <Suspense fallback={<ServerEventsCategorizedFallback />}>
         <ServerEventsCategorizedContent
           localePrefix={prefix}
+          localAgendasSection={localAgendasSection}
           {...contentProps}
         />
       </Suspense>
@@ -311,7 +315,8 @@ export async function ServerEventsCategorizedContent({
   categoriesPromise,
   featuredPlaces,
   localePrefix = "",
-}: ServerEventsCategorizedContentProps & { localePrefix?: string }) {
+  localAgendasSection,
+}: ServerEventsCategorizedContentProps & { localePrefix?: string; localAgendasSection?: SeoLinkSection }) {
   const locale = await getLocaleSafely();
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
@@ -452,6 +457,25 @@ export async function ServerEventsCategorizedContent({
     ...otherSections,
   ].slice(0, MAX_CATEGORY_SECTIONS);
 
+  // 5. Derive "Popular ara" from existing categorized events (zero extra API calls)
+  const POPULAR_MIN_VISITS = 10;
+  const POPULAR_MAX_EVENTS = 10;
+  const popularEvents = (() => {
+    const allEvents = Object.values(filteredCategorizedEvents).flat();
+    const seen = new Set<string>();
+    const deduped: EventSummaryResponseDTO[] = [];
+    for (const event of allEvents) {
+      if (seen.has(event.id)) continue;
+      seen.add(event.id);
+      if (event.visits >= POPULAR_MIN_VISITS) {
+        deduped.push(event);
+      }
+    }
+    return deduped
+      .sort((a, b) => b.visits - a.visits)
+      .slice(0, POPULAR_MAX_EVENTS);
+  })();
+
   const hasEvents =
     categorySectionsToRender.length > 0 || featuredSections.length > 0;
 
@@ -495,6 +519,28 @@ export async function ServerEventsCategorizedContent({
 
   return (
     <>
+      {/* Popular Now Section — derived from existing data, zero extra API calls */}
+      {popularEvents.length > 0 && (
+        <div className="container">
+          <section className="py-section-y border-b">
+            <SectionHeading
+              title={tCta("popularTitle")}
+              Icon={FireIcon}
+              titleClassName="heading-2 text-foreground"
+              iconClassName="h-6 w-6 text-primary flex-shrink-0"
+            />
+            <EventsAroundServer
+              events={popularEvents}
+              layout="horizontal"
+              usePriority={false}
+              showJsonLd
+              title={tCta("popularTitle")}
+              jsonLdId="popular-events"
+            />
+          </section>
+        </div>
+      )}
+
       {/* Featured Places Render */}
       {featuredSections.length > 0 && (
         <div className="container">
@@ -544,6 +590,35 @@ export async function ServerEventsCategorizedContent({
           );
         })}
       </div>
+
+      {/* Local Agendas — secondary navigation, rendered after main content */}
+      {localAgendasSection && localAgendasSection.links.length > 0 && (
+        <div className="container py-section-y border-b border-border/40">
+          <div className="flex flex-col gap-4">
+            <SectionHeading
+              title={localAgendasSection.title}
+              Icon={MapPinIcon}
+              titleClassName="heading-2 text-foreground"
+              iconClassName="h-6 w-6 text-primary flex-shrink-0"
+            />
+            <div className="flex flex-wrap gap-2">
+              {localAgendasSection.links.map((link) => (
+                <PressableAnchor
+                  key={`local-agendas-${link.href}`}
+                  href={withLocale(link.href)}
+                  prefetch={false}
+                  variant="plain"
+                  className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
+                  data-analytics-event-name="home_chip_click"
+                  data-analytics-context="home_seo_local-agendas"
+                >
+                  {link.label.replace(/^Agenda\s+/i, "")}
+                </PressableAnchor>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CTA */}
       <section className="py-section-y container text-center">

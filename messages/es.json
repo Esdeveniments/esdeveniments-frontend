@@ -519,7 +519,8 @@
     "ServerEventsCategorized": {
       "cta": "¿No encuentras lo que buscas?",
       "ctaButton": "Ver toda la agenda",
-      "quickCategoriesTitle": "Explora por intereses"
+      "quickCategoriesTitle": "Explora por intereses",
+      "popularTitle": "Popular ahora en Cataluña"
     },
     "Filters": {
       "triggerLabel": "Filtros"

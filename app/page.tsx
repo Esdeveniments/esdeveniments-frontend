@@ -93,22 +93,26 @@ export default async function Page(): Promise<JSX.Element> {
         },
       ],
     },
-    {
-      id: "local-agendas",
-      title: t("seoSections.localAgendas.title"),
-      links: TOP_AGENDA_LINKS.map((link) => ({
-        href: link.href,
-        label: `${agendaLabel} ${link.name}`,
-      })),
-    },
   ];
 
-  const homeNavigationItems: NavigationItem[] = homeSeoLinkSections.flatMap(
-    (section) =>
-      section.links.map((link) => ({
-        name: link.label,
-        href: link.href,
-      }))
+  // Local agendas section — rendered lower on the page (after carousels, before CTA)
+  const localAgendasSection: SeoLinkSection = {
+    id: "local-agendas",
+    title: t("seoSections.localAgendas.title"),
+    links: TOP_AGENDA_LINKS.map((link) => ({
+      href: link.href,
+      label: `${agendaLabel} ${link.name}`,
+    })),
+  };
+
+  const homeNavigationItems: NavigationItem[] = [
+    ...homeSeoLinkSections,
+    localAgendasSection,
+  ].flatMap((section) =>
+    section.links.map((link) => ({
+      name: link.label,
+      href: link.href,
+    }))
   );
 
   const featuredPlaceSections: FeaturedPlaceConfig[] = [
@@ -154,6 +158,7 @@ export default async function Page(): Promise<JSX.Element> {
         categoriesPromise={categoriesPromise}
         featuredPlaces={featuredPlaceSections}
         seoLinkSections={homeSeoLinkSections}
+        localAgendasSection={localAgendasSection}
       />
     </>
   );

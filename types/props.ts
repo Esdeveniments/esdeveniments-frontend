@@ -540,6 +540,7 @@ export interface ServerEventsCategorizedProps {
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
   featuredPlaces?: FeaturedPlaceConfig[];
   seoLinkSections?: SeoLinkSection[];
+  localAgendasSection?: SeoLinkSection;
 }
 
 export type ServerEventsCategorizedContentProps = Pick<

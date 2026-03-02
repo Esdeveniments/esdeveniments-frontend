@@ -101,9 +101,9 @@ export function prepareCardContentData({
 
   const shouldShowFavoriteButton = Boolean(event.slug);
 
-  // Price indicator — only show label for free events
-  // TODO: Re-enable when backend has reliable pricing data.
-  // Currently all events are marked FREE regardless of actual pricing.
+  // Price indicator — disabled until backend provides reliable FREE/PAID data.
+  // When enabled: uncomment the line below and remove the hardcoded undefined.
+  // All card rendering (CardLayout, CardHorizontalServer) already supports priceLabel.
   // const priceLabel = event.type === "FREE" ? tCard("free") : undefined;
   const priceLabel = undefined;
 

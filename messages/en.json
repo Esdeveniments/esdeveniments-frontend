@@ -519,7 +519,8 @@
     "ServerEventsCategorized": {
       "cta": "Can't find what you're looking for?",
       "ctaButton": "View full agenda",
-      "quickCategoriesTitle": "Explore by interests"
+      "quickCategoriesTitle": "Explore by interests",
+      "popularTitle": "Popular now in Catalonia"
     },
     "Filters": {
       "triggerLabel": "Filters"

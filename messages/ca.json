@@ -527,7 +527,8 @@
     "ServerEventsCategorized": {
       "cta": "No trobes el que busques?",
       "ctaButton": "Veure tota l'agenda",
-      "quickCategoriesTitle": "Explora per interessos"
+      "quickCategoriesTitle": "Explora per interessos",
+      "popularTitle": "Popular ara a Catalunya"
     },
     "Filters": {
       "triggerLabel": "Filtres"
