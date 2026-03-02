@@ -104,11 +104,9 @@ export default function EventLocationClient({
   if (compact) {
     return (
       <div ref={sectionRef} className="w-full flex flex-col gap-2">
-        {isMapsVisible && (
-          <div className="w-full rounded-card overflow-hidden">
-            <Maps location={location} />
-          </div>
-        )}
+        <div className="w-full h-[400px] rounded-card overflow-hidden bg-muted">
+          {isMapsVisible && <Maps location={location} />}
+        </div>
         <button
           onClick={handleOpenInMaps}
           className="inline-flex items-center gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
@@ -138,7 +136,9 @@ export default function EventLocationClient({
       </div>
       {showMap && (
         <div className="w-full flex flex-col justify-center items-end gap-card-padding">
-          {isMapsVisible && <Maps location={location} />}
+          <div className="w-full h-[400px] bg-muted">
+            {isMapsVisible && <Maps location={location} />}
+          </div>
           <div className="w-fit flex justify-end items-center gap-element-gap-sm px-section-x border-b-2 border-background hover:border-b-2 hover:border-foreground-strong ease-in-out duration-300 cursor-pointer">
             <button
               className="flex gap-element-gap-sm"

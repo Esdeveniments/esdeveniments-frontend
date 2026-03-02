@@ -12,19 +12,8 @@ import { getLocaleSafely } from "@utils/i18n-seo";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 /**
- * Extracts hostname from a URL string, returning null on parse failure.
- */
-function extractDomain(url: string): string | null {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Sticky sidebar for the event detail page (desktop only).
- * Contains: Date/Time, Location, More Info, Source, Duration, Sponsor.
+ * Contains: Date/Time, Location, More Info, Duration, Sponsor.
  *
  * Rendered inside a card with sticky positioning.
  * Hidden on mobile (lg:hidden) — mobile uses inline versions of these components.
@@ -46,8 +35,6 @@ export default async function EventSidebar({
 }) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
-
-  const sourceDomain = event.url ? extractDomain(event.url) : null;
 
   return (
     <aside
@@ -111,20 +98,6 @@ export default async function EventSidebar({
               </>
             )}
 
-            {/* Source / Organizer */}
-            {sourceDomain && (
-              <>
-                <hr className="border-border" />
-                <div className="flex flex-col gap-0.5">
-                  <span className="label text-foreground-strong/50">
-                    {t("sidebarSource")}
-                  </span>
-                  <span className="body-small text-foreground-strong/70">
-                    {sourceDomain}
-                  </span>
-                </div>
-              </>
-            )}
           </div>
         </div>
 

@@ -211,7 +211,7 @@ export default async function FilteredPage({
   // Prepare fetch params (align with byDate page behavior)
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: 10,
+    size: 12,
     category:
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     // term is client-driven via SWR; omit on server to keep ISR static

@@ -17,7 +17,7 @@ export default function SocialProofCounter({
   visits: number;
   interestedLabel: string;
 }) {
-  if (!visits || visits <= 0) return null;
+  if (!visits || visits < 10) return null;
 
   const isPopular = visits >= POPULAR_THRESHOLD;
 

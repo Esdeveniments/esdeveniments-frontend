@@ -43,7 +43,7 @@ export const useEvents = ({
   distance,
   lat,
   lon,
-  initialSize = 10,
+  initialSize = 12,
   fallbackData = [],
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {

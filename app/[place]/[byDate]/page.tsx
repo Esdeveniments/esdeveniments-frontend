@@ -254,7 +254,7 @@ export default async function ByDatePage({
 
   const paramsForFetch: FetchEventsParams = {
     page: 0,
-    size: 10,
+    size: 12,
   };
 
   // Only add date filters if actualDate is not "tots"

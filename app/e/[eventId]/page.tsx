@@ -323,7 +323,7 @@ export default async function EventPage({
             {/* Two-column layout: Main content + Sticky sidebar (desktop) */}
             <div className="flex flex-col lg:flex-row lg:gap-8">
               {/* ========== MAIN CONTENT (left column) ========== */}
-              <div className="flex-1 min-w-0 flex flex-col gap-section-y">
+              <div className="flex-1 min-w-0 flex flex-col gap-section-y-sm">
                 {/* Event Media Hero */}
                 <div className="w-full flex flex-col">
                   <div className="w-full">

@@ -3,8 +3,8 @@ import type { EventStatusMeta, EventTemporalStatus } from "types/event-status";
 
 const stateStyles: Record<EventStatusMeta["state"], string> = {
   past: "bg-foreground-strong/10 text-foreground-strong border border-foreground-strong/20",
-  live: "bg-primary-dark text-primary-foreground border border-primary-dark animate-pulse",
-  upcoming: "bg-primary text-primary-foreground border border-primary-dark",
+  live: "bg-primary text-primary-foreground border border-primary-dark animate-pulse",
+  upcoming: "bg-primary/10 text-primary border border-primary/20",
 };
 
 /**
@@ -49,7 +49,7 @@ const EventStatusBadge: React.FC<{
     >
       {displayText}
       {countdown && (
-        <span className="font-normal opacity-90">· {countdown}</span>
+        <span className="font-normal opacity-90 normal-case tracking-normal">· {countdown}</span>
       )}
     </span>
   );

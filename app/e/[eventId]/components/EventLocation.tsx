@@ -88,15 +88,16 @@ export default function EventLocation({
 
   return (
     <div className="w-full">
-      <div className="w-full flex flex-col gap-element-gap pr-section-x min-w-0">
+      <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
           Icon={LocationIcon}
           iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title={t("title")}
           titleClassName="heading-2"
         />
-        <div className="w-full flex flex-col justify-center items-center gap-element-gap px-section-x">
-          <div className="w-full flex flex-col justify-center items-start gap-element-gap">
+        <div className="w-full flex flex-col gap-element-gap">
+          {/* Text content with padding */}
+          <div className="w-full flex flex-col justify-center items-start gap-element-gap px-4">
             {/* Show full location: location, city, region */}
             {fullLocation && (
               <div className="w-full flex flex-col justify-start items-start gap-0.5">
@@ -131,12 +132,13 @@ export default function EventLocation({
                 )}
               </div>
             )}
-            <EventLocationClient
-              location={location}
-              cityName={cityLabel}
-              regionName={regionLabel}
-            />
           </div>
+          {/* Map — full width, no padding */}
+          <EventLocationClient
+            location={location}
+            cityName={cityLabel}
+            regionName={regionLabel}
+          />
         </div>
       </div>
     </div>

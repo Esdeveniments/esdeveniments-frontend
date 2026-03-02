@@ -30,13 +30,13 @@ export default async function Description({
           />
           {headerActions ? <div className="flex items-center">{headerActions}</div> : null}
         </div>
-        <div className="w-full break-words overflow-hidden space-y-4 px-4">
+        <div className="w-full max-w-prose break-words overflow-hidden space-y-4 px-4">
           {introText && (
-            <p className="body-normal text-foreground-strong">{introText}</p>
+            <p className="body-normal leading-[1.75] text-foreground-strong/90">{introText}</p>
           )}
           <div
             id={descriptionHtmlId}
-            className="body-normal text-foreground-strong [&>*]:body-normal [&>*]:text-foreground-strong"
+            className="body-normal leading-[1.75] text-foreground-strong/90 [&>*]:body-normal [&>*]:leading-[1.75] [&>*]:text-foreground-strong/90"
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
         </div>

@@ -75,7 +75,7 @@ export default function CardLayout({
       <div className="flex-1 flex flex-col px-4 pt-3 pb-4 pointer-events-none">
         <CategoryBadge label={categoryLabel} />
 
-        <p className="text-sm text-muted-foreground mb-1 truncate">
+        <p className="text-sm text-muted-foreground mb-1">
           {urgencyLabel ? (
             <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
               {urgencyLabel}

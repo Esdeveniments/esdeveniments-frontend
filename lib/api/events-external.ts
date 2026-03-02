@@ -42,7 +42,7 @@ export async function fetchEventsExternal(
     return {
       content: [],
       currentPage: 0,
-      pageSize: 10,
+      pageSize: 12,
       totalElements: 0,
       totalPages: 0,
       last: true,
@@ -57,7 +57,7 @@ export async function fetchEventsExternal(
       return {
         content: [],
         currentPage: 0,
-        pageSize: 10,
+        pageSize: 12,
         totalElements: 0,
         totalPages: 0,
         last: true,
@@ -69,7 +69,7 @@ export async function fetchEventsExternal(
     return {
       content: [],
       currentPage: 0,
-      pageSize: 10,
+      pageSize: 12,
       totalElements: 0,
       totalPages: 0,
       last: true,

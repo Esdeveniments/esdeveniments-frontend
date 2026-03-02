@@ -29,8 +29,8 @@ export default function TextHouseAd({ houseAd, place }: TextHouseAdProps) {
         <div className="flex-start px-card-padding-sm pt-card-padding-sm pb-element-gap-sm">
           <span className="badge-default">{t("houseAdLabel")}</span>
         </div>
-        <div className="flex-center flex-col gap-element-gap-sm pb-4">
-          <span className="heading-3 text-foreground-strong group-hover:text-primary text-center">
+        <div className="flex-center flex-col gap-element-gap-sm px-card-padding-sm pb-card-padding-sm">
+          <span className="heading-4 text-foreground-strong group-hover:text-primary text-center">
             {t(`houseAd.${houseAd.headlineKey}`)}
           </span>
           <div className="flex-center gap-element-gap-sm">

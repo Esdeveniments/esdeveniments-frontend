@@ -206,7 +206,7 @@ export async function buildPlaceEventsPromise({
 }): Promise<PlacePageEventsResult> {
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: 10,
+    size: 12,
   };
 
   if (place !== "catalunya") {
