@@ -768,7 +768,7 @@
       "sidebarVisitWebsite": "Visita el web",
       "sidebarSource": "Font",
       "sidebarOpenInMaps": "Obre a Maps",
-      "interested": "{count} interessats",
+      "interested": "{count, plural, one {{count} interessat} other {{count} interessats}}",
       "popular": "Popular",
       "readMore": "Llegir més",
       "readLess": "Llegir menys",
@@ -783,7 +783,7 @@
       "today": "Avui",
       "tomorrow": "Demà",
       "multipleDates": "Diversos dies",
-      "viewCountAria": "{count} visualitzacions"
+      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}"
     },
     "EventForm": {
       "title": "Títol *",

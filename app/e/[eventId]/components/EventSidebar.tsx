@@ -85,7 +85,7 @@ export default async function EventSidebar({
             )}
 
             {/* More Info link (from EventDetailsSection) */}
-            {event.url && (
+            {event.url && /^https?:\/\//i.test(event.url) && (
               <>
                 <hr className="border-border" />
                 <div className="flex flex-col gap-1">

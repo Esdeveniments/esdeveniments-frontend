@@ -761,7 +761,7 @@
       "sidebarVisitWebsite": "Visita la web",
       "sidebarSource": "Fuente",
       "sidebarOpenInMaps": "Abrir en Maps",
-      "interested": "{count} interesados",
+      "interested": "{count, plural, one {{count} interesado} other {{count} interesados}}",
       "popular": "Popular",
       "readMore": "Leer más",
       "readLess": "Leer menos",
@@ -776,7 +776,7 @@
       "today": "Hoy",
       "tomorrow": "Mañana",
       "multipleDates": "Varios días",
-      "viewCountAria": "{count} visualizaciones"
+      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}"
     },
     "EventForm": {
       "title": "Título *",

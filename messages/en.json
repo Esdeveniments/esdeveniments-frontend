@@ -776,7 +776,7 @@
       "today": "Today",
       "tomorrow": "Tomorrow",
       "multipleDates": "Multiple dates",
-      "viewCountAria": "{count} views"
+      "viewCountAria": "{count, plural, one {{count} view} other {{count} views}}"
     },
     "EventForm": {
       "title": "Title *",

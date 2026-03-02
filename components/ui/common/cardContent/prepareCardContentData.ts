@@ -23,8 +23,8 @@ export function prepareCardContentData({
   event: CardContentProps["event"];
   variant?: CardVariant;
   locale: AppLocale;
-  tCard: (key: string, values?: Record<string, string>) => string;
-  tTime: (key: string, values?: Record<string, string>) => string;
+  tCard: (key: string, values?: Record<string, string | number>) => string;
+  tTime: (key: string, values?: Record<string, string | number>) => string;
   preferPreformattedDates?: boolean;
   tCategories?: (key: string) => string;
 }) {
@@ -109,7 +109,7 @@ export function prepareCardContentData({
 
   // View count aria label
   const viewCountAriaLabel = tCard("viewCountAria", {
-    count: String(event.visits ?? 0),
+    count: event.visits ?? 0,
   });
 
   const firstCategory = event.categories?.[0];

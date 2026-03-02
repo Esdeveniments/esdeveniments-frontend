@@ -160,8 +160,8 @@ export interface CardLayoutProps {
 export interface CompactCardProps {
   event: EventSummaryResponseDTO;
   locale: AppLocale;
-  tCard: (key: string, values?: Record<string, string>) => string;
-  tTime: (key: string, values?: Record<string, string>) => string;
+  tCard: (key: string, values?: Record<string, string | number>) => string;
+  tTime: (key: string, values?: Record<string, string | number>) => string;
   index: number;
   analyticsEventName?: string;
 }

@@ -13,7 +13,7 @@ function ViewCounter({ visits, hideText = false, visitsLabel }: ViewCounterProps
     <div className={`flex justify-end items-center gap-1 body-small ${hideText ? "min-w-0" : "min-w-[80px]"} h-8 whitespace-nowrap`}>
       <Icon className={`${hideText ? "w-4 h-4" : "w-5 h-5"} ${iconColor}`} />
       <span className={`tabular-nums leading-none ${isPopular ? "font-semibold text-foreground-strong" : ""}`}>
-        {hideText ? visits : visitsLabel}
+        {hideText ? visits : (visitsLabel ?? visits)}
       </span>
     </div>
   );

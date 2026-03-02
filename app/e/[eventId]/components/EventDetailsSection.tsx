@@ -35,7 +35,7 @@ const EventDetailsSection: React.FC<{
             </div>
           )}
 
-          {event.url && (
+          {event.url && /^https?:\/\//i.test(event.url) && (
             <div className="body-normal font-semibold text-foreground-strong">
               {t("eventLink")}{" "}
               <PressableAnchor
