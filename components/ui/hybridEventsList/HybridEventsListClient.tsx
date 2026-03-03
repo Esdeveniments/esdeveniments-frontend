@@ -17,7 +17,7 @@ import type { AppLocale } from "types/i18n";
 
 function EventsGridSkeleton() {
   return (
-    <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 py-section-y">
+    <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap py-section-y">
       {Array.from({ length: 3 }).map((_, index) => (
         <EventCardSkeleton key={`loading-${index}`} />
       ))}

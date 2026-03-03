@@ -108,9 +108,8 @@ export default function EventStickyCTA({
   const handleSave = () => {
     // Delegate to the real FavoriteButton so the cookie-based API stays in sync
     const btn = findFavoriteButton();
-    if (btn) {
-      btn.click();
-    }
+    if (!btn) return;
+    btn.click();
     sendGoogleEvent("sticky_cta_click", {
       action: isFavorite ? "unsave" : "save",
       event_slug: eventSlug,
@@ -156,7 +155,7 @@ export default function EventStickyCTA({
               to avoid the hover:bg-primary fill that sticks on mobile touch */}
           <button
             onClick={handleSave}
-            className={`inline-flex items-center justify-center gap-1 rounded-button px-button-x py-2 border-2 label font-semibold transition-colors ${
+            className={`inline-flex items-center justify-center gap-1 rounded-button px-button-x py-2 border-2 label font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
               isFavorite
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-primary text-primary bg-transparent"
