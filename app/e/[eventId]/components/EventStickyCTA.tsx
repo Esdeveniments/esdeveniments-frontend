@@ -126,7 +126,7 @@ export default function EventStickyCTA({
       <div className="bg-background/95 backdrop-blur-md border-t border-border shadow-lg">
         <div className="flex items-center justify-evenly gap-1 px-section-x py-2">
           {/* More info - links to external event URL */}
-          {eventUrl && (
+          {eventUrl && /^https?:\/\//i.test(eventUrl) && (
             <a
               href={eventUrl}
               target="_blank"
