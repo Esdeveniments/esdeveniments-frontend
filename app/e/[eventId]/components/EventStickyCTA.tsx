@@ -162,6 +162,7 @@ export default function EventStickyCTA({
                 : "border-primary text-primary bg-transparent"
             }`}
             aria-label={isFavorite ? labels.favoriteRemove : labels.favoriteAdd}
+            aria-pressed={isFavorite}
           >
             {isFavorite ? (
               <HeartSolid className="w-4 h-4" />

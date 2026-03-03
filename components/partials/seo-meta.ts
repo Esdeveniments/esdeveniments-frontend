@@ -408,7 +408,7 @@ export function generateSiteNavigationElementSchema(
     "@type": "SiteNavigationElement",
     "@id": `${siteUrl}#sitenavigation`,
     name: "Sitemap de Catalunya",
-    url: `${siteUrl}/sitemap`,
+    url: toLocalizedUrl("/sitemap", localeToUse),
     hasPart: navigationElements,
   };
 }

@@ -395,6 +395,8 @@
     "LatestNewsSection": {
       "title": "Últimas noticias",
       "titleWithPlace": "Últimas noticias {place}",
+      "titleStale": "Noticias",
+      "titleStaleWithPlace": "Noticias {place}",
       "viewAll": "Ver todas"
     },
     "CulturalMessage": {

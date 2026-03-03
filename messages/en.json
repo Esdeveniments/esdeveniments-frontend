@@ -395,6 +395,8 @@
     "LatestNewsSection": {
       "title": "Latest news",
       "titleWithPlace": "Latest news {place}",
+      "titleStale": "News",
+      "titleStaleWithPlace": "News {place}",
       "viewAll": "View all"
     },
     "CulturalMessage": {
@@ -747,7 +749,7 @@
     },
     "EventPage": {
       "sponsored": "Sponsored content",
-      "visitsCount": "{count, plural, one {{count} view} other {{count} views}}",
+      "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "stickyMoreInfo": "More info",
       "stickyCalendar": "Calendar",
       "stickySave": "Save",

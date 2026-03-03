@@ -3,7 +3,7 @@ import EventCardSkeleton from "./EventCardSkeleton";
 export default function PlacePageSkeleton() {
   return (
     <div
-      className="container flex-col justify-center items-center mt-element-gap"
+      className="container py-section-y"
       data-testid="events-list-skeleton"
     >
       {/* Page header skeleton - improved spacing like HomePageSkeleton */}

@@ -395,6 +395,8 @@
     "LatestNewsSection": {
       "title": "Últimes notícies",
       "titleWithPlace": "Últimes notícies {place}",
+      "titleStale": "Notícies",
+      "titleStaleWithPlace": "Notícies {place}",
       "viewAll": "Veure totes"
     },
     "NewsList": {

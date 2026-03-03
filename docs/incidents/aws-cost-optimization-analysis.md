@@ -1,7 +1,7 @@
 # AWS/Vercel Cost Optimization Analysis
 
 **Date:** December 30, 2025  
-**Updated:** January 8, 2026  
+**Updated:** March 3, 2026  
 **Status:** ✅ Implemented  
 **Environment:** SST/OpenNext on AWS (eu-west-3) + Backend API on Elastic Beanstalk (eu-west-1)
 
@@ -133,19 +133,15 @@ The Dec 28, 2025 incident documented in [2025-12-28-dynamodb-write-cost-spike.md
 
 ### Recommendations
 
-#### 3.1 Verify ISR-Only for Listing Pages (CRITICAL)
+#### 3.1 Verify Listing Pages Stay Dynamic-Safe (CRITICAL)
 
 **Risk Mitigation:** Prevent $300+ spikes
 
-Ensure these pages NEVER read `searchParams` or `headers()`:
+All place pages are rendered **on-demand** (static generation was removed in March 2026 — see [Section 8](#8-static-generation)). The critical rule remains: these pages must NEVER read `searchParams` (which would create per-URL DynamoDB entries):
 
 - `app/[place]/page.tsx` ✅ Verified clean
 - `app/[place]/[byDate]/page.tsx` ✅ Verified clean
-- `app/[place]/[byDate]/[category]/page.tsx` - Should verify
-
-#### 3.2 Static Generation — Removed (March 2026)
-
-`generateStaticParams` was removed from all place page routes. See [Section 8](#8-static-generation) for full details and rationale. All place pages are now rendered on-demand and cached by CloudFront/CDN.
+- `app/[place]/[byDate]/[category]/page.tsx` ✅ Verified clean
 
 ---
 

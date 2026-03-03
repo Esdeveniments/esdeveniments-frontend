@@ -21,13 +21,22 @@ export default async function LatestNewsSection({
     return null;
   }
 
+  const FRESHNESS_DAYS = 7;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - FRESHNESS_DAYS);
+  const isFresh = latestNews.some(
+    (n) => new Date(n.endDate) >= cutoff,
+  );
+
   const placeSuffix =
     placeLabel && placeSlug !== "catalunya"
       ? formatPlacePreposition(placeLabel, placeType, locale, false)
       : "";
   const title = placeSuffix
-    ? t("titleWithPlace", { place: placeSuffix })
-    : t("title");
+    ? t(isFresh ? "titleWithPlace" : "titleStaleWithPlace", {
+        place: placeSuffix,
+      })
+    : t(isFresh ? "title" : "titleStale");
 
   return (
     <div className="w-full bg-background pb-8">
