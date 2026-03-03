@@ -764,3 +764,29 @@ export interface EventStickyCTAProps {
     favoriteRemove: string;
   };
 }
+
+// Collapsible description wrapper (mobile)
+export interface CollapsibleDescriptionProps {
+  children: React.ReactNode;
+}
+
+// Event details section (duration + external link)
+export interface EventDetailsSectionProps {
+  event: import("./api/event").EventDetailResponseDTO;
+}
+
+// Sticky sidebar for event detail page (desktop)
+export interface EventSidebarProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  cityName: string;
+  regionName: string;
+  primaryPlaceSlug: string;
+  citySlug?: string;
+  regionSlug?: string;
+}
+
+// Social proof counter
+export interface SocialProofCounterProps {
+  visits: number;
+  interestedLabel: string;
+}

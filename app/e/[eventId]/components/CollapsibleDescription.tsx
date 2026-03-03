@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
+import type { CollapsibleDescriptionProps } from "types/props";
 
 const COLLAPSED_HEIGHT = 200; // px — approximately 200 chars worth of text
 
@@ -13,9 +14,7 @@ const COLLAPSED_HEIGHT = 200; // px — approximately 200 chars worth of text
  */
 export default function CollapsibleDescription({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: CollapsibleDescriptionProps) {
   const t = useTranslations("Components.EventPage");
   const [isExpanded, setIsExpanded] = useState(false);
   const [needsCollapse, setNeedsCollapse] = useState(false);

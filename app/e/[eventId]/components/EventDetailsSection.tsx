@@ -1,7 +1,7 @@
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { GlobeAltIcon, ClockIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
-import type { EventDetailResponseDTO } from "types/api/event";
+import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { useTranslations } from "next-intl";
 
@@ -10,13 +10,13 @@ import { useTranslations } from "next-intl";
  * Status badge and date/time info are intentionally NOT shown here
  * to avoid duplication (they already appear in EventHeader and EventCalendar).
  */
-const EventDetailsSection: React.FC<{
-  event: EventDetailResponseDTO;
-}> = ({ event }) => {
+const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
 
+  const hasValidUrl = !!event.url && /^https?:\/\//i.test(event.url);
+
   // Only render if there's something to show
-  if (!event.duration && !event.url) return null;
+  if (!event.duration && !hasValidUrl) return null;
 
   return (
     <div className="w-full">
@@ -35,7 +35,7 @@ const EventDetailsSection: React.FC<{
             </div>
           )}
 
-          {event.url && /^https?:\/\//i.test(event.url) && (
+          {hasValidUrl && (
             <div className="body-normal font-semibold text-foreground-strong">
               {t("eventLink")}{" "}
               <PressableAnchor

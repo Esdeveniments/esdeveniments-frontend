@@ -9,6 +9,7 @@ import {
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { EventStickyCTAProps } from "types/props";
+import { useTranslations } from "next-intl";
 
 /**
  * Returns the real FavoriteButton element on the page.
@@ -33,6 +34,7 @@ export default function EventStickyCTA({
   eventSlug,
   labels,
 }: EventStickyCTAProps) {
+  const t = useTranslations("Components.EventPage");
   const [isVisible, setIsVisible] = useState(false);
   const [isFavorite, setIsFavorite] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -121,7 +123,7 @@ export default function EventStickyCTA({
     <div
       className="fixed bottom-16 left-0 right-0 z-40 md:hidden"
       role="toolbar"
-      aria-label="Event actions"
+      aria-label={t("toolbarAriaLabel")}
     >
       <div className="bg-background/95 backdrop-blur-md border-t border-border shadow-lg">
         <div className="flex items-center justify-evenly gap-1 px-section-x py-2">

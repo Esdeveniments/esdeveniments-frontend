@@ -139,7 +139,7 @@ export default async function Page(): Promise<JSX.Element> {
   ];
 
   const siteNavigationSchema =
-    generateSiteNavigationElementSchema(homeNavigationItems);
+    generateSiteNavigationElementSchema(homeNavigationItems, locale);
 
   return (
     <>

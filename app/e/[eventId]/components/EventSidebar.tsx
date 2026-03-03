@@ -9,7 +9,7 @@ import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import type { EventDetailResponseDTO } from "types/api/event";
+import type { EventSidebarProps } from "types/props";
 
 /**
  * Sticky sidebar for the event detail page (desktop only).
@@ -25,21 +25,14 @@ export default async function EventSidebar({
   primaryPlaceSlug,
   citySlug,
   regionSlug,
-}: {
-  event: EventDetailResponseDTO;
-  cityName: string;
-  regionName: string;
-  primaryPlaceSlug: string;
-  citySlug?: string;
-  regionSlug?: string;
-}) {
+}: EventSidebarProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
 
   return (
     <aside
       className="hidden lg:block w-[340px] xl:w-[380px] flex-shrink-0"
-      aria-label="Event details"
+      aria-label={t("sidebarAriaLabel")}
     >
       <div className="sticky top-20 flex flex-col gap-4">
         {/* Main sidebar card */}

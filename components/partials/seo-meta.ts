@@ -366,13 +366,16 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
 
 export function generateSiteNavigationElementSchema(
   navigationItems: NavigationItem[],
+  locale?: AppLocale,
 ) {
   if (!navigationItems || navigationItems.length === 0) return null;
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
 
   const normalizeToAbsoluteUrl = (value: string) => {
     if (/^https?:\/\//i.test(value)) return value;
     const normalized = value.startsWith("/") ? value : `/${value}`;
-    return `${siteUrl}${normalized}`;
+    return toLocalizedUrl(normalized, localeToUse);
   };
 
   const fallbackPathFromName = (value: string) => {

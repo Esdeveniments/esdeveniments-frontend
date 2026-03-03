@@ -61,16 +61,19 @@ export function prepareCardContentData({
   {
     const now = convertTZ(new Date(), "Europe/Madrid");
     const eventStart = convertTZ(new Date(event.startDate), "Europe/Madrid");
-    const todayStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-    const eventStr = `${eventStart.getFullYear()}-${eventStart.getMonth()}-${eventStart.getDate()}`;
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = `${tomorrow.getFullYear()}-${tomorrow.getMonth()}-${tomorrow.getDate()}`;
 
-    if (eventStr === todayStr) {
+    // Normalize to midnight to compare dates only (avoids string-based fragility)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfEventDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+
+    const diffTime = startOfEventDay.getTime() - startOfToday.getTime();
+    // Use Math.round to handle DST changes gracefully
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
       urgencyLabel = tCard("today");
       urgencyType = "today";
-    } else if (eventStr === tomorrowStr) {
+    } else if (diffDays === 1) {
       urgencyLabel = tCard("tomorrow");
       urgencyType = "tomorrow";
     }

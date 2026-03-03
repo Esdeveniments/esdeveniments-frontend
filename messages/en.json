@@ -760,7 +760,9 @@
       "popular": "Popular",
       "readMore": "Read more",
       "readLess": "Read less",
-      "durationLabel": "Duration: {duration}"
+      "durationLabel": "Duration: {duration}",
+      "sidebarAriaLabel": "Event details",
+      "toolbarAriaLabel": "Event actions"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",

@@ -1,6 +1,6 @@
 import type { CardProps } from "types/common";
 import CardContentClient from "@components/ui/common/cardContent/CardContentClient";
-import CardLoading from "@components/ui/cardLoading";
+import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
 import AdCardClient from "./AdCardClient";
 
 export default function Card({
@@ -8,7 +8,7 @@ export default function Card({
   isLoading = false,
   isPriority = false,
 }: CardProps) {
-  if (isLoading) return <CardLoading />;
+  if (isLoading) return <EventCardSkeleton />;
   if (event.isAd) return <AdCardClient />;
   return (
     <CardContentClient

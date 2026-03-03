@@ -143,25 +143,9 @@ Ensure these pages NEVER read `searchParams` or `headers()`:
 - `app/[place]/[byDate]/page.tsx` ✅ Verified clean
 - `app/[place]/[byDate]/[category]/page.tsx` - Should verify
 
-#### 3.2 Reduce Static Generation Scope (ALREADY OPTIMIZED)
+#### 3.2 Static Generation — Removed (March 2026)
 
-Current [utils/priority-places.ts](../utils/priority-places.ts) limits to ~12 places:
-
-```typescript
-export const topStaticGenerationPlaces = [
-  "barcelona",
-  "tarragona",
-  "mataro",
-  "maresme",
-  "valles-oriental",
-  "valles-occidental",
-  "baix-llobregat",
-  "badalona",
-  "granollers",
-];
-```
-
-This is good - other places use ISR with 600s revalidation.
+`generateStaticParams` was removed from all place page routes. See [Section 8](#8-static-generation) for full details and rationale. All place pages are now rendered on-demand and cached by CloudFront/CDN.
 
 ---
 

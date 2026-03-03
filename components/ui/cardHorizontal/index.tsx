@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { CardHorizontalProps } from "types/common";
 import CardContentServer from "@components/ui/common/cardContent";
-import CardLoading from "@components/ui/cardLoading";
+import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
 import AdCardClient from "@components/ui/card/AdCardClient";
 
 const CardHorizontal: React.FC<CardHorizontalProps> = ({
@@ -9,7 +9,7 @@ const CardHorizontal: React.FC<CardHorizontalProps> = ({
   isLoading,
   isPriority,
 }) => {
-  if (isLoading) return <CardLoading />;
+  if (isLoading) return <EventCardSkeleton />;
   if (event.isAd) return <AdCardClient />;
   return (
     <CardContentServer event={event} isPriority={isPriority} />

@@ -1,22 +1,21 @@
 import { FireIcon } from "@heroicons/react/24/solid";
 import { EyeIcon } from "@heroicons/react/24/outline";
+import type { SocialProofCounterProps } from "types/props";
 
 const POPULAR_THRESHOLD = 50;
 
 /**
- * Social proof counter — always shows for any positive visit count.
+ * Social proof counter — only shown when visits ≥ 10.
  * ≥50: FireIcon (solid, red) + "N interested" — signals trending/hot
- * <50: EyeIcon (outline) + "N interested" — signals "others are looking"
+ * 10–49: EyeIcon (outline) + "N interested" — signals "others are looking"
+ * <10: hidden (returns null)
  *
  * Server component — no client-side state needed.
  */
 export default function SocialProofCounter({
   visits,
   interestedLabel,
-}: {
-  visits: number;
-  interestedLabel: string;
-}) {
+}: SocialProofCounterProps) {
   if (!visits || visits < 10) return null;
 
   const isPopular = visits >= POPULAR_THRESHOLD;
