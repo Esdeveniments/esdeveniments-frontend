@@ -534,9 +534,6 @@
       "close": "Ahora no",
       "aria": "Síguenos en las redes sociales"
     },
-    "ListPageFaq": {
-      "title": "Preguntas frecuentes"
-    },
     "RestaurantPromotionForm": {
       "heading": "Promociona tu restaurante",
       "intro": "Haz que tu restaurante aparezca en esta página de eventos y llega a más clientes.",
@@ -749,7 +746,6 @@
       "timeWindow": "esta semana"
     },
     "EventPage": {
-      "faqTitle": "Preguntas frecuentes",
       "sponsored": "Contenido patrocinado",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
       "stickyMoreInfo": "Más info",
@@ -1274,29 +1270,6 @@
       "range": "De {start} a {end}",
       "simpleRange": "{start} - {end}"
     },
-    "ListPageFaq": {
-      "title": "Preguntas frecuentes",
-      "dateInline": {
-        "today": "hoy",
-        "tomorrow": "mañana",
-        "weekend": "este fin de semana",
-        "week": "esta semana",
-        "fallback": "los próximos días"
-      },
-      "dateCapitalized": {
-        "today": "Hoy",
-        "tomorrow": "Mañana",
-        "weekend": "Este fin de semana",
-        "week": "Esta semana",
-        "fallback": "Los próximos días"
-      },
-      "q1": "¿Qué puedo hacer {contextInline}?",
-      "a1": "{capitalizedContext} encontrarás conciertos, ferias, actividades familiares y planes culturales actualizados cada día.",
-      "q2": "¿Hay actividades gratuitas {contextInline}?",
-      "a2": "Sí. Usa la búsqueda, los filtros de categoría y la distancia para descubrir actividades gratuitas {contextInline}.",
-      "q3": "¿Dónde puedo ver {categoryName} {contextInline}?",
-      "a3": "Selecciona la categoría \"{categoryName}\" para destacar estos eventos {contextInline} y guarda la agenda para consultarla a menudo."
-    },
     "OpeningHours": {
       "openNow": "Abierto ahora",
       "closesAt": "Cierra a las {time}",
@@ -1320,19 +1293,6 @@
         "sentence": "{title} {verb} {date}{time}{place}.",
         "timeSuffix": ", {time}",
         "placeSuffix": ", {place}"
-      },
-      "faq": {
-        "whenQ": "¿Cuándo es el evento?",
-        "whenA": "{date}{time}",
-        "whereQ": "¿Dónde se celebra?",
-        "whereA": "{place}",
-        "isFreeQ": "¿Es gratuito?",
-        "isFreeYes": "Sí, el evento es gratuito.",
-        "isFreeNo": "No, el evento es de pago.",
-        "durationQ": "¿Cuál es la duración aproximada?",
-        "durationA": "{duration}",
-        "moreInfoQ": "¿Dónde puedo encontrar más información?",
-        "moreInfoA": "Puedes consultar todos los detalles en la página oficial del evento."
       }
     },
     "StringHelpers": {

@@ -307,7 +307,7 @@ async function PlacePageContent({
         />
       </FilterLoadingGate>
 
-      {/* Explore Navigation - SEO internal links (below events, above FAQ) */}
+      {/* Explore Navigation - SEO internal links (below events) */}
       <Suspense fallback={null}>
         <PlacePageExploreNav
           place={place}

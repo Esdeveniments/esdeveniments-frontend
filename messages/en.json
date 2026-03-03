@@ -534,9 +534,6 @@
       "close": "Not now",
       "aria": "Follow us on social media"
     },
-    "ListPageFaq": {
-      "title": "Frequently asked questions"
-    },
     "RestaurantPromotionForm": {
       "heading": "Promote your restaurant",
       "intro": "Get your restaurant featured on this event page and reach more customers.",
@@ -749,7 +746,6 @@
       "timeWindow": "this week"
     },
     "EventPage": {
-      "faqTitle": "Frequently asked questions",
       "sponsored": "Sponsored content",
       "visitsCount": "{count, plural, one {{count} view} other {{count} views}}",
       "stickyMoreInfo": "More info",
@@ -1297,19 +1293,6 @@
         "sentence": "{title} {verb} {date}{time}{place}.",
         "timeSuffix": ", {time}",
         "placeSuffix": ", {place}"
-      },
-      "faq": {
-        "whenQ": "When is the event?",
-        "whenA": "{date}{time}",
-        "whereQ": "Where is it held?",
-        "whereA": "{place}",
-        "isFreeQ": "Is it free?",
-        "isFreeYes": "Yes, the event is free.",
-        "isFreeNo": "No, the event is paid.",
-        "durationQ": "What is the approximate duration?",
-        "durationA": "{duration}",
-        "moreInfoQ": "Where can I find more information?",
-        "moreInfoA": "You can check all the details on the official event page."
       }
     },
     "StringHelpers": {
@@ -1376,29 +1359,6 @@
         "other": "Others"
       },
       "ariaAdd": "Add to {name}"
-    },
-    "ListPageFaq": {
-      "title": "Frequently asked questions",
-      "dateInline": {
-        "today": "today",
-        "tomorrow": "tomorrow",
-        "weekend": "this weekend",
-        "week": "this week",
-        "fallback": "the coming days"
-      },
-      "dateCapitalized": {
-        "today": "Today",
-        "tomorrow": "Tomorrow",
-        "weekend": "This weekend",
-        "week": "This week",
-        "fallback": "The coming days"
-      },
-      "q1": "What can I do {contextInline}?",
-      "a1": "In {capitalizedContext} you'll find concerts, fairs, family activities, and cultural plans updated daily.",
-      "q2": "Are there free activities {contextInline}?",
-      "a2": "Yes. Use search, category filters, and distance to discover free activities {contextInline}.",
-      "q3": "Where can I see {categoryName} {contextInline}?",
-      "a3": "Select the \"{categoryName}\" category to highlight these events {contextInline} and save the agenda to check it often."
     },
     "LocationHelpers": {
       "newsAll": "News from Catalonia",

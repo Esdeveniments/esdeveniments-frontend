@@ -440,7 +440,15 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -541,9 +549,6 @@
       "subtext": "Cada dia compartim els millors esdeveniments a les xarxes. Segueix-nos i no et perdis res!",
       "close": "Ara no",
       "aria": "Segueix-nos a les xarxes socials"
-    },
-    "ListPageFaq": {
-      "title": "Preguntes freqüents"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona el teu restaurant",
@@ -756,7 +761,6 @@
       "timeWindow": "aquesta setmana"
     },
     "EventPage": {
-      "faqTitle": "Preguntes freqüents",
       "sponsored": "Contingut patrocinat",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "stickyMoreInfo": "Més info",
@@ -1273,29 +1277,6 @@
       "range": "De {start} a {end}",
       "simpleRange": "{start} - {end}"
     },
-    "ListPageFaq": {
-      "title": "Preguntes freqüents",
-      "dateInline": {
-        "today": "avui",
-        "tomorrow": "demà",
-        "weekend": "aquest cap de setmana",
-        "week": "aquesta setmana",
-        "fallback": "els propers dies"
-      },
-      "dateCapitalized": {
-        "today": "Avui",
-        "tomorrow": "Demà",
-        "weekend": "Aquest cap de setmana",
-        "week": "Aquesta setmana",
-        "fallback": "Els propers dies"
-      },
-      "q1": "Què puc fer {contextInline}?",
-      "a1": "{capitalizedContext} hi trobaràs concerts, fires, activitats familiars i propostes culturals actualitzades cada dia.",
-      "q2": "Hi ha activitats gratuïtes {contextInline}?",
-      "a2": "Sí. Pots utilitzar la cerca, els filtres de categoria i la distància per descobrir activitats gratuïtes {contextInline}.",
-      "q3": "On puc veure {categoryName} {contextInline}?",
-      "a3": "Selecciona la categoria \"{categoryName}\" per destacar aquests esdeveniments {contextInline} i guarda l'agenda per consultar-la sovint."
-    },
     "OpeningHours": {
       "openNow": "Obert ara",
       "closesAt": "Tanca a les {time}",
@@ -1319,19 +1300,6 @@
         "sentence": "{title} {verb} {date}{time}{place}.",
         "timeSuffix": ", {time}",
         "placeSuffix": ", {place}"
-      },
-      "faq": {
-        "whenQ": "Quan és l'esdeveniment?",
-        "whenA": "{date}{time}",
-        "whereQ": "On se celebra?",
-        "whereA": "{place}",
-        "isFreeQ": "És gratuït?",
-        "isFreeYes": "Sí, l’esdeveniment és gratuït.",
-        "isFreeNo": "No, l’esdeveniment és de pagament.",
-        "durationQ": "Quina és la durada aproximada?",
-        "durationA": "{duration}",
-        "moreInfoQ": "On puc trobar més informació?",
-        "moreInfoA": "Pots consultar tots els detalls a la pàgina oficial de l'esdeveniment."
       }
     },
     "StringHelpers": {
@@ -1368,7 +1336,10 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
