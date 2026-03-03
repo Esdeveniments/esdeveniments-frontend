@@ -198,15 +198,19 @@ A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja,
 | **Breadcrumb depth** | Region → City → Category → Event title. Better SEO internal linking than any competitor. |
 | **Comprehensive structured data** | Event + FAQ + BreadcrumbList + ItemList. More thorough than any competitor. |
 
-### 4.3 Proposed Desktop Layout (future)
+### 4.3 Desktop Layout (implemented)
 
 Two-column with sticky sidebar:
 - **Left (~60%)**: Hero image → Share bar → Title → Description → Related events → Categories → Weather → FAQ → Restaurants → News
 - **Right (~40%, sticky)**: Date & time → Add to calendar → Location + static map → External link → Source attribution → Sponsor
 
-### 4.4 Proposed Mobile Layout (future)
+**Components**: `EventSidebar` (server, sticky sidebar), event detail page layout in `app/e/[eventId]/page.tsx`.
+
+### 4.4 Mobile Layout (implemented)
 
 Single column + **sticky bottom CTA bar** with 3 buttons: "Més info" (external link), "Calendar", "Save (❤)".
+
+**Component**: `EventStickyCTA` (client, appears on scroll, positioned above bottom nav).
 
 ---
 
@@ -265,11 +269,16 @@ Improvements that were identified as valuable but not yet implemented, listed by
 | Opportunity | Rationale | Dependent on |
 |-------------|-----------|-------------|
 | **Card: Free/Paid indicator** | Top-3 decision factor. Show "Gratuït" when `event.type === "FREE"` — but only when backend data quality improves. | Backend making `event.type` reliable |
-| **Card: 3-col grid on `xl:` (≥1280px)** | Increases desktop density. Cards work at ~350px width. | CSS-only change — low risk |
-| **Event detail: Sticky bottom CTA (mobile)** | Every competitor has persistent CTA. "Més info" + "Calendar" + "Save". | New component |
-| **Event detail: Two-column layout (desktop)** | Content left, sticky sidebar right with date/location/CTA. Eventbrite's proven pattern. | Structural refactor |
 | **Homepage: Hero background image** | Every competitor uses a hero visual. Castellers image already sourced. | CSS + image integration |
 | **Homepage: "Popular ara" trending section** | Fever's Top 10 drives engagement. API provides `visits` data. | New section component + API call |
+
+### Completed (formerly High Priority)
+
+| Opportunity | Status |
+|-------------|--------|
+| **Card: 3-col grid on `xl:` (≥1280px)** | ✅ Implemented — `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` in `List` component |
+| **Event detail: Sticky bottom CTA (mobile)** | ✅ Implemented — `EventStickyCTA` component |
+| **Event detail: Two-column layout (desktop)** | ✅ Implemented — `EventSidebar` with sticky positioning |
 
 ### Medium Priority
 

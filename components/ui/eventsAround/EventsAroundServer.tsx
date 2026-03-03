@@ -86,7 +86,7 @@ async function EventsAroundServer({
 
   if (loading) {
     return (
-      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-3 min-w-0">
+      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
         <EventCardLoading layout={layout} />
         <EventCardLoading layout={layout} />
         <EventCardLoading layout={layout} />
@@ -131,7 +131,7 @@ async function EventsAroundServer({
           hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
           labels={{ previous: tScroll("previous"), next: tScroll("next") }}
         >
-          <div className="flex gap-3">
+          <div className="flex gap-element-gap">
             {uniqueEvents.map((event, index) => (
               <div
                 role="listitem"
@@ -153,7 +153,7 @@ async function EventsAroundServer({
   return (
     <>
       {jsonLdBlock}
-      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-3 min-w-0">
+      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
         {uniqueEvents.map((event, index) => (
           <CompactCard
             key={event.id ?? event.slug ?? index}

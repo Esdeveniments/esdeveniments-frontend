@@ -36,11 +36,11 @@ export default function CardLayout({
       {renderLink({
         href: `/e/${slug}`,
         className: "absolute inset-0 z-[1]",
-        "aria-label": title,
+        "aria-label": originalTitle || title,
         "data-analytics-event-name": "select_event",
         "data-analytics-event-id": eventId ? String(eventId) : "",
         "data-analytics-event-slug": slug || "",
-        children: <span className="sr-only">{title}</span>,
+        children: <span className="sr-only">{originalTitle || title}</span>,
       })}
 
       <div

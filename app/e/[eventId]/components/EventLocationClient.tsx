@@ -80,7 +80,8 @@ export default function EventLocationClient({
 
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
-      "_blank"
+      "_blank",
+      "noopener,noreferrer"
     );
   };
 
@@ -96,7 +97,8 @@ export default function EventLocationClient({
 
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
-      "_blank"
+      "_blank",
+      "noopener,noreferrer"
     );
   };
 
