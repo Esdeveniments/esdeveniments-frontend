@@ -277,61 +277,26 @@ The events list endpoint doesn't have in-memory caching but relies on CloudFront
 
 ## 8. Static Generation
 
-### Current generateStaticParams Usage
+### Status: Removed (March 2026)
 
-| Page                           | Static Count | Strategy                                      | Analysis                    |
-| ------------------------------ | ------------ | --------------------------------------------- | --------------------------- |
-| `/[place]`                     | ~9 pages     | Top 9 places, rest ISR                        | ✅ Optimized for build size |
-| `/[place]/[byDate]`            | ~72 pages    | 9 places × 8 byDate params (4 dates + 4 cats) | ✅ Optimized                |
-| `/[place]/[byDate]/[category]` | ~180 pages   | 9 places × 4 dates × 5 categories             | ✅ Optimized                |
+`generateStaticParams` was removed from all place page routes in March 2026. All place pages are now rendered **on-demand** on first request and cached by CloudFront/CDN.
 
-**Total: ~261 static pages** (well within AWS Amplify's 230MB limit)
+**Rationale:**
+- The pre-rendered pages (~261) showed stale event data between deploys (monthly deploy cadence)
+- Top pre-rendered pages received only 24-31 clicks per reporting period — negligible traffic
+- The hardcoded place list (`topStaticGenerationPlaces`) drifted from actual top-traffic pages (per Google Search Console)
+- Lambda cost for on-demand rendering is $0.03/month — pre-rendering saved fractions of a cent
+- Root layout calls `headers()` (via `getLocaleSafely()` for i18n), making all pages dynamic anyway — pre-rendered HTML was never ISR-revalidated
 
-### Regression Guard ✅ NEW
+**What was removed:**
+- `generateStaticParams` from `app/[place]/page.tsx`, `app/[place]/[byDate]/page.tsx`, `app/[place]/[byDate]/[category]/page.tsx`
+- `topStaticGenerationPlaces` array from `utils/priority-places.ts`
+- `getTopStaticCombinations`, `getAllCategorySlugsForISR`, `findCategoryForRouting` from `utils/url-filters.ts`
+- `test/static-generation-limits.test.ts` regression guard (no longer needed)
 
-A test suite prevents accidental increases in static generation:
+**Cost impact:** None. DynamoDB baseline remains ~38K writes/day ($1.80/month). Lambda remains ~$0.03/month.
 
-```bash
-yarn test test/static-generation-limits.test.ts
-```
-
-**Limits enforced by tests:**
-| Metric | Current | Max Allowed |
-|--------|---------|-------------|
-| Places | 9 | 15 |
-| Dates | 4 | 5 |
-| Categories | 5 | 6 |
-| **Total Pages** | **261** | **500** |
-
-The test will **fail CI** if:
-
-- Someone adds too many places to `topStaticGenerationPlaces`
-- Total static page count exceeds 500
-- The baseline (261 pages) changes unexpectedly
-
-### Already Optimized ✅
-
-The static generation is well-controlled:
-
-1. **Places limited to ~9** via `topStaticGenerationPlaces` in [utils/priority-places.ts](../utils/priority-places.ts)
-2. **Dates limited to 4** (avui, dema, setmana, cap-de-setmana) - excludes "tots"
-3. **Categories limited to top 4** from API + "tots" default
-4. **All other combinations use ISR** with 600s revalidation
-
-```typescript
-// utils/priority-places.ts - Only ~9 places pre-rendered
-export const topStaticGenerationPlaces = [
-  "barcelona",
-  "tarragona",
-  "mataro",
-  "maresme",
-  "valles-oriental",
-  "valles-occidental",
-  "baix-llobregat",
-  "badalona",
-  "granollers",
-];
-```
+**Note:** `highPrioritySlugs` in `utils/priority-places.ts` is retained for sitemap generation (unrelated to static rendering).
 
 ---
 
