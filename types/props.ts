@@ -52,7 +52,6 @@ import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
-import type { FaqItem } from "types/faq";
 import type { AppLocale } from "types/i18n";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
@@ -586,25 +585,6 @@ export interface GeolocationButtonProps {
   error?: string | null;
   className?: string;
 }
-
-export interface ListPageFaqProps {
-  items: FaqItem[];
-  title?: string;
-}
-
-export interface ListPageFaqParams {
-  place: string;
-  date?: string;
-  category?: string;
-  placeTypeLabel?: PlaceTypeAndLabel;
-  categories?: CategorySummaryResponseDTO[];
-  locale?: import("types/i18n").AppLocale;
-}
-
-export type DateContext = {
-  inline: string;
-  capitalized: string;
-};
 
 export interface UseGeolocationReturn {
   location: GeolocationCoordinates | null;

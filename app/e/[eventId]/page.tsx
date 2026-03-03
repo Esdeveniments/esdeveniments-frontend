@@ -20,14 +20,7 @@ import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import {
-  InformationCircleIcon,
-} from "@heroicons/react/24/outline";
-const InfoIcon = InformationCircleIcon;
-import SectionHeading from "@components/ui/common/SectionHeading";
-import {
   buildEventIntroText,
-  buildFaqItems,
-  buildFaqJsonLd,
   formatPlaceName,
 } from "@utils/helpers";
 import { generateHowToSchema } from "@utils/schema-helpers";
@@ -163,19 +156,6 @@ export default async function EventPage({
       timeSuffix: tCopy("sentence.timeSuffix", { time: "{time}" }),
       placeSuffix: tCopy("sentence.placeSuffix", { place: "{place}" }),
     },
-    faq: {
-      whenQ: tCopy("faq.whenQ"),
-      whenA: tCopy("faq.whenA", { date: "{date}", time: "{time}" }),
-      whereQ: tCopy("faq.whereQ"),
-      whereA: tCopy("faq.whereA", { place: "{place}" }),
-      isFreeQ: tCopy("faq.isFreeQ"),
-      isFreeYes: tCopy("faq.isFreeYes"),
-      isFreeNo: tCopy("faq.isFreeNo"),
-      durationQ: tCopy("faq.durationQ"),
-      durationA: tCopy("faq.durationA", { duration: "{duration}" }),
-      moreInfoQ: tCopy("faq.moreInfoQ"),
-      moreInfoA: tCopy("faq.moreInfoA"),
-    },
   };
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
@@ -192,10 +172,8 @@ export default async function EventPage({
     remove: tCard("favoriteRemoveAria"),
   };
 
-  // Build intro and FAQ via shared utils (no assumptions)
+  // Build intro text via shared utils (no assumptions)
   const introText = await buildEventIntroText(event, eventCopyLabels, locale);
-  const faqItems = await buildFaqItems(event, eventCopyLabels, locale);
-  const faqJsonLd = buildFaqJsonLd(faqItems);
 
   // Prepare place data for LatestNewsSection (streamed separately)
   const placeLabel = cityName || regionName || "Catalunya";
@@ -444,33 +422,6 @@ export default async function EventPage({
                   />
                 )}
 
-                {/* FAQ Section */}
-                {faqItems.length >= 2 && (
-                  <section className="w-full" aria-labelledby="event-faq">
-                    <div className="w-full flex flex-col gap-element-gap">
-                      <SectionHeading
-                        headingId="event-faq"
-                        Icon={InfoIcon}
-                        iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-                        title={tEvent("faqTitle")}
-                        titleClassName="heading-2"
-                      />
-                      <dl className="space-y-element-gap px-section-x">
-                        {faqItems.map((item) => (
-                          <div key={item.q}>
-                            <dt className="body-normal font-semibold text-foreground-strong">
-                              {item.q}
-                            </dt>
-                            <dd className="body-normal text-foreground-strong/70">
-                              {item.a}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </div>
-                  </section>
-                )}
-
                 {/* Restaurant Promotion */}
                 <Suspense fallback={null}>
                   <LazyRestaurantPromotion
@@ -512,9 +463,6 @@ export default async function EventPage({
           newsHref={newsHref}
         />
       </Suspense>
-
-      {/* FAQ JSON-LD (only when we have 2+ items) */}
-      {faqJsonLd && <JsonLdServer id={`faq-${event.id}`} data={faqJsonLd} />}
 
       {/* Sticky CTA bar for mobile — sits above bottom nav */}
       {temporalStatus.state !== "past" && (

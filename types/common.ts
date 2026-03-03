@@ -294,23 +294,8 @@ export interface EventCopySentenceLabels {
   placeSuffix: string;
 }
 
-export interface EventCopyFaqLabels {
-  whenQ: string;
-  whenA: string;
-  whereQ: string;
-  whereA: string;
-  isFreeQ: string;
-  isFreeYes: string;
-  isFreeNo: string;
-  durationQ: string;
-  durationA: string;
-  moreInfoQ: string;
-  moreInfoA: string;
-}
-
 export interface EventCopyLabels {
   sentence: EventCopySentenceLabels;
-  faq: EventCopyFaqLabels;
 }
 
 export interface OpeningHoursLabels {
