@@ -154,6 +154,10 @@ export default async function EventPage({
         place: "{place}",
       }),
       timeSuffix: tCopy("sentence.timeSuffix", { time: "{time}" }),
+      timeSuffixRange: tCopy("sentence.timeSuffixRange", {
+        start: "{start}",
+        end: "{end}",
+      }),
       placeSuffix: tCopy("sentence.placeSuffix", { place: "{place}" }),
     },
   };

@@ -285,9 +285,7 @@ export async function buildEventIntroText(
     locale
   );
 
-  const placeSummary = cityName
-    ? `${cityName}${regionName ? ` (${regionName})` : ""}`
-    : regionName || formattedLocation || "";
+  const placeSummary = cityName || regionName || formattedLocation || "";
 
   // Determine location type: prioritize city over region
   // If event has a city, it's a "town" even if it also has a region (e.g., "Tona (Osona)")
@@ -460,10 +458,6 @@ export async function buildEventIntroText(
     ? formatTimeWithoutSeconds(normalizedEndTime)
     : "";
 
-  const timePart = startTimeLabel
-    ? `${startTimeLabel}${endTimeLabel ? `–${endTimeLabel}` : ""}`
-    : "";
-
   // Verb agreement: plural/singular
   // In Catalan, "se celebra" is correct (preferred over "es celebra" or "s'celebra")
   // Before verbs starting with voiceless "s" sound (s-, ce-, ci-), "se" is preferred
@@ -483,9 +477,13 @@ export async function buildEventIntroText(
       .replace("{start}", formattedStart);
   }
 
-  // Compose sentence
-  const timeSuffix = timePart
-    ? sentenceLabels.timeSuffix.replace("{time}", timePart)
+  // Compose time suffix: use range template when both start and end exist
+  const timeSuffix = startTimeLabel
+    ? endTimeLabel
+      ? sentenceLabels.timeSuffixRange
+          .replace("{start}", startTimeLabel)
+          .replace("{end}", endTimeLabel)
+      : sentenceLabels.timeSuffix.replace("{time}", startTimeLabel)
     : "";
   const placeSuffix = preposition
     ? sentenceLabels.placeSuffix.replace("{place}", preposition)

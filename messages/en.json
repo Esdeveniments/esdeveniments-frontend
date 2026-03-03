@@ -1291,7 +1291,8 @@
         "dateRange": "from {start} to {end}",
         "dateSingle": "on {nameDay}, {start}",
         "sentence": "{title} {verb} {date}{time}{place}.",
-        "timeSuffix": ", {time}",
+        "timeSuffix": ", at {time}",
+        "timeSuffixRange": ", from {start} to {end}",
         "placeSuffix": ", {place}"
       }
     },

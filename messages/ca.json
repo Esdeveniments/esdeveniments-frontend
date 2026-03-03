@@ -1298,7 +1298,8 @@
         "dateRange": "del {start} al {end}",
         "dateSingle": "el {nameDay}, {start}",
         "sentence": "{title} {verb} {date}{time}{place}.",
-        "timeSuffix": ", {time}",
+        "timeSuffix": ", a les {time}",
+        "timeSuffixRange": ", de {start} a {end}",
         "placeSuffix": ", {place}"
       }
     },

@@ -291,6 +291,7 @@ export interface EventCopySentenceLabels {
   dateSingle: string;
   sentence: string;
   timeSuffix: string;
+  timeSuffixRange: string;
   placeSuffix: string;
 }
 
