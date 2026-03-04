@@ -34,8 +34,8 @@ export default async function LatestNewsSection({
       : "";
   const title = placeSuffix
     ? t(isFresh ? "titleWithPlace" : "titleStaleWithPlace", {
-        place: placeSuffix,
-      })
+      place: placeSuffix,
+    })
     : t(isFresh ? "title" : "titleStale");
 
   return (

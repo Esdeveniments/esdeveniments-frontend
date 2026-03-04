@@ -10,6 +10,7 @@ import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import type { CardContentProps, FavoriteButtonLabels } from "types/props";
 import type { AppLocale } from "types/i18n";
 import type { CardVariant } from "types/ui";
+import { TIMEZONE_MADRID } from "@utils/constants";
 
 export function prepareCardContentData({
   event,
@@ -59,8 +60,8 @@ export function prepareCardContentData({
   let urgencyLabel: string | undefined;
   let urgencyType: "today" | "tomorrow" | undefined;
   {
-    const now = convertTZ(new Date(), "Europe/Madrid");
-    const eventStart = convertTZ(new Date(event.startDate), "Europe/Madrid");
+    const now = convertTZ(new Date(), TIMEZONE_MADRID);
+    const eventStart = convertTZ(new Date(event.startDate), TIMEZONE_MADRID);
 
     // Normalize to midnight to compare dates only (avoids string-based fragility)
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());

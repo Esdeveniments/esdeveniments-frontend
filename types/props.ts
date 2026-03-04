@@ -767,7 +767,7 @@ export interface EventStickyCTAProps {
 
 // Collapsible description wrapper (mobile)
 export interface CollapsibleDescriptionProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 // Event details section (duration + external link)

@@ -16,6 +16,9 @@ export const NEWS_FRESHNESS_DAYS = 7;
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
 
+/** Canonical timezone for all date operations in this app. */
+export const TIMEZONE_MADRID = "Europe/Madrid";
+
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;

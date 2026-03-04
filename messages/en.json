@@ -758,7 +758,7 @@
       "sidebarMoreInfo": "More information",
       "sidebarVisitWebsite": "Visit website",
       "sidebarOpenInMaps": "Open in Maps",
-      "interested": "{count} interested",
+      "interested": "{count, plural, one {{count} person interested} other {{count} people interested}}",
       "popular": "Popular",
       "readMore": "Read more",
       "readLess": "Read less",
