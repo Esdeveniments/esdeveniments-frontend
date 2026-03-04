@@ -23,11 +23,9 @@ const CulturalMessage = async ({
       : capitalizedLocation;
 
   return (
-    <div className="w-full">
-      <div className="w-full flex flex-col gap-element-gap min-w-0">
+    <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
           Icon={MagnifyingGlassIcon}
-          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
           title={t("explorePrefix", { location: locationText })}
           titleClassName="heading-2"
         />
@@ -37,7 +35,6 @@ const CulturalMessage = async ({
           <Badge href={`/${locationValue}/setmana`}>{t("week")}</Badge>
           <Badge href={`/${locationValue}/cap-de-setmana`}>{t("weekend")}</Badge>
         </div>
-      </div>
     </div>
   );
 };

@@ -68,13 +68,13 @@ export default function EventLocationClient({
     return undefined;
   }, [showMap]);
 
-  const handleDirectionsClick = () => {
+  const openGoogleMaps = (linkType: "maps_directions" | "maps_open") => {
     const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
 
     sendGoogleEvent("outbound_click", {
       link_domain: "www.google.com",
       link_path: "/maps/search/",
-      link_type: "maps_directions",
+      link_type: linkType,
       context: "event_location",
     });
 
@@ -85,22 +85,8 @@ export default function EventLocationClient({
     );
   };
 
-  const handleOpenInMaps = () => {
-    const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
-
-    sendGoogleEvent("outbound_click", {
-      link_domain: "www.google.com",
-      link_path: "/maps/search/",
-      link_type: "maps_open",
-      context: "event_location",
-    });
-
-    window.open(
-      `https://www.google.com/maps/search/?api=1&query=${query}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  };
+  const handleDirectionsClick = () => openGoogleMaps("maps_directions");
+  const handleOpenInMaps = () => openGoogleMaps("maps_open");
 
   // Compact mode: auto-show map, no toggle, just map + "Open in Maps" link
   if (compact) {

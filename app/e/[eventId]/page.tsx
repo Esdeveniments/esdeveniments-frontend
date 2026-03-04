@@ -422,7 +422,7 @@ export default async function EventPage({
                 <CulturalMessage
                   location={cityName || regionName}
                   locationValue={event.city?.slug || event.region?.slug || ""}
-                  locationType="town"
+                  locationType={placeType}
                 />
 
                 {/* Event Categories */}

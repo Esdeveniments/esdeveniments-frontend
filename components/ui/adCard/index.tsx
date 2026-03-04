@@ -1,6 +1,5 @@
 import { useState, memo, lazy, JSX } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
-import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
 import { AdContentProps } from "types/common";
 
 const AdBoard = lazy(() => import("../adBoard"));
@@ -22,9 +21,7 @@ const AdContent = ({ children }: AdContentProps): JSX.Element => (
 );
 
 const AdCard = (): JSX.Element => {
-  const [displayAd, setDisplayAd] = useState<boolean | undefined>(true);
-
-  if (displayAd === undefined) return <EventCardSkeleton />;
+  const [displayAd, setDisplayAd] = useState(true);
 
   if (!displayAd)
     return (
