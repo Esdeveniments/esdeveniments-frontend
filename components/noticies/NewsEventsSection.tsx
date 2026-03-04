@@ -9,7 +9,7 @@ export default function NewsEventsSection({
   return (
     <section className="mb-12 sm:mb-16">
       <div className="mb-6 sm:mb-8">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground-strong mb-3">
+        <h2 className="heading-2 text-foreground-strong mb-3">
           {title}
         </h2>
         <div className="w-20 h-1.5 bg-primary rounded-full"></div>

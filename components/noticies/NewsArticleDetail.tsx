@@ -16,7 +16,7 @@ import { notFound } from "next/navigation";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import {
   localeToHrefLang,
 } from "types/i18n";
@@ -84,9 +84,7 @@ export default async function NewsArticleDetail({
       : f.formattedStart;
   })();
   const absolute = (path: string) =>
-    path.startsWith("http")
-      ? path
-      : `${siteUrl}${withLocalePath(path, locale)}`;
+    path.startsWith("http") ? path : toLocalizedUrl(path, locale);
 
   // Build keywords from available data (categories and locations)
   const categoryKeywords = Array.from(
