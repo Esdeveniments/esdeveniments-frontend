@@ -18,6 +18,7 @@ async function HybridEventsList({
   place,
   category,
   date,
+  profileSlug,
   serverHasMore = false,
   categories,
 }: HybridEventsListProps): Promise<ReactElement> {
@@ -132,6 +133,7 @@ async function HybridEventsList({
         place={place}
         category={category}
         date={date}
+        profileSlug={profileSlug}
         serverHasMore={serverHasMore}
         categories={categories}
         pageData={pageData}

@@ -16,6 +16,7 @@ export default function EventLocation({
   regionName,
   citySlug,
   regionSlug,
+  profile,
   compact = false,
 }: EventLocationProps) {
   const t = useTranslations("Components.EventLocation");
@@ -131,6 +132,16 @@ export default function EventLocation({
                   </PressableAnchor>
                 )}
               </div>
+            )}
+            {/* Profile/venue link */}
+            {profile && (
+              <PressableAnchor
+                href={`/perfil/${profile.slug}`}
+                className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+                variant="inline"
+              >
+                {t("profileLink", { name: profile.name })}
+              </PressableAnchor>
             )}
           </div>
           {/* Map — full width, no padding */}

@@ -317,6 +317,24 @@
     "Breadcrumbs": {
       "home": "Inici"
     },
+    "Profile": {
+      "title": "{name} — Perfil",
+      "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "events": "Esdeveniments",
+      "verified": "Verificat",
+      "joinedDate": "Des de {date}",
+      "noEvents": "Encara no hi ha esdeveniments",
+      "website": "Lloc web",
+      "breadcrumbProfiles": "Perfils",
+      "totalEvents": "{count} esdeveniments",
+      "notFound": "Perfil no trobat",
+      "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
+      "backHome": "Tornar a l'inici",
+      "editProfile": "Editar perfil",
+      "comingSoon": "(properament)",
+      "claimQuestion": "És el teu local?",
+      "claimLogin": "Iniciar sessió"
+    },
     "Footer": {
       "navigation": {
         "home": "Inici",
@@ -329,7 +347,8 @@
         "contact": "Contacte",
         "archive": "Arxiu",
         "terms": "Termes de servei",
-        "privacy": "Privacitat"
+        "privacy": "Privacitat",
+        "login": "Iniciar sessió"
       },
       "sponsorCta": {
         "title": "Fes visible el teu negoci local",
@@ -369,7 +388,13 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publica"
+      "mobilePublishLabel": "Publica",
+      "auth": {
+        "login": "Iniciar sessió",
+        "logout": "Tanca sessió",
+        "userMenu": "Menú d'usuari",
+        "myProfile": "El meu perfil"
+      }
     },
     "NoEventsFound": {
       "cta": "Afegeix un esdeveniment",
@@ -853,7 +878,8 @@
       "title": "Ubicació",
       "showMap": "Mostrar mapa",
       "hideMap": "Tancar mapa",
-      "getDirections": "Com arribar"
+      "getDirections": "Com arribar",
+      "profileLink": "Perfil de {name}"
     },
     "EventCalendar": {
       "title": "Data i hora"
@@ -1644,5 +1670,43 @@
       "backHome": "Torna a l'inici"
     },
     "backToHome": "Torna a l'inici"
+  },
+  "Auth": {
+    "login": {
+      "title": "Iniciar sessió",
+      "subtitle": "Accedeix al teu compte per gestionar els teus esdeveniments",
+      "submit": "Iniciar sessió",
+      "noAccount": "No tens compte?",
+      "registerLink": "Crea'n un",
+      "magicLinkSent": "Revisa el teu correu per al link d'accés"
+    },
+    "register": {
+      "title": "Crear compte",
+      "subtitle": "Uneix-te a la comunitat i publica els teus esdeveniments",
+      "submit": "Crear compte",
+      "hasAccount": "Ja tens compte?",
+      "loginLink": "Inicia sessió",
+      "passwordHint": "Mínim 8 caràcters"
+    },
+    "fields": {
+      "email": "Correu electrònic",
+      "password": "Contrasenya",
+      "displayName": "Nom (opcional)"
+    },
+    "errors": {
+      "invalid-credentials": "Correu o contrasenya incorrectes",
+      "email-taken": "Ja existeix un compte amb aquest correu",
+      "weak-password": "La contrasenya ha de tenir mínim 8 caràcters",
+      "network-error": "Error de connexió. Torna-ho a provar.",
+      "not-configured": "L'autenticació encara no està configurada",
+      "rate-limited": "Massa intents. Espera un moment.",
+      "unknown": "Alguna cosa ha anat malament. Torna-ho a provar."
+    },
+    "meta": {
+      "loginTitle": "Iniciar sessió | Esdeveniments.cat",
+      "loginDescription": "Inicia sessió al teu compte d'Esdeveniments.cat",
+      "registerTitle": "Crear compte | Esdeveniments.cat",
+      "registerDescription": "Crea el teu compte a Esdeveniments.cat per publicar esdeveniments"
+    }
   }
 }

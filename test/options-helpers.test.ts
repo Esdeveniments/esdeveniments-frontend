@@ -145,9 +145,9 @@ describe("options-helpers", () => {
     });
 
     it("returns empty array for null/undefined input", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       expect(generateRegionsAndTownsOptions(null as any)).toEqual([]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       expect(generateRegionsAndTownsOptions(undefined as any)).toEqual([]);
     });
   });

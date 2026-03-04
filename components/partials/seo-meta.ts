@@ -136,6 +136,7 @@ export function buildPageMeta({
   image = `${siteUrl}/static/images/logo-seo-meta.webp`,
   locale,
   robotsOverride,
+  openGraphType,
 }: {
   title: string;
   description: string;
@@ -143,6 +144,7 @@ export function buildPageMeta({
   image?: string;
   locale?: AppLocale;
   robotsOverride?: string;
+  openGraphType?: string;
 }) {
   const resolvedLocale = locale ?? DEFAULT_LOCALE;
   const basePathname = stripLocaleFromPathname(getSafePathname(canonical));
@@ -169,6 +171,7 @@ export function buildPageMeta({
     },
     openGraph: {
       ...openGraph,
+      ...(openGraphType && { type: openGraphType }),
       locale: localeToOgLocale[resolvedLocale] ?? openGraph.locale,
       title,
       description,

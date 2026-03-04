@@ -54,6 +54,7 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
               </PressableAnchor>
             </div>
           )}
+
         </div>
       </div>
     </div>

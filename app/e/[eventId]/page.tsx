@@ -370,6 +370,7 @@ export default async function EventPage({
                     regionName={regionName}
                     citySlug={event.city?.slug}
                     regionSlug={event.region?.slug}
+                    profile={event.profile}
                   />
                 </div>
 
