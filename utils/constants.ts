@@ -10,6 +10,9 @@ import enMessages from "../messages/en.json";
 export const MAX_RESULTS = 15;
 export const MAX_FAVORITES = 10;
 
+/** Number of days within which news articles are considered "fresh". */
+export const NEWS_FRESHNESS_DAYS = 7;
+
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
 

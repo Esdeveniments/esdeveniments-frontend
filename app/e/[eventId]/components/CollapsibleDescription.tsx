@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import type { CollapsibleDescriptionProps } from "types/props";
@@ -19,6 +19,7 @@ export default function CollapsibleDescription({
   const [isExpanded, setIsExpanded] = useState(false);
   const [needsCollapse, setNeedsCollapse] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const regionId = useId();
 
   useEffect(() => {
     const el = contentRef.current;
@@ -46,6 +47,8 @@ export default function CollapsibleDescription({
       <div className="lg:hidden">
         <div
           ref={contentRef}
+          id={regionId}
+          role="region"
           className="relative overflow-hidden transition-[max-height] duration-300 ease-in-out"
           style={{
             maxHeight:
@@ -66,6 +69,7 @@ export default function CollapsibleDescription({
             className="mt-2 inline-flex items-center gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors px-section-x"
             type="button"
             aria-expanded={isExpanded}
+            aria-controls={regionId}
           >
             {isExpanded ? (
               <>

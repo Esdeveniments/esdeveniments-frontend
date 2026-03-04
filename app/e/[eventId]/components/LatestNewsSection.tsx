@@ -5,6 +5,7 @@ import { formatPlacePreposition } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { NEWS_FRESHNESS_DAYS } from "@utils/constants";
 
 export default async function LatestNewsSection({
   placeSlug,
@@ -21,9 +22,8 @@ export default async function LatestNewsSection({
     return null;
   }
 
-  const FRESHNESS_DAYS = 7;
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - FRESHNESS_DAYS);
+  cutoff.setDate(cutoff.getDate() - NEWS_FRESHNESS_DAYS);
   const isFresh = latestNews.some(
     (n) => new Date(n.endDate) >= cutoff,
   );
