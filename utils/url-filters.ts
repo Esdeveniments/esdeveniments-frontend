@@ -14,13 +14,8 @@ import type {
   URLQueryParams,
   ParsedFilters,
 } from "types/url-filters";
-import { VALID_DATES, isValidDateSlug } from "@lib/dates";
-import {
-  findCategoryBySlug,
-  getAllCategorySlugs,
-  isValidCategorySlugFormat,
-} from "./category-mapping";
-import { topStaticGenerationPlaces } from "./priority-places";
+import { isValidDateSlug } from "@lib/dates";
+import { isValidCategorySlugFormat } from "./category-mapping";
 import {
   DEFAULT_FILTER_VALUE,
   MAX_QUERY_PARAMS,
@@ -485,91 +480,6 @@ export function getCategorySlug(
 
   // Last resort: return default to prevent unsafe values in URLs
   return DEFAULT_FILTER_VALUE;
-}
-
-/**
- * Generate static params for ISR - enhanced with dynamic categories and places
- */
-export function getTopStaticCombinations(
-  dynamicCategories?: CategorySummaryResponseDTO[],
-  dynamicPlaces?: { slug: string }[]
-) {
-  // Use smaller list for static generation to keep build size under 230MB
-  // Each place generates ~4.6MB, so ~15 places = ~69MB (within limit)
-  const hardcodedTopPlaces = topStaticGenerationPlaces;
-  const topDates = VALID_DATES.filter((date) => date !== DEFAULT_FILTER_VALUE); // Exclude "tots" from static generation
-
-  // Filter top places to only include those that exist in API data
-  let topPlaces;
-  if (dynamicPlaces && dynamicPlaces.length > 0) {
-    const placeSlugs = new Set(dynamicPlaces.map((p) => p.slug));
-    topPlaces = hardcodedTopPlaces.filter((slug) => placeSlugs.has(slug));
-  } else {
-    topPlaces = hardcodedTopPlaces;
-  }
-
-  // Get top categories from dynamic data (API is source of truth)
-  let topCategories = [DEFAULT_FILTER_VALUE];
-
-  if (dynamicCategories && Array.isArray(dynamicCategories)) {
-    // Use first 5 dynamic categories + "tots"
-    const dynamicSlugs = dynamicCategories.slice(0, 4).map((cat) => cat.slug);
-    topCategories = [DEFAULT_FILTER_VALUE, ...dynamicSlugs];
-  }
-  // If no dynamic categories, only use "tots" (empty array would skip category generation)
-
-  const combinations = [];
-
-  for (const place of topPlaces) {
-    for (const date of topDates) {
-      for (const category of topCategories) {
-        combinations.push({ place, date, category });
-      }
-    }
-  }
-
-  return combinations;
-}
-
-/**
- * Get all possible category slugs for ISR generation
- * Uses dynamic categories from API as source of truth
- */
-export function getAllCategorySlugsForISR(
-  dynamicCategories?: CategorySummaryResponseDTO[]
-): string[] {
-  if (dynamicCategories && Array.isArray(dynamicCategories)) {
-    return getAllCategorySlugs(dynamicCategories);
-  }
-
-  // If no dynamic categories available, return empty array
-  // ISR generation should fetch categories before calling this
-  return [];
-}
-
-/**
- * Find category by slug in dynamic categories
- * Returns category info for routing and display
- * Note: This function is currently unused but kept for potential future use
- */
-export function findCategoryForRouting(
-  slug: string,
-  dynamicCategories?: CategorySummaryResponseDTO[]
-): { id?: number; name: string; slug: string } | null {
-  // Use dynamic categories as source of truth
-  if (dynamicCategories && Array.isArray(dynamicCategories)) {
-    const category = findCategoryBySlug(dynamicCategories, slug);
-    if (category) {
-      return {
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-      };
-    }
-  }
-
-  // No legacy fallback - API is the source of truth
-  return null;
 }
 
 /**

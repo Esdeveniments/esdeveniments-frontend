@@ -86,29 +86,36 @@ export default async function Page(): Promise<JSX.Element> {
       title: t("seoSections.tomorrow.title"),
       links: [
         { href: "/barcelona/dema", label: t("seoSections.tomorrow.links.barcelona") },
-        { href: "/maresme/dema", label: t("seoSections.tomorrow.links.maresme") },
         {
-          href: "/valles-occidental/dema",
-          label: t("seoSections.tomorrow.links.vallesOccidental"),
+          href: "/baix-llobregat/dema",
+          label: t("seoSections.tomorrow.links.baixLlobregat"),
+        },
+        {
+          href: "/valles-oriental/dema",
+          label: t("seoSections.tomorrow.links.vallesOriental"),
         },
       ],
     },
-    {
-      id: "local-agendas",
-      title: t("seoSections.localAgendas.title"),
-      links: TOP_AGENDA_LINKS.map((link) => ({
-        href: link.href,
-        label: `${agendaLabel} ${link.name}`,
-      })),
-    },
   ];
 
-  const homeNavigationItems: NavigationItem[] = homeSeoLinkSections.flatMap(
-    (section) =>
-      section.links.map((link) => ({
-        name: link.label,
-        href: link.href,
-      }))
+  // Local agendas section — rendered lower on the page (after carousels, before CTA)
+  const localAgendasSection: SeoLinkSection = {
+    id: "local-agendas",
+    title: t("seoSections.localAgendas.title"),
+    links: TOP_AGENDA_LINKS.map((link) => ({
+      href: link.href,
+      label: `${agendaLabel} ${link.name}`,
+    })),
+  };
+
+  const homeNavigationItems: NavigationItem[] = [
+    ...homeSeoLinkSections,
+    localAgendasSection,
+  ].flatMap((section) =>
+    section.links.map((link) => ({
+      name: link.label,
+      href: link.href,
+    }))
   );
 
   const featuredPlaceSections: FeaturedPlaceConfig[] = [
@@ -132,7 +139,7 @@ export default async function Page(): Promise<JSX.Element> {
   ];
 
   const siteNavigationSchema =
-    generateSiteNavigationElementSchema(homeNavigationItems);
+    generateSiteNavigationElementSchema(homeNavigationItems, locale);
 
   return (
     <>
@@ -154,6 +161,7 @@ export default async function Page(): Promise<JSX.Element> {
         categoriesPromise={categoriesPromise}
         featuredPlaces={featuredPlaceSections}
         seoLinkSections={homeSeoLinkSections}
+        localAgendasSection={localAgendasSection}
       />
     </>
   );
@@ -169,7 +177,15 @@ async function HomeStructuredData({
   locale: AppLocale;
 }): Promise<JSX.Element> {
   const categorizedEvents = await categorizedEventsPromise;
-  const homepageEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
+  const allEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
+
+  // Deduplicate: the same event can appear in multiple categories
+  const seen = new Set<string>();
+  const homepageEvents = allEvents.filter((e) => {
+    if (seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+  });
 
   const itemListSchema =
     homepageEvents.length > 0

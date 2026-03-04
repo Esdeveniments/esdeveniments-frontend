@@ -7,6 +7,7 @@ import { captureException } from "@sentry/nextjs";
 import { translateDescription } from "../actions";
 import { processDescription } from "@utils/text-processing";
 import type { AppLocale } from "types/i18n";
+import Button from "@components/ui/common/button";
 
 export default function TranslateDescription({
   description,
@@ -109,18 +110,18 @@ export default function TranslateDescription({
 
   return (
     <div className="space-y-1">
-      <button
-        type="button"
-        className="btn-neutral w-fit text-sm whitespace-nowrap"
+      <Button
+        variant="ghost"
         onClick={handleTranslate}
         disabled={isPending}
+        className="w-fit py-1 px-2 h-auto text-xs normal-case tracking-normal font-normal whitespace-nowrap"
       >
         {isPending
           ? t("translating")
           : showTranslated && translationHtml
             ? t("showOriginal")
             : t("translateCta", { target: targetLabel })}
-      </button>
+      </Button>
 
       {errorMessage && (
         <p className="body-normal text-foreground/80">{errorMessage}</p>

@@ -24,8 +24,8 @@
           "title": "What to do tomorrow",
           "links": {
             "barcelona": "What to do tomorrow in Barcelona",
-            "maresme": "What to do tomorrow in the Maresme",
-            "vallesOccidental": "What to do tomorrow in Vallès Occidental"
+            "baixLlobregat": "What to do tomorrow in Baix Llobregat",
+            "vallesOriental": "What to do tomorrow in Vallès Oriental"
           }
         },
         "localAgendas": {
@@ -175,6 +175,7 @@
       "sectionWeekend": "Weekend",
       "sectionWeek": "Week",
       "readingTime": "{minutes} min read",
+      "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "mustSee": "MUST-SEE",
       "moreProposals": "MORE IDEAS"
     },
@@ -394,6 +395,8 @@
     "LatestNewsSection": {
       "title": "Latest news",
       "titleWithPlace": "Latest news {place}",
+      "titleStale": "News",
+      "titleStaleWithPlace": "News {place}",
       "viewAll": "View all"
     },
     "CulturalMessage": {
@@ -430,6 +433,21 @@
         "Thursday",
         "Friday",
         "Saturday"
+      ],
+      "daysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      "monthsShort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
       ],
       "months": [
         "January",
@@ -503,7 +521,8 @@
     "ServerEventsCategorized": {
       "cta": "Can't find what you're looking for?",
       "ctaButton": "View full agenda",
-      "quickCategoriesTitle": "Explore by interests"
+      "quickCategoriesTitle": "Explore by interests",
+      "popularTitle": "Popular now in Catalonia"
     },
     "Filters": {
       "triggerLabel": "Filters"
@@ -516,9 +535,6 @@
       "subtext": "Every day we share the best events on social media. Follow us and never miss out.",
       "close": "Not now",
       "aria": "Follow us on social media"
-    },
-    "ListPageFaq": {
-      "title": "Frequently asked questions"
     },
     "RestaurantPromotionForm": {
       "heading": "Promote your restaurant",
@@ -632,7 +648,7 @@
     "HeroCTA": {
       "buttonBase": "See events",
       "dateWeekend": "this weekend",
-      "helper": "Select the town and dates, then click 'See events'"
+      "helper": "Discover the best plans near you"
     },
     "PromotionInfoModal": {
       "title": "Promote your restaurant",
@@ -732,14 +748,34 @@
       "timeWindow": "this week"
     },
     "EventPage": {
-      "faqTitle": "Frequently asked questions",
-      "sponsored": "Sponsored content"
+      "sponsored": "Sponsored content",
+      "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
+      "stickyMoreInfo": "More info",
+      "stickyCalendar": "Calendar",
+      "stickySave": "Save",
+      "free": "Free",
+      "paid": "Paid",
+      "sidebarMoreInfo": "More information",
+      "sidebarVisitWebsite": "Visit website",
+      "sidebarOpenInMaps": "Open in Maps",
+      "interested": "{count, plural, one {{count} person interested} other {{count} people interested}}",
+      "popular": "Popular",
+      "readMore": "Read more",
+      "readLess": "Read less",
+      "durationLabel": "Duration: {duration}",
+      "sidebarAriaLabel": "Event details",
+      "toolbarAriaLabel": "Event actions"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Add to favorites",
-      "favoriteRemoveAria": "Remove from favorites"
+      "favoriteRemoveAria": "Remove from favorites",
+      "free": "Free",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "multipleDates": "Multiple dates",
+      "viewCountAria": "{count, plural, one {{count} view} other {{count} views}}"
     },
     "EventForm": {
       "title": "Title *",
@@ -801,6 +837,7 @@
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
+      "hideMap": "Close map",
       "getDirections": "Get directions"
     },
     "EventCalendar": {
@@ -1114,7 +1151,7 @@
         "capDeSetmana": {
           "title": "What to do this weekend {label}",
           "subTitle": "Discover what to do this weekend {label}: concerts, festivals, family activities, and outdoor plans. Find your plan and make the most of the weekend.",
-          "metaTitle": "Plans for this weekend {label} - Agenda",
+          "metaTitle": "What to do this weekend {label} - Plans and agenda",
           "metaDescription": "Discover the best plans for this weekend {label}. Check concerts, popular festivals, activities with kids, routes, and other cultural proposals to make the most of the weekend.",
           "notFound": "Sorry, there are no events this weekend {label}. Check other dates, explore different categories, or see what's on in the rest of Catalonia to find new plans."
         }
@@ -1259,21 +1296,9 @@
         "dateRange": "from {start} to {end}",
         "dateSingle": "on {nameDay}, {start}",
         "sentence": "{title} {verb} {date}{time}{place}.",
-        "timeSuffix": ", {time}",
+        "timeSuffix": ", at {time}",
+        "timeSuffixRange": ", from {start} to {end}",
         "placeSuffix": ", {place}"
-      },
-      "faq": {
-        "whenQ": "When is the event?",
-        "whenA": "{date}{time}",
-        "whereQ": "Where is it held?",
-        "whereA": "{place}",
-        "isFreeQ": "Is it free?",
-        "isFreeYes": "Yes, the event is free.",
-        "isFreeNo": "No, the event is paid.",
-        "durationQ": "What is the approximate duration?",
-        "durationA": "{duration}",
-        "moreInfoQ": "Where can I find more information?",
-        "moreInfoA": "You can check all the details on the official event page."
       }
     },
     "StringHelpers": {
@@ -1341,29 +1366,6 @@
       },
       "ariaAdd": "Add to {name}"
     },
-    "ListPageFaq": {
-      "title": "Frequently asked questions",
-      "dateInline": {
-        "today": "today",
-        "tomorrow": "tomorrow",
-        "weekend": "this weekend",
-        "week": "this week",
-        "fallback": "the coming days"
-      },
-      "dateCapitalized": {
-        "today": "Today",
-        "tomorrow": "Tomorrow",
-        "weekend": "This weekend",
-        "week": "This week",
-        "fallback": "The coming days"
-      },
-      "q1": "What can I do {contextInline}?",
-      "a1": "In {capitalizedContext} you'll find concerts, fairs, family activities, and cultural plans updated daily.",
-      "q2": "Are there free activities {contextInline}?",
-      "a2": "Yes. Use search, category filters, and distance to discover free activities {contextInline}.",
-      "q3": "Where can I see {categoryName} {contextInline}?",
-      "a3": "Select the \"{categoryName}\" category to highlight these events {contextInline} and save the agenda to check it often."
-    },
     "LocationHelpers": {
       "newsAll": "News from Catalonia",
       "newsWithPlace": "News in {deLabel}"
@@ -1406,8 +1408,8 @@
     "emptyState": "Advertise your business here",
     "cta": "Sponsor this space",
     "houseAd": {
-      "pricing": "Your business here · From €5/week",
-      "pricingSub": "Exclusive space on your town's events page",
+      "pricing": "If you see this, so does your competition",
+      "pricingSub": "Reserve the only ad space in your town",
       "reach": "People in your town, looking for plans",
       "reachSub": "Looking for where to eat, shop and go out. You give them the answer.",
       "exclusive": "Just you. No competition.",
@@ -1416,8 +1418,8 @@
       "localSub": "Appear when they search where to eat, shop or go out",
       "intent": "People ready to go out",
       "intentSub": "They're looking for what to do and where to go. You give them the answer.",
-      "simple": "No hassle",
-      "simpleSub": "One banner, your town, one week. From €5",
+      "simple": "Whoever shows up here wins customers",
+      "simpleSub": "Your town's events page, seen by people looking for places to go",
       "results": "Where do customers find you?",
       "resultsSub": "Right here. When they search what to do in your town",
       "seasonal": "Festival in town?",

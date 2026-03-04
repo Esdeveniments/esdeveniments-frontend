@@ -1,6 +1,5 @@
 import type { EventDetailResponseDTO } from "types/api/event";
 import { getFormattedDate, normalizeEndTime } from "@utils/date-helpers";
-import type { FaqItem } from "types/faq";
 import { capitalizeFirstLetter, formatPlaceName } from "./string-helpers";
 import { formatPlacePreposition } from "@utils/helpers";
 import type { EventCopyLabels, StringHelperLabels } from "types/common";
@@ -286,9 +285,7 @@ export async function buildEventIntroText(
     locale
   );
 
-  const placeSummary = cityName
-    ? `${cityName}${regionName ? ` (${regionName})` : ""}`
-    : regionName || formattedLocation || "";
+  const placeSummary = cityName || regionName || formattedLocation || "";
 
   // Determine location type: prioritize city over region
   // If event has a city, it's a "town" even if it also has a region (e.g., "Tona (Osona)")
@@ -461,10 +458,6 @@ export async function buildEventIntroText(
     ? formatTimeWithoutSeconds(normalizedEndTime)
     : "";
 
-  const timePart = startTimeLabel
-    ? `${startTimeLabel}${endTimeLabel ? `–${endTimeLabel}` : ""}`
-    : "";
-
   // Verb agreement: plural/singular
   // In Catalan, "se celebra" is correct (preferred over "es celebra" or "s'celebra")
   // Before verbs starting with voiceless "s" sound (s-, ce-, ci-), "se" is preferred
@@ -484,9 +477,13 @@ export async function buildEventIntroText(
       .replace("{start}", formattedStart);
   }
 
-  // Compose sentence
-  const timeSuffix = timePart
-    ? sentenceLabels.timeSuffix.replace("{time}", timePart)
+  // Compose time suffix: use range template when both start and end exist
+  const timeSuffix = startTimeLabel
+    ? endTimeLabel
+      ? sentenceLabels.timeSuffixRange
+          .replace("{start}", startTimeLabel)
+          .replace("{end}", endTimeLabel)
+      : sentenceLabels.timeSuffix.replace("{time}", startTimeLabel)
     : "";
   const placeSuffix = preposition
     ? sentenceLabels.placeSuffix.replace("{place}", preposition)
@@ -500,133 +497,4 @@ export async function buildEventIntroText(
 
   // Capitalize place names after prepositions and in parentheses
   return capitalizePlaces(sentence);
-}
-
-export async function buildFaqItems(
-  event: EventDetailResponseDTO,
-  labels: EventCopyLabels = defaultEventCopyLabels,
-  locale: AppLocale = DEFAULT_LOCALE
-): Promise<FaqItem[]> {
-  const items: FaqItem[] = [];
-
-  const cityName = formatPlaceName(event.city?.name || "");
-  const regionName = formatPlaceName(event.region?.name || "");
-  const formattedLocation = formatPlaceName(event.location || "");
-
-  const { formattedStart, formattedEnd, nameDay } = await getFormattedDate(
-    event.startDate,
-    event.endDate,
-    locale
-  );
-  const formattedEventDate = formattedEnd
-    ? labels.sentence.dateRange
-        .replace("{start}", formattedStart)
-        .replace("{end}", formattedEnd)
-    : labels.sentence.dateSingle
-        .replace("{nameDay}", nameDay.toLowerCase())
-        .replace("{start}", formattedStart);
-
-  const normalizedEndTime = normalizeEndTime(event.startTime, event.endTime);
-  const startTimeLabel = isValidTime(event.startTime)
-    ? formatTimeWithoutSeconds(event.startTime)
-    : "";
-  const endTimeLabel = isValidTime(normalizedEndTime)
-    ? formatTimeWithoutSeconds(normalizedEndTime)
-    : "";
-  const hasDistinctEndTime = Boolean(startTimeLabel) && Boolean(endTimeLabel);
-  const timeLabel = startTimeLabel
-    ? `${startTimeLabel}${hasDistinctEndTime ? ` - ${endTimeLabel}` : ""}`
-    : "";
-
-  // Capitalize first letter since the date starts the answer sentence
-  const capitalizedDate = capitalizeFirstLetter(formattedEventDate);
-  const whenAnswer = labels.faq.whenA
-    .replace("{date}", capitalizedDate)
-    .replace(
-      "{time}",
-      timeLabel ? labels.sentence.timeSuffix.replace("{time}", timeLabel) : ""
-    );
-  items.push({
-    q: labels.faq.whenQ,
-    a: whenAnswer,
-  });
-
-  // Build clean location string: split location by commas, drop tokens equal to city/region, de-duplicate
-  const partsFromLocation = formattedLocation
-    ? formattedLocation
-        .split(",")
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0)
-    : [];
-  const normalizedCityName = cityName ? normalize(cityName) : "";
-  const normalizedRegionName = regionName ? normalize(regionName) : "";
-  const finalWhereParts: string[] = [];
-  const seenWhere = new Set<string>();
-
-  const addPart = (v?: string) => {
-    if (!v) return;
-    const key = normalize(v);
-    if (!key || seenWhere.has(key)) return;
-    seenWhere.add(key);
-    finalWhereParts.push(v.trim());
-  };
-
-  for (const p of partsFromLocation) {
-    const key = normalize(p);
-    if (key === normalizedCityName || key === normalizedRegionName) continue;
-    addPart(p);
-  }
-  addPart(cityName);
-  addPart(regionName);
-
-  if (finalWhereParts.length > 0) {
-    // Capitalize first word of each place (city / region) for the FAQ too
-    const places = finalWhereParts.map((p) => {
-      const trimmed = p.trim();
-      return formatPlaceName(trimmed);
-    });
-    items.push({
-      q: labels.faq.whereQ,
-      a: labels.faq.whereA.replace("{place}", places.join(", ")),
-    });
-  }
-
-  // NOTE: "Is it free?" FAQ removed intentionally.
-  // We don't have reliable pricing data (event.type defaults to "FREE"),
-  // so showing this FAQ could mislead users. See implementation_plan.md.
-
-  if (event.duration && event.duration.trim().length > 0) {
-    items.push({
-      q: labels.faq.durationQ,
-      a: labels.faq.durationA.replace("{duration}", event.duration),
-    });
-  }
-
-  // "More Info" FAQ: only show if event has an external URL.
-  // This provides SEO value by answering "where can I find more info?" queries
-  // while directing users to the official source.
-  if (event.url && event.url.trim().length > 0) {
-    items.push({
-      q: labels.faq.moreInfoQ,
-      a: labels.faq.moreInfoA,
-    });
-  }
-
-  return items;
-}
-
-export function buildFaqJsonLd(items: FaqItem[]) {
-  if (!items || items.length < 2) return null;
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: items.map((item) => ({
-      "@type": "Question",
-      name: item.q,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: item.a,
-      },
-    })),
-  } as const;
 }

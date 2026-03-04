@@ -24,8 +24,8 @@
           "title": "Què fer demà",
           "links": {
             "barcelona": "Què fer demà a Barcelona",
-            "maresme": "Què fer demà al Maresme",
-            "vallesOccidental": "Què fer demà al Vallès Occidental"
+            "baixLlobregat": "Què fer demà al Baix Llobregat",
+            "vallesOriental": "Què fer demà al Vallès Oriental"
           }
         },
         "localAgendas": {
@@ -175,6 +175,7 @@
       "sectionWeekend": "Cap de setmana",
       "sectionWeek": "Setmana",
       "readingTime": "{minutes} min lectura",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "mustSee": "ELS IMPRESCINDIBLES",
       "moreProposals": "MÉS PROPOSTES"
     },
@@ -394,6 +395,8 @@
     "LatestNewsSection": {
       "title": "Últimes notícies",
       "titleWithPlace": "Últimes notícies {place}",
+      "titleStale": "Notícies",
+      "titleStaleWithPlace": "Notícies {place}",
       "viewAll": "Veure totes"
     },
     "NewsList": {
@@ -438,6 +441,29 @@
         "Dijous",
         "Divendres",
         "Dissabte"
+      ],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
+      "monthsShort": [
+        "gen.",
+        "feb.",
+        "març",
+        "abr.",
+        "maig",
+        "juny",
+        "jul.",
+        "ag.",
+        "set.",
+        "oct.",
+        "nov.",
+        "des."
       ],
       "months": [
         "gener",
@@ -511,7 +537,8 @@
     "ServerEventsCategorized": {
       "cta": "No trobes el que busques?",
       "ctaButton": "Veure tota l'agenda",
-      "quickCategoriesTitle": "Explora per interessos"
+      "quickCategoriesTitle": "Explora per interessos",
+      "popularTitle": "Popular ara a Catalunya"
     },
     "Filters": {
       "triggerLabel": "Filtres"
@@ -524,9 +551,6 @@
       "subtext": "Cada dia compartim els millors esdeveniments a les xarxes. Segueix-nos i no et perdis res!",
       "close": "Ara no",
       "aria": "Segueix-nos a les xarxes socials"
-    },
-    "ListPageFaq": {
-      "title": "Preguntes freqüents"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona el teu restaurant",
@@ -640,7 +664,7 @@
     "HeroCTA": {
       "buttonBase": "Veure esdeveniments",
       "dateWeekend": "aquest cap de setmana",
-      "helper": "Selecciona la població i les dates, i prem 'Veure esdeveniments'"
+      "helper": "Descobreix els millors plans a prop teu"
     },
     "PromotionInfoModal": {
       "title": "Promociona el teu restaurant",
@@ -739,14 +763,34 @@
       "timeWindow": "aquesta setmana"
     },
     "EventPage": {
-      "faqTitle": "Preguntes freqüents",
-      "sponsored": "Contingut patrocinat"
+      "sponsored": "Contingut patrocinat",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
+      "stickyMoreInfo": "Més info",
+      "stickyCalendar": "Calendari",
+      "stickySave": "Desa",
+      "free": "Gratuït",
+      "paid": "De pagament",
+      "sidebarMoreInfo": "Més informació",
+      "sidebarVisitWebsite": "Visita el web",
+      "sidebarOpenInMaps": "Obre a Maps",
+      "interested": "{count, plural, one {{count} interessat} other {{count} interessats}}",
+      "popular": "Popular",
+      "readMore": "Llegir més",
+      "readLess": "Llegir menys",
+      "durationLabel": "Durada: {duration}",
+      "sidebarAriaLabel": "Detalls de l'esdeveniment",
+      "toolbarAriaLabel": "Accions de l'esdeveniment"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Afegeix a preferits",
-      "favoriteRemoveAria": "Elimina de preferits"
+      "favoriteRemoveAria": "Elimina de preferits",
+      "free": "Gratuït",
+      "today": "Avui",
+      "tomorrow": "Demà",
+      "multipleDates": "Diversos dies",
+      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}"
     },
     "EventForm": {
       "title": "Títol *",
@@ -808,6 +852,7 @@
     "EventLocation": {
       "title": "Ubicació",
       "showMap": "Mostrar mapa",
+      "hideMap": "Tancar mapa",
       "getDirections": "Com arribar"
     },
     "EventCalendar": {
@@ -1113,7 +1158,7 @@
         "capDeSetmana": {
           "title": "Què fer aquest cap de setmana {label}",
           "subTitle": "Descobreix què fer aquest cap de setmana {label}: concerts, festes, activitats familiars i propostes a l’aire lliure. Troba el teu pla i aprofita el cap de setmana.",
-          "metaTitle": "Plans per aquest cap de setmana {label} - Agenda",
+          "metaTitle": "Què fer aquest cap de setmana {label} - Plans i agenda",
           "metaDescription": "Descobreix els millors plans per aquest cap de setmana {label}. Consulta concerts, festes populars, activitats amb nens, rutes i altres propostes culturals per aprofitar al màxim el cap de setmana.",
           "notFound": "Ho sentim, però no hi ha esdeveniments aquest cap de setmana {label}. Consulta altres dates, explora categories diferents o mira què es fa a la resta de Catalunya per trobar nous plans."
         }
@@ -1237,29 +1282,6 @@
       "range": "De {start} a {end}",
       "simpleRange": "{start} - {end}"
     },
-    "ListPageFaq": {
-      "title": "Preguntes freqüents",
-      "dateInline": {
-        "today": "avui",
-        "tomorrow": "demà",
-        "weekend": "aquest cap de setmana",
-        "week": "aquesta setmana",
-        "fallback": "els propers dies"
-      },
-      "dateCapitalized": {
-        "today": "Avui",
-        "tomorrow": "Demà",
-        "weekend": "Aquest cap de setmana",
-        "week": "Aquesta setmana",
-        "fallback": "Els propers dies"
-      },
-      "q1": "Què puc fer {contextInline}?",
-      "a1": "{capitalizedContext} hi trobaràs concerts, fires, activitats familiars i propostes culturals actualitzades cada dia.",
-      "q2": "Hi ha activitats gratuïtes {contextInline}?",
-      "a2": "Sí. Pots utilitzar la cerca, els filtres de categoria i la distància per descobrir activitats gratuïtes {contextInline}.",
-      "q3": "On puc veure {categoryName} {contextInline}?",
-      "a3": "Selecciona la categoria \"{categoryName}\" per destacar aquests esdeveniments {contextInline} i guarda l'agenda per consultar-la sovint."
-    },
     "OpeningHours": {
       "openNow": "Obert ara",
       "closesAt": "Tanca a les {time}",
@@ -1281,21 +1303,9 @@
         "dateRange": "del {start} al {end}",
         "dateSingle": "el {nameDay}, {start}",
         "sentence": "{title} {verb} {date}{time}{place}.",
-        "timeSuffix": ", {time}",
+        "timeSuffix": ", a les {time}",
+        "timeSuffixRange": ", de {start} a {end}",
         "placeSuffix": ", {place}"
-      },
-      "faq": {
-        "whenQ": "Quan és l'esdeveniment?",
-        "whenA": "{date}{time}",
-        "whereQ": "On se celebra?",
-        "whereA": "{place}",
-        "isFreeQ": "És gratuït?",
-        "isFreeYes": "Sí, l’esdeveniment és gratuït.",
-        "isFreeNo": "No, l’esdeveniment és de pagament.",
-        "durationQ": "Quina és la durada aproximada?",
-        "durationA": "{duration}",
-        "moreInfoQ": "On puc trobar més informació?",
-        "moreInfoA": "Pots consultar tots els detalls a la pàgina oficial de l'esdeveniment."
       }
     },
     "StringHelpers": {
@@ -1332,7 +1342,10 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1409,8 +1422,8 @@
     "emptyState": "Anuncia el teu negoci aquí",
     "cta": "Patrocina aquest espai",
     "houseAd": {
-      "pricing": "El teu negoci aquí · Des de 5€/setmana",
-      "pricingSub": "Espai exclusiu a l'agenda d'esdeveniments del teu poble",
+      "pricing": "Si tu ho veus, la teva competència també",
+      "pricingSub": "Reserva l'únic espai publicitari al teu poble",
       "reach": "Gent del teu poble, buscant plans",
       "reachSub": "Busquen on menjar, comprar i sortir. Tu els dones la resposta.",
       "exclusive": "Només tu. Sense competència.",
@@ -1419,8 +1432,8 @@
       "localSub": "Apareix quan busquen on menjar, comprar o sortir",
       "intent": "Gent que ja vol sortir de casa",
       "intentSub": "Busquen què fer i on anar. Tu els dones la resposta.",
-      "simple": "Sense complicacions",
-      "simpleSub": "Un bàner, el teu poble, una setmana. Des de 5€",
+      "simple": "Qui apareix aquí, guanya clients",
+      "simpleSub": "L'agenda del teu poble, vista per qui busca on anar",
       "results": "On et troben els clients?",
       "resultsSub": "Aquí mateix. Quan busquen què fer al teu poble",
       "seasonal": "Hi ha festa al poble?",

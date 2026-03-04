@@ -24,7 +24,6 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect, notFound } from "next/navigation";
-import { topStaticGenerationPlaces } from "@utils/priority-places";
 import type { PlacePageEventsResult } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
@@ -35,16 +34,9 @@ import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
 
-// Note: This page is ISR-compatible. Server renders canonical, query-agnostic HTML.
+// Note: This page is fully dynamic (on-demand ISR). Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
-
-export async function generateStaticParams() {
-  // Only generate static pages for top ~15 places to keep build size under 230MB
-  // Each place generates ~4.6MB, so 15 places = ~69MB (within limit)
-  // Other places will be generated on-demand with ISR (revalidate: 600)
-  // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
-  return topStaticGenerationPlaces.map((slug) => ({ place: slug }));
-}
+// No generateStaticParams — all place pages are rendered on first request and cached.
 
 export async function generateMetadata({
   params,
@@ -206,7 +198,7 @@ export async function buildPlaceEventsPromise({
 }): Promise<PlacePageEventsResult> {
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: 10,
+    size: 12,
   };
 
   if (place !== "catalunya") {

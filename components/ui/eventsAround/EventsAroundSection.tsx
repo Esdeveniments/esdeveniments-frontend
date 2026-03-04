@@ -32,7 +32,6 @@ const EventsAroundSection: React.FC<EventsAroundProps> = async ({
           layout="compact"
           showJsonLd={false} // JSON-LD handled server-side for SEO
           title={displayTitle}
-          useDetailTimeFormat={true} // Use phrase format for related events in detail pages
         />
       </div>
     </div>

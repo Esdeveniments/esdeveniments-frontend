@@ -301,13 +301,14 @@ export default $config({
         memory: "512 MB", // Actual peak: 149 MB (243% headroom). Was 2048 MB.
         staticEtag: true, // Enable stronger caching for optimized images
       },
-      // Explicitly invalidate robots.txt on deploy to ensure route handler changes take effect
-      // CloudFront caches robots.txt with s-maxage=86400 (24 hours) by default, so we need
-      // to invalidate it after deployment to serve the new route handler response
-      // Note: Since robots.txt is NOT in public/, it should be handled by app/robots.txt/route.ts
-      // The invalidation ensures CloudFront doesn't serve a cached version
+      // Invalidate all CloudFront paths on deploy (SST default behavior).
+      // Previously only /robots.txt was invalidated, which left stale HTML/JS in CloudFront
+      // referencing old content-hashed static assets (e.g., /_next/static/media/*.png).
+      // When the image optimizer Lambda tried to fetch the old hash from S3, it got NoSuchKey
+      // because Pulumi's BucketFiles resource update removes files from previous builds.
+      // Using "all" ensures CloudFront drops stale references immediately after deploy.
       invalidation: {
-        paths: ["/robots.txt"],
+        paths: "all",
         wait: true, // Wait for invalidation to complete before deployment finishes
       },
     });

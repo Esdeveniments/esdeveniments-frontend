@@ -210,7 +210,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   if (isMobile) {
     return (
       <div
-        className={`fixed bottom-0 inset-x-0 z-modal p-4 pb-safe ${isClosing ? "animate-slide-down" : "animate-slide-up"
+        className={`fixed bottom-16 inset-x-0 z-modal p-4 pb-safe ${isClosing ? "animate-slide-down" : "animate-slide-up"
           }`}
         role="complementary"
         aria-label={t("aria")}

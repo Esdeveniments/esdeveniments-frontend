@@ -14,7 +14,7 @@ const CalendarButton: React.FC<CalendarButtonProps> = ({
     variant="neutral"
     aria-haspopup="menu"
     data-open={open}
-    className="group py-2 px-3 h-auto text-sm"
+    className="group py-2 px-3 h-auto text-sm normal-case tracking-normal font-normal"
   >
     <span className="flex-center w-5 h-5 rounded-button bg-background p-0.5 mr-1.5 border border-foreground-strong/10">
       <CalendarIcon className="w-3.5 h-3.5 text-primary" />

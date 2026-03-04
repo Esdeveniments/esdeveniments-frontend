@@ -48,6 +48,23 @@ How to prompt AI to actually follow your rules (not just read them).
 
 ---
 
+### Design & UX
+
+#### **[`design-rationale.md`](./design-rationale.md)** 🎨 DESIGN DECISIONS
+
+Why we made specific UI/UX decisions — competitive benchmarking, card redesign reasoning, and intentionally rejected patterns.
+
+- Card layout decisions (image-first, 3:2 ratio, 2-col grid, no share buttons)
+- Competitive analysis (Eventbrite, Fever, DICE, Meetup, Time Out)
+- Homepage & event detail page assessments
+- Future opportunities prioritized by impact
+- Data available on cards (what to show, what to hide)
+
+**Audience**: Designers, developers making UI changes
+**Time to Read**: 15 minutes
+
+---
+
 ### Design System Migration
 
 #### **[`design-system-overview.md`](./design-system-overview.md)** 🎯 START HERE
@@ -236,26 +253,22 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 ### Week 2 Phase 1 (Batch 1) ✅ COMPLETED - Typography Migration
 
 - **HybridEventsList** (`components/ui/hybridEventsList/index.tsx`)
-
   - Line 56: `<h1>` → `.heading-1` (replaced 8 inline utilities)
   - Line 69: `<p>` → `.body-large` (replaced inline utilities)
   - Impact: Every listing page (place, category, date filters)
 
 - **Footer** (`components/ui/common/footer/index.tsx`)
-
   - Navigation links → `.label font-medium`
   - Copyright text → `.label`
   - Removed `text-xs` class
   - Impact: Visible on every page
 
 - **News Article Page** (`app/noticies/[place]/[article]/page.tsx`)
-
   - Line 166: `<h1>` → `.heading-1` (replaced 7 inline utilities)
   - Line 182: `<p>` → `.body-large` (replaced inline utilities)
   - Impact: All news detail pages
 
 - **Link Components**
-
   - `components/ui/common/link/index.tsx` (ActiveLink)
   - `components/ui/common/link/ActiveNavLink.tsx`
   - Updated default className to use `.label` instead of 5 inline utilities
@@ -267,19 +280,16 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 ### Week 2 Phase 2 (Batch 2) ✅ COMPLETED - Card Components Typography
 
 - **NewsCard** (`components/ui/newsCard/index.tsx`)
-
   - Hero variant: h2 → `.heading-1`, date/place labels → `.label`
   - Default variant: h3 → `.heading-3`, description → `.body-small`
   - Impact: All news listing pages
 
 - **NewsRichCard** (`components/ui/newsRichCard/index.tsx`)
-
   - Horizontal variant: h3 → `.heading-2`, description → `.body-normal`
   - Default variant: h3 → `.heading-3`, description → `.body-small`
   - Impact: Featured news sections
 
 - **CardContent** (`components/ui/common/cardContent/index.tsx`)
-
   - h3 title → `.heading-4` (replaced `uppercase`)
   - Date, location, time info → `.body-small`
   - Impact: All event cards in listings
@@ -289,19 +299,16 @@ See **design-system-overview.md Week 0 section** for exact commands and timing.
 ### Week 2 Phase 3 (Batch 3) ✅ COMPLETED - Event Detail & Description Pages
 
 - **EventHeader** (`app/e/[eventId]/components/EventHeader.tsx`)
-
   - h1 → `.heading-3` (replaced `text-2xl font-bold uppercase`)
   - Impact: Event detail page main title
 
 - **EventDetailsSection** (`app/e/[eventId]/components/EventDetailsSection.tsx`)
-
   - h2 → `.heading-3`
   - Duration info → `.body-small`
   - Event link → `.body-normal`
   - Impact: Event detail metadata section
 
 - **Description** (`components/ui/common/description/index.tsx`)
-
   - h2 → `.heading-3` (replaced no class)
   - Intro text → `.body-normal` (replaced `text-base leading-relaxed font-normal`)
   - Content text → `.body-normal` (replaced inline utilities)

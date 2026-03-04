@@ -1,5 +1,4 @@
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import { MegaphoneIcon as SpeakerphoneIcon } from "@heroicons/react/24/outline";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import AdArticle from "@components/ui/adArticle";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
@@ -55,13 +54,11 @@ export function CategoryEventsSection({
         showJsonLd
         title={categoryName}
         jsonLdId={`category-events-${categorySlug}`}
-        useDetailTimeFormat={true}
       />
 
       {showAd && (
         <div className="w-full flex flex-col items-start mt-element-gap mb-element-gap-sm max-w-lg">
-          <div className="flex items-center gap-2 mb-element-gap">
-            <SpeakerphoneIcon className="w-5 h-5 text-foreground-strong flex-shrink-0" />
+          <div className="mb-element-gap">
             <h2 className="heading-2">{labels.sponsored}</h2>
           </div>
           <div className="w-full">
