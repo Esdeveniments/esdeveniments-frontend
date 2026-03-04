@@ -96,6 +96,10 @@ export default async function EventPage({
   const citySlug = event.city?.slug;
   const regionSlug = event.region?.slug;
   const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
+  const sponsorFallbackPlaces =
+    citySlug && regionSlug
+      ? [regionSlug].filter((p) => p !== primaryPlaceSlug)
+      : undefined;
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
@@ -396,10 +400,7 @@ export default async function EventPage({
                 <div className="lg:hidden">
                   <SponsorBannerSlot
                     place={primaryPlaceSlug}
-                    fallbackPlaces={[
-                      ...(citySlug && regionSlug ? [regionSlug] : []),
-                      "catalunya",
-                    ].filter((p) => p !== primaryPlaceSlug)}
+                    fallbackPlaces={sponsorFallbackPlaces}
                   />
                 </div>
 
@@ -452,8 +453,7 @@ export default async function EventPage({
                 cityName={cityName}
                 regionName={regionName}
                 primaryPlaceSlug={primaryPlaceSlug}
-                citySlug={citySlug}
-                regionSlug={regionSlug}
+                sponsorFallbackPlaces={sponsorFallbackPlaces}
               />
             </div>
           </article>

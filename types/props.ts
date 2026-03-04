@@ -598,15 +598,6 @@ export interface UseGeolocationReturn {
 
 // --- News components props ---
 
-export interface BreadcrumbItem {
-  label: string;
-  href?: string; // Omit for current page (last item)
-}
-
-export interface NewsBreadcrumbProps {
-  items: BreadcrumbItem[];
-}
-
 export interface NewsShareButtonsProps {
   place: string;
   slug: string;
@@ -797,8 +788,7 @@ export interface EventSidebarProps {
   cityName: string;
   regionName: string;
   primaryPlaceSlug: string;
-  citySlug?: string;
-  regionSlug?: string;
+  sponsorFallbackPlaces?: string[];
 }
 
 // Social proof counter

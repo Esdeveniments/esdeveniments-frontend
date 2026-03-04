@@ -44,7 +44,7 @@ async function SponsorBannerSlotContent({
  * Place this below heading/filters, above events list.
  *
  * For event pages, pass fallbackPlaces to enable cascade:
- * <SponsorBannerSlot place={citySlug} fallbackPlaces={[regionSlug, "catalunya"]} />
+ * <SponsorBannerSlot place={citySlug} fallbackPlaces={[regionSlug]} />
  */
 export default function SponsorBannerSlot({
   place,

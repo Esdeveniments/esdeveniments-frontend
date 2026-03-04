@@ -9,7 +9,7 @@ import AdArticle from "@components/ui/adArticle";
 import NewsEventsSection from "@components/noticies/NewsEventsSection";
 import NewsCard from "@components/ui/newsCard";
 import NewsShareButtons from "@components/noticies/NewsShareButtons";
-import NewsBreadcrumb from "@components/noticies/NewsBreadcrumb";
+import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import { getFormattedDate } from "@utils/date-helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { notFound } from "next/navigation";
@@ -20,7 +20,7 @@ import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import {
   localeToHrefLang,
 } from "types/i18n";
-import Image from "@components/ui/common/image";
+
 
 export default async function NewsArticleDetail({
   detailPromise,
@@ -88,10 +88,6 @@ export default async function NewsArticleDetail({
       ? path
       : `${siteUrl}${withLocalePath(path, locale)}`;
 
-  // Hero image from first event (if available)
-  const heroImageUrl = detail.events?.[0]?.imageUrl;
-  const heroCacheKey = detail.events?.[0]?.hash;
-
   // Build keywords from available data (categories and locations)
   const categoryKeywords = Array.from(
     new Set(
@@ -155,107 +151,94 @@ export default async function NewsArticleDetail({
   });
 
   return (
-    <div className="container flex-col justify-center items-center mt-8 pb-section-y-lg">
-      <JsonLdServer id="news-article-schema" data={articleSchema} />
-      <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
+    <div className="w-full bg-background pb-10">
+      <div className="container flex flex-col gap-section-y min-w-0">
+        <JsonLdServer id="news-article-schema" data={articleSchema} />
+        <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
 
-      {/* Breadcrumbs */}
-      <NewsBreadcrumb
-        items={[
-          { label: t("breadcrumbHome"), href: withLocalePath("/", locale) },
-          {
-            label: t("breadcrumbNews"),
-            href: withLocalePath("/noticies", locale),
-          },
-          {
-            label: placeType.label,
-            href: withLocalePath(`/noticies/${place}`, locale),
-          },
-          { label: detail.title },
-        ]}
-      />
+        <article className="w-full flex flex-col gap-section-y">
+          {/* Breadcrumbs */}
+          <Breadcrumbs
+            items={[
+              { label: t("breadcrumbHome"), href: "/" },
+              {
+                label: t("breadcrumbNews"),
+                href: withLocalePath("/noticies", locale),
+              },
+              {
+                label: placeType.label,
+                href: withLocalePath(`/noticies/${place}`, locale),
+              },
+              { label: detail.title },
+            ]}
+            className="px-section-x pt-4"
+          />
 
-      {/* Hero Image */}
-      {heroImageUrl && (
-        <div className="mb-6 w-full px-2 lg:px-0">
-          <div className="rounded-card overflow-hidden aspect-[16/9] bg-muted">
-            <Image
-              className="w-full h-full object-cover"
-              title={detail.title}
-              image={heroImageUrl}
-              alt={detail.title}
-              priority
-              context="hero"
-              cacheKey={heroCacheKey}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="w-full px-2 lg:px-0">
-        <div className="mb-6">
-          <h1 className="heading-1 mb-6 text-balance break-words">{detail.title}</h1>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 text-sm text-foreground-strong/70">
-            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-              <span className="bg-primary text-background px-3 sm:px-4 py-2 rounded-full font-medium uppercase text-xs sm:text-sm break-words">
+          {/* Article header */}
+          <div className="w-full">
+            <h1 className="heading-1 mb-6 text-balance break-words">{detail.title}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 text-sm text-foreground-strong/70">
+              <span className="text-primary font-semibold uppercase text-xs tracking-wide">
                 {detail.type === "WEEKEND"
                   ? t("sectionWeekend")
                   : t("sectionWeek")}{" "}
-                {dateRangeText}
+                · {dateRangeText}
               </span>
+              <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                <span className="whitespace-nowrap">{t("readingTime", { minutes: detail.readingTime })}</span>
+                <ViewCounter visits={detail.visits} hideText={false} visitsLabel={t("visitsCount", { count: detail.visits })} />
+              </div>
             </div>
-            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              <span className="whitespace-nowrap">{t("readingTime", { minutes: detail.readingTime })}</span>
-              <ViewCounter visits={detail.visits} hideText={false} visitsLabel={t("visitsCount", { count: detail.visits })} />
-            </div>
+            {plainDescription && (
+              <p className="body-large text-foreground-strong/80">
+                {plainDescription}
+              </p>
+            )}
           </div>
-          {plainDescription && (
-            <p className="body-large text-foreground-strong/80">
-              {plainDescription}
-            </p>
-          )}
-        </div>
 
-        <NewsShareButtons place={place} slug={article} label={t("shareArticle")} />
+          {/* Content */}
+          <div className="w-full">
+            <NewsShareButtons place={place} slug={article} label={t("shareArticle")} />
 
-        <div className="my-2">
-          <AdArticle slot="news_in_article" isDisplay={false} />
-        </div>
-
-        {detail.events && detail.events.length > 0 && (
-          <NewsEventsSection
-            title={t("mustSee")}
-            events={detail.events.slice(0, Math.min(detail.events.length, 3))}
-            showNumbered={true}
-          />
-        )}
-
-        {detail.events && detail.events.length > 3 && (
-          <NewsEventsSection
-            title={t("moreProposals")}
-            events={detail.events.slice(3)}
-          />
-        )}
-
-        {/* Related Articles */}
-        {detail.relatedNews && detail.relatedNews.length > 0 && (
-          <section className="mt-12 sm:mt-16">
-            <h2 className="heading-2 mb-6">{t("relatedArticles")}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-element-gap">
-              {detail.relatedNews.slice(0, 4).map((item) => (
-                <NewsCard
-                  key={item.id}
-                  event={item}
-                  placeSlug={item.city?.slug || item.region?.slug || place}
-                  placeLabel={
-                    item.city?.name || item.region?.name || placeType.label
-                  }
-                />
-              ))}
+            <div className="my-2">
+              <AdArticle slot="news_in_article" isDisplay={false} />
             </div>
-          </section>
-        )}
+
+            {detail.events && detail.events.length > 0 && (
+              <NewsEventsSection
+                title={t("mustSee")}
+                events={detail.events.slice(0, Math.min(detail.events.length, 3))}
+                showNumbered={true}
+              />
+            )}
+
+            {detail.events && detail.events.length > 3 && (
+              <NewsEventsSection
+                title={t("moreProposals")}
+                events={detail.events.slice(3)}
+              />
+            )}
+
+            {/* Related Articles */}
+            {detail.relatedNews && detail.relatedNews.length > 0 && (
+              <section className="mt-12 sm:mt-16">
+                <h2 className="heading-2 mb-6">{t("relatedArticles")}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-element-gap">
+                  {detail.relatedNews.slice(0, 4).map((item) => (
+                    <NewsCard
+                      key={item.id}
+                      event={item}
+                      placeSlug={item.city?.slug || item.region?.slug || place}
+                      placeLabel={
+                        item.city?.name || item.region?.name || placeType.label
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </article>
       </div>
     </div>
   );
