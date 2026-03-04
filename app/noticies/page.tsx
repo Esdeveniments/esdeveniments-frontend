@@ -10,6 +10,7 @@ import {
 } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { parseNewsPagination } from "@utils/news-helpers";
 import type { Href } from "types/common";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
@@ -51,26 +52,7 @@ export default async function Page({
   const query = (await (searchParams || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };
-  const pageParam =
-    typeof query.page === "string"
-      ? query.page
-      : Array.isArray(query.page)
-        ? query.page[0]
-        : undefined;
-  const sizeParam =
-    typeof query.size === "string"
-      ? query.size
-      : Array.isArray(query.size)
-        ? query.size[0]
-        : undefined;
-  const parsedPage = Number.isFinite(Number(pageParam))
-    ? Number(pageParam)
-    : 0;
-  const currentPage = parsedPage >= 0 ? parsedPage : 0;
-  const parsedSize = Number.isFinite(Number(sizeParam))
-    ? Number(sizeParam)
-    : 10;
-  const pageSize = parsedSize > 0 ? parsedSize : 10;
+  const { currentPage, pageSize } = parseNewsPagination(query);
 
   const citiesParam =
     typeof query.cities === "string"

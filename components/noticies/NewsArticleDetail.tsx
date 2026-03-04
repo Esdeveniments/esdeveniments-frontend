@@ -17,6 +17,7 @@ import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
 import {
   localeToHrefLang,
 } from "types/i18n";
@@ -222,16 +223,17 @@ export default async function NewsArticleDetail({
               <section className="mt-12 sm:mt-16">
                 <h2 className="heading-2 mb-6">{t("relatedArticles")}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-element-gap">
-                  {detail.relatedNews.slice(0, 4).map((item) => (
-                    <NewsCard
-                      key={item.id}
-                      event={item}
-                      placeSlug={item.city?.slug || item.region?.slug || place}
-                      placeLabel={
-                        item.city?.name || item.region?.name || placeType.label
-                      }
-                    />
-                  ))}
+                  {detail.relatedNews.slice(0, 4).map((item) => {
+                    const itemPlace = resolveNewsItemPlace(item, place, placeType.label);
+                    return (
+                      <NewsCard
+                        key={item.id}
+                        event={item}
+                        placeSlug={itemPlace.slug}
+                        placeLabel={itemPlace.label}
+                      />
+                    );
+                  })}
                 </div>
               </section>
             )}

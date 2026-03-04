@@ -9,6 +9,7 @@ import {
   getLocaleSafely,
   withLocalePath,
 } from "@utils/i18n-seo";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
 
 export default async function NewsList({
   newsPromise,
@@ -50,15 +51,11 @@ export default async function NewsList({
 
   const resolvedBasePath = basePath || `/noticies/${place}`;
 
-  const getItemPlace = (item: NewsSummaryResponseDTO) => {
-    const slug = item.city?.slug || item.region?.slug || place;
-    const label = item.city?.name || item.region?.name || placeType.label;
-    return { slug, label };
-  };
-
   const defaultPlace = { slug: place, label: placeType.label };
   const resolvePlace = (item: NewsSummaryResponseDTO) =>
-    basePath ? getItemPlace(item) : defaultPlace;
+    basePath
+      ? resolveNewsItemPlace(item, place, placeType.label)
+      : defaultPlace;
 
   const newsItemList = {
     "@context": "https://schema.org",
