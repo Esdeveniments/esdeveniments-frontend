@@ -20,7 +20,6 @@ import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
   urlToFilterState,
-  getTopStaticCombinations,
   getRedirectUrl,
 } from "@utils/url-filters";
 import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
@@ -31,7 +30,7 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { siteUrl } from "@config/index";
-import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
+import { fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { getTranslations } from "next-intl/server";
@@ -112,36 +111,7 @@ export async function generateMetadata({
   });
 }
 
-export async function generateStaticParams() {
-  // Generate static params for top combinations only
-  // Other combinations will be generated on-demand with ISR
-
-  // Validate places exist in API to avoid generating pages for removed/renamed places
-  let places: { slug: string }[] = [];
-  try {
-    places = await fetchPlaces();
-  } catch (error) {
-    console.warn(
-      "generateStaticParams: Error fetching places for validation:",
-      error
-    );
-    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
-    places = [];
-  }
-
-  // Pass validated places to getTopStaticCombinations
-  const combinations = getTopStaticCombinations(
-    undefined, // categories - use hardcoded fallback
-    places.length > 0 ? places : undefined // places - validate if available
-  );
-
-  // Transform the returned format from { place, date, category } to { place, byDate, category }
-  return combinations.map(({ place, date, category }) => ({
-    place,
-    byDate: date,
-    category,
-  }));
-}
+// No generateStaticParams — all filtered pages are rendered on first request and cached.
 
 export default async function FilteredPage({
   params,
@@ -211,7 +181,7 @@ export default async function FilteredPage({
   // Prepare fetch params (align with byDate page behavior)
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: 10,
+    size: 12,
     category:
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     // term is client-driven via SWR; omit on server to keep ISR static

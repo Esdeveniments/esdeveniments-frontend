@@ -52,7 +52,7 @@ import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
-import type { FaqItem } from "types/faq";
+import type { AppLocale } from "types/i18n";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -94,8 +94,75 @@ export interface ReportViewProps {
 export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
-  isHorizontal?: boolean;
   initialIsFavorite?: boolean;
+}
+
+export interface CardLayoutProps {
+  /** Event slug for links and analytics */
+  slug: string;
+  /** Event ID for analytics */
+  eventId?: string;
+  /** Prepared title text */
+  title: string;
+  /** Original (un-truncated) title for alt text */
+  originalTitle: string;
+  /** Prepared image URL */
+  image: string;
+  /** Whether this card's image should be priority-loaded */
+  isPriority: boolean;
+  /** Formatted card date string */
+  cardDate: string;
+  /** Formatted time display (empty string if no time) */
+  timeDisplay: string;
+  /** City/region location text */
+  primaryLocation: string;
+  /** Localized category label */
+  categoryLabel?: string;
+  /** Category slug for analytics/URL building */
+  categorySlug?: string;
+  /** Localized price label (e.g., "Gratuït" for free events) */
+  priceLabel?: string;
+  /** Urgency label ("Today" / "Tomorrow") */
+  urgencyLabel?: string;
+  /** Urgency type for styling */
+  urgencyType?: "today" | "tomorrow";
+  /** Multi-day label suffix */
+  multiDayLabel?: string;
+  /** Whether to show favorite button */
+  shouldShowFavoriteButton: boolean;
+  /** Whether this event is favorited */
+  isFavorite: boolean;
+  /** Favorite button labels */
+  favoriteLabels: FavoriteButtonLabels;
+  /** Image location/region/date for alt-text context */
+  imageContext?: {
+    location?: string;
+    region?: string;
+    date?: string;
+  };
+  /** Cache key for image optimization */
+  imageCacheKey?: string;
+  /** Optional view transition name for the image container */
+  imageViewTransitionName?: string;
+  /** Render the card link wrapper. Receives children (sr-only label) and props */
+  renderLink: (props: {
+    href: string;
+    className: string;
+    "aria-label": string;
+    "data-analytics-event-name": string;
+    "data-analytics-event-id": string;
+    "data-analytics-event-slug": string;
+    children: ReactNode;
+  }) => ReactNode;
+}
+
+export interface CompactCardProps {
+  event: EventSummaryResponseDTO;
+  locale: AppLocale;
+  tCard: (key: string, values?: Record<string, string | number>) => string;
+  tTime: (key: string, values?: Record<string, string | number>) => string;
+  index: number;
+  analyticsEventName?: string;
 }
 
 export interface FavoriteButtonLabels {
@@ -170,10 +237,7 @@ export interface CulturalMessageProps {
 
 export interface DescriptionProps {
   description?: string;
-  location?: string;
-  locationValue?: string;
   introText?: string;
-  locationType?: "region" | "town" | "general";
   /**
    * Optional actions rendered next to the section title (e.g. a client island button).
    * Must remain serializable/ReactNode compatible with server rendering.
@@ -492,6 +556,7 @@ export interface ServerEventsCategorizedProps {
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
   featuredPlaces?: FeaturedPlaceConfig[];
   seoLinkSections?: SeoLinkSection[];
+  localAgendasSection?: SeoLinkSection;
 }
 
 export type ServerEventsCategorizedContentProps = Pick<
@@ -537,25 +602,6 @@ export interface GeolocationButtonProps {
   error?: string | null;
   className?: string;
 }
-
-export interface ListPageFaqProps {
-  items: FaqItem[];
-  title?: string;
-}
-
-export interface ListPageFaqParams {
-  place: string;
-  date?: string;
-  category?: string;
-  placeTypeLabel?: PlaceTypeAndLabel;
-  categories?: CategorySummaryResponseDTO[];
-  locale?: import("types/i18n").AppLocale;
-}
-
-export type DateContext = {
-  inline: string;
-  capitalized: string;
-};
 
 export interface UseGeolocationReturn {
   location: GeolocationCoordinates | null;
@@ -740,4 +786,43 @@ export interface ProfileOwnerActionsProps {
 // Profile claim CTA client island props
 export interface ProfileClaimCtaProps {
   profileSlug: string;
+}
+
+// Sticky CTA bar for event detail page (mobile)
+export interface EventStickyCTAProps {
+  eventUrl?: string;
+  eventSlug: string;
+  labels: {
+    moreInfo: string;
+    calendar: string;
+    save: string;
+    favoriteAdd: string;
+    favoriteRemove: string;
+  };
+}
+
+// Collapsible description wrapper (mobile)
+export interface CollapsibleDescriptionProps {
+  children: ReactNode;
+}
+
+// Event details section (duration + external link)
+export interface EventDetailsSectionProps {
+  event: import("./api/event").EventDetailResponseDTO;
+}
+
+// Sticky sidebar for event detail page (desktop)
+export interface EventSidebarProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  cityName: string;
+  regionName: string;
+  primaryPlaceSlug: string;
+  citySlug?: string;
+  regionSlug?: string;
+}
+
+// Social proof counter
+export interface SocialProofCounterProps {
+  visits: number;
+  interestedLabel: string;
 }

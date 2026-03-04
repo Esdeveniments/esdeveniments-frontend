@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   XMarkIcon as XIcon,
   ChevronDownIcon,
   ArrowRightIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
@@ -17,13 +18,39 @@ export default function EventLocationClient({
   location,
   cityName,
   regionName,
-}: Pick<EventLocationProps, "location" | "cityName" | "regionName">) {
+  compact = false,
+}: Pick<EventLocationProps, "location" | "cityName" | "regionName" | "compact">) {
   const t = useTranslations("Components.EventLocation");
-  const [showMap, setShowMap] = useState(false);
+  const tPage = useTranslations("Components.EventPage");
+  const [showMap, setShowMap] = useState(compact); // Auto-show in compact mode
   const [isMapsVisible, setIsMapsVisible] = useState(false);
-  const mapsDivRef = useRef<HTMLDivElement | null>(null);
+  const [hasAutoExpanded, setHasAutoExpanded] = useState(compact);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
 
-  const handleShowMap = () => {
+  // Auto-expand map when the location section scrolls into view.
+  // Uses the free Maps Embed API (no usage limits / cost).
+  // The iframe only loads once visible, so no impact on initial page load.
+  useEffect(() => {
+    if (hasAutoExpanded) return;
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShowMap(true);
+          setHasAutoExpanded(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAutoExpanded]);
+
+  const handleShowMap = useCallback(() => {
     setShowMap((prev) => {
       const next = !prev;
       if (!next) {
@@ -31,7 +58,7 @@ export default function EventLocationClient({
       }
       return next;
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (showMap) {
@@ -41,30 +68,53 @@ export default function EventLocationClient({
     return undefined;
   }, [showMap]);
 
-  const handleDirectionsClick = () => {
+  const openGoogleMaps = (linkType: "maps_directions" | "maps_open") => {
     const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
 
     sendGoogleEvent("outbound_click", {
       link_domain: "www.google.com",
       link_path: "/maps/search/",
-      link_type: "maps_directions",
+      link_type: linkType,
       context: "event_location",
     });
 
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
-      "_blank"
+      "_blank",
+      "noopener,noreferrer"
     );
   };
 
+  const handleDirectionsClick = () => openGoogleMaps("maps_directions");
+  const handleOpenInMaps = () => openGoogleMaps("maps_open");
+
+  // Compact mode: auto-show map, no toggle, just map + "Open in Maps" link
+  if (compact) {
+    return (
+      <div ref={sectionRef} className="w-full flex flex-col gap-2">
+        <div className="w-full h-[400px] rounded-card overflow-hidden bg-muted">
+          {isMapsVisible && <Maps location={location} />}
+        </div>
+        <button
+          onClick={handleOpenInMaps}
+          className="inline-flex items-center gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
+          type="button"
+        >
+          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+          {tPage("sidebarOpenInMaps")}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div ref={sectionRef}>
       <div
         className="w-fit flex justify-start items-center gap-element-gap border-b-2 border-background hover:border-foreground-strong transition-interactive cursor-pointer"
         onClick={handleShowMap}
       >
         <button type="button" className="flex-start gap-element-gap">
-          <p className="body-normal font-medium">{t("showMap")}</p>
+          <p className="body-normal font-medium">{showMap ? t("hideMap") : t("showMap")}</p>
           {showMap ? (
             <XIcon className="h-5 w-5" aria-hidden="true" />
           ) : (
@@ -73,11 +123,10 @@ export default function EventLocationClient({
         </button>
       </div>
       {showMap && (
-        <div
-          className="w-full flex flex-col justify-center items-end gap-card-padding"
-          ref={mapsDivRef}
-        >
-          {isMapsVisible && <Maps location={location} />}
+        <div className="w-full flex flex-col justify-center items-end gap-card-padding">
+          <div className="w-full h-[400px] bg-muted">
+            {isMapsVisible && <Maps location={location} />}
+          </div>
           <div className="w-fit flex justify-end items-center gap-element-gap-sm px-section-x border-b-2 border-background hover:border-b-2 hover:border-foreground-strong ease-in-out duration-300 cursor-pointer">
             <button
               className="flex gap-element-gap-sm"
@@ -89,6 +138,6 @@ export default function EventLocationClient({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

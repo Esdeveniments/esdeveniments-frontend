@@ -8,7 +8,7 @@ import AddToCalendar from "@components/ui/addToCalendar";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { getLocaleSafely } from "@utils/i18n-seo";
 
-export default async function EventCalendar({ event }: EventCalendarProps) {
+export default async function EventCalendar({ event, compact = false }: EventCalendarProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({
     locale,
@@ -48,6 +48,31 @@ export default async function EventCalendar({ event }: EventCalendarProps) {
   const eventDate = formattedEnd
     ? `Del ${formattedStart} al ${formattedEnd}`
     : `${nameDay}, ${formattedStart}`;
+
+  if (compact) {
+    return (
+      <div className="w-full flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="h-4 w-4 text-foreground-strong flex-shrink-0" />
+          <p className="body-normal font-semibold text-foreground-strong">
+            {eventDate}
+          </p>
+        </div>
+        <p className="body-normal flex items-center gap-2 text-foreground-strong/80">
+          <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
+          {formatEventTimeDisplayDetail(startTime, endTime, timeLabels)}
+        </p>
+        <AddToCalendar
+          title={title}
+          description={description}
+          location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${city?.postalCode || ""}`}
+          startDate={startDate}
+          endDate={endDate}
+          canonical={`${siteUrl}/e/${slug}`}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

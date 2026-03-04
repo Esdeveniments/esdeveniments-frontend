@@ -1,4 +1,9 @@
-import { getDayNames, getMonthNames } from "./constants";
+import {
+  getDayNames,
+  getMonthNames,
+  getShortDayNames,
+  getShortMonthNames,
+} from "./constants";
 import type {
   DateObject,
   FormattedDateResult,
@@ -21,7 +26,7 @@ export const convertTZ = (date: Date | string, tzString: string): Date =>
   new Date(
     (typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {
       timeZone: tzString,
-    })
+    }),
   );
 
 function calculateDetailedDurationISO8601(start: Date, end: Date): string {
@@ -29,7 +34,7 @@ function calculateDetailedDurationISO8601(start: Date, end: Date): string {
 
   const days = Math.floor(differenceInMs / (1000 * 60 * 60 * 24));
   const hours = Math.floor(
-    (differenceInMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    (differenceInMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
   );
   const minutes = Math.floor((differenceInMs % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((differenceInMs % (1000 * 60)) / 1000);
@@ -52,7 +57,7 @@ const formatDateForLocale = (
   day: number,
   monthName: string,
   year: number,
-  includeYear: boolean
+  includeYear: boolean,
 ): string => {
   switch (locale) {
     case "es":
@@ -74,14 +79,14 @@ const formatDateForLocale = (
 export const getFormattedDate = (
   start: string | DateObject,
   end?: string | DateObject,
-  locale: AppLocale = DEFAULT_LOCALE
+  locale: AppLocale = DEFAULT_LOCALE,
 ): FormattedDateResult => {
   const localeToUse = locale ?? DEFAULT_LOCALE;
   const days = getDayNames(localeToUse);
   const months = getMonthNames(localeToUse);
 
   const startDate = new Date(
-    typeof start === "object" ? start.date || start.dateTime || "" : start
+    typeof start === "object" ? start.date || start.dateTime || "" : start,
   );
   const endDate = end
     ? new Date(typeof end === "object" ? end.date || end.dateTime || "" : end)
@@ -114,28 +119,27 @@ export const getFormattedDate = (
     startDay,
     nameMonth,
     year,
-    true
+    true,
   );
 
   const shouldShortenStartForSameMonthRange =
     localeToUse !== "en" && isMultipleDays && isSameMonth;
-  const formattedStart =
-    shouldShortenStartForSameMonthRange
-      ? `${startDay}`
-      : formatDateForLocale(
-          localeToUse,
-          startDay,
-          nameMonth,
-          year,
-          !(isMultipleDays && isSameYear)
-        );
+  const formattedStart = shouldShortenStartForSameMonthRange
+    ? `${startDay}`
+    : formatDateForLocale(
+        localeToUse,
+        startDay,
+        nameMonth,
+        year,
+        !(isMultipleDays && isSameYear),
+      );
 
   const formattedEndFull = formatDateForLocale(
     localeToUse,
     endDay,
     months[endDateConverted.getMonth()],
     endDateConverted.getFullYear(),
-    true
+    true,
   );
 
   // English: collapse repeated month for same-month ranges.
@@ -146,10 +150,10 @@ export const getFormattedDate = (
       : formattedEndFull;
 
   const startTime = `${startDateConverted.getHours()}:${String(
-    startDateConverted.getMinutes()
+    startDateConverted.getMinutes(),
   ).padStart(2, "0")}`;
   const endTime = `${endDateConverted.getHours()}:${String(
-    endDateConverted.getMinutes()
+    endDateConverted.getMinutes(),
   ).padStart(2, "0")}`;
 
   return {
@@ -191,7 +195,7 @@ export const isWeekend = (): boolean => {
  *   - null/undefined returns default { hour: 0, minute: 0, second: 0, nano: 0 }
  */
 export function parseTimeToEventTimeDTO(
-  dateOrString: Date | string | null | undefined
+  dateOrString: Date | string | null | undefined,
 ): EventTimeDTO {
   if (
     !dateOrString ||
@@ -261,11 +265,11 @@ const defaultEventTimeLabels: EventTimeLabels = (caMessages as any).Utils
 
 const fillTemplate = (
   template: string,
-  replacements: Record<string, string>
+  replacements: Record<string, string>,
 ): string =>
   Object.entries(replacements).reduce(
     (acc, [key, value]) => acc.replace(`{${key}}`, value),
-    template
+    template,
   );
 
 /**
@@ -284,7 +288,7 @@ export const formatTimeFromAPI = (timeObj: EventTimeDTO): string => {
  */
 export const normalizeEndTime = (
   startTime?: string | null,
-  endTime?: string | null
+  endTime?: string | null,
 ): string | null => {
   if (!endTime) return null;
   return startTime && startTime === endTime ? null : endTime;
@@ -302,7 +306,7 @@ export const normalizeEndTime = (
 export const formatEventTimeDisplay = (
   startTime?: string | null,
   endTime?: string | null,
-  labels: EventTimeLabels = defaultEventTimeLabels
+  labels: EventTimeLabels = defaultEventTimeLabels,
 ): string => {
   // Ensure we only work with HH:mm
   const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
@@ -341,7 +345,7 @@ export const formatEventTimeDisplay = (
 export const formatEventTimeDisplayDetail = (
   startTime?: string | null,
   endTime?: string | null,
-  labels: EventTimeLabels = defaultEventTimeLabels
+  labels: EventTimeLabels = defaultEventTimeLabels,
 ): string => {
   // Ensure we only work with HH:mm
   const cleanStart = startTime ? formatTimeForAPI(startTime) : null;
@@ -366,4 +370,88 @@ export const formatEventTimeDisplayDetail = (
     start: cleanStart,
     end: normalizedEndTime,
   });
+};
+
+/**
+ * Format a date for card display: abbreviated weekday + day + abbreviated month.
+ * Omits year when the event is in the current year.
+ * Examples:
+ *   ca: "Ds. 28 feb." | "Ds. 28 feb. 2027"
+ *   en: "Sat, Feb 28" | "Sat, Feb 28, 2027"
+ *   es: "Sáb. 28 feb." | "Sáb. 28 feb. 2027"
+ */
+export const formatCardDate = (
+  start: string,
+  end?: string,
+  locale: AppLocale = DEFAULT_LOCALE,
+): { cardDate: string; isMultiDay: boolean } => {
+  const shortDays = getShortDayNames(locale);
+  const shortMonths = getShortMonthNames(locale);
+
+  const startDate = convertTZ(new Date(start), "Europe/Madrid");
+  const endDate = end ? convertTZ(new Date(end), "Europe/Madrid") : startDate;
+
+  const startDay = startDate.getDate();
+  const endDay = endDate.getDate();
+  const isMultiDay =
+    startDay !== endDay ||
+    startDate.getMonth() !== endDate.getMonth() ||
+    startDate.getFullYear() !== endDate.getFullYear();
+
+  const currentYear = convertTZ(new Date(), "Europe/Madrid").getFullYear();
+  const startYear = startDate.getFullYear();
+  const endYear = endDate.getFullYear();
+  const showStartYear = startYear !== currentYear;
+  const showEndYear = endYear !== currentYear;
+
+  const weekDay = shortDays[startDate.getDay()];
+  const monthName = shortMonths[startDate.getMonth()];
+
+  const formatSingleDate = (
+    day: number,
+    month: string,
+    year: number,
+    showYear: boolean,
+    dayName?: string,
+  ): string => {
+    const yearSuffix = showYear
+      ? locale === "en"
+        ? `, ${year}`
+        : ` ${year}`
+      : "";
+    if (locale === "en") {
+      const prefix = dayName ? `${dayName}, ` : "";
+      return `${prefix}${month} ${day}${yearSuffix}`;
+    }
+    const prefix = dayName ? `${dayName} ` : "";
+    return `${prefix}${day} ${month}${yearSuffix}`;
+  };
+
+  if (!isMultiDay) {
+    return {
+      cardDate: formatSingleDate(
+        startDay,
+        monthName,
+        startYear,
+        showStartYear,
+        weekDay,
+      ),
+      isMultiDay: false,
+    };
+  }
+
+  const endMonthName = shortMonths[endDate.getMonth()];
+
+  const startPart = formatSingleDate(
+    startDay,
+    monthName,
+    startYear,
+    showStartYear,
+  );
+  const endPart = formatSingleDate(endDay, endMonthName, endYear, showEndYear);
+
+  return {
+    cardDate: `${startPart} – ${endPart}`,
+    isMultiDay: true,
+  };
 };

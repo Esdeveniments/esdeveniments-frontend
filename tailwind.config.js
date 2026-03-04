@@ -4,6 +4,7 @@ const foregroundRgb = "69 69 69";
 
 module.exports = {
   content: ["./components/**/*.{js,ts,jsx,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
+  safelist: [],
   theme: {
     container: {
       center: true,
@@ -169,6 +170,7 @@ module.exports = {
         "fast-pulse1": "fast-pulse 300ms cubic-bezier(0.4, 0, 0.6, 1) 100ms",
         appear: "appear 500ms",
         disappear: "disappear 500ms",
+        heartBeat: "heartBeat 300ms ease-out",
       },
       keyframes: {
         "fast-pulse": {
@@ -182,6 +184,11 @@ module.exports = {
         disappear: {
           "0%": { opacity: 1 },
           "100%": { opacity: 0 },
+        },
+        heartBeat: {
+          "0%": { transform: "scale(1)" },
+          "30%": { transform: "scale(1.15)" },
+          "100%": { transform: "scale(1)" },
         },
       },
 

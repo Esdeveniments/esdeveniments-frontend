@@ -56,7 +56,6 @@ export async function FeaturedPlaceSection({
         showJsonLd
         title={section.title}
         jsonLdId={`featured-events-${section.slug}`}
-        useDetailTimeFormat={true}
       />
     </section>
   );

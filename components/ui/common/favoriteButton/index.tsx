@@ -79,6 +79,7 @@ export default function FavoriteButton({
         aria-label={ariaLabel}
         aria-pressed={isFavorite}
         disabled={isPending}
+        data-favorite-button
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -167,7 +168,7 @@ export default function FavoriteButton({
           });
         }}
       >
-        <Icon className="h-6 w-6 text-primary transition-transform duration-200 group-hover:scale-[1.06] group-active:scale-[0.96]" />
+        <Icon className={`h-6 w-6 text-primary transition-[transform,color] duration-200 group-hover:scale-[1.06] group-active:scale-[0.96] ${isFavorite ? "animate-heartBeat" : ""}`} />
       </Button>
 
       {limitMessage && (

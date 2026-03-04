@@ -3,7 +3,7 @@
 import { memo, ReactElement, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
-import CardLoading from "@components/ui/cardLoading";
+import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
 import NoEventsFound from "@components/ui/common/noEventsFound/NoEventsFoundClient";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
@@ -15,14 +15,18 @@ import { useTranslations, useLocale } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { AppLocale } from "types/i18n";
 
-const ClientCardsList = dynamic(() => import("./ClientCardsList"), {
-  loading: () => (
-    <div className="w-full">
+function EventsGridSkeleton() {
+  return (
+    <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap py-section-y">
       {Array.from({ length: 3 }).map((_, index) => (
-        <CardLoading key={`loading-${index}`} />
+        <EventCardSkeleton key={`loading-${index}`} />
       ))}
-    </div>
-  ),
+    </section>
+  );
+}
+
+const ClientCardsList = dynamic(() => import("./ClientCardsList"), {
+  loading: () => <EventsGridSkeleton />,
 });
 
 // Client side enhancer: handles pagination & de-duplication.
@@ -179,13 +183,7 @@ function HybridEventsListClient(
 ): ReactElement | null {
   return (
     <Suspense
-      fallback={
-        <div className="w-full">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <CardLoading key={`loading-${index}`} />
-          ))}
-        </div>
-      }
+      fallback={<EventsGridSkeleton />}
     >
       <HybridEventsListClientContent {...props} />
     </Suspense>

@@ -96,7 +96,6 @@ export default function SponsorBanner({
             alt={imageAlt}
             width={imageWidth}
             height={Math.round(imageWidth / SPONSOR_BANNER_IMAGE.IDEAL_ASPECT_RATIO)}
-            loading="lazy"
             decoding="async"
             onError={handleError}
             onLoad={handleImageLoad}

@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
-import { getCategories, fetchCategories } from "@lib/api/categories";
+import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -37,9 +37,7 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { topStaticGenerationPlaces } from "@utils/priority-places";
-import { VALID_DATES } from "@lib/dates";
-import { fetchPlaces, fetchPlaceBySlug } from "@lib/api/places";
+import { fetchPlaceBySlug } from "@lib/api/places";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
@@ -114,71 +112,7 @@ export async function generateMetadata({
   });
 }
 
-export async function generateStaticParams() {
-  // Only generate static pages for top ~15 places to keep build size under 230MB
-  // Other places will be generated on-demand with ISR (revalidate: 600)
-  // Runtime validation (validatePlaceOrThrow) handles invalid slugs gracefully
-
-  // Validate places exist in API to avoid generating pages for removed/renamed places
-  let places: { slug: string }[] = [];
-  try {
-    places = await fetchPlaces();
-  } catch (error) {
-    console.warn(
-      "generateStaticParams: Error fetching places for validation:",
-      error
-    );
-    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
-    places = [];
-  }
-
-  // Validate categories exist in API to avoid generating pages for removed/renamed categories
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await fetchCategories();
-  } catch (error) {
-    console.warn(
-      "generateStaticParams: Error fetching categories for validation:",
-      error
-    );
-    // Fallback: use hardcoded list if API fails (runtime validation will handle invalid slugs)
-    categories = [];
-  }
-
-  // Filter to only places that exist in API
-  const placeSlugs = new Set(places.map((p) => p.slug));
-  const validPlaces =
-    places.length > 0
-      ? topStaticGenerationPlaces.filter((slug) => placeSlugs.has(slug))
-      : topStaticGenerationPlaces; // Fallback if API failed
-
-  const topDates = VALID_DATES.filter(
-    (date) => date !== DEFAULT_FILTER_VALUE
-  ) as ByDateOptions[];
-
-  // Get top categories from dynamic data (API is source of truth)
-  // Validate categories exist in API to avoid generating pages for removed/renamed categories
-  let topCategories: string[] = [];
-  if (categories.length > 0) {
-    // Use first 4 dynamic categories (same as getTopStaticCombinations)
-    topCategories = categories.slice(0, 4).map((cat) => cat.slug);
-  }
-  // If no categories available, don't generate category pages (only place/date combinations)
-
-  const combinations = [];
-
-  for (const place of validPlaces) {
-    for (const date of topDates) {
-      combinations.push({ place, byDate: date });
-    }
-
-    for (const category of topCategories) {
-      combinations.push({ place, byDate: category });
-    }
-  }
-
-  return combinations;
-}
+// No generateStaticParams — all place/date pages are rendered on first request and cached.
 
 export default async function ByDatePage({
   params,
@@ -254,7 +188,7 @@ export default async function ByDatePage({
 
   const paramsForFetch: FetchEventsParams = {
     page: 0,
-    size: 10,
+    size: 12,
   };
 
   // Only add date filters if actualDate is not "tots"

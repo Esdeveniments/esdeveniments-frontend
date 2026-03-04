@@ -12,10 +12,10 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   }, [error]);
 
   return (
-    <div style={{ padding: 32, textAlign: "center" }}>
+    <div className="flex-1 flex-center flex-col py-section-y px-section-x text-center">
       <h1 className="heading-2">{t("title")}</h1>
       <p>{error?.message || t("retry")}</p>
-      <button onClick={reset} style={{ marginTop: 16 }}>
+      <button onClick={reset} className="mt-4 btn-primary">
         {t("reload")}
       </button>
     </div>

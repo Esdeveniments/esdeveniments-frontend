@@ -7,7 +7,7 @@ export default function NotFound() {
 
   return (
     <div
-      style={{ padding: 32, textAlign: "center" }}
+      className="flex-1 flex-center flex-col py-section-y px-section-x text-center"
       data-testid="not-found-page"
     >
       <h1 className="heading-2" data-testid="not-found-title">
@@ -16,7 +16,7 @@ export default function NotFound() {
       <p>{t("description")}</p>
       <PressableLink
         href="/"
-        style={{ color: "#0070f3", textDecoration: "underline" }}
+        className="text-primary underline"
         data-testid="not-found-home-link"
         variant="inline"
       >
