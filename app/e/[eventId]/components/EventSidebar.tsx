@@ -51,6 +51,7 @@ export default async function EventSidebar({
               regionName={regionName}
               citySlug={citySlug}
               regionSlug={regionSlug}
+              profile={event.profile}
               compact
             />
 

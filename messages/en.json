@@ -317,6 +317,20 @@
     "Breadcrumbs": {
       "home": "Home"
     },
+    "Profile": {
+      "title": "{name} — Profile",
+      "metaDescription": "Discover events by {name}. Browse their upcoming events, concerts, exhibitions and more.",
+      "events": "Events",
+      "verified": "Verified",
+      "joinedDate": "Joined {date}",
+      "noEvents": "No events yet",
+      "website": "Website",
+      "breadcrumbProfiles": "Profiles",
+      "totalEvents": "{count} events",
+      "notFound": "Profile not found",
+      "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
+      "backHome": "Back to home"
+    },
     "Footer": {
       "navigation": {
         "home": "Home",
@@ -838,7 +852,8 @@
       "title": "Location",
       "showMap": "Show map",
       "hideMap": "Close map",
-      "getDirections": "Get directions"
+      "getDirections": "Get directions",
+      "profileLink": "Profile of {name}"
     },
     "EventCalendar": {
       "title": "Date and time"
