@@ -1,6 +1,5 @@
 import { sanitizeHtml } from "@utils/sanitize";
 import { DocumentIcon } from "@heroicons/react/24/outline";
-import CulturalMessage from "../culturalMessage";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { JSX } from "react";
 import { getTranslations } from "next-intl/server";
@@ -9,10 +8,7 @@ import { processDescription } from "utils/text-processing";
 
 export default async function Description({
   description,
-  location,
-  locationValue,
   introText,
-  locationType = "general",
   headerActions,
   descriptionHtmlId = "event-description-body",
 }: DescriptionProps): Promise<JSX.Element> {
@@ -34,22 +30,15 @@ export default async function Description({
           />
           {headerActions ? <div className="flex items-center">{headerActions}</div> : null}
         </div>
-        <div className="w-full break-words overflow-hidden space-y-4 px-4">
+        <div className="w-full max-w-prose break-words overflow-hidden space-y-4 px-4">
           {introText && (
-            <p className="body-normal text-foreground-strong">{introText}</p>
+            <p className="body-normal leading-[1.75] text-foreground-strong/90">{introText}</p>
           )}
           <div
             id={descriptionHtmlId}
-            className="body-normal text-foreground-strong [&>*]:body-normal [&>*]:text-foreground-strong"
+            className="body-normal leading-[1.75] text-foreground-strong/90 [&>*]:body-normal [&>*]:leading-[1.75] [&>*]:text-foreground-strong/90"
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
-          <div className="body-normal text-foreground-strong">
-            <CulturalMessage
-              location={location || ""}
-              locationValue={locationValue || ""}
-              locationType={locationType}
-            />
-          </div>
         </div>
       </div>
     </section>

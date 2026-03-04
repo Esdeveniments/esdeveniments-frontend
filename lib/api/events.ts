@@ -64,7 +64,7 @@ async function fetchEventsInternal(
   const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
     content: [],
     currentPage: params.page ?? 0,
-    pageSize: params.size ?? 10,
+    pageSize: params.size ?? 12,
     totalElements: 0,
     totalPages: 0,
     last: true,

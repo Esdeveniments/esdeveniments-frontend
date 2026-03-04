@@ -7,12 +7,12 @@ function AdBoard(): JSX.Element {
   const t = useTranslations("Components.AdBoard");
 
   return (
-    <div className="flex flex-col items-center justify-center h-56 w-full bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-center mb-4">
-      <p className="text-lg font-semibold text-yellow-800">
+    <div className="flex flex-col items-center justify-center h-56 w-full bg-muted/50 border border-border rounded-card p-card-padding text-center mb-4">
+      <p className="body-normal font-semibold text-foreground/80">
         {t("title")}
       </p>
-      <p className="text-sm text-yellow-700 mt-2">{t("body")}</p>
-      <p className="text-sm text-yellow-700 mt-2">
+      <p className="body-small text-muted-foreground mt-2">{t("body")}</p>
+      <p className="body-small text-muted-foreground mt-2">
         {t("contactPrefix")}{" "}
         <a
           className="text-primary underline hover:no-underline"

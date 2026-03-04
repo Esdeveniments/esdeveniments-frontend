@@ -35,7 +35,7 @@ export default async function SitemapContent({
   const siteNavigationSchema = generateSiteNavigationElementSchema([
     ...regionNavigation,
     ...cityNavigation,
-  ]);
+  ], locale);
 
   return (
     <>

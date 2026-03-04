@@ -58,7 +58,7 @@ export const defaultEventFormZodLabels: EventFormZodLabels = {
 };
 
 export const createEventFormSchema = (
-  labels: EventFormZodLabels = defaultEventFormZodLabels
+  labels: EventFormZodLabels = defaultEventFormZodLabels,
 ) =>
   z.object({
     id: z.string().optional(),
@@ -90,7 +90,7 @@ export const createEventFormSchema = (
       .string()
       .refine(
         (val) => !val || z.string().url().safeParse(val).success,
-        labels.invalidUrl
+        labels.invalidUrl,
       ),
     categories: z.array(CategoryFormItemSchema),
     email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
@@ -207,7 +207,7 @@ export interface FetchEventsWithFallbackResult {
  */
 export function distanceToRadius(
   distance: number | string | undefined,
-  defaultRadius: number = 50
+  defaultRadius: number = 50,
 ): number | undefined {
   if (distance === undefined) return undefined;
 
@@ -246,10 +246,7 @@ export interface EventShareBarClientProps extends EventShareBarProps {
 
 export interface EventDescriptionProps {
   description: string;
-  location: string;
-  locationValue: string;
   introText?: string;
-  locationType?: "region" | "town" | "general";
   locale?: AppLocale;
   showTranslate?: boolean;
 }
@@ -260,6 +257,7 @@ export interface EventTagsProps {
 
 export interface EventCalendarProps {
   event: EventDetailResponseDTO;
+  compact?: boolean;
 }
 
 export type HideNotification = (hide: boolean) => void;
@@ -306,6 +304,7 @@ export interface EventLocationProps {
   citySlug?: string;
   regionSlug?: string;
   profile?: import("types/api/profile").ProfileSummaryResponseDTO;
+  compact?: boolean;
 }
 
 export interface EventFormProps {
@@ -322,7 +321,7 @@ export interface EventFormProps {
   isLocating?: boolean;
   handleFormChange: <K extends keyof FormData>(
     name: K,
-    value: FormData[K]
+    value: FormData[K],
   ) => void;
   handleImageChange: (file: File | null) => void;
   handleTownChange: (town: Option | null) => void;

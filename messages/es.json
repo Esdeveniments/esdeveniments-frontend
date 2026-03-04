@@ -24,8 +24,8 @@
           "title": "Qué hacer mañana",
           "links": {
             "barcelona": "Qué hacer mañana en Barcelona",
-            "maresme": "Qué hacer mañana en el Maresme",
-            "vallesOccidental": "Qué hacer mañana en el Vallès Occidental"
+            "baixLlobregat": "Qué hacer mañana en el Baix Llobregat",
+            "vallesOriental": "Qué hacer mañana en el Vallès Oriental"
           }
         },
         "localAgendas": {
@@ -175,6 +175,7 @@
       "sectionWeekend": "Fin de semana",
       "sectionWeek": "Semana",
       "readingTime": "{minutes} min de lectura",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
       "mustSee": "IMPRESCINDIBLES",
       "moreProposals": "MÁS PROPUESTAS"
     },
@@ -408,6 +409,8 @@
     "LatestNewsSection": {
       "title": "Últimas noticias",
       "titleWithPlace": "Últimas noticias {place}",
+      "titleStale": "Noticias",
+      "titleStaleWithPlace": "Noticias {place}",
       "viewAll": "Ver todas"
     },
     "CulturalMessage": {
@@ -444,6 +447,21 @@
         "Jueves",
         "Viernes",
         "Sábado"
+      ],
+      "daysShort": ["Dom.", "Lun.", "Mar.", "Mié.", "Jue.", "Vie.", "Sáb."],
+      "monthsShort": [
+        "ene.",
+        "feb.",
+        "mar.",
+        "abr.",
+        "may.",
+        "jun.",
+        "jul.",
+        "ago.",
+        "sep.",
+        "oct.",
+        "nov.",
+        "dic."
       ],
       "months": [
         "enero",
@@ -517,7 +535,8 @@
     "ServerEventsCategorized": {
       "cta": "¿No encuentras lo que buscas?",
       "ctaButton": "Ver toda la agenda",
-      "quickCategoriesTitle": "Explora por intereses"
+      "quickCategoriesTitle": "Explora por intereses",
+      "popularTitle": "Popular ahora en Cataluña"
     },
     "Filters": {
       "triggerLabel": "Filtros"
@@ -530,9 +549,6 @@
       "subtext": "Cada día compartimos los mejores eventos en redes. Síguenos y no te pierdas nada.",
       "close": "Ahora no",
       "aria": "Síguenos en las redes sociales"
-    },
-    "ListPageFaq": {
-      "title": "Preguntas frecuentes"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona tu restaurante",
@@ -646,7 +662,7 @@
     "HeroCTA": {
       "buttonBase": "Ver eventos",
       "dateWeekend": "este fin de semana",
-      "helper": "Selecciona la población y las fechas, y pulsa 'Ver eventos'"
+      "helper": "Descubre los mejores planes cerca de ti"
     },
     "PromotionInfoModal": {
       "title": "Promociona tu restaurante",
@@ -746,14 +762,34 @@
       "timeWindow": "esta semana"
     },
     "EventPage": {
-      "faqTitle": "Preguntas frecuentes",
-      "sponsored": "Contenido patrocinado"
+      "sponsored": "Contenido patrocinado",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
+      "stickyMoreInfo": "Más info",
+      "stickyCalendar": "Calendario",
+      "stickySave": "Guardar",
+      "free": "Gratis",
+      "paid": "De pago",
+      "sidebarMoreInfo": "Más información",
+      "sidebarVisitWebsite": "Visita la web",
+      "sidebarOpenInMaps": "Abrir en Maps",
+      "interested": "{count, plural, one {{count} interesado} other {{count} interesados}}",
+      "popular": "Popular",
+      "readMore": "Leer más",
+      "readLess": "Leer menos",
+      "durationLabel": "Duración: {duration}",
+      "sidebarAriaLabel": "Detalles del evento",
+      "toolbarAriaLabel": "Acciones del evento"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Añadir a favoritos",
-      "favoriteRemoveAria": "Quitar de favoritos"
+      "favoriteRemoveAria": "Quitar de favoritos",
+      "free": "Gratis",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "multipleDates": "Varios días",
+      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}"
     },
     "EventForm": {
       "title": "Título *",
@@ -815,6 +851,7 @@
     "EventLocation": {
       "title": "Ubicación",
       "showMap": "Mostrar mapa",
+      "hideMap": "Cerrar mapa",
       "getDirections": "Cómo llegar",
       "profileLink": "Perfil de {name}"
     },
@@ -1129,7 +1166,7 @@
         "capDeSetmana": {
           "title": "Qué hacer este fin de semana {label}",
           "subTitle": "Descubre qué hacer este fin de semana {label}: conciertos, fiestas, actividades familiares y propuestas al aire libre. Encuentra tu plan y aprovecha el fin de semana.",
-          "metaTitle": "Planes para este fin de semana {label} - Agenda",
+          "metaTitle": "Qué hacer este fin de semana {label} - Planes y agenda",
           "metaDescription": "Descubre los mejores planes para este fin de semana {label}. Consulta conciertos, fiestas populares, actividades con niños, rutas y otras propuestas culturales para aprovechar al máximo el fin de semana.",
           "notFound": "Lo sentimos, pero no hay eventos este fin de semana {label}. Consulta otras fechas, explora categorías diferentes o mira qué se hace en el resto de Cataluña para encontrar nuevos planes."
         }
@@ -1253,29 +1290,6 @@
       "range": "De {start} a {end}",
       "simpleRange": "{start} - {end}"
     },
-    "ListPageFaq": {
-      "title": "Preguntas frecuentes",
-      "dateInline": {
-        "today": "hoy",
-        "tomorrow": "mañana",
-        "weekend": "este fin de semana",
-        "week": "esta semana",
-        "fallback": "los próximos días"
-      },
-      "dateCapitalized": {
-        "today": "Hoy",
-        "tomorrow": "Mañana",
-        "weekend": "Este fin de semana",
-        "week": "Esta semana",
-        "fallback": "Los próximos días"
-      },
-      "q1": "¿Qué puedo hacer {contextInline}?",
-      "a1": "{capitalizedContext} encontrarás conciertos, ferias, actividades familiares y planes culturales actualizados cada día.",
-      "q2": "¿Hay actividades gratuitas {contextInline}?",
-      "a2": "Sí. Usa la búsqueda, los filtros de categoría y la distancia para descubrir actividades gratuitas {contextInline}.",
-      "q3": "¿Dónde puedo ver {categoryName} {contextInline}?",
-      "a3": "Selecciona la categoría \"{categoryName}\" para destacar estos eventos {contextInline} y guarda la agenda para consultarla a menudo."
-    },
     "OpeningHours": {
       "openNow": "Abierto ahora",
       "closesAt": "Cierra a las {time}",
@@ -1297,21 +1311,9 @@
         "dateRange": "del {start} al {end}",
         "dateSingle": "el {nameDay}, {start}",
         "sentence": "{title} {verb} {date}{time}{place}.",
-        "timeSuffix": ", {time}",
+        "timeSuffix": ", a las {time}",
+        "timeSuffixRange": ", de {start} a {end}",
         "placeSuffix": ", {place}"
-      },
-      "faq": {
-        "whenQ": "¿Cuándo es el evento?",
-        "whenA": "{date}{time}",
-        "whereQ": "¿Dónde se celebra?",
-        "whereA": "{place}",
-        "isFreeQ": "¿Es gratuito?",
-        "isFreeYes": "Sí, el evento es gratuito.",
-        "isFreeNo": "No, el evento es de pago.",
-        "durationQ": "¿Cuál es la duración aproximada?",
-        "durationA": "{duration}",
-        "moreInfoQ": "¿Dónde puedo encontrar más información?",
-        "moreInfoA": "Puedes consultar todos los detalles en la página oficial del evento."
       }
     },
     "StringHelpers": {
@@ -1423,8 +1425,8 @@
     "emptyState": "Anuncia tu negocio aquí",
     "cta": "Patrocina este espacio",
     "houseAd": {
-      "pricing": "Tu negocio aquí · Desde 5€/semana",
-      "pricingSub": "Espacio exclusivo en la agenda de eventos de tu pueblo",
+      "pricing": "Si tú lo ves, tu competencia también",
+      "pricingSub": "Reserva el único espacio publicitario en tu pueblo",
       "reach": "Gente de tu pueblo, buscando planes",
       "reachSub": "Buscan dónde comer, comprar y salir. Tú les das la respuesta.",
       "exclusive": "Solo tú. Sin competencia.",
@@ -1433,8 +1435,8 @@
       "localSub": "Aparece cuando buscan dónde comer, comprar o salir",
       "intent": "Gente que ya quiere salir de casa",
       "intentSub": "Buscan qué hacer y adónde ir. Tú les das la respuesta.",
-      "simple": "Sin complicaciones",
-      "simpleSub": "Un banner, tu pueblo, una semana. Desde 5€",
+      "simple": "Quien aparece aquí, gana clientes",
+      "simpleSub": "La agenda de tu pueblo, vista por quien busca adónde ir",
       "results": "¿Dónde te encuentran los clientes?",
       "resultsSub": "Aquí mismo. Cuando buscan qué hacer en tu pueblo",
       "seasonal": "¿Hay fiesta en el pueblo?",

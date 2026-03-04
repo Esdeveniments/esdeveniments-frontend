@@ -10,8 +10,14 @@ import enMessages from "../messages/en.json";
 export const MAX_RESULTS = 15;
 export const MAX_FAVORITES = 10;
 
+/** Number of days within which news articles are considered "fresh". */
+export const NEWS_FRESHNESS_DAYS = 7;
+
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
+
+/** Canonical timezone for all date operations in this app. */
+export const TIMEZONE_MADRID = "Europe/Madrid";
 
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;
@@ -101,6 +107,18 @@ export function getDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
 export function getMonthNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
   return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
     .months as string[];
+}
+
+export function getShortDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
+  return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
+    .daysShort as string[];
+}
+
+export function getShortMonthNames(
+  locale: AppLocale = DEFAULT_LOCALE,
+): string[] {
+  return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
+    .monthsShort as string[];
 }
 
 export function getMonthUrlNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
@@ -327,3 +345,11 @@ export const SPONSOR_BANNER_IMAGE = {
   MIN_ASPECT_RATIO: 3,
   MAX_ASPECT_RATIO: 8,
 } as const;
+
+/**
+ * Color-coded category badge classes for event cards.
+ * Single neutral badge style for category labels.
+ * Keeps visual focus on event content — competitors (Eventbrite, Meetup,
+ * Dice, Time Out) all use monochrome/neutral category indicators.
+ */
+export const CATEGORY_BADGE_COLOR = "bg-muted text-foreground-strong";

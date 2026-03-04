@@ -45,7 +45,7 @@ export const useEvents = ({
   lat,
   lon,
   profileSlug,
-  initialSize = 10,
+  initialSize = 12,
   fallbackData = [],
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {

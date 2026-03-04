@@ -5,6 +5,7 @@ import { formatPlacePreposition } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { NEWS_FRESHNESS_DAYS } from "@utils/constants";
 
 export default async function LatestNewsSection({
   placeSlug,
@@ -21,13 +22,21 @@ export default async function LatestNewsSection({
     return null;
   }
 
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - NEWS_FRESHNESS_DAYS);
+  const isFresh = latestNews.some(
+    (n) => new Date(n.endDate) >= cutoff,
+  );
+
   const placeSuffix =
     placeLabel && placeSlug !== "catalunya"
       ? formatPlacePreposition(placeLabel, placeType, locale, false)
       : "";
   const title = placeSuffix
-    ? t("titleWithPlace", { place: placeSuffix })
-    : t("title");
+    ? t(isFresh ? "titleWithPlace" : "titleStaleWithPlace", {
+      place: placeSuffix,
+    })
+    : t(isFresh ? "title" : "titleStale");
 
   return (
     <div className="w-full bg-background pb-8">

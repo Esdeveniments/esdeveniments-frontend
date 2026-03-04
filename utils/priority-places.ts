@@ -1,31 +1,4 @@
 /**
- * Top priority places for static generation (build-time)
- * Limited to ~15 places to keep build size under AWS Amplify's 230MB limit
- * Each place generates ~4.6MB, so 15 places = ~69MB (within limit with other routes)
- */
-export const topStaticGenerationPlaces = [
-  // Top major cities (highest traffic)
-  "barcelona",
-  // "girona",
-  "tarragona",
-  "mataro",
-  // Top regions (high traffic)
-  "maresme",
-  "valles-oriental",
-  "valles-occidental",
-  "baix-llobregat",
-  // Top cities near Barcelona (high traffic)
-  "badalona",
-  // "sabadell",
-  // "terrassa",
-  "granollers",
-  // "l-hospitalet-de-llobregat",
-  // "santa-coloma-de-gramenet",
-  // "castelldefels",
-  // "viladecans",
-];
-
-/**
  * Full list of high-priority place slugs for SEO and sitemap generation
  * Contains most visited places from Google Search Console and major cities in Catalonia
  * Used for sitemap generation (doesn't affect build size)

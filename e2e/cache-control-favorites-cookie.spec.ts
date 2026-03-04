@@ -58,7 +58,7 @@ test.describe("Cache-Control with favorites cookie", () => {
       cacheControlWithoutCookie.includes("s-maxage=");
     if (looksLikeCdnCaching) {
       expect(cacheControlWithCookie).toContain("public");
-      expect(cacheControlWithCookie).toContain("s-maxage=300");
+      expect(cacheControlWithCookie).toContain("s-maxage=1800");
     } else {
       // Dev often forces no-store. Still ensure cookie doesn't change caching semantics.
       expect(cacheControlWithCookie).toBe(cacheControlWithoutCookie);

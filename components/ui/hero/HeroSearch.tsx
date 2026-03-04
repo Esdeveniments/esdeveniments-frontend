@@ -121,7 +121,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       setPlace("catalunya", "Catalunya", "region");
     }
     setIsModalOpen(false);
-  }, [localPlaceValue, allLocations, setPlace]);
+  }, [allLocations, localPlaceValue, setPlace]);
 
   const handlePlaceChange = useCallback((option: Option | null) => {
     setLocalPlaceValue(option?.value || "");
@@ -201,7 +201,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     <div className="w-full flex flex-col gap-4">
       {/* Title Section */}
       <div className="flex flex-col items-center justify-center text-center gap-2">
-        <h1 className="heading-1 flex flex-wrap items-center justify-center gap-2">
+        <h1 className="heading-1 text-white drop-shadow-lg flex flex-wrap items-center justify-center gap-2">
           <span>{t("titlePrefix")}</span>
           <div className="relative inline-block">
             <Button
@@ -211,7 +211,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                 setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
-              className="flex flex-wrap items-center justify-center gap-2 text-primary text-center hover:underline decoration-2 underline-offset-4 transition-all hover:bg-transparent px-0 py-0"
+              className="flex flex-wrap items-center justify-center gap-2 text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all hover:bg-transparent px-0 py-0 rounded-none"
               aria-expanded={isModalOpen}
             >
               {displayLabel}
@@ -261,7 +261,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             </Modal>
           </div>
         </h1>
-        <p className="body-large text-muted-foreground max-w-xl mx-auto">
+        <p className="body-large text-white/90 drop-shadow-md max-w-xl mx-auto">
           {subTitle || t("subtitleDefault")}
         </p>
       </div>

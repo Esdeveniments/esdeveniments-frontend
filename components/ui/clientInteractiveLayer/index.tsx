@@ -1,7 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState, Suspense, useCallback } from "react";
-import NextImage from "next/image";
+import { memo, useState, Suspense, useCallback } from "react";
 import { useNavbarVisible } from "@components/hooks/useNavbarVisible";
 import { useHydration } from "@components/hooks/useHydration";
 import { usePathname } from "next/navigation";
@@ -13,17 +12,7 @@ import {
   ClientInteractiveLayerProps,
   ClientInteractiveLayerContentProps,
 } from "types/props";
-import Imago from "@public/static/images/imago-esdeveniments.png";
 import { useUrlFilters } from "@components/hooks/useUrlFilters";
-
-function debounce(func: () => void, wait: number): () => void {
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-
-  return function (): void {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(), wait);
-  };
-}
 
 // Extract the parts that use useSearchParams and usePathname into a separate component
 function ClientInteractiveLayerContent({
@@ -110,7 +99,6 @@ function ClientInteractiveLayer({
 }: ClientInteractiveLayerProps) {
   const isNavbarVisible = useNavbarVisible();
   const isHydrated = useHydration();
-  const [scrollIcon, setScrollIcon] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = useCallback(() => {
@@ -121,42 +109,8 @@ function ClientInteractiveLayer({
     setIsModalOpen(false);
   }, []);
 
-  useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
-
-    const handleScroll = debounce(() => {
-      setScrollIcon(window.scrollY > 400);
-    }, 200);
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHydrated]);
-
   return (
     <>
-      {/* Floating Scroll Button */}
-      <div
-        onClick={() =>
-          isHydrated && window.scrollTo({ top: 0, behavior: "smooth" })
-        }
-        className={`w-14 h-14 flex justify-center items-center bg-background rounded-md shadow-xl cursor-pointer ${
-          isHydrated && scrollIcon
-            ? "fixed z-10 bottom-28 right-10 flex justify-end animate-appear"
-            : "hidden"
-        }`}
-      >
-        <NextImage
-          src={Imago}
-          className="p-1"
-          width={28}
-          height={28}
-          alt="Esdeveniments.cat"
-        />
-      </div>
-
       <Suspense
         fallback={
           <div className="w-full h-12 bg-background animate-pulse rounded-full" />

@@ -7,10 +7,7 @@ const DESCRIPTION_BODY_ID = "event-description-body";
 
 const EventDescription: React.FC<EventDescriptionProps> = ({
   description,
-  location,
-  locationValue,
   introText,
-  locationType = "general",
   locale,
   showTranslate,
 }) => {
@@ -18,10 +15,7 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
     <div className="max-w-none text-foreground min-w-0">
       <Description
         description={description}
-        location={location}
-        locationValue={locationValue}
         introText={introText}
-        locationType={locationType}
         descriptionHtmlId={DESCRIPTION_BODY_ID}
         headerActions={
           showTranslate ? (
