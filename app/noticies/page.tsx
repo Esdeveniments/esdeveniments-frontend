@@ -12,7 +12,7 @@ import { siteUrl } from "@config/index";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { Href } from "types/common";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import NewsBreadcrumb from "@components/noticies/NewsBreadcrumb";
 import NewsList from "@components/noticies/NewsList";
 import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -125,29 +125,12 @@ export default async function Page({
       )}
 
       {/* Breadcrumb Navigation */}
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
-      >
-        <ol className="flex items-center space-x-2">
-          <li>
-            <PressableAnchor
-              href={withLocale("/")}
-              className="hover:underline hover:text-primary transition-colors"
-              variant="inline"
-              prefetch={false}
-            >
-              {t("breadcrumbHome")}
-            </PressableAnchor>
-          </li>
-          <li>
-            <span className="mx-1" aria-hidden="true">/</span>
-          </li>
-          <li className="text-foreground-strong font-medium" aria-current="page">
-            {t("breadcrumbCurrent")}
-          </li>
-        </ol>
-      </nav>
+      <NewsBreadcrumb
+        items={[
+          { label: t("breadcrumbHome"), href: withLocale("/") },
+          { label: t("breadcrumbCurrent") },
+        ]}
+      />
 
       {/* Page Header Section */}
       <header className="w-full px-2 lg:px-0 mb-section-y-sm">

@@ -14,8 +14,9 @@ import { sendGoogleEvent } from "@utils/analytics";
 
 export default function CardShareButton({
   slug,
+  url,
 }: CardShareButtonProps): JSX.Element {
-  const eventUrl = `${siteUrl}/e/${slug}`;
+  const eventUrl = url || `${siteUrl}/e/${slug}`;
 
   const iconProps: CustomIconProps = {
     bgStyle: { fill: "#FFF" },

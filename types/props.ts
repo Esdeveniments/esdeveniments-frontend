@@ -597,6 +597,22 @@ export interface UseGeolocationReturn {
 }
 
 // --- News components props ---
+
+export interface BreadcrumbItem {
+  label: string;
+  href?: string; // Omit for current page (last item)
+}
+
+export interface NewsBreadcrumbProps {
+  items: BreadcrumbItem[];
+}
+
+export interface NewsShareButtonsProps {
+  place: string;
+  slug: string;
+  label: string;
+}
+
 export interface NewsEventsSectionProps {
   title: string;
   events: NewsEventItemDTO[];

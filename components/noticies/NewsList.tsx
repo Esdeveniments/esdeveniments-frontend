@@ -89,22 +89,48 @@ export default async function NewsList({
 
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
 
-      <section className="flex flex-col gap-6 px-2 lg:px-0">
-        {list.map((event: NewsSummaryResponseDTO, index: number) => {
-          const itemPlace = basePath
-            ? getItemPlace(event)
-            : { slug: place, label: placeType.label };
-
-          return (
+      <section className="px-2 lg:px-0">
+        {/* First card as hero (full width) */}
+        {list.length > 0 && (
+          <div className="mb-6">
             <NewsCard
-              key={`${event.id}-${index}`}
-              event={event}
-              placeSlug={itemPlace.slug}
-              placeLabel={itemPlace.label}
-              variant="default"
+              key={`${list[0].id}-hero`}
+              event={list[0]}
+              placeSlug={
+                basePath
+                  ? getItemPlace(list[0]).slug
+                  : place
+              }
+              placeLabel={
+                basePath
+                  ? getItemPlace(list[0]).label
+                  : placeType.label
+              }
+              variant="hero"
             />
-          );
-        })}
+          </div>
+        )}
+
+        {/* Remaining cards in responsive grid */}
+        {list.length > 1 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap">
+            {list.slice(1).map((event: NewsSummaryResponseDTO, index: number) => {
+              const itemPlace = basePath
+                ? getItemPlace(event)
+                : { slug: place, label: placeType.label };
+
+              return (
+                <NewsCard
+                  key={`${event.id}-${index + 1}`}
+                  event={event}
+                  placeSlug={itemPlace.slug}
+                  placeLabel={itemPlace.label}
+                  variant="default"
+                />
+              );
+            })}
+          </div>
+        )}
       </section>
       <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
         {currentPage > 0 ? (

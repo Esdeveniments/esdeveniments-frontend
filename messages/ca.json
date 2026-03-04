@@ -177,7 +177,9 @@
       "readingTime": "{minutes} min lectura",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "mustSee": "ELS IMPRESCINDIBLES",
-      "moreProposals": "MÉS PROPOSTES"
+      "moreProposals": "MÉS PROPOSTES",
+      "relatedArticles": "Articles relacionats",
+      "shareArticle": "Comparteix l'article"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Últimes notícies per hub",
@@ -442,15 +444,7 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": [
-        "Dg.",
-        "Dl.",
-        "Dt.",
-        "Dc.",
-        "Dj.",
-        "Dv.",
-        "Ds."
-      ],
+      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -1342,10 +1336,7 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": [
-        "gent gran",
-        "dansa"
-      ],
+      "feminineExceptions": ["gent gran", "dansa"],
       "masculineExceptions": [
         "penedès",
         "alt penedès",

@@ -63,7 +63,7 @@ export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
         return (
           <section key={hub.slug} className="w-full">
             <div className="flex items-baseline justify-between mb-1">
-              <h2 className="uppercase">
+              <h2 className="heading-2 uppercase">
                 {t("titleWithPlace", { place: hub.name })}
               </h2>
               <PressableAnchor

@@ -1,25 +1,26 @@
 import { stripHtmlTags } from "@utils/sanitize";
 import type {
-  NewsEventsSectionProps,
   NewsArticleDetailProps,
 } from "types/props";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import ViewCounter from "@components/ui/viewCounter";
 import AdArticle from "@components/ui/adArticle";
-import NewsRichCard from "@components/ui/newsRichCard";
+import NewsEventsSection from "@components/noticies/NewsEventsSection";
+import NewsCard from "@components/ui/newsCard";
+import NewsShareButtons from "@components/noticies/NewsShareButtons";
+import NewsBreadcrumb from "@components/noticies/NewsBreadcrumb";
 import { getFormattedDate } from "@utils/date-helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { notFound } from "next/navigation";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import {
-  DEFAULT_LOCALE,
   localeToHrefLang,
 } from "types/i18n";
+import Image from "@components/ui/common/image";
 
 export default async function NewsArticleDetail({
   detailPromise,
@@ -82,16 +83,14 @@ export default async function NewsArticleDetail({
       ? `${f.formattedStart} – ${f.formattedEnd}`
       : f.formattedStart;
   })();
-  const localePrefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocalePath = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!localePrefix) return path;
-    if (path === "/") return localePrefix || "/";
-    if (path.startsWith(localePrefix)) return path;
-    return `${localePrefix}${path}`;
-  };
   const absolute = (path: string) =>
-    path.startsWith("http") ? path : `${siteUrl}${withLocalePath(path)}`;
+    path.startsWith("http")
+      ? path
+      : `${siteUrl}${withLocalePath(path, locale)}`;
+
+  // Hero image from first event (if available)
+  const heroImageUrl = detail.events?.[0]?.imageUrl;
+  const heroCacheKey = detail.events?.[0]?.hash;
 
   // Build keywords from available data (categories and locations)
   const categoryKeywords = Array.from(
@@ -161,55 +160,37 @@ export default async function NewsArticleDetail({
       <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
 
       {/* Breadcrumbs */}
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
-      >
-        <ol className="flex items-center space-x-2 flex-wrap">
-          <li>
-            <PressableAnchor
-              href={withLocalePath("/")}
-              className="hover:underline hover:text-primary transition-colors"
-              variant="inline"
-              prefetch={false}
-            >
-              {t("breadcrumbHome")}
-            </PressableAnchor>
-          </li>
-          <li>
-            <span className="mx-1" aria-hidden="true">/</span>
-          </li>
-          <li>
-            <PressableAnchor
-              href={withLocalePath("/noticies")}
-              className="hover:underline hover:text-primary transition-colors"
-              variant="inline"
-              prefetch={false}
-            >
-              {t("breadcrumbNews")}
-            </PressableAnchor>
-          </li>
-          <li>
-            <span className="mx-1" aria-hidden="true">/</span>
-          </li>
-          <li>
-            <PressableAnchor
-              href={withLocalePath(`/noticies/${place}`)}
-              className="hover:underline hover:text-primary transition-colors"
-              variant="inline"
-              prefetch={false}
-            >
-              {placeType.label}
-            </PressableAnchor>
-          </li>
-          <li>
-            <span className="mx-1" aria-hidden="true">/</span>
-          </li>
-          <li className="text-foreground-strong font-medium truncate max-w-[200px] sm:max-w-none" aria-current="page">
-            {detail.title}
-          </li>
-        </ol>
-      </nav>
+      <NewsBreadcrumb
+        items={[
+          { label: t("breadcrumbHome"), href: withLocalePath("/", locale) },
+          {
+            label: t("breadcrumbNews"),
+            href: withLocalePath("/noticies", locale),
+          },
+          {
+            label: placeType.label,
+            href: withLocalePath(`/noticies/${place}`, locale),
+          },
+          { label: detail.title },
+        ]}
+      />
+
+      {/* Hero Image */}
+      {heroImageUrl && (
+        <div className="mb-6 w-full px-2 lg:px-0">
+          <div className="rounded-card overflow-hidden aspect-[16/9] bg-muted">
+            <Image
+              className="w-full h-full object-cover"
+              title={detail.title}
+              image={heroImageUrl}
+              alt={detail.title}
+              priority
+              context="hero"
+              cacheKey={heroCacheKey}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="w-full px-2 lg:px-0">
@@ -236,12 +217,14 @@ export default async function NewsArticleDetail({
           )}
         </div>
 
+        <NewsShareButtons place={place} slug={article} label={t("shareArticle")} />
+
         <div className="my-2">
           <AdArticle slot="news_in_article" isDisplay={false} />
         </div>
 
         {detail.events && detail.events.length > 0 && (
-          <EventsSection
+          <NewsEventsSection
             title={t("mustSee")}
             events={detail.events.slice(0, Math.min(detail.events.length, 3))}
             showNumbered={true}
@@ -249,50 +232,31 @@ export default async function NewsArticleDetail({
         )}
 
         {detail.events && detail.events.length > 3 && (
-          <EventsSection
+          <NewsEventsSection
             title={t("moreProposals")}
             events={detail.events.slice(3)}
           />
         )}
+
+        {/* Related Articles */}
+        {detail.relatedNews && detail.relatedNews.length > 0 && (
+          <section className="mt-12 sm:mt-16">
+            <h2 className="heading-2 mb-6">{t("relatedArticles")}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-element-gap">
+              {detail.relatedNews.slice(0, 4).map((item) => (
+                <NewsCard
+                  key={item.id}
+                  event={item}
+                  placeSlug={item.city?.slug || item.region?.slug || place}
+                  placeLabel={
+                    item.city?.name || item.region?.name || placeType.label
+                  }
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
-  );
-}
-
-function EventsSection({
-  title,
-  events,
-  showNumbered = false,
-}: NewsEventsSectionProps) {
-  return (
-    <section className="mb-12 sm:mb-16">
-      <div className="mb-6 sm:mb-8">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground-strong mb-3">
-          {title}
-        </h2>
-        <div className="w-20 h-1.5 bg-primary rounded-full"></div>
-      </div>
-
-      {showNumbered ? (
-        <div className="space-y-6 sm:space-y-8">
-          {events.map((event, index) => (
-            <div key={event.id} className="flex gap-4 sm:gap-6 items-start">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-background rounded-full flex items-center justify-center font-bold text-sm">
-                {index + 1}
-              </div>
-              <div className="flex-1 min-w-0">
-                <NewsRichCard event={event} variant="horizontal" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
-            <NewsRichCard key={event.id} event={event} />
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
