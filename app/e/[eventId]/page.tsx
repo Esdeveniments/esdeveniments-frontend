@@ -362,14 +362,7 @@ export default async function EventPage({
                   />
                 </CollapsibleDescription>
 
-                {/* Explore more plans — always visible (not inside collapsible) */}
-                <CulturalMessage
-                  location={cityName || regionName}
-                  locationValue={event.city?.slug || event.region?.slug || ""}
-                  locationType="town"
-                />
-
-                {/* Location — mobile only (between description and related events) */}
+                {/* Location — mobile only */}
                 <div className="lg:hidden">
                   <EventLocation
                     location={event.location}
@@ -380,7 +373,26 @@ export default async function EventPage({
                   />
                 </div>
 
-                {/* Sponsor — mobile only (between location and related events) */}
+                {/* Weather — mobile only (desktop shows in sidebar) */}
+                {temporalStatus.state !== "past" && (
+                  <div className="lg:hidden">
+                    <EventWeather weather={event.weather} />
+                  </div>
+                )}
+
+                {/* Past Event Banner — early visibility for past events */}
+                {temporalStatus.state === "past" && (
+                  <PastEventBanner
+                    temporalStatus={temporalStatus}
+                    cityName={cityName}
+                    regionName={regionName}
+                    explorePlaceHref={explorePlaceHref}
+                    exploreCategoryHref={exploreCategoryHref}
+                    primaryCategorySlug={primaryCategorySlug}
+                  />
+                )}
+
+                {/* Sponsor — mobile only */}
                 <div className="lg:hidden">
                   <SponsorBannerSlot
                     place={primaryPlaceSlug}
@@ -406,25 +418,15 @@ export default async function EventPage({
                   </div>
                 )}
 
+                {/* Explore more plans — after related events, before categories */}
+                <CulturalMessage
+                  location={cityName || regionName}
+                  locationValue={event.city?.slug || event.region?.slug || ""}
+                  locationType="town"
+                />
+
                 {/* Event Categories */}
                 <EventCategories categories={event.categories} place={primaryPlaceSlug} />
-
-                {/* Weather */}
-                {temporalStatus.state !== "past" && (
-                  <EventWeather weather={event.weather} />
-                )}
-
-                {/* Past Event Banner */}
-                {temporalStatus.state === "past" && (
-                  <PastEventBanner
-                    temporalStatus={temporalStatus}
-                    cityName={cityName}
-                    regionName={regionName}
-                    explorePlaceHref={explorePlaceHref}
-                    exploreCategoryHref={exploreCategoryHref}
-                    primaryCategorySlug={primaryCategorySlug}
-                  />
-                )}
 
                 {/* Restaurant Promotion */}
                 <Suspense fallback={null}>

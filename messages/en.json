@@ -837,6 +837,7 @@
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
+      "hideMap": "Close map",
       "getDirections": "Get directions"
     },
     "EventCalendar": {

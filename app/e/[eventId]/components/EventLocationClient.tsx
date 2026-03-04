@@ -128,7 +128,7 @@ export default function EventLocationClient({
         onClick={handleShowMap}
       >
         <button type="button" className="flex-start gap-element-gap">
-          <p className="body-normal font-medium">{t("showMap")}</p>
+          <p className="body-normal font-medium">{showMap ? t("hideMap") : t("showMap")}</p>
           {showMap ? (
             <XIcon className="h-5 w-5" aria-hidden="true" />
           ) : (

@@ -5,6 +5,7 @@ import {
 } from "@heroicons/react/24/outline";
 import EventCalendar from "./EventCalendar";
 import EventLocation from "./EventLocation";
+import Weather from "components/ui/weather";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
@@ -52,6 +53,14 @@ export default async function EventSidebar({
               regionSlug={regionSlug}
               compact
             />
+
+            {/* Weather (only when data available — not shown for past events) */}
+            {event.weather && (
+              <>
+                <hr className="border-border" />
+                <Weather weather={event.weather} />
+              </>
+            )}
 
             {/* Duration (from EventDetailsSection) */}
             {event.duration && (

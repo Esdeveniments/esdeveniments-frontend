@@ -13,8 +13,8 @@ const EventHeader: React.FC<
 > = ({ title, temporalStatus }) => {
   return (
     <div className="w-full flex flex-col justify-start items-start gap-element-gap-sm">
+      <h1 className="heading-1">{title}</h1>
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="heading-1">{title}</h1>
         <EventStatusBadge status={temporalStatus} />
         {/* TODO: Show FREE/PAID badge when backend reliably populates event.type
         {eventType && (
