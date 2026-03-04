@@ -64,8 +64,16 @@ export function prepareCardContentData({
     const eventStart = convertTZ(new Date(event.startDate), TIMEZONE_MADRID);
 
     // Normalize to midnight to compare dates only (avoids string-based fragility)
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfEventDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    const startOfEventDay = new Date(
+      eventStart.getFullYear(),
+      eventStart.getMonth(),
+      eventStart.getDate(),
+    );
 
     const diffTime = startOfEventDay.getTime() - startOfToday.getTime();
     // Use Math.round to handle DST changes gracefully

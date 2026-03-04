@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import type { CollapsibleDescriptionProps } from "types/props";
 
 const COLLAPSED_HEIGHT = 200; // px — approximately 200 chars worth of text
+// Buffer to avoid showing "Read more" for minimal overflow (e.g., 1-2 extra lines)
+const COLLAPSE_HEIGHT_BUFFER = 40;
 
 /**
  * Wraps children in a collapsible container on mobile.
@@ -27,7 +29,7 @@ export default function CollapsibleDescription({
 
     // Check if content exceeds the collapse threshold
     const checkHeight = () => {
-      setNeedsCollapse(el.scrollHeight > COLLAPSED_HEIGHT + 40);
+      setNeedsCollapse(el.scrollHeight > COLLAPSED_HEIGHT + COLLAPSE_HEIGHT_BUFFER);
     };
 
     checkHeight();
