@@ -48,7 +48,7 @@ export default async function NewsList({
     );
   }
 
-  const schemaBasePath = basePath || `/noticies/${place}`;
+  const resolvedBasePath = basePath || `/noticies/${place}`;
 
   const getItemPlace = (item: NewsSummaryResponseDTO) => {
     const slug = item.city?.slug || item.region?.slug || place;
@@ -56,16 +56,18 @@ export default async function NewsList({
     return { slug, label };
   };
 
+  const defaultPlace = { slug: place, label: placeType.label };
+  const resolvePlace = (item: NewsSummaryResponseDTO) =>
+    basePath ? getItemPlace(item) : defaultPlace;
+
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": `${siteUrl}${withLocale(schemaBasePath)}#news-itemlist`,
+    "@id": `${siteUrl}${withLocale(resolvedBasePath)}#news-itemlist`,
     name: t("itemListName", { place: placeType.label }),
     numberOfItems: list.length,
     itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => {
-      const itemPlace = basePath
-        ? getItemPlace(item)
-        : { slug: place, label: placeType.label };
+      const itemPlace = resolvePlace(item);
 
       return {
         "@type": "ListItem",
@@ -83,18 +85,13 @@ export default async function NewsList({
 
   return (
     <>
-      {/* Note: Head links for prev/next were here but next/head is not supported in App Router server components in the same way. 
-          We omit them here or they should be handled via metadata if blocking is acceptable, 
-          but since we are streaming, we can't easily inject into head. */}
 
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
 
       <section className="px-2 lg:px-0">
         {/* First card as hero (full width) */}
         {list.length > 0 && (() => {
-          const heroPlace = basePath
-            ? getItemPlace(list[0])
-            : { slug: place, label: placeType.label };
+          const heroPlace = resolvePlace(list[0]);
           return (
             <div className="mb-6">
               <NewsCard
@@ -112,9 +109,7 @@ export default async function NewsList({
         {list.length > 1 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap">
             {list.slice(1).map((event: NewsSummaryResponseDTO, index: number) => {
-              const itemPlace = basePath
-                ? getItemPlace(event)
-                : { slug: place, label: placeType.label };
+              const itemPlace = resolvePlace(event);
 
               return (
                 <NewsCard
@@ -133,7 +128,7 @@ export default async function NewsList({
         {currentPage > 0 ? (
           <PressableAnchor
             href={{
-              pathname: withLocale(basePath || `/noticies/${place}`),
+              pathname: withLocale(resolvedBasePath),
               query: { page: String(currentPage - 1), size: String(pageSize) },
             }}
             prefetch={false}
@@ -148,7 +143,7 @@ export default async function NewsList({
         {!response.last && (
           <PressableAnchor
             href={{
-              pathname: withLocale(basePath || `/noticies/${place}`),
+              pathname: withLocale(resolvedBasePath),
               query: { page: String(currentPage + 1), size: String(pageSize) },
             }}
             prefetch={false}
