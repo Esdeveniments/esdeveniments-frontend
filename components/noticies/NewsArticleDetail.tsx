@@ -222,7 +222,7 @@ export default async function NewsArticleDetail({
             {detail.relatedNews && detail.relatedNews.length > 0 && (
               <section className="mt-12 sm:mt-16">
                 <h2 className="heading-2 mb-6">{t("relatedArticles")}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-element-gap">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-element-gap">
                   {detail.relatedNews.slice(0, 3).map((item) => {
                     const itemPlace = resolveNewsItemPlace(item, place, placeType.label);
                     return (

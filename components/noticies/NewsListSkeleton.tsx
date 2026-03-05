@@ -1,11 +1,18 @@
 export default function NewsListSkeleton() {
   return (
-    <section className="flex flex-col gap-6 px-2 lg:px-0">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="w-full">
-          <NewsCardSkeleton />
-        </div>
-      ))}
+    <section className="px-2 lg:px-0">
+      {/* Hero card skeleton */}
+      <div className="mb-6">
+        <NewsCardSkeleton />
+      </div>
+      {/* Grid skeletons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="w-full">
+            <NewsCardSkeleton />
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
