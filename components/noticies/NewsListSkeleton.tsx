@@ -23,10 +23,10 @@ function HeroCardSkeleton() {
       {/* 16:9 image placeholder (matches NewsCard hero variant) */}
       <div className="relative aspect-[16/9] w-full animate-pulse" />
       <div className="absolute inset-x-0 bottom-0 px-4 pt-4 pb-4 sm:p-6">
-        <div className="h-7 w-3/4 bg-background/30 animate-pulse rounded mb-2" />
+        <div className="h-7 w-3/4 bg-foreground/20 animate-pulse rounded mb-2" />
         <div className="flex items-center gap-3">
-          <div className="h-5 w-32 bg-background/30 animate-pulse rounded" />
-          <div className="h-5 w-28 bg-background/30 animate-pulse rounded" />
+          <div className="h-5 w-32 bg-foreground/20 animate-pulse rounded" />
+          <div className="h-5 w-28 bg-foreground/20 animate-pulse rounded" />
         </div>
       </div>
     </div>
