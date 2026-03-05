@@ -16,7 +16,7 @@ import { notFound } from "next/navigation";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { resolveNewsItemPlace } from "@utils/news-helpers";
 import {
   localeToHrefLang,
@@ -162,11 +162,11 @@ export default async function NewsArticleDetail({
               { label: t("breadcrumbHome"), href: "/" },
               {
                 label: t("breadcrumbNews"),
-                href: withLocalePath("/noticies", locale),
+                href: "/noticies",
               },
               {
                 label: placeType.label,
-                href: withLocalePath(`/noticies/${place}`, locale),
+                href: `/noticies/${place}`,
               },
               { label: detail.title },
             ]}

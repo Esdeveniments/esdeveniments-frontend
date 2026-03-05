@@ -110,7 +110,7 @@ export default async function Page({
         <Breadcrumbs
           items={[
             { label: t("breadcrumbHome"), href: "/" },
-            { label: t("breadcrumbNews"), href: withLocale("/noticies") },
+            { label: t("breadcrumbNews"), href: "/noticies" },
             { label: placeLabel },
           ]}
           className="px-section-x pt-4"
