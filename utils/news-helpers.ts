@@ -4,7 +4,7 @@ import type { NewsSummaryResponseDTO } from "types/api/news";
  * Parse a single string-or-array query parameter into a string | undefined.
  */
 function parseStringParam(
-  value: string | string[] | undefined
+  value: string | string[] | undefined,
 ): string | undefined {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) return value[0];
@@ -17,19 +17,15 @@ function parseStringParam(
  */
 export function parseNewsPagination(
   query: Record<string, string | string[] | undefined>,
-  defaults = { page: 0, size: 10 }
+  defaults = { page: 0, size: 10 },
 ) {
-  const parsedPage = Number(parseStringParam(query.page));
+  const parsedPage = Math.floor(Number(parseStringParam(query.page)));
   const currentPage =
-    Number.isFinite(parsedPage) && parsedPage >= 0
-      ? parsedPage
-      : defaults.page;
+    Number.isFinite(parsedPage) && parsedPage >= 0 ? parsedPage : defaults.page;
 
-  const parsedSize = Number(parseStringParam(query.size));
+  const parsedSize = Math.floor(Number(parseStringParam(query.size)));
   const pageSize =
-    Number.isFinite(parsedSize) && parsedSize > 0
-      ? parsedSize
-      : defaults.size;
+    Number.isFinite(parsedSize) && parsedSize > 0 ? parsedSize : defaults.size;
 
   return { currentPage, pageSize };
 }
@@ -41,7 +37,7 @@ export function parseNewsPagination(
 export function resolveNewsItemPlace(
   item: NewsSummaryResponseDTO,
   fallbackSlug: string,
-  fallbackLabel: string
+  fallbackLabel: string,
 ) {
   return {
     slug: item.city?.slug || item.region?.slug || fallbackSlug,

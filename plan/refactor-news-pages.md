@@ -15,7 +15,7 @@
 4. [File-by-File Change Map](#4-file-by-file-change-map)
 5. [Competitive Reference](#5-competitive-reference)
 6. [Testing & Verification](#6-testing--verification)
-7. [Out of Scope / Future](#7-out-of-scope--future)
+7. [Genuinely Blocked](#7-genuinely-blocked-requires-backend-or-infrastructure)
 
 ---
 

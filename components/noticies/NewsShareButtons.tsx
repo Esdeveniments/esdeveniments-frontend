@@ -20,7 +20,7 @@ export default function NewsShareButtons({
   const locale = useLocale() as AppLocale;
   const articleUrl = `${siteUrl}${withLocalePath(`/noticies/${place}/${slug}`, locale)}`;
   return (
-    <div className="flex items-center gap-2" aria-label={label}>
+    <div className="flex items-center gap-2" role="group" aria-label={label}>
       <CardShareButton slug={slug} url={articleUrl} />
     </div>
   );
