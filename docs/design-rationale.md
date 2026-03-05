@@ -362,13 +362,9 @@ Exceptions: **Hero variant** keeps `aspect-[16/9]` (cinematic, full-bleed with t
 
 All card contexts use `formatCardDate()` for consistent abbreviated dates (`"12 gen"` not `"12 de gener de 2026"`). Verbose `getFormattedDate()` is reserved for detail page headers only. This matches the event card convention established in §2.
 
-### 8.3 Hero Image on Article Detail
+### 8.3 No Hero Image on Article Detail
 
-Article detail pages display the first event's image as a responsive hero using `buildPictureSourceUrls` (AVIF → WebP → JPEG fallback). This:
-
-- Gives articles a visual anchor (editorial pages without images feel like plain text dumps)
-- Reuses the existing image optimization pipeline (quality caps, responsive sizing)
-- Only renders when an event with an image exists (graceful degradation)
+Article detail pages intentionally omit a hero image. The first event card below the article header already displays the same image, so rendering it as a hero would create visual duplication. Removing the hero keeps the layout clean and avoids redundant image loads.
 
 ### 8.4 Related News Section
 

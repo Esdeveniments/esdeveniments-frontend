@@ -1,5 +1,7 @@
 import type { NewsSummaryResponseDTO } from "types/api/news";
 
+const DEFAULT_NEWS_PAGINATION = Object.freeze({ page: 0, size: 10 });
+
 /**
  * Parse a single string-or-array query parameter into a string | undefined.
  */
@@ -17,8 +19,8 @@ function parseStringParam(
  */
 export function parseNewsPagination(
   query: Record<string, string | string[] | undefined>,
-  defaults = { page: 0, size: 10 },
-) {
+  defaults = DEFAULT_NEWS_PAGINATION,
+): { currentPage: number; pageSize: number } {
   const parsedPage = Math.floor(Number(parseStringParam(query.page)));
   const currentPage =
     Number.isFinite(parsedPage) && parsedPage >= 0 ? parsedPage : defaults.page;
@@ -38,7 +40,7 @@ export function resolveNewsItemPlace(
   item: NewsSummaryResponseDTO,
   fallbackSlug: string,
   fallbackLabel: string,
-) {
+): { slug: string; label: string } {
   return {
     slug: item.city?.slug || item.region?.slug || fallbackSlug,
     label: item.city?.name || item.region?.name || fallbackLabel,
