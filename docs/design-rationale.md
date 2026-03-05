@@ -388,4 +388,4 @@ All three news routes (`/noticies`, `/noticies/[place]`, `/noticies/[place]/[slu
 
 ### 8.8 i18n Completeness
 
-All user-facing strings added during the refactor (`relatedArticles`, `shareArticle`, `viewCategory` aria-label) are translated across all three locales (`ca`, `es`, `en`) in the `App.NewsArticleDetail` namespace.
+All user-facing strings added during the refactor are translated across all three locales (`ca`, `es`, `en`): `relatedArticles` and `shareArticle` in `App.NewsArticleDetail`, and `viewCategory` aria-label in `Components.News`.

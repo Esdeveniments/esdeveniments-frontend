@@ -2,9 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { siteUrl } from "@config/index";
-import { useLocale } from "next-intl";
-import { withLocalePath } from "@utils/i18n-seo";
-import type { AppLocale } from "types/i18n";
 import type { NewsShareButtonsProps } from "types/props";
 
 const CardShareButton = dynamic(
@@ -17,8 +14,8 @@ export default function NewsShareButtons({
   slug,
   label,
 }: NewsShareButtonsProps) {
-  const locale = useLocale() as AppLocale;
-  const articleUrl = `${siteUrl}${withLocalePath(`/noticies/${place}/${slug}`, locale)}`;
+  // Canonical URL without locale prefix to consolidate social signals
+  const articleUrl = `${siteUrl}/noticies/${place}/${slug}`;
   return (
     <div className="flex items-center gap-2" role="group" aria-label={label}>
       <CardShareButton slug={slug} url={articleUrl} />
