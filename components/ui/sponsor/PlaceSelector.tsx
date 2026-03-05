@@ -50,7 +50,8 @@ export default function PlaceSelector({
   const hydrated = useHydration();
 
   // Fetch occupied places from API (replaces static config import)
-  const [occupiedStatus, setOccupiedStatus] = useState<Map<string, number>>(new Map());
+  const [occupiedStatus, setOccupiedStatus] = useState<Map<string, number>>(() => new Map());
+  const [isAvailabilityLoaded, setIsAvailabilityLoaded] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -71,6 +72,7 @@ export default function PlaceSelector({
         console.error("Failed to fetch sponsor availability:", error);
       } finally {
         clearTimeout(timeoutId);
+        setIsAvailabilityLoaded(true);
       }
     }
 
@@ -175,6 +177,11 @@ export default function PlaceSelector({
   }, []);
 
   const handleSelect = (place: PlaceOption) => {
+    // Guard: prevent selecting occupied places or before availability loaded
+    if (!isAvailabilityLoaded) return;
+    const daysLeft = occupiedStatus.get(place.slug);
+    if (typeof daysLeft === "number") return;
+
     onPlaceSelect(place);
     setQuery("");
     setIsOpen(false);
@@ -192,6 +199,9 @@ export default function PlaceSelector({
   };
 
   const handleCatalunyaSelect = () => {
+    // Guard: prevent selecting occupied Catalunya or before availability loaded
+    if (!isAvailabilityLoaded || isCatalunyaOccupied) return;
+
     const catalunyaOption: PlaceOption = {
       slug: CATALUNYA_SLUG,
       name: t("placeSelector.catalunya.title"),
@@ -256,8 +266,8 @@ export default function PlaceSelector({
           {/* Catalunya option - Maximum visibility */}
           <button
             onClick={handleCatalunyaSelect}
-            disabled={isCatalunyaOccupied}
-            className={`w-full text-left card-bordered p-4 transition-colors group ${isCatalunyaOccupied
+            disabled={!isAvailabilityLoaded || isCatalunyaOccupied}
+            className={`w-full text-left card-bordered p-4 transition-colors group ${!isAvailabilityLoaded || isCatalunyaOccupied
               ? "opacity-50 cursor-not-allowed"
               : "hover:border-primary hover:bg-primary/5"
               }`}
@@ -311,7 +321,7 @@ export default function PlaceSelector({
                 onFocus={() => setIsOpen(true)}
                 placeholder={t("placeSelector.placeholder")}
                 className="w-full pl-10 pr-4 py-3 rounded-input border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                disabled={isLoading}
+                disabled={isLoading || !isAvailabilityLoaded}
               />
             </div>
 
@@ -329,8 +339,8 @@ export default function PlaceSelector({
                       <button
                         key={`${place.type}-${place.slug}`}
                         onClick={() => handleSelect(place)}
-                        disabled={isOccupied}
-                        className={`w-full px-4 py-2 text-left flex items-center justify-between gap-2 ${isOccupied ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted'}`}
+                        disabled={!isAvailabilityLoaded || isOccupied}
+                        className={`w-full px-4 py-2 text-left flex items-center justify-between gap-2 ${!isAvailabilityLoaded || isOccupied ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted'}`}
                       >
                         <span>{place.name}</span>
                         <span className="flex items-center gap-2">
@@ -360,16 +370,24 @@ export default function PlaceSelector({
                 {t("placeSelector.popular")}:{" "}
               </span>
               <div className="inline-flex flex-wrap gap-2 mt-1">
-                {SPONSOR_POPULAR_PLACES.map((place: PlaceOption) => (
-                  <button
-                    key={place.slug}
-                    onClick={() => handlePopularClick(place)}
-                    className="text-sm text-primary hover:text-primary/80 hover:underline"
-                    disabled={isLoading}
-                  >
-                    {place.name}
-                  </button>
-                ))}
+                {SPONSOR_POPULAR_PLACES.map((place: PlaceOption) => {
+                  const daysLeft = occupiedStatus.get(place.slug);
+                  const isOccupied = typeof daysLeft === "number";
+                  return (
+                    <button
+                      key={place.slug}
+                      onClick={() => handlePopularClick(place)}
+                      className={`text-sm ${isOccupied
+                          ? "text-foreground/40 cursor-not-allowed line-through"
+                          : "text-primary hover:text-primary/80 hover:underline"
+                        }`}
+                      disabled={isLoading || !isAvailabilityLoaded || isOccupied}
+                      title={isOccupied ? getOccupiedLabel(daysLeft) : undefined}
+                    >
+                      {place.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
