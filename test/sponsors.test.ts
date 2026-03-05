@@ -864,7 +864,7 @@ describe("Sponsor System", () => {
       expect(status.has("barcelona")).toBe(false);
     });
 
-    test("occupied status prevents selecting a place via getActiveSponsorForPlace", () => {
+    test("occupied place has an active sponsor via getActiveSponsorForPlace", () => {
       const sponsors: SponsorConfig[] = [
         {
           businessName: "Active Sponsor",

@@ -374,9 +374,9 @@ A "Related Articles" section appears below the article body when `relatedNews` d
 
 `NewsShareButtons` appears in two positions: above the article description and below the events section. Dual placement ensures share buttons are accessible both at first glance and after reading. The component is a thin `"use client"` wrapper importing `CardShareButton` — no new sharing library was introduced.
 
-### 8.6 Reusable Breadcrumb (`NewsBreadcrumb`)
+### 8.6 Reusable Breadcrumb (`Breadcrumbs`)
 
-All three news routes (`/noticies`, `/noticies/[place]`, `/noticies/[place]/[slug]`) previously had inline breadcrumb markup. `NewsBreadcrumb` consolidates this into a single server component accepting `BreadcrumbItem[]` props with:
+All three news routes (`/noticies`, `/noticies/[place]`, `/noticies/[place]/[slug]`) use the shared `Breadcrumbs` component (`components/ui/common/Breadcrumbs.tsx`) accepting `BreadcrumbItem[]` props with:
 
 - `aria-current="page"` on the last item
 - `flex-wrap` for mobile overflow
