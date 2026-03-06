@@ -10,9 +10,10 @@ import {
 } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { parseNewsPagination } from "@utils/news-helpers";
 import type { Href } from "types/common";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import NewsList from "@components/noticies/NewsList";
 import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -51,26 +52,7 @@ export default async function Page({
   const query = (await (searchParams || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };
-  const pageParam =
-    typeof query.page === "string"
-      ? query.page
-      : Array.isArray(query.page)
-        ? query.page[0]
-        : undefined;
-  const sizeParam =
-    typeof query.size === "string"
-      ? query.size
-      : Array.isArray(query.size)
-        ? query.size[0]
-        : undefined;
-  const parsedPage = Number.isFinite(Number(pageParam))
-    ? Number(pageParam)
-    : 0;
-  const currentPage = parsedPage >= 0 ? parsedPage : 0;
-  const parsedSize = Number.isFinite(Number(sizeParam))
-    ? Number(sizeParam)
-    : 10;
-  const pageSize = parsedSize > 0 ? parsedSize : 10;
+  const { currentPage, pageSize } = parseNewsPagination(query);
 
   const citiesParam =
     typeof query.cities === "string"
@@ -118,69 +100,55 @@ export default async function Page({
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
 
   return (
-    <div className="container flex-col justify-center items-center mt-8 pb-section-y-lg">
-      <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
-      {breadcrumbListSchema && (
-        <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
-      )}
+    <div className="w-full bg-background pb-10">
+      <div className="container flex flex-col gap-section-y min-w-0">
+        <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
+        {breadcrumbListSchema && (
+          <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
+        )}
 
-      {/* Breadcrumb Navigation */}
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
-      >
-        <ol className="flex items-center space-x-2">
-          <li>
-            <PressableAnchor
-              href={withLocale("/")}
-              className="hover:underline hover:text-primary transition-colors"
-              variant="inline"
-              prefetch={false}
-            >
-              {t("breadcrumbHome")}
-            </PressableAnchor>
-          </li>
-          <li>
-            <span className="mx-1" aria-hidden="true">/</span>
-          </li>
-          <li className="text-foreground-strong font-medium" aria-current="page">
-            {t("breadcrumbCurrent")}
-          </li>
-        </ol>
-      </nav>
-
-      {/* Page Header Section */}
-      <header className="w-full px-2 lg:px-0 mb-section-y-sm">
-        <h1 className="heading-1 uppercase text-foreground-strong mb-element-gap">
-          {t("heading")}
-        </h1>
-        <p className="body-large text-foreground-strong/80 text-left">
-          {t("intro")}
-        </p>
-      </header>
-
-      {/* Latest News List (Catalunya) */}
-      <Suspense fallback={<NewsListSkeleton />}>
-        <NewsList
-          newsPromise={newsPromise}
-          placeTypePromise={placeTypePromise}
-          place={articlePlaceSlug}
-          currentPage={currentPage}
-          pageSize={pageSize}
-          basePath="/noticies"
+        {/* Breadcrumb Navigation */}
+        <Breadcrumbs
+          items={[
+            { label: t("breadcrumbHome"), href: "/" },
+            { label: t("breadcrumbCurrent") },
+          ]}
+          className="px-section-x pt-4"
         />
-      </Suspense>
 
-      <Suspense fallback={null}>
-        <NewsCitiesSection
-          citiesPromise={citiesPromise}
-          showAll={showAllCities}
-          showMoreHref={showMoreHref}
-          showLessHref={showLessHref}
-        />
-      </Suspense>
+        {/* Page Header Section */}
+        <header className="w-full mb-section-y-sm">
+          <h1 className="heading-1 uppercase text-foreground-strong mb-element-gap">
+            {t("heading")}
+          </h1>
+          <p className="body-large text-foreground-strong/80 text-left">
+            {t("intro")}
+          </p>
+        </header>
 
-      {/* Featured places section temporarily disabled. */}
+        {/* Latest News List (Catalunya) */}
+        <Suspense fallback={<NewsListSkeleton />}>
+          <NewsList
+            newsPromise={newsPromise}
+            placeTypePromise={placeTypePromise}
+            place={articlePlaceSlug}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            basePath="/noticies"
+          />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <NewsCitiesSection
+            citiesPromise={citiesPromise}
+            showAll={showAllCities}
+            showMoreHref={showMoreHref}
+            showLessHref={showLessHref}
+          />
+        </Suspense>
+
+        {/* Featured places section temporarily disabled. */}
+      </div>
     </div>
   );
 }

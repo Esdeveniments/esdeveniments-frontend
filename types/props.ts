@@ -597,6 +597,13 @@ export interface UseGeolocationReturn {
 }
 
 // --- News components props ---
+
+export interface NewsShareButtonsProps {
+  place: string;
+  slug: string;
+  label: string;
+}
+
 export interface NewsEventsSectionProps {
   title: string;
   events: NewsEventItemDTO[];
@@ -781,8 +788,7 @@ export interface EventSidebarProps {
   cityName: string;
   regionName: string;
   primaryPlaceSlug: string;
-  citySlug?: string;
-  regionSlug?: string;
+  sponsorFallbackPlaces?: string[];
 }
 
 // Social proof counter

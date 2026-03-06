@@ -177,7 +177,9 @@
       "readingTime": "{minutes} min read",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "mustSee": "MUST-SEE",
-      "moreProposals": "MORE IDEAS"
+      "moreProposals": "MORE IDEAS",
+      "relatedArticles": "Related articles",
+      "shareArticle": "Share this article"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Latest news by hub",

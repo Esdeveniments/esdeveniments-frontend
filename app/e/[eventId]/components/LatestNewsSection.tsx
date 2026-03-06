@@ -53,15 +53,27 @@ export default async function LatestNewsSection({
           </PressableAnchor>
         </div>
         <div className="flex flex-col gap-element-gap">
-          {latestNews.map((newsItem, index) => (
-            <NewsCard
-              key={newsItem.id}
-              event={newsItem}
-              placeSlug={placeSlug}
-              placeLabel={placeLabel}
-              variant={index === 0 ? "hero" : "default"}
-            />
-          ))}
+          {/* Hero card — full width */}
+          <NewsCard
+            key={latestNews[0].id}
+            event={latestNews[0]}
+            placeSlug={placeSlug}
+            placeLabel={placeLabel}
+            variant="hero"
+          />
+          {/* Remaining cards — 2-column grid on desktop */}
+          {latestNews.length > 1 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-element-gap">
+              {latestNews.slice(1, 3).map((newsItem) => (
+                <NewsCard
+                  key={newsItem.id}
+                  event={newsItem}
+                  placeSlug={placeSlug}
+                  placeLabel={placeLabel}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>
