@@ -54,8 +54,8 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         // s-maxage=1800: events are published days ahead; 30 min staleness
-        // is invisible. swr=3600: serve stale instantly for 30 min after expiry
-        // while revalidating in background (eliminates TTFB spikes).
+        // is invisible. swr=3600: serve stale instantly for up to 60 min after
+        // expiry while revalidating in background (eliminates TTFB spikes).
         "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600",
       },
     });

@@ -24,6 +24,7 @@ export default function FilterLoadingGate({
         isLoading ? " opacity-40 pointer-events-none" : ""
       }`}
       aria-busy={isLoading}
+      {...(isLoading ? { inert: true } : {})}
     >
       {children}
     </div>

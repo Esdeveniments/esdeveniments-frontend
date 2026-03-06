@@ -51,7 +51,8 @@ export function UrlFiltersProvider({
 
 /**
  * Consume pre-parsed URL filters from the nearest UrlFiltersProvider.
- * Falls back to local parsing when used outside the provider (e.g. tests).
+ * Throws if used outside the provider — wrap the component tree with
+ * UrlFiltersProvider first (or use renderWithProviders in tests).
  */
 export function useSharedUrlFilters(): ParsedFilters {
   const context = useContext(UrlFiltersContext);

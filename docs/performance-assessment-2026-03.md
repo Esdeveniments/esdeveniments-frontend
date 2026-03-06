@@ -11,7 +11,7 @@
 | Server Bundle (largest route) | ⚠️ Heavy     | `/patrocina` at 1.62 MB                            |
 | CSS Output                    | ✅ Good      | 73.6 KB main + 21.4 KB secondary = **95 KB total** |
 | Build Output (`.next/`)       | ℹ️ Info      | 1.4 GB total, 117 MB standalone                    |
-| Total Routes                  | ℹ️ Info      | 79 (36 pages, 37 APIs, 12 sitemaps)                |
+| Total Routes                  | ℹ️ Info      | 85 (36 pages, 37 APIs, 12 sitemaps)                |
 
 ---
 
@@ -295,7 +295,7 @@ PlacePageShell (Server)
 
 ### 8.2 `useSearchParams` Cascade (Primary INP Concern)
 
-**Finding**: `useSearchParams()` from Next.js re-renders **every subscriber** when search params change. On the `/[place]` route, **5 independent components** subscribe to `useSearchParams`:
+**Finding**: `useSearchParams()` from Next.js re-renders **every subscriber** when search params change. On the `/[place]` route, **6 independent components** subscribe to `useSearchParams`:
 
 | Component                       | Via                                     | Purpose                                      |
 | ------------------------------- | --------------------------------------- | -------------------------------------------- |

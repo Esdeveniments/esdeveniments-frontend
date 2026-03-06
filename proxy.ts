@@ -505,7 +505,7 @@ export default async function proxy(request: NextRequest) {
   //
   // s-maxage=1800 (30 min): Cultural events are published days in advance, so
   // 30 min staleness is invisible to users. With stale-while-revalidate=3600,
-  // CloudFront serves the stale page instantly for up to 30 min after expiry
+  // CloudFront serves the stale page instantly for up to 60 min after expiry
   // while revalidating in the background — eliminating TTFB spikes from
   // synchronous revalidation. This raises CloudFront cache-hit ratio and
   // reduces Lambda invocations significantly.

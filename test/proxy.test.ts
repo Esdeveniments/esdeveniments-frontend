@@ -665,10 +665,13 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
+      // In test env (non-preview), CSP must be enforced, not report-only
       expect(
-        mockResponse.headers.get("Content-Security-Policy") ||
-          mockResponse.headers.get("Content-Security-Policy-Report-Only"),
+        mockResponse.headers.get("Content-Security-Policy"),
       ).toBeDefined();
+      expect(
+        mockResponse.headers.get("Content-Security-Policy-Report-Only"),
+      ).toBeNull();
       expect(
         mockResponse.headers.get("Strict-Transport-Security"),
       ).toBeDefined();
@@ -702,10 +705,7 @@ describe("proxy", () => {
 
       await proxy(mockRequest);
 
-      const csp =
-        mockResponse.headers.get("Content-Security-Policy") ||
-        mockResponse.headers.get("Content-Security-Policy-Report-Only") ||
-        "";
+      const csp = mockResponse.headers.get("Content-Security-Policy") || "";
       expect(csp).toContain("'unsafe-inline'");
       // Should not contain strict-dynamic or nonce (relaxed CSP for ISR)
       expect(csp).not.toContain("'strict-dynamic'");
