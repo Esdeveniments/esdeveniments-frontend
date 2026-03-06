@@ -5,12 +5,12 @@
  * architecture get out of sync. This caused a 4-day outage (Feb 18-22, 2026)
  * where all image-proxy requests served unoptimized images (4.3 MB instead of ~50 KB).
  *
- * Sharp is installed into the Lambda bundle by open-next.config.ts (install.packages + arch).
- * SST's server.install provides redundant install for safety.
- * Both MUST match args.architecture in sst.config.ts.
+ * Sharp is installed into the Lambda bundle ONLY by open-next.config.ts (install.packages + arch).
+ * SST's server.install is NOT used for Sharp — it cannot cross-install on x64 CI.
+ * The open-next.config.ts arch MUST match args.architecture in sst.config.ts.
  *
- * Currently using x86_64 because SST 3.17.25's Go binary doesn't cross-install
- * arm64 packages on x64 CI. TODO: Switch to arm64 when SST supports it.
+ * Using arm64 (Graviton2) for ~20% cost savings per GB-second.
+ * open-next.config.ts handles cross-arch installation correctly via its `arch` field.
  */
 import { describe, it, expect } from "vitest";
 import fs from "fs";
@@ -26,37 +26,17 @@ describe("Sharp architecture consistency", () => {
     "open-next.config.ts",
   );
 
-  it("Lambda architecture matches Sharp binary arch (both x86_64/x64)", () => {
-    expect(sstContent).toMatch(/args\.architecture\s*=\s*["']x86_64["']/);
+  it("Lambda architecture is arm64 (Graviton2)", () => {
+    expect(sstContent).toMatch(/args\.architecture\s*=\s*["']arm64["']/);
   });
 
-  it("server.install includes x64 Sharp binaries (matching Lambda arch)", () => {
-    expect(sstContent).toContain("@img/sharp-linux-x64");
-    expect(sstContent).toContain("@img/sharp-libvips-linux-x64");
-  });
-
-  it("server.install does NOT include arm64 binaries (SST cannot cross-install)", () => {
+  it("server.install does NOT include platform-specific Sharp binaries", () => {
+    // Sharp installation is handled by open-next.config.ts, not server.install.
+    // SST v3's server.install cannot cross-install arm64 packages on x64 CI.
+    expect(sstContent).not.toContain('"@img/sharp-linux-x64"');
+    expect(sstContent).not.toContain('"@img/sharp-libvips-linux-x64"');
     expect(sstContent).not.toContain('"@img/sharp-linux-arm64"');
     expect(sstContent).not.toContain('"@img/sharp-libvips-linux-arm64"');
-  });
-
-  it("server.install arch matches args.architecture", () => {
-    const archMatch = sstContent.match(
-      /args\.architecture\s*=\s*["'](\w+)["']/,
-    );
-    expect(archMatch).not.toBeNull();
-    const lambdaArch = archMatch![1];
-
-    const sharpMatch = sstContent.match(/@img\/sharp-linux-(\w+)/);
-    expect(sharpMatch).not.toBeNull();
-    const sharpArch = sharpMatch![1];
-
-    const archMap: Record<string, string> = {
-      x86_64: "x64",
-      arm64: "arm64",
-    };
-
-    expect(archMap[lambdaArch]).toBe(sharpArch);
   });
 
   it("open-next.config.ts exists and installs Sharp", () => {
@@ -85,5 +65,12 @@ describe("Sharp architecture consistency", () => {
     };
 
     expect(openNextArch![1]).toBe(archMap[lambdaArch![1]]);
+  });
+
+  it("open-next.config.ts is the sole Sharp installer (not server.install)", () => {
+    // Verify open-next.config.ts has the install config with packages and arch
+    const openNextContent = fs.readFileSync(openNextConfigPath, "utf8");
+    expect(openNextContent).toMatch(/packages:\s*\[/);
+    expect(openNextContent).toMatch(/arch:\s*["']arm64["']/);
   });
 });

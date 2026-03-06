@@ -17,7 +17,10 @@ vi.stubGlobal("crypto", {
 
 vi.mock("next/server", () => {
   // Use a function constructor wrapped with vi.fn() for Vitest 4 compatibility
-  const MockNextResponseFn = vi.fn(function (body?: unknown, options?: { status?: number }) {
+  const MockNextResponseFn = vi.fn(function (
+    body?: unknown,
+    options?: { status?: number },
+  ) {
     return {
       status: options?.status || 200,
       headers: new Headers(),
@@ -39,10 +42,10 @@ vi.mock("next/server", () => {
       return response;
     }),
     redirect: vi.fn((_: unknown, status?: number) =>
-      MockNextResponseFn("redirect", { status })
+      MockNextResponseFn("redirect", { status }),
     ),
     json: vi.fn((data: unknown, options?: { status?: number }) =>
-      MockNextResponseFn(JSON.stringify(data), options)
+      MockNextResponseFn(JSON.stringify(data), options),
     ),
   }) as any;
 
@@ -120,7 +123,7 @@ describe("proxy", () => {
       const result = await proxy(mockRequest);
 
       expect(result.headers.get("Cache-Control")).toBe(
-        "public, max-age=0, s-maxage=1800, stale-while-revalidate=1800"
+        "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
       );
     });
 
@@ -144,7 +147,7 @@ describe("proxy", () => {
       // can keep this navigation eligible. `no-cache, max-age=0, must-revalidate`
       // forces revalidation without blocking bfcache. See proxy.ts for rationale.
       expect(result.headers.get("Cache-Control")).toBe(
-        "no-cache, max-age=0, must-revalidate"
+        "no-cache, max-age=0, must-revalidate",
       );
       expect(result.headers.get("Service-Worker-Allowed")).toBe("/");
     });
@@ -166,9 +169,9 @@ describe("proxy", () => {
       expect(NextResponse.redirect).toHaveBeenCalledWith(
         new URL(
           "/barcelona/events?search=rock",
-          "https://example.com/barcelona/tots/events?search=rock"
+          "https://example.com/barcelona/tots/events?search=rock",
         ),
-        301
+        301,
       );
     });
 
@@ -189,9 +192,9 @@ describe("proxy", () => {
       expect(NextResponse.redirect).toHaveBeenCalledWith(
         new URL(
           "/barcelona/teatre",
-          "https://example.com/barcelona?category=teatre&date=tots"
+          "https://example.com/barcelona?category=teatre&date=tots",
         ),
-        301
+        301,
       );
     });
 
@@ -201,7 +204,7 @@ describe("proxy", () => {
           pathname: "/barcelona",
           search: "?category=teatre&date=tots&search=castellers",
           searchParams: new URLSearchParams(
-            "?category=teatre&date=tots&search=castellers"
+            "?category=teatre&date=tots&search=castellers",
           ),
         },
         url: "https://example.com/barcelona?category=teatre&date=tots&search=castellers",
@@ -214,9 +217,9 @@ describe("proxy", () => {
       expect(NextResponse.redirect).toHaveBeenCalledWith(
         new URL(
           "/barcelona/teatre?search=castellers",
-          "https://example.com/barcelona?category=teatre&date=tots&search=castellers"
+          "https://example.com/barcelona?category=teatre&date=tots&search=castellers",
         ),
-        301
+        301,
       );
     });
 
@@ -253,7 +256,7 @@ describe("proxy", () => {
 
       expect(NextResponse.redirect).toHaveBeenCalledWith(
         new URL("/barcelona", "https://example.com/barcelona?date=invalid"),
-        301
+        301,
       );
     });
   });
@@ -272,7 +275,7 @@ describe("proxy", () => {
 
       expect(NextResponse.json).toHaveBeenCalledWith(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     });
 
@@ -289,7 +292,7 @@ describe("proxy", () => {
 
       expect(NextResponse.json).toHaveBeenCalledWith(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     });
 
@@ -309,7 +312,7 @@ describe("proxy", () => {
 
       expect(NextResponse.json).toHaveBeenCalledWith(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     });
 
@@ -330,7 +333,7 @@ describe("proxy", () => {
 
       expect(NextResponse.json).toHaveBeenCalledWith(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     });
 
@@ -351,7 +354,7 @@ describe("proxy", () => {
 
       expect(NextResponse.json).toHaveBeenCalledWith(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     });
 
@@ -375,7 +378,7 @@ describe("proxy", () => {
 
       expect(NextResponse.json).toHaveBeenCalledWith(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     });
 
@@ -389,7 +392,7 @@ describe("proxy", () => {
         body,
         timestamp,
         pathAndQuery,
-        "GET"
+        "GET",
       );
 
       const mockRequest = {
@@ -420,7 +423,7 @@ describe("proxy", () => {
         body,
         timestamp,
         pathAndQuery,
-        "GET"
+        "GET",
       );
 
       const mockRequest = {
@@ -487,7 +490,7 @@ describe("proxy", () => {
 
       expect(NextResponse).toHaveBeenCalledWith(
         "Bad Request: Unable to read request body",
-        { status: 400 }
+        { status: 400 },
       );
     });
 
@@ -524,7 +527,7 @@ describe("proxy", () => {
         bodyString,
         timestamp,
         pathAndQuery,
-        "POST"
+        "POST",
       );
 
       const mockRequest = {
@@ -562,12 +565,14 @@ describe("proxy", () => {
         },
         text: () => Promise.resolve(""),
       } as unknown as NextResponse;
-      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
-        if (options?.request) {
-          (mockResponse as any).request = options.request;
-        }
-        return mockResponse;
-      });
+      (NextResponse.next as unknown as any).mockImplementation(
+        (options?: { request?: { headers?: Headers } }) => {
+          if (options?.request) {
+            (mockResponse as any).request = options.request;
+          }
+          return mockResponse;
+        },
+      );
 
       // No visitor cookie present (first visit)
       const checkoutHeaders = new Headers();
@@ -582,7 +587,9 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       // x-visitor-id must be injected so checkout route can use it for idempotency
-      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
+      const forwardedVisitorId = (mockResponse as any).request?.headers.get(
+        "x-visitor-id",
+      );
       expect(forwardedVisitorId).toBeDefined();
       expect(forwardedVisitorId).toBe("testuuid");
 
@@ -605,12 +612,14 @@ describe("proxy", () => {
         },
         text: () => Promise.resolve(""),
       } as unknown as NextResponse;
-      (NextResponse.next as unknown as any).mockImplementation((options?: { request?: { headers?: Headers } }) => {
-        if (options?.request) {
-          (mockResponse as any).request = options.request;
-        }
-        return mockResponse;
-      });
+      (NextResponse.next as unknown as any).mockImplementation(
+        (options?: { request?: { headers?: Headers } }) => {
+          if (options?.request) {
+            (mockResponse as any).request = options.request;
+          }
+          return mockResponse;
+        },
+      );
 
       const existingVisitorId = "existing-visitor-456";
       const checkoutHeaders2 = new Headers();
@@ -627,7 +636,9 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       // x-visitor-id should use existing cookie value
-      const forwardedVisitorId = (mockResponse as any).request?.headers.get("x-visitor-id");
+      const forwardedVisitorId = (mockResponse as any).request?.headers.get(
+        "x-visitor-id",
+      );
       expect(forwardedVisitorId).toBe(existingVisitorId);
 
       // Cookie should NOT be set again
@@ -656,20 +667,20 @@ describe("proxy", () => {
 
       expect(
         mockResponse.headers.get("Content-Security-Policy") ||
-          mockResponse.headers.get("Content-Security-Policy-Report-Only")
+          mockResponse.headers.get("Content-Security-Policy-Report-Only"),
       ).toBeDefined();
       expect(
-        mockResponse.headers.get("Strict-Transport-Security")
+        mockResponse.headers.get("Strict-Transport-Security"),
       ).toBeDefined();
       expect(mockResponse.headers.get("X-Content-Type-Options")).toBe(
-        "nosniff"
+        "nosniff",
       );
       expect(mockResponse.headers.get("X-Frame-Options")).toBe("SAMEORIGIN");
       expect(mockResponse.headers.get("Referrer-Policy")).toBe(
-        "strict-origin-when-cross-origin"
+        "strict-origin-when-cross-origin",
       );
       expect(mockResponse.headers.get("Permissions-Policy")).toBe(
-        "camera=(), microphone=(), geolocation=(self)"
+        "camera=(), microphone=(), geolocation=(self)",
       );
     });
 

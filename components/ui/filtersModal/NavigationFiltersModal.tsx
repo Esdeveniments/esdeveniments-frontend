@@ -3,6 +3,7 @@ import {
   useState,
   useCallback,
   memo,
+  startTransition,
   ChangeEvent,
   FC,
   useEffect,
@@ -483,7 +484,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     }
 
     startNavigationFeedback();
-    setLoading(true);
+    startTransition(() => setLoading(true));
     router.push(newUrl);
     return true;
   };

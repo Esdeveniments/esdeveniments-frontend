@@ -504,10 +504,11 @@ export default async function proxy(request: NextRequest) {
   // Cache-Control for public HTML pages (excluding API and Next assets).
   //
   // s-maxage=1800 (30 min): Cultural events are published days in advance, so
-  // 30 min staleness is invisible to users. With stale-while-revalidate, CloudFront
-  // serves the cached page instantly and revalidates in the background — the next
-  // visitor gets fresh data. This raises CloudFront cache-hit ratio from ~3.6%
-  // to ~20-30%, reducing Lambda invocations significantly.
+  // 30 min staleness is invisible to users. With stale-while-revalidate=3600,
+  // CloudFront serves the stale page instantly for up to 30 min after expiry
+  // while revalidating in the background — eliminating TTFB spikes from
+  // synchronous revalidation. This raises CloudFront cache-hit ratio and
+  // reduces Lambda invocations significantly.
   //
   // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
   // still serve quickly and revalidate in the background.
@@ -520,7 +521,7 @@ export default async function proxy(request: NextRequest) {
       "Cache-Control",
       isPersonalizedHtml
         ? "private, no-store"
-        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=1800",
+        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
     );
   }
 

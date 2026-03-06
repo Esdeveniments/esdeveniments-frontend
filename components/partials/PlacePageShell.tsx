@@ -5,6 +5,7 @@ import HybridEventsList from "@components/ui/hybridEventsList";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
+import { UrlFiltersProvider } from "@components/context/UrlFiltersContext";
 import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
 import type { PlacePageShellProps } from "types/props";
 import { getTranslations } from "next-intl/server";
@@ -164,26 +165,28 @@ export default async function PlacePageShell({
 
   return (
     <FilterLoadingProvider>
-      <Suspense fallback={<EventsListSkeleton />}>
-        <PlacePageContent
-          shellDataPromise={shellDataPromise}
-          eventsPromise={eventsPromise}
-          place={place}
-          category={category}
-          date={date}
-          categories={categories}
-          webPageSchemaFactory={webPageSchemaFactory}
-        />
-      </Suspense>
+      <UrlFiltersProvider categories={categories}>
+        <Suspense fallback={<EventsListSkeleton />}>
+          <PlacePageContent
+            shellDataPromise={shellDataPromise}
+            eventsPromise={eventsPromise}
+            place={place}
+            category={category}
+            date={date}
+            categories={categories}
+            webPageSchemaFactory={webPageSchemaFactory}
+          />
+        </Suspense>
 
-      {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
-      <Suspense fallback={null}>
-        <LazyClientInteractiveLayer
-          categories={categories}
-          placeTypeLabel={placeTypeLabel}
-          filterLabels={filterLabels}
-        />
-      </Suspense>
+        {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
+        <Suspense fallback={null}>
+          <LazyClientInteractiveLayer
+            categories={categories}
+            placeTypeLabel={placeTypeLabel}
+            filterLabels={filterLabels}
+          />
+        </Suspense>
+      </UrlFiltersProvider>
     </FilterLoadingProvider>
   );
 }

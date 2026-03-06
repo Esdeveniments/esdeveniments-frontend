@@ -7,12 +7,12 @@ import type { NewsDetailResponseDTO } from "types/api/news";
 // Cache for news detail by slug (24h TTL) to prevent backend visit increments on refresh
 const { cache: newsDetailCache } =
   createKeyedCache<NewsDetailResponseDTO | null>(
-    86400000 // 24 hours
+    86400000, // 24 hours
   );
 
 export async function GET(
   _req: Request,
-  ctx: { params: Promise<{ slug: string }> }
+  ctx: { params: Promise<{ slug: string }> },
 ) {
   try {
     const { slug } = await ctx.params;
@@ -24,7 +24,8 @@ export async function GET(
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=60",
+        // Published articles are stable; 30 min cache with 1h stale window.
+        "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600",
       },
     });
   } catch (e) {

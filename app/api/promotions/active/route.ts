@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!eventId) {
     return NextResponse.json(
       { error: "Missing eventId parameter" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -22,5 +22,10 @@ export async function GET(request: NextRequest) {
   // For now, always return null (no active promotions)
   const activePromotion: ActivePromotion | null = null;
 
-  return NextResponse.json(activePromotion, { status: 200 });
+  return NextResponse.json(activePromotion, {
+    status: 200,
+    headers: {
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+    },
+  });
 }

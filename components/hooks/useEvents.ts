@@ -13,7 +13,7 @@ import { captureException } from "@sentry/nextjs";
 
 // SWR fetcher function for events API (single page) via internal proxy
 const pageFetcher = async (
-  params: FetchEventsParams
+  params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
   const qs = new URLSearchParams();
   if (typeof params.page === "number") qs.set("page", String(params.page));
@@ -53,7 +53,7 @@ export const useEvents = ({
   const currentKey = useMemo(
     () =>
       `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${initialSize}`,
-    [place, category, date, search, distance, lat, lon, initialSize]
+    [place, category, date, search, distance, lat, lon, initialSize],
   );
 
   const hasClientFilters = !!(search || distance || lat || lon);
@@ -71,13 +71,10 @@ export const useEvents = ({
   const radius = distance ? parseFloat(distance) : undefined;
   const latNumber = lat !== undefined ? parseFloat(lat) : undefined;
   const lonNumber = lon !== undefined ? parseFloat(lon) : undefined;
-  const hasCoords =
-    Number.isFinite(latNumber) && Number.isFinite(lonNumber);
-  const hasValidRadius =
-    radius !== undefined && Number.isFinite(radius);
+  const hasCoords = Number.isFinite(latNumber) && Number.isFinite(lonNumber);
+  const hasValidRadius = radius !== undefined && Number.isFinite(radius);
 
-  const normalizedPlace =
-    place === "catalunya" ? undefined : place;
+  const normalizedPlace = place === "catalunya" ? undefined : place;
   const placeForRequest =
     hasCoords && hasValidRadius ? undefined : normalizedPlace;
 
@@ -98,7 +95,7 @@ export const useEvents = ({
 
   const getKey = (
     pageIndex: number,
-    previousPageData: PagedResponseDTO<EventSummaryResponseDTO> | null
+    previousPageData: PagedResponseDTO<EventSummaryResponseDTO> | null,
   ) => {
     if (previousPageData && previousPageData.last) return null; // reached the end
     return [
@@ -187,16 +184,16 @@ export const useEvents = ({
       },
       revalidateFirstPage: false,
       revalidateOnMount: hasClientFilters,
-    }
+    },
   );
 
   const clientEvents = isActivated
-    ? pages?.flatMap((p) => p.content) ?? []
+    ? (pages?.flatMap((p) => p.content) ?? [])
     : fallbackData;
 
   const totalEvents = isActivated
     ? pages && pages.length > 0
-      ? pages[pages.length - 1]?.totalElements ?? clientEvents.length
+      ? (pages[pages.length - 1]?.totalElements ?? clientEvents.length)
       : clientEvents.length
     : fallbackData.length;
 
