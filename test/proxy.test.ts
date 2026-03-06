@@ -67,6 +67,11 @@ describe("proxy", () => {
     process.env = { ...originalEnv };
     process.env.HMAC_SECRET = "test-secret";
 
+    // Ensure preview/CSP env vars are unset so CSP tests reflect production behavior
+    delete process.env.VERCEL_ENV;
+    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+    delete process.env.NEXT_PUBLIC_CSP_REPORT_ONLY;
+
     // Reset mocks
     vi.restoreAllMocks();
     vi.stubGlobal("crypto", {

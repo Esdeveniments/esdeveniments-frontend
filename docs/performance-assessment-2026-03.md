@@ -295,6 +295,8 @@ PlacePageShell (Server)
 
 ### 8.2 `useSearchParams` Cascade (Primary INP Concern)
 
+> **Status: Mitigated in this PR.** A shared `UrlFiltersProvider` context now deduplicates `useSearchParams` subscriptions, reducing 4 independent parse calls to 1. See Fix 2 (§8.15) and `UrlFiltersContext.tsx`.
+
 **Finding**: `useSearchParams()` from Next.js re-renders **every subscriber** when search params change. On the `/[place]` route, **6 independent components** subscribe to `useSearchParams`:
 
 | Component                       | Via                                     | Purpose                                      |
@@ -490,6 +492,8 @@ Each `FilterButton` instantiates `usePressFeedback()` which registers 5 event ha
 
 ### 8.14 Summary: INP Budget Breakdown for Filter Removal Interaction
 
+> **Status: Baseline captured pre-optimization.** Fixes 1-3 from §8.15 were implemented in this PR, reducing the estimated budget by ~30-70ms on mobile. The table below documents the original baseline for comparison.
+
 Estimated synchronous work when user clicks X to remove a filter pill:
 
 | Step                           | Source                            | Est. Duration |
@@ -508,6 +512,8 @@ Estimated synchronous work when user clicks X to remove a filter pill:
 On a mid-range mobile device (4× CPU slowdown), multiply by ~3-4×: **100-350ms**. This aligns with the observed p75 of 194ms.
 
 ### 8.15 Recommended Fixes (Priority Order)
+
+> **Status: Fixes 1-3 implemented in this PR.** Fix 1 (`startTransition` wrapping) applied in `FilterButton` and `Search`. Fix 2 (`UrlFiltersProvider`) eliminates duplicate parsing. Fix 3 (`FilterLoadingGate` CSS opacity) avoids skeleton swap DOM churn. Fixes 4-5 remain as future optimizations.
 
 #### Fix 1: Wrap filter removal in `startTransition` (High Impact)
 
