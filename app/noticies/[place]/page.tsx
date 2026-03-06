@@ -7,11 +7,13 @@ import {
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { parseNewsPagination } from "@utils/news-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import NewsList from "@components/noticies/NewsList";
 import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
 
@@ -61,27 +63,7 @@ export default async function Page({
   const query = (await (searchParams || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };
-  const pageParam =
-    typeof query.page === "string"
-      ? query.page
-      : Array.isArray(query.page)
-        ? query.page[0]
-        : undefined;
-  const sizeParam =
-    typeof query.size === "string"
-      ? query.size
-      : Array.isArray(query.size)
-        ? query.size[0]
-        : undefined;
-  const parsedPage = Number.isFinite(Number(pageParam))
-    ? Number(pageParam)
-    : 0;
-  const currentPage = parsedPage >= 0 ? parsedPage : 0;
-
-  const parsedSize = Number.isFinite(Number(sizeParam))
-    ? Number(sizeParam)
-    : 10;
-  const pageSize = parsedSize > 0 ? parsedSize : 10;
+  const { currentPage, pageSize } = parseNewsPagination(query);
 
   // Start fetches immediately
   const newsPromise = fetchNews({ page: currentPage, size: pageSize, place });
@@ -116,85 +98,55 @@ export default async function Page({
   const agendaHref = place === "catalunya" ? "/catalunya" : `/${place}`;
 
   return (
-    <div className="container flex-col justify-center items-center mt-8 pb-section-y-lg">
-      {/* Head links for prev/next are removed as they require data. 
-          If critical, they should be in generateMetadata or we accept they load later? 
-          Actually we can't inject into head from here easily if streaming. */}
+    <div className="w-full bg-background pb-10">
+      <div className="container flex flex-col gap-section-y min-w-0">
 
-      <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
-      {breadcrumbListSchema && (
-        <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
-      )}
+        <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
+        {breadcrumbListSchema && (
+          <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
+        )}
 
-      {/* Breadcrumb Navigation */}
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-6 w-full px-2 lg:px-0 body-small text-foreground-strong/70"
-      >
-        <ol className="flex items-center space-x-2">
-          <li>
-            <PressableAnchor
-              href={withLocale("/")}
-              className="hover:underline hover:text-primary transition-colors"
-              variant="inline"
-              prefetch={false}
-            >
-              {t("breadcrumbHome")}
-            </PressableAnchor>
-          </li>
-          <li>
-            <span className="mx-1" aria-hidden="true">/</span>
-          </li>
-          <li>
-            <PressableAnchor
-              href={withLocale("/noticies")}
-              className="hover:underline hover:text-primary transition-colors"
-              variant="inline"
-              prefetch={false}
-            >
-              {t("breadcrumbNews")}
-            </PressableAnchor>
-          </li>
-          <li>
-            <span className="mx-1" aria-hidden="true">/</span>
-          </li>
-          <li className="text-foreground-strong font-medium" aria-current="page">
-            {placeLabel}
-          </li>
-        </ol>
-      </nav>
+        {/* Breadcrumb Navigation */}
+        <Breadcrumbs
+          items={[
+            { label: t("breadcrumbHome"), href: "/" },
+            { label: t("breadcrumbNews"), href: "/noticies" },
+            { label: placeLabel },
+          ]}
+          className="px-section-x pt-4"
+        />
 
-      {/* Page Header Section */}
-      <header className="w-full px-2 lg:px-0 mb-section-y-sm">
-        {/* Title and Action Links */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-element-gap mb-element-gap">
-          <h1 className="heading-1 uppercase text-foreground-strong flex-1">
-            {t("heading", { place: placeLabel })}
-          </h1>
-          <nav
-            aria-label="Page actions"
-            className="flex flex-wrap items-center gap-x-4 gap-y-2 md:mt-0"
-          >
-            <PressableAnchor
-              href={withLocale(agendaHref)}
-              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
-              prefetch={false}
-              variant="inline"
+        {/* Page Header Section */}
+        <header className="w-full mb-section-y-sm">
+          {/* Title and Action Links */}
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-element-gap mb-element-gap">
+            <h1 className="heading-1 uppercase text-foreground-strong flex-1">
+              {t("heading", { place: placeLabel })}
+            </h1>
+            <nav
+              aria-label="Page actions"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 md:mt-0"
             >
-              {t("seeAgenda", { place: placeLabel })}
-            </PressableAnchor>
-            <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
-              ·
-            </span>
-            <PressableAnchor
-              href={withLocale(`/noticies`)}
-              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
-              prefetch={false}
-              variant="inline"
-            >
-              {t("seeAll")}
-            </PressableAnchor>
-            {/* <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              <PressableAnchor
+                href={withLocale(agendaHref)}
+                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+                prefetch={false}
+                variant="inline"
+              >
+                {t("seeAgenda", { place: placeLabel })}
+              </PressableAnchor>
+              <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+                ·
+              </span>
+              <PressableAnchor
+                href={withLocale(`/noticies`)}
+                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+                prefetch={false}
+                variant="inline"
+              >
+                {t("seeAll")}
+              </PressableAnchor>
+              {/* <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
               ·
             </span>
             <PressableAnchor
@@ -205,20 +157,21 @@ export default async function Page({
             >
               {t("rssLabel")}
             </PressableAnchor> */}
-          </nav>
-        </div>
-      </header>
+            </nav>
+          </div>
+        </header>
 
-      {/* News List Content */}
-      <Suspense fallback={<NewsListSkeleton />}>
-        <NewsList
-          newsPromise={newsPromise}
-          placeTypePromise={placeTypePromise}
-          place={place}
-          currentPage={currentPage}
-          pageSize={pageSize}
-        />
-      </Suspense>
+        {/* News List Content */}
+        <Suspense fallback={<NewsListSkeleton />}>
+          <NewsList
+            newsPromise={newsPromise}
+            placeTypePromise={placeTypePromise}
+            place={place}
+            currentPage={currentPage}
+            pageSize={pageSize}
+          />
+        </Suspense>
+      </div>
     </div>
   );
 }

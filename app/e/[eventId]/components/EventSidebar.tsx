@@ -24,8 +24,7 @@ export default async function EventSidebar({
   cityName,
   regionName,
   primaryPlaceSlug,
-  citySlug,
-  regionSlug,
+  sponsorFallbackPlaces,
 }: EventSidebarProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
@@ -49,8 +48,8 @@ export default async function EventSidebar({
               location={event.location}
               cityName={cityName}
               regionName={regionName}
-              citySlug={citySlug}
-              regionSlug={regionSlug}
+              citySlug={event.city?.slug}
+              regionSlug={event.region?.slug}
               compact
             />
 
@@ -107,10 +106,7 @@ export default async function EventSidebar({
         <Suspense fallback={null}>
           <SponsorBannerSlot
             place={primaryPlaceSlug}
-            fallbackPlaces={[
-              ...(citySlug && regionSlug ? [regionSlug] : []),
-              "catalunya",
-            ].filter((p) => p !== primaryPlaceSlug)}
+            fallbackPlaces={sponsorFallbackPlaces}
           />
         </Suspense>
       </div>

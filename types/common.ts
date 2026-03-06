@@ -342,6 +342,7 @@ export interface CardHorizontalServerProps {
 
 export interface CardShareButtonProps {
   slug: string;
+  url?: string; // If provided, used as share URL. Otherwise defaults to `${siteUrl}/e/${slug}`.
 }
 
 export interface CustomIconProps {

@@ -9,6 +9,7 @@ import {
   getLocaleSafely,
   withLocalePath,
 } from "@utils/i18n-seo";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
 
 export default async function NewsList({
   newsPromise,
@@ -48,24 +49,22 @@ export default async function NewsList({
     );
   }
 
-  const schemaBasePath = basePath || `/noticies/${place}`;
+  const resolvedBasePath = basePath || `/noticies/${place}`;
 
-  const getItemPlace = (item: NewsSummaryResponseDTO) => {
-    const slug = item.city?.slug || item.region?.slug || place;
-    const label = item.city?.name || item.region?.name || placeType.label;
-    return { slug, label };
-  };
+  const defaultPlace = { slug: place, label: placeType.label };
+  const resolvePlace = (item: NewsSummaryResponseDTO) =>
+    basePath
+      ? resolveNewsItemPlace(item, place, placeType.label)
+      : defaultPlace;
 
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": `${siteUrl}${withLocale(schemaBasePath)}#news-itemlist`,
+    "@id": `${siteUrl}${withLocale(resolvedBasePath)}#news-itemlist`,
     name: t("itemListName", { place: placeType.label }),
     numberOfItems: list.length,
     itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => {
-      const itemPlace = basePath
-        ? getItemPlace(item)
-        : { slug: place, label: placeType.label };
+      const itemPlace = resolvePlace(item);
 
       return {
         "@type": "ListItem",
@@ -83,34 +82,50 @@ export default async function NewsList({
 
   return (
     <>
-      {/* Note: Head links for prev/next were here but next/head is not supported in App Router server components in the same way. 
-          We omit them here or they should be handled via metadata if blocking is acceptable, 
-          but since we are streaming, we can't easily inject into head. */}
 
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
 
-      <section className="flex flex-col gap-6 px-2 lg:px-0">
-        {list.map((event: NewsSummaryResponseDTO, index: number) => {
-          const itemPlace = basePath
-            ? getItemPlace(event)
-            : { slug: place, label: placeType.label };
-
+      <section className="px-2 lg:px-0">
+        {/* First card as hero (full width) */}
+        {list.length > 0 && (() => {
+          const heroPlace = resolvePlace(list[0]);
           return (
-            <NewsCard
-              key={`${event.id}-${index}`}
-              event={event}
-              placeSlug={itemPlace.slug}
-              placeLabel={itemPlace.label}
-              variant="default"
-            />
+            <div className="mb-6">
+              <NewsCard
+                key={`${list[0].id}-hero`}
+                event={list[0]}
+                placeSlug={heroPlace.slug}
+                placeLabel={heroPlace.label}
+                variant="hero"
+              />
+            </div>
           );
-        })}
+        })()}
+
+        {/* Remaining cards in responsive grid */}
+        {list.length > 1 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap">
+            {list.slice(1).map((event: NewsSummaryResponseDTO, index: number) => {
+              const itemPlace = resolvePlace(event);
+
+              return (
+                <NewsCard
+                  key={`${event.id}-${index + 1}`}
+                  event={event}
+                  placeSlug={itemPlace.slug}
+                  placeLabel={itemPlace.label}
+                  variant="default"
+                />
+              );
+            })}
+          </div>
+        )}
       </section>
       <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
         {currentPage > 0 ? (
           <PressableAnchor
             href={{
-              pathname: withLocale(basePath || `/noticies/${place}`),
+              pathname: withLocale(resolvedBasePath),
               query: { page: String(currentPage - 1), size: String(pageSize) },
             }}
             prefetch={false}
@@ -125,7 +140,7 @@ export default async function NewsList({
         {!response.last && (
           <PressableAnchor
             href={{
-              pathname: withLocale(basePath || `/noticies/${place}`),
+              pathname: withLocale(resolvedBasePath),
               query: { page: String(currentPage + 1), size: String(pageSize) },
             }}
             prefetch={false}
