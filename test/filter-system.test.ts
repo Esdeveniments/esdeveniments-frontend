@@ -173,6 +173,44 @@ describe("Filter Configuration System", () => {
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    describe("Price Filter", () => {
+      test("price isEnabled when value is not default", () => {
+        const stateWithPrice: FilterDisplayState = {
+          ...mockDisplayState,
+          filters: {
+            ...mockDisplayState.filters,
+            price: "gratis",
+          },
+        };
+        expect(FilterOperations.isEnabled("price", stateWithPrice)).toBe(true);
+      });
+
+      test("price isEnabled false when value is default", () => {
+        expect(FilterOperations.isEnabled("price", mockDisplayState)).toBe(false);
+      });
+
+      test("price getDisplayText returns raw value when not default", () => {
+        const stateWithPrice: FilterDisplayState = {
+          ...mockDisplayState,
+          filters: {
+            ...mockDisplayState.filters,
+            price: "pagament",
+          },
+        };
+        expect(FilterOperations.getDisplayText("price", stateWithPrice)).toBe("pagament");
+      });
+
+      test("price getDisplayText returns undefined when default", () => {
+        expect(FilterOperations.getDisplayText("price", mockDisplayState)).toBeUndefined();
+      });
+
+      test("price removal resets to undefined", () => {
+        const priceConfig = FilterOperations.getConfig("price");
+        const changes = priceConfig?.getRemovalChanges();
+        expect(changes).toEqual({ price: undefined });
+      });
+    });
   });
 
   describe("Filter Removal Logic", () => {

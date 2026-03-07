@@ -174,6 +174,85 @@ describe("url-filters: canonical building and parsing", () => {
     expect(url).toBe("/barcelona");
   });
 
+  it("buildCanonicalUrlDynamic includes price as query param", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+      price: "gratis",
+    });
+    expect(url).toBe("/barcelona?price=gratis");
+  });
+
+  it("buildCanonicalUrlDynamic omits default price", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+      price: DEFAULT_FILTER_VALUE,
+    });
+    expect(url).toBe("/barcelona");
+  });
+
+  it("buildCanonicalUrlDynamic includes price with other query params", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: "avui",
+      category: DEFAULT_FILTER_VALUE,
+      searchTerm: "jazz",
+      price: "pagament",
+    });
+    expect(url).toBe("/barcelona/avui?search=jazz&price=pagament");
+  });
+
+  it("buildCanonicalUrlDynamic includes price with from/to", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "girona",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: "concerts",
+      price: "gratis",
+      from: "2026-04-01",
+      to: "2026-04-07",
+    });
+    expect(url).toBe("/girona/concerts?price=gratis&from=2026-04-01&to=2026-04-07");
+  });
+
+  it("parseFiltersFromUrl extracts price from query params", () => {
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("price=gratis"),
+    );
+    expect(parsed.queryParams.price).toBe("gratis");
+  });
+
+  it("parseFiltersFromUrl extracts price with from/to together", () => {
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("price=pagament&from=2026-05-01&to=2026-05-15"),
+    );
+    expect(parsed.queryParams.price).toBe("pagament");
+    expect(parsed.queryParams.from).toBe("2026-05-01");
+    expect(parsed.queryParams.to).toBe("2026-05-15");
+  });
+
+  it("urlToFilterState includes price when present", () => {
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("price=gratis"),
+    );
+    const state = urlToFilterState(parsed);
+    expect(state.price).toBe("gratis");
+  });
+
+  it("urlToFilterState defaults price to DEFAULT_FILTER_VALUE when absent", () => {
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams(""),
+    );
+    const state = urlToFilterState(parsed);
+    expect(state.price).toBe(DEFAULT_FILTER_VALUE);
+  });
+
   it("urlToFilterState includes from/to when present", () => {
     const parsed = parseFiltersFromUrl(
       { place: "girona" },

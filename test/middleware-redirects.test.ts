@@ -459,4 +459,63 @@ describe("handleCanonicalRedirects", () => {
       expect(result).toBeNull(); // This is expected since there's no redirect needed
     });
   });
+
+  describe("preserves price, from, to query params during redirects", () => {
+    it("preserves price query param when redirecting /place/tots to /place", () => {
+      const request = createMockRequest("/barcelona/tots", "?price=gratis");
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona");
+      expect(redirectUrl.searchParams.get("price")).toBe("gratis");
+    });
+
+    it("preserves from and to query params when redirecting", () => {
+      const request = createMockRequest(
+        "/barcelona/tots",
+        "?from=2026-04-01&to=2026-04-07"
+      );
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona");
+      expect(redirectUrl.searchParams.get("from")).toBe("2026-04-01");
+      expect(redirectUrl.searchParams.get("to")).toBe("2026-04-07");
+    });
+
+    it("preserves price, from, to together with search during redirect", () => {
+      const request = createMockRequest(
+        "/barcelona/tots/concerts",
+        "?search=jazz&price=pagament&from=2026-05-01&to=2026-05-31"
+      );
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona/concerts");
+      expect(redirectUrl.searchParams.get("search")).toBe("jazz");
+      expect(redirectUrl.searchParams.get("price")).toBe("pagament");
+      expect(redirectUrl.searchParams.get("from")).toBe("2026-05-01");
+      expect(redirectUrl.searchParams.get("to")).toBe("2026-05-31");
+    });
+
+    it("preserves price when redirecting legacy query params to canonical path", () => {
+      const request = createMockRequest(
+        "/barcelona",
+        "?date=avui&price=gratis"
+      );
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona/avui");
+      expect(redirectUrl.searchParams.get("price")).toBe("gratis");
+    });
+  });
 });
