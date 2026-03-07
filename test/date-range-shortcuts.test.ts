@@ -42,9 +42,9 @@ describe("DATE_RANGE_SHORTCUTS", () => {
     });
 
     test("returns Monday-Sunday of following week", () => {
-      // Fix date to Wednesday March 11, 2026
+      // Fix date to Wednesday March 11, 2026 (UTC noon avoids timezone day-shift)
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 2, 11)); // March 11, 2026 (Wed)
+      vi.setSystemTime(new Date("2026-03-11T12:00:00Z"));
 
       const { from, to } = nextWeekShortcut.getRange();
       // Next Monday = March 16, Next Sunday = March 22
@@ -54,7 +54,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("returns correct range when today is Sunday", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 2, 15)); // March 15, 2026 (Sun)
+      vi.setSystemTime(new Date("2026-03-15T12:00:00Z"));
 
       const { from, to } = nextWeekShortcut.getRange();
       // Next Monday = March 16, Next Sunday = March 22
@@ -64,7 +64,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("returns correct range when today is Saturday", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 2, 14)); // March 14, 2026 (Sat)
+      vi.setSystemTime(new Date("2026-03-14T12:00:00Z"));
 
       const { from, to } = nextWeekShortcut.getRange();
       // Next Monday = March 16, Next Sunday = March 22
@@ -74,7 +74,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("returns correct range when today is Monday", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 2, 9)); // March 9, 2026 (Mon)
+      vi.setSystemTime(new Date("2026-03-09T12:00:00Z"));
 
       const { from, to } = nextWeekShortcut.getRange();
       // Next Monday = March 16, Next Sunday = March 22
@@ -94,7 +94,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("returns today through end of month", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 2, 7)); // March 7, 2026
+      vi.setSystemTime(new Date("2026-03-07T12:00:00Z"));
 
       const { from, to } = thisMonthShortcut.getRange();
       expect(from).toBe("2026-03-07");
@@ -103,7 +103,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("handles last day of month", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 2, 31)); // March 31, 2026
+      vi.setSystemTime(new Date("2026-03-31T12:00:00Z"));
 
       const { from, to } = thisMonthShortcut.getRange();
       expect(from).toBe("2026-03-31");
@@ -112,7 +112,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("handles February (non-leap year)", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 1, 10)); // Feb 10, 2026
+      vi.setSystemTime(new Date("2026-02-10T12:00:00Z"));
 
       const { from, to } = thisMonthShortcut.getRange();
       expect(from).toBe("2026-02-10");
@@ -121,7 +121,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("handles February (leap year)", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2028, 1, 10)); // Feb 10, 2028 (leap year)
+      vi.setSystemTime(new Date("2028-02-10T12:00:00Z"));
 
       const { from, to } = thisMonthShortcut.getRange();
       expect(from).toBe("2028-02-10");
@@ -140,7 +140,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("returns first through last day of next month", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 2, 7)); // March 7, 2026
+      vi.setSystemTime(new Date("2026-03-07T12:00:00Z"));
 
       const { from, to } = nextMonthShortcut.getRange();
       expect(from).toBe("2026-04-01");
@@ -149,7 +149,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("handles December (wraps to January of next year)", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 11, 15)); // Dec 15, 2026
+      vi.setSystemTime(new Date("2026-12-15T12:00:00Z"));
 
       const { from, to } = nextMonthShortcut.getRange();
       expect(from).toBe("2027-01-01");
@@ -158,7 +158,7 @@ describe("DATE_RANGE_SHORTCUTS", () => {
 
     test("handles January to February", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 0, 20)); // Jan 20, 2026
+      vi.setSystemTime(new Date("2026-01-20T12:00:00Z"));
 
       const { from, to } = nextMonthShortcut.getRange();
       expect(from).toBe("2026-02-01");
