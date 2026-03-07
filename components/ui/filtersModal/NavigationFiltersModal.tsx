@@ -20,7 +20,8 @@ const CalendarDatePicker = dynamic(
   () => import("./CalendarDatePicker"),
   { ssr: false, loading: () => <div className="h-[220px] w-full animate-pulse bg-muted/30 rounded-card" /> },
 );
-import { sendEventToGA, generateRegionsAndTownsOptions } from "@utils/helpers";
+import { generateRegionsAndTownsOptions } from "@utils/helpers";
+import { sendGoogleEvent } from "@utils/analytics";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option, PlaceType } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
@@ -501,12 +502,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       return true;
     }
 
-    sendEventToGA("Place", changes.place, "filters_modal_apply");
-    sendEventToGA("ByDate", changes.byDate, "filters_modal_apply");
-    sendEventToGA("Category", changes.category, "filters_modal_apply");
-    if (changes.distance !== undefined) {
-      sendEventToGA("Distance", changes.distance.toString(), "filters_modal_apply");
-    }
+    sendGoogleEvent("filter_change", {
+      filter_place: changes.place,
+      filter_date: changes.byDate,
+      filter_category: changes.category,
+      filter_distance: changes.distance !== undefined ? changes.distance.toString() : undefined,
+      context: "filters_modal_apply",
+    });
 
     startNavigationFeedback();
     startTransition(() => setLoading(true));

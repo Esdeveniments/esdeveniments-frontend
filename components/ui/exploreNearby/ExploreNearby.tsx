@@ -58,6 +58,9 @@ export default async function ExploreNearby({
                 <Badge
                   href={`/${r.slug}`}
                   ariaLabel={t("linkAria", { place: r.label })}
+                  data-analytics-event-name="explore_nearby_click"
+                  data-analytics-place-slug={r.slug}
+                  data-analytics-context="explore_nearby_regions"
                 >
                   {r.label}
                 </Badge>
@@ -103,6 +106,9 @@ export default async function ExploreNearby({
                 <Badge
                   href={`/${c.slug}`}
                   ariaLabel={t("linkAria", { place: c.label })}
+                  data-analytics-event-name="explore_nearby_click"
+                  data-analytics-place-slug={c.slug}
+                  data-analytics-context="explore_nearby_cities"
                 >
                   {c.label}
                 </Badge>
@@ -164,6 +170,9 @@ export default async function ExploreNearby({
                 <Badge
                   href={`/${link.slug}`}
                   ariaLabel={t("linkAria", { place: link.label })}
+                  data-analytics-event-name="explore_nearby_click"
+                  data-analytics-place-slug={link.slug}
+                  data-analytics-context="explore_nearby_siblings"
                 >
                   {link.label}
                 </Badge>

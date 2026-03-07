@@ -54,7 +54,19 @@ export default function EventClient({
   // } = useEventModals();
 
   useEffect(() => {
-    sendGoogleEvent("view_event_page", {});
+    const isPast = event.endDate
+      ? new Date(event.endDate) < new Date()
+      : false;
+
+    sendGoogleEvent("view_event_page", {
+      event_id: event.id,
+      event_slug: event.slug ?? "",
+      category_slug: event.categories?.[0]?.slug ?? "",
+      place_slug: event.city?.slug ?? event.region?.slug ?? "",
+      has_image: Boolean(event.imageUrl),
+      is_past: isPast,
+      origin: event.origin,
+    });
   }, []);
 
 

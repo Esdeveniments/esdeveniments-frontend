@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useMemo, useTransition, useCallback } from "react";
+import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
@@ -133,6 +133,26 @@ const Publica = () => {
     null
   );
 
+  // Funnel tracking refs (no re-render needed)
+  const formStartedRef = useRef(false);
+  const fieldsInteractedRef = useRef<Set<string>>(new Set());
+  const submittedRef = useRef(false);
+
+  // Track form abandonment on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (formStartedRef.current && !submittedRef.current) {
+        sendGoogleEvent("publica_form_abandon", {
+          fields_touched: Array.from(fieldsInteractedRef.current).join(","),
+          fields_count: fieldsInteractedRef.current.size,
+          source: "publica",
+        });
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   const {
     regionsWithCities,
     isLoading: isLoadingRegionsWithCities,
@@ -163,6 +183,23 @@ const Publica = () => {
     name: K,
     value: FormData[K]
   ) => {
+    // Track first interaction as form_start
+    if (!formStartedRef.current) {
+      formStartedRef.current = true;
+      sendGoogleEvent("publica_form_start", { source: "publica" });
+    }
+
+    // Track per-field interaction (once per field per session)
+    const fieldName = String(name);
+    if (!fieldsInteractedRef.current.has(fieldName)) {
+      fieldsInteractedRef.current.add(fieldName);
+      sendGoogleEvent("publica_field_interact", {
+        field_name: fieldName,
+        fields_count: fieldsInteractedRef.current.size,
+        source: "publica",
+      });
+    }
+
     setForm((prev) => ({ ...prev, [name]: value }));
   }, []);
 
@@ -538,6 +575,7 @@ const Publica = () => {
           has_slug: Boolean(slug),
         });
 
+        submittedRef.current = true;
         router.push(`/e/${slug}`);
       } catch (error) {
         console.error("Submission error:", error);

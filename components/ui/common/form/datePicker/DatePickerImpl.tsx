@@ -283,10 +283,15 @@ export default function DatePickerImpl({
                 : handleDaySelectEnd
             }
             disabled={
-              minDateObj
-                ? { before: minDateObj }
-                : activeField === "end"
-                  ? { before: startDate }
+              activeField === "end"
+                ? {
+                    before:
+                      minDateObj && minDateObj > startDate
+                        ? minDateObj
+                        : startDate,
+                  }
+                : minDateObj
+                  ? { before: minDateObj }
                   : undefined
             }
             defaultMonth={activeField === "start" ? startDate : endDate}

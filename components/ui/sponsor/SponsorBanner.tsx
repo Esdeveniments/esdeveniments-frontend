@@ -114,6 +114,7 @@ export default function SponsorBanner({
         rel="sponsored noopener"
         className={bannerClassName}
         data-analytics-event-name="sponsor_click"
+        data-analytics-link-type="sponsor_website"
         data-analytics-sponsor-name={sponsor.businessName}
         data-analytics-sponsor-place={place}
         data-analytics-sponsor-geo-scope={sponsor.geoScope}

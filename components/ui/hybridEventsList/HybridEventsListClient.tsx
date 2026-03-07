@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, ReactElement, useMemo, Suspense } from "react";
+import { memo, ReactElement, useMemo, Suspense, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
@@ -47,6 +47,7 @@ function HybridEventsListClientContent({
   const parsed = useSharedUrlFilters();
   const t = useTranslations("Components.HybridEventsListClient");
   const locale = useLocale() as AppLocale;
+  const searchResultsTrackedRef = useRef(false);
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
@@ -101,6 +102,25 @@ function HybridEventsListClientContent({
     }
     return uniqueAppended;
   }, [events, realInitialEvents, hasClientFilters]);
+
+  // Track search result counts when search filter is active and results load
+  useEffect(() => {
+    if (
+      search &&
+      !isLoading &&
+      !searchResultsTrackedRef.current &&
+      hasClientFilters
+    ) {
+      searchResultsTrackedRef.current = true;
+      sendGoogleEvent("search_results_loaded", {
+        search_term: search,
+        results_count: displayedEvents.length,
+        place: place || undefined,
+        category: category || undefined,
+        date: date || undefined,
+      });
+    }
+  }, [search, isLoading, hasClientFilters, displayedEvents.length, place, category, date]);
 
   // Log errors for debugging
   if (error) {

@@ -322,7 +322,7 @@ describe("DatePickerImpl", () => {
       expect(screen.getByText("Data i hora *")).toBeInTheDocument();
     });
 
-    it("corrects end date when selected end day is before start date", () => {
+    it("disables days before start date in end-date calendar", () => {
       const props = {
         ...baseProps,
         startDate: "2026-03-15T10:00",

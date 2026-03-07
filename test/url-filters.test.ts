@@ -1684,6 +1684,10 @@ describe("url-filters: hasActiveClientFilters", () => {
     expect(hasActiveClientFilters({ from: "2026-03-13" })).toBe(true);
   });
 
+  it("returns true when calendar to is set", () => {
+    expect(hasActiveClientFilters({ to: "2026-03-20" })).toBe(true);
+  });
+
   it("returns true when lat is set", () => {
     expect(hasActiveClientFilters({ lat: "41.3851" })).toBe(true);
   });

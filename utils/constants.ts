@@ -152,11 +152,25 @@ function toYMD(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+/** Create a Date representing "now" in Madrid local time (avoids wrong day at tz boundaries). */
+function nowInMadrid(): Date {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: TIMEZONE_MADRID,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const y = Number(parts.find((p) => p.type === "year")?.value);
+  const m = Number(parts.find((p) => p.type === "month")?.value) - 1;
+  const d = Number(parts.find((p) => p.type === "day")?.value);
+  return new Date(y, m, d, 12, 0, 0);
+}
+
 export const DATE_RANGE_SHORTCUTS: DateRangeShortcut[] = [
   {
     labelKey: "nextWeek",
     getRange: () => {
-      const today = new Date();
+      const today = nowInMadrid();
       const dayOfWeek = today.getDay(); // 0=Sun
       const daysUntilNextMon = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
       const nextMon = new Date(today);
@@ -169,7 +183,7 @@ export const DATE_RANGE_SHORTCUTS: DateRangeShortcut[] = [
   {
     labelKey: "thisMonth",
     getRange: () => {
-      const today = new Date();
+      const today = nowInMadrid();
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
       return { from: toYMD(today), to: toYMD(lastDay) };
     },
@@ -177,7 +191,7 @@ export const DATE_RANGE_SHORTCUTS: DateRangeShortcut[] = [
   {
     labelKey: "nextMonth",
     getRange: () => {
-      const today = new Date();
+      const today = nowInMadrid();
       const firstDay = new Date(today.getFullYear(), today.getMonth() + 1, 1);
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0);
       return { from: toYMD(firstDay), to: toYMD(lastDay) };

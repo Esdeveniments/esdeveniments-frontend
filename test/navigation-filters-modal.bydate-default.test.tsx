@@ -75,6 +75,10 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
     window.history.pushState({}, "", "/catalunya/avui");
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("applies DEFAULT_FILTER_VALUE ('tots') when no date is selected, not 'avui'", async () => {
     vi.useFakeTimers();
 
