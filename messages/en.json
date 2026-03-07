@@ -527,7 +527,9 @@
       "popularTitle": "Popular now in Catalonia"
     },
     "Filters": {
-      "triggerLabel": "Filters"
+      "triggerLabel": "Filters",
+      "priceFree": "Free",
+      "pricePaid": "Paid"
     },
     "Social": {
       "followUs": "Follow us"
@@ -621,7 +623,14 @@
         "selectPlaceholder": "Select town or county",
         "tagline": "Active filters",
         "dateHeading": "Date",
-        "categoriesHeading": "Categories"
+        "categoriesHeading": "Categories",
+        "priceHeading": "Price",
+        "priceFree": "Free",
+        "pricePaid": "Paid",
+        "calendarLabel": "Or pick from calendar:",
+        "pickDate": "Pick a date...",
+        "viewMore": "View more",
+        "viewLess": "View less"
       }
     },
     "ImageUploader": {
@@ -1387,7 +1396,8 @@
       "category": "Category",
       "date": "Date",
       "distance": "Distance",
-      "search": "Search"
+      "search": "Search",
+      "price": "Price"
     },
     "Categories": {
       "festesPopulars": "Popular festivals",
@@ -1401,7 +1411,10 @@
       "today": "Today",
       "tomorrow": "Tomorrow",
       "weekend": "Weekend",
-      "week": "This week"
+      "week": "This week",
+      "nextWeek": "Next week",
+      "thisMonth": "This month",
+      "nextMonth": "Next month"
     }
   },
   "Sponsor": {

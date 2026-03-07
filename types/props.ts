@@ -265,12 +265,13 @@ export interface DatePickerComponentProps {
   onToggleAllDay?: (isAllDayEvent: boolean) => void;
 }
 
-export interface CustomHeaderProps {
-  date: Date;
-  decreaseMonth: () => void;
-  increaseMonth: () => void;
-  prevMonthButtonDisabled: boolean;
-  nextMonthButtonDisabled: boolean;
+export interface CalendarDatePickerProps {
+  /** Range start as YYYY-MM-DD or empty string */
+  fromDate: string;
+  /** Range end as YYYY-MM-DD or empty string */
+  toDate: string;
+  /** Callback with from/to YYYY-MM-DD strings (empty to clear) */
+  onChange: (from: string, to: string) => void;
 }
 
 export type AcceptedImageTypes =
@@ -420,6 +421,7 @@ export type FilterLabels = {
   triggerLabel: string;
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
+  prices?: Record<string, string>;
   categoryLabelsBySlug?: Record<string, string>;
 };
 
