@@ -287,11 +287,9 @@ describe("DatePickerImpl", () => {
       fireEvent.change(timeInput, { target: { value: "23:00" } });
 
       // Should have called onChange for startDate AND endDate (auto-adjust)
-      const calls = baseProps.onChange.mock.calls;
-      const startCall = calls.find(
-        ([field]: [string]) => field === "startDate"
-      );
-      const endCall = calls.find(([field]: [string]) => field === "endDate");
+      const calls = baseProps.onChange.mock.calls as [string, string][];
+      const startCall = calls.find(([field]) => field === "startDate");
+      const endCall = calls.find(([field]) => field === "endDate");
 
       expect(startCall).toBeDefined();
       expect(endCall).toBeDefined();
