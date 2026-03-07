@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useState,
+  startTransition,
   ChangeEvent,
   KeyboardEvent,
   JSX,
@@ -61,7 +62,7 @@ export default function Search(): JSX.Element {
       const newUrl = queryString ? `${basePath}?${queryString}` : basePath;
 
       startNavigationFeedback();
-      setLoading(true);
+      startTransition(() => setLoading(true));
       router.push(newUrl);
     },
     [searchParams, router, pathname, isHomePage, setLoading]

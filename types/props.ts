@@ -796,3 +796,9 @@ export interface SocialProofCounterProps {
   visits: number;
   interestedLabel: string;
 }
+
+// URL filters context provider
+export interface UrlFiltersProviderProps {
+  children: ReactNode;
+  categories?: CategorySummaryResponseDTO[];
+}

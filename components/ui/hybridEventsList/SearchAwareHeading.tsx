@@ -3,19 +3,18 @@
 import { ReactElement, useEffect } from "react";
 import type { SearchAwareHeadingProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
-import { useUrlFilters } from "@components/hooks/useUrlFilters";
+import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 import { useLocale } from "next-intl";
 import type { AppLocale } from "types/i18n";
 import HeadingLayout from "./HeadingLayout";
 
 export default function SearchAwareHeading({
   pageData,
-  categories = [],
   titleClass,
   subtitleClass,
   cta,
 }: SearchAwareHeadingProps): ReactElement | null {
-  const { queryParams } = useUrlFilters(categories);
+  const { queryParams } = useSharedUrlFilters();
   const searchTerm = queryParams.search;
   const locale = useLocale() as AppLocale;
 

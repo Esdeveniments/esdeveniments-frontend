@@ -223,36 +223,30 @@ export default $config({
         TURSO_DATABASE_URL: requireEnv("TURSO_DATABASE_URL"),
         TURSO_AUTH_TOKEN: requireEnv("TURSO_AUTH_TOKEN"),
       },
-      warm: 3, // Reduced from 5 to save ~$20/month on idle warm instances
+      warm: 1, // Reduced from 3 to minimize warm invocations + GB-seconds. Cold starts ~2s, rare with CloudFront cache.
       server: {
-        // Install sharp with linux-x64 binaries in the server function bundle.
-        // OpenNext excludes sharp by default (only installs it for the image optimizer).
-        // Since we have a custom /api/image-proxy using sharp, we need to include it.
-        // ⚠️ CRITICAL: server.install packages MUST match args.architecture below.
-        // SST 3.17.25 runs `npm install` on CI (x64 Linux) WITHOUT --arch flags,
-        // so platform-specific optional deps resolve to the CI host arch.
-        // Using x86_64 Lambda to match. See: incident Feb 18-22, 2026.
-        // TODO: Switch to arm64 when SST supports cross-platform npm install.
-        install: [
-          "sharp",
-          "@img/sharp-linux-x64",
-          "@img/sharp-libvips-linux-x64",
-        ],
+        // Sharp is installed by open-next.config.ts (the PRIMARY mechanism),
+        // which handles cross-arch installation via its `arch` field.
+        // SST v3's server.install cannot cross-install arm64 packages on x64 CI
+        // (see incident Feb 18-22, 2026), so we don't include Sharp here.
+        // open-next.config.ts installs Sharp@0.34.5 with arch: "arm64".
       },
       transform: {
         server: (args) => {
           // All Lambda functions (server, image optimizer, warmer, revalidation) use nodejs22.x
           // OpenNext applies this runtime to all Lambda functions it creates
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
-          args.memory = "768 MB"; // Actual peak: 436 MB (43% headroom). Was 1792 MB → saves ~$6/month
+          args.memory = "512 MB"; // Actual peak: 436 MB (15% headroom). Was 768 MB → saves ~33% GB-seconds
           args.timeout = "20 seconds";
-          // ⚠️ MUST match server.install Sharp binary arch above.
-          // Using x86_64: SST 3.17.25 doesn't pass --arch to npm install,
-          // so Sharp binaries are always x64 (matching CI host).
-          // TODO: Switch to arm64 when SST supports cross-arch npm install.
-          args.architecture = "x86_64";
+          // arm64 (Graviton2): ~20% cheaper per GB-second vs x86_64.
+          // Sharp arm64 binaries are installed via open-next.config.ts (arch: "arm64"),
+          // which handles cross-arch installation correctly on x64 CI.
+          // See: incident Feb 18-22, 2026 (Sharp arch mismatch).
+          args.architecture = "arm64";
           // Sentry layer ARN - configurable per environment/region
           // Defaults to eu-west-3 version 283 if not specified
+          // Note: Sentry removed the native Relay binary from Node.js layers in mid-2023,
+          // so the layer is now pure JS and compatible with both x86_64 and arm64.
           args.layers = process.env.SENTRY_LAYER_ARN
             ? [process.env.SENTRY_LAYER_ARN]
             : [
@@ -298,7 +292,7 @@ export default $config({
         },
       },
       imageOptimization: {
-        memory: "512 MB", // Actual peak: 149 MB (243% headroom). Was 2048 MB.
+        memory: "384 MB", // Actual peak: 149 MB (157% headroom). Was 512 MB. Sharp needs ~48MB per 4K image + overhead.
         staticEtag: true, // Enable stronger caching for optimized images
       },
       // Invalidate all CloudFront paths on deploy (SST default behavior).

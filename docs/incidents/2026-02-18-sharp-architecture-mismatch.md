@@ -50,6 +50,18 @@ The image-proxy route catches Sharp errors gracefully (returns 200 with unoptimi
 3. **Updated `sst.config.ts`** `server.install` to x64 packages (redundant but consistent)
 4. **Updated `package.json`** platform-specific deps to x64
 
+### Post-Incident: arm64 Migration (Jul 2026)
+
+The original fix used x86_64 as a workaround for SST v3's inability to cross-install.
+Later, the architecture was switched to arm64 (Graviton2) for ~20% cost savings:
+
+1. **`open-next.config.ts`** arch changed to `"arm64"` — the PRIMARY and SOLE Sharp installer
+2. **Lambda architecture** changed to `"arm64"` (Graviton2) in `sst.config.ts`
+3. **Removed Sharp from `server.install`** — server.install cannot cross-install on x64 CI and was always redundant
+4. **Removed `@img/sharp-linux-x64` / `@img/sharp-libvips-linux-x64`** from package.json dependencies
+5. **Updated `next.config.js`** serverExternalPackages to reference arm64 Sharp binaries
+6. Sentry Lambda layer confirmed arm64-compatible (Relay binary removed mid-2023, now pure JS)
+
 ## Prevention Measures
 
 ### Already Implemented
@@ -71,19 +83,18 @@ The image-proxy route catches Sharp errors gracefully (returns 200 with unoptimi
 
 ## Key Files
 
-| File                                      | Role                                              |
-| ----------------------------------------- | ------------------------------------------------- |
-| `open-next.config.ts`                     | **PRIMARY** Sharp installer — MUST NOT be deleted |
-| `sst.config.ts` `server.install`          | Redundant Sharp install (safety net)              |
-| `sst.config.ts` `args.architecture`       | Lambda architecture — must match Sharp arch       |
-| `next.config.js` `serverExternalPackages` | Tells Turbopack to keep Sharp external            |
-| `test/sharp-architecture.test.ts`         | Guard test preventing config drift                |
-| `e2e/image-proxy.spec.ts`                 | E2E test catching runtime Sharp failure           |
+| File                                      | Role                                                       |
+| ----------------------------------------- | ---------------------------------------------------------- |
+| `open-next.config.ts`                     | **PRIMARY and SOLE** Sharp installer — MUST NOT be deleted |
+| `sst.config.ts` `args.architecture`       | Lambda architecture (arm64) — must match Sharp arch        |
+| `next.config.js` `serverExternalPackages` | Tells Turbopack to keep Sharp external                     |
+| `test/sharp-architecture.test.ts`         | Guard test preventing config drift                         |
+| `e2e/image-proxy.spec.ts`                 | E2E test catching runtime Sharp failure                    |
 
 ## Lessons Learned
 
-1. **`open-next.config.ts` is NOT dead weight** — it's the actual Sharp installer for the Lambda bundle. SST's `server.install` alone is insufficient.
+1. **`open-next.config.ts` is NOT dead weight** — it's the actual Sharp installer for the Lambda bundle. SST's `server.install` alone is insufficient. After the arm64 migration, `open-next.config.ts` is the SOLE Sharp installer (server.install was removed as it cannot cross-install).
 2. **Silent fallbacks hide outages** — The graceful error handling (200 + fallback) meant no alerts fired for 4 days. Always add E2E tests for critical optimizations.
-3. **SST's cross-platform npm install is broken in 3.17.25** — Don't trust `server.install` to cross-install for a different arch than the CI host.
+3. **SST v3's cross-platform npm install is broken** — Don't trust `server.install` to cross-install for a different arch than the CI host. Use `open-next.config.ts` with its `arch` field instead.
 4. **Lambda ZIP inspection is the ground truth** — Download and `unzip -l` the actual deployed ZIP to verify what's really there, don't trust config files.
 5. **HAR files catch silent degradations** — The user's HAR file was the only signal that something was wrong.

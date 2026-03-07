@@ -12,7 +12,7 @@ import {
   ClientInteractiveLayerProps,
   ClientInteractiveLayerContentProps,
 } from "types/props";
-import { useUrlFilters } from "@components/hooks/useUrlFilters";
+import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 
 // Extract the parts that use useSearchParams and usePathname into a separate component
 function ClientInteractiveLayerContent({
@@ -26,7 +26,7 @@ function ClientInteractiveLayerContent({
   handleCloseModal,
 }: ClientInteractiveLayerContentProps) {
   const pathname = usePathname();
-  const parsed = useUrlFilters(categories);
+  const parsed = useSharedUrlFilters();
 
   // Determine if it's the home page
   const isHomePage = pathname === "/";

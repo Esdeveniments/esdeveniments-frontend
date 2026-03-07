@@ -23,10 +23,11 @@ const nextConfig = {
   // Mark sharp and its native dependencies as external - required for SST/Lambda deployment
   // Sharp has native binaries that must be bundled separately for the target platform
   // Include @img/* packages to ensure Turbopack doesn't mangle the module resolution
+  // Using arm64 binaries — installed by open-next.config.ts for Graviton2 Lambda
   serverExternalPackages: [
     "sharp",
-    "@img/sharp-linux-x64",
-    "@img/sharp-libvips-linux-x64",
+    "@img/sharp-linux-arm64",
+    "@img/sharp-libvips-linux-arm64",
   ],
   // Disable incremental cache while SST/OpenNext lacks __fetch bucket
   cacheHandler: undefined,
