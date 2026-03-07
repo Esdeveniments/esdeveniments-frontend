@@ -460,7 +460,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         isDistanceFilterActive && !localPlaceCoords
           ? "catalunya"
           : localPlace || "catalunya",
-      byDate: localFromDate ? DEFAULT_FILTER_VALUE : (localByDate || "avui"),
+      byDate: localFromDate ? DEFAULT_FILTER_VALUE : (localByDate || DEFAULT_FILTER_VALUE),
       category: localCategory || DEFAULT_FILTER_VALUE,
       price: localPrice || DEFAULT_FILTER_VALUE,
       from: localFromDate || undefined,
@@ -545,12 +545,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     );
   }, []);
 
-  const handlePriceChange = useCallback((value: string | number) => {
-    setLocalPrice(
-      (prevValue) =>
-        (prevValue === value ? DEFAULT_FILTER_VALUE : value) as string
-    );
-  }, []);
+  // TODO: Re-enable when backend supports the `type` query param
+  // const handlePriceChange = useCallback((value: string | number) => {
+  //   setLocalPrice(
+  //     (prevValue) =>
+  //       (prevValue === value ? DEFAULT_FILTER_VALUE : value) as string
+  //   );
+  // }, []);
 
   // Determine if the selected place is a region (comarca) - regions don't have coordinates
   const isRegionSelected = localPlaceType === "region";
@@ -751,8 +752,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                           type="button"
                           onClick={() => handleDateRangeShortcut(getRange)}
                           className={`px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
                             }`}
                         >
                           {tByDates(labelKey)}
@@ -790,6 +791,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </div>
               </fieldset>
             )}
+            {/* TODO: Re-enable price filter when backend supports the `type` query param.
+                Currently the API ignores `type=FREE|PAID` (returns same 5075 results).
+                All plumbing (config, state, URL parsing, API forwarding) is in place —
+                just uncomment this fieldset once the backend filters by event type.
             <fieldset className="w-full flex flex-col justify-start items-start gap-4">
               <p className="w-full font-semibold font-barlow uppercase">
                 {t("modal.priceHeading")}
@@ -813,6 +818,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 />
               </div>
             </fieldset>
+            */}
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
               <div className="w-full flex items-center justify-between gap-3">
                 <p className="font-semibold font-barlow uppercase pt-[5px]">
