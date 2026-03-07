@@ -422,7 +422,7 @@ export function urlToFilterState(parsed: ParsedFilters): URLFilterState {
 export function hasActiveClientFilters(
   queryParams: Pick<
     URLQueryParams,
-    "search" | "distance" | "price" | "from" | "lat" | "lon"
+    "search" | "distance" | "price" | "from" | "to" | "lat" | "lon"
   >,
 ): boolean {
   return !!(
@@ -430,6 +430,7 @@ export function hasActiveClientFilters(
     queryParams.distance ||
     queryParams.price ||
     queryParams.from ||
+    queryParams.to ||
     queryParams.lat ||
     queryParams.lon
   );
