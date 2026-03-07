@@ -10,7 +10,7 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
-import { useUrlFilters } from "@components/hooks/useUrlFilters";
+import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 import { useTranslations, useLocale } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { AppLocale } from "types/i18n";
@@ -41,10 +41,9 @@ function HybridEventsListClientContent({
   category,
   date,
   serverHasMore = false,
-  categories = [],
   pageData,
 }: HybridEventsListClientProps): ReactElement | null {
-  const parsed = useUrlFilters(categories);
+  const parsed = useSharedUrlFilters();
   const t = useTranslations("Components.HybridEventsListClient");
   const locale = useLocale() as AppLocale;
 
