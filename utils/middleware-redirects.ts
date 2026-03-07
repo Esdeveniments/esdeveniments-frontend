@@ -17,7 +17,15 @@ import {
 } from "./constants";
 
 // Allowed query parameters to preserve in redirects (security: allowlist only)
-const ALLOWED_QUERY_PARAMS = new Set(["search", "distance", "lat", "lon"]);
+const ALLOWED_QUERY_PARAMS = new Set([
+  "search",
+  "distance",
+  "price",
+  "from",
+  "to",
+  "lat",
+  "lon",
+]);
 
 /**
  * Validates query parameters to prevent DOS attacks

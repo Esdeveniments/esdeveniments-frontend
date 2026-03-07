@@ -104,7 +104,7 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("uses fallback data immediately but revalidates when filters are present", async () => {
+  it("does not use fallback data when filters are present, fetches fresh data", async () => {
     const fetchSpy = vi.fn(async () => {
       await new Promise((r) => setTimeout(r, 20));
       return new Response(
@@ -130,7 +130,7 @@ describe("useEvents filtered behaviour", () => {
               date="tots"
               search="foo"
               initialSize={10}
-              // Filtered queries should still show SSR fallback while revalidating
+              // Filtered queries should NOT use SSR fallback (it's for unfiltered data)
               fallbackData={[createMockEvent("f", "F", "f")]}
             />
           </React.Suspense>
@@ -138,12 +138,12 @@ describe("useEvents filtered behaviour", () => {
       );
     });
 
-    // Should render immediately with fallback count
-    expect(screen.getByTestId("count").textContent).toBe("1");
+    // Fallback data is NOT used when client filters are active (avoids stale SSR events)
+    expect(screen.getByTestId("count").textContent).toBe("0");
 
     // Fetches fresh data
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
-    // After fetch completes, shows the revalidated result
+    // After fetch completes, shows the fresh result
     await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("1"));
   });
 

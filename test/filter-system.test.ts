@@ -35,6 +35,7 @@ describe("Filter Configuration System", () => {
         "distance",
         "search",
         "coordinates",
+        "price",
       ];
       FILTER_CONFIGURATIONS.forEach((config) => {
         expect(validTypes).toContain(config.type);
@@ -50,11 +51,16 @@ describe("Filter Configuration System", () => {
         category: "concerts",
         searchTerm: "",
         distance: 50,
+        price: DEFAULT_FILTER_VALUE,
         lat: undefined,
         lon: undefined,
       },
       queryParams: {},
-      segments: { place: "barcelona", date: DEFAULT_FILTER_VALUE, category: "concerts" },
+      segments: {
+        place: "barcelona",
+        date: DEFAULT_FILTER_VALUE,
+        category: "concerts",
+      },
       extraData: {
         categories: [{ slug: "concerts", name: "Concerts" }],
         placeTypeLabel: { label: "Barcelona" },
@@ -77,22 +83,22 @@ describe("Filter Configuration System", () => {
     test("isEnabled works correctly", () => {
       expect(FilterOperations.isEnabled("place", mockDisplayState)).toBe(true);
       expect(FilterOperations.isEnabled("byDate", mockDisplayState)).toBe(
-        false
+        false,
       );
       expect(FilterOperations.isEnabled("category", mockDisplayState)).toBe(
-        true
+        true,
       );
     });
 
     test("getDisplayText works correctly", () => {
       expect(FilterOperations.getDisplayText("place", mockDisplayState)).toBe(
-        "Barcelona"
+        "Barcelona",
       );
       expect(
-        FilterOperations.getDisplayText("byDate", mockDisplayState)
+        FilterOperations.getDisplayText("byDate", mockDisplayState),
       ).toBeUndefined();
       expect(
-        FilterOperations.getDisplayText("category", mockDisplayState)
+        FilterOperations.getDisplayText("category", mockDisplayState),
       ).toBe("Concerts");
     });
 
@@ -110,7 +116,10 @@ describe("Filter Configuration System", () => {
           date: "avui",
         },
       };
-      const displayText = FilterOperations.getDisplayText("byDate", stateWithDate);
+      const displayText = FilterOperations.getDisplayText(
+        "byDate",
+        stateWithDate,
+      );
       // Should return labelKey, not URL value
       expect(displayText).toBe("today");
     });
@@ -126,10 +135,15 @@ describe("Filter Configuration System", () => {
           category: DEFAULT_FILTER_VALUE,
           searchTerm: "",
           distance: 50,
+          price: DEFAULT_FILTER_VALUE,
           lat: undefined,
           lon: undefined,
         },
-        segments: { place: "catalunya", date: DEFAULT_FILTER_VALUE, category: DEFAULT_FILTER_VALUE },
+        segments: {
+          place: "catalunya",
+          date: DEFAULT_FILTER_VALUE,
+          category: DEFAULT_FILTER_VALUE,
+        },
       };
       expect(FilterOperations.hasActiveFilters(inactiveState)).toBe(false);
     });
@@ -148,6 +162,7 @@ describe("Filter Configuration System", () => {
         category: DEFAULT_FILTER_VALUE,
         searchTerm: "",
         distance: 50,
+        price: DEFAULT_FILTER_VALUE,
         lat: undefined,
         lon: undefined,
       });
@@ -175,6 +190,81 @@ describe("Filter Configuration System", () => {
       const placeConfig = FilterOperations.getConfig("place");
       const changes = placeConfig?.getRemovalChanges();
       expect(changes).toEqual({ place: "catalunya" });
+    });
+
+    test("byDate removal also clears calendar from/to", () => {
+      const byDateConfig = FilterOperations.getConfig("byDate");
+      const changes = byDateConfig?.getRemovalChanges();
+      expect(changes).toEqual({
+        byDate: DEFAULT_FILTER_VALUE,
+        from: undefined,
+        to: undefined,
+      });
+    });
+  });
+
+  describe("Calendar Date Integration", () => {
+    const calendarBaseState: FilterDisplayState = {
+      filters: {
+        place: "barcelona",
+        byDate: DEFAULT_FILTER_VALUE,
+        category: "concerts",
+        searchTerm: "",
+        distance: 50,
+        price: DEFAULT_FILTER_VALUE,
+        lat: undefined,
+        lon: undefined,
+      },
+      queryParams: {},
+      segments: {
+        place: "barcelona",
+        date: DEFAULT_FILTER_VALUE,
+        category: "concerts",
+      },
+      extraData: {
+        categories: [{ slug: "concerts", name: "Concerts" }],
+        placeTypeLabel: { label: "Barcelona" },
+      },
+    };
+
+    test("byDate isEnabled when calendar from param is set", () => {
+      const stateWithCalendar: FilterDisplayState = {
+        ...calendarBaseState,
+        queryParams: { from: "2026-03-15", to: "2026-03-15" },
+      };
+      expect(FilterOperations.isEnabled("byDate", stateWithCalendar)).toBe(
+        true,
+      );
+    });
+
+    test("byDate isEnabled false when no shortcut and no calendar", () => {
+      expect(FilterOperations.isEnabled("byDate", calendarBaseState)).toBe(
+        false,
+      );
+    });
+
+    test("byDate getDisplayText returns formatted date for calendar", () => {
+      const stateWithCalendar: FilterDisplayState = {
+        ...calendarBaseState,
+        queryParams: { from: "2026-03-15", to: "2026-03-15" },
+      };
+      expect(FilterOperations.getDisplayText("byDate", stateWithCalendar)).toBe(
+        "15/03",
+      );
+    });
+
+    test("byDate getDisplayText prefers calendar over shortcut", () => {
+      const stateBoth: FilterDisplayState = {
+        ...calendarBaseState,
+        filters: {
+          ...calendarBaseState.filters,
+          byDate: "avui",
+        },
+        queryParams: { from: "2026-12-25" },
+      };
+      expect(FilterOperations.getDisplayText("byDate", stateBoth)).toBe(
+        "25/12",
+      );
     });
   });
 });

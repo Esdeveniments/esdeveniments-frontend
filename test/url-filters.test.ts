@@ -8,6 +8,7 @@ import {
   toUrlSearchParams,
   buildFallbackUrlForInvalidPlace,
   getCategorySlug,
+  hasActiveClientFilters,
 } from "../utils/url-filters";
 import { DEFAULT_FILTER_VALUE, MAX_QUERY_PARAMS } from "../utils/constants";
 import type { CategorySummaryResponseDTO } from "../types/api/category";
@@ -86,7 +87,7 @@ describe("url-filters: canonical building and parsing", () => {
   it("parses 1, 2 and 3 segments correctly", () => {
     const one = parseFiltersFromUrl(
       { place: "catalunya" },
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     expect(one.segments).toEqual({
       place: "catalunya",
@@ -96,7 +97,7 @@ describe("url-filters: canonical building and parsing", () => {
 
     const twoDate = parseFiltersFromUrl(
       { place: "catalunya", date: "avui" },
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     expect(twoDate.segments).toEqual({
       place: "catalunya",
@@ -106,7 +107,7 @@ describe("url-filters: canonical building and parsing", () => {
 
     const twoCat = parseFiltersFromUrl(
       { place: "catalunya", category: "concerts" },
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     expect(twoCat.segments).toEqual({
       place: "catalunya",
@@ -116,7 +117,7 @@ describe("url-filters: canonical building and parsing", () => {
 
     const three = parseFiltersFromUrl(
       { place: "mataro", date: "avui", category: "concerts" },
-      new URLSearchParams("search=art")
+      new URLSearchParams("search=art"),
     );
     expect(three.segments).toEqual({
       place: "mataro",
@@ -129,7 +130,7 @@ describe("url-filters: canonical building and parsing", () => {
   it("urlToFilterState converts parsed filters and preserves defaults for numbers", () => {
     const parsed = parseFiltersFromUrl(
       { place: "lleida" },
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     const state = urlToFilterState(parsed);
     expect(state).toEqual({
@@ -138,15 +139,55 @@ describe("url-filters: canonical building and parsing", () => {
       category: DEFAULT_FILTER_VALUE,
       searchTerm: "",
       distance: 50,
+      price: DEFAULT_FILTER_VALUE,
       lat: undefined,
       lon: undefined,
     });
   });
 
+  it("parseFiltersFromUrl extracts calendar from/to query params", () => {
+    const parsed = parseFiltersFromUrl(
+      { place: "barcelona" },
+      new URLSearchParams("from=2026-03-15&to=2026-03-15"),
+    );
+    expect(parsed.queryParams.from).toBe("2026-03-15");
+    expect(parsed.queryParams.to).toBe("2026-03-15");
+  });
+
+  it("buildCanonicalUrlDynamic includes from/to as query params", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+      from: "2026-03-15",
+      to: "2026-03-15",
+    });
+    expect(url).toBe("/barcelona?from=2026-03-15&to=2026-03-15");
+  });
+
+  it("buildCanonicalUrlDynamic omits from/to when undefined", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+    });
+    expect(url).toBe("/barcelona");
+  });
+
+  it("urlToFilterState includes from/to when present", () => {
+    const parsed = parseFiltersFromUrl(
+      { place: "girona" },
+      new URLSearchParams("from=2026-06-01&to=2026-06-01"),
+    );
+    const state = urlToFilterState(parsed);
+    expect(state.from).toBe("2026-06-01");
+    expect(state.to).toBe("2026-06-01");
+  });
+
   it("getRedirectUrl returns canonical URL when parsed is not canonical", () => {
     const parsed = parseFiltersFromUrl(
       { place: "tarragona", date: "xx", category: "yy" },
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     const redirect = getRedirectUrl(parsed);
     // "xx" is not a valid date, "yy" is format-valid but not in API
@@ -159,7 +200,7 @@ describe("url-filters: canonical building and parsing", () => {
     // Invalid format category -> normalizes to 'tots'
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", category: "not a category!" }, // Invalid format (has spaces)
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     expect(parsed.isCanonical).toBe(false);
     const redirect = getRedirectUrl(parsed);
@@ -170,7 +211,7 @@ describe("url-filters: canonical building and parsing", () => {
     // Format-valid category is preserved (will be validated at runtime)
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", category: "not-a-category" }, // Valid format
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     // Without dynamic categories, format-valid slugs are accepted
     expect(parsed.isCanonical).toBe(true);
@@ -180,7 +221,7 @@ describe("url-filters: canonical building and parsing", () => {
     // Invalid format category with valid date -> category becomes 'tots' and is omitted
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", date: "avui", category: "not a category!" }, // Invalid format
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     expect(parsed.isCanonical).toBe(false);
     const redirect = getRedirectUrl(parsed);
@@ -191,7 +232,7 @@ describe("url-filters: canonical building and parsing", () => {
     // Format-valid category is preserved (will be validated at runtime)
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", date: "avui", category: "not-a-category" }, // Valid format
-      new URLSearchParams("")
+      new URLSearchParams(""),
     );
     // Without dynamic categories, format-valid slugs are accepted
     expect(parsed.isCanonical).toBe(true);
@@ -202,7 +243,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre"),
-      dynamicCategories
+      dynamicCategories,
     );
     expect(parsed.segments).toEqual({
       place: "barcelona",
@@ -215,7 +256,7 @@ describe("url-filters: canonical building and parsing", () => {
   it("reads date from query params when only place segment exists", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
-      new URLSearchParams("date=avui")
+      new URLSearchParams("date=avui"),
     );
     expect(parsed.segments).toEqual({
       place: "barcelona",
@@ -230,7 +271,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre&date=tots"),
-      dynamicCategories
+      dynamicCategories,
     );
     expect(parsed.segments).toEqual({
       place: "barcelona",
@@ -243,19 +284,19 @@ describe("url-filters: canonical building and parsing", () => {
   it("marks URL as non-canonical when category/date are in query params", () => {
     const withCategory = parseFiltersFromUrl(
       { place: "barcelona" },
-      new URLSearchParams("category=concerts")
+      new URLSearchParams("category=concerts"),
     );
     expect(withCategory.isCanonical).toBe(false);
 
     const withDate = parseFiltersFromUrl(
       { place: "barcelona" },
-      new URLSearchParams("date=avui")
+      new URLSearchParams("date=avui"),
     );
     expect(withDate.isCanonical).toBe(false);
 
     const withBoth = parseFiltersFromUrl(
       { place: "barcelona" },
-      new URLSearchParams("category=concerts&date=avui")
+      new URLSearchParams("category=concerts&date=avui"),
     );
     expect(withBoth.isCanonical).toBe(false);
   });
@@ -266,7 +307,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre&date=tots"),
-      dynamicCategories
+      dynamicCategories,
     );
     const redirect = getRedirectUrl(parsed);
     expect(redirect).toBe("/barcelona/teatre");
@@ -277,7 +318,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona" },
       new URLSearchParams("category=teatre&date=tots&search=castellers"),
-      dynamicCategories
+      dynamicCategories,
     );
     const redirect = getRedirectUrl(parsed);
     expect(redirect).toBe("/barcelona/teatre?search=castellers");
@@ -289,7 +330,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", category: "teatre" },
       new URLSearchParams("date=avui"),
-      dynamicCategories
+      dynamicCategories,
     );
     expect(parsed.segments).toEqual({
       place: "barcelona",
@@ -306,7 +347,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", date: DEFAULT_FILTER_VALUE },
       new URLSearchParams(),
-      []
+      [],
     );
     expect(parsed.isCanonical).toBe(false);
     const redirect = getRedirectUrl(parsed);
@@ -319,7 +360,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", date: DEFAULT_FILTER_VALUE, category: "teatre" },
       new URLSearchParams(),
-      dynamicCategories
+      dynamicCategories,
     );
     expect(parsed.isCanonical).toBe(false);
     const redirect = getRedirectUrl(parsed);
@@ -331,7 +372,7 @@ describe("url-filters: canonical building and parsing", () => {
     const parsed = parseFiltersFromUrl(
       { place: "barcelona", date: DEFAULT_FILTER_VALUE },
       new URLSearchParams("search=castellers"),
-      []
+      [],
     );
     expect(parsed.isCanonical).toBe(false);
     const redirect = getRedirectUrl(parsed);
@@ -423,7 +464,7 @@ describe("url-filters: toUrlSearchParams conversion", () => {
       // Create an array with more values than MAX_QUERY_PARAMS
       const manyValues = Array.from(
         { length: MAX_QUERY_PARAMS + 10 },
-        (_, i) => `value${i}`
+        (_, i) => `value${i}`,
       );
       const raw = { foo: manyValues };
       const params = toUrlSearchParams(raw);
@@ -432,7 +473,7 @@ describe("url-filters: toUrlSearchParams conversion", () => {
       expect(params.getAll("foo").length).toBe(MAX_QUERY_PARAMS);
       expect(params.getAll("foo")[0]).toBe("value0");
       expect(params.getAll("foo")[MAX_QUERY_PARAMS - 1]).toBe(
-        `value${MAX_QUERY_PARAMS - 1}`
+        `value${MAX_QUERY_PARAMS - 1}`,
       );
     });
 
@@ -464,7 +505,7 @@ describe("url-filters: toUrlSearchParams conversion", () => {
       // All should be present
       expect(params.get("key0")).toBe("value0");
       expect(params.get(`key${MAX_QUERY_PARAMS - 1}`)).toBe(
-        `value${MAX_QUERY_PARAMS - 1}`
+        `value${MAX_QUERY_PARAMS - 1}`,
       );
     });
 
@@ -1201,7 +1242,7 @@ describe("url-filters: getCategorySlug", () => {
 
     it("returns DEFAULT_FILTER_VALUE for null even with dynamic categories", () => {
       expect(getCategorySlug(null as any, mockCategories)).toBe(
-        DEFAULT_FILTER_VALUE
+        DEFAULT_FILTER_VALUE,
       );
     });
   });
@@ -1225,25 +1266,25 @@ describe("url-filters: getCategorySlug", () => {
 
     it("finds category with spaces in name", () => {
       expect(getCategorySlug("Fires i Mercats", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
 
     it("finds category with spaces in name (case-insensitive)", () => {
       expect(getCategorySlug("FIRES I MERCATS", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
 
     it("finds category with spaces in name (mixed case)", () => {
       expect(getCategorySlug("Fires I Mercats", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
 
     it("finds category with accented characters in name", () => {
       expect(getCategorySlug("Festes Populars", mockCategories)).toBe(
-        "festes-populars"
+        "festes-populars",
       );
     });
   });
@@ -1255,13 +1296,13 @@ describe("url-filters: getCategorySlug", () => {
 
     it("finds category by exact slug match with hyphens", () => {
       expect(getCategorySlug("fires-i-mercats", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
 
     it("finds category by exact slug match with multiple hyphens", () => {
       expect(getCategorySlug("festes-populars", mockCategories)).toBe(
-        "festes-populars"
+        "festes-populars",
       );
     });
   });
@@ -1277,13 +1318,13 @@ describe("url-filters: getCategorySlug", () => {
 
     it("finds category by slug case-insensitive with hyphens", () => {
       expect(getCategorySlug("FIRES-I-MERCATS", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
 
     it("finds category by slug case-insensitive with hyphens (mixed case)", () => {
       expect(getCategorySlug("Fires-I-Mercats", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
   });
@@ -1295,25 +1336,25 @@ describe("url-filters: getCategorySlug", () => {
 
     it("returns category as-is when format is valid and dynamic categories don't match", () => {
       expect(getCategorySlug("unknown-slug", mockCategories)).toBe(
-        "unknown-slug"
+        "unknown-slug",
       );
     });
 
     it("returns category as-is for valid format with numbers", () => {
       expect(getCategorySlug("category123", mockCategories)).toBe(
-        "category123"
+        "category123",
       );
     });
 
     it("returns category as-is for valid format with hyphens", () => {
       expect(getCategorySlug("test-category-slug", mockCategories)).toBe(
-        "test-category-slug"
+        "test-category-slug",
       );
     });
 
     it("returns category as-is for valid format with multiple hyphens", () => {
       expect(getCategorySlug("test---category", mockCategories)).toBe(
-        "test---category"
+        "test---category",
       );
     });
 
@@ -1330,7 +1371,7 @@ describe("url-filters: getCategorySlug", () => {
     it("normalizes invalid format with spaces when no dynamic match", () => {
       // Invalid format (has spaces) - should be sanitized to valid slug
       expect(getCategorySlug("invalid category", mockCategories)).toBe(
-        "invalid-category"
+        "invalid-category",
       );
     });
 
@@ -1378,11 +1419,11 @@ describe("url-filters: getCategorySlug", () => {
       ];
       // Match by name
       expect(getCategorySlug("Fires i Mercats", categories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
       // Match by slug
       expect(getCategorySlug("fires-i-mercats", categories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
   });
@@ -1398,7 +1439,7 @@ describe("url-filters: getCategorySlug", () => {
 
     it("handles mixed case with hyphens", () => {
       expect(getCategorySlug("FiReS-i-MeRcAtS", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
   });
@@ -1414,19 +1455,19 @@ describe("url-filters: getCategorySlug", () => {
 
     it("handles category with special name format", () => {
       expect(getCategorySlug("Fires i Mercats", mockCategories)).toBe(
-        "fires-i-mercats"
+        "fires-i-mercats",
       );
     });
 
     it("handles category with accented characters", () => {
       expect(getCategorySlug("Festes Populars", mockCategories)).toBe(
-        "festes-populars"
+        "festes-populars",
       );
     });
 
     it("handles unknown category gracefully", () => {
       expect(getCategorySlug("unknown-category", mockCategories)).toBe(
-        "unknown-category"
+        "unknown-category",
       );
     });
   });
@@ -1442,7 +1483,7 @@ describe("url-filters: getCategorySlug", () => {
 
     it("normalizes category with slashes to safe slug", () => {
       expect(getCategorySlug("category/with/slashes", mockCategories)).toBe(
-        "categorywithslashes"
+        "categorywithslashes",
       );
     });
 
@@ -1455,7 +1496,7 @@ describe("url-filters: getCategorySlug", () => {
 
     it("normalizes category with hash fragments", () => {
       expect(getCategorySlug("category#fragment", mockCategories)).toBe(
-        "categoryfragment"
+        "categoryfragment",
       );
     });
 
@@ -1468,13 +1509,13 @@ describe("url-filters: getCategorySlug", () => {
 
     it("normalizes category with null bytes", () => {
       expect(getCategorySlug("category\0null", mockCategories)).toBe(
-        "categorynull"
+        "categorynull",
       );
     });
 
     it("normalizes category with unicode control characters", () => {
       expect(getCategorySlug("category\u0000\u0001", mockCategories)).toBe(
-        "category"
+        "category",
       );
     });
 
@@ -1495,7 +1536,7 @@ describe("url-filters: getCategorySlug", () => {
       const result = getCategorySlug("!@#$%^&*()", mockCategories);
       // Result may be a short valid slug or DEFAULT_FILTER_VALUE
       expect(
-        result === DEFAULT_FILTER_VALUE || /^[a-z0-9-]+$/.test(result)
+        result === DEFAULT_FILTER_VALUE || /^[a-z0-9-]+$/.test(result),
       ).toBe(true);
     });
 
@@ -1509,7 +1550,7 @@ describe("url-filters: getCategorySlug", () => {
       const result = getCategorySlug("Unsafe", unsafeCategories);
       // Either DEFAULT_FILTER_VALUE or a valid sanitized slug
       expect(
-        result === DEFAULT_FILTER_VALUE || /^[a-z0-9-]+$/.test(result)
+        result === DEFAULT_FILTER_VALUE || /^[a-z0-9-]+$/.test(result),
       ).toBe(true);
       // Ensure no path traversal characters remain
       expect(result).not.toContain("/");
@@ -1525,5 +1566,64 @@ describe("url-filters: getCategorySlug", () => {
       // Should skip categories with missing name or slug
       expect(getCategorySlug("Valid", incompleteCategories)).toBe("valid-slug");
     });
+  });
+});
+
+describe("url-filters: hasActiveClientFilters", () => {
+  it("returns false when no query params are set", () => {
+    expect(hasActiveClientFilters({})).toBe(false);
+  });
+
+  it("returns false when all params are undefined", () => {
+    expect(
+      hasActiveClientFilters({
+        search: undefined,
+        distance: undefined,
+        price: undefined,
+        from: undefined,
+        lat: undefined,
+        lon: undefined,
+      }),
+    ).toBe(false);
+  });
+
+  it("returns true when search is set", () => {
+    expect(hasActiveClientFilters({ search: "concert" })).toBe(true);
+  });
+
+  it("returns true when distance is set", () => {
+    expect(hasActiveClientFilters({ distance: "10" })).toBe(true);
+  });
+
+  it("returns true when price is set", () => {
+    expect(hasActiveClientFilters({ price: "gratis" })).toBe(true);
+  });
+
+  it("returns true when calendar from is set", () => {
+    expect(hasActiveClientFilters({ from: "2026-03-13" })).toBe(true);
+  });
+
+  it("returns true when lat is set", () => {
+    expect(hasActiveClientFilters({ lat: "41.3851" })).toBe(true);
+  });
+
+  it("returns true when lon is set", () => {
+    expect(hasActiveClientFilters({ lon: "2.1734" })).toBe(true);
+  });
+
+  it("returns true when multiple filters are active", () => {
+    expect(
+      hasActiveClientFilters({
+        search: "jazz",
+        price: "gratis",
+        from: "2026-04-01",
+      }),
+    ).toBe(true);
+  });
+
+  it("returns false when params are empty strings", () => {
+    expect(
+      hasActiveClientFilters({ search: "", distance: "", price: "" }),
+    ).toBe(false);
   });
 });
