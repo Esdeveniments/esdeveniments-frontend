@@ -274,4 +274,204 @@ describe("useEvents filtered behaviour", () => {
     });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
+
+  it("includes type=FREE when price is gratis", async () => {
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input), "http://localhost");
+      expect(url.searchParams.get("type")).toBe("FREE");
+      return new Response(
+        JSON.stringify({
+          content: [createMockEvent("p1", "Free Event", "free-event")],
+          currentPage: 0,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+          last: true,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    await act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="barcelona"
+              date="tots"
+              price="gratis"
+              initialSize={10}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("1");
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("includes type=PAID when price is pagament", async () => {
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input), "http://localhost");
+      expect(url.searchParams.get("type")).toBe("PAID");
+      return new Response(
+        JSON.stringify({
+          content: [createMockEvent("p2", "Paid Event", "paid-event")],
+          currentPage: 0,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+          last: true,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    await act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="barcelona"
+              date="tots"
+              price="pagament"
+              initialSize={10}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("1");
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not include type when price is default", async () => {
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input), "http://localhost");
+      expect(url.searchParams.has("type")).toBe(false);
+      return new Response(
+        JSON.stringify({
+          content: [createMockEvent("p3", "Any Event", "any-event")],
+          currentPage: 0,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+          last: true,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    await act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="barcelona"
+              date="tots"
+              search="trigger"
+              initialSize={10}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("1");
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("includes from/to in request when explicit dates are provided", async () => {
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input), "http://localhost");
+      expect(url.searchParams.get("from")).toBe("2026-04-01");
+      expect(url.searchParams.get("to")).toBe("2026-04-07");
+      // Should not include byDate when explicit from is set
+      expect(url.searchParams.has("byDate")).toBe(false);
+      return new Response(
+        JSON.stringify({
+          content: [createMockEvent("d1", "Date Event", "date-event")],
+          currentPage: 0,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+          last: true,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    await act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="barcelona"
+              date="tots"
+              from="2026-04-01"
+              to="2026-04-07"
+              initialSize={10}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("1");
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses from as to when only from is provided", async () => {
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input), "http://localhost");
+      expect(url.searchParams.get("from")).toBe("2026-05-15");
+      expect(url.searchParams.get("to")).toBe("2026-05-15");
+      return new Response(
+        JSON.stringify({
+          content: [createMockEvent("d2", "Single Date", "single-date")],
+          currentPage: 0,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+          last: true,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    await act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Harness
+              place="barcelona"
+              date="tots"
+              from="2026-05-15"
+              initialSize={10}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("1");
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
 });
