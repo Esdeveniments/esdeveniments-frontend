@@ -1,5 +1,5 @@
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
-import type { ByDateOption } from "types/common";
+import type { ByDateOption, DateRangeShortcut } from "types/common";
 import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
@@ -133,6 +133,56 @@ export const BYDATES: ByDateOption[] = [
   { value: "dema", labelKey: "tomorrow" },
   { value: "cap-de-setmana", labelKey: "weekend" },
   { value: "setmana", labelKey: "week" },
+];
+
+/**
+ * Date range shortcuts that compute from/to dates client-side.
+ * These populate from/to query params instead of byDate URL segments.
+ */
+function toYMD(d: Date): string {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: TIMEZONE_MADRID,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const y = parts.find((p) => p.type === "year")?.value ?? "";
+  const m = parts.find((p) => p.type === "month")?.value ?? "";
+  const day = parts.find((p) => p.type === "day")?.value ?? "";
+  return `${y}-${m}-${day}`;
+}
+
+export const DATE_RANGE_SHORTCUTS: DateRangeShortcut[] = [
+  {
+    labelKey: "nextWeek",
+    getRange: () => {
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0=Sun
+      const daysUntilNextMon = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+      const nextMon = new Date(today);
+      nextMon.setDate(today.getDate() + daysUntilNextMon);
+      const nextSun = new Date(nextMon);
+      nextSun.setDate(nextMon.getDate() + 6);
+      return { from: toYMD(nextMon), to: toYMD(nextSun) };
+    },
+  },
+  {
+    labelKey: "thisMonth",
+    getRange: () => {
+      const today = new Date();
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return { from: toYMD(today), to: toYMD(lastDay) };
+    },
+  },
+  {
+    labelKey: "nextMonth",
+    getRange: () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+      return { from: toYMD(firstDay), to: toYMD(lastDay) };
+    },
+  },
 ];
 
 /**

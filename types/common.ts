@@ -19,6 +19,18 @@ export interface ByDateOption {
   labelKey: string;
 }
 
+/**
+ * Date range shortcuts that compute from/to dates client-side.
+ * Unlike ByDateOption (which maps to URL segments handled by the backend API),
+ * these shortcuts generate explicit from/to query params.
+ */
+export interface DateRangeShortcut {
+  /** i18n label key under Config.ByDates */
+  labelKey: string;
+  /** Computes { from, to } as YYYY-MM-DD strings */
+  getRange: () => { from: string; to: string };
+}
+
 // Type guard for Option (centralized for reuse in forms)
 export function isOption(obj: unknown): obj is Option {
   return !!obj && typeof obj === "object" && "value" in obj && "label" in obj;

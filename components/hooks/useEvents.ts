@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { hasActiveClientFilters } from "@utils/url-filters";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import {
@@ -27,6 +28,7 @@ const pageFetcher = async (
   if (params.byDate) qs.set("byDate", params.byDate);
   if (params.from) qs.set("from", params.from);
   if (params.to) qs.set("to", params.to);
+  if (params.type) qs.set("type", params.type);
 
   const res = await fetch(`/api/events?${qs.toString()}`);
   if (!res.ok) {
@@ -35,12 +37,22 @@ const pageFetcher = async (
   return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
 
+/** Map URL price slug to API EventType value */
+const priceToType = (price?: string): string | undefined => {
+  if (price === "gratis") return "FREE";
+  if (price === "pagament") return "PAID";
+  return undefined;
+};
+
 export const useEvents = ({
   place,
   category,
   date,
   search,
   distance,
+  price,
+  from: explicitFrom,
+  to: explicitTo,
   lat,
   lon,
   initialSize = 12,
@@ -52,21 +64,47 @@ export const useEvents = ({
 
   const currentKey = useMemo(
     () =>
-      `${place}|${category}|${date}|${search}|${distance}|${lat}|${lon}|${initialSize}`,
-    [place, category, date, search, distance, lat, lon, initialSize],
+      `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${initialSize}`,
+    [
+      place,
+      category,
+      date,
+      search,
+      distance,
+      price,
+      explicitFrom,
+      explicitTo,
+      lat,
+      lon,
+      initialSize,
+    ],
   );
 
-  const hasClientFilters = !!(search || distance || lat || lon);
+  const eventType = priceToType(price);
+
+  const hasClientFilters = hasActiveClientFilters({
+    search,
+    distance,
+    price,
+    from: explicitFrom,
+    lat: lat !== undefined ? String(lat) : undefined,
+    lon: lon !== undefined ? String(lon) : undefined,
+  });
 
   const isActivated = hasClientFilters || activationKey === currentKey;
 
-  const dateRange = getDateRangeFromByDate(date || DEFAULT_FILTER_VALUE);
-  const range = dateRange
-    ? {
-        from: toLocalDateString(dateRange.from),
-        to: toLocalDateString(dateRange.until),
-      }
-    : {};
+  // Explicit calendar from/to take precedence over byDate shortcut
+  const dateRange = explicitFrom
+    ? null
+    : getDateRangeFromByDate(date || DEFAULT_FILTER_VALUE);
+  const range = explicitFrom
+    ? { from: explicitFrom, to: explicitTo || explicitFrom }
+    : dateRange
+      ? {
+          from: toLocalDateString(dateRange.from),
+          to: toLocalDateString(dateRange.until),
+        }
+      : {};
 
   const radius = distance ? parseFloat(distance) : undefined;
   const latNumber = lat !== undefined ? parseFloat(lat) : undefined;
@@ -84,10 +122,11 @@ export const useEvents = ({
     size: initialSize,
     place: placeForRequest,
     category,
-    byDate: date,
+    byDate: explicitFrom ? undefined : date,
     from: range.from,
     to: range.to,
     term: search,
+    type: eventType,
     radius: hasCoords && hasValidRadius ? radius : undefined,
     lat: hasCoords && hasValidRadius ? latNumber : undefined,
     lon: hasCoords && hasValidRadius ? lonNumber : undefined,
@@ -106,6 +145,7 @@ export const useEvents = ({
       baseParams.from,
       baseParams.to,
       baseParams.term,
+      baseParams.type,
       baseParams.radius,
       baseParams.lat,
       baseParams.lon,
@@ -117,6 +157,7 @@ export const useEvents = ({
   const {
     data: pages,
     error,
+    isLoading: isSWRLoading,
     setSize,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
@@ -128,6 +169,7 @@ export const useEvents = ({
       fromParam,
       toParam,
       termParam,
+      typeParam,
       radiusParam,
       latParam,
       lonParam,
@@ -143,13 +185,14 @@ export const useEvents = ({
         from: fromParam as string | undefined,
         to: toParam as string | undefined,
         term: termParam as string | undefined,
+        type: typeParam as string | undefined,
         radius: radiusParam as number | undefined,
         lat: latParam as number | undefined,
         lon: lonParam as number | undefined,
       }),
     {
       fallbackData:
-        fallbackData && fallbackData.length > 0
+        !hasClientFilters && fallbackData && fallbackData.length > 0
           ? [
               {
                 content: fallbackData,
@@ -219,10 +262,15 @@ export const useEvents = ({
     await setSize((prev) => prev + 1);
   };
 
+  // True while SWR is fetching the first page after a filter change
+  // (no cached data yet). Lets consumers show a skeleton instead of stale events.
+  const isLoading = hasClientFilters && isSWRLoading;
+
   return {
     events: clientEvents,
     hasMore,
     totalEvents,
+    isLoading,
     isLoadingMore,
     loadMore,
     error: error as Error | undefined,

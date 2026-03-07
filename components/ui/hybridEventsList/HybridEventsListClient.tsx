@@ -11,6 +11,7 @@ import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
+import { hasActiveClientFilters } from "@utils/url-filters";
 import { useTranslations, useLocale } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { AppLocale } from "types/i18n";
@@ -49,6 +50,9 @@ function HybridEventsListClientContent({
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
+  const price = parsed.queryParams.price;
+  const from = parsed.queryParams.from;
+  const to = parsed.queryParams.to;
   const lat = parsed.queryParams.lat;
   const lon = parsed.queryParams.lon;
 
@@ -57,15 +61,18 @@ function HybridEventsListClientContent({
   }, [initialEvents]);
 
   // Check if client-side filters are active
-  const hasClientFilters = !!(search || distance || lat || lon);
+  const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
 
-  const { events, hasMore, loadMore, isLoadingMore, error } =
+  const { events, hasMore, loadMore, isLoading, isLoadingMore, error } =
     useEvents({
       place,
       category,
       date,
       search,
       distance,
+      price,
+      from,
+      to,
       lat,
       lon,
       initialSize: 10,
@@ -122,7 +129,10 @@ function HybridEventsListClientContent({
 
   return (
     <>
-      {showErrorState ? (
+      {isLoading ? (
+        // Show skeleton immediately while fetching filtered events
+        <EventsGridSkeleton />
+      ) : showErrorState ? (
         // Show error message when events fail to load
         <div className="w-full flex flex-col items-center gap-element-gap py-section-y px-section-x">
           <div className="w-full text-center">
