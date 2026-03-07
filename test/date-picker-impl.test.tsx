@@ -289,9 +289,9 @@ describe("DatePickerImpl", () => {
       // Should have called onChange for startDate AND endDate (auto-adjust)
       const calls = baseProps.onChange.mock.calls;
       const startCall = calls.find(
-        ([field]: [string]) => field === "startDate"
+        (call) => call[0] === "startDate"
       );
-      const endCall = calls.find(([field]: [string]) => field === "endDate");
+      const endCall = calls.find((call) => call[0] === "endDate");
 
       expect(startCall).toBeDefined();
       expect(endCall).toBeDefined();
