@@ -790,12 +790,12 @@ video {
   gap: 0.25rem;
 }
 
-/* Keyboard focus: visible outline for accessibility */
+/* Keyboard focus: visible ring for accessibility (box-shadow survives outline:none on selected days) */
 .rdp-filter-wrapper .rdp-day_button:focus-visible,
 .rdp-filter-wrapper .rdp-button_previous:focus-visible,
 .rdp-filter-wrapper .rdp-button_next:focus-visible {
-  outline: 2px solid #D6002F;
-  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #D6002F !important;
+  border-radius: 9999px;
 }
 
 .rdp-filter-wrapper .rdp-months {
@@ -845,10 +845,10 @@ video {
   outline: none !important;
 }
 
-/* Keyboard focus: visible outline for form calendar accessibility */
+/* Keyboard focus: visible ring for form calendar accessibility */
 .rdp-form-wrapper .rdp-day_button:focus-visible,
 .rdp-form-wrapper .rdp-button_previous:focus-visible,
 .rdp-form-wrapper .rdp-button_next:focus-visible {
-  outline: 2px solid #D6002F;
-  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #D6002F !important;
+  border-radius: 9999px;
 }
