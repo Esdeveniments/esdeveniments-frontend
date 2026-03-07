@@ -790,6 +790,14 @@ video {
   gap: 0.25rem;
 }
 
+/* Keyboard focus: visible outline for accessibility */
+.rdp-filter-wrapper .rdp-day_button:focus-visible,
+.rdp-filter-wrapper .rdp-button_previous:focus-visible,
+.rdp-filter-wrapper .rdp-button_next:focus-visible {
+  outline: 2px solid #D6002F;
+  outline-offset: 2px;
+}
+
 .rdp-filter-wrapper .rdp-months {
   gap: 0;
 }
@@ -835,4 +843,12 @@ video {
   background-color: rgba(214, 0, 47, 0.06);
   color: rgb(69, 69, 69);
   outline: none !important;
+}
+
+/* Keyboard focus: visible outline for form calendar accessibility */
+.rdp-form-wrapper .rdp-day_button:focus-visible,
+.rdp-form-wrapper .rdp-button_previous:focus-visible,
+.rdp-form-wrapper .rdp-button_next:focus-visible {
+  outline: 2px solid #D6002F;
+  outline-offset: 2px;
 }
