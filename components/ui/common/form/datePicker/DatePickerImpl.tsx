@@ -156,7 +156,7 @@ export default function DatePickerImpl({
           ? new Date(newStart.getTime() + diff)
           : addMinutes(newStart, 60);
       onChange("endDate", toISOStringLocalMinutes(newEnd));
-      setActiveField(null);
+      // Keep calendar open so user can adjust the time without re-clicking
     },
     [startDate, endDate, isAllDay, onChange],
   );
@@ -169,7 +169,7 @@ export default function DatePickerImpl({
 
       const corrected = newEnd < startDate ? addMinutes(startDate, 15) : newEnd;
       onChange("endDate", toISOStringLocalMinutes(corrected));
-      setActiveField(null);
+      // Keep calendar open so user can adjust the time without re-clicking
     },
     [startDate, endDate, onChange],
   );
@@ -307,7 +307,7 @@ export default function DatePickerImpl({
                 }
                 minTime={
                   activeField === "end" &&
-                  startDate.toDateString() === endDate.toDateString()
+                    startDate.toDateString() === endDate.toDateString()
                     ? formatTime(startDate)
                     : undefined
                 }
