@@ -696,6 +696,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                       setShowCalendar((prev) => !prev);
                       if (!showCalendar) {
                         setLocalByDate("");
+                      } else {
+                        setLocalFromDate("");
+                        setLocalToDate("");
                       }
                     }}
                     readOnly

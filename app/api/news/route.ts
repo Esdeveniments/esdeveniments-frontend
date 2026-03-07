@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         // s-maxage=600: news articles are rarely updated within 10 min.
-        // swr=1800: serve stale instantly for 20 min after expiry.
+        // swr=1800: serve stale instantly for 30 min after expiry.
         "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800",
       },
     });
