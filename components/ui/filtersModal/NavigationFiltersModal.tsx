@@ -750,11 +750,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                           key={labelKey}
                           type="button"
                           onClick={() => handleDateRangeShortcut(getRange)}
-                          className={`px-3 py-1.5 text-sm rounded-badge border transition-colors ${
-                            isActive
+                          className={`px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
                               ? "bg-primary text-primary-foreground border-primary"
                               : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
-                          }`}
+                            }`}
                         >
                           {tByDates(labelKey)}
                         </button>

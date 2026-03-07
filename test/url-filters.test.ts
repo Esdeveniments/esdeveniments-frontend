@@ -214,7 +214,9 @@ describe("url-filters: canonical building and parsing", () => {
       from: "2026-04-01",
       to: "2026-04-07",
     });
-    expect(url).toBe("/girona/concerts?price=gratis&from=2026-04-01&to=2026-04-07");
+    expect(url).toBe(
+      "/girona/concerts?price=gratis&from=2026-04-01&to=2026-04-07",
+    );
   });
 
   it("parseFiltersFromUrl extracts price from query params", () => {

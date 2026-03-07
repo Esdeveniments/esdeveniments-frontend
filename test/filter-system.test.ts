@@ -187,7 +187,9 @@ describe("Filter Configuration System", () => {
       });
 
       test("price isEnabled false when value is default", () => {
-        expect(FilterOperations.isEnabled("price", mockDisplayState)).toBe(false);
+        expect(FilterOperations.isEnabled("price", mockDisplayState)).toBe(
+          false,
+        );
       });
 
       test("price getDisplayText returns raw value when not default", () => {
@@ -198,11 +200,15 @@ describe("Filter Configuration System", () => {
             price: "pagament",
           },
         };
-        expect(FilterOperations.getDisplayText("price", stateWithPrice)).toBe("pagament");
+        expect(FilterOperations.getDisplayText("price", stateWithPrice)).toBe(
+          "pagament",
+        );
       });
 
       test("price getDisplayText returns undefined when default", () => {
-        expect(FilterOperations.getDisplayText("price", mockDisplayState)).toBeUndefined();
+        expect(
+          FilterOperations.getDisplayText("price", mockDisplayState),
+        ).toBeUndefined();
       });
 
       test("price removal resets to undefined", () => {

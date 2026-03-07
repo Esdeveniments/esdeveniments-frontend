@@ -42,10 +42,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": [
-      "vitest/globals",
-      "./types/global.d.ts"
-    ]
+    "types": ["vitest/globals", "./types/global.d.ts"]
   },
   "include": [
     "**/*.ts",

@@ -41,8 +41,9 @@ body {
   -moz-font-smoothing: antialiased;
   -o-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   color: #454545;
   font-weight: 400;
   letter-spacing: 0;
@@ -87,7 +88,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #D6002F;
+  background: #d6002f;
   cursor: pointer;
   margin-top: -10.5px; /* (3px track - 24px thumb) / 2 */
 }
@@ -96,13 +97,14 @@ input[type="range"]::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #D6002F;
+  background: #d6002f;
   cursor: pointer;
 }
 
 p {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   letter-spacing: 0;
   font-size: 1rem; /* 16px */
   line-height: 1.6;
@@ -696,7 +698,7 @@ video {
    foreground: rgb(69 69 69), foreground-strong: rgb(0 0 0)
 ─── */
 .rdp-filter-wrapper {
-  --rdp-accent-color: #D6002F;
+  --rdp-accent-color: #d6002f;
   --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
   --rdp-range_middle-color: rgb(69, 69, 69);
   --rdp-range_middle-background-color: rgba(214, 0, 47, 0.08);
@@ -747,7 +749,7 @@ video {
 .rdp-filter-wrapper .rdp-day.rdp-range_start .rdp-day_button,
 .rdp-filter-wrapper .rdp-day.rdp-range_end .rdp-day_button,
 .rdp-filter-wrapper .rdp-day.rdp-selected .rdp-day_button {
-  background-color: #D6002F;
+  background-color: #d6002f;
   color: #ffffff;
   font-weight: 600;
   outline: none !important;
@@ -765,25 +767,29 @@ video {
 }
 
 /* Today indicator – subtle dotted border */
-.rdp-filter-wrapper .rdp-day.rdp-today:not(.rdp-selected):not(.rdp-range_start):not(.rdp-range_end):not(.rdp-range_middle) .rdp-day_button {
+.rdp-filter-wrapper
+  .rdp-day.rdp-today:not(.rdp-selected):not(.rdp-range_start):not(
+    .rdp-range_end
+  ):not(.rdp-range_middle)
+  .rdp-day_button {
   border: 1px solid rgba(214, 0, 47, 0.35) !important;
 }
 
 .rdp-filter-wrapper .rdp-button_previous,
 .rdp-filter-wrapper .rdp-button_next {
-  color: #D6002F;
+  color: #d6002f;
   width: 24px;
   height: 24px;
 }
 
 .rdp-filter-wrapper .rdp-button_previous:hover,
 .rdp-filter-wrapper .rdp-button_next:hover {
-  color: #D6002F;
+  color: #d6002f;
   background-color: rgba(214, 0, 47, 0.06);
 }
 
 .rdp-filter-wrapper .rdp-chevron {
-  fill: #D6002F;
+  fill: #d6002f;
 }
 
 .rdp-filter-wrapper .rdp-nav {
@@ -794,7 +800,7 @@ video {
 .rdp-filter-wrapper .rdp-day_button:focus-visible,
 .rdp-filter-wrapper .rdp-button_previous:focus-visible,
 .rdp-filter-wrapper .rdp-button_next:focus-visible {
-  box-shadow: 0 0 0 2px #D6002F !important;
+  box-shadow: 0 0 0 2px #d6002f !important;
   border-radius: 9999px;
 }
 
@@ -804,7 +810,7 @@ video {
 
 /* EventForm date picker overrides */
 .rdp-form-wrapper {
-  --rdp-accent-color: #D6002F;
+  --rdp-accent-color: #d6002f;
   --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
   --rdp-selected-border: 0px solid transparent;
   --rdp-day_button-border-radius: 9999px;
@@ -827,7 +833,7 @@ video {
 }
 
 .rdp-form-wrapper .rdp-day.rdp-selected .rdp-day_button {
-  background-color: #D6002F;
+  background-color: #d6002f;
   color: #ffffff;
   font-weight: 600;
   outline: none !important;
@@ -849,6 +855,6 @@ video {
 .rdp-form-wrapper .rdp-day_button:focus-visible,
 .rdp-form-wrapper .rdp-button_previous:focus-visible,
 .rdp-form-wrapper .rdp-button_next:focus-visible {
-  box-shadow: 0 0 0 2px #D6002F !important;
+  box-shadow: 0 0 0 2px #d6002f !important;
   border-radius: 9999px;
 }
