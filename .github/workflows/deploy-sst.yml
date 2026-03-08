@@ -9,9 +9,9 @@ concurrency:
   group: deploy-sst-${{ github.ref }}
   cancel-in-progress: false # Don't cancel - let deployments complete
 
-# Explicit least-privilege permissions (security best practice)
+# Permissions: contents:write needed for last-successful-deploy tag
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 env:
@@ -559,7 +559,9 @@ jobs:
           # --- Final verdict ---
           echo ""
           if [ $FAIL -ne 0 ]; then
-            echo "::error::❌ Post-deploy verification FAILED — review errors above. Consider rollback: re-deploy previous commit."
+            echo "::error::❌ Post-deploy verification FAILED — review errors above."
+            echo "::error::🔄 ROLLBACK: Go to Actions → 'Rollback (SST)' → Run workflow (leave commit_sha empty to use last successful deploy)"
+            echo "::error::   Or run: gh workflow run rollback-sst.yml -f commit_sha=$(git rev-parse HEAD~1)"
             exit 1
           fi
           echo "✅ Post-deploy verification complete — all critical checks passed"
@@ -589,6 +591,13 @@ jobs:
           path: playwright-report/
           retention-days: 7
           if-no-files-found: ignore
+
+      - name: Tag successful deploy
+        if: success()
+        run: |
+          git tag -f last-successful-deploy
+          git push origin last-successful-deploy --force
+          echo "✅ Tagged ${{ github.sha }} as last-successful-deploy"
 
       - name: Deployment summary
         if: success()
