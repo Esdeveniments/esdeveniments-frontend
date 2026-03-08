@@ -719,6 +719,7 @@
       "dateTitle": "Browse by date",
       "dateAriaLabel": "Filter by date",
       "categoryTitle": "Explore categories",
+      "otherCategoryTitle": "Other categories in {place}",
       "categoryAriaLabel": "Browse by category",
       "categoryLinkAria": "View {category} in {place}"
     },

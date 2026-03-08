@@ -185,7 +185,15 @@ export function buildPageMeta({
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : (robotsOverride ?? "index, follow"),
+        : robotsOverride
+          ? robotsOverride
+          : {
+              index: true,
+              follow: true,
+              "max-image-preview": "large" as const,
+              "max-snippet": -1,
+              "max-video-preview": -1,
+            },
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,

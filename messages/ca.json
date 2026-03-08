@@ -726,6 +726,7 @@
       "dateTitle": "Cerca per data",
       "dateAriaLabel": "Filtra per data",
       "categoryTitle": "Explora categories",
+      "otherCategoryTitle": "Altres categories a {place}",
       "categoryAriaLabel": "Navega per categories",
       "categoryLinkAria": "Veure {category} a {place}"
     },
