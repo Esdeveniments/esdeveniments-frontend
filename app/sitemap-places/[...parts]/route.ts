@@ -1,18 +1,63 @@
 import { siteUrl } from "@config/index";
 import { fetchPlaces } from "@lib/api/places";
 import { fetchCategories } from "@lib/api/categories";
+import { fetchEventsExternal } from "@lib/api/events-external";
 import { VALID_DATES } from "@lib/dates";
-import { highPrioritySlugs } from "@utils/priority-places";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
-import { DEFAULT_FILTER_VALUE, SITEMAP_PLACES_PER_CHUNK } from "@utils/constants";
+import {
+  DEFAULT_FILTER_VALUE,
+  SITEMAP_PLACES_PER_CHUNK,
+  SITEMAP_MIN_EVENTS_FOR_EXPANSION,
+  SITEMAP_TOP_CATEGORIES_COUNT,
+} from "@utils/constants";
 import type { SitemapField } from "types/sitemap";
 import type { SitemapPartsRouteContext } from "types/props";
+import type { PlaceResponseDTO } from "types/api/place";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 
-export async function GET(_request: Request, context: SitemapPartsRouteContext) {
+/**
+ * Dynamically determines which places have enough content for full sitemap expansion.
+ * REGIONs always expand (they aggregate city events, always have content).
+ * CITYs expand only if they have enough events (>= SITEMAP_MIN_EVENTS_FOR_EXPANSION).
+ * This avoids submitting thin/empty filtered pages that waste crawl budget.
+ */
+async function getExpandablePlaces(
+  places: PlaceResponseDTO[],
+): Promise<Set<string>> {
+  const results = await Promise.all(
+    places.map(async (place) => {
+      // REGIONs always qualify — they aggregate events from all cities in the region
+      if (place.type === "REGION") {
+        return { slug: place.slug, expandable: true };
+      }
+      try {
+        // Lightweight fetch: size=1 to get only totalElements count
+        const result = await fetchEventsExternal({
+          place: place.slug,
+          size: 1,
+        });
+        return {
+          slug: place.slug,
+          expandable: result.totalElements >= SITEMAP_MIN_EVENTS_FOR_EXPANSION,
+        };
+      } catch {
+        return { slug: place.slug, expandable: false };
+      }
+    }),
+  );
+
+  return new Set(
+    results.filter(({ expandable }) => expandable).map(({ slug }) => slug),
+  );
+}
+
+export async function GET(
+  _request: Request,
+  context: SitemapPartsRouteContext,
+) {
   const { parts } = await context.params;
-  
+
   // Expected URL: /sitemap-places/1.xml, /sitemap-places/2.xml, etc.
   // parts = ["1.xml"], ["2.xml"], etc.
   if (!parts || parts.length !== 1) {
@@ -40,17 +85,10 @@ export async function GET(_request: Request, context: SitemapPartsRouteContext) 
     });
   }
 
-  const TOP_CATEGORIES_COUNT = 5;
-
   const [places, categories] = await Promise.all([
     fetchPlaces(),
     fetchCategories(),
   ]);
-
-  const placeSlugs = new Set(places.map((p) => p.slug));
-  const filteredHighPrioritySlugs = highPrioritySlugs.filter((placeSlug) =>
-    placeSlugs.has(placeSlug)
-  );
 
   // Chunk places: chunk 1 → places 0-99, chunk 2 → places 100-199, etc.
   const startIndex = (chunkNumber - 1) * SITEMAP_PLACES_PER_CHUNK;
@@ -67,33 +105,45 @@ export async function GET(_request: Request, context: SitemapPartsRouteContext) 
   // Top dates and categories (similar to static generation)
   const topDates = VALID_DATES.filter((date) => date !== DEFAULT_FILTER_VALUE);
   const topCategories = categories
-    .slice(0, TOP_CATEGORIES_COUNT)
+    .slice(0, SITEMAP_TOP_CATEGORIES_COUNT)
     .map((cat) => cat.slug)
     .filter((catSlug) => catSlug && catSlug !== DEFAULT_FILTER_VALUE);
 
-  const fields: SitemapField[] = [];
-  const lastmod = new Date().toISOString();
+  // Dynamically determine which places have enough content for full expansion.
+  // This replaces the static highPrioritySlugs list — adapts automatically
+  // as event data changes across places.
+  const expandableSlugs = await getExpandablePlaces(chunkPlaces);
 
-  // Generate URLs for each place in this chunk
+  const fields: SitemapField[] = [];
+  // Stable daily timestamp so crawlers don't think every URL changes per-request
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const lastmod = today.toISOString();
+
   for (const place of chunkPlaces) {
-    // /[place]
+    const shouldExpand = expandableSlugs.has(place.slug);
+
+    // /[place] — always included for all places
     const placeLoc = `${siteUrl}${buildCanonicalUrlDynamic(
       { place: place.slug },
-      categories
+      categories,
     )}`;
     fields.push({
       loc: placeLoc,
       lastmod: lastmod,
       changefreq: "daily",
-      priority: filteredHighPrioritySlugs.includes(place.slug) ? 0.9 : 0.6,
+      priority: shouldExpand ? 0.9 : 0.6,
       alternates: buildAlternateLinks(placeLoc),
     });
+
+    // Date and category combos only for places with real content depth
+    if (!shouldExpand) continue;
 
     // /[place]/[date]
     for (const date of topDates) {
       const dateLoc = `${siteUrl}${buildCanonicalUrlDynamic(
         { place: place.slug, byDate: date },
-        categories
+        categories,
       )}`;
       fields.push({
         loc: dateLoc,
@@ -107,7 +157,7 @@ export async function GET(_request: Request, context: SitemapPartsRouteContext) 
       for (const category of topCategories) {
         const dateCatLoc = `${siteUrl}${buildCanonicalUrlDynamic(
           { place: place.slug, byDate: date, category },
-          categories
+          categories,
         )}`;
         fields.push({
           loc: dateCatLoc,
@@ -121,19 +171,17 @@ export async function GET(_request: Request, context: SitemapPartsRouteContext) 
 
     // /[place]/[category] (when date is "tots" but omitted in URL)
     for (const category of topCategories) {
-      if (category !== DEFAULT_FILTER_VALUE) {
-        const catLoc = `${siteUrl}${buildCanonicalUrlDynamic(
-          { place: place.slug, category },
-          categories
-        )}`;
-        fields.push({
-          loc: catLoc,
-          lastmod: lastmod,
-          changefreq: "daily",
-          priority: 0.7,
-          alternates: buildAlternateLinks(catLoc),
-        });
-      }
+      const catLoc = `${siteUrl}${buildCanonicalUrlDynamic(
+        { place: place.slug, category },
+        categories,
+      )}`;
+      fields.push({
+        loc: catLoc,
+        lastmod: lastmod,
+        changefreq: "daily",
+        priority: 0.7,
+        alternates: buildAlternateLinks(catLoc),
+      });
     }
   }
 
@@ -141,7 +189,7 @@ export async function GET(_request: Request, context: SitemapPartsRouteContext) 
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=86400",
+      "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400",
     },
     status: 200,
   });
