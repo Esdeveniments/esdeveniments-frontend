@@ -206,7 +206,11 @@ export default $config({
         // which isn't available during resource creation. The code will fall back
         // to NEXT_PUBLIC_SITE_URL if INTERNAL_SITE_URL is not set.
         HMAC_SECRET: requireEnv("HMAC_SECRET"),
-        REVALIDATE_SECRET: requireEnv("REVALIDATE_SECRET"),
+        // Cache revalidation secret for /api/revalidate endpoint
+        // Required in production, optional in non-production (ephemeral staging doesn't need cache revalidation)
+        REVALIDATE_SECRET: isProduction
+          ? requireEnv("REVALIDATE_SECRET")
+          : process.env.REVALIDATE_SECRET,
         DEEPL_API_KEY: requireEnv("DEEPL_API_KEY"),
         // Optional: Pipedream webhook URL for new event email notifications
         // If not set, email notifications will be silently skipped
@@ -336,17 +340,19 @@ export default $config({
     // The __fetch/ prefix accumulates objects from every build (81K+ objects, 1.4 GB).
     // These are ephemeral Next.js fetch cache entries that become stale quickly.
     // Lifecycle rules handle cleanup automatically without needing the cleanup Lambda.
-    new aws.s3.BucketLifecycleConfigurationV2("FetchCacheLifecycle", {
-      bucket: site.nodes.assets!.name,
-      rules: [
-        {
-          id: "expire-fetch-cache",
-          filter: { prefix: "_cache/__fetch/" },
-          expiration: { days: 7 },
-          status: "Enabled",
-        },
-      ],
-    });
+    if (site.nodes.assets) {
+      new aws.s3.BucketLifecycleConfigurationV2("FetchCacheLifecycle", {
+        bucket: site.nodes.assets.name,
+        rules: [
+          {
+            id: "expire-fetch-cache",
+            filter: { prefix: "_cache/__fetch/" },
+            expiration: { days: 7 },
+            status: "Enabled",
+          },
+        ],
+      });
+    }
 
     // Validate that server node exists before creating alarms
     if (!site.nodes.server) {

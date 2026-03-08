@@ -231,11 +231,22 @@ jobs:
             fi
           fi
 
-          # Health endpoint
+          # Health endpoint — validate cache infrastructure (matches deploy workflow)
           HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 10 \
             "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
           if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Health endpoint OK"
+            if [ -f /tmp/health.json ]; then
+              S3_OK=$(jq -r '.cache.s3.configured // false' /tmp/health.json)
+              DYNAMO_OK=$(jq -r '.cache.dynamodb.configured // false' /tmp/health.json)
+              if [ "$S3_OK" = "true" ] && [ "$DYNAMO_OK" = "true" ]; then
+                echo "✅ Health endpoint OK (cache infrastructure verified: S3 + DynamoDB)"
+              else
+                echo "::error::Cache infrastructure DEGRADED after rollback (S3: ${S3_OK}, DynamoDB: ${DYNAMO_OK})"
+                FAIL=1
+              fi
+            else
+              echo "✅ Health endpoint OK"
+            fi
           else
             echo "::error::Health endpoint returned HTTP ${HTTP_CODE}"
             FAIL=1

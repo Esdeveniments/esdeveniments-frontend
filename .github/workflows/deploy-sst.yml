@@ -345,6 +345,12 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           NODE_ENV: production
+          # Required secrets for SST config (requireEnv calls in sst.config.ts)
+          # SST with --stage staging-ci won't load .env.production, so we pass them explicitly
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           echo "🚀 Deploying ephemeral staging stack..."
           npx sst deploy --stage staging-ci 2>&1 | tee /tmp/sst-staging-output.txt
