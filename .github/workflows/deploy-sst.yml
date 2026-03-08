@@ -22,7 +22,7 @@ jobs:
   deploy:
     name: Deploy to AWS with SST
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
     environment:
       name: production
@@ -333,6 +333,119 @@ jobs:
           echo "📦 SST version: $(cat node_modules/sst/package.json | jq -r '.version')"
           echo "📦 OpenNext version: $(cat node_modules/open-next/package.json | jq -r '.version')"
 
+      # =========================================================================
+      # EPHEMERAL STAGING: Deploy to a temporary AWS stack, run E2E against real
+      # arm64 Lambda + CloudFront + DynamoDB, then tear it down.
+      # This catches infra issues (Sharp on arm64, Lambda memory, CloudFront routing)
+      # BEFORE they reach production. Cost: ~$0 (pay-per-use, stack exists ~10 min).
+      # =========================================================================
+
+      - name: Deploy ephemeral staging
+        id: staging
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          NODE_ENV: production
+        run: |
+          echo "🚀 Deploying ephemeral staging stack..."
+          npx sst deploy --stage staging-ci 2>&1 | tee /tmp/sst-staging-output.txt
+
+          # Extract the staging URL from SST output
+          STAGING_URL=$(grep -oP 'SiteUrl:\s*\K\S+' /tmp/sst-staging-output.txt || echo "")
+          if [ -z "$STAGING_URL" ]; then
+            # Fallback: use sst output command
+            STAGING_URL=$(npx sst output --stage staging-ci SiteUrl 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$STAGING_URL" ]; then
+            echo "::error::Could not extract staging URL from SST output"
+            exit 1
+          fi
+
+          echo "staging_url=$STAGING_URL" >> "$GITHUB_OUTPUT"
+          echo "✅ Staging deployed at: $STAGING_URL"
+
+      - name: Wait for staging CloudFront propagation
+        if: success()
+        run: |
+          echo "⏳ Waiting for staging CloudFront to be ready..."
+          STAGING_URL="${{ steps.staging.outputs.staging_url }}"
+          # Retry up to 12 times (2 min) waiting for CloudFront to serve
+          for i in $(seq 1 12); do
+            if curl -sf --max-time 10 "$STAGING_URL" > /dev/null 2>&1; then
+              echo "✅ Staging is responding (attempt $i)"
+              break
+            fi
+            echo "⏳ Attempt $i/12 - waiting 10s..."
+            sleep 10
+          done
+
+      - name: Staging smoke test (Sharp on arm64)
+        if: success()
+        run: |
+          STAGING_URL="${{ steps.staging.outputs.staging_url }}"
+          echo "🔍 Testing Sharp on arm64 Lambda at staging..."
+
+          SHARP_RESPONSE=$(curl -sI --max-time 15 \
+            "${STAGING_URL}/api/image-proxy?url=$(python3 -c 'import urllib.parse; print(urllib.parse.quote("https://picsum.photos/800/600.jpg"))')&w=400&q=50" \
+            -H "Accept: image/webp,image/*" 2>/dev/null || echo "CURL_FAILED")
+
+          if echo "$SHARP_RESPONSE" | grep -qi "CURL_FAILED"; then
+            echo "::error::Staging image proxy endpoint unreachable"
+            exit 1
+          fi
+
+          OPTIMIZED=$(echo "$SHARP_RESPONSE" | grep -i "x-image-proxy-optimized" | tr -d '\r' | awk -F': ' '{print $2}')
+          SHARP_STATUS=$(echo "$SHARP_RESPONSE" | head -1 | grep -oE '[0-9]{3}' | head -1)
+
+          if [ "$SHARP_STATUS" = "502" ]; then
+            echo "::warning::Test image service (picsum.photos) unavailable — skipping Sharp check"
+          elif [ "$OPTIMIZED" = "fallback-sharp-error" ]; then
+            SHARP_ERROR=$(echo "$SHARP_RESPONSE" | grep -i "x-image-proxy-error" | tr -d '\r' | awk -F': ' '{print $2}')
+            echo "::error::Sharp BROKEN on staging arm64 Lambda! Error: ${SHARP_ERROR:-unknown}. DO NOT deploy to production."
+            exit 1
+          elif echo "$OPTIMIZED" | grep -qE "^(true|skipped-small|skipped-animated)$"; then
+            echo "✅ Sharp working on staging arm64 Lambda (optimized: ${OPTIMIZED})"
+          else
+            echo "::warning::Sharp status unclear on staging (optimized: ${OPTIMIZED:-empty})"
+          fi
+
+      - name: Staging E2E tests (real AWS infrastructure)
+        if: success()
+        run: |
+          yarn test:e2e -c playwright.remote.config.ts \
+            --workers=2 \
+            --grep-invert "@slow" \
+            e2e/smoke.spec.ts \
+            e2e/image-proxy.spec.ts \
+            e2e/canonical-urls.spec.ts \
+            e2e/home.flow.spec.ts
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.staging.outputs.staging_url }}
+
+      - name: Upload staging Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-staging
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Tear down ephemeral staging
+        if: always() && steps.staging.outcome != 'skipped'
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+        run: |
+          echo "🧹 Removing ephemeral staging stack..."
+          npx sst remove --stage staging-ci 2>&1 || echo "::warning::Staging teardown failed — manual cleanup may be needed: npx sst remove --stage staging-ci"
+          echo "✅ Staging stack removed"
+
+      # =========================================================================
+      # PRODUCTION DEPLOY
+      # Only runs if staging E2E passed (all previous steps succeeded)
+      # =========================================================================
+
       - name: Preview SST infrastructure changes
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
@@ -352,30 +465,130 @@ jobs:
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
+          set -uo pipefail
+          FAIL=0
+
           echo "⏳ Waiting for CloudFront propagation..."
           sleep 30
 
-          # Smoke tests
-          echo "🧪 Running smoke tests..."
-          curl -sf --max-time 10 https://www.esdeveniments.cat/ > /dev/null && echo "✅ Homepage OK" || echo "::warning::Homepage slow/unavailable"
-          curl -sf --max-time 10 https://www.esdeveniments.cat/barcelona > /dev/null && echo "✅ Barcelona page OK" || echo "::warning::Barcelona page slow/unavailable"
-          curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:" && echo "✅ robots.txt OK" || echo "::warning::robots.txt issue"
+          # --- Critical checks (fail pipeline if broken) ---
 
-          # CloudFront check
-          echo "🌐 Checking CloudFront..."
-          curl -sI https://www.esdeveniments.cat 2>/dev/null | grep -qi "x-cache" && echo "✅ CloudFront serving" || echo "::warning::CloudFront cache header not found"
+          echo "🧪 Running critical smoke tests..."
 
-          # Health check
-          echo "🔍 Checking deployment health..."
-          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
-          echo "Health endpoint: HTTP $HTTP_CODE"
-          if [ -f /tmp/health.json ]; then
-            S3_OK=$(jq -r '.cache.s3.configured // false' /tmp/health.json)
-            DYNAMO_OK=$(jq -r '.cache.dynamodb.configured // false' /tmp/health.json)
-            [ "$S3_OK" = "true" ] && [ "$DYNAMO_OK" = "true" ] && echo "✅ Cache infrastructure OK" || echo "::warning::Cache may need: npx sst refresh --stage production"
+          # 1. Homepage must return 200
+          if curl -sf --max-time 15 https://www.esdeveniments.cat/ > /dev/null; then
+            echo "✅ Homepage OK"
+          else
+            echo "::error::Homepage FAILED — site may be down"
+            FAIL=1
           fi
 
-          echo "✅ Post-deploy verification complete"
+          # 2. Barcelona page must return 200
+          if curl -sf --max-time 15 https://www.esdeveniments.cat/barcelona > /dev/null; then
+            echo "✅ Barcelona page OK"
+          else
+            echo "::error::Barcelona page FAILED — place pages may be broken"
+            FAIL=1
+          fi
+
+          # 3. Sharp on arm64 Lambda — the Feb 2026 incident check
+          # See: docs/incidents/2026-02-18-sharp-architecture-mismatch.md
+          echo "🔍 Checking Sharp on arm64 Lambda..."
+          SHARP_RESPONSE=$(curl -sI --max-time 15 \
+            "https://www.esdeveniments.cat/api/image-proxy?url=$(python3 -c 'import urllib.parse; print(urllib.parse.quote("https://picsum.photos/800/600.jpg"))')&w=400&q=50" \
+            -H "Accept: image/webp,image/*" 2>/dev/null || echo "CURL_FAILED")
+
+          if echo "$SHARP_RESPONSE" | grep -qi "CURL_FAILED"; then
+            echo "::error::Image proxy endpoint unreachable"
+            FAIL=1
+          else
+            SHARP_STATUS=$(echo "$SHARP_RESPONSE" | head -1 | grep -oE '[0-9]{3}' | head -1)
+            OPTIMIZED=$(echo "$SHARP_RESPONSE" | grep -i "x-image-proxy-optimized" | tr -d '\r' | awk -F': ' '{print $2}')
+
+            if [ "$SHARP_STATUS" = "502" ]; then
+              echo "::warning::Test image service (picsum.photos) unavailable — skipping Sharp check"
+            elif [ "$OPTIMIZED" = "fallback-sharp-error" ]; then
+              SHARP_ERROR=$(echo "$SHARP_RESPONSE" | grep -i "x-image-proxy-error" | tr -d '\r' | awk -F': ' '{print $2}')
+              echo "::error::Sharp is BROKEN on arm64 Lambda! Error: ${SHARP_ERROR:-unknown}. See: docs/incidents/2026-02-18-sharp-architecture-mismatch.md"
+              FAIL=1
+            elif echo "$OPTIMIZED" | grep -qE "^(true|skipped-small|skipped-animated)$"; then
+              SAVINGS=$(echo "$SHARP_RESPONSE" | grep -i "x-image-proxy-savings" | tr -d '\r' | awk -F': ' '{print $2}')
+              echo "✅ Sharp working on arm64 Lambda (optimized: ${OPTIMIZED}, savings: ${SAVINGS:-N/A})"
+            else
+              echo "::warning::Sharp status unclear (optimized: ${OPTIMIZED:-empty}) — manual check recommended"
+            fi
+          fi
+
+          # 4. Health endpoint — cache infrastructure
+          echo "🔍 Checking deployment health..."
+          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 10 \
+            "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
+          echo "Health endpoint: HTTP $HTTP_CODE"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            if [ -f /tmp/health.json ]; then
+              S3_OK=$(jq -r '.cache.s3.configured // false' /tmp/health.json)
+              DYNAMO_OK=$(jq -r '.cache.dynamodb.configured // false' /tmp/health.json)
+              if [ "$S3_OK" = "true" ] && [ "$DYNAMO_OK" = "true" ]; then
+                echo "✅ Cache infrastructure OK (S3 + DynamoDB)"
+              else
+                echo "::error::Cache infrastructure DEGRADED (S3: ${S3_OK}, DynamoDB: ${DYNAMO_OK}). Try: npx sst refresh --stage production"
+                FAIL=1
+              fi
+            fi
+          else
+            echo "::error::Health endpoint returned HTTP ${HTTP_CODE} — cache infrastructure may be misconfigured"
+            FAIL=1
+          fi
+
+          # --- Non-critical checks (warn only) ---
+
+          echo ""
+          echo "🔎 Running non-critical checks..."
+
+          # robots.txt (may need CloudFront propagation)
+          curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:" \
+            && echo "✅ robots.txt OK" \
+            || echo "::warning::robots.txt issue (may need CloudFront propagation)"
+
+          # CloudFront serving (informational)
+          curl -sI --max-time 5 https://www.esdeveniments.cat 2>/dev/null | grep -qi "x-cache" \
+            && echo "✅ CloudFront serving" \
+            || echo "::warning::CloudFront cache header not found (may need propagation)"
+
+          # --- Final verdict ---
+          echo ""
+          if [ $FAIL -ne 0 ]; then
+            echo "::error::❌ Post-deploy verification FAILED — review errors above. Consider rollback: re-deploy previous commit."
+            exit 1
+          fi
+          echo "✅ Post-deploy verification complete — all critical checks passed"
+
+      # Run critical E2E tests against production after deploy
+      # This catches issues that only manifest on real AWS infrastructure
+      # (arm64 Lambda, CloudFront, DynamoDB ISR) that localhost E2E cannot detect
+      - name: Post-deploy E2E tests (production)
+        if: success()
+        run: |
+          yarn test:e2e -c playwright.remote.config.ts \
+            --workers=2 \
+            --grep-invert "@slow" \
+            e2e/smoke.spec.ts \
+            e2e/image-proxy.spec.ts \
+            e2e/canonical-urls.spec.ts \
+            e2e/home.flow.spec.ts
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: https://www.esdeveniments.cat
+
+      - name: Upload post-deploy Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-post-deploy
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Deployment summary
         if: success()
