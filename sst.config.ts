@@ -110,7 +110,7 @@ export default $config({
         process.env.ACM_CERTIFICATE_ARN ||
         (await getSsmParameter(
           "/esdeveniments-frontend/acm-certificate-arn",
-        ).catch(() => process.env.ACM_CERTIFICATE_ARN || ""));
+        ).catch(() => ""));
 
       if (!certArn) {
         throw new Error(
