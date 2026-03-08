@@ -43,7 +43,9 @@ export default async function PlacePageExploreNav({
   const hasCategory = !!category && category !== DEFAULT_FILTER_VALUE;
 
   const showDateBadges = !hasDate;
-  const showCategoryLinks = categories.length > 0;
+  const showCategoryLinks = hasCategory
+    ? categories.some((c) => c.slug !== category)
+    : categories.length > 0;
 
   // Don't render if no links to show
   if (!showDateBadges && !showCategoryLinks) {

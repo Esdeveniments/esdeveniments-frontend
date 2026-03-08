@@ -25,27 +25,35 @@ import { buildAlternateLinks } from "@utils/i18n-seo";
 async function getExpandablePlaces(
   places: PlaceResponseDTO[],
 ): Promise<Set<string>> {
-  const results = await Promise.all(
-    places.map(async (place) => {
-      // REGIONs always qualify — they aggregate events from all cities in the region
-      if (place.type === "REGION") {
-        return { slug: place.slug, expandable: true };
-      }
-      try {
-        // Lightweight fetch: size=1 to get only totalElements count
-        const result = await fetchEventsExternal({
-          place: place.slug,
-          size: 1,
-        });
-        return {
-          slug: place.slug,
-          expandable: result.totalElements >= SITEMAP_MIN_EVENTS_FOR_EXPANSION,
-        };
-      } catch {
-        return { slug: place.slug, expandable: false };
-      }
-    }),
-  );
+  const BATCH_SIZE = 10;
+  const results: { slug: string; expandable: boolean }[] = [];
+
+  for (let i = 0; i < places.length; i += BATCH_SIZE) {
+    const batch = places.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map(async (place) => {
+        // REGIONs always qualify — they aggregate events from all cities in the region
+        if (place.type === "REGION") {
+          return { slug: place.slug, expandable: true };
+        }
+        try {
+          // Lightweight fetch: size=1 to get only totalElements count
+          const result = await fetchEventsExternal({
+            place: place.slug,
+            size: 1,
+          });
+          return {
+            slug: place.slug,
+            expandable:
+              result.totalElements >= SITEMAP_MIN_EVENTS_FOR_EXPANSION,
+          };
+        } catch {
+          return { slug: place.slug, expandable: false };
+        }
+      }),
+    );
+    results.push(...batchResults);
+  }
 
   return new Set(
     results.filter(({ expandable }) => expandable).map(({ slug }) => slug),
