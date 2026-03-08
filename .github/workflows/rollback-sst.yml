@@ -134,7 +134,7 @@ jobs:
           for VAR in NEXT_PUBLIC_API_URL HMAC_SECRET SENTRY_DSN DEEPL_API_KEY \
                      STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET \
                      TURSO_DATABASE_URL TURSO_AUTH_TOKEN; do
-            eval VAL=\$$VAR
+            VAL="${!VAR}"
             if [ -z "$VAL" ]; then
               echo "::error::$VAR is required but not set"
               exit 1
@@ -152,7 +152,7 @@ jobs:
                      CLOUDFLARE_ZONE_ID CLOUDFLARE_API_TOKEN \
                      NEXT_PUBLIC_TIKTOK_CLIENT_KEY NEXT_PUBLIC_TIKTOK_REDIRECT_URI \
                      TIKTOK_CLIENT_SECRET; do
-            eval VAL=\$$VAR
+            VAL="${!VAR}"
             if [ -n "$VAL" ]; then
               echo "$VAR=$VAL" >> .env.production
             fi

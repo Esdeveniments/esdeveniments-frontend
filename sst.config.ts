@@ -221,13 +221,13 @@ export default $config({
         }),
         // Stripe integration for sponsor payments
         // Required for /patrocina checkout and webhook processing
-        // Optional in non-production stages (ephemeral staging doesn't need Stripe)
-        ...(process.env.STRIPE_SECRET_KEY && {
-          STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-        }),
-        ...(process.env.STRIPE_WEBHOOK_SECRET && {
-          STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-        }),
+        // Required in production, optional in non-production (ephemeral staging doesn't need Stripe)
+        STRIPE_SECRET_KEY: isProduction
+          ? requireEnv("STRIPE_SECRET_KEY")
+          : process.env.STRIPE_SECRET_KEY,
+        STRIPE_WEBHOOK_SECRET: isProduction
+          ? requireEnv("STRIPE_WEBHOOK_SECRET")
+          : process.env.STRIPE_WEBHOOK_SECRET,
         // Optional Stripe config - defaults are fine for most cases
         ...(process.env.STRIPE_TAX_MODE && {
           STRIPE_TAX_MODE: process.env.STRIPE_TAX_MODE,
@@ -240,13 +240,13 @@ export default $config({
         }),
         // Turso database for sponsor persistence (replaces static config)
         // Required for sponsor banner display and Stripe webhook automation
-        // Optional in non-production stages (ephemeral staging doesn't need Turso)
-        ...(process.env.TURSO_DATABASE_URL && {
-          TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
-        }),
-        ...(process.env.TURSO_AUTH_TOKEN && {
-          TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN,
-        }),
+        // Required in production, optional in non-production (ephemeral staging doesn't need Turso)
+        TURSO_DATABASE_URL: isProduction
+          ? requireEnv("TURSO_DATABASE_URL")
+          : process.env.TURSO_DATABASE_URL,
+        TURSO_AUTH_TOKEN: isProduction
+          ? requireEnv("TURSO_AUTH_TOKEN")
+          : process.env.TURSO_AUTH_TOKEN,
       },
       warm: 1, // Reduced from 3 to minimize warm invocations + GB-seconds. Cold starts ~2s, rare with CloudFront cache.
       server: {

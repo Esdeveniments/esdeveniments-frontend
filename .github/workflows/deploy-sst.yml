@@ -369,15 +369,21 @@ jobs:
         run: |
           echo "⏳ Waiting for staging CloudFront to be ready..."
           STAGING_URL="${{ steps.staging.outputs.staging_url }}"
+          READY=false
           # Retry up to 12 times (2 min) waiting for CloudFront to serve
           for i in $(seq 1 12); do
             if curl -sf --max-time 10 "$STAGING_URL" > /dev/null 2>&1; then
               echo "✅ Staging is responding (attempt $i)"
+              READY=true
               break
             fi
             echo "⏳ Attempt $i/12 - waiting 10s..."
             sleep 10
           done
+          if [ "$READY" != "true" ]; then
+            echo "::error::Staging CloudFront did not become ready after 2 minutes"
+            exit 1
+          fi
 
       - name: Staging smoke test (Sharp on arm64)
         if: success()
