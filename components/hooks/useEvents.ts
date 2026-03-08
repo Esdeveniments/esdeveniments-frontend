@@ -3,6 +3,7 @@ import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { hasActiveClientFilters } from "@utils/url-filters";
+import { buildEventsQuery } from "@utils/api-helpers";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import {
@@ -16,19 +17,7 @@ import { captureException } from "@sentry/nextjs";
 const pageFetcher = async (
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
-  const qs = new URLSearchParams();
-  if (typeof params.page === "number") qs.set("page", String(params.page));
-  if (typeof params.size === "number") qs.set("size", String(params.size));
-  if (params.place) qs.set("place", params.place);
-  if (params.category) qs.set("category", params.category);
-  if (params.lat !== undefined) qs.set("lat", String(params.lat));
-  if (params.lon !== undefined) qs.set("lon", String(params.lon));
-  if (params.radius !== undefined) qs.set("radius", String(params.radius));
-  if (params.term) qs.set("term", params.term);
-  if (params.byDate) qs.set("byDate", params.byDate);
-  if (params.from) qs.set("from", params.from);
-  if (params.to) qs.set("to", params.to);
-  if (params.type) qs.set("type", params.type);
+  const qs = buildEventsQuery(params);
 
   const res = await fetch(`/api/events?${qs.toString()}`);
   if (!res.ok) {

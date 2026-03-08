@@ -711,6 +711,7 @@ video {
 
 .rdp-filter-wrapper .rdp-root {
   --rdp-font-family: var(--font-family, inherit);
+
   font-size: 0.8125rem;
   width: 100%;
   max-width: 280px;

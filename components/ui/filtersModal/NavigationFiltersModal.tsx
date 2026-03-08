@@ -99,9 +99,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     (!regionsWithCities && !isErrorRegionsWithCities);
 
   const defaults = useMemo(() => {
+    const hasExplicitDateRange = Boolean(
+      currentQueryParams.from || currentQueryParams.to
+    );
     const place =
       currentSegments.place === "catalunya" ? "" : currentSegments.place;
-    const byDate = currentSegments.date;
+    const byDate = hasExplicitDateRange
+      ? DEFAULT_FILTER_VALUE
+      : currentSegments.date;
     const category =
       currentSegments.category === DEFAULT_FILTER_VALUE
         ? ""
@@ -693,7 +698,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     id="pick-date"
                     name="byDate"
                     type="checkbox"
-                    className="h-4 w-4 rounded-md text-primary border border-primary focus:outline-none focus:ring-0 focus:ring-background"
+                    className="h-4 w-4 rounded-md text-primary border border-primary focus-ring"
                     checked={showCalendar}
                     onClick={() => {
                       setShowCalendar((prev) => {

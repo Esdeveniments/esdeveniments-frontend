@@ -24,10 +24,11 @@ function classifyOutboundLinkType(hostname: string, pathname: string): string {
 
   // Maps
   if (
-    h.endsWith("maps.google.com") ||
     h === "maps.google.com" ||
+    h.endsWith(".maps.google.com") ||
     h === "maps.app.goo.gl" ||
-    (h.endsWith("google.com") && pathname.startsWith("/maps"))
+    ((h === "google.com" || h.endsWith(".google.com")) &&
+      pathname.startsWith("/maps"))
   ) {
     return "maps";
   }

@@ -529,7 +529,10 @@ export function buildCanonicalUrlDynamic(
   dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   const place = filters.place || "catalunya";
-  const date = filters.byDate || DEFAULT_FILTER_VALUE;
+  const hasExplicitRange = Boolean(filters.from && filters.to);
+  const date = hasExplicitRange
+    ? DEFAULT_FILTER_VALUE
+    : filters.byDate || DEFAULT_FILTER_VALUE;
   let categorySlug = filters.category || DEFAULT_FILTER_VALUE;
 
   // Ensure we use the correct slug for the category
@@ -564,14 +567,12 @@ export function buildCanonicalUrlDynamic(
     params.set("distance", filters.distance.toString());
   }
 
-  if (filters.price && filters.price !== DEFAULT_FILTER_VALUE) {
+  if (filters.price === "gratis" || filters.price === "pagament") {
     params.set("price", filters.price);
   }
 
-  if (filters.from) {
+  if (hasExplicitRange && filters.from && filters.to) {
     params.set("from", filters.from);
-  }
-  if (filters.to) {
     params.set("to", filters.to);
   }
 
