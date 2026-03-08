@@ -265,6 +265,20 @@ export interface DatePickerComponentProps {
   onToggleAllDay?: (isAllDayEvent: boolean) => void;
 }
 
+export interface TimeSelectorProps {
+  value: string;
+  onChange: (time: string) => void;
+  minTime?: string;
+  label: string;
+}
+
+export interface DateButtonProps {
+  label: string;
+  value: string;
+  isOpen: boolean;
+  onClick: () => void;
+}
+
 export interface CalendarDatePickerProps {
   /** Range start as YYYY-MM-DD or empty string */
   fromDate: string;

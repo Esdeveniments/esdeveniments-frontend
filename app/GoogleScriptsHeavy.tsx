@@ -24,28 +24,35 @@ function classifyOutboundLinkType(hostname: string, pathname: string): string {
 
   // Maps
   if (
-    h.includes("maps.google") ||
+    h.endsWith("maps.google.com") ||
+    h === "maps.google.com" ||
     h === "maps.app.goo.gl" ||
-    (h.includes("google") && pathname.startsWith("/maps"))
+    (h.endsWith("google.com") && pathname.startsWith("/maps"))
   ) {
     return "maps";
   }
 
   // Social profiles
-  if (
-    h.includes("instagram.com") ||
-    h.includes("facebook.com") ||
-    h.includes("twitter.com") ||
-    h.includes("x.com") ||
-    h.includes("tiktok.com") ||
-    h.includes("youtube.com") ||
-    h.includes("linkedin.com")
-  ) {
+  const socialDomains = [
+    "instagram.com",
+    "facebook.com",
+    "twitter.com",
+    "x.com",
+    "tiktok.com",
+    "youtube.com",
+    "linkedin.com",
+  ];
+  if (socialDomains.some((d) => h === d || h.endsWith(`.${d}`))) {
     return "social_profile";
   }
 
   // Messaging
-  if (h.includes("wa.me") || h.includes("t.me")) {
+  if (
+    h === "wa.me" ||
+    h.endsWith(".wa.me") ||
+    h === "t.me" ||
+    h.endsWith(".t.me")
+  ) {
     return "messaging";
   }
 

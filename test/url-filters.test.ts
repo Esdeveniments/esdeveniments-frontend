@@ -1711,4 +1711,8 @@ describe("url-filters: hasActiveClientFilters", () => {
       hasActiveClientFilters({ search: "", distance: "", price: "" }),
     ).toBe(false);
   });
+
+  it("returns false when price is the default value 'tots'", () => {
+    expect(hasActiveClientFilters({ price: "tots" })).toBe(false);
+  });
 });

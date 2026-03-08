@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useState } from "react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
 import { ca, es, enUS } from "date-fns/locale";
 import type { Locale } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
-import type { DatePickerComponentProps } from "types/props";
+import type { DatePickerComponentProps, TimeSelectorProps, DateButtonProps } from "types/props";
 import "react-day-picker/style.css";
 
 const LOCALE_MAP: Record<string, Locale> = { ca, es, en: enUS };
@@ -21,7 +21,12 @@ function toDate(dateStr: string): Date {
 }
 
 function toISOStringLocalMinutes(date: Date): string {
-  return date.toISOString().slice(0, 16);
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${d}T${h}:${mi}`;
 }
 
 function computeEndDate(
@@ -63,12 +68,7 @@ function TimeSelector({
   onChange,
   minTime,
   label,
-}: {
-  value: string;
-  onChange: (time: string) => void;
-  minTime?: string;
-  label: string;
-}) {
+}: TimeSelectorProps) {
   return (
     <input
       type="time"
@@ -86,12 +86,7 @@ function DateButton({
   value,
   isOpen,
   onClick,
-}: {
-  label: string;
-  value: string;
-  isOpen: boolean;
-  onClick: () => void;
-}) {
+}: DateButtonProps) {
   return (
     <button
       type="button"
@@ -120,86 +115,68 @@ export default function DatePickerImpl({
   const locale = useLocale();
   const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
 
-  const startDate = useMemo(() => toDate(initialStartDate), [initialStartDate]);
-  const endDate = useMemo(
-    () => computeEndDate(startDate, initialEndDate, isAllDay),
-    [startDate, initialEndDate, isAllDay],
-  );
-  const minDateObj = useMemo(
-    () => (minDate ? toDate(minDate) : undefined),
-    [minDate],
-  );
+  const startDate = toDate(initialStartDate);
+  const endDate = computeEndDate(startDate, initialEndDate, isAllDay);
+  const minDateObj = minDate ? toDate(minDate) : undefined;
 
   const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
 
-  const handleDaySelectStart = useCallback(
-    (day: Date | undefined) => {
-      if (!day) return;
-      const newStart = new Date(day);
-      newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
+  const handleDaySelectStart = (day: Date | undefined) => {
+    if (!day) return;
+    const newStart = new Date(day);
+    newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
 
-      onChange("startDate", toISOStringLocalMinutes(newStart));
+    onChange("startDate", toISOStringLocalMinutes(newStart));
 
-      if (isAllDay) {
-        const endOfDay = setSeconds(
-          setMinutes(setHours(newStart, 23), 59),
-          59,
-        );
-        onChange("endDate", toISOStringLocalMinutes(endOfDay));
-        setActiveField(null);
-        return;
-      }
+    if (isAllDay) {
+      const endOfDay = setSeconds(
+        setMinutes(setHours(newStart, 23), 59),
+        59,
+      );
+      onChange("endDate", toISOStringLocalMinutes(endOfDay));
+      setActiveField(null);
+      return;
+    }
 
-      const diff = endDate.getTime() - startDate.getTime();
-      const newEnd =
-        diff > 0
-          ? new Date(newStart.getTime() + diff)
-          : addMinutes(newStart, 60);
+    const diff = endDate.getTime() - startDate.getTime();
+    const newEnd =
+      diff > 0
+        ? new Date(newStart.getTime() + diff)
+        : addMinutes(newStart, 60);
+    onChange("endDate", toISOStringLocalMinutes(newEnd));
+    // Keep calendar open so user can adjust the time without re-clicking
+  };
+
+  const handleDaySelectEnd = (day: Date | undefined) => {
+    if (!day) return;
+    const newEnd = new Date(day);
+    newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
+
+    const corrected = newEnd < startDate ? addMinutes(startDate, 15) : newEnd;
+    onChange("endDate", toISOStringLocalMinutes(corrected));
+    // Keep calendar open so user can adjust the time without re-clicking
+  };
+
+  const handleStartTimeChange = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const newStart = new Date(startDate);
+    newStart.setHours(h, m, 0, 0);
+    onChange("startDate", toISOStringLocalMinutes(newStart));
+
+    if (newStart >= endDate) {
+      const newEnd = addMinutes(newStart, 60);
       onChange("endDate", toISOStringLocalMinutes(newEnd));
-      // Keep calendar open so user can adjust the time without re-clicking
-    },
-    [startDate, endDate, isAllDay, onChange],
-  );
+    }
+  };
 
-  const handleDaySelectEnd = useCallback(
-    (day: Date | undefined) => {
-      if (!day) return;
-      const newEnd = new Date(day);
-      newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
+  const handleEndTimeChange = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const newEnd = new Date(endDate);
+    newEnd.setHours(h, m, 0, 0);
 
-      const corrected = newEnd < startDate ? addMinutes(startDate, 15) : newEnd;
-      onChange("endDate", toISOStringLocalMinutes(corrected));
-      // Keep calendar open so user can adjust the time without re-clicking
-    },
-    [startDate, endDate, onChange],
-  );
-
-  const handleStartTimeChange = useCallback(
-    (time: string) => {
-      const [h, m] = time.split(":").map(Number);
-      const newStart = new Date(startDate);
-      newStart.setHours(h, m, 0, 0);
-      onChange("startDate", toISOStringLocalMinutes(newStart));
-
-      if (newStart >= endDate) {
-        const newEnd = addMinutes(newStart, 60);
-        onChange("endDate", toISOStringLocalMinutes(newEnd));
-      }
-    },
-    [startDate, endDate, onChange],
-  );
-
-  const handleEndTimeChange = useCallback(
-    (time: string) => {
-      const [h, m] = time.split(":").map(Number);
-      const newEnd = new Date(endDate);
-      newEnd.setHours(h, m, 0, 0);
-
-      const corrected = newEnd < startDate ? addMinutes(startDate, 15) : newEnd;
-      onChange("endDate", toISOStringLocalMinutes(corrected));
-    },
-    [startDate, endDate, onChange],
-  );
+    const corrected = newEnd < startDate ? addMinutes(startDate, 15) : newEnd;
+    onChange("endDate", toISOStringLocalMinutes(corrected));
+  };
 
   const startDisplay = formatDateDisplay(startDate, locale);
   const endDisplay = formatDateDisplay(endDate, locale);

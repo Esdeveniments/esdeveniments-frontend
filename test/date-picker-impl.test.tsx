@@ -19,17 +19,22 @@ vi.mock("react-day-picker/style.css", () => ({}));
 
 /**
  * Mirrors the component's toISOStringLocalMinutes: creates a local Date
- * with the given hours/minutes and converts to UTC ISO slice.
- * This makes assertions timezone-agnostic.
+ * with the given hours/minutes and formats as local ISO (no UTC shift).
+ * Uses numeric Date constructor to avoid UTC parsing of date-only strings.
  */
-function expectedUTCTime(
+function expectedLocalTime(
   dateStr: string,
   hours: number,
   minutes: number,
 ): string {
-  const d = new Date(dateStr);
-  d.setHours(hours, minutes, 0, 0);
-  return d.toISOString().slice(0, 16);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const d = new Date(year, month - 1, day, hours, minutes, 0, 0);
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${dd}T${h}:${mi}`;
 }
 
 describe("DatePickerImpl", () => {
@@ -251,7 +256,7 @@ describe("DatePickerImpl", () => {
       const timeInput = screen.getByLabelText("Inici *");
       fireEvent.change(timeInput, { target: { value: "14:30" } });
 
-      const expected = expectedUTCTime("2026-03-07", 14, 30);
+      const expected = expectedLocalTime("2026-03-07", 14, 30);
       expect(baseProps.onChange).toHaveBeenCalledWith("startDate", expected);
     });
 
@@ -265,7 +270,7 @@ describe("DatePickerImpl", () => {
       const timeInput = screen.getByLabelText("Final *");
       fireEvent.change(timeInput, { target: { value: "15:00" } });
 
-      const expected = expectedUTCTime("2026-03-07", 15, 0);
+      const expected = expectedLocalTime("2026-03-07", 15, 0);
       expect(baseProps.onChange).toHaveBeenCalledWith("endDate", expected);
     });
 
@@ -294,7 +299,7 @@ describe("DatePickerImpl", () => {
       expect(startCall).toBeDefined();
       expect(endCall).toBeDefined();
       // End should be 60 minutes after start (23:00 + 60min)
-      const expectedEnd = expectedUTCTime("2026-03-07", 24, 0);
+      const expectedEnd = expectedLocalTime("2026-03-07", 24, 0);
       expect(endCall![1]).toBe(expectedEnd);
     });
   });
@@ -322,7 +327,7 @@ describe("DatePickerImpl", () => {
       expect(screen.getByText("Data i hora *")).toBeInTheDocument();
     });
 
-    it("disables days before start date in end-date calendar", () => {
+    it("opens end-date calendar with start-date context", () => {
       const props = {
         ...baseProps,
         startDate: "2026-03-15T10:00",
@@ -361,7 +366,7 @@ describe("DatePickerImpl", () => {
       fireEvent.click(day14);
 
       // Should preserve time (14:30) on the new date (March 14)
-      const expected = expectedUTCTime("2026-03-14", 14, 30);
+      const expected = expectedLocalTime("2026-03-14", 14, 30);
       expect(baseProps.onChange).toHaveBeenCalledWith("startDate", expected);
     });
   });

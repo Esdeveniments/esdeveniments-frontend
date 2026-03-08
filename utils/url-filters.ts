@@ -428,7 +428,7 @@ export function hasActiveClientFilters(
   return !!(
     queryParams.search ||
     queryParams.distance ||
-    queryParams.price ||
+    (queryParams.price && queryParams.price !== DEFAULT_FILTER_VALUE) ||
     queryParams.from ||
     queryParams.to ||
     queryParams.lat ||

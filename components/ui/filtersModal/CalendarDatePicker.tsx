@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import type { ReactElement } from "react";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { useLocale } from "next-intl";
@@ -36,18 +36,16 @@ export default function CalendarDatePicker({
   fromDate,
   toDate,
   onChange,
-}: CalendarDatePickerProps) {
+}: CalendarDatePickerProps): ReactElement {
   const locale = useLocale();
   const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
 
-  const selected = useMemo((): DateRange | undefined => {
-    const from = parseYMD(fromDate);
-    if (!from) return undefined;
-    const to = parseYMD(toDate);
-    return { from, to: to ?? from };
-  }, [fromDate, toDate]);
+  const from = parseYMD(fromDate);
+  const selected: DateRange | undefined = from
+    ? { from, to: parseYMD(toDate) ?? from }
+    : undefined;
 
-  const today = useMemo(() => new Date(), []);
+  const today = new Date();
 
   return (
     <div className="rdp-filter-wrapper">

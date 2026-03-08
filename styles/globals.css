@@ -768,9 +768,12 @@ video {
 
 /* Today indicator – subtle dotted border */
 .rdp-filter-wrapper
-  .rdp-day.rdp-today:not(.rdp-selected):not(.rdp-range_start):not(
-    .rdp-range_end
-  ):not(.rdp-range_middle)
+  .rdp-day.rdp-today:not(
+    .rdp-selected,
+    .rdp-range_start,
+    .rdp-range_end,
+    .rdp-range_middle
+  )
   .rdp-day_button {
   border: 1px solid rgba(214, 0, 47, 0.35) !important;
 }

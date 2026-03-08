@@ -105,6 +105,11 @@ function HybridEventsListClientContent({
 
   // Track search result counts when search filter is active and results load
   useEffect(() => {
+    // Reset tracking flag when search term changes to track new queries
+    searchResultsTrackedRef.current = false;
+  }, [search]);
+
+  useEffect(() => {
     if (
       search &&
       !isLoading &&
