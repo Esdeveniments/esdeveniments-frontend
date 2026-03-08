@@ -42,13 +42,28 @@ async function getExpandablePlaces(
             place: place.slug,
             size: 1,
           });
+          // fetchEventsExternal returns totalElements:0 on API errors (safe fallback).
+          // Distinguish a real empty place from an API failure: if content is empty
+          // but last is true AND totalElements is 0, it may be a fallback response.
+          // When count is genuinely unknown (API unavailable), expand the place to
+          // avoid collapsing sitemap URLs based on transient failures.
+          const countUnknown =
+            result.totalElements === 0 &&
+            result.content.length === 0 &&
+            result.last === true &&
+            result.currentPage === 0;
+          if (countUnknown) {
+            // API unavailable or returned fallback — expand to avoid shrinking sitemap
+            return { slug: place.slug, expandable: true };
+          }
           return {
             slug: place.slug,
             expandable:
               result.totalElements >= SITEMAP_MIN_EVENTS_FOR_EXPANSION,
           };
         } catch {
-          return { slug: place.slug, expandable: false };
+          // Expand on unexpected error so transient failures don't remove URLs
+          return { slug: place.slug, expandable: true };
         }
       }),
     );
