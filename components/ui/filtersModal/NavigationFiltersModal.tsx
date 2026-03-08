@@ -163,7 +163,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [localPlace, setLocalPlace] = useState<string>(defaults.place);
   const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
   const [localCategory, setLocalCategory] = useState<string>(defaults.category);
-  const [localPrice, setLocalPrice] = useState<string>(defaults.price);
+  // TODO: Re-enable when backend supports the `type` query param
+  // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
   const [localToDate, setLocalToDate] = useState<string>(currentQueryParams.to || defaults.fromDate);
   const [showCalendar, setShowCalendar] = useState<boolean>(Boolean(defaults.fromDate));
@@ -199,7 +200,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalPlace(defaults.place);
       setLocalByDate(defaults.byDate);
       setLocalCategory(defaults.category);
-      setLocalPrice(defaults.price);
+      // TODO: Re-enable when backend supports the `type` query param
+      // setLocalPrice(defaults.price);
       setLocalFromDate(defaults.fromDate);
       setLocalToDate(currentQueryParams.to || defaults.fromDate);
       setShowCalendar(Boolean(defaults.fromDate));
@@ -468,7 +470,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           : localPlace || "catalunya",
       byDate: localFromDate ? DEFAULT_FILTER_VALUE : (localByDate || DEFAULT_FILTER_VALUE),
       category: localCategory || DEFAULT_FILTER_VALUE,
-      price: localPrice || DEFAULT_FILTER_VALUE,
+      // Price UI is commented out (backend doesn't support type param yet).
+      // Always reset to default so stale ?price= values don't persist.
+      price: DEFAULT_FILTER_VALUE,
       from: localFromDate || undefined,
       to: (localToDate || localFromDate) || undefined,
       searchTerm: currentQueryParams.search || "",

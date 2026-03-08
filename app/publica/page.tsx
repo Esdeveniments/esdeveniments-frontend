@@ -150,7 +150,11 @@ const Publica = () => {
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      // Also fire on SPA navigation (component unmount)
+      handleBeforeUnload();
+    };
   }, []);
 
   const {
@@ -207,6 +211,20 @@ const Publica = () => {
     setError(null);
     setImageUploadMessage(null);
 
+    // Track interaction for funnel analytics
+    if (!formStartedRef.current) {
+      formStartedRef.current = true;
+      sendGoogleEvent("publica_form_start", { source: "publica" });
+    }
+    if (!fieldsInteractedRef.current.has("image")) {
+      fieldsInteractedRef.current.add("image");
+      sendGoogleEvent("publica_field_interact", {
+        field_name: "image",
+        fields_count: fieldsInteractedRef.current.size,
+        source: "publica",
+      });
+    }
+
     if (!file) {
       setImageFile(null);
       setImagePreview(null);
@@ -228,6 +246,20 @@ const Publica = () => {
   };
 
   const handleTownChange = (town: Option | null) => {
+    // Track interaction for funnel analytics
+    if (!formStartedRef.current) {
+      formStartedRef.current = true;
+      sendGoogleEvent("publica_form_start", { source: "publica" });
+    }
+    if (!fieldsInteractedRef.current.has("town")) {
+      fieldsInteractedRef.current.add("town");
+      sendGoogleEvent("publica_field_interact", {
+        field_name: "town",
+        fields_count: fieldsInteractedRef.current.size,
+        source: "publica",
+      });
+    }
+
     setForm((prev) => {
       const next = { ...prev, town };
       if (town) {
