@@ -10,6 +10,13 @@ vi.mock("@i18n/routing", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+// Mock next/navigation (required by FilterLoadingProvider in renderWithProviders)
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/",
+}));
+
 // Mock Image constructor for dimension validation
 class MockImage {
   onload: (() => void) | null = null;
@@ -67,9 +74,9 @@ describe("SponsorImageUpload file size validation", () => {
     selectFile(getFileInput(), file);
 
     await waitFor(() => {
-      expect(
-        screen.queryByText(/supera el límit permès/i),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/supera el límit permès/i)).not.toBeInTheDocument();
+      // Upload button should be enabled (file accepted into state)
+      expect(screen.getByRole("button", { name: /puja la imatge/i })).not.toBeDisabled();
     });
   });
 
@@ -83,9 +90,9 @@ describe("SponsorImageUpload file size validation", () => {
     selectFile(getFileInput(), file);
 
     await waitFor(() => {
-      expect(
-        screen.queryByText(/supera el límit permès/i),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/supera el límit permès/i)).not.toBeInTheDocument();
+      // Upload button should be enabled (file accepted into state)
+      expect(screen.getByRole("button", { name: /puja la imatge/i })).not.toBeDisabled();
     });
   });
 
@@ -116,10 +123,8 @@ describe("SponsorImageUpload file size validation", () => {
       expect(screen.getByText(/supera el límit permès/i)).toBeInTheDocument();
     });
 
-    // Upload button should not be enabled (no file in state)
-    const uploadButton = screen.queryByRole("button", {
-      name: /puja la imatge/i,
-    });
-    expect(uploadButton).not.toBeInTheDocument();
+    // Upload button should be rendered but disabled (no file in state)
+    const uploadButton = screen.getByRole("button", { name: /puja la imatge/i });
+    expect(uploadButton).toBeDisabled();
   });
 });
