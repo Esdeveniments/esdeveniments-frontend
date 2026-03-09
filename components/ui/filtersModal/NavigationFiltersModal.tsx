@@ -697,14 +697,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     label={tByDates(labelKey)}
                   />
                 ))}
-                <div className="flex justify-start items-center gap-2">
+                <label className="flex-start gap-2 cursor-pointer">
                   <input
                     id="pick-date"
                     name="byDate"
                     type="checkbox"
                     className="h-4 w-4 rounded-md text-primary border border-primary focus-ring"
                     checked={showCalendar}
-                    onClick={() => {
+                    onChange={() => {
                       setShowCalendar((prev) => {
                         if (!prev) {
                           // Opening calendar: clear byDate shortcut
@@ -717,10 +717,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                         return !prev;
                       });
                     }}
-                    readOnly
                   />
-                  <label htmlFor="pick-date">{t("modal.pickDate")}</label>
-                </div>
+                  <span>{t("modal.pickDate")}</span>
+                </label>
               </div>
               {showCalendar && (
                 <CalendarDatePicker
