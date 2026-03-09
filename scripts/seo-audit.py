@@ -77,6 +77,10 @@ CWV_THRESHOLDS = {
     "FCP": (1800, 3000, "ms"), "TTFB": (800, 1800, "ms"),
 }
 
+# i18n locale prefixes for URL parsing
+I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/e/", "ca")]
+LOCALE_PATH_PREFIXES = ["/es/", "/en/"]
+
 TODAY = datetime.now()
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
 START_90 = (TODAY - timedelta(days=93)).strftime("%Y-%m-%d")
@@ -390,7 +394,7 @@ def collect_gsc_data():
     all_pages_rows = gsc_query(["page"], START_90, END, limit=500)
     for r in all_pages_rows:
         url = r["keys"][0]
-        for prefix, locale in [("/es/e/", "es"), ("/en/e/", "en"), ("/e/", "ca")]:
+        for prefix, locale in I18N_EVENT_PREFIXES:
             if prefix in url:
                 slug = url.split(prefix)[-1].rstrip("/")
                 i18n_cannibal[slug].append({
@@ -422,7 +426,7 @@ def collect_gsc_data():
         # Parse path, strip site URL and locale prefix
         path = url.replace(SITE, "/").rstrip("/")
         # Remove locale prefix if present
-        for lp in ["/es/", "/en/"]:
+        for lp in LOCALE_PATH_PREFIXES:
             if path.startswith(lp):
                 path = "/" + path[len(lp):]
                 break
