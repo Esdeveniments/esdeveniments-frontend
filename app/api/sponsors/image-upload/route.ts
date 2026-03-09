@@ -99,6 +99,17 @@ export async function POST(request: Request) {
   if (blocked) return blocked;
 
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+    if (!contentType.includes("multipart/form-data")) {
+      return NextResponse.json(
+        {
+          errorCode: "invalid_content_type",
+          error: "Content-Type must be multipart/form-data.",
+        },
+        { status: 400 },
+      );
+    }
+
     const formData = await request.formData();
     const sessionIdRaw = formData.get("sessionId");
     const imageFile = formData.get("imageFile");
