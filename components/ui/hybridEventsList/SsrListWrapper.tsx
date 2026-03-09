@@ -3,16 +3,16 @@
 import { JSX } from "react";
 import type { SsrListWrapperProps } from "types/props";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
+import { hasActiveClientFilters } from "@utils/url-filters";
 
 // Declaratively controls visibility of the SSR list based on client-only filters.
 // Keeps SSR content in the initial HTML for SEO, then hides it after hydration
-// when client filters (search/distance/lat/lon) are active.
+// when any client filter is active (see hasActiveClientFilters for the full list).
 export default function SsrListWrapper({
   children,
 }: SsrListWrapperProps): JSX.Element {
   const { queryParams } = useSharedUrlFilters();
-  const { search, distance, lat, lon } = queryParams;
-  const hasClientFilters = !!(search || distance || lat || lon);
+  const hasClientFilters = hasActiveClientFilters(queryParams);
 
   return (
     <div

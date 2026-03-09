@@ -527,7 +527,9 @@
       "popularTitle": "Popular ahora en Cataluña"
     },
     "Filters": {
-      "triggerLabel": "Filtros"
+      "triggerLabel": "Filtros",
+      "priceFree": "Gratis",
+      "pricePaid": "De pago"
     },
     "Social": {
       "followUs": "Síguenos"
@@ -621,7 +623,14 @@
         "selectPlaceholder": "Selecciona población o comarca",
         "tagline": "Filtros activos",
         "dateHeading": "Fecha",
-        "categoriesHeading": "Categorías"
+        "categoriesHeading": "Categorías",
+        "priceHeading": "Precio",
+        "priceFree": "Gratis",
+        "pricePaid": "De pago",
+        "calendarLabel": "O elige en el calendario:",
+        "pickDate": "Elige una fecha...",
+        "viewMore": "Ver más",
+        "viewLess": "Ver menos"
       }
     },
     "ImageUploader": {
@@ -1389,7 +1398,8 @@
       "category": "Categoría",
       "date": "Fecha",
       "distance": "Distancia",
-      "search": "Buscar"
+      "search": "Buscar",
+      "price": "Precio"
     },
     "Categories": {
       "festesPopulars": "Fiestas populares",
@@ -1403,7 +1413,10 @@
       "today": "Hoy",
       "tomorrow": "Mañana",
       "weekend": "Fin de semana",
-      "week": "Esta semana"
+      "week": "Esta semana",
+      "nextWeek": "Semana que viene",
+      "thisMonth": "Este mes",
+      "nextMonth": "Mes que viene"
     }
   },
   "Sponsor": {

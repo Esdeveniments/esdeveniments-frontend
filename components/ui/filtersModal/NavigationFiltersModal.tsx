@@ -4,7 +4,7 @@ import {
   useCallback,
   memo,
   startTransition,
-  ChangeEvent,
+  type ChangeEvent,
   FC,
   useEffect,
   useRef,
@@ -14,8 +14,14 @@ import { useRouter } from "../../../i18n/routing";
 import dynamic from "next/dynamic";
 import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
-import { BYDATES, DISTANCES, DEFAULT_FILTER_VALUE } from "@utils/constants";
-import { sendEventToGA, generateRegionsAndTownsOptions } from "@utils/helpers";
+import { BYDATES, DISTANCES, DEFAULT_FILTER_VALUE, DATE_RANGE_SHORTCUTS } from "@utils/constants";
+
+const CalendarDatePicker = dynamic(
+  () => import("./CalendarDatePicker"),
+  { ssr: false, loading: () => <div className="h-[220px] w-full animate-pulse bg-muted/30 rounded-card" /> },
+);
+import { generateRegionsAndTownsOptions } from "@utils/helpers";
+import { sendGoogleEvent } from "@utils/analytics";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option, PlaceType } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
@@ -93,13 +99,22 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     (!regionsWithCities && !isErrorRegionsWithCities);
 
   const defaults = useMemo(() => {
+    const hasExplicitDateRange = Boolean(
+      currentQueryParams.from && currentQueryParams.to
+    );
     const place =
       currentSegments.place === "catalunya" ? "" : currentSegments.place;
-    const byDate = currentSegments.date;
+    const byDate = hasExplicitDateRange
+      ? DEFAULT_FILTER_VALUE
+      : currentSegments.date;
     const category =
       currentSegments.category === DEFAULT_FILTER_VALUE
         ? ""
         : currentSegments.category;
+    const price = currentQueryParams.price || DEFAULT_FILTER_VALUE;
+    const fromDate = hasExplicitDateRange
+      ? currentQueryParams.from || ""
+      : "";
     const distance =
       currentQueryParams.distance ||
       (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
@@ -110,6 +125,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       place,
       byDate,
       category,
+      price,
+      fromDate,
       distance,
       userLocation: initialUserLocation,
       selectOption: regionOption || null,
@@ -148,6 +165,15 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [localPlace, setLocalPlace] = useState<string>(defaults.place);
   const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
   const [localCategory, setLocalCategory] = useState<string>(defaults.category);
+  // TODO: Re-enable when backend supports the `type` query param
+  // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
+  const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
+  const [localToDate, setLocalToDate] = useState<string>(currentQueryParams.to || defaults.fromDate);
+  const [showCalendar, setShowCalendar] = useState<boolean>(Boolean(defaults.fromDate));
+  const isAdvancedDateActive =
+    BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
+    Boolean(defaults.fromDate);
+  const [showMoreDates, setShowMoreDates] = useState<boolean>(isAdvancedDateActive);
   const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
   const [localUserLocation, setLocalUserLocation] = useState(
     defaults.userLocation
@@ -179,6 +205,16 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalPlace(defaults.place);
       setLocalByDate(defaults.byDate);
       setLocalCategory(defaults.category);
+      // TODO: Re-enable when backend supports the `type` query param
+      // setLocalPrice(defaults.price);
+      setLocalFromDate(defaults.fromDate);
+      const hasExplicitRange = Boolean(currentQueryParams.from && currentQueryParams.to);
+      setLocalToDate(hasExplicitRange ? (currentQueryParams.to || defaults.fromDate) : defaults.fromDate);
+      setShowCalendar(Boolean(defaults.fromDate));
+      const advancedActive =
+        BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
+        Boolean(defaults.fromDate);
+      setShowMoreDates(advancedActive);
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
       setLocalPlaceType(defaults.placeType);
@@ -194,10 +230,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.place,
     defaults.byDate,
     defaults.category,
+    defaults.price,
+    defaults.fromDate,
     defaults.distance,
     defaults.userLocation,
     defaults.placeType,
     defaults.placeCoords,
+    currentQueryParams.to,
     initialUseCurrentLocation,
   ]);
 
@@ -438,8 +477,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         isDistanceFilterActive && !localPlaceCoords
           ? "catalunya"
           : localPlace || "catalunya",
-      byDate: localByDate || "avui",
+      byDate: localFromDate ? DEFAULT_FILTER_VALUE : (localByDate || DEFAULT_FILTER_VALUE),
       category: localCategory || DEFAULT_FILTER_VALUE,
+      // Price UI is commented out (backend doesn't support type param yet).
+      // Always reset to default so stale ?price= values don't persist.
+      price: DEFAULT_FILTER_VALUE,
+      from: localFromDate || undefined,
+      to: (localToDate || localFromDate) || undefined,
       searchTerm: currentQueryParams.search || "",
       distance: isDistanceFilterActive ? parseInt(localDistance) : undefined,
       lat: isDistanceFilterActive
@@ -476,12 +520,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       return true;
     }
 
-    sendEventToGA("Place", changes.place, "filters_modal_apply");
-    sendEventToGA("ByDate", changes.byDate, "filters_modal_apply");
-    sendEventToGA("Category", changes.category, "filters_modal_apply");
-    if (changes.distance !== undefined) {
-      sendEventToGA("Distance", changes.distance.toString(), "filters_modal_apply");
-    }
+    sendGoogleEvent("filter_change", {
+      filter_place: changes.place,
+      filter_date: changes.byDate,
+      filter_category: changes.category,
+      filter_distance: changes.distance !== undefined ? changes.distance.toString() : undefined,
+      context: "filters_modal_apply",
+    });
 
     startNavigationFeedback();
     startTransition(() => setLoading(true));
@@ -491,13 +536,42 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const handleByDateChange = useCallback((value: string | number) => {
     setLocalByDate((prevValue) => (prevValue === value ? "" : value) as string);
+    setLocalFromDate(""); // Clear calendar date when shortcut selected
+    setLocalToDate("");
+    setShowCalendar(false); // Hide calendar when shortcut selected
   }, []);
+
+  const handleCalendarDateChange = useCallback((from: string, to: string) => {
+    setLocalFromDate(from);
+    setLocalToDate(to || from);
+    if (from) {
+      setLocalByDate(""); // Clear shortcut when calendar date selected
+    }
+  }, []);
+
+  const handleDateRangeShortcut = useCallback(
+    (getRange: () => { from: string; to: string }) => {
+      const { from, to } = getRange();
+      setLocalFromDate(from);
+      setLocalToDate(to);
+      setLocalByDate(""); // Clear byDate shortcut
+    },
+    [],
+  );
 
   const handleCategoryChange = useCallback((value: string | number) => {
     setLocalCategory(
       (prevValue) => (prevValue === value ? "" : value) as string
     );
   }, []);
+
+  // TODO: Re-enable when backend supports the `type` query param
+  // const handlePriceChange = useCallback((value: string | number) => {
+  //   setLocalPrice(
+  //     (prevValue) =>
+  //       (prevValue === value ? DEFAULT_FILTER_VALUE : value) as string
+  //   );
+  // }, []);
 
   // Determine if the selected place is a region (comarca) - regions don't have coordinates
   const isRegionSelected = localPlaceType === "region";
@@ -616,12 +690,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </div>
               )}
             </div>
-            <fieldset className="w-full flex flex-col justify-start items-start gap-6">
+            <fieldset className="w-full flex flex-col justify-start items-start gap-4">
               <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
                 {t("modal.dateHeading")}
               </p>
               <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-                {BYDATES.map(({ value, labelKey }) => (
+                {BYDATES.slice(0, 3).map(({ value, labelKey }) => (
                   <RadioInput
                     key={value}
                     id={value}
@@ -632,7 +706,93 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     label={tByDates(labelKey)}
                   />
                 ))}
+                <label htmlFor="pick-date" className="flex-start gap-2 cursor-pointer">
+                  <input
+                    id="pick-date"
+                    name="byDate"
+                    type="checkbox"
+                    className="h-4 w-4 rounded-md text-primary border border-primary focus-ring"
+                    checked={showCalendar}
+                    onChange={() => {
+                      setShowCalendar((prev) => {
+                        if (!prev) {
+                          // Opening calendar: clear byDate shortcut
+                          setLocalByDate("");
+                        } else {
+                          // Closing calendar: clear date range
+                          setLocalFromDate("");
+                          setLocalToDate("");
+                        }
+                        return !prev;
+                      });
+                    }}
+                  />
+                  <span>{t("modal.pickDate")}</span>
+                </label>
               </div>
+              {showCalendar && (
+                <CalendarDatePicker
+                  fromDate={localFromDate}
+                  toDate={localToDate}
+                  onChange={handleCalendarDateChange}
+                />
+              )}
+              {!showMoreDates ? (
+                <button
+                  type="button"
+                  onClick={() => setShowMoreDates(true)}
+                  className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+                >
+                  {t("modal.viewMore")}
+                </button>
+              ) : (
+                <>
+                  <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+                    {BYDATES.slice(3).map(({ value, labelKey }) => (
+                      <RadioInput
+                        key={value}
+                        id={value}
+                        name="byDate"
+                        value={value}
+                        checkedValue={localByDate}
+                        onChange={handleByDateChange}
+                        label={tByDates(labelKey)}
+                      />
+                    ))}
+                  </div>
+                  <div className="w-full flex flex-wrap gap-2">
+                    {DATE_RANGE_SHORTCUTS.map(({ labelKey, getRange }) => {
+                      const { from: rangeFrom, to: rangeTo } = getRange();
+                      const isActive =
+                        !localByDate &&
+                        localFromDate !== "" &&
+                        localFromDate === rangeFrom &&
+                        localToDate === rangeTo;
+                      return (
+                        <button
+                          key={labelKey}
+                          type="button"
+                          aria-pressed={isActive}
+                          onClick={() => handleDateRangeShortcut(getRange)}
+                          className={`px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
+                            }`}
+                        >
+                          {tByDates(labelKey)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowMoreDates(false)}
+                    className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+                  >
+                    {t("modal.viewLess")}
+                  </button>
+                </>
+              )}
             </fieldset>
             {categories.length > 0 && (
               <fieldset className="w-full flex flex-col justify-start items-start gap-4">
@@ -654,6 +814,34 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </div>
               </fieldset>
             )}
+            {/* TODO: Re-enable price filter when backend supports the `type` query param.
+                Currently the API ignores `type=FREE|PAID` (returns same 5075 results).
+                All plumbing (config, state, URL parsing, API forwarding) is in place —
+                just uncomment this fieldset once the backend filters by event type.
+            <fieldset className="w-full flex flex-col justify-start items-start gap-4">
+              <p className="w-full font-semibold font-barlow uppercase">
+                {t("modal.priceHeading")}
+              </p>
+              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+                <RadioInput
+                  id="price-gratis"
+                  name="price"
+                  value="gratis"
+                  checkedValue={localPrice}
+                  onChange={handlePriceChange}
+                  label={t("modal.priceFree")}
+                />
+                <RadioInput
+                  id="price-pagament"
+                  name="price"
+                  value="pagament"
+                  checkedValue={localPrice}
+                  onChange={handlePriceChange}
+                  label={t("modal.pricePaid")}
+                />
+              </div>
+            </fieldset>
+            */}
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
               <div className="w-full flex items-center justify-between gap-3">
                 <p className="font-semibold font-barlow uppercase pt-[5px]">

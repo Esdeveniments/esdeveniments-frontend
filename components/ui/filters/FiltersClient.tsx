@@ -27,6 +27,7 @@ const FiltersClient = ({
     category: segments.category || DEFAULT_FILTER_VALUE,
     searchTerm: queryParams.search || "",
     distance: parseInt(queryParams.distance || "50"),
+    price: queryParams.price || DEFAULT_FILTER_VALUE,
     lat: queryParams.lat ? parseFloat(queryParams.lat) : undefined,
     lon: queryParams.lon ? parseFloat(queryParams.lon) : undefined,
   };
@@ -145,7 +146,9 @@ const FiltersClient = ({
                 ? translatedByDate(displayState.filters.byDate)
                 : config.key === "category" && displayText
                   ? translatedCategory(displayState.filters.category)
-                  : displayText;
+                  : config.key === "price" && displayText
+                    ? labels.prices?.[displayText] || displayText
+                    : displayText;
             return (
               <FilterButton
                 key={config.key}
