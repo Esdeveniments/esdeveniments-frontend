@@ -1,0 +1,109 @@
+name: SEO Audit
+
+on:
+  # Bi-weekly: 1st and 15th of each month at 7 AM UTC (9 AM CET)
+  schedule:
+    - cron: "0 7 1,15 * *"
+  # Manual trigger with optional comparison
+  workflow_dispatch:
+    inputs:
+      skip_issue:
+        description: "Skip GitHub Issue creation (just generate report)"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  GSC_SITE_URL: "https://www.esdeveniments.cat/"
+  GA4_PROPERTY_ID: "406884331"
+
+jobs:
+  seo-audit:
+    name: Run SEO Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          pip install --quiet \
+            google-api-python-client \
+            google-auth \
+            google-analytics-data
+
+      - name: Authenticate with GCP
+        run: |
+          echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> $GITHUB_ENV
+
+      - name: Download previous audit data
+        id: previous
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: seo-audit-data
+          workflow: seo-audit.yml
+          search_artifacts: true
+          if_no_artifact_found: warn
+        continue-on-error: true
+
+      - name: Run SEO audit
+        id: audit
+        run: |
+          mkdir -p audit-output
+
+          PREV_FLAG=""
+          if [ -f "seo-audit-data.json" ]; then
+            echo "📂 Found previous audit data"
+            PREV_FLAG="--previous seo-audit-data.json"
+          else
+            echo "📂 No previous audit data found (first run)"
+          fi
+
+          SEO_AUDIT_OUTPUT_DIR=audit-output \
+            python scripts/seo-audit.py $PREV_FLAG
+
+          # Set outputs for issue creation
+          echo "run_date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+          echo "has_previous=${{ steps.previous.outcome == 'success' }}" >> $GITHUB_OUTPUT
+
+      - name: Upload audit data (for future comparisons)
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-audit-data
+          path: audit-output/seo-audit-data.json
+          retention-days: 180
+          overwrite: true
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-audit-report-${{ steps.audit.outputs.run_date }}
+          path: audit-output/seo-audit-report.md
+          retention-days: 180
+
+      - name: Create GitHub Issue
+        if: ${{ github.event.inputs.skip_issue != 'true' }}
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "📊 SEO Audit — ${{ steps.audit.outputs.run_date }}"
+          content-filepath: audit-output/seo-audit-report.md
+          labels: seo,automated-audit
+          assignees: albertolive
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f /tmp/gcp-sa-key.json
