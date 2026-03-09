@@ -31,6 +31,11 @@ export default $config({
   async run() {
     const isProduction = $app.stage === "production";
 
+    // Helper: require env var in production, allow optional in non-production (ephemeral staging)
+    function requireEnvIfProd(name: string): string | undefined {
+      return isProduction ? requireEnv(name) : process.env[name];
+    }
+
     // Set Node.js 22.x runtime for ALL Lambda functions globally
     // This applies to server, image optimizer, warmer, and revalidation functions
     // Upgraded from nodejs20.x (deprecated April 2026)
@@ -208,10 +213,7 @@ export default $config({
         // to NEXT_PUBLIC_SITE_URL if INTERNAL_SITE_URL is not set.
         HMAC_SECRET: requireEnv("HMAC_SECRET"),
         // Cache revalidation secret for /api/revalidate endpoint
-        // Required in production, optional in non-production (ephemeral staging doesn't need cache revalidation)
-        REVALIDATE_SECRET: isProduction
-          ? requireEnv("REVALIDATE_SECRET")
-          : process.env.REVALIDATE_SECRET,
+        REVALIDATE_SECRET: requireEnvIfProd("REVALIDATE_SECRET"),
         DEEPL_API_KEY: requireEnv("DEEPL_API_KEY"),
         // Optional: Pipedream webhook URL for new event email notifications
         // If not set, email notifications will be silently skipped
@@ -225,14 +227,8 @@ export default $config({
           CLOUDFRONT_DISTRIBUTION_ID: process.env.CLOUDFRONT_DISTRIBUTION_ID,
         }),
         // Stripe integration for sponsor payments
-        // Required for /patrocina checkout and webhook processing
-        // Required in production, optional in non-production (ephemeral staging doesn't need Stripe)
-        STRIPE_SECRET_KEY: isProduction
-          ? requireEnv("STRIPE_SECRET_KEY")
-          : process.env.STRIPE_SECRET_KEY,
-        STRIPE_WEBHOOK_SECRET: isProduction
-          ? requireEnv("STRIPE_WEBHOOK_SECRET")
-          : process.env.STRIPE_WEBHOOK_SECRET,
+        STRIPE_SECRET_KEY: requireEnvIfProd("STRIPE_SECRET_KEY"),
+        STRIPE_WEBHOOK_SECRET: requireEnvIfProd("STRIPE_WEBHOOK_SECRET"),
         // Optional Stripe config - defaults are fine for most cases
         ...(process.env.STRIPE_TAX_MODE && {
           STRIPE_TAX_MODE: process.env.STRIPE_TAX_MODE,
@@ -243,15 +239,9 @@ export default $config({
         ...(process.env.STRIPE_MANUAL_TAX_RATE_IDS && {
           STRIPE_MANUAL_TAX_RATE_IDS: process.env.STRIPE_MANUAL_TAX_RATE_IDS,
         }),
-        // Turso database for sponsor persistence (replaces static config)
-        // Required for sponsor banner display and Stripe webhook automation
-        // Required in production, optional in non-production (ephemeral staging doesn't need Turso)
-        TURSO_DATABASE_URL: isProduction
-          ? requireEnv("TURSO_DATABASE_URL")
-          : process.env.TURSO_DATABASE_URL,
-        TURSO_AUTH_TOKEN: isProduction
-          ? requireEnv("TURSO_AUTH_TOKEN")
-          : process.env.TURSO_AUTH_TOKEN,
+        // Turso database for sponsor persistence
+        TURSO_DATABASE_URL: requireEnvIfProd("TURSO_DATABASE_URL"),
+        TURSO_AUTH_TOKEN: requireEnvIfProd("TURSO_AUTH_TOKEN"),
       },
       warm: 1, // Reduced from 3 to minimize warm invocations + GB-seconds. Cold starts ~2s, rare with CloudFront cache.
       server: {
