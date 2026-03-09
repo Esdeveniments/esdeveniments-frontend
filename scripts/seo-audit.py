@@ -1350,6 +1350,9 @@ def main():
         except (json.JSONDecodeError, OSError) as e:
             print(f"⚠️ Failed to load previous audit: {e}")
 
+    # Ensure output directory exists
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     # Write JSON
     json_path = os.path.join(OUTPUT_DIR, "seo-audit-data.json")
     with open(json_path, "w", encoding="utf-8") as f:
