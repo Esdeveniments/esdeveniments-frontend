@@ -18,7 +18,6 @@ Environment:
 import json
 import os
 import re
-import sys
 import argparse
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -56,6 +55,16 @@ TRACKED_CUSTOM_EVENTS = [
     "select_category", "home_chip_click", "ai_referrer",
 ]
 
+# AI referrer platforms (shared between traffic computation and breakdown)
+AI_PLATFORMS = ["chatgpt", "perplexity", "copilot", "gemini", "claude", "bing.com/chat"]
+
+# Expired event date pattern (Catalan date format in URLs)
+EXPIRED_EVENT_DATE_RE = re.compile(r"(\d{1,2})-de-(\w+)-del-(\d{4})")
+CATALAN_MONTHS = {
+    "gener": 1, "febrer": 2, "marc": 3, "abril": 4, "maig": 5, "juny": 6,
+    "juliol": 7, "agost": 8, "setembre": 9, "octubre": 10, "novembre": 11, "desembre": 12,
+}
+
 TODAY = datetime.now()
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
 START_90 = (TODAY - timedelta(days=93)).strftime("%Y-%m-%d")
@@ -79,7 +88,11 @@ def gsc_query(dims, start, end, limit=500, filters=None):
     body = {"startDate": start, "endDate": end, "dimensions": dims, "rowLimit": limit}
     if filters:
         body["dimensionFilterGroups"] = [{"filters": filters}]
-    return gsc.searchanalytics().query(siteUrl=SITE, body=body).execute().get("rows", [])
+    try:
+        return gsc.searchanalytics().query(siteUrl=SITE, body=body).execute().get("rows", [])
+    except Exception as e:
+        print(f"⚠️ GSC query failed (dims={dims}): {e}")
+        return []
 
 
 def ga_report(dimensions, metrics, start=START_90, end=END, limit=25, dim_filter=None):
@@ -93,7 +106,11 @@ def ga_report(dimensions, metrics, start=START_90, end=END, limit=25, dim_filter
     )
     if dim_filter:
         req.dimension_filter = dim_filter
-    resp = ga.run_report(req)
+    try:
+        resp = ga.run_report(req)
+    except Exception as e:
+        print(f"⚠️ GA4 report failed (dims={dimensions}): {e}")
+        return []
     return [
         {
             "dims": [v.value for v in row.dimension_values],
@@ -131,8 +148,11 @@ def fetch_psi_data(url, strategy="MOBILE"):
         )
         if resp.status_code == 200:
             return resp.json()
-    except Exception:
-        pass
+        print(f"⚠️ PSI API returned {resp.status_code} for {strategy}")
+    except requests.exceptions.Timeout:
+        print(f"⚠️ PSI API timed out for {strategy}")
+    except Exception as e:
+        print(f"⚠️ PSI API error for {strategy}: {e}")
     return None
 
 
@@ -154,7 +174,9 @@ def parse_psi_cwv(psi_data):
         m = crux.get(key, {})
         p75 = m.get("percentile")
         if p75 is not None:
-            result[label] = p75
+            p75 = float(p75)
+            # PSI returns CLS percentile as integer (12 = 0.12 CLS)
+            result[label] = p75 / 100 if label == "CLS" else p75
         cat = m.get("category")
         if cat:
             result[f"{label}_category"] = cat  # FAST / AVERAGE / SLOW
@@ -436,21 +458,15 @@ def collect_gsc_data():
     )[:15]
 
     # Expired/past events still indexed (event URLs with dates in the past)
-    # Event URLs contain dates like "15-de-febrer-del-2026"
-    month_map = {
-        "gener": 1, "febrer": 2, "marc": 3, "abril": 4, "maig": 5, "juny": 6,
-        "juliol": 7, "agost": 8, "setembre": 9, "octubre": 10, "novembre": 11, "desembre": 12,
-    }
-    date_pattern = re.compile(r"(\d{1,2})-de-(\w+)-del-(\d{4})")
     expired_events = []
     for r in all_pages_rows:
         url = r["keys"][0]
         if "/e/" not in url:
             continue
-        match = date_pattern.search(url)
+        match = EXPIRED_EVENT_DATE_RE.search(url)
         if match:
             day, month_name, year = match.groups()
-            month_num = month_map.get(month_name)
+            month_num = CATALAN_MONTHS.get(month_name)
             if month_num:
                 try:
                     event_date = datetime(int(year), month_num, int(day))
@@ -627,16 +643,15 @@ def collect_ga4_data():
     ai_sessions = sum(
         s["sessions"]
         for s in data["traffic_sources"]
-        if any(ai in s["source"] for ai in ["chatgpt", "perplexity", "copilot", "gemini", "claude"])
+        if any(ai in s["source"].lower() for ai in AI_PLATFORMS)
     )
     data["kpis"]["organic_sessions"] = organic_sessions
     data["kpis"]["ai_sessions"] = ai_sessions
 
     # AI traffic breakdown by platform
-    ai_platforms = ["chatgpt", "perplexity", "copilot", "gemini", "claude", "bing.com/chat"]
     data["ai_traffic_breakdown"] = []
     for s in data["traffic_sources"]:
-        for platform in ai_platforms:
+        for platform in AI_PLATFORMS:
             if platform in s["source"].lower():
                 data["ai_traffic_breakdown"].append({
                     "platform": s["source"],
@@ -1314,19 +1329,22 @@ def main():
     previous = None
     if args.previous and os.path.exists(args.previous):
         print(f"📂 Loading previous audit from {args.previous}")
-        with open(args.previous) as f:
-            previous = json.load(f)
+        try:
+            with open(args.previous, encoding="utf-8") as f:
+                previous = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"⚠️ Failed to load previous audit: {e}")
 
     # Write JSON
     json_path = os.path.join(OUTPUT_DIR, "seo-audit-data.json")
-    with open(json_path, "w") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(audit_data, f, indent=2, default=str)
     print(f"✅ JSON saved to {json_path}")
 
     # Generate and write Markdown
     md_content = generate_markdown(audit_data, previous)
     md_path = os.path.join(OUTPUT_DIR, "seo-audit-report.md")
-    with open(md_path, "w") as f:
+    with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_content)
     print(f"✅ Markdown report saved to {md_path}")
 
