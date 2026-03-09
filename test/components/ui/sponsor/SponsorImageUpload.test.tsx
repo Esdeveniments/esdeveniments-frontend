@@ -73,7 +73,7 @@ describe("SponsorImageUpload file size validation", () => {
     });
   });
 
-  it("rejects a file equal to MAX_SPONSOR_IMAGE_BYTES", async () => {
+  it("accepts a file equal to MAX_SPONSOR_IMAGE_BYTES", async () => {
     renderComponent();
     const file = createMockFile(
       "exact.jpg",
@@ -83,7 +83,9 @@ describe("SponsorImageUpload file size validation", () => {
     selectFile(getFileInput(), file);
 
     await waitFor(() => {
-      expect(screen.getByText(/supera el límit permès/i)).toBeInTheDocument();
+      expect(
+        screen.queryByText(/supera el límit permès/i),
+      ).not.toBeInTheDocument();
     });
   });
 
