@@ -16,6 +16,15 @@ import {
 } from "@utils/i18n-seo";
 import { getFormattedDate } from "@utils/helpers";
 
+// --- Default robots policy for indexable pages ---
+export const DEFAULT_ROBOTS_POLICY = {
+  index: true,
+  follow: true,
+  "max-image-preview": "large" as const,
+  "max-snippet": -1,
+  "max-video-preview": -1,
+};
+
 // --- Sanitization/Truncation helpers ---
 function sanitizeInput(str: string = ""): string {
   return str.replace(/<[^>]*>/g, "").trim();
@@ -194,7 +203,7 @@ export function generateEventMetadata(
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : "index, follow",
+        : DEFAULT_ROBOTS_POLICY,
     alternates: {
       canonical,
       languages: languageAlternates,

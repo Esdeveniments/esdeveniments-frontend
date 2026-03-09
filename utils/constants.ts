@@ -26,6 +26,12 @@ export const MAX_VALID_YEAR = 2100;
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
 // Sitemap chunking: places per chunk to stay under Lambda 6MB payload limit
 export const SITEMAP_PLACES_PER_CHUNK = 100;
+// Minimum event count for a place to get full date/category expansion in sitemap.
+// Places below this threshold only get the base /[place] URL to avoid
+// submitting thin/empty filtered pages that waste crawl budget.
+export const SITEMAP_MIN_EVENTS_FOR_EXPANSION = 10;
+// Number of top categories to include in place sitemap expansion
+export const SITEMAP_TOP_CATEGORIES_COUNT = 5;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";
 export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads (compression handles the rest)
