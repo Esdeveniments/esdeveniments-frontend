@@ -18,6 +18,10 @@ permissions:
   issues: write
   actions: read
 
+concurrency:
+  group: seo-audit
+  cancel-in-progress: false
+
 env:
   PYTHON_VERSION: "3.12"
   GSC_SITE_URL: "https://www.esdeveniments.cat/"

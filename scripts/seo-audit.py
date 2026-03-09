@@ -36,6 +36,25 @@ from google.analytics.data_v1beta.types import (
 SITE = os.environ.get("GSC_SITE_URL", "https://www.esdeveniments.cat/")
 GA_PROPERTY = f"properties/{os.environ.get('GA4_PROPERTY_ID', '406884331')}"
 OUTPUT_DIR = os.environ.get("SEO_AUDIT_OUTPUT_DIR", ".")
+BRAND_TERM = os.environ.get("SEO_BRAND_TERM", "esdeveniment")
+
+# Detection thresholds
+QUICK_WIN_MIN_IMPRESSIONS = 100
+QUICK_WIN_MAX_CTR = 0.03
+STRIKING_MIN_POS = 5
+STRIKING_MAX_POS = 20
+STRIKING_MIN_IMPRESSIONS = 10
+HIGH_BOUNCE_MIN_SESSIONS = 20
+HIGH_BOUNCE_THRESHOLD = 0.7
+BOUNCE_DIVERGENCE_THRESHOLD = 0.15
+LOW_USAGE_THRESHOLD = 50
+
+# Custom GA4 events to track
+TRACKED_CUSTOM_EVENTS = [
+    "filter_change", "search", "share", "add_to_calendar", "load_more",
+    "outbound_click", "view_event_page", "hero_cta_click", "sponsor_click",
+    "select_category", "home_chip_click", "ai_referrer",
+]
 
 TODAY = datetime.now()
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
@@ -197,7 +216,7 @@ def collect_gsc_data():
                 "position": round(r["position"], 1),
             }
             for r in rows
-            if r["impressions"] >= 100 and r["ctr"] < 0.03
+            if r["impressions"] >= QUICK_WIN_MIN_IMPRESSIONS and r["ctr"] < QUICK_WIN_MAX_CTR
         ],
         key=lambda r: r["impressions"],
         reverse=True,
@@ -216,7 +235,7 @@ def collect_gsc_data():
                 "position": round(r["position"], 1),
             }
             for r in rows
-            if 5 <= r["position"] <= 20 and r["impressions"] >= 10
+            if STRIKING_MIN_POS <= r["position"] <= STRIKING_MAX_POS and r["impressions"] >= STRIKING_MIN_IMPRESSIONS
         ],
         key=lambda r: r["impressions"],
         reverse=True,
@@ -543,13 +562,8 @@ def collect_ga4_data():
     ]
 
     # Custom events tracking
-    custom_events = [
-        "filter_change", "search", "share", "add_to_calendar", "load_more",
-        "outbound_click", "view_event_page", "hero_cta_click", "sponsor_click",
-        "select_category", "home_chip_click", "ai_referrer",
-    ]
     data["custom_events"] = {}
-    for ev in custom_events:
+    for ev in TRACKED_CUSTOM_EVENTS:
         rows = ga_report(
             ["eventName"], ["eventCount", "totalUsers"],
             dim_filter=FilterExpression(
@@ -577,7 +591,7 @@ def collect_ga4_data():
                 "duration": round(safe_float(r["metrics"][2]), 1),
             }
             for r in all_pages
-            if safe_int(r["metrics"][0]) >= 20 and safe_float(r["metrics"][1]) > 0.7
+            if safe_int(r["metrics"][0]) >= HIGH_BOUNCE_MIN_SESSIONS and safe_float(r["metrics"][1]) > HIGH_BOUNCE_THRESHOLD
         ],
         key=lambda r: r["sessions"],
         reverse=True,
@@ -726,6 +740,15 @@ def compare_kpis(current, previous):
     return changes
 
 
+def format_kpi_value(name, value):
+    """Format a KPI value for display in the markdown report."""
+    if "CTR" in name or "Bounce" in name:
+        return f"{value:.2%}"
+    if isinstance(value, (int, float)) and value > 1:
+        return f"{value:,.0f}"
+    return str(value)
+
+
 # ═══════════════════════════════════════════════════════════════
 # MARKDOWN REPORT GENERATION
 # ═══════════════════════════════════════════════════════════════
@@ -750,8 +773,8 @@ def generate_markdown(data, previous=None):
         lines.append("| KPI | Current | Previous | Change |")
         lines.append("|-----|---------|----------|--------|")
         for c in changes:
-            cur_fmt = f"{c['current']:.2%}" if "CTR" in c["name"] or "Bounce" in c["name"] else f"{c['current']:,.0f}" if isinstance(c["current"], (int, float)) and c["current"] > 1 else str(c["current"])
-            prev_fmt = f"{c['previous']:.2%}" if "CTR" in c["name"] or "Bounce" in c["name"] else f"{c['previous']:,.0f}" if isinstance(c["previous"], (int, float)) and c["previous"] > 1 else str(c["previous"])
+            cur_fmt = format_kpi_value(c["name"], c["current"])
+            prev_fmt = format_kpi_value(c["name"], c["previous"])
             lines.append(f"| {c['emoji']} {c['name']} | {cur_fmt} | {prev_fmt} | {c['change']} |")
     else:
         gsc_k = data["gsc"]["kpis"]
@@ -916,7 +939,7 @@ def generate_markdown(data, previous=None):
 
     # ── Mobile vs Desktop Bounce ──
     bounce_div = data["ga4"]["kpis"].get("bounce_divergence", 0)
-    if bounce_div > 0.15:
+    if bounce_div > BOUNCE_DIVERGENCE_THRESHOLD:
         mob_b = data["ga4"]["kpis"].get("mobile_bounce", 0)
         desk_b = data["ga4"]["kpis"].get("desktop_bounce", 0)
         higher = "Desktop" if desk_b > mob_b else "Mobile"
@@ -934,23 +957,22 @@ def generate_markdown(data, previous=None):
     # ── Core Web Vitals ──
     cwv = data.get("cwv", {})
     if cwv:
-        lines.append("## ⚡ Core Web Vitals (CrUX Real-User Data)")
+        lines.append("## ⚡ Core Web Vitals (PageSpeed Insights)")
         lines.append("")
-        # Thresholds: LCP ≤2500 good, >4000 poor; CLS ≤0.1 good, >0.25 poor; INP ≤200 good, >500 poor
         cwv_thresholds = {
             "LCP": (2500, 4000, "ms"), "CLS": (0.1, 0.25, ""), "INP": (200, 500, "ms"),
             "FCP": (1800, 3000, "ms"), "TTFB": (800, 1800, "ms"),
         }
-        for device_key, device_label in [("overall", "Overall"), ("mobile", "Mobile"), ("desktop", "Desktop")]:
+        for device_key, device_label in [("mobile", "Mobile"), ("desktop", "Desktop")]:
             device_cwv = cwv.get(device_key)
             if device_cwv:
-                lines.append(f"### {device_label}")
-                lines.append("| Metric | p75 | Good % | Poor % | Status |")
-                lines.append("|--------|-----|--------|--------|--------|")
+                lh_score = device_cwv.get("lighthouse_score", "—")
+                lines.append(f"### {device_label} (Lighthouse: {lh_score}/100)")
+                lines.append("| Metric | p75 | Category | Status |")
+                lines.append("|--------|-----|----------|--------|")
                 for metric in ["LCP", "CLS", "INP", "FCP", "TTFB"]:
                     p75 = device_cwv.get(metric)
-                    good = device_cwv.get(f"{metric}_good", 0)
-                    poor = device_cwv.get(f"{metric}_poor", 0)
+                    category = device_cwv.get(f"{metric}_category", "—")
                     if p75 is not None:
                         threshold = cwv_thresholds.get(metric)
                         if threshold:
@@ -960,7 +982,7 @@ def generate_markdown(data, previous=None):
                             status = "⚪"
                             unit = ""
                         p75_fmt = f"{p75:.3f}" if metric == "CLS" else f"{p75:,.0f}{unit}"
-                        lines.append(f"| {metric} | {p75_fmt} | {good:.0%} | {poor:.0%} | {status} |")
+                        lines.append(f"| {metric} | {p75_fmt} | {category} | {status} |")
                 lines.append("")
     else:
         lines.append("## ⚡ Core Web Vitals")
@@ -1048,7 +1070,7 @@ def generate_actions(data, previous=None):
 
     # Check for brand term visibility
     gsc_sd = data["gsc"]["striking_distance"]
-    brand_queries = [q for q in gsc_sd if "esdeveniment" in q["query"].lower()]
+    brand_queries = [q for q in gsc_sd if BRAND_TERM in q["query"].lower()]
     if brand_queries:
         worst_pos = max(q["position"] for q in brand_queries)
         if worst_pos > 5:
@@ -1070,7 +1092,7 @@ def generate_actions(data, previous=None):
     custom = data["ga4"]["custom_events"]
     for ev_name in ["share", "add_to_calendar"]:
         ev = custom.get(ev_name, {"count": 0})
-        if ev["count"] < 50:
+        if ev["count"] < LOW_USAGE_THRESHOLD:
             actions.append({
                 "priority": "P2",
                 "title": f"Low usage: {ev_name} ({ev['count']} events)",
@@ -1134,10 +1156,10 @@ def generate_actions(data, previous=None):
             "description": "Pages visible in search but never clicked waste crawl budget. Consider improving meta or noindexing low-value pages.",
         })
 
-    # Rich results gap (has Event schema but no Event rich results)
+    # Rich results gap (has search appearances but no Event rich results specifically)
     sa_types = [s["type"].upper() for s in data["gsc"].get("search_appearance", [])]
     has_event_rich = any(t in ("EVENT", "EVENT_LISTING") for t in sa_types)
-    if not has_event_rich:
+    if sa_types and not has_event_rich:
         actions.append({
             "priority": "P1",
             "title": "No Event rich results despite JSON-LD schema",
@@ -1146,7 +1168,7 @@ def generate_actions(data, previous=None):
 
     # Mobile vs desktop bounce divergence
     bounce_div = data["ga4"]["kpis"].get("bounce_divergence", 0)
-    if bounce_div > 0.15:
+    if bounce_div > BOUNCE_DIVERGENCE_THRESHOLD:
         mob_b = data["ga4"]["kpis"].get("mobile_bounce", 0)
         desk_b = data["ga4"]["kpis"].get("desktop_bounce", 0)
         higher = "Desktop" if desk_b > mob_b else "Mobile"
