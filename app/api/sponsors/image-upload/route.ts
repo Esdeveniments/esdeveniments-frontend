@@ -7,7 +7,11 @@ import {
   updatePaymentIntentMetadata,
 } from "@lib/stripe";
 import { activateSponsorImage } from "@lib/db/sponsors";
-import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR, MAX_SPONSOR_IMAGE_BYTES } from "@utils/constants";
+import {
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+  MAX_SPONSOR_IMAGE_BYTES,
+  FORMDATA_PARSE_ERROR_SUBSTRING,
+} from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
 import { isValidImageContent } from "@utils/image-validation";
 
@@ -132,7 +136,10 @@ export async function POST(request: Request) {
     // Get payment intent ID to update its metadata too
     const paymentIntentId = getPaymentIntentId(session);
 
-    const { url, publicId } = await uploadEventImage(imageFile, MAX_SPONSOR_IMAGE_BYTES);
+    const { url, publicId } = await uploadEventImage(
+      imageFile,
+      MAX_SPONSOR_IMAGE_BYTES,
+    );
 
     const imageMetadata = {
       sponsor_image_url: url,
@@ -226,7 +233,7 @@ export async function POST(request: Request) {
 
     if (
       message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR ||
-      message.toLowerCase().includes("failed to parse body as formdata")
+      message.toLowerCase().includes(FORMDATA_PARSE_ERROR_SUBSTRING)
     ) {
       return NextResponse.json(
         {

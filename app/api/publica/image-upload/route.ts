@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { uploadEventImage } from "@lib/api/events";
-import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
+import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR, FORMDATA_PARSE_ERROR_SUBSTRING } from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
 import { isValidImageContent } from "@utils/image-validation";
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
 
     if (
       message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR ||
-      message.toLowerCase().includes("failed to parse body as formdata")
+      message.toLowerCase().includes(FORMDATA_PARSE_ERROR_SUBSTRING)
     ) {
       return NextResponse.json(
         { error: EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR },
