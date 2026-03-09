@@ -13,7 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import {
   SPONSOR_BANNER_IMAGE,
-  MAX_ORIGINAL_FILE_BYTES,
+  MAX_SPONSOR_IMAGE_BYTES,
 } from "@utils/constants";
 import type {
   SponsorImageUploadResult,
@@ -141,7 +141,7 @@ export default function SponsorImageUpload({
 
       if (!selectedFile) return;
 
-      if (selectedFile.size > MAX_ORIGINAL_FILE_BYTES) {
+      if (selectedFile.size > MAX_SPONSOR_IMAGE_BYTES) {
         setError(t("upload.errors.tooLarge"));
         return;
       }

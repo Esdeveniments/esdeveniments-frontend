@@ -243,7 +243,7 @@ describe("ImageUploader file validation", () => {
     const largeFile = createMockFile(
       "large.jpg",
       "image/jpeg",
-      3 * 1024 * 1024,
+      9 * 1024 * 1024,
     );
     const compressedFile = createMockFile(
       "large-compressed.jpg",
@@ -278,7 +278,7 @@ describe("ImageUploader file validation", () => {
     const largeFile = createMockFile(
       "large.jpg",
       "image/jpeg",
-      3 * 1024 * 1024,
+      9 * 1024 * 1024,
     );
     mockCompress.mockRejectedValueOnce(new Error("failed"));
 
