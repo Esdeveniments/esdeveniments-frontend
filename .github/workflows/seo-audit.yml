@@ -14,7 +14,7 @@ on:
         type: boolean
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   actions: read
 
@@ -50,57 +50,56 @@ jobs:
           echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> $GITHUB_ENV
 
-      - name: Download previous audit data
+      - name: Find previous audit data
         id: previous
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          name: seo-audit-data
-          workflow: seo-audit.yml
-          search_artifacts: true
-          if_no_artifact_found: warn
-        continue-on-error: true
+        run: |
+          # Find the most recent audit JSON in the repo
+          LATEST=$(ls -1 data/seo-audits/*.json 2>/dev/null | sort -r | head -1)
+          if [ -n "$LATEST" ]; then
+            echo "📂 Found previous audit: $LATEST"
+            echo "path=$LATEST" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "📂 No previous audit data found (first run)"
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Run SEO audit
         id: audit
         run: |
-          mkdir -p audit-output
+          RUN_DATE=$(date -u +%Y-%m-%d)
+          mkdir -p data/seo-audits
 
           PREV_FLAG=""
-          if [ -f "seo-audit-data.json" ]; then
-            echo "📂 Found previous audit data"
-            PREV_FLAG="--previous seo-audit-data.json"
-          else
-            echo "📂 No previous audit data found (first run)"
+          if [ "${{ steps.previous.outputs.found }}" = "true" ]; then
+            PREV_FLAG="--previous ${{ steps.previous.outputs.path }}"
           fi
 
-          SEO_AUDIT_OUTPUT_DIR=audit-output \
+          SEO_AUDIT_OUTPUT_DIR=data/seo-audits \
             python scripts/seo-audit.py $PREV_FLAG
 
-          # Set outputs for issue creation
-          echo "run_date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
-          echo "has_previous=${{ steps.previous.outcome == 'success' }}" >> $GITHUB_OUTPUT
+          # Rename output files with date
+          mv data/seo-audits/seo-audit-data.json "data/seo-audits/${RUN_DATE}.json"
+          mv data/seo-audits/seo-audit-report.md "data/seo-audits/${RUN_DATE}.md"
 
-      - name: Upload audit data (for future comparisons)
-        uses: actions/upload-artifact@v4
-        with:
-          name: seo-audit-data
-          path: audit-output/seo-audit-data.json
-          retention-days: 180
-          overwrite: true
+          echo "run_date=$RUN_DATE" >> $GITHUB_OUTPUT
 
-      - name: Upload audit report
-        uses: actions/upload-artifact@v4
-        with:
-          name: seo-audit-report-${{ steps.audit.outputs.run_date }}
-          path: audit-output/seo-audit-report.md
-          retention-days: 180
+      - name: Commit audit data to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/seo-audits/
+          git commit -m "chore(seo): audit ${{ steps.audit.outputs.run_date }}
+
+          Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          git push
 
       - name: Create GitHub Issue
         if: ${{ github.event.inputs.skip_issue != 'true' }}
         uses: peter-evans/create-issue-from-file@v5
         with:
           title: "📊 SEO Audit — ${{ steps.audit.outputs.run_date }}"
-          content-filepath: audit-output/seo-audit-report.md
+          content-filepath: data/seo-audits/${{ steps.audit.outputs.run_date }}.md
           labels: seo,automated-audit
           assignees: albertolive
 
