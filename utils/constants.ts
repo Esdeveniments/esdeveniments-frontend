@@ -28,7 +28,7 @@ export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
 export const SITEMAP_PLACES_PER_CHUNK = 100;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";
-export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads
+export const MAX_ORIGINAL_FILE_BYTES = 5 * 1024 * 1024; // Lambda hard limit is 6MB; cap at 5MB to be safe
 
 export const formatMegabytesLabel = (bytes: number): string => {
   const value = bytes / (1024 * 1024);

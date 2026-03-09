@@ -11,7 +11,10 @@ import {
   ExclamationTriangleIcon,
   CheckIcon,
 } from "@heroicons/react/24/outline";
-import { SPONSOR_BANNER_IMAGE } from "@utils/constants";
+import {
+  SPONSOR_BANNER_IMAGE,
+  MAX_ORIGINAL_FILE_BYTES,
+} from "@utils/constants";
 import type {
   SponsorImageUploadResult,
   SponsorImageValidation,
@@ -24,7 +27,7 @@ import type {
  */
 function validateImageDimensions(
   width: number,
-  height: number
+  height: number,
 ): SponsorImageValidation {
   const aspectRatio = width / height;
   const warnings: SponsorImageWarning[] = [];
@@ -94,7 +97,7 @@ export default function SponsorImageUpload({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SponsorImageUploadResult | null>(null);
   const [validation, setValidation] = useState<SponsorImageValidation | null>(
-    null
+    null,
   );
 
   // Cleanup Object URL on component unmount to prevent memory leak
@@ -124,34 +127,42 @@ export default function SponsorImageUpload({
   /**
    * Process a selected file - validate dimensions and create preview
    */
-  const processFile = useCallback((selectedFile: File | null) => {
-    // Clean up previous preview
-    if (preview) {
-      URL.revokeObjectURL(preview);
-    }
+  const processFile = useCallback(
+    (selectedFile: File | null) => {
+      // Clean up previous preview
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
 
-    setFile(selectedFile);
-    setValidation(null);
-    setError(null);
-    setPreview(null);
+      setFile(selectedFile);
+      setValidation(null);
+      setError(null);
+      setPreview(null);
 
-    if (!selectedFile) return;
+      if (!selectedFile) return;
 
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(selectedFile);
-    setPreview(previewUrl);
+      if (selectedFile.size > MAX_ORIGINAL_FILE_BYTES) {
+        setError(t("upload.errors.tooLarge"));
+        return;
+      }
 
-    // Read image dimensions for validation
-    const img = new Image();
-    img.onload = () => {
-      const result = validateImageDimensions(img.width, img.height);
-      setValidation(result);
-    };
-    img.onerror = () => {
-      setError(t("upload.errors.invalidImage"));
-    };
-    img.src = previewUrl;
-  }, [preview, t]);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(selectedFile);
+      setPreview(previewUrl);
+
+      // Read image dimensions for validation
+      const img = new Image();
+      img.onload = () => {
+        const result = validateImageDimensions(img.width, img.height);
+        setValidation(result);
+      };
+      img.onerror = () => {
+        setError(t("upload.errors.invalidImage"));
+      };
+      img.src = previewUrl;
+    },
+    [preview, t],
+  );
 
   /**
    * Handle file input change
@@ -160,7 +171,7 @@ export default function SponsorImageUpload({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       processFile(e.target.files?.[0] ?? null);
     },
-    [processFile]
+    [processFile],
   );
 
   /**
@@ -176,14 +187,17 @@ export default function SponsorImageUpload({
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile?.type.startsWith("image/")) {
-      processFile(droppedFile);
-    }
-  }, [processFile]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile?.type.startsWith("image/")) {
+        processFile(droppedFile);
+      }
+    },
+    [processFile],
+  );
 
   /**
    * Clear selected file
@@ -214,55 +228,61 @@ export default function SponsorImageUpload({
       formData.append("imageFile", file, file.name || "sponsor-image");
 
       const xhr = new XMLHttpRequest();
-      const promise = new Promise<SponsorImageUploadResult>((resolve, reject) => {
-        xhr.open("POST", "/api/sponsors/image-upload");
-        xhr.responseType = "text";
-        xhr.timeout = 30000; // 30 second timeout for image upload
+      const promise = new Promise<SponsorImageUploadResult>(
+        (resolve, reject) => {
+          xhr.open("POST", "/api/sponsors/image-upload");
+          xhr.responseType = "text";
+          xhr.timeout = 30000; // 30 second timeout for image upload
 
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            setProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
-          }
-        };
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              setProgress(
+                Math.min(100, Math.round((event.loaded / event.total) * 100)),
+              );
+            }
+          };
 
-        xhr.onload = () => {
-          const text = typeof xhr.response === "string" ? xhr.response : "";
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const parsed = JSON.parse(text) as SponsorImageUploadResult;
-              const isValid =
-                parsed &&
-                parsed.success === true &&
-                typeof parsed.url === "string" &&
-                typeof parsed.publicId === "string" &&
-                typeof parsed.metadataSaved === "boolean";
-              if (isValid) {
-                resolve(parsed);
-              } else {
+          xhr.onload = () => {
+            const text = typeof xhr.response === "string" ? xhr.response : "";
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const parsed = JSON.parse(text) as SponsorImageUploadResult;
+                const isValid =
+                  parsed &&
+                  parsed.success === true &&
+                  typeof parsed.url === "string" &&
+                  typeof parsed.publicId === "string" &&
+                  typeof parsed.metadataSaved === "boolean";
+                if (isValid) {
+                  resolve(parsed);
+                } else {
+                  reject(new Error("invalid_response"));
+                }
+              } catch {
                 reject(new Error("invalid_response"));
               }
-            } catch {
-              reject(new Error("invalid_response"));
+              return;
             }
-            return;
-          }
 
-          // Try to parse structured error response
-          try {
-            const parsed = text ? JSON.parse(text) : null;
-            const code = parsed?.errorCode;
-            reject(new Error(typeof code === "string" ? code : "upload_failed"));
-            return;
-          } catch {
-            reject(new Error("upload_failed"));
-          }
-        };
+            // Try to parse structured error response
+            try {
+              const parsed = text ? JSON.parse(text) : null;
+              const code = parsed?.errorCode;
+              reject(
+                new Error(typeof code === "string" ? code : "upload_failed"),
+              );
+              return;
+            } catch {
+              reject(new Error("upload_failed"));
+            }
+          };
 
-        xhr.onerror = () => reject(new Error("upload_failed"));
-        xhr.ontimeout = () => reject(new Error("upload_failed"));
+          xhr.onerror = () => reject(new Error("upload_failed"));
+          xhr.ontimeout = () => reject(new Error("upload_failed"));
 
-        xhr.send(formData);
-      });
+          xhr.send(formData);
+        },
+      );
 
       const uploaded = await promise;
       setResult(uploaded);
@@ -288,7 +308,9 @@ export default function SponsorImageUpload({
       <div className="text-center space-y-4">
         <div>
           <h3 className="heading-3 mb-2">{t("upload.title")}</h3>
-          <p className="body-normal text-foreground/70">{t("upload.subtitle")}</p>
+          <p className="body-normal text-foreground/70">
+            {t("upload.subtitle")}
+          </p>
         </div>
 
         {/* Location badge */}
@@ -378,9 +400,10 @@ export default function SponsorImageUpload({
               className={`
                 relative border-2 border-dashed rounded-card p-8 text-center cursor-pointer
                 transition-all duration-200
-                ${isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50 hover:bg-muted/20"
+                ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50 hover:bg-muted/20"
                 }
                 ${isUploading ? "opacity-50 pointer-events-none" : ""}
               `}
@@ -406,7 +429,8 @@ export default function SponsorImageUpload({
                   <p className="body-small text-foreground/70">{file?.name}</p>
                   {validation && (
                     <p className="body-small text-foreground/50">
-                      {validation.width}×{validation.height}px ({validation.aspectRatio.toFixed(1)}:1)
+                      {validation.width}×{validation.height}px (
+                      {validation.aspectRatio.toFixed(1)}:1)
                     </p>
                   )}
                   <button
@@ -518,4 +542,3 @@ export default function SponsorImageUpload({
     </div>
   );
 }
-
