@@ -26,17 +26,20 @@ export async function isValidImageContent(file: File): Promise<boolean> {
       }
     }
 
-    // Special case for WebP: check for "WEBP" at offset 8 after RIFF
-    if (
-      bytes[0] === 0x52 &&
-      bytes[1] === 0x49 &&
-      bytes[2] === 0x46 &&
-      bytes[3] === 0x46 &&
-      bytes[8] === 0x57 &&
-      bytes[9] === 0x45 &&
-      bytes[10] === 0x42 &&
-      bytes[11] === 0x50
-    ) {
+    // Special case for WebP: check for "RIFF" at bytes 0-3 and "WEBP" at bytes 8-11
+    const isRiffHeader =
+      bytes[0] === 0x52 && // R
+      bytes[1] === 0x49 && // I
+      bytes[2] === 0x46 && // F
+      bytes[3] === 0x46; // F
+
+    const isWebpType =
+      bytes[8] === 0x57 && // W
+      bytes[9] === 0x45 && // E
+      bytes[10] === 0x42 && // B
+      bytes[11] === 0x50; // P
+
+    if (isRiffHeader && isWebpType) {
       return true;
     }
 
