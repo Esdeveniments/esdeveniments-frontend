@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { DEFAULT_ROBOTS_POLICY } from "lib/meta";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { SchemaPlaceLocation } from "types/schema";
 import {
@@ -185,15 +186,7 @@ export function buildPageMeta({
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : robotsOverride
-          ? robotsOverride
-          : {
-              index: true,
-              follow: true,
-              "max-image-preview": "large" as const,
-              "max-snippet": -1,
-              "max-video-preview": -1,
-            },
+        : (robotsOverride ?? DEFAULT_ROBOTS_POLICY),
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,
