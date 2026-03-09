@@ -142,6 +142,7 @@ export default function SponsorImageUpload({
       if (!selectedFile) return;
 
       if (selectedFile.size > MAX_SPONSOR_IMAGE_BYTES) {
+        setFile(null);
         setError(t("upload.errors.tooLarge"));
         return;
       }

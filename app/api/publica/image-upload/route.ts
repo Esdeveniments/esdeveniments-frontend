@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { uploadEventImage } from "@lib/api/events";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
+import { isValidImageContent } from "@utils/image-validation";
 
 // 10 uploads per minute per IP — prevents abuse of the public image upload
 const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
@@ -12,9 +13,9 @@ export async function POST(request: Request) {
 
   try {
     const contentType = request.headers.get("content-type") ?? "";
-    if (!contentType.includes("multipart/form-data")) {
+    if (!contentType.toLowerCase().includes("multipart/form-data")) {
       return NextResponse.json(
-        { error: "Content-Type must be multipart/form-data." },
+        { error: "El tipus de contingut ha de ser multipart/form-data." },
         { status: 400 },
       );
     }
@@ -25,6 +26,21 @@ export async function POST(request: Request) {
     if (!(imageFile instanceof File)) {
       return NextResponse.json(
         { error: "Falta la imatge a la sol·licitud." },
+        { status: 400 },
+      );
+    }
+
+    if (!imageFile.type.startsWith("image/")) {
+      return NextResponse.json(
+        { error: "El fitxer ha de ser una imatge." },
+        { status: 400 },
+      );
+    }
+
+    const isValidContent = await isValidImageContent(imageFile);
+    if (!isValidContent) {
+      return NextResponse.json(
+        { error: "El fitxer no és una imatge vàlida." },
         { status: 400 },
       );
     }
