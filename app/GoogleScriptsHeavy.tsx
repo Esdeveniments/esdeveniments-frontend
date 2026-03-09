@@ -19,6 +19,17 @@ const ADS_SRC = ADS_CLIENT
  * `data-analytics-link-type` attribute is set on the anchor.
  * Eliminates `(not set)` in GA4 outbound_click reports.
  */
+const SOCIAL_DOMAINS = [
+  "instagram.com",
+  "facebook.com",
+  "twitter.com",
+  "x.com",
+  "tiktok.com",
+  "youtube.com",
+  "linkedin.com",
+];
+const MESSAGING_DOMAINS = ["wa.me", "t.me"];
+
 function classifyOutboundLinkType(hostname: string, pathname: string): string {
   const h = hostname.toLowerCase();
 
@@ -34,22 +45,12 @@ function classifyOutboundLinkType(hostname: string, pathname: string): string {
   }
 
   // Social profiles
-  const socialDomains = [
-    "instagram.com",
-    "facebook.com",
-    "twitter.com",
-    "x.com",
-    "tiktok.com",
-    "youtube.com",
-    "linkedin.com",
-  ];
-  if (socialDomains.some((d) => h === d || h.endsWith(`.${d}`))) {
+  if (SOCIAL_DOMAINS.some((d) => h === d || h.endsWith(`.${d}`))) {
     return "social_profile";
   }
 
   // Messaging
-  const messagingDomains = ["wa.me", "t.me"];
-  if (messagingDomains.some((d) => h === d || h.endsWith(`.${d}`))) {
+  if (MESSAGING_DOMAINS.some((d) => h === d || h.endsWith(`.${d}`))) {
     return "messaging";
   }
 
