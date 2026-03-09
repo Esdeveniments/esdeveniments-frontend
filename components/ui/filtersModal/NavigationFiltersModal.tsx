@@ -754,13 +754,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   </div>
                   <div className="w-full flex flex-wrap gap-2">
                     {DATE_RANGE_SHORTCUTS.map(({ labelKey, getRange }) => {
+                      const { from: rangeFrom, to: rangeTo } = getRange();
                       const isActive =
                         !localByDate &&
                         localFromDate !== "" &&
-                        (() => {
-                          const { from, to } = getRange();
-                          return localFromDate === from && localToDate === to;
-                        })();
+                        localFromDate === rangeFrom &&
+                        localToDate === rangeTo;
                       return (
                         <button
                           key={labelKey}

@@ -87,10 +87,14 @@ function DateButton({
   isOpen,
   onClick,
 }: DateButtonProps) {
+  const accessibleLabel = value ? `${label}: ${value}` : label;
+
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={accessibleLabel}
+      aria-expanded={isOpen}
       className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
     >
       <span>{value || label}</span>
@@ -152,7 +156,7 @@ export default function DatePickerImpl({
     const newEnd = new Date(day);
     newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
 
-    const corrected = newEnd < startDate ? addMinutes(startDate, 15) : newEnd;
+    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
     onChange("endDate", toISOStringLocalMinutes(corrected));
     // Keep calendar open so user can adjust the time without re-clicking
   };
@@ -174,7 +178,7 @@ export default function DatePickerImpl({
     const newEnd = new Date(endDate);
     newEnd.setHours(h, m, 0, 0);
 
-    const corrected = newEnd < startDate ? addMinutes(startDate, 15) : newEnd;
+    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
     onChange("endDate", toISOStringLocalMinutes(corrected));
   };
 

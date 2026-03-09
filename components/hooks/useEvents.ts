@@ -60,6 +60,7 @@ export const useEvents = ({
     distance,
     price,
     from: explicitFrom,
+    to: explicitTo,
     lat: lat !== undefined ? String(lat) : undefined,
     lon: lon !== undefined ? String(lon) : undefined,
   });

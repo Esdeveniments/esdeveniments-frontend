@@ -48,12 +48,8 @@ function classifyOutboundLinkType(hostname: string, pathname: string): string {
   }
 
   // Messaging
-  if (
-    h === "wa.me" ||
-    h.endsWith(".wa.me") ||
-    h === "t.me" ||
-    h.endsWith(".t.me")
-  ) {
+  const messagingDomains = ["wa.me", "t.me"];
+  if (messagingDomains.some((d) => h === d || h.endsWith(`.${d}`))) {
     return "messaging";
   }
 

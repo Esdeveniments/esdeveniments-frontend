@@ -205,6 +205,17 @@ describe("url-filters: canonical building and parsing", () => {
     expect(url).toBe("/barcelona/avui?search=jazz&price=pagament");
   });
 
+  it("buildCanonicalUrlDynamic omits byDate when explicit from/to are present", () => {
+    const url = buildCanonicalUrlDynamic({
+      place: "barcelona",
+      byDate: "avui",
+      category: DEFAULT_FILTER_VALUE,
+      from: "2026-03-15",
+      to: "2026-03-15",
+    });
+    expect(url).toBe("/barcelona?from=2026-03-15&to=2026-03-15");
+  });
+
   it("buildCanonicalUrlDynamic includes price with from/to", () => {
     const url = buildCanonicalUrlDynamic({
       place: "girona",

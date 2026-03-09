@@ -137,11 +137,14 @@ const Publica = () => {
   const formStartedRef = useRef(false);
   const fieldsInteractedRef = useRef<Set<string>>(new Set());
   const submittedRef = useRef(false);
+  const abandonFiredRef = useRef(false);
 
-  // Track form abandonment on page unload
+  // Track form abandonment on page unload or SPA navigation
   useEffect(() => {
     const handleBeforeUnload = () => {
+      if (abandonFiredRef.current) return;
       if (formStartedRef.current && !submittedRef.current) {
+        abandonFiredRef.current = true;
         sendGoogleEvent("publica_form_abandon", {
           fields_touched: Array.from(fieldsInteractedRef.current).join(","),
           fields_count: fieldsInteractedRef.current.size,
@@ -183,18 +186,11 @@ const Publica = () => {
     [categories]
   );
 
-  const handleFormChange = useCallback(<K extends keyof FormData>(
-    name: K,
-    value: FormData[K]
-  ) => {
-    // Track first interaction as form_start
+  const trackFieldInteraction = (fieldName: string) => {
     if (!formStartedRef.current) {
       formStartedRef.current = true;
       sendGoogleEvent("publica_form_start", { source: "publica" });
     }
-
-    // Track per-field interaction (once per field per session)
-    const fieldName = String(name);
     if (!fieldsInteractedRef.current.has(fieldName)) {
       fieldsInteractedRef.current.add(fieldName);
       sendGoogleEvent("publica_field_interact", {
@@ -203,27 +199,20 @@ const Publica = () => {
         source: "publica",
       });
     }
+  };
 
+  const handleFormChange = useCallback(<K extends keyof FormData>(
+    name: K,
+    value: FormData[K]
+  ) => {
+    trackFieldInteraction(String(name));
     setForm((prev) => ({ ...prev, [name]: value }));
   }, []);
 
   const handleImageChange = (file: File | null) => {
     setError(null);
     setImageUploadMessage(null);
-
-    // Track interaction for funnel analytics
-    if (!formStartedRef.current) {
-      formStartedRef.current = true;
-      sendGoogleEvent("publica_form_start", { source: "publica" });
-    }
-    if (!fieldsInteractedRef.current.has("image")) {
-      fieldsInteractedRef.current.add("image");
-      sendGoogleEvent("publica_field_interact", {
-        field_name: "image",
-        fields_count: fieldsInteractedRef.current.size,
-        source: "publica",
-      });
-    }
+    trackFieldInteraction("image");
 
     if (!file) {
       setImageFile(null);
@@ -246,19 +235,7 @@ const Publica = () => {
   };
 
   const handleTownChange = (town: Option | null) => {
-    // Track interaction for funnel analytics
-    if (!formStartedRef.current) {
-      formStartedRef.current = true;
-      sendGoogleEvent("publica_form_start", { source: "publica" });
-    }
-    if (!fieldsInteractedRef.current.has("town")) {
-      fieldsInteractedRef.current.add("town");
-      sendGoogleEvent("publica_field_interact", {
-        field_name: "town",
-        fields_count: fieldsInteractedRef.current.size,
-        source: "publica",
-      });
-    }
+    trackFieldInteraction("town");
 
     setForm((prev) => {
       const next = { ...prev, town };
