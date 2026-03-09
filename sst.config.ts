@@ -125,7 +125,8 @@ export default $config({
       : undefined;
 
     // Alarm email endpoint - configurable per environment (production only)
-    if (isProduction && alarmsTopic) {
+    // alarmsTopic is only defined when isProduction, so checking it alone is sufficient
+    if (alarmsTopic) {
       const alarmEmail =
         process.env.ALARM_EMAIL || "esdeveniments.catalunya.cat@gmail.com";
 
@@ -165,7 +166,7 @@ export default $config({
           "0";
       }
 
-      if (isProduction && alarmsTopic) {
+      if (alarmsTopic) {
         new aws.cloudwatch.MetricAlarm(
           `${name}ImageOptimizerErrorAlarm`,
           {
@@ -360,7 +361,8 @@ export default $config({
     }
 
     // Alarms only for production — ephemeral stages don't need monitoring
-    if (isProduction && alarmsTopic) {
+    // alarmsTopic is only defined when isProduction, so checking it alone is sufficient
+    if (alarmsTopic) {
       // Create an alarm for 5xx Errors (Server Faults)
       new aws.cloudwatch.MetricAlarm("ServerErrorAlarm", {
         comparisonOperator: "GreaterThanThreshold",
@@ -541,7 +543,7 @@ export default $config({
           alarmActions: [alarmsTopic.arn],
         });
       }
-    } // end isProduction && alarmsTopic
+    } // end alarmsTopic (production-only)
 
     // Note: S3 request metrics require enabling request metrics on the bucket,
     // which adds ~$0.01/1000 requests. Not enabled by default.

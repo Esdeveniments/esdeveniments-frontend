@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 env:
@@ -54,12 +54,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Checkout target commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Pin: b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           ref: ${{ steps.target.outputs.sha }}
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4 # Pin: 39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
@@ -85,7 +85,7 @@ jobs:
           echo "✅ Removed system Pulumi"
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v5 # Pin: e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -257,6 +257,13 @@ jobs:
             exit 1
           fi
           echo "✅ Rollback verification complete — all critical checks passed"
+
+      - name: Tag successful rollback
+        if: success()
+        run: |
+          git tag -f last-successful-deploy ${{ steps.target.outputs.sha }}
+          git push origin last-successful-deploy --force
+          echo "🏷️ Updated last-successful-deploy tag to ${{ steps.target.outputs.sha }}"
 
       - name: Rollback summary
         if: always()

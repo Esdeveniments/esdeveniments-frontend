@@ -352,6 +352,7 @@ jobs:
           DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
+          set -euo pipefail
           echo "🚀 Deploying ephemeral staging stack..."
           npx sst deploy --stage staging-ci 2>&1 | tee /tmp/sst-staging-output.txt
 
@@ -448,10 +449,19 @@ jobs:
         if: always() && steps.staging.outcome != 'skipped'
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
+          NODE_ENV: production
+          # Required secrets for SST config synthesis during teardown
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           echo "🧹 Removing ephemeral staging stack..."
-          npx sst remove --stage staging-ci 2>&1 || echo "::warning::Staging teardown failed — manual cleanup may be needed: npx sst remove --stage staging-ci"
-          echo "✅ Staging stack removed"
+          if npx sst remove --stage staging-ci 2>&1; then
+            echo "✅ Staging stack removed"
+          else
+            echo "::warning::Staging teardown failed — manual cleanup may be needed: npx sst remove --stage staging-ci"
+          fi
 
       # =========================================================================
       # PRODUCTION DEPLOY
