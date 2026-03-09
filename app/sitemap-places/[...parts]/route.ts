@@ -1,7 +1,7 @@
 import { siteUrl } from "@config/index";
 import { fetchPlaces } from "@lib/api/places";
 import { fetchCategories } from "@lib/api/categories";
-import { fetchEventsExternal } from "@lib/api/events-external";
+import { fetchEventCountExternal } from "@lib/api/events-external";
 import { VALID_DATES } from "@lib/dates";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
@@ -37,32 +37,16 @@ async function getExpandablePlaces(
           return { slug: place.slug, expandable: true };
         }
         try {
-          // Lightweight fetch: size=1 to get only totalElements count
-          const result = await fetchEventsExternal({
-            place: place.slug,
-            size: 1,
-          });
-          // fetchEventsExternal returns totalElements:0 on API errors (safe fallback).
-          // Distinguish a real empty place from an API failure: if content is empty
-          // but last is true AND totalElements is 0, it may be a fallback response.
-          // When count is genuinely unknown (API unavailable), expand the place to
-          // avoid collapsing sitemap URLs based on transient failures.
-          const countUnknown =
-            result.totalElements === 0 &&
-            result.content.length === 0 &&
-            result.last === true &&
-            result.currentPage === 0;
-          if (countUnknown) {
-            // API unavailable or returned fallback — expand to avoid shrinking sitemap
-            return { slug: place.slug, expandable: true };
-          }
+          // Returns null on API failure, real count (≥0) on success.
+          // null → expand by default so transient failures don't shrink the sitemap.
+          const count = await fetchEventCountExternal(place.slug);
           return {
             slug: place.slug,
             expandable:
-              result.totalElements >= SITEMAP_MIN_EVENTS_FOR_EXPANSION,
+              count === null || count >= SITEMAP_MIN_EVENTS_FOR_EXPANSION,
           };
         } catch {
-          // Expand on unexpected error so transient failures don't remove URLs
+          // Expand on unexpected error to avoid collapsing sitemap on failures
           return { slug: place.slug, expandable: true };
         }
       }),

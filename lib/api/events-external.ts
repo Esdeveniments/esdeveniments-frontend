@@ -15,7 +15,9 @@ import type { FetchEventsParams } from "types/event";
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 
-export async function fetchEventBySlug(slug: string): Promise<EventDetailResponseDTO | null> {
+export async function fetchEventBySlug(
+  slug: string,
+): Promise<EventDetailResponseDTO | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
     console.error("NEXT_PUBLIC_API_URL is not defined");
@@ -35,7 +37,7 @@ export async function fetchEventBySlug(slug: string): Promise<EventDetailRespons
 }
 
 export async function fetchEventsExternal(
-  params: FetchEventsParams
+  params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) {
@@ -78,7 +80,7 @@ export async function fetchEventsExternal(
 }
 
 export async function fetchCategorizedEventsExternal(
-  maxEventsPerCategory?: number
+  maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
   const api = process.env.NEXT_PUBLIC_API_URL;
   if (!api) return {};
@@ -98,5 +100,32 @@ export async function fetchCategorizedEventsExternal(
   } catch (error) {
     console.error("fetchCategorizedEventsExternal: failed", error);
     return {};
+  }
+}
+
+/**
+ * Fetches only the total event count for a place.
+ * Returns the actual count (may be 0 for a real empty place) or null on API failure.
+ * Unlike fetchEventsExternal, null explicitly signals "unknown" so callers can
+ * distinguish a real zero from an error.
+ */
+export async function fetchEventCountExternal(
+  place: string,
+): Promise<number | null> {
+  const api = process.env.NEXT_PUBLIC_API_URL;
+  if (!api) return null;
+  try {
+    const qs = buildEventsQuery({ place, size: 1 });
+    const res = await fetchWithHmac(`${api}/events?${qs.toString()}`);
+    if (!res.ok) {
+      console.error(`fetchEventCountExternal: HTTP ${res.status} for ${place}`);
+      return null;
+    }
+    const data =
+      (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
+    return data.totalElements;
+  } catch (error) {
+    console.error("fetchEventCountExternal: failed", error);
+    return null;
   }
 }
