@@ -7,6 +7,7 @@ import { renderWithProviders } from "./utils/renderWithProviders";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/",
 }));
 
 describe("FilterButton (black-box)", () => {

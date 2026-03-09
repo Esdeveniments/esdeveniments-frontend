@@ -1,35 +1,16 @@
 "use client";
 
-import React, { useMemo } from "react";
-import DatePicker from "react-datepicker";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { useState } from "react";
+import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import { format, setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
-import { ca } from "date-fns/locale";
-import { useTranslations } from "next-intl";
-import { DatePickerComponentProps, CustomHeaderProps } from "types/props";
+import { setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
+import { ca, es, enUS } from "date-fns/locale";
+import type { Locale } from "date-fns";
+import { useLocale, useTranslations } from "next-intl";
+import type { DatePickerComponentProps, TimeSelectorProps, DateButtonProps } from "types/props";
+import "react-day-picker/style.css";
 
-import "react-datepicker/dist/react-datepicker.css";
-
-const ButtonInput = React.forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { value?: string }
->(({ value, ...props }, ref) => {
-  const { className: _className, ...restProps } = props;
-  return (
-    <button
-      ref={ref}
-      type="button"
-      className="w-full min-h-[44px] px-4 py-3 border border-border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2"
-      {...restProps}
-    >
-      <span>{value}</span>
-      <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-    </button>
-  );
-});
-
-ButtonInput.displayName = "ButtonInput";
+const LOCALE_MAP: Record<string, Locale> = { ca, es, en: enUS };
 
 function toDate(dateStr: string): Date {
   if (!dateStr) return setHours(setMinutes(new Date(), 0), 9);
@@ -40,13 +21,18 @@ function toDate(dateStr: string): Date {
 }
 
 function toISOStringLocalMinutes(date: Date): string {
-  return date.toISOString().slice(0, 16);
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${d}T${h}:${mi}`;
 }
 
 function computeEndDate(
   startingDate: Date,
   initialEndDate: string | undefined,
-  isAllDay: boolean
+  isAllDay: boolean,
 ): Date {
   const initialEndCandidate = initialEndDate
     ? toDate(initialEndDate)
@@ -64,38 +50,57 @@ function computeEndDate(
   return endingDate;
 }
 
-function buildHeaderRenderer(monthYearFormat: string) {
-  return function renderCustomHeader({
-    date,
-    decreaseMonth,
-    increaseMonth,
-    prevMonthButtonDisabled,
-    nextMonthButtonDisabled,
-  }: CustomHeaderProps) {
-    return (
-      <div className="flex justify-between items-center p-2">
-        <button
-          onClick={decreaseMonth}
-          disabled={prevMonthButtonDisabled}
-          type="button"
-          className="p-1"
-        >
-          <ChevronLeftIcon className="w-5 h-5" />
-        </button>
-        <span className="font-bold capitalize">
-          {format(date, monthYearFormat, { locale: ca })}
-        </span>
-        <button
-          onClick={increaseMonth}
-          disabled={nextMonthButtonDisabled}
-          type="button"
-          className="p-1"
-        >
-          <ChevronRightIcon className="w-5 h-5" />
-        </button>
-      </div>
-    );
-  };
+function formatTime(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function formatDateDisplay(d: Date, locale: string): string {
+  const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
+  return d.toLocaleDateString(dateFnsLocale.code ?? locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function TimeSelector({
+  value,
+  onChange,
+  minTime,
+  label,
+}: TimeSelectorProps) {
+  return (
+    <input
+      type="time"
+      value={value}
+      min={minTime}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label={label}
+      className="w-full px-3 py-2 border border-border rounded-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+    />
+  );
+}
+
+function DateButton({
+  label,
+  value,
+  isOpen,
+  onClick,
+}: DateButtonProps) {
+  const accessibleLabel = value ? `${label}: ${value}` : label;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={accessibleLabel}
+      aria-expanded={isOpen}
+      className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
+    >
+      <span>{value || label}</span>
+      <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+    </button>
+  );
 }
 
 export default function DatePickerImpl({
@@ -111,39 +116,74 @@ export default function DatePickerImpl({
   onToggleAllDay,
 }: DatePickerComponentProps) {
   const t = useTranslations("Components.DatePicker");
-  const dateFormat = t("dateFormat");
-  const monthYearFormat = t("monthYearFormat");
+  const locale = useLocale();
+  const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
 
-  const startDate = useMemo(() => toDate(initialStartDate), [initialStartDate]);
-  const endDate = useMemo(
-    () => computeEndDate(startDate, initialEndDate, isAllDay),
-    [startDate, initialEndDate, isAllDay]
-  );
-  const minDateObj = useMemo(() => (minDate ? toDate(minDate) : undefined), [minDate]);
+  const startDate = toDate(initialStartDate);
+  const endDate = computeEndDate(startDate, initialEndDate, isAllDay);
+  const minDateObj = minDate ? toDate(minDate) : undefined;
 
-  const renderCustomHeader = useMemo(
-    () => buildHeaderRenderer(monthYearFormat),
-    [monthYearFormat]
-  );
+  const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
 
-  const onChangeStart = (date: Date) => {
-    onChange("startDate", toISOStringLocalMinutes(date));
+  const handleDaySelectStart = (day: Date | undefined) => {
+    if (!day) return;
+    const newStart = new Date(day);
+    newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
+
+    onChange("startDate", toISOStringLocalMinutes(newStart));
 
     if (isAllDay) {
-      const endOfDay = setSeconds(setMinutes(setHours(date, 23), 59), 59);
+      const endOfDay = setSeconds(
+        setMinutes(setHours(newStart, 23), 59),
+        59,
+      );
       onChange("endDate", toISOStringLocalMinutes(endOfDay));
+      setActiveField(null);
       return;
     }
 
     const diff = endDate.getTime() - startDate.getTime();
-    const newEnd = diff > 0 ? new Date(date.getTime() + diff) : addMinutes(date, 60);
+    const newEnd =
+      diff > 0
+        ? new Date(newStart.getTime() + diff)
+        : addMinutes(newStart, 60);
     onChange("endDate", toISOStringLocalMinutes(newEnd));
+    // Keep calendar open so user can adjust the time without re-clicking
   };
 
-  const onChangeEnd = (date: Date) => {
-    const corrected = date < startDate ? addMinutes(startDate, 15) : date;
+  const handleDaySelectEnd = (day: Date | undefined) => {
+    if (!day) return;
+    const newEnd = new Date(day);
+    newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
+
+    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
+    onChange("endDate", toISOStringLocalMinutes(corrected));
+    // Keep calendar open so user can adjust the time without re-clicking
+  };
+
+  const handleStartTimeChange = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const newStart = new Date(startDate);
+    newStart.setHours(h, m, 0, 0);
+    onChange("startDate", toISOStringLocalMinutes(newStart));
+
+    if (newStart >= endDate) {
+      const newEnd = addMinutes(newStart, 60);
+      onChange("endDate", toISOStringLocalMinutes(newEnd));
+    }
+  };
+
+  const handleEndTimeChange = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const newEnd = new Date(endDate);
+    newEnd.setHours(h, m, 0, 0);
+
+    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
     onChange("endDate", toISOStringLocalMinutes(corrected));
   };
+
+  const startDisplay = formatDateDisplay(startDate, locale);
+  const endDisplay = formatDateDisplay(endDate, locale);
 
   return (
     <div className={`w-full flex flex-col gap-4 ${className ?? ""}`}>
@@ -160,13 +200,15 @@ export default function DatePickerImpl({
                 onChange={(e) => onToggleAllDay?.(e.target.checked)}
               />
               <div
-                className={`w-10 h-6 rounded-full transition-colors ${isAllDay ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}`}
-              ></div>
+                className={`w-10 h-6 rounded-full transition-colors ${isAllDay ? "bg-primary" : "bg-muted"}`}
+              />
               <div
                 className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isAllDay ? "transform translate-x-4" : ""}`}
-              ></div>
+              />
             </div>
-            <span className="text-sm text-foreground-strong">{t("allDay")}</span>
+            <span className="text-sm text-foreground-strong">
+              {t("allDay")}
+            </span>
           </label>
         )}
       </div>
@@ -176,22 +218,17 @@ export default function DatePickerImpl({
           <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
             {t("start")}
           </span>
-          <DatePicker
-            id={`${idPrefix}-start`}
-            locale={ca}
-            selected={startDate}
-            onChange={onChangeStart}
-            showTimeSelect={!isAllDay}
-            dateFormat={isAllDay ? "dd/MM/yyyy" : dateFormat}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            minDate={minDateObj}
-            required={required}
-            customInput={<ButtonInput />}
-            popperClassName="react-datepicker-left"
-            popperPlacement="bottom-start"
-            renderCustomHeader={renderCustomHeader}
+          <DateButton
+            label={t("start")}
+            value={
+              isAllDay
+                ? startDisplay
+                : `${startDisplay} ${formatTime(startDate)}`
+            }
+            isOpen={activeField === "start"}
+            onClick={() =>
+              setActiveField((prev) => (prev === "start" ? null : "start"))
+            }
           />
         </div>
 
@@ -199,33 +236,73 @@ export default function DatePickerImpl({
           <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
             {t("end")}
           </span>
-          <DatePicker
-            id={`${idPrefix}-end`}
-            locale={ca}
-            selected={endDate}
-            onChange={onChangeEnd}
-            showTimeSelect={!isAllDay}
-            dateFormat={isAllDay ? "dd/MM/yyyy" : dateFormat}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            minDate={startDate}
-            minTime={
-              startDate.toDateString() === endDate.toDateString() ? startDate : undefined
+          <DateButton
+            label={t("end")}
+            value={
+              isAllDay
+                ? endDisplay
+                : `${endDisplay} ${formatTime(endDate)}`
             }
-            maxTime={
-              startDate.toDateString() === endDate.toDateString()
-                ? setSeconds(setMinutes(setHours(endDate, 23), 59), 59)
-                : undefined
+            isOpen={activeField === "end"}
+            onClick={() =>
+              setActiveField((prev) => (prev === "end" ? null : "end"))
             }
-            required={required}
-            customInput={<ButtonInput />}
-            popperClassName="react-datepicker-left"
-            popperPlacement="bottom-start"
-            renderCustomHeader={renderCustomHeader}
           />
         </div>
       </div>
+
+      {activeField && (
+        <div className="rdp-form-wrapper border border-border rounded-card p-3 bg-background">
+          <DayPicker
+            id={`${idPrefix}-${activeField}`}
+            mode="single"
+            locale={dateFnsLocale}
+            selected={activeField === "start" ? startDate : endDate}
+            onSelect={
+              activeField === "start"
+                ? handleDaySelectStart
+                : handleDaySelectEnd
+            }
+            disabled={
+              activeField === "end"
+                ? {
+                    before:
+                      minDateObj && minDateObj > startDate
+                        ? minDateObj
+                        : startDate,
+                  }
+                : minDateObj
+                  ? { before: minDateObj }
+                  : undefined
+            }
+            defaultMonth={activeField === "start" ? startDate : endDate}
+            showOutsideDays
+            fixedWeeks
+            required={required}
+          />
+          {!isAllDay && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <TimeSelector
+                value={formatTime(
+                  activeField === "start" ? startDate : endDate,
+                )}
+                onChange={
+                  activeField === "start"
+                    ? handleStartTimeChange
+                    : handleEndTimeChange
+                }
+                minTime={
+                  activeField === "end" &&
+                    startDate.toDateString() === endDate.toDateString()
+                    ? formatTime(startDate)
+                    : undefined
+                }
+                label={activeField === "start" ? t("start") : t("end")}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

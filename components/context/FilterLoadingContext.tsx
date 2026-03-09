@@ -11,7 +11,7 @@ import {
   useMemo,
   startTransition,
 } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import type { FilterLoadingContextValue } from "types/props";
 
 const FilterLoadingContext =
@@ -20,22 +20,28 @@ const FilterLoadingContext =
 export function FilterLoadingProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
-  const searchKey = useMemo(() => searchParams.toString(), [searchParams]);
-  const previousSearchKeyRef = useRef<string | null>(null);
+  const pathname = usePathname();
+  // Track both pathname and search params so that date changes (path segment)
+  // also reset the loading state — not only query-param changes.
+  const urlKey = useMemo(
+    () => `${pathname}?${searchParams.toString()}`,
+    [pathname, searchParams],
+  );
+  const previousUrlKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const previousSearchKey = previousSearchKeyRef.current;
+    const previousUrlKey = previousUrlKeyRef.current;
 
-    if (previousSearchKey === null) {
-      previousSearchKeyRef.current = searchKey;
+    if (previousUrlKey === null) {
+      previousUrlKeyRef.current = urlKey;
       return;
     }
 
-    if (previousSearchKey !== searchKey) {
+    if (previousUrlKey !== urlKey) {
       startTransition(() => setIsLoading(false));
-      previousSearchKeyRef.current = searchKey;
+      previousUrlKeyRef.current = urlKey;
     }
-  }, [searchKey]);
+  }, [urlKey]);
 
   const setLoading = useCallback((loading: boolean) => {
     setIsLoading(loading);

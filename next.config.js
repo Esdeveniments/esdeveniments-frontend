@@ -47,7 +47,7 @@ const nextConfig = {
       "@headlessui/react",
       "@heroicons/react",
       "date-fns",
-      "react-datepicker",
+      "react-day-picker",
       "react-select",
       "react-share",
       "react-tooltip",

@@ -28,7 +28,7 @@ export interface FilterState {
       | "searchTerm"
       | "distance"
       | "openModal",
-    value: string | boolean
+    value: string | boolean,
   ) => void;
 }
 
@@ -49,7 +49,14 @@ export interface FilterConfig<T extends FilterValue = FilterValue> {
   key: keyof URLFilterState;
   displayName: string;
   defaultValue: T;
-  type: "place" | "category" | "date" | "distance" | "search" | "coordinates";
+  type:
+    | "place"
+    | "category"
+    | "date"
+    | "distance"
+    | "search"
+    | "coordinates"
+    | "price";
 
   // Behavior functions
   isEnabled: (_state: FilterDisplayState) => boolean;
