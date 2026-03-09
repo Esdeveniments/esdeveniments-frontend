@@ -1,7 +1,7 @@
 export interface LatestNewsSectionProps {
   placeSlug: string;
   placeLabel: string;
-  placeType: "region" | "town";
+  placeType: Exclude<PlaceType, "">;
   newsHref: string;
 }
 
