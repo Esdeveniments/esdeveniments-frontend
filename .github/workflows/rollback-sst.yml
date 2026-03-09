@@ -133,7 +133,8 @@ jobs:
           # Required secrets — fail fast if missing
           for VAR in NEXT_PUBLIC_API_URL HMAC_SECRET SENTRY_DSN DEEPL_API_KEY \
                      STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET \
-                     TURSO_DATABASE_URL TURSO_AUTH_TOKEN; do
+                     TURSO_DATABASE_URL TURSO_AUTH_TOKEN \
+                     REVALIDATE_SECRET; do
             VAL="${!VAR}"
             if [ -z "$VAL" ]; then
               echo "::error::$VAR is required but not set"
@@ -148,7 +149,7 @@ jobs:
           for VAR in SENTRY_AUTH_TOKEN NEXT_PUBLIC_GOOGLE_ANALYTICS \
                      NEXT_PUBLIC_GOOGLE_ADS NEXT_PUBLIC_GOOGLE_MAPS \
                      NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION \
-                     GOOGLE_PLACES_API_KEY REVALIDATE_SECRET \
+                     GOOGLE_PLACES_API_KEY \
                      CLOUDFLARE_ZONE_ID CLOUDFLARE_API_TOKEN \
                      NEXT_PUBLIC_TIKTOK_CLIENT_KEY NEXT_PUBLIC_TIKTOK_REDIRECT_URI \
                      TIKTOK_CLIENT_SECRET; do
