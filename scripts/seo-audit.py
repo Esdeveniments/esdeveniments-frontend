@@ -73,14 +73,19 @@ END_PREV = (TODAY - timedelta(days=34)).strftime("%Y-%m-%d")
 START_PREV = (TODAY - timedelta(days=63)).strftime("%Y-%m-%d")
 
 # ─── AUTH ───
-credentials, project = google.auth.default(
-    scopes=[
-        "https://www.googleapis.com/auth/webmasters.readonly",
-        "https://www.googleapis.com/auth/analytics.readonly",
-    ]
-)
-gsc = build("searchconsole", "v1", credentials=credentials)
-ga = BetaAnalyticsDataClient(credentials=credentials)
+try:
+    credentials, project = google.auth.default(
+        scopes=[
+            "https://www.googleapis.com/auth/webmasters.readonly",
+            "https://www.googleapis.com/auth/analytics.readonly",
+        ]
+    )
+    gsc = build("searchconsole", "v1", credentials=credentials)
+    ga = BetaAnalyticsDataClient(credentials=credentials)
+except Exception as e:
+    print(f"❌ Authentication failed: {e}")
+    print("Set GOOGLE_APPLICATION_CREDENTIALS or configure ADC.")
+    raise SystemExit(1)
 
 
 # ─── HELPERS ───
@@ -758,6 +763,8 @@ def format_kpi_value(name, value):
     """Format a KPI value for display in the markdown report."""
     if "CTR" in name or "Bounce" in name:
         return f"{value:.2%}"
+    if "Position" in name:
+        return f"{value:.1f}"
     if isinstance(value, (int, float)) and value > 1:
         return f"{value:,.0f}"
     return str(value)
