@@ -697,7 +697,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     label={tByDates(labelKey)}
                   />
                 ))}
-                <label className="flex-start gap-2 cursor-pointer">
+                <label htmlFor="pick-date" className="flex-start gap-2 cursor-pointer">
                   <input
                     id="pick-date"
                     name="byDate"
