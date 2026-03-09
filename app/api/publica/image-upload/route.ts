@@ -11,13 +11,21 @@ export async function POST(request: Request) {
   if (blocked) return blocked;
 
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+    if (!contentType.includes("multipart/form-data")) {
+      return NextResponse.json(
+        { error: "Content-Type must be multipart/form-data." },
+        { status: 400 },
+      );
+    }
+
     const formData = await request.formData();
     const imageFile = formData.get("imageFile");
 
     if (!(imageFile instanceof File)) {
       return NextResponse.json(
         { error: "Falta la imatge a la sol·licitud." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,7 +36,7 @@ export async function POST(request: Request) {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
         },
-      }
+      },
     );
   } catch (error) {
     const message =
@@ -37,14 +45,14 @@ export async function POST(request: Request) {
     if (message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
       return NextResponse.json(
         { error: EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR },
-        { status: 413 }
+        { status: 413 },
       );
     }
 
     console.error("image-upload route error:", error);
     return NextResponse.json(
       { error: "No s'ha pogut pujar la imatge. Torna-ho a intentar." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
