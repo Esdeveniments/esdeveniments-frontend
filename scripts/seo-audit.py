@@ -154,8 +154,7 @@ def parse_psi_cwv(psi_data):
         m = crux.get(key, {})
         p75 = m.get("percentile")
         if p75 is not None:
-            # CLS is reported as score * 100 by PSI
-            result[label] = p75 / 100 if label == "CLS" else p75
+            result[label] = p75
         cat = m.get("category")
         if cat:
             result[f"{label}_category"] = cat  # FAST / AVERAGE / SLOW
