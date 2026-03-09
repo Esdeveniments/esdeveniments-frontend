@@ -43,7 +43,8 @@ jobs:
           pip install --quiet \
             google-api-python-client \
             google-auth \
-            google-analytics-data
+            google-analytics-data \
+            requests
 
       - name: Authenticate with GCP
         run: |
@@ -66,6 +67,8 @@ jobs:
 
       - name: Run SEO audit
         id: audit
+        env:
+          PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
         run: |
           RUN_DATE=$(date -u +%Y-%m-%d)
           mkdir -p data/seo-audits

@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 
 import google.auth
+import requests
 from googleapiclient.discovery import build
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
@@ -95,6 +96,71 @@ def safe_int(val, default=0):
         return int(val)
     except (ValueError, TypeError):
         return default
+
+
+def fetch_psi_data(url, strategy="MOBILE"):
+    """Fetch CWV from PageSpeed Insights API (free, no auth needed with API key)."""
+    api_key = os.environ.get("PSI_API_KEY", "")
+    params = {"url": url, "category": "PERFORMANCE", "strategy": strategy}
+    if api_key:
+        params["key"] = api_key
+    try:
+        resp = requests.get(
+            "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
+            params=params,
+            timeout=60,
+        )
+        if resp.status_code == 200:
+            return resp.json()
+    except Exception:
+        pass
+    return None
+
+
+def parse_psi_cwv(psi_data):
+    """Extract CWV metrics from PSI response (CrUX field data + Lighthouse score)."""
+    if not psi_data:
+        return None
+    result = {}
+    # CrUX field data (real user metrics)
+    crux = psi_data.get("loadingExperience", {}).get("metrics", {})
+    metric_map = {
+        "LARGEST_CONTENTFUL_PAINT_MS": "LCP",
+        "CUMULATIVE_LAYOUT_SHIFT_SCORE": "CLS",
+        "INTERACTION_TO_NEXT_PAINT": "INP",
+        "FIRST_CONTENTFUL_PAINT_MS": "FCP",
+        "EXPERIMENTAL_TIME_TO_FIRST_BYTE": "TTFB",
+    }
+    for key, label in metric_map.items():
+        m = crux.get(key, {})
+        p75 = m.get("percentile")
+        if p75 is not None:
+            # CLS is reported as score * 100 by PSI
+            result[label] = p75 / 100 if label == "CLS" else p75
+        cat = m.get("category")
+        if cat:
+            result[f"{label}_category"] = cat  # FAST / AVERAGE / SLOW
+    # Lighthouse performance score (0-1)
+    lh = psi_data.get("lighthouseResult", {}).get("categories", {}).get("performance", {})
+    score = lh.get("score")
+    if score is not None:
+        result["lighthouse_score"] = round(score * 100)
+    return result if result else None
+
+
+def collect_cwv_data():
+    """Collect Core Web Vitals via PageSpeed Insights API."""
+    print("🔬 Collecting Core Web Vitals (PageSpeed Insights)...")
+    data = {}
+    for strategy, label in [("MOBILE", "mobile"), ("DESKTOP", "desktop")]:
+        psi = fetch_psi_data(SITE, strategy)
+        parsed = parse_psi_cwv(psi)
+        if parsed:
+            data[label] = parsed
+    # Compute overall as mobile (Google uses mobile-first indexing)
+    if "mobile" in data:
+        data["overall"] = data["mobile"]
+    return data
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -333,6 +399,59 @@ def collect_gsc_data():
         reverse=True,
     )[:15]
 
+    # AI Overview zero-click: queries at position 1-3 with 0 clicks
+    # High position + 0 clicks strongly suggests AI Overview is answering the query
+    query_rows = gsc_query(["query"], START_90, END, limit=500)
+    data["ai_overview_suspects"] = sorted(
+        [
+            {
+                "query": r["keys"][0],
+                "impressions": r["impressions"],
+                "position": round(r["position"], 1),
+                "ctr": round(r["ctr"], 4),
+            }
+            for r in query_rows
+            if r["position"] <= 3 and r["clicks"] == 0 and r["impressions"] >= 10
+        ],
+        key=lambda r: r["impressions"],
+        reverse=True,
+    )[:15]
+
+    # Expired/past events still indexed (event URLs with dates in the past)
+    # Event URLs contain dates like "15-de-febrer-del-2026"
+    month_map = {
+        "gener": 1, "febrer": 2, "marc": 3, "abril": 4, "maig": 5, "juny": 6,
+        "juliol": 7, "agost": 8, "setembre": 9, "octubre": 10, "novembre": 11, "desembre": 12,
+    }
+    date_pattern = re.compile(r"(\d{1,2})-de-(\w+)-del-(\d{4})")
+    expired_events = []
+    for r in all_pages_rows:
+        url = r["keys"][0]
+        if "/e/" not in url:
+            continue
+        match = date_pattern.search(url)
+        if match:
+            day, month_name, year = match.groups()
+            month_num = month_map.get(month_name)
+            if month_num:
+                try:
+                    event_date = datetime(int(year), month_num, int(day))
+                    if event_date < TODAY - timedelta(days=30):
+                        expired_events.append({
+                            "page": url,
+                            "event_date": event_date.strftime("%Y-%m-%d"),
+                            "impressions": r["impressions"],
+                            "clicks": r["clicks"],
+                            "position": round(r["position"], 1),
+                        })
+                except ValueError:
+                    pass
+    data["expired_events_indexed"] = sorted(
+        expired_events,
+        key=lambda r: r["impressions"],
+        reverse=True,
+    )[:15]
+
     return data
 
 
@@ -499,6 +618,43 @@ def collect_ga4_data():
     )
     data["kpis"]["organic_sessions"] = organic_sessions
     data["kpis"]["ai_sessions"] = ai_sessions
+
+    # AI traffic breakdown by platform
+    ai_platforms = ["chatgpt", "perplexity", "copilot", "gemini", "claude", "bing.com/chat"]
+    data["ai_traffic_breakdown"] = []
+    for s in data["traffic_sources"]:
+        for platform in ai_platforms:
+            if platform in s["source"].lower():
+                data["ai_traffic_breakdown"].append({
+                    "platform": s["source"],
+                    "medium": s["medium"],
+                    "sessions": s["sessions"],
+                    "engaged": s["engaged"],
+                    "bounce_rate": s["bounce_rate"],
+                })
+                break
+    data["ai_traffic_breakdown"].sort(key=lambda x: x["sessions"], reverse=True)
+
+    # New vs returning users
+    new_ret = ga_report(["newVsReturning"], ["sessions", "engagedSessions", "bounceRate", "averageSessionDuration"])
+    data["new_vs_returning"] = [
+        {
+            "type": r["dims"][0],
+            "sessions": safe_int(r["metrics"][0]),
+            "engaged": safe_int(r["metrics"][1]),
+            "bounce_rate": round(safe_float(r["metrics"][2]), 3),
+            "duration": round(safe_float(r["metrics"][3]), 1),
+        }
+        for r in new_ret
+    ]
+
+    # Engagement depth: pages per session by channel
+    data["kpis"]["new_user_sessions"] = sum(
+        u["sessions"] for u in data["new_vs_returning"] if u["type"] == "new"
+    )
+    data["kpis"]["returning_user_sessions"] = sum(
+        u["sessions"] for u in data["new_vs_returning"] if u["type"] == "returning"
+    )
 
     # Mobile vs desktop bounce divergence
     mobile = next((d for d in data["devices"] if d["device"] == "mobile"), None)
@@ -775,6 +931,102 @@ def generate_markdown(data, previous=None):
         lines.append(f"⚠️ {higher} bounce is significantly higher. May indicate bot traffic or UX issues on {higher.lower()}.")
         lines.append("")
 
+    # ── Core Web Vitals ──
+    cwv = data.get("cwv", {})
+    if cwv:
+        lines.append("## ⚡ Core Web Vitals (CrUX Real-User Data)")
+        lines.append("")
+        # Thresholds: LCP ≤2500 good, >4000 poor; CLS ≤0.1 good, >0.25 poor; INP ≤200 good, >500 poor
+        cwv_thresholds = {
+            "LCP": (2500, 4000, "ms"), "CLS": (0.1, 0.25, ""), "INP": (200, 500, "ms"),
+            "FCP": (1800, 3000, "ms"), "TTFB": (800, 1800, "ms"),
+        }
+        for device_key, device_label in [("overall", "Overall"), ("mobile", "Mobile"), ("desktop", "Desktop")]:
+            device_cwv = cwv.get(device_key)
+            if device_cwv:
+                lines.append(f"### {device_label}")
+                lines.append("| Metric | p75 | Good % | Poor % | Status |")
+                lines.append("|--------|-----|--------|--------|--------|")
+                for metric in ["LCP", "CLS", "INP", "FCP", "TTFB"]:
+                    p75 = device_cwv.get(metric)
+                    good = device_cwv.get(f"{metric}_good", 0)
+                    poor = device_cwv.get(f"{metric}_poor", 0)
+                    if p75 is not None:
+                        threshold = cwv_thresholds.get(metric)
+                        if threshold:
+                            good_t, poor_t, unit = threshold
+                            status = "🟢" if p75 <= good_t else ("🔴" if p75 >= poor_t else "🟡")
+                        else:
+                            status = "⚪"
+                            unit = ""
+                        p75_fmt = f"{p75:.3f}" if metric == "CLS" else f"{p75:,.0f}{unit}"
+                        lines.append(f"| {metric} | {p75_fmt} | {good:.0%} | {poor:.0%} | {status} |")
+                lines.append("")
+    else:
+        lines.append("## ⚡ Core Web Vitals")
+        lines.append("")
+        lines.append("⚠️ CrUX data not available (site may not have enough traffic for Chrome UX Report).")
+        lines.append("")
+
+    # ── AI Overview Zero-Click ──
+    ai_suspects = data["gsc"].get("ai_overview_suspects", [])
+    if ai_suspects:
+        lines.append("## 🤖 AI Overview Suspects (Position 1-3, Zero Clicks)")
+        lines.append("")
+        lines.append("Queries where you rank top 3 but get 0 clicks — likely answered by AI Overview/featured snippet.")
+        lines.append("")
+        lines.append("| Query | Position | Impressions |")
+        lines.append("|-------|----------|-------------|")
+        for r in ai_suspects[:10]:
+            lines.append(f"| \"{r['query']}\" | {r['position']:.1f} | {r['impressions']:,} |")
+        lines.append("")
+
+    # ── AI Traffic Breakdown ──
+    ai_breakdown = data["ga4"].get("ai_traffic_breakdown", [])
+    if ai_breakdown:
+        lines.append("## 🤖 AI Traffic Breakdown by Platform")
+        lines.append("")
+        lines.append("| Platform | Medium | Sessions | Engaged | Bounce |")
+        lines.append("|----------|--------|----------|---------|--------|")
+        for a in ai_breakdown:
+            lines.append(f"| {a['platform']} | {a['medium']} | {a['sessions']:,} | {a['engaged']:,} | {a['bounce_rate']:.0%} |")
+        total_ai = sum(a["sessions"] for a in ai_breakdown)
+        total_sessions = data["ga4"]["kpis"].get("sessions", 1)
+        lines.append(f"\n**Total AI traffic: {total_ai:,} sessions ({total_ai/total_sessions:.1%} of all traffic)**")
+        lines.append("")
+
+    # ── Expired Events Still Indexed ──
+    expired = data["gsc"].get("expired_events_indexed", [])
+    if expired:
+        lines.append("## 📅 Expired Events Still Indexed")
+        lines.append("")
+        lines.append("Past events (>30 days old) still appearing in search. Wasted crawl budget and potentially poor UX.")
+        lines.append("")
+        lines.append("| Page | Event Date | Impressions | Clicks | Position |")
+        lines.append("|------|------------|-------------|--------|----------|")
+        for r in expired[:10]:
+            path = r["page"].replace(SITE, "/")
+            lines.append(f"| `{path[:60]}...` | {r['event_date']} | {r['impressions']:,} | {r['clicks']} | {r['position']:.1f} |")
+        lines.append("")
+
+    # ── New vs Returning Users ──
+    nvr = data["ga4"].get("new_vs_returning", [])
+    if nvr:
+        lines.append("## 👥 New vs Returning Users")
+        lines.append("")
+        lines.append("| Type | Sessions | Engaged | Bounce | Duration |")
+        lines.append("|------|----------|---------|--------|----------|")
+        for u in nvr:
+            lines.append(f"| {u['type'].title()} | {u['sessions']:,} | {u['engaged']:,} | {u['bounce_rate']:.0%} | {u['duration']:.0f}s |")
+        new_u = next((u for u in nvr if u["type"] == "new"), None)
+        ret_u = next((u for u in nvr if u["type"] == "returning"), None)
+        if new_u and ret_u and ret_u["sessions"] > 0:
+            ratio = new_u["sessions"] / ret_u["sessions"]
+            lines.append(f"\n**New:Returning ratio: {ratio:.1f}:1**")
+            if ratio > 10:
+                lines.append("⚠️ Very few returning users. Consider email newsletters, push notifications, or save-for-later features.")
+        lines.append("")
+
     # ── Actionable Items ──
     lines.append("## ✅ Actionable Items")
     lines.append("")
@@ -922,6 +1174,72 @@ def generate_actions(data, previous=None):
                 "description": "AI-referred sessions appeared for the first time. Monitor growth and ensure tracking is configured.",
             })
 
+    # Core Web Vitals issues
+    cwv = data.get("cwv", {})
+    for device_key, device_label in [("mobile", "Mobile"), ("desktop", "Desktop")]:
+        device_cwv = cwv.get(device_key, {})
+        if device_cwv:
+            # LCP > 4000ms is poor
+            lcp = device_cwv.get("LCP", 0)
+            if lcp > 4000:
+                actions.append({
+                    "priority": "P1",
+                    "title": f"Poor LCP on {device_label}: {lcp:,.0f}ms (threshold: 2,500ms)",
+                    "description": f"{device_label} Largest Contentful Paint is in the 'poor' range. Optimize images, reduce server response time, or defer non-critical resources.",
+                })
+            elif lcp > 2500:
+                actions.append({
+                    "priority": "P2",
+                    "title": f"LCP needs improvement on {device_label}: {lcp:,.0f}ms",
+                    "description": f"{device_label} LCP is above 'good' threshold (2,500ms). Consider image optimization or lazy loading improvements.",
+                })
+            # INP > 500ms is poor
+            inp = device_cwv.get("INP", 0)
+            if inp > 500:
+                actions.append({
+                    "priority": "P1",
+                    "title": f"Poor INP on {device_label}: {inp:,.0f}ms (threshold: 200ms)",
+                    "description": f"{device_label} Interaction to Next Paint is poor. Reduce JavaScript execution time, break up long tasks.",
+                })
+            # CLS > 0.25 is poor
+            cls_val = device_cwv.get("CLS", 0)
+            if cls_val > 0.25:
+                actions.append({
+                    "priority": "P1",
+                    "title": f"Poor CLS on {device_label}: {cls_val:.3f} (threshold: 0.1)",
+                    "description": f"{device_label} Cumulative Layout Shift is poor. Add size attributes to images/ads, avoid dynamic content injection above fold.",
+                })
+
+    # AI Overview zero-click queries
+    ai_suspects = data["gsc"].get("ai_overview_suspects", [])
+    if len(ai_suspects) >= 3:
+        total_impr = sum(r["impressions"] for r in ai_suspects)
+        actions.append({
+            "priority": "P2",
+            "title": f"AI Overview impact: {len(ai_suspects)} queries with 0 clicks at top 3 ({total_impr:,} impressions)",
+            "description": "Queries where you rank 1-3 but get no clicks — likely answered by AI Overview. Consider adding FAQ schema, unique data, or visual content to earn the click.",
+        })
+
+    # Expired events wasting crawl budget
+    expired = data["gsc"].get("expired_events_indexed", [])
+    if len(expired) >= 5:
+        total_impr = sum(r["impressions"] for r in expired)
+        actions.append({
+            "priority": "P2",
+            "title": f"Expired events: {len(expired)} past events still indexed ({total_impr:,} impressions)",
+            "description": "Events >30 days old still appear in search results. Consider adding automatic noindex for past events or redirecting to current editions.",
+        })
+
+    # Low returning user ratio
+    new_sessions = data["ga4"]["kpis"].get("new_user_sessions", 0)
+    ret_sessions = data["ga4"]["kpis"].get("returning_user_sessions", 0)
+    if ret_sessions > 0 and new_sessions / ret_sessions > 10:
+        actions.append({
+            "priority": "P2",
+            "title": f"Very low returning users ({ret_sessions:,} returning vs {new_sessions:,} new)",
+            "description": "Most users don't come back. Consider push notifications, email digest, save/favorite features, or 'events near me' alerts.",
+        })
+
     # Trend-based actions
     if previous:
         changes = compare_kpis(data, previous)
@@ -955,6 +1273,7 @@ def main():
     # Collect data
     gsc_data = collect_gsc_data()
     ga4_data = collect_ga4_data()
+    cwv_data = collect_cwv_data()
 
     # Build output
     audit_data = {
@@ -967,6 +1286,7 @@ def main():
         },
         "gsc": gsc_data,
         "ga4": ga4_data,
+        "cwv": cwv_data,
     }
 
     # Load previous data if available
@@ -1000,7 +1320,12 @@ def main():
     print(f"  Bounce: {ga_k['bounce_rate']:.0%} | Avg duration: {ga_k['avg_duration']:.0f}s")
     print(f"  Quick wins: {len(gsc_data['quick_wins'])} | Cannibalization: {len(gsc_data['cannibalization'])}")
     print(f"  i18n cannibal: {len(gsc_data.get('i18n_cannibalization', []))} | 3-seg indexed: {len(gsc_data.get('three_segment_indexed', []))} | Dead pages: {len(gsc_data.get('dead_pages', []))}")
+    print(f"  AI Overview suspects: {len(gsc_data.get('ai_overview_suspects', []))} | Expired events indexed: {len(gsc_data.get('expired_events_indexed', []))}")
     print(f"  Rich results: {'Yes' if gsc_data['search_appearance'] else 'None'} | Bounce gap: {ga_k.get('bounce_divergence', 0):.0%}")
+    cwv_overall = cwv_data.get("overall", {})
+    if cwv_overall:
+        print(f"  CWV: LCP {cwv_overall.get('LCP', '?')}ms | CLS {cwv_overall.get('CLS', '?')} | INP {cwv_overall.get('INP', '?')}ms")
+    print(f"  Users: {ga_k.get('new_user_sessions', 0):,} new | {ga_k.get('returning_user_sessions', 0):,} returning")
 
     actions = generate_actions(audit_data, previous)
     print(f"\n  Actionable items: {len(actions)}")

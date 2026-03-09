@@ -2126,7 +2126,122 @@
         "position": 10
       }
     ],
-    "dead_pages": []
+    "dead_pages": [],
+    "ai_overview_suspects": [
+      {
+        "query": "\"calisthenics academy\" \"bar association\" address",
+        "impressions": 21,
+        "position": 1.7,
+        "ctr": 0
+      }
+    ],
+    "expired_events_indexed": [
+      {
+        "page": "https://www.esdeveniments.cat/e/el-petit-princep-5-de-desembre-del-2024-mh9d8udtlvscpeidipl5tkanfc",
+        "event_date": "2024-12-05",
+        "impressions": 518,
+        "clicks": 32,
+        "position": 9.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/cavalcada-de-reis-5-de-gener-del-2026-c68aad16-dc8e-4bfa-bf67-9745a4e3c096",
+        "event_date": "2026-01-05",
+        "impressions": 467,
+        "clicks": 15,
+        "position": 5.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/mercat-de-segona-ma-8-de-setembre-del-2024-ok844i02mfa6m8l35rnh3hbpvs",
+        "event_date": "2024-09-08",
+        "impressions": 370,
+        "clicks": 7,
+        "position": 14.1
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/campionat-de-botifarra-fiporc-7-de-febrer-del-2026-cde57fbb-8e46-401c-870e-ea825d99abf8",
+        "event_date": "2026-02-07",
+        "impressions": 320,
+        "clicks": 2,
+        "position": 5.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/concert-de-mushkaa-13-de-desembre-del-2025-dd60a48e-7769-4606-b38e-97a156ead7a3",
+        "event_date": "2025-12-13",
+        "impressions": 299,
+        "clicks": 3,
+        "position": 6.6
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/primer-bany-de-lany-2026-al-masnou-1-de-gener-del-2026-13a7e874-708c-41cd-b8c0-a1b2beeaaa1b",
+        "event_date": "2026-01-01",
+        "impressions": 276,
+        "clicks": 4,
+        "position": 8.8
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/reis-dorient-cavalcada-de-reis-5-de-gener-del-2026-f4f8d9d0-4e4d-4b2e-b91b-834e1f3bc613",
+        "event_date": "2026-01-05",
+        "impressions": 273,
+        "clicks": 4,
+        "position": 6.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/xerrada-urgeix-la-variant-24-de-maig-del-2024-0gek5gla904ob4iva6gndohp1o",
+        "event_date": "2024-05-24",
+        "impressions": 272,
+        "clicks": 4,
+        "position": 4.1
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/crema-torrons-4-de-gener-del-2026-3b87bcfa-faab-4372-8233-34ca3b1564d5",
+        "event_date": "2026-01-04",
+        "impressions": 266,
+        "clicks": 4,
+        "position": 7.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/parc-infantil-de-nadal-la-neula-1-de-febrer-del-2026-114837d8-bb58-461b-861a-ef5adb6e5230",
+        "event_date": "2026-02-01",
+        "impressions": 230,
+        "clicks": 2,
+        "position": 5.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/campament-reial-del-patge-gregori-3-de-gener-del-2026-683248e8-38fb-404c-b0f1-403b5dcabf4c",
+        "event_date": "2026-01-03",
+        "impressions": 211,
+        "clicks": 4,
+        "position": 7.4
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/conferencies-de-tardor-directora-general-sra-belen-gallo-garcia-19-de-octubre-del-2024-tggnaeif4odtob2kf8njq6mm6c",
+        "event_date": "2024-10-19",
+        "impressions": 199,
+        "clicks": 3,
+        "position": 2.9
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/37e-pessebre-vivent-vila-de-rupit-27-de-desembre-del-2025-41hk87vfpdvch081k573dh9vug",
+        "event_date": "2025-12-27",
+        "impressions": 173,
+        "clicks": 1,
+        "position": 12.9
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/cavalcada-de-reis-5-de-gener-del-2026-c68aad16-dc8e-4bfa-bf67-9745a4e3c096",
+        "event_date": "2026-01-05",
+        "impressions": 169,
+        "clicks": 6,
+        "position": 6.4
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/cavalcada-dels-reis-de-lorient-5-de-gener-del-2026-12d8dabb-1b7a-4612-ac2e-a20653243184",
+        "event_date": "2026-01-05",
+        "impressions": 166,
+        "clicks": 6,
+        "position": 1.5
+      }
+    ]
   },
   "ga4": {
     "top_pages": [
@@ -2864,9 +2979,65 @@
       "avg_duration": 65.0,
       "organic_sessions": 7321,
       "ai_sessions": 295,
+      "new_user_sessions": 13132,
+      "returning_user_sessions": 1516,
       "mobile_bounce": 0.177,
       "desktop_bounce": 0.538,
       "bounce_divergence": 0.361
-    }
-  }
+    },
+    "ai_traffic_breakdown": [
+      {
+        "platform": "chatgpt.com",
+        "medium": "(not set)",
+        "sessions": 157,
+        "engaged": 140,
+        "bounce_rate": 0.108
+      },
+      {
+        "platform": "chatgpt.com",
+        "medium": "referral",
+        "sessions": 114,
+        "engaged": 107,
+        "bounce_rate": 0.061
+      },
+      {
+        "platform": "perplexity",
+        "medium": "(not set)",
+        "sessions": 16,
+        "engaged": 16,
+        "bounce_rate": 0.0
+      },
+      {
+        "platform": "copilot.com",
+        "medium": "(not set)",
+        "sessions": 8,
+        "engaged": 1,
+        "bounce_rate": 0.875
+      }
+    ],
+    "new_vs_returning": [
+      {
+        "type": "new",
+        "sessions": 13132,
+        "engaged": 8114,
+        "bounce_rate": 0.382,
+        "duration": 54.0
+      },
+      {
+        "type": "returning",
+        "sessions": 1516,
+        "engaged": 1116,
+        "bounce_rate": 0.264,
+        "duration": 163.5
+      },
+      {
+        "type": "(not set)",
+        "sessions": 184,
+        "engaged": 2,
+        "bounce_rate": 0.989,
+        "duration": 5.1
+      }
+    ]
+  },
+  "cwv": {}
 }
