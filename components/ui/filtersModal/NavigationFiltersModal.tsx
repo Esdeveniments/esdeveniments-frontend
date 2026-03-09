@@ -100,7 +100,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
 
   const defaults = useMemo(() => {
     const hasExplicitDateRange = Boolean(
-      currentQueryParams.from || currentQueryParams.to
+      currentQueryParams.from && currentQueryParams.to
     );
     const place =
       currentSegments.place === "catalunya" ? "" : currentSegments.place;
@@ -112,7 +112,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         ? ""
         : currentSegments.category;
     const price = currentQueryParams.price || DEFAULT_FILTER_VALUE;
-    const fromDate = currentQueryParams.from || "";
+    const fromDate = hasExplicitDateRange
+      ? currentQueryParams.from || ""
+      : "";
     const distance =
       currentQueryParams.distance ||
       (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
@@ -168,7 +170,10 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
   const [localToDate, setLocalToDate] = useState<string>(currentQueryParams.to || defaults.fromDate);
   const [showCalendar, setShowCalendar] = useState<boolean>(Boolean(defaults.fromDate));
-  const [showMoreDates, setShowMoreDates] = useState<boolean>(false);
+  const isAdvancedDateActive =
+    BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
+    Boolean(defaults.fromDate);
+  const [showMoreDates, setShowMoreDates] = useState<boolean>(isAdvancedDateActive);
   const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
   const [localUserLocation, setLocalUserLocation] = useState(
     defaults.userLocation
@@ -203,9 +208,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       // TODO: Re-enable when backend supports the `type` query param
       // setLocalPrice(defaults.price);
       setLocalFromDate(defaults.fromDate);
-      setLocalToDate(currentQueryParams.to || defaults.fromDate);
+      const hasExplicitRange = Boolean(currentQueryParams.from && currentQueryParams.to);
+      setLocalToDate(hasExplicitRange ? (currentQueryParams.to || defaults.fromDate) : defaults.fromDate);
       setShowCalendar(Boolean(defaults.fromDate));
-      setShowMoreDates(false);
+      const advancedActive =
+        BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
+        Boolean(defaults.fromDate);
+      setShowMoreDates(advancedActive);
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
       setLocalPlaceType(defaults.placeType);
@@ -763,6 +772,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                         <button
                           key={labelKey}
                           type="button"
+                          aria-pressed={isActive}
                           onClick={() => handleDateRangeShortcut(getRange)}
                           className={`px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
                             ? "bg-primary text-primary-foreground border-primary"
