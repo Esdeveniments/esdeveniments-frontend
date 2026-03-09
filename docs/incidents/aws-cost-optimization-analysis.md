@@ -276,7 +276,7 @@ The events list endpoint doesn't have in-memory caching but relies on CloudFront
 
 **Cost impact:** None. DynamoDB baseline remains ~38K writes/day ($1.80/month). Lambda remains ~$0.03/month.
 
-**Note:** `highPrioritySlugs` in `utils/priority-places.ts` is retained for sitemap generation (unrelated to static rendering).
+**Note:** `highPrioritySlugs` in `utils/priority-places.ts` was later replaced by dynamic event-count-based expansion in sitemap-places route, and the file was deleted.
 
 ---
 

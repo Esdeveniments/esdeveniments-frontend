@@ -719,6 +719,7 @@
       "dateTitle": "Buscar por fecha",
       "dateAriaLabel": "Filtrar por fecha",
       "categoryTitle": "Explorar categorías",
+      "otherCategoryTitle": "Otras categorías en {place}",
       "categoryAriaLabel": "Navegar por categorías",
       "categoryLinkAria": "Ver {category} en {place}"
     },
