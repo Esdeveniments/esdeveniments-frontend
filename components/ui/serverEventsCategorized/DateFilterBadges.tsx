@@ -116,6 +116,10 @@ export function DateFilterBadges({
                 categories
               )}
               ariaLabel={getAriaLabel(dateFilter)}
+              data-analytics-event-name="date_filter_click"
+              data-analytics-date-slug={dateFilter.slug}
+              data-analytics-context="place_page"
+              data-analytics-place-slug={placeSlug}
             >
               {dateFilter.label}
             </Badge>

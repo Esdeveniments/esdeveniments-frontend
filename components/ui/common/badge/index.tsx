@@ -13,9 +13,15 @@ const Badge = forwardRef<
     variant?: "outline" | "solid";
     onClick?: () => void;
     ariaLabel?: string;
+    [key: `data-${string}`]: string | undefined;
   }>
->(({ href, children, className = "", onClick, ariaLabel }, ref) => {
+>(({ href, children, className = "", onClick, ariaLabel, ...rest }, ref) => {
   const combined = `${BASE_CLASS} ${className}`.trim();
+
+  // Separate data-* attributes to forward to the underlying element
+  const dataAttrs = Object.fromEntries(
+    Object.entries(rest).filter(([k]) => k.startsWith("data-")),
+  );
 
   if (href) {
     return (
@@ -25,6 +31,7 @@ const Badge = forwardRef<
         aria-label={ariaLabel}
         variant="chip"
         prefetch={false}
+        {...dataAttrs}
       >
         <span data-slot="badge" ref={ref}>
           {children}
@@ -42,6 +49,7 @@ const Badge = forwardRef<
       onClick={onClick}
       aria-label={ariaLabel}
       className={combined}
+      {...dataAttrs}
     >
       {children}
     </span>

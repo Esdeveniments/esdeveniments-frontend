@@ -461,7 +461,14 @@ export async function GET(request: Request) {
           sharpError instanceof Error ? sharpError.message : String(sharpError);
         console.error("[image-proxy] Sharp processing failed:", errorMessage);
 
-        if (process.env.NODE_ENV === "production") {
+        // On Vercel, Sharp is not installed (expected) — skip Sentry.
+        // On SST/Lambda, Sharp is installed via open-next.config.ts — always report
+        // so we catch regressions like the Feb 2026 incident (4 days of silent fallback).
+        // VERCEL_ENV is set by Vercel to "production"|"preview"|"development";
+        // it's undefined on SST/Lambda.
+        const isVercel = !!process.env.VERCEL_ENV;
+
+        if (process.env.NODE_ENV === "production" && !isVercel) {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
           });

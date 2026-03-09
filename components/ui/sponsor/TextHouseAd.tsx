@@ -22,6 +22,7 @@ export default function TextHouseAd({ houseAd, place }: TextHouseAdProps) {
         href="/patrocina"
         className="group block w-full overflow-hidden rounded-card border border-border bg-muted/20 transition-shadow hover:shadow-md hover:border-primary focus-ring"
         data-analytics-event-name="house_ad_click"
+        data-analytics-link-type="house_ad"
         data-analytics-house-ad-id={houseAd.id}
         data-analytics-house-ad-type="text"
         data-analytics-house-ad-place={place}
