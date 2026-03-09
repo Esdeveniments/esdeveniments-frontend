@@ -873,7 +873,7 @@ def generate_markdown(data, previous=None):
             lines.append("")
     else:
         lines.append("No cannibalization issues detected.")
-    lines.append("")
+        lines.append("")
 
     # ── Trends ──
     lines.append("## 📈 Query Trends (30d vs Previous 30d)")
