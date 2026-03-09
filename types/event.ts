@@ -172,6 +172,7 @@ export interface FetchEventsParams {
   byDate?: string; // Date filter
   from?: string; // Start date
   to?: string; // End date
+  type?: string; // Price filter: "FREE" | "PAID"
   isToday?: boolean;
   // Note: API expects 'term' for search queries
 }
@@ -347,6 +348,9 @@ export interface UseEventsOptions {
   date?: string;
   search?: string; // Client-side search term filter
   distance?: string; // Client-side distance filter
+  price?: string; // Client-side price filter: "gratis" | "pagament"
+  from?: string; // Calendar date filter (YYYY-MM-DD)
+  to?: string; // Calendar date filter (YYYY-MM-DD)
   lat?: string; // Client-side latitude filter
   lon?: string; // Client-side longitude filter
   initialSize?: number;
@@ -358,6 +362,8 @@ export interface UseEventsReturn {
   events: EventSummaryResponseDTO[];
   hasMore: boolean;
   totalEvents: number;
+  /** True while fetching the first page after a filter change (no cached data yet) */
+  isLoading: boolean;
   isLoadingMore: boolean;
   loadMore: () => void | Promise<void>;
   error: Error | undefined;

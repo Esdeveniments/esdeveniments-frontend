@@ -13,6 +13,9 @@ export interface URLFilterState {
   category: URLCategory;
   searchTerm: string;
   distance: number;
+  price: string;
+  from?: string; // Calendar date filter (YYYY-MM-DD)
+  to?: string; // Calendar date filter (YYYY-MM-DD)
   lat?: number;
   lon?: number;
 }
@@ -28,6 +31,9 @@ export interface RouteSegments {
 export interface URLQueryParams {
   search?: string;
   distance?: string;
+  price?: string;
+  from?: string; // Calendar date filter (YYYY-MM-DD)
+  to?: string; // Calendar date filter (YYYY-MM-DD)
   lat?: string;
   lon?: string;
 }

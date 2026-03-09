@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, ReactElement, useMemo, Suspense } from "react";
+import { memo, ReactElement, useMemo, Suspense, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
@@ -11,6 +11,7 @@ import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
+import { hasActiveClientFilters } from "@utils/url-filters";
 import { useTranslations, useLocale } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { AppLocale } from "types/i18n";
@@ -46,9 +47,13 @@ function HybridEventsListClientContent({
   const parsed = useSharedUrlFilters();
   const t = useTranslations("Components.HybridEventsListClient");
   const locale = useLocale() as AppLocale;
+  const searchResultsTrackedRef = useRef(false);
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
+  const price = parsed.queryParams.price;
+  const from = parsed.queryParams.from;
+  const to = parsed.queryParams.to;
   const lat = parsed.queryParams.lat;
   const lon = parsed.queryParams.lon;
 
@@ -57,15 +62,18 @@ function HybridEventsListClientContent({
   }, [initialEvents]);
 
   // Check if client-side filters are active
-  const hasClientFilters = !!(search || distance || lat || lon);
+  const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
 
-  const { events, hasMore, loadMore, isLoadingMore, error } =
+  const { events, hasMore, loadMore, isLoading, isLoadingMore, error } =
     useEvents({
       place,
       category,
       date,
       search,
       distance,
+      price,
+      from,
+      to,
       lat,
       lon,
       initialSize: 10,
@@ -95,6 +103,30 @@ function HybridEventsListClientContent({
     return uniqueAppended;
   }, [events, realInitialEvents, hasClientFilters]);
 
+  // Track search result counts when search filter is active and results load
+  useEffect(() => {
+    // Reset tracking flag when search term changes to track new queries
+    searchResultsTrackedRef.current = false;
+  }, [search]);
+
+  useEffect(() => {
+    if (
+      search &&
+      !isLoading &&
+      !searchResultsTrackedRef.current &&
+      hasClientFilters
+    ) {
+      searchResultsTrackedRef.current = true;
+      sendGoogleEvent("search_results_loaded", {
+        search_term: search,
+        results_count: displayedEvents.length,
+        place: place || undefined,
+        category: category || undefined,
+        date: date || undefined,
+      });
+    }
+  }, [search, isLoading, hasClientFilters, displayedEvents.length, place, category, date]);
+
   // Log errors for debugging
   if (error) {
     console.error("Events loading error:", error);
@@ -122,7 +154,10 @@ function HybridEventsListClientContent({
 
   return (
     <>
-      {showErrorState ? (
+      {isLoading ? (
+        // Show skeleton immediately while fetching filtered events
+        <EventsGridSkeleton />
+      ) : showErrorState ? (
         // Show error message when events fail to load
         <div className="w-full flex flex-col items-center gap-element-gap py-section-y px-section-x">
           <div className="w-full text-center">

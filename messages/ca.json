@@ -535,7 +535,9 @@
       "popularTitle": "Popular ara a Catalunya"
     },
     "Filters": {
-      "triggerLabel": "Filtres"
+      "triggerLabel": "Filtres",
+      "priceFree": "Gratuït",
+      "pricePaid": "De pagament"
     },
     "Social": {
       "followUs": "Segueix-nos"
@@ -629,7 +631,14 @@
         "selectPlaceholder": "Selecciona població o comarca",
         "tagline": "Filtres actius",
         "dateHeading": "Data",
-        "categoriesHeading": "Categories"
+        "categoriesHeading": "Categories",
+        "priceHeading": "Preu",
+        "priceFree": "Gratuït",
+        "pricePaid": "De pagament",
+        "calendarLabel": "O escull al calendari:",
+        "pickDate": "Escull una data...",
+        "viewMore": "Veure més",
+        "viewLess": "Veure menys"
       }
     },
     "ImageUploader": {
@@ -1390,7 +1399,8 @@
       "category": "Categoria",
       "date": "Data",
       "distance": "Distància",
-      "search": "Cerca"
+      "search": "Cerca",
+      "price": "Preu"
     },
     "Categories": {
       "festesPopulars": "Festes Populars",
@@ -1404,7 +1414,10 @@
       "today": "Avui",
       "tomorrow": "Demà",
       "weekend": "Cap de setmana",
-      "week": "Aquesta setmana"
+      "week": "Aquesta setmana",
+      "nextWeek": "Setmana vinent",
+      "thisMonth": "Aquest mes",
+      "nextMonth": "Mes vinent"
     }
   },
   "Sponsor": {
