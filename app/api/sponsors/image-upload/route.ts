@@ -226,7 +226,7 @@ export async function POST(request: Request) {
 
     if (
       message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR ||
-      message.includes("Failed to parse body as FormData")
+      message.toLowerCase().includes("failed to parse body as formdata")
     ) {
       return NextResponse.json(
         {
