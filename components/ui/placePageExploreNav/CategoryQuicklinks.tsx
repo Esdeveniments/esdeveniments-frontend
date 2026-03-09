@@ -83,6 +83,10 @@ export default async function CategoryQuicklinks({
                   category: getCategoryLabel(category),
                   place: placeLabel,
                 })}
+                data-analytics-event-name="category_quicklink_click"
+                data-analytics-category-slug={category.slug}
+                data-analytics-context="place_page"
+                data-analytics-place-slug={place}
               >
                 {getCategoryLabel(category)}
               </Badge>

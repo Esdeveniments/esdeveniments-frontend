@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useMemo, useTransition, useCallback } from "react";
+import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
@@ -133,6 +133,33 @@ const Publica = () => {
     null
   );
 
+  // Funnel tracking refs (no re-render needed)
+  const formStartedRef = useRef(false);
+  const fieldsInteractedRef = useRef<Set<string>>(new Set());
+  const submittedRef = useRef(false);
+  const abandonFiredRef = useRef(false);
+
+  // Track form abandonment on page unload or SPA navigation
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (abandonFiredRef.current) return;
+      if (formStartedRef.current && !submittedRef.current) {
+        abandonFiredRef.current = true;
+        sendGoogleEvent("publica_form_abandon", {
+          fields_touched: Array.from(fieldsInteractedRef.current).join(","),
+          fields_count: fieldsInteractedRef.current.size,
+          source: "publica",
+        });
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      // Also fire on SPA navigation (component unmount)
+      handleBeforeUnload();
+    };
+  }, []);
+
   const {
     regionsWithCities,
     isLoading: isLoadingRegionsWithCities,
@@ -159,16 +186,33 @@ const Publica = () => {
     [categories]
   );
 
+  const trackFieldInteraction = (fieldName: string) => {
+    if (!formStartedRef.current) {
+      formStartedRef.current = true;
+      sendGoogleEvent("publica_form_start", { source: "publica" });
+    }
+    if (!fieldsInteractedRef.current.has(fieldName)) {
+      fieldsInteractedRef.current.add(fieldName);
+      sendGoogleEvent("publica_field_interact", {
+        field_name: fieldName,
+        fields_count: fieldsInteractedRef.current.size,
+        source: "publica",
+      });
+    }
+  };
+
   const handleFormChange = useCallback(<K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
+    trackFieldInteraction(String(name));
     setForm((prev) => ({ ...prev, [name]: value }));
   }, []);
 
   const handleImageChange = (file: File | null) => {
     setError(null);
     setImageUploadMessage(null);
+    trackFieldInteraction("image");
 
     if (!file) {
       setImageFile(null);
@@ -191,6 +235,8 @@ const Publica = () => {
   };
 
   const handleTownChange = (town: Option | null) => {
+    trackFieldInteraction("town");
+
     setForm((prev) => {
       const next = { ...prev, town };
       if (town) {
@@ -538,6 +584,7 @@ const Publica = () => {
           has_slug: Boolean(slug),
         });
 
+        submittedRef.current = true;
         router.push(`/e/${slug}`);
       } catch (error) {
         console.error("Submission error:", error);

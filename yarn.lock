@@ -2420,6 +2420,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@date-fns/tz@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@date-fns/tz@npm:1.4.1"
+  checksum: 10c0/9033fdc4682fe3d4d147625ce04fa88a8792653594e2de8d5a438c8f3bfc0990ee28fe773f91cac6810b06d818b5b281ae0608752ba8337257d0279ded3f019a
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:0.5.7":
   version: 0.5.7
   resolution: "@discoveryjs/json-ext@npm:0.5.7"
@@ -3003,7 +3010,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.6.1, @floating-ui/dom@npm:^1.7.2":
+"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.6.1":
   version: 1.7.2
   resolution: "@floating-ui/dom@npm:1.7.2"
   dependencies:
@@ -3023,7 +3030,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.1.2, @floating-ui/react-dom@npm:^2.1.6":
+"@floating-ui/react-dom@npm:^2.1.2":
   version: 2.1.6
   resolution: "@floating-ui/react-dom@npm:2.1.6"
   dependencies:
@@ -3032,18 +3039,6 @@ __metadata:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
   checksum: 10c0/6654834a8e73ecbdbc6cad2ad8f7abc698ac7c1800ded4d61113525c591c03d2e3b59d3cf9205859221465ea38c87af4f9e6e204703c5b7a7e85332d1eef2e18
-  languageName: node
-  linkType: hard
-
-"@floating-ui/react-dom@npm:^2.1.4":
-  version: 2.1.4
-  resolution: "@floating-ui/react-dom@npm:2.1.4"
-  dependencies:
-    "@floating-ui/dom": "npm:^1.7.2"
-  peerDependencies:
-    react: ">=16.8.0"
-    react-dom: ">=16.8.0"
-  checksum: 10c0/2dade6b8e18de09c90b876249756155ab31f49b5a81d246a3dc568d0355bc9e4bc26485dfd27b9e3bf86585700f4d241e8f53e8321249ec9b012a266a86b9366
   languageName: node
   linkType: hard
 
@@ -3058,34 +3053,6 @@ __metadata:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
   checksum: 10c0/a42df129e1e976fe8ba3f4c8efdda265a0196c1b66b83f2b9b27423d08dcc765406f893aeff9d830e70e3f14a9d4c490867eb4c32983317cbaa33863b0fae6f6
-  languageName: node
-  linkType: hard
-
-"@floating-ui/react@npm:^0.27.15":
-  version: 0.27.16
-  resolution: "@floating-ui/react@npm:0.27.16"
-  dependencies:
-    "@floating-ui/react-dom": "npm:^2.1.6"
-    "@floating-ui/utils": "npm:^0.2.10"
-    tabbable: "npm:^6.0.0"
-  peerDependencies:
-    react: ">=17.0.0"
-    react-dom: ">=17.0.0"
-  checksum: 10c0/a026266d8875e69de1ac1e1a00588660c8ee299c1e7d067c5c5fd1d69a46fd10acff5dd6cb66c3fe40a3347b443234309ba95f5b33d49059d0cda121f558f566
-  languageName: node
-  linkType: hard
-
-"@floating-ui/react@npm:^0.27.3":
-  version: 0.27.13
-  resolution: "@floating-ui/react@npm:0.27.13"
-  dependencies:
-    "@floating-ui/react-dom": "npm:^2.1.4"
-    "@floating-ui/utils": "npm:^0.2.10"
-    tabbable: "npm:^6.0.0"
-  peerDependencies:
-    react: ">=17.0.0"
-    react-dom: ">=17.0.0"
-  checksum: 10c0/4f5dd45829e4c62f447718d07bcf88a2388efb78dd91e38a6f34091feecfa4044ff7b43357192cdad4acbfc3898b932527c2a320913c5f492bae998f34f9f57d
   languageName: node
   linkType: hard
 
@@ -6982,6 +6949,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tabby_ai/hijri-converter@npm:1.0.5":
+  version: 1.0.5
+  resolution: "@tabby_ai/hijri-converter@npm:1.0.5"
+  checksum: 10c0/40044f463ff57855315c8925461942311460bb64e16706480dde98142f40bcd8e9925bb6fee401fd209397b5bb25368d1529c85b1e6c7e6216ea2085f6aaf61e
+  languageName: node
+  linkType: hard
+
 "@tailwindcss/aspect-ratio@npm:^0.4.2":
   version: 0.4.2
   resolution: "@tailwindcss/aspect-ratio@npm:0.4.2"
@@ -7349,15 +7323,6 @@ __metadata:
     pg-protocol: "npm:*"
     pg-types: "npm:^2.2.0"
   checksum: 10c0/7f93f83a4da0dc6133918f824d826fa34e78fb8cf86392d28a0e095c836c6910c014ced5d4b364d83e8485a65ce369adeb9663b14ba301241d4c0f80073007f3
-  languageName: node
-  linkType: hard
-
-"@types/react-datepicker@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "@types/react-datepicker@npm:7.0.0"
-  dependencies:
-    react-datepicker: "npm:*"
-  checksum: 10c0/8b9efb8841ed9bfb06e3157a2a4c5ed18fd7d6175cf760fb4fece99c0a53a55a5f27ea6484b62f548f2543cae349456c0f912d36243fe34251a25043ba4a1296
   languageName: node
   linkType: hard
 
@@ -9215,7 +9180,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clsx@npm:^2.0.0, clsx@npm:^2.1.1":
+"clsx@npm:^2.0.0":
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10c0/c4c8eb865f8c82baab07e71bfa8897c73454881c4f99d6bc81585aecd7c441746c1399d08363dc096c550cceaf97bd4ce1e8854e1771e9998d9f94c4fe075839
@@ -9710,6 +9675,13 @@ __metadata:
     es-errors: "npm:^1.3.0"
     is-data-view: "npm:^1.0.1"
   checksum: 10c0/fa7aa40078025b7810dcffc16df02c480573b7b53ef1205aa6a61533011005c1890e5ba17018c692ce7c900212b547262d33279fde801ad9843edc0863bf78c4
+  languageName: node
+  linkType: hard
+
+"date-fns-jalali@npm:4.1.0-0":
+  version: 4.1.0-0
+  resolution: "date-fns-jalali@npm:4.1.0-0"
+  checksum: 10c0/f9ad98d9f7e8e5abe0d070dc806b0c8baded2b1208626c42e92cbd2605b5171f5714d6b79b20cc2666267d821699244c9d0b5e93274106cf57d6232da77596ed
   languageName: node
   linkType: hard
 
@@ -15341,31 +15313,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-datepicker@npm:*":
-  version: 8.4.0
-  resolution: "react-datepicker@npm:8.4.0"
+"react-day-picker@npm:^9.14.0":
+  version: 9.14.0
+  resolution: "react-day-picker@npm:9.14.0"
   dependencies:
-    "@floating-ui/react": "npm:^0.27.3"
-    clsx: "npm:^2.1.1"
+    "@date-fns/tz": "npm:^1.4.1"
+    "@tabby_ai/hijri-converter": "npm:1.0.5"
     date-fns: "npm:^4.1.0"
+    date-fns-jalali: "npm:4.1.0-0"
   peerDependencies:
-    react: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
-    react-dom: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
-  checksum: 10c0/e96ba4f2b54476f66bfa33aa0c21729095c83d293671b07a9ddd96ab48dad85b6530acc5ca016e83ef8907feeebfefb7133bf7a02dc550175c48c5d9f66d70ac
-  languageName: node
-  linkType: hard
-
-"react-datepicker@npm:^8.8.0":
-  version: 8.8.0
-  resolution: "react-datepicker@npm:8.8.0"
-  dependencies:
-    "@floating-ui/react": "npm:^0.27.15"
-    clsx: "npm:^2.1.1"
-    date-fns: "npm:^4.1.0"
-  peerDependencies:
-    react: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
-    react-dom: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
-  checksum: 10c0/741c533a7b063df9291b195f24f4b54c3b95615cc5a2295c8608fc5ce4c8af19df3b03316e3653ab19cbc9145265796dfb1ab91cf357c450460ac850952853a8
+    react: ">=16.8.0"
+  checksum: 10c0/5d26b2e8e28fb504c2ec577bda2ea26709ccab07555aada0674bd72ae38963de6f5cab135d936bb2fef935f97f73c6510657b15b936766e53d5c65811d13289a
   languageName: node
   linkType: hard
 
@@ -15997,7 +15955,6 @@ __metadata:
     "@types/jsdom": "npm:^21.1.7"
     "@types/node": "npm:^24.10.1"
     "@types/react": "npm:^19.2.7"
-    "@types/react-datepicker": "npm:^7.0.0"
     "@types/react-dom": "npm:^19.2.3"
     "@typescript-eslint/eslint-plugin": "npm:^8.48.0"
     "@typescript-eslint/parser": "npm:^8.48.0"
@@ -16024,7 +15981,7 @@ __metadata:
     next-sitemap: "npm:^4.2.3"
     postcss: "npm:^8.5.1"
     react: "npm:19.2.3"
-    react-datepicker: "npm:^8.8.0"
+    react-day-picker: "npm:^9.14.0"
     react-dom: "npm:19.2.3"
     react-select: "npm:^5.7.0"
     react-share: "npm:^5.0.3"

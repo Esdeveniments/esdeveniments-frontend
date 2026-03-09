@@ -14,6 +14,7 @@ import { DEFAULT_FILTER_VALUE } from "../utils/constants";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/",
 }));
 
 // Mock analytics
