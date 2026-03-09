@@ -12,7 +12,6 @@ import type {
   EventLocationLabels,
   EventPlaceLabelOptions,
   EventPlaceLabels,
-  EventListLocationLabelOptions,
   EventListLocationLabels,
 } from "types/location";
 
@@ -162,7 +161,7 @@ export const buildEventListLocationLabels = ({
   cityName,
   regionName,
   location,
-}: EventListLocationLabelOptions): EventListLocationLabels => {
+}: EventPlaceLabelOptions): EventListLocationLabels => {
   const cityLabel = formatOptionalPlace(cityName);
   const regionLabel = formatOptionalPlace(regionName);
   const locationLabel = formatOptionalPlace(location);
