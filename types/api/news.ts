@@ -4,6 +4,7 @@ import type {
   ProvinceSummaryResponseDTO,
 } from "./event";
 import type { CitySummaryResponseDTO } from "./city";
+import type { CategorySummaryResponseDTO } from "./category";
 
 export type NewsType = "WEEKLY" | "WEEKEND" | string;
 
@@ -20,12 +21,6 @@ export interface NewsSummaryResponseDTO {
   city?: CitySummaryResponseDTO;
   region?: RegionSummaryResponseDTO;
   updatedAt?: string;
-}
-
-export interface NewsEventCategoryDTO {
-  id: number;
-  slug: string;
-  name: string;
 }
 
 export interface NewsEventItemDTO {
@@ -47,7 +42,7 @@ export interface NewsEventItemDTO {
   province?: ProvinceSummaryResponseDTO;
   visits: number;
   origin: string;
-  categories: NewsEventCategoryDTO[];
+  categories: CategorySummaryResponseDTO[];
 }
 
 export interface NewsDetailResponseDTO {
