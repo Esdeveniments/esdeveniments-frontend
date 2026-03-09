@@ -1,5 +1,5 @@
 import { fetchWithHmac } from "./fetch-wrapper";
-import { parseEventDetail } from "lib/validation/event";
+import { parseEventDetail, parsePagedEvents } from "lib/validation/event";
 import { buildEventsQuery } from "@utils/api-helpers";
 import type {
   EventDetailResponseDTO,
@@ -121,9 +121,9 @@ export async function fetchEventCountExternal(
       console.error(`fetchEventCountExternal: HTTP ${res.status} for ${place}`);
       return null;
     }
-    const data =
-      (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
-    return data.totalElements;
+    const payload = await res.json();
+    const data = parsePagedEvents(payload);
+    return data?.totalElements ?? null;
   } catch (error) {
     console.error("fetchEventCountExternal: failed", error);
     return null;
