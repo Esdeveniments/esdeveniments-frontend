@@ -42,7 +42,10 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error ? error.message : "Error pujant la imatge.";
 
-    if (message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
+    if (
+      message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR ||
+      message.includes("Failed to parse body as FormData")
+    ) {
       return NextResponse.json(
         { error: EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR },
         { status: 413 },

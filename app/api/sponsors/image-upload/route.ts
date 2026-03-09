@@ -275,7 +275,10 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed";
 
-    if (message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
+    if (
+      message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR ||
+      message.includes("Failed to parse body as FormData")
+    ) {
       return NextResponse.json(
         {
           errorCode: "image_too_large",
