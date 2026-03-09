@@ -1,0 +1,2414 @@
+{
+  "meta": {
+    "run_date": "2026-03-09",
+    "period": {
+      "start": "2025-12-06",
+      "end": "2026-03-06"
+    },
+    "comparison_period": {
+      "start": "2026-01-05",
+      "end": "2026-02-03"
+    },
+    "site": "https://www.esdeveniments.cat/",
+    "ga4_property": "properties/406884331"
+  },
+  "gsc": {
+    "kpis": {
+      "clicks": 3257,
+      "impressions": 153031,
+      "ctr": 0.0213,
+      "position": 17.7
+    },
+    "quick_wins": [
+      {
+        "page": "https://www.esdeveniments.cat/",
+        "clicks": 72,
+        "impressions": 3379,
+        "ctr": 0.0213,
+        "position": 32.6
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/rua-de-carnaval-15-de-febrer-del-2026-70c339df-f909-4241-8768-704b4d50feeb",
+        "clicks": 7,
+        "impressions": 1330,
+        "ctr": 0.0053,
+        "position": 2.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/barcelona",
+        "clicks": 26,
+        "impressions": 1093,
+        "ctr": 0.0238,
+        "position": 53.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/el-masnou",
+        "clicks": 21,
+        "impressions": 732,
+        "ctr": 0.0287,
+        "position": 7.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/la-garriga",
+        "clicks": 8,
+        "impressions": 677,
+        "ctr": 0.0118,
+        "position": 9.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/tarragona/avui",
+        "clicks": 6,
+        "impressions": 612,
+        "ctr": 0.0098,
+        "position": 59.8
+      },
+      {
+        "page": "https://www.esdeveniments.cat/vilassar-de-mar",
+        "clicks": 10,
+        "impressions": 546,
+        "ctr": 0.0183,
+        "position": 15.8
+      },
+      {
+        "page": "https://www.esdeveniments.cat/malgrat-de-mar",
+        "clicks": 15,
+        "impressions": 517,
+        "ctr": 0.029,
+        "position": 9.8
+      },
+      {
+        "page": "https://www.esdeveniments.cat/maresme",
+        "clicks": 12,
+        "impressions": 492,
+        "ctr": 0.0244,
+        "position": 30.6
+      },
+      {
+        "page": "https://www.esdeveniments.cat/canet-de-mar",
+        "clicks": 9,
+        "impressions": 492,
+        "ctr": 0.0183,
+        "position": 7.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/argentona",
+        "clicks": 7,
+        "impressions": 437,
+        "ctr": 0.016,
+        "position": 10.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/altafulla",
+        "clicks": 6,
+        "impressions": 391,
+        "ctr": 0.0153,
+        "position": 10.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/mercat-de-segona-ma-8-de-setembre-del-2024-ok844i02mfa6m8l35rnh3hbpvs",
+        "clicks": 7,
+        "impressions": 370,
+        "ctr": 0.0189,
+        "position": 14.1
+      },
+      {
+        "page": "https://www.esdeveniments.cat/maresme/avui",
+        "clicks": 7,
+        "impressions": 362,
+        "ctr": 0.0193,
+        "position": 31.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/campionat-de-botifarra-fiporc-7-de-febrer-del-2026-cde57fbb-8e46-401c-870e-ea825d99abf8",
+        "clicks": 2,
+        "impressions": 320,
+        "ctr": 0.0063,
+        "position": 5.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/concert-de-mushkaa-13-de-desembre-del-2025-dd60a48e-7769-4606-b38e-97a156ead7a3",
+        "clicks": 3,
+        "impressions": 299,
+        "ctr": 0.01,
+        "position": 6.6
+      },
+      {
+        "page": "https://www.esdeveniments.cat/barcelona/avui",
+        "clicks": 2,
+        "impressions": 286,
+        "ctr": 0.007,
+        "position": 51.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/primer-bany-de-lany-2026-al-masnou-1-de-gener-del-2026-13a7e874-708c-41cd-b8c0-a1b2beeaaa1b",
+        "clicks": 4,
+        "impressions": 276,
+        "ctr": 0.0145,
+        "position": 8.8
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/reis-dorient-cavalcada-de-reis-5-de-gener-del-2026-f4f8d9d0-4e4d-4b2e-b91b-834e1f3bc613",
+        "clicks": 4,
+        "impressions": 273,
+        "ctr": 0.0147,
+        "position": 6.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/xerrada-urgeix-la-variant-24-de-maig-del-2024-0gek5gla904ob4iva6gndohp1o",
+        "clicks": 4,
+        "impressions": 272,
+        "ctr": 0.0147,
+        "position": 4.1
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/crema-torrons-4-de-gener-del-2026-3b87bcfa-faab-4372-8233-34ca3b1564d5",
+        "clicks": 4,
+        "impressions": 266,
+        "ctr": 0.015,
+        "position": 7.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/campament-reial-del-patge-gregori-3-de-gener-del-2026-683248e8-38fb-404c-b0f1-403b5dcabf4c",
+        "clicks": 4,
+        "impressions": 211,
+        "ctr": 0.019,
+        "position": 7.4
+      },
+      {
+        "page": "https://www.esdeveniments.cat/alella/avui",
+        "clicks": 5,
+        "impressions": 203,
+        "ctr": 0.0246,
+        "position": 6.0
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/conferencies-de-tardor-directora-general-sra-belen-gallo-garcia-19-de-octubre-del-2024-tggnaeif4odtob2kf8njq6mm6c",
+        "clicks": 3,
+        "impressions": 199,
+        "ctr": 0.0151,
+        "position": 2.9
+      },
+      {
+        "page": "https://www.esdeveniments.cat/catalunya/cap-de-setmana",
+        "clicks": 5,
+        "impressions": 181,
+        "ctr": 0.0276,
+        "position": 48.2
+      }
+    ],
+    "striking_distance": [
+      {
+        "query": "esdeveniments",
+        "page": "https://www.esdeveniments.cat/",
+        "clicks": 6,
+        "impressions": 784,
+        "ctr": 0.0077,
+        "position": 18.1
+      },
+      {
+        "query": "el petit princep barcelona",
+        "page": "https://www.esdeveniments.cat/e/el-petit-princep-5-de-desembre-del-2024-mh9d8udtlvscpeidipl5tkanfc",
+        "clicks": 32,
+        "impressions": 482,
+        "ctr": 0.0664,
+        "position": 6.3
+      },
+      {
+        "query": "agenda la garriga",
+        "page": "https://www.esdeveniments.cat/la-garriga",
+        "clicks": 2,
+        "impressions": 278,
+        "ctr": 0.0072,
+        "position": 8.7
+      },
+      {
+        "query": "agenda argentona",
+        "page": "https://www.esdeveniments.cat/argentona",
+        "clicks": 3,
+        "impressions": 245,
+        "ctr": 0.0122,
+        "position": 6.4
+      },
+      {
+        "query": "agenda arenys de munt",
+        "page": "https://www.esdeveniments.cat/arenys-de-munt",
+        "clicks": 4,
+        "impressions": 216,
+        "ctr": 0.0185,
+        "position": 5.5
+      },
+      {
+        "query": "neula parc 2025",
+        "page": "https://www.esdeveniments.cat/e/parc-infantil-de-nadal-la-neula-1-de-febrer-del-2026-114837d8-bb58-461b-861a-ef5adb6e5230",
+        "clicks": 1,
+        "impressions": 189,
+        "ctr": 0.0053,
+        "position": 5.1
+      },
+      {
+        "query": "agenda vilassar de mar",
+        "page": "https://www.esdeveniments.cat/vilassar-de-mar",
+        "clicks": 2,
+        "impressions": 185,
+        "ctr": 0.0108,
+        "position": 8.1
+      },
+      {
+        "query": "campament reial granollers 2026",
+        "page": "https://www.esdeveniments.cat/es/e/campament-reial-del-patge-gregori-3-de-gener-del-2026-683248e8-38fb-404c-b0f1-403b5dcabf4c",
+        "clicks": 4,
+        "impressions": 171,
+        "ctr": 0.0234,
+        "position": 7.8
+      },
+      {
+        "query": "mercat segona m\u00e0 granollers (recinte firal) fotos",
+        "page": "https://www.esdeveniments.cat/e/mercat-de-segona-ma-8-de-setembre-del-2024-ok844i02mfa6m8l35rnh3hbpvs",
+        "clicks": 4,
+        "impressions": 171,
+        "ctr": 0.0234,
+        "position": 10.6
+      },
+      {
+        "query": "agenda sant pol de mar",
+        "page": "https://www.esdeveniments.cat/sant-pol-de-mar",
+        "clicks": 1,
+        "impressions": 146,
+        "ctr": 0.0068,
+        "position": 9.1
+      },
+      {
+        "query": "agenda masnou",
+        "page": "https://www.esdeveniments.cat/el-masnou",
+        "clicks": 3,
+        "impressions": 136,
+        "ctr": 0.0221,
+        "position": 6.3
+      },
+      {
+        "query": "pessebre vivent rupit 2025",
+        "page": "https://www.esdeveniments.cat/e/37e-pessebre-vivent-vila-de-rupit-27-de-desembre-del-2025-41hk87vfpdvch081k573dh9vug",
+        "clicks": 1,
+        "impressions": 120,
+        "ctr": 0.0083,
+        "position": 10.1
+      },
+      {
+        "query": "agenda alella",
+        "page": "https://www.esdeveniments.cat/alella/avui",
+        "clicks": 1,
+        "impressions": 118,
+        "ctr": 0.0085,
+        "position": 5.4
+      },
+      {
+        "query": "agenda malgrat de mar",
+        "page": "https://www.esdeveniments.cat/malgrat-de-mar",
+        "clicks": 4,
+        "impressions": 117,
+        "ctr": 0.0342,
+        "position": 8.2
+      },
+      {
+        "query": "agenda bigues i riells",
+        "page": "https://www.esdeveniments.cat/bigues-i-riells",
+        "clicks": 4,
+        "impressions": 113,
+        "ctr": 0.0354,
+        "position": 7.1
+      },
+      {
+        "query": "sankutrail",
+        "page": "https://www.esdeveniments.cat/es/e/festa-del-most-presentacio-de-la-sankutrail-2026-i-vermut-amb-vinils-18-de-octubre-del-2025-8jdh4fvn05bcbkaga88sd36gig",
+        "clicks": 1,
+        "impressions": 106,
+        "ctr": 0.0094,
+        "position": 10.1
+      },
+      {
+        "query": "altafulla agenda",
+        "page": "https://www.esdeveniments.cat/altafulla",
+        "clicks": 2,
+        "impressions": 105,
+        "ctr": 0.019,
+        "position": 8.0
+      },
+      {
+        "query": "agenda el masnou",
+        "page": "https://www.esdeveniments.cat/el-masnou",
+        "clicks": 4,
+        "impressions": 97,
+        "ctr": 0.0412,
+        "position": 7.1
+      },
+      {
+        "query": "agenda maresme",
+        "page": "https://www.esdeveniments.cat/maresme/avui",
+        "clicks": 4,
+        "impressions": 75,
+        "ctr": 0.0533,
+        "position": 15.9
+      },
+      {
+        "query": "canet de mar agenda",
+        "page": "https://www.esdeveniments.cat/canet-de-mar",
+        "clicks": 3,
+        "impressions": 75,
+        "ctr": 0.04,
+        "position": 6.3
+      },
+      {
+        "query": "arenys de munt agenda",
+        "page": "https://www.esdeveniments.cat/arenys-de-munt",
+        "clicks": 3,
+        "impressions": 72,
+        "ctr": 0.0417,
+        "position": 9.2
+      },
+      {
+        "query": "torneig sant vicen\u00e7 de montalt 2026",
+        "page": "https://www.esdeveniments.cat/e/iii-torneig-de-basquet-cadet-23-de-gener-del-2026-b9352b56-de9c-48ad-b24c-cad6eb3f011c",
+        "clicks": 3,
+        "impressions": 70,
+        "ctr": 0.0429,
+        "position": 9.5
+      },
+      {
+        "query": "agenda roda de ter",
+        "page": "https://www.esdeveniments.cat/roda-de-ter",
+        "clicks": 2,
+        "impressions": 64,
+        "ctr": 0.0312,
+        "position": 8.6
+      },
+      {
+        "query": "agenda valles oriental",
+        "page": "https://www.esdeveniments.cat/valles-oriental/avui",
+        "clicks": 1,
+        "impressions": 64,
+        "ctr": 0.0156,
+        "position": 17.4
+      },
+      {
+        "query": "fira de la llum arenys de munt 2025",
+        "page": "https://www.esdeveniments.cat/e/fira-de-la-llum-2025-6-de-desembre-del-2025-be4706bf-4d06-45ba-bc4d-292c96f6a7f0",
+        "clicks": 1,
+        "impressions": 62,
+        "ctr": 0.0161,
+        "position": 7.1
+      },
+      {
+        "query": "crema torrons tordera 2026",
+        "page": "https://www.esdeveniments.cat/es/e/crema-torrons-4-de-gener-del-2026-3b87bcfa-faab-4372-8233-34ca3b1564d5",
+        "clicks": 2,
+        "impressions": 61,
+        "ctr": 0.0328,
+        "position": 7.5
+      },
+      {
+        "query": "arenys de mar agenda",
+        "page": "https://www.esdeveniments.cat/arenys-de-mar",
+        "clicks": 1,
+        "impressions": 60,
+        "ctr": 0.0167,
+        "position": 11.2
+      },
+      {
+        "query": "que fer a matar\u00f3 avui",
+        "page": "https://www.esdeveniments.cat/mataro/avui",
+        "clicks": 4,
+        "impressions": 58,
+        "ctr": 0.069,
+        "position": 9.9
+      },
+      {
+        "query": "vilassar de mar agenda",
+        "page": "https://www.esdeveniments.cat/vilassar-de-mar",
+        "clicks": 1,
+        "impressions": 58,
+        "ctr": 0.0172,
+        "position": 6.9
+      },
+      {
+        "query": "agenda maresme",
+        "page": "https://www.esdeveniments.cat/maresme",
+        "clicks": 2,
+        "impressions": 53,
+        "ctr": 0.0377,
+        "position": 18.4
+      }
+    ],
+    "cannibalization": [
+      {
+        "query": "campament reial granollers 2026",
+        "total_impressions": 224,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/es/e/campament-reial-del-patge-gregori-3-de-gener-del-2026-683248e8-38fb-404c-b0f1-403b5dcabf4c",
+            "position": 7.8,
+            "clicks": 4,
+            "impressions": 171
+          },
+          {
+            "page": "https://www.esdeveniments.cat/e/campament-reial-del-patge-gregori-3-de-gener-del-2026-683248e8-38fb-404c-b0f1-403b5dcabf4c",
+            "position": 8.6,
+            "clicks": 1,
+            "impressions": 53
+          }
+        ]
+      },
+      {
+        "query": "nadalem masnou",
+        "total_impressions": 213,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/nadalem-2024-26-de-desembre-del-2024-j3eb8mggnuj28nrd3ltms28v8k",
+            "position": 2.8,
+            "clicks": 1,
+            "impressions": 205
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/e/nadalem-2025-23-de-desembre-del-2025-2af4719b-81c8-42d3-bd55-38ffa4fc5749",
+            "position": 3.9,
+            "clicks": 1,
+            "impressions": 8
+          }
+        ]
+      },
+      {
+        "query": "carnaval malgrat de mar 2026",
+        "total_impressions": 205,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/es/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+            "position": 1,
+            "clicks": 18,
+            "impressions": 140
+          },
+          {
+            "page": "https://www.esdeveniments.cat/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+            "position": 1,
+            "clicks": 3,
+            "impressions": 65
+          }
+        ]
+      },
+      {
+        "query": "neula parc 2025",
+        "total_impressions": 200,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/parc-infantil-de-nadal-la-neula-1-de-febrer-del-2026-114837d8-bb58-461b-861a-ef5adb6e5230",
+            "position": 5.1,
+            "clicks": 1,
+            "impressions": 189
+          },
+          {
+            "page": "https://www.esdeveniments.cat/en/e/parc-infantil-de-nadal-la-neula-1-de-febrer-del-2026-114837d8-bb58-461b-861a-ef5adb6e5230",
+            "position": 5.7,
+            "clicks": 1,
+            "impressions": 11
+          }
+        ]
+      },
+      {
+        "query": "carnaval roda de ter 2026",
+        "total_impressions": 172,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/roda-1200-anys-carnaval-2026-20-de-febrer-del-2026-ace4f598-7a5c-4bb4-a744-299bdc9163b2",
+            "position": 1.8,
+            "clicks": 6,
+            "impressions": 93
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/e/roda-1200-anys-carnaval-2026-20-de-febrer-del-2026-ace4f598-7a5c-4bb4-a744-299bdc9163b2",
+            "position": 1.3,
+            "clicks": 2,
+            "impressions": 79
+          }
+        ]
+      },
+      {
+        "query": "agenda arenys de munt hoy",
+        "total_impressions": 139,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/arenys-de-munt",
+            "position": 4.5,
+            "clicks": 6,
+            "impressions": 125
+          },
+          {
+            "page": "https://www.esdeveniments.cat/e/carnaval-familiar-15-de-febrer-del-2026-25cd8d10-2efa-415c-b008-d6f919c7e1c9",
+            "position": 1,
+            "clicks": 1,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/arenys-de-munt",
+            "position": 7.5,
+            "clicks": 1,
+            "impressions": 13
+          }
+        ]
+      },
+      {
+        "query": "actividades en santa eug\u00e8nia",
+        "total_impressions": 135,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga",
+            "position": 64.5,
+            "clicks": 0,
+            "impressions": 2
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/avui",
+            "position": 52.8,
+            "clicks": 0,
+            "impressions": 6
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/avui/tallers-i-formacio",
+            "position": 90,
+            "clicks": 0,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/dema",
+            "position": 46.8,
+            "clicks": 0,
+            "impressions": 17
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/dema/altres",
+            "position": 73.3,
+            "clicks": 0,
+            "impressions": 3
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/dema/familia-i-infants",
+            "position": 59,
+            "clicks": 0,
+            "impressions": 21
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/dema/gent-gran",
+            "position": 50.7,
+            "clicks": 0,
+            "impressions": 24
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/setmana",
+            "position": 48.3,
+            "clicks": 0,
+            "impressions": 3
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/setmana/exposicions",
+            "position": 23,
+            "clicks": 0,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/setmana/familia-i-infants",
+            "position": 63.6,
+            "clicks": 0,
+            "impressions": 55
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/setmana/festes-populars",
+            "position": 99,
+            "clicks": 0,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/santa-eugenia-de-berga/tallers-i-formacio",
+            "position": 84,
+            "clicks": 0,
+            "impressions": 1
+          }
+        ]
+      },
+      {
+        "query": "agenda maresme",
+        "total_impressions": 133,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/maresme/avui",
+            "position": 15.9,
+            "clicks": 4,
+            "impressions": 75
+          },
+          {
+            "page": "https://www.esdeveniments.cat/maresme",
+            "position": 18.4,
+            "clicks": 2,
+            "impressions": 53
+          },
+          {
+            "page": "https://www.esdeveniments.cat/maresme/dema",
+            "position": 79.2,
+            "clicks": 1,
+            "impressions": 5
+          }
+        ]
+      },
+      {
+        "query": "agenda valles oriental",
+        "total_impressions": 107,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/valles-oriental/avui",
+            "position": 17.4,
+            "clicks": 1,
+            "impressions": 64
+          },
+          {
+            "page": "https://www.esdeveniments.cat/valles-oriental/cap-de-setmana",
+            "position": 45.7,
+            "clicks": 1,
+            "impressions": 34
+          },
+          {
+            "page": "https://www.esdeveniments.cat/valles-oriental/exposicions",
+            "position": 64.3,
+            "clicks": 1,
+            "impressions": 9
+          }
+        ]
+      },
+      {
+        "query": "que fer aquest cap de setmana",
+        "total_impressions": 101,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/",
+            "position": 29.4,
+            "clicks": 3,
+            "impressions": 62
+          },
+          {
+            "page": "https://www.esdeveniments.cat/catalunya/cap-de-setmana",
+            "position": 43.9,
+            "clicks": 3,
+            "impressions": 26
+          },
+          {
+            "page": "https://www.esdeveniments.cat/barcelona/cap-de-setmana",
+            "position": 60.4,
+            "clicks": 2,
+            "impressions": 13
+          }
+        ]
+      },
+      {
+        "query": "carnaval gurb 2026",
+        "total_impressions": 80,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/en/e/carnaval-de-gurb-2026-28-de-febrer-del-2026-02e7f7c1-e813-46e5-8545-2c3dc920d11e",
+            "position": 1.5,
+            "clicks": 1,
+            "impressions": 24
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/e/carnaval-de-gurb-2026-28-de-febrer-del-2026-02e7f7c1-e813-46e5-8545-2c3dc920d11e",
+            "position": 1.2,
+            "clicks": 1,
+            "impressions": 56
+          }
+        ]
+      },
+      {
+        "query": "canet de mar agenda",
+        "total_impressions": 77,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/canet-de-mar",
+            "position": 6.3,
+            "clicks": 3,
+            "impressions": 75
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/canet-de-mar/avui",
+            "position": 18,
+            "clicks": 1,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/canet-de-mar/setmana",
+            "position": 19,
+            "clicks": 1,
+            "impressions": 1
+          }
+        ]
+      },
+      {
+        "query": "gastrotapes granollers 2026",
+        "total_impressions": 62,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/gastrotapes-2026-6-de-marc-del-2026-3b7cc970-0d64-414c-87e7-668164221fef",
+            "position": 2.3,
+            "clicks": 5,
+            "impressions": 60
+          },
+          {
+            "page": "https://www.esdeveniments.cat/e/ciencia-amb-tirador-10-de-octubre-del-2023-9p8ivfoca4ldrcor60ib22e5ho",
+            "position": 113,
+            "clicks": 1,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/e/la-gran-fira-al-carrer-6-de-setembre-del-2025-21qk935743eeagst7qhpovb1m4",
+            "position": 72,
+            "clicks": 1,
+            "impressions": 1
+          }
+        ]
+      },
+      {
+        "query": "acroyoga en montcada i reixac",
+        "total_impressions": 58,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/raco-jove-acroyoga-5-de-juny-del-2024-jpomi29v2vv07ovq64194uptv8",
+            "position": 30.4,
+            "clicks": 0,
+            "impressions": 20
+          },
+          {
+            "page": "https://www.esdeveniments.cat/en/e/raco-jove-acroyoga-5-de-juny-del-2024-jpomi29v2vv07ovq64194uptv8",
+            "position": 26.5,
+            "clicks": 0,
+            "impressions": 8
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/e/raco-jove-acroyoga-5-de-juny-del-2024-jpomi29v2vv07ovq64194uptv8",
+            "position": 33.3,
+            "clicks": 0,
+            "impressions": 30
+          }
+        ]
+      },
+      {
+        "query": "agenda maresme avui",
+        "total_impressions": 53,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/maresme",
+            "position": 19.8,
+            "clicks": 2,
+            "impressions": 19
+          },
+          {
+            "page": "https://www.esdeveniments.cat/maresme/avui",
+            "position": 11.7,
+            "clicks": 1,
+            "impressions": 34
+          }
+        ]
+      },
+      {
+        "query": "actividades gratuitas en granollers",
+        "total_impressions": 49,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/avui/exposicions",
+            "position": 87,
+            "clicks": 0,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/avui/gent-gran",
+            "position": 91.5,
+            "clicks": 0,
+            "impressions": 4
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/avui/serveis-municipals",
+            "position": 95.5,
+            "clicks": 0,
+            "impressions": 2
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/cap-de-setmana/esport",
+            "position": 55,
+            "clicks": 0,
+            "impressions": 3
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/cap-de-setmana/familia-i-infants",
+            "position": 87.8,
+            "clicks": 0,
+            "impressions": 5
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/cap-de-setmana/gent-gran",
+            "position": 71.5,
+            "clicks": 0,
+            "impressions": 4
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/cap-de-setmana/serveis-municipals",
+            "position": 27.8,
+            "clicks": 0,
+            "impressions": 4
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/cap-de-setmana/tallers-i-formacio",
+            "position": 67.5,
+            "clicks": 0,
+            "impressions": 2
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/dema/esport",
+            "position": 78.2,
+            "clicks": 0,
+            "impressions": 4
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/dema/exposicions",
+            "position": 90.2,
+            "clicks": 0,
+            "impressions": 4
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/dema/familia-i-infants",
+            "position": 70,
+            "clicks": 0,
+            "impressions": 2
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/dema/gent-gran",
+            "position": 46.4,
+            "clicks": 0,
+            "impressions": 5
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/dema/patrimoni-cultural",
+            "position": 82,
+            "clicks": 0,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/dema/serveis-municipals",
+            "position": 99.5,
+            "clicks": 0,
+            "impressions": 2
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/setmana",
+            "position": 24,
+            "clicks": 0,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/granollers/tots/serveis-municipals",
+            "position": 95.8,
+            "clicks": 0,
+            "impressions": 4
+          },
+          {
+            "page": "https://www.esdeveniments.cat/granollers",
+            "position": 23,
+            "clicks": 0,
+            "impressions": 1
+          }
+        ]
+      },
+      {
+        "query": "parc de nadal la roca del valles",
+        "total_impressions": 43,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/parc-de-nadal-27-de-desembre-del-2024-e0udq9euh1mijvqkjv0i5vpfug",
+            "position": 1.0,
+            "clicks": 1,
+            "impressions": 39
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/e/parc-de-nadal-27-de-desembre-del-2025-e8eee1d3-a7c6-4352-a449-0da70b0d88ee",
+            "position": 4.5,
+            "clicks": 1,
+            "impressions": 4
+          }
+        ]
+      },
+      {
+        "query": "actividades en barcelona",
+        "total_impressions": 41,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/barcelona",
+            "position": 77,
+            "clicks": 0,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/barcelona",
+            "position": 76.9,
+            "clicks": 0,
+            "impressions": 29
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/barcelona/avui",
+            "position": 91.3,
+            "clicks": 0,
+            "impressions": 11
+          }
+        ]
+      },
+      {
+        "query": "campament reial castellbisbal",
+        "total_impressions": 32,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/campament-reial-3-de-gener-del-2026-f74c80e2-e47e-4001-920e-a356197b87e5",
+            "position": 8.5,
+            "clicks": 1,
+            "impressions": 31
+          },
+          {
+            "page": "https://www.esdeveniments.cat/e/campament-reial-4-de-gener-del-2026-73107ea0-4b69-48c0-8de5-d6cb95966c0b",
+            "position": 12,
+            "clicks": 1,
+            "impressions": 1
+          }
+        ]
+      },
+      {
+        "query": "quina tordera 2025",
+        "total_impressions": 31,
+        "pages": [
+          {
+            "page": "https://www.esdeveniments.cat/e/gran-quina-festa-cptordera-6-de-gener-del-2025-rpue5apn5hnjn8adegbql87mkk",
+            "position": 19,
+            "clicks": 1,
+            "impressions": 1
+          },
+          {
+            "page": "https://www.esdeveniments.cat/es/e/gran-quina-festa-cptordera-6-de-gener-del-2025-rpue5apn5hnjn8adegbql87mkk",
+            "position": 10.0,
+            "clicks": 1,
+            "impressions": 30
+          }
+        ]
+      }
+    ],
+    "content_gaps": [
+      {
+        "query": "actividades tarragona",
+        "impressions": 194,
+        "position": 77.1
+      },
+      {
+        "query": "activitats culturals barcelona",
+        "impressions": 167,
+        "position": 60.2
+      },
+      {
+        "query": "activitats de salut barcelona",
+        "impressions": 147,
+        "position": 30.0
+      },
+      {
+        "query": "actividades en santa eug\u00e8nia",
+        "impressions": 131,
+        "position": 57.8
+      },
+      {
+        "query": "activitats culturals",
+        "impressions": 95,
+        "position": 66.1
+      },
+      {
+        "query": "activitats granollers",
+        "impressions": 89,
+        "position": 32.4
+      },
+      {
+        "query": "agenda catalunya",
+        "impressions": 87,
+        "position": 32.7
+      },
+      {
+        "query": "actividades ni\u00f1os tarragona",
+        "impressions": 65,
+        "position": 67.6
+      },
+      {
+        "query": "actividades para ni\u00f1os en tarragona",
+        "impressions": 62,
+        "position": 88.1
+      },
+      {
+        "query": "activitats de benestar barcelona",
+        "impressions": 59,
+        "position": 62.2
+      },
+      {
+        "query": "acroyoga en montcada i reixac",
+        "impressions": 58,
+        "position": 31.4
+      },
+      {
+        "query": "activitats lleida",
+        "impressions": 53,
+        "position": 49.0
+      },
+      {
+        "query": "activitats infantils a girona",
+        "impressions": 46,
+        "position": 69.6
+      },
+      {
+        "query": "activitats catalunya",
+        "impressions": 41,
+        "position": 42.4
+      },
+      {
+        "query": "actividades en barcelona",
+        "impressions": 39,
+        "position": 80.5
+      },
+      {
+        "query": "activitats infantils a lleida",
+        "impressions": 35,
+        "position": 64.0
+      },
+      {
+        "query": "agenda catalu\u00f1a",
+        "impressions": 34,
+        "position": 33.1
+      },
+      {
+        "query": "activities tarragona",
+        "impressions": 31,
+        "position": 77.1
+      },
+      {
+        "query": "agenda cultura badalona",
+        "impressions": 31,
+        "position": 36.5
+      },
+      {
+        "query": ".tarragona events",
+        "impressions": 29,
+        "position": 81.5
+      },
+      {
+        "query": "actividades en figueres",
+        "impressions": 29,
+        "position": 76.4
+      },
+      {
+        "query": "actividades gratuitas en granollers",
+        "impressions": 29,
+        "position": 60.3
+      },
+      {
+        "query": "agenda cap de setmana",
+        "impressions": 23,
+        "position": 30.0
+      },
+      {
+        "query": "-site:facebook.com -site:fb.me -site:youtube.com -site:youtu.be -site:youtube.be -site:twitter.com -site:instagram.com -site:tiktok.com -site:vm.tiktok.com -site:t.co -site:x.com -site:reddit.com \"diba\" -\"muebles\" -\"iosfa\" -\"boluarte\" -\"yasmine\" -\"farah\" -\"llibru\" -\"ninong\" -\"asturianu\" -\"nalang\" -\"kaya\" -\"mirzaei\" -\"grabe\" -\"gobiernu\" -\"ang\" -\"sindibae\" -\"tall ad diba\" -\"qui\u00e9n diba\" -\"yun\" -\"telle\" -\"diba volver\" -\"diba a ser\" -\"jean serg diba\" -\"ramen po\" -\"gumana\" -\"maya diba\" -\"kooperatiba\" -\"diba ser\" -\"diba po\" -\"grabeee diba\" -\"taenaaaa\" -\"niya\" -\"cenn\" -\"tama\" -\"naman\" -\"sinabi\" -\"ko\" -\"galing\" -\"feve\" -\"part\u00edos\" -\"diba firmar\" -\"la mio\" -\"dhiba\" -\"carat\" -\"spree\" -\"whoever\" -\"nang\" -\"makahanap\" -\"kayo\" -\"bagong\" -\"kabardagulan\" -\"moots\" -\"nwegbo\" -\"nun\" -\"dexar\" -\"ang\" -\"sindibae\" -\"tall ad diba\" -\"qui\u00e9n diba\" -\"yun\" -\"telle\" -\"diba volver\" -\"diba a ser\" -\"jean serg diba\" -\"ramen po\" -\"gumana\" -\"maya diba\" -\"kooperatiba\" -\"diba ser\" -\"diba po\" -\"grabeee diba\" -\"taenaaaa\" -\"niya\" -\"cenn\" -\"tama\" -\"naman\" -\"sinabi\" -\"ko\" -\"galing\" -\"feve\" -\"part\u00edos\" -\"diba firmar\" -\"la mio\" -\"dhiba\" -\"carat\" -\"spree\" -\"whoever\" -\"nang\" -\"makahanap\" -\"kayo\" -\"bagong\" -\"kabardagulan\" -\"moots\" -\"nwegbo\" -\"nun\" -\"dexar\"",
+        "impressions": 20,
+        "position": 57.8
+      },
+      {
+        "query": "agenda bages cap de setmana",
+        "impressions": 20,
+        "position": 57.7
+      },
+      {
+        "query": "actividades salud barcelona",
+        "impressions": 19,
+        "position": 39.2
+      },
+      {
+        "query": "activitats nens barcelona",
+        "impressions": 19,
+        "position": 74.6
+      },
+      {
+        "query": "actividades granollers",
+        "impressions": 18,
+        "position": 56.4
+      },
+      {
+        "query": "actividades en selva",
+        "impressions": 16,
+        "position": 72
+      },
+      {
+        "query": "actividades figueres",
+        "impressions": 16,
+        "position": 79.3
+      }
+    ],
+    "top_performers": [
+      {
+        "page": "https://www.esdeveniments.cat/e/40a-marxa-de-sant-pau-1-de-febrer-del-2026-d8698a99-600d-4216-a949-7570ef33d3b6",
+        "clicks": 8,
+        "impressions": 56,
+        "ctr": 0.1429,
+        "position": 8.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/santa-eulalia-2026-21-de-febrer-del-2026-48e6a55a-42c4-4c0d-aafc-caa675821f8f",
+        "clicks": 6,
+        "impressions": 53,
+        "ctr": 0.1132,
+        "position": 5.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/en/e/exposicio-atstaticcars-22-de-febrer-del-2025-sr3acmg8p9ihalmkjrt0dacsfo",
+        "clicks": 6,
+        "impressions": 55,
+        "ctr": 0.1091,
+        "position": 6.0
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+        "clicks": 20,
+        "impressions": 196,
+        "ctr": 0.102,
+        "position": 2.0
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/campionat-de-catalunya-benjami-i-alevi-de-judo-28-de-febrer-del-2026-11d36f84-bdb5-4651-981e-b8187d120f1a",
+        "clicks": 5,
+        "impressions": 53,
+        "ctr": 0.0943,
+        "position": 6.8
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/missa-del-gall-24-de-desembre-del-2023-7jegb2s4n7cmotpejcbcodl734",
+        "clicks": 9,
+        "impressions": 102,
+        "ctr": 0.0882,
+        "position": 7.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/iii-torneig-de-basquet-cadet-23-de-gener-del-2026-b9352b56-de9c-48ad-b24c-cad6eb3f011c",
+        "clicks": 9,
+        "impressions": 108,
+        "ctr": 0.0833,
+        "position": 9.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/gran-quina-festa-cptordera-6-de-gener-del-2025-rpue5apn5hnjn8adegbql87mkk",
+        "clicks": 5,
+        "impressions": 61,
+        "ctr": 0.082,
+        "position": 10.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/missa-del-gall-24-de-desembre-del-2025-6fe2e3c7-7d2c-4a8d-bdad-935f766018ec",
+        "clicks": 6,
+        "impressions": 77,
+        "ctr": 0.0779,
+        "position": 8.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/cavalgada-de-reis-5-de-gener-del-2026-92372f06-2bfa-4caf-a5e7-1acb18fe5525",
+        "clicks": 5,
+        "impressions": 66,
+        "ctr": 0.0758,
+        "position": 2.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/51e-pessebre-monumental-de-can-banus-20-de-desembre-del-2025-f604bf69-284e-46a7-b8c6-d0687a676f79",
+        "clicks": 5,
+        "impressions": 68,
+        "ctr": 0.0735,
+        "position": 10.6
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/el-trencanous-11-de-desembre-del-2025-34469c86-79b3-40fc-986c-eeeee255874c",
+        "clicks": 4,
+        "impressions": 56,
+        "ctr": 0.0714,
+        "position": 8.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/e/missa-del-gall-24-de-desembre-del-2025-6fe2e3c7-7d2c-4a8d-bdad-935f766018ec",
+        "clicks": 4,
+        "impressions": 58,
+        "ctr": 0.069,
+        "position": 7.1
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/campament-reial-2-de-gener-del-2025-5bs5g2cqlur85u4usac9a5hj20",
+        "clicks": 5,
+        "impressions": 76,
+        "ctr": 0.0658,
+        "position": 9.4
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/el-petit-princep-5-de-desembre-del-2024-mh9d8udtlvscpeidipl5tkanfc",
+        "clicks": 32,
+        "impressions": 518,
+        "ctr": 0.0618,
+        "position": 9.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/gastrotapes-2026-6-de-marc-del-2026-3b7cc970-0d64-414c-87e7-668164221fef",
+        "clicks": 5,
+        "impressions": 81,
+        "ctr": 0.0617,
+        "position": 2.6
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/winterland-xmas-park-6-de-desembre-del-2025-a3cb6e45-3146-41de-a7b0-c1332871717b",
+        "clicks": 3,
+        "impressions": 51,
+        "ctr": 0.0588,
+        "position": 11.0
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/fira-fora-stocks-27-de-setembre-del-2025-09qf2d58si7d5s7v159i6b5p34",
+        "clicks": 6,
+        "impressions": 103,
+        "ctr": 0.0583,
+        "position": 8.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/e/portes-obertes-a-lebm-les-caliues-24-de-abril-del-2024-1b0nl1a6d54grbmet1rgh4b6bs",
+        "clicks": 3,
+        "impressions": 52,
+        "ctr": 0.0577,
+        "position": 8.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/maresme/cap-de-setmana",
+        "clicks": 12,
+        "impressions": 221,
+        "ctr": 0.0543,
+        "position": 21.7
+      }
+    ],
+    "devices": {
+      "mobile": [
+        {
+          "page": "https://www.esdeveniments.cat/e/el-petit-princep-5-de-desembre-del-2024-mh9d8udtlvscpeidipl5tkanfc",
+          "clicks": 29,
+          "ctr": 0.0676,
+          "position": 6.1
+        },
+        {
+          "page": "https://www.esdeveniments.cat/es/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+          "clicks": 18,
+          "ctr": 0.1364,
+          "position": 1
+        },
+        {
+          "page": "https://www.esdeveniments.cat/",
+          "clicks": 16,
+          "ctr": 0.0244,
+          "position": 36.2
+        },
+        {
+          "page": "https://www.esdeveniments.cat/barcelona",
+          "clicks": 12,
+          "ctr": 0.0263,
+          "position": 48.9
+        },
+        {
+          "page": "https://www.esdeveniments.cat/arenys-de-munt",
+          "clicks": 11,
+          "ctr": 0.0312,
+          "position": 6.6
+        },
+        {
+          "page": "https://www.esdeveniments.cat/el-masnou",
+          "clicks": 10,
+          "ctr": 0.0442,
+          "position": 6.7
+        },
+        {
+          "page": "https://www.esdeveniments.cat/malgrat-de-mar",
+          "clicks": 9,
+          "ctr": 0.0437,
+          "position": 8.5
+        },
+        {
+          "page": "https://www.esdeveniments.cat/mataro/avui",
+          "clicks": 6,
+          "ctr": 0.033,
+          "position": 9.5
+        },
+        {
+          "page": "https://www.esdeveniments.cat/e/gastrotapes-2026-6-de-marc-del-2026-3b7cc970-0d64-414c-87e7-668164221fef",
+          "clicks": 5,
+          "ctr": 0.0877,
+          "position": 2.3
+        },
+        {
+          "page": "https://www.esdeveniments.cat/e/roda-1200-anys-carnaval-2026-20-de-febrer-del-2026-ace4f598-7a5c-4bb4-a744-299bdc9163b2",
+          "clicks": 5,
+          "ctr": 0.0549,
+          "position": 2.0
+        }
+      ],
+      "desktop": [
+        {
+          "page": "https://www.esdeveniments.cat/",
+          "clicks": 5,
+          "ctr": 0.0025,
+          "position": 38.2
+        },
+        {
+          "page": "https://www.esdeveniments.cat/e/40a-marxa-de-sant-pau-1-de-febrer-del-2026-d8698a99-600d-4216-a949-7570ef33d3b6",
+          "clicks": 3,
+          "ctr": 0.4286,
+          "position": 12.4
+        },
+        {
+          "page": "https://www.esdeveniments.cat/e/el-petit-princep-5-de-desembre-del-2024-mh9d8udtlvscpeidipl5tkanfc",
+          "clicks": 3,
+          "ctr": 0.0375,
+          "position": 26.1
+        },
+        {
+          "page": "https://www.esdeveniments.cat/arenys-de-munt",
+          "clicks": 2,
+          "ctr": 0.0192,
+          "position": 22.6
+        },
+        {
+          "page": "https://www.esdeveniments.cat/e/roda-1200-anys-carnaval-2026-20-de-febrer-del-2026-ace4f598-7a5c-4bb4-a744-299bdc9163b2",
+          "clicks": 2,
+          "ctr": 0.1667,
+          "position": 4.6
+        },
+        {
+          "page": "https://www.esdeveniments.cat/el-masnou",
+          "clicks": 2,
+          "ctr": 0.0145,
+          "position": 7.8
+        },
+        {
+          "page": "https://www.esdeveniments.cat/es/e/conferencia-i-mostra-de-pintura-josep-serra-llimona-8-de-novembre-del-2025-ktqijjojcpbubtd32rrgaf2kok",
+          "clicks": 2,
+          "ctr": 0.6667,
+          "position": 71.7
+        },
+        {
+          "page": "https://www.esdeveniments.cat/argentona",
+          "clicks": 1,
+          "ctr": 0.013,
+          "position": 23.2
+        },
+        {
+          "page": "https://www.esdeveniments.cat/castellbisbal",
+          "clicks": 1,
+          "ctr": 0.0588,
+          "position": 29.1
+        },
+        {
+          "page": "https://www.esdeveniments.cat/catalunya/cap-de-setmana",
+          "clicks": 1,
+          "ctr": 0.0094,
+          "position": 57.0
+        }
+      ]
+    },
+    "trends": {
+      "rising": [
+        {
+          "query": "rua carnaval granollers 2026",
+          "clicks_now": 2,
+          "clicks_prev": 0,
+          "impressions_now": 593,
+          "impressions_prev": 0,
+          "impressions_delta": 593
+        },
+        {
+          "query": "fiporc riudellots 2026",
+          "clicks_now": 1,
+          "clicks_prev": 0,
+          "impressions_now": 306,
+          "impressions_prev": 0,
+          "impressions_delta": 306
+        },
+        {
+          "query": "esdeveniments",
+          "clicks_now": 1,
+          "clicks_prev": 0,
+          "impressions_now": 247,
+          "impressions_prev": 0,
+          "impressions_delta": 247
+        },
+        {
+          "query": "agenda arenys de mar",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 179,
+          "impressions_prev": 0,
+          "impressions_delta": 179
+        },
+        {
+          "query": "carnaval roda de ter 2026",
+          "clicks_now": 8,
+          "clicks_prev": 0,
+          "impressions_now": 172,
+          "impressions_prev": 0,
+          "impressions_delta": 172
+        },
+        {
+          "query": "sankutrail",
+          "clicks_now": 1,
+          "clicks_prev": 0,
+          "impressions_now": 109,
+          "impressions_prev": 0,
+          "impressions_delta": 109
+        },
+        {
+          "query": "carnaval arenys de mar 2026",
+          "clicks_now": 1,
+          "clicks_prev": 0,
+          "impressions_now": 104,
+          "impressions_prev": 0,
+          "impressions_delta": 104
+        },
+        {
+          "query": "agenda la garriga",
+          "clicks_now": 1,
+          "clicks_prev": 0,
+          "impressions_now": 100,
+          "impressions_prev": 0,
+          "impressions_delta": 100
+        },
+        {
+          "query": "carnaval gurb 2026",
+          "clicks_now": 2,
+          "clicks_prev": 0,
+          "impressions_now": 82,
+          "impressions_prev": 0,
+          "impressions_delta": 82
+        },
+        {
+          "query": "gastrotapes granollers 2026",
+          "clicks_now": 6,
+          "clicks_prev": 0,
+          "impressions_now": 70,
+          "impressions_prev": 0,
+          "impressions_delta": 70
+        },
+        {
+          "query": "\"biblioteca municipal joan fontcuberta i gel\" \"xarxa de biblioteques municipals\"",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 91,
+          "impressions_prev": 24,
+          "impressions_delta": 67
+        },
+        {
+          "query": "activitats granollers",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 76,
+          "impressions_prev": 13,
+          "impressions_delta": 63
+        },
+        {
+          "query": "rua carnaval 2026 granollers",
+          "clicks_now": 1,
+          "clicks_prev": 0,
+          "impressions_now": 57,
+          "impressions_prev": 0,
+          "impressions_delta": 57
+        },
+        {
+          "query": "agenda altafulla",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 53,
+          "impressions_prev": 0,
+          "impressions_delta": 53
+        },
+        {
+          "query": "carnaval montmelo 2026",
+          "clicks_now": 1,
+          "clicks_prev": 0,
+          "impressions_now": 52,
+          "impressions_prev": 0,
+          "impressions_delta": 52
+        }
+      ],
+      "declining": [
+        {
+          "query": "el petit princep barcelona",
+          "clicks_now": 3,
+          "clicks_prev": 27,
+          "impressions_now": 41,
+          "impressions_prev": 361,
+          "impressions_delta": -320
+        },
+        {
+          "query": "\"calisthenics academy\" \"bar association\"",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 0,
+          "impressions_prev": 201,
+          "impressions_delta": -201
+        },
+        {
+          "query": "torneig sant vicen\u00e7 de montalt 2026",
+          "clicks_now": 0,
+          "clicks_prev": 3,
+          "impressions_now": 0,
+          "impressions_prev": 105,
+          "impressions_delta": -105
+        },
+        {
+          "query": "cabalgata arenys de mar 2026",
+          "clicks_now": 0,
+          "clicks_prev": 2,
+          "impressions_now": 0,
+          "impressions_prev": 78,
+          "impressions_delta": -78
+        },
+        {
+          "query": "viladrau la garriga 2026",
+          "clicks_now": 1,
+          "clicks_prev": 2,
+          "impressions_now": 2,
+          "impressions_prev": 76,
+          "impressions_delta": -74
+        },
+        {
+          "query": "actividades ni\u00f1os tarragona",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 0,
+          "impressions_prev": 65,
+          "impressions_delta": -65
+        },
+        {
+          "query": "actividades para ni\u00f1os en tarragona",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 0,
+          "impressions_prev": 62,
+          "impressions_delta": -62
+        },
+        {
+          "query": "eventos locales gratuitos esta semana",
+          "clicks_now": 0,
+          "clicks_prev": 3,
+          "impressions_now": 0,
+          "impressions_prev": 58,
+          "impressions_delta": -58
+        },
+        {
+          "query": "agenda sant pol de mar",
+          "clicks_now": 0,
+          "clicks_prev": 1,
+          "impressions_now": 0,
+          "impressions_prev": 57,
+          "impressions_delta": -57
+        },
+        {
+          "query": "activitats de benestar barcelona",
+          "clicks_now": 0,
+          "clicks_prev": 0,
+          "impressions_now": 4,
+          "impressions_prev": 55,
+          "impressions_delta": -51
+        },
+        {
+          "query": "agenda masnou",
+          "clicks_now": 0,
+          "clicks_prev": 1,
+          "impressions_now": 0,
+          "impressions_prev": 48,
+          "impressions_delta": -48
+        },
+        {
+          "query": "agenda vilassar de mar",
+          "clicks_now": 0,
+          "clicks_prev": 1,
+          "impressions_now": 0,
+          "impressions_prev": 47,
+          "impressions_delta": -47
+        },
+        {
+          "query": "cabalgata alella 2026",
+          "clicks_now": 0,
+          "clicks_prev": 2,
+          "impressions_now": 0,
+          "impressions_prev": 45,
+          "impressions_delta": -45
+        },
+        {
+          "query": "agenda malgrat de mar",
+          "clicks_now": 0,
+          "clicks_prev": 1,
+          "impressions_now": 0,
+          "impressions_prev": 43,
+          "impressions_delta": -43
+        },
+        {
+          "query": "cap de setmana catalunya",
+          "clicks_now": 0,
+          "clicks_prev": 1,
+          "impressions_now": 0,
+          "impressions_prev": 29,
+          "impressions_delta": -29
+        }
+      ]
+    },
+    "search_appearance": [
+      {
+        "type": "FORUMS",
+        "clicks": 0,
+        "impressions": 3,
+        "ctr": 0
+      }
+    ]
+  },
+  "ga4": {
+    "top_pages": [
+      {
+        "page": "/",
+        "sessions": 1006,
+        "engaged": 633,
+        "bounce_rate": 0.371,
+        "duration": 79.2
+      },
+      {
+        "page": "/catalunya",
+        "sessions": 470,
+        "engaged": 315,
+        "bounce_rate": 0.33,
+        "duration": 102.6
+      },
+      {
+        "page": "/en",
+        "sessions": 374,
+        "engaged": 310,
+        "bounce_rate": 0.171,
+        "duration": 36.2
+      },
+      {
+        "page": "/es",
+        "sessions": 226,
+        "engaged": 198,
+        "bounce_rate": 0.124,
+        "duration": 82.9
+      },
+      {
+        "page": "/barcelona",
+        "sessions": 164,
+        "engaged": 90,
+        "bounce_rate": 0.451,
+        "duration": 51.0
+      },
+      {
+        "page": "/publica",
+        "sessions": 134,
+        "engaged": 103,
+        "bounce_rate": 0.231,
+        "duration": 72.5
+      },
+      {
+        "page": "/es/catalunya",
+        "sessions": 83,
+        "engaged": 64,
+        "bounce_rate": 0.229,
+        "duration": 46.9
+      },
+      {
+        "page": "/noticies",
+        "sessions": 72,
+        "engaged": 51,
+        "bounce_rate": 0.292,
+        "duration": 41.0
+      },
+      {
+        "page": "/e/el-petit-princep-5-de-desembre-del-2024-mh9d8udtlvscpeidipl5tkanfc",
+        "sessions": 64,
+        "engaged": 57,
+        "bounce_rate": 0.109,
+        "duration": 41.9
+      },
+      {
+        "page": "/arenys-de-munt",
+        "sessions": 59,
+        "engaged": 51,
+        "bounce_rate": 0.136,
+        "duration": 79.5
+      },
+      {
+        "page": "/es/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+        "sessions": 59,
+        "engaged": 50,
+        "bounce_rate": 0.153,
+        "duration": 32.1
+      },
+      {
+        "page": "/patrocina",
+        "sessions": 54,
+        "engaged": 43,
+        "bounce_rate": 0.204,
+        "duration": 142.9
+      },
+      {
+        "page": "/bigues-i-riells",
+        "sessions": 52,
+        "engaged": 45,
+        "bounce_rate": 0.135,
+        "duration": 151.3
+      },
+      {
+        "page": "/catalunya/cap-de-setmana",
+        "sessions": 50,
+        "engaged": 48,
+        "bounce_rate": 0.04,
+        "duration": 102.4
+      },
+      {
+        "page": "/el-masnou",
+        "sessions": 50,
+        "engaged": 46,
+        "bounce_rate": 0.08,
+        "duration": 94.3
+      },
+      {
+        "page": "/cardedeu",
+        "sessions": 46,
+        "engaged": 45,
+        "bounce_rate": 0.022,
+        "duration": 153.6
+      },
+      {
+        "page": "/es/catalunya/cap-de-setmana",
+        "sessions": 46,
+        "engaged": 44,
+        "bounce_rate": 0.043,
+        "duration": 92.9
+      },
+      {
+        "page": "/e/cineforum-tardor-del-44-les-rutes-dels-maquis-27-de-febrer-del-2026-f0cf2c86-c3c0-4463-ac89-0ce96dd43722",
+        "sessions": 44,
+        "engaged": 42,
+        "bounce_rate": 0.045,
+        "duration": 73.5
+      },
+      {
+        "page": "/es/e/cavalcada-de-reis-5-de-gener-del-2026-c68aad16-dc8e-4bfa-bf67-9745a4e3c096",
+        "sessions": 44,
+        "engaged": 31,
+        "bounce_rate": 0.295,
+        "duration": 74.1
+      },
+      {
+        "page": "/catalunya/avui",
+        "sessions": 42,
+        "engaged": 34,
+        "bounce_rate": 0.19,
+        "duration": 32.8
+      },
+      {
+        "page": "/en/catalunya",
+        "sessions": 42,
+        "engaged": 26,
+        "bounce_rate": 0.381,
+        "duration": 8.3
+      },
+      {
+        "page": "/preferits",
+        "sessions": 42,
+        "engaged": 38,
+        "bounce_rate": 0.095,
+        "duration": 34.8
+      },
+      {
+        "page": "/e/jornada-de-portes-obertes-del-nou-biciparc-18-de-gener-del-2026-c301ac53-d0ad-4817-aaef-fc01203fe294",
+        "sessions": 41,
+        "engaged": 34,
+        "bounce_rate": 0.171,
+        "duration": 106.3
+      },
+      {
+        "page": "/malgrat-de-mar",
+        "sessions": 34,
+        "engaged": 27,
+        "bounce_rate": 0.206,
+        "duration": 44.9
+      },
+      {
+        "page": "/e/conferencia-entre-murs-i-places-la-musica-a-la-catalunya-comtal-a-carrec-de-maria-incoronata-colantuono-santoro-15-de-gener-del-2026-8470d049-5524-4b2c-b0e4-0d84f96e442b",
+        "sessions": 33,
+        "engaged": 29,
+        "bounce_rate": 0.121,
+        "duration": 30.1
+      },
+      {
+        "page": "/es/tarragona/avui",
+        "sessions": 33,
+        "engaged": 32,
+        "bounce_rate": 0.03,
+        "duration": 36.8
+      },
+      {
+        "page": "/sitemap",
+        "sessions": 31,
+        "engaged": 24,
+        "bounce_rate": 0.226,
+        "duration": 3.1
+      },
+      {
+        "page": "/canet-de-mar",
+        "sessions": 30,
+        "engaged": 23,
+        "bounce_rate": 0.233,
+        "duration": 27.5
+      },
+      {
+        "page": "/maresme",
+        "sessions": 29,
+        "engaged": 29,
+        "bounce_rate": 0.0,
+        "duration": 59.8
+      },
+      {
+        "page": "/la-garriga",
+        "sessions": 27,
+        "engaged": 27,
+        "bounce_rate": 0.0,
+        "duration": 81.4
+      }
+    ],
+    "traffic_sources": [
+      {
+        "source": "google",
+        "medium": "organic",
+        "sessions": 6701,
+        "engaged": 5730,
+        "bounce_rate": 0.145
+      },
+      {
+        "source": "(direct)",
+        "medium": "(none)",
+        "sessions": 6323,
+        "engaged": 2504,
+        "bounce_rate": 0.604
+      },
+      {
+        "source": "bing",
+        "medium": "organic",
+        "sessions": 406,
+        "engaged": 351,
+        "bounce_rate": 0.135
+      },
+      {
+        "source": "(not set)",
+        "medium": "(not set)",
+        "sessions": 222,
+        "engaged": 3,
+        "bounce_rate": 0.986
+      },
+      {
+        "source": "m.facebook.com",
+        "medium": "referral",
+        "sessions": 177,
+        "engaged": 7,
+        "bounce_rate": 0.96
+      },
+      {
+        "source": "chatgpt.com",
+        "medium": "(not set)",
+        "sessions": 157,
+        "engaged": 140,
+        "bounce_rate": 0.108
+      },
+      {
+        "source": "facebook.com",
+        "medium": "referral",
+        "sessions": 131,
+        "engaged": 36,
+        "bounce_rate": 0.725
+      },
+      {
+        "source": "duckduckgo",
+        "medium": "organic",
+        "sessions": 120,
+        "engaged": 103,
+        "bounce_rate": 0.142
+      },
+      {
+        "source": "chatgpt.com",
+        "medium": "referral",
+        "sessions": 114,
+        "engaged": 107,
+        "bounce_rate": 0.061
+      },
+      {
+        "source": "es.search.yahoo.com",
+        "medium": "referral",
+        "sessions": 103,
+        "engaged": 89,
+        "bounce_rate": 0.136
+      },
+      {
+        "source": "ecosia.org",
+        "medium": "organic",
+        "sessions": 86,
+        "engaged": 77,
+        "bounce_rate": 0.105
+      },
+      {
+        "source": "culturacardedeu.com",
+        "medium": "referral",
+        "sessions": 66,
+        "engaged": 46,
+        "bounce_rate": 0.303
+      },
+      {
+        "source": "search.brave.com",
+        "medium": "referral",
+        "sessions": 26,
+        "engaged": 25,
+        "bounce_rate": 0.038
+      },
+      {
+        "source": "perplexity",
+        "medium": "(not set)",
+        "sessions": 16,
+        "engaged": 16,
+        "bounce_rate": 0.0
+      },
+      {
+        "source": "l.facebook.com",
+        "medium": "referral",
+        "sessions": 11,
+        "engaged": 11,
+        "bounce_rate": 0.0
+      },
+      {
+        "source": "copilot.com",
+        "medium": "(not set)",
+        "sessions": 8,
+        "engaged": 1,
+        "bounce_rate": 0.875
+      },
+      {
+        "source": "qwant.com",
+        "medium": "organic",
+        "sessions": 8,
+        "engaged": 8,
+        "bounce_rate": 0.0
+      },
+      {
+        "source": "badmintonelcorredor.cat",
+        "medium": "referral",
+        "sessions": 7,
+        "engaged": 4,
+        "bounce_rate": 0.429
+      },
+      {
+        "source": "privacywall.org",
+        "medium": "referral",
+        "sessions": 7,
+        "engaged": 7,
+        "bounce_rate": 0.0
+      },
+      {
+        "source": "facebook",
+        "medium": "social",
+        "sessions": 6,
+        "engaged": 0,
+        "bounce_rate": 1.0
+      }
+    ],
+    "organic_landing_pages": [
+      {
+        "page": "(not set)",
+        "sessions": 147,
+        "bounce_rate": 0.844,
+        "duration": 138.4
+      },
+      {
+        "page": "/",
+        "sessions": 130,
+        "bounce_rate": 0.369,
+        "duration": 99.0
+      },
+      {
+        "page": "/e/el-petit-princep-5-de-desembre-del-2024-mh9d8udtlvscpeidipl5tkanfc",
+        "sessions": 61,
+        "bounce_rate": 0.115,
+        "duration": 42.1
+      },
+      {
+        "page": "/es",
+        "sessions": 56,
+        "bounce_rate": 0.107,
+        "duration": 311.7
+      },
+      {
+        "page": "/es/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+        "sessions": 55,
+        "bounce_rate": 0.091,
+        "duration": 36.2
+      },
+      {
+        "page": "/barcelona",
+        "sessions": 44,
+        "bounce_rate": 0.114,
+        "duration": 150.0
+      },
+      {
+        "page": "/arenys-de-munt",
+        "sessions": 43,
+        "bounce_rate": 0.116,
+        "duration": 79.8
+      },
+      {
+        "page": "/el-masnou",
+        "sessions": 39,
+        "bounce_rate": 0.077,
+        "duration": 108.3
+      },
+      {
+        "page": "/es/e/cavalcada-de-reis-5-de-gener-del-2026-c68aad16-dc8e-4bfa-bf67-9745a4e3c096",
+        "sessions": 38,
+        "bounce_rate": 0.263,
+        "duration": 43.6
+      },
+      {
+        "page": "/malgrat-de-mar",
+        "sessions": 29,
+        "bounce_rate": 0.241,
+        "duration": 41.4
+      },
+      {
+        "page": "/es/tarragona/avui",
+        "sessions": 24,
+        "bounce_rate": 0.042,
+        "duration": 42.3
+      },
+      {
+        "page": "/maresme",
+        "sessions": 24,
+        "bounce_rate": 0.0,
+        "duration": 134.1
+      },
+      {
+        "page": "/catalunya",
+        "sessions": 23,
+        "bounce_rate": 0.087,
+        "duration": 140.3
+      },
+      {
+        "page": "/catalunya/fires-i-mercats",
+        "sessions": 20,
+        "bounce_rate": 0.05,
+        "duration": 47.0
+      },
+      {
+        "page": "/e/parc-de-nadal-solidari-27-de-desembre-del-2025-8891dfbf-06f1-43bf-be88-c3a7d5c7313d",
+        "sessions": 19,
+        "bounce_rate": 0.263,
+        "duration": 198.8
+      },
+      {
+        "page": "/mataro/avui",
+        "sessions": 19,
+        "bounce_rate": 0.105,
+        "duration": 36.3
+      },
+      {
+        "page": "/es/e/primer-bany-de-lany-2026-al-masnou-1-de-gener-del-2026-13a7e874-708c-41cd-b8c0-a1b2beeaaa1b",
+        "sessions": 18,
+        "bounce_rate": 0.222,
+        "duration": 147.0
+      },
+      {
+        "page": "/maresme/cap-de-setmana",
+        "sessions": 18,
+        "bounce_rate": 0.056,
+        "duration": 46.6
+      },
+      {
+        "page": "/e/iii-torneig-de-basquet-cadet-23-de-gener-del-2026-b9352b56-de9c-48ad-b24c-cad6eb3f011c",
+        "sessions": 17,
+        "bounce_rate": 0.059,
+        "duration": 58.6
+      },
+      {
+        "page": "/catalunya/cap-de-setmana",
+        "sessions": 16,
+        "bounce_rate": 0.125,
+        "duration": 74.8
+      },
+      {
+        "page": "/e/mercat-de-segona-ma-8-de-setembre-del-2024-ok844i02mfa6m8l35rnh3hbpvs",
+        "sessions": 16,
+        "bounce_rate": 0.25,
+        "duration": 38.8
+      },
+      {
+        "page": "/la-garriga",
+        "sessions": 16,
+        "bounce_rate": 0.0,
+        "duration": 129.2
+      },
+      {
+        "page": "/vilassar-de-mar",
+        "sessions": 16,
+        "bounce_rate": 0.062,
+        "duration": 248.8
+      },
+      {
+        "page": "/bigues-i-riells",
+        "sessions": 15,
+        "bounce_rate": 0.0,
+        "duration": 65.9
+      },
+      {
+        "page": "/canet-de-mar",
+        "sessions": 15,
+        "bounce_rate": 0.133,
+        "duration": 58.9
+      }
+    ],
+    "devices": [
+      {
+        "device": "desktop",
+        "sessions": 8271,
+        "engaged": 3824,
+        "bounce_rate": 0.538,
+        "duration": 55.0
+      },
+      {
+        "device": "mobile",
+        "sessions": 6498,
+        "engaged": 5347,
+        "bounce_rate": 0.177,
+        "duration": 73.1
+      },
+      {
+        "device": "tablet",
+        "sessions": 96,
+        "engaged": 85,
+        "bounce_rate": 0.115,
+        "duration": 295.4
+      }
+    ],
+    "channels": [
+      {
+        "channel": "Organic Search",
+        "sessions": 7415,
+        "bounce_rate": 0.141,
+        "duration": 83.1,
+        "pages_per_session": 2.1
+      },
+      {
+        "channel": "Direct",
+        "sessions": 6323,
+        "bounce_rate": 0.604,
+        "duration": 45.7,
+        "pages_per_session": 1.7
+      },
+      {
+        "channel": "Unassigned",
+        "sessions": 404,
+        "bounce_rate": 0.604,
+        "duration": 32.4,
+        "pages_per_session": 1.2
+      },
+      {
+        "channel": "Organic Social",
+        "sessions": 364,
+        "bounce_rate": 0.78,
+        "duration": 20.7,
+        "pages_per_session": 1.3
+      },
+      {
+        "channel": "Referral",
+        "sessions": 236,
+        "bounce_rate": 0.144,
+        "duration": 135.5,
+        "pages_per_session": 2.9
+      },
+      {
+        "channel": "Organic Shopping",
+        "sessions": 3,
+        "bounce_rate": 0.0,
+        "duration": 58.7,
+        "pages_per_session": 1.3
+      }
+    ],
+    "custom_events": {
+      "filter_change": {
+        "count": 329,
+        "users": 69
+      },
+      "search": {
+        "count": 76,
+        "users": 53
+      },
+      "share": {
+        "count": 14,
+        "users": 12
+      },
+      "add_to_calendar": {
+        "count": 25,
+        "users": 16
+      },
+      "load_more": {
+        "count": 106,
+        "users": 43
+      },
+      "outbound_click": {
+        "count": 434,
+        "users": 332
+      },
+      "view_event_page": {
+        "count": 456,
+        "users": 327
+      },
+      "hero_cta_click": {
+        "count": 47,
+        "users": 39
+      },
+      "sponsor_click": {
+        "count": 5,
+        "users": 4
+      },
+      "select_category": {
+        "count": 4,
+        "users": 4
+      },
+      "home_chip_click": {
+        "count": 28,
+        "users": 18
+      },
+      "ai_referrer": {
+        "count": 0,
+        "users": 0
+      }
+    },
+    "high_bounce_pages": [
+      {
+        "page": "/barcelona/teatre",
+        "sessions": 25,
+        "bounce_rate": 0.92,
+        "duration": 10.4
+      },
+      {
+        "page": "/es/la-garriga",
+        "sessions": 23,
+        "bounce_rate": 0.783,
+        "duration": 4.6
+      },
+      {
+        "page": "/en/la-garriga",
+        "sessions": 20,
+        "bounce_rate": 0.9,
+        "duration": 2.8
+      }
+    ],
+    "countries": [
+      {
+        "country": "Spain",
+        "sessions": 9542
+      },
+      {
+        "country": "United States",
+        "sessions": 2406
+      },
+      {
+        "country": "Singapore",
+        "sessions": 882
+      },
+      {
+        "country": "China",
+        "sessions": 721
+      },
+      {
+        "country": "Japan",
+        "sessions": 624
+      },
+      {
+        "country": "Germany",
+        "sessions": 159
+      },
+      {
+        "country": "United Kingdom",
+        "sessions": 96
+      },
+      {
+        "country": "Hong Kong",
+        "sessions": 72
+      },
+      {
+        "country": "Ireland",
+        "sessions": 53
+      },
+      {
+        "country": "France",
+        "sessions": 48
+      }
+    ],
+    "languages": [
+      {
+        "language": "Spanish",
+        "sessions": 5511
+      },
+      {
+        "language": "English",
+        "sessions": 4069
+      },
+      {
+        "language": "Catalan",
+        "sessions": 3824
+      },
+      {
+        "language": "Chinese",
+        "sessions": 721
+      },
+      {
+        "language": "(other)",
+        "sessions": 562
+      },
+      {
+        "language": "French",
+        "sessions": 68
+      },
+      {
+        "language": "Italian",
+        "sessions": 35
+      },
+      {
+        "language": "German",
+        "sessions": 21
+      },
+      {
+        "language": "Russian",
+        "sessions": 11
+      },
+      {
+        "language": "Polish",
+        "sessions": 7
+      }
+    ],
+    "kpis": {
+      "sessions": 14732,
+      "users": 13077,
+      "engaged_sessions": 9261,
+      "bounce_rate": 0.371,
+      "avg_duration": 65.0,
+      "organic_sessions": 7321,
+      "ai_sessions": 295
+    }
+  }
+}
