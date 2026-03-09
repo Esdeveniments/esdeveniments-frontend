@@ -1034,7 +1034,7 @@ def generate_markdown(data, previous=None):
         for a in ai_breakdown:
             lines.append(f"| {a['platform']} | {a['medium']} | {a['sessions']:,} | {a['engaged']:,} | {a['bounce_rate']:.0%} |")
         total_ai = sum(a["sessions"] for a in ai_breakdown)
-        total_sessions = data["ga4"]["kpis"].get("sessions", 1)
+        total_sessions = data["ga4"]["kpis"].get("sessions", 0) or 1
         lines.append(f"\n**Total AI traffic: {total_ai:,} sessions ({total_ai/total_sessions:.1%} of all traffic)**")
         lines.append("")
 
