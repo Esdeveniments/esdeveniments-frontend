@@ -7,7 +7,7 @@ import {
   updatePaymentIntentMetadata,
 } from "@lib/stripe";
 import { activateSponsorImage } from "@lib/db/sponsors";
-import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
+import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR, MAX_SPONSOR_IMAGE_BYTES } from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
 import { isValidImageContent } from "@utils/image-validation";
 
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
     // Get payment intent ID to update its metadata too
     const paymentIntentId = getPaymentIntentId(session);
 
-    const { url, publicId } = await uploadEventImage(imageFile);
+    const { url, publicId } = await uploadEventImage(imageFile, MAX_SPONSOR_IMAGE_BYTES);
 
     const imageMetadata = {
       sponsor_image_url: url,
