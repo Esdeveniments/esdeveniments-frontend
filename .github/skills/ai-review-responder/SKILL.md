@@ -10,8 +10,6 @@ description: Automate responding to AI code review comments (Gemini, CodeRabbit,
 Automate the full cycle of responding to AI code review comments on GitHub PRs:
 **Fetch → Evaluate → Fix/Decline → Resolve → Re-review**
 
-This skill codifies the workflow for handling suggestions from Gemini, CodeRabbit, Cubic, Sentry, and other AI review bots.
-
 ## When to Use
 
 Trigger phrases:
@@ -21,7 +19,15 @@ Trigger phrases:
 
 ## Workflow
 
-### Step 1: Fetch Unresolved Threads
+### Step 1: Identify the PR
+
+- If the user specifies a PR number, use it
+- Otherwise, detect from the current branch: `gh pr list --head $(git branch --show-current) --json number --jq '.[0].number'`
+- Get repo owner/name: `gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'`
+
+### Step 2: Fetch Unresolved Threads
+
+**IMPORTANT**: Always set `export GH_PAGER=cat` before any `gh api` call to prevent pager issues.
 
 ```bash
 export GH_PAGER=cat
@@ -49,9 +55,9 @@ gh api graphql -f query='
 }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | {id: .id, author: .comments.nodes[0].author.login, path: .comments.nodes[0].path, line: .comments.nodes[0].line, created: .comments.nodes[0].createdAt, body: .comments.nodes[0].body[0:300]}'
 ```
 
-**IMPORTANT**: Always set `export GH_PAGER=cat` before any `gh api` call to prevent pager issues.
+If no unresolved threads, report "No new comments" and stop.
 
-### Step 2: Evaluate Each Suggestion
+### Step 3: Evaluate Each Suggestion
 
 For each unresolved thread, use the `code-review-evaluation` skill's decision tree:
 
@@ -59,32 +65,34 @@ For each unresolved thread, use the `code-review-evaluation` skill's decision tr
 |----------|---------|--------|
 | Bug/error fix | AGREE ✅ | Fix it |
 | Missing docs/fields | AGREE ✅ | Fix it |
-| Unused code cleanup | AGREE ✅ | Fix it |
-| Code quality (extract constant, reduce duplication) | AGREE ✅ | Fix it |
-| Trailing newline, encoding | AGREE ✅ | Fix it |
+| Unused code/imports | AGREE ✅ | Fix it |
+| Extract constant / reduce duplication | AGREE ✅ | Fix it |
 | Edge case handling (null check, mkdir, try/catch) | AGREE ✅ | Fix it |
+| Performance improvement (batch API calls) | AGREE ✅ | Fix it |
 | Pattern/architecture change | CHECK SKILLS | Cross-reference project skills |
-| Cosmetic refactor (rename, reorder, simplify working code) | DECLINE ❌ | Resolve with rationale |
-| Repeat suggestion (already declined) | DECLINE ❌ | Resolve, reference prior decision |
-| Suggestion that breaks functionality | DECLINE ❌ | Resolve with explanation |
+| Cosmetic refactor (rename, reorder working code) | DECLINE ❌ | Resolve with rationale |
+| Repeat of previously declined suggestion | DECLINE ❌ | Resolve, reference prior decision |
+| Breaks functionality or project conventions | DECLINE ❌ | Resolve with explanation |
 
-### Step 3: Present Summary Table
+**For pattern/architecture suggestions**: Cross-reference the relevant project skill from `.github/skills/` before deciding. See the `code-review-evaluation` skill for the full decision tree.
 
-Before making changes, present a summary table to the user:
+### Step 4: Present Summary Table
+
+Before making changes, present a summary table:
 
 ```
 | # | Source | Line | Issue | Verdict |
 |---|--------|------|-------|---------|
 | 1 | Gemini L594 | Batch API calls | ✅ AGREE — reduces N calls to 1 |
-| 2 | Cubic L88 | Don't SystemExit | ❌ DECLINE — can't run without creds |
+| 2 | Cubic L88 | Don't exit on error | ❌ DECLINE — rationale here |
 ```
 
-### Step 4: Apply Fixes
+### Step 5: Apply Fixes
 
 For agreed suggestions:
-1. Read the relevant code section
+1. Read the relevant code sections (parallel reads for efficiency)
 2. Make the minimal fix
-3. Validate syntax (e.g., `python3 -c "import ast; ast.parse(open('file').read())"`)
+3. Validate (syntax check, lint, typecheck as appropriate for the language)
 
 Batch all fixes into a single commit:
 
@@ -100,7 +108,7 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
 
 If push is rejected (non-fast-forward), use `git pull --rebase && git push`.
 
-### Step 5: Resolve All Threads
+### Step 6: Resolve All Threads
 
 Resolve ALL threads (both fixed and declined) using GraphQL mutation:
 
@@ -115,57 +123,62 @@ for TID in "THREAD_ID_1" "THREAD_ID_2"; do
 done
 ```
 
-### Step 6: Request Re-review
+### Step 7: Request Re-review
 
-Post a summary comment and trigger all review bots:
+Post a summary comment and trigger review bots:
 
 ```bash
-gh pr comment PR_NUMBER --body "Round N: [summary of fixes]. Declined: [summary of declines with rationale].
+gh pr comment PR_NUMBER --body "Round N: [summary of fixes]. Declined: [summary with rationale].
 
 @coderabbitai review
-/gemini review
+@gemini review
 @cubic-dev-ai review"
 ```
 
-### Step 7: Report Results
+**Bot trigger commands**:
+- CodeRabbit: `@coderabbitai review`
+- Gemini: `@gemini review`
+- Cubic: `@cubic-dev-ai review`
+
+### Step 8: Report Results
 
 Present a final summary table showing all actions taken.
 
-## Evaluation Rules (Project-Specific Declines)
+## Evaluation Rules
 
-These suggestion patterns should ALWAYS be declined per our project conventions:
+### Always Agree (Most Cases)
 
-### Always Decline
+AI reviewers are usually right about:
+- Missing null checks, error handling, edge cases
+- Unused imports/variables
+- Documentation inconsistencies
+- Type mismatches
+- Extracting repeated values as constants
+- Reducing API call count (batching)
+- File encoding, trailing newlines
+- Security vulnerabilities (generic patterns)
 
-| Suggestion | Reason |
-|-----------|--------|
-| "Use `next/link` directly" | Must use `Link` from `@i18n/routing` |
-| "Add types inline in component" | All types must go in `/types` directory |
-| "Use `gray-500` for text" | Must use semantic tokens (`text-foreground/80`) |
-| "Add searchParams to page component" | CRITICAL: causes $300+ cost spikes |
-| "Use raw fetch()" | Must use `fetchWithHmac` or `safeFetch` |
-| "Create barrel file / index.ts re-exports" | Causes manifest bloat in RSC |
-| "Add `next: { revalidate }` to external fetch" | Causes fetch cache explosion |
-| "Don't exit on missing auth in CI scripts" | CI scripts can't run without credentials |
-| "Consolidate API queries with different filters" | Different queries need different params |
-| "Use `@types/*` path alias" | Conflicts with TS type definition packages |
+### Check Project Skills Before Deciding
 
-### Usually Decline (Cosmetic)
+Only when suggestion involves project-specific patterns. See `code-review-evaluation` skill for full list:
+- Import patterns (`next/link` vs `@i18n/routing`)
+- Type organization (`/types` directory governance)
+- Styling (semantic tokens vs arbitrary Tailwind)
+- API patterns (three-layer proxy, `fetchWithHmac`)
+- URL/routing (`searchParams` restrictions)
+- Environment variables (4-location rule)
 
-| Suggestion | Reason |
-|-----------|--------|
-| "Simplify working logic" | If it works correctly, cosmetic refactors add risk |
-| "Use urlparse instead of string ops" | Fine when input is a controlled constant |
-| "Split file into multiple modules" | Acceptable for CI scripts under ~1500 lines |
-| "Use broader exception types" | Specific catches are intentional |
-| "Add global variables" | CI scripts with module-level state are fine |
+### Common Decline Patterns
 
-### CLS /100 Normalization (Known False Positive)
-
-Gemini repeatedly flags CLS `/100` as incorrect. **Always decline this**:
-- PSI API returns CLS percentile as INTEGER (e.g., 12 = CLS 0.12)
-- Our thresholds check 0.1/0.25 after `/100` normalization
-- This is CORRECT per PSI API documentation
+| Pattern | Typical Rationale |
+|---------|------------------|
+| Cosmetic refactor of working code | Adds risk without functional benefit |
+| Consolidate queries with different filters | Different queries need different parameters |
+| Replace string ops with stdlib for controlled inputs | Input is a constant we control |
+| Split small scripts into modules | Acceptable for scripts under ~1500 lines |
+| Don't exit on missing required config in CI | CI scripts can't produce useful output without config |
+| Broader exception handling | Specific catches are intentional |
+| Repeated suggestion (same as prior round) | Already evaluated and declined with rationale |
 
 ## Efficiency Tips
 
@@ -174,6 +187,7 @@ Gemini repeatedly flags CLS `/100` as incorrect. **Always decline this**:
 - **Single commit**: Group all fixes into one commit per round
 - **Single resolve loop**: Resolve all thread IDs in one bash call
 - **Count rounds**: Track which round this is (check PR comment history)
+- **Handle push conflicts**: Always `git pull --rebase` if push fails
 
 ## Example Full Run
 
@@ -181,20 +195,21 @@ Gemini repeatedly flags CLS `/100` as incorrect. **Always decline this**:
 User: "check new comments"
 
 Agent:
-1. Fetches 4 unresolved threads
-2. Presents table:
+1. Detects PR from current branch
+2. Fetches 4 unresolved threads
+3. Presents table:
    | # | Source | Issue | Verdict |
    |---|--------|-------|---------|
-   | 1 | Cubic L1355 | mkdir before write | ✅ Fix |
-   | 2 | Cubic L100 | SystemExit (repeat) | ❌ Decline |
-   | 3 | Gemini L215 | Consolidate queries | ❌ Decline |
-   | 4 | Gemini L411 | urlparse vs replace | ❌ Decline |
+   | 1 | Cubic L200 | Add mkdir before write | ✅ Fix |
+   | 2 | Cubic L50 | Don't exit on error | ❌ Decline — can't run without config |
+   | 3 | Gemini L100 | Consolidate queries | ❌ Decline — different filters |
+   | 4 | Gemini L300 | Use urlparse | ❌ Decline — input is constant |
 
-3. Fixes #1, validates syntax
-4. Commits: "fix(seo): ensure output dir exists"
-5. Resolves all 4 threads
-6. Comments with summary + re-review triggers
-7. Reports: "Round 6: 1 fixed, 3 declined. All resolved."
+4. Fixes #1, validates syntax
+5. Commits and pushes
+6. Resolves all 4 threads
+7. Posts summary comment + triggers re-review bots
+8. Reports: "Round N: 1 fixed, 3 declined. All resolved."
 ```
 
 ## Checklist
@@ -203,8 +218,8 @@ Agent:
 - [ ] Fetch ALL unresolved threads (not just new ones)
 - [ ] Cross-reference `code-review-evaluation` skill for pattern/architecture suggestions
 - [ ] Present summary table before making changes
-- [ ] Validate syntax after fixes
+- [ ] Validate changes after fixes (syntax, lint, typecheck)
 - [ ] Handle `git push` rejection with `--rebase`
 - [ ] Resolve ALL threads (fixed AND declined)
-- [ ] Include round number in commit/comment
-- [ ] Trigger all 3 review bots in re-review comment
+- [ ] Include round number in commit and comment
+- [ ] Trigger review bots using correct commands (`@gemini review`, not `/gemini review`)
