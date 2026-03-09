@@ -7,11 +7,32 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   resolve: {
     alias: [
-      { find: /^server-only$/, replacement: resolve(__dirname, "./test/mocks/server-only.ts") },
-      { find: /^next-intl\/server$/, replacement: resolve(__dirname, "./test/mocks/next-intl-server.ts") },
-      { find: /^next-intl$/, replacement: resolve(__dirname, "./test/mocks/next-intl.ts") },
-      { find: /^next-intl\/navigation$/, replacement: resolve(__dirname, "./test/mocks/next-intl-navigation.tsx") },
-      { find: /^next-intl\/routing$/, replacement: resolve(__dirname, "./test/mocks/next-intl-navigation.tsx") },
+      {
+        find: /^server-only$/,
+        replacement: resolve(__dirname, "./test/mocks/server-only.ts"),
+      },
+      {
+        find: /^next-intl\/server$/,
+        replacement: resolve(__dirname, "./test/mocks/next-intl-server.ts"),
+      },
+      {
+        find: /^next-intl$/,
+        replacement: resolve(__dirname, "./test/mocks/next-intl.ts"),
+      },
+      {
+        find: /^next-intl\/navigation$/,
+        replacement: resolve(
+          __dirname,
+          "./test/mocks/next-intl-navigation.tsx",
+        ),
+      },
+      {
+        find: /^next-intl\/routing$/,
+        replacement: resolve(
+          __dirname,
+          "./test/mocks/next-intl-navigation.tsx",
+        ),
+      },
       { find: "@i18n", replacement: resolve(__dirname, "./i18n") },
       { find: "types", replacement: resolve(__dirname, "./types") },
       { find: "lib", replacement: resolve(__dirname, "./lib") },
@@ -29,6 +50,7 @@ export default defineConfig({
     include: ["test/**/*.{test,spec}.{ts,tsx,js,jsx}"],
     exclude: ["e2e/**", "node_modules/**", ".next/**"],
     coverage: {
+      provider: "v8",
       reporter: ["text", "json", "html"],
       exclude: [
         "node_modules/",
@@ -36,7 +58,24 @@ export default defineConfig({
         "**/*.d.ts",
         ".next/",
         "next.config.js",
+        "e2e/",
+        "scripts/",
+        "public/",
+        "docs/",
+        "messages/",
+        "plan/",
+        "**/*.config.*",
+        "sst.config.ts",
+        "open-next.config.ts",
+        "instrumentation*.ts",
+        "sentry.*.config.ts",
       ],
+      thresholds: {
+        statements: 50,
+        branches: 50,
+        functions: 50,
+        lines: 50,
+      },
     },
   },
 });
