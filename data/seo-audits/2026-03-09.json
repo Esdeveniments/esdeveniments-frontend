@@ -1671,7 +1671,462 @@
         "impressions": 3,
         "ctr": 0
       }
-    ]
+    ],
+    "i18n_cannibalization": [
+      {
+        "slug": "cavalcada-de-reis-5-de-gener-del-2026-c68aad16-dc8e-4bfa-bf67-9745a4e3c096",
+        "total_impressions": 636,
+        "pages": [
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/cavalcada-de-reis-5-de-gener-del-2026-c68aad16-dc8e-4bfa-bf67-9745a4e3c096",
+            "clicks": 15,
+            "impressions": 467,
+            "ctr": 0.0321,
+            "position": 5.2
+          },
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/cavalcada-de-reis-5-de-gener-del-2026-c68aad16-dc8e-4bfa-bf67-9745a4e3c096",
+            "clicks": 6,
+            "impressions": 169,
+            "ctr": 0.0355,
+            "position": 6.4
+          }
+        ]
+      },
+      {
+        "slug": "primer-bany-de-lany-2026-al-masnou-1-de-gener-del-2026-13a7e874-708c-41cd-b8c0-a1b2beeaaa1b",
+        "total_impressions": 391,
+        "pages": [
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/primer-bany-de-lany-2026-al-masnou-1-de-gener-del-2026-13a7e874-708c-41cd-b8c0-a1b2beeaaa1b",
+            "clicks": 6,
+            "impressions": 115,
+            "ctr": 0.0522,
+            "position": 7.1
+          },
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/primer-bany-de-lany-2026-al-masnou-1-de-gener-del-2026-13a7e874-708c-41cd-b8c0-a1b2beeaaa1b",
+            "clicks": 4,
+            "impressions": 276,
+            "ctr": 0.0145,
+            "position": 8.8
+          }
+        ]
+      },
+      {
+        "slug": "crema-torrons-4-de-gener-del-2026-3b87bcfa-faab-4372-8233-34ca3b1564d5",
+        "total_impressions": 341,
+        "pages": [
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/crema-torrons-4-de-gener-del-2026-3b87bcfa-faab-4372-8233-34ca3b1564d5",
+            "clicks": 4,
+            "impressions": 266,
+            "ctr": 0.015,
+            "position": 7.7
+          },
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/crema-torrons-4-de-gener-del-2026-3b87bcfa-faab-4372-8233-34ca3b1564d5",
+            "clicks": 3,
+            "impressions": 75,
+            "ctr": 0.04,
+            "position": 7.8
+          }
+        ]
+      },
+      {
+        "slug": "carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+        "total_impressions": 299,
+        "pages": [
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+            "clicks": 20,
+            "impressions": 196,
+            "ctr": 0.102,
+            "position": 2.0
+          },
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/carnestoltes-13-de-febrer-del-2026-e0a0ad9a-4ab6-4e58-8192-2698a2c07c05",
+            "clicks": 4,
+            "impressions": 103,
+            "ctr": 0.0388,
+            "position": 2.1
+          }
+        ]
+      },
+      {
+        "slug": "roda-1200-anys-carnaval-2026-20-de-febrer-del-2026-ace4f598-7a5c-4bb4-a744-299bdc9163b2",
+        "total_impressions": 261,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/roda-1200-anys-carnaval-2026-20-de-febrer-del-2026-ace4f598-7a5c-4bb4-a744-299bdc9163b2",
+            "clicks": 7,
+            "impressions": 139,
+            "ctr": 0.0504,
+            "position": 3.7
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/roda-1200-anys-carnaval-2026-20-de-febrer-del-2026-ace4f598-7a5c-4bb4-a744-299bdc9163b2",
+            "clicks": 2,
+            "impressions": 122,
+            "ctr": 0.0164,
+            "position": 2.3
+          }
+        ]
+      },
+      {
+        "slug": "1r-ple-de-bruixes-al-masnou-8-de-marc-del-2025-54b980kg76f4v5n1i3vln6aul8",
+        "total_impressions": 206,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/1r-ple-de-bruixes-al-masnou-8-de-marc-del-2025-54b980kg76f4v5n1i3vln6aul8",
+            "clicks": 7,
+            "impressions": 160,
+            "ctr": 0.0437,
+            "position": 8.2
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/1r-ple-de-bruixes-al-masnou-8-de-marc-del-2025-54b980kg76f4v5n1i3vln6aul8",
+            "clicks": 5,
+            "impressions": 46,
+            "ctr": 0.1087,
+            "position": 7.1
+          }
+        ]
+      },
+      {
+        "slug": "cavalcada-de-reis-5-de-gener-del-2026-8ed0b679-06d1-4dd7-81d3-418385d8e4c0",
+        "total_impressions": 176,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/cavalcada-de-reis-5-de-gener-del-2026-8ed0b679-06d1-4dd7-81d3-418385d8e4c0",
+            "clicks": 2,
+            "impressions": 115,
+            "ctr": 0.0174,
+            "position": 4.9
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/cavalcada-de-reis-5-de-gener-del-2026-8ed0b679-06d1-4dd7-81d3-418385d8e4c0",
+            "clicks": 2,
+            "impressions": 61,
+            "ctr": 0.0328,
+            "position": 4.7
+          }
+        ]
+      },
+      {
+        "slug": "gran-quina-festa-cptordera-6-de-gener-del-2025-rpue5apn5hnjn8adegbql87mkk",
+        "total_impressions": 158,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/gran-quina-festa-cptordera-6-de-gener-del-2025-rpue5apn5hnjn8adegbql87mkk",
+            "clicks": 5,
+            "impressions": 61,
+            "ctr": 0.082,
+            "position": 10.7
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/gran-quina-festa-cptordera-6-de-gener-del-2025-rpue5apn5hnjn8adegbql87mkk",
+            "clicks": 2,
+            "impressions": 97,
+            "ctr": 0.0206,
+            "position": 9.4
+          }
+        ]
+      },
+      {
+        "slug": "missa-del-gall-24-de-desembre-del-2025-6fe2e3c7-7d2c-4a8d-bdad-935f766018ec",
+        "total_impressions": 135,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/missa-del-gall-24-de-desembre-del-2025-6fe2e3c7-7d2c-4a8d-bdad-935f766018ec",
+            "clicks": 6,
+            "impressions": 77,
+            "ctr": 0.0779,
+            "position": 8.3
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/missa-del-gall-24-de-desembre-del-2025-6fe2e3c7-7d2c-4a8d-bdad-935f766018ec",
+            "clicks": 4,
+            "impressions": 58,
+            "ctr": 0.069,
+            "position": 7.1
+          }
+        ]
+      },
+      {
+        "slug": "fira-fora-stocks-27-de-setembre-del-2025-09qf2d58si7d5s7v159i6b5p34",
+        "total_impressions": 133,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/fira-fora-stocks-27-de-setembre-del-2025-09qf2d58si7d5s7v159i6b5p34",
+            "clicks": 6,
+            "impressions": 103,
+            "ctr": 0.0583,
+            "position": 8.2
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/fira-fora-stocks-27-de-setembre-del-2025-09qf2d58si7d5s7v159i6b5p34",
+            "clicks": 2,
+            "impressions": 30,
+            "ctr": 0.0667,
+            "position": 6.3
+          }
+        ]
+      },
+      {
+        "slug": "missa-del-gall-24-de-desembre-del-2023-7jegb2s4n7cmotpejcbcodl734",
+        "total_impressions": 120,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/missa-del-gall-24-de-desembre-del-2023-7jegb2s4n7cmotpejcbcodl734",
+            "clicks": 9,
+            "impressions": 102,
+            "ctr": 0.0882,
+            "position": 7.7
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/missa-del-gall-24-de-desembre-del-2023-7jegb2s4n7cmotpejcbcodl734",
+            "clicks": 2,
+            "impressions": 18,
+            "ctr": 0.1111,
+            "position": 8.2
+          }
+        ]
+      },
+      {
+        "slug": "cavalcada-de-reis-5-de-gener-del-2026-dfeffe04-be59-4327-9660-1167ebe7933f",
+        "total_impressions": 94,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/cavalcada-de-reis-5-de-gener-del-2026-dfeffe04-be59-4327-9660-1167ebe7933f",
+            "clicks": 4,
+            "impressions": 41,
+            "ctr": 0.0976,
+            "position": 5.9
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/cavalcada-de-reis-5-de-gener-del-2026-dfeffe04-be59-4327-9660-1167ebe7933f",
+            "clicks": 2,
+            "impressions": 53,
+            "ctr": 0.0377,
+            "position": 3.5
+          }
+        ]
+      },
+      {
+        "slug": "exposicio-atstaticcars-22-de-febrer-del-2025-sr3acmg8p9ihalmkjrt0dacsfo",
+        "total_impressions": 87,
+        "pages": [
+          {
+            "locale": "en",
+            "page": "https://www.esdeveniments.cat/en/e/exposicio-atstaticcars-22-de-febrer-del-2025-sr3acmg8p9ihalmkjrt0dacsfo",
+            "clicks": 6,
+            "impressions": 55,
+            "ctr": 0.1091,
+            "position": 6.0
+          },
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/exposicio-atstaticcars-22-de-febrer-del-2025-sr3acmg8p9ihalmkjrt0dacsfo",
+            "clicks": 2,
+            "impressions": 32,
+            "ctr": 0.0625,
+            "position": 4.8
+          }
+        ]
+      },
+      {
+        "slug": "16a-trobada-de-cotxes-classics-1-de-marc-del-2026-62e66512-1279-4148-8e9f-9cf1649e044e",
+        "total_impressions": 76,
+        "pages": [
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/16a-trobada-de-cotxes-classics-1-de-marc-del-2026-62e66512-1279-4148-8e9f-9cf1649e044e",
+            "clicks": 3,
+            "impressions": 16,
+            "ctr": 0.1875,
+            "position": 6.5
+          },
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/16a-trobada-de-cotxes-classics-1-de-marc-del-2026-62e66512-1279-4148-8e9f-9cf1649e044e",
+            "clicks": 2,
+            "impressions": 60,
+            "ctr": 0.0333,
+            "position": 7.9
+          }
+        ]
+      },
+      {
+        "slug": "40a-marxa-de-sant-pau-1-de-febrer-del-2026-d8698a99-600d-4216-a949-7570ef33d3b6",
+        "total_impressions": 68,
+        "pages": [
+          {
+            "locale": "ca",
+            "page": "https://www.esdeveniments.cat/e/40a-marxa-de-sant-pau-1-de-febrer-del-2026-d8698a99-600d-4216-a949-7570ef33d3b6",
+            "clicks": 8,
+            "impressions": 56,
+            "ctr": 0.1429,
+            "position": 8.2
+          },
+          {
+            "locale": "es",
+            "page": "https://www.esdeveniments.cat/es/e/40a-marxa-de-sant-pau-1-de-febrer-del-2026-d8698a99-600d-4216-a949-7570ef33d3b6",
+            "clicks": 4,
+            "impressions": 12,
+            "ctr": 0.3333,
+            "position": 5.5
+          }
+        ]
+      }
+    ],
+    "three_segment_indexed": [
+      {
+        "page": "https://www.esdeveniments.cat/catalunya/cap-de-setmana/fires-i-mercats",
+        "clicks": 1,
+        "impressions": 100,
+        "position": 64.8
+      },
+      {
+        "page": "https://www.esdeveniments.cat/catalunya/avui/fires-i-mercats",
+        "clicks": 1,
+        "impressions": 91,
+        "position": 33.9
+      },
+      {
+        "page": "https://www.esdeveniments.cat/catalunya/cap-de-setmana/familia-i-infants",
+        "clicks": 1,
+        "impressions": 50,
+        "position": 47.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/barcelona/cap-de-setmana/altres",
+        "clicks": 1,
+        "impressions": 38,
+        "position": 61.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/catalunya/avui/festes-populars",
+        "clicks": 1,
+        "impressions": 15,
+        "position": 59.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/figueres/tots/fires-i-mercats",
+        "clicks": 2,
+        "impressions": 8,
+        "position": 18
+      },
+      {
+        "page": "https://www.esdeveniments.cat/barcelona/setmana/familia-i-infants",
+        "clicks": 2,
+        "impressions": 7,
+        "position": 53.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/girona/cap-de-setmana/tallers-i-formacio",
+        "clicks": 2,
+        "impressions": 7,
+        "position": 34.3
+      },
+      {
+        "page": "https://www.esdeveniments.cat/badalona/cap-de-setmana/familia-i-infants",
+        "clicks": 2,
+        "impressions": 5,
+        "position": 6.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/mataro/cap-de-setmana/exposicions",
+        "clicks": 2,
+        "impressions": 5,
+        "position": 41.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/valles-oriental/setmana/familia-i-infants",
+        "clicks": 2,
+        "impressions": 5,
+        "position": 12.2
+      },
+      {
+        "page": "https://www.esdeveniments.cat/catalunya/dema/familia-i-infants",
+        "clicks": 1,
+        "impressions": 5,
+        "position": 44.6
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/alt-emporda/avui/dansa",
+        "clicks": 2,
+        "impressions": 4,
+        "position": 5.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/barcelona/avui/teatre",
+        "clicks": 1,
+        "impressions": 3,
+        "position": 36.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/catalunya/cap-de-setmana/esport",
+        "clicks": 1,
+        "impressions": 3,
+        "position": 13.7
+      },
+      {
+        "page": "https://www.esdeveniments.cat/baix-llobregat/cap-de-setmana/altres",
+        "clicks": 2,
+        "impressions": 2,
+        "position": 6.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/es/alella/tots/musica",
+        "clicks": 2,
+        "impressions": 2,
+        "position": 9
+      },
+      {
+        "page": "https://www.esdeveniments.cat/reus/setmana/familia-i-infants",
+        "clicks": 2,
+        "impressions": 2,
+        "position": 25.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/amer/setmana/gent-gran",
+        "clicks": 1,
+        "impressions": 2,
+        "position": 21.5
+      },
+      {
+        "page": "https://www.esdeveniments.cat/badalona/avui/gent-gran",
+        "clicks": 1,
+        "impressions": 2,
+        "position": 10
+      }
+    ],
+    "dead_pages": []
   },
   "ga4": {
     "top_pages": [
@@ -2408,7 +2863,10 @@
       "bounce_rate": 0.371,
       "avg_duration": 65.0,
       "organic_sessions": 7321,
-      "ai_sessions": 295
+      "ai_sessions": 295,
+      "mobile_bounce": 0.177,
+      "desktop_bounce": 0.538,
+      "bounce_divergence": 0.361
     }
   }
 }

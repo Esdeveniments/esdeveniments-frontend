@@ -17,6 +17,7 @@ Environment:
 
 import json
 import os
+import re
 import sys
 import argparse
 from datetime import datetime, timedelta
@@ -259,6 +260,79 @@ def collect_gsc_data():
         for r in sa_rows
     ]
 
+    # ── ENHANCED DETECTIONS ──
+
+    # i18n cannibalization: same slug appearing under /e/, /es/e/, /en/e/
+    i18n_cannibal = defaultdict(list)
+    all_pages_rows = gsc_query(["page"], START_90, END, limit=500)
+    for r in all_pages_rows:
+        url = r["keys"][0]
+        for prefix, locale in [("/es/e/", "es"), ("/en/e/", "en"), ("/e/", "ca")]:
+            if prefix in url:
+                slug = url.split(prefix)[-1].rstrip("/")
+                i18n_cannibal[slug].append({
+                    "locale": locale,
+                    "page": url,
+                    "clicks": r["clicks"],
+                    "impressions": r["impressions"],
+                    "ctr": round(r["ctr"], 4),
+                    "position": round(r["position"], 1),
+                })
+                break
+    # Only flag when genuinely different locales compete (not same locale dupes)
+    data["i18n_cannibalization"] = sorted(
+        [
+            {"slug": slug, "total_impressions": sum(p["impressions"] for p in pages), "pages": pages}
+            for slug, pages in i18n_cannibal.items()
+            if len(set(p["locale"] for p in pages)) >= 2
+        ],
+        key=lambda x: x["total_impressions"],
+        reverse=True,
+    )[:15]
+
+    # 3-segment URLs indexed (should not be): /place/date/category
+    # Must have exactly 3 path segments after optional locale prefix
+    # e.g., /catalunya/cap-de-setmana/fires-i-mercats or /es/tarragona/avui/familia
+    data["three_segment_indexed"] = []
+    for r in all_pages_rows:
+        url = r["keys"][0]
+        # Parse path, strip site URL and locale prefix
+        path = url.replace(SITE, "/").rstrip("/")
+        # Remove locale prefix if present
+        for lp in ["/es/", "/en/"]:
+            if path.startswith(lp):
+                path = "/" + path[len(lp):]
+                break
+        segments = [s for s in path.split("/") if s]
+        # 3 segments = place/date/category (exclude /e/ event detail, /noticies/, /api/, /sitemap)
+        if len(segments) == 3 and segments[0] not in ("e", "noticies", "api", "sitemap-places"):
+            data["three_segment_indexed"].append({
+                "page": r["keys"][0],
+                "clicks": r["clicks"],
+                "impressions": r["impressions"],
+                "position": round(r["position"], 1),
+            })
+    data["three_segment_indexed"] = sorted(
+        data["three_segment_indexed"],
+        key=lambda r: r["impressions"],
+        reverse=True,
+    )[:20]
+
+    # Dead pages: high impressions, 0 clicks (wasted crawl budget)
+    data["dead_pages"] = sorted(
+        [
+            {
+                "page": r["keys"][0],
+                "impressions": r["impressions"],
+                "position": round(r["position"], 1),
+            }
+            for r in all_pages_rows
+            if r["clicks"] == 0 and r["impressions"] >= 20
+        ],
+        key=lambda r: r["impressions"],
+        reverse=True,
+    )[:15]
+
     return data
 
 
@@ -425,6 +499,18 @@ def collect_ga4_data():
     )
     data["kpis"]["organic_sessions"] = organic_sessions
     data["kpis"]["ai_sessions"] = ai_sessions
+
+    # Mobile vs desktop bounce divergence
+    mobile = next((d for d in data["devices"] if d["device"] == "mobile"), None)
+    desktop = next((d for d in data["devices"] if d["device"] == "desktop"), None)
+    if mobile and desktop:
+        data["kpis"]["mobile_bounce"] = mobile["bounce_rate"]
+        data["kpis"]["desktop_bounce"] = desktop["bounce_rate"]
+        data["kpis"]["bounce_divergence"] = round(abs(mobile["bounce_rate"] - desktop["bounce_rate"]), 3)
+    else:
+        data["kpis"]["mobile_bounce"] = 0
+        data["kpis"]["desktop_bounce"] = 0
+        data["kpis"]["bounce_divergence"] = 0
 
     return data
 
@@ -618,13 +704,76 @@ def generate_markdown(data, previous=None):
     lines.append("## 🏷️ Rich Results (Search Appearance)")
     lines.append("")
     if data["gsc"]["search_appearance"]:
+        has_event = any(sa["type"].upper() in ("EVENT", "EVENT_LISTING") for sa in data["gsc"]["search_appearance"])
         lines.append("| Type | Clicks | Impressions | CTR |")
         lines.append("|------|--------|-------------|-----|")
         for sa in data["gsc"]["search_appearance"]:
             lines.append(f"| {sa['type']} | {sa['clicks']:,} | {sa['impressions']:,} | {sa['ctr']:.1%} |")
+        if not has_event:
+            lines.append("")
+            lines.append("⚠️ **No Event rich results** despite having Event JSON-LD. Only non-Event types appearing.")
     else:
         lines.append("⚠️ No rich results detected. JSON-LD structured data may need review.")
     lines.append("")
+
+    # ── i18n Cannibalization ──
+    i18n_cannibal = data["gsc"].get("i18n_cannibalization", [])
+    if i18n_cannibal:
+        lines.append("## 🌐 i18n Cannibalization (Same Event, Multiple Locales)")
+        lines.append("")
+        lines.append("Same event slug indexed under multiple locale prefixes (`/e/`, `/es/e/`, `/en/e/`), splitting ranking signals.")
+        lines.append("")
+        for item in i18n_cannibal[:8]:
+            slug_short = item["slug"][:60] + "..." if len(item["slug"]) > 60 else item["slug"]
+            lines.append(f"**{slug_short}** ({item['total_impressions']:,} total impr)")
+            for p in sorted(item["pages"], key=lambda x: x["position"]):
+                lines.append(f"- [{p['locale']}] Pos {p['position']:.1f} | {p['clicks']} clicks | {p['impressions']:,} impr")
+            lines.append("")
+
+    # ── 3-Segment URLs Indexed ──
+    three_seg = data["gsc"].get("three_segment_indexed", [])
+    if three_seg:
+        lines.append("## 🚫 3-Segment URLs Indexed (Should Be Noindexed)")
+        lines.append("")
+        lines.append("URLs with pattern `/place/date/category` appearing in GSC. These create thin/duplicate content.")
+        lines.append("")
+        lines.append("| Page | Impressions | Clicks | Position |")
+        lines.append("|------|-------------|--------|----------|")
+        for r in three_seg[:10]:
+            path = r["page"].replace(SITE, "/")
+            lines.append(f"| `{path}` | {r['impressions']:,} | {r['clicks']} | {r['position']:.1f} |")
+        lines.append("")
+
+    # ── Dead Pages ──
+    dead = data["gsc"].get("dead_pages", [])
+    if dead:
+        lines.append("## 💀 Dead Pages (Impressions but Zero Clicks)")
+        lines.append("")
+        lines.append("Pages wasting crawl budget — visible in search but never clicked.")
+        lines.append("")
+        lines.append("| Page | Impressions | Position |")
+        lines.append("|------|-------------|----------|")
+        for r in dead[:10]:
+            path = r["page"].replace(SITE, "/")
+            lines.append(f"| `{path}` | {r['impressions']:,} | {r['position']:.1f} |")
+        lines.append("")
+
+    # ── Mobile vs Desktop Bounce ──
+    bounce_div = data["ga4"]["kpis"].get("bounce_divergence", 0)
+    if bounce_div > 0.15:
+        mob_b = data["ga4"]["kpis"].get("mobile_bounce", 0)
+        desk_b = data["ga4"]["kpis"].get("desktop_bounce", 0)
+        higher = "Desktop" if desk_b > mob_b else "Mobile"
+        lines.append("## 📱 Mobile vs Desktop Bounce Divergence")
+        lines.append("")
+        lines.append(f"| Device | Bounce Rate |")
+        lines.append(f"|--------|-------------|")
+        lines.append(f"| Mobile | {mob_b:.0%} |")
+        lines.append(f"| Desktop | {desk_b:.0%} |")
+        lines.append(f"| **Gap** | **{bounce_div:.0%}** |")
+        lines.append("")
+        lines.append(f"⚠️ {higher} bounce is significantly higher. May indicate bot traffic or UX issues on {higher.lower()}.")
+        lines.append("")
 
     # ── Actionable Items ──
     lines.append("## ✅ Actionable Items")
@@ -704,6 +853,75 @@ def generate_actions(data, previous=None):
             "description": f"Page `{top_qw['page'].replace(SITE, '/')}` has high visibility but low click-through. Improve meta title/description.",
         })
 
+    # i18n cannibalization
+    i18n = data["gsc"].get("i18n_cannibalization", [])
+    if i18n:
+        actions.append({
+            "priority": "P1",
+            "title": f"i18n cannibalization: {len(i18n)} events with competing locale URLs",
+            "description": "Same event pages indexed under /e/, /es/e/, /en/e/ split ranking signals. Review hreflang tags and canonical URLs to consolidate.",
+        })
+
+    # 3-segment URLs indexed
+    three_seg = data["gsc"].get("three_segment_indexed", [])
+    if three_seg:
+        total_impr = sum(r["impressions"] for r in three_seg)
+        actions.append({
+            "priority": "P1",
+            "title": f"3-segment URLs indexed: {len(three_seg)} pages ({total_impr:,} impressions)",
+            "description": "URLs like /place/date/category are indexed but create thin/duplicate content. Add noindex in proxy.ts and remove from sitemaps.",
+        })
+
+    # Dead pages
+    dead = data["gsc"].get("dead_pages", [])
+    if len(dead) >= 5:
+        total_impr = sum(r["impressions"] for r in dead)
+        actions.append({
+            "priority": "P2",
+            "title": f"Dead pages: {len(dead)} pages with {total_impr:,} impressions and 0 clicks",
+            "description": "Pages visible in search but never clicked waste crawl budget. Consider improving meta or noindexing low-value pages.",
+        })
+
+    # Rich results gap (has Event schema but no Event rich results)
+    sa_types = [s["type"].upper() for s in data["gsc"].get("search_appearance", [])]
+    has_event_rich = any(t in ("EVENT", "EVENT_LISTING") for t in sa_types)
+    if not has_event_rich:
+        actions.append({
+            "priority": "P1",
+            "title": "No Event rich results despite JSON-LD schema",
+            "description": "Site has Event structured data but Google shows no Event rich results. Test with Rich Results Test, check for schema errors (missing fields, price issues).",
+        })
+
+    # Mobile vs desktop bounce divergence
+    bounce_div = data["ga4"]["kpis"].get("bounce_divergence", 0)
+    if bounce_div > 0.15:
+        mob_b = data["ga4"]["kpis"].get("mobile_bounce", 0)
+        desk_b = data["ga4"]["kpis"].get("desktop_bounce", 0)
+        higher = "Desktop" if desk_b > mob_b else "Mobile"
+        actions.append({
+            "priority": "P2",
+            "title": f"{higher} bounce {bounce_div:.0%} higher than {'mobile' if higher == 'Desktop' else 'desktop'}",
+            "description": f"{higher} bounce rate ({max(mob_b, desk_b):.0%}) diverges significantly. May indicate bot traffic or UX issues specific to {higher.lower()} experience.",
+        })
+
+    # AI traffic growth (when comparing with previous)
+    if previous:
+        ai_cur = data["ga4"]["kpis"].get("ai_sessions", 0)
+        ai_prev = previous.get("ga4", {}).get("kpis", {}).get("ai_sessions", 0)
+        if ai_cur > ai_prev and ai_prev > 0:
+            growth = ((ai_cur - ai_prev) / ai_prev) * 100
+            actions.append({
+                "priority": "INFO",
+                "title": f"AI traffic growing: {ai_prev} → {ai_cur} sessions (+{growth:.0f}%)",
+                "description": "AI-referred traffic is increasing. Ensure AI referrer tracking is working and content is optimized for AI citation.",
+            })
+        elif ai_cur > 0 and ai_prev == 0:
+            actions.append({
+                "priority": "INFO",
+                "title": f"New AI traffic detected: {ai_cur} sessions",
+                "description": "AI-referred sessions appeared for the first time. Monitor growth and ensure tracking is configured.",
+            })
+
     # Trend-based actions
     if previous:
         changes = compare_kpis(data, previous)
@@ -781,7 +999,8 @@ def main():
     print(f"  GA4: {ga_k['sessions']:,} sessions | {ga_k['organic_sessions']:,} organic | {ga_k['ai_sessions']:,} AI")
     print(f"  Bounce: {ga_k['bounce_rate']:.0%} | Avg duration: {ga_k['avg_duration']:.0f}s")
     print(f"  Quick wins: {len(gsc_data['quick_wins'])} | Cannibalization: {len(gsc_data['cannibalization'])}")
-    print(f"  Rich results: {'Yes' if gsc_data['search_appearance'] else 'None'}")
+    print(f"  i18n cannibal: {len(gsc_data.get('i18n_cannibalization', []))} | 3-seg indexed: {len(gsc_data.get('three_segment_indexed', []))} | Dead pages: {len(gsc_data.get('dead_pages', []))}")
+    print(f"  Rich results: {'Yes' if gsc_data['search_appearance'] else 'None'} | Bounce gap: {ga_k.get('bounce_divergence', 0):.0%}")
 
     actions = generate_actions(audit_data, previous)
     print(f"\n  Actionable items: {len(actions)}")
