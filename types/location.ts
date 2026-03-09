@@ -18,20 +18,13 @@ export type EventLocationLabelOptions = {
   secondaryPreference?: "venue" | "region";
 };
 
-export type EventLocationLabels = {
-  cityLabel: string;
-  regionLabel: string;
-  venueLabel: string;
-  primaryLabel: string;
-  secondaryLabel: string;
-};
-
 export type EventPlaceLabelOptions = {
   cityName?: string | null;
   regionName?: string | null;
   location?: string | null;
 };
 
+/** Base set of location labels shared by all label helpers. */
 export type EventPlaceLabels = {
   cityLabel: string;
   regionLabel: string;
@@ -39,16 +32,12 @@ export type EventPlaceLabels = {
   secondaryLabel: string;
 };
 
-export type EventListLocationLabelOptions = {
-  cityName?: string | null;
-  regionName?: string | null;
-  location?: string | null;
-};
+/** Full location labels including venue (for event detail page). */
+export type EventLocationLabels = EventPlaceLabels & { venueLabel: string };
 
-export type EventListLocationLabels = {
-  cityLabel: string;
-  regionLabel: string;
-  locationLabel: string;
-  primaryLabel: string;
-  secondaryLabel: string;
-};
+/**
+ * List location labels including the raw location string.
+ * `EventListLocationLabelOptions` is structurally identical to `EventPlaceLabelOptions`;
+ * use `EventPlaceLabelOptions` as the input type for `buildEventListLocationLabels`.
+ */
+export type EventListLocationLabels = EventPlaceLabels & { locationLabel: string };

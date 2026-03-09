@@ -5,11 +5,6 @@ export interface UserLocation {
   longitude: number;
 }
 
-export interface EventLocation {
-  latitude: number;
-  longitude: number;
-}
-
 // Legacy category enum and related unions removed in favor of backend DTOs
 
 // Frontend-only/transformed event shape
