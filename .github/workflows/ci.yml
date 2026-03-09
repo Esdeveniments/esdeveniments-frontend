@@ -62,10 +62,10 @@ jobs:
       - name: Validate i18n placeholders
         run: yarn i18n:validate
 
-      - name: Run unit tests (Vitest)
+      - name: Run unit tests with coverage (Vitest)
         env:
           CI: true
-        run: yarn test
+        run: yarn test:coverage
 
       - name: Generate service worker (prebuild)
         env:
