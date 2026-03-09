@@ -1248,7 +1248,9 @@ def generate_actions(data, previous=None):
         device_cwv = cwv.get(device_key, {})
         if device_cwv:
             for metric in ["LCP", "INP", "CLS"]:
-                val = device_cwv.get(metric, 0)
+                val = device_cwv.get(metric)
+                if val is None:
+                    continue
                 good_t, poor_t, unit = CWV_THRESHOLDS[metric]
                 if val > poor_t:
                     fmt = f"{val:.3f}" if metric == "CLS" else f"{val:,.0f}{unit}"
