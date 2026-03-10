@@ -81,7 +81,7 @@ CWV_THRESHOLDS = {
 I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/e/", "ca")]
 LOCALE_PATH_PREFIXES = ["/es/", "/en/"]
 
-TODAY = datetime.now()
+TODAY = datetime.utcnow()
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
 START_90 = (TODAY - timedelta(days=93)).strftime("%Y-%m-%d")
 START_30 = (TODAY - timedelta(days=33)).strftime("%Y-%m-%d")
@@ -663,15 +663,27 @@ def collect_ga4_data():
     else:
         data["kpis"] = {"sessions": 0, "users": 0, "engaged_sessions": 0, "bounce_rate": 0, "avg_duration": 0}
 
-    # Compute derived KPIs
-    organic_sessions = sum(
-        s["sessions"] for s in data["traffic_sources"] if s["medium"] == "organic"
+    # Compute derived KPIs (separate queries to avoid truncation from top-20 source list)
+    organic_rows = ga_report(
+        ["sessionMedium"], ["sessions"],
+        dim_filter=FilterExpression(
+            filter=Filter(field_name="sessionMedium", string_filter=Filter.StringFilter(value="organic"))
+        ),
+        limit=1,
     )
-    ai_sessions = sum(
-        s["sessions"]
-        for s in data["traffic_sources"]
-        if any(ai in s["source"].lower() for ai in AI_PLATFORMS)
+    organic_sessions = safe_int(organic_rows[0]["metrics"][0]) if organic_rows else 0
+
+    ai_rows = ga_report(
+        ["sessionSource"], ["sessions"],
+        dim_filter=FilterExpression(
+            filter=Filter(
+                field_name="sessionSource",
+                in_list_filter=Filter.InListFilter(values=AI_PLATFORMS),
+            )
+        ),
+        limit=len(AI_PLATFORMS),
     )
+    ai_sessions = sum(safe_int(r["metrics"][0]) for r in ai_rows)
     data["kpis"]["organic_sessions"] = organic_sessions
     data["kpis"]["ai_sessions"] = ai_sessions
 
@@ -1108,16 +1120,23 @@ def generate_actions(data, previous=None):
     """Generate actionable items based on the data."""
     actions = []
 
-    # Check for brand term visibility
-    gsc_sd = data["gsc"]["striking_distance"]
-    brand_queries = [q for q in gsc_sd if BRAND_TERM in q["query"].lower()]
-    if brand_queries:
-        worst_pos = max(q["position"] for q in brand_queries)
+    # Check for brand term visibility (search all queries, not just striking distance)
+    all_brand = [
+        q for q in data["gsc"].get("striking_distance", []) + data["gsc"].get("quick_wins", [])
+        if BRAND_TERM in q.get("query", q.get("page", "")).lower()
+    ]
+    # Also check cannibalization data for brand queries at any position
+    for c in data["gsc"].get("cannibalization", []):
+        if BRAND_TERM in c["query"].lower():
+            for p in c["pages"]:
+                all_brand.append({"query": c["query"], "position": p["position"]})
+    if all_brand:
+        worst_pos = max(q["position"] for q in all_brand)
         if worst_pos > 5:
             actions.append({
                 "priority": "P0",
                 "title": f"Brand term at position {worst_pos:.0f}",
-                "description": f"Brand-related query \"{brand_queries[0]['query']}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
+                "description": f"Brand-related query \"{all_brand[0]['query']}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
             })
 
     # Check for no rich results
@@ -1305,7 +1324,7 @@ def generate_actions(data, previous=None):
                 actions.append({
                     "priority": "P1",
                     "title": f"Declining: {c['name']} ({c['change']})",
-                    "description": f"{c['name']} dropped from {c['previous']} to {c['current']}. Investigate potential causes.",
+                    "description": f"{c['name']} dropped from {format_kpi_value(c['name'], c['previous'])} to {format_kpi_value(c['name'], c['current'])}. Investigate potential causes.",
                 })
 
     if not actions:
