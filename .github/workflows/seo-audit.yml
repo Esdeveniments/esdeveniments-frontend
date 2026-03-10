@@ -77,13 +77,13 @@ jobs:
           RUN_DATE=$(date -u +%Y-%m-%d)
           mkdir -p data/seo-audits
 
-          PREV_FLAG=""
+          PREV_ARGS=()
           if [ "${{ steps.previous.outputs.found }}" = "true" ]; then
-            PREV_FLAG="--previous ${{ steps.previous.outputs.path }}"
+            PREV_ARGS=(--previous "${{ steps.previous.outputs.path }}")
           fi
 
           SEO_AUDIT_OUTPUT_DIR=data/seo-audits \
-            python scripts/seo-audit.py $PREV_FLAG
+            python scripts/seo-audit.py "${PREV_ARGS[@]}"
 
           # Rename output files with date
           mv data/seo-audits/seo-audit-data.json "data/seo-audits/${RUN_DATE}.json"

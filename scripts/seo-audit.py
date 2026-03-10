@@ -1136,7 +1136,7 @@ def generate_actions(data, previous=None):
             actions.append({
                 "priority": "P0",
                 "title": f"Brand term at position {worst_pos:.0f}",
-                "description": f"Brand-related query \"{all_brand[0]['query']}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
+                "description": f"Brand-related query \"{all_brand[0].get('query', all_brand[0].get('page', BRAND_TERM))}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
             })
 
     # Check for no rich results
