@@ -673,17 +673,26 @@ def collect_ga4_data():
     )
     organic_sessions = safe_int(organic_rows[0]["metrics"][0]) if organic_rows else 0
 
-    ai_rows = ga_report(
-        ["sessionSource"], ["sessions"],
-        dim_filter=FilterExpression(
-            filter=Filter(
-                field_name="sessionSource",
-                in_list_filter=Filter.InListFilter(values=AI_PLATFORMS),
-            )
-        ),
-        limit=len(AI_PLATFORMS),
-    )
-    ai_sessions = sum(safe_int(r["metrics"][0]) for r in ai_rows)
+    # AI sessions — use substring matching consistent with breakdown logic
+    ai_sessions = 0
+    for s in data["traffic_sources"]:
+        for platform in AI_PLATFORMS:
+            if platform in s["source"].lower():
+                ai_sessions += s["sessions"]
+                break
+    # Supplement from a wider query if traffic_sources was truncated
+    if ai_sessions == 0:
+        ai_rows = ga_report(
+            ["sessionSource"], ["sessions"],
+            dim_filter=FilterExpression(
+                filter=Filter(
+                    field_name="sessionSource",
+                    in_list_filter=Filter.InListFilter(values=AI_PLATFORMS),
+                )
+            ),
+            limit=len(AI_PLATFORMS),
+        )
+        ai_sessions = sum(safe_int(r["metrics"][0]) for r in ai_rows)
     data["kpis"]["organic_sessions"] = organic_sessions
     data["kpis"]["ai_sessions"] = ai_sessions
 
@@ -1120,10 +1129,10 @@ def generate_actions(data, previous=None):
     """Generate actionable items based on the data."""
     actions = []
 
-    # Check for brand term visibility (search all queries, not just striking distance)
+    # Check for brand term visibility (search all query-bearing datasets)
     all_brand = [
-        q for q in data["gsc"].get("striking_distance", []) + data["gsc"].get("quick_wins", [])
-        if BRAND_TERM in q.get("query", q.get("page", "")).lower()
+        q for q in data["gsc"].get("striking_distance", [])
+        if BRAND_TERM in q.get("query", "").lower()
     ]
     # Also check cannibalization data for brand queries at any position
     for c in data["gsc"].get("cannibalization", []):
@@ -1136,7 +1145,7 @@ def generate_actions(data, previous=None):
             actions.append({
                 "priority": "P0",
                 "title": f"Brand term at position {worst_pos:.0f}",
-                "description": f"Brand-related query \"{all_brand[0].get('query', all_brand[0].get('page', BRAND_TERM))}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
+                "description": f"Brand-related query \"{all_brand[0].get('query', BRAND_TERM)}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
             })
 
     # Check for no rich results
@@ -1275,7 +1284,7 @@ def generate_actions(data, previous=None):
                     fmt = f"{val:.3f}" if metric == "CLS" else f"{val:,.0f}{unit}"
                     actions.append({
                         "priority": "P1",
-                        "title": f"Poor {metric} on {device_label}: {fmt} (threshold: {good_t}{unit})",
+                        "title": f"Poor {metric} on {device_label}: {fmt} (poor threshold: {poor_t}{unit})",
                         "description": f"{device_label} {cwv_labels[metric]} is in the 'poor' range. {cwv_advice[metric]}",
                     })
                 elif val > good_t:
