@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { uploadEventImage } from "@lib/api/events";
-import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR, FORMDATA_PARSE_ERROR_SUBSTRING } from "@utils/constants";
+import {
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+  FORMDATA_PARSE_ERROR_SUBSTRING,
+} from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
 import { isValidImageContent } from "@utils/image-validation";
 
@@ -13,7 +16,7 @@ export async function POST(request: Request) {
 
   try {
     const contentType = request.headers.get("content-type") ?? "";
-    if (!contentType.toLowerCase().includes("multipart/form-data")) {
+    if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
       return NextResponse.json(
         { error: "El tipus de contingut ha de ser multipart/form-data." },
         { status: 400 },

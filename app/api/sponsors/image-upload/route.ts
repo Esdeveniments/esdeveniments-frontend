@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
   try {
     const contentType = request.headers.get("content-type") ?? "";
-    if (!contentType.toLowerCase().includes("multipart/form-data")) {
+    if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
       return NextResponse.json(
         {
           errorCode: "invalid_content_type",
