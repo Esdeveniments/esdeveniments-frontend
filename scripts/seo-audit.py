@@ -143,7 +143,7 @@ def ga_report(dimensions, metrics, start=START_90, end=END, limit=25, dim_filter
 
 def sanitize_md(text):
     """Escape Markdown special characters that could break tables."""
-    return str(text).replace("|", "\\|").replace("`", "\\`")
+    return re.sub(r"([\|*_`\[\]\(\)])", r"\\\1", str(text))
 
 
 def safe_float(val, default=0.0):
